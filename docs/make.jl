@@ -8,7 +8,9 @@ using GenX
 using Documenter
 
 DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
-
+println(pwd())
+genx_docpath = joinpath(pwd(), "docs/src")
+push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Load Inputs" => "load-inputs.md",
