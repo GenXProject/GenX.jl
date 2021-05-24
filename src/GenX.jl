@@ -18,7 +18,6 @@ using StatsBase
 using LinearAlgebra
 using YAML
 using Dates
-#using Plots
 using Clustering
 using Distances
 using Combinatorics

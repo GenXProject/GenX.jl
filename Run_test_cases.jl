@@ -51,7 +51,7 @@ for uc = [1]
 
     ### Solve model
     println("Solving Model")
-    EP, solve_time = solve_model(EP, mysetup, myinputs)
+    EP, solve_time = solve_model(EP, mysetup)
     myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 
     ### Write output

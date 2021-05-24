@@ -20,7 +20,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	end
 
 	# If output directory does not exist, create it
-	println(path)
 	if !(isdir(path))
 		mkdir(path)
 	end

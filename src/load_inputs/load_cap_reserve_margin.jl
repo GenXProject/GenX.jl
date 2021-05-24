@@ -3,7 +3,7 @@
 
 Function for reading input parameters related to planning reserve margin constraints
 """
-function load_cap_reserve_margin(setup::Dict, path::AbstractString, sep::AbstractString, inputs_crm::Dict, network_var::DataFrame)
+function load_cap_reserve_margin(setup::Dict, path::AbstractString, sep::AbstractString, inputs_crm::Dict)
 	# Definition of capacity reserve margin (crm) by locational deliverability area (LDA)
 	println("About to read Capacity_reserve_margin.csv")
 
@@ -20,7 +20,17 @@ function load_cap_reserve_margin(setup::Dict, path::AbstractString, sep::Abstrac
 
 	println("Capacity_reserve_margin.csv Successfully Read!")
 
+
+
+	return inputs_crm
+end
+
+function load_cap_reserve_margin_trans(setup::Dict, path::AbstractString, sep::AbstractString, inputs_crm::Dict, network_var::DataFrame)
+
 	println("About to Read Transmission's Participation in Capacity Reserve Margin")
+
+	res = inputs_crm["NCapacityReserveMargin"]
+	
 	first_col_trans = findall(s -> s == Symbol("CapRes_1"), names(network_var))[1]
 	last_col_trans = findall(s -> s == Symbol("CapRes_$res"), names(network_var))[1]
 	dfTransCapRes = network_var[:,first_col_trans:last_col_trans]

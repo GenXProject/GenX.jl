@@ -2,9 +2,9 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are specified in a *GenXSettings.yml* file which should be located in the current working directory (or to specify an alternative location, edit the '''settings_path''' variable in your *Run.jl* file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
+Model settings parameters are categorized into based on model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify the efficiency of the transmission and distribution network. Note that all settings parameters are case sensitive.
 
-###### Table 1a: Summary of the Model settings parameters
+###### Table 1: Summary of the Model settings parameters
 ---
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
@@ -24,33 +24,19 @@ Model settings parameters are specified in a *GenXSettings.yml* file which shoul
 ||2 = unit commitment with linearized clustering.|
 |NetworkExpansion | Flag for activating or deactivating inter-regional transmission expansion.|
 ||1 = active|
-||0 = modeling single zone or for multi-zone problems, inter regional transmission expansion is not allowed.|
+||0 = modling single zone or inter regional transmission is not allowed.|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
 ||1 = linear|
 ||>=2 = piece-wise quadratic|
 |Reserves | Flag for modeling operating reserves .|
 ||0 = no operating reserves |
 ||1 regulation (primary) and spinning (secondary) reserves |
+|pTolerance | Wrap-up tolerance used in defining inter-temporal constraints for the first period. |
+||(0,1) = value in last period is within specified tolerance of the value in the first period.|
 |StorageLosses | Flag to account for storage related losses.|
-||0 = VRE and CO2 constraint DO NOT account for energy lost. |
+||0 = VRE and $CO_2$ constraint DO NOT account for energy lost. |
 ||1 = constraint DO account for energy lost. |
-|**Policy related**|
-|EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
-|| Default = 0 (No RPS or CES constraints).|
-|| 1 = activate energy share requirement related constraints. |
-|CO2Cap | Flag for specifying the type of CO2 emission limit constraint.|
-|| 0 = no CO2 emission limit|
-|| 1 = mass-based emission limit constraint|
-|| 2 = load + rate-based emission limit constraint|
-|| 3 = generation + rate-based emission limit constraint|
-|CapacityReserveMargin | Flag for Capacity Reserve Margin constraints. |
-|| Default = 0 (No Capacity Reserve Margin constraints)|
-|| 1 = activate Capacity Reserve Margin related constraints |
-|MinCapReq | Minimum technology carve out requirement constraints.|
-|| 1 = if one or more minimum technology capacity constraints are specified|
-|| 0 = otherwise|
 |**Solution strategy and outputs**||
-|Solver | Solver name is case sensitive (CPLEX, Gurobi, clp). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
@@ -58,20 +44,9 @@ Model settings parameters are specified in a *GenXSettings.yml* file which shoul
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
-|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
-|**Miscellaneous**|
-|PrintModel | Flag for printnig the model equations as .lp file.|
-||1= including the model equation as an output|
-||0 for the model equation not being included as an output|
-|MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|
-
-Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. *gurobi_settings.yml* or *cplex_settings.yml*), which should be located in the current working directory (or to specify an alternative location, edit the '''solver_settings_path''' variable in your Run.jl file). Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. Note that appropriate solver settings are specific to each solver.
-
-###### Table 1b: Summary of the Solver settings parameters
----
-|**Settings Parameter** | **Description**|
-| :------------ | :-----------|
+|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal $CO_2$ prices.|
 |**Solver settings**||
+|Solver | Solver name is case sensitive (CPLEX, Gurobi, clp). |
 |Method | Algorithm used to solve continuous models or the root node of a MIP model. Generally, barrier method provides the fastest run times for real-world problem set.|
 || CPLEX: CPX\_PARAM\_LPMETHOD - Default = 0; See [link](https://www.ibm.com/docs/en/icos/20.1.0?topic=parameters-algorithm-continuous-linear-problems) for more specifications.|
 || Gurobi: Method - Default = -1; See [link](https://www.gurobi.com/documentation/8.1/refman/method.html) for more specifications.|
@@ -116,6 +91,26 @@ Additionally, Solver related settings parameters are specified in the appropriat
 || clp: Scaling - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
 |Perturbation | Perturbs problem; Switch on perturbation (50), automatic (100), don't try perturbing (102).|
 || clp: Perturbation: - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
+|**Policy related**|
+|EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
+|| Default = 0 (No RPS or CES constraints).|
+|| 1 = activate energy share requirement related constraints. |
+|CO2Cap | Flag for specifying the type of $CO_2$ emission limit constraint.|
+|| 0 = no $CO_2$ emission limit|
+|| 1 = mass-based emission limit constraint|
+|| 2 = load + rate-based emission limit constraint|
+|| 3 = generation + rate-based emission limit constraint|
+|CapacityReserveMargin | Flag for Capacity Reserve Margin constraints. |
+|| Default = 0 (No Capacity Reserve Margin constraints)|
+|| 1 = activate Capacity Reserve Margin related constraints |
+|MinCapReq | Minimum technology carve out requirement constraints.|
+|| 1 = if one or more minimum technology capacity constraints are specified|
+|| 0 = otherwise|
+|**Miscellaneous**|
+|PrintModel | Flag for printnig the model equations as .lp file.|
+||1= including the model equation as an output|
+||0 for the model equation not being included as an output|
+|MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|
 
 
 ## 2 Inputs
@@ -128,17 +123,17 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**Mandatory Files**||
-|Fuels\_data.csv |Specify fuel type, CO2 emissions intensity, and time-series of fuel prices. |
+|Fuels\_data.csv | Specify fuel type, time-dependent costs, and $CO_2$ emissions intensity. |
 |Network.csv |Specify network topology, transmission fixed costs, capacity and loss parameters.|
-|Load\_data.csv |Specify time-series of load profiles for each model zone, weights for each time step, load shedding costs, and optional time domain reduction parameters.|
-|Generators\_variability.csv |Specify time-series of capacity factor/availability for each resource.|
+|Load\_data.csv |Specify time-dependent load profile for each model zone, weights for each time step, load shedding costs, and optional time domain reduction parameters.|
+|Generators\_variability.csv |Specify time-dependent availability of each resource.|
 |Generators\_data.csv |Specify cost and performance data for generation, storage and demand flexibility resources.|
 |**Settings-specific Files**||
 |Reserves.csv |Specify operational reserve requirements as a function of load and renewables generation and penalty for not meeting these requirements.|
-|Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.|
-|CO2\_cap.csv |Specify regional CO2 emission limits.|
+|Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard goals.|
+|CO2\_cap.csv |Specify regional $CO_2$ emission limit targets.|
 |Capacity\_reserve\_margin.csv |Specify regional capacity reserve margin requirements.|
-|Minimum\_capacity\_requirement.csv.csv |Specify regional minimum technology capacity deployment requirements.|
+|Minimum\_capacity\_requirement.csv.csv |Specify regional minimum technology deployment requirements.|
 
 
 
@@ -147,18 +142,16 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 
 #### 2.1.1 Fuels\_data.csv
 
-• **First row:** names of all fuels used in the model instance which should match the labels used in *Fuel* column in the *Generators\_data.csv* file. For renewable resources or other resources that do not consume a fuel, the name of the fuel is *none*.
+• **First row:** names of all fuels used in the model instance which should match the labels used in *Fuel* column in the *Generators\_data.csv* file.For renewable resources the name of the fuel is *none*.
 
-• **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
+• **Second row:** The second row specifies the $CO_2$ emissions intensity of each fuel in tons/MMBtu. Note that tons correspond to metric tonnes and not short tons.
 
-• **Remaining rows:** Rest of the rows in this input file specify the time-series for prices for each fuel in $/MMBtu. A constant price can be specified by entering the same value for all hours. 
-
-* ** First column:** The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
+• **Remaining rows:** Rest of the rows in this input file specify the time-dependent cost of each fuel in $/MMBtu. The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
 
 
 #### 2.1.2 Network.csv
 
-This input file contains input parameters related to: 1) definition of model zones (regions between which transmission flows are explicitly modeled) and 2) definition of transmission network topology, existing capacity, losses and reinforcement costs. The following table describe each of the mandatory parameter inputs need to be specified to run an instance of the model, along with comments for the model configurations when they are needed.
+This input file contains input parameters related to: 1) definition of model zones and 2) definition of transmission network topology, existing capacity, losses and reinforcement costs. The following table describe each of the mandatory parameter inputs need to be specified to run an instance of the model, along with comments for the model configurations when they are needed.
 
 ###### Table 3: Structure of the Network.csv file
 ---
@@ -168,17 +161,15 @@ This input file contains input parameters related to: 1) definition of model zon
 |Network\_zones | Specified as z* where * is a number of the zone.|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
-|Network\_Lines | Numerical index for each network line/|
-| z* (Network map) | Next n columns, one per zone, with column header in format of z* where * is the number of the zone. L rows, one for each network line (or interregional path), with a 1 in the column corresponding to the 'origin' zone and a -1 in the column corresponding to the 'destination' zone for each line. No more than one column may be marked as origin and one as destination for each line, or the model will not function correctly. Note that positive flows indicate flow from origin to destination zone; negative flows indicate flow from destination to origin zone.|
+|Network\_Lines | Number of the network line z* zone number for specifying start and end point of the inter-regional transmission line.|
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
 |Line\_Reinforcement\_Cost\_per\_MWyr | Cost of adding new capacity to the inter-regional transmission line.|
 |**Trans\_Loss\_Segments = 1**||
-|Line\_Loss\_Percentage | fractional transmission loss for each transmission line||
+|Line\_Loss\_Percentage | fractional transmission loss for each transmission line - can be uniquely specified for each file distance\_mile Line distance that is used to compute linear line losses - not directly used in the model.|
 |**Trans\_Loss\_Segments > 1**||
-|Ohms | Line resistance in Ohms (used to calculate I^2R losses)|
-|kV | Line voltage in kV (used to calculate I^2R losses)|
+|Ohms | Line resistance in OhmskV Line voltage in kV.|
 |**CapacityReserveMargin> 0**||
 |CapRes\_* | Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint. * represents the number of the capacity reserve margin constraint.|
 ||1 = the transmission line is eligible for adding firm capacity to the region|
@@ -190,7 +181,7 @@ This input file contains input parameters related to: 1) definition of model zon
 
 #### 2.1.3 Load\_data.csv
 
-This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding. Note that GenX is designed to model hourly time steps. With some care and effort, finer (e.g. 15 minute) or courser (e.g. 2 hour) time steps can be modeled so long as all time-related parameters are scaled appropriately (e.g. time period weights, heat rates, ramp rates and minimum up and down times for generators, variable costs, etc). 
+This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding.
 
 ###### Table 4: Structure of the Load\_data.csv file
 ---
@@ -200,64 +191,63 @@ This file includes parameters to characterize model temporal resolution to appro
 |Voll |Value of lost load in $/MWh.|
 |Demand\_Segment |Number of demand curtailment/lost load segments with different cost and capacity of curtailable demand for each segment. User-specified demand segments. Integer values starting with 1 in the first row. Additional segements added in subsequent rows.|
 |Cost\_of\_Demand\_Curtailment\_per\_MW |Cost of non-served energy/demand curtailment (for each segment), reported as a fraction of value of lost load. If *Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length equal to the length of Demand\_Segment.|
-|Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
+|Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demandsegment.|
 |Time\_Index |Index defining time step in the model.|
 |Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
 |**Settings-specific Columns**|
 |**OperationWrapping = 1**|
 |Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations.|
 |Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps).|
-|Sub\_Weights |Number of annual time steps (e.g. hours) represented by a given representative period. Length of this column is equal to the number of representative periods. Sum of the elements of this column should be equal to the total number of time steps in a model time horizon, defined in parameterWeightTotal (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
+|Sub\_Weights |Number of annual hours represented by a given representative week. Length of this column is equal to the number of representative periods. Sum of the elements of this column should be equal to the total number of hours in a model time horizon, defined in parameterWeightTotal(e.g. 8760 if modeling 365 days of 8736 if modeling 52 representative weeks).|
 
 
 
 #### 2.1.4 Generator\_variability.csv
 
-This file contains the time-series of capacity factors / availability of each resource included in the *Generators\_data.csv* file for each time step (e.g. hour) modeled.
+This file contains the time-dependent capacity factor of resources included in the *Generators\_data.csv* file.
 
 • first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
-• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the *Generators\_data.csv* file in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in *Generators\_data.csv* must be unique. Note that for Hydro reservoir resources (i.e. *HYDRO = 1* in the *Generators\_data.csv*), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor.
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the *Generators\_data.csv* file in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for Hydro reservoir resources (i.e. *HYDRO = 1* in the *Generators\_data.csv*), values in this file correspond to inflows as a fraction of installed power capacity.
 
 #### 2.1.5 Generators\_data.csv
 
-This file contains cost and performance parameters for various generators and other resources (storage, flexible demand, etc) included in the model formulation.
+This file contains cost and performance parameters for various generators resources included in the model formulation.
 
 ###### Table 5: Mandatory columns in the Generators\_data.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand/loads.|
-|Zone | Integer representing zone number where the resource is located. |
+|Resource | This column contains unique names of resources available to the model. Resources can include generators, storage, imports/exports to and from a region and shiftable loads.|
+|Zone | Integer representing zone number. |
 |**Technology type flags**|
-|New\_Build | {-1, 0, 1}, Flag for resource (storage, generation) eligibility for capacity expansion.|
-||New\_Build = 1: eligible for capacity expansion and retirement. |
-||New\_Build = 0: not eligible for capacity expansion, eligible for retirement.|
-||New\_Build = -1: not eligible for capacity expansion or retirement.|
-|THERM | {0, 1, 2}, Flag to indicate membership in set of thermal resources (e.g. nuclear, combined heat and power, natural gas combined cycle, coal power plant)|
-||THERM = 0: Not part of set (default) |
-||THERM = 1: If the power plant relies on thermal energy input and subject unit commitment constraints/decisions if *UCommit >=1* (e.g. cycling decisions/costs/constraints). |
-||THERM = 2: If the power plant relies on thermal energy input and is subject to simplified economic dispatch constraints (ramping limits and minimum output level but no cycling decisions/costs/constraints). |
+|New\_Build | Flag for resource (storage, generation) eligibility for capacity expansion.|
+||New\_Build = 1: eligible for capacity expansion. |
+||New\_Build = 0: others including existing capacity.|
+||New\_Build = -1: if you don't want to let the resource retire.|
+|THERM | Flag for thermal resources (Nuclear, combined heat and power, natural gas combined cycle, coal power plant).|
+||THERM = 0: Default |
+||THERM = 1: If the power plant relies on thermal energy input and is eligible for unit commitment. |
+||THERM = 2: If the power plant relies on thermal energy input and is not eligible for unit commitment. |
 |Cap\_size | Size (MW) of a single generating unit. This is used only for resources with integer unit commitment (*THERM = 1*) - not relevant for other resources.|
-|VRE | {0, 1}, Flag to indicate membership in set of dispatchable (or curtailable) variable renewable energy resources (onshore wind, offshore wind, utility-scale solar PV, and distributed solar PV subject to dispatch signals).|
-||VRE = 0: Not part of set (default) |
-||VRE = 1: Dispatchable variable renewable energy (VRE) resources. |
-|Num\_VRE\_bins | Number of resource availability profiles considered for each VRE resource per zone. This parameter is used to decide the number of capacity investment decision variables related to a single variable renewable energy technology in each zone.|
+|VRE | Flag for dispatchable renewable energy resources (onshore wind, offshore wind, dis- tributed solar and utility-scale solar PV).|
+||VRE = 0: Default |
+||VRE = 1: dispatchable renewable resources. |
+|Num\_VRE\_bins | Number of resource availability profiles considered for each PV or wind resource per zone. This parameter is used to decide the number of capacity investment decision variables related to a single variable renewable energy technology in each zone.|
 ||Num\_VRE\_bins = 1: using a single resource availability profile per technology per zone. 1 capacity investment decision variable and 1 generator RID tracking technology power output (and in each zone).|
-||Num\_VRE\_bins > 1: using multiple resource availability profiles per technology per zone. Num\_VRE\_bins capacity investment decision variables and 1 generator RID used to define technology power output at each time step (and in each zone). Example: Suppose we are modeling 3 bins of wind profiles for each zone. Then include 3 rows with wind resource names as Wind\_1, Wind\_2, and Wind\_3 and a corresponding increasing sequence of RIDs. Set Num\_VRE\_bins for the generator with smallest RID, Wind\_1, to be 3 and set Num\_VRE\_bins for the other rows corresponding to Wind\_2 and Wind\_3, to be zero. By setting Num\_VRE\_bins for Wind\_2 and Wind\_3, the model eliminates the power outputs variables for these generators. The power output from the technology across all bins is reported in the power output variable for the first generator. This allows for multiple bins without significantly increasing number of model variables (adding each bin only adds one new capacity variable and no operational variables). See documentation for '''curtailable_variable_renewable()''' for more. |
-|MUST\_RUN | {0, 1}, Flag to indicate membership in set of must-run plants (could be used to model behind-the-meter PV not subject to dispatch signals/curtailment, run-of-river hydro that cannot spill water, must-run or self-committed thermal generators, etc). |
-||MUST\_RUN = 0: Not part of set (default) |
-||MUST\_RUN = 1: Must-run (non-dispatchable) resources.|
-|STOR | {0, 1, 2}, Flag to indicate membership in set of storage resources and designate which type of storage resource formulation to employ.|
-||STOR = 0: Not part of set (default) |
-||STOR = 1: Discharging power capacity and energy capacity are the investment decision variables; symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage).|
-||STOR = 2: Discharging, charging power capacity and energy capacity are investment variables; asymmetric charge and discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
-|FLEX | {0, 1}, Flag to indicate membership in set of flexible demand-side resources (e.g. scheduleable or time shiftable loads such as automated EV charging, smart thermostat systems, irrigating pumping loads etc).|
-||FLEX = 0: Not part of set (default) |
-||FLEX = 1: Flexible demand resource.|
-|HYDRO | {0, 1}, Flag to indicate membership in set of reservoir hydro resources.|
-||HYDRO = 0: Not part of set (default) |
-||HYDRO = 1: Hydropower with reservoir modeling, including inflows, spillage, ramp rate limits and minimum operating level and efficiency loss associated with discharging. Reservoir capacity can be represented as a ratio or energy to power. This type of plant cannot charge from grid.|
+||Num\_VRE\_bins > 1: using multiple resource availability profiles per technology per zone. Num\_VRE\_bins capacity investment decision variables and 1 generator RID used to define technology power output at each time step (and in each zone). Example: Suppose we are modeling 3 bins of wind profiles for each zone. Then include 3 rows with wind resource names as Wind\_1, Wind\_2, and Wind\_3 and a corresponding increasing sequence of RIDs. Set Num\_VRE\_bins for the generator with smallest RID, Wind\_1, to be 3 and set Num\_VRE\_bins for the other rows corresponding to Wind\_2 and Wind\_3, to be zero. By setting Num\_VRE\_bins for Wind\_2 and Wind\_3, the model eliminates the power outputs variables for these generators. The power output from the technology across all bins is reported in the power output variable for the first generator. This allows for multiple bins without significantly increasing number of model variables (adding each bin only adds one new capacity variable).|
+|MUST\_RUN | Flag for must-run plants - could be used to model behind-the-meter PV, hydro run-of-river, must-run fossil or thermal plants (small hydro, biomass).|
+||MUST\_RUN = 0: Default|
+||MUST\_RUN = 1: for must-run (non-dispatchable) resources.|
+|STOR |Flag for the type of the storage resource.|
+||STOR = 1: Discharging power capacity and energy capacity are the investment decision variables, charging capacity equal to discharging capacity (e.g. lithium-ion battery storage).|
+||STOR = 2: Discharging, charging power capacity and energy capacity are investment variables (e.g. long duration hydrogen storage).|
+||STOR = 0: for other types of resources.|
+|FLEX | Flag for flexible demand-side resources.|
+||FLEX = 1: demand resource that is available only a subset of hours and specified by a maximum available capacity (given by parameter *Existing\_Cap\_MW*). Includes the option to expand with associated investment cost (e.g. EV load).|
+||FLEX = 0: for other types of resources.|
+|HYDRO | Flag for the type of hydro resource.|
+||HYDRO = 1: hydropower with reservoir modeling, including inflows, spillage, ramp rate limits and minimum operating level and efficiency loss associated with discharging. Reservoir capacity can be represented as a ratio or energy to power. This type of plant cannot charge from grid.|
 |**Existing technology capacity**|
 |Existing\_Cap\_MW |The existing capacity of a power plant in MW.|
 |Existing\_Cap\_MWh |The existing capacity of storage in MWh where *STOR = 1* or *STOR = 2*.|
@@ -279,49 +269,49 @@ This file contains cost and performance parameters for various generators and ot
 |Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). |
 |Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with *STOR = 2*, or variable operations and maintenance costs associated with flexible demand deferral with *FLEX = 1*. Otherwise 0 ($/MWh). |
 |**Technical performance parameters**|
-|Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator or MMBtu of fuel consumed per MWh of electricity generated for export (net of on-site house loads). The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
+|Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator. The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
 |Fuel  |Fuel needed for a generator. The names should match with the ones in the *Fuels\_data.csv*. |
-|Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs.|
-|Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in *Generators\_variability.csv*. Applies to thermal plants, and reservoir hydro resource (*HYDRO = 1*).|
-|Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity. Applies to thermal plants, and reservoir hydro resource (*HYDRO = 1*).|
-|Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity. Applies to thermal plants, and reservoir hydro resource (*HYDRO = 1*).|
-|Eff\_Up  |[0,1], Efficiency of charging storage – applies to storage technologies (all STOR types). |
-|Eff\_Down  |[0,1], Efficiency of discharging storage – applies to storage technologies (all STOR types). |
+|Self\_Disch  |The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs. Range is 0-1. |
+|Eff\_Up  |Efficiency of charging storage – applies to storage technologies (all STOR types). |
+|Eff\_Down  |Efficiency of discharging storage – applies to storage technologies (all STOR types). |
 |Hydro\_Energy\_to\_Power\_Ratio  |The rated number of hours of reservoir hydro storage at peak discharge power output. Applies to *HYDRO = 1* (hours). |
-|Min\_Duration  |Specifies the minimum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
-|Max\_Duration  |Specifies the maximum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
-|Max\_Demand\_Flex\_Delay  |Maximum number of hours that demand can be deferred or delayed. Applies to resources with FLEX type 1 (hours). |
+|Min\_Duration  |It specifies the minimum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
+|Max\_Duration  |It specifies the maximum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
+|Max\_Demand\_Flex\_Delay  |Maximum number of hours that demand can be deferred. Applies to resources with FLEX type 1 (hours). |
 |Max\_Demand\_Flex\_Advance  |Maximum number of hours that demand can be scheduled in advance of the original schedule. Applies to resources with FLEX type 1 (hours). |
-|Demand\_Flex\_Energy\_Eff  |[0,1], Energy efficiency associated with time shifting demand. Represents energy losses due to time shifting (or 'snap back' effect of higher consumption due to delay in use) that may apply to some forms of flexible demand. Applies to resources with FLEX type 1 (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
+|Demand\_Flex\_Energy\_Eff  |Energy efficiency associated with time shifting demand. Represents energy losses due to time shifting. Applies to resources with FLEX type 1 (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
 
 
 ###### Table 6: Settings-specific columns in the Generators\_data.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**UCommit >= 1** | The following settings apply only to thermal plants with unit commitment constraints (*THERM = 1*).|
-|Up\_Time| Minimum amount of time a resource has to stay in the committed state.|
-|Down\_Time |Minimum amount of time a resource has to remain in the shutdown state.|
-|Start\_Cost\_per\_MW |Cost per MW of nameplate capacity to start a generator ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
-|Start\_Fuel\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each generator (MMBtu/MW per start).|
-|**Reserves = 1** | The following settings apply to thermal, dispatchable VRE, hydro and storage resources|
-|Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
-|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
-|Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
-|Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
+|**UCommit >= 1**||
+|Min\_Power |The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in *Generators\_variability.csv*. Applies to thermal plants, and reservoir hydro resource (*HYDRO = 1*).|
+|Ramp\_Up\_Percentage |Maximum increase in power output from between two periods (typically two hours), reported as a fraction of nameplate capacity. Applies to thermal plants, and reservoir hydro resource (*HYDRO = 1*).|
+|Ramp\_Dn\_Percentage |Maximum decrease in power output from between two periods (typically two hours), reported as a fraction of nameplate capacity. Applies to thermal plants, and reservoir hydro resource (*HYDRO = 1*).|
+|Up\_Time| Minimum amount of time a resource has to stay in the committed state. Applies to thermal plants with unit commitment constraints (*COMMIT = 1*).|
+|Down\_Time |Minimum amount of time a resource has to remain in the shutdown state. Applies to thermal plants with unit commitment constraints (*COMMIT = 1*).|
+|Start\_Cost\_per\_MW |Cost per MW of nameplate capacity to start a generator ($/MW). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Fuel\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each generator (MMBtu/MW).|
+|**Reserves = 1**||
+|Reg\_Cost |Cost of providing regulation reserves ($/MW).|
+|Rsv\_Cost |Cost of providing spinning reserves ($/MW).|
+|Reg\_Max |Fraction of nameplate capacity that can committed to provided regulation up reserves.Applies to generation and storage resources.|
+|Rsv\_Max |Fraction of nameplate capacity that can committed to provided spinning up reserves. Applies to generation and storage resources.|
 |**EnergyShareRequirement> 0**||
 |ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint.|
 ||1- included|
 ||0- excluded|
 |**CapacityReserveMargin> 0**||
-|CapRes\_* |[0,1], Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
+|CapRes\_* |Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint.|
 |**ModelingToGenerateAlternatives = 1**||
 |MGA |Eligibility of the technology for Modeling To Generate Alternative (MGA) run. |
 ||1 = Technology is available for the MGA run.|
 ||0 = Technology is unavailable for the MGA run (e.g. storage technologies).|
 |Resource\_Type |For the MGA run, we categorize all the resources in a few resource types. We then find maximally different generation portfolio based on these resource types. For example, existing solar and new solar resources could be represented by a resource type names *Solar*. Categorization of resources into resource types is user dependent.|
 |**MinCapReq = 1**|
-|MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file *Minimum\_capacity\_requirement.csv.csv*.|
+|MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ithrow of the file *Minimum\_capacity\_requirement.csv.csv*.|
 
 
 
@@ -329,29 +319,29 @@ This file contains cost and performance parameters for various generators and ot
 
 #### 2.2.1 Online Time-domain reduction
 
-Modeling grid operations for each hour of the year can be computationally expensive for models with many zones and resources. Time-domain reduction is often employed in capacity expansion models as a way to balance model spatial and temporal resolution as well as representation of dispatch, while ensuring reasonable computational times. GenX allows the option of performing time-domain reduction on the user supplied time-series input data to produce a representative time series at the desired level of temporal resolution. The below table summarizes the list of parameters to be specified by the user to perform the time domain reduction implemented in GenX. These parameters are passed to GenX via the YAML file *time\_domain\_reduction\_settings.yml*.
+Modeling grid operations for each hour of the year, which can be computationally expensive for models with many zones and resources. Time-domain reduction is often employed in CEMs as a way to balance model spatial and temporal resolution as well as representation of dispatch, while ensuring reasonable computational times. GenX allows the option of performing time-domain reduction on the user input data to the desired level of temporal resolution. The below table summarizes the list of parameters to be specified by the user to perform the time domain reduction implemented in GenX. These parameters are passed to GenX via the YAML file *time\_domain\_reduction\_settings.yml*.
 
 ###### Table 7: Structure of the Load\_data.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**TimeDomainReduction = 1**||
-|Timesteps\_per\_period | The number of timesteps (e.g., hours) in each representative period (i.e. 168 for weeks, 24 for days, 72 for three-day periods, etc).|
-|UseExtremePeriods | 1 = Include outliers (by performance or load/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary *ExtremePeriods*. Extreme periods can be selected based on following criteria applied to load profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most load across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
+|Timesteps\_per\_period | Default 168, the number of timesteps (e.g., hours) in each representative period.|
+|UseExtremePeriods | 1 = Include outliers (by performance or load/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionaryExtremePeriods. Extreme weeks can be selected based on following criteria applied to load profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value)) statistic (minimum, maximum). i.e., the user could want the hour with the most load across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
 ||0 = Do not include extreme periods.|
 |ExtremePeriods | If UseExtremePeriods = 1, use this dictionary to select which types of extreme periods to use. Select by profile type (Load, PV, or Wind), geography (Zone or System), grouping by timestep or by period (Absolute or Integral), and statistic (Maximum or Minimum).|
-|ClusterMethod |Either *kmeans* or *kmedoids*, the method used to cluster periods and determine each time step's representative period.|
-|ScalingMethod |Either ‘N' or ‘S', the decision to normalize ([0,1]) or standardize (mean 0, variance 1) the input data prior to clustering.|
-|MinPeriods |The minimum number of representative periods used to represent the input data. If using UseExtremePeriods, this must be greater or equal to the number of selected extreme periods. If *IterativelyAddPeriods* is off, this will be the total number of representative periods.|
-|MaxPeriods| The maximum number of representative periods - both clustered and extreme - that may be used to represent the input data.|
+|ClusterMethod |Either *kmeans* or *kmedoids*, the method used to cluster periods and determine each point's representative period.|
+|ScalingMethod |Either ‘N' or ‘S', the decision to normalize ([0,1]) or standardize (mean 0, variance 1) the input data.|
+|MinPeriods |The minimum number of representative periods used to represent the input data. If using UseExtremePeriods, this must be greater or equal to the number of selected extreme periods. If *IterativelyAddPeriods* if off, this will be the total number of representative periods.|
+|MaxPeriods| The maximum number of representative periods - both clustered and extreme - that maybe used to represent the input data.|
 |IterativelyAddPeriods |1 = Add representative periods until the error threshold between input data and represented data is met or the maximum number of representative periods is reached.|
 ||0 = Use only the minimum number of representative periods. This minimum value includes the selected extreme periods if *UseExtremePeriods* is on.|
-|Threshold |Iterative period addition will end if the period farthest from its representative period (as measured using Euclidean distance) is within this percentage of the total possible error (for normalization) or 95% of the total possible error (± 2 σ for standardization). E.g., for a threshold of 0.01, each period must be within 1% of the spread of possible error before the clustering iterations will terminate (or until the maximum is reached).|
+|Threshold |Iterative period addition will end if the period farthest (Euclidean Distance) from its representative period is within this percentage of the total possible error (for normalization) or 95% of the total possible error (± 2 σfor standardization). E.g., for a threshold of 0.01, each period must be within 1% of the spread of possible error before the clustering iterations will terminate (or until the maximum is reached).|
 |IterateMethod | Either ‘cluster' (Default) or ‘extreme', whether to increment the number of clusters to the kmeans/kmedoids method or to set aside the worst-fitting periods as a new extreme periods.|
 |nReps |Default 200, the number of kmeans/kmedoids repetitions at the same setting.|
 |LoadWeight| Default 1, a multiplier on load columns to optionally prioritize better fits for load profiles over resource capacity factor or fuel price profiles.|
 |WeightTotal |Default 8760, the sum to which the relative weights of representative periods will be scaled.|
-|ClusterFuelPrices| Either 1 or 0, whether or not to use the fuel price time series in *Fuels\_data.csv* in the clustering process. If 'no', this function will still write *Fuels\_data.csv* in the TimeDomainReductionFolder with reshaped fuel prices based on the number and size of the representative periods but will not use the fuel price time series for selection of representative periods.|
+|ClusterFuelPrices| Either 1 or 0, whether or not to use the fuel price time series in *Fuels\_data.csv* in the clustering process. If 'no', this function will still write *Fuels\_data.csv* in the TimeDomainReductionFolder with reshaped fuel prices based on the number and size of the representative periods, assuming a constant time series of fuel prices with length equal to the number of time steps in the input data.|
 
 
 
@@ -363,21 +353,21 @@ This file includes parameter inputs needed to model time-dependent procurement o
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Reg\_Req\_Percent\_Load |[0,1], Regulation requirement as a percent of time-dependent load; here load is the total across all model zones.|
-|Reg\_Req\_Percent\_VRE |[0,1], Regulation requirement as a percent of time-dependent wind and solar generation (summed across all model zones).|
-|Rsv\_Req\_Percent\_Load [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent load (which is summed across all zones).|
-|Rsv\_Req\_Percent\_VRE |[0,1], Spinning up or contingency reserve requirement as a percent of time-dependent wind and solar generation (which is summed across all zones).|
-|Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement ($/MW per time step).|
-|Dynamic\_Contingency |Flags to include capacity (generation or transmission) contingency to be added to the spinning reserve requirement.|
+|Reg\_Req\_Percent\_Load |Regulation requirement as a percent of time-dependent load; here load is the total across all model zones.|
+|Reg\_Req\_Percent\_VRE |Regulation requirement as a percent of time-dependent wind and solar generation (summed across all model zones).|
+|Rsv\_Req\_Percent\_Load |Spinning up reserve requirement as a percent of time-dependent load (which is summed across all zones).|
+|Rsv\_Req\_Percent\_VRE |Spinning up reserve requirement as a percent of time-dependent wind and solar generation (which is summed across all zones).|
+|Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement ($/MW).|
+|Dynamic\_Contingency |Flags to include capacity (generation or transmission) contingency to the spinning reserve requirement.|
 |Dynamic\_Contingency |= 1: contingency set to be equal to largest installed thermal unit (only applied when *UCommit = 1*).|
 ||= 2: contingency set to be equal to largest committed thermal unit each time period (only applied when *UCommit = 1*).|
-|Static\_Contingency\_MW |A fixed static contingency in MW added to reserve requirement. Applied when *UCommit = 1* and *DynamicContingency = 0*, or when *UCommit = 2*. Contingency term not included in operating reserve requirement when this value is set to 0 and DynamicContingency is not active.|
+|Static\_Contingency\_MW |Static contingency in MW. Applied when *UCommit = 1* and *DynamicContingency = 0*, or when *UCommit = 2*. Contingency term not included in operating reserve requirement when this value is set to 0 and DynamicContingency is not active.|
 
 
 
 #### 2.2.3 Energy\_share\_requirement.csv
 
-This file contains inputs specifying minimum energy share requirement policies, such as Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) policies. This file is needed if parameter EnergyShareRequirement has a non-zero value in the YAML file *GenX\_settings.yml*. 
+This file contains the regional Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) goals. This file is needed if parameter EnergyShareRequirementhas a non-zero value in the YAML file *GenX\_settings.yml*.
 
 Note: this file should use the same region name as specified in the *Generators\_data.csv* file.
 
@@ -387,13 +377,13 @@ Note: this file should use the same region name as specified in the *Generators\
 | :------------ | :-----------|
 |Region\_description |Region name|
 |Network\_zones |zone number represented as z*|
-|ESR\_* |[0,1], Energy share requirements as a share of zonal demand (calculated on an annual basis). * represents the number of the ESR constraint, given by the number of ESR\_* columns in the *Energy\_share\_requirement.csv* file.|
+|ESR\_* |Energy share requirements of the region - value reported on an annual basis. * represents the number of the ESR constraint, given by the number of ESR\_* columns in the *Energy\_share\_requirement.csv* file.|
 
 
 
 #### 2.2.4 CO2\_cap.csv
 
-This file contains inputs specifying CO2 emission limits policies (e.g. emissions cap and permit trading programs). This file is needed if *CO2Cap* flag is activated in the YAML file *GenX\_settings.yml*. *CO2Cap* flag set to 1 represents mass-based (tCO2 ) emission target. *CO2Cap* flag set to 2 is specified when emission target is given in terms of rate (tCO2/MWh) and is based on total demand met. *CO2Cap* flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
+This file contains the regional $CO_2$ emission limits. This file is needed if *CO2Cap* flag is activated in the YAML file *GenX\_settings.yml*. *CO2Cap* flag set to 1 represents mass-based (t$CO_2$ ) emission target. *CO2Cap* flag set to 2 is specified when emission target is given in terms of rate (t$CO_2$ /MWh) and is based on total demand met. *CO2Cap* flag set to 3 is specified when emission target is given in terms of rate (t$CO_2$ /MWh) and is based on total generation.
 
 ###### Table 10: Structure of the CO2\_cap.csv file
 ---
@@ -403,14 +393,13 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 |Network\_zones| zone number represented as z*|
 |CO_2\_Cap\_Zone* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
 |CO_2\_Max\_tons\_MWh* |Emission limit in terms of rate|
-|CO_2\_Max\_Mtons* |Emission limit in absolute values, in Million of tons |
-| | where in the above inputs, * represents the number of the emission limit constraints. For example, if the model has 2 emission limit constraints applied separately for 2 zones, the above CSV file will have 2 columns for specifying emission limit in terms on rate: CO_2\_Max\_tons\_MWh\_1 and CO_2\_Max\_tons\_MWh\_2.|
+|CO_2\_Max\_Mtons* |Emission limit in absolute values, in Million of tons * represents the number of the emission limit constraint. For example, if the model has 2 emission limit constraints applied separately for 2 zones, the above CSV file will have 2 columns for specifying emission limit in terms on rate: CO_2\_Max\_tons\_MWh\_1 and CO_2\_Max\_tons\_MWh\_2.|
 
 
 
 #### 2.2.5 Capacity\_reserve\_margin.csv
 
-This file contains the regional capacity reserve margin requirements. This file is needed if parameter CapacityReserveMargin has a non-zero value in the YAML file *GenX\_settings.yml*.
+This file contains the regional capacity reserve margin requirements. This file is needed if parameter CapacityReserveMarginhas a non-zero value in the YAML file *GenX\_settings.yml*.
 
 Note: this file should use the same region name as specified in the *Generators\_data.csv* file
 
@@ -420,13 +409,13 @@ Note: this file should use the same region name as specified in the *Generators\
 | :------------ | :-----------|
 |Region\_description |Region name|
 |Network\_zones |zone number represented as z*|
-|CapRes\_* |[0,1], Capacity reserve margin requirements of a zone, reported as a fraction of demand|
+|CapRes\_* |Capacity reserve margin requirements of a zone, reported as a fraction of demand|
 
 
 
 #### 2.2.6 Minimum\_capacity\_requirement.csv.csv
 
-This file contains the minimum capacity carve-out requirement to be imposed (e.g. a storage capacity mandate or offshore wind capacity mandate). This file is needed if parameter *MinCapReq* flag has a non-zero value in the YAML file *GenX\_settings.yml*.
+This file contains the minimum capacity carve-out requirement to be imposed. This file is needed if parameter *MinCapReq* flag has a non-zero value in the YAML file *GenX\_settings.yml*.
 
 ###### Table 12: Structure of the Minimum\_capacity\_requirement.csv.csv file
 ---
@@ -441,7 +430,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 
 
 #### 2.2.7 Rand\_mga\_objective\_coefficients.csv
-This file is required while using modeling to generate alternatives (MGA) algorithm. The number of columns in this csv file is equal to one plus the number of model zones. Number of rows for each iteration is equal to the number of distinct elements in the *Resource\_Type* column in the *Generators\_data.csv* file. Elements of this file are used as random objective function coefficients fo the MGA algorithm.
+This file is required while using modeling to generate alternatives (MGA) algorithm. The numbe of columns in this csv file is equal to one plus the number of model zones. Number of rows for each iteration is equal to the number of distinct elements in the *Resource\_Type* column in the *Generators\_data.csv* file. Elements of this file are used as random objective function coefficients fo the MGA algorithm.
 
 ###### Table 12: Structure of the Minimum\_capacity\_requirement.csv.csv file
 ---
@@ -504,13 +493,13 @@ Reports optimal objective function value and contribution of each term by zone.
 
 #### 3.1.3 emissions.csv
 
-Reports CO2 emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
+Reports $CO_2$ emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
 
 ###### Table 16: Structure of emission prices in the emissions.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-|CO_2\_price |Marginal CO2 abatement cost associated with constraint on maximum annual CO2 emissions; will be same across zones if CO2 emissions constraint is applied for the entire region and not zone-wise |\$/ tonne CO2. |
+|CO_2\_price |Marginal $CO_2$ abatement cost associated with constraint on maximum annual $CO_2$ emissions; will be same across zones if $CO_2$ emissions constraint is applied for the entire region and not zone-wise |\$/ tonne $CO_2$. |
 
 
 

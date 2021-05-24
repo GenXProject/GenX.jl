@@ -1,19 +1,17 @@
-working_path = pwd()
-cd("../../..")
-environment_path = pwd()
-println(environment_path)
-include(joinpath(environment_path, "package_activate.jl")) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
+cd(dirname(@__FILE__))
+settings_path = joinpath(pwd(), "GenX_settings.yml") #Settings YAML file path
+
+environment_path = "../../../package_activate.jl"
+include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
 
 ### Set relevant directory paths
-genx_path = pwd() #cd(pwd, "../../../")
-src_path = joinpath(genx_path, "src") # GenX path
-settings_path = joinpath(working_path, "GenX_settings.yml") #Settings YAML file path
+src_path = "../../../src/"
 
-inpath=working_path#"$working_path/Example_Systems/Inputs/SmallNewEngland"
+inpath = pwd()
+working_path = "../../../"
 
 ### Load GenX
 println("Loading packages")
-push!(LOAD_PATH, genx_path)
 push!(LOAD_PATH, src_path)
 
 using GenX
@@ -50,7 +48,7 @@ EP = generate_model(mysetup, myinputs, OPTIMIZER)
 
 ### Solve model
 println("Solving Model")
-EP, solve_time = solve_model(EP, mysetup, myinputs)
+EP, solve_time = solve_model(EP, mysetup)
 myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 
 ### Write output

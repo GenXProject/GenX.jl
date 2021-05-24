@@ -3,7 +3,7 @@
 
 Function for reading input parameters related to electricity load (demand)
 """
-function load_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_load::Dict)
+function load_load_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_load::Dict)
 
 	# Load related inputs
 	#data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)

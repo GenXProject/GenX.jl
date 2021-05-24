@@ -33,7 +33,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 
 	# Read temporal-resolved load data, and clustering information if relevant
-	inputs = load_data(setup, path, sep, inputs)
+	inputs = load_load_data(setup, path, sep, inputs)
 	# Read fuel cost data, including time-varying fuel costs
 	inputs, cost_fuel, CO2_fuel = load_fuels_data(setup, path, sep, inputs)
 	# Read in generator/resource related inputs
@@ -42,7 +42,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 	inputs = load_generators_variability(setup, path, sep, inputs)
 
 	if setup["CapacityReserveMargin"]==1
-		inputs = load_cap_reserve_margin(setup, path, sep, inputs, network_var)
+		inputs = load_cap_reserve_margin(setup, path, sep, inputs)
+		if inputs["Z"] >1
+			inputs = load_cap_reserve_margin_trans(setup, path, sep, inputs,network_var)
+		end
 	end
 
 	# Read in general configuration parameters for reserves (resource-specific reserve parameters are read in generators_data())
