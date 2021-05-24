@@ -1,0 +1,42 @@
+@doc raw"""
+	must_run(EP::Model, inputs::Dict)
+
+This function defines the constraints for operation of `must-run' or non-dispatchable resources, such as rooftop solar systems that do not receive dispatch signals, run-of-river hydroelectric facilities without the ability to spill water, or cogeneration systems that must produce a fixed quantity of heat in each time step. This resource type can also be used to model baseloaded or self-committed thermal generators that do not respond to economic dispatch.
+
+For must-run resources ($y\in \mathcal{MR}$) output in each time period $t$ must exactly equal the available capacity factor times the installed capacity, not allowing for curtailment. These resources are also not eligible for contributing to frequency regulation or operating reserve requirements. 
+
+```math
+\begin{aligned} \allowdisplaybreaks
+\label{eq:mustruncapub}
+	\Theta_{y,z,t} = \rho^{max}_{y,z,t}\times \Delta^{total}_{y,z} 
+	\hspace{4 cm}  \forall y \in \mathcal{MR}, z \in \mathcal{Z},t \in \mathcal{T}
+\end{aligned}
+```
+"""
+function must_run(EP::Model, inputs::Dict)
+
+	println("Must-Run Resources Module")
+
+	dfGen = inputs["dfGen"]
+
+	T = inputs["T"]     # Number of time steps (hours)
+	Z = inputs["Z"]     # Number of zones
+	G = inputs["G"] 	# Number of generators
+
+	MUST_RUN = inputs["MUST_RUN"]
+
+	### Expressions ###
+
+	## Power Balance Expressions ##
+
+	@expression(EP, ePowerBalanceNdisp[t=1:T, z=1:Z],
+		sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z,:][!,:R_ID])))
+
+	EP[:ePowerBalance] += ePowerBalanceNdisp
+
+	### Constratints ###
+
+	@constraint(EP, [y in MUST_RUN, t=1:T], EP[:vP][y,t] == inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+
+	return EP
+end

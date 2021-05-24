@@ -1,0 +1,13 @@
+
+# Gurobi Solver Parameters
+Feasib_Tol: 1.0e-06 # Constraint (primal) feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/feasibilitytol.html
+Optimal_Tol: 1e-6 # Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol
+Pre_Solve: 1 # Controls presolve level. See https://www.gurobi.com/documentation/8.1/refman/presolve.html
+#AggFill: # Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill
+#PreDual: # Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual
+TimeLimit: 110000 # Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
+MIPGap: 1e-4 # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). See https://www.gurobi.com/documentation/8.1/refman/mipgap2.html
+Crossover: -1 # Barrier crossver strategy. See https://www.gurobi.com/documentation/8.1/refman/crossover.html#parameter:Crossover
+Method: 4 #-1 # Algorithm used to solve continuous models (including MIP root relaxation). See https://www.gurobi.com/documentation/8.1/refman/method.html
+BarConvTol: 1.0e-08 # Barrier convergence tolerance (determines when barrier terminates). See https://www.gurobi.com/documentation/8.1/refman/barconvtol.html
+NumericFocus: 0 # Numerical precision emphasis. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html

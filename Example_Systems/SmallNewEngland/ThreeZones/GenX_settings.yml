@@ -1,0 +1,21 @@
+MacOrWindows: Mac  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
+PrintModel: 0 # 1 = including the model equation as an output; 0 = the model equation not being included as an output
+NetworkExpansion: 1 # 1 = active otherwise no active
+Trans_Loss_Segments: 1 # Number of segments to use in piecewise linear approximation of losses; 1 = linear, >2 = piecewise quadratic
+Reserves: 0 # 0 = no operating reserves, 1 regulation (primary) and operating (secondary) reserves
+EnergyShareRequirement: 0 #minimum qualifying renewables penetration; 0 = no active; 1 = active per node; 2 = active as system
+CapacityReserveMargin: 0 # Number of capacity reserve margin constraints - should match the number of capacity reserve margin constraints defined in input file CapRes.csv
+CO2Cap: 2 # 0 = no cap; 1 = zonal caps; 2 = overall cap;
+NCO2Cap: 3 # Number of CO2 Cap constraints
+StorageLosses: 1 # 0 = Energy Share Requirement and CO2 constraint DO NOT account for energy lost; 1 = constraint DO account for energy lost
+MinCapReq: 1  # 0= no Minimum technology carveout constraints; 1 - activates Minimum technology carveout constraints
+Solver: Gurobi # Available solvers: Gurobi, CPLEX, CLPs
+ParameterScale: 1 # Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. 1- scaling done, 0- use input as it is.
+WriteShadowPrices: 1 # 1 = get shadow prices of LP or relaxed MILP; 0 = dont compute shadow prices of various constraints
+UCommit: 0 # 0 = no Unit Commitment, 1 = integer clestering, 2 = linearized clustering
+OperationWrapping: 1 # Sets temporal resolution of the model; 0 = single period to represent the full Year, with first-Last time step linked; 1 = Multiple representative periods;
+LongDurationStorage: 0 # 1- allow inter-period energy exchange for storage technologies; 0 - no energy exchange across periods allowed for storage technologies
+TimeDomainReductionFolder: "TDR_Results1" # Folder where results from TDR will be saved. If results already exist here, these will be used without running TDR again.
+TimeDomainReduction: 1 # 1 = Use time domain reduced (``\_clustered.csv'') inputs based on Load\_data.csv, Generators\_variability.csv, and (optionally) Fuels\_data.csv; 0 = Use input data as provided
+ModelingToGenerateAlternatives: 0 # 1 =activate modeling to generate alternative module; 0 = modeling to generate alternative solutions not active - model produces a single solution as output.
+ModelingtoGenerateAlternativeSlack: 0.1 # slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions
