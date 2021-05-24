@@ -3,7 +3,6 @@
 *.jl.mem
 *.DS_Store
 /Manifest.toml
-/docs/build/
 .Rhistory
 deps/deps.jl
 .vscode/
