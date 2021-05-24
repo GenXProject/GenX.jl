@@ -2,7 +2,7 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are specified in a GenXSettings.yml file which should be located in the current working directory (or to specify an alternative location, edit the '''settings_path''' variable in your Run.jl file. Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
+Model settings parameters are specified in a GenXSettings.yml file which should be located in the current working directory (or to specify an alternative location, edit the '''settings_path''' variable in your Run.jl file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
 
 ###### Table 1a: Summary of the Model settings parameters
 ---
@@ -65,7 +65,7 @@ Model settings parameters are specified in a GenXSettings.yml file which should 
 ||0 for the model equation not being included as an output|
 |MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|
 
-Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. gurobi_settings.yml or cplex_settings.yml), which should be located in the current working directory (or to specify an alternative location, edit the '''solver_settings_path''' variable in your Run.jl file. Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. 
+Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. gurobi_settings.yml or cplex_settings.yml), which should be located in the current working directory (or to specify an alternative location, edit the '''solver_settings_path''' variable in your Run.jl file). Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. 
 
 ###### Table 1b: Summary of the Solver settings parameters
 ---
