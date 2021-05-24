@@ -128,17 +128,17 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**Mandatory Files**||
-|Fuels\_data.csv | Specify fuel type, time-dependent costs, and CO2 emissions intensity. |
+|Fuels\_data.csv |Specify fuel type, CO2 emissions intensity, and time-series of fuel prices. |
 |Network.csv |Specify network topology, transmission fixed costs, capacity and loss parameters.|
-|Load\_data.csv |Specify time-dependent load profile for each model zone, weights for each time step, load shedding costs, and optional time domain reduction parameters.|
-|Generators\_variability.csv |Specify time-dependent availability of each resource.|
+|Load\_data.csv |Specify time-series of load profiles for each model zone, weights for each time step, load shedding costs, and optional time domain reduction parameters.|
+|Generators\_variability.csv |Specify time-series of capacity factor/availability for each resource.|
 |Generators\_data.csv |Specify cost and performance data for generation, storage and demand flexibility resources.|
 |**Settings-specific Files**||
 |Reserves.csv |Specify operational reserve requirements as a function of load and renewables generation and penalty for not meeting these requirements.|
-|Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard goals.|
-|CO2\_cap.csv |Specify regional CO2 emission limit targets.|
+|Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.|
+|CO2\_cap.csv |Specify regional CO2 emission limits.|
 |Capacity\_reserve\_margin.csv |Specify regional capacity reserve margin requirements.|
-|Minimum\_capacity\_requirement.csv.csv |Specify regional minimum technology deployment requirements.|
+|Minimum\_capacity\_requirement.csv.csv |Specify regional minimum technology capacity deployment requirements.|
 
 
 
@@ -147,16 +147,18 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 
 #### 2.1.1 Fuels\_data.csv
 
-• **First row:** names of all fuels used in the model instance which should match the labels used in *Fuel* column in the *Generators\_data.csv* file.For renewable resources the name of the fuel is *none*.
+• **First row:** names of all fuels used in the model instance which should match the labels used in *Fuel* column in the *Generators\_data.csv* file. For renewable resources or other resources that do not consume a fuel, the name of the fuel is *none*.
 
-• **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu. Note that tons correspond to metric tonnes and not short tons.
+• **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
 
-• **Remaining rows:** Rest of the rows in this input file specify the time-dependent cost of each fuel in $/MMBtu. The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
+• **Remaining rows:** Rest of the rows in this input file specify the time-series for prices for each fuel in $/MMBtu. A constant price can be specified by entering the same value for all hours. 
+
+* ** First column:** The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
 
 
 #### 2.1.2 Network.csv
 
-This input file contains input parameters related to: 1) definition of model zones and 2) definition of transmission network topology, existing capacity, losses and reinforcement costs. The following table describe each of the mandatory parameter inputs need to be specified to run an instance of the model, along with comments for the model configurations when they are needed.
+This input file contains input parameters related to: 1) definition of model zones (regions between which transmission flows are explicitly modeled) and 2) definition of transmission network topology, existing capacity, losses and reinforcement costs. The following table describe each of the mandatory parameter inputs need to be specified to run an instance of the model, along with comments for the model configurations when they are needed.
 
 ###### Table 3: Structure of the Network.csv file
 ---
@@ -166,15 +168,17 @@ This input file contains input parameters related to: 1) definition of model zon
 |Network\_zones | Specified as z* where * is a number of the zone.|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
-|Network\_Lines | Number of the network line z* zone number for specifying start and end point of the inter-regional transmission line.|
+|Network\_Lines | Numerical index for each network line/|
+| z* (Network map) | Next n columns, one per zone, with column header in format of z* where * is the number of the zone. L rows, one for each network line (or interregional path), with a 1 in the column corresponding to the 'origin' zone and a -1 in the column corresponding to the 'destination' zone for each line. No more than one column may be marked as origin and one as destination for each line, or the model will not function correctly. Note that positive flows indicate flow from origin to destination zone; negative flows indicate flow from destination to origin zone.|
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
 |Line\_Reinforcement\_Cost\_per\_MWyr | Cost of adding new capacity to the inter-regional transmission line.|
 |**Trans\_Loss\_Segments = 1**||
-|Line\_Loss\_Percentage | fractional transmission loss for each transmission line - can be uniquely specified for each file distance\_mile Line distance that is used to compute linear line losses - not directly used in the model.|
+|Line\_Loss\_Percentage | fractional transmission loss for each transmission line||
 |**Trans\_Loss\_Segments > 1**||
-|Ohms | Line resistance in OhmskV Line voltage in kV.|
+|Ohms | Line resistance in Ohms (used to calculate I^2R losses)|
+|kV | Line voltage in kV (used to calculate I^2R losses)|
 |**CapacityReserveMargin> 0**||
 |CapRes\_* | Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint. * represents the number of the capacity reserve margin constraint.|
 ||1 = the transmission line is eligible for adding firm capacity to the region|
