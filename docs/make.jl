@@ -40,7 +40,7 @@ makedocs(;
     sitename="GenX",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://GenXProject.github.io/GenX",
+        canonical="https://genxproject.github.io/GenX",
         assets=String[],
     ),
     pages = Any[p for p in pages],
