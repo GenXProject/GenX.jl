@@ -8,8 +8,10 @@ using GenX
 using Documenter
 
 DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
-
-pages = OrderedDict(
+println(pwd())
+genx_docpath = joinpath(pwd(), "docs/src")
+push!(LOAD_PATH, genx_docpath)
+#=pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Load Inputs" => "load-inputs.md",
     "Model Components" => Any[
@@ -31,7 +33,7 @@ pages = OrderedDict(
     ],
     "GenX Data" => "data-documentation.md",
     "GenX Outputs" => "write-outputs.md"
-)
+)=#
 
 makedocs(;
     modules=[GenX],
@@ -43,7 +45,29 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX",
         assets=String[],
     ),
-    pages = Any[p for p in pages],
+    pages=[
+    "Welcome Page" => "index.md",
+    "Load Inputs" => "load-inputs.md",
+    "Model Components" => Any[
+        "Discharge" => "discharge.md",
+        "Non Served Energy" => "non-served-energy.md",
+        "Reserves" => "reserves.md",
+        "Unit Commitment" => "ucommit.md"
+    ],
+    "Resources" => Any[
+        "Curtailable Variable Renewable" => "curtailable-variable-renewable.md",
+        "Flexible Demand" => "flexible-demand.md",
+        "Hydro" => "hydro-res.md",
+        "Must Run" => "must-run.md",
+        "Thermal Commit" => "thermal-commit.md",
+        "Thermal No Commit" => "thermal-no-commit.md"
+    ],
+    "Methods" => Any[
+        "Time Domain Reduction" => "time-domain-reduction.md"
+    ],
+    "GenX Data" => "data-documentation.md",
+    "GenX Outputs" => "write-outputs.md"
+    ]
 )
 
 deploydocs(;
