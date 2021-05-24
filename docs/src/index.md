@@ -26,7 +26,7 @@ You can see all of the packages installed in your Julia environment and their ve
 ## Documentation
 
 Detailed documentation for GenX can be found [here](https://docs.google.com/document/d/1G_1gdnSj92jF8nda2Zl8O4M5B98t19gOYnbbMFhohb4/edit?usp=sharing). It includes details of each of GenX's methods, required and optional input files, and outputs. 
-Documentation for [GenX](https://github.com/GenXProject/GenX.jl).
+Documentation for [GenX](https://github.com/GenXProject/GenX).
 
 ## Running an Instance of GenX
 

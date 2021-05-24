@@ -42,4 +42,4 @@ Here are step by step instructions for running Run_test.jl:
 4.	After the script runs to completion, results will be written to a folder called “Results”
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run_test.jl will not run to completion.
-Documentation for [GenX](https://github.com/GenXProject/GenX.jl).
+Documentation for [GenX](https://github.com/GenXProject/GenX).
