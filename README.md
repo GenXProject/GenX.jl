@@ -1,7 +1,11 @@
 # GenX
 
 ## Overview
-GenX is a highly-configurable electricity resource capacity expansion model that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. GenX is a constrained linear optimization model that determines the mix of electricity generation, storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost subject to a variety of power system operational constraints and specified policy constraints, such as CO$_2$ emissions limits. Importantly, GenX can be configured with varying level of model resolution and scope, with regards to chronological variability of electricity demand and renewable energy availability, power system operational detail and unit commitment constraints, and transmission network representation, depending on the planning problem or policy question to be studied. As such, the GenX model is designed to be highly configurable, with several different degrees of resolution possible on each of these key dimensions. The model is capable of representing a full range of conventional and novel electricity resources, including thermal generators, variable renewable resources (wind and solar), run-of-river, reservoir and pumped-storage hydroelectric generators, energy storage devices, demand-side flexibility, and several advanced technologies such as long-duration energy storage.
+GenX is a highly-configurable electricity resource capacity expansion model that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. 
+
+GenX is a constrained linear or mixed integer linear optimization model that determines the portfolio of electricity generation, storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost subject to a variety of power system operational constraints and specified policy constraints, such as CO2 emissions limits.
+
+Importantly, GenX can be configured with varying level of model resolution and scope, with regards to chronological variability of electricity demand and renewable energy availability, power system operational detail and unit commitment constraints, and transmission network representation, depending on the planning problem or policy question to be studied. As such, the GenX model is designed to be highly flexible and configurable, with several different degrees of resolution possible on each of these key dimensions. The model is capable of representing a full range of conventional and novel electricity resources, including thermal generators, variable renewable resources (wind and solar), run-of-river, reservoir and pumped-storage hydroelectric generators, energy storage devices, demand-side flexibility, and several advanced technologies such as long-duration energy storage.
 
 The 'main' branch is the current master branch of GenX. The various subdirectories are described below:
 
@@ -17,7 +21,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one of the following solvers: A) Gurobi, and B) CPLEX. Note that using Gurobi and CPLEX requires a valid license on the host machine. The file `juliaenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
+GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one of the following solvers: A) Gurobi, and B) CPLEX. Note that using Gurobi and CPLEX requires a valid license on the host machine. Compatibility with open source solvers Clp and GLPK will be added shortly. The file `juliaenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
 
 ## Documentation
 
@@ -29,7 +33,7 @@ Download or clone the GenX repository on your machine in a directory named 'GenX
 The Run_test.jl file in each of the example sub-folders within `Example_Systems/` provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run_test.jl script:
 1.	Establish path to environment setup files and GenX source files.
 2.	Read in model settings `GenX_Settings.yml` from the example directory.
-3.  Configure solver settings.
+3.  	Configure solver settings.
 4.	Load the model inputs from the example directory and perform time-domain clustering if required.
 5.	Generate a GenX model instance.
 6.	Solve the model.
