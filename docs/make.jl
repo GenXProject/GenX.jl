@@ -49,7 +49,7 @@ makedocs(;
 deploydocs(;
     repo="github.com/GenXProject/GenX",
     target = "build",
-    branch = "gh-pages",
+    branch = "main",
     devbranch = "main",
     push_preview = true,
 )
