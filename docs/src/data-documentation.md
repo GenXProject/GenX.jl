@@ -2,9 +2,9 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are categorized into based on model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify the efficiency of the transmission and distribution network. Note that all settings parameters are case sensitive.
+Model settings parameters are specified in a GenXSettings.yml file which should be located in the current working directory (or to specify an alternative location, edit the '''settings_path''' variable in your Run.jl file. Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
 
-###### Table 1: Summary of the Model settings parameters
+###### Table 1a: Summary of the Model settings parameters
 ---
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
@@ -24,19 +24,33 @@ Model settings parameters are categorized into based on model structure, solutio
 ||2 = unit commitment with linearized clustering.|
 |NetworkExpansion | Flag for activating or deactivating inter-regional transmission expansion.|
 ||1 = active|
-||0 = modling single zone or inter regional transmission is not allowed.|
+||0 = modeling single zone or for multi-zone problems, inter regional transmission expansion is not allowed.|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
 ||1 = linear|
 ||>=2 = piece-wise quadratic|
 |Reserves | Flag for modeling operating reserves .|
 ||0 = no operating reserves |
 ||1 regulation (primary) and spinning (secondary) reserves |
-|pTolerance | Wrap-up tolerance used in defining inter-temporal constraints for the first period. |
-||(0,1) = value in last period is within specified tolerance of the value in the first period.|
 |StorageLosses | Flag to account for storage related losses.|
-||0 = VRE and $CO_2$ constraint DO NOT account for energy lost. |
+||0 = VRE and CO2 constraint DO NOT account for energy lost. |
 ||1 = constraint DO account for energy lost. |
+|**Policy related**|
+|EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
+|| Default = 0 (No RPS or CES constraints).|
+|| 1 = activate energy share requirement related constraints. |
+|CO2Cap | Flag for specifying the type of CO2 emission limit constraint.|
+|| 0 = no CO2 emission limit|
+|| 1 = mass-based emission limit constraint|
+|| 2 = load + rate-based emission limit constraint|
+|| 3 = generation + rate-based emission limit constraint|
+|CapacityReserveMargin | Flag for Capacity Reserve Margin constraints. |
+|| Default = 0 (No Capacity Reserve Margin constraints)|
+|| 1 = activate Capacity Reserve Margin related constraints |
+|MinCapReq | Minimum technology carve out requirement constraints.|
+|| 1 = if one or more minimum technology capacity constraints are specified|
+|| 0 = otherwise|
 |**Solution strategy and outputs**||
+|Solver | Solver name is case sensitive (CPLEX, Gurobi, clp). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
@@ -44,9 +58,20 @@ Model settings parameters are categorized into based on model structure, solutio
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
-|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal $CO_2$ prices.|
+|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|**Miscellaneous**|
+|PrintModel | Flag for printnig the model equations as .lp file.|
+||1= including the model equation as an output|
+||0 for the model equation not being included as an output|
+|MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|
+
+Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. gurobi_settings.yml or cplex_settings.yml), which should be located in the current working directory (or to specify an alternative location, edit the '''solver_settings_path''' variable in your Run.jl file. Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. 
+
+###### Table 1b: Summary of the Solver settings parameters
+---
+|**Settings Parameter** | **Description**|
+| :------------ | :-----------|
 |**Solver settings**||
-|Solver | Solver name is case sensitive (CPLEX, Gurobi, clp). |
 |Method | Algorithm used to solve continuous models or the root node of a MIP model. Generally, barrier method provides the fastest run times for real-world problem set.|
 || CPLEX: CPX\_PARAM\_LPMETHOD - Default = 0; See [link](https://www.ibm.com/docs/en/icos/20.1.0?topic=parameters-algorithm-continuous-linear-problems) for more specifications.|
 || Gurobi: Method - Default = -1; See [link](https://www.gurobi.com/documentation/8.1/refman/method.html) for more specifications.|
@@ -91,26 +116,6 @@ Model settings parameters are categorized into based on model structure, solutio
 || clp: Scaling - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
 |Perturbation | Perturbs problem; Switch on perturbation (50), automatic (100), don't try perturbing (102).|
 || clp: Perturbation: - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
-|**Policy related**|
-|EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
-|| Default = 0 (No RPS or CES constraints).|
-|| 1 = activate energy share requirement related constraints. |
-|CO2Cap | Flag for specifying the type of $CO_2$ emission limit constraint.|
-|| 0 = no $CO_2$ emission limit|
-|| 1 = mass-based emission limit constraint|
-|| 2 = load + rate-based emission limit constraint|
-|| 3 = generation + rate-based emission limit constraint|
-|CapacityReserveMargin | Flag for Capacity Reserve Margin constraints. |
-|| Default = 0 (No Capacity Reserve Margin constraints)|
-|| 1 = activate Capacity Reserve Margin related constraints |
-|MinCapReq | Minimum technology carve out requirement constraints.|
-|| 1 = if one or more minimum technology capacity constraints are specified|
-|| 0 = otherwise|
-|**Miscellaneous**|
-|PrintModel | Flag for printnig the model equations as .lp file.|
-||1= including the model equation as an output|
-||0 for the model equation not being included as an output|
-|MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|
 
 
 ## 2 Inputs
@@ -123,7 +128,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**Mandatory Files**||
-|Fuels\_data.csv | Specify fuel type, time-dependent costs, and $CO_2$ emissions intensity. |
+|Fuels\_data.csv | Specify fuel type, time-dependent costs, and CO2 emissions intensity. |
 |Network.csv |Specify network topology, transmission fixed costs, capacity and loss parameters.|
 |Load\_data.csv |Specify time-dependent load profile for each model zone, weights for each time step, load shedding costs, and optional time domain reduction parameters.|
 |Generators\_variability.csv |Specify time-dependent availability of each resource.|
@@ -131,7 +136,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |**Settings-specific Files**||
 |Reserves.csv |Specify operational reserve requirements as a function of load and renewables generation and penalty for not meeting these requirements.|
 |Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard goals.|
-|CO2\_cap.csv |Specify regional $CO_2$ emission limit targets.|
+|CO2\_cap.csv |Specify regional CO2 emission limit targets.|
 |Capacity\_reserve\_margin.csv |Specify regional capacity reserve margin requirements.|
 |Minimum\_capacity\_requirement.csv.csv |Specify regional minimum technology deployment requirements.|
 
@@ -144,7 +149,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 
 • **First row:** names of all fuels used in the model instance which should match the labels used in *Fuel* column in the *Generators\_data.csv* file.For renewable resources the name of the fuel is *none*.
 
-• **Second row:** The second row specifies the $CO_2$ emissions intensity of each fuel in tons/MMBtu. Note that tons correspond to metric tonnes and not short tons.
+• **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu. Note that tons correspond to metric tonnes and not short tons.
 
 • **Remaining rows:** Rest of the rows in this input file specify the time-dependent cost of each fuel in $/MMBtu. The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
 
@@ -383,7 +388,7 @@ Note: this file should use the same region name as specified in the *Generators\
 
 #### 2.2.4 CO2\_cap.csv
 
-This file contains the regional $CO_2$ emission limits. This file is needed if *CO2Cap* flag is activated in the YAML file *GenX\_settings.yml*. *CO2Cap* flag set to 1 represents mass-based (t$CO_2$ ) emission target. *CO2Cap* flag set to 2 is specified when emission target is given in terms of rate (t$CO_2$ /MWh) and is based on total demand met. *CO2Cap* flag set to 3 is specified when emission target is given in terms of rate (t$CO_2$ /MWh) and is based on total generation.
+This file contains the regional CO2 emission limits. This file is needed if *CO2Cap* flag is activated in the YAML file *GenX\_settings.yml*. *CO2Cap* flag set to 1 represents mass-based (tCO2 ) emission target. *CO2Cap* flag set to 2 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total demand met. *CO2Cap* flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
 
 ###### Table 10: Structure of the CO2\_cap.csv file
 ---
@@ -493,13 +498,13 @@ Reports optimal objective function value and contribution of each term by zone.
 
 #### 3.1.3 emissions.csv
 
-Reports $CO_2$ emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
+Reports CO2 emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
 
 ###### Table 16: Structure of emission prices in the emissions.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-|CO_2\_price |Marginal $CO_2$ abatement cost associated with constraint on maximum annual $CO_2$ emissions; will be same across zones if $CO_2$ emissions constraint is applied for the entire region and not zone-wise |\$/ tonne $CO_2$. |
+|CO_2\_price |Marginal CO2 abatement cost associated with constraint on maximum annual CO2 emissions; will be same across zones if CO2 emissions constraint is applied for the entire region and not zone-wise |\$/ tonne CO2. |
 
 
 
