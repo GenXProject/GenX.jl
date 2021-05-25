@@ -1,9 +1,25 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int)
 
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
 
-The function adds transmission reinforcement or construction costs to the objective function. Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$. 
+The function adds transmission reinforcement or construction costs to the objective function. Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$.
 ```math
 \begin{aligned}\allowdisplaybreaks
 & \sum_{l \in \mathcal{L}}\left(\pi^{TCAP}_{l} \times \bigtriangleup\varphi^{max}_{l}\right)
@@ -25,9 +41,9 @@ Transmission flow constraints are modeled using a ``transport method,'' where po
 
 ```math
 \begin{aligned}\allowdisplaybreaks
-	% trasmission constraints	
-	&-\varphi^{max}_{l} \leq  \Phi_{l,t} \leq \varphi^{max}_{l} , &\quad \forall l \in (\mathcal{L} \setminus \mathcal{E} ),\forall t  \in \mathcal{T}\\ 
-	% trasmission expansion	
+	% trasmission constraints
+	&-\varphi^{max}_{l} \leq  \Phi_{l,t} \leq \varphi^{max}_{l} , &\quad \forall l \in (\mathcal{L} \setminus \mathcal{E} ),\forall t  \in \mathcal{T}\\
+	% trasmission expansion
 	&-(\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l} ) \leq  \Phi_{l,t} \leq (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l} ) , &\quad \forall l \in \mathcal{E},\forall t  \in \mathcal{T}\\
 	& \bigtriangleup\varphi^{max}_{l}  \leq \overline{\bigtriangleup\varphi^{max}_{l}}, &\quad \forall l \in \mathcal{E}
 \end{aligned}
@@ -40,17 +56,17 @@ Transmission losses due to power flows can be accounted for in three different w
 ```math
 \begin{aligned}\allowdisplaybreaks
 %configurable losses formulation
-	& \beta_{l,t}(\cdot) = \begin{cases} 0 & \text{if~} \text{losses.~0} \\ \\ \varphi^{loss}_{l}\times \mid \Phi_{l,t} \mid & \text{if~} \text{losses.~1} \\ \\ \ell_{l,t} &\text{if~} \text{losses.~2} \end{cases}, &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T} 
+	& \beta_{l,t}(\cdot) = \begin{cases} 0 & \text{if~} \text{losses.~0} \\ \\ \varphi^{loss}_{l}\times \mid \Phi_{l,t} \mid & \text{if~} \text{losses.~1} \\ \\ \ell_{l,t} &\text{if~} \text{losses.~2} \end{cases}, &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}
 \end{aligned}
 ```
 
-For the second option, an absolute value approximation is utilized to calculate the magnitude of the power flow on each line (reflecting the fact that negative power flows for a line linking nodes $i$ and $j$ represents flows from node $j$ to $i$ and causes the same magnitude of losses as an equal power flow from $i$ to $j$). This absolute value function is linearized such that the flow in the line must be equal to the subtraction of the auxiliary variable for flow in the positive direction, $\Phi^{+}_{l,t}$, and the auxiliary variable for flow in the negative direction, $\Phi^{+}_{l,t}$, of the line. Then, the magnitude of the flow is calculated as the sum of the two auxiliary variables. The sum of positive and negative directional flows are also constrained by the maximum line flow capacity. 
+For the second option, an absolute value approximation is utilized to calculate the magnitude of the power flow on each line (reflecting the fact that negative power flows for a line linking nodes $i$ and $j$ represents flows from node $j$ to $i$ and causes the same magnitude of losses as an equal power flow from $i$ to $j$). This absolute value function is linearized such that the flow in the line must be equal to the subtraction of the auxiliary variable for flow in the positive direction, $\Phi^{+}_{l,t}$, and the auxiliary variable for flow in the negative direction, $\Phi^{+}_{l,t}$, of the line. Then, the magnitude of the flow is calculated as the sum of the two auxiliary variables. The sum of positive and negative directional flows are also constrained by the maximum line flow capacity.
 
 ```math
 \begin{aligned}\allowdisplaybreaks
 % trasmission losses simple
-	&\Phi_{l,t} =  \Phi^{+}_{l,t}  - \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\ 
-	&\mid \Phi_{l,t} \mid =  \Phi^{+}_{l,t}  + \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\ 
+	&\Phi_{l,t} =  \Phi^{+}_{l,t}  - \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\mid \Phi_{l,t} \mid =  \Phi^{+}_{l,t}  + \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\Phi^{+}_{l,t}  + \Phi^{-}_{l,t} \leq \varphi^{max}_{l}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
@@ -58,18 +74,18 @@ For the second option, an absolute value approximation is utilized to calculate 
 If discrete unit commitment decisions are modeled, ``phantom losses'' can be observed wherein the auxiliary variables for flows in both directions ($\Phi^{+}_{l,t}$ and $\Phi^{-}_{l,t}$) are both increased to produce increased losses so as to avoid cycling a thermal generator and incurring start-up costs or opportunity costs related to minimum down times. This unrealistic behavior can be eliminated via inclusion of additional constraints and a set of auxiliary binary variables, $ON^{+}_{l,t} \in {0,1} \forall l \in \mathcal{L}$. Then the following additional constraints are created:
 ```math
 \begin{aligned}\allowdisplaybreaks
-	\Phi^{+}_{l,t} \leq TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\ 
+	\Phi^{+}_{l,t} \leq TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	\Phi^{-}_{l,t} \leq (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}) -TransON^{+}_{l,t}, &\quad  \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
-```	
+```
 where $TransON^{+}_{l,t}$ is a continuous variable, representing the product of the binary variable $ON^{+}_{l,t}$ and the expression, $(\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l})$. This product cannot be defined explicitly, since it will lead to a bilinear expression involving two variables. Instead, we enforce this definition via the Glover's Linearization as shown below (also referred McCormick Envelopes constraints for bilinear expressions, which is exact when one of the variables is binary).
 ```math
 \begin{aligned}\allowdisplaybreaks
-	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\ 
-	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\ 
+	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	TransON^{+}_{l,t} \leq (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}) - (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times(1- TransON^{+}_{l,t}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\
 \end{aligned}
-```	
+```
 
 These constraints permit only the positive \textit{or} negative auxiliary flow variables to be non-zero at a given time period, not both.
 
@@ -91,8 +107,8 @@ For the third option, losses are calculated as a piecewise-linear approximation 
 Next, a constraint ensures that the sum of auxiliary segment variables ($m \geq 1$) minus the ``zero" segment (which allows values to go into the negative domain) from both positive and negative domains must total the actual power flow across the line, and a constraint ensures that the sum of negative and positive flows do not exceed the maximum flow for the line.
 ```math
 \begin{aligned}\allowdisplaybreaks
-	&\sum_{m \in [1:M]} (\S^{+}_{m,l,t}) - \S^{+}_{0,l,t} =  \Phi_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\  
-	&\sum_{m \in [1:M]} (\S^{-}_{m,l,t}) - \S^{-}_{0,l,t}  =  - \Phi_{l,t} 
+	&\sum_{m \in [1:M]} (\S^{+}_{m,l,t}) - \S^{+}_{0,l,t} =  \Phi_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\sum_{m \in [1:M]} (\S^{-}_{m,l,t}) - \S^{-}_{0,l,t}  =  - \Phi_{l,t}
 \end{aligned}
 ```
 
@@ -101,11 +117,11 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 ```math
 \begin{aligned}\allowdisplaybreaks
 	&\S^{+}_{m,l,t} <=    \overline{\S_{m,l}} \times ON^{+}_{m,l,t}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{-}_{m,l,t} <=    \overline{\S_{m,l}} \times ON^{-}_{m,l,t},  &\quad \forall m \in[1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\ 
+	&\S^{-}_{m,l,t} <=    \overline{\S_{m,l}} \times ON^{-}_{m,l,t},  &\quad \forall m \in[1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\S^{+}_{m,l,t} \geq ON^{+}_{m+1,l,t} \times \overline{\S_{m,l}}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\S^{-}_{m,l,t} \geq ON^{-}_{m+1,l,t} \times \overline{\S_{m,l}} , &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{+}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{+}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\  
-	&\S^{-}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{-}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}  
+	&\S^{+}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{+}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\S^{-}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{-}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
 """
@@ -242,10 +258,10 @@ function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::I
 			# Constraints to limit phantom losses that can occur to avoid discrete cycling costs/opportunity costs due to min down
 			@constraints(EP, begin
 				cTAuxPosUB[l in LOSS_LINES, t=1:T], vTAUX_POS[l,t] <= vPROD_TRANSCAP_ON[l,t]
-				
+
 				# Either negative or positive flows are activated, not both
 				cTAuxNegUB[l in LOSS_LINES, t=1:T], vTAUX_NEG[l,t] <= eAvail_Trans_Cap[l]-vPROD_TRANSCAP_ON[l,t]
-				
+
 				# McCormick representation of product of continuous and binary variable
 				# (in this case, of: vPROD_TRANSCAP_ON[l,t] = eAvail_Trans_Cap[l] * vTAUX_POS_ON[l,t])
 				# McCormick constraint 1

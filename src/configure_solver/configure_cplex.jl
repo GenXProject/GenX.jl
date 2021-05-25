@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 function configure_cplex(solver_settings_path::String)
 
     solver_settings = YAML.load(open(solver_settings_path))
@@ -31,7 +47,7 @@ function configure_cplex(solver_settings_path::String)
     MySolutionType = 2 	# Solution type for LP or QP. See https://www.ibm.com/support/knowledgecenter/hr/SSSA5P_12.8.0/ilog.odms.cplex.help/CPLEX/Parameters/topics/SolutionType.html
         if(haskey(solver_settings, "SolutionType")) MySolutionType = solver_settings["SolutionType"] end
   ########################################################################
-    
+
     OPTIMIZER = optimizer_with_attributes(CPLEX.Optimizer,
         "CPX_PARAM_EPRHS" => MyFeasibilityTol,
         "CPX_PARAM_EPOPT" => MyOptimalityTol,
@@ -45,7 +61,7 @@ function configure_cplex(solver_settings_path::String)
         "CPX_PARAM_NUMERICALEMPHASIS" => MyNumericFocus,
         "CPX_PARAM_BAROBJRNG" => MyBarObjRng,
         "CPX_PARAM_SOLUTIONTYPE" => MySolutionType
-    
+
     )
     return OPTIMIZER
 end

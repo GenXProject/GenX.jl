@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 
@@ -19,17 +35,17 @@ Thermal resources subject to unit commitment ($y \in \mathcal{UC}$) adhere to th
 \begin{aligned}
 \label{eq:numclustermax1}
 \nu_{y,z,t} \leq \frac{\Delta^{\text{total}}_{y,z}}{\Omega^{size}_{y,z}}
-	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}  
+	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 \label{eq:numclustermax2}
 \begin{aligned}
 \chi_{y,z,t} \leq \frac{\Delta^{\text{total}}_{y,z}}{\Omega^{size}_{y,z}}
-	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}  
+	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 \begin{aligned}
 \label{eq:numclustermax3}
 \zeta_{y,z,t} \leq \frac{\Delta^{\text{total}}_{y,z}}{\Omega^{size}_{y,z}}
-	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}  
+	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
 (See Constraints 1-3 in the code)
@@ -52,7 +68,7 @@ Additionally, the following constarint maintains the commitment state variable a
 ```
 (See Constraint 4 in the code)
 
-Like other time-coupling constraints, this constraint wraps around to link the commitment state in the first time step of the year (or each representative period), $t \in \mathcal{T}^{start}$, to the last time step of the year (or each representative period), $t+\tau^{period}-1$. 
+Like other time-coupling constraints, this constraint wraps around to link the commitment state in the first time step of the year (or each representative period), $t \in \mathcal{T}^{start}$, to the last time step of the year (or each representative period), $t+\tau^{period}-1$.
 
 **Ramping constraints**
 
@@ -63,7 +79,7 @@ Thermal resources subject to unit commitment ($y \in UC$) adhere to the followin
 \begin{aligned}
 	\Theta_{y,z,t-1} - \Theta_{y,z,t} &\leq  \kappa^{down}_{y,z} \cdot \Omega^{size}_{y,z} \cdot (\nu_{y,z,t} - \chi_{y,z,t}) & \\[6pt]
 	\qquad & - \: \rho^{min}_{y,z} \cdot \Omega^{size}_{y,z} \cdot \chi_{y,z,t} & \hspace{0.5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}  \\[6pt]
-	\qquad & + \: \text{min}( \rho^{max}_{y,z,t}, \text{max}( \rho^{min}_{y,z}, \kappa^{down}_{y,z} ) ) \cdot \Omega^{size}_{y,z} \cdot \zeta_{y,z,t} & 
+	\qquad & + \: \text{min}( \rho^{max}_{y,z,t}, \text{max}( \rho^{min}_{y,z}, \kappa^{down}_{y,z} ) ) \cdot \Omega^{size}_{y,z} \cdot \zeta_{y,z,t} &
 \end{aligned}
 \end{aligned}
 \begin{aligned}
@@ -85,7 +101,7 @@ If not modeling regulation and spinning reserves, thermal resources subject to u
 ```math
 \begin{aligned}
 	\Theta_{y,z,t} \geq \rho^{min}_{y,z} \times \Omega^{size}_{y,z} \times \nu_{y,z,t}
-	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}  
+	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 \begin{aligned}
 	\Theta_{y,z,t} \leq \rho^{max}_{y,z,t} \time \Omega^{size}_{y,z} \times \nu_{y,z,t}
@@ -104,7 +120,7 @@ Thermal resources subject to unit commitment adhere to the following constraints
 \begin{aligned}
 \label{eq:minuptime}
 	\nu_{y,z,t} \geq \displaystyle \sum_{\hat{t} = t-\tau^{up}_{y,z}}^t \chi_{y,z,\hat{t}}
-	\hspace{5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T} 
+	\hspace{5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 \begin{aligned}
 \label{eq:mindowntime}
@@ -174,7 +190,7 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 		EP[:vP][y,(t+hours_per_subperiod-1)]-EP[:vP][y,t] <= dfGen[!,:Ramp_Dn_Percentage][y]*dfGen[!,:Cap_Size][y]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			- dfGen[!,:Min_Power][y]*dfGen[!,:Cap_Size][y]*EP[:vSTART][y,t]
 			+ min(inputs["pP_Max"][y,t],max(dfGen[!,:Min_Power][y],dfGen[!,:Ramp_Dn_Percentage][y]))*dfGen[!,:Cap_Size][y]*EP[:vSHUT][y,t])
-		
+
 	## For Interior Hours
 		# rampup constraints
 	@constraint(EP,[y in THERM_COMMIT, t in INTERIOR_SUBPERIODS],
@@ -219,12 +235,12 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 			# cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
 			# cUpTimeWrap constraint equivalant to: sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
 			[t in Up_Time_HOURS], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
-			
+
 			# cUpTimeStart:
 			# NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
 			[t in START_SUBPERIODS], EP[:vCOMMIT][y,t] >= EP[:vSTART][y,t]+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Up_Time][y]-1)):(t+hours_per_subperiod-1))
 		end)
-			
+
 		## down time
 		Down_Time = Int(floor(dfGen[!,:Down_Time][y]))
 		Down_Time_HOURS = [] # Set of hours in the summation term of the maximum down time constraint for the first subperiod of each representative period
@@ -234,17 +250,17 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 
 		# Constraint looks back over last n hours, where n = dfGen[!,:Down_Time][y]
 		# TODO: Replace LHS of constraints in this block with eNumPlantsOffline[y,t]
-		@constraints(EP, begin 
+		@constraints(EP, begin
 			# cDownTimeInterior: Constraint looks back over last n hours, where n = inputs["pDMS_Time"][y]
 			[t in setdiff(INTERIOR_SUBPERIODS,Down_Time_HOURS)], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-dfGen[!,:Down_Time][y]):t)
-			
+
 			# cDownTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
 			# cDownTimeWrap constraint equivalant to: EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Down_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
 			[t in Down_Time_HOURS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(dfGen[!,:Down_Time][y]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
-			
+
 			# cDownTimeStart:
 			# NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-			[t in START_SUBPERIODS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t]  >= EP[:vSHUT][y,t]+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Down_Time][y]-1)):(t+hours_per_subperiod-1))			
+			[t in START_SUBPERIODS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t]  >= EP[:vSHUT][y,t]+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Down_Time][y]-1)):(t+hours_per_subperiod-1))
 		end)
 	end
 
@@ -264,10 +280,10 @@ When modeling frequency regulation and reserves contributions, thermal units sub
 
 ```math
 \begin{aligned}
-	f_{y,z,t} \leq \upsilon^{reg}_{y,z} \times \rho^{max}_{y,z,t} (\Omega^{size}_{y,z} \times \nu_{y,z,t}) \hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T} 
+	f_{y,z,t} \leq \upsilon^{reg}_{y,z} \times \rho^{max}_{y,z,t} (\Omega^{size}_{y,z} \times \nu_{y,z,t}) \hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 \begin{aligned}
-	r_{y,z,t} \leq \upsilon^{rsv}_{y,z} \times \rho^{max}_{y,z,t} (\Omega^{size}_{y,z} \times \nu_{y,z,t}) \hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T} 
+	r_{y,z,t} \leq \upsilon^{rsv}_{y,z} \times \rho^{max}_{y,z,t} (\Omega^{size}_{y,z} \times \nu_{y,z,t}) \hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
 
@@ -280,7 +296,7 @@ When modeling frequency regulation and spinning reserves contributions, thermal 
 ```math
 \begin{aligned}
 	\Theta_{y,z,t} - f_{y,z,t} \geq \rho^{min}_{y,z} \times Omega^{size}_{y,z} \times \nu_{y,z,t}
-	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T} 
+	\hspace{4cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 \begin{aligned}
 	\Theta_{y,z,t} + f_{y,z,t} + r_{y,z,t} \leq \rho^{max}_{y,z,t} \times \Omega^{size}_{y,z} \times \nu_{y,z,t}
@@ -312,7 +328,7 @@ function thermal_commit_reserves(EP::Model, inputs::Dict)
 
 	if !isempty(THERM_COMMIT_REG_RSV)
 		@constraints(EP, begin
-			# Maximum regulation and reserve contributions 
+			# Maximum regulation and reserve contributions
 			[y in THERM_COMMIT_REG_RSV, t=1:T], EP[:vREG][y,t] <= inputs["pP_Max"][y,t]*dfGen[!,:Reg_Max][y]*dfGen[!,:Cap_Size][y]*EP[:vCOMMIT][y,t]
 			[y in THERM_COMMIT_REG_RSV, t=1:T], EP[:vRSV][y,t] <= inputs["pP_Max"][y,t]*dfGen[!,:Rsv_Max][y]*dfGen[!,:Cap_Size][y]*EP[:vCOMMIT][y,t]
 
