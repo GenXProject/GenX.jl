@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	investment_discharge(EP::Model, inputs::Dict)
 
@@ -8,16 +24,16 @@ The total capacity of each resource is defined as the sum of the existing capaci
 ```math
 \begin{aligned}\allowdisplaybreaks
 \label{eq:totalpowercap}
-& \Delta^{total}_{y,z} =(\overline{\Delta_{y,z}}+\Omega_{y,z}-\Delta_{y,z}) \forall y \in \mathcal{G}, z \in \mathcal{Z} 
+& \Delta^{total}_{y,z} =(\overline{\Delta_{y,z}}+\Omega_{y,z}-\Delta_{y,z}) \forall y \in \mathcal{G}, z \in \mathcal{Z}
 \end{aligned}
 ```
 
-One cannot retire more capacity than existing capacity. 
+One cannot retire more capacity than existing capacity.
 ```math
 \begin{aligned} \allowdisplaybreaks
 \label{eq:pcapub}
 &\Delta_{y,z} \leq \overline{\Delta_{y,z}}
-	\hspace{4 cm}  \forall y \in \mathcal{G}, z \in \mathcal{Z}  
+	\hspace{4 cm}  \forall y \in \mathcal{G}, z \in \mathcal{Z}
 \end{aligned}
 ```
 
@@ -36,8 +52,8 @@ For resources where $\overline{\Omega_{y,z}}$ and $\underline{\Omega_{y,z}}$ is 
 In addition, this function adds investment and fixed O\&M related costs related to discharge/generation capacity to the objective function:
 ```math
 \begin{aligned} \allowdisplaybreaks
-& 	\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}} 
-	\left( (\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) 
+& 	\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}}
+	\left( (\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z})
 	+ (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)
 \end{aligned}
 ```

@@ -1,19 +1,33 @@
-working_path = pwd()
-cd("../../..")
-environment_path = pwd()
-println(environment_path)
-include(joinpath(environment_path, "package_activate.jl")) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+cd(dirname(@__FILE__))
+settings_path = joinpath(pwd(), "GenX_settings.yml") #Settings YAML file path
+
+environment_path = "../../../package_activate.jl"
+include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
 
 ### Set relevant directory paths
-genx_path = pwd() #cd(pwd, "../../../")
-src_path = joinpath(genx_path, "src") # GenX path
-settings_path = joinpath(working_path, "GenX_settings.yml") #Settings YAML file path
+src_path = "../../../src/"
 
-inpath=working_path#"$working_path/Example_Systems/Inputs/SmallNewEngland"
+inpath = pwd()
+working_path = "../../../"
 
 ### Load GenX
 println("Loading packages")
-push!(LOAD_PATH, genx_path)
 push!(LOAD_PATH, src_path)
 
 using GenX
@@ -50,13 +64,13 @@ EP = generate_model(mysetup, myinputs, OPTIMIZER)
 
 ### Solve model
 println("Solving Model")
-EP, solve_time = solve_model(EP, mysetup, myinputs)
+EP, solve_time = solve_model(EP, mysetup)
 myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 
 ### Write output
 # Run MGA if the MGA flag is set to 1 else only save the least cost solution
 println("Writing Output")
-outpath = "$working_path/output_data/Results"
+outpath = "$inpath/Results"
 write_outputs(EP, outpath, mysetup, myinputs)
 if mysetup["ModelingToGenerateAlternatives"] == 1
     print("Starting Model to Generate Alternatives (MGA) Iterations")
