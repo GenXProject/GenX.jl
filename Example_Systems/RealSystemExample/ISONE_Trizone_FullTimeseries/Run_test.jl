@@ -24,7 +24,6 @@ include(environment_path) #Run this line to activate the Julia virtual environme
 src_path = "../../../src/"
 
 inpath = pwd()
-working_path = "../../../"
 
 ### Load GenX
 println("Loading packages")

@@ -24,7 +24,6 @@ environment_path = "../../../package_activate.jl"
 src_path = "../../../src/"
 
 inpath= pwd()
-working_path = "../../../"
 
 ### Load GenX
 println("Loading packages")
