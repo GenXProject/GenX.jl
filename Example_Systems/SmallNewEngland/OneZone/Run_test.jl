@@ -71,7 +71,7 @@ myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 ### Write output
 # Run MGA if the MGA flag is set to 1 else only save the least cost solution
 println("Writing Output")
-outpath = "$working_path/output_data/Results"
+outpath = "$inpath/Results"
 write_outputs(EP, outpath, mysetup, myinputs)
 if mysetup["ModelingToGenerateAlternatives"] == 1
     print("Starting Model to Generate Alternatives (MGA) Iterations")
