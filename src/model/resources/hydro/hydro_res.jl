@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	hydro_res(EP::Model, inputs::Dict, Reserves::Int)
 
@@ -14,28 +30,28 @@ Reservoir hydro systems are governed by the storage inventory balance constraint
 \label{eq:hydroSoCBalint}
 &\Gamma_{y,z,t} = \Gamma_{y,z,t-1} -\frac{1}{\eta_{y,z}^{down}}\Theta_{y,z,t} - \varrho_{y,z,t} + \rho^{max}_{y,z,t} \times \Delta^{total}_{y,z}  \hspace{.1 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}^{interior} \\
 \label{eq:hydroSoCBalstart}
-&\Gamma_{y,z,t} = \Gamma_{y,z,t+\tau^{period}-1} -\frac{1}{\eta_{y,z}^{down}}\Theta_{y,z,t} - \varrho_{y,z,t} + \rho^{max}_{y,z,t} \times \Delta^{total}_{y,z}  \hspace{.1 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}^{start} 
+&\Gamma_{y,z,t} = \Gamma_{y,z,t+\tau^{period}-1} -\frac{1}{\eta_{y,z}^{down}}\Theta_{y,z,t} - \varrho_{y,z,t} + \rho^{max}_{y,z,t} \times \Delta^{total}_{y,z}  \hspace{.1 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```
 
-We implement time-wrapping to endogenize the definition of the intial state prior to the first period with the following assumption. If time step $t$ is the first time step of the year then storage inventory at $t$ is defined based on last time step of the year. Alternatively, if time step $t$ is the first time step of a representative period, then storage inventory at $t$ is defined based on the last time step of the representative period. Thus, when using representative periods, the storage balance constraint for hydro resources does not allow for energy exchange between representative periods. 
+We implement time-wrapping to endogenize the definition of the intial state prior to the first period with the following assumption. If time step $t$ is the first time step of the year then storage inventory at $t$ is defined based on last time step of the year. Alternatively, if time step $t$ is the first time step of a representative period, then storage inventory at $t$ is defined based on the last time step of the representative period. Thus, when using representative periods, the storage balance constraint for hydro resources does not allow for energy exchange between representative periods.
 
 Note: in future updates, an option to model hydro resources with large reservoirs that can transfer energy across sample periods will be implemented, similar to the functions for modeling long duration energy storage in long_duration_storage.jl.
 
 **Ramping Limits**
 
-The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$). 
+The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$).
 ```math
 \begin{aligned} \allowdisplaybreaks
 \label{eq:hydrorampdown}
-&\Theta_{y,z,t} - \Theta_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z} 
+&\Theta_{y,z,t} - \Theta_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 ```math
 \begin{aligned}
 \label{eq:hydrorampup}
-&\Theta_{y,z,t-1} - \Theta_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z} 
+&\Theta_{y,z,t-1} - \Theta_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
@@ -44,12 +60,12 @@ Ramping constraints are enforced for all time steps except the first time step o
 
 **Power generation and stream flow bounds**
 
-Electricity production plus total spilled power from hydro resources is constrained to always be above a minimum output parameter, $\rho^{min}_{y,z}$, to represent operational constraints related to minimum stream flows or other demands for water from hydro reservoirs. Electricity production is constrained by either the the net installed capacity or by the energy level in the reservoir in the prior time step, whichever is more binding. For the latter constraint, the constraint for the first time step of the year (or the first time step of each representative period) is implemented based on energy storage level in last time step of the year (or last time step of each representative period). 
+Electricity production plus total spilled power from hydro resources is constrained to always be above a minimum output parameter, $\rho^{min}_{y,z}$, to represent operational constraints related to minimum stream flows or other demands for water from hydro reservoirs. Electricity production is constrained by either the the net installed capacity or by the energy level in the reservoir in the prior time step, whichever is more binding. For the latter constraint, the constraint for the first time step of the year (or the first time step of each representative period) is implemented based on energy storage level in last time step of the year (or last time step of each representative period).
 
 ```math
 \begin{aligned}\allowdisplaybreaks
 \label{eq:hydrominflow}
-&\Theta_{y,z,t} + \varrho_{y,z,t}  \geq \rho^{min}_{y,z} \times \Delta^{total}_{y,z} 
+&\Theta_{y,z,t} + \varrho_{y,z,t}  \geq \rho^{min}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
@@ -57,7 +73,7 @@ Electricity production plus total spilled power from hydro resources is constrai
 ```math
 \begin{aligned}
 \label{eq:hydromaxpcap}
-	\Theta_{y,t}  \leq \times \Delta^{total}_{y,z} 
+	\Theta_{y,t}  \leq \times \Delta^{total}_{y,z}
 \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
 ```
@@ -65,7 +81,7 @@ Electricity production plus total spilled power from hydro resources is constrai
 ```math
 \begin{aligned}
 \label{eq:hydromaxecap}
-	\Theta_{y,z,t} \leq  \Gamma_{y,t-1} 
+	\Theta_{y,z,t} \leq  \Gamma_{y,t-1}
 \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
 	```
@@ -76,7 +92,7 @@ In case the reservoir capacity is known ($y \in W^{cap}$), then an additional co
 
 \begin{aligned} \allowdisplaybreaks
 \label{eq:hydrorescap}
-\Gamma_{y,z, t} \leq \mu^{stor}_{y,z}\times \Delta^{total}_{y,z} 
+\Gamma_{y,z, t} \leq \mu^{stor}_{y,z}\times \Delta^{total}_{y,z}
 \hspace{4 cm}  \forall y \in \mathcal{W}^{cap}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
 ```
@@ -169,17 +185,17 @@ end
 	**Modifications when operating reserves are modeled**
 
 	When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
-	
+
 	```math
 	\begin{aligned} a\allowdisplaybreaks
 	\label{eq:hydromaxpcapres}
-	 \Theta_{y,z,t} + f_{y,z,t} +r_{y,z,t}  \leq  \times \Delta^{total}_{y,z} 
+	 \Theta_{y,z,t} + f_{y,z,t} +r_{y,z,t}  \leq  \times \Delta^{total}_{y,z}
 	\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
 	\end{aligned}
 	```
-	
-	The amount of downward frequency regulation reserves cannot exceed the current power output. 
-	
+
+	The amount of downward frequency regulation reserves cannot exceed the current power output.
+
 	```math
 	\begin{aligned}
 	\label{eq: hydrodownreg}
@@ -187,7 +203,7 @@ end
 	\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 	\end{aligned}
 	 ```
-	
+
 	 The amount of frequency regulation and operating reserves procured in each time step is bounded by the user-specified fraction ($\upsilon^{reg}_{y,z}$,$\upsilon^{rsv}_{y,z}$) of nameplate capacity for each reserve type, reflecting the maximum ramp rate for the hydro resource in whatever time interval defines the requisite response time for the regulation or reserve products (e.g., 5 mins or 15 mins or 30 mins). These response times differ by system operator and reserve product, and so the user should define these parameters in a self-consistent way for whatever system context they are modeling.
 
 	 ```math

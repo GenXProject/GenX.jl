@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
 
@@ -92,7 +108,7 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 			[y in STOR_ALL, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t-1]
 			[y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
-	end 
+	end
 	return EP
 end
 
@@ -100,7 +116,7 @@ function storage_all_reserves(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
-	
+
 	START_SUBPERIODS = inputs["START_SUBPERIODS"]
 	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 	hours_per_subperiod = inputs["hours_per_subperiod"]
@@ -123,7 +139,7 @@ function storage_all_reserves(EP::Model, inputs::Dict)
 			# Maximum storage contribution to reserves is a specified fraction of installed discharge power capacity
 			[y in STOR_REG_RSV, t=1:T], EP[:vREG][y,t] <= dfGen[!,:Reg_Max][y]*EP[:eTotalCap][y]
 			[y in STOR_REG_RSV, t=1:T], EP[:vRSV][y,t] <= dfGen[!,:Rsv_Max][y]*EP[:eTotalCap][y]
-			
+
 			# Actual contribution to regulation and reserves is sum of auxilary variables for portions contributed during charging and discharging
 			[y in STOR_REG_RSV, t=1:T], EP[:vREG][y,t] == EP[:vREG_charge][y,t]+EP[:vREG_discharge][y,t]
 			[y in STOR_REG_RSV, t=1:T], EP[:vRSV][y,t] == EP[:vRSV_charge][y,t]+EP[:vRSV_discharge][y,t]

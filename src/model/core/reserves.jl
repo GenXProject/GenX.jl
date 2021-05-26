@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 ##########################################################################################################################################
 # The reserves.jl module contains functions to creates decision variables related to frequency regulation and reserves provision
 # and constraints setting overall system requirements for regulation and operating reserves.
@@ -6,7 +22,7 @@
 @doc raw"""
 	reserves(EP::Model, inputs::Dict, UCommit::Int)
 
-This function sets up reserve decisions and constraints, using reserves\_core() and reserves\_contingency() functions. 
+This function sets up reserve decisions and constraints, using reserves\_core() and reserves\_contingency() functions.
 """
 function reserves(EP::Model, inputs::Dict, UCommit::Int)
 
@@ -25,14 +41,14 @@ end
 
 This function establishes several different versions of contingency reserve requirement expression, $CONTINGENCY$ used in the reserves_core() function below.
 
-Contingency reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies). 
-	
-There are three options for the $Contingency$ expression, depending on user settings: 
+Contingency reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies).
+
+There are three options for the $Contingency$ expression, depending on user settings:
 
 \begin{enumerate}
-\item a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''reserves.csv''' input file; 
-\item a dynamic contingency based on installed capacity decisions, in which the largest \textit{installed} generator is used to determine the contingency requirement for all time periods; and 
-\item dynamic unit commitment based contingency, in which the largest \textit{committed} generator in any time period is used to determine the contingency requirement in that time period.  
+\item a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''reserves.csv''' input file;
+\item a dynamic contingency based on installed capacity decisions, in which the largest \textit{installed} generator is used to determine the contingency requirement for all time periods; and
+\item dynamic unit commitment based contingency, in which the largest \textit{committed} generator in any time period is used to determine the contingency requirement in that time period.
 \end{enumerate}
 
 Note that the two dynamic contigencies are only available if unit commitment is being modeled.
@@ -51,11 +67,11 @@ where $\epsilon^{contingency}$ is static contingency requirement in MWs.
 Option 2 (dynamic capacity-based contingency) is expressed by the following constraints (Eqs. \ref{eq:dynamconting1} - \ref{eq:dynamconting3}):
 ```math
 \begin{aligned}
-	Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z} 
+	Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
 	\label{eq:dynamconting1}
 \end{aligned}
 \begin{aligned}
-	\alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z} 
+	\alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
 	\label{eq:dynamconting2}
 \end{aligned}
 \begin{aligned}
@@ -63,17 +79,17 @@ Option 2 (dynamic capacity-based contingency) is expressed by the following cons
 	\label{eq:dynamconting3}
 \end{aligned}
 ```
-where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $\alpha^{Contingency,Aux}_{y,z} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the total installed capacity $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise. Note that if the user specifies contingency option 2, and is also using the linear relaxation of unit commitment constraints, the capacity size parameter for units in the set $\mathcal{UC}$ must still be set to a discrete unit size for this contingency to work as intended. 
+where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $\alpha^{Contingency,Aux}_{y,z} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the total installed capacity $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise. Note that if the user specifies contingency option 2, and is also using the linear relaxation of unit commitment constraints, the capacity size parameter for units in the set $\mathcal{UC}$ must still be set to a discrete unit size for this contingency to work as intended.
 
 **Dynamic commitment-based contingency**
 Option 3 (dynamic commitment-based contingency) is expressed by the following three sets of constraints (Eqs. \ref{eq:dynamconting4} - \ref{eq:dynamconting6}):
 ```math
 \begin{aligned}
-	Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z} 
+	Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
 	\label{eq:dynamconting4}
 \end{aligned}
 \begin{aligned}
-	Contingency\_Aux_{y,z,t} \leq \nu_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z} 
+	Contingency\_Aux_{y,z,t} \leq \nu_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
 	\label{eq:dynamconting5}
 \end{aligned}
 \begin{aligned}
@@ -137,7 +153,7 @@ function reserves_contingency(EP::Model, inputs::Dict, UCommit::Int)
 		@constraint(EP, cContAux1[y in COMMIT], vCONTINGENCY_AUX[y] <= EP[:eTotalCap][y])
 		# Ensure vCONTINGENCY_AUX = 1 if total capacity > 0
 		@constraint(EP, cContAux2[y in COMMIT], EP[:eTotalCap][y] <= inputs["pContingency_BigM"][y]*vCONTINGENCY_AUX[y])
-			
+
 		# option 2: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest commited generator in each hour
 	elseif UCommit == 1 && pDynamic_Contingency == 2
 		@constraint(EP, cContingency[y in COMMIT, t=1:T], vLARGEST_CONTINGENCY[t] >=
@@ -158,7 +174,7 @@ end
 This function creates decision variables related to frequency regulation and reserves provision and constraints setting overall system requirements for regulation and operating reserves.
 
 ** Regulation and reserves decisions**
-	
+
 \begin{itemize}
 	\item $f_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in Y$ in time $t \in T$ and zone $z \in Z$ to frequency regulation
 	\item $r_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in Y$ in time $t \in T$ and zone $z \in Z$ to operating reserves up
@@ -192,11 +208,11 @@ Total requirements for frequency regulation (aka primary reserves) in each time 
 	\label{eq:regreq}
 \end{aligned}
 ```
-where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility); $\rho^{max}_{y,z,t}$ is the forecasted capacity factor for variable renewable resource $y \in VRE$ and zone $z$ in time step $t$; $\Delta^{\text{total}}_{y,z}$ is the total installed capacity of variable renewable resources $y \in VRE$ and zone $z$; and $\epsilon^{load}_{reg}$ and $\epsilon^{vre}_{reg}$ are parameters specifying the required frequency regulation as a fraction of forecasted demand and variable renewable generation. 
+where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility); $\rho^{max}_{y,z,t}$ is the forecasted capacity factor for variable renewable resource $y \in VRE$ and zone $z$ in time step $t$; $\Delta^{\text{total}}_{y,z}$ is the total installed capacity of variable renewable resources $y \in VRE$ and zone $z$; and $\epsilon^{load}_{reg}$ and $\epsilon^{vre}_{reg}$ are parameters specifying the required frequency regulation as a fraction of forecasted demand and variable renewable generation.
 
 **Operating reserve requirements**
 
-Total requirements for operating reserves in the upward direction (aka spinning reserves or contingency reserces or secondary reserves) in each time step $t$ are specified as fractions of time step's demand (to reflect demand forecast errors) and variable renewable avaialblity in the time step (to reflect wind and solar forecast errors) plus the largest planning contingency (e.g. potential forced generation outage) as shown in Eq. \ref{eq:rsvreq}. 
+Total requirements for operating reserves in the upward direction (aka spinning reserves or contingency reserces or secondary reserves) in each time step $t$ are specified as fractions of time step's demand (to reflect demand forecast errors) and variable renewable avaialblity in the time step (to reflect wind and solar forecast errors) plus the largest planning contingency (e.g. potential forced generation outage) as shown in Eq. \ref{eq:rsvreq}.
 
 ```math
 \begin{aligned}
