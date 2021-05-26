@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	investment_energy(EP::Model, inputs::Dict)
 
@@ -7,16 +23,16 @@
 	```math
 	\begin{aligned}\allowdisplaybreaks
 	\label{eq:totalenergycap}
-	& \Delta^{total,energy}_{y,z} =(\overline{\Delta^{energy}_{y,z}}+\Omega^{energy}_{y,z}-\Delta^{energy}_{y,z}) \forall y \in \mathcal{O}, z \in \mathcal{Z}  
+	& \Delta^{total,energy}_{y,z} =(\overline{\Delta^{energy}_{y,z}}+\Omega^{energy}_{y,z}-\Delta^{energy}_{y,z}) \forall y \in \mathcal{O}, z \in \mathcal{Z}
 	\end{aligned}
 	```
 
-	One cannot retire more capacity than existing capacity. 
+	One cannot retire more capacity than existing capacity.
 	```math
 	\begin{aligned} \allowdisplaybreaks
 	\label{eq:pcapub}
 	&\Delta^{energy}_{y,z} \leq \overline{\Delta^{energy}_{y,z}}
-		\hspace{4 cm}  \forall y \in \mathcal{O}, z \in \mathcal{Z}   
+		\hspace{4 cm}  \forall y \in \mathcal{O}, z \in \mathcal{Z}
 	\label{eq:ccapub}
 	\end{aligned}
 
@@ -35,8 +51,8 @@
 	In addition, this function adds investment and fixed O\&M related costs related to charge capacity to the objective function:
 	```math
 	\begin{aligned} \allowdisplaybreaks
-	& 	\sum_{y \in \mathcal{O} } \sum_{z \in \mathcal{Z}} 
-		\left( (\pi^{INVEST,energy}_{y,z} \times    \Omega^{energy}_{y,z}) 
+	& 	\sum_{y \in \mathcal{O} } \sum_{z \in \mathcal{Z}}
+		\left( (\pi^{INVEST,energy}_{y,z} \times    \Omega^{energy}_{y,z})
 		+ (\pi^{FOM,energy}_{y,z} \times  \Delta^{total,energy}_{y,z})\right)
 	\end{aligned}
 	```

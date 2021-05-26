@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
 
@@ -15,7 +31,7 @@ function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
 	T = inputs["T"]     # Number of time steps (hours)
 
 	STOR_SYMMETRIC = inputs["STOR_SYMMETRIC"]
-	
+
 	### Constraints ###
 
 	# Storage discharge and charge power (and reserve contribution) related constraints for symmetric storage resources:
@@ -40,10 +56,10 @@ end
 Sets up variables and constraints specific to storage resources with symmetric charge and discharge capacities when reserves are modeled. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
 function storage_symmetric_reserves(EP::Model, inputs::Dict)
-	
+
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
-	
+
 	STOR_SYMMETRIC = inputs["STOR_SYMMETRIC"]
 
 	STOR_SYM_REG_RSV = intersect(STOR_SYMMETRIC, inputs["REG"], inputs["RSV"]) # Set of symmetric storage resources with both REG and RSV reserves

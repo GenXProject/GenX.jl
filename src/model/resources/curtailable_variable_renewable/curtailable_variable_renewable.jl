@@ -1,7 +1,23 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int)
 
-This function defines the constraints for operation of variable renewable energy (VRE) resources whose output can be curtailed ($y \in \mathcal{VRE}$), such as utility-scale solar PV or wind power resources or run-of-river hydro resources that can spill water. 
+This function defines the constraints for operation of variable renewable energy (VRE) resources whose output can be curtailed ($y \in \mathcal{VRE}$), such as utility-scale solar PV or wind power resources or run-of-river hydro resources that can spill water.
 
 The operational constraints for VRE resources are a function of each technology's time-dependent hourly capacity factor (or availability factor, $\rho^{max}_{y,z,t}$), in per unit terms, and the total available capacity ($\Delta^{total}_{y,z}$).
 
@@ -75,7 +91,7 @@ end
 @doc raw"""
 	curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 
-When modeling operating reserves, this function is called by ```curtailable_variable_renewable()```, which modifies the constraint for maximum power output in each time step from VRE resources to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and upward operating (spinning) reserves ($r_{y,z,t}$). 
+When modeling operating reserves, this function is called by ```curtailable_variable_renewable()```, which modifies the constraint for maximum power output in each time step from VRE resources to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and upward operating (spinning) reserves ($r_{y,z,t}$).
 
 ```math
 \begin{aligned} \allowdisplaybreaks
@@ -84,12 +100,12 @@ When modeling operating reserves, this function is called by ```curtailable_vari
 \end{aligned}
 ```
 
-The amount of downward frequency regulation reserves also cannot exceed the current power output.  
+The amount of downward frequency regulation reserves also cannot exceed the current power output.
 
 ```math
 \begin{aligned} \allowdisplaybreaks
 \label{eq:VREpoweroutresdown}
-	f_{y,z,t} \leq \Theta_{y,z,t}   
+	f_{y,z,t} \leq \Theta_{y,z,t}
 	\forall y,z \in \{(y,z)|VREIndex_{y,z}=1, z \in \mathcal{Z}\},t \in \mathcal{T}
 \end{aligned}
 ```
@@ -142,7 +158,7 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 			end)
 
 		elseif y in inputs["RSV"] # Resource only eligible for spinning reserves - only available in up, no down spinning reserves
-			
+
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
 				[t=1:T], EP[:vRSV][y,t] <= dfGen[!,:Rsv_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)

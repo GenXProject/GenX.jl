@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
     non_served_energy(EP::Model, inputs::Dict)
 
@@ -7,7 +23,7 @@ This function defines contributions to the objective function from the cost of n
 
 ```math
 \begin{aligned}
-	Obj_{NSE} = 
+	Obj_{NSE} =
 	\sum_{s \in \mathcal{S} } \sum_{t \in \mathcal{T}} \sum_{z \in \mathcal{Z}}\omega_{t} \times n_{s}^{slope} \times \Lambda_{s,t,z}
 \end{aligned}
 ```
@@ -16,7 +32,7 @@ Contributions to the power balance expression from non-served energy/curtailed d
 
 ```math
 \begin{aligned}
-	PowerBal_{NSE} = 
+	PowerBal_{NSE} =
 	\sum_{s \in \mathcal{S} } \Lambda_{s,t,z}
 		\hspace{4 cm}  \forall s \in \mathcal{S}, t \in \mathcal{T}
 \end{aligned}
@@ -85,7 +101,7 @@ function non_served_energy(EP::Model, inputs::Dict)
 
 	# Demand curtailed in each segment of curtailable demands cannot exceed maximum allowable share of demand
 	@constraint(EP, cNSEPerSeg[s=1:SEG, t=1:T, z=1:Z], vNSE[s,t,z] <= inputs["pMax_D_Curtail"][s]*inputs["pD"][t,z])
-	
+
 	# Total demand curtailed in each time step (hourly) cannot exceed total demand
 	@constraint(EP, cMaxNSE[t=1:T, z=1:Z], sum(vNSE[s,t,z] for s=1:SEG) <= inputs["pD"][t,z])
 
