@@ -21,7 +21,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one of the following solvers: A) Gurobi, and B) CPLEX. Note that using Gurobi and CPLEX requires a valid license on the host machine. Compatibility with open source solvers Clp and GLPK will be added shortly. The file `juliaenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
+GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one of the following solvers: A) [Gurobi](https://www.gurobi.com), and B) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Note that using Gurobi and CPLEX requires a valid license on the host machine. Compatibility with open source solvers Clp and [GLPK](https://www.gnu.org/software/glpk/) will be added shortly. The file `juliaenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
 
 ## Documentation
 
@@ -33,7 +33,7 @@ Download or clone the GenX repository on your machine in a directory named 'GenX
 The Run_test.jl file in each of the example sub-folders within `Example_Systems/` provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run_test.jl script:
 1.	Establish path to environment setup files and GenX source files.
 2.	Read in model settings `GenX_Settings.yml` from the example directory.
-3.  	Configure solver settings.
+3.  Configure solver settings.
 4.	Load the model inputs from the example directory and perform time-domain clustering if required.
 5.	Generate a GenX model instance.
 6.	Solve the model.
@@ -61,3 +61,6 @@ Modules = [GenX]
 ```
 ## Bug and feature requests and contact info
 If you would like to report a bug in the code or request a feature, please use our [Issue Tracker](https://github.com/GenXProject/GenX/issues). If you're unsure or have questions on how to use GenX that are not addressed by the above documentation, please reach out to Sambuddha Chakrabarti (sc87@princeton.edu), Jesse Jenkins (jdj2@princeton.edu) or Dharik Mallapragada (dharik@mit.edu).
+
+## GenX Team
+GenX has been developed jointly by researchers at the [MIT Energy Initiative](https://energy.mit.edu/) and the ZERO lab at Princeton University. Key contributors include [Nestor A. Sepulveda](https://energy.mit.edu/profile/nestor-sepulveda/), [Jesse D. Jenkins](https://mae.princeton.edu/people/faculty/jenkins),  [Dharik S. Mallapragada](https://energy.mit.edu/profile/dharik-mallapragada/), [Aaron M. Schwartz](https://idss.mit.edu/staff/aaron-schwartz/), [Neha S. Patankar](https://www.linkedin.com/in/nehapatankar), [Qingyu Xu](https://www.linkedin.com/in/qingyu-xu-61b3567b), [Jack Morris](https://www.linkedin.com/in/jack-morris-024b37121), [Sambuddha Chakrabarti](https://www.linkedin.com/in/sambuddha-chakrabarti-ph-d-84157318).
