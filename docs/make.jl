@@ -6,12 +6,12 @@ push!(LOAD_PATH, genx_path)
 import DataStructures: OrderedDict
 using GenX
 using Documenter
-
+#DocumenterTools.genkeys(user="GenXProject", repo="git@github.com:GenXProject/GenX.git")
 DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
 println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
-#=pages = OrderedDict(
+pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Load Inputs" => "load-inputs.md",
     "Model Components" => Any[
@@ -33,7 +33,7 @@ push!(LOAD_PATH, genx_docpath)
     ],
     "GenX Data" => "data-documentation.md",
     "GenX Outputs" => "write-outputs.md"
-)=#
+)
 
 makedocs(;
     modules=[GenX],
@@ -45,29 +45,7 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX",
         assets=String[],
     ),
-    pages=[
-    "Welcome Page" => "index.md",
-    "Load Inputs" => "load-inputs.md",
-    "Model Components" => Any[
-        "Discharge" => "discharge.md",
-        "Non Served Energy" => "non-served-energy.md",
-        "Reserves" => "reserves.md",
-        "Unit Commitment" => "ucommit.md"
-    ],
-    "Resources" => Any[
-        "Curtailable Variable Renewable" => "curtailable-variable-renewable.md",
-        "Flexible Demand" => "flexible-demand.md",
-        "Hydro" => "hydro-res.md",
-        "Must Run" => "must-run.md",
-        "Thermal Commit" => "thermal-commit.md",
-        "Thermal No Commit" => "thermal-no-commit.md"
-    ],
-    "Methods" => Any[
-        "Time Domain Reduction" => "time-domain-reduction.md"
-    ],
-    "GenX Data" => "data-documentation.md",
-    "GenX Outputs" => "write-outputs.md"
-    ]
+    pages=Any[p for p in pages]
 )
 
 deploydocs(;
