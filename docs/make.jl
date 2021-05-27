@@ -27,10 +27,9 @@ DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
 println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
-#=
 pages = OrderedDict(
     "Welcome Page" => "index.md",
-    "Load Inputs" => "load-inputs.md",
+    "Load Inputs" => "load_inputs.md",
     "Model Components" => [
         "Discharge" => "discharge.md",
         "Non Served Energy" => "non-served-energy.md",
@@ -51,7 +50,6 @@ pages = OrderedDict(
     "GenX Data" => "data-documentation.md",
     "GenX Outputs" => "write-outputs.md"
 )
-=#
 makedocs(;
     modules=[GenX],
     authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
@@ -62,7 +60,7 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX",
         assets=String[],
     ),
-    pages = [
+    #=pages = [
         "Welcome Page" => "index.md",
         "Load Inputs" => "load_inputs.md",
         "Model Components" => [
@@ -84,8 +82,8 @@ makedocs(;
         ],
         "GenX Data" => "data-documentation.md",
         "GenX Outputs" => "write-outputs.md"
-    ]
-    #pages=[p for p in pages]
+    ]=#
+    pages=[p for p in pages]
 )
 
 deploydocs(;
