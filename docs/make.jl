@@ -27,16 +27,17 @@ DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
 println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
+#=
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Load Inputs" => "load-inputs.md",
-    "Model Components" => Any[
+    "Model Components" => [
         "Discharge" => "discharge.md",
         "Non Served Energy" => "non-served-energy.md",
         "Reserves" => "reserves.md",
         "Unit Commitment" => "ucommit.md"
     ],
-    "Resources" => Any[
+    "Resources" => [
         "Curtailable Variable Renewable" => "curtailable-variable-renewable.md",
         "Flexible Demand" => "flexible-demand.md",
         "Hydro" => "hydro-res.md",
@@ -44,13 +45,13 @@ pages = OrderedDict(
         "Thermal Commit" => "thermal-commit.md",
         "Thermal No Commit" => "thermal-no-commit.md"
     ],
-    "Methods" => Any[
+    "Methods" => [
         "Time Domain Reduction" => "time-domain-reduction.md"
     ],
     "GenX Data" => "data-documentation.md",
     "GenX Outputs" => "write-outputs.md"
 )
-
+=#
 makedocs(;
     modules=[GenX],
     authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
@@ -61,13 +62,36 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX",
         assets=String[],
     ),
-    pages=Any[p for p in pages]
+    pages = [
+        "Welcome Page" => "index.md",
+        "Load Inputs" => "load_inputs.md",
+        "Model Components" => [
+            "Discharge" => "discharge.md",
+            "Non Served Energy" => "non-served-energy.md",
+            "Reserves" => "reserves.md",
+            "Unit Commitment" => "ucommit.md"
+        ],
+        "Resources" => [
+            "Curtailable Variable Renewable" => "curtailable-variable-renewable.md",
+            "Flexible Demand" => "flexible-demand.md",
+            "Hydro" => "hydro-res.md",
+            "Must Run" => "must-run.md",
+            "Thermal Commit" => "thermal-commit.md",
+            "Thermal No Commit" => "thermal-no-commit.md"
+        ],
+        "Methods" => [
+            "Time Domain Reduction" => "time-domain-reduction.md"
+        ],
+        "GenX Data" => "data-documentation.md",
+        "GenX Outputs" => "write-outputs.md"
+    ]
+    #pages=[p for p in pages]
 )
 
 deploydocs(;
-    repo="github.com/GenXProject/GenX",
-    target = "build",
-    branch = "main",
-    devbranch = "main",
-    push_preview = true,
+    repo="github.com/GenXProject/GenX.git",
+    #target = "build",
+    #branch = "main",
+    #devbranch = "main",
+    #push_preview = true,
 )

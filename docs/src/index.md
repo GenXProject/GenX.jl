@@ -22,12 +22,6 @@ GenX runs on Julia v1.3.1 and JuMP v0.21.4, and requires a valid Gurobi license 
 * DocumenterTools (v0.1.9)
 
 You can see all of the packages installed in your Julia environment and their version numbers by running pkg> status on the package manager command line.
-
-## Documentation
-
-Detailed documentation for GenX can be found [here](https://docs.google.com/document/d/1G_1gdnSj92jF8nda2Zl8O4M5B98t19gOYnbbMFhohb4/edit?usp=sharing). It includes details of each of GenX's methods, required and optional input files, and outputs. 
-Documentation for [GenX](https://github.com/GenXProject/GenX).
-
 ## Running an Instance of GenX
 
 The Run_test.jl file provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run_test.jl script:
@@ -52,8 +46,4 @@ Note that if you have not already installed the required Julia packages, you are
 ## Index
 
 ```@index
-```
-
-```@autodocs
-Modules = [GenX]
 ```
