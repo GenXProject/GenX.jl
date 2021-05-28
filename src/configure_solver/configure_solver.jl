@@ -26,7 +26,16 @@ function configure_solver(solver::String, solver_settings_path::String)
         OPTIMIZER = configure_cplex(cplex_settings_path)
 	elseif solver == "Clp"
 		clp_settings_path = joinpath(solver_settings_path, "clp_settings.yml")
-        OPTIMIZER = configure_cplex(clp_settings_path)
+        OPTIMIZER = configure_clp(clp_settings_path)
+	elseif solver == "Cbc"
+		cbc_settings_path = joinpath(solver_settings_path, "cbc_settings.yml")
+        OPTIMIZER = configure_cbc(cbc_settings_path)
+	elseif solver == "GLPK"
+		glpk_settings_path = joinpath(solver_settings_path, "glpk_settings.yml")
+        OPTIMIZER = configure_glpk(glpk_settings_path)
+	elseif solver == "Ipopt"
+		ipopt_settings_path = joinpath(solver_settings_path, "ipopt_settings.yml")
+        OPTIMIZER = configure_ipopt(ipopt_settings_path)
 	end
 
 	return OPTIMIZER

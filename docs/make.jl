@@ -48,7 +48,8 @@ pages = OrderedDict(
         "Time Domain Reduction" => "time-domain-reduction.md"
     ],
     "GenX Data" => "data-documentation.md",
-    "GenX Outputs" => "write-outputs.md"
+    "GenX Outputs" => "write-outputs.md",
+    "New Documentation Page" => "new_doc_page.md"
 )
 makedocs(;
     modules=[GenX],

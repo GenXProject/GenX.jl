@@ -25,7 +25,7 @@ GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one
 
 ## Documentation
 
-Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX/). It includes details of each of GenX's methods, required and optional input files, and outputs. Interested users may also want to browse through prior publications that have used GenX to understand the various features of the tool. Full publication list is available [here](https://energy.mit.edu/genx/#publications).
+Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX/docs/build). It includes details of each of GenX's methods, required and optional input files, and outputs. Interested users may also want to browse through prior publications that have used GenX to understand the various features of the tool. Full publication list is available [here](https://energy.mit.edu/genx/#publications).
 
 ## Running an Instance of GenX
 Download or clone the GenX repository on your machine in a directory named 'GenX'. Create this new directory in a location where you wish to store the GenXJulEnv environment.
@@ -46,7 +46,6 @@ Here are step-by-step instructions for running Run_test.jl:
 4.	After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run_test.jl`.
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run_test.jl will not run to completion.
-Documentation for [GenX](https://genxproject.github.io/GenX/docs/build). 
 ## Bug and feature requests and contact info
 If you would like to report a bug in the code or request a feature, please use our [Issue Tracker](https://github.com/GenXProject/GenX/issues). If you're unsure or have questions on how to use GenX that are not addressed by the above documentation, please reach out to Sambuddha Chakrabarti (sc87@princeton.edu), Jesse Jenkins (jdj2@princeton.edu) or Dharik Mallapragada (dharik@mit.edu).
 
