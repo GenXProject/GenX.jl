@@ -47,9 +47,7 @@ pages = OrderedDict(
     "Methods" => [
         "Time Domain Reduction" => "time-domain-reduction.md"
     ],
-    "Additional Features" => [
-        "Modeling to Generate Alternatives" => "modeling-to-generate-alternatives.md"
-    ],
+    "Additional Features" => "additional-features.md",
     "GenX Data" => "data-documentation.md",
     "GenX Outputs" => "write-outputs.md",
     "New Documentation Page" => "new_doc_page.md"

@@ -1,7 +1,7 @@
 # GenX
 # GenX [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://sambuddhac.github.io/GenX.jl/stable) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://sambuddhac.github.io/GenX.jl/dev) [![Build Status](https://github.com/sambuddhac/GenX.jl/badges/master/pipeline.svg)](https://github.com/sambuddhac/GenX.jl/pipelines) [![Coverage](https://github.com/sambuddhac/GenX.jl/badges/master/coverage.svg)](https://github.com/sambuddhac/GenX.jl/commits/master) [![Build Status](https://travis-ci.com/sambuddhac/GenX.jl.svg?branch=master)](https://travis-ci.com/sambuddhac/GenX.jl) [![Build Status](https://ci.appveyor.com/api/projects/status/github/sambuddhac/GenX.jl?svg=true)](https://ci.appveyor.com/project/sambuddhac/GenX-jl) [![Build Status](https://cloud.drone.io/api/badges/sambuddhac/GenX.jl/status.svg)](https://cloud.drone.io/sambuddhac/GenX.jl) [![Build Status](https://api.cirrus-ci.com/github/sambuddhac/GenX.jl.svg)](https://cirrus-ci.com/github/sambuddhac/GenX.jl) [![Coverage](https://codecov.io/gh/sambuddhac/GenX.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/sambuddhac/GenX.jl) [![Coverage](https://coveralls.io/repos/github/sambuddhac/GenX.jl/badge.svg?branch=master)](https://coveralls.io/github/sambuddhac/GenX.jl?branch=master) [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 ## Overview
-GenX is a highly-configurable electricity resource capacity expansion model that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. 
+GenX is a highly-configurable electricity resource capacity expansion model that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape.
 
 GenX is a constrained linear or mixed integer linear optimization model that determines the portfolio of electricity generation, storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost subject to a variety of power system operational constraints and specified policy constraints, such as CO2 emissions limits.
 
@@ -11,7 +11,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 1. `src/` Contains the core GenX model code for reading inputs, model generation, solving and writing model outputs.
 
-2. `Example_Systems/` Contains fully specified examples that users can use to test GenX and get familiar with its various features. Within this folder, we have two sets of examples: 
+2. `Example_Systems/` Contains fully specified examples that users can use to test GenX and get familiar with its various features. Within this folder, we have two sets of examples:
 -   `RealSystemExample/`, a detailed system representation based on ISO New England and including many different resources (upto 58)
 -   `SmallNewEngland/` , a simplified system consisting of 4 different resources per zone.
 
@@ -30,7 +30,7 @@ Detailed documentation for GenX can be found [here](https://genxproject.github.i
 ## Running an Instance of GenX
 Download or clone the GenX repository on your machine in a directory named 'GenX'. Create this new directory in a location where you wish to store the GenXJulEnv environment.
 
-The Run_test.jl file in each of the example sub-folders within `Example_Systems/` provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run_test.jl script:
+The Run.jl file in each of the example sub-folders within `Example_Systems/` provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run.jl script:
 1.	Establish path to environment setup files and GenX source files.
 2.	Read in model settings `GenX_Settings.yml` from the example directory.
 3.  Configure solver settings.
@@ -39,13 +39,26 @@ The Run_test.jl file in each of the example sub-folders within `Example_Systems/
 6.	Solve the model.
 7.	Write the output files to a specified directory.
 
-Here are step-by-step instructions for running Run_test.jl:
+Here are step-by-step instructions for running Run.jl:
 1.	Start an instance of the Julia kernel.
-2.	Make your present working directory to be where the Run_test.jl is located. To do this, you can use the Julia command `julia> cd(“/path/to/directory/containing/file)`, using the actual pathname of the directory containing Run_test.jl. Note that all your inputs files should be in this directory in addition to Run_test.jl. Details about the required input files can be found in the documentation linked above or in the examples provided in the folder `Example_Systems/`. You can check your present working directory by running the command `julia> pwd()`.
-3.	Run the script by executing the command `julia> include(“Run_test.jl”)`.
-4.	After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run_test.jl`.
+2.	Make your present working directory to be where the Run.jl is located. To do this, you can use the Julia command `julia> cd(“/path/to/directory/containing/file)`, using the actual pathname of the directory containing Run.jl. Note that all your inputs files should be in this directory in addition to Run.jl. Details about the required input files can be found in the documentation linked above or in the examples provided in the folder `Example_Systems/`. You can check your present working directory by running the command `julia> pwd()`.
+3.	Run the script by executing the command `julia> include(“Run.jl”)`.
+4.	After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
 
-Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run_test.jl will not run to completion.
+Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
+
+## Running an Instance of MGA in GenX
+To use the MGA algorithm, user will need to perform the following tasks:
+
+1. Add a `Resource_Type` column in the `Generators_data.csv` file denoting the type of each technology.
+2. Add a `MGA` column in the `Generators_data.csv` file denoting the availability of the technology.
+3. Set the `ModelingToGenerateAlternatives` flag in the `GenX_Settings.yml` file to 1.
+4. Set the `ModelingtoGenerateAlternativeSlack` flag in the `GenX_Settings.yml` file to the desirable level of slack.
+5. Create a `Rand_mga_objective_coefficients.csv` file to provide random objective function coefficients for each MGA iteration. For each iteration, number of rows in the `Rand_mga_objective_coefficients.csv` file represents the number of distinct technology types while number of columns represent the number of model zones.
+6. Solve the model using `Run.jl` file.
+
+Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
+
 ## Bug and feature requests and contact info
 If you would like to report a bug in the code or request a feature, please use our [Issue Tracker](https://github.com/GenXProject/GenX/issues). If you're unsure or have questions on how to use GenX that are not addressed by the above documentation, please reach out to Sambuddha Chakrabarti (sc87@princeton.edu), Jesse Jenkins (jdj2@princeton.edu) or Dharik Mallapragada (dharik@mit.edu).
 
