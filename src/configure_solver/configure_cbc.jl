@@ -26,7 +26,7 @@ function configure_cbc(solver_settings_path::String)
 
 	# Optional solver parameters ############################################
 	Myseconds = 1e-6
-		if(haskey(solver_settings, "seconds")) Myseconds = solver_settings["seconds"] end
+		if(haskey(solver_settings, "seconds")) Myseconds = solver_settings["TimeLimit"] end
 	MylogLevel = 1e-6
 		if(haskey(solver_settings, "logLevel")) MylogLevel = solver_settings["logLevel"] end
 	MymaxSolutions = -1
@@ -37,7 +37,7 @@ function configure_cbc(solver_settings_path::String)
 		if(haskey(solver_settings, "allowableGap")) MyallowableGap = solver_settings["allowableGap"] end
 	MyratioGap = Inf
 		if(haskey(solver_settings, "ratioGap")) MyratioGap = solver_settings["ratioGap"] end
-	Mythreads = 1e-4
+	Mythreads = 1
 		if(haskey(solver_settings, "threads")) MyMIPGap = solver_settings["threads"] end
 	########################################################################
 

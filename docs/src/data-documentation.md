@@ -93,7 +93,6 @@ Additionally, Solver related settings parameters are specified in the appropriat
 |Crossover | Determines the crossover strategy used to transform the interior solution produced by barrier algorithm into a basic solution.|
 || CPLEX: CPX\_PARAM\_SOLUTIONTYPE - Default = 2; See [link](https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-optimality-tolerance) for more specifications.|
 || Gurobi: Crossover - Default = 0; See [link](https://www.gurobi.com/documentation/9.1/refman/crossover.html#:~:text=Use%20value%200%20to%20disable,interior%20solution%20computed%20by%20barrier.) for more specifications.|
-|| clp: crossover - Default = 0; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
 |NumericFocus | Controls the degree to which the code attempts to detect and manage numerical issues.|
 || CPLEX: CPX\_PARAM\_NUMERICALEMPHASIS - Default = 0; See [link](https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-numerical-precision-emphasis) for more specifications.|
 || Gurobi: NumericFocus - Default = 0; See [link](https://www.gurobi.com/documentation/9.1/refman/numericfocus.html) for more specifications.|
@@ -109,13 +108,24 @@ Additionally, Solver related settings parameters are specified in the appropriat
 |MaximumIterations | Terminate after performing this number of simplex iterations.|
 || clp: MaximumIterations - Default = 2147483647; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
 |LogLevel | Set to 1, 2, 3, or 4 for increasing output. Set to 0 to disable output.|
-|| clp: LogLevel - Default = 1; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
+|| clp: logLevel - Default = 1; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
+|| cbc: logLevel - Default = 1; See [link](https://www.coin-or.org/Doxygen/Cbc/classCbcModel.html#a244a08213674ce52ddcf33ab4ff53380a185d42e67d2c4cb7b79914c0ed322b5f) for more specifications.|
 |InfeasibleReturn | Set to 1 to return as soon as the problem is found to be infeasible (by default, an infeasibility proof is computed as well).|
 || clp: InfeasibleReturn - Default = 0; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
 |Scaling | Sets or unsets scaling; 0 -off, 1 equilibrium, 2 geometric, 3 auto, 4 dynamic(later).|
 || clp: Scaling - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
 |Perturbation | Perturbs problem; Switch on perturbation (50), automatic (100), don't try perturbing (102).|
-|| clp: Perturbation: - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
+|| clp: Perturbation - Default = 3; See [link](https://www.coin-or.org/Doxygen/Clp/classClpModel.html) for more specifications.|
+|maxSolutions | Terminate after this many feasible solutions have been found.|
+|| cbc: maxSolutions - Default = -1; See [link](https://www.coin-or.org/Doxygen/Cbc/classCbcModel.html#a244a08213674ce52ddcf33ab4ff53380a185d42e67d2c4cb7b79914c0ed322b5f) for more specifications.|
+|maxNodes | Terminate after this many branch-and-bound nodes have been evaluated|
+|| cbc: maxNodes - Default = -1; See [link](https://www.coin-or.org/Doxygen/Cbc/classCbcModel.html#a244a08213674ce52ddcf33ab4ff53380a185d42e67d2c4cb7b79914c0ed322b5f) for more specifications.|
+| allowableGap | Terminate after optimality gap is less than this value (on an absolute scale)|
+|| cbc: allowableGap - Default = -1; See [link](https://www.coin-or.org/Doxygen/Cbc/classCbcModel.html#a244a08213674ce52ddcf33ab4ff53380a185d42e67d2c4cb7b79914c0ed322b5f) for more specifications.|
+|ratioGap | Terminate after optimality gap is smaller than this relative fraction.|
+|| cbc: ratioGap - Default = Inf; See [link](https://www.coin-or.org/Doxygen/Cbc/classCbcModel.html#a244a08213674ce52ddcf33ab4ff53380a185d42e67d2c4cb7b79914c0ed322b5f) for more specifications.|
+|threads | Set the number of threads to use for parallel branch & bound.|
+|| cbc: threads - Default = 1; See [link](https://www.coin-or.org/Doxygen/Cbc/classCbcModel.html#a244a08213674ce52ddcf33ab4ff53380a185d42e67d2c4cb7b79914c0ed322b5f) for more specifications.|
 
 
 ## 2 Inputs
@@ -151,7 +161,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 
 • **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
 
-• **Remaining rows:** Rest of the rows in this input file specify the time-series for prices for each fuel in $/MMBtu. A constant price can be specified by entering the same value for all hours. 
+• **Remaining rows:** Rest of the rows in this input file specify the time-series for prices for each fuel in $/MMBtu. A constant price can be specified by entering the same value for all hours.
 
 * ** First column:** The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
 
@@ -190,7 +200,7 @@ This input file contains input parameters related to: 1) definition of model zon
 
 #### 2.1.3 Load\_data.csv
 
-This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding. Note that GenX is designed to model hourly time steps. With some care and effort, finer (e.g. 15 minute) or courser (e.g. 2 hour) time steps can be modeled so long as all time-related parameters are scaled appropriately (e.g. time period weights, heat rates, ramp rates and minimum up and down times for generators, variable costs, etc). 
+This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding. Note that GenX is designed to model hourly time steps. With some care and effort, finer (e.g. 15 minute) or courser (e.g. 2 hour) time steps can be modeled so long as all time-related parameters are scaled appropriately (e.g. time period weights, heat rates, ramp rates and minimum up and down times for generators, variable costs, etc).
 
 ###### Table 4: Structure of the Load\_data.csv file
 ---
@@ -377,7 +387,7 @@ This file includes parameter inputs needed to model time-dependent procurement o
 
 #### 2.2.3 Energy\_share\_requirement.csv
 
-This file contains inputs specifying minimum energy share requirement policies, such as Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) policies. This file is needed if parameter EnergyShareRequirement has a non-zero value in the YAML file *GenX\_settings.yml*. 
+This file contains inputs specifying minimum energy share requirement policies, such as Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) policies. This file is needed if parameter EnergyShareRequirement has a non-zero value in the YAML file *GenX\_settings.yml*.
 
 Note: this file should use the same region name as specified in the *Generators\_data.csv* file.
 
