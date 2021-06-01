@@ -17,7 +17,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
 
-We have implemented Modeling to Generate Alternatives (MGA) Algorithm proposed by Evelina et al. (2017) to generate a set of feasible, near cost-optimal technology portfolios.
+We have implemented an updated Modeling to Generate Alternatives (MGA) Algorithm proposed by [Evelina et al., (2017)](https://www.sciencedirect.com/science/article/pii/S0360544217304097) to generate a set of feasible, near cost-optimal technology portfolios. This algorithm was developed by [Brill Jr, E. D., 1979](https://pubsonline.informs.org/doi/abs/10.1287/mnsc.25.5.413) and introduced to energy system planning by [DeCarolia, J. F., 2011](https://www.sciencedirect.com/science/article/pii/S0140988310000721).
 
 To create the MGA formulation, we replace the cost-minimizing objective function of GenX with a new objective function that creates multiple generation portfolios by zone. We further add a new budget constraint based on the optimal objective function value $f^*$ of the least-cost model and the user-specified value of slack $\delta$. After adding the slack constraint, the resulting MGA formulation is given as:
 
@@ -27,15 +27,13 @@ To create the MGA formulation, we replace the cost-minimizing objective function
 	&\sum_{z \in \mathcal{Z}}\sum_{r \in \mathcal{R}} \beta_{z,r}^{k}P_{z,r}\\
 	\text{s.t.} \quad
 	&P_{zr} = \sum_{y \in \mathcal{G}}\sum_{t \in \mathcal{T}} \omega_{t} \Theta_{y,t,z,r}  \\
-	& f \leq f^* + \delta \\
-	&Ax = b
+	& f \leq f^* + \delta \label{budget}\\
+	&Ax = b \label{misc}
 \end{aligned}
 ```
 
-where, $\beta_{zr}$ is a random objective fucntion coefficient betwen $[-100,100]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. In Constraint \ref{budget}, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. Constraint \ref{misc} represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
+where, $\beta_{zr}$ is a random objective fucntion coefficient betwen $[0,100]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. In Constraint \ref{budget}, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. Constraint \ref{misc} represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
 """
-
-# Begin Policies Functions
 function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
 
     if setup["ModelingToGenerateAlternatives"]==1

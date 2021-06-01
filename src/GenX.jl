@@ -158,5 +158,5 @@ include("write_outputs/ucommit/write_start.jl")
 
 include("write_outputs/write_outputs.jl")
 
-include("tools/modeling_to_generate_alternatives.jl")
+include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
 end

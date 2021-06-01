@@ -27,7 +27,7 @@ $\nu_{y,t,z}$ designates the commitment state of generator cluster $y$ in zone $
 $\chi_{y,t,z}$ represents number of startup decisions in cluster $y$ in zone $z$ at time $t$;
 $\zeta_{y,t,z}$ represents number of shutdown decisions in cluster $y$ in zone $z$ at time $t$.
 
-**Cost expressions:*
+**Cost expressions:**
 
 The total cost of start-ups across all generators subject to unit commitment ($y \in UC$) and all time periods, t is expressed as:
 ```math
