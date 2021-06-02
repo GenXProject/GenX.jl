@@ -31,6 +31,12 @@ pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
     "Running GenX in Different Modes" => "genx_run_modes.md",
+    "Model Concept and Overview" => [
+        "Model Introduction" => "model_introduction.md",
+        "Notation" => "model_notation.md",
+        "Objective Function" => "objective_function.md",
+        "Power Balance" => "power_balance.md"
+    ],
     "Model Function Reference" => [
         "Core" => [
             "Discharge" => [
