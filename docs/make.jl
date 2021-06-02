@@ -81,7 +81,7 @@ pages = OrderedDict(
     ],
     "Additional Features" => "additional_features.md",
     "GenX Outputs" => "write_outputs.md",
-    "New Documentation Page" => "new_doc_page.md",
+    "New Documentation Page" => "documentation.md",
 )
 makedocs(;
     modules=[GenX],

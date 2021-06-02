@@ -4,6 +4,7 @@ authors = ["Jesse Jenkins", "Nestor Sepulveda", "Dharik Mallapragada", "Aaron Sc
 version = "1.0.0"
 
 [deps]
+GenX = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
 CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -26,27 +27,26 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+GenX = "1.0.0"
 julia = "1"
-CPLEX v0.6.1
-CSV v0.6.0
-Cbc v0.8.0
-Clp v0.8.1
-  [aaaa29a8] Clustering v0.14.2
-  [861a8166] Combinatorics v1.0.2
-  [a93c6f00] DataFrames v0.20.2
-  [864edb3b] DataStructures v0.17.20
-  [b4f34e82] Distances v0.10.2
-  [e30172f5] Documenter v0.24.7
-  [35a29f4d] DocumenterTools v0.1.9
-  [60bf3e95] GLPK v0.14.8
-  [2e9cd046] Gurobi v0.7.6
-  [b6b21f68] Ipopt v0.6.0
-  [4076af6c] JuMP v0.21.3
-  [fdba3010] MathProgBase v0.7.8
-  [2913bbd2] StatsBase v0.33.0
-  [ddb6d928] YAML v0.4.3
-  [ade2ca70] Dates 
-  [37e2e46d] LinearAlgebra 
+CPLEX = "0.6.1"
+CSV = "0.6.0"
+Cbc = "0.8.0"
+Clp = "0.8.1"
+Clustering = "0.14.2"
+Combinatorics = "1.0.2"
+DataFrames = "0.20.2"
+DataStructures = "0.17.20"
+Distances = "0.10.2"
+Documenter = "0.24.7"
+DocumenterTools = "0.1.9"
+GLPK = "0.14.8"
+Gurobi = "0.7.6"
+Ipopt = "0.6.0"
+JuMP = "0.21.3"
+MathProgBase = "0.7.8"
+StatsBase = "0.33.0"
+YAML = "0.4.3"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

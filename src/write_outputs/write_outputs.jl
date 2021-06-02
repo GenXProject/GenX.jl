@@ -46,18 +46,18 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	## Check if solved sucessfully - time out is included
 	if status != MOI.OPTIMAL
 		if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
-			write_status(path, sep, inputs, EP)
+			write_status(path, sep, inputs, setup, EP)
 			return
 			# Model reached timelimit but failed to find a feasible solution
 	#### Aaron Schwartz - Not sure if the below condition is valid anymore. We should revisit ####
 		elseif isnan(objective_value(EP))==true
 			# Model failed to solve, so record solver status and exit
-			write_status(path, sep, inputs, EP)
+			write_status(path, sep, inputs, setup, EP)
 			return
 		end
 	end
 
-	write_status(path, sep, inputs, EP)
+	write_status(path, sep, inputs, setup, EP)
 	write_costs(path, sep, inputs, setup, EP)
 	dfCap = write_capacity(path, sep, inputs, setup, EP)
 	dfPower = write_power(path, sep, inputs, setup, EP)

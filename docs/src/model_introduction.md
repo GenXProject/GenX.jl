@@ -33,35 +33,32 @@ With appropriate configuration of the model, GenX thus allows the user to tracta
 
 The model is usually configured to consider a single future planning year. In this sense, the current formulation is *static* because its objective is not to determine when investments should take place over time, but rather to produce a snapshot of the minimum-cost generation capacity mix under some pre-specified future conditions. However, the current implementation of the model can be run in sequence (with outputs from one planning year used as inputs for another subsequent planning year) to represent a step-wise or myopic expansion of the electricity system. Future updates of the model will include the option to allow simultaneous co-optimization of sequential planning decisions over multiple investment periods, where we leverage dual dynamic programming techniques to improve computational tractability. 
 
-##Uses##
+### Uses
 
 From a centralized planning perspective, the GenX model can help to determine the investments needed to supply future electricity demand at minimum cost, as is common in least-cost utility planning or integrated resource planning processes. In the context of liberalized markets, the model can be used by regulators and policy makers for indicative energy planning or policy analysis in order to establish a long-term vision of efficient market and policy outcomes. The model can also be used for techno-economic assessment of emerging electricity generation, storage, and demand-side resources and to enumerate the effect of parametric uncertainty (e.g., technology costs, fuel costs, demand, policy decisions) on the system-wide value or role of different resources. 
 
-##Structure of the Model##
+### Structure of the Model
 
 FILL IN WITH FLOW-THROUGH OF MODEL AS IT RUNS: CONFIGURE MODEL -> CONFIGURE SOLVER ->  INPUTS -> SETUP MODEL -> SOLVE MODEL -> OUTPUTS
 
-##Objective Function##
+### Objective Function
 
 The objective function of GenX minimizes total annual electricity system costs over the following six components shown in the below equation:
 
-```math
-\begin{aligned}\allowdisplaybreaks
-&\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}} 
-\left( (\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) 
-+ (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right) + \notag \\
-&\sum_{y \in \mathcal{O} } \sum_{z \in \mathcal{Z}} 
+$\sum_{i \in \mathcal{Z}}$
+$\sum_{y \in \mathcal{G}}\sum_{z \in \mathcal{Z}}$
+$\left( (\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) 
++ (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right) + $
+$\sum_{y \in \mathcal{O} } \sum_{z \in \mathcal{Z}} 
 \left( (\pi^{INVEST,energy}_{y,z} \times    \Omega^{energy}_{y,z}) 
-+ (\pi^{FOM,energy}_{y,z} \times  \Delta^{total,energy}_{y,z})\right) + \notag \\
-&\sum_{y \in \mathcal{O}^{asym}}  \sum_{z \in \mathcal{Z}} 
++ (\pi^{FOM,energy}_{y,z} \times  \Delta^{total,energy}_{y,z})\right) + $
+$\sum_{y \in \mathcal{O}^{asym}}  \sum_{z \in \mathcal{Z}} 
 \left( (\pi^{INVEST,charge}_{y,z} \times    \Omega^{charge}_{y,z}) 
-+ (\pi^{FOM,charge}_{y,z} \times  \Delta^{total,charge}_{y,z})\right) + \notag \\
-& \sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times(\pi^{VOM}_{y,z} + \pi^{FUEL}_{y,z})\times \Theta_{y,z,t}\right) + \sum_{y \in \mathcal{O \cup DF} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,charge}_{y,z} \times \Pi_{y,z,t}\right) +\notag \\
-&\sum_{s \in \mathcal{S} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}}\left(\omega_{t} \times n_{s}^{slope} \times \Lambda_{s,z,t}\right) + \sum_{t \in \mathcal{T} } \left(\omega_{t} \times \pi^{unmet}_{rsv} \times r^{unmet}_{t}\right) \notag \\
-&\sum_{y \in \mathcal{H} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}}\left(\omega_{t} \times \pi^{START}_{y,z} \times \chi_{s,z,t}\right) + \notag \\
-& \sum_{l \in \mathcal{L}}\left(\pi^{TCAP}_{l} \times \bigtriangleup\varphi^{max}_{l}\right)
-\end{aligned}
-```
++ (\pi^{FOM,charge}_{y,z} \times  \Delta^{total,charge}_{y,z})\right) + $
+$\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times(\pi^{VOM}_{y,z} + \pi^{FUEL}_{y,z})\times \Theta_{y,z,t}\right) + \sum_{y \in \mathcal{O \cup DF} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,charge}_{y,z} \times \Pi_{y,z,t}\right) +$
+$\sum_{s \in \mathcal{S} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}}\left(\omega_{t} \times n_{s}^{slope} \times \Lambda_{s,z,t}\right) + \sum_{t \in \mathcal{T} } \left(\omega_{t} \times \pi^{unmet}_{rsv} \times r^{unmet}_{t}\right) $
+$\sum_{y \in \mathcal{H} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}}\left(\omega_{t} \times \pi^{START}_{y,z} \times \chi_{s,z,t}\right) + $
+$\sum_{l \in \mathcal{L}}\left(\pi^{TCAP}_{l} \times \bigtriangleup\varphi^{max}_{l}\right)$
 
 The first summation represents the fixed costs of generation/discharge over all zones and technologies, which reflects the sum of the annualized capital cost, $\pi^{INVEST}_{y,z}$, times the total new capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM}_{y,z}$, times the net installed generation capacity, $\overline{\Omega}^{size}_{y,z} \times \Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions). 
 
@@ -83,7 +80,7 @@ In summary, the objective function can be understood as the minimization of cost
 
 While the objective function is formulated as a cost minimization problem, it is also equivalent to a social welfare maximization problem, with the bulk of demand treated as inelastic and always served, and the utility of consumption for price-elastic consumers represented as a segment-wise approximation, as per the cost of unserved demand summation above.
 
-##Power Balance Constraint##
+## Power Balance Constraint##
 
 The power balance constraint of the model ensures that electricity demand is met at every time step in each zone. As shown in the constraint, electricity demand, $D_{t,z}$, at each time step and for each zone must be strictly equal to the sum of generation, $\Theta_{y,z,t}$, from thermal technologies ($\mathcal{H}$), curtailable variable renewable energy resources ($\mathcal{VRE}$), must-run resources ($\mathcal{MR}$), and hydro resources ($\mathcal{W}$). At the same time, energy storage devices ($\mathcal{O}$) can discharge energy, $\Theta_{y,z,t}$ to help satisfy demand, while when these devices are charging, $\Pi_{y,z,t}$, they increase demand. For the case of flexible demand resources ($\mathcal{DF}$), delaying demand, $\Pi_{y,z,t}$, decreases demand while satisfying delayed demand, $\Theta_{y,z,t}$, increases demand. Price-responsive demand curtailment, $\Lambda_{s,z,t}$, also reduces demand. Finally, power flows, $\Phi_{l,t}$, on each line $l$ into or out of a zone (defined by the network map $\varphi^{map}_{l,z}$), are considered in the demand balance equation for each zone. By definition, power flows leaving their reference zone are positive, thus the minus sign in the below constraint. At the same time losses due to power flows increase demand, and one-half of losses across a line linking two zones are attributed to each connected zone. The losses function $\beta_{l,t}(\cdot)$ will depend on the configuration used to model losses (see [Transmission](https://genxproject.github.io/GenX/docs/build/transmission.html)). 
 

@@ -13,6 +13,7 @@ A complete copy of the GNU General Public License v2 (GPLv2) is available
 in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 @doc raw"""
 	configure_clp(solver_settings_path::String)
 
@@ -40,6 +41,8 @@ function configure_clp(solver_settings_path::String)
 	solver_settings = YAML.load(open(solver_settings_path))
 
 	# Optional solver parameters ############################################
+        MyDualObjectiveLimit = 1e100
+            if(haskey(solver_settings, "DualObjectiveLimit")) MyDualObjectiveLimit = solver_settings["DualObjectiveLimit"] end
         MyPrimalTolerance = 1e-7	#Primal feasibility tolerance
             if(haskey(solver_settings, "Feasib_Tol")) MyPrimalTolerance = solver_settings["Feasib_Tol"] end
         MyDualTolerance = 1e-7	#Dual feasibility tolerance

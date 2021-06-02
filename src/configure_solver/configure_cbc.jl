@@ -32,7 +32,6 @@ The Cbc optimizer instance is configured with the following default parameters i
  - threads = 1
 
 """
-
 function configure_cbc(solver_settings_path::String)
 
 	solver_settings = YAML.load(open(solver_settings_path))
@@ -54,7 +53,7 @@ function configure_cbc(solver_settings_path::String)
 		if(haskey(solver_settings, "threads")) Mythreads = solver_settings["threads"] end
 	########################################################################
 
-	OPTIMIZER = optimizer_with_attributes(Cbc.Optimizer,
+	OPTIMIZER = set_optimizer_attribute(Cbc.Optimizer,
 		"seconds" => Myseconds,
 		"logLevel" => MylogLevel,
 		"maxSolutions" => MymaxSolutions,
