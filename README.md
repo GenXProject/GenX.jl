@@ -49,7 +49,7 @@ Here are step-by-step instructions for running Run.jl:
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
-## Running an Instance of Modeling to Generate Alternatives in GenX
+## Running Modeling to Generate Alternatives with GenX
 GenX includes a modeling to generate alternatives (MGA) package that can be used to automatically enumerate a diverse set of near cost-optimal solutions to electricity system planning problems. To use the MGA algorithm, user will need to perform the following tasks:
 
 1. Add a `Resource_Type` column in the `Generators_data.csv` file denoting the type of each technology.
