@@ -15,9 +15,22 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    configure_cbc(solver_settings_path::String)
+	configure_cbc(solver_settings_path::String)
 
-This is th Cbc Configuration
+Reads user-specified solver settings from cbc_settings.yml in the directory specified by the string solver_settings_path.
+
+Returns a MathOptInterface OptimizerWithAttributes Cbc optimizer instance to be used in the GenX.generate_model() method.
+
+The Cbc optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
+
+ - seconds = 1e-6
+ - logLevel = 1e-6
+ - maxSolutions = -1
+ - maxNodes = -1
+ - allowableGap = -1
+ - ratioGap = Inf
+ - threads = 1
+
 """
 
 function configure_cbc(solver_settings_path::String)
@@ -26,7 +39,7 @@ function configure_cbc(solver_settings_path::String)
 
 	# Optional solver parameters ############################################
 	Myseconds = 1e-6
-		if(haskey(solver_settings, "seconds")) Myseconds = solver_settings["TimeLimit"] end
+		if(haskey(solver_settings, "TimeLimit")) Myseconds = solver_settings["TimeLimit"] end
 	MylogLevel = 1e-6
 		if(haskey(solver_settings, "logLevel")) MylogLevel = solver_settings["logLevel"] end
 	MymaxSolutions = -1
@@ -38,7 +51,7 @@ function configure_cbc(solver_settings_path::String)
 	MyratioGap = Inf
 		if(haskey(solver_settings, "ratioGap")) MyratioGap = solver_settings["ratioGap"] end
 	Mythreads = 1
-		if(haskey(solver_settings, "threads")) MyMIPGap = solver_settings["threads"] end
+		if(haskey(solver_settings, "threads")) Mythreads = solver_settings["threads"] end
 	########################################################################
 
 	OPTIMIZER = optimizer_with_attributes(Cbc.Optimizer,
