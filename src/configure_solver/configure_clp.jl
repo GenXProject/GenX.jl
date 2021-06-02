@@ -21,7 +21,7 @@ Reads user-specified solver settings from clp_settings.yml in the directory spec
 
 Returns a MathOptInterface OptimizerWithAttributes Clp optimizer instance to be used in the GenX.generate_model() method.
 
-The Clp optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
+The Clp optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
     - PrimalTolerance = 1e-7 (Primal feasibility tolerance)
     - DualTolerance = 1e-7 (Dual feasibility tolerance)
