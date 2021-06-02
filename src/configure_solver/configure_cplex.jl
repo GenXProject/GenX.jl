@@ -19,9 +19,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Reads user-specified solver settings from cplex_settings.yml in the directory specified by the string solver_settings_path.
 
-Returns a MathOptInterface OptimizerWithAttributes Cplex optimizer instance to be used in the GenX.generate_model() method.
+Returns a MathOptInterface OptimizerWithAttributes CPLEX optimizer instance to be used in the GenX.generate_model() method.
 
-The Cplex optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
+The CPLEX optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
 
  - CPX_PARAM_EPRHS = 1e-6 (Constraint (primal) feasibility tolerances. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/EpRHS.html)
  - CPX_PARAM_EPOPT = 1e-6 (Dual feasibility tolerances. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/EpOpt.html)
