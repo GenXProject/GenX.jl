@@ -13,6 +13,7 @@ A complete copy of the GNU General Public License v2 (GPLv2) is available
 in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
+
 @doc raw"""
 	configure_clp(solver_settings_path::String)
 
@@ -20,7 +21,7 @@ Reads user-specified solver settings from clp_settings.yml in the directory spec
 
 Returns a MathOptInterface OptimizerWithAttributes Clp optimizer instance to be used in the GenX.generate_model() method.
 
-The Clp optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
+The Clp optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
     - PrimalTolerance = 1e-7 (Primal feasibility tolerance)
     - DualTolerance = 1e-7 (Dual feasibility tolerance)
