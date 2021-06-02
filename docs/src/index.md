@@ -52,9 +52,6 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
 
-## GenX Team
-GenX has been developed jointly by researchers at the [MIT Energy Initiative](https://energy.mit.edu/) and the ZERO lab at Princeton University. Key contributors include [Nestor A. Sepulveda](https://energy.mit.edu/profile/nestor-sepulveda/), [Jesse D. Jenkins](https://mae.princeton.edu/people/faculty/jenkins),  [Dharik S. Mallapragada](https://energy.mit.edu/profile/dharik-mallapragada/), [Aaron M. Schwartz](https://idss.mit.edu/staff/aaron-schwartz/), [Neha S. Patankar](https://www.linkedin.com/in/nehapatankar), [Qingyu Xu](https://www.linkedin.com/in/qingyu-xu-61b3567b), [Jack Morris](https://www.linkedin.com/in/jack-morris-024b37121), [Sambuddha Chakrabarti](https://www.linkedin.com/in/sambuddha-chakrabarti-ph-d-84157318).
-
 
 ## Contents
 ```@contents
