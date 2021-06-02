@@ -22,16 +22,14 @@ This function defines the expressions and constraints keeping track of total ava
 The total capacity of each resource is defined as the sum of the existing capacity plus the newly invested capacity minus any retired capacity (Eq. \ref{eq:totalpowercap}). Note for storage resources, additional energy and charge power capacity decisions and constraints are defined in the storage module.
 
 ```math
-\begin{aligned}\allowdisplaybreaks
-\label{eq:totalpowercap}
+\begin{aligned}
 & \Delta^{total}_{y,z} =(\overline{\Delta_{y,z}}+\Omega_{y,z}-\Delta_{y,z}) \forall y \in \mathcal{G}, z \in \mathcal{Z}
 \end{aligned}
 ```
 
 One cannot retire more capacity than existing capacity.
 ```math
-\begin{aligned} \allowdisplaybreaks
-\label{eq:pcapub}
+\begin{aligned}
 &\Delta_{y,z} \leq \overline{\Delta_{y,z}}
 	\hspace{4 cm}  \forall y \in \mathcal{G}, z \in \mathcal{Z}
 \end{aligned}
@@ -39,11 +37,9 @@ One cannot retire more capacity than existing capacity.
 
 For resources where $\overline{\Omega_{y,z}}$ and $\underline{\Omega_{y,z}}$ is defined, then we impose constraints on minimum (Eq. \ref{eq:mincap}) and maximum power capacity (Eq. \ref{eq:maxcap}).
 ```math
-\begin{aligned} \allowdisplaybreaks
-\label{eq:mincap}
+\begin{aligned}
 & \Delta^{total}_{y,z} \leq \overline{\Omega}_{y,z}
 	\hspace{4 cm}  \forall y \in \mathcal{G}, z \in \mathcal{Z} \\
-\label{eq:maxcap}
 & \Delta^{total}_{y,z}  \geq \underline{\Omega}_{y,z}
 	\hspace{4 cm}  \forall y \in \mathcal{G}, z \in \mathcal{Z}
 \end{aligned}
@@ -51,14 +47,13 @@ For resources where $\overline{\Omega_{y,z}}$ and $\underline{\Omega_{y,z}}$ is 
 
 In addition, this function adds investment and fixed O\&M related costs related to discharge/generation capacity to the objective function:
 ```math
-\begin{aligned} \allowdisplaybreaks
+\begin{aligned}
 & 	\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}}
 	\left( (\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z})
 	+ (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)
 \end{aligned}
 ```
 """
-
 function investment_discharge(EP::Model, inputs::Dict)
 
 	println("Investment Discharge Module")

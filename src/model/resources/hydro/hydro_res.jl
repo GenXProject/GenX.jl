@@ -26,10 +26,8 @@ Hydroelectric generators with water storage reservoirs ($y \in \mathcal{W}$) are
 Reservoir hydro systems are governed by the storage inventory balance constraint given below. This constraint enforces that energy level of the reservoir resource $y$ and zone $z$ in time step $t$ ($\Gamma_{y,z,t}$) is defined as the sum of the reservoir level in the previous time step, less the amount of electricity generated, $\Theta_{y,z,t}$ (accounting for the generation efficiency, $\eta_{y,z}^{down}$), minus any spillage $\varrho_{y,z,t}$, plus the hourly inflows into the reservoir (equal to the installed reservoir discharged capacity times the normalized hourly inflow parameter $\rho^{max}_{y,z, t}$).
 
 ```math
-\begin{aligned} \allowdisplaybreaks
-\label{eq:hydroSoCBalint}
+\begin{aligned}
 &\Gamma_{y,z,t} = \Gamma_{y,z,t-1} -\frac{1}{\eta_{y,z}^{down}}\Theta_{y,z,t} - \varrho_{y,z,t} + \rho^{max}_{y,z,t} \times \Delta^{total}_{y,z}  \hspace{.1 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}^{interior} \\
-\label{eq:hydroSoCBalstart}
 &\Gamma_{y,z,t} = \Gamma_{y,z,t+\tau^{period}-1} -\frac{1}{\eta_{y,z}^{down}}\Theta_{y,z,t} - \varrho_{y,z,t} + \rho^{max}_{y,z,t} \times \Delta^{total}_{y,z}  \hspace{.1 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```
@@ -42,15 +40,13 @@ Note: in future updates, an option to model hydro resources with large reservoir
 
 The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$).
 ```math
-\begin{aligned} \allowdisplaybreaks
-\label{eq:hydrorampdown}
+\begin{aligned}
 &\Theta_{y,z,t} - \Theta_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 ```math
 \begin{aligned}
-\label{eq:hydrorampup}
 &\Theta_{y,z,t-1} - \Theta_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
@@ -63,8 +59,7 @@ Ramping constraints are enforced for all time steps except the first time step o
 Electricity production plus total spilled power from hydro resources is constrained to always be above a minimum output parameter, $\rho^{min}_{y,z}$, to represent operational constraints related to minimum stream flows or other demands for water from hydro reservoirs. Electricity production is constrained by either the the net installed capacity or by the energy level in the reservoir in the prior time step, whichever is more binding. For the latter constraint, the constraint for the first time step of the year (or the first time step of each representative period) is implemented based on energy storage level in last time step of the year (or last time step of each representative period).
 
 ```math
-\begin{aligned}\allowdisplaybreaks
-\label{eq:hydrominflow}
+\begin{aligned}
 &\Theta_{y,z,t} + \varrho_{y,z,t}  \geq \rho^{min}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
@@ -72,26 +67,24 @@ Electricity production plus total spilled power from hydro resources is constrai
 
 ```math
 \begin{aligned}
-\label{eq:hydromaxpcap}
-	\Theta_{y,t}  \leq \times \Delta^{total}_{y,z}
+\Theta_{y,t}  \leq \times \Delta^{total}_{y,z}
 \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
 ```
 
 ```math
 \begin{aligned}
-\label{eq:hydromaxecap}
-	\Theta_{y,z,t} \leq  \Gamma_{y,t-1}
+\Theta_{y,z,t} \leq  \Gamma_{y,t-1}
 \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
-	```
+```
 
 **Reservoir energy capacity constraint**
 
 In case the reservoir capacity is known ($y \in W^{cap}$), then an additional constraint enforces the total stored energy in each time step to be less than or equal to the available reservoir capacity. Here, the reservoir capacity is defined multiplying the parameter, $\mu^{stor}_{y,z}$ with the available power capacity.
 
-\begin{aligned} \allowdisplaybreaks
-\label{eq:hydrorescap}
+```math
+\begin{aligned}
 \Gamma_{y,z, t} \leq \mu^{stor}_{y,z}\times \Delta^{total}_{y,z}
 \hspace{4 cm}  \forall y \in \mathcal{W}^{cap}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
@@ -180,40 +173,38 @@ end
 @doc raw"""
 	hydro_res_reserves(EP::Model, inputs::Dict, Reserves::Int)
 
-	This module defines the modified constraints and additional constraints needed when modeling operating reserves
+This module defines the modified constraints and additional constraints needed when modeling operating reserves
 
-	**Modifications when operating reserves are modeled**
+**Modifications when operating reserves are modeled**
 
-	When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
+When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
 
-	```math
-	\begin{aligned} a\allowdisplaybreaks
-	\label{eq:hydromaxpcapres}
-	 \Theta_{y,z,t} + f_{y,z,t} +r_{y,z,t}  \leq  \times \Delta^{total}_{y,z}
-	\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
-	\end{aligned}
-	```
+```math
+\begin{aligned}
+ \Theta_{y,z,t} + f_{y,z,t} +r_{y,z,t}  \leq  \times \Delta^{total}_{y,z}
+\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
+\end{aligned}
+```
 
-	The amount of downward frequency regulation reserves cannot exceed the current power output.
+The amount of downward frequency regulation reserves cannot exceed the current power output.
 
-	```math
-	\begin{aligned}
-	\label{eq: hydrodownreg}
-	 f_{y,z,t} \leq \Theta_{y,z,t}
-	\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
-	\end{aligned}
-	 ```
+```math
+\begin{aligned}
+ f_{y,z,t} \leq \Theta_{y,z,t}
+\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
+\end{aligned}
+```
 
-	 The amount of frequency regulation and operating reserves procured in each time step is bounded by the user-specified fraction ($\upsilon^{reg}_{y,z}$,$\upsilon^{rsv}_{y,z}$) of nameplate capacity for each reserve type, reflecting the maximum ramp rate for the hydro resource in whatever time interval defines the requisite response time for the regulation or reserve products (e.g., 5 mins or 15 mins or 30 mins). These response times differ by system operator and reserve product, and so the user should define these parameters in a self-consistent way for whatever system context they are modeling.
+The amount of frequency regulation and operating reserves procured in each time step is bounded by the user-specified fraction ($\upsilon^{reg}_{y,z}$,$\upsilon^{rsv}_{y,z}$) of nameplate capacity for each reserve type, reflecting the maximum ramp rate for the hydro resource in whatever time interval defines the requisite response time for the regulation or reserve products (e.g., 5 mins or 15 mins or 30 mins). These response times differ by system operator and reserve product, and so the user should define these parameters in a self-consistent way for whatever system context they are modeling.
 
-	 ```math
-	 \begin{aligned}
-	  f_{y,z,t} \leq \upsilon^{reg}_{y,z} \times \Delta^{total}_{y,z}
-	  \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	  r_{y,z, t} \leq \upsilon^{rsv}_{y,z}\times \Delta^{total}_{y,z}
-	  \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
-	  \end{aligned}
-	```
+```math
+\begin{aligned}
+f_{y,z,t} \leq \upsilon^{reg}_{y,z} \times \Delta^{total}_{y,z}
+\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T} \\
+r_{y,z, t} \leq \upsilon^{rsv}_{y,z}\times \Delta^{total}_{y,z}
+\hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
+\end{aligned}
+```
 
 """
 function hydro_res_reserves(EP::Model, inputs::Dict)

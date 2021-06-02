@@ -21,7 +21,7 @@ This function establishes decisions, expressions, and constraints related to tra
 
 The function adds transmission reinforcement or construction costs to the objective function. Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$.
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 & \sum_{l \in \mathcal{L}}\left(\pi^{TCAP}_{l} \times \bigtriangleup\varphi^{max}_{l}\right)
 \end{aligned}
 ```
@@ -29,7 +29,7 @@ Note that fixed O\&M and replacement capital costs (depreciation) for existing t
 
 Power flow and transmission loss terms are also added to the power balance constraint for each zone:
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 &	- \sum_{l\in \mathcal{L}}{(\varphi^{map}_{l,z} \times \Phi_{l,t})} - \frac{1}{2} \sum_{l\in \mathcal{L}}{(\varphi^{map}_{l,z} \times \beta_{l,t}(\cdot))}
 \end{aligned}
 ```
@@ -37,10 +37,10 @@ Power flows, $\Phi_{l,t}$, on each line $l$ into or out of a zone (defined by th
 
 **Accounting for Transmission and Network Expansion Between Zones**
 
-Transmission flow constraints are modeled using a ``transport method,'' where power flow, $\Phi_{l,t}$, on each line (or more likely a `path' aggregating flows across multiple parallel lines) is constrained to be less than or equal to the line's maximum power transfer capacity, $\varphi^{max}_{l}$, plus any transmission capacity added on that line (for lines eligible for expansion in the set $\mathcal{E}$). The additional transmission capacity, $\bigtriangleup\varphi^{max}_{l} $, is constrained by a maximum allowed reinforcement, $\overline{\bigtriangleup\varphi^{max}_{l}}$, for each line $l \in \mathcal{E}$.
+Transmission flow constraints are modeled using a 'transport method','' where power flow, $\Phi_{l,t}$, on each line (or more likely a `path' aggregating flows across multiple parallel lines) is constrained to be less than or equal to the line's maximum power transfer capacity, $\varphi^{max}_{l}$, plus any transmission capacity added on that line (for lines eligible for expansion in the set $\mathcal{E}$). The additional transmission capacity, $\bigtriangleup\varphi^{max}_{l} $, is constrained by a maximum allowed reinforcement, $\overline{\bigtriangleup\varphi^{max}_{l}}$, for each line $l \in \mathcal{E}$.
 
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 	% trasmission constraints
 	&-\varphi^{max}_{l} \leq  \Phi_{l,t} \leq \varphi^{max}_{l} , &\quad \forall l \in (\mathcal{L} \setminus \mathcal{E} ),\forall t  \in \mathcal{T}\\
 	% trasmission expansion
@@ -54,7 +54,7 @@ Transmission flow constraints are modeled using a ``transport method,'' where po
 Transmission losses due to power flows can be accounted for in three different ways. The first option is to neglect losses entirely, setting the value of the losses function to zero for all lines at all hours. The second option is to assume that losses are a fixed percentage, $\varphi^{loss}_{l}$, of the magnitude of power flow on each line, $\mid \Phi_{l,t} \mid$ (e.g., losses are a linear function of power flows). Finally, the third option is to calculate losses, $\ell_{l,t}$, by approximating a quadratic-loss function of power flow across the line using a piecewise-linear function with total number of segments equal to the size of the set $\mathcal{M}$.
 
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 %configurable losses formulation
 	& \beta_{l,t}(\cdot) = \begin{cases} 0 & \text{if~} \text{losses.~0} \\ \\ \varphi^{loss}_{l}\times \mid \Phi_{l,t} \mid & \text{if~} \text{losses.~1} \\ \\ \ell_{l,t} &\text{if~} \text{losses.~2} \end{cases}, &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}
 \end{aligned}
@@ -63,7 +63,7 @@ Transmission losses due to power flows can be accounted for in three different w
 For the second option, an absolute value approximation is utilized to calculate the magnitude of the power flow on each line (reflecting the fact that negative power flows for a line linking nodes $i$ and $j$ represents flows from node $j$ to $i$ and causes the same magnitude of losses as an equal power flow from $i$ to $j$). This absolute value function is linearized such that the flow in the line must be equal to the subtraction of the auxiliary variable for flow in the positive direction, $\Phi^{+}_{l,t}$, and the auxiliary variable for flow in the negative direction, $\Phi^{+}_{l,t}$, of the line. Then, the magnitude of the flow is calculated as the sum of the two auxiliary variables. The sum of positive and negative directional flows are also constrained by the maximum line flow capacity.
 
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 % trasmission losses simple
 	&\Phi_{l,t} =  \Phi^{+}_{l,t}  - \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\mid \Phi_{l,t} \mid =  \Phi^{+}_{l,t}  + \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
@@ -73,55 +73,57 @@ For the second option, an absolute value approximation is utilized to calculate 
 
 If discrete unit commitment decisions are modeled, ``phantom losses'' can be observed wherein the auxiliary variables for flows in both directions ($\Phi^{+}_{l,t}$ and $\Phi^{-}_{l,t}$) are both increased to produce increased losses so as to avoid cycling a thermal generator and incurring start-up costs or opportunity costs related to minimum down times. This unrealistic behavior can be eliminated via inclusion of additional constraints and a set of auxiliary binary variables, $ON^{+}_{l,t} \in {0,1} \forall l \in \mathcal{L}$. Then the following additional constraints are created:
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 	\Phi^{+}_{l,t} \leq TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	\Phi^{-}_{l,t} \leq (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}) -TransON^{+}_{l,t}, &\quad  \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
 where $TransON^{+}_{l,t}$ is a continuous variable, representing the product of the binary variable $ON^{+}_{l,t}$ and the expression, $(\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l})$. This product cannot be defined explicitly, since it will lead to a bilinear expression involving two variables. Instead, we enforce this definition via the Glover's Linearization as shown below (also referred McCormick Envelopes constraints for bilinear expressions, which is exact when one of the variables is binary).
+
 ```math
-\begin{aligned}\allowdisplaybreaks
-	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	TransON^{+}_{l,t} \leq (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}) - (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times(1- TransON^{+}_{l,t}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\
+\begin{aligned}
+	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
+	TransON^{+}_{l,t} \leq  (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
+	TransON^{+}_{l,t} \leq (\varphi^{max}_{l} + \bigtriangleup\varphi^{max}_{l}) - (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) \times(1- TransON^{+}_{l,t}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
 \end{aligned}
 ```
 
-These constraints permit only the positive \textit{or} negative auxiliary flow variables to be non-zero at a given time period, not both.
+These constraints permit only the positive or negative auxiliary flow variables to be non-zero at a given time period, not both.
 
-For the third option, losses are calculated as a piecewise-linear approximation of a quadratic function of power flows. In order to do this, we represent the absolute value of the line flow variable by the sum of positive stepwise flow variables ($\S^{+}_{m,l,t}, \S^{-}_{m,l,t}$), associated with each partition of line losses computed using the corresponding linear expressions. This can be understood as a segmentwise linear fitting (or first order approximation) of the quadratic losses function. The first constraint below computes the losses a the accumulated sum of losses for each linear stepwise segment of the approximated quadratic function, including both positive domain and negative domain segments. A second constraint ensures that the stepwise variables do not exceed the maximum size per segment. The slope and maximum size for each segment are calculated as per the method in \cite{Zhang2013}.
+For the third option, losses are calculated as a piecewise-linear approximation of a quadratic function of power flows. In order to do this, we represent the absolute value of the line flow variable by the sum of positive stepwise flow variables $(\mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t})$, associated with each partition of line losses computed using the corresponding linear expressions. This can be understood as a segmentwise linear fitting (or first order approximation) of the quadratic losses function. The first constraint below computes the losses a the accumulated sum of losses for each linear stepwise segment of the approximated quadratic function, including both positive domain and negative domain segments. A second constraint ensures that the stepwise variables do not exceed the maximum size per segment. The slope and maximum size for each segment are calculated as per the method in \cite{Zhang2013}.
 ```math
-\begin{aligned}\allowdisplaybreaks
+\begin{aligned}
 	% losses constraints
-	& \ell_{l,t} = \frac{\varphi^{ohm}_{l}}{(\varphi^{volt}_{l})^2}\bigg( \sum_{m \in \mathcal{M}}( S^{+}_{m,l}\times \S^{+}_{m,l,t} + S^{-}_{m,l}\times \S^{-}_{m,l,t}) \bigg), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \notag\\
+	& \ell_{l,t} = \frac{\varphi^{ohm}_{l}}{(\varphi^{volt}_{l})^2}\bigg( \sum_{m \in \mathcal{M}}( S^{+}_{m,l}\times \mathcal{S}^{+}_{m,l,t} + S^{-}_{m,l}\times \mathcal{S}^{-}_{m,l,t}) \bigg), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \notag\\
 	& \text{\quad Where:}\notag\\
-	&  \quad S^{+}_{m,l} = \frac{2+4 \times \sqrt{2}\times (m-1)}{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) &\quad \forall m \in [1 \colon M], l \in \mathcal{L}  \notag\\
+	& \quad S^{+}_{m,l} = \frac{2+4 \times \sqrt{2}\times (m-1)}{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) &\quad \forall m \in [1 \colon M], l \in \mathcal{L}  \notag\\
 	& \quad S^{-}_{m,l} = \frac{2+4 \times \sqrt{2}\times (m-1)}{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) &\quad \forall m \in [1 \colon M], l \in \mathcal{L}\\
 	& \notag\\
-	&\S^{+}_{m,l,t}, \S^{-}_{m,l,t} <= \overline{\S_{m,l}} &\quad \forall m \in [1:M], l \in \mathcal{L}, t \in \mathcal{T} \notag\\
+	& \mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t} <= \overline{\mathcal{S}_{m,l}} &\quad \forall m \in [1:M], l \in \mathcal{L}, t \in \mathcal{T} \notag\\
 	& \text{\quad Where:} \notag\\
-	& \quad \overline{\S_{l,z}} =  \begin{cases} \frac{(1+\sqrt{2})}{1+\sqrt{2} \times (2 \times M-1)}  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} \text{m=1} \\ \\  \frac{2 \times \sqrt{2} }{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} \text{m $>$ 1} \end{cases}, &
+	& \quad \overline{\mathcal{S}_{l,z}} =  \begin{cases} \frac{(1+\sqrt{2})}{1+\sqrt{2} \times (2 \times M-1)}  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} \text{m=1} \\
+	& \frac{2 \times \sqrt{2} }{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} \text{m $>$ 1} \end{cases} \\
 \end{aligned}
 ```
 
-Next, a constraint ensures that the sum of auxiliary segment variables ($m \geq 1$) minus the ``zero" segment (which allows values to go into the negative domain) from both positive and negative domains must total the actual power flow across the line, and a constraint ensures that the sum of negative and positive flows do not exceed the maximum flow for the line.
+Next, a constraint ensures that the sum of auxiliary segment variables ($m \geq 1$) minus the "zero" segment (which allows values to go into the negative domain) from both positive and negative domains must total the actual power flow across the line, and a constraint ensures that the sum of negative and positive flows do not exceed the maximum flow for the line.
 ```math
-\begin{aligned}\allowdisplaybreaks
-	&\sum_{m \in [1:M]} (\S^{+}_{m,l,t}) - \S^{+}_{0,l,t} =  \Phi_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\sum_{m \in [1:M]} (\S^{-}_{m,l,t}) - \S^{-}_{0,l,t}  =  - \Phi_{l,t}
+\begin{aligned}
+	&\sum_{m \in [1:M]} (\mathcal{S}^{+}_{m,l,t}) - \mathcal{S}^{+}_{0,l,t} =  \Phi_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\sum_{m \in [1:M]} (\mathcal{S}^{-}_{m,l,t}) - \mathcal{S}^{-}_{0,l,t}  =  - \Phi_{l,t}
 \end{aligned}
 ```
 
-As with losses option 2, this segment-wise approximation of a quadratic loss function also permits ``phantom losses'' to avoid cycling thermal units when discrete unit commitment decisions are modeled. In this case, the additional constraints below are also added to ensure that auxiliary segments variables do not exceed maximum value per segment and that they are filled in order; i.e., one segment cannot be non-zero unless prior segment is at its maximum value. Binary constraints deal with absolute value of power flow on each line. If the flow is positive, $\S^{+}_{0,l,t}$ must be zero; if flow is negative, $\S^{+}_{0,l,t}$ must be positive and takes on value of the full negative flow, forcing all $\S^{+}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Conversely, if the flow is negative, $\S^{-}_{0,l,t}$ must be zero; if flow is positive, $\S^{-}_{0,l,t}$ must be positive and takes on value of the full positive flow, forcing all $\S^{-}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Requiring segments to fill in sequential order and binary variables to ensure variables reflect the actual direction of power flows are both necessary to eliminate ``phantom losses'' from the solution. These constraints and binary decisions are ommited if the model is fully linear.
+As with losses option 2, this segment-wise approximation of a quadratic loss function also permits 'phantom losses' to avoid cycling thermal units when discrete unit commitment decisions are modeled. In this case, the additional constraints below are also added to ensure that auxiliary segments variables do not exceed maximum value per segment and that they are filled in order; i.e., one segment cannot be non-zero unless prior segment is at its maximum value. Binary constraints deal with absolute value of power flow on each line. If the flow is positive, $\mathcal{S}^{+}_{0,l,t}$ must be zero; if flow is negative, $\mathcal{S}^{+}_{0,l,t}$ must be positive and takes on value of the full negative flow, forcing all $\mathcal{S}^{+}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Conversely, if the flow is negative, $\mathcal{S}^{-}_{0,l,t}$ must be zero; if flow is positive, $\mathcal{S}^{-}_{0,l,t}$ must be positive and takes on value of the full positive flow, forcing all $\mathcal{S}^{-}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Requiring segments to fill in sequential order and binary variables to ensure variables reflect the actual direction of power flows are both necessary to eliminate ``phantom losses'' from the solution. These constraints and binary decisions are ommited if the model is fully linear.
 
 ```math
-\begin{aligned}\allowdisplaybreaks
-	&\S^{+}_{m,l,t} <=    \overline{\S_{m,l}} \times ON^{+}_{m,l,t}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{-}_{m,l,t} <=    \overline{\S_{m,l}} \times ON^{-}_{m,l,t},  &\quad \forall m \in[1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{+}_{m,l,t} \geq ON^{+}_{m+1,l,t} \times \overline{\S_{m,l}}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{-}_{m,l,t} \geq ON^{-}_{m+1,l,t} \times \overline{\S_{m,l}} , &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{+}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{+}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\S^{-}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{-}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
+\begin{aligned}
+	&\mathcal{S}^{+}_{m,l,t} <=    \overline{\mathcal{S}_{m,l}} \times ON^{+}_{m,l,t}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\mathcal{S}^{-}_{m,l,t} <=    \overline{\mathcal{S}_{m,l}} \times ON^{-}_{m,l,t},  &\quad \forall m \in[1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\mathcal{S}^{+}_{m,l,t} \geq ON^{+}_{m+1,l,t} \times \overline{\mathcal{S}_{m,l}}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\mathcal{S}^{-}_{m,l,t} \geq ON^{-}_{m+1,l,t} \times \overline{\mathcal{S}_{m,l}} , &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\mathcal{S}^{+}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{+}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	&\mathcal{S}^{-}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{-}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
 """

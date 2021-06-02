@@ -30,6 +30,6 @@ function write_status(path::AbstractString, sep::AbstractString, inputs::Dict, s
 			Objval = objective_value(EP))
 		dfStatus = DataFrame(Status = status, Solve = inputs["solve_time"],
 			Objval = objective_value(EP), Objbound= objective_bound(EP),FinalMIPGap =(objective_value(EP) -objective_bound(EP))/objective_value(EP) )
-
+	end
 	CSV.write(string(path,sep,"status.csv"),dfStatus)
 end

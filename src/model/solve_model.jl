@@ -14,8 +14,6 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-## SolveModel.jl: Solving Model Module
-
 @doc raw"""
 	fix_integers(jump_model::Model)
 
@@ -26,19 +24,19 @@ description: fixes the iteger variables ones the model has been solved in order 
 returns: none (modifies an existing-solved model in the memory). solve() must be run again to solve and getdual veriables
 
 """
-################################################################################
-## function fix_integers()
-##
-## inputs: jump_model - a model object containing that has been previously solved.
-##
-## description: fixes the iteger variables ones the model has been solved in order
-## to calculate approximations of dual variables
-##
-## returns: no result since it modifies an existing-solved model in the memory.
-## solve() must be run again to solve and getdual veriables
-##
-################################################################################
 function fix_integers(jump_model::Model)
+	################################################################################
+	## function fix_integers()
+	##
+	## inputs: jump_model - a model object containing that has been previously solved.
+	##
+	## description: fixes the iteger variables ones the model has been solved in order
+	## to calculate approximations of dual variables
+	##
+	## returns: no result since it modifies an existing-solved model in the memory.
+	## solve() must be run again to solve and getdual veriables
+	##
+	################################################################################
 	for v in all_variables(jump_model)
 		if is_integer(v)
             unset_integer(v)
@@ -60,19 +58,18 @@ description: Solves and extracts solution variables for later processing
 
 returns: results EP model object with a set of DataFrames containing key results
 """
-################################################################################
-## function solve_model()
-##
-## inputs: EP - a JuMP model representing the energy optimization problem
-## setup - a Dict containing GenX setup flags
-##
-## description: Solves and extracts solution variables for later processing
-##
-## returns: results EP model object with a set of DataFrames containing key results
-##
-################################################################################
 function solve_model(EP::Model, setup::Dict)
-
+	################################################################################
+	## function solve_model()
+	##
+	## inputs: EP - a JuMP model representing the energy optimization problem
+	## setup - a Dict containing GenX setup flags
+	##
+	## description: Solves and extracts solution variables for later processing
+	##
+	## returns: results EP model object with a set of DataFrames containing key results
+	##
+	################################################################################
 	## Start solve timer
 	solver_start_time = time()
 	solver_time = time()
