@@ -14,6 +14,16 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+@doc raw"""
+	configure_ipopt(solver_settings_path::String)
+
+Reads user-specified solver settings from ipopt_settings.yml in the directory specified by the string solver_settings_path.
+
+Returns a MathOptInterface OptimizerWithAttributes Ipopt optimizer instance to be used in the GenX.generate_model() method.
+
+The Ipopt optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
+
+"""
 function configure_ipopt(solver_settings_path::String)
 
 	solver_settings = YAML.load(open(solver_settings_path))

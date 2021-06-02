@@ -21,6 +21,10 @@ using Pkg
 Pkg.instantiate()
 #environment_path = "../../../package_activate.jl"
 #include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
+settings_path = joinpath(pwd(), "Settings")
+
+environment_path = "../../../package_activate.jl"
+include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
 
 ### Set relevant directory paths
 src_path = "../../../src/"
@@ -34,14 +38,15 @@ push!(LOAD_PATH, src_path)
 using GenX
 using YAML
 
-mysetup = YAML.load(open(settings_path)) # mysetup dictionary stores settings and GenX-specific parameters
+genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
+mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
 
 ### Cluster time series inputs if necessary and if specified by the user
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
 if mysetup["TimeDomainReduction"] == 1
     if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
         println("Clustering Time Series Data...")
-        cluster_inputs(inpath, mysetup)
+        cluster_inputs(inpath, settings_path, mysetup)
     else
         println("Time Series Data Already Clustered.")
     end
@@ -49,8 +54,7 @@ end
 
 ### Configure solver
 println("Configuring Solver")
-solver_settings_path = pwd()
-OPTIMIZER = configure_solver(mysetup["Solver"], solver_settings_path)
+OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 
 #### Running a case
 
@@ -74,6 +78,6 @@ println("Writing Output")
 outpath = "$inpath/Results"
 write_outputs(EP, outpath, mysetup, myinputs)
 if mysetup["ModelingToGenerateAlternatives"] == 1
-    print("Starting Model to Generate Alternatives (MGA) Iterations")
+    println("Starting Model to Generate Alternatives (MGA) Iterations")
     mga(EP,inpath,mysetup,myinputs,outpath)
 end
