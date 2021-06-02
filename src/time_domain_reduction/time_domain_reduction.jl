@@ -408,7 +408,7 @@ end
 
 
 @doc raw"""
-    cluster_inputs(inpath, v=false, norm_plot=false, silh_plot=false, res_plots=false, indiv_plots=false, pair_plots=false)
+    cluster_inputs(inpath, settings_path, v=false, norm_plot=false, silh_plot=false, res_plots=false, indiv_plots=false, pair_plots=false)
 
 Use kmeans or kemoids to cluster raw load profiles and resource capacity factor profiles
 into representative periods. Use Extreme Periods to capture noteworthy periods or
@@ -453,13 +453,13 @@ In Load_data.csv, include the following:
     representative weeks, assuming a constant time series of fuel prices with length equal to the
     number of timesteps in the raw input data.
 """
-function cluster_inputs(inpath, mysetup, v=false)
+function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     if v println(now()) end
 
     ##### Step 0: Load in settings and data
 
-    myTDRsetup = YAML.load(open(joinpath(inpath,"time_domain_reduction_settings.yml")))
+    myTDRsetup = YAML.load(open(joinpath(settings_path,"time_domain_reduction_settings.yml")))
 
     # Accept Model Parameters from the Settings File time_domain_reduction_settings.yml
     TimestepsPerRepPeriod = myTDRsetup["TimestepsPerRepPeriod"]
