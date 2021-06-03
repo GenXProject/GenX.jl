@@ -73,9 +73,7 @@ pages = OrderedDict(
             "Minimum Capacity Requirement" => "minimum_capacity_requirement.md"
         ]
     ],
-    "Methods" => [
-        "Time Domain Reduction" => "time_domain_reduction.md"
-    ],
+    "Methods" => "methods.md",
     "Additional Features" => "additional_features.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
     "GenX Inputs" => "load_inputs.md",
