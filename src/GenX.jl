@@ -60,8 +60,6 @@ include("configure_solver/configure_gurobi.jl")
 include("configure_solver/configure_cplex.jl")
 include("configure_solver/configure_clp.jl")
 include("configure_solver/configure_cbc.jl")
-include("configure_solver/configure_glpk.jl")
-include("configure_solver/configure_ipopt.jl")
 include("configure_solver/configure_solver.jl")
 
 # Load input data

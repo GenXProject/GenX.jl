@@ -28,8 +28,10 @@ function write_status(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	if (setup["UCommit"] == 0 || setup["UCommit"] == 2)
 		dfStatus = DataFrame(Status = status, Solve = inputs["solve_time"],
 			Objval = objective_value(EP))
+	else
 		dfStatus = DataFrame(Status = status, Solve = inputs["solve_time"],
 			Objval = objective_value(EP), Objbound= objective_bound(EP),FinalMIPGap =(objective_value(EP) -objective_bound(EP))/objective_value(EP) )
+	end
 
 	CSV.write(string(path,sep,"status.csv"),dfStatus)
 end
