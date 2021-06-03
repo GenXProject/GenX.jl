@@ -14,6 +14,16 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+@doc raw"""
+	configure_solver(solver::String, solver_settings_path::String)
+
+This method returns a solver-specific MathOptInterface OptimizerWithAttributes optimizer instance to be used in the GenX.generate_model() method.
+
+The "solver" argument is a string which specifies the solver to be used, and can be either "Gurobi", "CPLEX", "Clp", "Cbc", "GLPK", or "Ipopt".
+
+The "solver_settings_path" argument is a string which specifies the path to the directory that contains the settings YAML file for the specified solver.
+
+"""
 function configure_solver(solver::String, solver_settings_path::String)
 
 	# Set solver as Gurobi
@@ -30,12 +40,12 @@ function configure_solver(solver::String, solver_settings_path::String)
 	elseif solver == "Cbc"
 		cbc_settings_path = joinpath(solver_settings_path, "cbc_settings.yml")
         OPTIMIZER = configure_cbc(cbc_settings_path)
-	elseif solver == "GLPK"
+	#=elseif solver == "GLPK"
 		glpk_settings_path = joinpath(solver_settings_path, "glpk_settings.yml")
         OPTIMIZER = configure_glpk(glpk_settings_path)
 	elseif solver == "Ipopt"
 		ipopt_settings_path = joinpath(solver_settings_path, "ipopt_settings.yml")
-        OPTIMIZER = configure_ipopt(ipopt_settings_path)
+        OPTIMIZER = configure_ipopt(ipopt_settings_path)=#
 	end
 
 	return OPTIMIZER

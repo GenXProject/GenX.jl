@@ -27,9 +27,7 @@ The first two constraints model keep track of inventory of deferred demand in ea
 
 ```math
 \begin{aligned}
-\label{eq:DflexSocBalinterior}
 \Gamma_{y,z,t} = \Gamma_{y,z,t-1} -\eta_{y,z}^{dflex}\Theta_{y,z,t} +\Pi_{y,z,t} \hspace{4 cm}  \forall y \in \mathcal{DF}, z \in \mathcal{Z}, t \in \mathcal{T}^{interior} \\
-\label{eq:DflexSocBalstart}
 \Gamma_{y,z,t} = \Gamma_{y,z,t +\tau^{period}-1} -\eta_{y,z}^{dflex}\Theta_{y,z,t} +\Pi_{y,z,t} \hspace{4 cm}  \forall y \in \mathcal{DF}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```

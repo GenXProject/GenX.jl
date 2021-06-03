@@ -17,10 +17,12 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 import Pkg
 using Pkg
 Pkg.activate("GenXJulEnv")
-#Pkg.add(Pkg.PackageSpec(name="Cbc", version="0.7.1"))
+Pkg.add(Pkg.PackageSpec(name="Cbc", version="0.8.0"))
 Pkg.add(Pkg.PackageSpec(name="Clp", version="0.8.1"))
 Pkg.add(Pkg.PackageSpec(name="DataStructures", version="0.17.20"))
-#Pkg.add(Pkg.PackageSpec(name="GLPK", version="0.13.0"))
+Pkg.add(Pkg.PackageSpec(name="Dates"))
+Pkg.add(Pkg.PackageSpec(name="GLPK", version="0.14.8"))
+Pkg.add(Pkg.PackageSpec(name="Ipopt", version="0.6.0"))
 Pkg.add(Pkg.PackageSpec(name="JuMP", version="0.21.3"))
 Pkg.add(Pkg.PackageSpec(name="CPLEX", version="0.6.1"))
 Pkg.add(Pkg.PackageSpec(name="CSV", version="0.6.0"))

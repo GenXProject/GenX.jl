@@ -41,6 +41,9 @@ using Documenter
 using Gurobi
 #using CPLEX
 using Clp
+using Cbc 
+using GLPK 
+using Ipopt 
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -56,6 +59,9 @@ include("configure_settings/configure_settings.jl")
 include("configure_solver/configure_gurobi.jl")
 include("configure_solver/configure_cplex.jl")
 include("configure_solver/configure_clp.jl")
+include("configure_solver/configure_cbc.jl")
+include("configure_solver/configure_glpk.jl")
+include("configure_solver/configure_ipopt.jl")
 include("configure_solver/configure_solver.jl")
 
 # Load input data

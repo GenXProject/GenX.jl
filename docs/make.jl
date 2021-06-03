@@ -29,28 +29,59 @@ genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
     "Welcome Page" => "index.md",
-    "Load Inputs" => "load_inputs.md",
-    "Model Components" => [
-        "Discharge" => "discharge.md",
-        "Non Served Energy" => "non-served-energy.md",
-        "Reserves" => "reserves.md",
-        "Unit Commitment" => "ucommit.md"
+    "Model Inputs/Outputs Documentation" => "data_documentation.md",
+    "Running GenX in Different Modes" => "genx_run_modes.md",
+    "Model Concept and Overview" => [
+        "Model Introduction" => "model_introduction.md",
+        "Notation" => "model_notation.md",
+        "Objective Function" => "objective_function.md",
+        "Power Balance" => "power_balance.md"
     ],
-    "Resources" => [
-        "Curtailable Variable Renewable" => "curtailable-variable-renewable.md",
-        "Flexible Demand" => "flexible-demand.md",
-        "Hydro" => "hydro-res.md",
-        "Must Run" => "must-run.md",
-        "Thermal Commit" => "thermal-commit.md",
-        "Thermal No Commit" => "thermal-no-commit.md"
+    "Model Function Reference" => [
+        "Core" => [
+            "Discharge" => [
+                "Discharge" => "discharge.md",
+                "Investment Discharge" => "investment_discharge.md"
+            ],
+            "Non Served Energy" => "non_served_energy.md",
+            "Reserves" => "reserves.md",
+            "Transmission" => "transmission.md",
+            "Unit Commitment" => "ucommit.md"
+        ],
+        "Resources" => [
+            "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
+            "Flexible Demand" => "flexible_demand.md",
+            "Hydro" => "hydro_res.md",
+            "Must Run" => "must_run.md",
+            "Storage" => [
+                "Storage" => "storage.md",
+                "Investment Charge" => "investment_charge.md",
+                "Investment Energy" => "investment_energy.md",
+                "Long Duration Storage" => "long_duration_storage.md",
+                "Storage All" => "storage_all.md",
+                "Storage Asymmetric" => "storage_asymmetric.md",
+                "Storage Symmetric" => "storage_symmetric.md"
+            ],
+            "Thermal" => [
+                "Thermal" => "thermal.md",
+                "Thermal Commit" => "thermal_commit.md",
+                "Thermal No Commit" => "thermal_no_commit.md"
+            ]
+        ],
+        "Policies" => [
+            "Capacity Reserve Margin" => "cap_reserve_margin.md",
+            "CO2 Capacity" => "co2_cap.md",
+            "Energy Share Requirement" => "energy_share_requirement.md",
+            "Minimum Capacity Requirement" => "minimum_capacity_requirement.md"
+        ]
     ],
+    "Function Reference for Loading Inputs" => "load_inputs.md",
     "Methods" => [
-        "Time Domain Reduction" => "time-domain-reduction.md"
+        "Time Domain Reduction" => "time_domain_reduction.md"
     ],
-    "Additional Features" => "additional-features.md",
-    "GenX Data" => "data-documentation.md",
-    "GenX Outputs" => "write-outputs.md",
-    "New Documentation Page" => "new_doc_page.md",
+    "Additional Features" => "additional_features.md",
+    "GenX Outputs" => "write_outputs.md",
+    "New Documentation Page" => "documentation.md",
 )
 makedocs(;
     modules=[GenX],
@@ -62,29 +93,6 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX",
         assets=String[],
     ),
-    #=pages = [
-        "Welcome Page" => "index.md",
-        "Load Inputs" => "load_inputs.md",
-        "Model Components" => [
-            "Discharge" => "discharge.md",
-            "Non Served Energy" => "non-served-energy.md",
-            "Reserves" => "reserves.md",
-            "Unit Commitment" => "ucommit.md"
-        ],
-        "Resources" => [
-            "Curtailable Variable Renewable" => "curtailable-variable-renewable.md",
-            "Flexible Demand" => "flexible-demand.md",
-            "Hydro" => "hydro-res.md",
-            "Must Run" => "must-run.md",
-            "Thermal Commit" => "thermal-commit.md",
-            "Thermal No Commit" => "thermal-no-commit.md"
-        ],
-        "Methods" => [
-            "Time Domain Reduction" => "time-domain-reduction.md"
-        ],
-        "GenX Data" => "data-documentation.md",
-        "GenX Outputs" => "write-outputs.md"
-    ]=#
     pages=[p for p in pages]
 )
 

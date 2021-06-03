@@ -17,45 +17,42 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	investment_charge(EP::Model, inputs::Dict)
 
-	This function defines the expressions and constraints keeping track of total available storage charge capacity across all resources as well as constraints on capacity retirements. The function also adds investment and fixed O\&M related costs related to charge capacity to the objective function.
+This function defines the expressions and constraints keeping track of total available storage charge capacity across all resources as well as constraints on capacity retirements. The function also adds investment and fixed O\&M related costs related to charge capacity to the objective function.
 
-	The total capacity of each resource is defined as the sum of the existing capacity plus the newly invested capacity minus any retired capacity (Eq. \ref{eq:totalchargecap}).
+The total capacity of each resource is defined as the sum of the existing capacity plus the newly invested capacity minus any retired capacity (Eq. \ref{eq:totalchargecap}).
 
-	```math
-	\begin{aligned}\allowdisplaybreaks
-	\label{eq:totalchargecap}
-	& \Delta^{total,charge}_{y,z} =(\overline{\Delta^{charge}_{y,z}}+\Omega^{charge}_{y,z}-\Delta^{charge}_{y,z}) \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z}
-	\end{aligned}
-	```
+```math
+\begin{aligned}
+& \Delta^{total,charge}_{y,z} =(\overline{\Delta^{charge}_{y,z}}+\Omega^{charge}_{y,z}-\Delta^{charge}_{y,z}) \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z}
+\end{aligned}
+```
 
-	One cannot retire more capacity than existing capacity.
-	```math
-	\begin{aligned} \allowdisplaybreaks
-	\label{eq:ccapub}
-	&\Delta^{charge}_{y,z} \leq \overline{\Delta^{charge}_{y,z}}
-		\hspace{4 cm}  \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z}
-	\end{aligned}
+One cannot retire more capacity than existing capacity.
+```math
+\begin{aligned}
+&\Delta^{charge}_{y,z} \leq \overline{\Delta^{charge}_{y,z}}
+	\hspace{4 cm}  \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z}
+\end{aligned}
+```
 
-	For resources where $\overline{\Omega_{y,z}^{charge}}$ and $\underline{\Omega_{y,z}^{charge}}$ is defined, then we impose constraints on minimum (Eq. \ref{eq:mincap}) and maximum power capacity (Eq. \ref{eq:maxcap}).
-	```math
-	\begin{aligned} \allowdisplaybreaks
-	\label{eq:minccap}
-	& \Delta^{total,charge}_{y,z} \leq \overline{\Omega}^{charge}_{y,z}
-		\hspace{4 cm}  \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z} \\
-	\label{eq:maxccap}
-	& \Delta^{total,charge}_{y,z}  \geq \underline{\Omega}^{charge}_{y,z}
-		\hspace{4 cm}  \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z}
-	\end{aligned}
-	```
+For resources where $\overline{\Omega_{y,z}^{charge}}$ and $\underline{\Omega_{y,z}^{charge}}$ is defined, then we impose constraints on minimum (Eq. \ref{eq:mincap}) and maximum power capacity (Eq. \ref{eq:maxcap}).
+```math
+\begin{aligned}
+& \Delta^{total,charge}_{y,z} \leq \overline{\Omega}^{charge}_{y,z}
+	\hspace{4 cm}  \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z} \\
+& \Delta^{total,charge}_{y,z}  \geq \underline{\Omega}^{charge}_{y,z}
+	\hspace{4 cm}  \forall y \in \mathcal{O}^{asym}, z \in \mathcal{Z}
+\end{aligned}
+```
 
-	In addition, this function adds investment and fixed O\&M related costs related to charge capacity to the objective function:
-	```math
-	\begin{aligned} \allowdisplaybreaks
-	& 	\sum_{y \in \mathcal{O}^{asym} } \sum_{z \in \mathcal{Z}}
-		\left( (\pi^{INVEST,charge}_{y,z} \times    \Omega^{charge}_{y,z})
-		+ (\pi^{FOM,charge}_{y,z} \times  \Delta^{total,charge}_{y,z})\right)
-	\end{aligned}
-	```
+In addition, this function adds investment and fixed O\&M related costs related to charge capacity to the objective function:
+```math
+\begin{aligned}
+& 	\sum_{y \in \mathcal{O}^{asym} } \sum_{z \in \mathcal{Z}}
+	\left( (\pi^{INVEST,charge}_{y,z} \times    \Omega^{charge}_{y,z})
+	+ (\pi^{FOM,charge}_{y,z} \times  \Delta^{total,charge}_{y,z})\right)
+\end{aligned}
+```
 """
 function investment_charge(EP::Model, inputs::Dict)
 

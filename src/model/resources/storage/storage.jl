@@ -29,6 +29,7 @@ For storage technologies with symmetric charge and discharge capacity (all $o \i
 	&  \Pi_{o,z,t} + \Theta_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}^{sym}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
 These constraints are created with the function ```storage_symmetric()``` in ```storage_symmetric.jl```.
 
 If reserves are modeled, the following two constraints replace those above:
@@ -36,9 +37,10 @@ If reserves are modeled, the following two constraints replace those above:
 ```math
 \begin{aliged}
 	&  \Pi_{o,z,t} + f^{charge}_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}^{sym}, z \in \mathcal{Z}, t \in \mathcal{T}\\
-	&  \Pi_{o,z,t} + f^{charge}_{o,z,t} + \Theta_{o,z,t} + f^{discharge}_{o,z,t} + r^{discharge}_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}^{sym}, z \in \mathcal{Z}, t \in \mathcal{T}
+	&  \Pi_{o,z,t} + f^{charge}_{o,z,t} + \Theta_{o,z,t} + f^{discharge}_{o,z,t} + r^{discharge}_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}^{sym}, z \in \mathcal{Z}, t \in \mathcal{T} \\
 \end{aligned}
 ```
+
 where $f^{charge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while charging, $f^{discharge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while discharging, and $r^{discharge}_{o,z,t}$ is the contribution of storage resources to upward reserves while discharging. Note that as storage resources can contribute to regulation and reserves while either charging or discharging, the proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources where the total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is the sum of the proxy variables.
 
 These constraints are created with the function ```storage_symmetric_reserves()``` in ```storage_symmetric.jl```.
@@ -52,6 +54,7 @@ For storage technologies with asymmetric charge and discharge capacities (all $o
 	&  \Pi_{o,z,t} \leq \Delta^{total, charge}_{o,z} & \quad \forall o \in \mathcal{O}^{asym}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
 These constraints are created with the function ```storage_asymmetric()``` in ```storage_asymmetric.jl```.
 
 If reserves are modeled, the above constraint is replaced by the following:
@@ -61,6 +64,7 @@ If reserves are modeled, the above constraint is replaced by the following:
 	&  \Pi_{o,z,t} + f^{charge}_{o,z,t} \leq \Delta^{total, charge}_{o,z} & \quad \forall o \in \mathcal{O}^{asym}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
 where $f^{+}_{y=o,z,t}$ is the contribution of storage resources to frequency regulation while charging.
 
 These constraints are created with the function ```storage_asymmetric_reserves()``` in ```storage_asymmetric.jl```.
@@ -73,12 +77,11 @@ The following two constraints track the state of charge of the storage resources
 
 ```math
 \begin{aligned} \allowdisplaybreaks
-\label{eq:SoCBalinterior}
 	&  \Gamma_{o,z,t} =\Gamma_{o,z,t-1} - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,t} + \eta_{o,z}^{charge}\Pi_{o,z,t} - \eta_{o,z}^{loss}\Gamma_{o,z,t-1}  & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}^{interior}\\
-\label{eq:SoCBalstart}
 	&  \Gamma_{o,z,t} =\Gamma_{o,z,t+\tau^{period}-1} - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,t} + \eta_{o,z}^{charge}\Pi_{o,z,t} - \eta_{o,z}^{loss}\Gamma_{o,z,t+\tau^{period}-1}  & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```
+
 When modeling the entire year as a single chronological period with total number of time steps of $\tau^{period}$, storage inventory in the first time step is linked to storage inventory at the last time step of the period representing the year. Alternatively, when modeling the entire year with multiple representative periods, Eq. \ref{eq:SoCBalstart} relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of $\tau^{period}$ time steps. In this implementation, energy exchange between representative periods is not permitted. When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year. If ```LongDurationStorage=1``` and ```OperationWrapping=1```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
 
 The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{o,z}$. Finally, the maximum discharge rate for storage resources, $\Pi_{o,z,t}$, is constrained to be less than the discharge power capacity, $\Omega_{o,z,t}$ or the state of charge at the end of the last period, $\Gamma_{o,z,t-1}$, whichever is lessor.
@@ -90,6 +93,7 @@ The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z
 	&  \Theta_{o,z,t} \leq \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
 The above constraints are established in ```storage_all()``` in ```storage_all.jl```.
 
 If reserves are modeled, two pairs of proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources, to denote the contribution of storage resources to regulation or reserves while charging or discharging, respectively. The total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is then the sum of the proxy variables:
@@ -137,9 +141,9 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 	&  \Theta_{o,z,t} + f^{discharge}_{o,z,t} + r^{discharge}_{o,z,t} \leq \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-
 function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
 
 	println("Storage Resources Module")
