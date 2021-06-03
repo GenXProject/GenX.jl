@@ -30,7 +30,6 @@ push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
     "Welcome Page" => "index.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
-    "Running GenX in Different Modes" => "genx_run_modes.md",
     "Model Concept and Overview" => [
         "Model Introduction" => "model_introduction.md",
         "Notation" => "model_notation.md",
