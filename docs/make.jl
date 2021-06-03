@@ -29,7 +29,6 @@ genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
     "Welcome Page" => "index.md",
-    "Model Inputs/Outputs Documentation" => "data_documentation.md",
     "Model Concept and Overview" => [
         "Model Introduction" => "model_introduction.md",
         "Notation" => "model_notation.md",
@@ -74,13 +73,13 @@ pages = OrderedDict(
             "Minimum Capacity Requirement" => "minimum_capacity_requirement.md"
         ]
     ],
-    "Function Reference for Loading Inputs" => "load_inputs.md",
     "Methods" => [
         "Time Domain Reduction" => "time_domain_reduction.md"
     ],
     "Additional Features" => "additional_features.md",
+    "Model Inputs/Outputs Documentation" => "data_documentation.md",
+    "GenX Inputs" => "load_inputs.md",
     "GenX Outputs" => "write_outputs.md",
-    "New Documentation Page" => "documentation.md",
 )
 makedocs(;
     modules=[GenX],
