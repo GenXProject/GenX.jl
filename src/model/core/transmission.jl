@@ -91,20 +91,21 @@ where $TransON^{+}_{l,t}$ is a continuous variable, representing the product of 
 These constraints permit only the positive or negative auxiliary flow variables to be non-zero at a given time period, not both.
 
 For the third option, losses are calculated as a piecewise-linear approximation of a quadratic function of power flows. In order to do this, we represent the absolute value of the line flow variable by the sum of positive stepwise flow variables $(\mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t})$, associated with each partition of line losses computed using the corresponding linear expressions. This can be understood as a segmentwise linear fitting (or first order approximation) of the quadratic losses function. The first constraint below computes the losses a the accumulated sum of losses for each linear stepwise segment of the approximated quadratic function, including both positive domain and negative domain segments. A second constraint ensures that the stepwise variables do not exceed the maximum size per segment. The slope and maximum size for each segment are calculated as per the method in \cite{Zhang2013}.
+
 ```math
 \begin{aligned}
-	% losses constraints
-	& \ell_{l,t} = \frac{\varphi^{ohm}_{l}}{(\varphi^{volt}_{l})^2}\bigg( \sum_{m \in \mathcal{M}}( S^{+}_{m,l}\times \mathcal{S}^{+}_{m,l,t} + S^{-}_{m,l}\times \mathcal{S}^{-}_{m,l,t}) \bigg), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \notag\\
-	& \text{\quad Where:}\notag\\
-	& \quad S^{+}_{m,l} = \frac{2+4 \times \sqrt{2}\times (m-1)}{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) &\quad \forall m \in [1 \colon M], l \in \mathcal{L}  \notag\\
+	& \ell_{l,t} = \frac{\varphi^{ohm}_{l}}{(\varphi^{volt}_{l})^2}\bigg( \sum_{m \in \mathcal{M}}( S^{+}_{m,l}\times \mathcal{S}^{+}_{m,l,t} + S^{-}_{m,l}\times \mathcal{S}^{-}_{m,l,t}) \bigg), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
+	& \text{\quad Where:} \\
+	& \quad S^{+}_{m,l} = \frac{2+4 \times \sqrt{2}\times (m-1)}{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) &\quad \forall m \in [1 \colon M], l \in \mathcal{L}  \\
 	& \quad S^{-}_{m,l} = \frac{2+4 \times \sqrt{2}\times (m-1)}{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) &\quad \forall m \in [1 \colon M], l \in \mathcal{L}\\
-	& \notag\\
-	& \mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t} <= \overline{\mathcal{S}_{m,l}} &\quad \forall m \in [1:M], l \in \mathcal{L}, t \in \mathcal{T} \notag\\
-	& \text{\quad Where:} \notag\\
-	& \quad \overline{\mathcal{S}_{l,z}} =  \begin{cases} \frac{(1+\sqrt{2})}{1+\sqrt{2} \times (2 \times M-1)}  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} \text{m=1} \\
-	& \frac{2 \times \sqrt{2} }{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} \text{m $>$ 1} \end{cases} \\
+	& \\
+	& \mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t} <= \overline{\mathcal{S}_{m,l}} &\quad \forall m \in [1:M], l \in \mathcal{L}, t \in \mathcal{T} \\
+	& \text{\quad Where:} \\
+	& \quad \overline{S_{l,z}} =  \begin{cases} \frac{(1+\sqrt{2})}{1+\sqrt{2} \times (2 \times M-1)}  (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} m = 1 \\
+	\frac{2 \times \sqrt{2} }{1+\sqrt{2} \times (2 \times M-1)} (\varphi^{max}_{l} + \overline{\bigtriangleup\varphi^{max}_{l}}) & \text{if~} m > 1 \end{cases}
 \end{aligned}
 ```
+
 
 Next, a constraint ensures that the sum of auxiliary segment variables ($m \geq 1$) minus the "zero" segment (which allows values to go into the negative domain) from both positive and negative domains must total the actual power flow across the line, and a constraint ensures that the sum of negative and positive flows do not exceed the maximum flow for the line.
 ```math
