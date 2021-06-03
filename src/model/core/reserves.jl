@@ -44,12 +44,9 @@ This function establishes several different versions of contingency reserve requ
 Contingency reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies).
 
 There are three options for the $Contingency$ expression, depending on user settings:
-
-\begin{enumerate}
-\item a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''reserves.csv''' input file;
-\item a dynamic contingency based on installed capacity decisions, in which the largest \textit{installed} generator is used to determine the contingency requirement for all time periods; and
-\item dynamic unit commitment based contingency, in which the largest \textit{committed} generator in any time period is used to determine the contingency requirement in that time period.
-\end{enumerate}
+	1. a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''reserves.csv''' input file;
+	2. a dynamic contingency based on installed capacity decisions, in which the largest \textit{installed} generator is used to determine the contingency requirement for all time periods; and
+	3. dynamic unit commitment based contingency, in which the largest \textit{committed} generator in any time period is used to determine the contingency requirement in that time period.
 
 Note that the two dynamic contigencies are only available if unit commitment is being modeled.
 
@@ -58,7 +55,6 @@ Option 1 (static contingency) is expressed by the following constraint:
 ```math
 \begin{aligned}
 	Contingency = \epsilon^{contingency}
-	\label{eq:statconting}
 \end{aligned}
 ```
 where $\epsilon^{contingency}$ is static contingency requirement in MWs.
@@ -68,15 +64,18 @@ Option 2 (dynamic capacity-based contingency) is expressed by the following cons
 ```math
 \begin{aligned}
 	Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-	\label{eq:dynamconting1}
 \end{aligned}
+```
+
+```math
 \begin{aligned}
 	\alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-	\label{eq:dynamconting2}
 \end{aligned}
+```
+
+```math
 \begin{aligned}
 	\alpha^{Contingency,Aux}_{y,z} \geq M_y \times \Delta^{\text{total}}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-	\label{eq:dynamconting3}
 \end{aligned}
 ```
 where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $\alpha^{Contingency,Aux}_{y,z} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the total installed capacity $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise. Note that if the user specifies contingency option 2, and is also using the linear relaxation of unit commitment constraints, the capacity size parameter for units in the set $\mathcal{UC}$ must still be set to a discrete unit size for this contingency to work as intended.
@@ -86,15 +85,18 @@ Option 3 (dynamic commitment-based contingency) is expressed by the following th
 ```math
 \begin{aligned}
 	Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-	\label{eq:dynamconting4}
 \end{aligned}
+```
+
+```math
 \begin{aligned}
 	Contingency\_Aux_{y,z,t} \leq \nu_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-	\label{eq:dynamconting5}
 \end{aligned}
+```
+
+```math
 \begin{aligned}
 	Contingency\_Aux_{y,z,t} \geq M_y \times \nu_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-	\label{eq:dynamconting6}
 \end{aligned}
 ```
 where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $Contingency\_Aux_{y,z,t} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the commitment state for that generation cluster $\nu_{y,z,t} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$ and time period $t$, and can be 0 otherwise. Note that this dynamic commitment-based contingency can only be specified if discrete unit commitment decisions are used (e.g. it will not work if relaxed unit commitment is used).
@@ -174,11 +176,9 @@ end
 This function creates decision variables related to frequency regulation and reserves provision and constraints setting overall system requirements for regulation and operating reserves.
 
 ** Regulation and reserves decisions**
+- $f_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in Y$ in time $t \in T$ and zone $z \in Z$ to frequency regulation
+- $r_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in Y$ in time $t \in T$ and zone $z \in Z$ to operating reserves up
 
-\begin{itemize}
-	\item $f_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in Y$ in time $t \in T$ and zone $z \in Z$ to frequency regulation
-	\item $r_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in Y$ in time $t \in T$ and zone $z \in Z$ to operating reserves up
-\end{itemize}
 
 We assume frequency regulation is symmetric (provided in equal quantity towards both upwards and downwards regulation). To reduce computational complexity, operating reserves are only modeled in the upwards direction, as downwards reserves requirements are rarely binding in practice.
 
@@ -186,9 +186,7 @@ Storage resources ($y \in \mathcal{O}$) have two pairs of auxilary variables to 
 
 ** Unmet operating reserves**
 
-\begin{itemize}
-	\item $unmet\_rsv_{t} \geq 0$ denotes any shortfall in provision of operating reserves during each time period $t \in T$
-\end{itemize}
+- $unmet\_rsv_{t} \geq 0$ denotes any shortfall in provision of operating reserves during each time period $t \in T$
 
 There is a penalty $C^{rsv}$ added to the objective function to penalize reserve shortfalls, equal to:
 
@@ -205,7 +203,6 @@ Total requirements for frequency regulation (aka primary reserves) in each time 
 ```math
 \begin{aligned}
 	\sum_{y \in Y, z \in Z} f_{y,t,z} \geq \epsilon^{load}_{reg} \times \sum_{z \in Z} \mathcal{D}_{z,t} + \epsilon^{vre}_{reg} \times \sum_{z \in Z} \rho^{max}_{y,z,t} \times \Delta^{\text{total}}_{y,z} \quad \forall t \in T
-	\label{eq:regreq}
 \end{aligned}
 ```
 where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility); $\rho^{max}_{y,z,t}$ is the forecasted capacity factor for variable renewable resource $y \in VRE$ and zone $z$ in time step $t$; $\Delta^{\text{total}}_{y,z}$ is the total installed capacity of variable renewable resources $y \in VRE$ and zone $z$; and $\epsilon^{load}_{reg}$ and $\epsilon^{vre}_{reg}$ are parameters specifying the required frequency regulation as a fraction of forecasted demand and variable renewable generation.
@@ -217,13 +214,11 @@ Total requirements for operating reserves in the upward direction (aka spinning 
 ```math
 \begin{aligned}
 	\sum_{y \in Y, z \in Z} r_{y,z,t} + r^{unmet}_{t} \geq \epsilon^{load}_{rsv} \times \sum_{z \in Z} \mathcal{D}_{z,t} + \epsilon^{vre}_{rsv} \times \sum_{z \in Z} \rho^{max}_{y,z,t} \times \Delta^{\text{total}}_{y,z} + Contingency \quad \forall t \in T
-		\label{eq:rsvreq}
 \end{aligned}
 ```
 
 where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility); $\rho^{max}_{y,z,t}$ is the forecasted capacity factor for variable renewable resource $y \in VRE$ and zone $z$ in time step $t$; $\Delta^{\text{total}}_{y,z}$ is the total installed capacity of variable renewable resources $y \in VRE$ and zone $z$; and $\epsilon^{load}_{rsv}$ and $\epsilon^{vre}_{rsv}$ are parameters specifying the required contingency reserves as a fraction of forecasted demand and variable renewable generation. $Contingency$ is an expression defined in the reserves\_contingency() function meant to represent the largest `N-1' contingency (unplanned generator outage) that the system operator must carry operating reserves to cover and depends on how the user wishes to specify contingency requirements.
 """
-
 function reserves_core(EP::Model, inputs::Dict, UCommit::Int)
 
 	# DEV NOTE: After simplifying reserve changes are integrated/confirmed, should we revise such that reserves can be modeled without UC constraints on?

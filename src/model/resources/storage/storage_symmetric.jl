@@ -19,9 +19,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Sets up variables and constraints specific to storage resources with symmetric charge and discharge capacities. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-# Set up additional variables, constraints, and expressions associated with storage resources with symmetric charge & discharge capacity
-# (e.g. most electrochemical batteries that use same components for charge & discharge)
 function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
+	# Set up additional variables, constraints, and expressions associated with storage resources with symmetric charge & discharge capacity
+	# (e.g. most electrochemical batteries that use same components for charge & discharge)
 	# STOR = 1 corresponds to storage with distinct power and energy capacity decisions but symmetric charge/discharge power ratings
 
 	println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
