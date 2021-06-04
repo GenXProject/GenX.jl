@@ -16,7 +16,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 using GenX
 using Test
-
+#These are just some dummy sample test; The full-grown unit testing module is under active development currently
 @testset "GenX.jl" begin
-    # Write your tests here.
+    @test simple_operation(2.0, 3.0) == 5
+    @test simple_operation(2.1, 3.1)==5.2
+    @test simple_operation(21.0, 31.0)== 52.0
 end

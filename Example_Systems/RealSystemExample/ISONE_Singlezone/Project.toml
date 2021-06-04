@@ -4,7 +4,6 @@ authors = ["Jesse Jenkins", "Nestor Sepulveda", "Dharik Mallapragada", "Aaron Sc
 version = "1.0.0"
 
 [deps]
-GenX = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
 CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Cbc = "9961bab8-2fa3-5c5a-9d89-47fab24efd76"
@@ -27,8 +26,6 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-GenX = "1.0.0"
-julia = "1"
 CPLEX = "0.6.1"
 CSV = "0.6.0"
 Cbc = "0.8.0"
@@ -47,6 +44,7 @@ JuMP = "0.21.3"
 MathProgBase = "0.7.8"
 StatsBase = "0.33.0"
 YAML = "0.4.3"
+julia = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

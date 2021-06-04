@@ -15,14 +15,13 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 push!(LOAD_PATH,"../src/")
-cd("../")
+#=cd("../")
 include(joinpath(pwd(), "package_activate.jl"))
 genx_path = joinpath(pwd(), "src")
-push!(LOAD_PATH, genx_path)
+push!(LOAD_PATH, genx_path)=#
 import DataStructures: OrderedDict
 using GenX
 using Documenter
-#DocumenterTools.genkeys(user="GenXProject", repo="git@github.com:GenXProject/GenX.git")
 DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
 println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
@@ -97,8 +96,8 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/GenXProject/GenX.git",
-    #target = "build",
-    #branch = "main",
-    #devbranch = "main",
-    #push_preview = true,
+    target = "build",
+    branch = "gh-pages",
+    devbranch = "main",
+    push_preview = true,
 )
