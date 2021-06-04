@@ -93,10 +93,9 @@ using CSV           # 0.5.23
 Calculates Root Mean Square Error.
 
 ```math
-RMSE = \\sqrt{\\frac{1}{n}\\Sigma_{i=1}^{n}{\\Big(\\frac{d_i -f_i}{\\sigma_i}\\Big)^2}}
+RMSE = \sqrt{\frac{1}{n}\Sigma_{i=1}^{n}{\Big(\frac{d_i -f_i}{\sigma_i}\Big)^2}}
 ```
 
-CITE: https://towardsdatascience.com/julia-for-data-science-how-to-build-linear-regression-from-scratch-with-julia-6d1521a00611
 """
 function rmse_score(y_true, y_pred)
     errors = y_pred - y_true
@@ -277,28 +276,6 @@ function RemoveConstCols(all_profiles, all_col_names, v=false)
     return all_profiles, all_col_names, ConstData, ConstCols, ConstIdx
 end
 
-"""
-if UseExtremePeriods == 1
-    # INTEGRAL Extrema, not ABSOLUTE Extrema
-    #  - i.e., find DAY (Group) with total max/min, not day including HOUR (Timestep) with max/min
-    cgdf = combine(groupby(InputData, :Group), [c .=> sum for c in OldColNames])
-    cgdf = cgdf[setdiff(1:end, NumDataPoints+1), :]
-    rename!(cgdf, [:Group; OldColNames])
-    (maxGroupLoad, groupWithMaxLoad) = findmax( sum([cgdf[!, Symbol(c)] for c in setdiff(load_col_names, ConstCols) ]) )
-    (minGroupSolar, groupWithMinSolar) = findmin( sum([cgdf[!, Symbol(c)] for c in setdiff(solar_col_names, ConstCols) ]) )
-    (minGroupWind, groupWithMinWind) = findmin( sum([cgdf[!, Symbol(c)] for c in setdiff(wind_col_names, ConstCols) ]) )
-    if v
-        println("Group with Highest Total Load: ", groupWithMaxLoad)
-        println("Group with Lowest Total Solar: ", groupWithMinSolar)
-        println("Group with Lowest Total Wind: ", groupWithMinWind)
-    end
-    ExtremeWksList = unique([MaxMinWksList; groupWithMaxLoad; groupWithMinSolar; groupWithMinWind])
-    if v println("EW: ", ExtremeWksList) end
-else
-    ExtremeWksList = []
-end
-"""
-
 @doc raw"""
 
     get_extreme_period(DF, GDF, profKey, typeKey, statKey,
@@ -414,11 +391,9 @@ Use kmeans or kemoids to cluster raw load profiles and resource capacity factor 
 into representative periods. Use Extreme Periods to capture noteworthy periods or
 periods with notably poor fits.
 
-Inputs
-
 In Load_data.csv, include the following:
 
- - Timesteps_per_Rep_Period - Typically 168 timesteps (e.g., hours) per period, this designates the length
+ - Timesteps\_per\_Rep\_Period - Typically 168 timesteps (e.g., hours) per period, this designates the length
      of each representative period.
  - UseExtremePeriods - Either 1 or 0, this designates whether or not to include
     outliers (by performance or load/resource extreme) as their own representative periods.
@@ -448,8 +423,8 @@ In Load_data.csv, include the following:
     better fits for load profiles over resource capacity factor profiles.
  - WeightTotal - Default 8760, the sum to which the relative weights of representative periods will be scaled.
  - ClusterFuelPrices - Either 1 or 0, this indicates whether or not to use the fuel price
-    time series in Fuels_data.csv in the clustering process. If 'no', this function will still write
-    Fuels_data_clustered.csv with reshaped fuel prices based on the number and size of the
+    time series in Fuels\_data.csv in the clustering process. If 'no', this function will still write
+    Fuels\_data\_clustered.csv with reshaped fuel prices based on the number and size of the
     representative weeks, assuming a constant time series of fuel prices with length equal to the
     number of timesteps in the raw input data.
 """
