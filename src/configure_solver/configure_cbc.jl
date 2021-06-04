@@ -53,7 +53,7 @@ function configure_cbc(solver_settings_path::String)
 		if(haskey(solver_settings, "threads")) Mythreads = solver_settings["threads"] end
 	########################################################################
 
-	OPTIMIZER = set_optimizer_attribute(Cbc.Optimizer,
+	OPTIMIZER = optimizer_with_attributes(Cbc.Optimizer,
 		"seconds" => Myseconds,
 		"logLevel" => MylogLevel,
 		"maxSolutions" => MymaxSolutions,
