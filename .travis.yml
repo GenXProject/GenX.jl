@@ -9,7 +9,7 @@ julia:
 coveralls: true
 branches:
   only:
-    - master
+    - main
     - gh-pages
 os:
   - linux
