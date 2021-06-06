@@ -42,33 +42,3 @@ function dftranspose(df::DataFrame, withhead::Bool)
 		return DataFrame([[names(df)]; collect.(eachrow(df))], [:Row; Symbol.("x",axes(df, 1))])
 	end
 end # End dftranpose()
-
-# function dftranspose(df::DataFrame, withhead::Bool)
-# 	# Extract old column names (as Symbols)
-# 	oldnames_temp = names(df)
-# 	# Convert to String vector and save for use as new row names
-# 	oldnames = Vector{Union{Nothing,String}}(nothing, length(oldnames_temp))
-# 	for r in 1:length(oldnames_temp)
-# 		oldnames[r] = String(oldnames_temp[r])
-# 	end
-# 	if(withhead)
-# 		# Extract first row of data frame (Resources names) (as Strings) and save as new column names
-# 		newnames = string.(df[:,1])
-# 		startcol=2
-# 	else
-# 		startcol=1
-# 	end
-# 	# Collect each of the old columns and tranpose to new rows
-# 	t = DataFrame(permutedims(df[:,startcol]))
-# 	for c in (startcol+1):ncol(df)
-# 		t = vcat(t,DataFrame(permutedims(df[:,c])))
-# 	end
-# 	# Set new column names
-# 	if(withhead)
-# 		t = DataFrame(t,Symbol(newnames[c]))
-# 	end
-# 	# Add new row names vector to data frame
-# 	t = hcat(DataFrame(Row=oldnames[startcol:length(oldnames)]), t)
-# 	# Return transposed data frame
-# 	return t
-# end # End dftranpose()
