@@ -26,33 +26,49 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 ## Note this function is necessary because no stock function to transpose
 ## DataFrames appears to exist.
 ################################################################################
+"""
+   df = dftranspose(df::DataFrame, withhead::Bool)
 
+Returns a transpose of a Dataframe.\n
+Uses approx 
+FIXME: This is for DataFrames@0.20.2, as used in GenX. 
+Versions 0.21+ could use stack and unstack to make further changes while retaining the order
+"""
 function dftranspose(df::DataFrame, withhead::Bool)
-	# Extract old column names (as Symbols)
-	oldnames_temp = names(df)
-	# Convert to String vector and save for use as new row names
-	oldnames = Vector{Union{Nothing,String}}(nothing, length(oldnames_temp))
-	for r in 1:length(oldnames_temp)
-		oldnames[r] = String(oldnames_temp[r])
-	end
-	if(withhead)
-		# Extract first row of data frame (Resources names) (as Strings) and save as new column names
-		newnames = string.(df[:,1])
-		startcol=2
+	if withhead
+		colnames = cat(:Row, Symbol.(df[!,1]), dims=1)
+		return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
 	else
-		startcol=1
+		return DataFrame([[names(df)]; collect.(eachrow(df))], [:Row; Symbol.("x",axes(df, 1))])
 	end
-	# Collect each of the old columns and tranpose to new rows
-	t = DataFrame(permutedims(df[:,startcol]))
-	for c in (startcol+1):ncol(df)
-		t = vcat(t,DataFrame(permutedims(df[:,c])))
-	end
-	# Set new column names
-	if(withhead)
-		t = DataFrame(t,Symbol(newnames[c]))
-	end
-	# Add new row names vector to data frame
-	t = hcat(DataFrame(Row=oldnames[startcol:length(oldnames)]), t)
-	# Return transposed data frame
-	return t
 end # End dftranpose()
+
+# function dftranspose(df::DataFrame, withhead::Bool)
+# 	# Extract old column names (as Symbols)
+# 	oldnames_temp = names(df)
+# 	# Convert to String vector and save for use as new row names
+# 	oldnames = Vector{Union{Nothing,String}}(nothing, length(oldnames_temp))
+# 	for r in 1:length(oldnames_temp)
+# 		oldnames[r] = String(oldnames_temp[r])
+# 	end
+# 	if(withhead)
+# 		# Extract first row of data frame (Resources names) (as Strings) and save as new column names
+# 		newnames = string.(df[:,1])
+# 		startcol=2
+# 	else
+# 		startcol=1
+# 	end
+# 	# Collect each of the old columns and tranpose to new rows
+# 	t = DataFrame(permutedims(df[:,startcol]))
+# 	for c in (startcol+1):ncol(df)
+# 		t = vcat(t,DataFrame(permutedims(df[:,c])))
+# 	end
+# 	# Set new column names
+# 	if(withhead)
+# 		t = DataFrame(t,Symbol(newnames[c]))
+# 	end
+# 	# Add new row names vector to data frame
+# 	t = hcat(DataFrame(Row=oldnames[startcol:length(oldnames)]), t)
+# 	# Return transposed data frame
+# 	return t
+# end # End dftranpose()
