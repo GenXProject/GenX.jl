@@ -30,7 +30,6 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
    df = dftranspose(df::DataFrame, withhead::Bool)
 
 Returns a transpose of a Dataframe.\n
-Uses approx 
 FIXME: This is for DataFrames@0.20.2, as used in GenX. 
 Versions 0.21+ could use stack and unstack to make further changes while retaining the order
 """
