@@ -37,7 +37,7 @@ pages = OrderedDict(
     "Model Function Reference" => [
         "Core" => [
             "Discharge" => "discharge.md",
-            "Investment Discharge" => "investment_discharge.md",
+            #"Investment Discharge" => "investment_discharge.md",
             "Non Served Energy" => "non_served_energy.md",
             "Reserves" => "reserves.md",
             "Transmission" => "transmission.md",
@@ -71,10 +71,13 @@ pages = OrderedDict(
         ]
     ],
     "Methods" => "methods.md",
+    "Solver Configurations" => "solver_configuration.md",
+    "Solving the Model" => "solve_model.md",
     "Additional Features" => "additional_features.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
     "GenX Inputs" => "load_inputs.md",
     "GenX Outputs" => "write_outputs.md",
+    "Unit Testing (Under Development)" => "unit_testing.md"
 )
 makedocs(;
     modules=[GenX],
