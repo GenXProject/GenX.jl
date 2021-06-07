@@ -41,11 +41,34 @@ The Run.jl file in each of the example sub-folders within `Example_Systems/` pro
 6.	Solve the model.
 7.	Write the output files to a specified directory.
 
-Here are step-by-step instructions for running Run.jl:
-1.	Start an instance of the Julia kernel.
-2.	Make your present working directory to be where the Run.jl is located. To do this, you can use the Julia command `julia> cd(“/path/to/directory/containing/file)`, using the actual pathname of the directory containing Run.jl. Note that all your inputs files should be in this directory in addition to Run.jl. Details about the required input files can be found in the documentation linked above or in the examples provided in the folder `Example_Systems/`. You can check your present working directory by running the command `julia> pwd()`.
-3.	Run the script by executing the command `julia> include(“Run.jl”)`.
-4.	After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+Here are step-by-step instructions for running Run.jl, following the two slightly different methods:
+
+### Method 1 
+
+1. Start an instance of the Julia kernel from inside the GenX/ folder (which corresponds to the GenX repo, that you've just cloned) by typing `julia --project="GenX"`.
+2. Go to the package prompt by typing `]`. You will see that you're already within the `(GenX)` environment. Type `activate .` to activate the dependecnies in the environment.
+3. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
+4. Type the back key to come back to the `julia>` prompt.
+5. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy)
+6. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+
+### Method 2
+
+1. Start an instance of the Julia kernel.
+2. Make your present working directory to be where the Run.jl is located. To do this, you can use the Julia command `julia> cd(“/path/to/directory/containing/file)`, using the actual pathname of the directory containing Run.jl. Note that all your inputs files should be in this directory in addition to Run.jl. Details about the required input files can be found in the documentation linked above or in the examples provided in the folder `Example_Systems/`. You can check your present working directory by running the command `julia> pwd()`.
+3. Uncomment the following lines of code at the beginning of the `Run.jl` file (which is currently commented out):
+    `environment_path = "../../../package_activate.jl"`
+    `include(environment_path)`
+4. Run the script by executing the command `julia> include(“Run.jl”)`.
+5. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+
+Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
+
+If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
+1. Uncomment the relevant lines in the `[deps]` and `[compat]` in the Project.toml file within GenX/ folder
+2. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
+3. Set the appropriate solver in the `genx_settings.yml` file
+4. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
