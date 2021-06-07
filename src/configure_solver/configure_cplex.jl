@@ -63,7 +63,7 @@ function configure_cplex(solver_settings_path::String)
     MyBarObjRng = 1e+75 	# Sets the maximum absolute value of the objective function. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/BarObjRng.html
         if(haskey(solver_settings, "BarObjRng")) MyBarObjRng = solver_settings["BarObjRng"] end
     MySolutionType = 2 	# Solution type for LP or QP. See https://www.ibm.com/support/knowledgecenter/hr/SSSA5P_12.8.0/ilog.odms.cplex.help/CPLEX/Parameters/topics/SolutionType.html
-        if(haskey(solver_settings, "SolutionType")) MySolutionType = solver_settings["Crossover"] end
+        if(haskey(solver_settings, "SolutionType")) MySolutionType = solver_settings["SolutionType"] end
   ########################################################################
 
     OPTIMIZER = optimizer_with_attributes(CPLEX.Optimizer,

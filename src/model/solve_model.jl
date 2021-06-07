@@ -37,13 +37,14 @@ function fix_integers(jump_model::Model)
 	## solve() must be run again to solve and getdual veriables
 	##
 	################################################################################
+	values = Dict(v => value(v) for v in all_variables(jump_model))
 	for v in all_variables(jump_model)
 		if is_integer(v)
-            unset_integer(v)
-            fix(v,value(v),force=true)
+            fix(v,values[v],force=true)
+			unset_integer(v)
         elseif is_binary(v)
-            unset_binary(v)
-            fix(v,value(v),force=true)
+            fix(v,values[v],force=true)
+			unset_binary(v)
         end
 	end
 end

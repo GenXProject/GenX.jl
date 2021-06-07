@@ -39,10 +39,10 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
-#=Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
+# Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 using Gurobi
-using CPLEX
-=#
+# using CPLEX
+
 using Clp
 using Cbc
 
