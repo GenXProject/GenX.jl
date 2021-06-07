@@ -74,7 +74,4 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 6. Solve the model using `Run.jl` file.
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
-## Index
 
-```@index
-```
