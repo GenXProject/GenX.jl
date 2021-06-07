@@ -36,10 +36,8 @@ By definition $\mathcal{T}^{start}=\{\left(m-1\right) \times \tau^{period}+1 | m
 
 We need additional variables and constraints to approximate energy exchange between representative periods, while accounting for their chronological occurence in the original input time series data and the possibility that two representative periods may not be adjacent to each other (Fig. \ref{fig:LDESmodel}). To implement this, we introduce a new variable $Q_{o,z, n}$ that models inventory of storage technology $o \in O$ in zone $z$ in each input period $n \in \mathcal{N}$. Additionally we define a function mapping, $f: n \rightarrow m$, that uniquely maps each input period $n$ to its corresponding representative period $m$. This mapping is available as an output of the process used to identify representative periods (E.g. k-means clustering \cite{Mallapragada2018}).
 
-\begin{figure}[h]
-\caption{Modeling inter-period energy exchange via long-duration storage when using representative period temporal resolution to approximate annual grid operations}
-\includegraphics[width=\textwidth]{LDES_approach.png}
-\end{figure}
+![Modeling inter-period energy exchange via long-duration storage when using representative period temporal resolution to approximate annual grid operations](assets/LDES_approach.png)
+*Figure. Modeling inter-period energy exchange via long-duration storage when using representative period temporal resolution to approximate annual grid operations*
 
 The following two equations define the storage inventory at the beginning of each input period $n+1$ as the sum of storage inventory at begining of previous input period $n$ plus change in storage inventory for that period. The latter is approximated by the change in storage inventory in the corresponding representative period, identified per the mapping $f(n)$.  The second constraint relates the storage level of the last input period, $|N|$, with the storage level at the beginning of the first input period. Finally, if the input period is also a representative period, then a third constraint enforces that initial storage level estimated by the intra-period storage balance constraint should equal the initial storage level estimated from the inter-period storage balance constraints.
 
