@@ -37,7 +37,3 @@ The model is usually configured to consider a single future planning year. In th
 ## Uses
 
 From a centralized planning perspective, the GenX model can help to determine the investments needed to supply future electricity demand at minimum cost, as is common in least-cost utility planning or integrated resource planning processes. In the context of liberalized markets, the model can be used by regulators and policy makers for indicative energy planning or policy analysis in order to establish a long-term vision of efficient market and policy outcomes. The model can also be used for techno-economic assessment of emerging electricity generation, storage, and demand-side resources and to enumerate the effect of parametric uncertainty (e.g., technology costs, fuel costs, demand, policy decisions) on the system-wide value or role of different resources.
-
-## Structure of the Model
-
-FILL IN WITH FLOW-THROUGH OF MODEL AS IT RUNS: CONFIGURE MODEL -> CONFIGURE SOLVER ->  INPUTS -> SETUP MODEL -> SOLVE MODEL -> OUTPUTS

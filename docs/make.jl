@@ -36,10 +36,8 @@ pages = OrderedDict(
     ],
     "Model Function Reference" => [
         "Core" => [
-            "Discharge" => [
-                "Discharge" => "discharge.md",
-                "Investment Discharge" => "investment_discharge.md"
-            ],
+            "Discharge" => "discharge.md",
+            "Investment Discharge" => "investment_discharge.md",
             "Non Served Energy" => "non_served_energy.md",
             "Reserves" => "reserves.md",
             "Transmission" => "transmission.md",

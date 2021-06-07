@@ -1,5 +1,5 @@
 # GenX
-# GenX [![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)[![Coverage Status](https://coveralls.io/repos/github/GenXProject/GenX/badge.svg?branch=main)](https://coveralls.io/github/GenXProject/GenX?branch=main)[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://sambuddhac.github.io/GenX.jl/stable) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://sambuddhac.github.io/GenX.jl/dev) [![Build Status](https://github.com/sambuddhac/GenX.jl/badges/master/pipeline.svg)](https://github.com/sambuddhac/GenX.jl/pipelines) [![Coverage](https://github.com/sambuddhac/GenX.jl/badges/master/coverage.svg)](https://github.com/sambuddhac/GenX.jl/commits/master) [![Build Status](https://travis-ci.com/sambuddhac/GenX.jl.svg?branch=master)](https://travis-ci.com/sambuddhac/GenX.jl) [![Build Status](https://ci.appveyor.com/api/projects/status/github/sambuddhac/GenX.jl?svg=true)](https://ci.appveyor.com/project/sambuddhac/GenX-jl) [![Build Status](https://cloud.drone.io/api/badges/sambuddhac/GenX.jl/status.svg)](https://cloud.drone.io/sambuddhac/GenX.jl) [![Build Status](https://api.cirrus-ci.com/github/sambuddhac/GenX.jl.svg)](https://cirrus-ci.com/github/sambuddhac/GenX.jl) [![Coverage](https://codecov.io/gh/sambuddhac/GenX.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/sambuddhac/GenX.jl) [![Coverage](https://coveralls.io/repos/github/sambuddhac/GenX.jl/badge.svg?branch=master)](https://coveralls.io/github/sambuddhac/GenX.jl?branch=master) [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+# GenX [![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)[![Coverage Status](https://coveralls.io/repos/github/GenXProject/GenX/badge.svg?branch=main)](https://coveralls.io/github/GenXProject/GenX?branch=main)[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://sambuddhac.github.io/GenX.jl/stable) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://sambuddhac.github.io/GenX.jl/dev) [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 ## Overview
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. 
 
@@ -23,7 +23,11 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one of the following solvers: A) [Gurobi](https://www.gurobi.com), and B) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Note that using Gurobi and CPLEX requires a valid license on the host machine. Compatibility with open source solvers Clp and [GLPK](https://www.gnu.org/software/glpk/) will be added shortly. The file `juliaenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
+GenX.jl runs on Julia v1.3.0 and JuMP v0.21.3, and is currently setup to use one of the following open-source freely available solvers: A) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems and (B) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems. We also provide the option to use one of these two commercial solvers: C) [Gurobi](https://www.gurobi.com), and D) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Note that using Gurobi and CPLEX requires a valid license on the host machine. There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Running an Instance of GenX`.
+
+The file `juliaenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
+
+You can see all of the packages installed in your Julia environment and their version numbers by running pkg> status on the package manager command line.
 
 ## Documentation
 
@@ -41,11 +45,34 @@ The Run.jl file in each of the example sub-folders within `Example_Systems/` pro
 6.	Solve the model.
 7.	Write the output files to a specified directory.
 
-Here are step-by-step instructions for running Run.jl:
-1.	Start an instance of the Julia kernel.
-2.	Make your present working directory to be where the Run.jl is located. To do this, you can use the Julia command `julia> cd(“/path/to/directory/containing/file)`, using the actual pathname of the directory containing Run.jl. Note that all your inputs files should be in this directory in addition to Run.jl. Details about the required input files can be found in the documentation linked above or in the examples provided in the folder `Example_Systems/`. You can check your present working directory by running the command `julia> pwd()`.
-3.	Run the script by executing the command `julia> include(“Run.jl”)`.
-4.	After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+Here are step-by-step instructions for running Run.jl, following the two slightly different methods:
+
+### Method 1 
+
+1. Start an instance of the Julia kernel from inside the GenX/ folder (which corresponds to the GenX repo, that you've just cloned) by typing `julia --project="GenX"`.
+2. Go to the package prompt by typing `]`. You will see that you're already within the `(GenX)` environment. Type `activate .` to activate the dependecnies in the environment.
+3. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
+4. Type the back key to come back to the `julia>` prompt.
+5. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy)
+6. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+
+### Method 2
+
+1. Start an instance of the Julia kernel.
+2. Make your present working directory to be where the Run.jl is located. To do this, you can use the Julia command `julia> cd(“/path/to/directory/containing/file)`, using the actual pathname of the directory containing Run.jl. Note that all your inputs files should be in this directory in addition to Run.jl. Details about the required input files can be found in the documentation linked above or in the examples provided in the folder `Example_Systems/`. You can check your present working directory by running the command `julia> pwd()`.
+3. Uncomment the following lines of code at the beginning of the `Run.jl` file (which is currently commented out):
+    `environment_path = "../../../package_activate.jl"`
+    `include(environment_path)`
+4. Run the script by executing the command `julia> include(“Run.jl”)`.
+5. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+
+Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
+
+If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
+1. Uncomment the relevant lines in the `[deps]` and `[compat]` in the Project.toml file within GenX/ folder
+2. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
+3. Set the appropriate solver in the `genx_settings.yml` file
+4. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
