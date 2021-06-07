@@ -46,6 +46,12 @@ Modules = [GenX]
 Pages = ["write_storage.jl"]
 ```
 
+## Write Storage Dual
+```@autodocs
+Modules = [GenX]
+Pages = ["write_storagedual.jl"]
+```
+
 ## Write Power
 ```@autodocs
 Modules = [GenX]
@@ -58,18 +64,6 @@ Modules = [GenX]
 Pages = ["write_curtailment.jl"]
 ```
 
-## Write Energy Revenue
-```@autodocs
-Modules = [GenX]
-Pages = ["write_energy_revenue.jl"]
-```
-
-## Write Net Revenue
-```@autodocs
-Modules = [GenX]
-Pages = ["write_net_revenue.jl"]
-```
-
 ## Write Prices
 ```@autodocs
 Modules = [GenX]
@@ -80,4 +74,33 @@ Pages = ["write_price.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_reliability.jl"]
+```
+## Write Energy Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_energy_revenue.jl"]
+```
+
+## Write Subsidy Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_subsidy_revenue.jl"]
+```
+
+## Write Capacity Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_reserve_margin_revenue.jl"]
+```
+
+## Write Energy Share Requirement Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_esr_revenue.jl"]
+```
+
+## Write Net Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_net_revenue.jl"]
 ```
