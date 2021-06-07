@@ -16,6 +16,12 @@ Modules = [GenX]
 Pages = ["write_costs.jl"]
 ```
 
+## Write Emissions
+```@autodocs
+Modules = [GenX]
+Pages = ["write_emissions.jl"]
+```
+
 ## Write Capacities
 ```@autodocs
 Modules = [GenX]
@@ -26,6 +32,12 @@ Pages = ["write_capacity.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_charge.jl"]
+```
+
+## Write Non-served-energy
+```@autodocs
+Modules = [GenX]
+Pages = ["write_nse.jl"]
 ```
 
 ## Write Storage
@@ -44,4 +56,28 @@ Pages = ["write_power.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_curtailment.jl"]
-``` 
+```
+
+## Write Energy Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_energy_revenue.jl"]
+```
+
+## Write Net Revenue
+```@autodocs
+Modules = [GenX]
+Pages = ["write_net_revenue.jl"]
+```
+
+## Write Prices
+```@autodocs
+Modules = [GenX]
+Pages = ["write_price.jl"]
+```
+
+## Write Reliability
+```@autodocs
+Modules = [GenX]
+Pages = ["write_reliability.jl"]
+```

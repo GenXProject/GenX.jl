@@ -14,6 +14,12 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+@doc raw"""
+	write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
+Function for reporting time-dependent CO$_2$ emissions by zone.
+
+"""
 function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
