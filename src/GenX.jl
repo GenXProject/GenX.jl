@@ -81,8 +81,8 @@ include("load_inputs/load_inputs.jl")
 include("time_domain_reduction/time_domain_reduction.jl")
 
 #Core GenX Features
-include("model/core/discharge/discharge.jl")
-include("model/core/discharge/investment_discharge.jl")
+include("model/core/discharge.jl")
+include("model/core/investment_discharge.jl")
 
 include("model/core/non_served_energy.jl")
 include("model/core/ucommit.jl")
