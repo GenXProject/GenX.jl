@@ -63,42 +63,24 @@ where $\epsilon^{contingency}$ is static contingency requirement in MWs.
 Option 2 (dynamic capacity-based contingency) is expressed by the following constraints (Eqs. \ref{eq:dynamconting1} - \ref{eq:dynamconting3}):
 ```math
 \begin{aligned}
-	Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
+	&Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	&\alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	&\alpha^{Contingency,Aux}_{y,z} \geq M_y \times \Delta^{\text{total}}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
 \end{aligned}
 ```
 
-```math
-\begin{aligned}
-	\alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-\end{aligned}
-```
-
-```math
-\begin{aligned}
-	\alpha^{Contingency,Aux}_{y,z} \geq M_y \times \Delta^{\text{total}}_{y,z} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-\end{aligned}
-```
 where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $\alpha^{Contingency,Aux}_{y,z} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the total installed capacity $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise. Note that if the user specifies contingency option 2, and is also using the linear relaxation of unit commitment constraints, the capacity size parameter for units in the set $\mathcal{UC}$ must still be set to a discrete unit size for this contingency to work as intended.
 
 **Dynamic commitment-based contingency**
 Option 3 (dynamic commitment-based contingency) is expressed by the following three sets of constraints (Eqs. \ref{eq:dynamconting4} - \ref{eq:dynamconting6}):
 ```math
 \begin{aligned}
-	Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
+	& Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	& Contingency\_Aux_{y,z,t} \leq \nu_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	& Contingency\_Aux_{y,z,t} \geq M_y \times \nu_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
 \end{aligned}
 ```
 
-```math
-\begin{aligned}
-	Contingency\_Aux_{y,z,t} \leq \nu_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-\end{aligned}
-```
-
-```math
-\begin{aligned}
-	Contingency\_Aux_{y,z,t} \geq M_y \times \nu_{y,z,t} \hspace{4cm} \forall y \in \mathcal{UC}, z \in \mathcal{Z}
-\end{aligned}
-```
 where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $Contingency\_Aux_{y,z,t} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the commitment state for that generation cluster $\nu_{y,z,t} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$ and time period $t$, and can be 0 otherwise. Note that this dynamic commitment-based contingency can only be specified if discrete unit commitment decisions are used (e.g. it will not work if relaxed unit commitment is used).
 """
 function reserves_contingency(EP::Model, inputs::Dict, UCommit::Int)

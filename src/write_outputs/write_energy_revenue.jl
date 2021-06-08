@@ -14,6 +14,11 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+@doc raw"""
+	write_energy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
+
+Function for writing energy revenue from the different generation technologies.
+"""
 function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)

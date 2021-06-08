@@ -35,14 +35,7 @@ pages = OrderedDict(
         "Power Balance" => "power_balance.md"
     ],
     "Model Function Reference" => [
-        "Core" => [
-            "Discharge" => "discharge.md",
-            #"Investment Discharge" => "investment_discharge.md",
-            "Non Served Energy" => "non_served_energy.md",
-            "Reserves" => "reserves.md",
-            "Transmission" => "transmission.md",
-            "Unit Commitment" => "ucommit.md"
-        ],
+        "Core" => "core.md",
         "Resources" => [
             "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
             "Flexible Demand" => "flexible_demand.md",
@@ -63,12 +56,7 @@ pages = OrderedDict(
                 "Thermal No Commit" => "thermal_no_commit.md"
             ]
         ],
-        "Policies" => [
-            "Capacity Reserve Margin" => "cap_reserve_margin.md",
-            "CO2 Capacity" => "co2_cap.md",
-            "Energy Share Requirement" => "energy_share_requirement.md",
-            "Minimum Capacity Requirement" => "minimum_capacity_requirement.md"
-        ]
+        "Policies" => "policies.md"
     ],
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",

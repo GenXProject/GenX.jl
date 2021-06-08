@@ -1,6 +1,6 @@
 # Model Notation
 
-## Table 1: Model Indices and Sets
+## Model Indices and Sets
 ---
 |**Notation** | **Description**|
 | :------------ | :-----------|
@@ -48,7 +48,7 @@ $\mathcal{W} \in \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric generat
 ---
 
 
-## Table 2: Decision Variables
+## Decision Variables
 ---
 |**Notation** | **Description**|
 | :------------ | :-----------|
@@ -86,7 +86,7 @@ $\mathcal{W} \in \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric generat
 ---
 
 
-## Table 3: Parameters
+## Parameters
 ---
 |**Notation** | **Description**|
 | :------------ | :-----------|
