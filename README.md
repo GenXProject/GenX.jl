@@ -51,10 +51,11 @@ Here are step-by-step instructions for running Run.jl, following the two slightl
 
 1. Start an instance of the Julia kernel from inside the GenX/ folder (which corresponds to the GenX repo, that you've just cloned) by typing `julia --project="GenX"`.
 2. Go to the package prompt by typing `]`. You will see that you're already within the `(GenX)` environment. Type `activate .` to activate the dependecnies in the environment.
-3. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
-4. Type the back key to come back to the `julia>` prompt.
-5. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy)
-6. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+3. If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) run `instantiate` from the `(GenX) pkg` prompt.
+4. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
+5. Type the back key to come back to the `julia>` prompt.
+6. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy)
+7. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
 
 ### Method 2
 

@@ -8,8 +8,8 @@ To run the model, first navigate to the example directory at `GenX/Example_Syste
    
 Next, ensure that your settings in `GenX_settings.yml` are correct. The default settings use the solver Gurobi (`Solver: Gurobi`), time domain reduced input data (`TimeDomainReduction: 1`). Other optional policies include minimum capacity requirements, a capacity reserve margin, and more. A rate-based carbon cap of 50 gCO<sub>2</sub> per kWh is specified in the `CO2_cap.csv` input file.
 
-Once the settings are confirmed, run the model with the `Run_test.jl` script in the example directory:
+Once the settings are confirmed, run the model with the `Run.jl` script in the example directory:
 
-`include("Run_test.jl")`
+`include("Run.jl")`
 
-Once the model has completed, results will write to the `output_data` directory.
+Once the model has completed, results will write to the `Results` directory.
