@@ -17,7 +17,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	configure_cbc(solver_settings_path::String)
 
-Reads user-specified solver settings from cbc_settings.yml in the directory specified by the string solver_settings_path.
+Reads user-specified solver settings from cbc\_settings.yml in the directory specified by the string solver\_settings\_path.
 
 Returns a MathOptInterface OptimizerWithAttributes Cbc optimizer instance to be used in the GenX.generate_model() method.
 

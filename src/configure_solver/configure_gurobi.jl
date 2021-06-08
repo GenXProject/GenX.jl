@@ -17,11 +17,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	configure_gurobi(solver_settings_path::String)
 
-Reads user-specified solver settings from gurobi_settings.yml in the directory specified by the string solver_settings_path.
+Reads user-specified solver settings from gurobi\_settings.yml in the directory specified by the string solver\_settings\_path.
 
 Returns a MathOptInterface OptimizerWithAttributes Gurobi optimizer instance to be used in the GenX.generate_model() method.
 
-The Gurobi optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided: 
+The Gurobi optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
  - FeasibilityTol = 1e-6 (Constraint (primal) feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/feasibilitytol.html)
  - OptimalityTol = 1e-6 (Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol)
