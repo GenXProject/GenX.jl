@@ -63,8 +63,8 @@ pages = OrderedDict(
     "Solving the Model" => "solve_model.md",
     "Additional Features" => "additional_features.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
-    "GenX Inputs" => "load_inputs.md",
-    "GenX Outputs" => "write_outputs.md",
+    "GenX Inputs Functions" => "load_inputs.md",
+    "GenX Outputs Functions" => "write_outputs.md",
     "Unit Testing (Under Development)" => "unit_testing.md"
 )
 makedocs(;
