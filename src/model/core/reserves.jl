@@ -60,7 +60,7 @@ Option 1 (static contingency) is expressed by the following constraint:
 where $\epsilon^{contingency}$ is static contingency requirement in MWs.
 
 **Dynamic capacity-based contingency**
-Option 2 (dynamic capacity-based contingency) is expressed by the following constraints (Eqs. \ref{eq:dynamconting1} - \ref{eq:dynamconting3}):
+Option 2 (dynamic capacity-based contingency) is expressed by the following constraints:
 ```math
 \begin{aligned}
 	&Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
@@ -72,7 +72,7 @@ Option 2 (dynamic capacity-based contingency) is expressed by the following cons
 where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $\alpha^{Contingency,Aux}_{y,z} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the total installed capacity $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise. Note that if the user specifies contingency option 2, and is also using the linear relaxation of unit commitment constraints, the capacity size parameter for units in the set $\mathcal{UC}$ must still be set to a discrete unit size for this contingency to work as intended.
 
 **Dynamic commitment-based contingency**
-Option 3 (dynamic commitment-based contingency) is expressed by the following three sets of constraints (Eqs. \ref{eq:dynamconting4} - \ref{eq:dynamconting6}):
+Option 3 (dynamic commitment-based contingency) is expressed by the following set of constraints:
 ```math
 \begin{aligned}
 	& Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
