@@ -40,12 +40,6 @@ Modules = [GenX]
 Pages = ["write_nse.jl"]
 ```
 
-## Write Storage
-```@autodocs
-Modules = [GenX]
-Pages = ["write_storage.jl"]
-```
-
 ## Write Storage Dual
 ```@autodocs
 Modules = [GenX]

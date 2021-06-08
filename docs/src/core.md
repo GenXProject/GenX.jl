@@ -6,12 +6,6 @@ Modules = [GenX]
 Pages = ["discharge.jl"]
 ```
 
-## Investment Discharge
-```@autodocs
-Modules = [GenX]
-Pages = ["investment_discharge.jl"]
-```
-
 ## Non-served Energy
 ```@autodocs
 Modules = [GenX]

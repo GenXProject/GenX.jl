@@ -62,9 +62,3 @@ Pages = ["load_network_data.jl"]
 Modules = [GenX]
 Pages = ["load_period_map.jl"]
 ```
-
-## Reserves Data
-```@autodocs
-Modules = [GenX]
-Pages = ["load_reserves.jl"]
-```
