@@ -111,8 +111,7 @@ $\mathcal{W} \in \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric generat
 |$\pi_{y,z}^{FOM}$ | Fixed O&M cost of technology $y$ in zone $z$ [\$/MW-yr]|
 |$\pi_{y,z}^{FOM,energy}$ | Fixed O&M cost of energy component of technology $y$ in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}$ [\$/MWh-yr]|
 |$\pi_{y,z}^{FOM,charge}$ | Fixed O&M cost of charging power component of technology $y$ in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}$ [\$/MW-yr]|
-|$\pi_{y,z}^{VOM}$ | Variable O&M cost of technology
-|$y$ in zone $z$ [\$/MWh]|
+|$\pi_{y,z}^{VOM}$ | Variable O&M cost of technology $y$ in zone $z$ [\$/MWh]|
 |$\pi_{y,z}^{VOM,charge}$ | Variable O&M cost of charging technology $y$ in zone $z$ - only applicable for storage and demand flexibility resources, $y \in \mathcal{O} \cup \mathcal{DF}$ [\$/MWh]|
 |$\pi_{y,z}^{FUEL}$ | Fuel cost of technology $y$ in zone $z$ [\$/MWh]|
 |$\pi_{y,z}^{START}$ | Startup cost of technology $y$ in zone $z$ [\$/startup]|
