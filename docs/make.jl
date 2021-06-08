@@ -63,12 +63,7 @@ pages = OrderedDict(
                 "Thermal No Commit" => "thermal_no_commit.md"
             ]
         ],
-        "Policies" => [
-            "Capacity Reserve Margin" => "cap_reserve_margin.md",
-            "CO2 Capacity" => "co2_cap.md",
-            "Energy Share Requirement" => "energy_share_requirement.md",
-            "Minimum Capacity Requirement" => "minimum_capacity_requirement.md"
-        ]
+        "Policies" => "policies.md"
     ],
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",

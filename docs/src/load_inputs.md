@@ -9,7 +9,7 @@ Modules = [GenX]
 Pages = ["load_cap_reserve_margin.jl"]
 ```
 
-## $CO_2$ Emissions Cap
+## CO$_2$ Emissions Cap
 ```@autodocs
 Modules = [GenX]
 Pages = ["load_co2_cap.jl"]
