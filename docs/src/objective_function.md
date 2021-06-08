@@ -29,8 +29,15 @@ The seventh summation represents the total cost of not meeting hourly operating 
 
 The eighth summation corresponds to the startup costs incurred by technologies to which unit commitment decisions apply (e.g. $y \in \mathcal{UC}$), equal to the cost of start-up, $\pi^{START}_{y,z}$, times the number of startup events, $\chi_{y,z,t}$, for the cluster of units in each zone and time step (weighted by $\omega_t$).
 
-The last term corresponds to the transmission reinforcement or construction costs, for each transmission line (if modeled). Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$. Note that fixed O\&M and replacement capital costs (depreciation) for existing transmission capacity is treated as a sunk cost and not included explicitly in the GenX objective function.
+The last term corresponds to the transmission reinforcement or construction costs, for each transmission line (if modeled). Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$. Note that fixed O&M and replacement capital costs (depreciation) for existing transmission capacity is treated as a sunk cost and not included explicitly in the GenX objective function.
 
-In summary, the objective function can be understood as the minimization of costs associated with five sets of different decisions: (1) where and how to invest on capacity, (2) how to dispatch or operate that capacity, (3) which consumer demand segments to serve or curtail, (4) how to cycle and commit thermal units subject to unit commitment decisions, (5) and where and how to invest in additional transmission network capacity to increase power transfer capacity between zones. Note however that each of these components are considered jointly and the optimization is performed over the whole problem at once as a monolithic co-optimization problem.
+In summary, the objective function can be understood as the minimization of costs associated with five sets of different decisions:
+1. where and how to invest on capacity,
+2. how to dispatch or operate that capacity,
+3. which consumer demand segments to serve or curtail,
+4. how to cycle and commit thermal units subject to unit commitment decisions,
+5. and where and how to invest in additional transmission network capacity to increase power transfer capacity between zones.
+
+Note however that each of these components are considered jointly and the optimization is performed over the whole problem at once as a monolithic co-optimization problem.
 
 While the objective function is formulated as a cost minimization problem, it is also equivalent to a social welfare maximization problem, with the bulk of demand treated as inelastic and always served, and the utility of consumption for price-elastic consumers represented as a segment-wise approximation, as per the cost of unserved demand summation above.
