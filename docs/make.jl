@@ -41,15 +41,7 @@ pages = OrderedDict(
             "Flexible Demand" => "flexible_demand.md",
             "Hydro" => "hydro_res.md",
             "Must Run" => "must_run.md",
-            "Storage" => [
-                "Storage" => "storage.md",
-                "Investment Charge" => "investment_charge.md",
-                "Investment Energy" => "investment_energy.md",
-                "Long Duration Storage" => "long_duration_storage.md",
-                "Storage All" => "storage_all.md",
-                "Storage Asymmetric" => "storage_asymmetric.md",
-                "Storage Symmetric" => "storage_symmetric.md"
-            ],
+            "Storage" => "storage.md",
             "Thermal" => [
                 "Thermal" => "thermal.md",
                 "Thermal Commit" => "thermal_commit.md",
