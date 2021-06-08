@@ -124,7 +124,7 @@ end
 @doc raw"""
 	thermal_no_commit_reservesEP::Model, inputs::Dict)
 
-This function is called by the thermal_no_commit() function when regulation and reserves constraints are active and defines reserve related constraints for thermal power plants not subject to unit commitment constraints on power plant start-ups and shut-down decisions.
+This function is called by the ```thermal_no_commit()``` function when regulation and reserves constraints are active and defines reserve related constraints for thermal power plants not subject to unit commitment constraints on power plant start-ups and shut-down decisions.
 
 **Maximum contributions to frequency regulation and reserves**
 
@@ -162,7 +162,7 @@ When modeling regulation and spinning reserves, thermal units not subject to uni
 \end{aligned}
 ```
 
-Note there are multiple versions of these constraints in the code in order to avoid creation of unecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. Reg\_Max and/or RSV\_Max = 0)
+Note there are multiple versions of these constraints in the code in order to avoid creation of unecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. ```Reg_Max=0``` and/or ```RSV_Max=0```).
 """
 function thermal_no_commit_reserves(EP::Model, inputs::Dict)
 

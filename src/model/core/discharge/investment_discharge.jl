@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements.
 
-The total capacity of each resource is defined as the sum of the existing capacity plus the newly invested capacity minus any retired capacity (Eq. \ref{eq:totalpowercap}). Note for storage resources, additional energy and charge power capacity decisions and constraints are defined in the storage module.
+The total capacity of each resource is defined as the sum of the existing capacity plus the newly invested capacity minus any retired capacity. Note for storage resources, additional energy and charge power capacity decisions and constraints are defined in the storage module.
 
 ```math
 \begin{aligned}
@@ -35,7 +35,7 @@ One cannot retire more capacity than existing capacity.
 \end{aligned}
 ```
 
-For resources where $\overline{\Omega_{y,z}}$ and $\underline{\Omega_{y,z}}$ is defined, then we impose constraints on minimum (Eq. \ref{eq:mincap}) and maximum power capacity (Eq. \ref{eq:maxcap}).
+For resources where $\overline{\Omega_{y,z}}$ and $\underline{\Omega_{y,z}}$ is defined, then we impose constraints on minimum and maximum power capacity.
 ```math
 \begin{aligned}
 & \Delta^{total}_{y,z} \leq \overline{\Omega}_{y,z}

@@ -29,7 +29,7 @@ Instead of modeling capacity reserve margin requirement (a.k.a. capacity market 
 \end{aligned}
 ```
 
-Note that multiple capacity reserve margin requirements can be specified covering different individual zones or aggregations of zones, where the total number of constraints is specified by the GenX settings parameter '''CapacityReserveMargin''' (where this parameter should be an integer value > 0).
+Note that multiple capacity reserve margin requirements can be specified covering different individual zones or aggregations of zones, where the total number of constraints is specified by the GenX settings parameter ```CapacityReserveMargin``` (where this parameter should be an integer value > 0).
 """
 function cap_reserve_margin(EP::Model, inputs::Dict, setup::Dict)
 	# capacity reserve margin constraint

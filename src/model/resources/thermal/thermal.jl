@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 The thermal module creates decision variables, expressions, and constraints related to thermal power plants e.g. coal, oil or natural gas steam plants, natural gas combined cycle and combustion turbine plants, nuclear, hydrogen combustion etc.
 
-This module uses the following 'helper' functions in separate files: thermal_commit() for thermal resources subject to unit commitment decisions and constraints (if any) and thermal_no_commit() for thermal resources not subject to unit commitment (if any).
+This module uses the following 'helper' functions in separate files: ```thermal_commit()``` for thermal resources subject to unit commitment decisions and constraints (if any) and ```thermal_no_commit()``` for thermal resources not subject to unit commitment (if any).
 """
 function thermal(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
 
