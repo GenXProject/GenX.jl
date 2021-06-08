@@ -21,3 +21,9 @@ Pages = ["configure_cplex.jl"]
 Modules = [GenX]
 Pages = ["configure_clp.jl"]
 ```
+
+## Configuring Cbc
+```@autodocs
+Modules = [GenX]
+Pages = ["configure_cbc.jl"]
+```
