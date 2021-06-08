@@ -60,7 +60,7 @@ $\mathcal{W} \in \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric generat
 |$\Delta_{y,z}^{total} \in \mathbb{R}_+$ | Total installed capacity of technology $y$ in zone $z$ [MW]|
 |$\Delta_{y,z}^{total,energy} \in \mathbb{R}_+$ | Total installed energy capacity of technology $y$ in zone $z$  - only applicable for storage resources, $y \in \mathcal{O}$ [MWh]|
 |$\Delta_{y,z}^{total,charge} \in \mathbb{R}_+$ | Total installed charging power capacity of technology $y$ in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}^{asym}$ [MW]|
-|$\Delta \varphi^{max}_{l} $ | Additional transmission capacity added to line $l$ [MW] |
+|$\bigtriangleup\varphi^{max}_{l}$ | Additional transmission capacity added to line $l$ [MW] |
 |$\Theta_{y,z,t} \in \mathbb{R}_+$ | Energy injected into the grid by technology $y$ at time step $t$ in zone $z$ [MWh]|
 |$\Pi_{y,z,t} \in \mathbb{R}_+$ | Energy withdrawn from grid by technology $y$ at time step $t$ in zone $z$ [MWh]|
 |$\Gamma_{y,z,t} \in \mathbb{R}_+$ | Stored energy level of technology $y$ at end of time step $t$ in zone $z$ [MWh]|
