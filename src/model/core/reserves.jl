@@ -22,7 +22,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	reserves(EP::Model, inputs::Dict, UCommit::Int)
 
-This function sets up reserve decisions and constraints, using the ```reserves\_core()```` and ```reserves\_contingency()```` functions.
+This function sets up reserve decisions and constraints, using the reserves_core()` and reserves_contingency()` functions.
 """
 function reserves(EP::Model, inputs::Dict, UCommit::Int)
 
@@ -45,8 +45,8 @@ Contingency reserves represent requirements for upward ramping capability within
 
 There are three options for the $Contingency$ expression, depending on user settings:
 	1. a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''reserves.csv''' input file;
-	2. a dynamic contingency based on installed capacity decisions, in which the largest \textit{installed} generator is used to determine the contingency requirement for all time periods; and
-	3. dynamic unit commitment based contingency, in which the largest \textit{committed} generator in any time period is used to determine the contingency requirement in that time period.
+	2. a dynamic contingency based on installed capacity decisions, in which the largest 'installed' generator is used to determine the contingency requirement for all time periods; and
+	3. dynamic unit commitment based contingency, in which the largest 'committed' generator in any time period is used to determine the contingency requirement in that time period.
 
 Note that the two dynamic contigencies are only available if unit commitment is being modeled.
 
