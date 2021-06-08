@@ -35,14 +35,7 @@ pages = OrderedDict(
         "Power Balance" => "power_balance.md"
     ],
     "Model Function Reference" => [
-        "Core" => [
-            "Discharge" => "discharge.md",
-            #"Investment Discharge" => "investment_discharge.md",
-            "Non Served Energy" => "non_served_energy.md",
-            "Reserves" => "reserves.md",
-            "Transmission" => "transmission.md",
-            "Unit Commitment" => "ucommit.md"
-        ],
+        "Core" => "core.md",
         "Resources" => [
             "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
             "Flexible Demand" => "flexible_demand.md",
