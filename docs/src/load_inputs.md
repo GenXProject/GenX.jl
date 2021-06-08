@@ -3,23 +3,6 @@
 Modules = [GenX]
 Pages = ["load_inputs.jl"]
 ```
-## Capacity Reserve Margin
-```@autodocs
-Modules = [GenX]
-Pages = ["load_cap_reserve_margin.jl"]
-```
-
-## CO$_2$ Emissions Cap
-```@autodocs
-Modules = [GenX]
-Pages = ["load_co2_cap.jl"]
-```
-
-## Energy Share Requirement
-```@autodocs
-Modules = [GenX]
-Pages = ["load_energy_share_requirement.jl"]
-```
 
 ## Fuels Data
 ```@autodocs
@@ -45,16 +28,34 @@ Modules = [GenX]
 Pages = ["load_load_data.jl"]
 ```
 
+## Transmission Network
+```@autodocs
+Modules = [GenX]
+Pages = ["load_network_data.jl"]
+```
+
 ## Minimum Capacity Requirements
 ```@autodocs
 Modules = [GenX]
 Pages = ["load_minimum_capacity_requirement.jl"]
 ```
 
-## Transmission Network
+## Capacity Reserve Margin
 ```@autodocs
 Modules = [GenX]
-Pages = ["load_network_data.jl"]
+Pages = ["load_cap_reserve_margin.jl"]
+```
+
+## CO$_2$ Emissions Cap
+```@autodocs
+Modules = [GenX]
+Pages = ["load_co2_cap.jl"]
+```
+
+## Energy Share Requirement
+```@autodocs
+Modules = [GenX]
+Pages = ["load_energy_share_requirement.jl"]
 ```
 
 ## Mapping Representative Time Periods
