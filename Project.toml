@@ -24,7 +24,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-CSV = "0.6.0"
+CSV = "0.6.0, 0.8"
 Cbc = "0.8.0"
 Clp = "0.8.1"
 Clustering = "0.14.2"
