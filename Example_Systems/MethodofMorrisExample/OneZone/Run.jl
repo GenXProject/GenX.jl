@@ -16,10 +16,10 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 cd(dirname(@__FILE__))
 settings_path = joinpath(pwd(), "Settings")
-#=
+
 environment_path = "../../../package_activate.jl"
 include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
-=#
+
 ### Set relevant directory paths
 src_path = "../../../src/"
 
@@ -81,7 +81,7 @@ if mysetup["MethodofMorris"] == 1
     morris(EP,inpath,mysetup,myinputs,outpath)
 end
 
-if mysetup["MonteCarlo"] == 1
+#=if mysetup["MonteCarlo"] == 1
     println("Starting Monte Carlo analysis")
     montecarlo(EP,inpath,mysetup,myinputs,outpath)
-end
+end=#
