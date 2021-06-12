@@ -76,7 +76,12 @@ if mysetup["ModelingToGenerateAlternatives"] == 1
     mga(EP,inpath,mysetup,myinputs,outpath)
 end
 
-if mysetup["MEthodofMorris"] == 1
+if mysetup["MethodofMorris"] == 1
     println("Starting Global sensitivity analysis with Method of Morris")
     morris(EP,inpath,mysetup,myinputs,outpath)
+end
+
+if mysetup["MonteCarlo"] == 1
+    println("Starting Monte Carlo analysis")
+    montecarlo(EP,inpath,mysetup,myinputs,outpath)
 end

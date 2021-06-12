@@ -1,0 +1,5 @@
+Resource,Zone,Lower_bound,Upper_bound,Parameter
+natural_gas_combined_cycle,1,-10,10,Inv_Cost_per_Mwyr
+solar_pv,1,-10,10,Inv_Cost_per_Mwyr
+onshore_wind,1,-10,10,Inv_Cost_per_Mwyr
+battery,1,-10,10,Inv_Cost_per_Mwyr

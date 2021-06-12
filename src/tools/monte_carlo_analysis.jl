@@ -21,19 +21,22 @@ We are in the process of implementing Method of Morris for global sensitivity an
 """
 function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
 
-    Morris_range = CSV.read(string(path, "/Method_of_morris_range.csv"), header=true)
+    MonteCarlo_range = CSV.read(string(path, "/Monte_carlo_range.csv"), header=true)
 
-    f1 = function(p)
-        print(p)
-        myinputs["dfGen"][!,:Inv_Cost_per_MWyr]=p
-        EP = generate_model(mysetup, myinputs, OPTIMIZER)
-        EP, solve_time = solve_model(EP, mysetup)
-        [objective_value(EP)]
+    no_products = length(MonteCarlo_range[!, :Inv_Cost_per_MWyr_variance])
+    N = 4
+    samples = Array{Float64}(undef,no_products,N)
+
+    for j in 1:no_products
+        samples[j,:] = rand( Normal(myinputs["dfGen"][j,:Inv_Cost_per_MWyr], myinputs["dfGen"][1,:sigma]/10), N)
     end
 
-    A = myinputs["dfGen"][!,:Inv_Cost_per_MWyr]
-    B = myinputs["dfGen"][!,:sigma]
-    C = [A B]
-    C = mapslices(x->[x], C, dims=2)[:]
-    m = gsa(f1,Morris(total_num_trajectory=10,num_trajectory=3),C)
+    pi_samples = Array{Float64}(undef, N)
+    for k in 1:N
+        myinputs["dfGen"][!,:Inv_Cost_per_MWyr]=samples[:,k]
+        EP = generate_model(mysetup, myinputs, OPTIMIZER)
+        EP, solve_time = solve_model(EP, mysetup)
+        pi_samples[k] = objective_value(EP)
+    end
+
 end
