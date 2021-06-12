@@ -1,0 +1,5 @@
+Resource,Zone,Inv_Cost_per_MWyr
+natural_gas_combined_cycle,1,100
+solar_pv,1,100
+onshore_wind,1,100
+battery,1,100
