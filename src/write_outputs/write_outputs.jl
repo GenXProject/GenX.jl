@@ -35,10 +35,16 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		sep = "\U005c"
 	end
 
-    # Find closest unused ouput directory name and create it
-    # FIXME: In the future this behaviour could be controled using a flag in setup.
-    path = choose_output_dir(path)
-    mkdir(path)
+    if setup["OverwriteResults"] == 1
+        # Overwrite existing results if dir exists
+        if !(isdir(path))
+		    mkdir(path)
+	    end
+    else
+        # Find closest unused ouput directory name and create it
+        path = choose_output_dir(path)
+        mkdir(path)
+    end
 
 	# https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
 	status = termination_status(EP)
