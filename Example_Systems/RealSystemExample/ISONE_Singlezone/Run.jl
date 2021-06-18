@@ -32,6 +32,7 @@ println("Loading packages")
 push!(LOAD_PATH, src_path)
 using GenX
 using YAML
+using BenchmarkTools
 
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
 mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
@@ -72,6 +73,7 @@ myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 println("Writing Output")
 outpath = "$inpath/Results"
 write_outputs(EP, outpath, mysetup, myinputs)
+#println(@btime write_outputs(EP, outpath, mysetup, myinputs))
 if mysetup["ModelingToGenerateAlternatives"] == 1
     println("Starting Model to Generate Alternatives (MGA) Iterations")
     mga(EP,inpath,mysetup,myinputs,outpath)
