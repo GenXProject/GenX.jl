@@ -28,10 +28,12 @@ returns: Dict (dictionary) object containing all data inputs
 function load_inputs(setup::Dict,path::AbstractString)
 
 	## Use appropriate directory separator depending on Mac or Windows config
-	if setup["MacOrWindows"]=="Mac"
+	if Sys.isunix()
 		sep = "/"
-	else
+    elseif Sys.iswindows()
 		sep = "\U005c"
+    else
+        sep = "/"
 	end
 
 	data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
