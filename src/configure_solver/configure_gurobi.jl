@@ -77,6 +77,7 @@ function configure_gurobi(solver_settings_path::String)
 		"BarConvTol" => MyBarConvTol,
 		"NumericFocus" => MyNumericFocus,
 		"Crossover" =>  MyCrossover
+	
 	)
 
 	return OPTIMIZER
