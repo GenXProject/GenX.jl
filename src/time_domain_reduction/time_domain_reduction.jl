@@ -771,10 +771,12 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### Step 6: Print to File
 
-    if mysetup["MacOrWindows"]=="Mac"
+    if Sys.isunix()
 		sep = "/"
-	else
+    elseif Sys.iswindows()
 		sep = "\U005c"
+    else
+        sep = "/"
 	end
 
     mkpath(joinpath(inpath, TimeDomainReductionFolder))
