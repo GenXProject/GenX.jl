@@ -20,6 +20,8 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 	Z = inputs["Z"]     # Number of zones
 	SEG = inputs["SEG"] # Number of load curtailment segments
 	STOR_ALL = inputs["STOR_ALL"]
+	println(STOR_ALL)
+	println(Z)
 	FLEX = inputs["FLEX"]
 	## Power balance for each zone
 	dfPowerBalance = Array{Any}
@@ -39,11 +41,11 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 				sum(value.(EP[:vP][dfGen[(dfGen[!,:HYDRO].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
 	     	dfTemp1[t+rowoffset,2] = sum(value.(EP[:vP][dfGen[(dfGen[!,:STOR].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
 	     	dfTemp1[t+rowoffset,3] = 0
-	     	if !isempty(STOR_ALL)
+	     	if !isempty(intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
 	     	    dfTemp1[t+rowoffset,3] = -sum(value.(EP[:vCHARGE][y,t]) for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
 	     	end
 	     	dfTemp1[t+rowoffset,4] = 0
-	     	if !isempty(FLEX)
+	     	if !isempty(intersect(dfGen[dfGen.Zone.==z,:R_ID],FLEX))
 	     	    dfTemp1[t+rowoffset,4] = sum(value.(EP[:vCHARGE_FLEX][y,t]) for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],FLEX))
 	     	end
 	     	dfTemp1[t+rowoffset,5] = -sum(value.(EP[:vP][dfGen[(dfGen[!,:FLEX].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))

@@ -461,7 +461,11 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     if v println("Loading inputs") end
     myinputs=Dict()
-    myinputs = load_inputs(mysetup,inpath)
+    # Define a local version of the setup so that you can modify the mysetup["ParameterScale] value to be zero in case it is 1
+    mysetup_local = mysetup
+    # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
+    mysetup_local["ParameterScale"]=0  # Performing cluster and report outputs in user-provided units
+    myinputs = load_inputs(mysetup_local,inpath)
 
     if v println() end
 
@@ -776,9 +780,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
     ### Load_data_clustered.csv
-    if mysetup["ParameterScale"] == 1
-        LPOutputData = LPOutputData .* ModelScalingFactor
-    end
     load_in = DataFrame(CSV.File(string(inpath,sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
     load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
     load_in[1:length(W),:Sub_Weights] .= W
