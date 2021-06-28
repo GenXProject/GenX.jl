@@ -99,3 +99,6 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
 
+## pygenx: Python interface for GenX
+
+Python users can now run GenX from a thin-python-wrapper interface, developed by [Daniel Olsen](https://github.com/danielolsen). This tool is called `pygenx` and can be cloned from the github page: [pygenx](https://github.com/danielolsen/pygenx). It needs installation of Julia 1.3 and a clone of GenX repo along with your python installation. 
