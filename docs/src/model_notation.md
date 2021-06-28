@@ -52,8 +52,9 @@ $\mathcal{W} \in \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric generat
 ---
 |**Notation** | **Description**|
 | :------------ | :-----------|
+|$\Omega_{y,z} \in \mathbb{R}_+$ | Installed capacity of resource $y$  in zone $z$ [MWh]|
 |$\Omega^{energy}_{y,z} \in \mathbb{R}_+$ | Installed energy capacity of resource $y$  in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}$ [MWh]|
-|$\Omega^{charge}_{y,z} \in \mathbb{R}_+$ | Installed charging power capacity of resource $y$  in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}$ [MW]|
+|$\Omega^{charge}_{y,z} \in \mathbb{R}_+$ | Installed charging power capacity of resource $y$  in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}^{asym}$ [MW]|
 |$\Delta_{y,z} \in \mathbb{R}_+$ | Retired capacity of technology $y$ from existing capacity in zone $z$ [MW]|
 |$\Delta^{energy}_{y,z} \in \mathbb{R}_+$ | Retired energy capacity of technology $y$ from existing capacity in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}$[MWh]|
 |$\Delta^{charge}_{y,z} \in \mathbb{R}_+$ | Retired charging capacity of technology $y$ from existing capacity in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}^{asym}$[MW]|

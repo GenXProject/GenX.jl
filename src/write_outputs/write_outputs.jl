@@ -76,8 +76,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	write_nse(path, sep, inputs, setup, EP)
 	write_power_balance(path, sep, inputs, setup, EP)
 	if inputs["Z"] > 1
-		write_transmission_flows(path, sep, inputs, EP)
-		write_transmission_losses(path, sep, inputs, EP)
+		write_transmission_flows(path, sep, setup, inputs, EP)
+		write_transmission_losses(path, sep, inputs, setup, EP)
 		if setup["NetworkExpansion"] == 1
 			write_nw_expansion(path, sep, inputs, setup, EP)
 		end

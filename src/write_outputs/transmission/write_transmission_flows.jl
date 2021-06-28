@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_transmission_flows(path::AbstractString, sep::AbstractString, inputs::Dict, EP::Model)
+function write_transmission_flows(path::AbstractString, sep::AbstractString, setup::Dict, inputs::Dict, EP::Model)
 	# Transmission related values
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -22,7 +22,11 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, inp
 	# Power flows on transmission lines at each time step
 	dfFlow = DataFrame(Line = 1:L, Sum = Array{Union{Missing,Float32}}(undef, L))
 	for i in 1:L
-		dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:])
+		if setup["ParameterScale"] == 1
+			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:]) * ModelScalingFactor
+		else
+			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:])
+		end
 	end
 	dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW])))
 	auxNew_Names=[Symbol("Line");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
