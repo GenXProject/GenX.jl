@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_transmission_losses(path::AbstractString, sep::AbstractString, inputs::Dict, EP::Model)
+function write_transmission_losses(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	L = inputs["L"]     # Number of transmission lines
@@ -26,7 +26,11 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 		if i in inputs["LOSS_LINES"]
 			tlosses[i,:] = value.(EP[:vTLOSS])[i,:]
 		end
-		dfTLosses[!,:Sum][i] = sum(tlosses[i,:])
+		if setup["ParameterScale"] == 1
+			dfTLosses[!,:Sum][i] = sum(tlosses[i,:]) * ModelScalingFactor
+		else
+			dfTLosses[!,:Sum][i] = sum(tlosses[i,:])
+		end
 	end
 	dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses))
 	auxNew_Names=[Symbol("Line");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
