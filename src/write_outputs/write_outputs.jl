@@ -29,10 +29,12 @@ Function for the entry-point for writing the different output files. From here, 
 function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
 	## Use appropriate directory separator depending on Mac or Windows config
-	if setup["MacOrWindows"]=="Mac"
+	if Sys.isunix()
 		sep = "/"
-	else
+    elseif Sys.iswindows()
 		sep = "\U005c"
+    else
+        sep = "/"
 	end
 
     if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
