@@ -22,17 +22,24 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 	# Power losses for transmission between zones at each time step
 	dfTLosses = DataFrame(Line = 1:L, Sum = Array{Union{Missing,Float32}}(undef, L))
 	tlosses = zeros(L,T)
-	for i in 1:L
-		if i in inputs["LOSS_LINES"]
-			tlosses[i,:] = value.(EP[:vTLOSS])[i,:]
-		end
-		if setup["ParameterScale"] == 1
+	if setup["ParameterScale"] == 1
+		for i in 1:L
+			if i in inputs["LOSS_LINES"]
+				tlosses[i,:] = value.(EP[:vTLOSS])[i,:] * ModelScalingFactor
+			end
 			dfTLosses[!,:Sum][i] = sum(tlosses[i,:]) * ModelScalingFactor
-		else
+		end
+		dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses)) * ModelScalingFactor
+	else
+		for i in 1:L
+			if i in inputs["LOSS_LINES"]
+				tlosses[i,:] = value.(EP[:vTLOSS])[i,:]
+			end
 			dfTLosses[!,:Sum][i] = sum(tlosses[i,:])
 		end
+		dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses))		
 	end
-	dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses))
+	
 	auxNew_Names=[Symbol("Line");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfTLosses,auxNew_Names)
 	total = convert(DataFrame, ["Total" sum(dfTLosses[!,:Sum]) fill(0.0, (1,T))])

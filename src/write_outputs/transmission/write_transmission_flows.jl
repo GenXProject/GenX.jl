@@ -21,14 +21,17 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, set
 	L = inputs["L"]     # Number of transmission lines
 	# Power flows on transmission lines at each time step
 	dfFlow = DataFrame(Line = 1:L, Sum = Array{Union{Missing,Float32}}(undef, L))
-	for i in 1:L
-		if setup["ParameterScale"] == 1
+	if setup["ParameterScale"] == 1
+		for i in 1:L
 			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:]) * ModelScalingFactor
-		else
+		end
+		dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW]))) * ModelScalingFactor
+	else
+		for i in 1:L
 			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:])
 		end
+		dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW])))
 	end
-	dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW])))
 	auxNew_Names=[Symbol("Line");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfFlow,auxNew_Names)
 	total = convert(DataFrame, ["Total" sum(dfFlow[!,:Sum]) fill(0.0, (1,T))])
