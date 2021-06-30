@@ -25,7 +25,7 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, set
 		for i in 1:L
 			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:]) * ModelScalingFactor
 		end
-		dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW]))) * ModelScalingFactor
+		dfFlow = hcat(dfFlow, convert(DataFrame, (value.(EP[:vFLOW])) * ModelScalingFactor))
 	else
 		for i in 1:L
 			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:])
