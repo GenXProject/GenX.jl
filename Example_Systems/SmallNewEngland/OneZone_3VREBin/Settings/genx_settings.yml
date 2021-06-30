@@ -1,4 +1,4 @@
-MacOrWindows: Mac  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
+#MacOrWindows: Mac  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
 OverwriteResults: 0 # Overwrite existing results in output folder or create a new one; 0 = create new folder; 1 = overwrite existing results
 PrintModel: 0 # Write the model formulation as an output; 0 = active; 1 = not active
 NetworkExpansion: 0 # Transmission network expansionl; 0 = not active; 1 = active systemwide
