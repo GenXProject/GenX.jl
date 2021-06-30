@@ -29,7 +29,7 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 			end
 			dfTLosses[!,:Sum][i] = sum(tlosses[i,:]) * ModelScalingFactor
 		end
-		dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses)) * ModelScalingFactor
+		dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses * ModelScalingFactor))
 	else
 		for i in 1:L
 			if i in inputs["LOSS_LINES"]
