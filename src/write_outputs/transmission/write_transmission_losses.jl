@@ -27,7 +27,7 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 			if i in inputs["LOSS_LINES"]
 				tlosses[i,:] = value.(EP[:vTLOSS])[i,:] * ModelScalingFactor
 			end
-			dfTLosses[!,:Sum][i] = sum(tlosses[i,:]) * ModelScalingFactor
+			dfTLosses[!,:Sum][i] = sum(inputs["omega"].* tlosses[i,:]) * ModelScalingFactor
 		end
 		dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses * ModelScalingFactor))
 	else
@@ -35,7 +35,7 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 			if i in inputs["LOSS_LINES"]
 				tlosses[i,:] = value.(EP[:vTLOSS])[i,:]
 			end
-			dfTLosses[!,:Sum][i] = sum(tlosses[i,:])
+			dfTLosses[!,:Sum][i] = sum(inputs["omega"].* tlosses[i,:])
 		end
 		dfTLosses = hcat(dfTLosses, convert(DataFrame, tlosses))		
 	end
@@ -44,7 +44,12 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 	rename!(dfTLosses,auxNew_Names)
 	total = convert(DataFrame, ["Total" sum(dfTLosses[!,:Sum]) fill(0.0, (1,T))])
 	for t in 1:T
-		total[!,t+2] .= sum(dfTLosses[!,Symbol("t$t")][1:L])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+2] .= sum(dfTLosses[!,Symbol("t$t")][1:L])
+		elseif v"1.5" <= VERSION < v"1.6"
+			total[:,t+2] .= sum(dfTLosses[:,Symbol("t$t")][1:L])
+		end
+		
 	end
 	rename!(total,auxNew_Names)
 	dfTLosses = vcat(dfTLosses, total)

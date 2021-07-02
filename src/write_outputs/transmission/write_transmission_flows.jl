@@ -23,12 +23,12 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, set
 	dfFlow = DataFrame(Line = 1:L, Sum = Array{Union{Missing,Float32}}(undef, L))
 	if setup["ParameterScale"] == 1
 		for i in 1:L
-			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:]) * ModelScalingFactor
+			dfFlow[!,:Sum][i] = sum(inputs["omega"].* (value.(EP[:vFLOW])[i,:])) * ModelScalingFactor
 		end
 		dfFlow = hcat(dfFlow, convert(DataFrame, (value.(EP[:vFLOW])) * ModelScalingFactor))
 	else
 		for i in 1:L
-			dfFlow[!,:Sum][i] = sum(value.(EP[:vFLOW])[i,:])
+			dfFlow[!,:Sum][i] = sum(inputs["omega"].* (value.(EP[:vFLOW])[i,:]))
 		end
 		dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW])))
 	end
@@ -36,7 +36,12 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, set
 	rename!(dfFlow,auxNew_Names)
 	total = convert(DataFrame, ["Total" sum(dfFlow[!,:Sum]) fill(0.0, (1,T))])
 	for t in 1:T
-		total[!,t+2] .= sum(dfFlow[!,Symbol("t$t")][1:L])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+2] .= sum(dfFlow[!,Symbol("t$t")][1:L])
+		elseif v"1.5" <= VERSION < v"1.6"
+			total[:,t+2] .= sum(dfFlow[:,Symbol("t$t")][1:L])
+		end
+		
 	end
 	rename!(total,auxNew_Names)
 	dfFlow = vcat(dfFlow, total)

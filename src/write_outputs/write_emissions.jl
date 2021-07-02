@@ -74,7 +74,11 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 			rename!(dfEmissions,auxNew_Names)
 			total = convert(DataFrame, ["Total" zeros(1,inputs["NCO2Cap"]) sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))])
 			for t in 1:T
-				total[!,t+inputs["NCO2Cap"]+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
+				if v"0.3" <= VERSION < v"0.4"
+					total[!,t+inputs["NCO2Cap"]+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
+				elseif v"0.5" <= VERSION < v"0.6"
+					total[:,t+inputs["NCO2Cap"]+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
+				end
 			end
 			rename!(total,auxNew_Names)
 			dfEmissions = vcat(dfEmissions, total)
@@ -83,7 +87,11 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 			rename!(dfEmissions,auxNew_Names)
 			total = convert(DataFrame, ["Total" sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))])
 			for t in 1:T
-				total[!,t+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
+				if v"0.3" <= VERSION < v"0.4"
+					total[!,t+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
+				elseif v"0.5" <= VERSION < v"0.6"
+					total[:,t+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
+				end
 			end
 			rename!(total,auxNew_Names)
 			dfEmissions = vcat(dfEmissions, total)
@@ -110,7 +118,11 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 		rename!(dfEmissions,auxNew_Names)
 		total = convert(DataFrame, ["Total" sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))])
 		for t in 1:T
-			total[!,t+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
+			if v"1.3" <= VERSION < v"1.4"
+				total[!,t+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
+			elseif v"1.5" <= VERSION < v"1.6"
+				total[:,t+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
+			end
 		end
 		rename!(total,auxNew_Names)
 		dfEmissions = vcat(dfEmissions, total)
