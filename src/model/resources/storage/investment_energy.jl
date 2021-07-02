@@ -59,7 +59,7 @@ In addition, this function adds investment and fixed O\&M related costs related 
 """
 function investment_energy(EP::Model, inputs::Dict)
 
-	println("Storage Investment Module")
+	#println("Storage Investment Module")
 
 	dfGen = inputs["dfGen"]
 

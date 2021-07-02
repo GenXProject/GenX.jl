@@ -59,7 +59,7 @@ When not modeling regulation and reserves, thermal units not subject to unit com
 """
 function thermal_no_commit(EP::Model, inputs::Dict, Reserves::Int)
 
-	println("Thermal (No Unit Commitment) Resources Module")
+	#println("Thermal (No Unit Commitment) Resources Module")
 
 	dfGen = inputs["dfGen"]
 

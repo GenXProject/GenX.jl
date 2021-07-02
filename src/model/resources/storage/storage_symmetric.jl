@@ -24,7 +24,7 @@ function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
 	# (e.g. most electrochemical batteries that use same components for charge & discharge)
 	# STOR = 1 corresponds to storage with distinct power and energy capacity decisions but symmetric charge/discharge power ratings
 
-	println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
+	#println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
 
 	dfGen = inputs["dfGen"]
 

@@ -169,5 +169,5 @@ include("write_outputs/write_outputs.jl")
 include("simple_operation.jl")
 
 include("tools/modeling_to_generate_alternatives.jl")
-include("tools/method_of_morris_v0.jl")
+include("tools/method_of_morris_parallel_v0.jl")
 end

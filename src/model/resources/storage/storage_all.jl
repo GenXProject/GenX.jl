@@ -21,7 +21,7 @@ Sets up variables and constraints common to all storage resources. See ```storag
 """
 function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
 	# Setup variables, constraints, and expressions common to all storage resources
-	println("Storage Core Resources Module")
+	#println("Storage Core Resources Module")
 
 	dfGen = inputs["dfGen"]
 

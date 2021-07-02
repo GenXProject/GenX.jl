@@ -39,7 +39,7 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int)
 	## Controllable variable renewable generators
 	### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Generators_data.csv  >1
 	## Default value of Num_VRE_Bins ==1
-	println("Dispatchable Resources Module")
+	#println("Dispatchable Resources Module")
 
 	dfGen = inputs["dfGen"]
 

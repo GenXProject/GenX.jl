@@ -24,6 +24,8 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathProgBase = "fdba3010-5040-5b88-9595-932c9decdf73"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+DiffEqSensitivity = "41bf760c-e81c-5289-8e54-58b1f1f8abe2"
 
 [compat]
 #CPLEX = "0.6.1"
@@ -45,6 +47,8 @@ MathProgBase = "0.7.8"
 StatsBase = "0.33.0"
 YAML = "0.4.3"
 julia = "1"
+Statistics = "1.4.0"
+#DiffEqSensitivity = "v6.33.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

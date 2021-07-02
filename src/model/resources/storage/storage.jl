@@ -146,7 +146,7 @@ The above reserve related constraints are established by ```storage_all_reserves
 """
 function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
 
-	println("Storage Resources Module")
+	#println("Storage Resources Module")
 
 	G = inputs["G"]
 
