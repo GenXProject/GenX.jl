@@ -19,8 +19,6 @@ GenX.jl runs on Julia v1.3.x series, where x>=0 and a minimum version of JuMP v0
 
 The file `julenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
 
-You can see all of the packages installed in your Julia environment and their version numbers by running pkg> status on the package manager command line.
-
 ## Running an Instance of GenX
 
 Download or clone the GenX repository on your machine in a directory named 'GenX'. Create this new directory in a location where you wish to store the GenXJulEnv environment.
