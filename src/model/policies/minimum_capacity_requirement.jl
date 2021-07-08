@@ -27,15 +27,20 @@ The minimum capacity requirement constraint allows for modeling minimum deployme
 
 Note that $\epsilon_{y,z,p}^{MinCapReq}$ is the eligiblity of a generator of technology $y$ in zone $z$ of requirement $p$ and will be equal to $1$ for eligible generators and will be zero for ineligible resources. The dual value of each minimum capacity constraint can be interpreted as the required payment (e.g. subsidy) per MW per year required to ensure adequate revenue for the qualifying resources.
 """
-function minimum_capacity_requirement(EP::Model, inputs::Dict)
+function minimum_capacity_requirement(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Minimum Capacity Requirement Module")
 
 	dfGen = inputs["dfGen"]
 	NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+	end
+
 	@constraint(EP, cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs],
 	sum(EP[:eTotalCap][y]
 	for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID])
+	+ (setup["VreStor"]==1 ? sum(EP[:eTotalCap_VRE] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]) : 0)
 	>= inputs["MinCapReq"][mincap])
 
 	return EP

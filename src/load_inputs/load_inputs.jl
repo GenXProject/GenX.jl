@@ -88,6 +88,12 @@ function load_inputs(setup::Dict,path::AbstractString)
 		inputs = load_period_map(setup, path, sep, inputs)
 	end
 
+	# Read in VRE-storage resource module related inputs & resource availability profiles
+	if setup["VreStor"] == 1
+		inputs = load_vre_stor_data(setup, path, sep, inputs, cost_fuel, CO2_fuel)
+		inputs = load_vre_stor_variability(setup, path, sep, inputs)
+	end
+
 	println("CSV Files Successfully Read In From $path$sep")
 
 	return inputs

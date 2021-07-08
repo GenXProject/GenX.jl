@@ -44,6 +44,10 @@ function cap_reserve_margin(EP::Model, inputs::Dict, setup::Dict)
 	VRE_HYDRO_RES = union(inputs["HYDRO_RES"],inputs["VRE"])
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+	end
 	if setup["CapacityReserveMargin"] > 0
 		if SEG >=2
 			if Z > 1
@@ -54,6 +58,7 @@ function cap_reserve_margin(EP::Model, inputs::Dict, setup::Dict)
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX) # including Flexibile load
 				- sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L)
 				+ sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x>0,inputs["dfCapRes"][:,res]))
+				+ (setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[y,Symbol("CapRes_$res")] * (EP[:vP_VRE_STOR][y, t] - EP[:vCHARGE_VRE_STOR][y, t]) for y in 1:VRE_STOR) : 0) # include VRE-storage module
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][:,res][z])
 				for z=findall(x->x>0,inputs["dfCapRes"][:,res])))
 			else # No vFlow in single-zone models
@@ -63,6 +68,7 @@ function cap_reserve_margin(EP::Model, inputs::Dict, setup::Dict)
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in VRE_HYDRO_RES ) # including hydro and VRE
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX) # including Flexibile load
 				+ sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x>0,inputs["dfCapRes"][:,res]))
+				+ (setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[y,Symbol("CapRes_$res")] * (EP[:vP_VRE_STOR][y, t] - EP[:vCHARGE_VRE_STOR][y, t]) for y in 1:VRE_STOR) : 0) # include VRE-storage module
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][:,res][z])
 				for z=findall(x->x>0,inputs["dfCapRes"][:,res])))
 			end
@@ -74,6 +80,7 @@ function cap_reserve_margin(EP::Model, inputs::Dict, setup::Dict)
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in VRE_HYDRO_RES ) # including hydro and VRE
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX) # including Flexibile load
 				- sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L)
+				+ (setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[y,Symbol("CapRes_$res")] * (EP[:vP_VRE_STOR][y, t] - EP[:vCHARGE_VRE_STOR][y, t]) for y in 1:VRE_STOR) : 0) # include VRE-storage module
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][:,res][z])
 				for z=findall(x->x>0,inputs["dfCapRes"][:,res])))
 			else # No vFlow in single-zone models
@@ -82,6 +89,7 @@ function cap_reserve_margin(EP::Model, inputs::Dict, setup::Dict)
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL) # including storage
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in VRE_HYDRO_RES ) # including hydro and VRE
 				+ sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX) # including Flexibile load
+				+ (setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[y,Symbol("CapRes_$res")] * (EP[:vP_VRE_STOR][y, t] - EP[:vCHARGE_VRE_STOR][y, t]) for y in 1:VRE_STOR) : 0) # include VRE-storage module
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][:,res][z])
 				for z=findall(x->x>0,inputs["dfCapRes"][:,res])))
 			end

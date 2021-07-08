@@ -159,6 +159,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"])
 	end
 
+	# Model constraints, variables, expressions related to the co-located VRE-storage resources
+	if setup["VreStor"] == 1
+		EP = vre_stor(EP, inputs, setup["Reserves"])
+	end
+
 	# Policies
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)
@@ -175,7 +180,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if (setup["MinCapReq"] == 1)
-		EP = minimum_capacity_requirement(EP, inputs)
+		EP = minimum_capacity_requirement(EP, inputs, setup)
 	end
 
 	## Define the objective function

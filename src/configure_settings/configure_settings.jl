@@ -19,7 +19,7 @@ function configure_settings(settings_path::String)
     settings = YAML.load(open(settings_path))
 
     # Optional settings parameters ############################################
-	#Write the model formulation as an output; 0 = active; 1 = not active
+	# Write the model formulation as an output; 0 = active; 1 = not active
     if(!haskey(settings, "PrintModel")) settings["PrintModel"] = 0  end
     # Transmission network expansionl; 0 = not active; 1 = active systemwide
     if(!haskey(settings, "NetworkExpansion")) settings["NetworkExpansion"] = 0 end
@@ -57,6 +57,8 @@ function configure_settings(settings_path::String)
     if(!haskey(settings, "ModelingToGenerateAlternatives")) settings["ModelingToGenerateAlternatives"] = 0 end
     # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
     if(!haskey(settings, "ModelingtoGenerateAlternativeSlack")) settings["ModelingtoGenerateAlternativeSlack"] = 0.1 end
+    # Activate the VRE-storage module and constraints; 0 = not active; 1 = acttive
+    if(!haskey(settings, "VreStor")) settings["VreStor"] = 0  end
 
 return settings
 end
