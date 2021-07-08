@@ -28,7 +28,7 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	dfPower = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
 	if setup["ParameterScale"] ==1
 		for i in 1:G
-			dfPower[!,:AnnualSum][i] = sum(value.(EP[:vP])[i,:]) * ModelScalingFactor
+			dfPower[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vP])[i,:])) * ModelScalingFactor
 		end
 		dfPower = hcat(dfPower, convert(DataFrame, (value.(EP[:vP]))* ModelScalingFactor))
 	else
@@ -43,7 +43,11 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 
 	total = convert(DataFrame, ["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))])
 	for t in 1:T
-		total[!,t+3] .= sum(dfPower[!,Symbol("t$t")][1:G])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+3] .= sum(dfPower[!,Symbol("t$t")][1:G])
+		elseif v"1.5" <= VERSION < v"1.6"
+			total[:,t+3] .= sum(dfPower[:,Symbol("t$t")][1:G])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfPower = vcat(dfPower, total)

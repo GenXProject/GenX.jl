@@ -43,7 +43,11 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 	rename!(dfCurtailment,auxNew_Names)
 	total = convert(DataFrame, ["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))])
 	for t in 1:T
-		total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G])
+		elseif v"1.5" <= VERSION < v"1.6"
+			total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfCurtailment = vcat(dfCurtailment, total)

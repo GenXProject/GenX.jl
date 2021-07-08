@@ -31,15 +31,17 @@ function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 		dfTemp = DataFrame(Segment=zeros(SEG), Zone=zeros(SEG), AnnualSum = Array{Union{Missing,Float32}}(undef, SEG))
 		dfTemp[!,:Segment] = (1:SEG)
 		dfTemp[!,:Zone] = fill(z,(SEG))
-		for i in 1:SEG
-			if setup["ParameterScale"] ==1
+		if setup["ParameterScale"]==1
+			for i in 1:SEG
 				dfTemp[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vNSE])[i,:,z]))* ModelScalingFactor
-			else
+			end
+			dfTemp = hcat(dfTemp, convert(DataFrame, (value.(EP[:vNSE])[:,:,z])* ModelScalingFactor))
+		else
+			for i in 1:SEG
 				dfTemp[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vNSE])[i,:,z]))
 			end
-
+			dfTemp = hcat(dfTemp, convert(DataFrame, value.(EP[:vNSE])[:,:,z]))
 		end
-		dfTemp = hcat(dfTemp, convert(DataFrame, value.(EP[:vNSE])[:,:,z]))
 		if z == 1
 			dfNse = dfTemp
 		else
@@ -51,7 +53,11 @@ function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 	rename!(dfNse,auxNew_Names)
 	total = convert(DataFrame, ["Total" 0 sum(dfNse[!,:AnnualSum]) fill(0.0, (1,T))])
 	for t in 1:T
-		total[!,t+3] .= sum(dfNse[!,Symbol("t$t")][1:Z])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+3] .= sum(dfNse[!,Symbol("t$t")][1:Z])
+		elseif v"1.5" <= VERSION < v"1.6"
+			total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)

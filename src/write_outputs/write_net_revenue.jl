@@ -51,31 +51,29 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
  	dfNetRevenue[!,:Fuel_cost] .= 0.0
 	for i in 1:G
 		dfNetRevenue.Fuel_cost[i] = sum(inputs["C_Fuel_per_MWh"][i,:] .* inputs["omega"] .* value.(EP[:vP])[i,:])
-		if setup["ParameterScale"] == 1
-			dfNetRevenue.Fuel_cost = dfNetRevenue.Fuel_cost * (ModelScalingFactor^2) # converting Million US$ to US$
-		end
+	end
+	if setup["ParameterScale"] == 1
+		dfNetRevenue.Fuel_cost = dfNetRevenue.Fuel_cost * (ModelScalingFactor^2) # converting Million US$ to US$
 	end
 
 	# Add storage cost to the dataframe
 	dfNetRevenue[!,:Var_OM_cost_in] .= 0.0
  	for y in inputs["STOR_ALL"]
  		dfNetRevenue.Var_OM_cost_in[y] = dfGen[y,:Var_OM_Cost_per_MWh_In] * sum(value.(EP[:vCHARGE])[y,:])
-		if setup["ParameterScale"] == 1
-			dfNetRevenue.Var_OM_cost_in = dfNetRevenue.Var_OM_cost_in * (ModelScalingFactor^2) # converting Million US$ to US$
-		end
  	end
-
+	if setup["ParameterScale"] == 1
+		dfNetRevenue.Var_OM_cost_in = dfNetRevenue.Var_OM_cost_in * (ModelScalingFactor^2) # converting Million US$ to US$
+	end
 	# Add start-up cost to the dataframe
 	dfNetRevenue[!,:StartCost] .= 0.0
  	if (setup["UCommit"]>=1)
  		for y in COMMIT #dfGen[!,:R_ID]
  			dfNetRevenue.StartCost[y] = sum(value.(EP[:eCStart])[y,:])
  		end
-		if setup["ParameterScale"] == 1
-			dfNetRevenue.StartCost = dfNetRevenue.StartCost * (ModelScalingFactor^2) # converting Million US$ to US$
-		end
  	end
-
+	if setup["ParameterScale"] == 1
+		dfNetRevenue.StartCost = dfNetRevenue.StartCost * (ModelScalingFactor^2) # converting Million US$ to US$
+	end
 	# Add charge cost to the dataframe
 	dfNetRevenue[!,:Charge_cost] .= 0.0
 	if has_duals(EP) == 1
