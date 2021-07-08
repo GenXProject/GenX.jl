@@ -74,9 +74,9 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 			rename!(dfEmissions,auxNew_Names)
 			total = convert(DataFrame, ["Total" zeros(1,inputs["NCO2Cap"]) sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))])
 			for t in 1:T
-				if v"0.3" <= VERSION < v"0.4"
+				if v"1.3" <= VERSION < v"1.4"
 					total[!,t+inputs["NCO2Cap"]+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
-				elseif v"0.5" <= VERSION < v"0.6"
+				elseif v"1.5" <= VERSION < v"1.6"
 					total[:,t+inputs["NCO2Cap"]+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
 				end
 			end
@@ -87,9 +87,9 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 			rename!(dfEmissions,auxNew_Names)
 			total = convert(DataFrame, ["Total" sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))])
 			for t in 1:T
-				if v"0.3" <= VERSION < v"0.4"
+				if v"1.3" <= VERSION < v"1.4"
 					total[!,t+2] .= sum(dfEmissions[!,Symbol("t$t")][1:Z])
-				elseif v"0.5" <= VERSION < v"0.6"
+				elseif v"1.5" <= VERSION < v"1.6"
 					total[:,t+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
 				end
 			end
