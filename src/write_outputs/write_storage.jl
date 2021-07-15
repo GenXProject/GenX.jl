@@ -47,9 +47,27 @@ function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,s
 		end
 	end
 
-
 	dfStorage = hcat(dfStorage, convert(DataFrame, storagevcapvalue))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfStorage,auxNew_Names)
+
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+		dfStorageVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone])
+		s_vre_storage = zeros(VRE_STOR,T)
+		for i in 1:VRE_STOR
+			s_vre_storage[i,:] = value.(EP[:vS_VRE_STOR])[i,:] 
+			if setup["ParameterScale"]==1
+				s_vre_storage[i,:] =  s_vre_storage[i,:] .* ModelScalingFactor
+			end
+		end
+
+		dfStorageVRESTOR = hcat(dfStorageVRESTOR, convert(DataFrame, s_vre_storage))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
+		rename!(dfStorageVRESTOR,auxNew_Names)
+		dfStorage = vcat(dfStorage, dfStorageVRESTOR)
+	end
+
 	CSV.write(string(path,sep,"storage.csv"), dftranspose(dfStorage, false), writeheader=false)
 end

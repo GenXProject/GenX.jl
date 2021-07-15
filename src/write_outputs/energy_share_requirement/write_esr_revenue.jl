@@ -22,9 +22,18 @@ Function for reporting the renewable/clean credit revenue earned by each generat
 function write_esr_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfESR::DataFrame)
 	dfGen = inputs["dfGen"]
 	dfESRRev = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfESRRevVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
+		dfESRRev = vcat(dfESRRev, dfESRRevVRESTOR)
+	end
 
 	for i in 1:inputs["nESR"]
-		dfESRRev =  hcat(dfESRRev, dfPower[1:end-1,:AnnualSum] .* dfGen[!,Symbol("ESR_$i")] * dfESR[i,:ESR_Price])
+		tempESR = dfGen[!,Symbol("ESR_$i")]
+		if setup["VreStor"] == 1
+			tempESR = vcat(tempESR, dfGen_VRE_STOR[!,Symbol("ESR_$i")])
+		end
+		dfESRRev =  hcat(dfESRRev, dfPower[1:end-1,:AnnualSum] .* tempESR * dfESR[i,:ESR_Price])
 		# dfpower is in MWh already, price is in $/MWh already, no need to scale
 		# if setup["ParameterScale"] == 1
 		# 	#dfESRRev[!,:x1] = dfESRRev[!,:x1] * (1e+3) # MillionUS$ to US$

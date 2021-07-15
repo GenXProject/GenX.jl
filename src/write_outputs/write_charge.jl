@@ -45,16 +45,33 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	dfCharge = hcat(dfCharge, convert(DataFrame, charge))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCharge,auxNew_Names)
+
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+		dfChargeVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		charge_vre_stor = zeros(VRE_STOR, T)
+		for i in 1:VRE_STOR
+			charge_vre_stor[i,:] = value.(EP[:vCHARGE_VRE_STOR][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+			dfChargeVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_vre_stor[i,:])
+		end
+		dfChargeVRESTOR = hcat(dfChargeVRESTOR, convert(DataFrame, charge_vre_stor))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfChargeVRESTOR,auxNew_Names)
+		dfCharge = vcat(dfCharge, dfChargeVRESTOR)
+	end
+
 	total = convert(DataFrame, ["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))])
 	for t in 1:T
 		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
+			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])]) + (setup["VreStor"]==1 ? sum(dfChargeVRESTOR[!,Symbol("t$t")][1:VRE_STOR]) : 0)
 		elseif v"1.5" <= VERSION < v"1.6"
-			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
+			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])]) + (setup["VreStor"]==1 ? sum(dfChargeVRESTOR[:,Symbol("t$t")][1:VRE_STOR]) : 0)
 		end
 	end
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)
 	CSV.write(string(path,sep,"charge.csv"), dftranspose(dfCharge, false), writeheader=false)
 	return dfCharge
+
 end

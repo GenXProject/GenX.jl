@@ -30,13 +30,22 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
 	VRE_HYDRO_RES = union(inputs["HYDRO_RES"],inputs["VRE"])
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	temp_G = G
 	### calculating capacity reserve revenue
 
 	dfResRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfResRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
+		dfResRevenue = vcat(dfResRevenue, dfResRevenueVRESTOR)
+		temp_G = G + inputs["VRE_STOR"]
+	end
+
 	for i in 1:inputs["NCapacityReserveMargin"]
 		# initiate the process by assuming everything is thermal
-		dfResRevenue = hcat(dfResRevenue, round.(Int, dfCap[1:end-1,:EndCap] .* dfGen[!,Symbol("CapRes_$i")] .* sum(dfResMar[i,:])))
-		for y in 1:G
+		temp_CapRes = ((setup["VreStor"]==1) ? vcat(dfGen[!,Symbol("CapRes_$i")], dfGen_VRE_STOR[!,Symbol("CapRes_$i")]) : dfGen[!,Symbol("CapRes_$i")])
+		dfResRevenue = hcat(dfResRevenue, round.(Int, dfCap[1:temp_G,:EndCap] .* temp_CapRes .* sum(dfResMar[i,:]))) # error bc storage & PV? only getting PV capacity
+		for y in 1:(temp_G-1)
 			if (y in STOR_ALL)
 				dfResRevenue[y,:x1] = round.(Int, sum(
 				(DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1] .-
@@ -50,6 +59,11 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
 				(DataFrame([[names(dfPower)]; collect.(eachrow(dfCharge))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1] .-
 				DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1]) .*
 				DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen[y,Symbol("CapRes_$i")]))
+			elseif (y in (G+1):temp_G) # check if this is correct
+				dfResRevenue[y,:x1] = round.(Int, sum(
+				(DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1] .-
+				DataFrame([[names(dfPower)]; collect.(eachrow(dfCharge))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1]) .*
+				DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen_VRE_STOR[y,Symbol("CapRes_$i")]))
 			end
 		end
 		# the capacity and power is in MW already, no need to scale

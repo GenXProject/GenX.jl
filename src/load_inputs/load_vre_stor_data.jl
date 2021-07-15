@@ -57,6 +57,7 @@ function load_vre_stor_data(setup::Dict, path::AbstractString, sep::AbstractStri
 	inputs_vre_stor["RESOURCES_VRE_STOR"] = collect(skipmissing(vre_stor_in[!,:Resource][1:VRE_STOR]))
 	inputs_vre_stor["RESOURCES_VRE"] = collect(skipmissing(vre_stor_in[!,:Resource_VRE][1:VRE_STOR]))
 	inputs_vre_stor["RESOURCES_STOR"] = collect(skipmissing(vre_stor_in[!,:Resource_STOR][1:VRE_STOR]))
+	inputs_vre_stor["RESOURCES_GRID"] = collect(skipmissing(vre_stor_in[!,:Resource_GRID][1:VRE_STOR]))
 	
 	# Zones resources are located in
 	#zones = collect(skipmissing(vre_stor_in[!,:Zone][1:inputs_vre_stor["VRE_STOR"]]))

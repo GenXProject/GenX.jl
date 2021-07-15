@@ -37,16 +37,34 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 	else
 		dfCurtailment = hcat(dfCurtailment, convert(DataFrame, ((inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP]))))
 	end
-
-
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCurtailment,auxNew_Names)
+
+	if setup["VreStor"]==1
+		VRE_STOR = inputs["VRE_STOR"]
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfCurtailmentVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		for i in 1:VRE_STOR
+			dfCurtailmentVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"].*(inputs["pP_Max_VRE_STOR"][i,:]).*value.(EP[:eTotalCap_VRE])[i,:].- inputs["omega"].*value.(EP[:vP_DC])[i,:])
+		end
+
+		if setup["ParameterScale"]==1
+			dfCurtailmentVRESTOR.AnnualSum = dfCurtailmentVRESTOR.AnnualSum * ModelScalingFactor
+			dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, convert(DataFrame, (ModelScalingFactor * (inputs["pP_Max_VRE_STOR"]).*value.(EP[:eTotalCap_VRE]).- value.(EP[:vP_DC]))))
+		else
+			dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, convert(DataFrame, ((inputs["pP_Max_VRE_STOR"]).*value.(EP[:eTotalCap_VRE]).- value.(EP[:vP_DC]))))
+		end
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfCurtailmentVRESTOR,auxNew_Names)
+		dfCurtailment = vcat(dfCurtailment, dfCurtailmentVRESTOR)
+	end
+
 	total = convert(DataFrame, ["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))])
 	for t in 1:T
 		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G])
+			total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G]) + (setup["VreStor"]==1 ? sum(dfCurtailmentVRESTOR[!,Symbol("t$t")][1:VRE_STOR]) : 0)
 		elseif v"1.5" <= VERSION < v"1.6"
-			total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G])
+			total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G]) + (setup["VreStor"]==1 ? sum(dfCurtailmentVRESTOR[!,Symbol("t$t")][1:VRE_STOR]) : 0)
 		end
 	end
 	rename!(total,auxNew_Names)

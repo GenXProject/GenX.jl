@@ -41,12 +41,34 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfPower,auxNew_Names)
 
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+		dfPowerVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		if setup["ParameterScale"] == 1
+			for i in 1:VRE_STOR
+				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:]) * ModelScalingFactor
+			end
+			dfPowerVRESTOR = hcat(dfPowerVRESTOR, convert(DataFrame, value.(EP[:vP_VRE_STOR]) * ModelScalingFactor))
+		else
+			for i in 1:VRE_STOR
+				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:]) 
+			end
+			dfPowerVRESTOR = hcat(dfPowerVRESTOR, convert(DataFrame, value.(EP[:vP_VRE_STOR])))
+		end
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfPowerVRESTOR,auxNew_Names)
+
+		# Concatenate VRE-storage resources to power csv
+		dfPower = vcat(dfPower, dfPowerVRESTOR)
+	end
+
 	total = convert(DataFrame, ["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))])
 	for t in 1:T
 		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfPower[!,Symbol("t$t")][1:G])
+			total[!,t+3] .= sum(dfPower[!,Symbol("t$t")][1:G]) + (setup["VreStor"]==1 ? sum(dfPowerVRESTOR[!,Symbol("t$t")][1:VRE_STOR]) : 0)
 		elseif v"1.5" <= VERSION < v"1.6"
-			total[:,t+3] .= sum(dfPower[:,Symbol("t$t")][1:G])
+			total[:,t+3] .= sum(dfPower[:,Symbol("t$t")][1:G]) + (setup["VreStor"]==1 ? sum(dfPowerVRESTOR[:,Symbol("t$t")][1:VRE_STOR]) : 0)
 		end
 	end
 	rename!(total,auxNew_Names)

@@ -26,15 +26,15 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 
-	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
+	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cGridCost"])
 	if setup["ParameterScale"] == 1
-		cVar = (value(EP[:eTotalCVarOut])+value(EP[:eTotalCVarIn])+ (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
-		cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)) * (ModelScalingFactor^2)
-		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
+		cVar = (value(EP[:eTotalCVarOut]) + value(EP[:eTotalCVarIn]) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCVar_VRE_STOR]) : 0)) * (ModelScalingFactor^2)
+		cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCFix_VRE_STOR]) : 0)) * (ModelScalingFactor^2)
+		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0, 0]
 	else
-		cVar = value(EP[:eTotalCVarOut])+value(EP[:eTotalCVarIn])+ (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
-		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
+		cVar = value(EP[:eTotalCVarOut])+value(EP[:eTotalCVarIn])+ (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCVar_VRE_STOR]) : 0)
+		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCFix_VRE_STOR]) : 0)
+		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0, 0]
 	end
 
 	if setup["UCommit"]>=1
@@ -56,6 +56,13 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 			dfCost[!,2][7] = value(EP[:eTotalCNetworkExp]) * (ModelScalingFactor^2)
 		else
 			dfCost[!,2][7] = value(EP[:eTotalCNetworkExp])
+		end
+	end
+	if setup["VreStor"] == 1
+		if setup["ParameterScale"] == 1
+			dfCost[!,2][8] = value(EP[:eTotalCGrid]) * (ModelScalingFactor^2)
+		else
+			dfCost[!,2][8] = value(EP[:eTotalCGrid])
 		end
 	end
 
@@ -90,6 +97,14 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 					sum(value.(EP[:eCVar_out])[y,:])
 			end
 		end
+		if setup["VreStor"] == 1
+			dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+			for y in dfGen_VRE_STOR[dfGen_VRE_STOR[!,:Zone].==z,:][!,:R_ID]
+				tempCFix = tempCFix + value.(EP[:eCFix_VRE_STOR])[y]
+				tempCVar = tempCVar + sum(value.(EP[:eCVar_out_VRE_STOR])[y,:])
+				tempCTotal = tempCTotal + value.(EP[:eCFix_VRE_STOR])[y] + sum(value.(EP[:eCVar_out_VRE_STOR])[y,:])
+			end
+		end
 
 		if setup["ParameterScale"] == 1
 			tempCFix = tempCFix * (ModelScalingFactor^2)
@@ -102,7 +117,7 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 		else
 			tempCNSE = sum(value.(EP[:eCNSE])[:,:,z])
 		end
-		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
 	end
 	CSV.write(string(path,sep,"costs.csv"), dfCost)
 end

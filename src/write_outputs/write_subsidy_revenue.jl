@@ -24,6 +24,11 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 	#NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
 
 	dfSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfSubRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
+		dfSubRevenue = vcat(dfSubRevenue, dfSubRevenueVRESTOR)
+	end
 	#dfSubRevenue.SubsidyRevenue .= 0.0
 	#=
 	if v"1.3" <= VERSION < v"1.4"
@@ -43,6 +48,12 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 	### calculating tech specific subsidy revenue
 
 	dfRegSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
+	# Ensure generators match up if activated
+	if setup["VreStor"]==1
+		dfRegSubRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
+		dfRegSubRevenue = vcat(dfRegSubRevenue, dfRegSubRevenueVRESTOR)
+	end
+
 	#dfRegSubRevenue.SubsidyRevenue .= 0.0
 	if v"1.3" <= VERSION < v"1.4"
 		dfRegSubRevenue[!,:SubsidyRevenue] .= 0.0

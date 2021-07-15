@@ -23,6 +23,9 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 	println(STOR_ALL)
 	println(Z)
 	FLEX = inputs["FLEX"]
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+	end
 	## Power balance for each zone
 	dfPowerBalance = Array{Any}
 	rowoffset=3
@@ -38,11 +41,15 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 	     	dfTemp1[t+rowoffset,1]= sum(value.(EP[:vP][dfGen[(dfGen[!,:THERM].==1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
 		 		sum(value.(EP[:vP][dfGen[(dfGen[!,:VRE].==1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
 				sum(value.(EP[:vP][dfGen[(dfGen[!,:MUST_RUN].==1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
-				sum(value.(EP[:vP][dfGen[(dfGen[!,:HYDRO].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
-	     	dfTemp1[t+rowoffset,2] = sum(value.(EP[:vP][dfGen[(dfGen[!,:STOR].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
-	     	dfTemp1[t+rowoffset,3] = 0
+				sum(value.(EP[:vP][dfGen[(dfGen[!,:HYDRO].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) 
+				#(setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:EtaInverter] .* value.(EP[:vP_DC][dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID],t])) : 0) -
+				#(setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:EtaInverter] .* value.(EP[:vCHARGE_DC][dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID],t])) : 0)
+	     	dfTemp1[t+rowoffset,2] = sum(value.(EP[:vP][dfGen[(dfGen[!,:STOR].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
+				(setup["VreStor"]==1 ? sum(value.(EP[:vP_VRE_STOR][dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID],t])) : 0)
+			 #(setup["VreStor"]==1 ? sum(dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:EtaInverter] .* value.(EP[:vDISCHARGE_DC][dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID],t])) : 0)
+	     	dfTemp1[t+rowoffset,3] = (setup["VreStor"]==1 ? sum(value.(EP[:vCHARGE_VRE_STOR][dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID],t])) : 0)
 	     	if !isempty(intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
-	     	    dfTemp1[t+rowoffset,3] = -sum(value.(EP[:vCHARGE][y,t]) for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
+	     	    dfTemp1[t+rowoffset,3] -= sum(value.(EP[:vCHARGE][y,t]) for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
 	     	end
 	     	dfTemp1[t+rowoffset,4] = 0
 	     	if !isempty(intersect(dfGen[dfGen.Zone.==z,:R_ID],FLEX))
