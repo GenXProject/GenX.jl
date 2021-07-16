@@ -22,7 +22,9 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 	Z = inputs["Z"]     # Number of zonests
 	L = inputs["L"] # Number of lines
 	THERM_ALL = inputs["THERM_ALL"]
-	VRE_HYDRO_RES = union(inputs["HYDRO_RES"],inputs["VRE"])
+	# VRE_HYDRO_RES = union(inputs["HYDRO_RES"],inputs["VRE"])
+	VRE = inputs["VRE"]
+	HYDRO_RES = inputs["HYDRO_RES"]
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	#calculating capacity value under reserve margin constraint, added by NP on 10/21/2020
@@ -36,8 +38,10 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 				for y in 1:G
 					if (dfCap[y,:EndCap] > 0.0001) .& (y in STOR_ALL) # including storage
 						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]-dfCharge[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
-					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in VRE_HYDRO_RES) # including hydro and VRE
-						dfCapValue_[y,Symbol("t$t")] = (inputs["pP_Max"][y,t] * dfGen[y,Symbol("CapRes_$i")])
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in HYDRO_RES) # including hydro and VRE
+						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in VRE) # including hydro and VRE
+						dfCapValue_[y,Symbol("t$t")] = ((inputs["pP_Max"][y,t]) * dfGen[y,Symbol("CapRes_$i")])
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in FLEX) # including flexible load
 						dfCapValue_[y,Symbol("t$t")] = ((dfCharge[y,Symbol("t$t")] - dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in THERM_ALL) # including thermal
