@@ -37,7 +37,7 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 					if (dfCap[y,:EndCap] > 0.0001) .& (y in STOR_ALL) # including storage
 						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]-dfCharge[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in VRE_HYDRO_RES) # including hydro and VRE
-						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
+						dfCapValue_[y,Symbol("t$t")] = (inputs["pP_Max"][y,t] * dfGen[y,Symbol("CapRes_$i")])
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in FLEX) # including flexible load
 						dfCapValue_[y,Symbol("t$t")] = ((dfCharge[y,Symbol("t$t")] - dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in THERM_ALL) # including thermal
