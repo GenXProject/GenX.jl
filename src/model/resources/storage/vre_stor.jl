@@ -36,7 +36,6 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
 
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
 	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-
 	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
     
     dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
@@ -93,6 +92,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
             dfGen_VRE_STOR[!,:Existing_Cap_MW][y] + EP[:vZERO]
         end
     )
+    #@expression(EP, eTotalCap_VRE[y in 1:VRE_STOR], dfGen_VRE_STOR[!,:Existing_Cap_MW][y] + EP[:vCAP_VRE][y] - EP[:vRETCAP_VRE][y])
     @expression(EP, eTotalCap_STOR[y in 1:VRE_STOR], 
         if y in intersect(NEW_CAP_ENERGY_VRE_STOR, RET_CAP_ENERGY_VRE_STOR) # Resources eligible for new capacity and retirements
             dfGen_VRE_STOR[!,:Existing_Cap_MWh][y] + EP[:vCAPSTORAGE_VRE_STOR][y] - EP[:vRETCAPSTORAGE_VRE_STOR][y]
@@ -104,6 +104,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
             dfGen_VRE_STOR[!,:Existing_Cap_MWh][y] + EP[:vZERO]
         end
     )
+    #@expression(EP, eTotalCap_STOR[y in 1:VRE_STOR], dfGen_VRE_STOR[!,:Existing_Cap_MWh][y] + EP[:vCAPSTORAGE_VRE_STOR][y] - EP[:vRETCAPSTORAGE_VRE_STOR][y])
     @expression(EP, eTotalCap_GRID[y in 1:VRE_STOR], 
         if y in intersect(NEW_CAP_GRID, RET_CAP_GRID) # Resources eligible for new capacity and retirements
             dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW][y] + EP[:vGRIDCAP][y] - EP[:vRETGRIDCAP][y]
@@ -115,6 +116,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
             dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW][y] + EP[:vZERO]
         end
     )
+    #@expression(EP, eTotalCap_GRID[y in 1:VRE_STOR], dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW][y] + EP[:vGRIDCAP][y] - EP[:vRETGRIDCAP][y])
     
     # Energy losses related to technologies (increase in effective demand)
     @expression(EP, eELOSS_VRE_STOR[y=1:VRE_STOR], sum(inputs["omega"][t]*(vCHARGE_DC[y,t]/dfGen_VRE_STOR[!,:EtaInverter][y] + vCHARGE_VRE_STOR[y,t] - vDISCHARGE_DC[y,t]/dfGen_VRE_STOR[!,:EtaInverter][y]) for t in 1:T))
@@ -135,8 +137,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
 
 	# Sum individual resource contributions to variable charging costs to get total variable charging costs
 	@expression(EP, eTotalCFix_VRE_STOR, sum(eCFix_VRE_STOR[y] for y in 1:VRE_STOR))
-	@expression(EP, eTotalCVar_VRE_STOR_T[t in 1:T], sum(eCVar_out_VRE_STOR[y, t] for y in 1:VRE_STOR))
-    @expression(EP, eTotalCVar_VRE_STOR, sum(eTotalCVar_VRE_STOR_T[t] for t in 1:T))
+    @expression(EP, eTotalCVar_VRE_STOR, sum(eCVar_out_VRE_STOR[y, t] for y in 1:VRE_STOR, t in 1:T))
 	EP[:eObj] += (eTotalCFix_VRE_STOR + eTotalCVar_VRE_STOR)
 
     # Separate grid costs
@@ -147,16 +148,16 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalance_VRE_STOR[t=1:T, z=1:Z],
-	sum(EP[:vP_VRE_STOR][y,t]-vCHARGE_VRE_STOR[y,t] for y in dfGen_VRE_STOR[dfGen_VRE_STOR[!,:Zone].==z,:][!,:R_ID]))
+	sum(vP_VRE_STOR[y,t]-vCHARGE_VRE_STOR[y,t] for y in intersect(dfGen_VRE_STOR[dfGen_VRE_STOR.Zone.==z,:R_ID],1:VRE_STOR)))
 
 	EP[:ePowerBalance] += ePowerBalance_VRE_STOR
 
 	### Constraints ###
 
     # Constraint 0: Cannot retire more capacity than existing capacity for VRE-STOR technologies
-    @constraint(EP, cMaxRet_VRE[y in RET_CAP_VRE_STOR], vRETCAP_VRE[y] <= dfGen_VRE_STOR[!,:Existing_Cap_MW][y])
-    @constraint(EP, cMaxRet_GRID[y in RET_CAP_GRID], vRETGRIDCAP[y] <= dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW][y])
-    @constraint(EP, cMaxRet_STOR[y in RET_CAP_ENERGY_VRE_STOR], vRETCAPSTORAGE_VRE_STOR[y] <= dfGen_VRE_STOR[!,:Existing_Cap_MWh][y])
+    @constraint(EP, cMaxRet_VRE[y in 1:VRE_STOR], vRETCAP_VRE[y] <= dfGen_VRE_STOR[!,:Existing_Cap_MW][y])
+    @constraint(EP, cMaxRet_GRID[y in 1:VRE_STOR], vRETGRIDCAP[y] <= dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW][y])
+    @constraint(EP, cMaxRet_STOR[y in 1:VRE_STOR], vRETCAPSTORAGE_VRE_STOR[y] <= dfGen_VRE_STOR[!,:Existing_Cap_MWh][y])
 
     # Constraint 1: Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
@@ -192,15 +193,18 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
     @constraint(EP, cSOCMax[y in 1:VRE_STOR, t in 1:T],
     vS_VRE_STOR[y,t] <= eTotalCap_STOR[y])
 
-
     # Constraint 7: Charge Maximum
     @constraint(EP, cChargeMax[y in 1:VRE_STOR, t in 1:T], 
     vCHARGE_DC[y,t] <= dfGen_VRE_STOR[!,:Power_To_Energy_Ratio][y]*eTotalCap_STOR[y])
 
-
     # Constraint 8: Discharge Maximum
     @constraint(EP, cDischargeMax[y in 1:VRE_STOR, t in 1:T],
     vDISCHARGE_DC[y,t] <= dfGen_VRE_STOR[!,:Power_To_Energy_Ratio][y]*eTotalCap_STOR[y])
+
+    @constraint(EP, cChargeDischargeMax[y in 1:VRE_STOR, t in 1:T],
+    vDISCHARGE_DC[y,t] + vCHARGE_DC[y,t] <= dfGen_VRE_STOR[!,:Power_To_Energy_Ratio][y]*eTotalCap_STOR[y])
+    @constraint(EP, cDischargeSOC[y in 1:VRE_STOR, t in INTERIOR_SUBPERIODS], vDISCHARGE_DC[y,t] <= vS_VRE_STOR[y,t-1])
+    @constraint(EP, cDischargeSOCExterior[y in 1:VRE_STOR, t in START_SUBPERIODS], vDISCHARGE_DC[y,t] <= vS_VRE_STOR[y,t+hours_per_subperiod-1])
 
     # Constraint 9: Grid Export Maximum
     @constraint(EP, cGridExport[y in 1:VRE_STOR, t in 1:T],
@@ -213,9 +217,15 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
 
     # Constraint 11: State of Charge (energy stored for the next hour)
     @constraint(EP, cSoCBalInterior_VRE_STOR[t in INTERIOR_SUBPERIODS,y in 1:VRE_STOR], 
-    vS_VRE_STOR[y,t] == vS_VRE_STOR[y,t-1]-(1/dfGen_VRE_STOR[!,:Eff_Down][y]*vDISCHARGE_DC[y,t])+(dfGen_VRE_STOR[!,:Eff_Up][y]*(vCHARGE_DC[y,t]+vCHARGE_VRE_STOR[y, t]*dfGen_VRE_STOR[!,:EtaInverter][y]))-(dfGen_VRE_STOR[!,:Self_Disch][y]*vS_VRE_STOR[y,t-1]))
+    vS_VRE_STOR[y,t] == vS_VRE_STOR[y,t-1] -
+                        (1/dfGen_VRE_STOR[!,:Eff_Down][y]*vDISCHARGE_DC[y,t]) +
+                        (dfGen_VRE_STOR[!,:Eff_Up][y]*(vCHARGE_DC[y,t] + vCHARGE_VRE_STOR[y, t]*dfGen_VRE_STOR[!,:EtaInverter][y])) -
+                        (dfGen_VRE_STOR[!,:Self_Disch][y]*vS_VRE_STOR[y,t-1]))
     @constraint(EP, cSoCBalStart_VRE_STOR[t in START_SUBPERIODS, y in 1:VRE_STOR],
-    vS_VRE_STOR[y,t] == vS_VRE_STOR[y,t+hours_per_subperiod-1]-(1/dfGen_VRE_STOR[!,:Eff_Down][y]*vDISCHARGE_DC[y,t])+(dfGen_VRE_STOR[!,:Eff_Up][y]*(vCHARGE_DC[y,t]+vCHARGE_VRE_STOR[y, t]*dfGen_VRE_STOR[!,:EtaInverter][y]))-(dfGen_VRE_STOR[!,:Self_Disch][y]*vS_VRE_STOR[y,t+hours_per_subperiod-1]))
+    vS_VRE_STOR[y,t] == vS_VRE_STOR[y,t+hours_per_subperiod-1] - 
+                        (1/dfGen_VRE_STOR[!,:Eff_Down][y]*vDISCHARGE_DC[y,t]) +
+                        (dfGen_VRE_STOR[!,:Eff_Up][y]*(vCHARGE_DC[y,t] + vCHARGE_VRE_STOR[y, t]*dfGen_VRE_STOR[!,:EtaInverter][y])) -
+                        (dfGen_VRE_STOR[!,:Self_Disch][y]*vS_VRE_STOR[y,t+hours_per_subperiod-1]))
 
     #
     

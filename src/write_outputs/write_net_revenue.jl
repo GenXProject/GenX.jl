@@ -90,10 +90,10 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	if setup["VreStor"]==1
 		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
 		dfNetRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
-		dfNetRevenueVRESTOR.Inv_cost_MW = dfGen_VRE_STOR[!,:Inv_cost_VRE_per_MWyr] .* value.(EP[:vCAP_VRE]) + dfGen_VRE_STOR[!,:Inv_cost_GRID_per_MWyr] .* value.(EP[:vGRIDCAP])
-		dfNetRevenueVRESTOR.Inv_cost_MWh = dfGen_VRE_STOR[!,:Inv_cost_per_MWhyr] .* value.(EP[:vCAPSTORAGE_VRE_STOR])
-		dfNetRevenueVRESTOR.Fixed_OM_cost_MW = dfGen_VRE_STOR[!,:Fixed_OM_VRE_cost_per_MWyr] .* value.(EP[:eTotalCap_VRE]) + dfGen_VRE_STOR[!,:Fixed_OM_GRID_cost_per_MWyr] .* value.(EP[:eTotalCap_GRID])
-		dfNetRevenueVRESTOR.Fixed_OM_cost_MWh = dfGen_VRE_STOR[!,:Fixed_OM_cost_per_MWhyr] .* value.(EP[:eTotalCap_STOR])
+		dfNetRevenueVRESTOR.Inv_cost_MW = dfGen_VRE_STOR[!,:Inv_Cost_VRE_per_MWyr] .* value.(EP[:vCAP_VRE]) + dfGen_VRE_STOR[!,:Inv_Cost_GRID_per_MWyr] .* value.(EP[:vGRIDCAP])
+		dfNetRevenueVRESTOR.Inv_cost_MWh = dfGen_VRE_STOR[!,:Inv_Cost_per_MWhyr] .* value.(EP[:vCAPSTORAGE_VRE_STOR])
+		dfNetRevenueVRESTOR.Fixed_OM_cost_MW = dfGen_VRE_STOR[!,:Fixed_OM_VRE_Cost_per_MWyr] .* value.(EP[:eTotalCap_VRE]) + dfGen_VRE_STOR[!,:Fixed_OM_GRID_Cost_per_MWyr] .* value.(EP[:eTotalCap_GRID])
+		dfNetRevenueVRESTOR.Fixed_OM_cost_MWh = dfGen_VRE_STOR[!,:Fixed_OM_Cost_per_MWhyr] .* value.(EP[:eTotalCap_STOR])
 		dfNetRevenueVRESTOR.Var_OM_cost_out = (dfGen_VRE_STOR[!,:Var_OM_Cost_per_MWh]) .* dfPower[(G+1):end-1,:AnnualSum]
 		dfNetRevenueVRESTOR[!,:Fuel_cost] .= 0.0
 		dfNetRevenueVRESTOR[!,:Var_OM_cost_in] .= 0.0

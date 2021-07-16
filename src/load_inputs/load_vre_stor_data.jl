@@ -92,19 +92,19 @@ function load_vre_stor_data(setup::Dict, path::AbstractString, sep::AbstractStri
 
 		## Investment cost terms
 		# Annualized capacity investment cost of the VRE-component 
-		inputs_vre_stor["dfGen_VRE_STOR"][!,:Inv_cost_VRE_per_MWyr] = vre_stor_in[!,:Inv_Cost_VRE_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+		inputs_vre_stor["dfGen_VRE_STOR"][!,:Inv_Cost_VRE_per_MWyr] = vre_stor_in[!,:Inv_Cost_VRE_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
 		# Annualized investment cost of the energy capacity of the storage-component 
-		inputs_vre_stor["dfGen_VRE_STOR"][!,:Inv_cost_per_MWhyr] = vre_stor_in[!,:Inv_Cost_per_MWhyr]/ModelScalingFactor # Convert to $ million/GWh/yr  with objective function in millions
+		inputs_vre_stor["dfGen_VRE_STOR"][!,:Inv_Cost_per_MWhyr] = vre_stor_in[!,:Inv_Cost_per_MWhyr]/ModelScalingFactor # Convert to $ million/GWh/yr  with objective function in millions
 		# Annualized capacity investment cost of the grid-component
-		inputs_vre_stor["dfGen_VRE_STOR"][!,:Inv_cost_GRID_per_MWyr] = vre_stor_in[!,:Inv_Cost_GRID_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr  with objective function in millions
+		inputs_vre_stor["dfGen_VRE_STOR"][!,:Inv_Cost_GRID_per_MWyr] = vre_stor_in[!,:Inv_Cost_GRID_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr  with objective function in millions
 
 		## Fixed O&M cost terms
 		# Fixed operations and maintenance cost of the VRE-component 
-		inputs_vre_stor["dfGen_VRE_STOR"][!,:Fixed_OM_VRE_cost_per_MWyr] = vre_stor_in[!,:Fixed_OM_VRE_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+		inputs_vre_stor["dfGen_VRE_STOR"][!,:Fixed_OM_VRE_Cost_per_MWyr] = vre_stor_in[!,:Fixed_OM_VRE_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
 		# Fixed operations and maintenance cost of the energy capacity of the storage-component 
-		inputs_vre_stor["dfGen_VRE_STOR"][!,:Fixed_OM_cost_per_MWhyr] = vre_stor_in[!,:Fixed_OM_Cost_per_MWhyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+		inputs_vre_stor["dfGen_VRE_STOR"][!,:Fixed_OM_Cost_per_MWhyr] = vre_stor_in[!,:Fixed_OM_Cost_per_MWhyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
 		# Fixed operations and maintenance cost of the grid-component
-		inputs_vre_stor["dfGen_VRE_STOR"][!,:Fixed_OM_GRID_cost_per_MWyr] = vre_stor_in[!,:Fixed_OM_GRID_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+		inputs_vre_stor["dfGen_VRE_STOR"][!,:Fixed_OM_GRID_Cost_per_MWyr] = vre_stor_in[!,:Fixed_OM_GRID_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
 
 		## Variable O&M cost terms
 		# Variable operations and maintenance cost of a generation or storage technology
