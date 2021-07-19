@@ -17,7 +17,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	write_status(path::AbstractString, sep::AbstractString, inputs::Dict, EP::Model)
 
-Function for writing the final solve status of the optimization problem solved
+Function for writing the final solve status of the optimization problem solved.
 """
 function write_status(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
