@@ -30,7 +30,12 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 	for i in 1:inputs["NCapacityReserveMargin"]
 		dfCapValue_ = dfPower[1:end-1,:]
 		dfCapValue_ = select!(dfCapValue_, Not(:AnnualSum))
-		dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
+		if v"1.3" <= VERSION < v"1.4"
+			dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
+		elseif v"1.4" <= VERSION < v"1.7"
+			#dfCapValue_.Reserve = Symbol("CapRes_$i")
+			dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
+		end
 		for t in 1:T
 			if dfResMar[i,t] > 0.0001
 				for y in 1:G

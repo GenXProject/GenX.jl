@@ -28,7 +28,7 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 	
 	if v"1.3" <= VERSION < v"1.4"
 		dfSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.5" <= VERSION < v"1.6"
+	elseif v"1.4" <= VERSION < v"1.7"
 		dfSubRevenue.SubsidyRevenue = zeros(size(dfSubRevenue, 1))
 		#dfSubRevenue[:,:SubsidyRevenue] = zeros(size(dfSubRevenue, 1))
 	end
@@ -47,7 +47,7 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 	#dfRegSubRevenue.SubsidyRevenue .= 0.0
 	if v"1.3" <= VERSION < v"1.4"
 		dfRegSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.5" <= VERSION < v"1.6"
+	elseif v"1.4" <= VERSION < v"1.7"
 		dfRegSubRevenue.SubsidyRevenue = zeros(size(dfRegSubRevenue, 1))
 	end
 	if (setup["MinCapReq"] >= 1)

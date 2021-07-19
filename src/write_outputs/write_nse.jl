@@ -55,7 +55,7 @@ function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 	for t in 1:T
 		if v"1.3" <= VERSION < v"1.4"
 			total[!,t+3] .= sum(dfNse[!,Symbol("t$t")][1:Z])
-		elseif v"1.5" <= VERSION < v"1.6"
+		elseif v"1.4" <= VERSION < v"1.7"
 			total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
 		end
 	end
