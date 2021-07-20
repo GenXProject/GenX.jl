@@ -104,7 +104,7 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 		# wrapping from end of sample period to start of sample period for energy capacity constraint
 		@constraints(EP, begin
 			[y in STOR_ALL, t=1:T], EP[:vP][y,t] <= EP[:eTotalCap][y]
-			[y in STOR_ALL, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t-1]
+			[y in STOR_ALL, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t-1]*dfGen[!,:Eff_Down][y]
 			[y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
