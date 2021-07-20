@@ -105,7 +105,7 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 		@constraints(EP, begin
 			[y in STOR_ALL, t=1:T], EP[:vP][y,t] <= EP[:eTotalCap][y]
 			[y in STOR_ALL, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t-1]*dfGen[!,:Eff_Down][y]
-			[y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]*dfGen[!,:Eff_Down][y]
 		end)
 	end
 	return EP
