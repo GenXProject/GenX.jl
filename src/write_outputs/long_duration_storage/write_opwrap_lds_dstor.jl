@@ -28,7 +28,7 @@ function write_opwrap_lds_dstor(path::AbstractString, sep::AbstractString, input
 			dsoc[i,:] = value.(EP[:vdSOC])[i,:]
 		end
 	end
-	dfdStorage = hcat(dfdStorage, convert(DataFrame, dsoc))
+	dfdStorage = hcat(dfdStorage, DataFrame(dsoc, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("w$t") for t in 1:W]]
 	rename!(dfdStorage,auxNew_Names)
 	CSV.write(string(path,sep,"dStorage.csv"), dftranspose(dfdStorage, false), writeheader=false)

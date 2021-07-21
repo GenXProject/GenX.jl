@@ -30,12 +30,12 @@ function write_rsv(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 		dfRsv[!,:Sum][i] = sum(rsv[i,:])
 	end
 	dfRsv[!,:Sum][G+1] = sum(value.(EP[:vUNMET_RSV]))
-	reg = convert(DataFrame, rsv)
+	reg = DataFrame(rsv, :auto)
 	push!(reg, transpose(convert(Array{Union{Missing,Float32}}, value.(EP[:vUNMET_RSV]))))
 	dfRsv = hcat(dfRsv, reg)
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfRsv,auxNew_Names)
-	total = convert(DataFrame, ["Total" 0 sum(dfRsv[!,:Sum]) fill(0.0, (1,T))])
+	total = DataFrame(["Total" 0 sum(dfRsv[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
 		total[!,t+3] .= sum(dfRsv[!,Symbol("t$t")][1:G])
 	end

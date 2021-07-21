@@ -48,7 +48,7 @@ function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs:
 		end
 		dfEnergyRevenue_ = hcat(dfEnergyRevenue_, dfEnergyRevenue_1)
 	end
-	dfEnergyRevenue = hcat(dfEnergyRevenue, convert(DataFrame, dfEnergyRevenue_'))
+	dfEnergyRevenue = hcat(dfEnergyRevenue, DataFrame(dfEnergyRevenue_', :auto))
 	for i in 1:G
 		dfEnergyRevenue[!,:AnnualSum][i] = sum(dfEnergyRevenue[i,6:T+5])
 	end

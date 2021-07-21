@@ -34,7 +34,7 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 			dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
 		elseif v"1.4" <= VERSION < v"1.7"
 			#dfCapValue_.Reserve = Symbol("CapRes_$i")
-			dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
+			dfCapValue_.Reserve = fill(Symbol("CapRes_$i"), size(dfCapValue_, 1))
 		end
 		for t in 1:T
 			if dfResMar[i,t] > 0.0001

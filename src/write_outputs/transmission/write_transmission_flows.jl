@@ -25,16 +25,16 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, set
 		for i in 1:L
 			dfFlow[!,:Sum][i] = sum(inputs["omega"].* (value.(EP[:vFLOW])[i,:])) * ModelScalingFactor
 		end
-		dfFlow = hcat(dfFlow, convert(DataFrame, (value.(EP[:vFLOW])) * ModelScalingFactor))
+		dfFlow = hcat(dfFlow, DataFrame((value.(EP[:vFLOW])) * ModelScalingFactor, :auto))
 	else
 		for i in 1:L
 			dfFlow[!,:Sum][i] = sum(inputs["omega"].* (value.(EP[:vFLOW])[i,:]))
 		end
-		dfFlow = hcat(dfFlow, convert(DataFrame, value.(EP[:vFLOW])))
+		dfFlow = hcat(dfFlow, DataFrame(value.(EP[:vFLOW]), :auto))
 	end
 	auxNew_Names=[Symbol("Line");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfFlow,auxNew_Names)
-	total = convert(DataFrame, ["Total" sum(dfFlow[!,:Sum]) fill(0.0, (1,T))])
+	total = DataFrame(["Total" sum(dfFlow[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
 		if v"1.3" <= VERSION < v"1.4"
 			total[!,t+2] .= sum(dfFlow[!,Symbol("t$t")][1:L])

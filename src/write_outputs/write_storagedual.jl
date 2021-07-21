@@ -69,7 +69,7 @@ function write_storagedual(path::AbstractString, sep::AbstractString, inputs::Di
 
 
 
-	dfStorageDual=hcat(dfStorageDual, convert(DataFrame,dual_values))
+	dfStorageDual=hcat(dfStorageDual, DataFrame(dual_values, :auto))
 	rename!(dfStorageDual,[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]])
 
 	CSV.write(string(path,sep,"storagebal_duals.csv"), dftranspose(dfStorageDual, false), writeheader=false)

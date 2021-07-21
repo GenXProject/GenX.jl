@@ -85,6 +85,6 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 	for c in 2:size(dfPowerBalance,2)
 	   	dfPowerBalance[rowoffset,c]=sum(inputs["omega"].*dfPowerBalance[(rowoffset+1):size(dfPowerBalance,1),c])
 	end
-	dfPowerBalance = DataFrame(dfPowerBalance)
+	dfPowerBalance = DataFrame(dfPowerBalance, :auto)
 	CSV.write(string(path,sep,"power_balance.csv"), dfPowerBalance, writeheader=false)
 end

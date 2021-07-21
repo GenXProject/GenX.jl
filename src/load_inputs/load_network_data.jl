@@ -32,8 +32,8 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
         inputs_nw["L"]=size(collect(skipmissing(network_var[!,:Network_Lines])),1)
 
         # Topology of the network source-sink matrix
-        start = findall(s -> s == Symbol("z1"), names(network_var))[1]
-        inputs_nw["pNet_Map"] = convert(Matrix{Float64}, network_var[1:inputs_nw["L"],start:start+inputs_nw["Z"]-1])
+        start = findall(s -> s == "z1", names(network_var))[1]
+        inputs_nw["pNet_Map"] = Matrix{Float64}(network_var[1:inputs_nw["L"],start:start+inputs_nw["Z"]-1])
 
         # Transmission capacity of the network (in MW)
         if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values to GW
