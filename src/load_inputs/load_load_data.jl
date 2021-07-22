@@ -75,7 +75,7 @@ function load_load_data(setup::Dict, path::AbstractString, sep::AbstractString, 
 	inputs_load["INTERIOR_SUBPERIODS"] = setdiff(1:T,inputs_load["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
 
 	# Demand in MW for each zone
-	println(names(load_in))
+	#println(names(load_in))
 	start = findall(s -> s == "Load_MW_z1", names(load_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
 	if setup["ParameterScale"] ==1  # Parameter scaling turned on
 		# Max value of non-served energy
