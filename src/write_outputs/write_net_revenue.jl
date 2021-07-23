@@ -67,7 +67,7 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 		dfNetRevenue.Var_OM_cost_in = zeros(size(dfNetRevenue, 1))
 	end
  	for y in inputs["STOR_ALL"]
- 		dfNetRevenue.Var_OM_cost_in[y] = dfGen[y,:Var_OM_Cost_per_MWh_In] * sum(value.(EP[:vCHARGE])[y,:])
+ 		dfNetRevenue.Var_OM_cost_in[y] = dfGen[y,:Var_OM_Cost_per_MWh_In] * sum(inputs["omega"] .* value.(EP[:vCHARGE])[y,:])
  	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Var_OM_cost_in = dfNetRevenue.Var_OM_cost_in * (ModelScalingFactor^2) # converting Million US$ to US$
