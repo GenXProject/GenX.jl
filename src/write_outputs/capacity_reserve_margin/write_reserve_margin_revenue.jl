@@ -48,7 +48,7 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
 				dfResRevenue[y,:x1] = round.(Int, sum((DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1]) .*
 				DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen[y,Symbol("CapRes_$i")]))
            		elseif (y in VRE)
-                		dfResRevenue[y,:x1] = round.(Int, sum( dfCap[1:end-1,:EndCap] .* inputs["pP_Max"][y,:] .*
+                		dfResRevenue[y,:x1] = round.(Int, sum( dfCap[y,:EndCap] .* inputs["pP_Max"][y,:] .*
                 		DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen[y,Symbol("CapRes_$i")]))
 			elseif (y in FLEX)
 				dfResRevenue[y,:x1] = round.(Int, sum(
