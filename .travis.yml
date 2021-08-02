@@ -4,8 +4,10 @@ notifications:
   email: false
 julia:
   #- 1.0
-  - 1.3
-  #- nightly
+  #- 1.3
+  - 1.5
+  - 1.6
+  - nightly
 coveralls: true
 branches:
   only:
