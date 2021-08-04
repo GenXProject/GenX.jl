@@ -1,7 +1,7 @@
 #MacOrWindows: Mac  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
 OverwriteResults: 0 # Overwrite existing results in output folder or create a new one; 0 = create new folder; 1 = overwrite existing results
 PrintModel: 0 # Write the model formulation as an output; 0 = active; 1 = not active
-NetworkExpansion: 1 # Transmission network expansionl; 0 = not active; 1 = active systemwide
+#NetworkExpansion: 1 # Transmission network expansionl; 0 = not active; 1 = active systemwide
 Trans_Loss_Segments: 1 # Number of segments used in piecewise linear approximation of transmission losses; 1 = linear, >2 = piecewise quadratic
 Reserves: 0 # Regulation (primary) and operating (secondary) reserves; 0 = not active, 1 = active systemwide
 EnergyShareRequirement: 1 # Minimum qualifying renewables penetration; 0 = not active; 1 = active systemwide
