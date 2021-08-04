@@ -27,7 +27,7 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
 
         # Number of zones in the network
         inputs_nw["Z"]=size(collect(skipmissing(network_var[!,:Network_zones])),1)
-
+        Z = inputs_nw["Z"]
         # Number of lines in the network
         inputs_nw["L"]=size(collect(skipmissing(network_var[!,:Network_Lines])),1)
 
@@ -54,7 +54,7 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
 
         # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
         inputs_nw["pTrans_Max_Possible"] = zeros(Float64, inputs_nw["L"])
-        if setup["NetworkExpansion"]==1
+        if Z>=2 #setup["NetworkExpansion"]==1
             if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
                 # Read between zone network reinforcement costs per peak MW of capacity added
                 inputs_nw["pC_Line_Reinforcement"] = convert(Array{Float64}, collect(skipmissing(network_var[!,:Line_Reinforcement_Cost_per_MWyr])))/ModelScalingFactor # convert to million $/GW/yr with objective function in millions
@@ -99,7 +99,7 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
         inputs_nw["TRANS_LOSS_SEGS"] = setup["Trans_Loss_Segments"] # Number of segments used in piecewise linear approximations quadratic loss functions
         inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"].!=0) # Lines for which loss coefficients apply (are non-zero);
 
-        if setup["NetworkExpansion"] == 1
+        if Z>=2 #setup["NetworkExpansion"] == 1
             # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
             inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].>=0)
             inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].<0)

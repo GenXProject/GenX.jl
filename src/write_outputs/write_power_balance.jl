@@ -57,10 +57,16 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 	     	dfTemp1[t+rowoffset,7] = value(EP[:vNSE][1,t,z])
 	     	dfTemp1[t+rowoffset,8] = 0
 	     	dfTemp1[t+rowoffset,9] = 0
+		#=
 	     	if setup["NetworkExpansion"] == 1
 	     	    dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
 	     	    dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
 	     	end
+		=#
+		if Z>=2
+			dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
+			dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
+		end
 	     	dfTemp1[t+rowoffset,10] = -inputs["pD"][t,z]
 
 			if setup["ParameterScale"] == 1
