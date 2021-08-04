@@ -54,7 +54,7 @@ Here are step-by-step instructions for running Run.jl, following the two slightl
 
 Execution of the entire sequence of the four steps above should look like the figure below:
 
-![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step1.png)
+![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step1_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4*
 
 5. Type the back key to come back to the `julia>` prompt.
@@ -62,20 +62,20 @@ Execution of the entire sequence of the four steps above should look like the fi
 
 Execution of the steps 5 and 6 above should look like the figure below:
 
-![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step2.png)
+![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step2_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6*
 
 7. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
 
 If however, the user opens a julia kernel, while not yet inside the GenX folder, it's still possible to reach to the GenX folder while being inside the Julia REPL by executing the `pwd()` command first to check where on the directory structure the user is currently, and then by executing the `cd(<path to GenX>)` command. Afterwards, the steps are the same as above. This is shown in the three figures below:
 
-![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Changing path to GenX](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step1.png)
+![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Changing path to GenX](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step1_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Changing path to GenX*
 
-![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Steps 1-4](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step2.png)
+![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Steps 1-4](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step2_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4*
 
-![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Steps 5-6](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step3.png)
+![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Steps 5-6](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step3_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6*
 
 ### Method 2: Creating the Julia environment and installing the dependencies by building the Project.toml files by running activation script
