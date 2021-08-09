@@ -42,7 +42,7 @@ function write_charging_cost(path::AbstractString, sep::AbstractString, inputs::
 		end
 		dfChargingcost_ = hcat(dfChargingcost_, dfChargingcost_1)
 	end
-	dfChargingcost = hcat(dfChargingcost, convert(DataFrame, dfChargingcost_'))
+	dfChargingcost = hcat(dfChargingcost, DataFrame(dfChargingcost_', :auto))
  	for i in 1:G
  		dfChargingcost[!,:AnnualSum][i] = sum(dfChargingcost[i,6:T+5])
  	end
