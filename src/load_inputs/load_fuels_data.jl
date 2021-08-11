@@ -32,7 +32,7 @@ function load_fuels_data(setup::Dict, path::AbstractString, sep::AbstractString,
 
 	# Fuel costs .&  CO2 emissions rate for each fuel type (stored in dictionary objects)
 	fuels = names(fuels_in)[2:end] # fuel type indexes
-	costs = convert(Matrix, fuels_in[2:end,2:end])
+	costs = Matrix(fuels_in[2:end,2:end])
 	# New addition for variable fuel price
 	CO2_content = fuels_in[1,2:end] # tons CO2/MMBtu
 	fuel_costs = Dict{AbstractString,Array{Float64}}()

@@ -29,9 +29,9 @@ function write_price(path::AbstractString, sep::AbstractString, inputs::Dict, se
 
 	# Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of generation
 	if setup["ParameterScale"] == 1
-		dfPrice = hcat(dfPrice, convert(DataFrame, transpose(dual.(EP[:cPowerBalance])./inputs["omega"]*ModelScalingFactor)))
+		dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]*ModelScalingFactor), :auto))
 	else
-		dfPrice = hcat(dfPrice, convert(DataFrame, transpose(dual.(EP[:cPowerBalance])./inputs["omega"])))
+		dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]), :auto))
 	end
 
 	auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]

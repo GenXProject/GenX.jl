@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int)
+	function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int)
 
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
 
@@ -178,7 +178,7 @@ function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::I
 			@variable(EP, vTAUX_POS_ON[l in LOSS_LINES, s=1:TRANS_LOSS_SEGS, t=1:T], Bin)
 			@variable(EP, vTAUX_NEG_ON[l in LOSS_LINES, s=1:TRANS_LOSS_SEGS, t=1:T], Bin)
 		end
-    end
+    	end
 
 	# Transmission losses on each transmission line "l" at hour "t"
 	@variable(EP, vTLOSS[l in LOSS_LINES,t=1:T] >= 0)
@@ -200,17 +200,17 @@ function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::I
 	end
 
 	# Net power flow outgoing from zone "z" at hour "t" in MW
-    @expression(EP, eNet_Export_Flows[z=1:Z,t=1:T], sum(inputs["pNet_Map"][l,z] * vFLOW[l,t] for l=1:L))
+    	@expression(EP, eNet_Export_Flows[z=1:Z,t=1:T], sum(inputs["pNet_Map"][l,z] * vFLOW[l,t] for l=1:L))
 
 	# Losses from power flows into or out of zone "z" in MW
-    @expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * vTLOSS[l,t] for l in LOSS_LINES))
+    	@expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * vTLOSS[l,t] for l in LOSS_LINES))
 
 	## Objective Function Expressions ##
 
 	if NetworkExpansion == 1
 		@expression(EP, eTotalCNetworkExp, sum(vNEW_TRANS_CAP[l]*inputs["pC_Line_Reinforcement"][l] for l in EXPANSION_LINES))
 		EP[:eObj] += eTotalCNetworkExp
-    end
+    	end
 
 	## End Objective Function Expressions ##
 

@@ -28,12 +28,16 @@ function write_start(path::AbstractString, sep::AbstractString, inputs::Dict, se
 		end
 		dfStart[!,:Sum][i] = sum(start[i,:])
 	end
-	dfStart = hcat(dfStart, convert(DataFrame, start))
+	dfStart = hcat(dfStart, DataFrame(start, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfStart,auxNew_Names)
-	total = convert(DataFrame, ["Total" 0 sum(dfStart[!,:Sum]) fill(0.0, (1,T))])
+	total = DataFrame(["Total" 0 sum(dfStart[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		total[!,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
+		elseif v"1.5" <= VERSION < v"1.7"
+			total[:,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfStart = vcat(dfStart, total)
