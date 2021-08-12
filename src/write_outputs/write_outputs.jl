@@ -122,18 +122,18 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	dfESRRev = DataFrame()
 	if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
 		dfESR = write_esr_prices(path, sep, inputs, setup, EP)
-		dfESRRev = write_esr_revenue(path, sep, inputs, setup, dfPower, dfESR)
+		dfESRRev = write_esr_revenue(path, sep, inputs, setup, dfPower, dfESR) 
 	end
 	dfResMar = DataFrame()
 	dfResRevenue = DataFrame()
 	if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
 		dfResMar = write_reserve_margin(path, sep, setup, EP)
-		write_reserve_margin_w(path, sep, inputs, setup, EP)
-		dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
-		write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
+		write_reserve_margin_w(path, sep, inputs, setup, EP) 
+		dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap) # changes
+		write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap) # changes
 	end
 
-	write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
+	write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue) 
 
 	## Print confirmation
 	println("Wrote outputs to $path$sep")
