@@ -528,7 +528,8 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     cgdf = combine(groupby(InputData, :Group), [c .=> sum for c in OldColNames])
     cgdf = cgdf[setdiff(1:end, NumDataPoints+1), :]
-    rename!(cgdf, [:Group; OldColNames])
+    #rename!(cgdf, [:Group; OldColNames])
+    rename!(cgdf, :OldColNames => :NewColNames) #Need to test
 
     # Extreme Period Identification
     ExtremeWksList = []
