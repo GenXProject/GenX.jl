@@ -47,7 +47,8 @@ function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,s
 		end
 	end
 
-	dfStorage = hcat(dfStorage, convert(DataFrame, storagevcapvalue))
+
+	dfStorage = hcat(dfStorage, DataFrame(storagevcapvalue, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfStorage,auxNew_Names)
 

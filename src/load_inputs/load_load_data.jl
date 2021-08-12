@@ -75,18 +75,19 @@ function load_load_data(setup::Dict, path::AbstractString, sep::AbstractString, 
 	inputs_load["INTERIOR_SUBPERIODS"] = setdiff(1:T,inputs_load["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
 
 	# Demand in MW for each zone
-	start = findall(s -> s == Symbol("Load_MW_z1"), names(load_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
+	#println(names(load_in))
+	start = findall(s -> s == "Load_MW_z1", names(load_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
 	if setup["ParameterScale"] ==1  # Parameter scaling turned on
 		# Max value of non-served energy
 		inputs_load["Voll"] = collect(skipmissing(load_in[!,:Voll])) /ModelScalingFactor # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
 		# Demand in MW
-		inputs_load["pD"] =convert(Matrix, load_in[1:inputs_load["T"],start:start-1+inputs_load["Z"]])/ModelScalingFactor  # convert to GW
+		inputs_load["pD"] =Matrix(load_in[1:inputs_load["T"],start:start-1+inputs_load["Z"]])/ModelScalingFactor  # convert to GW
 
 	else # No scaling
 		# Max value of non-served energy
 		inputs_load["Voll"] = collect(skipmissing(load_in[!,:Voll]))
 		# Demand in MW
-		inputs_load["pD"] =convert(Matrix, load_in[1:inputs_load["T"],start:start-1+inputs_load["Z"]]) #form a matrix with columns as the different zonal load MW values and rows as the hours
+		inputs_load["pD"] =Matrix(load_in[1:inputs_load["T"],start:start-1+inputs_load["Z"]]) #form a matrix with columns as the different zonal load MW values and rows as the hours
 	end
 
 	#if setup["TimeDomainReduction"] ==1 # Used in time_domain_reduction

@@ -19,7 +19,7 @@ function write_reserve_margin(path::AbstractString, sep::AbstractString, setup::
 	if setup["ParameterScale"] == 1
 		temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
 	end
-	dfResMar = DataFrame(temp_ResMar)
+	dfResMar = DataFrame(temp_ResMar, :auto)
 	CSV.write(string(path,sep,"ReserveMargin.csv"), dfResMar)
 	return dfResMar
 end
