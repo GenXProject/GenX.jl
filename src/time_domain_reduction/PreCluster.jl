@@ -51,15 +51,14 @@ using YAML
 # Input Data Directory
 #inpath = "$working_path/Example_Clustering_SE"
 #inpath = "$genx_path/input_data/Inputs/RealSystemExample/ISONE_Trizone_FullTimeseries"
-inpath = "$genx_path\\Example_Systems\\Inputs\\SmallNewEngland\\OneZone"
+inpath = "$genx_path\\Example_Systems\\SmallNewEngland\\ThreeZones"
 
 # Verbosity and Plot Choices
 v = false
 
 # Settings
-#settings_path = joinpath(genx_path, "GenX_settings.yml")
-settings_path = joinpath(inpath, "GenX_settings.yml")
-mysetup = YAML.load(open(settings_path))
+settings_path = joinpath(inpath, "Settings")
+mysetup = YAML.load(open(joinpath(settings_path, "genx_settings.yml")))
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
 
 if (isfile(TDRpath*"/Load_data.csv")) || (isfile(TDRpath*"/Generators_variability.csv")) || (isfile(TDRpath*"/Fuels_data.csv"))
@@ -69,7 +68,7 @@ elseif mysetup["TimeDomainReduction"] == 0
     println("Trying to pre-cluster the inputs, but the TimeDomainReduction setting is set to 0. Set to 1 and try again.")
     println(settings_path)
 else
-    Rep_Period, Weights, RMSE, TDRsetup, col_to_zone_map = cluster_inputs(inpath, mysetup, v)
+    Rep_Period, Weights, RMSE, TDRsetup, col_to_zone_map = cluster_inputs(inpath, settings_path, mysetup, v)
     if v
         for res in RMSE
             println(res)
