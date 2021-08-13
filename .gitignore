@@ -56,3 +56,8 @@ Example_Systems/NYISO/Settings/cplex_settings.yml
 Example_Systems/NYISO/Settings/genx_settings.yml
 Example_Systems/NYISO/Settings/gurobi_settings.yml
 Example_Systems/NYISO/Settings/time_domain_reduction_settings.yml
+Example_Systems/NYISO/TDR_Results/Fuels_data.csv
+Example_Systems/NYISO/TDR_Results/Generators_variability.csv
+Example_Systems/NYISO/TDR_Results/Load_data.csv
+Example_Systems/NYISO/TDR_Results/Period_map.csv
+Example_Systems/NYISO/TDR_Results/time_domain_reduction_settings.yml

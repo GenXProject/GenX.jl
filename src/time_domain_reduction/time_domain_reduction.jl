@@ -804,6 +804,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         new_col[1:size(LPOutputData,1)] = LPOutputData[!,c]
         load_in[!,c] .= new_col
     end
+    load_in = load_in[1:size(LPOutputData,1),:]
 
     if v println("Writing load file...") end
     CSV.write(string(inpath,sep,Load_Outfile), load_in)
