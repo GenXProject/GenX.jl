@@ -114,7 +114,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	EP = non_served_energy(EP, inputs)
 
-	EP = investment_discharge(EP, inputs)
+	if setup["MultiPeriod"] > 0
+		EP = investment_discharge_multi_period(EP, inputs, setup["PeriodLength"], setup["WACC"])
+	else
+		EP = investment_discharge(EP, inputs)
+	end
 
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
@@ -142,7 +146,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+		if setup["MultiPeriod"] > 0 
+			EP = storage_multi_period(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["PeriodLength"], setup["WACC"])
+		else
+			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+		end
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources

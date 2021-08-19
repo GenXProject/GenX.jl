@@ -27,6 +27,10 @@ export cluster_inputs
 export mga
 export simple_operation
 
+# Multi-period methods
+export run_ddp
+export configure_multi_period_inputs
+
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
 using MathProgBase #for fix_integers
@@ -40,7 +44,7 @@ using Distances
 using Combinatorics
 using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-# using Gurobi
+using Gurobi
 # using CPLEX
 
 using Clp
@@ -116,6 +120,9 @@ include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
 
+include("multi_period/model/storage_multi_period.jl")
+include("multi_period/model/investment_multi_period.jl")
+
 include("model/generate_model.jl")
 include("model/solve_model.jl")
 
@@ -168,4 +175,8 @@ include("write_outputs/write_outputs.jl")
 include("simple_operation.jl")
 
 include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
+
+include("multi_period/dual_dynamic_programing.jl")
+include("multi_period/configure_multi_period_inputs.jl")
+
 end

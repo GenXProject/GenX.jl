@@ -1,0 +1,5 @@
+NumPeriods: 3
+PeriodLength: 5
+WACC: 0.045
+ConvergenceTolerance: 0.01
+SeparateInputs: 0
