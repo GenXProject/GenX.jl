@@ -12,11 +12,23 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
         start_cap_d[Symbol("eTotalCapCharge")] = Symbol("cExistingCapCharge")
     end
 
-    total_cap_d = Dict()
+    # This dictionary contains the endogenous retirement constraint name as a key,
+    # and a tuple consisting of the associated tracking array constraint and variable as the value
+    retirements_d = Dict([(Symbol("vCAPTRACK"),Symbol("cCapTrack"))])
 
-    T = setup["NumPeriods"]  # Total number of time periods
-    #gen_lifetimes = inputs["dfGen"][!,:Lifetime] # Lifetimes of generator resources
-    EPSILON = setup["ConvergenceTolerance"] # Tolerance
+    if !isempty(inputs["STOR_ALL"])
+        retirements_d[Symbol("vCAPTRACKENERGY")] = Symbol("cCapTrackEnergy")
+    end
+
+    if !isempty(inputs["STOR_ASYMMETRIC"])
+        retirements_d[Symbol("vCAPTRACKCHARGE")] = Symbol("cCapTrackCharge")
+    end
+    
+    settings_d = setup["MultiPeriodSettingsDict"]
+
+    num_periods = settings_d["NumPeriods"]  # Total number of time periods
+    EPSILON = settings_d["ConvergenceTolerance"] # Tolerance
+
     ic = 0 # Iteration Counter
 
     results_d = Dict() # Dictionary to store the results to return
@@ -25,9 +37,9 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
     upper_bounds_a = [] # Array to store the upper bound of each iteration
     lower_bounds_a = [] # Array to store the lower bound of each iteration
 
-    # Step a.i) Initialize cost-to-go function for t = 1:T
-    for t in 1:T
-        models_d[t] = initialize_cost_to_go(setup, models_d[t])
+    # Step a.i) Initialize cost-to-go function for t = 1:num_periods
+    for t in 1:num_periods
+        models_d[t] = initialize_cost_to_go(settings_d, models_d[t])
     end
 
     # Step a.ii) Set objective upper bound
@@ -80,15 +92,15 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
         println(string("Lower Bound = ", z_lower))
         println("***********")
 
-        # Step d) Forward pass for t = 1:T
+        # Step d) Forward pass for t = 1:num_periods
 		## For first iteration we dont need to solve forward pass for first period (we did that already above),
 		## but we need to update forward pass solution for the first period for subsequent iterations
 		if ic > 1
 			t = 1 #  update forward pass solution for the first period
 			models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
 		end
-		## Forward pass for t=2:T
-        for t in 2:T
+		## Forward pass for t=2:num_periods
+        for t in 2:num_periods
 
             println("***********")
             println(string("Forward Pass t = ", t))
@@ -98,7 +110,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
             models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
 
             # Step d.ii) Fix capacity tracking variables for endogenous retirements
-            #models_d[t]["EP"] = fix_capacity_tracking(models_d[t-1]["EP"], models_d[t]["EP"], track_d, t)
+            models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], retirements_d, t)
 
             # Step d.iii) Solve the model at time t
             models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
@@ -113,7 +125,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
 
         # Step e) Calculate the new upper bound
         z_upper_temp = 0
-        for t in 1:T
+        for t in 1:num_periods
             z_upper_temp = z_upper_temp + (objective_value(models_d[t]) - value(models_d[t][:vALPHA]))
         end
 
@@ -124,15 +136,15 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
 
         append!(upper_bounds_a, z_upper) # Store current iteration upper bound
 
-        # Step f) Backward pass for t = T:2
-        for t in T:-1:2
+        # Step f) Backward pass for t = num_periods:2
+        for t in num_periods:-1:2
 
             println("***********")
             println(string("Backward Pass t = ", t))
             println("***********")
 
             # Step f.i) Add a cut to the previous time step using information from the current time step
-            models_d[t-1] = add_cut(models_d[t-1], models_d[t], start_cap_d, total_cap_d)
+            models_d[t-1] = add_cut(models_d[t-1], models_d[t], start_cap_d, retirements_d)
 
             # Step f.ii) Solve the model with the additional cut at time t-1
             models_d[t-1], solve_time_d[t-1] = solve_model(models_d[t-1],setup)
@@ -259,10 +271,10 @@ end
 
 function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
 
+    # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
+    # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-            println(EP_cur[c][y])
-            #i = i[1] # Extract integer index value from keys tuple
 
 	        # Set the right hand side value of the linking initial capacity constraint in the current time
 	        # period to the value of the available capacity variable solved for in the previous time period
@@ -272,33 +284,27 @@ function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dic
 	return EP_cur
 end
 
-function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, track_d::Dict, cur_time_period::Int)
+function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, retirements_d::Dict, cur_period::Int)
 
-    P = cur_time_period # Current time period index
-
-    # track_d dictionary contains the endogenous retirement constraint name as a key,
-    # and a tuple consisting of the associated tracking array constraint and variable as the value
-    for (k, v) in track_d
-
-	    # Extract tracking variable and constraint names for newly buily capacity from the tuple
-        cap_track_constr_name = Symbol(v[1]) # New capacity tracking constraint name
-        cap_track_var_name = Symbol(v[2]) # New capacity tracking variable name
+    # retirements_d dictionary contains the endogenous retirement tracking array variable name (v) as a key,
+    # and the associated linking constraint name (c) as a value
+    for (v, c) in retirements_d
 
 	    # Tracking variables and constraints for retired capacity are named identicaly to those for newly
 	    # built capacity, except have the prefex "vRET" and "cRet", accordingly
-	    ret_track_constr_name = Symbol("cRet",v[1][2:end]) # Retired capacity tracking constraint name
-	    ret_track_var_name = Symbol("vRET",v[2][2:end]) # Retired capacity tracking variable name
+        rv = Symbol("vRET",string(v)[2:end]) # Retired capacity tracking variable name (rv)
+	    rc = Symbol("cRet",string(c)[2:end]) # Retired capacity tracking constraint name (rc)
 
-        for i in keys(EP_cur[cap_track_constr_name])
+        for i in keys(EP_cur[c])
             i = i[1] # Extract integer index value from keys tuple - corresponding to generator index
 
 	        # For all previous time periods, set the right hand side value of the tracking constraint in the current
 	        # time period to the value of the tracking constraint observed in the previous time period
-            for p in 1:(P-1)
+            for p in 1:(cur_period-1)
 		        # Tracking newly buily capacity over all previous time periods
-                JuMP.setRHS(EP_cur[cap_track_constr_name][i,p],getvalue(EP_prev[cap_track_var_name][i,p]))
+                JuMP.set_normalized_rhs(EP_cur[c][i,p],value(EP_prev[v][i,p]))
 		        # Tracking retired capacity over all previous time periods
-                JuMP.setRHS(EP_cur[ret_track_constr_name][i,p],getvalue(EP_prev[ret_track_var_name][i,p]))
+                JuMP.set_normalized_rhs(EP_cur[rc][i,p],value(EP_prev[rv][i,p]))
             end
         end
     end
@@ -306,7 +312,7 @@ function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, track_d::Dict, cur
 	return EP_cur
 end
 
-function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, total_cap_d::Dict)
+function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, retirements_d::Dict)
 
     next_obj_value = objective_value(EP_next) # Get the objective function value for the next time period
 
@@ -314,6 +320,9 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, total_cap_d::
     println("eRHS Init: ", eRHS)
 
     # Generate cut components for investment decisions
+
+    # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
+    # and the associated linking constraint name (c) as a value
     for (e,c) in start_cap_d
 
         # Continue if nothing to add to the cut
@@ -329,32 +338,29 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, total_cap_d::
         println("eRHS Updated: ", eRHS)
     end
 
-    #= 
-    # Generate cut components for endogenous retirements
-    for (k,v) in track_d
+    # Generate cut components for endogenous retirements.
 
-        cap_constr_name = Symbol(v[1]) # New capacity tracking constraint
-        cap_var_name = Symbol(v[2]) # New capacity tracking variable
+    # retirements_d dictionary contains the endogenous retirement tracking array variable name (v) as a key,
+    # and the associated linking constraint name (c) as a value
+    for (v,c) in retirements_d
 
         # Continue if nothing to add to the cut
-        if isempty(EP_next[cap_constr_name])
+        if isempty(EP_next[c])
             continue
         end
 
         # Generate the cut component for new capacity
-        eCurRHS_cap = generate_cut_component_track(EP_cur, EP_next, cap_var_name, cap_constr_name)
+        eCurRHS_cap = generate_cut_component_track(EP_cur, EP_next, v, c)
 
-        ret_constr_name = Symbol("cRet",v[1][2:end]) # Retired capacity tracking constraint
-        ret_var_name = Symbol("vRET",v[2][2:end]) # Retired capacity tracking variable
+        rv = Symbol("vRET",string(v)[2:end]) # Retired capacity tracking variable (rv)
+        rc = Symbol("cRet",string(c)[2:end]) # Retired capacity tracking constraint (rc)
 
         # Generate the cut component for retired capacity
-        eCurRHS_ret = generate_cut_component_track(EP_cur, EP_next, ret_var_name, ret_constr_name)
+        eCurRHS_ret = generate_cut_component_track(EP_cur, EP_next, rv, rc)
 
         # Add the cut component to the RHS
-        @expression(EP_cur, eRHS, eRHS + eCurRHS_cap + eCurRHS_ret)
+        eRHS = eRHS + eCurRHS_cap + eCurRHS_ret
     end
-
-    =#
 
     # Add the cut to the model
     @constraint(EP_cur, EP_cur[:vALPHA] >= next_obj_value - eRHS)
@@ -368,32 +374,13 @@ function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::S
     cur_inv_value = Float64[]
     cur_inv_var = []
 
-    for i in keys(EP_next[constr_name])
-        y = i[1]
-        p = i[2]
+    for k in keys(EP_next[constr_name])
+        y = k[1] # Index representing resource
+        p = k[2] # Index representing period
 
         push!(next_dual_value, getdual(EP_next[constr_name][y,p]))
         push!(cur_inv_value, getvalue(EP_cur[var_name][y,p]))
         push!(cur_inv_var, EP_cur[var_name][y,p])
-    end
-
-    eCutComponent = @expression(EP_cur, eCutComponent, dot(next_dual_value,(cur_inv_value .- cur_inv_var)))
-
-    return eCutComponent
-end
-
-function generate_cut_component_inv(EP_cur::Model, EP_next::Model, e::Symbol, c::Symbol)
-
-    next_dual_value = Float64[]
-    cur_inv_value = Float64[]
-    cur_inv_var = []
-
-    for y in keys(EP_next[c])
-        #y = i[1]
-
-        push!(next_dual_value, dual(EP_next[c][y]))
-        push!(cur_inv_value, value(EP_cur[e][y]))
-        push!(cur_inv_var, EP_cur[e][y])
     end
 
     eCutComponent = @expression(EP_cur, dot(next_dual_value,(cur_inv_value .- cur_inv_var)))
@@ -401,14 +388,32 @@ function generate_cut_component_inv(EP_cur::Model, EP_next::Model, e::Symbol, c:
     return eCutComponent
 end
 
-function initialize_cost_to_go(setup::Dict, EP::Model)
+function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
 
-	P = setup["CurPeriod"] # Current DDP Time Period
-	L = setup["PeriodLength"] # Length (in years) of each period
-	I = setup["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+    next_dual_value = Float64[]
+    cur_inv_value = Float64[]
+    cur_inv_var = []
 
-    DF = 1/(1+I)^(L*(P-1))  # Discount factor applied all to costs in each period
-	OPEXMULT = sum([1/(1+I)^(i-1) for i in range(1,stop=L)]) # OPEX multiplier to count multiple years between two model time periods
+    for y in keys(EP_next[constr_name])
+
+        push!(next_dual_value, dual(EP_next[constr_name][y]))
+        push!(cur_inv_value, value(EP_cur[expr_name][y]))
+        push!(cur_inv_var, EP_cur[expr_name][y])
+    end
+
+    eCutComponent = @expression(EP_cur, dot(next_dual_value,(cur_inv_value .- cur_inv_var)))
+
+    return eCutComponent
+end
+
+function initialize_cost_to_go(settings_d::Dict, EP::Model)
+
+	cur_period = settings_d["CurPeriod"] # Current DDP Time Period
+	period_len = settings_d["PeriodLength"] # Length (in years) of each period
+	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+
+    DF = 1/(1+wacc)^(period_len*(cur_period-1))  # Discount factor applied all to costs in each period
+	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
 
 	# Initialize the cost-to-go variable
     @variable(EP, vALPHA >= 0);

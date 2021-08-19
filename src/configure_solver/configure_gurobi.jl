@@ -63,6 +63,8 @@ function configure_gurobi(solver_settings_path::String)
 		if(haskey(solver_settings, "BarConvTol")) MyBarConvTol = solver_settings["BarConvTol"] end
 	MyNumericFocus = 0 	# Numerical precision emphasis. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
 		if(haskey(solver_settings, "NumericFocus")) MyNumericFocus = solver_settings["NumericFocus"] end
+	MyOutputFlag = 1 	# Controls Gurobi output. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
+		if(haskey(solver_settings, "OutputFlag")) MyOutputFlag = solver_settings["OutputFlag"] end
 	########################################################################
 
 	OPTIMIZER = optimizer_with_attributes(Gurobi.Optimizer,
@@ -76,8 +78,8 @@ function configure_gurobi(solver_settings_path::String)
 		"Method" => MyMethod,
 		"BarConvTol" => MyBarConvTol,
 		"NumericFocus" => MyNumericFocus,
-		"Crossover" =>  MyCrossover
-	
+		"Crossover" =>  MyCrossover,
+		"OutputFlag" => MyOutputFlag
 	)
 
 	return OPTIMIZER

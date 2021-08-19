@@ -115,7 +115,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	EP = non_served_energy(EP, inputs)
 
 	if setup["MultiPeriod"] > 0
-		EP = investment_discharge_multi_period(EP, inputs, setup["PeriodLength"], setup["WACC"])
+		EP = investment_discharge_multi_period(EP, inputs, setup["MultiPeriodSettingsDict"])
 	else
 		EP = investment_discharge(EP, inputs)
 	end
@@ -147,7 +147,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
 		if setup["MultiPeriod"] > 0 
-			EP = storage_multi_period(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["PeriodLength"], setup["WACC"])
+			EP = storage_multi_period(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["MultiPeriodSettingsDict"])
 		else
 			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
 		end

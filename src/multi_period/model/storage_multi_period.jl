@@ -144,14 +144,14 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-function storage_multi_period(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, period_length::Int, wacc::Float64)
+function storage_multi_period(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, MultiPeriodSettingsDict::Dict)
 
-	println("Storage Resources Module")
+	println("Storage Resources Multi-Period Module")
 
 	G = inputs["G"]
 
 	if !isempty(inputs["STOR_ALL"])
-		EP = investment_energy_multi_period(EP, inputs, period_length, wacc)
+		EP = investment_energy_multi_period(EP, inputs, MultiPeriodSettingsDict)
 		EP = storage_all(EP, inputs, Reserves, OperationWrapping, LongDurationStorage)
 
 		# Include LongDurationStorage only when modeling representative periods and long-duration storage
@@ -161,7 +161,7 @@ function storage_multi_period(EP::Model, inputs::Dict, Reserves::Int, OperationW
 	end
 
 	if !isempty(inputs["STOR_ASYMMETRIC"])
-		EP = investment_charge_multi_period(EP, inputs, period_length, wacc)
+		EP = investment_charge_multi_period(EP, inputs,MultiPeriodSettingsDict)
 		EP = storage_asymmetric(EP, inputs, Reserves)
 	end
 

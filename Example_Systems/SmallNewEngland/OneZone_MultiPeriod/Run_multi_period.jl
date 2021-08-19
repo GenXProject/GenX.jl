@@ -40,7 +40,7 @@ genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file
 mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
 
 multiperiod_settings = joinpath(settings_path, "multi_period_settings.yml") # Multi period settings YAML file path 
-merge!(mysetup,YAML.load(open(multiperiod_settings)))
+mysetup["MultiPeriodSettingsDict"] = YAML.load(open(multiperiod_settings))
 
 ### Cluster time series inputs if necessary and if specified by the user
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
@@ -63,13 +63,13 @@ OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 myinputs=Dict()
 model_dict=Dict()
 cur_inv_dict=Dict()
-for t in 1:mysetup["NumPeriods"]
+for t in 1:mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
 
 	# Step 0) Set Model Year
-	mysetup["CurPeriod"] = t
+	mysetup["MultiPeriodSettingsDict"]["CurPeriod"] = t
 
 	# Step 1) Load Inputs
-	if mysetup["SeparateInputs"] == 1
+	if mysetup["MultiPeriodSettingsDict"]["SeparateInputs"] == 1
 		global inpath = string("$working_path/Input_Period_",t)
 	end
 	global myinputs = load_inputs(mysetup, inpath)

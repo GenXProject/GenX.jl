@@ -14,3 +14,4 @@ Crossover: -1                 # Barrier crossver strategy.
 BarObjRng: 1e+75              # Sets the maximum absolute value of the objective function
 PreDual: 0                    # Decides whether presolve should pass the primal or dual linear programming problem to the LP optimization algorithm.
 AggFill: 10                   # Allowed fill during presolve aggregation.
+OutputFlag: 0                 # Controls Gurobi output.s
