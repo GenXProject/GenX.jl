@@ -73,7 +73,7 @@ for t in 1:mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
 		global inpath = string("$working_path/Input_Period_",t)
 	end
 	global myinputs = load_inputs(mysetup, inpath)
-	myinputs = configure_multi_period_inputs(myinputs)
+	myinputs = configure_multi_period_inputs(myinputs,mysetup["MultiPeriodSettingsDict"])
 
 	# Step 2) Set the specific CO2 constraints for each model (overwriting the CSV file inputs)
 	#Z = myinputs["Z"]

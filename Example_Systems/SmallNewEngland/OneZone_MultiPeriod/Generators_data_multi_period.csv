@@ -1,5 +1,5 @@
-Resource,Inv_Cost_per_MW,Inv_Cost_per_MWh,Inv_Cost_Charge_per_MW,Lifetime,Min_Retired_Cap_MW_p1,Min_Retired_Cap_MW_p2,Min_Retired_Cap_MW_p3,Min_Retired_Energy_Cap_MW_p1,Min_Retired_Energy_Cap_MW_p2,Min_Retired_Energy_Cap_MW_p3,Min_Retired_Charge_Cap_MW_p1,Min_Retired_Charge_Cap_MW_p2,Min_Retired_Charge_Cap_MW_p3
-natural_gas_combined_cycle,1308000,0,0,20,0,0,0,0,0,0,0,0,0
-solar_pv,1706000,0,0,20,0,0,0,0,0,0,0,0,0
-onshore_wind,1944000,0,0,20,0,0,0,0,0,0,0,0,0
-battery,391680,449880,449880,20,0,0,0,0,0,0,0,0,0
+Resource,Capital_Recovery_Period,Lifetime,Min_Retired_Cap_MW_p1,Min_Retired_Cap_MW_p2,Min_Retired_Cap_MW_p3,Min_Retired_Energy_Cap_MW_p1,Min_Retired_Energy_Cap_MW_p2,Min_Retired_Energy_Cap_MW_p3,Min_Retired_Charge_Cap_MW_p1,Min_Retired_Charge_Cap_MW_p2,Min_Retired_Charge_Cap_MW_p3
+natural_gas_combined_cycle,20,20,0,0,0,0,0,0,0,0,0
+solar_pv,20,20,0,0,0,0,0,0,0,0,0
+onshore_wind,20,20,0,0,0,0,0,0,0,0,0
+battery,20,20,0,0,0,0,0,0,0,0,0
