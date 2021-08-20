@@ -1,4 +1,4 @@
-function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
+function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
     # start_cap_d dictionary contains key-value pairs of available capacity investment expressions
     # as keys and their corresponding linking constraints as values
@@ -12,6 +12,10 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
         start_cap_d[Symbol("eTotalCapCharge")] = Symbol("cExistingCapCharge")
     end
 
+    if setup["NetworkExpansion"]==1 && inputs["Z"] > 1
+        start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
+    end
+
     # This dictionary contains the endogenous retirement constraint name as a key,
     # and a tuple consisting of the associated tracking array constraint and variable as the value
     retirements_d = Dict([(Symbol("vCAPTRACK"),Symbol("cCapTrack"))])
@@ -23,11 +27,17 @@ function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
     if !isempty(inputs["STOR_ASYMMETRIC"])
         retirements_d[Symbol("vCAPTRACKCHARGE")] = Symbol("cCapTrackCharge")
     end
+
+    return start_cap_d, retirements_d
+end
+
+function run_ddp(models_d::Dict, setup::Dict, inputs::Dict)
     
     settings_d = setup["MultiPeriodSettingsDict"]
-
     num_periods = settings_d["NumPeriods"]  # Total number of time periods
     EPSILON = settings_d["ConvergenceTolerance"] # Tolerance
+
+    start_cap_d, retirements_d = configure_ddp_dicts(setup, inputs)
 
     ic = 0 # Iteration Counter
 

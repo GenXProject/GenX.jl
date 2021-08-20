@@ -90,6 +90,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	if setup["MultiPeriod"] >= 1
 		inputs = load_generators_data_multi_period(setup, path, sep, inputs)
+		inputs = load_network_data_multi_period(setup, path, sep, inputs)
 	end
 
 	println("CSV Files Successfully Read In From $path$sep")

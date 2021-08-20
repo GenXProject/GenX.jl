@@ -179,5 +179,6 @@ include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl"
 include("multi_period/dual_dynamic_programing.jl")
 include("multi_period/configure_multi_period_inputs.jl")
 include("multi_period/model/load_generators_data_multi_period.jl")
+include("multi_period/model/load_network_data_multi_period.jl")
 
 end

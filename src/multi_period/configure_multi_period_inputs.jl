@@ -25,13 +25,14 @@ function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp
 	return overnight_capital_cost
 end
 
-function configure_multi_period_inputs(inputs::Dict, settings_d::Dict)
+function configure_multi_period_inputs(inputs::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
     dfGen = inputs["dfGen"]
 	dfGenMultiPeriod = inputs["dfGenMultiPeriod"]
 
 	# Parameter inputs when multi-year discounting is activated
 	period_len = settings_d["PeriodLength"] # Length (in years) of each period
+	cur_period = settings_d["CurPeriod"]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 
 	# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
@@ -42,11 +43,6 @@ function configure_multi_period_inputs(inputs::Dict, settings_d::Dict)
 
 	# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model time periods
 	OPEXDF = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
-
-	# 3. Convert transmission line reinforcement costs into discounted cash flows - only applies if network expansion is activated
-	#if (setup["NetworkExpansion"]==1)
-	#	inputs["pC_Line_Reinforcement"] = compute_dcf(setup,inputs["pC_Total_Line_Reinforcement"],inputs["pLine_Lifetime"])
-	#end
 
 	# Update fixed O&M costs
 	# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each period, which may be multiple years
@@ -60,6 +56,29 @@ function configure_multi_period_inputs(inputs::Dict, settings_d::Dict)
 	inputs["RET_CAP_ENERGY"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs["STOR_ALL"])
 	# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
 	inputs["RET_CAP_CHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs["STOR_ASYMMETRIC"])
+
+	# Transmission
+	if NetworkExpansion == 1 && inputs["Z"] > 1
+
+		dfNetworkMultiPeriod = inputs["dfNetworkMultiPeriod"]
+
+		# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
+		inputs["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs["pC_Line_Reinforcement"],dfNetworkMultiPeriod[!,:Capital_Recovery_Period])
+
+		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment period
+		inputs["pTrans_Max_Possible"] = inputs["pLine_Max_Flow_Possible_MW_p$cur_period"]
+
+        # Network lines and zones that are expandable have greater maximum possible line flow than that of the previous period
+		if cur_period > 1
+			inputs["EXPANSION_LINES"] = findall(inputs["pLine_Max_Flow_Possible_MW_p$cur_period"] .> inputs["pLine_Max_Flow_Possible_MW_p$(cur_period-1)"])
+        	inputs["NO_EXPANSION_LINES"] = findall(inputs["pLine_Max_Flow_Possible_MW_p$cur_period"] .<= inputs["pLine_Max_Flow_Possible_MW_p$(cur_period-1)"])
+		else
+			inputs["EXPANSION_LINES"] = findall(inputs["pLine_Max_Flow_Possible_MW_p$cur_period"] .> inputs["pTrans_Max"])
+			inputs["NO_EXPANSION_LINES"] = findall(inputs["pLine_Max_Flow_Possible_MW_p$cur_period"] .<= inputs["pTrans_Max"])
+		end
+
+		#To-Do: Error handling (Line Flow must be monotonically increasing, in first period must be negative or greater than pTrans_Max)
+    end
 
     return inputs
 end
