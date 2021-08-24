@@ -27,6 +27,7 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 	HYDRO_RES = inputs["HYDRO_RES"]
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	MUST_RUN = inputs["MUST_RUN"]
 	#calculating capacity value under reserve margin constraint, added by NP on 10/21/2020
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
