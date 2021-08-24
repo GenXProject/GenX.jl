@@ -51,6 +51,8 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 						dfCapValue_[y,Symbol("t$t")] = ((dfCharge[y,Symbol("t$t")] - dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in THERM_ALL) # including thermal
 						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in MUST_RUN) # Must run technologies are not considered for reserve margin
+						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
 					end
 				end
 			else
