@@ -33,8 +33,8 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:end-1,:NewCap]
 	dfNetRevenue.Inv_cost_MWh = dfGen[!,:Inv_Cost_per_MWhyr] .* dfCap[1:end-1,:NewEnergyCap]
 	if setup["ParameterScale"] == 1
-		dfNetRevenue.Inv_cost_MWh = dfNetRevenue.Inv_cost_MWh * (ModelScalingFactor^2) # converting Million US$ to US$
-		dfNetRevenue.Inv_cost_MW = dfNetRevenue.Inv_cost_MW * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.Inv_cost_MWh = dfNetRevenue.Inv_cost_MWh * (ModelScalingFactor) # converting Million US$ to US$
+		dfNetRevenue.Inv_cost_MW = dfNetRevenue.Inv_cost_MW * (ModelScalingFactor) # converting Million US$ to US$
 	end
 
 	# Add operations and maintenance cost to the dataframe
@@ -42,9 +42,9 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:end-1,:EndEnergyCap]
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:end-1,:AnnualSum]
 	if setup["ParameterScale"] == 1
-		dfNetRevenue.Fixed_OM_cost_MW = dfNetRevenue.Fixed_OM_cost_MW * (ModelScalingFactor^2) # converting Million US$ to US$
-		dfNetRevenue.Fixed_OM_cost_MWh = dfNetRevenue.Fixed_OM_cost_MWh * (ModelScalingFactor^2) # converting Million US$ to US$
-		dfNetRevenue.Var_OM_cost_out = dfNetRevenue.Var_OM_cost_out * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.Fixed_OM_cost_MW = dfNetRevenue.Fixed_OM_cost_MW * (ModelScalingFactor) # converting Million US$ to US$
+		dfNetRevenue.Fixed_OM_cost_MWh = dfNetRevenue.Fixed_OM_cost_MWh * (ModelScalingFactor) # converting Million US$ to US$
+		dfNetRevenue.Var_OM_cost_out = dfNetRevenue.Var_OM_cost_out * (ModelScalingFactor) # converting Million US$ to US$
 	end
 
 	# Add fuel cost to the dataframe
