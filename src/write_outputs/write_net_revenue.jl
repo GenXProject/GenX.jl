@@ -175,7 +175,7 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 
 	dfNetRevenue.Revenue =	dfNetRevenue.EnergyRevenue + dfNetRevenue.SubsidyRevenue + dfNetRevenue.ReserveMarginRevenue + dfNetRevenue.ESRRevenue + dfNetRevenue.RegSubsidyRevenue
-	dfNetRevenue.Cost 	= 	dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
+	dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
 	dfNetRevenue.Profit = 	dfNetRevenue.Revenue - dfNetRevenue.Cost
 
 	CSV.write(string(path,sep,"NetRevenue.csv"), dfNetRevenue)
