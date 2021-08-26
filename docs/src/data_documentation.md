@@ -174,8 +174,6 @@ This input file contains input parameters related to: 1) definition of model zon
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Mandatory Columns**||
-|Network\_zones | Specified as z* where * is a number of the zone.|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
 |Network\_Lines | Numerical index for each network line/|
