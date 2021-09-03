@@ -129,7 +129,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if Z > 1
-		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiPeriod"], setup["MultiPeriodSettingsDict"])
+		if setup["MultiPeriod"] > 0
+			EP = transmission_multi_period(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiPeriodSettingsDict"])
+		else
+			EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"])
+		end
 	end
 
 	# Technologies

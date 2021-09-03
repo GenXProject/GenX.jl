@@ -26,10 +26,13 @@ export write_outputs
 export cluster_inputs
 export mga
 export simple_operation
+export choose_output_dir
 
 # Multi-period methods
 export run_ddp
 export configure_multi_period_inputs
+export load_inputs_multi_period
+export write_multi_period_outputs
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -120,8 +123,9 @@ include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
 
-include("multi_period/model/storage_multi_period.jl")
-include("multi_period/model/investment_multi_period.jl")
+include("multi_period/model_multi_period/storage_multi_period.jl")
+include("multi_period/model_multi_period/investment_multi_period.jl")
+include("multi_period/model_multi_period/transmission_multi_period.jl")
 
 include("model/generate_model.jl")
 include("model/solve_model.jl")
@@ -177,8 +181,10 @@ include("simple_operation.jl")
 include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
 
 include("multi_period/dual_dynamic_programing.jl")
-include("multi_period/configure_multi_period_inputs.jl")
-include("multi_period/model/load_generators_data_multi_period.jl")
-include("multi_period/model/load_network_data_multi_period.jl")
+include("multi_period/load_inputs_multi_period/configure_multi_period_inputs.jl")
+include("multi_period/load_inputs_multi_period/load_generators_data_multi_period.jl")
+include("multi_period/load_inputs_multi_period/load_network_data_multi_period.jl")
+include("multi_period/load_inputs_multi_period/load_inputs_multi_period.jl")
+include("multi_period/write_outputs_multi_period/write_capacity_multi_period.jl")
 
 end

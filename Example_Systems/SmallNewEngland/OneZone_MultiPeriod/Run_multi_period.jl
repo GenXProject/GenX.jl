@@ -17,8 +17,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 cd(dirname(@__FILE__))
 settings_path = joinpath(pwd(), "Settings")
 
-#environment_path = "../../../package_activate.jl"
-#include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
+environment_path = "../../../package_activate.jl"
+include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
 
 ### Set relevant directory paths
 src_path = "../../../src/"
@@ -57,71 +57,56 @@ end
 println("Configuring Solver")
 OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 
-# DDP Setup Parameters
-#co2_array = [0.1, 0.05, 0.01] # CO2 emissions intensity in each model year in tCO2/MWh NOTE: the length of this array has to be align with number of model time periods
-
-myinputs=Dict()
 model_dict=Dict()
-cur_inv_dict=Dict()
+inputs_dict=Dict()
+
+inputs_multi_period = load_inputs_multi_period(mysetup, string("$inpath/Inputs"))
+
 for t in 1:mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
 
 	# Step 0) Set Model Year
 	mysetup["MultiPeriodSettingsDict"]["CurPeriod"] = t
 
 	# Step 1) Load Inputs
-	if mysetup["MultiPeriodSettingsDict"]["SeparateInputs"] == 1
-		global inpath = string("$working_path/Input_Period_",t)
-	end
-	global myinputs = load_inputs(mysetup, inpath)
-	myinputs = configure_multi_period_inputs(myinputs,mysetup["MultiPeriodSettingsDict"])
+	inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
-	# Step 2) Set the specific CO2 constraints for each model (overwriting the CSV file inputs)
-	#Z = myinputs["Z"]
-	#for z in 1:Z
-	#	myinputs["pMaxCO2Rate"][z] = co2_array[t]
-	#end
+	inputs_dict[t] = load_inputs(mysetup, inpath_sub)
 
-	# Step 3) Generate model
-	EP = generate_model(mysetup, myinputs, OPTIMIZER)
+	merge!(inputs_dict[t],inputs_multi_period)
+	inputs_dict[t] = configure_multi_period_inputs(inputs_dict[t],mysetup["MultiPeriodSettingsDict"],mysetup["NetworkExpansion"])
 
-	# Step 4) Add model to dictionary
-	model_dict[t] = EP
-
+	# Step 2) Generate model
+	model_dict[t] = generate_model(mysetup, inputs_dict[t], OPTIMIZER)
 end
 
-#=
+
 ### Solve model
 println("Solving Model")
-EP, solve_time = solve_model(model_dict[1], mysetup)
-myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 
-### Write output
-# Run MGA if the MGA flag is set to 1 else only save the least cost solution
-println("Writing Output")
-outpath = "$inpath/Results_DDP"
-write_outputs(EP, outpath, mysetup, myinputs)
-#println(@btime write_outputs(EP, outpath, mysetup, myinputs))
-if mysetup["ModelingToGenerateAlternatives"] == 1
-    println("Starting Model to Generate Alternatives (MGA) Iterations")
-    mga(EP,inpath,mysetup,myinputs,outpath)
-end
-=#
-# Step 5) Run DDP Algorithm
+# Step 3) Run DDP Algorithm
 ## Solve Model
-myresults_d, mystats_d = run_ddp(model_dict, mysetup, myinputs)
+model_dict, mystats_d, inputs_dict = run_ddp(model_dict, mysetup, inputs_dict)
 
-#=
-# Step 6) Write final outputs from each period
-if ! isdir("Results")
-	mkdir("Results")
+# Step 4) Write final outputs from each period
+
+outpath = string("$inpath/Results")
+
+if !haskey(mysetup, "OverwriteResults") || mysetup["OverwriteResults"] == 1
+	# Overwrite existing results if dir exists
+	# This is the default behaviour when there is no flag, to avoid breaking existing code
+	if !(isdir(outpath))
+		mkdir(outpath)
+	end
+else
+	# Find closest unused ouput directory name and create it
+	outpath = choose_output_dir(outpath)
+	mkdir(outpath)
 end
 
-for t in 1:mysetup["DDP_Total_Periods"]
-	outpath = string("$working_path/Results/Results_Period_",t)
-	GenX_Modular.write_outputs(mysetup,outpath,myresults_d[t],myinputs)
+for p in 1:mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
+	outpath_cur = string("$outpath/Results_p$p")
+	write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
 end
 
-# Step 7) Write DDP summary outputs
-outpath = string("$working_path/Results/")
-write_ddp_outputs(myresults_d, mystats_d, outpath, mysetup)
-=#
+# Step 5) Write DDP summary outputs
+write_multi_period_outputs(mystats_d, outpath, mysetup["MultiPeriodSettingsDict"])

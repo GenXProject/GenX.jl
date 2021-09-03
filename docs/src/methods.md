@@ -8,3 +8,42 @@ Modules = [GenX]
 Pages = ["time_domain_reduction.jl"]
 Order = [:type, :function]
 ```
+
+## Multi-Period Modeling
+
+GenX can be configured for multi-period modeling with perfect foresight. The dual dynamic program (DDP) algorithm is a well-known approach for solving multi-period optimization problems in a computationally efficient manner, first proposed by Pereira and
+Pinto (1991). This algorithm splits up a multi-period investment planning problem into multiple, single-period sub-problems. Each period is solved iteratively as a separate linear program sub-problem (“forward pass”), and information from future periods is shared with past periods (“backwards pass”) so that investment decisions made in subsequent iterations reflect the contributions of present-day investments to future costs. Multi-period modeling functionality is designed as a "wrapper" around GenX, and to the extent possible, existing methods were left unchanged.
+
+The time-domain reduction method provided allows the user to automate these feature by specifying the various parameters related to the time-domain reduction algorithm (via time\_domain\_reduction\_settings.yml described under  Model Inputs/Outputs documentations/Inputs), including the desired level of temporal resolution to be used in formulating the resulting optimization model.
+
+```@autodocs
+Modules = [GenX]
+Pages = ["dual_dynamic_programing.jl"]
+Order = [:type, :function]
+```
+
+```@autodocs
+Modules = [GenX]
+Pages = ["configure_multi_period_inputs.jl"]
+Order = [:type, :function]
+```
+
+```@autodocs
+Modules = [GenX]
+Pages = ["investment_multi_period.jl"]
+Order = [:type, :function]
+
+```@autodocs
+Modules = [GenX]
+Pages = ["storage_multi_period.jl"]
+Order = [:type, :function]
+
+```@autodocs
+Modules = [GenX]
+Pages = ["transmission_multi_period.jl"]
+Order = [:type, :function]
+
+```@autodocs
+Modules = [GenX]
+Pages = ["write_capacity_multi_period.jl"]
+Order = [:type, :function]
