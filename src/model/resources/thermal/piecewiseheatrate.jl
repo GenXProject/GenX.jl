@@ -15,11 +15,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	thermal(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
-
-The thermal module creates decision variables, expressions, and constraints related to thermal power plants e.g. coal, oil or natural gas steam plants, natural gas combined cycle and combustion turbine plants, nuclear, hydrogen combustion etc.
-
-This module uses the following 'helper' functions in separate files: thermal_commit() for thermal resources subject to unit commitment decisions and constraints (if any) and thermal_no_commit() for thermal resources not subject to unit commitment (if any).
+	piecewiseheatrate(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
+piecewiseheatrate module allows piecewise-linear fitting of input thermal energy at part load. When setup["PieceWiseHeatRate"] == 1 and setup["UCommit"] >= 1, this module is on.
 """
 
 function piecewiseheatrate(EP::Model, inputs::Dict)
