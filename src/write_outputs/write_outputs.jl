@@ -96,6 +96,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			write_reg(path, sep, inputs, setup, EP)
 			write_rsv(path, sep, inputs, setup, EP)
 		end
+		if setup["PieceWiseHeatRate"] == 1
+			write_piecewise_fuel(path, sep, inputs, setup, EP)
+			println("write piecewise")
+		end
 	end
 
 

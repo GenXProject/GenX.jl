@@ -73,10 +73,18 @@ function co2_cap(EP::Model, inputs::Dict, setup::Dict)
 	# CO2 emissions for resources "y" during hour "t" [tons]
 	# if the model is using scaling, then vP is in GW;
 	@expression(EP, eEmissionsByPlant[y=1:G,t=1:T],
-		if y in inputs["COMMIT"]
-			dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t] + dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
+	    if (setup["UCommit"] >= 1 & setup["PieceWiseHeatRate"] ==1)
+			if y in inputs["COMMIT"]
+				dfGen[!,:CO2_per_MMBTU][y]*EP[:vFuel][y,t] + dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
+			else
+				dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
+			end
 		else
-			dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
+		    if y in inputs["COMMIT"]
+			    dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t] + dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
+		    else
+		     	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
+	    	end
 		end
 	)
 

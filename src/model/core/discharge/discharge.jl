@@ -29,7 +29,7 @@ This module additionally defines contributions to the objective function from va
 ```
 
 """
-function discharge(EP::Model, inputs::Dict)
+function discharge(EP::Model, inputs::Dict, PieceWiseHeatRate::Int)
 
 	println("Discharge Module")
 
@@ -46,6 +46,10 @@ function discharge(EP::Model, inputs::Dict)
 	### Expressions ###
 
 	## Objective Function Expressions ##
+	# if piecewiseheatrate option and ucommit commitment option are active, skip the fuel consumption
+	if (PieceWiseHeatRate == 1)&(!isempty(inputs["THERM_COMMIT"]))
+		inputs["C_Fuel_per_MWh"][inputs["THERM_COMMIT"],:] .=0
+	end
 
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M plus fuel cost
 	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[!,:Var_OM_Cost_per_MWh][y]+inputs["C_Fuel_per_MWh"][y,t])*vP[y,t]))
