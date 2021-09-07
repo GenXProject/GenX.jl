@@ -1,4 +1,4 @@
-Voll,Demand_Segment,Cost_of_demand_curtailment_perMW,Max_demand_curtailment,$/MWh,Rep_Periods,Timesteps_per_Rep_Period,Sub_Weights,Time_Index,Load_MW_z1,Load_MW_z2,Load_MW_z3
+Voll,Demand_Segment,Cost_of_Demand_Curtailment_per_MW,Max_Demand_Curtailment,$/MWh,Rep_Periods,Timesteps_per_Rep_Period,Sub_Weights,Time_Index,Load_MW_z1,Load_MW_z2,Load_MW_z3
 9000,1,1,1,9000,4,120,3000,1,17459,19302,12735
 ,2,0.067,0.075,603,,,2640,2,16658,18484,12038
 ,,,,,,,3000,3,15640,17421,11331
