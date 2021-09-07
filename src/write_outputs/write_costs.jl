@@ -33,6 +33,7 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
 	else
 		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
+		#cVar = value(EP[:eTotalCVarOut])+(!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
 		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
 		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
 	end
