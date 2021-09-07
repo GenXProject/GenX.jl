@@ -7,9 +7,9 @@
 |$t \in \mathcal{T}$ | where $t$ denotes an time step and $\mathcal{T}$ is the set of time steps over which grid operations are modeled|
 |$\mathcal{T}^{interior} \in \mathcal{T}^{}$ | where $\mathcal{T}^{interior}$ is the set of interior timesteps in the data series|
 |$\mathcal{T}^{start} \in \mathcal{T}$ |  where $\mathcal{T}^{start}$ is the set of initial timesteps in the data series. $\mathcal{T}^{start}={1}$ when representing entire year as a single contiguous period; $\mathcal{T}^{start}=\{\left(m-1\right) \times \tau^{period}+1 \| m \in \mathcal{M}\}$, which corresponds to the first time step of each representative period $m \in \mathcal{M}$|
-|$n \in \mathcal{N}$ | where $n$ corresponds to a contiguous time period and $\mathcal{N}$ correspond to the set of contiguous periods of length $\tau^{period}$ that make up the input time series (e.g. load, variable renewable energy availability) to the model|
-|$\mathcal{N}^{rep} \in \mathcal{N}$ | where $\mathcal{N}^{rep}$ correspond to set of representative time period hat are selected from set of contiguous periods, $\mathcal{M}$|
-|$m \in \mathcal{M}$ | where $m$ correspond to a representative time period and $\mathcal{M}$ corresponds to the set of representative periods indexed as per their chronological ocurrence in the set of contiguous periods spanning the input time series data, i.e. $\mathcal{N}$|
+|$n \in \mathcal{N}$ | where $n$ corresponds to a contiguous time period and $\mathcal{N}$ corresponds to the set of contiguous periods of length $\tau^{period}$ that make up the input time series (e.g. load, variable renewable energy availability) to the model|
+|$\mathcal{N}^{rep} \in \mathcal{N}$ | where $\mathcal{N}^{rep}$ corresponds to the set of representative time periods that are selected from the set of contiguous periods, $\mathcal{M}$|
+|$m \in \mathcal{M}$ | where $m$ corresponds to a representative time period and $\mathcal{M}$ corresponds to the set of representative time periods indexed as per their chronological ocurrence in the set of contiguous periods spanning the input time series data, i.e. $\mathcal{N}$|
 $z \in \mathcal{Z}$ | where $z$ denotes a zone and $\mathcal{Z}$ is the set of zones in the network|
 |$l \in \mathcal{L}$ | where $l$ denotes a line and $\mathcal{L}$ is the set of transmission lines in the network|
 |$y \in \mathcal{G}$ | where $y$ denotes a technology and $\mathcal{G}$ is the set of available technologies |
@@ -21,9 +21,9 @@ $z \in \mathcal{Z}$ | where $z$ denotes a zone and $\mathcal{Z}$ is the set of z
 |$s \in \mathcal{S}$ | where $s$ denotes a segment and $\mathcal{S}$ is the set of consumers segments for price-responsive demand curtailment|
 |$\mathcal{O} \in \mathcal{G}$ | where $\mathcal{O}$ is the subset of storage resources excluding heat storage and hydro storage |
 |$o \in \mathcal{O}$ | where $o$ denotes a storage technology in a set $\mathcal{O}$|
-|$\mathcal{O}^{sym} \in \mathcal{O}$ | where $\mathcal{O}^{sym}$ correspond to the set of energy storage technologies with equal (or symmetric) charge and discharge power capacities|
-|$\mathcal{O}^{asym} \in \mathcal{O}$ | where $\mathcal{O}^{asym}$ correspond to the set of energy storage technologies with independently sized (or asymmetric) charge and discharge power capacities|
-|$\mathcal{O}^{LDES} \in \mathcal{O}$ | where $\mathcal{O}^{LDES}$ correspond to the set of long-duration energy storage technologies for which inter-period energy exchange is permitted when using representative periods to model annual grid operations|
+|$\mathcal{O}^{sym} \in \mathcal{O}$ | where $\mathcal{O}^{sym}$ corresponds to the set of energy storage technologies with equal (or symmetric) charge and discharge power capacities|
+|$\mathcal{O}^{asym} \in \mathcal{O}$ | where $\mathcal{O}^{asym}$ corresponds to the set of energy storage technologies with independently sized (or asymmetric) charge and discharge power capacities|
+|$\mathcal{O}^{LDES} \in \mathcal{O}$ | where $\mathcal{O}^{LDES}$ corresponds to the set of long-duration energy storage technologies for which inter-period energy exchange is permitted when using representative periods to model annual grid operations|
 $\mathcal{W} \in \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric generators with water storage reservoirs|
 |$\mathcal{W}^{nocap} \in \mathcal{W}$ | where $\mathcal{W}^{nocap}$ is a subset of set of $ \mathcal{W}$ and represents resources with unknown reservoir capacity|
 |$\mathcal{W}^{cap} \in \mathcal{W}$ | where $\mathcal{W}^{cap}$ is a subset of set of $ \mathcal{W}$ and represents resources with known reservoir capacity|
