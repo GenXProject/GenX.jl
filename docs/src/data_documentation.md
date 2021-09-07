@@ -157,7 +157,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 
 #### 2.1.1 Fuels\_data.csv
 
-• **First row:** names of all fuels used in the model instance which should match the labels used in `Fuel` column in the `Generators_data.csv` file. For renewable resources or other resources that do not consume a fuel, the name of the fuel is `none`.
+• **First row:** names of all fuels used in the model instance which should match the labels used in `Fuel` column in the `Generators_data.csv` file. For renewable resources or other resources that do not consume a fuel, the name of the fuel is `None`.
 
 • **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
 
