@@ -75,6 +75,7 @@ include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
+include("load_inputs/load_fleccs_data.jl")
 
 include("load_inputs/load_inputs.jl")
 
@@ -111,6 +112,11 @@ include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
 include("model/resources/thermal/piecewiseheatrate.jl")
+
+include("model/resources/fleccs/fleccs.jl")
+include("model/resources/fleccs/fleccs_fix.jl")
+include("model/resources/fleccs/fleccs2.jl")
+
 
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")

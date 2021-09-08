@@ -1,0 +1,8 @@
+R_ID,Zone,FLECCS_NO,Resource,Existing_Cap_Unit,TURBINE,COMPRESSOR,ABSORBER,REGEN,SOLVENT,THERM,DISP,NDISP,STOR,Commit,Min_Share,Max_Share,Existing_Cap_MW,Existing_Cap_MWh,New_Build,Num_unit,Cap_Size,Min_Cap_MW,Max_Cap_MW,Min_Share_percent,Max_Share_percent,Var_OM_Cost_per_Unit,Var_OM_cost_per_MWh_in,Inv_Cost_per_Unityr,Fixed_OM_Cost_per_Unityr,Start_cost_per_unit,Fuel,Min_power,Self_disch,Eff_up,Eff_down,Ratio_power_to_energy,Min_Duration,Ramp_Up_percentage,Ramp_Dn_percentage,Up_time,Down_time
+1,1,1,NGCT,9540,1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,20,477,0,-1,0,0,1.67,0,1000000000,0,95,NG,0.2,0,1,1,0,0,0.64,0.64,6,6
+1,1,2,NGST,5280,2,0,0,0,0,1,0,0,0,1,0,0,0,0,1,20,264,0,-1,0,0,1.67,0,1000000000,0,95,NG,0.2,0,1,1,0,0,0.64,0.64,6,6
+1,1,3,Adsorber,4415.953472,0,0,1,0,0,1,0,0,0,1,0,0,0,0,1,20,220.7976736,0,-1,0,0,11.2,0,1000000000,0,14.16983529,None,0.2,0,1,1,0,0,0.64,0.64,6,6
+1,1,4,Compressor,427.2500009,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,20,21.36250005,0,-1,0,0,0,0,1000000000,0,0,None,0.16,0,1,1,0,0,0.64,0.64,6,6
+1,1,5,Regenerator,5519.94184,0,0,0,1,0,1,0,0,0,1,0,0,0,0,1,20,275.997092,0,-1,0,0,0,0,1000000000,0,14.16983529,none,0.16,0,1,1,0,0,0.64,0.64,6,6
+1,1,6,Rich,61221.17316,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,20,3061.058658,0,0,0,0,0,0,1000000000,0,0,none,0,0,1,1,0,0,0.64,0.64,0,0
+1,1,7,Lean,61221.17316,0,0,0,0,2,0,0,0,0,0,0,0,0,0,1,20,3061.058658,0,0,0,0,0,0,1000000000,0,0,none,0,0,1,1,0,0,0.64,0.64,0,0

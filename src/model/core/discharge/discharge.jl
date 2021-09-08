@@ -29,7 +29,7 @@ This module additionally defines contributions to the objective function from va
 ```
 
 """
-function discharge(EP::Model, inputs::Dict, PieceWiseHeatRate::Int)
+function discharge(EP::Model, inputs::Dict, PieceWiseHeatRate::Int, CostCO2::Int)
 
 	println("Discharge Module")
 
@@ -54,12 +54,24 @@ function discharge(EP::Model, inputs::Dict, PieceWiseHeatRate::Int)
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M plus fuel cost
 	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[!,:Var_OM_Cost_per_MWh][y]+inputs["C_Fuel_per_MWh"][y,t])*vP[y,t]))
 	#@expression(EP, eCVar_out[y=1:G,t=1:T], (round(inputs["omega"][t]*(dfGen[!,:Var_OM_Cost_per_MWh][y]+inputs["C_Fuel_per_MWh"][y,t]), digits=RD)*vP[y,t]))
+	# CO2 emissions from generators in the generator_data.csv
+	@expression(EP,eCO2_emissions[y=1:G,t = 1:T],vP[y,t]*inputs["dfGen"][!,:CO2_per_MWh][y])
+	# mutiplying the CO2 emissions and CO2 cost
+	@expression(EP,eCCO2_out[y=1:G,t=1:T], eCO2_emissions[y,t]*CostCO2)
+	# Sum the CO2 emissions cost
+	@expression(EP,eTotalCCO2T[t=1:T], sum(eCCO2_out[y,t] for y in 1:G))
+	@expression(EP,eTotalCCO2, sum(eTotalCCO2T[t] for t in 1:T))
+
+	
 	# Sum individual resource contributions to variable discharging costs to get total variable discharging costs
 	@expression(EP, eTotalCVarOutT[t=1:T], sum(eCVar_out[y,t] for y in 1:G))
 	@expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))
 
+	#@expression(EP, eTotalCVarOut, eTotalCVarOutG + eTotalCCO2)
+
 	# Add total variable discharging cost contribution to the objective function
-	EP[:eObj] += eTotalCVarOut
+	EP[:eObj] = EP[:eObj] + eTotalCVarOut + eTotalCCO2
+
 
 	return EP
 

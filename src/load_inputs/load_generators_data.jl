@@ -191,13 +191,17 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	heat_rate = convert(Array{Float64}, collect(skipmissing(gen_in[!,:Heat_Rate_MMBTU_per_MWh])) )
 	# Fuel used by each resource
 	fuel_type = collect(skipmissing(gen_in[!,:Fuel]))
+	inputs_gen["fuel_type"] = fuel_type
+
 	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
 	inputs_gen["C_Fuel_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
+	inputs_gen["C_Fuel_per_MMBTU"] = zeros(Float64, G, inputs_gen["T"])
 	inputs_gen["dfGen"][!,:CO2_per_MWh] = zeros(Float64, G)
 	inputs_gen["dfGen"][!,:CO2_per_MMBTU] = zeros(Float64, G)
 	for g in 1:G
 		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
 		inputs_gen["C_Fuel_per_MWh"][g,:] = fuel_costs[fuel_type[g]].*heat_rate[g]
+		inputs_gen["C_Fuel_per_MMBTU"][g,:] = fuel_costs[fuel_type[g]]
 		inputs_gen["dfGen"][!,:CO2_per_MWh][g] = fuel_CO2[fuel_type[g]]*heat_rate[g]
 		inputs_gen["dfGen"][!,:CO2_per_MMBTU][g] = fuel_CO2[fuel_type[g]]
 
