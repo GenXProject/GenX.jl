@@ -29,7 +29,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{W}^{cap} \subseteq \mathcal{W}$ | where $\mathcal{W}^{cap}$ is a subset of set of $ \mathcal{W}$ and represents resources with known reservoir capacity|
 |$\mathcal{MR} \subseteq \mathcal{G}$ | where $\mathcal{MR}$ set of must-run resources|
 |$\mathcal{DF} \subseteq \mathcal{G}$ | where $\mathcal{DF}$ set of flexible demand resources|
-|$\mathcal{G}_p^{ESR} \subseteq \mathcal{G}$ | where $\mathcal{G}_p^{ESR}$ is a subset of $\mathcal{G}$ that is elgible for Energy Share Requirement (ESR) policy constraint $p$|
+|$\mathcal{G}_p^{ESR} \subseteq \mathcal{G}$ | where $\mathcal{G}_p^{ESR}$ is a subset of $\mathcal{G}$ that is eligible for Energy Share Requirement (ESR) policy constraint $p$|
 |$p \in \mathcal{P}$ | where $p$ denotes a instance in the policy set $\mathcal{P}$|
 |$\mathcal{P}^{ESR} \subseteq \mathcal{P}$ | Energy Share Requirement type policies |
 |$\mathcal{P}^{CO_2} \subseteq \mathcal{P}$ | CO$_2$ emission cap policies|
@@ -39,12 +39,12 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{P}^{CRM} \subseteq \mathcal{P}$ | Capacity reserve margin (CRM) type policy constraints |
 |$\mathcal{P}^{MinTech} \subseteq \mathcal{P}$ | Minimum Capacity Carve-out type policy constraint |
 |$\mathcal{Z}^{ESR}_{p} \subseteq \mathcal{Z}$ | set of zones eligible for ESR policy constraint $p \in \mathcal{P}^{ESR}$ |
-|$\mathcal{Z}^{CRM}_{p} \subseteq \mathcal{Z}$ | set of zones that form the locational deliverable area for capacity reserve margine policy constraint $p \in \mathcal{P}^{CRM}$ |
+|$\mathcal{Z}^{CRM}_{p} \subseteq \mathcal{Z}$ | set of zones that form the locational deliverable area for capacity reserve margin policy constraint $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{Z}^{CO_2}_{p,mass} \subseteq \mathcal{Z}$ | set of zones are under the emission cap mass-based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{mass}$ |
 |$\mathcal{Z}^{CO_2}_{p,load} \subseteq \mathcal{Z}$ | set of zones are under the emission cap load emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{load}$ |
 |$\mathcal{Z}^{CO_2}_{p,gen} \subseteq \mathcal{Z}$ | set of zones are under the emission cap generation emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO2,gen}$ |
-|$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines entering Locational Deliverability Area of capactiy reserve margine policy $p \in \mathcal{P}^{CRM}$ |
-|$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines leaving Locational Deliverability Area of capactiy reserve margine policy $p \in \mathcal{P}^{CRM}$ |
+|$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines entering Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
+|$\mathcal{L}_p^{out} \subseteq \mathcal{L}$ | The subset of transmission lines leaving Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
 ---
 
 
@@ -82,7 +82,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\zeta_{y,z,t}$ | Number of shutdown decisions,  of the generation cluster $y$ in zone $z$ at time $t$|
 |$\mathcal{Q}_{o,n} \in \mathbb{R}_+$ | Inventory of storage of type $o$ at the beginning of input period $n$ [MWh]|
 |$\Delta\mathcal{Q}_{o,m} \in \mathbb{R}$ | Excess storage inventory built up during representative period $m$ [MWh]|
-|$ON^{+}_{l,t} \in {0,1} $ | Binary variable to activate positive flows on line $l$ in time $t$|
+|$ON^{+}_{l,t} \in \{0,1\} $ | Binary variable to activate positive flows on line $l$ in time $t$|
 |$TransON^{+}_{l,t} \in \mathbb{R}_+$ | Variable defining maximum positive flow in line $l$ in time $t$ [MW]|
 ---
 
