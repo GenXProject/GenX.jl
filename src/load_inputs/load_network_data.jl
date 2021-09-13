@@ -26,8 +26,6 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
     network_var = DataFrame(CSV.File(string(path,sep,"Network.csv"), header=true), copycols=true)
 
     # Number of zones in the network
-    #inputs_nw["Z"]=size(collect(skipmissing(network_var[!,:Network_zones])),1)##Original
-    #inputs_nw["Z"] = size(findall(s -> occursin("z", s), names(network_var)),1) ##Greg's PR
     inputs_nw["Z"] = size(findall(s -> (startswith(s, "z")) & (tryparse(Float64, s[2:end]) != nothing), names(network_var)),1)
     Z = inputs_nw["Z"]
     # Number of lines in the network
