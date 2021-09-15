@@ -47,6 +47,7 @@ Here are step-by-step instructions for running Run.jl, following the two slightl
 
 ### Method 1: Creating the Julia environment and installing dependencies from Project.toml file
 
+
 1. Start a terminal and navigate into the `GenX` folder.
 2. Type `julia --project=.` to start an instance of the `julia` kernal with the `project` set to the current folder. The `.` indicates the current folder.
 
@@ -58,7 +59,6 @@ If it's your first time running GenX (or, if you have pulled after some major up
 6. Type the back key to come back to the `julia>` prompt.
 
 Steps 3-6 can be skipped on subsequent runs.
-
 Execution of the entire sequence of the six steps is shown in Figure 1.
 
 ![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-6](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step1_Updated.png)
