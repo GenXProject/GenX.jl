@@ -51,7 +51,7 @@ elseif v"1.5" <= VERSION < v"1.7"=#
 	Pkg.add(Pkg.PackageSpec(name="GLPK", version="0.14.12"))
 	Pkg.add(Pkg.PackageSpec(name="Ipopt", version="0.7.0"))
 	Pkg.add(Pkg.PackageSpec(name="JuMP", version="0.21.8"))
-	#Pkg.add(Pkg.PackageSpec(name="CPLEX", version="0.7.7"))
+	Pkg.add(Pkg.PackageSpec(name="CPLEX", version="0.6.1"))
 	Pkg.add(Pkg.PackageSpec(name="CSV", version="0.8.5"))
 	Pkg.add(Pkg.PackageSpec(name="Clustering", version="0.14.2"))
 	Pkg.add(Pkg.PackageSpec(name="Combinatorics", version="1.0.2"))

@@ -25,6 +25,7 @@ export solve_model
 export write_outputs
 export cluster_inputs
 export mga
+export morris
 export simple_operation
 
 using JuMP # used for mathematical programming
@@ -39,12 +40,15 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
+using DiffEqSensitivity
+using OrdinaryDiffEq
+using QuasiMonteCarlo
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 #using Gurobi
-#using CPLEX
+using CPLEX
 
-using Clp
-using Cbc
+#using Clp
+#using Cbc
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -168,4 +172,5 @@ include("write_outputs/write_outputs.jl")
 include("simple_operation.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
+include("additional_tools/method_of_morris_v0.jl")
 end

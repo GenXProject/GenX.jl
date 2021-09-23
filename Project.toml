@@ -32,7 +32,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 BenchmarkTools = "1.1.1"
-#CPLEX = "0.7.7"
+CPLEX = "0.6.1"
 CSV = "0.8.5"
 Cbc = "0.8.0"
 Clp = "0.8.4"

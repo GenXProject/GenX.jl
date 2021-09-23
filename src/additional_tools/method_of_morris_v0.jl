@@ -22,7 +22,12 @@ We are in the process of implementing Method of Morris for global sensitivity an
 """
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
-    Morris_range = CSV.read(string(path, "/Method_of_morris_range.csv"), header=true, copycols=true)
+    if setup["MacOrWindows"]=="Mac"
+		sep = "/"
+	else
+		sep = "\U005c"
+	end
+    Morris_range = DataFrame(CSV.File(string(path, sep,"Method_of_morris_range.csv"), header=true), copycols=true)
     save_parameters = zeros(length(Morris_range[!,:Parameter]))
     f1 = function(sigma)
         print(sigma)
@@ -54,12 +59,6 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
 
     #save the variance of effect of each uncertain variable on the objective function
     Morris_range[!,:variance] = DataFrame(m.variances')[!,:x1]
-
-    if setup["MacOrWindows"]=="Mac"
-		sep = "/"
-	else
-		sep = "\U005c"
-	end
 
     CSV.write(string(outpath,sep,"morris.csv"), Morris_range)
 
