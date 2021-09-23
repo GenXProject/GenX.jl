@@ -24,7 +24,7 @@ function storage_asymmetric(EP::Model, inputs::Dict, Reserves::Int)
 	# (e.g. most chemical, thermal, and mechanical storage options with distinct charge & discharge components/processes)
 	# STOR = 2 corresponds to storage with distinct power and energy capacity decisions and distinct charge and discharge power capacity decisions/ratings
 
-	#println("Storage Resources with Asmymetric Charge/Discharge Capacity Module")
+	println("Storage Resources with Asmymetric Charge/Discharge Capacity Module")
 
 	dfGen = inputs["dfGen"]
 

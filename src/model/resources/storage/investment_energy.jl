@@ -59,7 +59,7 @@ In addition, this function adds investment and fixed O\&M related costs related 
 """
 function investment_energy(EP::Model, inputs::Dict)
 
-	#println("Storage Investment Module")
+	println("Storage Investment Module")
 
 	dfGen = inputs["dfGen"]
 
@@ -120,11 +120,11 @@ function investment_energy(EP::Model, inputs::Dict)
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapEnergy[y in intersect(dfGen[dfGen.Max_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCap[y] <= dfGen[!,:Max_Cap_MWh][y])
+	@constraint(EP, cMaxCapEnergy[y in intersect(dfGen[dfGen.Max_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] <= dfGen[!,:Max_Cap_MWh][y])
 
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapEnergy[y in intersect(dfGen[dfGen.Min_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCap[y] >= dfGen[!,:Min_Cap_MWh][y])
+	@constraint(EP, cMinCapEnergy[y in intersect(dfGen[dfGen.Min_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] >= dfGen[!,:Min_Cap_MWh][y])
 
 	return EP
 end

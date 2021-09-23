@@ -16,9 +16,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 ##############################################
 #
-#   Time Series Clustering, Python => Julia
-#    - Jack Morris, 1/20/2021   <- Happy Inauguration Day!
-#    - Renamed time_domain_reduction 3/21/2021
+#   Time Domain Reduction
+#    - Jack Morris
 #
 # Use kmeans or kemoids to cluster raw load profiles and resource capacity factor profiles
 # into representative periods. Use Extreme Periods to capture noteworthy periods or
@@ -78,13 +77,13 @@ settings_path = joinpath(genx_path, "GenX_settings.yml")
 push!(LOAD_PATH, genx_path)
 push!(LOAD_PATH, pwd())
 
-using YAML          # 0.4.2
-using DataFrames    # 0.20.0
-using StatsBase     # 0.33.0
-using Clustering    # 0.14.1
-using Distances     # 0.9.0
-using Documenter    # 0.24.7
-using CSV           # 0.5.23
+using YAML
+using DataFrames
+using StatsBase
+using Clustering
+using Distances
+using Documenter
+using CSV
 
 
 @doc raw"""
@@ -204,11 +203,11 @@ K-Medoids:
 """
 function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false)
     if ClusterMethod == "kmeans"
-        DistMatrix = pairwise(Euclidean(), convert(Matrix, ClusteringInputDF), dims=2)
-        R = kmeans(convert(Matrix, ClusteringInputDF), NClusters, init=:kmcen)
+        DistMatrix = pairwise(Euclidean(), Matrix(ClusteringInputDF), dims=2)
+        R = kmeans(Matrix(ClusteringInputDF), NClusters, init=:kmcen)
 
         for i in 1:nIters
-            R_i = kmeans(convert(Matrix, ClusteringInputDF), NClusters)
+            R_i = kmeans(Matrix(ClusteringInputDF), NClusters)
 
             if R_i.totalcost < R.totalcost
                 R = R_i
@@ -229,7 +228,7 @@ function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false)
         end
 
     elseif ClusterMethod == "kmedoids"
-        DistMatrix = pairwise(Euclidean(), convert(Matrix, ClusteringInputDF), dims=2)
+        DistMatrix = pairwise(Euclidean(), Matrix(ClusteringInputDF), dims=2)
         R = kmedoids(DistMatrix, NClusters, init=:kmcen)
 
         for i in 1:nIters
@@ -461,7 +460,11 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     if v println("Loading inputs") end
     myinputs=Dict()
-    myinputs = load_inputs(mysetup,inpath)
+    # Define a local version of the setup so that you can modify the mysetup["ParameterScale] value to be zero in case it is 1
+    mysetup_local = mysetup
+    # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
+    mysetup_local["ParameterScale"]=0  # Performing cluster and report outputs in user-provided units
+    myinputs = load_inputs(mysetup_local,inpath)
 
     if v println() end
 
@@ -524,7 +527,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     cgdf = combine(groupby(InputData, :Group), [c .=> sum for c in OldColNames])
     cgdf = cgdf[setdiff(1:end, NumDataPoints+1), :]
-    rename!(cgdf, [:Group; OldColNames])
+    rename!(cgdf, [:Group; Symbol.(OldColNames)])
 
     # Extreme Period Identification
     ExtremeWksList = []
@@ -575,15 +578,18 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     #    168*n (n period-stacked profiles) by 52 (# periods) DF
 
     DFsToConcat = [stack(InputData[isequal.(InputData.Group,w),:], OldColNames)[!,:value] for w in 1:NumDataPoints if w <= NumDataPoints ]
-    ModifiedData = DataFrame(Dict(i => DFsToConcat[i] for i in 1:NumDataPoints))
+    ModifiedData = DataFrame(Dict(Symbol(i) => DFsToConcat[i] for i in 1:NumDataPoints))
+
 
     AnnualTSeriesNormalized[:, :Group] .= (1:Nhours) .÷ (TimestepsPerRepPeriod+0.0001) .+ 1
     DFsToConcatNorm = [stack(AnnualTSeriesNormalized[isequal.(AnnualTSeriesNormalized.Group,w),:], OldColNames)[!,:value] for w in 1:NumDataPoints if w <= NumDataPoints ]
-    ModifiedDataNormalized = DataFrame(Dict(i => DFsToConcatNorm[i] for i in 1:NumDataPoints))
+    ModifiedDataNormalized = DataFrame(Dict(Symbol(i) => DFsToConcatNorm[i] for i in 1:NumDataPoints))
 
     NClusters = MinPeriods
     if UseExtremePeriods == 1
-        ClusteringInputDF = select(ModifiedDataNormalized, Not(ExtremeWksList))
+        if v println("Pre-removal: ", names(ModifiedDataNormalized)) end
+        if v println("Extreme Periods: ", string.(ExtremeWksList)) end
+        ClusteringInputDF = select(ModifiedDataNormalized, Not(string.(ExtremeWksList)))
         if v println("Post-removal: ", names(ClusteringInputDF)) end
         NClusters -= length(ExtremeWksList)
     else
@@ -652,11 +658,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     ##### Step 4: Aggregation
     # Add the subperiods corresponding to the extreme periods back into the data.
     # Rescaling weights to account for partial period cut out.
-    # If we want to rescale to ensure total demand is equal, we should
-    #   do that here too.
-    #      - Would we add a constant multiplier just to load columns? Does this change the daily/weekly representation too much?
-    #      - Should the the weighted total load be equal with respect to each zone?
-
+    # Rescaling load to ensure total demand is equal
     ExtremeWksList = sort(ExtremeWksList)
     if UseExtremePeriods == 1
         if v println("Extreme Periods: ", ExtremeWksList) end
@@ -693,7 +695,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     FuelCols = [Symbol(fuel_col_names[i]) for i in 1:length(fuel_col_names) ]
     ConstCol_Syms = [Symbol(ConstCols[i]) for i in 1:length(ConstCols) ]
 
-    # SCALE LOAD - The reprsentative period's load times the number of periods it represents
+    # SCALE LOAD - The representative period's load times the number of periods it represents
     #  should equal the total load of all the periods it represents (within each load zone)
     MultMap = Dict()
     for m in 1:NClusters
@@ -703,7 +705,13 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             ### ADD HERE
             if loadcol ∉ ConstCol_Syms
                 persums = [sum(InputData[(TimestepsPerRepPeriod*(i-1)+1):(TimestepsPerRepPeriod*i),loadcol]) for i in periods_represented]
-                multiplier = sum(persums) / (N[m]*sum(InputData[(TimestepsPerRepPeriod*(M[m]-1)+1):(TimestepsPerRepPeriod*M[m]),loadcol]))
+                if length(periods_represented) < 1
+                    multiplier = 0
+                else
+                    sum_persums = sum(persums)
+                    sum_load = sum(InputData[(TimestepsPerRepPeriod*(M[m]-1)+1):(TimestepsPerRepPeriod*M[m]),loadcol])
+                    multiplier = sum_persums / (length(periods_represented)*sum_load)
+                end
                 MultMap[M[m]][loadcol] = multiplier
             end
         end
@@ -718,12 +726,14 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     lpDFs = [] # Load Profile DataFrames - Just Load Profiles
     fpDFs = [] # Fuel Profile DataFrames - Just Fuel Profiles
     Ncols = length(NewColNames) - 1
+
     for m in 1:NClusters
         rpDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols) )
-        gvDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (NewColNames[i] in VarCols)) )
-        lpDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (NewColNames[i] in LoadCols)) )
-        if IncludeFuel fpDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (NewColNames[i] in FuelCols)) ) end
+        gvDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (Symbol(NewColNames[i]) in VarCols)) )
+        lpDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (Symbol(NewColNames[i]) in LoadCols)) )
+        if IncludeFuel fpDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (Symbol(NewColNames[i]) in FuelCols)) ) end
         if !IncludeFuel fpDF = DataFrame(Placeholder = 1:TimestepsPerRepPeriod) end
+
         # Add Constant Columns back in
         for c in 1:length(ConstCols)
             rpDF[!,Symbol(ConstCols[c])] .= ConstData[c][1]
@@ -767,18 +777,17 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### Step 6: Print to File
 
-    if mysetup["MacOrWindows"]=="Mac"
+    if Sys.isunix()
 		sep = "/"
-	else
+    elseif Sys.iswindows()
 		sep = "\U005c"
+    else
+        sep = "/"
 	end
 
     mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
     ### Load_data_clustered.csv
-    if mysetup["ParameterScale"] == 1
-        LPOutputData = LPOutputData .* ModelScalingFactor
-    end
     load_in = DataFrame(CSV.File(string(inpath,sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
     load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
     load_in[1:length(W),:Sub_Weights] .= W
@@ -795,6 +804,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         new_col[1:size(LPOutputData,1)] = LPOutputData[!,c]
         load_in[!,c] .= new_col
     end
+    load_in = load_in[1:size(LPOutputData,1),:]
 
     if v println("Writing load file...") end
     CSV.write(string(inpath,sep,Load_Outfile), load_in)
