@@ -16,11 +16,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 @doc raw"""
 	mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
-
 We have implemented an updated Modeling to Generate Alternatives (MGA) Algorithm proposed by [Evelina et al., (2017)](https://www.sciencedirect.com/science/article/pii/S0360544217304097) to generate a set of feasible, near cost-optimal technology portfolios. This algorithm was developed by [Brill Jr, E. D., 1979](https://pubsonline.informs.org/doi/abs/10.1287/mnsc.25.5.413) and introduced to energy system planning by [DeCarolia, J. F., 2011](https://www.sciencedirect.com/science/article/pii/S0140988310000721).
-
 To create the MGA formulation, we replace the cost-minimizing objective function of GenX with a new objective function that creates multiple generation portfolios by zone. We further add a new budget constraint based on the optimal objective function value $f^*$ of the least-cost model and the user-specified value of slack $\delta$. After adding the slack constraint, the resulting MGA formulation is given as:
-
 ```math
 \begin{aligned}
 	\text{max/min} \quad
@@ -31,18 +28,17 @@ To create the MGA formulation, we replace the cost-minimizing objective function
 	&Ax = b
 \end{aligned}
 ```
-
 where, $\beta_{zr}$ is a random objective fucntion coefficient betwen $[0,100]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. In the second constraint above, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. The constraint $Ax = b$ represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
 """
-function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
+function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, sep::AbstractString)
 
     if setup["ModelingToGenerateAlternatives"]==1
         # Start MGA Algorithm
 	    println("MGA Module")
 
 	    # Random objective function coefficients for the MGA formulation
-	    Obj_coefficients = CSV.read(string(path, "/Rand_mga_objective_coefficients.csv"), header=true)
-
+	    #Obj_coefficients = CSV.read(string(path, "/Rand_mga_objective_coefficients.csv"), header=true)
+	    Obj_coefficients = DataFrame(CSV.File(string(path, sep,"Rand_mga_objective_coefficients.csv"), header=true), copycols=true)
 	    # Objective function value of the least cost problem
 	    Least_System_Cost = objective_value(EP)
 

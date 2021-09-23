@@ -25,7 +25,6 @@ export solve_model
 export write_outputs
 export cluster_inputs
 export mga
-export morris
 export simple_operation
 
 using JuMP # used for mathematical programming
@@ -40,13 +39,12 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
-using DiffEqSensitivity
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-# using Gurobi
-using CPLEX
+#using Gurobi
+#using CPLEX
 
-#using Clp
-#using Cbc
+using Clp
+using Cbc
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -140,6 +138,7 @@ include("write_outputs/write_storage.jl")
 include("write_outputs/write_storagedual.jl")
 include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_time_weights.jl")
+include("write_outputs/choose_output_dir.jl")
 
 include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
@@ -168,6 +167,5 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("tools/modeling_to_generate_alternatives.jl")
-include("tools/method_of_morris_parallel_v0.jl")
+include("additional_tools/modeling_to_generate_alternatives.jl")
 end
