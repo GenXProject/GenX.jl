@@ -29,10 +29,10 @@ function write_reg(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 		end
 		dfReg[!,:Sum][i] = sum(reg[i,:])
 	end
-	dfReg = hcat(dfReg, convert(DataFrame, reg))
+	dfReg = hcat(dfReg, DataFrame(reg, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfReg,auxNew_Names)
-	total = convert(DataFrame, ["Total" 0 sum(dfReg[!,:Sum]) fill(0.0, (1,T))])
+	total = DataFrame(["Total" 0 sum(dfReg[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
 		total[!,t+3] .= sum(dfReg[!,Symbol("t$t")][1:G])
 	end

@@ -29,22 +29,31 @@ Function for the entry-point for writing the different output files. From here, 
 function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
 	## Use appropriate directory separator depending on Mac or Windows config
-	if setup["MacOrWindows"]=="Mac"
+	if Sys.isunix()
 		sep = "/"
-	else
+    elseif Sys.iswindows()
 		sep = "\U005c"
+    else
+        sep = "/"
 	end
 
-	# If output directory does not exist, create it
-	if !(isdir(path))
-		mkdir(path)
-	end
+    if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
+        # Overwrite existing results if dir exists
+        # This is the default behaviour when there is no flag, to avoid breaking existing code
+        if !(isdir(path))
+		    mkdir(path)
+	    end
+    else
+        # Find closest unused ouput directory name and create it
+        path = choose_output_dir(path)
+        mkdir(path)
+    end
 
 	# https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
 	status = termination_status(EP)
 
 	## Check if solved sucessfully - time out is included
-	if status != MOI.OPTIMAL
+	if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
 		if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
 			write_status(path, sep, inputs, setup, EP)
 			return
@@ -67,8 +76,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	write_nse(path, sep, inputs, setup, EP)
 	write_power_balance(path, sep, inputs, setup, EP)
 	if inputs["Z"] > 1
-		write_transmission_flows(path, sep, inputs, EP)
-		write_transmission_losses(path, sep, inputs, EP)
+		write_transmission_flows(path, sep, setup, inputs, EP)
+		write_transmission_losses(path, sep, inputs, setup, EP)
 		if setup["NetworkExpansion"] == 1
 			write_nw_expansion(path, sep, inputs, setup, EP)
 		end

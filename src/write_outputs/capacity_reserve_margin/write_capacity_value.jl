@@ -22,25 +22,37 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 	Z = inputs["Z"]     # Number of zonests
 	L = inputs["L"] # Number of lines
 	THERM_ALL = inputs["THERM_ALL"]
-	VRE_HYDRO_RES = union(inputs["HYDRO_RES"],inputs["VRE"])
+	# VRE_HYDRO_RES = union(inputs["HYDRO_RES"],inputs["VRE"])
+	VRE = inputs["VRE"]
+	HYDRO_RES = inputs["HYDRO_RES"]
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	MUST_RUN = inputs["MUST_RUN"]
 	#calculating capacity value under reserve margin constraint, added by NP on 10/21/2020
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
 		dfCapValue_ = dfPower[1:end-1,:]
 		dfCapValue_ = select!(dfCapValue_, Not(:AnnualSum))
-		dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
+		if v"1.3" <= VERSION < v"1.4"
+			dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
+		elseif v"1.4" <= VERSION < v"1.7"
+			#dfCapValue_.Reserve = Symbol("CapRes_$i")
+			dfCapValue_.Reserve = fill(Symbol("CapRes_$i"), size(dfCapValue_, 1))
+		end
 		for t in 1:T
 			if dfResMar[i,t] > 0.0001
 				for y in 1:G
 					if (dfCap[y,:EndCap] > 0.0001) .& (y in STOR_ALL) # including storage
 						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]-dfCharge[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
-					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in VRE_HYDRO_RES) # including hydro and VRE
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in HYDRO_RES) # including hydro and VRE
 						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in VRE) # including hydro and VRE
+						dfCapValue_[y,Symbol("t$t")] = ((inputs["pP_Max"][y,t]) * dfGen[y,Symbol("CapRes_$i")])
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in FLEX) # including flexible load
 						dfCapValue_[y,Symbol("t$t")] = ((dfCharge[y,Symbol("t$t")] - dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in THERM_ALL) # including thermal
+						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in MUST_RUN) # Must run technologies are not considered for reserve margin
 						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
 					end
 				end

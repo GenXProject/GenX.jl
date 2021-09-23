@@ -33,17 +33,21 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 	if setup["ParameterScale"] ==1
 		dfCurtailment.AnnualSum = dfCurtailment.AnnualSum * ModelScalingFactor
-		dfCurtailment = hcat(dfCurtailment, convert(DataFrame, ( ModelScalingFactor * (inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP]))))
+		dfCurtailment = hcat(dfCurtailment, DataFrame(( ModelScalingFactor * (inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP])), :auto))
 	else
-		dfCurtailment = hcat(dfCurtailment, convert(DataFrame, ((inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP]))))
+		dfCurtailment = hcat(dfCurtailment, DataFrame(((inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP])), :auto))
 	end
 
 
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCurtailment,auxNew_Names)
-	total = convert(DataFrame, ["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))])
+	total = DataFrame(["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G])
+		elseif v"1.4" <= VERSION < v"1.7"
+			total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfCurtailment = vcat(dfCurtailment, total)

@@ -29,12 +29,16 @@ function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict,
 		end
 		dfShutdown[!,:Sum][i] = sum(shut[i,:])
 	end
-	dfShutdown = hcat(dfShutdown, convert(DataFrame, shut))
+	dfShutdown = hcat(dfShutdown, DataFrame(shut, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfShutdown,auxNew_Names)
-	total = convert(DataFrame, ["Total" 0 sum(dfShutdown[!,:Sum]) fill(0.0, (1,T))])
+	total = DataFrame(["Total" 0 sum(dfShutdown[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		total[!,t+3] .= sum(dfShutdown[!,Symbol("t$t")][1:G])
+		if v"1.3" <= VERSION < v"1.4"
+			total[!,t+3] .= sum(dfShutdown[!,Symbol("t$t")][1:G])
+		elseif v"1.4" <= VERSION < v"1.7"
+			total[:,t+3] .= sum(dfShutdown[:,Symbol("t$t")][1:G])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
