@@ -49,16 +49,17 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     sigma_inv = [inputs["dfGen"][!,:Inv_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Inv_Cost_per_MWyr", :Lower_bound] ./100) inputs["dfGen"][!,:Inv_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Inv_Cost_per_MWyr", :Upper_bound] ./100)]
     sigma_fom = [inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Fixed_OM_Cost_per_MWyr", :Lower_bound] ./100) inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Fixed_OM_Cost_per_MWyr", :Upper_bound] ./100)]
     sigma = [sigma_inv; sigma_fom]
-    sigma = mapslices(x->[x], sigma, dims=2)[:]
+    inputs["sigma"] = mapslices(x->[x], sigma, dims=2)[:]
 
     # Perform the method of morris analysis
-    m = gsa(f1,Morris(total_num_trajectory=3,num_trajectory=2),sigma)
-
+    m = gsa(f1,Morris(total_num_trajectory=3,num_trajectory=2),inputs["sigma"])
+    println("hahaha")
+    println(m.means)
     #save the mean effect of each uncertain variable on the objective fucntion
-    Morris_range[!,:mean] = DataFrame(m.means')[!,:x1]
+    Morris_range[!,:mean] = DataFrame(m.means', :auto)[!,:x1]
 
     #save the variance of effect of each uncertain variable on the objective function
-    Morris_range[!,:variance] = DataFrame(m.variances')[!,:x1]
+    Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
 
     CSV.write(string(outpath,sep,"morris.csv"), Morris_range)
 
