@@ -167,5 +167,5 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
+include("additional_tools/modeling_to_generate_alternatives.jl")
 end
