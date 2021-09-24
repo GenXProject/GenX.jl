@@ -52,7 +52,7 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     inputs["sigma"] = mapslices(x->[x], sigma, dims=2)[:]
 
     # Perform the method of morris analysis
-    m = gsa(f1,Morris(total_num_trajectory=3,num_trajectory=2),inputs["sigma"])
+    m = gsa(f1,Morris(total_num_trajectory=1,num_trajectory=1),inputs["sigma"])
     println("hahaha")
     println(m.means)
     #save the mean effect of each uncertain variable on the objective fucntion
