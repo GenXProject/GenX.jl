@@ -138,6 +138,7 @@ Thermal resources subject to unit commitment adhere to the following constraints
 where $\tau_{y,z}^{up|down}$ is the minimum up or down time for units in generating cluster $y$ in zone $z$.
 
 Like with the ramping constraints, the minimum up and down constraint time also wrap around from the start of each time period to the end of each period.
+It is recommended that users of GenX must use longer subperiods than the longest min up/down time if modeling UC. Otherwise, the model will report error.
 """
 function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 
