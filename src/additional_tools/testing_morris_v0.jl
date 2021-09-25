@@ -60,7 +60,7 @@ function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajector
     reduce(hcat,matrices)
 end
 
-function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector,)
+function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector)
     rng = Random.default_rng()
     len_design_mat = 10
     design_matrices = sample_matrices(p_range, p_steps, rng;num_trajectory,

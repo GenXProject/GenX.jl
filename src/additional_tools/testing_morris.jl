@@ -15,7 +15,7 @@ function generate_design_matrix(p_range, p_steps, rng;len_design_mat)
     ps = [range(p_range[i][1], stop=p_range[i][2], length=p_steps[i]) for i in 1:length(p_range)]
     indices = [rand(rng, 1:i) for i in p_steps]
     all_idxs = Vector{typeof(indices)}(undef,len_design_mat)
-
+    
     for i in 1:len_design_mat
         j = rand(rng, 1:length(p_range))
         indices[j] += (rand(rng) < 0.5 ? -1 : 1)
@@ -60,12 +60,19 @@ function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajector
     reduce(hcat,matrices)
 end
 
-function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector,)
+function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector,len_design_mat)
     rng = Random.default_rng()
-    len_design_mat = 10
-    design_matrices = sample_matrices(p_range, p_steps, rng;num_trajectory,
+    design_matrices_original = sample_matrices(p_range, p_steps, rng;num_trajectory,
                                         total_num_trajectory,len_design_mat)
-
+    println(design_matrices_original)
+    design_matrices = similar(design_matrices_original, Float64)
+    for g in unique(groups)
+        temp = findall(x->x==g, groups)
+        for k in temp
+            design_matrices[k,:] = design_matrices_original[temp[1],:]
+        end
+    end
+    println(design_matrices)
     multioutput = false
     desol = false
     local y_size
@@ -145,11 +152,13 @@ end
     sol = solve(prob1,Tsit5();saveat=t)
     [mean(sol[1,:]), maximum(sol[2,:])]
   end
-  p_steps=[2,2,2,2]
-  total_num_trajectory=4
+  p_steps=[3,3,3,3]
+  total_num_trajectory=3
   num_trajectory=1
   p_range=[[1,5],[1,5],[1,5],[1,5]]
-  m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range)
+  groups=["s","b","b","s"]
+  len_design_mat = 10
+  m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat)
 
   #scatter(m.means[1,:], m.variances[1,:],series_annotations=[:a,:b,:c,:d],color=:gray)
 
