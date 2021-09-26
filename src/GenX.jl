@@ -45,6 +45,7 @@ using OrdinaryDiffEq
 using QuasiMonteCarlo
 using Random
 using RecursiveArrayTools
+using Statistics
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 #using Gurobi
 using CPLEX
@@ -174,5 +175,5 @@ include("write_outputs/write_outputs.jl")
 include("simple_operation.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
-include("additional_tools/method_of_morris_v1.jl")
+include("additional_tools/method_of_morris_v2.jl")
 end

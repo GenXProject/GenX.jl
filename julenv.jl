@@ -63,7 +63,7 @@ elseif v"1.5" <= VERSION < v"1.7"=#
 	#Pkg.build("Gurobi")
 	##Add if elseif with Method of Morris for these
 	Pkg.add(Pkg.PackageSpec(name="DiffEqSensitivity", version="6.52.1"))
-	Pkg.add(Pkg.PackageSpec(name="Statistics"))
+	Pkg.add(Pkg.PackageSpec(name="Statistics", version="1.4.0"))
 	Pkg.add(Pkg.PackageSpec(name="OrdinaryDiffEq", version="5.60.1"))
 	Pkg.add(Pkg.PackageSpec(name="QuasiMonteCarlo", version="0.2.3"))
 	##Add if elseif with Method of Morris for these

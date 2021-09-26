@@ -31,10 +31,10 @@ struct MorrisResult{T1,T2}
     variances::T1
     elementary_effects::T2
 end
-function generate_design_matrix(p_range, p_steps, rng;len_design_mat)
+function generate_design_matrix(p_range, p_steps, rng;len_design_mat,groups)
     ps = [range(p_range[i][1], stop=p_range[i][2], length=p_steps[i]) for i in 1:length(p_range)]
     indices = [rand(rng, 1:i) for i in p_steps]
-    all_idxs = Vector{typeof(indices)}(undef,len_design_mat)
+    all_idxs_original = Vector{typeof(indices)}(undef,len_design_mat)
     
     for i in 1:len_design_mat
         j = rand(rng, 1:length(p_range))
@@ -44,12 +44,23 @@ function generate_design_matrix(p_range, p_steps, rng;len_design_mat)
         elseif indices[j] < 1.0
             indices[j] += 2
         end
-        all_idxs[i] = copy(indices)
+        all_idxs_original[i] = copy(indices)
     end
+
+    df_all_idx_original = DataFrame(all_idxs_original,:auto)
+    println(df_all_idx_original)
+    all_idxs = similar(df_all_idx_original)
+    for g in unique(groups)
+        temp = findall(x->x==g, groups)
+        for k in temp
+            all_idxs[k,:] = df_all_idx_original[temp[1],:]
+        end
+    end
+    println(all_idxs)
 
     B = Array{Array{Float64}}(undef,len_design_mat)
     for j in 1:len_design_mat
-        cur_p = [ps[u][(all_idxs[j][u])] for u in 1:length(p_range)]
+        cur_p = [ps[u][(all_idxs[:,j][u])] for u in 1:length(p_range)]
         B[j] = cur_p
     end
     reduce(hcat, B)
@@ -63,7 +74,7 @@ function calculate_spread(matrix)
     spread
 end
 
-function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajectory,len_design_mat)
+function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajectory,len_design_mat,groups)
     matrix_array = []
     println(num_trajectory)
     println(total_num_trajectory)
@@ -71,7 +82,7 @@ function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajector
         error("total_num_trajectory should be greater than num_trajectory preferably atleast 3-4 times higher")
     end
     for i in 1:total_num_trajectory
-        mat = generate_design_matrix(p_range, p_steps, rng;len_design_mat)
+        mat = generate_design_matrix(p_range, p_steps, rng;len_design_mat,groups)
         spread = calculate_spread(mat)
         push!(matrix_array,MatSpread(mat,spread))
     end
@@ -83,16 +94,23 @@ end
 function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector,len_design_mat,groups)
     rng = Random.default_rng()
     design_matrices_original = sample_matrices(p_range, p_steps, rng;num_trajectory,
-                                        total_num_trajectory,len_design_mat)
-    println(DataFrame(design_matrices_original,:auto))
-    design_matrices = similar(design_matrices_original, Float64)
-    for g in unique(groups)
-        temp = findall(x->x==g, groups)
-        for k in temp
-            design_matrices[k,:] = design_matrices_original[temp[1],:]
+                                        total_num_trajectory,len_design_mat,groups)
+    println(design_matrices_original)
+    L = DataFrame(design_matrices_original,:auto)
+    println(L)
+
+    distinct_trajectories = Array{Int64}(undef,num_trajectory)
+    design_matrices = Matrix(DataFrame(unique(last, pairs(eachcol(L[!,1:len_design_mat])))))
+    distinct_trajectories[1] = length(design_matrices[1,:])
+    if num_trajectory > 1
+        for i in 2:num_trajectory
+            design_matrices = hcat(design_matrices, Matrix(DataFrame(unique(last, pairs(eachcol(L[!,(i-1)*len_design_mat+1:i*len_design_mat]))))))
+            distinct_trajectories[i] = length(Matrix(DataFrame(unique(last, pairs(eachcol(L[!,(i-1)*len_design_mat+1:i*len_design_mat])))))[1,:])
         end
     end
-    println(DataFrame(design_matrices,:auto))
+    println(distinct_trajectories)
+    println(design_matrices)
+
     multioutput = false
     desol = false
     local y_size
@@ -105,9 +123,13 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
         desol = true
     end
     all_y = multioutput ? reduce(hcat,_y) : _y
-
+    println(all_y)
     effects = []
+    while(length(effects) < length(groups))
+        push!(effects,Vector{Float64}[])
+    end
     for i in 1:num_trajectory
+        len_design_mat = distinct_trajectories[i]
         y1 = multioutput ? all_y[:,(i-1)*len_design_mat+1] : all_y[(i-1)*len_design_mat+1]
         for j in (i-1)*len_design_mat+1:(i*len_design_mat)-1
             y2 = y1
@@ -123,13 +145,11 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
             y1 = multioutput ? all_y[:,j+1] : all_y[j+1]
             effect = @. (y1-y2)/(del)
             elem_effect = typeof(y1) <: Number ? effect : mean(effect, dims = 2)
-            if length(effects) >= change_index && change_index > 0
-                push!(effects[change_index],elem_effect)
-            elseif change_index > 0
-                while(length(effects) < change_index-1)
-                    push!(effects,typeof(elem_effect)[])
-                end
-                push!(effects,[elem_effect])
+            temp_g_index = findall(x->x==groups[change_index], groups)
+            for g in temp_g_index
+                println(effects)
+                println(elem_effect)
+                push!(effects[g],[elem_effect])
             end
         end
     end
@@ -180,7 +200,7 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
 
     # Creating a function for iteratively solving the model with different sets of input parameters
     f1 = function(sigma)
-        print(sigma)
+        #print(sigma)
         print("\n")
         #save_parameters = hcat(save_parameters, sigma)
 
@@ -198,10 +218,11 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
 
     # Perform the method of morris analysis
     m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups)
-
+    println(m.means)
+    println(DataFrame(m.means', :auto))
     #save the mean effect of each uncertain variable on the objective fucntion
     Morris_range[!,:mean] = DataFrame(m.means', :auto)[!,:x1]
-
+    println(DataFrame(m.variances', :auto))
     #save the variance of effect of each uncertain variable on the objective function
     Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
 

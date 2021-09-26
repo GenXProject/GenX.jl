@@ -89,7 +89,6 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
         desol = true
     end
     all_y = multioutput ? reduce(hcat,_y) : _y
-    println(all_y)
 
     effects = []
     for i in 1:num_trajectory
@@ -121,19 +120,17 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
     means = eltype(effects[1])[]
     means_star = eltype(effects[1])[]
     variances = eltype(effects[1])[]
-    println(effects)
     for k in effects
         if !isempty(k)
             push!(means, mean(k))
             push!(means_star, mean(x -> abs.(x), k))
             push!(variances, var(k))
         else
-            push!(means, [0.0])#(effects[1][1]))
-            push!(means_star, [0.0]) #zero(effects[1][1]))
-            push!(variances, [0.0])#zero(effects[1][1]))
+            push!(means, zero(effects[1][1]))
+            push!(means_star, zero(effects[1][1]))
+            push!(variances, zero(effects[1][1]))
         end
     end
-    println(effects)
     if desol
         f_shape = x -> [reshape(x[:,i],y_size) for i in 1:size(x,2)]
         means = map(f_shape,means)
@@ -167,8 +164,8 @@ end
   total_num_trajectory=4
   num_trajectory=2
   p_range=[[1,4],[10,40]]
-  groups=["s","b"]
-  len_design_mat = 10
+  groups=["s","s"]
+  len_design_mat = 2
   m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups)
   scatter(m.means[1,:], m.variances[1,:],series_annotations=[:a,:b],color=:gray)
 
