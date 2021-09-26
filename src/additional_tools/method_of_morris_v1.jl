@@ -1,5 +1,25 @@
-using OrdinaryDiffEq, Statistics, Random, RecursiveArrayTools, DataFrames #load packages Plots,
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
+@doc raw"""
+	morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
+
+We are in the process of implementing Method of Morris for global sensitivity analysis
+#fortest
+"""
 struct MatSpread{T1,T2}
     mat::T1
     spread::T2
@@ -135,34 +155,56 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
     end
     MorrisResult(reduce(hcat, means),reduce(hcat, means_star),reduce(hcat, variances),effects)
 end
+function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
+    if setup["MacOrWindows"]=="Mac"
+		sep = "/"
+	else
+		sep = "\U005c"
+	end
 
-function f(du,u,p)
-    du = p[1]*u[1] - p[2]*u[1]
-end
-  u0 = [1.0]
-  tspan = (0.0,1.0)
-  p = [1.5,3.0]
-  prob = ODEProblem(f,u0,tspan,p)
+    # Reading the input parameters
+    Morris_range = DataFrame(CSV.File(string(path, sep,"Method_of_morris_range.csv"), header=true), copycols=true)
+    groups = Morris_range[!,:Group]
+    p_steps = Morris_range[!,:p_steps]
+    total_num_trajectory=Morris_range[!,:total_num_trajectory][1]
+    num_trajectory=Morris_range[!,:num_trajectory][1]
+    len_design_mat=Morris_range[!,:len_design_mat][1]
+    #save_parameters = zeros(length(Morris_range[!,:Parameter]))
 
-  f1 = function (p)
-    prob1 = remake(prob;p=p)
-    sol = solve(prob1,Tsit5())
-    [mean(sol[1,:])]
-  end
-  p_steps=[4,4]
-  if length(p_steps) == 0
-    for i in 1:length(p_range)
-        push!(p_steps,100)
+    # Creating the range of uncertain parameters in terms of absolute values
+    sigma_inv = [inputs["dfGen"][!,:Inv_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Inv_Cost_per_MWyr", :Lower_bound] ./100) inputs["dfGen"][!,:Inv_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Inv_Cost_per_MWyr", :Upper_bound] ./100)]
+    sigma_fom = [inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Fixed_OM_Cost_per_MWyr", :Lower_bound] ./100) inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Fixed_OM_Cost_per_MWyr", :Upper_bound] ./100)]
+    sigma = [sigma_inv; sigma_fom]
+    p_range = mapslices(x->[x], sigma, dims=2)[:]
+
+    # Creating a function for iteratively solving the model with different sets of input parameters
+    f1 = function(sigma)
+        print(sigma)
+        print("\n")
+        #save_parameters = hcat(save_parameters, sigma)
+
+        inv_index = findall(s -> s == "Inv_Cost_per_MWyr", Morris_range[!,:Parameter])
+        inputs["dfGen"][!,:Inv_Cost_per_MWyr] = sigma[first(inv_index):last(inv_index)]
+
+        fom_index = findall(s -> s == "Fixed_OM_Cost_per_MWyr", Morris_range[!,:Parameter])
+        inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = sigma[first(fom_index):last(fom_index)]
+
+        EP = generate_model(setup, inputs, OPTIMIZER)
+        #EP, solve_time = solve_model(EP, setup)
+        redirect_stdout((()->optimize!(EP)),open("/dev/null", "w"))
+        [objective_value(EP)]
     end
-  end
-  total_num_trajectory=4
-  num_trajectory=2
-  p_range=[[1,4],[1,4]]
-  groups=["s","b"]
-  len_design_mat = 2
-  m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups)
 
-  scatter(m.means[1,:], m.variances[1,:],series_annotations=[:a,:b],color=:gray)
+    # Perform the method of morris analysis
+    m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups)
 
-  
+    #save the mean effect of each uncertain variable on the objective fucntion
+    Morris_range[!,:mean] = DataFrame(m.means', :auto)[!,:x1]
+
+    #save the variance of effect of each uncertain variable on the objective function
+    Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
+
+    CSV.write(string(outpath,sep,"morris.csv"), Morris_range)
+
+end
