@@ -72,6 +72,8 @@ elseif v"1.5" <= VERSION < v"1.7"=#
 	Pkg.add(Pkg.PackageSpec(name="StatsBase", version="0.33.8"))
 	Pkg.add(Pkg.PackageSpec(name="YAML", version="0.4.7"))
 	Pkg.add(Pkg.PackageSpec(name="LinearAlgebra"))
+	Pkg.add(Pkg.PackageSpec(name="Random"))
+	Pkg.add(Pkg.PackageSpec(name="RecursiveArrayTools", version="2.17.2"))
 #end
 #=
 [336ed68f] CSV v0.8.5
