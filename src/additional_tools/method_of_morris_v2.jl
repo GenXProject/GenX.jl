@@ -149,7 +149,7 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
             for g in temp_g_index
                 println(effects)
                 println(elem_effect)
-                push!(effects[g],[elem_effect])
+                push!(effects[g],elem_effect)
             end
         end
     end
