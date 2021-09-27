@@ -1,9 +1,0 @@
-Resource,Zone,Lower_bound,Upper_bound,Parameter,mean,variance
-natural_gas_combined_cycle,1,-10,10,Inv_Cost_per_MWyr,0.010570277037012141,NaN
-solar_pv,1,-10,10,Inv_Cost_per_MWyr,0.0,0.0
-onshore_wind,1,-10,10,Inv_Cost_per_MWyr,0.0,0.0
-battery,1,-10,10,Inv_Cost_per_MWyr,47.18119441074009,4.227524069357246e-21
-natural_gas_combined_cycle,1,-5,5,Fixed_OM_Cost_per_MWyr,0.010570276838019881,NaN
-solar_pv,1,-5,5,Fixed_OM_Cost_per_MWyr,115.14183023777578,2.332907821340961e-22
-onshore_wind,1,-5,5,Fixed_OM_Cost_per_MWyr,10.778539141138454,1.419221406021574e-20
-battery,1,-5,5,Fixed_OM_Cost_per_MWyr,47.18119441236892,NaN
