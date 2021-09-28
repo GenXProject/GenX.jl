@@ -49,12 +49,12 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 			for i in 1:VRE_STOR
 				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:]) * ModelScalingFactor
 			end
-			dfPowerVRESTOR = hcat(dfPowerVRESTOR, convert(DataFrame, value.(EP[:vP_VRE_STOR]) * ModelScalingFactor))
+			dfPowerVRESTOR = hcat(dfPowerVRESTOR, DataFrame((value.(EP[:vP_VRE_STOR])) * ModelScalingFactor, :auto))
 		else
 			for i in 1:VRE_STOR
 				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:]) 
 			end
-			dfPowerVRESTOR = hcat(dfPowerVRESTOR, convert(DataFrame, value.(EP[:vP_VRE_STOR])))
+			dfPowerVRESTOR = hcat(dfPowerVRESTOR, DataFrame((value.(EP[:vP_VRE_STOR])), :auto))
 		end
 		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 		rename!(dfPowerVRESTOR,auxNew_Names)

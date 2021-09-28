@@ -34,7 +34,7 @@ function load_vre_stor_variability(setup::Dict, path::AbstractString, sep::Abstr
 	select!(vre_stor_var, [:Time_Index; Symbol.(inputs_vre_stor["RESOURCES_VRE_STOR"]) ])
 
 	# Maximum power output and variability of each energy resource
-	inputs_vre_stor["pP_Max_VRE_STOR"] = transpose(convert(Matrix{Float64}, vre_stor_var[1:inputs_vre_stor["T"],2:(inputs_vre_stor["VRE_STOR"]+1)]))
+	inputs_vre_stor["pP_Max_VRE_STOR"] = transpose(Matrix{Float64}(vre_stor_var[1:inputs_vre_stor["T"],2:(inputs_vre_stor["VRE_STOR"]+1)]))
 
 	println("Vre_and_storage_variability.csv Successfully Read!")
 

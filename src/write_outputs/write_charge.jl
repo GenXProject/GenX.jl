@@ -19,6 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing the charging energy values of the different storage technologies.
 """
+
 function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
@@ -55,7 +56,7 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 			charge_vre_stor[i,:] = value.(EP[:vCHARGE_VRE_STOR][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
 			dfChargeVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_vre_stor[i,:])
 		end
-		dfChargeVRESTOR = hcat(dfChargeVRESTOR, convert(DataFrame, charge_vre_stor))
+		dfChargeVRESTOR = hcat(dfChargeVRESTOR, DataFrame(charge_vre_stor, :auto))
 		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 		rename!(dfChargeVRESTOR,auxNew_Names)
 		dfCharge = vcat(dfCharge, dfChargeVRESTOR)
@@ -64,13 +65,14 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
 		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])]) + (setup["VreStor"]==1 ? sum(dfChargeVRESTOR[!,Symbol("t$t")][1:VRE_STOR]) : 0)
+			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
 		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])]) + (setup["VreStor"]==1 ? sum(dfChargeVRESTOR[:,Symbol("t$t")][1:VRE_STOR]) : 0)
+			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
+		end
 	end
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)
 	CSV.write(string(path,sep,"charge.csv"), dftranspose(dfCharge, false), writeheader=false)
 	return dfCharge
-
 end
+

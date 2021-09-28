@@ -188,9 +188,6 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
     @constraint(EP, cVREGenMax[y in 1:VRE_STOR, t in 1:T],
     vP_DC[y,t] <= inputs["pP_Max_VRE_STOR"][y,t]*eTotalCap_VRE[y])
 
-    #@constraint(EP, cVREGenMax[y in 1:VRE_STOR, t in 1:T],
-    #vP_DC[y,t] <= inputs["pP_Max_VRE_STOR"][y,t]*(dfGen_VRE_STOR[!,:Existing_Cap_MW][y] + vCAP_VRE[y] - vRETCAP_VRE[y]))
-
     # Constraint 6: SOC Maximum
     @constraint(EP, cSOCMax[y in 1:VRE_STOR, t in 1:T],
     vS_VRE_STOR[y,t] <= eTotalCap_STOR[y])
@@ -198,9 +195,6 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
     # Constraint 7: Charge Maximum
     @constraint(EP, cChargeMax[y in 1:VRE_STOR, t in 1:T], 
     vCHARGE_DC[y,t] <= dfGen_VRE_STOR[!,:Power_To_Energy_Ratio][y]*eTotalCap_STOR[y])
-
-    @constraint(EP, cChargeMax_PV[y in 1:VRE_STOR, t in 1:T], 
-    vCHARGE_DC[y,t] <= vP_DC[y,t])
 
     # Constraint 8: Discharge Maximum
     @constraint(EP, cDischargeMax[y in 1:VRE_STOR, t in 1:T],

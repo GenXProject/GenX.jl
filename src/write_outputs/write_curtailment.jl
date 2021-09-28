@@ -50,9 +50,9 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 
 		if setup["ParameterScale"]==1
 			dfCurtailmentVRESTOR.AnnualSum = dfCurtailmentVRESTOR.AnnualSum * ModelScalingFactor
-			dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, convert(DataFrame, (ModelScalingFactor * (inputs["pP_Max_VRE_STOR"]).*value.(EP[:eTotalCap_VRE]).- value.(EP[:vP_DC]))))
+			dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, DataFrame((ModelScalingFactor * (inputs["pP_Max_VRE_STOR"]).*value.(EP[:eTotalCap_VRE]).- value.(EP[:vP_DC])), :auto))
 		else
-			dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, convert(DataFrame, ((inputs["pP_Max_VRE_STOR"]).*value.(EP[:eTotalCap_VRE]).- value.(EP[:vP_DC]))))
+			dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, DataFrame(((inputs["pP_Max_VRE_STOR"]).*value.(EP[:eTotalCap_VRE]).- value.(EP[:vP_DC])), :auto))
 		end
 		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 		rename!(dfCurtailmentVRESTOR,auxNew_Names)

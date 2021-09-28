@@ -143,14 +143,14 @@ for z in 1:Z
 
         @constraints(EP, begin
             # cFlexibleDemandDelay: Constraints looks back over last n hours, where n = dfGen[!,:Max_Flexible_Demand_Delay][y]
-            [t in setdiff(1:T,FLEXIBLE_DEMAND_DELAY_HOURS,END_HOURS)], sum(EP[:vP][y,e] for e=(t+1):(t+dfGen[!,:Max_Flexible_Demand_Delay][y])) >= EP[:vS_FLEX][y,t]
+            [t in setdiff(1:T,FLEXIBLE_DEMAND_DELAY_HOURS,END_HOURS)], sum(EP[:vP][y,e] for e=(t+1):(t+Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y])))) >= EP[:vS_FLEX][y,t]
 
             # cFlexibleDemandDelayWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
             # cFlexibleDemandDelayWrap constraint is equivalant to: sum(EP[:vP][y,e] for e=(t+1):(hours_per_subperiod_max)+sum(EP[:vP][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Delay][y]-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y,t]
-            [t in FLEXIBLE_DEMAND_DELAY_HOURS], sum(EP[:vP][y,e] for e=(t+1):(t+hours_per_subperiod-(t%hours_per_subperiod)))+sum(EP[:vP][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+dfGen[!,:Max_Flexible_Demand_Delay][y]-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y,t]
+            [t in FLEXIBLE_DEMAND_DELAY_HOURS], sum(EP[:vP][y,e] for e=(t+1):(t+hours_per_subperiod-(t%hours_per_subperiod)))+sum(EP[:vP][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y]))-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y,t]
 
             # cFlexibleDemandDelayEnd: cFlexibleDemandDelayEnd constraint is equivalant to: sum(EP[:vP][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Delay][y])) >= EP[:vS_FLEX][y,t]
-            [t in END_HOURS], sum(EP[:vP][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+dfGen[!,:Max_Flexible_Demand_Delay][y])) >= EP[:vS_FLEX][y,t]
+            [t in END_HOURS], sum(EP[:vP][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y])))) >= EP[:vS_FLEX][y,t]
             # NOTE: Expression (hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1) is equivalant to "hours_per_subperiod_min"
             # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
         end)

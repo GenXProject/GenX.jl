@@ -22,7 +22,7 @@ Function for reading input parameters related to specifically co-located VRE-sto
 function load_vre_stor_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_vre_stor::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 	# VRE-Storage related inputs
-	vre_stor_in = CSV.read(string(path,sep,"Vre_and_storage_data.csv"), categorical=false, header=true, copycols=true)
+	vre_stor_in = DataFrame(CSV.File(string(path,sep,"Vre_and_storage_data.csv"), header=true), copycols=true)
 
 	# Add Resource IDs after reading to prevent user errors
 	vre_stor_in[!,:R_ID] = 1:size(collect(skipmissing(vre_stor_in[!,1])),1)

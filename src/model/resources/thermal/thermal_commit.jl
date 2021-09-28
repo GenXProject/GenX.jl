@@ -235,15 +235,15 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 
 		@constraints(EP, begin
 			# cUpTimeInterior: Constraint looks back over last n hours, where n = dfGen[!,:Up_Time][y]
-			[t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-dfGen[!,:Up_Time][y]):t)
+			[t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-Int(floor(dfGen[!,:Up_Time][y]))):t)
 
 			# cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
 			# cUpTimeWrap constraint equivalant to: sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
-			[t in Up_Time_HOURS], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
+			[t in Up_Time_HOURS], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(Int(floor(dfGen[!,:Up_Time][y]))-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
 
 			# cUpTimeStart:
 			# NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-			[t in START_SUBPERIODS], EP[:vCOMMIT][y,t] >= EP[:vSTART][y,t]+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Up_Time][y]-1)):(t+hours_per_subperiod-1))
+			[t in START_SUBPERIODS], EP[:vCOMMIT][y,t] >= EP[:vSTART][y,t]+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-1)-(Int(floor(dfGen[!,:Up_Time][y]))-1)):(t+hours_per_subperiod-1))
 		end)
 
 		## down time
@@ -257,15 +257,15 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 		# TODO: Replace LHS of constraints in this block with eNumPlantsOffline[y,t]
 		@constraints(EP, begin
 			# cDownTimeInterior: Constraint looks back over last n hours, where n = inputs["pDMS_Time"][y]
-			[t in setdiff(INTERIOR_SUBPERIODS,Down_Time_HOURS)], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-dfGen[!,:Down_Time][y]):t)
+			[t in setdiff(INTERIOR_SUBPERIODS,Down_Time_HOURS)], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-Int(floor(dfGen[!,:Down_Time][y]))):t)
 
 			# cDownTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
 			# cDownTimeWrap constraint equivalant to: EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Down_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
-			[t in Down_Time_HOURS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(dfGen[!,:Down_Time][y]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
+			[t in Down_Time_HOURS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(Int(floor(dfGen[!,:Down_Time][y]))-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
 
 			# cDownTimeStart:
 			# NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-			[t in START_SUBPERIODS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t]  >= EP[:vSHUT][y,t]+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Down_Time][y]-1)):(t+hours_per_subperiod-1))
+			[t in START_SUBPERIODS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t]  >= EP[:vSHUT][y,t]+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-1)-(Int(floor(dfGen[!,:Down_Time][y]))-1)):(t+hours_per_subperiod-1))
 		end)
 	end
 

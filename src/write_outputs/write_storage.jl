@@ -64,7 +64,7 @@ function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,s
 			end
 		end
 
-		dfStorageVRESTOR = hcat(dfStorageVRESTOR, convert(DataFrame, s_vre_storage))
+		dfStorageVRESTOR = hcat(dfStorageVRESTOR, DataFrame(s_vre_storage, :auto))
 		auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 		rename!(dfStorageVRESTOR,auxNew_Names)
 		dfStorage = vcat(dfStorage, dfStorageVRESTOR)
