@@ -27,12 +27,14 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 	HYDRO_RES = inputs["HYDRO_RES"]
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	MUST_RUN = inputs["MUST_RUN"]
 	temp_G = G
 	if setup["VreStor"]==1
 		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
 		VRE_STOR = inputs["VRE_STOR"]
 		temp_G = G + VRE_STOR
 	end
+	
 	#calculating capacity value under reserve margin constraint, added by NP on 10/21/2020
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
@@ -56,6 +58,8 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in FLEX) # including flexible load
 						dfCapValue_[y,Symbol("t$t")] = ((dfCharge[y,Symbol("t$t")] - dfPower[y,Symbol("t$t")]) * dfGen[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in THERM_ALL) # including thermal
+						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in MUST_RUN) # Must run technologies are not considered for reserve margin
 						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
 					elseif (setup["VreStor"]==1) .& (dfCap[y,:EndCap] > 0.0001) .& (y in (G+1):temp_G) # including VRE-storage module
 						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]-dfCharge[y,Symbol("t$t")]) * dfGen_VRE_STOR[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]

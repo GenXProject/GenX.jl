@@ -120,20 +120,20 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 
 	if setup["ParameterScale"] == 1
-		dfNetRevenue.Inv_cost_MWh = dfNetRevenue.Inv_cost_MWh * (ModelScalingFactor^2) # converting Million US$ to US$
-		dfNetRevenue.Inv_cost_MW = dfNetRevenue.Inv_cost_MW * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.Inv_cost_MWh = dfNetRevenue.Inv_cost_MWh * (ModelScalingFactor) # converting Million US$ to US$
+		dfNetRevenue.Inv_cost_MW = dfNetRevenue.Inv_cost_MW * (ModelScalingFactor) # converting Million US$ to US$
 
-		dfNetRevenue.Fixed_OM_cost_MW = dfNetRevenue.Fixed_OM_cost_MW * (ModelScalingFactor^2) # converting Million US$ to US$
-		dfNetRevenue.Fixed_OM_cost_MWh = dfNetRevenue.Fixed_OM_cost_MWh * (ModelScalingFactor^2) # converting Million US$ to US$
-		dfNetRevenue.Var_OM_cost_out = dfNetRevenue.Var_OM_cost_out * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.Fixed_OM_cost_MW = dfNetRevenue.Fixed_OM_cost_MW * (ModelScalingFactor) # converting Million US$ to US$
+		dfNetRevenue.Fixed_OM_cost_MWh = dfNetRevenue.Fixed_OM_cost_MWh * (ModelScalingFactor) # converting Million US$ to US$
+		dfNetRevenue.Var_OM_cost_out = dfNetRevenue.Var_OM_cost_out * (ModelScalingFactor) # converting Million US$ to US$
 
-		dfNetRevenue.Fuel_cost = dfNetRevenue.Fuel_cost * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.Fuel_cost = dfNetRevenue.Fuel_cost * (ModelScalingFactor) # converting Million US$ to US$
 
-		dfNetRevenue.Var_OM_cost_in = dfNetRevenue.Var_OM_cost_in * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.Var_OM_cost_in = dfNetRevenue.Var_OM_cost_in * (ModelScalingFactor) # converting Million US$ to US$
 
-		dfNetRevenue.StartCost = dfNetRevenue.StartCost * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue.StartCost = dfNetRevenue.StartCost * (ModelScalingFactor) # converting Million US$ to US$
 
-		dfNetRevenue[!,:EmissionsCost] = dfNetRevenue[!,:EmissionsCost] * (ModelScalingFactor^2) # converting Million US$ to US$
+		dfNetRevenue[!,:EmissionsCost] = dfNetRevenue[!,:EmissionsCost] * (ModelScalingFactor) # converting Million US$ to US$
 	end
 
 	# Add charge cost to the dataframe
@@ -190,7 +190,8 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 
 	dfNetRevenue.Revenue =	dfNetRevenue.EnergyRevenue + dfNetRevenue.SubsidyRevenue + dfNetRevenue.ReserveMarginRevenue + dfNetRevenue.ESRRevenue + dfNetRevenue.RegSubsidyRevenue
-	dfNetRevenue.Cost 	= 	dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
+	dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
+	#dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
 	dfNetRevenue.Profit = 	dfNetRevenue.Revenue - dfNetRevenue.Cost
 
 	CSV.write(string(path,sep,"NetRevenue.csv"), dfNetRevenue)

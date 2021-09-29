@@ -73,8 +73,8 @@ LoadWeight: 1
 WeightTotal: 8760
 
   #   - ClusterFuelPrices
-  #   Either 1 (yes) or 0 (no), this indicates whether or not to use the fuel price
-  #   time series in Fuels_data.csv in the clustering process. If 0, this function will still write
+  #   Either 'yes' ro 'no', this indicates whether or not to use the fuel price
+  #   time series in Fuels_data.csv in the clustering process. If 'no', this function will still write
   #   Fuels_data_clustered.csv with reshaped fuel prices based on the number and size of the
   #   representative weeks, assuming a constant time series of fuel prices with length equal to the
   #   number of timesteps in the raw input data.

@@ -3,11 +3,12 @@
 ```@meta
 CurrentModule = GenX
 ```
+
 ## Overview
 
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape.
 
-The model was [originally developed](https://energy.mit.edu/publication/enhanced-decision-support-changing-electricity-landscape/) by [Jesse D. Jenkins](https://mae.princeton.edu/people/faculty/jenkins) and [Nestor A. Sepulveda](https://energy.mit.edu/profile/nestor-sepulveda/) at the Massachusetts Institute of Technology and is now jointly maintained by [a team of contributors](https://energy.mit.edu/genx/#team) at the MIT Energy Initiative (led by [Dharik Mallapragada](https://energy.mit.edu/profile/dharik-mallapragada/)) and the Princeton University ZERO Lab (led by Jenkins). 
+The model was [originally developed](https://energy.mit.edu/publication/enhanced-decision-support-changing-electricity-landscape/) by [Jesse D. Jenkins](https://mae.princeton.edu/people/faculty/jenkins) and [Nestor A. Sepulveda](https://energy.mit.edu/profile/nestor-sepulveda/) at the Massachusetts Institute of Technology and is now jointly maintained by [a team of contributors](https://energy.mit.edu/genx/#team) at the MIT Energy Initiative (led by [Dharik Mallapragada](https://energy.mit.edu/profile/dharik-mallapragada/)) and the Princeton University ZERO Lab (led by Jenkins).
 
 GenX is a constrained linear or mixed integer linear optimization model that determines the portfolio of electricity generation, storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost, while subject to a variety of power system operational constraints, resource availability limits, and other imposed environmental, market design, and policy constraints.
 
@@ -24,6 +25,7 @@ The file `julenv.jl` in the parent directory lists all of the packages and their
 Download or clone the GenX repository on your machine in a directory named 'GenX'. Create this new directory in a location where you wish to store the GenXJulEnv environment.
 
 The Run.jl file in each of the example sub-folders within `Example_Systems/` provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run.jl script:
+
 1. Establish path to environment setup files and GenX source files.
 2. Read in model settings `genx_settings.yml` from the example directory.
 3. Configure solver settings.
@@ -37,24 +39,25 @@ Here are step-by-step instructions for running Run.jl, following the two slightl
 ### Method 1: Creating the Julia environment and installing dependencies from Project.toml file
 
 1. Start an instance of the Julia kernel from inside the GenX/ folder (which corresponds to the GenX repo, that you've just cloned) by typing `julia --project="GenX"`.
-2. Go to the package prompt by typing `]`. You will see that you're already within the `(GenX)` environment. Type `activate .` to activate the dependecnies in the environment.
+2. Go to the package prompt by typing `]`. You will see that you're within a Julia virtual environment named `(GenX)`. However, at this point, this environment isn't loaded with the dependencies. Type `activate .` to activate the dependecnies in the environment.
 3. If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) run `instantiate` from the `(GenX) pkg` prompt.
-4. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
+4. If you have an old `Manifest.toml` file file at the same file hierarchy as the `Project.toml` file and you get an error while running through the above steps, please delete the existing `Manifest.toml` file and execute steps 1-3 again.
+5. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
 
 Execution of the entire sequence of the four steps above should look like the figure below:
 
 ![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4](assets/Method1_Julia_Kernel_from_inside_GenX_Step1_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4*
 
-5. Type the back key to come back to the `julia>` prompt.
-6. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy)
+6. Type the back key to come back to the `julia>` prompt.
+7. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy)
 
 Execution of the steps 5 and 6 above should look like the figure below:
 
 ![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6](assets/Method1_Julia_Kernel_from_inside_GenX_Step2_Updated.png)
 *Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6*
 
-7. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+8. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
 
 If however, the user opens a julia kernel, while not yet inside the GenX folder, it's still possible to reach to the GenX folder while being inside the Julia REPL by executing the `pwd()` command first to check where on the directory structure the user is currently, and then by executing the `cd(<path to GenX>)` command. Afterwards, the steps are the same as above. This is shown in the three figures below:
 
@@ -80,12 +83,20 @@ If however, the user opens a julia kernel, while not yet inside the GenX folder,
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
 If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
-1. Uncomment the relevant lines in the `[deps]` and `[compat]` in the Project.toml file within GenX/ folder
+
+1. Uncomment the relevant lines in the `[deps]` and `[compat]` in the Project.toml file within GenX/ folder. If the CPLEX and/or Gurobi lines are missing, add the following lines to the `[deps]`:
+`CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"`
+`Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"`
+and the following lines to the `[compat]`:
+`CPLEX = "0.7.7"`
+`Gurobi = "0.9.14"`
+depending on whether you are going to use CPLEX or Gurobi, respectively.
 2. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
 3. Set the appropriate solver in the `genx_settings.yml` file
 4. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
 
 ## Running Modeling to Generate Alternatives with GenX
+
 GenX includes a modeling to generate alternatives (MGA) package that can be used to automatically enumerate a diverse set of near cost-optimal solutions to electricity system planning problems. To use the MGA algorithm, user will need to perform the following tasks:
 
 1. Add a `Resource_Type` column in the `Generators_data.csv` file denoting the type of each technology.
@@ -99,4 +110,4 @@ Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders
 
 ## pygenx: Python interface for GenX
 
-Python users can now run GenX from a thin-python-wrapper interface, developed by [Daniel Olsen](https://github.com/danielolsen). This tool is called `pygenx` and can be cloned from the github page: [pygenx](https://github.com/danielolsen/pygenx). It needs installation of Julia 1.3 and a clone of GenX repo along with your python installation. 
+Python users can now run GenX from a thin-python-wrapper interface, developed by [Daniel Olsen](https://github.com/danielolsen). This tool is called `pygenx` and can be cloned from the github page: [pygenx](https://github.com/danielolsen/pygenx). It needs installation of Julia 1.3 and a clone of GenX repo along with your python installation.
