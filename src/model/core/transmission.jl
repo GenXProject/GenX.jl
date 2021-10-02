@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int)
+	function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int, CapacityReserveMargin::Int)
 
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
 
@@ -128,7 +128,7 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 \end{aligned}
 ```
 """
-function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int)
+function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int, CapacityReserveMargin::Int)
 
 	println("Transmission Module")
 
@@ -223,6 +223,14 @@ function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::I
 
 	EP[:ePowerBalance] += ePowerBalanceLossesByZone
 	EP[:ePowerBalance] += ePowerBalanceNetExportFlows
+
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		if Z > 1 
+			@expression(EP, eCapResMarBalanceTrans[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L))
+			EP[:eCapResMarBalance] -= eCapResMarBalanceTrans
+		end
+	end
 
 	### Constraints ###
 

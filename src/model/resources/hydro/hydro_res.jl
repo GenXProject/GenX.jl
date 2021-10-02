@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	hydro_res(EP::Model, inputs::Dict, Reserves::Int)
+	hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
 
 This module defines the operational constraints for reservoir hydropower plants.
 
@@ -90,7 +90,7 @@ In case the reservoir capacity is known ($y \in W^{cap}$), then an additional co
 \end{aligned}
 ```
 """
-function hydro_res(EP::Model, inputs::Dict, Reserves::Int)
+function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
 
 	println("Hydro Reservoir Core Resources Module")
 
@@ -121,6 +121,12 @@ function hydro_res(EP::Model, inputs::Dict, Reserves::Int)
 		sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
 
 	EP[:ePowerBalance] += ePowerBalanceHydroRes
+
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in HYDRO_RES))
+		EP[:eCapResMarBalance] += eCapResMarBalanceHydro
+	end
 
 	### Constratints ###
 

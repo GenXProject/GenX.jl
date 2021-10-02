@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    non_served_energy(EP::Model, inputs::Dict)
+    non_served_energy(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
 This function defines the non-served energy/curtailed demand decision variable $\Lambda_{s,t,z} \forall s \in \mathcal{S}, \forall t \in \mathcal{T}, z \in \mathcal{Z}$, representing the total amount of demand curtailed in demand segment $s$ at time period $t$ in zone $z$. The first segment of non-served energy, $s=1$, is used to denote the cost of involuntary demand curtailment (e.g. emergency load shedding or rolling blackouts), specified as the value of $n_{1}^{slope}$. Additional segments, $s \geq 2$ can be used to specify a segment-wise approximation of a price elastic demand curve, or segments of price-responsive curtailable loads (aka demand response). Each segment denotes a price/cost at which the segment of demand is willing to curtail consumption, $n_{s}^{slope}$, representing the marginal willingness to pay for electricity of this segment of demand (or opportunity cost incurred when demand is not served) and a maximum quantity of demand in this segment, $n_{s}^{size}$, specified as a share of demand in each zone in each time step, $D_{t,z}.$ Note that the current implementation assumes demand segments are an equal share of hourly load in all zones.
 
@@ -59,7 +59,7 @@ Additionally, total demand curtailed in each time step cannot exceed total deman
 ```
 
 """
-function non_served_energy(EP::Model, inputs::Dict)
+function non_served_energy(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
 	println("Non-served Energy Module")
 
@@ -96,6 +96,14 @@ function non_served_energy(EP::Model, inputs::Dict)
 
 	# Add non-served energy/curtailed demand contribution to power balance expression
 	EP[:ePowerBalance] += ePowerBalanceNse
+
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		if SEG >=2
+			@expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x>0,inputs["dfCapRes"][:,res])))
+			EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+		end
+	end
 
 	### Constratints ###
 

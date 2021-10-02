@@ -30,18 +30,9 @@ Note that $\epsilon_{y,z,p}^{MinCapReq}$ is the eligiblity of a generator of tec
 function minimum_capacity_requirement(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Minimum Capacity Requirement Module")
-
-	dfGen = inputs["dfGen"]
 	NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
-	if setup["VreStor"]==1
-		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-	end
 
-	@constraint(EP, cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs],
-	sum(EP[:eTotalCap][y]
-	for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID])
-	+ (setup["VreStor"]==1 ? sum(EP[:eTotalCap_VRE] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]) : 0)
-	>= inputs["MinCapReq"][mincap])
+	@constraint(EP, cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs], EP[:eMinCapRes][mincap] >= inputs["MinCapReq"][mincap])
 
 	return EP
 end

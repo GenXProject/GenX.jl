@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    flexible_demand(EP::Model, inputs::Dict)
+    flexible_demand(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
 This function defines the operating constraints for flexible demand resources. As implemented, flexible demand resources ($y \in \mathcal{DF}$) are characterized by: a) maximum deferrable demand as a fraction of available capacity in a particular time step $t$, $\rho^{max}_{y,z,t}$, b) the maximum time this demand can be advanced and delayed, defined by parameters, $\tau^{advance}_{y,z}$ and $\tau^{delay}_{y,z}$, respectively and c) the energy losses associated with shifting demand, $\eta_{y,z}^{dflex}$.
 
@@ -65,7 +65,7 @@ A similar constraints maximum time steps of demand advancement. This is done by 
 If $t$ is first time step of the year (or the first time step of the representative period), then the above two constraints are implemented to look back over the last n time steps, starting with the last time step of the year (or the last time step of the representative period). This time-wrapping implementation is similar to the time-wrapping implementations used for defining the storage balance constraints for hydropower reservoir resources and energy storage resources.
 
 """
-function flexible_demand(EP::Model, inputs::Dict)
+function flexible_demand(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 ## Flexible demand resources available during all hours and can be either delayed or advanced (virtual storage-shiftable demand) - DR ==1
 
 println("Flexible Demand Resources Module")
@@ -98,6 +98,12 @@ END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of eac
     sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:][!,:R_ID])))
 
 EP[:ePowerBalance] += ePowerBalanceDemandFlex
+
+# Capacity Reserves Margin policy
+if CapacityReserveMargin > 0
+    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
+    EP[:eCapResMarBalance] += eCapResMarBalanceFlex
+end
 
 ## Objective Function Expressions ##
 

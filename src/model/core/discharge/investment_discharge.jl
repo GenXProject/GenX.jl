@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	investment_discharge(EP::Model, inputs::Dict)
+	investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 
 This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements.
 
@@ -54,7 +54,7 @@ In addition, this function adds investment and fixed O\&M related costs related 
 \end{aligned}
 ```
 """
-function investment_discharge(EP::Model, inputs::Dict)
+function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 
 	println("Investment Discharge Module")
 
@@ -139,6 +139,11 @@ function investment_discharge(EP::Model, inputs::Dict)
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
 	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0,:R_ID], 1:G)], eTotalCap[y] >= dfGen[!,:Min_Cap_MW][y])
+
+	if (MinCapReq == 1)
+		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
+		EP[:eMinCapRes] += eMinCapResInvest
+	end
 
 	return EP
 end

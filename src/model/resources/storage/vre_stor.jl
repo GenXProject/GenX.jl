@@ -15,10 +15,10 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	vre_stor(EP::Model, inputs::Dict, Reserves::Int)
+	vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int)
 
 """
-function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
+function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int)
 
 	println("VRE-Storage Module")
 
@@ -150,6 +150,25 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int)
 	sum(vP_VRE_STOR[y,t]-vCHARGE_VRE_STOR[y,t] for y=dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID]))
 
 	EP[:ePowerBalance] += ePowerBalance_VRE_STOR
+
+    ## Policy Expressions ##
+
+    if (MinCapReq == 1)
+        @expression(EP, eMinCapResVREStor[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap_VRE] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
+		EP[:eMinCapRes] += eMinCapResVREStor
+	end
+
+    if EnergyShareRequirement >= 1
+        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen_VRE_STOR[!,Symbol("ESR_$ESR")][y]*EP[:vP_DC][y,t]*dfGen_VRE_STOR[!,:EtaInverter][y] for y=dfGen_VRE_STOR[findall(x->x>0,dfGen_VRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T) 
+						- sum(inputs["dfESR"][:,ESR][z]*StorageLosses*sum(EP[:eELOSS_VRE_STOR][y] for y=dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID]) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+		EP[:eESR] += eESRVREStor												
+	end
+
+    # Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+        @expression(EP, eCapResMarBalanceVREStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen_VRE_STOR[y,Symbol("CapRes_$res")] * (EP[:vP_VRE_STOR][y, t] - EP[:vCHARGE_VRE_STOR][y, t]) for y in 1:VRE_STOR))
+		EP[:eCapResMarBalance] += eCapResMarBalanceVREStor
+	end
 
 	### Constraints ###
 

@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
+	storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int)
 
 A wide range of energy storage devices (all $o \in \mathcal{O}$) can be modeled in GenX, using one of two generic storage formulations: (1) storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), such as Lithium-ion batteries and most other electrochemical storage devices that use the same components for both charge and discharge; and (2) storage technologies that employ distinct and potentially asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), such as most thermal storage technologies or hydrogen electrolysis/storage/fuel cell or combustion turbine systems.
 
@@ -144,13 +144,15 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
+function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int)
 
 	println("Storage Resources Module")
-
+	dfGen = inputs["dfGen"]
 	G = inputs["G"]
+	T = inputs["T"]
+	STOR_ALL = inputs["STOR_ALL"]
 
-	if !isempty(inputs["STOR_ALL"])
+	if !isempty(STOR_ALL)
 		EP = investment_energy(EP, inputs)
 		EP = storage_all(EP, inputs, Reserves, OperationWrapping, LongDurationStorage)
 
@@ -167,6 +169,18 @@ function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int,
 
 	if !isempty(inputs["STOR_SYMMETRIC"])
 		EP = storage_symmetric(EP, inputs, Reserves)
+	end
+
+	# ESR Lossses
+	if EnergyShareRequirement >= 1
+		@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][:,ESR][z]*StorageLosses*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+		EP[:eESR] -= eESRStor
+	end
+
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
+		EP[:eCapResMarBalance] += eCapResMarBalanceStor
 	end
 
 	return EP
