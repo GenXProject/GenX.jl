@@ -1,4 +1,5 @@
 IterativelyAddPeriods: 1
+MultiPeriodConcatenate: 1
 ExtremePeriods:
   Wind:
     System:

@@ -45,10 +45,10 @@ function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp
 
 	# 1) For each resource, find the minimum of the capital recovery period and the end of the model horizon
 	# Total time between the end of the final model period and the start of the current period
-	model_yrs_remaining = period_len * num_periods - period_len * (cur_period-1) 
-	
+	model_yrs_remaining = period_len * num_periods - period_len * (cur_period-1)
+
 	# We will sum annualized costs through the full capital recovery period or the end of planning horizon, whichever comes first
-	payment_yrs_remaining = min.(crp, model_yrs_remaining) 
+	payment_yrs_remaining = min.(crp, model_yrs_remaining)
 
 	# KEY ASSUMPTION: Investment costs after the planning horizon are fully recoverable, so we don't need to include these costs
 	# 2) Compute the present value of investment associated with capital recovery period within the model horizon - discounting to year 1 and not year 0
@@ -65,14 +65,14 @@ end
 @doc raw"""
 	function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
-This function overwrites input parameters read in via the load\_inputs() method for proper configuration of multi-period modeling: 
+This function overwrites input parameters read in via the load\_inputs() method for proper configuration of multi-period modeling:
 
 1) Overnight capital costs are computed via the compute\_overnight\_capital\_cost() method and overwrite internal model representations of annualized investment costs.
 
 2) Annualized fixed O&M costs are scaled up to represent total fixed O&M incured over the length of each model period (specified by "PeriodLength" field in multi\_period\_settings.yml).
 
 3) Internal set representations of resources eligible for capacity retirements are overwritten to ensure compatability with multi-period modeling.
-	
+
 4) When NetworkExpansion is active and there are multiple model zones, parameters related to transmission and network expansion are updated. First, annualized transmission reinforcement costs are converted into overnight capital costs. Next, the maximum allowable transmission line reinforcement parameter is overwritten by the model period-specific value specified in the "Line\_Max\_Flow\_Possible\_MW" fields in the network_multi_period.csv file. Finally, internal representations of lines eligible or not eligible for transmission expansion are overwritten based on the updated maximum allowable transmission line reinforcement parameters.
 
 inputs:
@@ -125,6 +125,7 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment period
 		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_period"]
+		#inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW"]
 
         # Network lines and zones that are expandable have greater maximum possible line flow than that of the previous period
 		if cur_period > 1
