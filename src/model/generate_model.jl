@@ -151,7 +151,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to non-dispatchable renewable resources
 	if !isempty(inputs["MUST_RUN"])
-		EP = must_run(EP, inputs)
+		EP = must_run(EP, inputs, setup["CapacityReserveMargin"])
 	end
 
 	# Model constraints, variables, expression related to energy storage modeling
