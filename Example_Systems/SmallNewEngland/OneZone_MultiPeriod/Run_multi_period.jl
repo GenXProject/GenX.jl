@@ -39,7 +39,7 @@ using BenchmarkTools
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
 mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
 
-multiperiod_settings = joinpath(settings_path, "multi_period_settings.yml") # Multi period settings YAML file path 
+multiperiod_settings = joinpath(settings_path, "multi_period_settings.yml") # Multi period settings YAML file path
 mysetup["MultiPeriodSettingsDict"] = YAML.load(open(multiperiod_settings))
 
 ### Cluster time series inputs if necessary and if specified by the user
@@ -47,7 +47,7 @@ TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
 if mysetup["TimeDomainReduction"] == 1
     if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
         println("Clustering Time Series Data...")
-        cluster_inputs(inpath, settings_path, mysetup)
+        FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict = cluster_inputs(inpath, settings_path, mysetup)
     else
         println("Time Series Data Already Clustered.")
     end

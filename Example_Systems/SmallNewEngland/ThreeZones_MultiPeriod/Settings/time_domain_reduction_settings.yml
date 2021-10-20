@@ -83,9 +83,10 @@ ClusterFuelPrices: 1
   #   - MultiPeriodConcatenate
   #   (Only considered if MultiPeriod = 1 in genx_settings.yml)
   #   If 1, this designates that the model should time domain reduce the input data
-  #   of all periods together. Else if 0, the model will time domain reduce each
-  #   period's data individually.
-MultiPeriodConcatenate: 1
+  #   of all periods together. Else if 0, the model will time domain reduce only
+  #   the first stage and will apply the periods of each other stage to this set
+  #   of representative periods by closest Eucliden distance.
+MultiPeriodConcatenate: 0
 
   #   - UseExtremePeriods
   #   Either 1 (yes) or 0 (no), this designates whether or not to include

@@ -47,7 +47,7 @@ TDRpath = joinpath(inpath, "Inputs", "Inputs_p1", mysetup["TimeDomainReductionFo
 if mysetup["TimeDomainReduction"] == 1
     if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
         println("Clustering Time Series Data...")
-        FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict = cluster_inputs(inpath, settings_path, mysetup)
+        FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict, R, A, M, DistMatrix, ClusteringInputDF = cluster_inputs(inpath, settings_path, mysetup)
     else
         println("Time Series Data Already Clustered.")
     end
@@ -66,7 +66,7 @@ if mysetup["TimeDomainReduction"] == 1
 end
 """
 
-
+"""
 ### Configure solver
 println("Configuring Solver")
 OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
@@ -124,3 +124,4 @@ end
 
 # Step 5) Write DDP summary outputs
 write_multi_period_outputs(mystats_d, outpath, mysetup["MultiPeriodSettingsDict"])
+"""

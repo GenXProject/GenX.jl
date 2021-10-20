@@ -1,5 +1,5 @@
 IterativelyAddPeriods: 1
-MultiPeriodConcatenate: 0
+MultiPeriodConcatenate: 1
 ExtremePeriods:
   Wind:
     System:
