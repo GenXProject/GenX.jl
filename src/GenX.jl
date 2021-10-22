@@ -186,5 +186,6 @@ include("multi_period/load_inputs_multi_period/load_generators_data_multi_period
 include("multi_period/load_inputs_multi_period/load_network_data_multi_period.jl")
 include("multi_period/load_inputs_multi_period/load_inputs_multi_period.jl")
 include("multi_period/write_outputs_multi_period/write_capacity_multi_period.jl")
+include("multi_period/write_outputs_multi_period/write_settings.jl")
 
 end

@@ -66,7 +66,7 @@ if mysetup["TimeDomainReduction"] == 1
 end
 """
 
-"""
+
 ### Configure solver
 println("Configuring Solver")
 OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
@@ -123,5 +123,4 @@ for p in 1:mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
 end
 
 # Step 5) Write DDP summary outputs
-write_multi_period_outputs(mystats_d, outpath, mysetup["MultiPeriodSettingsDict"])
-"""
+write_multi_period_outputs(mystats_d, outpath, mysetup)

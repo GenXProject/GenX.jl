@@ -94,6 +94,9 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
         end
     end
 
+    # Weighted Average Cost of Capital for Transmission Expansion
+    inputs_nw["transmission_WACC"]= convert(Array{Float64}, collect(skipmissing(network_var[!,:WACC])))
+
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)
     inputs_nw["pTrans_Loss_Coef"] = zeros(Float64, inputs_nw["L"])
     for l in 1:inputs_nw["L"]

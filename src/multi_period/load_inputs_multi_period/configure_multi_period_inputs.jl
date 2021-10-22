@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array)
+	function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array,tech_wacc::Array)
 
 This function computes overnight capital costs incured within the model horizon, assuming that annualized costs to be paid after the model horizon are fully recoverable, and so are not included in the cost computation.
 
@@ -25,23 +25,23 @@ For each resource $y \in \mathcal{G}$ with annualized investment cost $AIC_{y}$ 
     & OCC = \sum^{min(CRP_{y},H)}_{i=1}\frac{ACI_{y}}{(1+WACC)^{i}}
 \end{aligned}
 ```
-where $WAAC$ is the weighted average cost of capital (set by the "WACC" field in the multi\_period\_settings.yml file) and $H$ is the number of years remaining between the start of the current model period and the model horizon (the end of the final model period).
+where $WACC$ is the technology-specific weighted average cost of capital (set by the "WACC" field in the Generators_data.csv or Network.csv files) and $H$ is the number of years remaining between the start of the current model period and the model horizon (the end of the final model period).
 
 inputs:
 
   * settings\_d - dict object containing settings dictionary configured in the multi-period settings file multi\_period\_settings.yml.
   * inv\_costs\_yr - array object containing annualized investment costs.
   * crp - array object of capital recovery period values.
+  * tech_wacc - array object containing technology-specific weighted costs of capital.
 NOTE: The inv\_costs\_yr and crp arrays must be the same length; values with the same index in each array correspond to the same resource $y /in /mathcal{G}$.
 
 returns: array object containing overnight capital costs, the discounted sum of annual investment costs incured within the model horizon.
 """
-function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array)
+function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array, tech_wacc::Array)
 
 	cur_period = settings_d["CurPeriod"] # Current model
 	num_periods = settings_d["NumPeriods"] # Total number of model periods
 	period_len = settings_d["PeriodLength"] # Length (in years) of each model period
-	wacc = settings_d["WACC"] # Weighted average cost of capital
 
 	# 1) For each resource, find the minimum of the capital recovery period and the end of the model horizon
 	# Total time between the end of the final model period and the start of the current period
@@ -55,7 +55,7 @@ function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp
 	#    (Factor to adjust discounting to year 0 for capital cost is included in the discounting coefficient applied to all terms in the objective function value.)
 	occ = zeros(length(inv_costs_yr))
 	for i in 1:length(occ)
-		occ[i] = sum(inv_costs_yr[i]/(1+wacc) .^ (p) for p=1:payment_yrs_remaining[i])
+		occ[i] = sum(inv_costs_yr[i]/(1+tech_wacc[i]) .^ (p) for p=1:payment_yrs_remaining[i])
 	end
 
 	# 3) Return the overnight capital cost (discounted sum of annual investment costs incured within the model horizon)
@@ -95,9 +95,9 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 
 	# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
 	# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs
-	inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period])
-	inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiPeriod[!,:Capital_Recovery_Period])
-	inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period])
+	inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+	inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+	inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 
 	# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model time periods
 	OPEXDF = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
@@ -121,7 +121,7 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 		dfNetworkMultiPeriod = inputs_d["dfNetworkMultiPeriod"]
 
 		# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
-		inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiPeriod[!,:Capital_Recovery_Period])
+		inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiPeriod[!,:Capital_Recovery_Period], inputs_d["transmission_WACC"])
 
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment period
 		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_period"]
