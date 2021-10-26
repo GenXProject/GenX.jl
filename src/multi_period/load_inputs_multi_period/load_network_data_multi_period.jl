@@ -30,18 +30,33 @@ returns: Dictionary object containing multi-period network data inputs.
 function load_network_data_multi_period(setup::Dict, path::AbstractString, sep::AbstractString, inputs::Dict)
 
     # Network zones inputs and Network topology inputs
-    network_mp = DataFrame(CSV.File(string(path,sep,"Network_multi_period.csv"), header=true), copycols=true)
-    
-    num_periods = setup["MultiPeriodSettingsDict"]["NumPeriods"]
-    inputs["dfNetworkMultiPeriod"] = network_mp
+    network_mp = DataFrame(CSV.File(string(path,sep,"Inputs_p1",sep,"Network.csv"), header=true), copycols=true)
 
+    # Remove rows of 'missing' by removing 'Network_zones' and index, and by using completecases()
+    network_mp = network_mp[!, Not(Symbol("Network_zones"))]
+    network_mp = network_mp[completecases(network_mp), :]
+
+    num_periods = setup["MultiPeriodSettingsDict"]["NumPeriods"]
+    inputs["dfNetworkMultiPeriod"] = network_mp[!, [Symbol("Network_Lines"), Symbol("Capital_Recovery_Period")]]
+    inputs["dfNetworkMultiPeriod"][!,Symbol("pLine_Max_Flow_Possible_MW_p1")] = network_mp[!, Symbol("Line_Max_Flow_Possible_MW")]
+    inputs["pLine_Max_Flow_Possible_MW_p1"] = network_mp[!,Symbol("Line_Max_Flow_Possible_MW")]
     if setup["ParameterScale"] == 1
-        for p in 1:num_periods
-            inputs["pLine_Max_Flow_Possible_MW_p$p"] = network_mp[!,Symbol("Line_Max_Flow_Possible_MW_p$p")]/ModelScalingFactor # Convert to GW
+        inputs["pLine_Max_Flow_Possible_MW_p1"] = inputs["pLine_Max_Flow_Possible_MW_p1"]/ModelScalingFactor # Convert to GW
+    end
+
+
+    for p in 2:num_periods
+        network_mp = DataFrame(CSV.File(string(path,sep,"Inputs_p$p",sep,"Network.csv"), header=true), copycols=true)
+        network_mp = network_mp[!, Not(Symbol("Network_zones"))]
+        network_mp = network_mp[completecases(network_mp), :]
+        inputs["dfNetworkMultiPeriod"][!,Symbol("pLine_Max_Flow_Possible_MW_p$p")] = network_mp[!, Symbol("Line_Max_Flow_Possible_MW")]
+        inputs["pLine_Max_Flow_Possible_MW_p$p"] = network_mp[!,Symbol("Line_Max_Flow_Possible_MW")]
+        if setup["ParameterScale"] == 1
+            inputs["pLine_Max_Flow_Possible_MW_p$p"] = inputs["pLine_Max_Flow_Possible_MW_p$p"]/ModelScalingFactor # Convert to GW
         end
     end
 
-    # To-Do: Error handling 
+    # To-Do: Error handling
     # 1.) pLine_Max_Flow_Possible_MW must be monotonically increasing (greater than or equal to)
 
     println("Network_multi_period.csv Successfully Read!")

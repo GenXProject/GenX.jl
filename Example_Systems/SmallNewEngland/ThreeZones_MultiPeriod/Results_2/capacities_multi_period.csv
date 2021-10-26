@@ -1,0 +1,12 @@
+Resource,Zone,StartCap_p1,EndCap_p1,EndCap_p2,EndCap_p3
+MA_natural_gas_combined_cycle,1,0.0,10922.068728711474,10213.793190093958,0.0
+MA_solar_pv,1,0.0,0.0,0.0,0.0
+CT_natural_gas_combined_cycle,2,0.0,10384.589072321249,5384.465170977055,0.0
+CT_onshore_wind,2,0.0,0.0,0.0,0.0
+CT_solar_pv,2,0.0,0.0,0.0,0.0
+ME_natural_gas_combined_cycle,3,0.0,0.0,0.0,0.0
+ME_onshore_wind,3,0.0,1476.3587788593338,0.0,0.0
+MA_battery,1,0.0,0.0,0.0,0.0
+CT_battery,2,0.0,0.0,0.0,0.0
+ME_battery,3,0.0,749.5116967267975,749.5116967267971,0.0
+Total,n/a,0.0,23532.52827661885,16347.77005779781,0.0
