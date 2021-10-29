@@ -1,0 +1,3 @@
+MinCapReqConstraint,Constraint_Description,Min_MW
+1,Landbasedwind,8000
+2,CA_S_solar,10000

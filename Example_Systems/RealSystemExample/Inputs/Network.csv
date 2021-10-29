@@ -1,0 +1,4 @@
+Network_zones,Network_Lines,z1,z2,z3,Line_Max_Flow_MW,Line_Min_Flow_MW,Transmission Path Name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr
+z1,1.0,1.0,-1.0,0.0,3675.0,-3000.0,CA_N_to_CA_S,336.6139,0.03366139449135546,3675.0,74223.0
+z2,2.0,0.0,1.0,-1.0,3767.0,-4794.0,CA_S_to_WECC_AZ,320.9613,0.032096128835034064,3767.0,51113.0
+z3,,,,,,,,,,,

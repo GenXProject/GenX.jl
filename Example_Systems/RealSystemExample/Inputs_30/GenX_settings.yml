@@ -1,0 +1,37 @@
+
+
+MacOrWindows: Mac  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
+Trans_Loss_Segments: 1 # Number of segments to use in piecewise linear approximation of losses; 1 = linear, >2 = piecewise quadratic
+Distr_Loss_Segments: 0 # Number of segments to use in piecewise linear approximation of losses; 1 = linear, >2 = piecewise quadratic
+Distr_Margin_LV_Segments: 0 # Number of segments to use in piecewise linear approximation of quadratic term in LV distribution margin equation
+CO2Cap: 2 # 0 = no cap; 1 = zonal caps; 2 = overall cap;
+UCommit: 2 # 0 = no UC, 1 integer clustering, 2 linearized clustering
+Specific_Share: 0 # 1 = active otherwise no active
+RPS: 3 #minimum qualifying renewables penetration; 0 = not active; 1 = active per node; 2 = active as system
+CES: 3 #minimum qualifying clean energy resource penetration; 0 = not active; 1 = active per node; 2 = active as system
+RPS_Adjustment: 0 # Annual non-modeled RPS qualifying generation (e.g. from DG solar); is removed from modeled RPS obligation
+CES_Adjustment: 0  # Annual non-modeled RPS qualifying generation (e.g. from DG solar); is removed from modeled RPS obligation
+StorageLosses: 0 # 0 VRE and CO2 constraint DO NOT account for energy lost; 1 constraint DO  account for energy lost
+NetworkExpansion: 1 # 1 = active otherwise no active
+HeatMarket: 0 # 1 = active otherwise no active
+Externalities: 0 # 1 = active otherwise no active
+OperationWrapping: 2 # 0 = Full Year First-Last Hour Year; 1 = Full Year First-Last Hour Week; 2 = Sample Weeks First-Last Hour Week;
+LDS: 0 # 0 = no long duration storage constraints; 1 = consider long duration storage constraints. Default is 0
+pTolerance: 0.05 # Wrap-up tolerance
+Reserves: 0 # 0 = no reserves, 1 regulation (primary) and operating (secondary) reserves
+PrintModel: 0 # 1 for including the model equation as an output; 0 for the model equation not being included as an output
+Trading: 0 # Partial equilibrium trading regions included [1=yes, 0=no]
+Dual_MIP: 0 # Should GenX get dual variables from mixed integer problems? If yes, GenX will resolve with all integer decisions fixed to MIP solution values and obtain duals from resulting LP.
+GenXScalingFactor: 1000 # Scaling factor [1e-0 to 1e-5] that re-scales GenX coefficients to try to obtain a more compact range of objective, constraint, and RHS coefficients (to reduce numerical issues).
+  # Solver Settings: (If not specified, GenX will use default values for specified solver)
+Solver: CLP # Specifies which solver to use. Options: [CPLEX, Gurobi, CLP]
+Feasib_Tol: 1e-6 # [CPLEX/Gurobi] All constraints must be satisfied to this tolerance
+BarConvTol: 1e-8 # [CPLEX/Gurobi] The barrier solver terminates when the relative difference between the primal and dual objective values is less than the specified tolerance. Tightening this tolerance often produces a more accurate solution, which can sometimes reduce the time spent in crossover. Loosening it causes the barrier algorithm to terminate with a less accurate solution, which can be useful when barrier is making very slow progress in later iterations.
+Optimal_Tol: 1e-6 # [CPLEX/Gurobi] Reduced costs must all be smaller than OptimalityTol in the improving direction in order for a model to be declared optimal.
+# MIPGap: 0.01 # [CPLEX/Gurobi] Optimality gap for mixed integer problems (unused if linear problem)
+# Pre_Solve: 0 # [CPLEX: [0:1] / Gurobi: [-1:2]] Controls the presolve level.
+Crossover: -1 # -1 for turnning off the crossover - [CPLEX: [0:2] / Gurobi" [-1:4]] Determines the crossover strategy used to transform the interior solution produced by barrier into a basic solution.
+Method: 4 # [CPLEX: [0:6; 4=Barrier] / Gurobi: [-1:5; 2=Barrier]] Algorithm used to solve continuous models or the root node of a MIP model.
+NumericFocus: 1 # [CPLEX: [0:1] / Gurobi: [0:3]] The NumericFocus parameter controls the degree to which the code attempts to detect and manage numerical issues. The default setting (0)
+RoundingDigits: 3 # number of rounding digits for objective function coefficients
+CapacityReserveMargin: 0 #flag for reserve margin constraints - 0: turn OFF the constraints; 1 - turn ON the constraints
