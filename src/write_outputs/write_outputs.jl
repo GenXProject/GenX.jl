@@ -31,23 +31,23 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	## Use appropriate directory separator depending on Mac or Windows config
 	if Sys.isunix()
 		sep = "/"
-    elseif Sys.iswindows()
+    	elseif Sys.iswindows()
 		sep = "\U005c"
-    else
-        sep = "/"
+    	else
+        	sep = "/"
 	end
 
-    if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
-        # Overwrite existing results if dir exists
-        # This is the default behaviour when there is no flag, to avoid breaking existing code
-        if !(isdir(path))
-		    mkdir(path)
-	    end
-    else
-        # Find closest unused ouput directory name and create it
-        path = choose_output_dir(path)
-        mkdir(path)
-    end
+    	if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
+        	# Overwrite existing results if dir exists
+        	# This is the default behaviour when there is no flag, to avoid breaking existing code
+        	if !(isdir(path))
+			mkdir(path)
+	    	end
+    	else
+        	# Find closest unused ouput directory name and create it
+        	path = choose_output_dir(path)
+        	mkdir(path)
+    	end
 
 	# https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
 	status = termination_status(EP)
@@ -55,54 +55,54 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	## Check if solved sucessfully - time out is included
 	if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
 		if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
-			@btime write_status(path, sep, inputs, setup, EP)
+			write_status(path, sep, inputs, setup, EP)
 			return
 			# Model reached timelimit but failed to find a feasible solution
 	#### Aaron Schwartz - Not sure if the below condition is valid anymore. We should revisit ####
 		elseif isnan(objective_value(EP))==true
 			# Model failed to solve, so record solver status and exit
-			@btime write_status(path, sep, inputs, setup, EP)
+			write_status(path, sep, inputs, setup, EP)
 			return
 		end
 	end
 
 	write_status(path, sep, inputs, setup, EP)
-	@btime write_costs(path, sep, inputs, setup, EP)
-	dfCap = @btime write_capacity(path, sep, inputs, setup, EP)
-	dfPower = @btime write_power(path, sep, inputs, setup, EP)
-	dfCharge = @btime write_charge(path, sep, inputs, setup, EP)
-	@btime write_storage(path, sep, inputs, setup, EP)
-	dfCurtailment = @btime write_curtailment(path, sep, inputs, setup, EP)
-	@btime write_nse(path, sep, inputs, setup, EP)
-	@btime write_power_balance(path, sep, inputs, setup, EP)
+	write_costs(path, sep, inputs, setup, EP)
+	dfCap = write_capacity(path, sep, inputs, setup, EP)
+	dfPower = write_power(path, sep, inputs, setup, EP)
+	dfCharge = write_charge(path, sep, inputs, setup, EP)
+	write_storage(path, sep, inputs, setup, EP)
+	dfCurtailment = write_curtailment(path, sep, inputs, setup, EP)
+	write_nse(path, sep, inputs, setup, EP)
+	write_power_balance(path, sep, inputs, setup, EP)
 	if inputs["Z"] > 1
-		@btime write_transmission_flows(path, sep, setup, inputs, EP)
-		@btime write_transmission_losses(path, sep, inputs, setup, EP)
+		write_transmission_flows(path, sep, setup, inputs, EP)
+		write_transmission_losses(path, sep, inputs, setup, EP)
 		if setup["NetworkExpansion"] == 1
 			write_nw_expansion(path, sep, inputs, setup, EP)
 		end
 	end
-	@btime write_emissions(path, sep, inputs, setup, EP)
+	write_emissions(path, sep, inputs, setup, EP)
 	if has_duals(EP) == 1
-		@btime write_reliability(path, sep, inputs, setup, EP)
-		@btime write_storagedual(path, sep, inputs, setup, EP)
+		write_reliability(path, sep, inputs, setup, EP)
+		write_storagedual(path, sep, inputs, setup, EP)
 	end
 
 	if setup["UCommit"] >= 1
-		@btime write_commit(path, sep, inputs, setup, EP)
-		@btime write_start(path, sep, inputs, setup, EP)
-		@btime write_shutdown(path, sep, inputs, setup, EP)
+		write_commit(path, sep, inputs, setup, EP)
+		write_start(path, sep, inputs, setup, EP)
+		write_shutdown(path, sep, inputs, setup, EP)
 		if setup["Reserves"] == 1
-			@btime write_reg(path, sep, inputs, setup, EP)
-			@btime write_rsv(path, sep, inputs, setup, EP)
+			write_reg(path, sep, inputs, setup, EP)
+			write_rsv(path, sep, inputs, setup, EP)
 		end
 	end
 
 
 	# Output additional variables related inter-period energy transfer via storage
 	if setup["OperationWrapping"] == 1 && setup["LongDurationStorage"] == 1
-		@btime write_opwrap_lds_stor_init(path, sep, inputs, setup, EP)
-		@btime write_opwrap_lds_dstor(path, sep, inputs, setup, EP)
+		write_opwrap_lds_stor_init(path, sep, inputs, setup, EP)
+		write_opwrap_lds_dstor(path, sep, inputs, setup, EP)
 	end
 
 	dfPrice = DataFrame()
@@ -111,29 +111,29 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	dfSubRevenue = DataFrame()
 	dfRegSubRevenue = DataFrame()
 	if has_duals(EP) == 1
-		dfPrice = @btime write_price(path, sep, inputs, setup, EP)
-		dfEnergyRevenue = @btime write_energy_revenue(path, sep, inputs, setup, EP, dfPower, dfPrice, dfCharge)
-		dfChargingcost = @btime write_charging_cost(path, sep, inputs, dfCharge, dfPrice, dfPower, setup)
-		dfSubRevenue, dfRegSubRevenue = @btime write_subsidy_revenue(path, sep, inputs, setup, dfCap, EP)
+		dfPrice = write_price(path, sep, inputs, setup, EP)
+		dfEnergyRevenue = write_energy_revenue(path, sep, inputs, setup, EP, dfPower, dfPrice, dfCharge)
+		dfChargingcost = write_charging_cost(path, sep, inputs, dfCharge, dfPrice, dfPower, setup)
+		dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, sep, inputs, setup, dfCap, EP)
 	end
 
-	@btime write_time_weights(path, sep, inputs)
+	write_time_weights(path, sep, inputs)
 	dfESR = DataFrame()
 	dfESRRev = DataFrame()
 	if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
-		dfESR = @btime write_esr_prices(path, sep, inputs, setup, EP)
-		dfESRRev = @btime write_esr_revenue(path, sep, inputs, setup, dfPower, dfESR)
+		dfESR = write_esr_prices(path, sep, inputs, setup, EP)
+		dfESRRev = write_esr_revenue(path, sep, inputs, setup, dfPower, dfESR)
 	end
 	dfResMar = DataFrame()
 	dfResRevenue = DataFrame()
 	if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
-		dfResMar = @btime write_reserve_margin(path, sep, setup, EP)
-		@btime write_reserve_margin_w(path, sep, inputs, setup, EP)
-		dfResRevenue = @btime write_reserve_margin_revenue(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
-		@btime write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
+		dfResMar = write_reserve_margin(path, sep, setup, EP)
+		write_reserve_margin_w(path, sep, inputs, setup, EP)
+		dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
+		write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
 	end
 
-	@btime write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
+	write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
 
 	## Print confirmation
 	println("Wrote outputs to $path$sep")
