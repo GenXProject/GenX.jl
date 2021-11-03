@@ -54,7 +54,7 @@ OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 
 ### Load inputs
 println("Loading Inputs")
-myinputs = Dict() # myinputs dictionary will store read-in data and computed parameters
+# myinputs dictionary will store read-in data and computed parameters
 myinputs = load_inputs(mysetup, inpath)
 
 ### Generate model
