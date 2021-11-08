@@ -20,8 +20,6 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
 	Z = inputs["Z"]     # Number of zones
 	SEG = inputs["SEG"] # Number of load curtailment segments
 	STOR_ALL = inputs["STOR_ALL"]
-	println(STOR_ALL)
-	println(Z)
 	FLEX = inputs["FLEX"]
 	## Power balance for each zone
 	dfPowerBalance = Array{Any}
