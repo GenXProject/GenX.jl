@@ -29,7 +29,7 @@ Finally, the model is usually configured to consider a full year of operating de
 With appropriate configuration of the model, GenX thus allows the user to tractably consider several interlinking decision layers in a single, monolithic optimization problem that would otherwise have been necessary to solve in different separated stages or models. The following figure reflects the range of configurations currently possible along the three key dimensions of chronological detail, operational detail, and network detail.
 
 
-![Range of configurations currently implemented in GenX along three key dimensions of model resolution](assets/Dimensions_graphic3.png)
+![Range of configurations currently implemented in GenX along three key dimensions of model resolution](assets/Dimensions_graphic3_background.png)
 *Figure. Range of configurations currently implemented in GenX along three key dimensions of model resolution*
 
 The model is usually configured to consider a single future planning year. In this sense, the current formulation is *static* because its objective is not to determine when investments should take place over time, but rather to produce a snapshot of the minimum-cost generation capacity mix under some pre-specified future conditions. However, the current implementation of the model can be run in sequence (with outputs from one planning year used as inputs for another subsequent planning year) to represent a step-wise or myopic expansion of the electricity system. Future updates of the model will include the option to allow simultaneous co-optimization of sequential planning decisions over multiple investment periods, where we leverage dual dynamic programming techniques to improve computational tractability.
