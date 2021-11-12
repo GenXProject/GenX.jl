@@ -14,57 +14,6 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-##############################################
-#
-#   Time Domain Reduction
-#    - Jack Morris
-#
-# Use kmeans or kemoids to cluster raw load profiles and resource capacity factor profiles
-# into representative periods. Use Extreme Periods to capture noteworthy periods or
-# periods with notably poor fits.
-#
-#  Inputs
-#
-#  In time_domain_reduction_settings.yml, include the following:
-#
-#  - Timesteps_per_Rep_Period - Typically 168 timesteps (e.g., hours) per period, this designates the length
-#     of each representative period.
-#  - UseExtremePeriods - Either 1 or 0, this designates whether or not to include
-#     outliers (by performance or load/resource extreme) as their own representative periods.
-#     This setting automatically includes the periods with maximum load, minimum solar cf and
-#     minimum wind cf as extreme periods.
-#  - ClusterMethod - Either 'kmeans' or 'kmedoids', this designates the method used to cluster
-#     periods and determine each point's representative period.
-#  - ScalingMethod - Either 'N' or 'S', this designates directs the module to normalize ([0,1])
-#     or standardize (mean 0, variance 1) the input data.
-#  - MinPeriods - The minimum number of periods used to represent the input data. If using
-#     UseExtremePeriods, this must be at least three. If IterativelyAddPeriods if off,
-#    this will be the total number of periods.
-#  - MaxPeriods - The maximum number of periods - both clustered periods and extreme periods -
-#     that may be used to represent the input data.
-#  - IterativelyAddPeriods - Either 1 or 0, this designates whether or not to add periods
-#     until the error threshold between input data and represented data is met or the maximum
-#     number of periods is reached.
-#  - Threshold - Iterative period addition will end if the period farthest (Euclidean Distance)
-#     from its representative period is within this percentage of the total possible error (for normalization)
-#     or ~95% of the total possible error (for standardization). E.g., for a threshold of 0.01,
-#     every period must be within 1% of the spread of possible error before the clustering
-#     iterations will terminate (or until the max number of periods is reached).
-#  - IterateMethod - Either 'cluster' (Default) or 'extreme', this designates whether to add clusters to
-#     the kmeans/kmedoids method or to set aside the worst-fitting periods as a new extreme periods.
-#  - nReps - Default 200, the number of times to repeat each kmeans/kmedoids clustering at the same setting.
-#  - LoadWeight - Default 1, this is an optional multiplier on load columns in order to prioritize
-#     better fits for load profiles over resource capacity factor profiles.
-#  - WeightTotal - Default 8760, the sum to which the relative weights of representative periods will be scaled.
-#  - ClusterFuelPrices - Either 1 or 0, this indicates whether or not to use the fuel price
-#     time series in Fuels_data.csv in the clustering process. If 'no', this function will still write
-#     Fuels_data_clustered.csv with reshaped fuel prices based on the number and size of the
-#     representative weeks, assuming a constant time series of fuel prices with length equal to the
-#     number of timesteps in the raw input data.
-#
-#
-#############################################
-
 # Store the paths of the current working directory, GenX, and Settings YAML file
 if isfile("PreCluster.jl")
     genx_path = cd(pwd, "../..") # pwd() grandparent <-- TDR called from PreCluster.jl
@@ -465,6 +414,77 @@ end
 
 
 @doc raw"""
+
+    get_load_multipliers(ClusterOutputData, ModifiedData, M, W, LoadCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols)
+
+Get multipliers to linearly scale clustered load profiles L zone-wise such that their weighted sum equals the original zonal total load.
+Scale load profiles later using these multipliers in order to ensure that a copy of the original load is kept for validation.
+
+Find $k_z$ such that:
+
+```math
+\sum_{i \in I} L_{i,z} = \sum_{t \in T, m \in M} C_{t,m,z} \cdot \frac{w_m}{T} \cdot k_z   \: \: \: \forall z \in Z
+```
+
+where $Z$ is the set of zones, $I$ is the full time domain, $T$ is the length of one period (e.g., 168 for one week in hours),
+$M$ is the set of representative periods, $L_{i,z}$ is the original zonal load profile over time (hour) index $i$, $C_{i,m,z}$ is the
+load in timestep $i$ for representative period $m$ in zone $z$, $w_m$ is the weight of the representative period equal to the total number of
+hours that one hour in representative period $m$ represents in the original profile, and $k_z$ is the zonal load multiplier returned by the function.
+
+"""
+function get_load_multipliers(ClusterOutputData, InputData, M, W, LoadCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols, v=false)
+
+    # Compute original zonal total loads
+    zone_sums = Dict()
+    for loadcol in LoadCols
+        zone_sums[loadcol] = sum(InputData[:, loadcol])
+    end
+
+    # Compute zonal loads per representative period
+    cluster_zone_sums = Dict()
+    for m in 1:NClusters
+        clustered_lp_DF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols if (Symbol(NewColNames[i]) in LoadCols)) )
+        cluster_zone_sums[m] = Dict()
+        for loadcol in LoadCols
+            cluster_zone_sums[m][loadcol] = sum(clustered_lp_DF[:, loadcol])
+        end
+    end
+
+    # Use representative period weights to compute total zonal load of the representative profile
+    # Determine multiplier to bridge the gap between original zonal loads and representative zonal loads
+    weighted_cluster_zone_sums = Dict(loadcol => 0.0 for loadcol in LoadCols)
+    load_mults = Dict()
+    for loadcol in LoadCols
+        for m in 1:NClusters
+            weighted_cluster_zone_sums[loadcol] += (W[m]/(TimestepsPerRepPeriod))*cluster_zone_sums[m][loadcol]
+        end
+        load_mults[loadcol] = zone_sums[loadcol]/weighted_cluster_zone_sums[loadcol]
+        if v println(loadcol, ": ", weighted_cluster_zone_sums[loadcol], " vs. ", zone_sums[loadcol], " => ", load_mults[loadcol]) end
+    end
+
+    # Zone-wise validation that scaled clustered load equals original load (Don't actually scale load in this function)
+    if v
+        new_zone_sums = Dict(loadcol => 0.0 for loadcol in LoadCols)
+        for m in 1:NClusters
+            for i in 1:Ncols
+                if (NewColNames[i] in LoadCols)
+                    # Uncomment this line if we decide to scale load here instead of later. (Also remove "load_mults[NewColNames[i]]*" term from new_zone_sums computation)
+                    #ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] *= load_mults[NewColNames[i]]
+                    println("   Scaling ", M[m], " (", NewColNames[i], ") : ", cluster_zone_sums[m][NewColNames[i]], " => ", load_mults[NewColNames[i]]*sum(ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i]))
+                    new_zone_sums[NewColNames[i]] += (W[m]/(TimestepsPerRepPeriod))*load_mults[NewColNames[i]]*sum(ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i])
+                end
+            end
+        end
+        for loadcol in LoadCols
+            println(loadcol, ": ", new_zone_sums[loadcol], " =?= ", zone_sums[loadcol])
+        end
+    end
+
+    return load_mults
+end
+
+
+@doc raw"""
     cluster_inputs(inpath, settings_path, v=false, norm_plot=false, silh_plot=false, res_plots=false, indiv_plots=false, pair_plots=false)
 
 Use kmeans or kemoids to cluster raw load profiles and resource capacity factor profiles
@@ -572,7 +592,8 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             RESOURCE_ZONES = inputs_dict[1]["RESOURCE_ZONES"]
             RESOURCES = inputs_dict[1]["RESOURCES"]
             ZONES = inputs_dict[1]["R_ZONES"]
-            # PARSE
+            # Parse input data into useful structures divided by type (load, wind, solar, fuel, groupings thereof, etc.)
+            # TO DO LATER: Replace these with collections of col_names, profiles, zones
             load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
                  load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
                  col_to_zone_map, AllFuelsConst, period_lengths, total_length, relative_lengths = parse_multi_period_data(inputs_dict)
@@ -582,6 +603,8 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
             RESOURCES = myinputs["RESOURCES"]
             ZONES = myinputs["R_ZONES"]
+            # Parse input data into useful structures divided by type (load, wind, solar, fuel, groupings thereof, etc.)
+            # TO DO LATER: Replace these with collections of col_names, profiles, zones
             load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
                  load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
                  col_to_zone_map, AllFuelsConst = parse_data(myinputs)
@@ -593,7 +616,8 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
         RESOURCES = myinputs["RESOURCES"]
         ZONES = myinputs["R_ZONES"]
-        # LATER Replace these with collections of col_names, profiles, zones
+        # Parse input data into useful structures divided by type (load, wind, solar, fuel, groupings thereof, etc.)
+        # TO DO LATER: Replace these with collections of col_names, profiles, zones
         load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
              load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
              col_to_zone_map, AllFuelsConst = parse_data(myinputs)
@@ -601,19 +625,14 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     if v println() end
 
-    #return load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
-    #     load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-    #     col_to_zone_map, AllFuelsConst
-    #return load_profiles, load_col_names, load_zones, col_to_zone_map
-
-    # PREVIOUS COMMENT LINE BREAK
-
     # Remove Constant Columns - Add back later in final output
     all_profiles, all_col_names, ConstData, ConstCols, ConstIdx = RemoveConstCols(all_profiles, all_col_names, v)
 
+    # Determine whether or not to time domain reduce fuel profiles as well based on user choice and file structure (i.e., variable fuels in Fuels_data.csv)
     IncludeFuel = true
     if (ClusterFuelPrices != 1) || (AllFuelsConst) IncludeFuel = false end
 
+    # Put it together!
     InputData = DataFrame( Dict( all_col_names[c]=>all_profiles[c] for c in 1:length(all_col_names) ) )
     InputData = convert.(Float64, InputData)
     if v
@@ -623,13 +642,14 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     end
 
     OldColNames = names(InputData)
-    NewColNames = [OldColNames; :GrpWeight]
+    NewColNames = [Symbol.(OldColNames); :GrpWeight]
     Nhours = nrow(InputData) # Timesteps
+    Ncols = length(NewColNames) - 1
 
 
     ##### Step 1: Normalize or standardize all load, renewables, and fuel data / optionally scale with LoadWeight
-    #return InputData, OldColNames
 
+    # Normalize/standardize data based on user-provided method
     if ScalingMethod == "N"
         normProfiles = [ StatsBase.transform(fit(UnitRangeTransform, InputData[:,c]; dims=1, unit=true), InputData[:,c]) for c in 1:length(OldColNames)  ]
     elseif ScalingMethod == "S"
@@ -640,8 +660,10 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         normProfiles = [ StatsBase.transform(fit(UnitRangeTransform, InputData[:,c]; dims=1, unit=true), InputData[:,c]) for c in 1:length(OldColNames)  ]
     end
 
+    # Compile newly normalized/standardized profiles
     AnnualTSeriesNormalized = DataFrame(Dict(  OldColNames[c] => normProfiles[c] for c in 1:length(OldColNames) ))
 
+    # Optional pre-scaling of load in order to give it more preference in clutering algorithm
     if LoadWeight != 1   # If we want to value load more/less than capacity factors. Assume nonnegative.
         for c in load_col_names
             AnnualTSeriesNormalized[!, Symbol(c)] .= AnnualTSeriesNormalized[!, Symbol(c)] .* LoadWeight
@@ -657,16 +679,18 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### STEP 2: Identify extreme periods in the model, Reshape data for clustering
 
-    # Total number of subperiod available in the data set, where each subperiod length = NumGrpDays
+    # Total number of subperiods available in the dataset, where each subperiod length = TimestepsPerRepPeriod
     NumDataPoints = Nhours÷TimestepsPerRepPeriod # 364 weeks in 7 years
     if v println("Total Subperiods in the data set: ", NumDataPoints) end
     InputData[:, :Group] .= (1:Nhours) .÷ (TimestepsPerRepPeriod+0.0001) .+ 1
 
+    # Group by period (e.g., week)
     cgdf = combine(groupby(InputData, :Group), [c .=> sum for c in OldColNames])
     cgdf = cgdf[setdiff(1:end, NumDataPoints+1), :]
     rename!(cgdf, [:Group; Symbol.(OldColNames)])
 
-    # Extreme Period Identification
+    # Extreme period identification based on user selection in time_domain_reduction_settings.yml
+    LoadExtremePeriod = false        # Used when deciding whether or not to scale load curves to equal original total load
     ExtremeWksList = []
     if UseExtremePeriods == 1
       for profKey in keys(ExtPeriodSelections)
@@ -674,6 +698,9 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
               for typeKey in keys(ExtPeriodSelections[profKey][geoKey])
                   for statKey in keys(ExtPeriodSelections[profKey][geoKey][typeKey])
                       if ExtPeriodSelections[profKey][geoKey][typeKey][statKey] == 1
+                          if profKey == "Load"
+                              LoadExtremePeriod = true
+                          end
                           if geoKey == "System"
                               if v print(geoKey, " ") end
                               (stat, group_idx) = get_extreme_period(InputData, cgdf, profKey, typeKey, statKey, ConstCols, load_col_names, solar_col_names, wind_col_names, v)
@@ -713,15 +740,14 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     ### DATA MODIFICATION - Shifting InputData and Normalized InputData
     #    from 8760 (# hours) by n (# profiles) DF to
     #    168*n (n period-stacked profiles) by 52 (# periods) DF
-
     DFsToConcat = [stack(InputData[isequal.(InputData.Group,w),:], OldColNames)[!,:value] for w in 1:NumDataPoints if w <= NumDataPoints ]
     ModifiedData = DataFrame(Dict(Symbol(i) => DFsToConcat[i] for i in 1:NumDataPoints))
-
 
     AnnualTSeriesNormalized[:, :Group] .= (1:Nhours) .÷ (TimestepsPerRepPeriod+0.0001) .+ 1
     DFsToConcatNorm = [stack(AnnualTSeriesNormalized[isequal.(AnnualTSeriesNormalized.Group,w),:], OldColNames)[!,:value] for w in 1:NumDataPoints if w <= NumDataPoints ]
     ModifiedDataNormalized = DataFrame(Dict(Symbol(i) => DFsToConcatNorm[i] for i in 1:NumDataPoints))
 
+    # Remove extreme periods from normalized data before clustering
     NClusters = MinPeriods
     if UseExtremePeriods == 1
         if v println("Pre-removal: ", names(ModifiedDataNormalized)) end
@@ -735,7 +761,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
 
     ##### STEP 3: Clustering
-
     cluster_results = []
 
     # Cluster once regardless of iteration decisions
@@ -794,8 +819,10 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### Step 4: Aggregation
     # Add the subperiods corresponding to the extreme periods back into the data.
-    # Rescaling weights to account for partial period cut out.
-    # Rescaling load to ensure total demand is equal
+    # Rescale weights to total user-specified number of hours (e.g., 8760 for one year).
+    # If LoadExtremePeriod=false (because we don't want to change peak load day), rescale load to ensure total demand is equal
+
+    # Add extreme periods into the clustering result with # of occurences = 1 for each
     ExtremeWksList = sort(ExtremeWksList)
     if UseExtremePeriods == 1
         if v println("Extreme Periods: ", ExtremeWksList) end
@@ -808,10 +835,13 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     end
 
     N = W  # Keep cluster version of weights stored as N, number of periods represented by RP
+
+    # Rescale weights to total user-specified number of hours
     W = scale_weights(W, WeightTotal, v)
 
-    # SORT A W M in conjunction, chronologically by M, before handling them elsewhere to be consistent
-    # A points to an index of M. We need it to point to a new index of sorted M.
+    # Order representative periods chronologically
+    #   SORT A W M in conjunction, chronologically by M, before handling them elsewhere to be consistent
+    #   A points to an index of M. We need it to point to a new index of sorted M. Hence, AssignMap.
     old_M = M
     df_sort = DataFrame( Weights = W, NumPeriodsRepresented = N, Rep_Period = M)
     sort!(df_sort, [:Rep_Period])
@@ -821,48 +851,58 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     AssignMap = Dict( i => findall(x->x==old_M[i], M)[1] for i in 1:length(M))
     A = [AssignMap[a] for a in A]
 
-    # Make PeriodMap
+    # Make PeriodMap, maps each period to its representative period
     PeriodMap = DataFrame(Period_Index = 1:length(A),
                             Rep_Period = [M[a] for a in A],
                             Rep_Period_Index = [a for a in A])
 
-    # Get column names by type for later analysis
+    # Get Symbol-version of column names by type for later analysis
     LoadCols = [Symbol("Load_MW_z"*string(i)) for i in 1:length(load_col_names) ]
     VarCols = [Symbol(var_col_names[i]) for i in 1:length(var_col_names) ]
     FuelCols = [Symbol(fuel_col_names[i]) for i in 1:length(fuel_col_names) ]
     ConstCol_Syms = [Symbol(ConstCols[i]) for i in 1:length(ConstCols) ]
 
+    ### ### ###
+    # Cluster Ouput: The original data at the medoids/centers
+    ClusterOutputData = ModifiedData[:,Symbol.(M)]
+
+    # Get zone-wise load multipliers for later scaling in order for weighted-representative-total-zonal load to equal original total-zonal load
+    #  (Only if we don't have load-related extreme periods because we don't want to change peak load periods)
+    if !LoadExtremePeriod
+        load_mults = get_load_multipliers(ClusterOutputData, InputData, M, W, LoadCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols)
+    end
+    ### ### ###
+
     # SCALE LOAD - The representative period's load times the number of periods it represents
     #  should equal the total load of all the periods it represents (within each load zone)
-    MultMap = Dict()
-    for m in 1:NClusters
-        MultMap[M[m]] = Dict()
-        periods_represented = findall(x->x==m, A)
-        for loadcol in LoadCols
-            ### ADD HERE
-            if loadcol ∉ ConstCol_Syms
-                persums = [sum(InputData[(TimestepsPerRepPeriod*(i-1)+1):(TimestepsPerRepPeriod*i),loadcol]) for i in periods_represented]
-                if length(periods_represented) < 1
-                    multiplier = 0
-                else
-                    sum_persums = sum(persums)
-                    sum_load = sum(InputData[(TimestepsPerRepPeriod*(M[m]-1)+1):(TimestepsPerRepPeriod*M[m]),loadcol])
-                    multiplier = sum_persums / (length(periods_represented)*sum_load)
-                end
-                MultMap[M[m]][loadcol] = multiplier
-            end
-        end
-    end
+    #MultMap = Dict()
+    #for m in 1:NClusters
+    #    MultMap[M[m]] = Dict()
+    #    periods_represented = findall(x->x==m, A)
+    #    for loadcol in LoadCols
+    #        ### ADD HERE
+    #        if loadcol ∉ ConstCol_Syms
+    #            persums = [sum(InputData[(TimestepsPerRepPeriod*(i-1)+1):(TimestepsPerRepPeriod*i),loadcol]) for i in periods_represented]
+    #            if length(periods_represented) < 1
+    #                multiplier = 0
+    #            else
+    #                sum_persums = sum(persums)
+    #                sum_load = sum(InputData[(TimestepsPerRepPeriod*(M[m]-1)+1):(TimestepsPerRepPeriod*M[m]),loadcol])
+    #                multiplier = sum_persums / (length(periods_represented)*sum_load)
+    #            end
+    #            MultMap[M[m]][loadcol] = multiplier
+    #        end
+    #    end
+    #end
 
     # Cluster Ouput: The original data at the medoids/centers
-    ClusterOutputData = ModifiedData[:,M]
+    #ClusterOutputData = ModifiedData[:,M]
 
     # Reorganize Data by Load, Solar, Wind, Fuel, and GrpWeight by Hour, Add Constant Data Back In
     rpDFs = [] # Representative Period DataFrames - Load and Resource Profiles
     gvDFs = [] # Generators Variability DataFrames - Just Resource Profiles
     lpDFs = [] # Load Profile DataFrames - Just Load Profiles
     fpDFs = [] # Fuel Profile DataFrames - Just Fuel Profiles
-    Ncols = length(NewColNames) - 1
 
     for m in 1:NClusters
         rpDF = DataFrame( Dict( NewColNames[i] => ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] for i in 1:Ncols) )
@@ -888,7 +928,9 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         #   Scale lpDF but not rpDF which compares to input data but is not written to file.
         for loadcol in LoadCols
             if loadcol ∉ ConstCol_Syms
-                lpDF[!,loadcol] .*= MultMap[M[m]][loadcol]
+                if !LoadExtremePeriod
+                    lpDF[!,loadcol] .*= load_mults[loadcol]
+                end
             end
         end
 
