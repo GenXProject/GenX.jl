@@ -41,11 +41,11 @@ using Combinatorics
 using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 #using Gurobi
-#using CPLEX
+using CPLEX
 #using MOI
-using SCIP
-using Clp
-using Cbc
+#using SCIP
+#using Clp
+#using Cbc
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -98,6 +98,7 @@ include("model/resources/curtailable_variable_renewable/curtailable_variable_ren
 include("model/resources/flexible_demand/flexible_demand.jl")
 
 include("model/resources/hydro/hydro_res.jl")
+include("model/resources/hydro/hydro_inter_period_linkage.jl")
 
 include("model/resources/must_run/must_run.jl")
 

@@ -142,12 +142,17 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"])
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
 	if !isempty(inputs["HYDRO_RES"])
 		EP = hydro_res(EP, inputs, setup["Reserves"])
+	end
+
+	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
+	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+		EP = hydro_inter_period_linkage(EP, inputs)
 	end
 
 	# Model constraints, variables, expression related to demand flexibility resources

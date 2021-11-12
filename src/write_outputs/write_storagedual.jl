@@ -41,7 +41,7 @@ function write_storagedual(path::AbstractString, sep::AbstractString, inputs::Di
 	# Loop over W separately hours_per_subperiod
 	for y in 1:G
 		if y in inputs["STOR_ALL"]
-			if setup["OperationWrapping"]==1 && setup["LongDurationStorage"]==1
+			if setup["OperationWrapping"]==1 && !isempty(inputs["STOR_LONG_DURATION"])
 				for w in 1:REP_PERIOD
 					x1[y,hours_per_subperiod*(w-1)+1] = dual.(EP[:cSoCBalLongDurationStorageStart][w,y])
 				end

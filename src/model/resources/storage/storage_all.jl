@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
+	storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int)
 
 Sets up variables and constraints common to all storage resources. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
+function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int)
 	# Setup variables, constraints, and expressions common to all storage resources
 	println("Storage Core Resources Module")
 
@@ -73,7 +73,7 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 
 	# Links state of charge in first time step with decisions in last time step of each subperiod
 	# We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
-	if !(OperationWrapping == 1 && LongDurationStorage == 1)
+	if !(OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"]))
 		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_ALL], EP[:vS][y,t] ==
 			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t])
 			+(dfGen[!,:Eff_Up][y]*EP[:vCHARGE][y,t])-(dfGen[!,:Self_Disch][y]*EP[:vS][y,t+hours_per_subperiod-1]))
