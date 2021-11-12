@@ -86,7 +86,7 @@ ClusterFuelPrices: 1
   #   of all periods together. Else if 0, the model will time domain reduce only
   #   the first stage and will apply the periods of each other stage to this set
   #   of representative periods by closest Eucliden distance.
-MultiPeriodConcatenate: 0
+MultiPeriodConcatenate: 1
 
   #   - UseExtremePeriods
   #   Either 1 (yes) or 0 (no), this designates whether or not to include
@@ -126,7 +126,7 @@ ExtremePeriods:
             Min: 0
          Integral:
             Max: 0
-            Min: 1
+            Min: 0
       System:
          Absolute:
             Max: 0
@@ -141,7 +141,7 @@ ExtremePeriods:
             Min: 0
          Integral:
             Max: 0
-            Min: 1
+            Min: 0
       System:
          Absolute:
             Max: 0

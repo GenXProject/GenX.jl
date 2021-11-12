@@ -1,6 +1,6 @@
 NetworkExpansion: 1
 TimeDomainReductionFolder: "TDR_Results"
-ParameterScale: 1
+ParameterScale: 0
 EnergyShareRequirement: 0
 PrintModel: 0
 TimeDomainReduction: 1

@@ -1,5 +1,5 @@
 IterativelyAddPeriods: 1
-MultiPeriodConcatenate: 0
+MultiPeriodConcatenate: 1
 ExtremePeriods:
   Wind:
     System:
@@ -14,7 +14,7 @@ ExtremePeriods:
         Min: 0
         Max: 0
       Integral:
-        Min: 1
+        Min: 0
         Max: 0
   Load:
     System:
@@ -44,7 +44,7 @@ ExtremePeriods:
         Min: 0
         Max: 0
       Integral:
-        Min: 1
+        Min: 0
         Max: 0
 UseExtremePeriods: 1
 MinPeriods: 8
