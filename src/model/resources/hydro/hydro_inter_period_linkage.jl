@@ -69,7 +69,6 @@ function hydro_inter_period_linkage(EP::Model, inputs::Dict)
 	REP_PERIOD = inputs["REP_PERIOD"]     # Number of representative periods
 
 	STOR_HYDRO_LONG_DURATION = inputs["STOR_HYDRO_LONG_DURATION"]
-	print(STOR_HYDRO_LONG_DURATION)
 
 	START_SUBPERIODS = inputs["START_SUBPERIODS"]
 
