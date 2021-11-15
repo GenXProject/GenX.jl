@@ -44,16 +44,17 @@ This function defines the expressions and constraints keeping track of total ava
 
 Total Capacity Linking Variables and Constraints: 
 	
-  * The linking variable vEXISTINGCAP[y] for $y \in \mathcal{G}$ is introduced and replaces occurrences of the parameter Existing\_Cap\_MW ($\bar{\Delta}_{y,z}$) in all expressions and constraints in investmen\_discharge().
+  * The linking variable vEXISTINGCAP[y] for $y \in \mathcal{G}$ is introduced and replaces occurrences of the parameter Existing\_Cap\_MW ($\bar{\Delta}_{y,z}$) in all expressions and constraints in investment\_discharge().
   * The linking constraint cExistingCap[y] for $y \in \mathcal{G}$  is introduced, which is used to link end discharge capacity from period $p$ to start discharge capacity in period $p+1$. When $p=1$, the constraint sets vEXISTINGCAP[y] = $\bar{\Delta}_{y,z}$. 
 	
 Scaling Down the Objective Function Contribution:
 
-  * The contribution of eTotalCFix ($\sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \left((\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) + (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)$) is scaled down the factor $\sum_{p=1}^{\mathcal{P}} \frac{1}{(1+WACC)^{p-1}}$, where $\mathcal{P}$ is the length of each period and $WACC$ is the weighted average cost of capital, before it is added to the objective function (these costs will be scaled back to their correct value by the method initialize\_cost\_to\_go()).
+  * The contribution of eTotalCFix ($\sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \left((\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) + (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)$) is scaled down by the factor $\sum_{p=1}^{\mathcal{P}} \frac{1}{(1+WACC)^{p-1}}$, where $\mathcal{P}$ is the length of each period and $WACC$ is the weighted average cost of capital, before it is added to the objective function (these costs will be scaled back to their correct value by the method initialize\_cost\_to\_go()).
 	
 Endogenous Retirements Linking Variables and Constraints:
   * The linking variables vCAPTRACK[y,p] and vRETCAPTRACKE[y,p] for $y \in \mathcal{G}, p \in  \mathcal{P}$ are introduced, which represent the cumulative capacity additions and retirements from previous model periods, respectively. 
   * Linking constraints which enforce endogenous retirements using the vCAPTRACK and vRETCAPTRACK variables.
+  * The constraint enforces that total retirements by period p should atleast equal the sum of the user specified value + new capacity build in prior periods that reach their end of life before end of period p. See Equation 18-21 of  Lara et al, Deterministic electric power infrastructure planning: Mixed-integer programming model and nested decomposition algorithm, EJOR, 271(3), 1037-1054, 2018 for further discussion.
 
 inputs:
 
@@ -180,9 +181,9 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 		end
 	)
 
-	### Constratints ###
+	### Constraints ###
 
-    # DDP Constraint – Existing capacity variable is equal to existin capacity specified in the input file
+    # DDP Constraint – Existing capacity variable is equal to existing capacity specified in the input file
     @constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == dfGen[!,:Existing_Cap_MW][y])
 
 	## Constraints on retirements and capacity additions

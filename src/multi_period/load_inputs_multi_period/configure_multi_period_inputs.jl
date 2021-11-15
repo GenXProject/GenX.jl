@@ -22,10 +22,10 @@ This function computes overnight capital costs incured within the model horizon,
 For each resource $y \in \mathcal{G}$ with annualized investment cost $AIC_{y}$ and capital recovery period $CRP_{y}$, overnight capital costs $OCC_{y}$ are computed as follows:
 ```math
 \begin{aligned}
-    & OCC = \sum^{min(CRP_{y},H)}_{i=1}\frac{ACI_{y}}{(1+WACC)^{i}}
+    & OCC_{y} = \sum^{min(CRP_{y},H)}_{i=1}\frac{AIC_{y}}{(1+WACC_{y})^{i}}
 \end{aligned}
 ```
-where $WACC$ is the technology-specific weighted average cost of capital (set by the "WACC" field in the Generators_data.csv or Network.csv files) and $H$ is the number of years remaining between the start of the current model period and the model horizon (the end of the final model period).
+where $WACC_y$ is the technology-specific weighted average cost of capital (set by the "WACC" field in the Generators_data.csv or Network.csv files), $H$ is the number of years remaining between the start of the current model period and the model horizon (the end of the final model period) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Generators_data.csv)
 
 inputs:
 
@@ -33,7 +33,7 @@ inputs:
   * inv\_costs\_yr - array object containing annualized investment costs.
   * crp - array object of capital recovery period values.
   * tech_wacc - array object containing technology-specific weighted costs of capital.
-NOTE: The inv\_costs\_yr and crp arrays must be the same length; values with the same index in each array correspond to the same resource $y /in /mathcal{G}$.
+NOTE: The inv\_costs\_yr and crp arrays must be the same length; values with the same index in each array correspond to the same resource $y \in \mathcal{G}$.
 
 returns: array object containing overnight capital costs, the discounted sum of annual investment costs incured within the model horizon.
 """
@@ -94,7 +94,7 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 
 	# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
-	# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs
+	# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
 	inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 	inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 	inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
