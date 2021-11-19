@@ -41,11 +41,13 @@ function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp
 
 	cur_period = settings_d["CurPeriod"] # Current model
 	num_periods = settings_d["NumPeriods"] # Total number of model periods
-	period_len = settings_d["PeriodLength"] # Length (in years) of each model period
+	### period_len = settings_d["PeriodLength"] # Length (in years) of each model period # Pre-VSL
+	period_lens = settings_d["PeriodLengths"]
 
 	# 1) For each resource, find the minimum of the capital recovery period and the end of the model horizon
 	# Total time between the end of the final model period and the start of the current period
-	model_yrs_remaining = period_len * num_periods - period_len * (cur_period-1)
+	### model_yrs_remaining = period_len * num_periods - period_len * (cur_period-1) # Pre-VSL
+	model_yrs_remaining = sum(period_lens[cur_period:end])
 
 	# We will sum annualized costs through the full capital recovery period or the end of planning horizon, whichever comes first
 	payment_yrs_remaining = min.(crp, model_yrs_remaining)
@@ -89,8 +91,9 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 	dfGenMultiPeriod = inputs_d["dfGenMultiPeriod"]
 
 	# Parameter inputs when multi-year discounting is activated
-	period_len = settings_d["PeriodLength"] # Length (in years) of each period
+	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	cur_period = settings_d["CurPeriod"]
+	period_len = settings_d["PeriodLengths"][cur_period]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 
 	# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
@@ -100,13 +103,13 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 	inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 
 	# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model time periods
-	OPEXDF = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
+	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
 
 	# Update fixed O&M costs
 	# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each period, which may be multiple years
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXDF.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXDF.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXDF.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
+	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
+	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
+	inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
 
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID])

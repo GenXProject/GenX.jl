@@ -1,6 +1,6 @@
 NetworkExpansion: 1
 TimeDomainReductionFolder: "TDR_Results"
-ParameterScale: 0
+ParameterScale: 1
 EnergyShareRequirement: 0
 PrintModel: 0
 TimeDomainReduction: 1
@@ -9,9 +9,12 @@ CapacityReserveMargin: 0
 ModelingtoGenerateAlternativeSlack: 0.1
 Solver: "Gurobi"
 MultiPeriodSettingsDict:
+  PeriodLengths:
+    - 10
+    - 10
+    - 10
   ConvergenceTolerance: 0.01
   NumPeriods: 3
-  PeriodLength: 10
   WACC: 0.045
   CurPeriod: 3
 LongDurationStorage: 0

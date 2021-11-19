@@ -318,8 +318,9 @@ inputs:
 function write_costs(outpath::String, sep::String, settings_d::Dict)
 
 	num_periods = settings_d["NumPeriods"] # Total number of DDP time periods
-	period_len = settings_d["PeriodLength"] # Length (in years) of each period
+	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
+	period_lens = settings_d["PeriodLengths"]
 
     costs_d = Dict()
     for p in 1:num_periods
@@ -327,13 +328,15 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
         costs_d[p] = DataFrame(CSV.File(string(cur_path,sep,"costs.csv"), header=true), copycols=true)
     end
 
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
+	### OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods # Pre-VSL
+	OPEXMULTS = [ sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_lens[j])]) for j in 1:num_periods] # Stage-wise OPEX multipliers to count multiple years between two model time periods
     # Set first column of DataFrame as resource names from the first time period
     df_costs = DataFrame(Costs = costs_d[1][!,:Costs])
 
     # Store discounted total costs for each time period in a data frame
     for p in 1:num_periods
-        DF = 1/(1+wacc)^(period_len*(p-1))  # Discount factor applied to ALL costs in each period
+        ### DF = 1/(1+wacc)^(period_len*(p-1))  # Discount factor applied to ALL costs in each period # Pre-VSL
+		DF = 1/(1+wacc)^(period_lens[p]*(p-1))  # Discount factor applied to ALL costs in each period
 
         df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!,Symbol("Total")]
     end
@@ -341,7 +344,8 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
     # For OPEX costs, apply additional discounting
     for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
         if cost in df_costs[!,:Costs]
-            df_costs[df_costs[!,:Costs] .== cost, 2:end] = OPEXMULT .* df_costs[df_costs[!,:Costs] .== cost, 2:end]
+            ### df_costs[df_costs[!,:Costs] .== cost, 2:end] = OPEXMULT .* df_costs[df_costs[!,:Costs] .== cost, 2:end] # Pre-VSL
+			df_costs[df_costs[!,:Costs] .== cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!,:Costs] .== cost, 2:end]   # CONFIRM THIS
         end
     end
 
@@ -638,7 +642,8 @@ returns: JuMP model with updated objective function.
 function initialize_cost_to_go(settings_d::Dict, EP::Model)
 
 	cur_period = settings_d["CurPeriod"] # Current DDP Time Period
-	period_len = settings_d["PeriodLength"] # Length (in years) of each period
+	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
+	period_len = settings_d["PeriodLengths"][cur_period]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 
     DF = 1/(1+wacc)^(period_len*(cur_period-1))  # Discount factor applied all to costs in each period

@@ -53,24 +53,11 @@ if mysetup["TimeDomainReduction"] == 1
     end
 end
 
-""" # Pre Jack Edits - 9/10/2021
-### Cluster time series inputs if necessary and if specified by the user
-TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
-if mysetup["TimeDomainReduction"] == 1
-    if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
-        println("Clustering Time Series Data...")
-        cluster_inputs(inpath, settings_path, mysetup)
-    else
-        println("Time Series Data Already Clustered.")
-    end
-end
-"""
-
-
 ### Configure solver
 println("Configuring Solver")
 OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 
+### Load Inputs
 model_dict=Dict()
 inputs_dict=Dict()
 
@@ -92,7 +79,6 @@ for t in 1:mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
 	# Step 2) Generate model
 	model_dict[t] = generate_model(mysetup, inputs_dict[t], OPTIMIZER)
 end
-
 
 ### Solve model
 println("Solving Model")

@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	function get_retirement_period(cur_period::Int, period_len::Int, lifetime::Int)
+	function get_retirement_period(cur_period::Int, period_len::Int, lifetime::Int, multi_period_settings::Dict)
 
 This function determines the model period before which all newly built capacity must be retired. Used to enforce endogenous lifetime retirements in multi-period modeling.
 
@@ -24,15 +24,20 @@ inputs:
   * cur\_period – An Int representing the current model period $p$.
   * period\_len – An Int representing the length $L$ of each model period.
   * lifetime – An Int representing the lifetime of a particular resource.
+  * multi\_stage\_settings - Dictionary containing settings dictionary configured in the multi-period settings file multi\_period\_settings.yml.
 
 returns: An Int representing the model period in before which the resource must retire due to endogenous lifetime retirements.
 """
-function get_retirement_period(cur_period::Int, period_len::Int, lifetime::Int)
-	years_from_start = cur_period * period_len # Years from start from the END of the current period
+function get_retirement_period(cur_period::Int, lifetime::Int, multi_period_settings::Dict)
+	period_lens = multi_period_settings["PeriodLengths"]
+	### years_from_start = cur_period * period_len # Years from start from the END of the current period # Pre-VSL
+	years_from_start = sum(period_lens[1:cur_period])
 	ret_years = years_from_start - lifetime # Difference between end of current period and technology lifetime
-	ret_period = floor(ret_years / period_len) # Compute the period before which all newly built capacity must be retired by the end of the current period
-    if ret_period < 0
-        return 0
+	### ret_period = floor(ret_years / period_len) # Compute the period before which all newly built capacity must be retired by the end of the current period # Pre-VSL
+	ret_period = 0
+	while (ret_years - period_lens[ret_period+1] >= 0) & (ret_period < cur_period)
+		ret_period += 1
+		ret_years -= period_lens[ret_period]
 	end
     return Int(ret_period)
 end
@@ -42,17 +47,17 @@ end
 
 This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements, compatible with multi-period modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-period modeling, which are described below.
 
-Total Capacity Linking Variables and Constraints: 
-	
+Total Capacity Linking Variables and Constraints:
+
   * The linking variable vEXISTINGCAP[y] for $y \in \mathcal{G}$ is introduced and replaces occurrences of the parameter Existing\_Cap\_MW ($\bar{\Delta}_{y,z}$) in all expressions and constraints in investment\_discharge().
-  * The linking constraint cExistingCap[y] for $y \in \mathcal{G}$  is introduced, which is used to link end discharge capacity from period $p$ to start discharge capacity in period $p+1$. When $p=1$, the constraint sets vEXISTINGCAP[y] = $\bar{\Delta}_{y,z}$. 
-	
+  * The linking constraint cExistingCap[y] for $y \in \mathcal{G}$  is introduced, which is used to link end discharge capacity from period $p$ to start discharge capacity in period $p+1$. When $p=1$, the constraint sets vEXISTINGCAP[y] = $\bar{\Delta}_{y,z}$.
+
 Scaling Down the Objective Function Contribution:
 
   * The contribution of eTotalCFix ($\sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \left((\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) + (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)$) is scaled down by the factor $\sum_{p=1}^{\mathcal{P}} \frac{1}{(1+WACC)^{p-1}}$, where $\mathcal{P}$ is the length of each period and $WACC$ is the weighted average cost of capital, before it is added to the objective function (these costs will be scaled back to their correct value by the method initialize\_cost\_to\_go()).
-	
+
 Endogenous Retirements Linking Variables and Constraints:
-  * The linking variables vCAPTRACK[y,p] and vRETCAPTRACKE[y,p] for $y \in \mathcal{G}, p \in  \mathcal{P}$ are introduced, which represent the cumulative capacity additions and retirements from previous model periods, respectively. 
+  * The linking variables vCAPTRACK[y,p] and vRETCAPTRACKE[y,p] for $y \in \mathcal{G}, p \in  \mathcal{P}$ are introduced, which represent the cumulative capacity additions and retirements from previous model periods, respectively.
   * Linking constraints which enforce endogenous retirements using the vCAPTRACK and vRETCAPTRACK variables.
   * The constraint enforces that total retirements by period p should atleast equal the sum of the user specified value + new capacity build in prior periods that reach their end of life before end of period p. See Equation 18-21 of  Lara et al, Deterministic electric power infrastructure planning: Mixed-integer programming model and nested decomposition algorithm, EJOR, 271(3), 1037-1054, 2018 for further discussion.
 
@@ -79,8 +84,9 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 
 	# Multi-period parameters
 	num_periods = multi_period_settings["NumPeriods"]
-	period_len = multi_period_settings["PeriodLength"]
+	###period_len = multi_period_settings["PeriodLength"] #Pre-VSL
 	cur_period = multi_period_settings["CurPeriod"]
+	period_len = multi_period_settings["PeriodLengths"][cur_period]
 	wacc = multi_period_settings["WACC"]
 
 	### Variables ###
@@ -148,7 +154,8 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model time periods
 	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)])
-	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later, 
+
+	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between time periods for fixed costs.
 	EP[:eObj] += (1/OPEXMULT)*eTotalCFix
 
@@ -172,8 +179,8 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrack[y=1:G], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_period))
-	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_period(cur_period, period_len, dfGenMultiPeriod[!,:Lifetime][y])))
-	@expression(EP, eMinRetCapTrack[y=1:G], 
+	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_period(cur_period, dfGenMultiPeriod[!,:Lifetime][y], multi_period_settings)))
+	@expression(EP, eMinRetCapTrack[y=1:G],
 		if y in COMMIT
 			sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Cap_MW_p$p")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_period)
 		else
@@ -244,8 +251,9 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	# Multi-period parameters
 	num_periods = multi_period_settings["NumPeriods"]
-	period_len = multi_period_settings["PeriodLength"]
+	### period_len = multi_period_settings["PeriodLength"] # Pre-VSL
 	cur_period = multi_period_settings["CurPeriod"]
+	period_len = multi_period_settings["PeriodLengths"][cur_period]
 	wacc = multi_period_settings["WACC"]
 
 	### Variables ###
@@ -298,7 +306,7 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model time periods
 	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)])
-	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later, 
+	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between time periods for fixed costs.
 	EP[:eObj] += (1/OPEXMULT)*eTotalCFixCharge
 
@@ -322,7 +330,7 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_period))
-	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_period(cur_period, period_len, dfGenMultiPeriod[!,:Lifetime][y])))
+	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_period(cur_period, dfGenMultiPeriod[!,:Lifetime][y], multi_period_settings)))
 	@expression(EP, eMinRetCapTrackCharge[y in STOR_ASYMMETRIC], sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Charge_Cap_MW_p$p")][y]) for p=1:cur_period))
 
 	### Constratints ###
@@ -387,8 +395,9 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	# Multi-period parameters
 	num_periods = multi_period_settings["NumPeriods"]
-	period_len = multi_period_settings["PeriodLength"]
+	### period_len = multi_period_settings["PeriodLength"] # Pre-VSL
 	cur_period = multi_period_settings["CurPeriod"]
+	period_len = multi_period_settings["PeriodLengths"][cur_period]
 	wacc = multi_period_settings["WACC"]
 
 	### Variables ###
@@ -441,7 +450,7 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model time periods
 	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)])
-	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later, 
+	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between time periods for fixed costs.
 	EP[:eObj] += (1/OPEXMULT)*eTotalCFixEnergy
 
@@ -465,7 +474,7 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackEnergy[y in STOR_ALL], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_period))
-	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_period(cur_period, period_len, dfGenMultiPeriod[!,:Lifetime][y])))
+	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_period(cur_period, dfGenMultiPeriod[!,:Lifetime][y], multi_period_settings)))
 	@expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Energy_Cap_MW_p$p")][y]) for p=1:cur_period))
 
 	### Constratints ###
