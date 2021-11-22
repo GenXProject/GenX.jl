@@ -95,21 +95,24 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 	cur_period = settings_d["CurPeriod"]
 	period_len = settings_d["PeriodLengths"][cur_period]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
-	# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
-	# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
-	inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-	inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-	inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+	if !myopic   # Don't overwrite annualized costs in myopic case
+		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
+		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiPeriod[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 
-	# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model time periods
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
+		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model time periods
+		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
 
-	# Update fixed O&M costs
-	# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each period, which may be multiple years
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
+		# Update fixed O&M costs
+		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each period, which may be multiple years
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
+	end
 
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID])
@@ -123,8 +126,10 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 
 		dfNetworkMultiPeriod = inputs_d["dfNetworkMultiPeriod"]
 
-		# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
-		inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiPeriod[!,:Capital_Recovery_Period], inputs_d["transmission_WACC"])
+		if !myopic # Don't overwrite annualized costs in myopic case
+			# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
+			inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiPeriod[!,:Capital_Recovery_Period], inputs_d["transmission_WACC"])
+		end
 
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment period
 		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_period"]

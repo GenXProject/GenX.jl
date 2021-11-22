@@ -84,6 +84,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     settings_d = setup["MultiPeriodSettingsDict"]
     num_periods = settings_d["NumPeriods"]  # Total number of time periods
     EPSILON = settings_d["ConvergenceTolerance"] # Tolerance
+	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     start_cap_d, cap_track_d = configure_ddp_dicts(setup, inputs_d[1])
 
@@ -172,6 +173,18 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
         ## DEV NOTE: Jack, for the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
         # Please implement the appropriate If condition statements here.
+		if myopic
+			println("***********")
+            println("Exiting After First Forward Pass! (Myopic)")
+            println(string("Upper Bound = ", z_upper))
+            println(string("Lower Bound = ", z_lower))
+            println("***********")
+
+			stats_d["TIMES"] = times_a
+		    stats_d["UPPER_BOUNDS"] = upper_bounds_a
+		    stats_d["LOWER_BOUNDS"] = lower_bounds_a
+			return models_d, stats_d, inputs_d
+		end
 
         # Step e) Calculate the new upper bound
         z_upper_temp = 0
@@ -321,6 +334,7 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
 	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
 	period_lens = settings_d["PeriodLengths"]
+	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     costs_d = Dict()
     for p in 1:num_periods
@@ -336,8 +350,11 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
     # Store discounted total costs for each time period in a data frame
     for p in 1:num_periods
         ### DF = 1/(1+wacc)^(period_len*(p-1))  # Discount factor applied to ALL costs in each period # Pre-VSL
-		DF = 1/(1+wacc)^(period_lens[p]*(p-1))  # Discount factor applied to ALL costs in each period
-
+		if myopic
+			DF = 1 # DF=1 because we do not apply discount factor in myopic case
+		else
+			DF = 1/(1+wacc)^(period_lens[p]*(p-1))  # Discount factor applied to ALL costs in each period
+		end
         df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!,Symbol("Total")]
     end
 
@@ -614,7 +631,7 @@ The updated objective function $OBJ^{*}$ returned by this method takes the form:
     OBJ^{*} = DF * OPEXMULT * OBJ + \alpha
 \end{aligned}
 ```
-where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor, which discounts costs associated with the  model period $p$ to year-0 dollars:
+where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor (applied only in the non-myopic case), which discounts costs associated with the  model period $p$ to year-0 dollars:
 ```math
 \begin{aligned}
     DF = \frac{1}{(1+WACC)^{L*(p-1)}}
@@ -645,17 +662,27 @@ function initialize_cost_to_go(settings_d::Dict, EP::Model)
 	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	period_len = settings_d["PeriodLengths"][cur_period]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
-    DF = 1/(1+wacc)^(period_len*(cur_period-1))  # Discount factor applied all to costs in each period
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
+	if myopic
+		# We do not apply the discount factor DF in the myopic case
+		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
 
-	# Initialize the cost-to-go variable
-    @variable(EP, vALPHA >= 0);
+		# Overwrite the objective function to include the cost-to-go variable vAlpha (not in myopic case)
+		# All OPEX terms get an additional adjustment factor OPEXMULT
+		@objective(EP, Min, OPEXMULT*EP[:eObj])
+	else
+    	DF = 1/(1+wacc)^(period_len*(cur_period-1))  # Discount factor applied all to costs in each period
+		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)]) # OPEX multiplier to count multiple years between two model time periods
 
-	# Overwrite the objective function to include the cost-to-go variable
-	# Multiply discount factor to all terms except the alpha term or the cost-to-go function
-	# All OPEX terms get an additional adjustment factor
-	@objective(EP, Min, DF*OPEXMULT*EP[:eObj] + vALPHA)
+		# Initialize the cost-to-go variable
+	    @variable(EP, vALPHA >= 0);
+
+		# Overwrite the objective function to include the cost-to-go variable
+		# Multiply discount factor to all terms except the alpha term or the cost-to-go function
+		# All OPEX terms get an additional adjustment factor
+		@objective(EP, Min, DF*OPEXMULT*EP[:eObj] + vALPHA)
+	end
 
 	return EP
 
