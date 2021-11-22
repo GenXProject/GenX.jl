@@ -98,6 +98,7 @@ include("model/resources/curtailable_variable_renewable/curtailable_variable_ren
 include("model/resources/flexible_demand/flexible_demand.jl")
 
 include("model/resources/hydro/hydro_res.jl")
+include("model/resources/hydro/hydro_inter_period_linkage.jl")
 
 include("model/resources/must_run/must_run.jl")
 

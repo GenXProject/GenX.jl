@@ -24,7 +24,7 @@ function write_opwrap_lds_dstor(path::AbstractString, sep::AbstractString, input
 	dfdStorage = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])
 	dsoc = zeros(G,W)
 	for i in 1:G
-		if i in inputs["STOR_ALL"]
+		if i in inputs["STOR_LONG_DURATION"]
 			dsoc[i,:] = value.(EP[:vdSOC])[i,:]
 		end
 	end
