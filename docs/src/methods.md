@@ -18,7 +18,7 @@ The time-domain reduction method provided allows the user to automate these feat
 
 ```@autodocs
 Modules = [GenX]
-Pages = ["dual_dynamic_programing.jl"]
+Pages = ["dual_dynamic_programming.jl"]
 Order = [:type, :function]
 ```
 

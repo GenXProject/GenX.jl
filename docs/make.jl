@@ -57,7 +57,7 @@ pages = OrderedDict(
             ]
         ],
         "Multi_period" => [
-            "Load inputs for multi-period modeling" => [ 
+            "Load inputs for multi-period modeling" => [
                 "Configure multi-period inputs" => "configure_multi_period_inputs.md",
                 #"Load inputs" => "load_inputs_multi_period.md",
                 "Load generators data" => "load_generators_data_multi_period.md",
@@ -65,7 +65,7 @@ pages = OrderedDict(
             ],
             "Model multi period" => [
                 "Investment multi period" => "investment_multi_period.md",
-                "Dual Dynamic Programing Algorithm" => "dual_dynamic_programing.md"
+                "Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
                 ],
         ],
         "Policies" => "policies.md"
