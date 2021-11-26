@@ -80,15 +80,15 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
         inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"]
     end
 
-    # Multi-Period
-    if setup["MultiPeriod"] == 1
-        num_periods = setup["MultiPeriodSettingsDict"]["NumPeriods"]
+    # Multi-Stage
+    if setup["MultiStage"] == 1
+        num_stages = setup["MultiStageSettingsDict"]["NumStages"]
         if setup["ParameterScale"] == 1
-            for p in 1:num_periods
+            for p in 1:num_stages
                 inputs_nw["pLine_Max_Flow_Possible_MW_p$p"] = convert(Array{Float64}, collect(skipmissing(network_var[!,:Line_Max_Flow_Possible_MW])))/ModelScalingFactor # Convert to GW
             end
         else
-            for p in 1:num_periods
+            for p in 1:num_stages
                 inputs_nw["pLine_Max_Flow_Possible_MW_p$p"] = convert(Array{Float64}, collect(skipmissing(network_var[!,:Line_Max_Flow_Possible_MW])))
             end
         end

@@ -15,9 +15,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    load_network_data_multi_period(setup::Dict, path::AbstractString, sep::AbstractString, inputs::Dict)
+    load_network_data_multi_stage(setup::Dict, path::AbstractString, sep::AbstractString, inputs::Dict)
 
-Loads multi-period network data inputs from Network_multi_period.csv in path directory and stores variables in a Dictionary object for use in generate_model() function
+Loads multi-stage network data inputs from Network_multi_stage.csv in path directory and stores variables in a Dictionary object for use in generate_model() function
 
 inputs:
   * setup - Dictonary object containing setup parameters
@@ -25,9 +25,9 @@ inputs:
   * sep – String which represents the file directory separator character.
   * inputs – Dictionary object which is the output of the load_input() method.
 
-returns: Dictionary object containing multi-period network data inputs.
+returns: Dictionary object containing multi-stage network data inputs.
 """
-function load_network_data_multi_period(setup::Dict, path::AbstractString, sep::AbstractString, inputs::Dict)
+function load_network_data_multi_stage(setup::Dict, path::AbstractString, sep::AbstractString, inputs::Dict)
 
     # Network zones inputs and Network topology inputs
     network_mp = DataFrame(CSV.File(string(path,sep,"Inputs_p1",sep,"Network.csv"), header=true), copycols=true)
@@ -36,20 +36,20 @@ function load_network_data_multi_period(setup::Dict, path::AbstractString, sep::
     network_mp = network_mp[!, Not(Symbol("Network_zones"))]
     network_mp = network_mp[completecases(network_mp), :]
 
-    num_periods = setup["MultiPeriodSettingsDict"]["NumPeriods"]
-    inputs["dfNetworkMultiPeriod"] = network_mp[!, [Symbol("Network_Lines"), Symbol("Capital_Recovery_Period")]]
-    inputs["dfNetworkMultiPeriod"][!,Symbol("pLine_Max_Flow_Possible_MW_p1")] = network_mp[!, Symbol("Line_Max_Flow_Possible_MW")]
+    num_stages = setup["MultiStageSettingsDict"]["NumStages"]
+    inputs["dfNetworkMultiStage"] = network_mp[!, [Symbol("Network_Lines"), Symbol("Capital_Recovery_Period")]]
+    inputs["dfNetworkMultiStage"][!,Symbol("pLine_Max_Flow_Possible_MW_p1")] = network_mp[!, Symbol("Line_Max_Flow_Possible_MW")]
     inputs["pLine_Max_Flow_Possible_MW_p1"] = network_mp[!,Symbol("Line_Max_Flow_Possible_MW")]
     if setup["ParameterScale"] == 1
         inputs["pLine_Max_Flow_Possible_MW_p1"] = inputs["pLine_Max_Flow_Possible_MW_p1"]/ModelScalingFactor # Convert to GW
     end
 
 
-    for p in 2:num_periods
+    for p in 2:num_stages
         network_mp = DataFrame(CSV.File(string(path,sep,"Inputs_p$p",sep,"Network.csv"), header=true), copycols=true)
         network_mp = network_mp[!, Not(Symbol("Network_zones"))]
         network_mp = network_mp[completecases(network_mp), :]
-        inputs["dfNetworkMultiPeriod"][!,Symbol("pLine_Max_Flow_Possible_MW_p$p")] = network_mp[!, Symbol("Line_Max_Flow_Possible_MW")]
+        inputs["dfNetworkMultiStage"][!,Symbol("pLine_Max_Flow_Possible_MW_p$p")] = network_mp[!, Symbol("Line_Max_Flow_Possible_MW")]
         inputs["pLine_Max_Flow_Possible_MW_p$p"] = network_mp[!,Symbol("Line_Max_Flow_Possible_MW")]
         if setup["ParameterScale"] == 1
             inputs["pLine_Max_Flow_Possible_MW_p$p"] = inputs["pLine_Max_Flow_Possible_MW_p$p"]/ModelScalingFactor # Convert to GW
@@ -59,7 +59,7 @@ function load_network_data_multi_period(setup::Dict, path::AbstractString, sep::
     # To-Do: Error handling
     # 1.) pLine_Max_Flow_Possible_MW must be monotonically increasing (greater than or equal to)
 
-    println("Network_multi_period.csv Successfully Read!")
+    println("Multi-Stage Network.csv Files Successfully Read!")
 
     return inputs
 end

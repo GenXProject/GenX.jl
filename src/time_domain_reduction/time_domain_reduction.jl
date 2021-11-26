@@ -111,12 +111,12 @@ end
 @doc raw"""
     parse_mutli_period_data(inputs_dict)
 
-Get load, solar, wind, and other curves from multi-period input data.
+Get load, solar, wind, and other curves from multi-stage input data.
 
 """
-function parse_multi_period_data(inputs_dict)
+function parse_multi_stage_data(inputs_dict)
     # Assumes no missing data
-    # Assumes zones and resources remain the same across periods.
+    # Assumes zones and resources remain the same across planning stages.
     RESOURCE_ZONES = inputs_dict[1]["RESOURCE_ZONES"]
     ZONES = inputs_dict[1]["R_ZONES"]
     solar_col_names = []
@@ -126,16 +126,15 @@ function parse_multi_period_data(inputs_dict)
     wind_profiles = []
     var_profiles = []
 
-    # In case not all periods have the same length, check relative lengths
-    #println("Getting period lengths...")
-    period_lengths = [ size(inputs_dict[t]["pD"][:,1],1) for t in 1:length(keys(inputs_dict)) ]
-    #println(period_lengths)
-    total_length = sum(period_lengths)
-    relative_lengths = period_lengths/total_length
+    # [ REPLACE THIS with multi_stage_settings.yml StageLengths ]
+    # In case not all stages have the same length, check relative lengths
+    stage_lengths = [ size(inputs_dict[t]["pD"][:,1],1) for t in 1:length(keys(inputs_dict)) ]
+    total_length = sum(stage_lengths)
+    relative_lengths = stage_lengths/total_length
 
     # LOAD - Load_data.csv
-    period_load_profiles = [ inputs_dict[t]["pD"][:,l] for t in 1:length(keys(inputs_dict)), l in 1:size(inputs_dict[1]["pD"],2) ]
-    vector_lps = [period_load_profiles[:,t] for t in 1:length(keys(inputs_dict))]
+    stage_load_profiles = [ inputs_dict[t]["pD"][:,l] for t in 1:length(keys(inputs_dict)), l in 1:size(inputs_dict[1]["pD"],2) ]
+    vector_lps = [stage_load_profiles[:,t] for t in 1:length(keys(inputs_dict))]
     load_profiles = [reduce(vcat,vector_lps[l]) for l in 1:size(inputs_dict[1]["pD"],2)]
     load_col_names = ["Load_MW_z"*string(l) for l in 1:size(load_profiles)[1]]
     load_zones = [l for l in 1:size(load_profiles)[1]]
@@ -145,25 +144,25 @@ function parse_multi_period_data(inputs_dict)
     for r in 1:length(RESOURCE_ZONES)
         if occursin("PV", RESOURCE_ZONES[r]) || occursin("pv", RESOURCE_ZONES[r]) || occursin("Pv", RESOURCE_ZONES[r]) || occursin("Solar", RESOURCE_ZONES[r]) || occursin("SOLAR", RESOURCE_ZONES[r]) || occursin("solar", RESOURCE_ZONES[r])
             push!(solar_col_names, RESOURCE_ZONES[r])
-            pv_all_periods = []
+            pv_all_stages = []
             for t in 1:length(keys(inputs_dict))
-                pv_all_periods = vcat(pv_all_periods, inputs_dict[t]["pP_Max"][r,:])
+                pv_all_periods = vcat(pv_all_stages, inputs_dict[t]["pP_Max"][r,:])
             end
-            push!(solar_profiles, pv_all_periods)
+            push!(solar_profiles, pv_all_stages)
         elseif occursin("Wind", RESOURCE_ZONES[r]) || occursin("WIND", RESOURCE_ZONES[r]) || occursin("wind", RESOURCE_ZONES[r])
             push!(wind_col_names, RESOURCE_ZONES[r])
-            wind_all_periods = []
+            wind_all_stages = []
             for t in 1:length(keys(inputs_dict))
-                wind_all_periods = vcat(wind_all_periods, inputs_dict[t]["pP_Max"][r,:])
+                wind_all_stages = vcat(wind_all_stages, inputs_dict[t]["pP_Max"][r,:])
             end
-            push!(wind_profiles, wind_all_periods)
+            push!(wind_profiles, wind_all_stages)
         end
         push!(var_col_names, RESOURCE_ZONES[r])
-        var_all_periods = []
+        var_all_stages = []
         for t in 1:length(keys(inputs_dict))
-            var_all_periods = vcat(var_all_periods, inputs_dict[t]["pP_Max"][r,:])
+            var_all_stages = vcat(var_all_stages, inputs_dict[t]["pP_Max"][r,:])
         end
-        push!(var_profiles, var_all_periods)
+        push!(var_profiles, var_all_stages)
         col_to_zone_map[RESOURCE_ZONES[r]] = ZONES[r]
     end
 
@@ -174,19 +173,19 @@ function parse_multi_period_data(inputs_dict)
     for f in 1:length(fuel_col_names)
         fuel_all_periods = []
         for t in 1:length(keys(inputs_dict))
-            fuel_all_periods = vcat(fuel_all_periods, inputs_dict[t]["fuel_costs"][fuel_col_names[f]])
+            fuel_all_stages = vcat(fuel_all_periods, inputs_dict[t]["fuel_costs"][fuel_col_names[f]])
             if AllFuelsConst && (minimum(inputs_dict[t]["fuel_costs"][fuel_col_names[f]]) != maximum(inputs_dict[t]["fuel_costs"][fuel_col_names[f]]))
                 AllFuelsConst = false
             end
         end
-        push!(fuel_profiles, fuel_all_periods)
+        push!(fuel_profiles, fuel_all_stages)
     end
 
     all_col_names = [load_col_names; var_col_names; fuel_col_names]
     all_profiles = [load_profiles..., var_profiles..., fuel_profiles...]
     return load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
          load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-         col_to_zone_map, AllFuelsConst, period_lengths, total_length, relative_lengths
+         col_to_zone_map, AllFuelsConst, stage_lengths, total_length, relative_lengths
 end
 
 @doc raw"""
@@ -527,6 +526,11 @@ In Load_data.csv, include the following:
     Fuels\_data\_clustered.csv with reshaped fuel prices based on the number and size of the
     representative weeks, assuming a constant time series of fuel prices with length equal to the
     number of timesteps in the raw input data.
+ -  MultiStageConcatenate - (Only considered if MultiStage = 1 in genx_settings.yml)
+    If 1, this designates that the model should time domain reduce the input data
+     of all model stages together. Else if 0, [still in development] the model will time domain reduce only
+     the first stage and will apply the periods of each other model stage to this set
+     of representative periods by closest Eucliden distance.
 """
 function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
@@ -553,9 +557,9 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     ClusterFuelPrices = myTDRsetup["ClusterFuelPrices"]
     TimeDomainReductionFolder = mysetup["TimeDomainReductionFolder"]
 
-    MultiPeriod = mysetup["MultiPeriod"]
-    MultiPeriodConcatenate = myTDRsetup["MultiPeriodConcatenate"]
-    NumPeriods = mysetup["MultiPeriodSettingsDict"]["NumPeriods"]
+    MultiStage = mysetup["MultiStage"]
+    MultiStageConcatenate = myTDRsetup["MultiStageConcatenate"]
+    NumStages = mysetup["MultiStageSettingsDict"]["NumStages"]
 
     Load_Outfile = joinpath(TimeDomainReductionFolder, "Load_data.csv")
     GVar_Outfile = joinpath(TimeDomainReductionFolder, "Generators_variability.csv")
@@ -570,25 +574,25 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
     mysetup_local["ParameterScale"]=0  # Performing cluster and report outputs in user-provided units
 
-    if MultiPeriod == 1
+    if MultiStage == 1
         model_dict=Dict()
         inputs_dict=Dict()
-        inputs_multi_period = load_inputs_multi_period(mysetup, string("$inpath/Inputs"))
-        for t in 1:NumPeriods
+        inputs_multi_stage = load_inputs_multi_stage(mysetup, string("$inpath/Inputs"))
+        for t in 1:NumStages
 
         	# Step 0) Set Model Year
-        	mysetup["MultiPeriodSettingsDict"]["CurPeriod"] = t
+        	mysetup["MultiStageSettingsDict"]["CurStage"] = t
 
         	# Step 1) Load Inputs
         	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
         	inputs_dict[t] = load_inputs(mysetup, inpath_sub)
 
-        	merge!(inputs_dict[t],inputs_multi_period)
-        	inputs_dict[t] = configure_multi_period_inputs(inputs_dict[t],mysetup["MultiPeriodSettingsDict"],mysetup["NetworkExpansion"])
+        	merge!(inputs_dict[t],inputs_multi_stage)
+        	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
         end
-        if MultiPeriodConcatenate == 1
-            println("MultiPeriod with Concatenation")
+        if MultiStageConcatenate == 1
+            println("MultiStage with Concatenation")
             RESOURCE_ZONES = inputs_dict[1]["RESOURCE_ZONES"]
             RESOURCES = inputs_dict[1]["RESOURCES"]
             ZONES = inputs_dict[1]["R_ZONES"]
@@ -596,9 +600,9 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             # TO DO LATER: Replace these with collections of col_names, profiles, zones
             load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
                  load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-                 col_to_zone_map, AllFuelsConst, period_lengths, total_length, relative_lengths = parse_multi_period_data(inputs_dict)
+                 col_to_zone_map, AllFuelsConst, stage_lengths, total_length, relative_lengths = parse_multi_stage_data(inputs_dict)
         else # TDR each period individually
-            println("MultiPeriod without Concatenation")
+            println("MultiStage without Concatenation")
             myinputs = inputs_dict[1]
             RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
             RESOURCES = myinputs["RESOURCES"]
@@ -608,10 +612,10 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
                  load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
                  col_to_zone_map, AllFuelsConst = parse_data(myinputs)
-            println("TDR for each individual period has not yet been FULLY implemented.")
+            println("TDR for each individual stage has not yet been FULLY implemented.")
         end
     else
-        println("Not MultiPeriod")
+        println("Not MultiStage")
         myinputs = load_inputs(mysetup_local,inpath)
         RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
         RESOURCES = myinputs["RESOURCES"]
@@ -843,10 +847,10 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     #   SORT A W M in conjunction, chronologically by M, before handling them elsewhere to be consistent
     #   A points to an index of M. We need it to point to a new index of sorted M. Hence, AssignMap.
     old_M = M
-    df_sort = DataFrame( Weights = W, NumPeriodsRepresented = N, Rep_Period = M)
+    df_sort = DataFrame( Weights = W, NumStagesRepresented = N, Rep_Period = M)
     sort!(df_sort, [:Rep_Period])
     W = df_sort[!, :Weights]
-    N = df_sort[!, :NumPeriodsRepresented]
+    N = df_sort[!, :NumStagesRepresented]
     M = df_sort[!, :Rep_Period]
     AssignMap = Dict( i => findall(x->x==old_M[i], M)[1] for i in 1:length(M))
     A = [AssignMap[a] for a in A]
@@ -862,7 +866,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     FuelCols = [Symbol(fuel_col_names[i]) for i in 1:length(fuel_col_names) ]
     ConstCol_Syms = [Symbol(ConstCols[i]) for i in 1:length(ConstCols) ]
 
-    ### ### ###
     # Cluster Ouput: The original data at the medoids/centers
     ClusterOutputData = ModifiedData[:,Symbol.(M)]
 
@@ -871,32 +874,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     if !LoadExtremePeriod
         load_mults = get_load_multipliers(ClusterOutputData, InputData, M, W, LoadCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols)
     end
-    ### ### ###
-
-    # SCALE LOAD - The representative period's load times the number of periods it represents
-    #  should equal the total load of all the periods it represents (within each load zone)
-    #MultMap = Dict()
-    #for m in 1:NClusters
-    #    MultMap[M[m]] = Dict()
-    #    periods_represented = findall(x->x==m, A)
-    #    for loadcol in LoadCols
-    #        ### ADD HERE
-    #        if loadcol ∉ ConstCol_Syms
-    #            persums = [sum(InputData[(TimestepsPerRepPeriod*(i-1)+1):(TimestepsPerRepPeriod*i),loadcol]) for i in periods_represented]
-    #            if length(periods_represented) < 1
-    #                multiplier = 0
-    #            else
-    #                sum_persums = sum(persums)
-    #                sum_load = sum(InputData[(TimestepsPerRepPeriod*(M[m]-1)+1):(TimestepsPerRepPeriod*M[m]),loadcol])
-    #                multiplier = sum_persums / (length(periods_represented)*sum_load)
-    #            end
-    #            MultMap[M[m]][loadcol] = multiplier
-    #        end
-    #    end
-    #end
-
-    # Cluster Ouput: The original data at the medoids/centers
-    #ClusterOutputData = ModifiedData[:,M]
 
     # Reorganize Data by Load, Solar, Wind, Fuel, and GrpWeight by Hour, Add Constant Data Back In
     rpDFs = [] # Representative Period DataFrames - Load and Resource Profiles
@@ -963,40 +940,40 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         sep = "/"
 	end
 
-    if MultiPeriod == 1
-        print("Outputs: MultiPeriod")
-        if MultiPeriodConcatenate == 1
+    if MultiStage == 1
+        print("Outputs: MultiStage")
+        if MultiStageConcatenate == 1
             println(" with Concatenation")
-            groups_per_period = round.(Int, size(A,1)*relative_lengths)
-            group_ranges = [if i == 1 1:groups_per_period[1] else sum(groups_per_period[1:i-1])+1:sum(groups_per_period[1:i]) end for i in 1:size(relative_lengths,1)]
+            groups_per_stage = round.(Int, size(A,1)*relative_lengths)
+            group_ranges = [if i == 1 1:groups_per_stage[1] else sum(groups_per_stage[1:i-1])+1:sum(groups_per_stage[1:i]) end for i in 1:size(relative_lengths,1)]
 
             ### IMPLEMENT
-            Period_Weights = Dict()
-            Period_PeriodMaps = Dict()
-            Period_Outfiles = Dict()
-            for per in 1:NumPeriods                      # Iterate over multi-periods
+            Stage_Weights = Dict()
+            Stage_PeriodMaps = Dict()
+            Stage_Outfiles = Dict()
+            for per in 1:NumStages                      # Iterate over multi-stages
                 mkpath(joinpath(inpath,"Inputs","Inputs_p$per", TimeDomainReductionFolder))
-                # Period-specific weights and mappings
-                cmap = countmap(A[group_ranges[per]])    # Count number of each rep. period in the (multi-)period
-                weight_props = [ if i in keys(cmap) cmap[i]/N[i] else 0 end for i in 1:size(M,1) ]  # Proportions of each rep. period associated with each (multi-)period
-                Period_Weights[per] = weight_props.*W    # Total hours that each rep. period represents within the (multi-)period
-                Period_PeriodMaps[per] = PeriodMap[group_ranges[per],:]
-                Period_PeriodMaps[per][!,:Period_Index] = 1:(group_ranges[per][end]-group_ranges[per][1]+1)
+                # Stage-specific weights and mappings
+                cmap = countmap(A[group_ranges[per]])    # Count number of each rep. period in the planning stage
+                weight_props = [ if i in keys(cmap) cmap[i]/N[i] else 0 end for i in 1:size(M,1) ]  # Proportions of each rep. period associated with each planning stage
+                Stage_Weights[per] = weight_props.*W    # Total hours that each rep. period represents within the planning stage
+                Stage_PeriodMaps[per] = PeriodMap[group_ranges[per],:]
+                Stage_PeriodMaps[per][!,:Period_Index] = 1:(group_ranges[per][end]-group_ranges[per][1]+1)
                 # Outfiles
-                Period_Outfiles[per] = Dict()
-                Period_Outfiles[per]["Load"] = joinpath("Inputs_p$per", Load_Outfile)
-                Period_Outfiles[per]["GVar"] = joinpath("Inputs_p$per", GVar_Outfile)
-                Period_Outfiles[per]["Fuel"] = joinpath("Inputs_p$per", Fuel_Outfile)
-                Period_Outfiles[per]["PMap"] = joinpath("Inputs_p$per", PMap_Outfile)
-                Period_Outfiles[per]["YAML"] = joinpath("Inputs_p$per", YAML_Outfile)
+                Stage_Outfiles[per] = Dict()
+                Stage_Outfiles[per]["Load"] = joinpath("Inputs_p$per", Load_Outfile)
+                Stage_Outfiles[per]["GVar"] = joinpath("Inputs_p$per", GVar_Outfile)
+                Stage_Outfiles[per]["Fuel"] = joinpath("Inputs_p$per", Fuel_Outfile)
+                Stage_Outfiles[per]["PMap"] = joinpath("Inputs_p$per", PMap_Outfile)
+                Stage_Outfiles[per]["YAML"] = joinpath("Inputs_p$per", YAML_Outfile)
 
                 # TO IMPLEMENT
-                # Save output data to period-specific locations
+                # Save output data to stage-specific locations
                 ### Load_data_clustered.csv
                 load_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p$per",sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
                 load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
-                load_in[1:length(Period_Weights[per]),:Sub_Weights] .= Period_Weights[per]
-                load_in[!,:Rep_Periods][1] = length(Period_Weights[per])
+                load_in[1:length(Stage_Weights[per]),:Sub_Weights] .= Stage_Weights[per]
+                load_in[!,:Rep_Periods][1] = length(Stage_Weights[per])
                 load_in[!,:Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
                 select!(load_in, Not(LoadCols))
                 select!(load_in, Not(:Time_Index))
@@ -1012,7 +989,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 load_in = load_in[1:size(LPOutputData,1),:]
 
                 if v println("Writing load file...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Period_Outfiles[per]["Load"]), load_in)
+                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["Load"]), load_in)
 
                 ### Generators_variability_clustered.csv
                 # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
@@ -1022,7 +999,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
                 NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
                 if v println("Writing resource file...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Period_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
+                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
 
                 ### Fuels_data_clustered.csv
                 fuel_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p$per",sep,"Fuels_data.csv"), header=true), copycols=true)
@@ -1032,17 +1009,17 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 rename!(NewFuelOutput, FuelCols)
                 insertcols!(NewFuelOutput, 1, :Time_Index => 0:size(NewFuelOutput,1)-1)
                 if v println("Writing fuel profiles...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Period_Outfiles[per]["Fuel"]), NewFuelOutput)
+                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["Fuel"]), NewFuelOutput)
 
                 ### Period_map.csv
                 if v println("Writing period map...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Period_Outfiles[per]["PMap"]), Period_PeriodMaps[per])
+                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["PMap"]), Stage_PeriodMaps[per])
 
                 ### time_domain_reduction_settings.yml
                 if v println("Writing .yml settings...") end
-                YAML.write_file(string(inpath,sep,"Inputs",sep,Period_Outfiles[per]["YAML"]), myTDRsetup)
+                YAML.write_file(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["YAML"]), myTDRsetup)
 
-                #return PeriodMap, LPOutputData, lpDFs, InputData, R, A, W, M, N, groups_per_period, group_ranges
+                #return PeriodMap, LPOutputData, lpDFs, InputData, R, A, W, M, N, groups_per_stage, group_ranges
             end
 
         else
@@ -1102,7 +1079,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             YAML.write_file(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,YAML_Outfile), myTDRsetup)
         end
     else
-        println("Outputs: Single Period")
+        println("Outputs: Single-Stage")
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
         ### Load_data_clustered.csv

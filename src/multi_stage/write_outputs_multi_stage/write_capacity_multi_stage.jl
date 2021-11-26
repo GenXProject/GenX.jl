@@ -1,4 +1,4 @@
-function write_capacity_multi_period(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_capacity_multi_stage(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	# Capacity decisions
 	dfGen = inputs["dfGen"]
 	capdischarge = zeros(size(inputs["RESOURCES"]))

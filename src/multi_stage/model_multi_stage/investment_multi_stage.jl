@@ -15,64 +15,64 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	function get_retirement_period(cur_period::Int, period_len::Int, lifetime::Int, multi_period_settings::Dict)
+	function get_retirement_stage(cur_stage::Int, stage_len::Int, lifetime::Int, multi_stage_settings::Dict)
 
-This function determines the model period before which all newly built capacity must be retired. Used to enforce endogenous lifetime retirements in multi-period modeling.
+This function determines the model stage before which all newly built capacity must be retired. Used to enforce endogenous lifetime retirements in multi-stage modeling.
 
 inputs:
 
-  * cur\_period – An Int representing the current model period $p$.
-  * period\_len – An Int representing the length $L$ of each model period.
+  * cur\_stage – An Int representing the current model stage $p$.
+  * stage\_len – An Int representing the length $L$ of each model stage.
   * lifetime – An Int representing the lifetime of a particular resource.
-  * multi\_stage\_settings - Dictionary containing settings dictionary configured in the multi-period settings file multi\_period\_settings.yml.
+  * multi\_stage\_settings - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 
-returns: An Int representing the model period in before which the resource must retire due to endogenous lifetime retirements.
+returns: An Int representing the model stage in before which the resource must retire due to endogenous lifetime retirements.
 """
-function get_retirement_period(cur_period::Int, lifetime::Int, multi_period_settings::Dict)
-	period_lens = multi_period_settings["PeriodLengths"]
-	years_from_start = sum(period_lens[1:cur_period]) # Years from start from the END of the current period
-	ret_years = years_from_start - lifetime # Difference between end of current period and technology lifetime
-	ret_period = 0 # Compute the period before which all newly built capacity must be retired by the end of the current period
-	while (ret_years - period_lens[ret_period+1] >= 0) & (ret_period < cur_period)
-		ret_period += 1
-		ret_years -= period_lens[ret_period]
+function get_retirement_stage(cur_stage::Int, lifetime::Int, multi_stage_settings::Dict)
+	stage_lens = multi_stage_settings["StageLengths"]
+	years_from_start = sum(stage_lens[1:cur_stage]) # Years from start from the END of the current stage
+	ret_years = years_from_start - lifetime # Difference between end of current stage and technology lifetime
+	ret_stage = 0 # Compute the stage before which all newly built capacity must be retired by the end of the current stage
+	while (ret_years - stage_lens[ret_stage+1] >= 0) & (ret_stage < cur_stage)
+		ret_stage += 1
+		ret_years -= stage_lens[ret_stage]
 	end
-    return Int(ret_period)
+    return Int(ret_stage)
 end
 
 @doc raw"""
-	function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period_settings::Dict)
+	function investment_discharge_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements, compatible with multi-period modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-period modeling, which are described below.
+This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, which are described below.
 
 Total Capacity Linking Variables and Constraints:
 
   * The linking variable vEXISTINGCAP[y] for $y \in \mathcal{G}$ is introduced and replaces occurrences of the parameter Existing\_Cap\_MW ($\bar{\Delta}_{y,z}$) in all expressions and constraints in investment\_discharge().
-  * The linking constraint cExistingCap[y] for $y \in \mathcal{G}$  is introduced, which is used to link end discharge capacity from period $p$ to start discharge capacity in period $p+1$. When $p=1$, the constraint sets vEXISTINGCAP[y] = $\bar{\Delta}_{y,z}$.
+  * The linking constraint cExistingCap[y] for $y \in \mathcal{G}$  is introduced, which is used to link end discharge capacity from stage $p$ to start discharge capacity in stage $p+1$. When $p=1$, the constraint sets vEXISTINGCAP[y] = $\bar{\Delta}_{y,z}$.
 
 Scaling Down the Objective Function Contribution:
 
-  * The contribution of eTotalCFix ($\sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \left((\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) + (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)$) is scaled down by the factor $\sum_{p=1}^{\mathcal{P}} \frac{1}{(1+WACC)^{p-1}}$, where $\mathcal{P}$ is the length of each period and $WACC$ is the weighted average cost of capital, before it is added to the objective function (these costs will be scaled back to their correct value by the method initialize\_cost\_to\_go()).
+  * The contribution of eTotalCFix ($\sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \left((\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z}) + (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)$) is scaled down by the factor $\sum_{p=1}^{\mathcal{P}} \frac{1}{(1+WACC)^{p-1}}$, where $\mathcal{P}$ is the length of each stage and $WACC$ is the weighted average cost of capital, before it is added to the objective function (these costs will be scaled back to their correct value by the method initialize\_cost\_to\_go()).
 
 Endogenous Retirements Linking Variables and Constraints:
-  * The linking variables vCAPTRACK[y,p] and vRETCAPTRACKE[y,p] for $y \in \mathcal{G}, p \in  \mathcal{P}$ are introduced, which represent the cumulative capacity additions and retirements from previous model periods, respectively.
+  * The linking variables vCAPTRACK[y,p] and vRETCAPTRACKE[y,p] for $y \in \mathcal{G}, p \in  \mathcal{P}$ are introduced, which represent the cumulative capacity additions and retirements from previous model stages, respectively.
   * Linking constraints which enforce endogenous retirements using the vCAPTRACK and vRETCAPTRACK variables.
-  * The constraint enforces that total retirements by period p should atleast equal the sum of the user specified value + new capacity build in prior periods that reach their end of life before end of period p. See Equation 18-21 of  Lara et al, Deterministic electric power infrastructure planning: Mixed-integer programming model and nested decomposition algorithm, EJOR, 271(3), 1037-1054, 2018 for further discussion.
+  * The constraint enforces that total retirements by stage p should atleast equal the sum of the user specified value + new capacity build in prior stages that reach their end of life before end of stage p. See Equation 18-21 of  Lara et al, Deterministic electric power infrastructure planning: Mixed-integer programming model and nested decomposition algorithm, EJOR, 271(3), 1037-1054, 2018 for further discussion.
 
 inputs:
 
   * EP – JuMP model.
   * inputs – Dictionary object containing model inputs dictionary generated by load\_inputs().
-  * multi\_period\_settings - Dictionary containing settings dictionary configured in the multi-period settings file multi\_period\_settings.yml.
+  * multi\_stage\_settings - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 
 returns: JuMP model with updated variables, expressions, and constraints.
 """
-function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period_settings::Dict)
+function investment_discharge_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-	println("Investment Discharge Multi-Period Module")
+	println("Investment Discharge multi-stage Module")
 
 	dfGen = inputs["dfGen"]
-	dfGenMultiPeriod = inputs["dfGenMultiPeriod"]
+	dfGenMultiStage = inputs["dfGenMultiStage"]
 
 	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
 
@@ -80,11 +80,11 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
 
-	# Multi-period parameters
-	num_periods = multi_period_settings["NumPeriods"]
-	cur_period = multi_period_settings["CurPeriod"]
-	period_len = multi_period_settings["PeriodLengths"][cur_period]
-	wacc = multi_period_settings["WACC"]
+	# multi-stage parameters
+	num_stages = multi_stage_settings["NumStages"]
+	cur_stage = multi_stage_settings["CurStage"]
+	stage_len = multi_stage_settings["StageLengths"][cur_stage]
+	wacc = multi_stage_settings["WACC"]
 
 	### Variables ###
 
@@ -97,9 +97,9 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 	@variable(EP, vEXISTINGCAP[y=1:G] >= 0);
 
 	# DDP - Endogenous Retirement Variables #
-	# Keep track of all new and retired capacity from all periods
-	@variable(EP, vCAPTRACK[y=1:G,p=1:num_periods] >= 0 )
-	@variable(EP, vRETCAPTRACK[y=1:G,p=1:num_periods] >= 0 )
+	# Keep track of all new and retired capacity from all stages
+	@variable(EP, vCAPTRACK[y=1:G,p=1:num_stages] >= 0 )
+	@variable(EP, vRETCAPTRACK[y=1:G,p=1:num_stages] >= 0 )
 
 	### Expressions ###
 
@@ -149,11 +149,11 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 	@expression(EP, eTotalCFix, sum(EP[:eCFix][y] for y in 1:G))
 
 	# Add term to objective function expression
-	# DDP - OPEX multiplier to count multiple years between two model time periods
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)])
+	# DDP - OPEX multiplier to count multiple years between two model stages
+	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
-	# and we have already accounted for multiple years between time periods for fixed costs.
+	# and we have already accounted for multiple years between stages for fixed costs.
 	EP[:eObj] += (1/OPEXMULT)*eTotalCFix
 
 	## DDP - Endogenous Retirements ##
@@ -175,13 +175,13 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 	)
 
 	# Construct and add the endogenous retirement constraint expressions
-	@expression(EP, eRetCapTrack[y=1:G], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_period))
-	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_period(cur_period, dfGenMultiPeriod[!,:Lifetime][y], multi_period_settings)))
+	@expression(EP, eRetCapTrack[y=1:G], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
+	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGenMultiStage[!,:Lifetime][y], multi_stage_settings)))
 	@expression(EP, eMinRetCapTrack[y=1:G],
 		if y in COMMIT
-			sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Cap_MW_p$p")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_period)
+			sum((dfGenMultiStage[!,Symbol("Min_Retired_Cap_MW_p$p")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_stage)
 		else
-			sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Cap_MW_p$p")][y]) for p=1:cur_period)
+			sum((dfGenMultiStage[!,Symbol("Min_Retired_Cap_MW_p$p")][y]) for p=1:cur_stage)
 		end
 	)
 
@@ -206,15 +206,15 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 
 	## DDP - Endogenous Retirements ##
 
-	# Keep track of newly built capacity from previous time periods
-	@constraint(EP, cCapTrackNew[y=1:G], eNewCap[y] == vCAPTRACK[y,cur_period])
+	# Keep track of newly built capacity from previous stages
+	@constraint(EP, cCapTrackNew[y=1:G], eNewCap[y] == vCAPTRACK[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cCapTrack[y=1:G,p=1:(cur_period-1)], vCAPTRACK[y,p] == 0)
+	@constraint(EP, cCapTrack[y=1:G,p=1:(cur_stage-1)], vCAPTRACK[y,p] == 0)
 
-	# Keep track of retired capacity from previous time periods
-	@constraint(EP, cRetCapTrackNew[y=1:G], eRetCap[y] == vRETCAPTRACK[y,cur_period])
+	# Keep track of retired capacity from previous stages
+	@constraint(EP, cRetCapTrackNew[y=1:G], eRetCap[y] == vRETCAPTRACK[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cRetCapTrack[y=1:G,p=1:(cur_period-1)], vRETCAPTRACK[y,p] == 0)
+	@constraint(EP, cRetCapTrack[y=1:G,p=1:(cur_stage-1)], vRETCAPTRACK[y,p] == 0)
 
 	@constraint(EP, cLifetimeRet[y=1:G], eNewCapTrack[y] + eMinRetCapTrack[y]  <= eRetCapTrack[y])
 
@@ -222,35 +222,35 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 end
 
 @doc raw"""
-	function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_settings::Dict)
+	function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available power charge capacity across all storage resources with asymmetric charge/discharge as well as constraints on charge capacity retirements, compatible with multi-period modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-period modeling, all analogous to those described in investment_discharge_multi_period().
+This function defines the expressions and constraints keeping track of total available power charge capacity across all storage resources with asymmetric charge/discharge as well as constraints on charge capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment_discharge_multi_stage().
 
 inputs:
 
   * EP – JuMP model.
   * inputs – Dictionary object containing model inputs dictionary generated by load\_inputs().
-  * multi\_period\_settings - Dictionary containing settings dictionary configured in the multi-period settings file multi\_period\_settings.yml.
+  * multi\_stage\_settings - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 
 returns: JuMP model with updated variables, expressions, and constraints.
 """
-function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_settings::Dict)
+function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-	println("Storage Investment Charge Multi-Period Module")
+	println("Storage Investment Charge multi-stage Module")
 
 	dfGen = inputs["dfGen"]
-	dfGenMultiPeriod = inputs["dfGenMultiPeriod"]
+	dfGenMultiStage = inputs["dfGenMultiStage"]
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
 	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
 	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
 
-	# Multi-period parameters
-	num_periods = multi_period_settings["NumPeriods"]
-	cur_period = multi_period_settings["CurPeriod"]
-	period_len = multi_period_settings["PeriodLengths"][cur_period]
-	wacc = multi_period_settings["WACC"]
+	# multi-stage parameters
+	num_stages = multi_stage_settings["NumStages"]
+	cur_stage = multi_stage_settings["CurStage"]
+	stage_len = multi_stage_settings["StageLengths"][cur_stage]
+	wacc = multi_stage_settings["WACC"]
 
 	### Variables ###
 
@@ -266,9 +266,9 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 	@variable(EP, vEXISTINGCAPCHARGE[y in STOR_ASYMMETRIC] >= 0);
 
 	# DDP - Endogenous Retirement Variables #
-	# Keep track of all new and retired capacity from all periods
-	@variable(EP, vCAPTRACKCHARGE[y in STOR_ASYMMETRIC,p=1:num_periods] >= 0 )
-	@variable(EP, vRETCAPTRACKCHARGE[y in STOR_ASYMMETRIC,p=1:num_periods] >= 0 )
+	# Keep track of all new and retired capacity from all stages
+	@variable(EP, vCAPTRACKCHARGE[y in STOR_ASYMMETRIC,p=1:num_stages] >= 0 )
+	@variable(EP, vRETCAPTRACKCHARGE[y in STOR_ASYMMETRIC,p=1:num_stages] >= 0 )
 
 	### Expressions ###
 
@@ -300,10 +300,10 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 	@expression(EP, eTotalCFixCharge, sum(EP[:eCFixCharge][y] for y in STOR_ASYMMETRIC))
 
 	# Add term to objective function expression
-	# DDP - OPEX multiplier to count multiple years between two model time periods
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)])
+	# DDP - OPEX multiplier to count multiple years between two model stages
+	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
-	# and we have already accounted for multiple years between time periods for fixed costs.
+	# and we have already accounted for multiple years between stages for fixed costs.
 	EP[:eObj] += (1/OPEXMULT)*eTotalCFixCharge
 
 	## DDP - Endogenous Retirements ##
@@ -325,9 +325,9 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 	)
 
 	# Construct and add the endogenous retirement constraint expressions
-	@expression(EP, eRetCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_period))
-	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_period(cur_period, dfGenMultiPeriod[!,:Lifetime][y], multi_period_settings)))
-	@expression(EP, eMinRetCapTrackCharge[y in STOR_ASYMMETRIC], sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Charge_Cap_MW_p$p")][y]) for p=1:cur_period))
+	@expression(EP, eRetCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_stage))
+	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGenMultiStage[!,:Lifetime][y], multi_stage_settings)))
+	@expression(EP, eMinRetCapTrackCharge[y in STOR_ASYMMETRIC], sum((dfGenMultiStage[!,Symbol("Min_Retired_Charge_Cap_MW_p$p")][y]) for p=1:cur_stage))
 
 	### Constratints ###
 
@@ -350,15 +350,15 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	## DDP - Endogenous Retirements ##
 
-	# Keep track of newly built capacity from previous time periods
-	@constraint(EP, cCapTrackChargeNew[y in STOR_ASYMMETRIC], eNewCapCharge[y] == vCAPTRACKCHARGE[y,cur_period])
+	# Keep track of newly built capacity from previous stages
+	@constraint(EP, cCapTrackChargeNew[y in STOR_ASYMMETRIC], eNewCapCharge[y] == vCAPTRACKCHARGE[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cCapTrackCharge[y in STOR_ASYMMETRIC,p=1:(cur_period-1)], vCAPTRACKCHARGE[y,p] == 0)
+	@constraint(EP, cCapTrackCharge[y in STOR_ASYMMETRIC,p=1:(cur_stage-1)], vCAPTRACKCHARGE[y,p] == 0)
 
-	# Keep track of retired capacity from previous time periods
-	@constraint(EP, cRetCapTrackChargeNew[y in STOR_ASYMMETRIC], eRetCapCharge[y] == vRETCAPTRACKCHARGE[y,cur_period])
+	# Keep track of retired capacity from previous stages
+	@constraint(EP, cRetCapTrackChargeNew[y in STOR_ASYMMETRIC], eRetCapCharge[y] == vRETCAPTRACKCHARGE[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cRetCapTrackCharge[y in STOR_ASYMMETRIC,p=1:(cur_period-1)], vRETCAPTRACKCHARGE[y,p] == 0)
+	@constraint(EP, cRetCapTrackCharge[y in STOR_ASYMMETRIC,p=1:(cur_stage-1)], vRETCAPTRACKCHARGE[y,p] == 0)
 
 	@constraint(EP, cLifetimeRetCharge[y in STOR_ASYMMETRIC], eNewCapTrackCharge[y] + eMinRetCapTrackCharge[y]  <= eRetCapTrackCharge[y])
 
@@ -366,34 +366,34 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 end
 
 @doc raw"""
-	function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_settings::Dict)
+	function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available energy capacity across all storage resources as well as constraints on energy capacity retirements, compatible with multi-period modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-period modeling, all analogous to those described in investment_discharge_multi_period().
+This function defines the expressions and constraints keeping track of total available energy capacity across all storage resources as well as constraints on energy capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment_discharge_multi_stage().
 
 inputs:
 
   * EP – JuMP model.
   * inputs – Dictionary object containing model inputs dictionary generated by load\_inputs().
-  * multi\_period\_settings - Dictionary containing settings dictionary configured in the multi-period settings file multi\_period\_settings.yml.
+  * multi\_stage\_settings - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 
 returns: JuMP model with updated variables, expressions, and constraints.
 """
-function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_settings::Dict)
+function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-	println("Storage Investment Energy Multi-Period Module")
+	println("Storage Investment Energy multi-stage Module")
 
 	dfGen = inputs["dfGen"]
-	dfGenMultiPeriod = inputs["dfGenMultiPeriod"]
+	dfGenMultiStage = inputs["dfGenMultiStage"]
 
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
 	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
 
-	# Multi-period parameters
-	num_periods = multi_period_settings["NumPeriods"]
-	cur_period = multi_period_settings["CurPeriod"]
-	period_len = multi_period_settings["PeriodLengths"][cur_period]
-	wacc = multi_period_settings["WACC"]
+	# multi-stage parameters
+	num_stages = multi_stage_settings["NumStages"]
+	cur_stage = multi_stage_settings["CurStage"]
+	stage_len = multi_stage_settings["StageLengths"][cur_stage]
+	wacc = multi_stage_settings["WACC"]
 
 	### Variables ###
 
@@ -409,9 +409,9 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 	@variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL] >= 0);
 
 	# DDP - Endogenous Retirement Variables #
-	# Keep track of all new and retired capacity from all periods
-	@variable(EP, vCAPTRACKENERGY[y in STOR_ALL,p=1:num_periods] >= 0 )
-	@variable(EP, vRETCAPTRACKENERGY[y in STOR_ALL,p=1:num_periods] >= 0 )
+	# Keep track of all new and retired capacity from all stages
+	@variable(EP, vCAPTRACKENERGY[y in STOR_ALL,p=1:num_stages] >= 0 )
+	@variable(EP, vRETCAPTRACKENERGY[y in STOR_ALL,p=1:num_stages] >= 0 )
 
 	### Expressions ###
 
@@ -443,10 +443,10 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 	@expression(EP, eTotalCFixEnergy, sum(EP[:eCFixEnergy][y] for y in STOR_ALL))
 
 	# Add term to objective function expression
-	# DDP - OPEX multiplier to count multiple years between two model time periods
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=period_len)])
+	# DDP - OPEX multiplier to count multiple years between two model stages
+	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
-	# and we have already accounted for multiple years between time periods for fixed costs.
+	# and we have already accounted for multiple years between stages for fixed costs.
 	EP[:eObj] += (1/OPEXMULT)*eTotalCFixEnergy
 
 	## DDP - Endogenous Retirements ##
@@ -468,9 +468,9 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 	)
 
 	# Construct and add the endogenous retirement constraint expressions
-	@expression(EP, eRetCapTrackEnergy[y in STOR_ALL], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_period))
-	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_period(cur_period, dfGenMultiPeriod[!,:Lifetime][y], multi_period_settings)))
-	@expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGenMultiPeriod[!,Symbol("Min_Retired_Energy_Cap_MW_p$p")][y]) for p=1:cur_period))
+	@expression(EP, eRetCapTrackEnergy[y in STOR_ALL], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_stage))
+	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGenMultiStage[!,:Lifetime][y], multi_stage_settings)))
+	@expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGenMultiStage[!,Symbol("Min_Retired_Energy_Cap_MW_p$p")][y]) for p=1:cur_stage))
 
 	### Constratints ###
 
@@ -492,15 +492,15 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	## DDP - Endogenous Retirements ##
 
-	# Keep track of newly built capacity from previous time periods
-	@constraint(EP, cCapTrackEnergyNew[y in STOR_ALL], eNewCapEnergy[y] == vCAPTRACKENERGY[y,cur_period])
+	# Keep track of newly built capacity from previous stages
+	@constraint(EP, cCapTrackEnergyNew[y in STOR_ALL], eNewCapEnergy[y] == vCAPTRACKENERGY[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cCapTrackEnergy[y in STOR_ALL,p=1:(cur_period-1)], vCAPTRACKENERGY[y,p] == 0)
+	@constraint(EP, cCapTrackEnergy[y in STOR_ALL,p=1:(cur_stage-1)], vCAPTRACKENERGY[y,p] == 0)
 
-	# Keep track of retired capacity from previous time periods
-	@constraint(EP, cRetCapTrackEnergyNew[y in STOR_ALL], eRetCapEnergy[y] == vRETCAPTRACKENERGY[y,cur_period])
+	# Keep track of retired capacity from previous stages
+	@constraint(EP, cRetCapTrackEnergyNew[y in STOR_ALL], eRetCapEnergy[y] == vRETCAPTRACKENERGY[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cRetCapTrackEnergy[y in STOR_ALL,p=1:(cur_period-1)], vRETCAPTRACKENERGY[y,p] == 0)
+	@constraint(EP, cRetCapTrackEnergy[y in STOR_ALL,p=1:(cur_stage-1)], vRETCAPTRACKENERGY[y,p] == 0)
 
 	@constraint(EP, cLifetimeRetEnergy[y in STOR_ALL], eNewCapTrackEnergy[y] + eMinRetCapTrackEnergy[y]  <= eRetCapTrackEnergy[y])
 

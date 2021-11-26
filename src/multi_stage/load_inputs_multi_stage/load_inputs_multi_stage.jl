@@ -15,9 +15,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_inputs_multi_period(setup::Dict,path::AbstractString)
+	load_inputs_multi_stage(setup::Dict,path::AbstractString)
 
-Loads multi-period data inputs from multiple input .csv files in path directory and stores variables in a Dict (dictionary) object for use in generate_model() function
+Loads multi-stage data inputs from multiple input .csv files in path directory and stores variables in a Dict (dictionary) object for use in generate_model() function
 
 inputs:
 
@@ -26,7 +26,7 @@ inputs:
 
 returns: Dict (dictionary) object containing all data inputs
 """
-function load_inputs_multi_period(setup::Dict,path::AbstractString)
+function load_inputs_multi_stage(setup::Dict,path::AbstractString)
 
 	## Use appropriate directory separator depending on Mac or Windows config
 	if Sys.isunix()
@@ -38,18 +38,18 @@ function load_inputs_multi_period(setup::Dict,path::AbstractString)
 	end
 
 	## Read input files
-	println("Reading Multi-Period Input CSV Files")
+	println("Reading multi-stage Input CSV Files")
 
 	## Declare Dict (dictionary) object used to store parameters
-	inputs_multi_period = Dict()
-   
-	inputs_multi_period = load_generators_data_multi_period(setup, path, sep, inputs_multi_period)
+	inputs_multi_stage = Dict()
 
-	if setup["NetworkExpansion"] > 0 
-		inputs_multi_period = load_network_data_multi_period(setup, path, sep, inputs_multi_period)
+	inputs_multi_stage = load_generators_data_multi_stage(setup, path, sep, inputs_multi_stage)
+
+	if setup["NetworkExpansion"] > 0
+		inputs_multi_stage = load_network_data_multi_stage(setup, path, sep, inputs_multi_stage)
 	end
 
-	println("Multi-Period CSV Files Successfully Read In From $path$sep")
+	println("multi-stage CSV Files Successfully Read In From $path$sep")
 
-	return inputs_multi_period
+	return inputs_multi_stage
 end

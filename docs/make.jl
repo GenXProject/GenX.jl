@@ -56,15 +56,15 @@ pages = OrderedDict(
                 "Thermal No Commit" => "thermal_no_commit.md"
             ]
         ],
-        "Multi_period" => [
-            "Load inputs for multi-period modeling" => [
-                "Configure multi-period inputs" => "configure_multi_period_inputs.md",
-                #"Load inputs" => "load_inputs_multi_period.md",
-                "Load generators data" => "load_generators_data_multi_period.md",
-                "Load network data" => "load_network_data_multi_period.md",
+        "Multi_stage" => [
+            "Load inputs for multi-stage modeling" => [
+                "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
+                #"Load inputs" => "load_inputs_multi_stage.md",
+                "Load generators data" => "load_generators_data_multi_stage.md",
+                "Load network data" => "load_network_data_multi_stage.md",
             ],
-            "Model multi period" => [
-                "Investment multi period" => "investment_multi_period.md",
+            "Model multi stage" => [
+                "Investment multi stage" => "investment_multi_stage.md",
                 "Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
                 ],
         ],

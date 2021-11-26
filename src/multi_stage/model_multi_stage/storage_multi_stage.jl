@@ -15,18 +15,18 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	storage_multi_period(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, MultiPeriodSettingsDict::Dict)
+	storage_multi_stage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, MultiStageSettingsDict::Dict)
 
-This function is identical to storage(), except calls multi-period investment energy and charge methods.
+This function is identical to storage(), except calls multi-stage investment energy and charge methods.
 """
-function storage_multi_period(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, MultiPeriodSettingsDict::Dict)
+function storage_multi_stage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, MultiStageSettingsDict::Dict)
 
-	println("Storage Resources Multi-Period Module")
+	println("Storage Resources multi-stage Module")
 
 	G = inputs["G"]
 
 	if !isempty(inputs["STOR_ALL"])
-		EP = investment_energy_multi_period(EP, inputs, MultiPeriodSettingsDict)
+		EP = investment_energy_multi_stage(EP, inputs, MultiStageSettingsDict)
 		EP = storage_all(EP, inputs, Reserves, OperationWrapping, LongDurationStorage)
 
 		# Include LongDurationStorage only when modeling representative periods and long-duration storage
@@ -36,7 +36,7 @@ function storage_multi_period(EP::Model, inputs::Dict, Reserves::Int, OperationW
 	end
 
 	if !isempty(inputs["STOR_ASYMMETRIC"])
-		EP = investment_charge_multi_period(EP, inputs,MultiPeriodSettingsDict)
+		EP = investment_charge_multi_stage(EP, inputs,MultiStageSettingsDict)
 		EP = storage_asymmetric(EP, inputs, Reserves)
 	end
 

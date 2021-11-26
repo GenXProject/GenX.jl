@@ -80,13 +80,13 @@ WeightTotal: 8760
   #   number of timesteps in the raw input data.
 ClusterFuelPrices: 1
 
-  #   - MultiPeriodConcatenate
-  #   (Only considered if MultiPeriod = 1 in genx_settings.yml)
+  #   - MultiStageConcatenate
+  #   (Only considered if MultiStage = 1 in genx_settings.yml)
   #   If 1, this designates that the model should time domain reduce the input data
-  #   of all periods together. Else if 0, the model will time domain reduce only
-  #   the first stage and will apply the periods of each other stage to this set
+  #   of all model stages together. Else if 0, [still in development] the model will time domain reduce only
+  #   the first stage and will apply the periods of each other model stage to this set
   #   of representative periods by closest Eucliden distance.
-MultiPeriodConcatenate: 1
+MultiStageConcatenate: 1
 
   #   - UseExtremePeriods
   #   Either 1 (yes) or 0 (no), this designates whether or not to include

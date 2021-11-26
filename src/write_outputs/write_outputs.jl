@@ -68,8 +68,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 	write_status(path, sep, inputs, setup, EP)
 	write_costs(path, sep, inputs, setup, EP)
-	if setup["MultiPeriod"] == 1
-		dfCap = write_capacity_multi_period(path, sep, inputs, setup, EP)
+	if setup["MultiStage"] == 1
+		dfCap = write_capacity_multi_stage(path, sep, inputs, setup, EP)
 	else
 		dfCap = write_capacity(path, sep, inputs, setup, EP)
 	end
@@ -109,8 +109,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		write_opwrap_lds_dstor(path, sep, inputs, setup, EP)
 	end
 
-	# Temporary! Suppress these outputs until we know that they are compatable with multi-period modeling
-	if setup["MultiPeriod"] == 0
+	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
+	if setup["MultiStage"] == 0
 		dfPrice = DataFrame()
 		dfEnergyRevenue = DataFrame()
 		dfChargingcost = DataFrame()

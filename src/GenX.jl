@@ -28,11 +28,11 @@ export mga
 export simple_operation
 export choose_output_dir
 
-# Multi-period methods
+# Multi-stage methods
 export run_ddp
-export configure_multi_period_inputs
-export load_inputs_multi_period
-export write_multi_period_outputs
+export configure_multi_stage_inputs
+export load_inputs_multi_stage
+export write_multi_stage_outputs
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -123,9 +123,9 @@ include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
 
-include("multi_period/model_multi_period/storage_multi_period.jl")
-include("multi_period/model_multi_period/investment_multi_period.jl")
-include("multi_period/model_multi_period/transmission_multi_period.jl")
+include("multi_stage/model_multi_stage/storage_multi_stage.jl")
+include("multi_stage/model_multi_stage/investment_multi_stage.jl")
+include("multi_stage/model_multi_stage/transmission_multi_stage.jl")
 
 include("model/generate_model.jl")
 include("model/solve_model.jl")
@@ -180,12 +180,12 @@ include("simple_operation.jl")
 
 include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
 
-include("multi_period/dual_dynamic_programming.jl")
-include("multi_period/load_inputs_multi_period/configure_multi_period_inputs.jl")
-include("multi_period/load_inputs_multi_period/load_generators_data_multi_period.jl")
-include("multi_period/load_inputs_multi_period/load_network_data_multi_period.jl")
-include("multi_period/load_inputs_multi_period/load_inputs_multi_period.jl")
-include("multi_period/write_outputs_multi_period/write_capacity_multi_period.jl")
-include("multi_period/write_outputs_multi_period/write_settings.jl")
+include("multi_stage/dual_dynamic_programming.jl")
+include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
+include("multi_stage/load_inputs_multi_stage/load_generators_data_multi_stage.jl")
+include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
+include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
+include("multi_stage/write_outputs_multi_stage/write_capacity_multi_stage.jl")
+include("multi_stage/write_outputs_multi_stage/write_settings.jl")
 
 end
