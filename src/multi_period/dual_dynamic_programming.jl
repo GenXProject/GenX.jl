@@ -331,7 +331,6 @@ inputs:
 function write_costs(outpath::String, sep::String, settings_d::Dict)
 
 	num_periods = settings_d["NumPeriods"] # Total number of DDP time periods
-	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
 	period_lens = settings_d["PeriodLengths"]
 	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
@@ -349,7 +348,6 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
 
     # Store discounted total costs for each time period in a data frame
     for p in 1:num_periods
-        ### DF = 1/(1+wacc)^(period_len*(p-1))  # Discount factor applied to ALL costs in each period # Pre-VSL
 		if myopic
 			DF = 1 # DF=1 because we do not apply discount factor in myopic case
 		else
@@ -361,8 +359,7 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
     # For OPEX costs, apply additional discounting
     for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
         if cost in df_costs[!,:Costs]
-            ### df_costs[df_costs[!,:Costs] .== cost, 2:end] = OPEXMULT .* df_costs[df_costs[!,:Costs] .== cost, 2:end] # Pre-VSL
-			df_costs[df_costs[!,:Costs] .== cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!,:Costs] .== cost, 2:end]   # CONFIRM THIS
+			df_costs[df_costs[!,:Costs] .== cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!,:Costs] .== cost, 2:end]
         end
     end
 
@@ -659,7 +656,6 @@ returns: JuMP model with updated objective function.
 function initialize_cost_to_go(settings_d::Dict, EP::Model)
 
 	cur_period = settings_d["CurPeriod"] # Current DDP Time Period
-	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	period_len = settings_d["PeriodLengths"][cur_period]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP

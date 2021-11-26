@@ -41,12 +41,10 @@ function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp
 
 	cur_period = settings_d["CurPeriod"] # Current model
 	num_periods = settings_d["NumPeriods"] # Total number of model periods
-	### period_len = settings_d["PeriodLength"] # Length (in years) of each model period # Pre-VSL
 	period_lens = settings_d["PeriodLengths"]
 
 	# 1) For each resource, find the minimum of the capital recovery period and the end of the model horizon
 	# Total time between the end of the final model period and the start of the current period
-	### model_yrs_remaining = period_len * num_periods - period_len * (cur_period-1) # Pre-VSL
 	model_yrs_remaining = sum(period_lens[cur_period:end])
 
 	# We will sum annualized costs through the full capital recovery period or the end of planning horizon, whichever comes first
@@ -91,7 +89,6 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 	dfGenMultiPeriod = inputs_d["dfGenMultiPeriod"]
 
 	# Parameter inputs when multi-year discounting is activated
-	### period_len = settings_d["PeriodLength"] # Length (in years) of each period # Pre-VSL
 	cur_period = settings_d["CurPeriod"]
 	period_len = settings_d["PeriodLengths"][cur_period]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
@@ -133,7 +130,6 @@ function configure_multi_period_inputs(inputs_d::Dict, settings_d::Dict, Network
 
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment period
 		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_period"]
-		#inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW"]
 
         # Network lines and zones that are expandable have greater maximum possible line flow than that of the previous period
 		if cur_period > 1

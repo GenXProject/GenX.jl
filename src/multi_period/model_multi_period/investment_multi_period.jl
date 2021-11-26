@@ -30,11 +30,9 @@ returns: An Int representing the model period in before which the resource must 
 """
 function get_retirement_period(cur_period::Int, lifetime::Int, multi_period_settings::Dict)
 	period_lens = multi_period_settings["PeriodLengths"]
-	### years_from_start = cur_period * period_len # Years from start from the END of the current period # Pre-VSL
-	years_from_start = sum(period_lens[1:cur_period])
+	years_from_start = sum(period_lens[1:cur_period]) # Years from start from the END of the current period
 	ret_years = years_from_start - lifetime # Difference between end of current period and technology lifetime
-	### ret_period = floor(ret_years / period_len) # Compute the period before which all newly built capacity must be retired by the end of the current period # Pre-VSL
-	ret_period = 0
+	ret_period = 0 # Compute the period before which all newly built capacity must be retired by the end of the current period
 	while (ret_years - period_lens[ret_period+1] >= 0) & (ret_period < cur_period)
 		ret_period += 1
 		ret_years -= period_lens[ret_period]
@@ -84,7 +82,6 @@ function investment_discharge_multi_period(EP::Model, inputs::Dict, multi_period
 
 	# Multi-period parameters
 	num_periods = multi_period_settings["NumPeriods"]
-	###period_len = multi_period_settings["PeriodLength"] #Pre-VSL
 	cur_period = multi_period_settings["CurPeriod"]
 	period_len = multi_period_settings["PeriodLengths"][cur_period]
 	wacc = multi_period_settings["WACC"]
@@ -251,7 +248,6 @@ function investment_charge_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	# Multi-period parameters
 	num_periods = multi_period_settings["NumPeriods"]
-	### period_len = multi_period_settings["PeriodLength"] # Pre-VSL
 	cur_period = multi_period_settings["CurPeriod"]
 	period_len = multi_period_settings["PeriodLengths"][cur_period]
 	wacc = multi_period_settings["WACC"]
@@ -395,7 +391,6 @@ function investment_energy_multi_period(EP::Model, inputs::Dict, multi_period_se
 
 	# Multi-period parameters
 	num_periods = multi_period_settings["NumPeriods"]
-	### period_len = multi_period_settings["PeriodLength"] # Pre-VSL
 	cur_period = multi_period_settings["CurPeriod"]
 	period_len = multi_period_settings["PeriodLengths"][cur_period]
 	wacc = multi_period_settings["WACC"]

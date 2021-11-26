@@ -125,7 +125,6 @@ function transmission_multi_period(EP::Model, inputs::Dict, UCommit::Int, Networ
 		@expression(EP, eTotalCNetworkExp, sum(vNEW_TRANS_CAP[l]*inputs["pC_Line_Reinforcement"][l] for l in EXPANSION_LINES))
 
 		wacc = multi_period_settings_d["WACC"]
-		### period_len = multi_period_settings_d["PeriodLength"] # Pre-VSL
 		cur_period = multi_period_settings_d["CurPeriod"]
 		period_len = multi_period_settings_d["PeriodLengths"][cur_period]
 

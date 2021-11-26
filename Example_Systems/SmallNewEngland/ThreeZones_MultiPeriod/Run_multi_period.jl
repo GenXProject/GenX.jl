@@ -84,13 +84,10 @@ end
 println("Solving Model")
 
 # Step 3) Run DDP Algorithm
-## Solve Model
 model_dict, mystats_d, inputs_dict = run_ddp(model_dict, mysetup, inputs_dict)
 
 # Step 4) Write final outputs from each period
-
 outpath = string("$inpath/Results")
-
 if !haskey(mysetup, "OverwriteResults") || mysetup["OverwriteResults"] == 1
 	# Overwrite existing results if dir exists
 	# This is the default behaviour when there is no flag, to avoid breaking existing code
