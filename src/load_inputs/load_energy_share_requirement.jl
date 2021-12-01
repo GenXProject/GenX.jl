@@ -15,15 +15,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_energy_share_requirement(setup::Dict, path::AbstractString, sep::AbstractString, inputs_ESR::Dict)
+	load_energy_share_requirement(setup::Dict, path::AbstractString, inputs_ESR::Dict)
 
 Function for reading input parameters related to mimimum energy share requirement constraints (e.g. renewable portfolio standard or clean electricity standard policies)
 """
-function load_energy_share_requirement(setup::Dict, path::AbstractString, sep::AbstractString, inputs_ESR::Dict)
+function load_energy_share_requirement(setup::Dict, path::AbstractString, inputs_ESR::Dict)
 	# Definition of ESR requirements by zone (as % of load)
 	# e.g. any policy requiring a min share of qualifying resources (Renewable Portfolio Standards / Renewable Energy Obligations / Clean Energy Standards etc.)
-	#inputs_ESR["dfESR"] = CSV.read(string(path,sep,"Energy_share_requirement.csv"), header=true)
-	inputs_ESR["dfESR"] = DataFrame(CSV.File(string(path, sep,"Energy_share_requirement.csv"), header=true), copycols=true)
+	inputs_ESR["dfESR"] = DataFrame(CSV.File(joinpath(path,"Energy_share_requirement.csv"), header=true), copycols=true)
 	# Ensure float format values:
 	ESR = count(s -> startswith(String(s), "ESR"), names(inputs_ESR["dfESR"]))
 	first_col = findall(s -> s == "ESR_1", names(inputs_ESR["dfESR"]))[1]
