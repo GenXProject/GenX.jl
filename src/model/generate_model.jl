@@ -164,6 +164,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = hydro_res(EP, inputs, setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
+	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
+	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+		EP = hydro_inter_period_linkage(EP, inputs)
+	end
+
 	# Model constraints, variables, expression related to demand flexibility resources
 	if !isempty(inputs["FLEX"])
 		EP = flexible_demand(EP, inputs, setup["CapacityReserveMargin"])

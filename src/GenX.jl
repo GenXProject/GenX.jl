@@ -42,7 +42,8 @@ using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 #using Gurobi
 #using CPLEX
-
+#using MOI
+using SCIP
 using Clp
 using Cbc
 
@@ -58,6 +59,7 @@ include("configure_settings/configure_settings.jl")
 
 # Configure optimizer instance
 include("configure_solver/configure_gurobi.jl")
+include("configure_solver/configure_scip.jl")
 include("configure_solver/configure_cplex.jl")
 include("configure_solver/configure_clp.jl")
 include("configure_solver/configure_cbc.jl")
@@ -96,6 +98,7 @@ include("model/resources/curtailable_variable_renewable/curtailable_variable_ren
 include("model/resources/flexible_demand/flexible_demand.jl")
 
 include("model/resources/hydro/hydro_res.jl")
+include("model/resources/hydro/hydro_inter_period_linkage.jl")
 
 include("model/resources/must_run/must_run.jl")
 
@@ -167,5 +170,5 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
+include("additional_tools/modeling_to_generate_alternatives.jl")
 end
