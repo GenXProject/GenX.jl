@@ -1,0 +1,17 @@
+Costs,TotalCosts_p1,TotalCosts_p2,TotalCosts_p3,,Costs,TotalCosts_p1,TotalCosts_p2,TotalCosts_p3
+cFix,2.39E+10,1.15E+09,4.85E+10,,cFix,3673790968,916577523.1,13459043898
+cVar,8.93E+09,4.98E+09,5.34E+08,,cVar,5177227732,4878673733,1269498656
+cNSE,3.52E+08,0,6.70E+08,,cNSE,1814762.127,0,0
+cStart,0,0,0,,cStart,0,0,0
+cUnmetRsv,0,0,0,,cUnmetRsv,0,0,0
+cNetworkExp,0,0,1.84E+08,,cNetworkExp,74099000,29917852.18,0
+Myopic=0,66437.16462,53777.16484,49856.39202,<- OBJ ->,Myopic=1,8926.932462,5825.169108,14728.54255
+,,,,,,,,
+Difference,,,,,,,,
+Costs,TotalCosts_p1,TotalCosts_p2,TotalCosts_p3,"<- Is this a fair comparison? Myopic should be in annualized costs while DDP should be in total costs, right?",,,,
+cFix,"-20,194,344,539","-230,466,736","-35,009,373,477",,,,,
+cVar,"-3,752,300,906","-106,109,824","735,271,062",,,,,
+cNSE,"-350,642,628",0,"-670,070,128",,,,,
+cStart,0,0,0,,,,,
+cUnmetRsv,0,0,0,,,,,
+cNetworkExp,"74,099,000","29,917,852","-183,676,922",,,,,

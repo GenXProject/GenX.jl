@@ -128,7 +128,15 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	EP = non_served_energy(EP, inputs, setup["CapacityReserveMargin"])
 
+##dev_ddp
+	if setup["MultiStage"] > 0
+		EP = investment_discharge_multi_stage(EP, inputs, setup["MultiStageSettingsDict"])
+	else
+		EP = investment_discharge(EP, inputs)
+	end
+##Aneesha's PR modification
 	EP = investment_discharge(EP, inputs, setup["MinCapReq"])
+##Dev
 
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
@@ -139,7 +147,15 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if Z > 1
+##dev_ddp
+		if setup["MultiStage"] > 0
+			EP = transmission_multi_stage(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiStageSettingsDict"])
+		else
+			EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"])
+		end
+##Aneesha's PR modification
 		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
+##Dev
 	end
 
 	# Technologies
@@ -156,7 +172,15 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
+##dev_ddp
+		if setup["MultiStage"] > 0 
+			EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["MultiStageSettingsDict"])
+		else
+			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+		end
+##Aneesha's PR modification
 		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+##Dev
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
