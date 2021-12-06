@@ -47,9 +47,11 @@ using Distances
 using Combinatorics
 using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-using Gurobi
 # using CPLEX
-
+#using Gurobi
+#using CPLEX
+#using MOI
+using SCIP
 using Clp
 using Cbc
 
@@ -65,6 +67,7 @@ include("configure_settings/configure_settings.jl")
 
 # Configure optimizer instance
 include("configure_solver/configure_gurobi.jl")
+include("configure_solver/configure_scip.jl")
 include("configure_solver/configure_cplex.jl")
 include("configure_solver/configure_clp.jl")
 include("configure_solver/configure_cbc.jl")
@@ -103,6 +106,7 @@ include("model/resources/curtailable_variable_renewable/curtailable_variable_ren
 include("model/resources/flexible_demand/flexible_demand.jl")
 
 include("model/resources/hydro/hydro_res.jl")
+include("model/resources/hydro/hydro_inter_period_linkage.jl")
 
 include("model/resources/must_run/must_run.jl")
 
@@ -178,7 +182,7 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
+include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
 
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
@@ -187,5 +191,5 @@ include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
 include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_capacity_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_settings.jl")
-
+include("additional_tools/modeling_to_generate_alternatives.jl") ##Note to Neha: Should we delete this and keep REF MGA rather?
 end

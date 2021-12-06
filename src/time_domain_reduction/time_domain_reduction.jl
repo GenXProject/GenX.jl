@@ -486,7 +486,7 @@ end
 @doc raw"""
     cluster_inputs(inpath, settings_path, v=false, norm_plot=false, silh_plot=false, res_plots=false, indiv_plots=false, pair_plots=false)
 
-Use kmeans or kemoids to cluster raw load profiles and resource capacity factor profiles
+Use kmeans or kmedoids to cluster raw load profiles and resource capacity factor profiles
 into representative periods. Use Extreme Periods to capture noteworthy periods or
 periods with notably poor fits.
 
@@ -538,9 +538,10 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### Step 0: Load in settings and data
 
+    # Read time domain reduction settings file time_domain_reduction_settings.yml
     myTDRsetup = YAML.load(open(joinpath(settings_path,"time_domain_reduction_settings.yml")))
 
-    # Accept Model Parameters from the Settings File time_domain_reduction_settings.yml
+    # Accept model parameters from the settings file time_domain_reduction_settings.yml
     TimestepsPerRepPeriod = myTDRsetup["TimestepsPerRepPeriod"]
     ClusterMethod = myTDRsetup["ClusterMethod"]
     ScalingMethod = myTDRsetup["ScalingMethod"]
@@ -567,12 +568,11 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     PMap_Outfile = joinpath(TimeDomainReductionFolder, "Period_map.csv")
     YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
 
-    if v println("Loading inputs") end
-    myinputs=Dict()
-    # Define a local version of the setup so that you can modify the mysetup["ParameterScale] value to be zero in case it is 1
+    # Define a local version of the setup so that you can modify the mysetup["ParameterScale"] value to be zero in case it is 1
     mysetup_local = mysetup
     # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
     mysetup_local["ParameterScale"]=0  # Performing cluster and report outputs in user-provided units
+#dev_ddp
 
     if MultiStage == 1
         model_dict=Dict()
@@ -628,6 +628,18 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     end
 
     if v println() end
+#=##Dev
+    if v println("Loading inputs") end
+    myinputs=Dict()
+    myinputs = load_inputs(mysetup_local,inpath)
+    if v println() end
+
+    # Parse input data into useful structures divided by type (load, wind, solar, fuel, groupings thereof, etc.)
+    # TO DO LATER: Replace these with collections of col_names, profiles, zones
+    load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
+         load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
+         col_to_zone_map, AllFuelsConst = parse_data(myinputs)
+=###Dev
 
     # Remove Constant Columns - Add back later in final output
     all_profiles, all_col_names, ConstData, ConstCols, ConstIdx = RemoveConstCols(all_profiles, all_col_names, v)
@@ -644,7 +656,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         println(describe(InputData))
         println()
     end
-
     OldColNames = names(InputData)
     NewColNames = [Symbol.(OldColNames); :GrpWeight]
     Nhours = nrow(InputData) # Timesteps
@@ -668,7 +679,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     AnnualTSeriesNormalized = DataFrame(Dict(  OldColNames[c] => normProfiles[c] for c in 1:length(OldColNames) ))
 
     # Optional pre-scaling of load in order to give it more preference in clutering algorithm
-    if LoadWeight != 1   # If we want to value load more/less than capacity factors. Assume nonnegative.
+    if LoadWeight != 1   # If we want to value load more/less than capacity factors. Assume nonnegative. LW=1 means no scaling.
         for c in load_col_names
             AnnualTSeriesNormalized[!, Symbol(c)] .= AnnualTSeriesNormalized[!, Symbol(c)] .* LoadWeight
         end
@@ -686,7 +697,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     # Total number of subperiods available in the dataset, where each subperiod length = TimestepsPerRepPeriod
     NumDataPoints = Nhours÷TimestepsPerRepPeriod # 364 weeks in 7 years
     if v println("Total Subperiods in the data set: ", NumDataPoints) end
-    InputData[:, :Group] .= (1:Nhours) .÷ (TimestepsPerRepPeriod+0.0001) .+ 1
+    InputData[:, :Group] .= (1:Nhours) .÷ (TimestepsPerRepPeriod+0.0001) .+ 1    # Group col identifies the subperiod ID of each hour (e.g., all hours in week 2 have Group=2 if using TimestepsPerRepPeriod=168)
 
     # Group by period (e.g., week)
     cgdf = combine(groupby(InputData, :Group), [c .=> sum for c in OldColNames])
@@ -807,14 +818,13 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     W = last(cluster_results)[3]  # Weights
     M = last(cluster_results)[4]  # Centers or Medoids
     DistMatrix = last(cluster_results)[5]  # Pairwise distances
-
     if v
         println("Total Groups Assigned to Each Cluster: ", W)
         println("Sum Cluster Weights: ", sum(W))
         println("Representative Periods: ", M)
     end
 
-    # K-medoids returns indices from DistMatrix as its medoids.
+    # K-means/medoids returns indices from DistMatrix as its medoids.
     #   This does not account for missing extreme weeks.
     #   This is corrected retroactively here.
     M = [parse(Int64, string(names(ClusteringInputDF)[i])) for i in M]
@@ -903,9 +913,15 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
         # Scale Load using previously identified multipliers
         #   Scale lpDF but not rpDF which compares to input data but is not written to file.
+#dev_ddp
         for loadcol in LoadCols
             if loadcol ∉ ConstCol_Syms
                 if !LoadExtremePeriod
+#=##Dev
+        if !LoadExtremePeriod
+            for loadcol in LoadCols
+                if loadcol ∉ ConstCol_Syms
+=###Dev
                     lpDF[!,loadcol] .*= load_mults[loadcol]
                 end
             end
