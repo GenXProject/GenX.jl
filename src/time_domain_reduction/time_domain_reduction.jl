@@ -171,9 +171,9 @@ function parse_multi_stage_data(inputs_dict)
     fuel_profiles = []
     AllFuelsConst = true
     for f in 1:length(fuel_col_names)
-        fuel_all_periods = []
+        fuel_all_stages = []
         for t in 1:length(keys(inputs_dict))
-            fuel_all_stages = vcat(fuel_all_periods, inputs_dict[t]["fuel_costs"][fuel_col_names[f]])
+            fuel_all_stages = vcat(fuel_all_stages, inputs_dict[t]["fuel_costs"][fuel_col_names[f]])
             if AllFuelsConst && (minimum(inputs_dict[t]["fuel_costs"][fuel_col_names[f]]) != maximum(inputs_dict[t]["fuel_costs"][fuel_col_names[f]]))
                 AllFuelsConst = false
             end
