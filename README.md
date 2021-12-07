@@ -35,7 +35,7 @@ Detailed documentation for GenX can be found [here](https://genxproject.github.i
 Download or clone the GenX repository on your machine in a directory named 'GenX'. Create this new directory in a location where you wish to store the GenXJulEnv environment.
 
 The Run.jl file in each of the example sub-folders within `Example_Systems/` provides an example of how to use GenX.jl for capacity expansion modeling. The following are the main steps performed in the Run.jl script:
-1.	Establish path to environment setup files and GenX source files.
+1.  Establish path to environment setup files and GenX source files.
 2.	Read in model settings `GenX_Settings.yml` from the example directory.
 3.  Configure solver settings.
 4.	Load the model inputs from the example directory and perform time-domain clustering if required.

@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	must_run(EP::Model, inputs::Dict)
+	must_run(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
 This function defines the constraints for operation of `must-run' or non-dispatchable resources, such as rooftop solar systems that do not receive dispatch signals, run-of-river hydroelectric facilities without the ability to spill water, or cogeneration systems that must produce a fixed quantity of heat in each time step. This resource type can also be used to model baseloaded or self-committed thermal generators that do not respond to economic dispatch.
 
@@ -28,7 +28,7 @@ For must-run resources ($y\in \mathcal{MR}$) output in each time period $t$ must
 \end{aligned}
 ```
 """
-function must_run(EP::Model, inputs::Dict)
+function must_run(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
 	println("Must-Run Resources Module")
 
@@ -48,6 +48,12 @@ function must_run(EP::Model, inputs::Dict)
 		sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z,:][!,:R_ID])))
 
 	EP[:ePowerBalance] += ePowerBalanceNdisp
+
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		@expression(EP, eCapResMarBalanceMustRun[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
+		EP[:eCapResMarBalance] += eCapResMarBalanceMustRun
+	end
 
 	### Constratints ###
 

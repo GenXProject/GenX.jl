@@ -87,7 +87,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	if setup["OperationWrapping"]==1 && !isempty(inputs["STOR_LONG_DURATION"]) && (isfile(data_directory*"/Period_map.csv") || isfile(joinpath(data_directory,string(joinpath(setup["TimeDomainReductionFolder"],"Period_map.csv"))))) # Use Time Domain Reduced data for GenX)
 		inputs = load_period_map(setup, path, sep, inputs)
 	end
-
+	
 	println("CSV Files Successfully Read In From $path$sep")
 
 	return inputs
