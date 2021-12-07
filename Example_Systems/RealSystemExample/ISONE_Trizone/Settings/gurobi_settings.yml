@@ -8,7 +8,7 @@ Method: 2                     # Algorithm used to solve continuous models (inclu
 
 #Gurobi-specific solver settings
 MIPGap: 1e-4                  # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise).
-BarConvTol: 1.0e-08           # Barrier convergence tolerance (determines when barrier terminates).
+BarConvTol: 1.0e-06           # Barrier convergence tolerance (determines when barrier terminates).
 NumericFocus: 0               # Numerical precision emphasis.
 Crossover: 0               # Barrier crossver strategy.
 BarObjRng: 1e+75              # Sets the maximum absolute value of the objective function

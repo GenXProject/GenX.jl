@@ -57,6 +57,7 @@ inpath = "$genx_path\\Example_Systems\\SmallNewEngland\\ThreeZones"
 v = false
 
 # Settings
+#settings_path = joinpath(genx_path, "GenX_settings.yml")
 settings_path = joinpath(inpath, "Settings")
 mysetup = YAML.load(open(joinpath(settings_path, "genx_settings.yml")))
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
