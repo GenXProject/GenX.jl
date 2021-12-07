@@ -111,6 +111,10 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 			[y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]*dfGen[!,:Eff_Down][y]
 		end)
 	end
+	#From co2 Policy module
+	@expression(EP, eELOSSByZone[z=1:Z],
+		sum(EP[:eELOSS][y] for y in intersect(inputs["STOR_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
+	)
 	return EP
 end
 

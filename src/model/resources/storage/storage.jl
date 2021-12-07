@@ -150,7 +150,7 @@ function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int)
 
 	G = inputs["G"]
 
-	if !isempty(inputs["STOR_ALL"])
+	if !isempty(inputs["STOR_ALL"]) #&& OperationWrapping == 1
 		EP = investment_energy(EP, inputs)
 		EP = storage_all(EP, inputs, Reserves, OperationWrapping)
 
