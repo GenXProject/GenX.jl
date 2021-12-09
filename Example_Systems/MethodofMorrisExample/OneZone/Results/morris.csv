@@ -1,9 +1,9 @@
 Resource,Zone,Lower_bound,Upper_bound,Parameter,Group,p_steps,total_num_trajectory,num_trajectory,len_design_mat,policy,mean,variance
-natural_gas_combined_cycle,1,-5,5,Inv_Cost_per_MWyr,ng,10,2,2,15,reference,19.154349766796773,32.99411371704077
-solar_pv,1,-10,10,Inv_Cost_per_MWyr,solar,20,,,,,-0.07923392996885296,0.018834046974927285
+natural_gas_combined_cycle,1,-5,5,Inv_Cost_per_MWyr,ng,10,2,2,15,reference,19.25430441736557,95.53052383119127
+solar_pv,1,-10,10,Inv_Cost_per_MWyr,solar,20,,,,,0.0,0.0
 onshore_wind,1,-7,7,Inv_Cost_per_MWyr,wind,14,,,,,0.0,0.0
-battery,1,-20,20,Inv_Cost_per_MWyr,battery,40,,,,,1.836416911302575,0.0
-natural_gas_combined_cycle,1,-5,5,Fixed_OM_Cost_per_MWyr,ng,10,,,,,19.154349766796773,32.99411371704077
-solar_pv,1,-10,10,Fixed_OM_Cost_per_MWyr,solar,20,,,,,-0.07923392996885296,0.018834046974927285
+battery,1,-20,20,Inv_Cost_per_MWyr,battery,40,,,,,0.1864047498091279,0.0035963256127263038
+natural_gas_combined_cycle,1,-5,5,Fixed_OM_Cost_per_MWyr,ng,10,,,,,19.25430441736557,95.53052383119127
+solar_pv,1,-10,10,Fixed_OM_Cost_per_MWyr,solar,20,,,,,0.0,0.0
 onshore_wind,1,-7,7,Fixed_OM_Cost_per_MWyr,wind,14,,,,,0.0,0.0
-battery,1,-20,20,Fixed_OM_Cost_per_MWyr,battery,40,,,,,1.836416911302575,0.0
+battery,1,-20,20,Fixed_OM_Cost_per_MWyr,battery,40,,,,,0.1864047498091279,0.0035963256127263038
