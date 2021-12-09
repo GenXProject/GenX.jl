@@ -182,8 +182,6 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
-
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
 include("multi_stage/load_inputs_multi_stage/load_generators_data_multi_stage.jl")
@@ -191,5 +189,5 @@ include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
 include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_capacity_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_settings.jl")
-include("additional_tools/modeling_to_generate_alternatives.jl") ##Note to Neha: Should we delete this and keep REF MGA rather?
+include("additional_tools/modeling_to_generate_alternatives.jl")
 end
