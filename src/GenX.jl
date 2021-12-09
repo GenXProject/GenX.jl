@@ -191,8 +191,6 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
-
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
 include("multi_stage/load_inputs_multi_stage/load_generators_data_multi_stage.jl")

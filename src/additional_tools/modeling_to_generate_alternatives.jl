@@ -40,9 +40,6 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
         # Start MGA Algorithm
 	    println("MGA Module")
 
-	    # Random objective function coefficients for the MGA formulation
-	    #Obj_coefficients = CSV.read(string(path, "/Rand_mga_objective_coefficients.csv"), header=true)
-	    Obj_coefficients = DataFrame(CSV.File(string(path, sep,"Rand_mga_objective_coefficients.csv"), header=true), copycols=true)
 	    # Objective function value of the least cost problem
 	    Least_System_Cost = objective_value(EP)
 
@@ -90,10 +87,10 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 
 	    print("Starting the first MGA iteration")
 
-	    for i in unique(Obj_coefficients[!, :Iter])
+	    for i in 1:setup["ModelingToGenerateAlternativeIterations"]
 
 	    	# Create random coefficients for the generators that we want to include in the MGA run for the given budget
-	    	pRand = Obj_coefficients[(Obj_coefficients[!,:Iter] .== i), :]
+	    	pRand = rand(length(unique(dfGen[dfGen[!, :MGA] .== 1, :Resource_Type])),length(unique(dfGen[!,:Zone])))
 
 	    	### Maximization objective
 	    	@objective(EP, Max, sum(pRand[tt,z] * vSumvP[tt,z] for tt in 1:length(TechTypes), z in 1:Z ))
