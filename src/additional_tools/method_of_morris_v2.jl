@@ -18,7 +18,6 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 	morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
 We are in the process of implementing Method of Morris for global sensitivity analysis
-#fortest
 """
 struct MatSpread{T1,T2}
     mat::T1
