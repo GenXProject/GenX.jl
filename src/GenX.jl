@@ -25,6 +25,7 @@ export solve_model
 export write_outputs
 export cluster_inputs
 export mga
+export morris
 export simple_operation
 export choose_output_dir
 
@@ -46,6 +47,14 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
+
+using DiffEqSensitivity
+using OrdinaryDiffEq
+using QuasiMonteCarlo
+using Random
+using RecursiveArrayTools
+using Statistics
+
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 # using CPLEX
 #using Gurobi
@@ -189,5 +198,7 @@ include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
 include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_capacity_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_settings.jl")
+
 include("additional_tools/modeling_to_generate_alternatives.jl")
+include("additional_tools/method_of_morris_v2.jl")
 end
