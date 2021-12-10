@@ -48,10 +48,10 @@ using Combinatorics
 using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 # using CPLEX
-#using Gurobi
-#using CPLEX
+using Gurobi
+using CPLEX
 #using MOI
-using SCIP
+#using SCIP
 using Clp
 using Cbc
 
@@ -85,6 +85,8 @@ include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
+include("load_inputs/load_co2_tax.jl")
+include("load_inputs/load_co2_credit.jl")
 
 include("load_inputs/load_inputs.jl")
 
@@ -100,6 +102,7 @@ include("model/core/ucommit.jl")
 include("model/core/reserves.jl")
 
 include("model/core/transmission.jl")
+include("model/core/co2.jl")
 
 include("model/resources/curtailable_variable_renewable/curtailable_variable_renewable.jl")
 
@@ -121,8 +124,11 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+include("model/resources/thermal/piecewiseheatrate.jl")
 
 include("model/policies/co2_cap.jl")
+include("model/policies/co2_tax.jl")
+include("model/policies/co2_credit.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
@@ -150,10 +156,12 @@ include("write_outputs/write_price.jl")
 include("write_outputs/write_reliability.jl")
 include("write_outputs/write_status.jl")
 include("write_outputs/write_storage.jl")
-include("write_outputs/write_storagedual.jl")
+#include("write_outputs/write_storagedual.jl")
 include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_time_weights.jl")
 include("write_outputs/choose_output_dir.jl")
+
+
 
 include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
@@ -182,7 +190,7 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
+#include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
 
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")

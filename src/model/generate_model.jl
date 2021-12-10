@@ -127,18 +127,19 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	# Infrastructure
-	EP = discharge(EP, inputs, setup["EnergyShareRequirement"])
+	EP = discharge(EP, inputs, setup["EnergyShareRequirement"], setup["PieceWiseHeatRate"])
 
 	EP = non_served_energy(EP, inputs, setup["CapacityReserveMargin"])
+
 
 ##dev_ddp
 	if setup["MultiStage"] > 0
 		EP = investment_discharge_multi_stage(EP, inputs, setup["MultiStageSettingsDict"])
 	else
-		EP = investment_discharge(EP, inputs)
+		EP = investment_discharge(EP, inputs, setup["MinCapReq"])
 	end
 ##Aneesha's PR modification
-	EP = investment_discharge(EP, inputs, setup["MinCapReq"])
+	#EP = investment_discharge(EP, inputs, setup["MinCapReq"])
 ##Dev
 
 	if setup["UCommit"] > 0
@@ -154,10 +155,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		if setup["MultiStage"] > 0
 			EP = transmission_multi_stage(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiStageSettingsDict"])
 		else
-			EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"])
+			EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
 		end
 ##Aneesha's PR modification
-		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
+		#EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
 ##Dev
 	end
 
@@ -176,13 +177,13 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
 ##dev_ddp
-		if setup["MultiStage"] > 0 
+		if setup["MultiStage"] > 0
 			EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["MultiStageSettingsDict"])
 		else
-			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"],setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
 		end
 ##Aneesha's PR modification
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+		#EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
 ##Dev
 	end
 
@@ -202,12 +203,27 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 	# Model constraints, variables, expression related to thermal resource technologies
 	if !isempty(inputs["THERM_ALL"])
-		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"])
+		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"], setup["PieceWiseHeatRate"])
 	end
 
 	# Policies
+	# CO2
+	EP = co2(EP, inputs, setup)
+	
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)
+
+
+
+	# CO2 tax
+	if setup["CO2Tax"] >= 1
+		EP = co2_tax(EP, inputs, setup)
+	end
+
+	# CO2 credit
+	if setup["CO2Credit"] >= 1
+		EP = co2_credit(EP, inputs, setup)
+	end
 
 
 	# Energy Share Requirement

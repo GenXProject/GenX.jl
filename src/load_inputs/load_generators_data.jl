@@ -172,6 +172,14 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		# Cost of providing spinning reserves
 		inputs_gen["dfGen"][!,:Rsv_Cost] = gen_in[!,:Rsv_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
 
+		if setup["PieceWiseHeatRate"] == 1
+			inputs_gen["dfGen"][!,:Intercept1] = gen_in[!,:Intercept1]/ModelScalingFactor # convert intercept
+		    inputs_gen["dfGen"][!,:Intercept2] = gen_in[!,:Intercept2]/ModelScalingFactor
+		    inputs_gen["dfGen"][!,:Intercept3] = gen_in[!,:Intercept3]/ModelScalingFactor
+		end
+
+		inputs_gen["dfGen"][!,:CO2_Sequestration_Per_ton] = gen_in[!,:CO2_Sequestration_Per_ton]/ModelScalingFactor 
+
 	end
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
@@ -187,6 +195,7 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		start_cost = convert(Array{Float64}, collect(skipmissing(inputs_gen["dfGen"][!,:Start_Cost_per_MW])))
 		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
 		inputs_gen["dfGen"][!,:CO2_per_Start] = zeros(Float64, G)
+		inputs_gen["dfGen"][!,:CO2_per_MMBTU] = zeros(Float64, G)
 	end
 
 	# Heat rate of all resources (million BTUs/MWh)
@@ -200,8 +209,10 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
 		inputs_gen["C_Fuel_per_MWh"][g,:] = fuel_costs[fuel_type[g]].*heat_rate[g]
 		inputs_gen["dfGen"][!,:CO2_per_MWh][g] = fuel_CO2[fuel_type[g]]*heat_rate[g]
+		inputs_gen["dfGen"][!,:CO2_per_MMBTU][g] = fuel_CO2[fuel_type[g]]
 		if setup["ParameterScale"] ==1
 			inputs_gen["dfGen"][!,:CO2_per_MWh][g] = inputs_gen["dfGen"][!,:CO2_per_MWh][g] * ModelScalingFactor
+			inputs_gen["dfGen"][!,:CO2_per_MMBTU][g] = inputs_gen["dfGen"][!,:CO2_per_MMBTU][g] * ModelScalingFactor
 		end
 		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
