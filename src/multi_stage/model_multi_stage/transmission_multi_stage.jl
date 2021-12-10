@@ -41,7 +41,7 @@ returns: JuMP model with updated variables, expressions, and constraints.
 """
 function transmission_multi_stage(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int, multi_stage_settings_d::Dict)
 
-	println("Transmission Module")
+	println("Multi-Stage Transmission Module")
 
 	dfGen = inputs["dfGen"]
 
