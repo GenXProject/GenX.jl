@@ -80,8 +80,3 @@ if mysetup["MethodofMorris"] == 1
     println("Starting Global sensitivity analysis with Method of Morris")
     morris(EP,inpath,mysetup,myinputs,outpath, OPTIMIZER)
 end
-
-#=if mysetup["MonteCarlo"] == 1
-    println("Starting Monte Carlo analysis")
-    montecarlo(EP,inpath,mysetup,myinputs,outpath)
-end=#
