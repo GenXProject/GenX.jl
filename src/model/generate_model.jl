@@ -246,7 +246,9 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if (setup["MinCapReq"] == 1)
         EP = minimum_capacity_requirement(EP, inputs, setup)
     end
-
+    if (setup["MaxCapReq"] == 1)
+        EP = maximum_capacity_limit(EP, inputs, setup)
+    end
     ## Define the objective function
     @objective(EP, Min, EP[:eObj])
 

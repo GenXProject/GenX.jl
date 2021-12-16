@@ -204,7 +204,7 @@ if setup["MultiStage"] == 0
     end
     dfCO2CaptureCredit = DataFrame()
     if setup["CO2Credit"] == 1
-        dfCO2CaptureCredit = write_credit_for_captured_emissions(path, sep, inputs, setup, EP)
+        dfCO2CaptureCredit = write_credit_for_captured_emissions(EP, inputs, setup)
     end
     elapsed_time_net_rev = @elapsed write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost)
     println("Time elapsed for writing net revenue is")

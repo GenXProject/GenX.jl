@@ -163,7 +163,6 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	# 		dfNetRevenue[!,:EmissionsCost] = dfNetRevenue[!,:EmissionsCost] * (ModelScalingFactor^2) # converting Million US$ to US$
 	# 	end
  	# end
-	#  dfCO2MassCapCost::DataFrame, dfCO2LoadRateCapCost::DataFrame, dfCO2GenRateCapCost::DataFrame, dfCO2TaxCost::DataFrame, dfCO2CaptureCredit::DataFrame
 	if setup["CO2Cap"] == 1 && has_duals(EP) == 1
 	    dfNetRevenue.EmissionsCost += dfCO2MassCapCost.AnnualSum
 	end
