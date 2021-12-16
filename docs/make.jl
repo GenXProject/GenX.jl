@@ -39,7 +39,10 @@ pages = OrderedDict(
         "Resources" => [
             "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
             "Flexible Demand" => "flexible_demand.md",
-            "Hydro" => "hydro_res.md",
+            "Hydro" => [
+                "Hydro Reservoir" => "hydro_res.md",
+                "Long Duration Hydro" => "hydro_inter_period_linkage.md"
+            ],
             "Must Run" => "must_run.md",
             "Storage" => [
                 "Storage" => "storage.md",
