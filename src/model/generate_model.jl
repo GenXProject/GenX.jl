@@ -124,6 +124,8 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = ucommit(EP, inputs, setup["UCommit"])
 	end
 
+	EP = emissions(EP, inputs)
+
 	if setup["Reserves"] > 0
 		EP = reserves(EP, inputs, setup["UCommit"])
 	end

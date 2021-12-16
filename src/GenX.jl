@@ -96,6 +96,7 @@ include("model/core/discharge/investment_discharge.jl")
 
 include("model/core/non_served_energy.jl")
 include("model/core/ucommit.jl")
+include("model/core/emissions.jl")
 
 include("model/core/reserves.jl")
 
