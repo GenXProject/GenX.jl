@@ -1,0 +1,11 @@
+Resource,Capital_Recovery_Period,Lifetime,Min_Retired_Cap_MW_p1,Min_Retired_Cap_MW_p2,Min_Retired_Cap_MW_p3,Min_Retired_Energy_Cap_MW_p1,Min_Retired_Energy_Cap_MW_p2,Min_Retired_Energy_Cap_MW_p3,Min_Retired_Charge_Cap_MW_p1,Min_Retired_Charge_Cap_MW_p2,Min_Retired_Charge_Cap_MW_p3
+MA_natural_gas_combined_cycle,20,20,0,0,0,0,0,0,0,0,0
+MA_solar_pv,20,20,0,0,0,0,0,0,0,0,0
+CT_natural_gas_combined_cycle,20,20,0,0,0,0,0,0,0,0,0
+CT_onshore_wind,20,20,0,0,0,0,0,0,0,0,0
+CT_solar_pv,20,20,0,0,0,0,0,0,0,0,0
+ME_natural_gas_combined_cycle,20,20,0,0,0,0,0,0,0,0,0
+ME_onshore_wind,20,20,0,0,0,0,0,0,0,0,0
+MA_battery,20,20,0,0,0,0,0,0,0,0,0
+CT_battery,20,20,0,0,0,0,0,0,0,0,0
+ME_battery,20,20,0,0,0,0,0,0,0,0,0
