@@ -63,6 +63,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "ModelingToGenerateAlternatives", 0)
     # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
     set_default_if_absent!(settings, "ModelingtoGenerateAlternativeSlack", 0.1)
+    # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
+    set_default_if_absent!(settings, "MultiStage", 0)
 
 return settings
 end
