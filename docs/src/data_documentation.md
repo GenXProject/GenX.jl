@@ -451,8 +451,6 @@ This file contains the minimum capacity carve-out requirement to be imposed (e.g
 Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
 
 
-#### 2.2.7 Rand\_mga\_objective\_coefficients.csv
-This file is required while using modeling to generate alternatives (MGA) algorithm. The number of columns in this csv file is equal to one plus the number of model zones. Number of rows for each iteration is equal to the number of distinct elements in the `Resource_Type` column in the `Generators_data.csv` file. Elements of this file are used as random objective function coefficients of the MGA algorithm.
 
 ###### Table 12: Structure of the Minimum\_capacity\_requirement.csv file
 ---
