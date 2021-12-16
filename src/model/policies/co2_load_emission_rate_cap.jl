@@ -58,7 +58,7 @@ Similarly, a generation based emission constraint is defined by setting the emis
 
 Note that the generator-side rate-based constraint can be used to represent a fee-rebate (``feebate'') system: the dirty generators that emit above the bar ($\epsilon_{z,p,gen}^{maxCO_2}$) have to buy emission allowances from the emission regulator in the region $z$ where they are located; in the same vein, the clean generators get rebates from the emission regulator at an emission allowance price being the dual variable of the emissions rate constraint.
 """
-function co2_cap(EP::Model, inputs::Dict, setup::Dict)
+function co2_load_side_emission_rate_cap(EP::Model, inputs::Dict, setup::Dict)
 
     println("C02 Policies Module")
 
@@ -68,59 +68,18 @@ function co2_cap(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    ### Expressions ###
 
-    # CO2 emissions for resources "y" during hour "t" [tons]
-    # if the model is using scaling, then vP is in GW;
-    #=Move this to discharge.jl
-    	@expression(EP, eEmissionsByPlant[y=1:G,t=1:T],
-    		if y in inputs["COMMIT"]
-    			dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t] + dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
-    		else
-    			dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
-    		end
-    	)
-
-    	# Emissions per zone = sum of emissions from each generator
-    	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
-    	if setup["CO2Cap"] == 2
-    		@expression(EP, eELOSSByZone[z=1:Z],
-    			sum(EP[:eELOSS][y] for y in intersect(inputs["STOR_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-    		)
-    	##Move this to discharge.jl
-    	elseif setup["CO2Cap"] == 3
-    		@expression(EP, eGenerationByZone[z=1:Z, t=1:T], # the unit is GW
-    			sum(EP[:vP][y,t] for y in intersect(inputs["THERM_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-    			+ sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-    			+ sum(EP[:vP][y,t] for y in intersect(inputs["MUST_RUN"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-    			+ sum(EP[:vP][y,t] for y in intersect(inputs["HYDRO_RES"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-    		)
-    	end
-    	=#
     ### Constraints ###
 
-    ## Mass-based: Emissions constraint in absolute emissions limit (tons)
-    @constraint(EP, cCO2Emissions_mass[cap = 1:inputs["NCO2Cap"]],
-        sum(inputs["omega"][t] * EP[:eEmissionsByZone][z, t] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap]), t = 1:T) <=
-        sum(inputs["dfMaxCO2"][z, cap] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap]))
+    ## Load emission rate-based: Emissions constraint in load-side emission rate limit (tons/MWh)
+    ## Load + Rate-based: Emissions constraint in terms of rate (tons/MWh)
+    @constraint(EP, cCO2Emissions_loadrate[cap = 1:inputs["NCO2LoadRateCap"]],
+        sum(inputs["omega"][t] * eEmissionsByZone[z, t] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]), t = 1:T) <=
+        sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - sum(vNSE[s, t, z] for s = 1:SEG)) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])) +
+        sum(inputs["dfMaxCO2LoadRate"][z, cap] * setup["StorageLosses"] * eELOSSByZone[z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
     )
-    # ## Load + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-    # elseif setup["CO2Cap"] == 2 ##This part moved to non_served_energy.jl
-    # 	@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-    # 		sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
-    # 		sum(inputs["dfMaxCO2Rate"][z,cap] * sum(inputs["omega"][t] * (inputs["pD"][t,z] - sum(EP[:vNSE][s,t,z] for s in 1:SEG)) for t=1:T) for z = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])) +
-    # 		sum(inputs["dfMaxCO2Rate"][z,cap] * setup["StorageLosses"] *  EP[:eELOSSByZone][z] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
-    # 	)
 
-    # ## Generation + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-    # elseif (setup["CO2Cap"]==3)
-    # 	@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-    # 		sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
-    # 		sum(inputs["dfMaxCO2Rate"][z,cap] * inputs["omega"][t] * EP[:eGenerationByZone][z,t] for t=1:T, z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
-    # 	)
-    # end 
 
-    #@constraint(eP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]], EP[:eCO2Cap][cap]<=0)
     return EP
 
 end

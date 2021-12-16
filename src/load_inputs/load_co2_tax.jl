@@ -17,28 +17,21 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	load_co2_tax(setup::Dict, path::AbstractString, sep::AbstractString, inputs_co2_tax::Dict)
 
-Function for reading input parameters related to CO$_2$ emissions cap constraints
+Function for reading input parameters related to tax on CO$_2$ emissions
 """
 function load_co2_tax(setup::Dict, path::AbstractString, sep::AbstractString, inputs_co2_tax::Dict)
 	# Definition of CO2 Tax requirements by zone (as Max Mtons)
 	#inputs_co2_tax["dfCO2Cap"] = CSV.read(string(path,sep,"CO2_cap.csv"), header=true)
 	inputs_co2_tax["dfCO2Tax"] = DataFrame(CSV.File(string(path, sep,"CO2_tax.csv"), header=true), copycols=true)
-
-
 	inputs_co2_tax["dfCO2Tax"][!,:CO2Tax] = convert(Array{Float64}, inputs_co2_tax["dfCO2Tax"][!,:CO2Tax])
 
-
 	# scale parameters if ModelScalingFactor is applied 
-	# convert the unit from $/ton to $/kton
+	# convert the unit from $/ton to Million$/kton
 	if setup["ParameterScale"] == 1
-		inputs_co2_tax["dfCO2Tax"][!,:CO2Tax] = inputs_co2_tax["dfCO2Tax"][!,:CO2Tax]/ModelScalingFactor
-
+		inputs_co2_tax["dfCO2Tax"][!,:CO2Tax] = inputs_co2_tax["dfCO2Tax"][!,:CO2Tax] / ModelScalingFactor
 	else
 		inputs_co2_tax["dfCO2Tax"][!,:CO2Tax] = inputs_co2_tax["dfCO2Tax"][!,:CO2Tax]
-
 	end
-
-
 
 	println("CO2_tax.csv Successfully Read!")
 	return inputs_co2_tax

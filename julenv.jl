@@ -36,7 +36,7 @@ Pkg.add(Pkg.PackageSpec(name="Distances", version="0.10.3"))
 Pkg.add(Pkg.PackageSpec(name="DataFrames", version="1.0.0")) #0.20.2
 Pkg.add(Pkg.PackageSpec(name="Documenter", version="0.27.3"))
 Pkg.add(Pkg.PackageSpec(name="DocumenterTools", version="0.1.13"))
-#Pkg.add(Pkg.PackageSpec(name="Gurobi", version="0.9.14"))
+Pkg.add(Pkg.PackageSpec(name="Gurobi", version="0.9.14"))
 #Pkg.build("Gurobi")
 ##Add if elseif with Method of Morris for these
 Pkg.add(Pkg.PackageSpec(name="DiffEqSensitivity", version="6.52.1"))

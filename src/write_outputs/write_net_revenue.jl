@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing net revenue of different generation technologies.
 """
-function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame)
+function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfCO2MassCapCost::DataFrame, dfCO2LoadRateCapCost::DataFrame, dfCO2GenRateCapCost::DataFrame, dfCO2TaxCost::DataFrame)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
@@ -135,49 +135,61 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	elseif v"1.4" <= VERSION < v"1.7"
 		dfNetRevenue.EmissionsCost = zeros(size(dfNetRevenue, 1))
 	end
- 	if setup["CO2Cap"] >=1 && has_duals(EP) == 1
- 		for y in 1:G
-			dfNetRevenue.EmissionsCost[y] = 0.0
-			for cap in 1:inputs["NCO2Cap"]
- 				if dfGen[y,:Zone] in findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
-					if setup["CO2Cap"]==1 # Mass-based
-						# Cost = sum(sum(emissions of gen y * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-						dfNetRevenue.EmissionsCost[y] += sum(value(EP[:eEmissionsByPlant][y,t]) * inputs["omega"][t] * (-1) * dual(EP[:cCO2Emissions_systemwide][cap])
-							for t in 1:T)
+ 	# if setup["CO2Cap"] >=1 && has_duals(EP) == 1
+ 	# 	for y in 1:G
+	# 		dfNetRevenue.EmissionsCost[y] = 0.0
+	# 		for cap in 1:inputs["NCO2Cap"]
+ 	# 			if dfGen[y,:Zone] in findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
+	# 				if setup["CO2Cap"]==1 # Mass-based
+	# 					# Cost = sum(sum(emissions of gen y * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
+	# 					dfNetRevenue.EmissionsCost[y] += sum(value(EP[:eEmissionsByPlant][y,t]) * inputs["omega"][t] * (-1) * dual(EP[:cCO2Emissions_systemwide][cap])
+	# 						for t in 1:T)
 
-					elseif setup["CO2Cap"]==2 # Demand + Rate-based
-						# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-						dfNetRevenue.EmissionsCost[y] += sum(value(EP[:eEmissionsByPlant][y,t]) * inputs["omega"][t] * (-1) * dual(EP[:cCO2Emissions_systemwide][cap])
-							for t in 1:T)
-					elseif setup["CO2Cap"]==3 # Generation + Rate-based
-						if y in union(inputs["THERM_ALL"],inputs["VRE"], inputs["VRE"],inputs["MUST_RUN"],inputs["HYDRO_RES"])
-							# Cost = sum( sum(emissions - generatio for zone z * MaxCO2Rate for zone z for z in Z) * dual(CO2 constraint[cap] for cap in setup["NCO2"])
-							dfNetRevenue.EmissionsCost[y] += sum( (value(EP[:eEmissionsByPlant][y,t]) - (value(EP[:vP][y,t]) * inputs["dfMaxCO2Rate"][z,cap])) * inputs["omega"][t] * (-1) * dual(EP[:cCO2Emissions_systemwide][cap])
-								for z=dfGen[y,:Zone], t in 1:T)
-						end
-					end
-				end
-			end
- 		end
-		if setup["ParameterScale"] == 1
-			dfNetRevenue[!,:EmissionsCost] = dfNetRevenue[!,:EmissionsCost] * (ModelScalingFactor^2) # converting Million US$ to US$
-		end
- 	end
-
-	# Add regional technology subsidy revenue to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:RegSubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.RegSubsidyRevenue = zeros(size(dfNetRevenue, 1))
+	# 				elseif setup["CO2Cap"]==2 # Demand + Rate-based
+	# 					# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
+	# 					dfNetRevenue.EmissionsCost[y] += sum(value(EP[:eEmissionsByPlant][y,t]) * inputs["omega"][t] * (-1) * dual(EP[:cCO2Emissions_systemwide][cap])
+	# 						for t in 1:T)
+	# 				elseif setup["CO2Cap"]==3 # Generation + Rate-based
+	# 					if y in union(inputs["THERM_ALL"],inputs["VRE"], inputs["VRE"],inputs["MUST_RUN"],inputs["HYDRO_RES"])
+	# 						# Cost = sum( sum(emissions - generatio for zone z * MaxCO2Rate for zone z for z in Z) * dual(CO2 constraint[cap] for cap in setup["NCO2"])
+	# 						dfNetRevenue.EmissionsCost[y] += sum( (value(EP[:eEmissionsByPlant][y,t]) - (value(EP[:vP][y,t]) * inputs["dfMaxCO2Rate"][z,cap])) * inputs["omega"][t] * (-1) * dual(EP[:cCO2Emissions_systemwide][cap])
+	# 							for z=dfGen[y,:Zone], t in 1:T)
+	# 					end
+	# 				end
+	# 			end
+	# 		end
+ 	# 	end
+	# 	if setup["ParameterScale"] == 1
+	# 		dfNetRevenue[!,:EmissionsCost] = dfNetRevenue[!,:EmissionsCost] * (ModelScalingFactor^2) # converting Million US$ to US$
+	# 	end
+ 	# end
+	#  dfCO2MassCapCost::DataFrame, dfCO2LoadRateCapCost::DataFrame, dfCO2GenRateCapCost::DataFrame, dfCO2TaxCost::DataFrame, dfCO2CaptureCredit::DataFrame
+	if setup["CO2Cap"] == 1 && has_duals(EP) == 1
+	    dfNetRevenue.EmissionsCost += dfCO2MassCapCost.AnnualSum
 	end
-	if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
-		dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[!,:SubsidyRevenue]
+	if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
+	    dfNetRevenue.EmissionsCost += dfCO2LoadRateCapCost.AnnualSum
+	end	
+	if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
+	    dfNetRevenue.EmissionsCost += dfCO2GenRateCapCost.AnnualSum
 	end
+	if setup["CO2Tax"] == 1
+	    dfNetRevenue.EmissionsCost += dfCO2TaxCost.AnnualSum
+	end	
+    # Add regional technology subsidy revenue to the dataframe
+    if v"1.3" <= VERSION < v"1.4"
+        dfNetRevenue[!, :RegSubsidyRevenue] .= 0.0
+    elseif v"1.4" <= VERSION < v"1.7"
+        dfNetRevenue.RegSubsidyRevenue = zeros(size(dfNetRevenue, 1))
+    end
+    if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
+        dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[!, :SubsidyRevenue]
+    end
 
-	dfNetRevenue.Revenue =	dfNetRevenue.EnergyRevenue + dfNetRevenue.SubsidyRevenue + dfNetRevenue.ReserveMarginRevenue + dfNetRevenue.ESRRevenue + dfNetRevenue.RegSubsidyRevenue
-	dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
-	#dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
-	dfNetRevenue.Profit = 	dfNetRevenue.Revenue - dfNetRevenue.Cost
+    dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue + dfNetRevenue.SubsidyRevenue + dfNetRevenue.ReserveMarginRevenue + dfNetRevenue.ESRRevenue + dfNetRevenue.RegSubsidyRevenue
+    dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
+    #dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
+    dfNetRevenue.Profit = dfNetRevenue.Revenue - dfNetRevenue.Cost
 
-	CSV.write(string(path,sep,"NetRevenue.csv"), dfNetRevenue)
+    CSV.write(string(path, sep, "NetRevenue.csv"), dfNetRevenue)
 end

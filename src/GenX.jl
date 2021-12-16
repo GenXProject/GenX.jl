@@ -49,7 +49,7 @@ using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 # using CPLEX
 using Gurobi
-using CPLEX
+# using CPLEX
 #using MOI
 #using SCIP
 using Clp
@@ -81,8 +81,11 @@ include("load_inputs/load_reserves.jl")
 include("load_inputs/load_cap_reserve_margin.jl")
 include("load_inputs/load_energy_share_requirement.jl")
 include("load_inputs/load_co2_cap.jl")
+include("load_inputs/load_co2_cap_genrate.jl")
+include("load_inputs/load_co2_cap_loadrate.jl")
 include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
+include("load_inputs/load_maximum_capacity_limit.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
 include("load_inputs/load_co2_tax.jl")
@@ -127,6 +130,8 @@ include("model/resources/thermal/thermal_no_commit.jl")
 include("model/resources/thermal/piecewiseheatrate.jl")
 
 include("model/policies/co2_cap.jl")
+include("model/policies/co2_generation_emission_rate_cap.jl")
+include("model/policies/co2_load_emission_rate_cap.jl")
 include("model/policies/co2_tax.jl")
 include("model/policies/co2_credit.jl")
 include("model/policies/energy_share_requirement.jl")
@@ -146,7 +151,13 @@ include("write_outputs/write_charge.jl")
 include("write_outputs/write_charging_cost.jl")
 include("write_outputs/write_costs.jl")
 include("write_outputs/write_curtailment.jl")
-include("write_outputs/write_emissions.jl")
+# include("write_outputs/write_emissions.jl")
+include("write_outputs/write_co2.jl")
+include("write_outputs/write_co2_cap.jl")
+include("write_outputs/write_co2_generation_emission_rate_cap.jl")
+include("write_outputs/write_co2_load_emission_rate_cap.jl")
+include("write_outputs/write_co2_tax.jl")
+include("write_outputs/write_co2_taxcredit.jl")
 include("write_outputs/write_energy_revenue.jl")
 include("write_outputs/write_net_revenue.jl")
 include("write_outputs/write_nse.jl")

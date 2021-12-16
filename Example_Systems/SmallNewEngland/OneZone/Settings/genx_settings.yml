@@ -20,3 +20,5 @@ TimeDomainReduction: 0 # Time domain reduce (i.e. cluster) inputs based on Load_
 ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
 ModelingToGenerateAlternativeIterations: 3 # Number of MGA iterations with maximization and minimization objective
+MultiStage: 0
+PieceWiseHeatRate: 0
