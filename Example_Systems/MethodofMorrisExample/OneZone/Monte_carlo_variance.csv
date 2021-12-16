@@ -1,0 +1,5 @@
+Resource,Zone,Inv_Cost_per_Mwyr_variance
+natural_gas_combined_cycle,1,10
+solar_pv,1,10
+onshore_wind,1,10
+battery,1,10
