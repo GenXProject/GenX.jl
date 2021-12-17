@@ -103,9 +103,16 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 2. Add a `MGA` column in the `Generators_data.csv` file denoting the availability of the technology.
 3. Set the `ModelingToGenerateAlternatives` flag in the `GenX_Settings.yml` file to 1.
 4. Set the `ModelingtoGenerateAlternativeSlack` flag in the `GenX_Settings.yml` file to the desirable level of slack.
-5. Create a `Rand_mga_objective_coefficients.csv` file to provide random objective function coefficients for each MGA iteration. For each iteration, number of rows in the `Rand_mga_objective_coefficients.csv` file represents the number of distinct technology types while number of columns represent the number of model zones.
-6. Solve the model using `Run.jl` file.
+5. Solve the model using `Run.jl` file.
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
 
+## Running Method of Morris with GenX
+
+GenX includes Method of Morris package that can be used for performing extensive one-at-a-time sensitivity analysis. To use the Method of Morris algorithm, user will need to perform the following tasks:
+
+1. Create `Method_of_morris_range.csv` file to provide inputs required for runiing the Method of Morris script.
+2. Set the `MethodofMorris` flag in the `GenX_Settings.yml` file to 1.
+3. Solve the model using `Run.jl` file.
+4. Results of the Method of Morris script will be stored in the `Results` folder in the `morris.csv` file.
 

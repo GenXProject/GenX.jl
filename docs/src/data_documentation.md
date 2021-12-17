@@ -452,15 +452,6 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 
 
 
-###### Table 12: Structure of the Minimum\_capacity\_requirement.csv file
----
-|**Column Name** | **Description**|
-| :------------ | :-----------|
-|V* |* represents the region number. This column has random integers between -100 and 100.|
-|Iter | MGA iteration number.|
-
-
-
 ## 3 Outputs
 
 The table below summarizes the units of each output variable reported as part of the various CSV files produced after each model run. The reported units are also provided. If a result file includes time-dependent values, the value will not include the hour weight in it. An annual sum ("AnnualSum") column/row will be provided whenever it is possible (e.g., `emissions.csv`).
