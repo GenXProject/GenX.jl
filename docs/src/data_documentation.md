@@ -130,7 +130,7 @@ Additionally, Solver related settings parameters are specified in the appropriat
 
 ## 2 Inputs
 
-All input files are in CSV format. Running the GenX model requires a minimum of five input files. Additionally, the user may need to specify five more input files based on model configuration and type of scenarios of interest. Names of the input files and their functionality is given below. Note that names of the input files are case sensitive.
+All input files are in CSV format. Running the GenX model requires a minimum of five input files. Additionally, the user may need to specify five more input files based on model configuration and type of scenarios of interest. Description and column details of all potential input files are included in the `Input_data_explained` folder in the `Example_Systems` folder. Names of the input files and their functionality is also given below. Note that names of the input files are case sensitive.
 
 
 ###### Table 2: Summary of the input files
