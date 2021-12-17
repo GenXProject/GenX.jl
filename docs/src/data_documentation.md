@@ -2,7 +2,7 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are specified in a `GenX_Settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
+Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
 
 ###### Table 1a: Summary of the Model settings parameters
 ---
@@ -12,9 +12,6 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 |OperationWrapping | Select temporal resolution for operations constraints.|
 ||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
 ||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|LongDurationStorage | Select whether inter-period energy exchange allowed for storage technologies.|
-||0= inter-period energy exchange not allowed.|
-||1 = inter-period energy exchange allowed.|
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
 ||0 = Use full input data as provided.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
@@ -59,6 +56,9 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
 |WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|MethodofMorris | Method of Morris algorithm |
+||1 = Use the algorithm. |
+||0 = Do not use the algorithm. |
 |**Miscellaneous**|
 |PrintModel | Flag for printnig the model equations as .lp file.|
 ||1= including the model equation as an output|
@@ -266,6 +266,9 @@ This file contains cost and performance parameters for various generators and ot
 |HYDRO | {0, 1}, Flag to indicate membership in set of reservoir hydro resources.|
 ||HYDRO = 0: Not part of set (default) |
 ||HYDRO = 1: Hydropower with reservoir modeling, including inflows, spillage, ramp rate limits and minimum operating level and efficiency loss associated with discharging. Reservoir capacity can be represented as a ratio or energy to power. This type of plant cannot charge from grid.|
+|LDS | {0, 1}, Flag to indicate the resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage)|
+||LDS = 0: Not part of set (default) |
+||LDS = 1: Long duration storage resources|
 |**Existing technology capacity**|
 |Existing\_Cap\_MW |The existing capacity of a power plant in MW.|
 |Existing\_Cap\_MWh |The existing capacity of storage in MWh where `STOR = 1` or `STOR = 2`.|
@@ -368,7 +371,7 @@ Modeling grid operations for each hour of the year can be computationally expens
 
 #### 2.2.2 Reserves.csv
 
-This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `Reserves` flag is activated in the YAML file `GenX_settings.yml`.
+This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `Reserves` flag is activated in the YAML file `genx_settings.yml`.
 
 ###### Table 8: Structure of the Reserves.csv file
 ---
@@ -388,7 +391,7 @@ This file includes parameter inputs needed to model time-dependent procurement o
 
 #### 2.2.3 Energy\_share\_requirement.csv
 
-This file contains inputs specifying minimum energy share requirement policies, such as Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) policies. This file is needed if parameter EnergyShareRequirement has a non-zero value in the YAML file `GenX_settings.yml`.
+This file contains inputs specifying minimum energy share requirement policies, such as Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) policies. This file is needed if parameter EnergyShareRequirement has a non-zero value in the YAML file `genx_settings.yml`.
 
 Note: this file should use the same region name as specified in the `Generators_data.csv` file.
 
@@ -404,7 +407,7 @@ Note: this file should use the same region name as specified in the `Generators_
 
 #### 2.2.4 CO2\_cap.csv
 
-This file contains inputs specifying CO2 emission limits policies (e.g. emissions cap and permit trading programs). This file is needed if `CO2Cap` flag is activated in the YAML file `GenX_settings.yml`. `CO2Cap` flag set to 1 represents mass-based (tCO2 ) emission target. `CO2Cap` flag set to 2 is specified when emission target is given in terms of rate (tCO2/MWh) and is based on total demand met. `CO2Cap` flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
+This file contains inputs specifying CO2 emission limits policies (e.g. emissions cap and permit trading programs). This file is needed if `CO2Cap` flag is activated in the YAML file `genx_settings.yml`. `CO2Cap` flag set to 1 represents mass-based (tCO2 ) emission target. `CO2Cap` flag set to 2 is specified when emission target is given in terms of rate (tCO2/MWh) and is based on total demand met. `CO2Cap` flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
 
 ###### Table 10: Structure of the CO2\_cap.csv file
 ---
@@ -421,7 +424,7 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 
 #### 2.2.5 Capacity\_reserve\_margin.csv
 
-This file contains the regional capacity reserve margin requirements. This file is needed if parameter CapacityReserveMargin has a non-zero value in the YAML file `GenX_settings.yml`.
+This file contains the regional capacity reserve margin requirements. This file is needed if parameter CapacityReserveMargin has a non-zero value in the YAML file `genx_settings.yml`.
 
 Note: this file should use the same region name as specified in the `Generators_data.csv` file
 
@@ -437,7 +440,7 @@ Note: this file should use the same region name as specified in the `Generators_
 
 #### 2.2.6 Minimum\_capacity\_requirement.csv
 
-This file contains the minimum capacity carve-out requirement to be imposed (e.g. a storage capacity mandate or offshore wind capacity mandate). This file is needed if parameter `MinCapReq` flag has a non-zero value in the YAML file `GenX_settings.yml`.
+This file contains the minimum capacity carve-out requirement to be imposed (e.g. a storage capacity mandate or offshore wind capacity mandate). This file is needed if the `MinCapReq` flag has a non-zero value in the YAML file `genx_settings.yml`.
 
 ###### Table 12: Structure of the Minimum\_capacity\_requirement.csv file
 ---
@@ -450,6 +453,35 @@ This file contains the minimum capacity carve-out requirement to be imposed (e.g
 
 Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
 
+#### 2.2.7 Method\_of\_morris\_range.csv
+
+This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
+
+###### Table 12: Structure of the Method\_of\_morris\_range.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand/loads.|
+|Zone | Integer representing zone number where the resource is located. |
+|Lower\_bound | Percentage lower deviation from the nominal value|
+|Upper\_bound| Percentage upper deviation from the nominal value|
+|Parameter| Column from the `Generators_data.csv` file containing uncertain parameters|
+|Group| Group the uncertain parameters that will be changed all at once while performing the sensitivity analysis. For example, if the fuel price of natural gas is uncertain, all generators consuming natural gas should be in the same group. Group name is user defined|
+|p_steps| Number of steps between upper and lower bound|
+|total\_num\_trajectory| Total number of trakectories through the design matrix|
+|num\_trajectory| Selected number of trajectories throigh the design matrix|
+|len\_design\_mat| Length of the design matrix|
+|policy| Name of the policy|
+
+Notes:
+1. Upper and lower bounds are specified in terms of percentage deviation from the nominal value.
+2. Percentage variation for uncertain parameters in a given group is identical. For example, if solar cluster 1 and solar cluster 2 both belong to the ‘solar’ group, their Lower_bound and Upper_bound must be identical
+3. P\_steps should at least be = 1\%, i.e., Upper\_bound – Lower\_bound $<$ p\_steps
+4. P\_steps for parameters in one group must be identical
+5. Total\_num\_trajectory should be around 3 to 4 times the total number of uncertain parameters
+6. num\_trajectory should be approximately equal to the total number of uncertain parameters
+7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
+8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
 
 
 ## 3 Outputs
