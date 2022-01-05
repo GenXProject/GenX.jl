@@ -186,15 +186,19 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     Morris_range = DataFrame(CSV.File(string(path, sep,"Method_of_morris_range.csv"), header=true), copycols=true)
     groups = Morris_range[!,:Group]
     p_steps = Morris_range[!,:p_steps]
-    total_num_trajectory=Morris_range[!,:total_num_trajectory][1]
-    num_trajectory=Morris_range[!,:num_trajectory][1]
-    len_design_mat=Morris_range[!,:len_design_mat][1]
+    total_num_trajectory = Morris_range[!,:total_num_trajectory][1]
+    num_trajectory = Morris_range[!,:num_trajectory][1]
+    len_design_mat = Morris_range[!,:len_design_mat][1]
+    uncertain_columns = unique(Morris_range[!,:Parameter])
     #save_parameters = zeros(length(Morris_range[!,:Parameter]))
 
     # Creating the range of uncertain parameters in terms of absolute values
-    sigma_inv = [inputs["dfGen"][!,:Inv_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Inv_Cost_per_MWyr", :Lower_bound] ./100) inputs["dfGen"][!,:Inv_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Inv_Cost_per_MWyr", :Upper_bound] ./100)]
-    sigma_fom = [inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Fixed_OM_Cost_per_MWyr", :Lower_bound] ./100) inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== "Fixed_OM_Cost_per_MWyr", :Upper_bound] ./100)]
-    sigma = [sigma_inv; sigma_fom]
+    sigma = zeros((1, 2))
+    for column in uncertain_columns
+        sigma = [sigma; [inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Lower_bound] ./100) inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Upper_bound] ./100)]]
+    end
+    sigma = sigma[2:end,:]
+
     p_range = mapslices(x->[x], sigma, dims=2)[:]
 
     # Creating a function for iteratively solving the model with different sets of input parameters
@@ -203,11 +207,10 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
         print("\n")
         #save_parameters = hcat(save_parameters, sigma)
 
-        inv_index = findall(s -> s == "Inv_Cost_per_MWyr", Morris_range[!,:Parameter])
-        inputs["dfGen"][!,:Inv_Cost_per_MWyr] = sigma[first(inv_index):last(inv_index)]
-
-        fom_index = findall(s -> s == "Fixed_OM_Cost_per_MWyr", Morris_range[!,:Parameter])
-        inputs["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = sigma[first(fom_index):last(fom_index)]
+        for column in uncertain_columns
+            index = findall(s -> s == column, Morris_range[!,:Parameter])
+            inputs["dfGen"][!,Symbol(column)] = sigma[first(index):last(index)]
+        end
 
         EP = generate_model(setup, inputs, OPTIMIZER)
         #EP, solve_time = solve_model(EP, setup)
