@@ -107,7 +107,7 @@ If not modeling regulation and spinning reserves, thermal resources subject to u
 
 ```math
 \begin{aligned}
-	\Theta_{y,z,t} \geq \rho^{max}_{y,z} \times \Omega^{size}_{y,z} \times \nu_{y,z,t}
+	\Theta_{y,z,t} \leq \rho^{max}_{y,z} \times \Omega^{size}_{y,z} \times \nu_{y,z,t}
 	\hspace{1.5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
