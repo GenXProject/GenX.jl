@@ -5,7 +5,7 @@ Modules = [GenX]
 Pages = ["cap_reserve_margin.jl"]
 ```
 
-## CO$_2$ Capacity
+## CO$_2$ Constraint Policy
 ```@autodocs
 Modules = [GenX]
 Pages = ["co2_cap.jl"]
