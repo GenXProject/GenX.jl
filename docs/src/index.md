@@ -109,9 +109,9 @@ Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders
 
 ## Running Method of Morris with GenX
 
-GenX includes Method of Morris package that can be used for performing extensive one-at-a-time sensitivity analysis. To use the Method of Morris algorithm, user will need to perform the following tasks:
+GenX includes Method of Morris package that can be used for performing extensive one-at-a-time sensitivity analysis on any parameters specified in the `Generators_data.csv` file. To use the Method of Morris algorithm, user will need to perform the following tasks:
 
-1. Create `Method_of_morris_range.csv` file to provide inputs required for runiing the Method of Morris script.
+1. Create `Method_of_morris_range.csv` file to provide inputs required for running the Method of Morris script.
 2. Set the `MethodofMorris` flag in the `GenX_Settings.yml` file to 1.
 3. Solve the model using `Run.jl` file.
 4. Results of the Method of Morris script will be stored in the `Results` folder in the `morris.csv` file.

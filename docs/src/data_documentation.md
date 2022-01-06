@@ -482,6 +482,7 @@ Notes:
 6. num\_trajectory should be approximately equal to the total number of uncertain parameters
 7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
 8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
+9. Upper and lower bounds should be specified for all the resources included in the `Generators_data.csv` file. If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
 
 
 ## 3 Outputs
