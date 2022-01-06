@@ -52,4 +52,4 @@ after_success:
       Pkg.add("Coverage")
       using Coverage
       Coveralls.submit(process_folder())'
-install: travis_wait 30 mvn install
+#install: travis_wait 30 mvn install
