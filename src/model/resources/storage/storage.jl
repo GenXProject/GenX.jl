@@ -144,18 +144,18 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int)
+function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int)
 
 	println("Storage Resources Module")
 
 	G = inputs["G"]
 
-	if !isempty(inputs["STOR_ALL"])
+	if !isempty(inputs["STOR_ALL"]) #&& OperationWrapping == 1
 		EP = investment_energy(EP, inputs)
-		EP = storage_all(EP, inputs, Reserves, OperationWrapping, LongDurationStorage)
+		EP = storage_all(EP, inputs, Reserves, OperationWrapping)
 
 		# Include LongDurationStorage only when modeling representative periods and long-duration storage
-		if OperationWrapping == 1 && LongDurationStorage == 1
+		if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
 			EP = long_duration_storage(EP, inputs)
 		end
 	end

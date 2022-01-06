@@ -52,7 +52,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 ---
 |**Notation** | **Description**|
 | :------------ | :-----------|
-|$\Omega_{y,z} \in \mathbb{R}_+$ | Installed capacity of resource $y$  in zone $z$ [MWh]|
+|$\Omega_{y,z} \in \mathbb{R}_+$ | Installed capacity in terms of the number of units (each unit, being of size $\overline{\Omega}_{y,z}^{size}$) of resource $y$  in zone $z$ [Dimensionless]|
 |$\Omega^{energy}_{y,z} \in \mathbb{R}_+$ | Installed energy capacity of resource $y$  in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}$ [MWh]|
 |$\Omega^{charge}_{y,z} \in \mathbb{R}_+$ | Installed charging power capacity of resource $y$  in zone $z$ - only applicable for storage resources, $y \in \mathcal{O}^{asym}$ [MW]|
 |$\Delta_{y,z} \in \mathbb{R}_+$ | Retired capacity of technology $y$ from existing capacity in zone $z$ [MW]|
@@ -93,7 +93,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 | :------------ | :-----------|
 |$D_{z,t}$ | Electricity demand in zone $z$ and at time step $t$ [MWh]|
 |$\tau^{period}$ | number of time steps in each representative period $w \in \mathcal{W}^{rep}$ and each input period $w \in \mathcal{W}^{input}$|
-|$\omega_{t}$ | weight of each model time step $\omega_t =1 \forall t \in T$ when modeling each time step of the year at an hourly resolution|
+|$\omega_{t}$ | weight of each model time step $\omega_t =1 \forall t \in T$ when modeling each time step of the year at an hourly resolution [1/year]|
 |$n_s^{slope}$ | Cost of non-served energy/demand curtailment for price-responsive demand segment $s$ [\$/MWh]|
 |$n_s^{size}$ | Size of price-responsive demand segment $s$ as a fraction of the hourly zonal demand [%]|
 |$\overline{\Omega}_{y,z}$ | Maximum capacity of technology $y$ in zone $z$ [MW]|

@@ -37,7 +37,7 @@ function discharge(EP::Model, inputs::Dict)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps
-
+	Z = inputs["Z"]     # Number of zones
 	### Variables ###
 
 	# Energy injected into the grid by resource "y" at hour "t"

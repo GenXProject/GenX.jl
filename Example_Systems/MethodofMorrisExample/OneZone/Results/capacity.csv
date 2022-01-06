@@ -1,0 +1,6 @@
+Resource,Zone,StartCap,RetCap,NewCap,EndCap,StartEnergyCap,RetEnergyCap,NewEnergyCap,EndEnergyCap,StartChargeCap,RetChargeCap,NewChargeCap,EndChargeCap
+natural_gas_combined_cycle,1,0.0,0.0,23750.0,23750.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+solar_pv,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+onshore_wind,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+battery,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Total,n/a,0.0,0.0,23750.0,23750.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0

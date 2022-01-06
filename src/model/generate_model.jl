@@ -109,6 +109,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Initialize Objective Function Expression
 	@expression(EP, eObj, 0)
 
+
+	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
+	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+
 	# Infrastructure
 	EP = discharge(EP, inputs)
 
@@ -119,6 +123,8 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
 	end
+
+	EP = emissions(EP, inputs)
 
 	if setup["Reserves"] > 0
 		EP = reserves(EP, inputs, setup["UCommit"])
@@ -142,12 +148,17 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"])
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
 	if !isempty(inputs["HYDRO_RES"])
 		EP = hydro_res(EP, inputs, setup["Reserves"])
+	end
+
+	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
+	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+		EP = hydro_inter_period_linkage(EP, inputs)
 	end
 
 	# Model constraints, variables, expression related to demand flexibility resources

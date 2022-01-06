@@ -24,7 +24,7 @@ function write_opwrap_lds_stor_init(path::AbstractString, sep::AbstractString, i
 	dfStorageInit = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])
 	socw = zeros(G,NPeriods)
 	for i in 1:G
-		if i in inputs["STOR_ALL"]
+		if i in inputs["STOR_LONG_DURATION"]
 			socw[i,:] = value.(EP[:vSOCw])[i,:]
 		end
 	end

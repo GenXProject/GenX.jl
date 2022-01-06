@@ -1,0 +1,5 @@
+region,Resource,zone,Cluster,R_ID,Inv_cost_MW,Inv_cost_MWh,Fixed_OM_cost_MW,Fixed_OM_cost_MWh,Var_OM_cost_out,Fuel_cost,Var_OM_cost_in,StartCost,Charge_cost,EnergyRevenue,SubsidyRevenue,ReserveMarginRevenue,ESRRevenue,EmissionsCost,RegSubsidyRevenue,Revenue,Cost,Profit
+NE,natural_gas_combined_cycle,1,1,1,1.5532500000000002e9,0.0,2.4431625000000003e8,0.0,4.163772564e8,2.6397129792453973e6,0.0,319412.0615384616,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.216902631440784e9,-2.216902631440784e9
+NE,solar_pv,1,1,2,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+NE,onshore_wind,1,1,3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+NE,battery,1,0,4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
