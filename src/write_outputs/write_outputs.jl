@@ -31,23 +31,23 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	## Use appropriate directory separator depending on Mac or Windows config
 	if Sys.isunix()
 		sep = "/"
-    elseif Sys.iswindows()
+    	elseif Sys.iswindows()
 		sep = "\U005c"
-    else
-        sep = "/"
+    	else
+        	sep = "/"
 	end
 
-    if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
-        # Overwrite existing results if dir exists
-        # This is the default behaviour when there is no flag, to avoid breaking existing code
-        if !(isdir(path))
-		    mkdir(path)
-	    end
-    else
-        # Find closest unused ouput directory name and create it
-        path = choose_output_dir(path)
-        mkdir(path)
-    end
+    	if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
+        	# Overwrite existing results if dir exists
+        	# This is the default behaviour when there is no flag, to avoid breaking existing code
+        	if !(isdir(path))
+			mkdir(path)
+	    	end
+    	else
+        	# Find closest unused ouput directory name and create it
+        	path = choose_output_dir(path)
+        	mkdir(path)
+    	end
 
 	# https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
 	status = termination_status(EP)

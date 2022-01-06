@@ -52,6 +52,7 @@ using Statistics
 #using CPLEX
 #using MOI
 using SCIP
+using BenchmarkTools
 using Clp
 using Cbc
 
