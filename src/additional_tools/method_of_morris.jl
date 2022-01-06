@@ -176,11 +176,14 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
 end
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
-    if setup["MacOrWindows"]=="Mac"
-		sep = "/"
-	else
-		sep = "\U005c"
-	end
+    ## Use appropriate directory separator depending on Mac or Windows config
+    if Sys.isunix()
+        sep = "/"
+    elseif Sys.iswindows()
+        sep = "\U005c"
+    else
+        sep = "/"
+    end
 
     # Reading the input parameters
     Morris_range = DataFrame(CSV.File(string(path, sep,"Method_of_morris_range.csv"), header=true), copycols=true)
