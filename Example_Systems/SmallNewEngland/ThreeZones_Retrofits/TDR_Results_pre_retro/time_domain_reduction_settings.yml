@@ -1,0 +1,59 @@
+IterativelyAddPeriods: 1
+ExtremePeriods:
+  Wind:
+    System:
+      Absolute:
+        Min: 0
+        Max: 0
+      Integral:
+        Min: 0
+        Max: 0
+    Zone:
+      Absolute:
+        Min: 0
+        Max: 0
+      Integral:
+        Min: 1
+        Max: 0
+  Load:
+    System:
+      Absolute:
+        Min: 0
+        Max: 1
+      Integral:
+        Min: 0
+        Max: 0
+    Zone:
+      Absolute:
+        Min: 0
+        Max: 0
+      Integral:
+        Min: 0
+        Max: 0
+  PV:
+    System:
+      Absolute:
+        Min: 0
+        Max: 0
+      Integral:
+        Min: 0
+        Max: 0
+    Zone:
+      Absolute:
+        Min: 0
+        Max: 0
+      Integral:
+        Min: 1
+        Max: 0
+UseExtremePeriods: 1
+MinPeriods: 8
+MaxPeriods: 11
+LoadWeight: 1
+ClusterFuelPrices: 1
+nReps: 100
+Threshold: 0.05
+TimestepsPerRepPeriod: 168
+IterateMethod: "cluster"
+ScalingMethod: "S"
+ClusterMethod: "kmeans"
+WeightTotal: 8760

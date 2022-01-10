@@ -133,7 +133,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
 	end
 
-	write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
+	#write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
 
 	## Print confirmation
 	println("Wrote outputs to $path$sep")

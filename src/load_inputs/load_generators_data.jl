@@ -59,6 +59,9 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	# Set of controllable variable renewable resources
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
+	# Set of retrofit resources
+	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
+
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1
 		# Set of thermal resources eligible for unit committment
@@ -103,6 +106,12 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	# Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
+
+	# Retrofit Information
+	if length(inputs_gen["RETRO"]) > 0 # If there are any retrofit technologies in consideration, read relevant data
+		inputs_gen["RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:retro_source][1:inputs_gen["G"]])) # The origin technology that is retrofitted into this new technology
+		inputs_gen["RETROFIT_EFFICIENCIES"] = collect(skipmissing(gen_in[!,:retro_efficiency][1:inputs_gen["G"]])) # The ratio of source nameplate capacity to retrofitted nameplate capacity
+	end
 
 	if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
 

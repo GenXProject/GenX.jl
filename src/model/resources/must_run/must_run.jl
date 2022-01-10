@@ -49,7 +49,7 @@ function must_run(EP::Model, inputs::Dict)
 
 	EP[:ePowerBalance] += ePowerBalanceNdisp
 
-	### Constratints ###
+	### Constraints ###
 
 	@constraint(EP, [y in MUST_RUN, t=1:T], EP[:vP][y,t] == inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 

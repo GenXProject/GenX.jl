@@ -124,7 +124,7 @@ function investment_discharge(EP::Model, inputs::Dict)
 	# Add term to objective function expression
 	EP[:eObj] += eTotalCFix
 
-	### Constratints ###
+	### Constraints ###
 
 	## Constraints on retirements and capacity additions
 	# Cannot retire more capacity than existing capacity

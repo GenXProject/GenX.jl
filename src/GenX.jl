@@ -40,7 +40,7 @@ using Distances
 using Combinatorics
 using Documenter
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-#using Gurobi
+using Gurobi
 #using CPLEX
 using BenchmarkTools
 using Clp
@@ -110,6 +110,8 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+
+include("model/resources/retrofit/retrofit.jl")
 
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")

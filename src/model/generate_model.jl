@@ -159,6 +159,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"])
 	end
 
+	# Model constraints, variables, expression related to retrofit technologies
+	if !isempty(inputs["RETRO"])
+		EP = retrofit(EP, inputs)
+	end
+
 	# Policies
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)
