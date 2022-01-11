@@ -6,7 +6,7 @@ Pre_Solve: 1 # Controls presolve level.
 #PreDual: # Presolve dualization.
 TimeLimit: 110000 # Limits total time solver.
 MIPGap: 1e-4 # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise).
-Method: 2 #-1 # Algorithm used to solve continuous models (including MIP root relaxation).
+Method: 4 #-1 # Algorithm used to solve continuous models (including MIP root relaxation).
 BarConvTol: 1.0e-08 # Barrier convergence tolerance (determines when barrier terminates).
 NumericFocus: 0 # Numerical precision emphasis.
 #BarObjRng: # Sets the maximum absolute value of the objective function.
