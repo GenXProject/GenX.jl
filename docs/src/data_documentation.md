@@ -462,6 +462,8 @@ This file contains the settings parameters required to run the Method of Morris 
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand/loads.|
+|ID| This column goes from 1 to N, where N is the total number of uncertain parameters.|
+|File| Name of the file containing uncertain parameters. Note: Remove `.csv` from the file name.|
 |Zone | Integer representing zone number where the resource is located. |
 |Lower\_bound | Percentage lower deviation from the nominal value|
 |Upper\_bound| Percentage upper deviation from the nominal value|
@@ -476,13 +478,13 @@ This file contains the settings parameters required to run the Method of Morris 
 Notes:
 1. Upper and lower bounds are specified in terms of percentage deviation from the nominal value.
 2. Percentage variation for uncertain parameters in a given group is identical. For example, if solar cluster 1 and solar cluster 2 both belong to the ‘solar’ group, their Lower_bound and Upper_bound must be identical
-3. P\_steps should at least be = 1\%, i.e., Upper\_bound – Lower\_bound $<$ p\_steps
+3. P\_steps should at least be = 1%, i.e., Upper\_bound – Lower\_bound should be less than p\_steps
 4. P\_steps for parameters in one group must be identical
 5. Total\_num\_trajectory should be around 3 to 4 times the total number of uncertain parameters
 6. num\_trajectory should be approximately equal to the total number of uncertain parameters
 7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
 8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
-9. Upper and lower bounds should be specified for all the resources included in the `Generators_data.csv` file. If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
+9. Upper and lower bounds should be specified for all the resources included in the `Generators_data.csv` file. If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = p_steps = 0.
 
 
 ## 3 Outputs

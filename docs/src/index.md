@@ -115,4 +115,6 @@ GenX includes Method of Morris package that can be used for performing extensive
 2. Set the `MethodofMorris` flag in the `GenX_Settings.yml` file to 1.
 3. Solve the model using `Run.jl` file.
 4. Results of the Method of Morris script will be stored in the `Results` folder in the `morris.csv` file.
-
+5. Uncertain parameter values used for each method of morris iteration will be stored in the `Results` folder in the `morris_parameters.csv` file.
+6. Objective function value of each method of morris iteration will be stored in the `Results` folder in the `morris_objective.csv` file.
+7. Elementary effect used for computing the mean effect of the uncertain parameter will be stored in the `Results` folder in the `morris_elementary_effects.csv` file.
