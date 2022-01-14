@@ -20,14 +20,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 This function defines the constraints for operation of retrofit technologies, including
 	but not limited to carbon capture, natural gas-hydrogen blending, and thermal energy storage.
 
-For retrofit resources ($y\in \mathcal{RF}$), the capacity $\Omega_{y,z}$ that may be installed
-is constrained by the amount of capacity $\Delta_{y',z}$ retired by the source technology $y'$ as well
-as the retrofit efficiency [SYM? $ef_y$].
+For retrofittable resources $y$, the sum of retrofit capacity $\Omega_{y_r,z}$ that may be installed
+is constrained by the amount of capacity $\Delta_{y,z}$ retired as well as the retrofit efficiency
+$ef_{y_r}$ where $y_r$ is any technology in the set of retrofits of $y$ ($RF(y)$).
 
 ```math
 \begin{aligned}
-\Omega_{y,z} \leq ef_{y} \times \Delta_{y',z}
-\hspace{4 cm}  \forall y \in \mathcal{RF}, z \in \mathcal{Z}
+\sum_{y_r} \frac{\Omega_{y_r,z}}{ef(y_r)} \leq \Delta_{y,z}
+\hspace{4 cm}  \forall y \in Y, y_r \in \mathcal{RF(y)}, z \in \mathcal{Z}
 \end{aligned}
 ```
 """
@@ -35,14 +35,15 @@ function retrofit(EP::Model, inputs::Dict)
 
 	println("Retrofit Resources Module")
 
+	G = inputs["G"]   # Number of resources (generators, storage, DR, and DERs)
 	RETRO = inputs["RETRO"] # Set of all retrofit resources
-	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
-	RETRO_SOURCE = inputs["RETROFIT_SOURCES"] # Source technology for the retrofit
-	RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"] # Maximum ratio of retrofitted capacity to source capacity
+	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
+	RETRO_SOURCE = inputs["RETROFIT_SOURCES"] # Source technology for the retrofit [1:G]
+	RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"] # Maximum ratio of retrofitted capacity to source capacity [1:G]
 
 	### Constraints ###
 
-	@constraint(EP, cRetroMaxCap[y in intersect(RETRO,NEW_CAP)], EP[:vCAP][y] <= RETRO_EFFICIENCY[y]*EP[:vRETCAP][findall(x->x==RETRO_SOURCE[y], inputs["RESOURCES"])[1]])
+	@constraint(EP, cRetroMaxCap[y in RET_CAP], sum(EP[:vCAP][yr]/RETRO_EFFICIENCY[yr] for yr in findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G)) <= EP[:vRETCAP][y])
 
 	return EP
 end

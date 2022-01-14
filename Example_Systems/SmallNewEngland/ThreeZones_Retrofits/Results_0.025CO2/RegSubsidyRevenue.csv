@@ -1,0 +1,15 @@
+region,Resource,zone,Cluster,R_ID,SubsidyRevenue
+MA,MA_natural_gas,1,1,1,0.0
+MA,MA_natural_gas_CCS_retro,1,1,2,0.0
+MA,MA_natural_gas_H2_retro,1,1,3,0.0
+CT,MA_wind,1,1,4,0.0
+MA,MA_solar_pv,1,1,5,7.693135182429739e6
+CT,CT_natural_gas,2,1,6,0.0
+CT,CT_wind,2,1,7,0.0
+CT,CT_solar_pv,2,1,8,0.0
+ME,ME_natural_gas,3,1,9,0.0
+ME,ME_wind,3,1,10,0.0
+CT,ME_solar_pv,3,1,11,0.0
+MA,MA_battery,1,0,12,0.0
+CT,CT_battery,2,0,13,1.1935361512488072e8
+ME,ME_battery,3,0,14,2.388509305025944e7
