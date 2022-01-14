@@ -39,9 +39,9 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
             end
         end
     end
-    dfCO2Price = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price))
+    dfCO2Price = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, :auto))
     auxNew_Names = [Symbol("Zone"); [Symbol("CO2_Price_$cap") for cap = 1:inputs["NCO2Cap"]]]
-    names!(dfCO2Price, auxNew_Names)
+    rename!(dfCO2Price, auxNew_Names)
 
     CSV.write(string(path, sep, "CO2Price_mass.csv"), dfCO2Price, writeheader = false)
 

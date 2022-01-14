@@ -27,7 +27,7 @@ function write_reliability(path::AbstractString, sep::AbstractString, inputs::Di
 	dfReliability = DataFrame(Zone = 1:Z)
 	# Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of generation
 	if setup["ParameterScale"] == 1
-		dfReliability = hcat(dfReliability, DataFrame(transpose(dual.(EP[:cMaxNSE])./inputs["omega"]*ModelScalingFactor), :auto))
+		dfReliability = hcat(dfReliability, DataFrame(transpose(dual.(EP[:cMaxNSE])./inputs["omega"]* ModelScalingFactor), :auto))
 	else
 		dfReliability = hcat(dfReliability, DataFrame(transpose(dual.(EP[:cMaxNSE])./inputs["omega"]), :auto))
 	end

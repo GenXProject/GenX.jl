@@ -74,13 +74,23 @@ function load_inputs(setup::Dict,path::AbstractString)
 	if setup["MinCapReq"] == 1
 		inputs = load_minimum_capacity_requirement(path,sep, inputs, setup)
 	end
-
+	if setup["MaxCapReq"] == 1
+	    inputs = load_maximum_capacity_limit(path, sep, inputs, setup)
+	end
 	if setup["EnergyShareRequirement"]==1
 		inputs = load_energy_share_requirement(setup, path, sep, inputs)
 	end
 
-	if setup["CO2Cap"] >= 1
+	if setup["CO2Cap"] == 1
 		inputs = load_co2_cap(setup, path, sep, inputs)
+	end
+
+	if setup["CO2GenRateCap"] == 1
+	    inputs = load_co2_generation_side_emission_rate_cap(setup, path, sep, inputs)
+	end
+
+	if setup["CO2LoadRateCap"] == 1
+	    inputs = load_co2_load_side_emission_rate_cap(setup, path, sep, inputs)
 	end
 
 	if setup["CO2Tax"] >= 1

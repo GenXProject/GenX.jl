@@ -125,7 +125,9 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if (setup["MinCapReq"] == 1)
         @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
     end
-
+    if (setup["MaxCapReq"] == 1)
+        @expression(EP, eMaxCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+    end
     # Infrastructure
     EP = discharge(EP, inputs, setup["EnergyShareRequirement"], setup["PieceWiseHeatRate"])
 
@@ -136,7 +138,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["MultiStage"] > 0
         EP = investment_discharge_multi_stage(EP, inputs, setup["MultiStageSettingsDict"])
     else
-        EP = investment_discharge(EP, inputs, setup["MinCapReq"])
+        EP = investment_discharge(EP, inputs, setup["MinCapReq"], setup["MaxCapReq"])
     end
     ##Aneesha's PR modification
     #EP = investment_discharge(EP, inputs, setup["MinCapReq"])
@@ -215,13 +217,12 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CO2Cap"] == 1
         EP = co2_cap(EP, inputs, setup)
     end
-    if setup["CO2LoadRateCap"] == 1
+    if setup["CO2GenRateCap"] == 1
         EP = co2_generation_side_emission_rate_cap(EP, inputs, setup)
     end
-    if setup["CO2GenRateCap"] == 1
+    if setup["CO2LoadRateCap"] == 1
         EP = co2_load_side_emission_rate_cap(EP, inputs, setup)
     end
-
     # CO2 tax
     if setup["CO2Tax"] >= 1
         EP = co2_tax(EP, inputs, setup)

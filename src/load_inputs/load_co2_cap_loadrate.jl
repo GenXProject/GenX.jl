@@ -25,17 +25,17 @@ function load_co2_load_side_emission_rate_cap(setup::Dict, path::AbstractString,
 
     # determine the number of caps
     cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap_LoadRate"]))
-    inputs_co2["NCO2Cap_LoadRate"] = cap
+    inputs_co2["NCO2LoadRateCap"] = cap
 
     # read in zone-cap membership
-    first_col = findall(s -> s == Symbol("CO_2_Cap_Zone_1"), names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    last_col = findall(s -> s == Symbol("CO_2_Cap_Zone_$cap"), names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    inputs_co2["dfCO2LoadRateCapZones"] = convert(Matrix{Float64}, inputs_co2["dfCO2Cap_LoadRate"][:, first_col:last_col])
+    first_col = findall(s -> s == "CO_2_Cap_Zone_1", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
+    last_col = findall(s -> s == "CO_2_Cap_Zone_$cap", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
+    inputs_co2["dfCO2LoadRateCapZones"] = Matrix{Float64}(inputs_co2["dfCO2Cap_LoadRate"][:, first_col:last_col])
 
     # read in CO2 emissions cap in metric tons/MWh, with or without Scaling, the unit of emission cap (load rate) are both ton/MWh.
-    first_col = findall(s -> s == Symbol("CO_2_Max_LoadRate_1"), names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    last_col = findall(s -> s == Symbol("CO_2_Max_LoadRate_$cap"), names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    inputs_co2["dfMaxCO2LoadRate"] = convert(Matrix{Float64}, inputs_co2["dfCO2Cap_LoadRate"][:, first_col:last_col])
+    first_col = findall(s -> s == "CO_2_Max_LoadRate_1", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
+    last_col = findall(s -> s == "CO_2_Max_LoadRate_$cap", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
+    inputs_co2["dfMaxCO2LoadRate"] = Matrix{Float64}(inputs_co2["dfCO2Cap_LoadRate"][:, first_col:last_col])
 
     println("CO2_loadrate_cap.csv Successfully Read!")
     return inputs_co2

@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for reading input parameters related to max capacity limit constraints (e.g. technology specific development upperbound)
 """
-function load_max_capacity_limit(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict)
+function load_maximum_capacity_limit(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict)
     MaxCapReq = DataFrame(CSV.File(string(path, sep, "Maximum_capacity_limit.csv"), header = true), copycols = true)
     NumberOfMaxCapReqs = size(collect(skipmissing(MaxCapReq[!, :MaxCapReqConstraint])), 1)
     inputs["NumberOfMaxCapReqs"] = NumberOfMaxCapReqs

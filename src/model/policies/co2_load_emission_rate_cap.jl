@@ -74,9 +74,9 @@ function co2_load_side_emission_rate_cap(EP::Model, inputs::Dict, setup::Dict)
     ## Load emission rate-based: Emissions constraint in load-side emission rate limit (tons/MWh)
     ## Load + Rate-based: Emissions constraint in terms of rate (tons/MWh)
     @constraint(EP, cCO2Emissions_loadrate[cap = 1:inputs["NCO2LoadRateCap"]],
-        sum(inputs["omega"][t] * eEmissionsByZone[z, t] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]), t = 1:T) <=
-        sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - sum(vNSE[s, t, z] for s = 1:SEG)) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])) +
-        sum(inputs["dfMaxCO2LoadRate"][z, cap] * setup["StorageLosses"] * eELOSSByZone[z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
+        sum(inputs["omega"][t] * EP[:eEmissionsByZone][z, t] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]), t = 1:T) <=
+        sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - sum(EP[:vNSE][s, t, z] for s = 1:SEG)) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])) +
+        sum(inputs["dfMaxCO2LoadRate"][z, cap] * setup["StorageLosses"] * EP[:eELOSSByZone][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
     )
 
 

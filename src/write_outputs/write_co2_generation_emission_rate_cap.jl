@@ -40,9 +40,9 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
             end
         end
     end
-    dfCO2GenRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price))
+    dfCO2GenRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, :auto))
     auxNew_Names = [Symbol("Zone"); [Symbol("CO2_GenRate_Price_$cap") for cap = 1:inputs["NCO2GenRateCap"]]]
-    names!(dfCO2GenRatePrice, auxNew_Names)
+    rename!(dfCO2GenRatePrice, auxNew_Names)
     CSV.write(string(path, sep, "CO2Price_genrate.csv"), dfCO2GenRatePrice, writeheader = false)
 
     temp_totalpowerMWh = zeros(G) # in GenRate Cap constraint, generation is defined as the generation from the four types of resources

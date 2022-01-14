@@ -27,7 +27,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, se
     Z = inputs["Z"]     # Number of zones
     # L = inputs["L"]     # Number of transmission lines
     # W = inputs["REP_PERIOD"]     # Number of subperiods
-    # SEG = inputs["SEG"] # Number of load curtailment segments
+    SEG = inputs["SEG"] # Number of load curtailment segments
 
     tempCO2Price = zeros(Z, inputs["NCO2LoadRateCap"])
     for cap = 1:inputs["NCO2LoadRateCap"]
@@ -39,9 +39,9 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, se
             end
         end
     end
-    dfCO2LoadRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price))
+    dfCO2LoadRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, :auto))
     auxNew_Names = [Symbol("Zone"); [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]]
-    names!(dfCO2LoadRatePrice, auxNew_Names)
+    rename!(dfCO2LoadRatePrice, auxNew_Names)
     CSV.write(string(path, sep, "CO2Price_loadrate.csv"), dfCO2LoadRatePrice, writeheader = false)
 
 
@@ -50,7 +50,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, se
     Storageloss = DataFrame(Storageloss_MWh = zeros(Z))
     for z = 1:Z
         CO2CapEligibleLoad[z, :CO2CapEligibleLoad_MWh] = sum(inputs["omega"] .* (inputs["pD"][:, z] - temp_NSE[:, z]))
-        Storageloss[z, :Storageloss_MWh] = sum(setup["StorageLosses"] * sum(value.(EP[:eELOSS])[y] for y in dfGen[(dfGen[!, :Zone].==z), :][!, :R_ID]))
+        Storageloss[z, :Storageloss_MWh] = setup["StorageLosses"] * value.(EP[:eELOSSByZone])[z]
     end
 
 

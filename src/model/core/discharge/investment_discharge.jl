@@ -48,7 +48,7 @@ In addition, this function adds investment and fixed O\&M related costs related 
 \end{aligned}
 ```
 """
-function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
+function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int, MaxCapReq::Int)
 
 	println("Investment Discharge Module")
 
@@ -138,6 +138,9 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
 		EP[:eMinCapRes] += eMinCapResInvest
 	end
-
+	if (MaxCapReq == 1)
+	    @expression(EP, eMaxCapResInvest[mincap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!, Symbol("MaxCapTag_$mincap")].==1), :][!, :R_ID]))
+	    EP[:eMaxCapRes] += eMaxCapResInvest
+	end
 	return EP
 end

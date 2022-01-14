@@ -137,7 +137,7 @@ include("model/policies/co2_credit.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
-
+include("model/policies/maximum_capacity_limit.jl")
 include("multi_stage/model_multi_stage/storage_multi_stage.jl")
 include("multi_stage/model_multi_stage/investment_multi_stage.jl")
 include("multi_stage/model_multi_stage/transmission_multi_stage.jl")

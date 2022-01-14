@@ -23,11 +23,11 @@ Function for reporting carbon tax.
 function write_co2_tax(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    # T = inputs["T"]     # Number of time steps (hours)
-    # Z = inputs["Z"]     # Number of zones
-    # L = inputs["L"]     # Number of transmission lines
-    # W = inputs["REP_PERIOD"]     # Number of subperiods
-    # SEG = inputs["SEG"] # Number of load curtailment segments
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    L = inputs["L"]     # Number of transmission lines
+    W = inputs["REP_PERIOD"]     # Number of subperiods
+    SEG = inputs["SEG"] # Number of load curtailment segments
 
     dfCO2TaxCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
     for g = 1:G

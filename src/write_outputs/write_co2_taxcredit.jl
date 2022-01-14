@@ -15,9 +15,16 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_credit_for_captured_emissions(EP::Model, inputs::Dict, setup::Dict)
+	write_credit_for_captured_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 """
-function write_credit_for_captured_emissions(EP::Model, inputs::Dict, setup::Dict)
+function write_credit_for_captured_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    dfGen = inputs["dfGen"]
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    L = inputs["L"]     # Number of transmission lines
+    W = inputs["REP_PERIOD"]     # Number of subperiods
+    SEG = inputs["SEG"] # Number of load curtailment segments
 
     if setup["ParameterScale"] == 1
         dfCO2CaptureCredit = DataFrame(Zone = 1:Z, AnnualSum = value.(EP[:eCCO2Credit]) * ModelScalingFactor * ModelScalingFactor)
