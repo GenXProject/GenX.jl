@@ -47,7 +47,7 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 || 1 = if one or more minimum technology capacity constraints are specified|
 || 0 = otherwise|
 |**Solution strategy and outputs**||
-|Solver | Solver name is case sensitive (CPLEX, Gurobi, clp). |
+|Solver | Solver name is not case sensitive (CPLEX, cplex, Gurobi, gurobi, Clp, clp). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
