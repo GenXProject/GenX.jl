@@ -111,75 +111,75 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
 
-	if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
-
-		# The existing capacity of a power plant in megawatts
-		inputs_gen["dfGen"][!,:Existing_Charge_Cap_MW] = gen_in[!,:Existing_Charge_Cap_MW]/ModelScalingFactor # Convert to GW
-		# The existing capacity of storage in megawatt-hours STOR = 1 or STOR = 2
-		inputs_gen["dfGen"][!,:Existing_Cap_MWh] = gen_in[!,:Existing_Cap_MWh]/ModelScalingFactor # Convert to GWh
-		# The existing charging capacity for resources where STOR = 2
-		inputs_gen["dfGen"][!,:Existing_Cap_MW] = gen_in[!,:Existing_Cap_MW]/ModelScalingFactor # Convert to GW
-
-		# Cap_Size scales only capacities for those technologies with capacity >1
-		# Step 1: convert vector to float
-		inputs_gen["dfGen"][!,:Cap_Size] =convert(Array{Float64}, gen_in[!,:Cap_Size])
-		for g in 1:G  # Scale only those capacities for which Cap_Size > 1
-			if inputs_gen["dfGen"][!,:Cap_Size][g]>1.0
-				inputs_gen["dfGen"][!,:Cap_Size][g] = gen_in[!,:Cap_Size][g]/ModelScalingFactor # Convert to GW
-			end
-		end
-
-		# Min capacity terms
-		# Limit on minimum discharge capacity of the resource. -1 if no limit on minimum capacity
-		inputs_gen["dfGen"][!,:Min_Cap_MW] = gen_in[!,:Min_Cap_MW]/ModelScalingFactor # Convert to GW
-		# Limit on minimum energy capacity of the resource. -1 if no limit on minimum capacity
-		inputs_gen["dfGen"][!,:Min_Cap_MWh] = gen_in[!,:Min_Cap_MWh]/ModelScalingFactor # Convert to GWh
-		# Limit on minimum charge capacity of the resource. -1 if no limit on minimum capacity
-		inputs_gen["dfGen"][!,:Min_Charge_Cap_MW] = gen_in[!,:Min_Charge_Cap_MW]/ModelScalingFactor # Convert to GWh
-
-		## Max capacity terms
-		# Limit on maximum discharge capacity of the resource. -1 if no limit on maximum capacity
-		inputs_gen["dfGen"][!,:Max_Cap_MW] = gen_in[!,:Max_Cap_MW]/ModelScalingFactor # Convert to GW
-		# Limit on maximum energy capacity of the resource. -1 if no limit on maximum capacity
-		inputs_gen["dfGen"][!,:Max_Cap_MWh] = gen_in[!,:Max_Cap_MWh]/ModelScalingFactor # Convert to GWh
-		# Limit on maximum charge capacity of the resource. -1 if no limit on maximum capacity
-		inputs_gen["dfGen"][!,:Max_Charge_Cap_MW] = gen_in[!,:Max_Charge_Cap_MW]/ModelScalingFactor # Convert to GW
-
-		## Investment cost terms
-		# Annualized capacity investment cost of a generation technology
-		inputs_gen["dfGen"][!,:Inv_Cost_per_MWyr] = gen_in[!,:Inv_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
-		# Annualized investment cost of the energy capacity for a storage technology with STOR = 1 or STOR = 2
-		inputs_gen["dfGen"][!,:Inv_Cost_per_MWhyr] = gen_in[!,:Inv_Cost_per_MWhyr]/ModelScalingFactor # Convert to $ million/GWh/yr  with objective function in millions
-		# Annualized capacity investment cost for the charging portion of a storage technology with STOR = 2
-		inputs_gen["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = gen_in[!,:Inv_Cost_Charge_per_MWyr]/ModelScalingFactor # Convert to $ million/GWh/yr  with objective function in millions
-
-		## Fixed O&M cost terms
-		# Fixed operations and maintenance cost of a generation or storage technology
-		inputs_gen["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = gen_in[!,:Fixed_OM_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
-		# Fixed operations and maintenance cost of the power aspect of a storage technology of type STOR = 1 or STOR = 2
-		inputs_gen["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = gen_in[!,:Fixed_OM_Cost_per_MWhyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
-		# Fixed operations and maintenance cost of the charging aspect of a storage technology of type STOR = 2
-		inputs_gen["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr] = gen_in[!,:Fixed_OM_Cost_Charge_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
-
-		## Variable O&M cost terms
-		# Variable operations and maintenance cost of a generation or storage technology
-		inputs_gen["dfGen"][!,:Var_OM_Cost_per_MWh] = gen_in[!,:Var_OM_Cost_per_MWh]/ModelScalingFactor # Convert to $ million/GWh with objective function in millions
-		# Variable operations and maintenance cost of the charging aspect of a storage technology with STOR = 2,
-		# or variable operations and maintenance costs associated with flexible demand with FLEX = 1
-		inputs_gen["dfGen"][!,:Var_OM_Cost_per_MWh_In] = gen_in[!,:Var_OM_Cost_per_MWh_In]/ModelScalingFactor # Convert to $ million/GWh with objective function in millions
-		# Cost of providing regulation reserves
-		inputs_gen["dfGen"][!,:Reg_Cost] = gen_in[!,:Reg_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
-		# Cost of providing spinning reserves
-		inputs_gen["dfGen"][!,:Rsv_Cost] = gen_in[!,:Rsv_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
-
-		if setup["PieceWiseHeatRate"] == 1
-			inputs_gen["dfGen"][!,:Intercept1] = gen_in[!,:Intercept1]/ModelScalingFactor # convert intercept
-		    inputs_gen["dfGen"][!,:Intercept2] = gen_in[!,:Intercept2]/ModelScalingFactor
-		    inputs_gen["dfGen"][!,:Intercept3] = gen_in[!,:Intercept3]/ModelScalingFactor
-		end
-
-		inputs_gen["dfGen"][!,:CO2_Sequestration_Per_ton] = gen_in[!,:CO2_Sequestration_Per_ton]/ModelScalingFactor 
-
+	if setup["ParameterScale"] == 1  # Parameter scaling turned on - adjust values of subset of parameter values
+	
+	    # The existing capacity of a power plant in megawatts
+	    inputs_gen["dfGen"][!, :Existing_Charge_Cap_MW] = gen_in[!, :Existing_Charge_Cap_MW] / ModelScalingFactor # Convert to GW
+	    # The existing capacity of storage in megawatt-hours STOR = 1 or STOR = 2
+	    inputs_gen["dfGen"][!, :Existing_Cap_MWh] = gen_in[!, :Existing_Cap_MWh] / ModelScalingFactor # Convert to GWh
+	    # The existing charging capacity for resources where STOR = 2
+	    inputs_gen["dfGen"][!, :Existing_Cap_MW] = gen_in[!, :Existing_Cap_MW] / ModelScalingFactor # Convert to GW
+	
+	    # Cap_Size scales only capacities for those technologies with capacity >1
+	    # Step 1: convert vector to float
+	    inputs_gen["dfGen"][!, :Cap_Size] = convert(Array{Float64}, gen_in[!, :Cap_Size])
+	    for g in 1:G  # Scale only those capacities for which Cap_Size > 1
+	        if inputs_gen["dfGen"][!, :Cap_Size][g] > 1.0
+	            inputs_gen["dfGen"][!, :Cap_Size][g] = gen_in[!, :Cap_Size][g] / ModelScalingFactor # Convert to GW
+	        end
+	    end
+	
+	    # Min capacity terms
+	    # Limit on minimum discharge capacity of the resource. -1 if no limit on minimum capacity
+	    inputs_gen["dfGen"][!, :Min_Cap_MW] = gen_in[!, :Min_Cap_MW] / ModelScalingFactor # Convert to GW
+	    # Limit on minimum energy capacity of the resource. -1 if no limit on minimum capacity
+	    inputs_gen["dfGen"][!, :Min_Cap_MWh] = gen_in[!, :Min_Cap_MWh] / ModelScalingFactor # Convert to GWh
+	    # Limit on minimum charge capacity of the resource. -1 if no limit on minimum capacity
+	    inputs_gen["dfGen"][!, :Min_Charge_Cap_MW] = gen_in[!, :Min_Charge_Cap_MW] / ModelScalingFactor # Convert to GWh
+	
+	    ## Max capacity terms
+	    # Limit on maximum discharge capacity of the resource. -1 if no limit on maximum capacity
+	    inputs_gen["dfGen"][!, :Max_Cap_MW] = gen_in[!, :Max_Cap_MW] / ModelScalingFactor # Convert to GW
+	    # Limit on maximum energy capacity of the resource. -1 if no limit on maximum capacity
+	    inputs_gen["dfGen"][!, :Max_Cap_MWh] = gen_in[!, :Max_Cap_MWh] / ModelScalingFactor # Convert to GWh
+	    # Limit on maximum charge capacity of the resource. -1 if no limit on maximum capacity
+	    inputs_gen["dfGen"][!, :Max_Charge_Cap_MW] = gen_in[!, :Max_Charge_Cap_MW] / ModelScalingFactor # Convert to GW
+	
+	    ## Investment cost terms
+	    # Annualized capacity investment cost of a generation technology
+	    inputs_gen["dfGen"][!, :Inv_Cost_per_MWyr] = gen_in[!, :Inv_Cost_per_MWyr] / ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+	    # Annualized investment cost of the energy capacity for a storage technology with STOR = 1 or STOR = 2
+	    inputs_gen["dfGen"][!, :Inv_Cost_per_MWhyr] = gen_in[!, :Inv_Cost_per_MWhyr] / ModelScalingFactor # Convert to $ million/GWh/yr  with objective function in millions
+	    # Annualized capacity investment cost for the charging portion of a storage technology with STOR = 2
+	    inputs_gen["dfGen"][!, :Inv_Cost_Charge_per_MWyr] = gen_in[!, :Inv_Cost_Charge_per_MWyr] / ModelScalingFactor # Convert to $ million/GWh/yr  with objective function in millions
+	
+	    ## Fixed O&M cost terms
+	    # Fixed operations and maintenance cost of a generation or storage technology
+	    inputs_gen["dfGen"][!, :Fixed_OM_Cost_per_MWyr] = gen_in[!, :Fixed_OM_Cost_per_MWyr] / ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+	    # Fixed operations and maintenance cost of the power aspect of a storage technology of type STOR = 1 or STOR = 2
+	    inputs_gen["dfGen"][!, :Fixed_OM_Cost_per_MWhyr] = gen_in[!, :Fixed_OM_Cost_per_MWhyr] / ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+	    # Fixed operations and maintenance cost of the charging aspect of a storage technology of type STOR = 2
+	    inputs_gen["dfGen"][!, :Fixed_OM_Cost_Charge_per_MWyr] = gen_in[!, :Fixed_OM_Cost_Charge_per_MWyr] / ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
+	
+	    ## Variable O&M cost terms
+	    # Variable operations and maintenance cost of a generation or storage technology
+	    inputs_gen["dfGen"][!, :Var_OM_Cost_per_MWh] = gen_in[!, :Var_OM_Cost_per_MWh] / ModelScalingFactor # Convert to $ million/GWh with objective function in millions
+	    # Variable operations and maintenance cost of the charging aspect of a storage technology with STOR = 2,
+	    # or variable operations and maintenance costs associated with flexible demand with FLEX = 1
+	    inputs_gen["dfGen"][!, :Var_OM_Cost_per_MWh_In] = gen_in[!, :Var_OM_Cost_per_MWh_In] / ModelScalingFactor # Convert to $ million/GWh with objective function in millions
+	    # Cost of providing regulation reserves
+	    inputs_gen["dfGen"][!, :Reg_Cost] = gen_in[!, :Reg_Cost] / ModelScalingFactor # Convert to $ million/GW with objective function in millions
+	    # Cost of providing spinning reserves
+	    inputs_gen["dfGen"][!, :Rsv_Cost] = gen_in[!, :Rsv_Cost] / ModelScalingFactor # Convert to $ million/GW with objective function in millions
+	
+	    if setup["PieceWiseHeatRate"] == 1
+	        inputs_gen["dfGen"][!, :Intercept1] = gen_in[!, :Intercept1] / ModelScalingFactor # convert intercept
+	        inputs_gen["dfGen"][!, :Intercept2] = gen_in[!, :Intercept2] / ModelScalingFactor
+	        inputs_gen["dfGen"][!, :Intercept3] = gen_in[!, :Intercept3] / ModelScalingFactor
+	    end
+		# if scale, then the unit becomes Million$/kton.
+	    inputs_gen["dfGen"][!, :CO2_Capture_Cost_per_Metric_Ton] = gen_in[!, :CO2_Capture_Cost_per_Metric_Ton] / ModelScalingFactor
+	
 	end
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled

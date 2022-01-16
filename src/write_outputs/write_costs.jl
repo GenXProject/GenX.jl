@@ -28,20 +28,34 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 
 	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
 	if setup["ParameterScale"] == 1
-		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
-		if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-			cVar = cVar + value(EP[:eCVar_fuel_piecewise]) * (ModelScalingFactor^2)
-		end
-		cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)) * (ModelScalingFactor^2)
-		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
+	    cVar = (value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
+	    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+	        cVar = cVar + value(EP[:eCVar_fuel_piecewise]) * (ModelScalingFactor^2)
+	    end
+	    if setup["CO2Tax"] == 1
+	        cVar = cVar + value(EP[:eTotalCCO2Tax]) * (ModelScalingFactor^2)
+	    end
+	    if setup["CO2Credit"] == 1
+	        cVar = cVar + value(EP[:eTotalCCO2Credit]) * (ModelScalingFactor^2)
+	    end
+	    cVar = cVar + value(EP[:eTotaleCCO2Sequestration]) * (ModelScalingFactor^2)
+	    cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)) * (ModelScalingFactor^2)
+	    dfCost[!, Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
 	else
-		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
-		#cVar = value(EP[:eTotalCVarOut])+(!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
-		if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-			cVar = cVar + value(EP[:eCVar_fuel_piecewise])
-		end
-		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
+	    cVar = (value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
+	    #cVar = value(EP[:eTotalCVarOut])+(!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
+	    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+	        cVar = cVar + value(EP[:eCVar_fuel_piecewise])
+	    end
+	    if setup["CO2Tax"] == 1
+	        cVar = cVar + value(EP[:eTotalCCO2Tax])
+	    end
+	    if setup["CO2Credit"] == 1
+	        cVar = cVar + value(EP[:eTotalCCO2Credit])
+	    end
+	    cVar = cVar + value(EP[:eTotaleCCO2Sequestration])
+	    cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
+	    dfCost[!, Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
 	end
 
 	if setup["UCommit"]>=1
@@ -71,38 +85,45 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 		tempCFix = 0
 		tempCVar = 0
 		tempCStart = 0
-		for y in dfGen[dfGen[!,:Zone].==z,:][!,:R_ID]
-			tempCFix = tempCFix +
-				(y in inputs["STOR_ALL"] ? value.(EP[:eCFixEnergy])[y] : 0) +
-				(y in inputs["STOR_ASYMMETRIC"] ? value.(EP[:eCFixCharge])[y] : 0) +
-				value.(EP[:eCFix])[y]
-			tempCVar = tempCVar +
-				(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
-				(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
-				sum(value.(EP[:eCVar_out])[y,:])
-			if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-				tempCVar = tempCVar + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y,:]) : 0)
-			end
-			if setup["UCommit"]>=1
-				tempCTotal = tempCTotal +
-					value.(EP[:eCFix])[y] +
-					(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
-					(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
-					sum(value.(EP[:eCVar_out])[y,:])
-					(y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y,:]) : 0)
-				tempCStart = tempCStart +
-					(y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y,:]) : 0)
-			else
-				tempCTotal = tempCTotal +
-					value.(EP[:eCFix])[y] +
-					(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
-					(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
-					sum(value.(EP[:eCVar_out])[y,:])
-				if setup["PieceWiseHeatRate"] == 1
-					tempCTotal = tempCTotal + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y,:]) : 0)
-				end
-			end
-		end
+	for y in dfGen[dfGen[!, :Zone].==z, :][!, :R_ID]
+	    tempCFix = tempCFix +
+	               (y in inputs["STOR_ALL"] ? value.(EP[:eCFixEnergy])[y] : 0) +
+	               (y in inputs["STOR_ASYMMETRIC"] ? value.(EP[:eCFixCharge])[y] : 0) +
+	               value.(EP[:eCFix])[y]
+	    tempCVar = tempCVar +
+	               (y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y, :]) : 0) +
+	               (y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y, :]) : 0) +
+	               sum(value.(EP[:eCVar_out])[y, :])
+	    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+	        tempCVar = tempCVar + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y, :]) : 0)
+	    end
+	    if setup["CO2Tax"] == 1
+	        tempCVar = tempCVar + value(EP[:eCCO2Tax])[z]
+	    end
+	    if setup["CO2Credit"] == 1
+	        tempCVar = tempCVar + value(EP[:eCCO2Credit])[z]
+	    end
+	    tempCVar = tempCVar + value(EP[:eCCO2Sequestration])[z]
+	    if setup["UCommit"] >= 1
+	        tempCTotal = tempCTotal +
+	                     value.(EP[:eCFix])[y] +
+	                     (y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y, :]) : 0) +
+	                     (y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y, :]) : 0) +
+	                     sum(value.(EP[:eCVar_out])[y, :])
+	        (y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y, :]) : 0)
+	        tempCStart = tempCStart +
+	                     (y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y, :]) : 0)
+	    else
+	        tempCTotal = tempCTotal +
+	                     value.(EP[:eCFix])[y] +
+	                     (y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y, :]) : 0) +
+	                     (y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y, :]) : 0) +
+	                     sum(value.(EP[:eCVar_out])[y, :])
+	        if setup["PieceWiseHeatRate"] == 1
+	            tempCTotal = tempCTotal + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y, :]) : 0)
+	        end
+	    end
+	end
 
 		if setup["ParameterScale"] == 1
 			tempCFix = tempCFix * (ModelScalingFactor^2)

@@ -223,6 +223,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CO2LoadRateCap"] == 1
         EP = co2_load_side_emission_rate_cap(EP, inputs, setup)
     end
+    
     # CO2 tax
     if setup["CO2Tax"] >= 1
         EP = co2_tax(EP, inputs, setup)
