@@ -53,11 +53,7 @@ function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 	rename!(dfNse,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfNse[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfNse[!,Symbol("t$t")][1:Z])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
-		end
+		total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
 	end
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)

@@ -47,11 +47,7 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	rename!(dfCharge,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
-		end
+		total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
 	end
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)
