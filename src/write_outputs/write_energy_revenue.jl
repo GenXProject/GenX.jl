@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_energy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
+	write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
 
 Function for writing energy revenue from the different generation technologies.
 """
-function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
+function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -53,10 +53,10 @@ function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs:
 		dfEnergyRevenue[!,:AnnualSum][i] = sum(dfEnergyRevenue[i,6:T+5])
 	end
 	dfEnergyRevenue_annualonly = dfEnergyRevenue[!,1:5]
-	CSV.write(string(path,sep,"EnergyRevenue.csv"), dfEnergyRevenue_annualonly)
+	CSV.write(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue_annualonly)
 	return dfEnergyRevenue
 end
-#=function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
+#=function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfPower::DataFrame, dfPrice::DataFrame, dfCharge::DataFrame)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -89,7 +89,7 @@ end
 	for i in 1:G
 		dfEnergyRevenue[!,:AnnualSum][i] = sum(dfEnergyRevenue[i,6:T+5])
 	end
-	CSV.write(string(path,sep,"EnergyRevenue.csv"), dfEnergyRevenue)
+	CSV.write(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue)
 	return dfEnergyRevenue
 end
 =#

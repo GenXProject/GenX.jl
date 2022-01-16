@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_transmission_flows(path::AbstractString, sep::AbstractString, setup::Dict, inputs::Dict, EP::Model)
+function write_transmission_flows(path::AbstractString, setup::Dict, inputs::Dict, EP::Model)
 	# Transmission related values
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -41,10 +41,10 @@ function write_transmission_flows(path::AbstractString, sep::AbstractString, set
 		elseif v"1.4" <= VERSION < v"1.7"
 			total[:,t+2] .= sum(dfFlow[:,Symbol("t$t")][1:L])
 		end
-		
+
 	end
 	rename!(total,auxNew_Names)
 	dfFlow = vcat(dfFlow, total)
 
-	CSV.write(string(path,sep,"flow.csv"), dftranspose(dfFlow, false), writeheader=false)
+	CSV.write(joinpath(path, "flow.csv"), dftranspose(dfFlow, false), writeheader=false)
 end

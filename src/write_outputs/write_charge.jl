@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the charging energy values of the different storage technologies.
 """
-function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -55,6 +55,6 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	end
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)
-	CSV.write(string(path,sep,"charge.csv"), dftranspose(dfCharge, false), writeheader=false)
+	CSV.write(joinpath(path, "charge.csv"), dftranspose(dfCharge, false), writeheader=false)
 	return dfCharge
 end
