@@ -98,12 +98,12 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	        tempCVar = tempCVar + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y, :]) : 0)
 	    end
 	    if setup["CO2Tax"] == 1
-	        tempCVar = tempCVar + value(EP[:eCCO2Tax])[z]
+	        tempCVar = tempCVar + value.(EP[:eCCO2Tax])[z]
 	    end
 	    if setup["CO2Credit"] == 1
-	        tempCVar = tempCVar + value(EP[:eCCO2Credit])[z]
+	        tempCVar = tempCVar + value.(EP[:eCCO2Credit])[z]
 	    end
-	    tempCVar = tempCVar + value(EP[:eCCO2Sequestration])[z]
+	    tempCVar = tempCVar + value.(EP[:eCCO2Sequestration])[z]
 	    if setup["UCommit"] >= 1
 	        tempCTotal = tempCTotal +
 	                     value.(EP[:eCFix])[y] +

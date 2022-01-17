@@ -126,7 +126,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
     end
     if (setup["MaxCapReq"] == 1)
-        @expression(EP, eMaxCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+        @expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
     end
     # Infrastructure
     EP = discharge(EP, inputs, setup["EnergyShareRequirement"], setup["PieceWiseHeatRate"])

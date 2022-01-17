@@ -60,7 +60,7 @@ function co2(EP::Model, inputs::Dict, setup::Dict)
     # add CO2 sequestration cost to objective function
     @expression(EP, eCCO2Sequestration_plant[y = 1:G], sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] * dfGen[!, :CO2_Capture_Cost_per_Metric_Ton][y] for t in 1:T))
 
-    @expression(EP, eCCO2Sequestration[z = 1:Z], sum(eCCO2Sequestration_plant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eCCO2Sequestration[z = 1:Z], sum(eCCO2Sequestration_plant[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
 
     @expression(EP, eTotaleCCO2Sequestration, sum(eCCO2Sequestration[z] for z in 1:Z))
 
