@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_capacity_value(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfCharge::DataFrame, dfResMar::DataFrame, dfCap::DataFrame)
+function write_capacity_value(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfCharge::DataFrame, dfResMar::DataFrame, dfCap::DataFrame, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -33,6 +33,84 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
 		VRE_STOR = inputs["VRE_STOR"]
 		temp_G = G + VRE_STOR
+		VRE_STOR_ = (G+1):temp_G
+		grid_index = (VRE_STOR * 2) 
+
+		# create separate dataframe for two resources
+		dfCapValue_VRE = DataFrame()
+		for i in 1:inputs["NCapacityReserveMargin"]
+			dfCapValue_VRE_STOR_ = dfPower[G+1:G+VRE_STOR,:]
+			dfCapValue_VRE_STOR_ = select!(dfCapValue_VRE_STOR_, Not(:AnnualSum))
+			dfCapValue_VRE_STOR_.Reserve = fill(Symbol("CapRes_$i"), size(dfCapValue_VRE_STOR_, 1))
+			for t in 1:T
+				if dfResMar[i,t] > 0.0001
+					for y in 1:VRE_STOR
+						dfCapValue_VRE_STOR_[y,Symbol("t$t")] = ((inputs["pP_Max_VRE_STOR"][y,t]) * dfGen_VRE_STOR[y,Symbol("CapRes_$i")] * dfGen_VRE_STOR[y,:EtaInverter])
+					end
+				else
+					dfCapValue_VRE_STOR_[!,Symbol("t$t")] .= 0
+				end
+			end
+			dfCapValue_VRE = vcat(dfCapValue_VRE, dfCapValue_VRE_STOR_)
+		end
+		CSV.write(string(path,sep,"CapacityValue_VRE.csv"),dfCapValue_VRE)
+
+		# Create DC charge DataFrame
+		dfCharge_DC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		charge_dc = zeros(VRE_STOR, T)
+		for i in 1:VRE_STOR
+			charge_dc[i,:] = value.(EP[:vCHARGE_DC][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+			dfCharge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_dc[i,:])
+		end
+
+		dfCharge_DC = hcat(dfCharge_DC, DataFrame(charge_dc, :auto))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfCharge_DC,auxNew_Names)
+
+		total = DataFrame(["Total" 0 sum(dfCharge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		for t in 1:T
+			total[:,t+3] .= sum(dfCharge_DC[:,Symbol("t$t")][1:VRE_STOR])
+		end
+		rename!(total,auxNew_Names)
+		dfCharge_DC = vcat(dfCharge_DC, total)
+		
+		dfDischarge_DC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		discharge_dc = zeros(VRE_STOR, T)
+		for i in 1:VRE_STOR
+			discharge_dc[i,:] = value.(EP[:vDISCHARGE_DC][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+			dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* discharge_dc[i,:])
+		end
+
+		dfDischarge_DC = hcat(dfDischarge_DC, DataFrame(discharge_dc, :auto))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfDischarge_DC,auxNew_Names)
+
+		total = DataFrame(["Total" 0 sum(dfDischarge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		for t in 1:T
+			total[:,t+3] .= sum(dfDischarge_DC[:,Symbol("t$t")][1:VRE_STOR])
+		end
+		rename!(total,auxNew_Names)
+		dfDischarge_DC = vcat(dfDischarge_DC, total)
+		
+		dfCapValue_STOR = DataFrame()
+		for i in 1:inputs["NCapacityReserveMargin"]
+			dfCapValue_VRE_STOR_ = dfPower[G+1:G+VRE_STOR,:]
+			dfCapValue_VRE_STOR_ = select!(dfCapValue_VRE_STOR_, Not(:AnnualSum))
+			dfCapValue_VRE_STOR_.Reserve = fill(Symbol("CapRes_$i"), size(dfCapValue_VRE_STOR_, 1))
+			for t in 1:T
+				if dfResMar[i,t] > 0.0001
+					for y in 1:VRE_STOR
+						dfCapValue_VRE_STOR_[y,Symbol("t$t")] = ((dfDischarge_DC[y,Symbol("t$t")]-dfCharge_DC[y,Symbol("t$t")]) * dfGen_VRE_STOR[y,:EtaInverter] * dfGen_VRE_STOR[y,Symbol("CapRes_$i")])/dfCap[y+G+VRE_STOR,:EndCap]
+					end
+				else
+					dfCapValue_VRE_STOR_[!,Symbol("t$t")] .= 0
+				end
+			end
+			dfCapValue_STOR = vcat(dfCapValue_STOR, dfCapValue_VRE_STOR_)
+		end
+		CSV.write(string(path,sep,"CapacityValue_STOR.csv"),dfCapValue_STOR)
+
+		
 	end
 	
 	#calculating capacity value under reserve margin constraint, added by NP on 10/21/2020
@@ -61,8 +139,8 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
 					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in MUST_RUN) # Must run technologies are not considered for reserve margin
 						dfCapValue_[y,Symbol("t$t")] = dfGen[y,Symbol("CapRes_$i")]
-					elseif (setup["VreStor"]==1) .& (dfCap[y,:EndCap] > 0.0001) .& (y in (G+1):temp_G) # including VRE-storage module
-						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]-dfCharge[y,Symbol("t$t")]) * dfGen_VRE_STOR[y,Symbol("CapRes_$i")])/dfCap[y,:EndCap]
+					elseif (dfCap[y,:EndCap] > 0.0001) .& (y in VRE_STOR_) # getting grid capacity for dividing capacity by an amount
+						dfCapValue_[y,Symbol("t$t")] = ((dfPower[y,Symbol("t$t")]-dfCharge[y,Symbol("t$t")]) * dfGen_VRE_STOR[y-G,Symbol("CapRes_$i")])/dfCap[y+grid_index,:EndCap]
 					end
 				end
 			else

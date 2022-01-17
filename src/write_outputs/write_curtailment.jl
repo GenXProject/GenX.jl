@@ -23,7 +23,7 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
+	dfCurtailment = DataFrame(Resource = dfGen[!,:technology], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
 	for i in 1:G
 		if i in inputs["VRE"]
 			dfCurtailment[!,:AnnualSum][i] = sum(inputs["omega"].*(inputs["pP_Max"][i,:]).*value.(EP[:eTotalCap])[i,:].- inputs["omega"].*value.(EP[:vP])[i,:])
@@ -43,7 +43,7 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 	if setup["VreStor"]==1
 		VRE_STOR = inputs["VRE_STOR"]
 		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-		dfCurtailmentVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		dfCurtailmentVRESTOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
 		for i in 1:VRE_STOR
 			dfCurtailmentVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"].*(inputs["pP_Max_VRE_STOR"][i,:]).*value.(EP[:eTotalCap_VRE])[i,:].- inputs["omega"].*value.(EP[:vP_DC])[i,:])
 		end

@@ -53,7 +53,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	status = termination_status(EP)
 
 	## Check if solved sucessfully - time out is included
-	if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
+	if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED && status != MOI.OTHER_ERROR
 		if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
 			write_status(path, sep, inputs, setup, EP)
 			return
@@ -129,11 +129,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
 		dfResMar = write_reserve_margin(path, sep, setup, EP)
 		write_reserve_margin_w(path, sep, inputs, setup, EP) 
-		#dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap) # changes
-		write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap) # changes
+		dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap) # changes
+		write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap, EP) # changes
 	end
 
-	#write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue) 
+	write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue) 
 
 	## Print confirmation
 	println("Wrote outputs to $path$sep")

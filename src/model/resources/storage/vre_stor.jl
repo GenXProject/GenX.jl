@@ -132,7 +132,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, Energy
     + dfGen_VRE_STOR[!,:Fixed_OM_Cost_per_MWhyr][y]*eTotalCap_STOR[y])
 
     # Variable costs of "generation" for VRE-STOR resource "y" during hour "t" = variable O&M plus fuel cost
-    @expression(EP, eCVar_out_VRE_STOR[y in 1:VRE_STOR, t in 1:T], (inputs["omega"][t]*(dfGen_VRE_STOR[!,:Var_OM_Cost_per_MWh][y]+dfGen_VRE_STOR[!,:C_Fuel_per_MWh][y])*vP_VRE_STOR[y,t]))
+    @expression(EP, eCVar_out_VRE_STOR[y in 1:VRE_STOR, t in 1:T], (inputs["omega"][t]*(dfGen_VRE_STOR[!,:Var_OM_Cost_per_MWh][y]+dfGen_VRE_STOR[!,:C_Fuel_per_MWh][y])*vP_DC[y,t]*dfGen_VRE_STOR[!,:EtaInverter][y]))
 
 	# Sum individual resource contributions to variable charging costs to get total variable charging costs
 	@expression(EP, eTotalCFix_VRE_STOR, sum(eCFix_VRE_STOR[y] for y in 1:VRE_STOR))
@@ -234,7 +234,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, Energy
 
     # Constraint 11: System generation maximum
     @constraint(EP, cSysGen[y in 1:VRE_STOR, t in 1:T],
-    vP_VRE_STOR[y,t] <= dfGen_VRE_STOR[!,:EtaInverter][y]*(vDISCHARGE_DC[y,t] + vP_DC[y,t]))
+    vP_VRE_STOR[y,t] <= dfGen_VRE_STOR[!,:EtaInverter][y]*(vDISCHARGE_DC[y,t] + vP_DC[y,t] - vCHARGE_DC[y, t]))
     
     # Constaint 12: System charging maximum
     @constraint(EP, cSysCharge[t in 1:T, z in 1:Z],

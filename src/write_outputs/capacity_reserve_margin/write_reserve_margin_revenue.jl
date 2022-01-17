@@ -41,6 +41,7 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
 		dfResRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
 		dfResRevenue = vcat(dfResRevenue, dfResRevenueVRESTOR)
 		temp_G = G + inputs["VRE_STOR"]
+		VRE_STOR = G+1:temp_G
 	end
 
 	for i in 1:inputs["NCapacityReserveMargin"]
@@ -64,11 +65,12 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
 				(DataFrame([[names(dfPower)]; collect.(eachrow(dfCharge))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1] .-
 				DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1]) .*
 				DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen[y,Symbol("CapRes_$i")]))
-			elseif (y in (G+1):temp_G) # check if this is correct
+			elseif (y in VRE_STOR) # check if this is correct
+				l = y - G
 				dfResRevenue[y,:x1] = round.(Int, sum(
 				(DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1] .-
 				DataFrame([[names(dfPower)]; collect.(eachrow(dfCharge))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3,y+1]) .*
-				DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen_VRE_STOR[y,Symbol("CapRes_$i")]))
+				DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!,i+1] .* dfGen_VRE_STOR[l,Symbol("CapRes_$i")]))
 			end
 		end
 		# the capacity and power is in MW already, no need to scale

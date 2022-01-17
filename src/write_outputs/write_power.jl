@@ -25,7 +25,7 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	T = inputs["T"]     # Number of time steps (hours)
 
 	# Power injected by each resource in each time step
-	dfPower = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
+	dfPower = DataFrame(Resource = dfGen[!,:technology], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
 	if setup["ParameterScale"] ==1
 		for i in 1:G
 			dfPower[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vP])[i,:])) * ModelScalingFactor
@@ -44,7 +44,53 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	if setup["VreStor"] == 1
 		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
 		VRE_STOR = inputs["VRE_STOR"]
-		dfPowerVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+
+		# Create separate csvs for discharge_dc & AC power generation
+		dfDischarge_DC = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		if setup["ParameterScale"] == 1
+			for i in 1:VRE_STOR
+				dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vDISCHARGE_DC])[i,:]) * ModelScalingFactor * dfGen_VRE_STOR[!,:EtaInverter][i]
+			end
+			dfDischarge_DC = hcat(dfDischarge_DC, DataFrame((value.(EP[:vDISCHARGE_DC])) * ModelScalingFactor, :auto))
+		else
+			for i in 1:VRE_STOR
+				dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vDISCHARGE_DC])[i,:]) * dfGen_VRE_STOR[!,:EtaInverter][i]
+			end
+			dfDischarge_DC = hcat(dfDischarge_DC, DataFrame((value.(EP[:vDISCHARGE_DC])), :auto))
+		end
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfDischarge_DC,auxNew_Names)
+		total = DataFrame(["Total" 0 sum(dfDischarge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		for t in 1:T
+			total[:,t+3] .= sum(dfDischarge_DC[:,Symbol("t$t")][1:VRE_STOR])
+		end
+		rename!(total,auxNew_Names)
+		dfDischarge_DC = vcat(dfDischarge_DC, total)
+		CSV.write(string(path,sep,"vre_stor_bat_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
+
+		dfVP_VRE_STOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		if setup["ParameterScale"] == 1
+			for i in 1:VRE_STOR
+				dfVP_VRE_STOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_DC])[i,:]) * ModelScalingFactor * dfGen_VRE_STOR[!,:EtaInverter][i]
+			end
+			dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame((value.(EP[:vP_DC])) * ModelScalingFactor, :auto))
+		else
+			for i in 1:VRE_STOR
+				dfVP_VRE_STOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_DC])[i,:]) * dfGen_VRE_STOR[!,:EtaInverter][i]
+			end
+			dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame((value.(EP[:vP_DC])), :auto))
+		end
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfVP_VRE_STOR,auxNew_Names)
+		total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		for t in 1:T
+			total[:,t+3] .= sum(dfVP_VRE_STOR[:,Symbol("t$t")][1:VRE_STOR])
+		end
+		rename!(total,auxNew_Names)
+		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
+		CSV.write(string(path,sep,"vre_stor_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
+
+		dfPowerVRESTOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
 		if setup["ParameterScale"] == 1
 			for i in 1:VRE_STOR
 				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:]) * ModelScalingFactor
@@ -52,7 +98,7 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 			dfPowerVRESTOR = hcat(dfPowerVRESTOR, DataFrame((value.(EP[:vP_VRE_STOR])) * ModelScalingFactor, :auto))
 		else
 			for i in 1:VRE_STOR
-				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:]) 
+				dfPowerVRESTOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_VRE_STOR])[i,:])  
 			end
 			dfPowerVRESTOR = hcat(dfPowerVRESTOR, DataFrame((value.(EP[:vP_VRE_STOR])), :auto))
 		end
