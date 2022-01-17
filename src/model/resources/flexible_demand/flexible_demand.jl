@@ -138,12 +138,6 @@ for z in 1:Z
         FLEXIBLE_DEMAND_DELAY_HOURS = [] # Set of hours in the summation term of the maximum demand delay constraint for the first subperiod of each representative period
         for s in START_SUBPERIODS
             flexible_demand_delay_start = s+hours_per_subperiod-max_flexible_demand_delay
-            println("Max flexible demand delay type")
-            println(typeof(max_flexible_demand_delay))
-            println("Hours per subperiod type")
-            println(typeof(hours_per_subperiod))
-            println("Type of s")
-            println(typeof(s))
             FLEXIBLE_DEMAND_DELAY_HOURS = union(FLEXIBLE_DEMAND_DELAY_HOURS, flexible_demand_delay_start:(s+hours_per_subperiod-2))
         end
 
