@@ -50,7 +50,7 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, 
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
-	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:][!,:R_ID])))
+	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
 	EP[:ePowerBalance] += ePowerBalanceDisp
 
@@ -65,7 +65,7 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, 
 	for y in VRE_POWER_OUT
 		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
 		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[!,:Num_VRE_Bins][y]-1,:R_ID])
+		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
 
 		# Constraints on contribution to regulation and reserves
 		if Reserves == 1
@@ -124,13 +124,13 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 	for y in VRE_POWER_OUT
 		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
 		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[!,:Num_VRE_Bins][y]-1,:R_ID])
+		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
 
 		if y in inputs["REG"] && y in inputs["RSV"] # Resource eligible for regulation and spinning reserves
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vREG][y,t] <= dfGen[!,:Reg_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
-				[t=1:T], EP[:vRSV][y,t] <= dfGen[!,:Rsv_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
 
 				# Power generated and regulation reserve contributions down per hour must be greater than zero
 				[t=1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
@@ -142,7 +142,7 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 		elseif y in inputs["REG"] # Resource only eligible for regulation reserves
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vREG][y,t] <= dfGen[!,:Reg_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
 
 				# Power generated and regulation reserve contributions down per hour must be greater than zero
 				[t=1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
@@ -156,7 +156,7 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vRSV][y,t] <= dfGen[!,:Rsv_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
 
 				# Power generated and reserve contributions up per hour by renewable generators must be less than
 				# hourly capacity factor. Note: inequality constraint allows curtailment of output below maximum level.

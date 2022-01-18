@@ -132,7 +132,7 @@ function reserves_contingency(EP::Model, inputs::Dict, UCommit::Int)
 		# option 1: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest installed generator
 	if UCommit == 1 && pDynamic_Contingency == 1
 		@constraint(EP, cContingency[y in COMMIT], vLARGEST_CONTINGENCY >=
-			inputs["dfGen"][!,:Cap_Size][y]*vCONTINGENCY_AUX[y] )
+			inputs["dfGen"][y,:Cap_Size]*vCONTINGENCY_AUX[y] )
 		# Ensure vCONTINGENCY_AUX = 0 if total capacity = 0
 		@constraint(EP, cContAux1[y in COMMIT], vCONTINGENCY_AUX[y] <= EP[:eTotalCap][y])
 		# Ensure vCONTINGENCY_AUX = 1 if total capacity > 0
@@ -141,7 +141,7 @@ function reserves_contingency(EP::Model, inputs::Dict, UCommit::Int)
 		# option 2: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest commited generator in each hour
 	elseif UCommit == 1 && pDynamic_Contingency == 2
 		@constraint(EP, cContingency[y in COMMIT, t=1:T], vLARGEST_CONTINGENCY[t] >=
-			inputs["dfGen"][!,:Cap_Size][y]*vCONTINGENCY_AUX[y,t] )
+			inputs["dfGen"][y,:Cap_Size]*vCONTINGENCY_AUX[y,t] )
 		# Ensure vCONTINGENCY_AUX = 0 if vCOMMIT = 0
 		@constraint(EP, cContAux[y in COMMIT, t=1:T], vCONTINGENCY_AUX[y,t] <= EP[:vCOMMIT][y,t])
 		# Ensure vCONTINGENCY_AUX = 1 if vCOMMIT > 0
@@ -254,8 +254,8 @@ function reserves_core(EP::Model, inputs::Dict, UCommit::Int)
 	# Penalty for unmet operating reserves
 	@expression(EP, eCRsvPen[t=1:T], inputs["omega"][t]*inputs["pC_Rsv_Penalty"]*vUNMET_RSV[t])
 	@expression(EP, eTotalCRsvPen, sum(eCRsvPen[t] for t=1:T) +
-		sum(dfGen[!,:Reg_Cost][y]*vRSV[y,t] for y in RSV, t=1:T) +
-		sum(dfGen[!,:Rsv_Cost][y]*vREG[y,t] for y in REG, t=1:T) )
+		sum(dfGen[y,:Reg_Cost]*vRSV[y,t] for y in RSV, t=1:T) +
+		sum(dfGen[y,:Rsv_Cost]*vREG[y,t] for y in REG, t=1:T) )
 	EP[:eObj] += eTotalCRsvPen
 
 	### Constraints ###
