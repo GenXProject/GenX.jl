@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_rsv(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
@@ -41,5 +41,5 @@ function write_rsv(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 	end
 	rename!(total,auxNew_Names)
 	dfRsv = vcat(dfRsv, total)
-	CSV.write(string(path,sep,"reg_dn.csv"), dftranspose(dfRsv, false), writeheader=false)
+	CSV.write(joinpath(path, "reg_dn.csv"), dftranspose(dfRsv, false), writeheader=false)
 end

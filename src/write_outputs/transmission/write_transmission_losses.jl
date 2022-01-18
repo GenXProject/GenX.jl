@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_transmission_losses(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_transmission_losses(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	L = inputs["L"]     # Number of transmission lines
@@ -45,10 +45,9 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 	total = DataFrame(["Total" sum(dfTLosses[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
 		total[:,t+2] .= sum(dfTLosses[:,Symbol("t$t")][1:L])
-
 	end
 	rename!(total,auxNew_Names)
 	dfTLosses = vcat(dfTLosses, total)
 
-	CSV.write(string(path,sep,"tlosses.csv"), dftranspose(dfTLosses, false), writeheader=false)
+	CSV.write(joinpath(path, "tlosses.csv"), dftranspose(dfTLosses, false), writeheader=false)
 end

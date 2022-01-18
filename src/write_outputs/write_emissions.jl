@@ -15,12 +15,12 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting time-dependent CO$_2$ emissions by zone.
 
 """
-function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -115,5 +115,5 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 		rename!(total,auxNew_Names)
 		dfEmissions = vcat(dfEmissions, total)
 	end
-	CSV.write(string(path,sep,"emissions.csv"), dftranspose(dfEmissions, false), writeheader=false)
+	CSV.write(joinpath(path, "emissions.csv"), dftranspose(dfEmissions, false), writeheader=false)
 end
