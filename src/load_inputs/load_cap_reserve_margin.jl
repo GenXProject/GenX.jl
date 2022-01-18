@@ -21,8 +21,6 @@ Function for reading input parameters related to planning reserve margin constra
 """
 function load_cap_reserve_margin(setup::Dict, path::AbstractString, inputs_crm::Dict)
 	# Definition of capacity reserve margin (crm) by locational deliverability area (LDA)
-	println("About to read Capacity_reserve_margin.csv")
-
 	inputs_crm["dfCapRes"] = DataFrame(CSV.File(joinpath(path, "Capacity_reserve_margin.csv"), header=true), copycols=true)
 
 	# Ensure float format values:
@@ -36,8 +34,6 @@ function load_cap_reserve_margin(setup::Dict, path::AbstractString, inputs_crm::
 
 	println("Capacity_reserve_margin.csv Successfully Read!")
 
-
-
 	return inputs_crm
 end
 
@@ -47,9 +43,6 @@ end
 Function for reading input parameters related to participation of transmission imports/exports in capacity reserve margin constraint.
 """
 function load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_var::DataFrame)
-
-	println("About to read details on participation of transmission imports/exports in capacity reserve margin constraint.")
-
 	res = inputs_crm["NCapacityReserveMargin"]
 
 	first_col_trans = findall(s -> s == "CapRes_1", names(network_var))[1]
@@ -66,7 +59,6 @@ function load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_va
 	last_col_trans_excl = findall(s -> s == "CapRes_Excl_$res", names(network_var))[1]
 	dfTransCapRes_excl = network_var[:,first_col_trans_excl:last_col_trans_excl]
 	inputs_crm["dfTransCapRes_excl"] = Matrix{Float64}(dfTransCapRes_excl[completecases(dfTransCapRes_excl),:])
-	println("Details on participation of transmission imports/exports in capacity reserve margin constraint Successfully Read!")
 
 	return inputs_crm
 end
