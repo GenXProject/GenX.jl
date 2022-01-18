@@ -53,7 +53,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	if setup["CapacityReserveMargin"]==1
 		inputs = load_cap_reserve_margin(setup, path, inputs)
 		if inputs["Z"] >1
-			inputs = load_cap_reserve_margin_trans(setup, path, inputs,network_var)
+			inputs = load_cap_reserve_margin_trans(setup, inputs,network_var)
 		end
 	end
 
