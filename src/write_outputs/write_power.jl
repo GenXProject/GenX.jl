@@ -43,11 +43,7 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	total = DataFrame(["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfPower[!,Symbol("t$t")][1:G])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfPower[:,Symbol("t$t")][1:G])
-		end
+		total[:,t+3] .= sum(dfPower[:,Symbol("t$t")][1:G])
 	end
 	rename!(total,auxNew_Names)
 	dfPower = vcat(dfPower, total)

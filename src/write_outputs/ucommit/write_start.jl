@@ -33,11 +33,7 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(dfStart,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfStart[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
-		elseif v"1.5" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
-		end
+		total[:,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
 	end
 	rename!(total,auxNew_Names)
 	dfStart = vcat(dfStart, total)

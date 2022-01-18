@@ -44,12 +44,7 @@ function write_transmission_losses(path::AbstractString, inputs::Dict, setup::Di
 	rename!(dfTLosses,auxNew_Names)
 	total = DataFrame(["Total" sum(dfTLosses[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+2] .= sum(dfTLosses[!,Symbol("t$t")][1:L])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+2] .= sum(dfTLosses[:,Symbol("t$t")][1:L])
-		end
-
+		total[:,t+2] .= sum(dfTLosses[:,Symbol("t$t")][1:L])
 	end
 	rename!(total,auxNew_Names)
 	dfTLosses = vcat(dfTLosses, total)
