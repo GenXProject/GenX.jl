@@ -576,7 +576,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     if MultiStage == 1
         model_dict=Dict()
         inputs_dict=Dict()
-        inputs_multi_stage = load_inputs_multi_stage(mysetup, string("$inpath/Inputs"))
+        inputs_multi_stage = load_inputs_multi_stage(mysetup, joinpath(inpath, "Inputs"))
         for t in 1:NumStages
 
         	# Step 0) Set Model Year
@@ -945,15 +945,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### Step 6: Print to File
 
-#<<<<<<< HEAD
-    if Sys.isunix()
-		sep = "/"
-    elseif Sys.iswindows()
-		sep = "\U005c"
-    else
-        sep = "/"
-	end
-
     if MultiStage == 1
         if v print("Outputs: MultiStage") end
         if MultiStageConcatenate == 1
@@ -982,7 +973,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
                 # Save output data to stage-specific locations
                 ### TDR_Results/Load_data_clustered.csv
-                load_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p$per",sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+                load_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", "Inputs_p$per", "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
                 load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
                 load_in[1:length(Stage_Weights[per]),:Sub_Weights] .= Stage_Weights[per]
                 load_in[!,:Rep_Periods][1] = length(Stage_Weights[per])
@@ -1001,7 +992,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 load_in = load_in[1:size(LPOutputData,1),:]
 
                 if v println("Writing load file...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["Load"]), load_in)
+                CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["Load"]), load_in)
 
                 ### TDR_Results/Generators_variability.csv
                 # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
@@ -1011,25 +1002,25 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
                 NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
                 if v println("Writing resource file...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
+                CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
 
                 ### TDR_Results/Fuels_data.csv
-                fuel_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p$per",sep,"Fuels_data.csv"), header=true), copycols=true)
+                fuel_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"), header=true), copycols=true)
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
                 rename!(NewFuelOutput, FuelCols)
                 insertcols!(NewFuelOutput, 1, :Time_Index => 0:size(NewFuelOutput,1)-1)
                 if v println("Writing fuel profiles...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["Fuel"]), NewFuelOutput)
+                CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["Fuel"]), NewFuelOutput)
 
                 ### TDR_Results/Period_map.csv
                 if v println("Writing period map...") end
-                CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["PMap"]), Stage_PeriodMaps[per])
+                CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["PMap"]), Stage_PeriodMaps[per])
 
                 ### TDR_Results/time_domain_reduction_settings.yml
                 if v println("Writing .yml settings...") end
-                YAML.write_file(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["YAML"]), myTDRsetup)
+                YAML.write_file(joinpath(inpath, "Inputs", Stage_Outfiles[per]["YAML"]), myTDRsetup)
 
             end
 
@@ -1038,7 +1029,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             mkpath(joinpath(inpath,"Inputs","Inputs_p1", TimeDomainReductionFolder))
 
             ### TDR_Results/Load_data.csv
-            load_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+            load_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", "Inputs_p1", "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
             load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
             load_in[1:length(W),:Sub_Weights] .= W
             load_in[!,:Rep_Periods][1] = length(W)
@@ -1057,7 +1048,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             load_in = load_in[1:size(LPOutputData,1),:]
 
             if v println("Writing load file...") end
-            CSV.write(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,Load_Outfile), load_in)
+            CSV.write(joinpath(inpath, "Inputs", "Inputs_p1", Load_Outfile), load_in)
 
             ### TDR_Results/Generators_variability.csv
 
@@ -1068,33 +1059,33 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
             NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
             if v println("Writing resource file...") end
-            CSV.write(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,GVar_Outfile), GVOutputData, header=NewGVColNames)
+            CSV.write(joinpath(inpath, "Inputs", "Inputs_p1", GVar_Outfile), GVOutputData, header=NewGVColNames)
 
             ### TDR_Results/Fuels_data.csv
 
-            fuel_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,"Fuels_data.csv"), header=true), copycols=true)
+            fuel_in = DataFrame(CSV.File(string(inpath, "Inputs", "Inputs_p1", "Fuels_data.csv"), header=true), copycols=true)
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
             rename!(NewFuelOutput, FuelCols)
             insertcols!(NewFuelOutput, 1, :Time_Index => 0:size(NewFuelOutput,1)-1)
             if v println("Writing fuel profiles...") end
-            CSV.write(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,Fuel_Outfile), NewFuelOutput)
+            CSV.write(joinpath(inpath, "Inputs", "Inputs_p1", Fuel_Outfile), NewFuelOutput)
 
             ### Period_map.csv
             if v println("Writing period map...") end
-            CSV.write(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,PMap_Outfile), PeriodMap)
+            CSV.write(joinpath(inpath, "Inputs", "Inputs_p1", PMap_Outfile), PeriodMap)
 
             ### time_domain_reduction_settings.yml
             if v println("Writing .yml settings...") end
-            YAML.write_file(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,YAML_Outfile), myTDRsetup)
+            YAML.write_file(joinpath(inpath, "Inputs", "Inputs_p1", YAML_Outfile), myTDRsetup)
         end
     else
         if v println("Outputs: Single-Stage") end
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
         ### TDR_Results/Load_data.csv
-        load_in = DataFrame(CSV.File(string(inpath,sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+        load_in = DataFrame(CSV.File(joinpath(inpath, "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
         load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
         load_in[1:length(W),:Sub_Weights] .= W
         load_in[!,:Rep_Periods][1] = length(W)
@@ -1113,7 +1104,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         load_in = load_in[1:size(LPOutputData,1),:]
 
         if v println("Writing load file...") end
-        CSV.write(string(inpath,sep,Load_Outfile), load_in)
+        CSV.write(joinpath(inpath, Load_Outfile), load_in)
 
         ### TDR_Results/Generators_variability.csv
 
@@ -1124,26 +1115,26 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
         NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
         if v println("Writing resource file...") end
-        CSV.write(string(inpath,sep,GVar_Outfile), GVOutputData, header=NewGVColNames)
+        CSV.write(joinpath(inpath, GVar_Outfile), GVOutputData, header=NewGVColNames)
 
         ### TDR_Results/Fuels_data.csv
 
-        fuel_in = DataFrame(CSV.File(string(inpath,sep,"Fuels_data.csv"), header=true), copycols=true)
+        fuel_in = DataFrame(CSV.File(joinpath(inpath, "Fuels_data.csv"), header=true), copycols=true)
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
         NewFuelOutput = vcat(SepFirstRow, FPOutputData)
         rename!(NewFuelOutput, FuelCols)
         insertcols!(NewFuelOutput, 1, :Time_Index => 0:size(NewFuelOutput,1)-1)
         if v println("Writing fuel profiles...") end
-        CSV.write(string(inpath,sep,Fuel_Outfile), NewFuelOutput)
+        CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
 
         ### TDR_Results/Period_map.csv
         if v println("Writing period map...") end
-        CSV.write(string(inpath,sep,PMap_Outfile), PeriodMap)
+        CSV.write(joinpath(inpath, PMap_Outfile), PeriodMap)
 
         ### TDR_Results/time_domain_reduction_settings.yml
         if v println("Writing .yml settings...") end
-        YAML.write_file(string(inpath,sep,YAML_Outfile), myTDRsetup)
+        YAML.write_file(joinpath(inpath, YAML_Outfile), myTDRsetup)
     end
 
     return Dict("OutputDF" => FinalOutputData,
