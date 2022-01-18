@@ -25,14 +25,10 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 
 	dfSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
 	#dfSubRevenue.SubsidyRevenue .= 0.0
-	
-	if v"1.3" <= VERSION < v"1.4"
-		dfSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfSubRevenue.SubsidyRevenue = zeros(size(dfSubRevenue, 1))
-		#dfSubRevenue[:,:SubsidyRevenue] = zeros(size(dfSubRevenue, 1))
-	end
-	
+
+	dfSubRevenue.SubsidyRevenue = zeros(size(dfSubRevenue, 1))
+	#dfSubRevenue[:,:SubsidyRevenue] = zeros(size(dfSubRevenue, 1))
+
 	#dfSubRevenue[!,:SubsidyRevenue] .= 0.0
 	for y in (dfGen[(dfGen[!,:Min_Cap_MW].>0) ,:][!,:R_ID])
 		dfSubRevenue[y,:SubsidyRevenue] = (value.(EP[:eTotalCap])[y]) * (dual.(EP[:cMinCap])[y])
@@ -44,12 +40,7 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 	### calculating tech specific subsidy revenue
 
 	dfRegSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
-	#dfRegSubRevenue.SubsidyRevenue .= 0.0
-	if v"1.3" <= VERSION < v"1.4"
-		dfRegSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfRegSubRevenue.SubsidyRevenue = zeros(size(dfRegSubRevenue, 1))
-	end
+	dfRegSubRevenue.SubsidyRevenue = zeros(size(dfRegSubRevenue, 1))
 	if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
 			for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]

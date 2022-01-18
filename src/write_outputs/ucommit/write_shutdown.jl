@@ -34,11 +34,7 @@ function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict,
 	rename!(dfShutdown,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfShutdown[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfShutdown[!,Symbol("t$t")][1:G])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfShutdown[:,Symbol("t$t")][1:G])
-		end
+		total[:,t+3] .= sum(dfShutdown[:,Symbol("t$t")][1:G])
 	end
 	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
