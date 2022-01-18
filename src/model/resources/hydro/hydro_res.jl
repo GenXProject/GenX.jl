@@ -118,22 +118,22 @@ function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin
 		# Energy stored in reservoir at end of each other hour is equal to energy at end of prior hour less generation and spill and + inflows in the current hour
 		# The ["pP_Max"][y,t] term here refers to inflows as a fraction of peak discharge power capacity.
 		# DEV NOTE: Last inputs["pP_Max"][y,t] term above is inflows; currently part of capacity factors inputs in Generators_variability.csv but should be moved to its own Hydro_inflows.csv input in future.
-		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y,t-1] - (1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t]) - vSPILL[y,t] +inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
+		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y,t-1] - (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] +inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
 
 		# Constraints for reservoir hydro with time wrapping from end of sample period to start
 		cHydroReservoirWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y,t+hours_per_subperiod-1]
-				- (1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t]) - vSPILL[y,t] +  inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] +  inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down between consecutive hours
-		cRampUpInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t-1] <= dfGen[!,:Ramp_Up_Percentage][y]*EP[:eTotalCap][y]
-		cRampDownInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t-1] - EP[:vP][y,t] <= dfGen[!,:Ramp_Dn_Percentage][y]*EP[:eTotalCap][y]
+		cRampUpInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
+		cRampDownInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 
 		# Maximum ramp up and down between consecutive hours, wrapping from end of sample period to start of sample period
 		cRampUpWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t+hours_per_subperiod-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
 		cRampDownWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t+hours_per_subperiod-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
-		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[!,:Min_Power][y]*EP[:eTotalCap][y]
+		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 		# DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
 
 		# Maximum discharging rate must be less than power rating OR available stored energy at start of hour, whichever is less
@@ -148,7 +148,7 @@ function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin
 
 	### Constraints to limit maximum energy in storage based on known limits on reservoir energy capacity (only for HYDRO_RES_KNOWN_CAP)
 	# Maximum energy stored in reservoir must be less than energy capacity in all hours - only applied to HYDRO_RES_KNOWN_CAP
-	@constraint(EP, cHydroMaxEnergy[y in HYDRO_RES_KNOWN_CAP, t in 1:T], EP[:vS_HYDRO][y,t] <= dfGen[!,:Hydro_Energy_to_Power_Ratio][y]*EP[:eTotalCap][y])
+	@constraint(EP, cHydroMaxEnergy[y in HYDRO_RES_KNOWN_CAP, t in 1:T], EP[:vS_HYDRO][y,t] <= dfGen[y,:Hydro_Energy_to_Power_Ratio]*EP[:eTotalCap][y])
 
 	if Reserves == 1
 		### Reserve related constraints for reservoir hydro resources (y in HYDRO_RES), if used

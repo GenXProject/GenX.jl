@@ -65,7 +65,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCFix = 0
 		tempCVar = 0
 		tempCStart = 0
-		for y in dfGen[dfGen[!,:Zone].==z,:][!,:R_ID]
+		for y in dfGen[dfGen[!,:Zone].==z, :R_ID]
 			tempCFix = tempCFix +
 				(y in inputs["STOR_ALL"] ? value.(EP[:eCFixEnergy])[y] : 0) +
 				(y in inputs["STOR_ASYMMETRIC"] ? value.(EP[:eCFixCharge])[y] : 0) +

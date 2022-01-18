@@ -33,39 +33,39 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	           "Demand"]
 	   	dfTemp1[2,1:size(dfTemp1,2)] = repeat([z],size(dfTemp1,2))
 	   	for t in 1:T
-	     	dfTemp1[t+rowoffset,1]= sum(value.(EP[:vP][dfGen[(dfGen[!,:THERM].==1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
-		 		sum(value.(EP[:vP][dfGen[(dfGen[!,:VRE].==1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
-				sum(value.(EP[:vP][dfGen[(dfGen[!,:MUST_RUN].==1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t])) +
-				sum(value.(EP[:vP][dfGen[(dfGen[!,:HYDRO].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
-	     	dfTemp1[t+rowoffset,2] = sum(value.(EP[:vP][dfGen[(dfGen[!,:STOR].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
-	     	dfTemp1[t+rowoffset,3] = 0
+			dfTemp1[t+rowoffset,1]= sum(value.(EP[:vP][dfGen[(dfGen[!,:THERM].==1) .&  (dfGen[!,:Zone].==z), :R_ID], t])) +
+				sum(value.(EP[:vP][dfGen[(dfGen[!,:VRE].==1) .&  (dfGen[!,:Zone].==z), :R_ID], t])) +
+				sum(value.(EP[:vP][dfGen[(dfGen[!,:MUST_RUN].==1) .&  (dfGen[!,:Zone].==z), :R_ID], t])) +
+				sum(value.(EP[:vP][dfGen[(dfGen[!,:HYDRO].>=1) .&  (dfGen[!,:Zone].==z), :R_ID], t]))
+			dfTemp1[t+rowoffset,2] = sum(value.(EP[:vP][dfGen[(dfGen[!,:STOR].>=1) .&  (dfGen[!,:Zone].==z), :R_ID] ,t]))
+			dfTemp1[t+rowoffset,3] = 0
 	     	if !isempty(intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
-	     	    dfTemp1[t+rowoffset,3] = -sum(value.(EP[:vCHARGE][y,t]) for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
+				dfTemp1[t+rowoffset,3] = -sum(value.(EP[:vCHARGE][y,t]) for y in intersect(dfGen[dfGen.Zone.==z, :R_ID],STOR_ALL))
 	     	end
-	     	dfTemp1[t+rowoffset,4] = 0
+			dfTemp1[t+rowoffset,4] = 0
 	     	if !isempty(intersect(dfGen[dfGen.Zone.==z,:R_ID],FLEX))
-	     	    dfTemp1[t+rowoffset,4] = sum(value.(EP[:vCHARGE_FLEX][y,t]) for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],FLEX))
+				dfTemp1[t+rowoffset,4] = sum(value.(EP[:vCHARGE_FLEX][y,t]) for y in intersect(dfGen[dfGen.Zone.==z, :R_ID],FLEX))
 	     	end
-	     	dfTemp1[t+rowoffset,5] = -sum(value.(EP[:vP][dfGen[(dfGen[!,:FLEX].>=1) .&  (dfGen[!,:Zone].==z),:][!,:R_ID],t]))
+				dfTemp1[t+rowoffset,5] = -sum(value.(EP[:vP][dfGen[(dfGen[!,:FLEX].>=1) .&  (dfGen[!,:Zone].==z), :R_ID],t]))
 	     	if SEG>1
-	       		dfTemp1[t+rowoffset,6] = sum(value.(EP[:vNSE][2:SEG,t,z]))
+				dfTemp1[t+rowoffset,6] = sum(value.(EP[:vNSE][2:SEG,t,z]))
 	     	else
-	       		dfTemp1[t+rowoffset,6]=0
+				dfTemp1[t+rowoffset,6]=0
 	     	end
-	     	dfTemp1[t+rowoffset,7] = value(EP[:vNSE][1,t,z])
-	     	dfTemp1[t+rowoffset,8] = 0
-	     	dfTemp1[t+rowoffset,9] = 0
-		#=
-	     	if setup["NetworkExpansion"] == 1
-	     	    dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
-	     	    dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
-	     	end
-		=#
-		if Z>=2
-			dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
-			dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
-		end
-	     	dfTemp1[t+rowoffset,10] = -inputs["pD"][t,z]
+			dfTemp1[t+rowoffset,7] = value(EP[:vNSE][1,t,z])
+			dfTemp1[t+rowoffset,8] = 0
+			dfTemp1[t+rowoffset,9] = 0
+			#=
+			if setup["NetworkExpansion"] == 1
+			    dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
+			    dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
+			end
+			=#
+			if Z>=2
+				dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
+				dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
+			end
+			dfTemp1[t+rowoffset,10] = -inputs["pD"][t,z]
 
 			if setup["ParameterScale"] == 1
 				dfTemp1[t+rowoffset,1] = dfTemp1[t+rowoffset,1] * ModelScalingFactor
@@ -79,7 +79,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 				dfTemp1[t+rowoffset,9] = dfTemp1[t+rowoffset,9] * ModelScalingFactor
 				dfTemp1[t+rowoffset,10] = dfTemp1[t+rowoffset,10] * ModelScalingFactor
 			end
-	   	end
+		end
 		if z==1
 			dfPowerBalance =  hcat(vcat(["", "Zone", "AnnualSum"], ["t$t" for t in 1:T]), dfTemp1)
 		else

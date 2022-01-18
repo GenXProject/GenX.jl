@@ -31,12 +31,12 @@ function emissions(EP::Model, inputs::Dict)
 	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
 
 	@expression(EP, eEmissionsByPlant[y=1:G,t=1:T],
-	 	if y in inputs["COMMIT"]
-		 	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]+dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
-	 	else
-		 	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
-	 	end
- 	)
- 	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
+		if y in inputs["COMMIT"]
+			dfGen[y,:CO2_per_MWh]*EP[:vP][y,t]+dfGen[y,:CO2_per_Start]*EP[:vSTART][y,t]
+		else
+			dfGen[y,:CO2_per_MWh]*EP[:vP][y,t]
+		end
+	)
+	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
 	return EP
 end
