@@ -19,8 +19,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 This method returns a solver-specific MathOptInterface OptimizerWithAttributes optimizer instance to be used in the GenX.generate\_model() method.
 
-The "solver" argument is a string which specifies the solver to be used, and can be either "Gurobi", "CPLEX", "Clp", "Cbc", "GLPK", or "Ipopt".
-It is not case sensitive.
+The "solver" argument is a string which specifies the solver to be used. It is not case sensitive.
+Currently supported solvers include: "Gurobi", "CPLEX", "Clp", "Cbc", or "SCIP"
 
 The "solver\_settings\_path" argument is a string which specifies the path to the directory that contains the settings YAML file for the specified solver.
 
