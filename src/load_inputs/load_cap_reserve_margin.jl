@@ -15,7 +15,10 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_cap_reserve_margin(setup::Dict, path::AbstractString, inputs_crm::Dict, network_var::DataFrame)
+	load_cap_reserve_margin(setup::Dict, 
+
+
+::AbstractString, inputs_crm::Dict, network_var::DataFrame)
 
 Function for reading input parameters related to planning reserve margin constraints
 """
@@ -41,7 +44,7 @@ function load_cap_reserve_margin(setup::Dict, path::AbstractString, inputs_crm::
 	return inputs_crm
 end
 
-function load_cap_reserve_margin_trans(setup::Dict, path::AbstractString, inputs_crm::Dict, network_var::DataFrame)
+function load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_var::DataFrame)
 
 	println("About to Read Transmission's Participation in Capacity Reserve Margin")
 
