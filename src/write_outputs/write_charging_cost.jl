@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_charging_cost(path::AbstractString, sep::AbstractString, inputs::Dict, dfCharge::DataFrame, dfPrice::DataFrame, dfPower::DataFrame, setup::Dict)
+function write_charging_cost(path::AbstractString, inputs::Dict, dfCharge::DataFrame, dfPrice::DataFrame, dfPower::DataFrame, setup::Dict)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -47,10 +47,10 @@ function write_charging_cost(path::AbstractString, sep::AbstractString, inputs::
  		dfChargingcost[!,:AnnualSum][i] = sum(dfChargingcost[i,6:T+5])
  	end
 	dfChargingcost_annualonly = dfChargingcost[!,1:5]
-	CSV.write(string(path,sep,"ChargingCost.csv"), dfChargingcost_annualonly)
+	CSV.write(joinpath(path, "ChargingCost.csv"), dfChargingcost_annualonly)
 	return dfChargingcost
 end
-#=function write_charging_cost(path::AbstractString, sep::AbstractString, inputs::Dict, dfCharge::DataFrame, dfPrice::DataFrame, dfPower::DataFrame, setup::Dict)
+#=function write_charging_cost(path::AbstractString, inputs::Dict, dfCharge::DataFrame, dfPrice::DataFrame, dfPower::DataFrame, setup::Dict)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -74,7 +74,7 @@ end
  	for i in 1:G
  		dfChargingcost[!,:Sum][i] = sum(dfChargingcost[i,6:T+5])
  	end
-	CSV.write(string(path,sep,"ChargingCost.csv"), dfChargingcost)
+	CSV.write(joinpath(path, "ChargingCost.csv"), dfChargingcost)
 	return dfChargingcost
 end
 =#
