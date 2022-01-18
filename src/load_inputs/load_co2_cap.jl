@@ -20,7 +20,6 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 Function for reading input parameters related to CO$_2$ emissions cap constraints
 """
 function load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
-	println("About to read CO2_cap.csv")
 	# Definition of Cap requirements by zone (as Max Mtons)
 	inputs_co2["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path,"CO2_cap.csv"), header=true), copycols=true)
 	cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap"]))
