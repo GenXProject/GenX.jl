@@ -20,6 +20,9 @@ cplex.log
 
 /docs/build/
 
+# Microsoft office temporary files
+~$*
+
 # Never include output folders
 Example_Systems/**/Results*/
 
