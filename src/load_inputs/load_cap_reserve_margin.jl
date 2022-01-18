@@ -15,10 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_cap_reserve_margin(setup::Dict, 
-
-
-::AbstractString, inputs_crm::Dict, network_var::DataFrame)
+	load_cap_reserve_margin(setup::Dict, path::AbstractString, inputs_crm::Dict)
 
 Function for reading input parameters related to planning reserve margin constraints
 """
@@ -44,9 +41,14 @@ function load_cap_reserve_margin(setup::Dict, path::AbstractString, inputs_crm::
 	return inputs_crm
 end
 
+@doc raw"""
+	load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_var::DataFrame)
+
+Function for reading input parameters related to participation of transmission imports/exports in capacity reserve margin constraint.
+"""
 function load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_var::DataFrame)
 
-	println("About to Read Transmission's Participation in Capacity Reserve Margin")
+	println("About to read details on participation of transmission imports/exports in capacity reserve margin constraint.")
 
 	res = inputs_crm["NCapacityReserveMargin"]
 
@@ -64,7 +66,7 @@ function load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_va
 	last_col_trans_excl = findall(s -> s == "CapRes_Excl_$res", names(network_var))[1]
 	dfTransCapRes_excl = network_var[:,first_col_trans_excl:last_col_trans_excl]
 	inputs_crm["dfTransCapRes_excl"] = Matrix{Float64}(dfTransCapRes_excl[completecases(dfTransCapRes_excl),:])
-	println("Transmission's Participation in Capacity Reserve Margin is Successfully Read!")
+	println("Details on participation of transmission imports/exports in capacity reserve margin constraint Successfully Read!")
 
 	return inputs_crm
 end
