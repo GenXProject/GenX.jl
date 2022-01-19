@@ -19,11 +19,12 @@ function write_nw_expansion(path::AbstractString, sep::AbstractString, inputs::D
 
     # Transmission network reinforcements
     transcap = zeros(L)
+    transendcap = zeros(L)
     for i in 1:L
         if i in inputs["EXPANSION_LINES"]
             transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
-            transendcap[i] = value.(EP[:eAvail_Trans_Cap])[i]
         end
+        transendcap[i] = value.(EP[:eAvail_Trans_Cap][i])
     end
     dfTransCap = DataFrame(
         Line = 1:L,
