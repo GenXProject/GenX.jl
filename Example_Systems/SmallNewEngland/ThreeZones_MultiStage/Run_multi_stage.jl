@@ -37,7 +37,7 @@ using YAML
 using BenchmarkTools
 
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
-mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
+mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
 multistage_settings = joinpath(settings_path, "multi_stage_settings.yml") # Multi stage settings YAML file path
 mysetup["MultiStageSettingsDict"] = YAML.load(open(multistage_settings))
