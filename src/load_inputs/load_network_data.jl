@@ -83,7 +83,11 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
     # Multi-Stage
     if setup["MultiStage"] == 1
         # Weighted Average Cost of Capital for Transmission Expansion
-        inputs_nw["transmission_WACC"]= convert(Array{Float64}, collect(skipmissing(network_var[!,:WACC])))
+        if setup["NetworkExpansion"]>=1
+            inputs_nw["transmission_WACC"]= convert(Array{Float64}, collect(skipmissing(network_var[!,:WACC])))
+        end
+
+        # Max Flow Possible on Each Line
         num_stages = setup["MultiStageSettingsDict"]["NumStages"] # Number of Planning Stages
         if setup["ParameterScale"] == 1
             for p in 1:num_stages
