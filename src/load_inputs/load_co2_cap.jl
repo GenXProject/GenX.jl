@@ -15,14 +15,13 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_co2_cap(setup::Dict, path::AbstractString, sep::AbstractString, inputs_co2::Dict)
+	load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
 
 Function for reading input parameters related to CO$_2$ emissions cap constraints
 """
-function load_co2_cap(setup::Dict, path::AbstractString, sep::AbstractString, inputs_co2::Dict)
+function load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
 	# Definition of Cap requirements by zone (as Max Mtons)
-	#inputs_co2["dfCO2Cap"] = CSV.read(string(path,sep,"CO2_cap.csv"), header=true)
-	inputs_co2["dfCO2Cap"] = DataFrame(CSV.File(string(path, sep,"CO2_cap.csv"), header=true), copycols=true)
+	inputs_co2["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path,"CO2_cap.csv"), header=true), copycols=true)
 	cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap"]))
 	first_col = findall(s -> s == "CO_2_Cap_Zone_1", names(inputs_co2["dfCO2Cap"]))[1]
 	last_col = findall(s -> s == "CO_2_Cap_Zone_$cap", names(inputs_co2["dfCO2Cap"]))[1]

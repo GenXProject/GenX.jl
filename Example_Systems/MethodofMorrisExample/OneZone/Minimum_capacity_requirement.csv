@@ -1,0 +1,4 @@
+MinCapReqConstraint,ConstraintDescription,Min_MW
+1,PV,5000
+2,Wind,10000
+3,Batteries,6000

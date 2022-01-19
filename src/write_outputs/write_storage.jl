@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,setup::Dict, EP::Model)
+	write_storage(path::AbstractString, inputs::Dict,setup::Dict, EP::Model)
 
 Function for writing the capacities of different storage technologies, including hydro reservoir, flexible storage tech etc.
 """
-function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,setup::Dict, EP::Model)
+function write_storage(path::AbstractString, inputs::Dict,setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	G = inputs["G"]
@@ -51,5 +51,5 @@ function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,s
 	dfStorage = hcat(dfStorage, DataFrame(storagevcapvalue, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfStorage,auxNew_Names)
-	CSV.write(string(path,sep,"storage.csv"), dftranspose(dfStorage, false), writeheader=false)
+	CSV.write(joinpath(path, "storage.csv"), dftranspose(dfStorage, false), writeheader=false)
 end

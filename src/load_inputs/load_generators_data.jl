@@ -15,14 +15,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_generators_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+	load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 Function for reading input parameters related to electricity generators (plus storage and flexible demand resources)
 """
-function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 	# Generator related inputs
-	gen_in = DataFrame(CSV.File(string(path,sep,"Generators_data.csv"), header=true), copycols=true)
+	gen_in = DataFrame(CSV.File(joinpath(path, "Generators_data.csv"), header=true), copycols=true)
 
 	# Add Resource IDs after reading to prevent user errors
 	gen_in[!,:R_ID] = 1:size(collect(skipmissing(gen_in[!,1])),1)
@@ -46,9 +46,11 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	inputs_gen["STOR_ALL"] = union(inputs_gen["STOR_SYMMETRIC"],inputs_gen["STOR_ASYMMETRIC"])
 
 	# Set of storage resources with long duration storage capabilitites
-	inputs_gen["STOR_HYDRO_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.HYDRO.==1),:R_ID]
-	inputs_gen["STOR_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.STOR.==1),:R_ID]
-	inputs_gen["STOR_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.STOR.==1),:R_ID]
+	#if setup["LongDurationStorage"] == 1
+		inputs_gen["STOR_HYDRO_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.HYDRO.==1),:R_ID]
+		inputs_gen["STOR_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.STOR.==1),:R_ID]
+		inputs_gen["STOR_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.STOR.==1),:R_ID]
+	#end
 
 	# Set of all reservoir hydro resources
 	inputs_gen["HYDRO_RES"] = gen_in[(gen_in[!,:HYDRO].==1),:R_ID]

@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_curtailment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the curtailment values of the different variable renewable resources.
 """
-function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -43,14 +43,10 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
 	rename!(dfCurtailment,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCurtailment[!,Symbol("t$t")][1:G])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G])
-		end
+		total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G])
 	end
 	rename!(total,auxNew_Names)
 	dfCurtailment = vcat(dfCurtailment, total)
-	CSV.write(string(path,sep,"curtail.csv"), dftranspose(dfCurtailment, false), writeheader=false)
+	CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), writeheader=false)
 	return dfCurtailment
 end
