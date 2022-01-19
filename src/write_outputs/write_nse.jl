@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting non-served energy for every model zone, time step and cost-segment.
 """
-function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -53,15 +53,11 @@ function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 	rename!(dfNse,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfNse[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfNse[!,Symbol("t$t")][1:Z])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
-		end
+		total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
 	end
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)
 
-	CSV.write(string(path,sep,"nse.csv"),  dftranspose(dfNse, false), writeheader=false)
+	CSV.write(joinpath(path, "nse.csv"),  dftranspose(dfNse, false), writeheader=false)
 	return dfTemp
 end

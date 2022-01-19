@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_opwrap_lds_dstor(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_opwrap_lds_dstor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Extract data frames from input dictionary
 	dfGen = inputs["dfGen"]
 	W = inputs["REP_PERIOD"]     # Number of subperiods
@@ -31,5 +31,5 @@ function write_opwrap_lds_dstor(path::AbstractString, sep::AbstractString, input
 	dfdStorage = hcat(dfdStorage, DataFrame(dsoc, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("w$t") for t in 1:W]]
 	rename!(dfdStorage,auxNew_Names)
-	CSV.write(string(path,sep,"dStorage.csv"), dftranspose(dfdStorage, false), writeheader=false)
+	CSV.write(joinpath(path, "dStorage.csv"), dftranspose(dfdStorage, false), writeheader=false)
 end

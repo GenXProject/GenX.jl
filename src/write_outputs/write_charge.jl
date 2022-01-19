@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the charging energy values of the different storage technologies.
 """
-function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -47,14 +47,10 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	rename!(dfCharge,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
-		end
+		total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
 	end
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)
-	CSV.write(string(path,sep,"charge.csv"), dftranspose(dfCharge, false), writeheader=false)
+	CSV.write(joinpath(path, "charge.csv"), dftranspose(dfCharge, false), writeheader=false)
 	return dfCharge
 end

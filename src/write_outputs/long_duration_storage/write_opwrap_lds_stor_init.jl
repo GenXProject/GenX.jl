@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_opwrap_lds_stor_init(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_opwrap_lds_stor_init(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Extract data frames from input dictionary
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]
@@ -31,5 +31,5 @@ function write_opwrap_lds_stor_init(path::AbstractString, sep::AbstractString, i
 	dfStorageInit = hcat(dfStorageInit, DataFrame(socw, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("n$t") for t in 1:NPeriods]]
 	rename!(dfStorageInit,auxNew_Names)
-	CSV.write(string(path,sep,"StorageInit.csv"), dftranspose(dfStorageInit, false), writeheader=false)
+	CSV.write(joinpath(path, "StorageInit.csv"), dftranspose(dfStorageInit, false), writeheader=false)
 end
