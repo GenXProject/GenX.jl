@@ -2,7 +2,7 @@
 *.jl.*.cov
 *.jl.mem
 *.DS_Store
-/Manifest.toml
+Manifest.toml
 .Rhistory
 deps/deps.jl
 .vscode/
@@ -14,22 +14,24 @@ YourModel.lp
 time_domain_reduction/PreCluster_Plots.jl
 time_domain_reduction/TSC_Plots.jl
 time_domain_reduction/TSC.jl
+
 gurobi.log
 cplex.log
-Example_Systems/SmallNewEngland/ThreeZones/TDR_*
-Example_Systems/RealSystemExample/ISONE_Singlezone/Manifest.toml
-Example_Systems/RealSystemExample/ISONE_Singlezone/Results*
-Example_Systems/RealSystemExample/ISONE_Trizone/Results*
-Example_Systems/RealSystemExample/ISONE_Trizone_FullTimeseries/Results*
-Example_Systems/RealSystemExample/MGA_ISONE_Trizone_FullTimeseries/Results*
-Example_Systems/SmallNewEngland/OneZone/Results*
-Example_Systems/SmallNewEngland/OneZone_3VREBin/Results*
-Example_Systems/SmallNewEngland/ThreeZones/Results*
+
 /docs/build/
-Example_Systems/NYISO/*
-Example_Systems/RealSystemExample/PG_Test_2030_p1/*
-Example_Systems/RealSystemExample/Inputs/*
-Example_Systems/SmallNewEngland/ThreeZones_full/*
+
+# Microsoft office temporary files
+~$*
+
+# Never include output folders
+Example_Systems/**/Results*/
+
+# Example systems which may be or have been under development
+Example_Systems/SmallNewEngland/ThreeZones/TDR_*
+Example_Systems/NYISO*
+Example_Systems/RealSystemExample/PG_Test_2030_p1/
+Example_Systems/RealSystemExample/Inputs/
+Example_Systems/SmallNewEngland/ThreeZones_full*
 2050/
-Example_Systems/SmallNewEngland/ThreeZones_MultiPeriod/Inputs/Inputs_p2/TDR_Results/*
-Example_Systems/SmallNewEngland/ThreeZones_MultiPeriod/Inputs/Inputs_p3/TDR_Results/*
+Example_Systems/SmallNewEngland/ThreeZones_MultiPeriod/Inputs/Inputs_p2/TDR_Results/
+Example_Systems/SmallNewEngland/ThreeZones_MultiPeriod/Inputs/Inputs_p3/TDR_Results/
