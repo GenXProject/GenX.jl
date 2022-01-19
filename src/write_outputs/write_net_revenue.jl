@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame)
+	write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame)
 
 Function for writing net revenue of different generation technologies.
 """
-function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame)
+function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
@@ -48,11 +48,7 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 
 	# Add fuel cost to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:Fuel_cost] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.Fuel_cost = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.Fuel_cost = zeros(size(dfNetRevenue, 1))
 	for i in 1:G
 		dfNetRevenue.Fuel_cost[i] = sum(inputs["C_Fuel_per_MWh"][i,:] .* inputs["omega"] .* value.(EP[:vP])[i,:])
 	end
@@ -61,11 +57,7 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 
 	# Add storage cost to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:Var_OM_cost_in] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.Var_OM_cost_in = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.Var_OM_cost_in = zeros(size(dfNetRevenue, 1))
  	for y in inputs["STOR_ALL"]
  		dfNetRevenue.Var_OM_cost_in[y] = dfGen[y,:Var_OM_Cost_per_MWh_In] * sum(inputs["omega"] .* value.(EP[:vCHARGE])[y,:])
  	end
@@ -73,11 +65,7 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 		dfNetRevenue.Var_OM_cost_in = dfNetRevenue.Var_OM_cost_in * (ModelScalingFactor^2) # converting Million US$ to US$
 	end
 	# Add start-up cost to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:StartCost] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.StartCost = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.StartCost = zeros(size(dfNetRevenue, 1))
  	if (setup["UCommit"]>=1)
  		for y in COMMIT #dfGen[!,:R_ID]
  			dfNetRevenue.StartCost[y] = sum(value.(EP[:eCStart])[y,:])
@@ -87,54 +75,33 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 		dfNetRevenue.StartCost = dfNetRevenue.StartCost * (ModelScalingFactor^2) # converting Million US$ to US$
 	end
 	# Add charge cost to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:Charge_cost] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.Charge_cost = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.Charge_cost = zeros(size(dfNetRevenue, 1))
 	if has_duals(EP) == 1
 		dfNetRevenue.Charge_cost = dfChargingcost[!,:AnnualSum] # Unit is confirmed to be US$
 	end
 
 	# Add energy and subsidy revenue to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:EnergyRevenue] .= 0.0
-		dfNetRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.EnergyRevenue = zeros(size(dfNetRevenue, 1))
-		dfNetRevenue.SubsidyRevenue = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.EnergyRevenue = zeros(size(dfNetRevenue, 1))
+	dfNetRevenue.SubsidyRevenue = zeros(size(dfNetRevenue, 1))
 	if has_duals(EP) == 1
 		dfNetRevenue.EnergyRevenue = dfEnergyRevenue[!,:AnnualSum] # Unit is confirmed to be US$
 	 	dfNetRevenue.SubsidyRevenue = dfSubRevenue[!,:SubsidyRevenue] # Unit is confirmed to be US$
 	end
 
 	# Add capacity revenue to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:ReserveMarginRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.ReserveMarginRevenue = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.ReserveMarginRevenue = zeros(size(dfNetRevenue, 1))
  	if setup["CapacityReserveMargin"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
  		dfNetRevenue.ReserveMarginRevenue = dfResRevenue[!,:AnnualSum]
  	end
 
 	# Add RPS/CES revenue to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:ESRRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.ESRRevenue = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.ESRRevenue = zeros(size(dfNetRevenue, 1))
  	if setup["EnergyShareRequirement"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
  		dfNetRevenue.ESRRevenue = dfESRRev[!,:AnnualSum]
  	end
 
 	# Calculate emissions cost
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:EmissionsCost] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.EmissionsCost = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.EmissionsCost = zeros(size(dfNetRevenue, 1))
  	if setup["CO2Cap"] >=1 && has_duals(EP) == 1
  		for y in 1:G
 			dfNetRevenue.EmissionsCost[y] = 0.0
@@ -165,11 +132,7 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
  	end
 
 	# Add regional technology subsidy revenue to the dataframe
-	if v"1.3" <= VERSION < v"1.4"
-		dfNetRevenue[!,:RegSubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfNetRevenue.RegSubsidyRevenue = zeros(size(dfNetRevenue, 1))
-	end
+	dfNetRevenue.RegSubsidyRevenue = zeros(size(dfNetRevenue, 1))
 	if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
 		dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[!,:SubsidyRevenue]
 	end
@@ -179,5 +142,5 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
 	#dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW + dfNetRevenue.Inv_cost_MWh + dfNetRevenue.Fixed_OM_cost_MW + dfNetRevenue.Fixed_OM_cost_MWh + dfNetRevenue.Var_OM_cost_out + dfNetRevenue.Var_OM_cost_in + dfNetRevenue.Fuel_cost + dfNetRevenue.Charge_cost + dfNetRevenue.EmissionsCost + dfNetRevenue.StartCost
 	dfNetRevenue.Profit = 	dfNetRevenue.Revenue - dfNetRevenue.Cost
 
-	CSV.write(string(path,sep,"NetRevenue.csv"), dfNetRevenue)
+	CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)
 end

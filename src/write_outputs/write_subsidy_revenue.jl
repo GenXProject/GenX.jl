@@ -15,24 +15,20 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfCap::DataFrame, EP::Model)
+	write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfCap::DataFrame, EP::Model)
 
 Function for reporting subsidy revenue earned if a generator specified `Min_Cap` is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is \$.
 """
-function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfCap::DataFrame, EP::Model)
+function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfCap::DataFrame, EP::Model)
 	dfGen = inputs["dfGen"]
 	#NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
 
 	dfSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
 	#dfSubRevenue.SubsidyRevenue .= 0.0
-	
-	if v"1.3" <= VERSION < v"1.4"
-		dfSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfSubRevenue.SubsidyRevenue = zeros(size(dfSubRevenue, 1))
-		#dfSubRevenue[:,:SubsidyRevenue] = zeros(size(dfSubRevenue, 1))
-	end
-	
+
+	dfSubRevenue.SubsidyRevenue = zeros(size(dfSubRevenue, 1))
+	#dfSubRevenue[:,:SubsidyRevenue] = zeros(size(dfSubRevenue, 1))
+
 	#dfSubRevenue[!,:SubsidyRevenue] .= 0.0
 	for y in (dfGen[(dfGen[!,:Min_Cap_MW].>0) ,:][!,:R_ID])
 		dfSubRevenue[y,:SubsidyRevenue] = (value.(EP[:eTotalCap])[y]) * (dual.(EP[:cMinCap])[y])
@@ -44,12 +40,7 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 	### calculating tech specific subsidy revenue
 
 	dfRegSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
-	#dfRegSubRevenue.SubsidyRevenue .= 0.0
-	if v"1.3" <= VERSION < v"1.4"
-		dfRegSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfRegSubRevenue.SubsidyRevenue = zeros(size(dfRegSubRevenue, 1))
-	end
+	dfRegSubRevenue.SubsidyRevenue = zeros(size(dfRegSubRevenue, 1))
 	if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
 			for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]
@@ -62,7 +53,7 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
 		dfRegSubRevenue.SubsidyRevenue = dfRegSubRevenue.SubsidyRevenue*(ModelScalingFactor^2) #convert from Million US$ to US$
 	end
 
-	CSV.write(string(path,sep,"SubsidyRevenue.csv"), dfSubRevenue)
-	CSV.write(string(path,sep,"RegSubsidyRevenue.csv"), dfRegSubRevenue)
+	CSV.write(joinpath(path, "SubsidyRevenue.csv"), dfSubRevenue)
+	CSV.write(joinpath(path, "RegSubsidyRevenue.csv"), dfRegSubRevenue)
 	return dfSubRevenue, dfRegSubRevenue
 end

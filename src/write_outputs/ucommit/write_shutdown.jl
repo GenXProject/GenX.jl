@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -34,13 +34,9 @@ function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict,
 	rename!(dfShutdown,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfShutdown[!,:Sum]) fill(0.0, (1,T))], :auto)
 	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfShutdown[!,Symbol("t$t")][1:G])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfShutdown[:,Symbol("t$t")][1:G])
-		end
+		total[:,t+3] .= sum(dfShutdown[:,Symbol("t$t")][1:G])
 	end
 	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
-	CSV.write(string(path,sep,"shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
+	CSV.write(joinpath(path, "shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
 end

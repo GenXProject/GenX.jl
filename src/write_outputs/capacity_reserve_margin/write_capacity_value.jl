@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_capacity_value(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfCharge::DataFrame, dfResMar::DataFrame, dfCap::DataFrame)
+function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfCharge::DataFrame, dfResMar::DataFrame, dfCap::DataFrame)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -33,12 +33,7 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 	for i in 1:inputs["NCapacityReserveMargin"]
 		dfCapValue_ = dfPower[1:end-1,:]
 		dfCapValue_ = select!(dfCapValue_, Not(:AnnualSum))
-		if v"1.3" <= VERSION < v"1.4"
-			dfCapValue_[!,:Reserve] .= Symbol("CapRes_$i")
-		elseif v"1.4" <= VERSION < v"1.7"
-			#dfCapValue_.Reserve = Symbol("CapRes_$i")
-			dfCapValue_.Reserve = fill(Symbol("CapRes_$i"), size(dfCapValue_, 1))
-		end
+		dfCapValue_.Reserve = fill(Symbol("CapRes_$i"), size(dfCapValue_, 1))
 		for t in 1:T
 			if dfResMar[i,t] > 0.0001
 				for y in 1:G
@@ -62,5 +57,5 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 		end
 		dfCapValue = vcat(dfCapValue, dfCapValue_)
 	end
-	CSV.write(string(path,sep,"CapacityValue.csv"),dfCapValue)
+	CSV.write(joinpath(path, "CapacityValue.csv"),dfCapValue)
 end
