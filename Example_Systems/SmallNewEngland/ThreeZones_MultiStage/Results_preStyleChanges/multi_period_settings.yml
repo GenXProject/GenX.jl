@@ -1,9 +1,0 @@
-PeriodLengths:
-  - 10
-  - 10
-  - 10
-ConvergenceTolerance: 0.01
-NumPeriods: 3
-WACC: 0.045
-Myopic: 0
-CurPeriod: 3

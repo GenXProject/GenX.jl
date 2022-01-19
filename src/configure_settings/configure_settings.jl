@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 function configure_settings(settings_path::String)
-
+	println("Configuring Settings")
     settings = YAML.load(open(settings_path))
 
     # Optional settings parameters ############################################
@@ -38,7 +38,7 @@ function configure_settings(settings_path::String)
     # Activate minimum technology carveout constraints; 0 = not active; 1 = active
     if(!haskey(settings, "MinCapReq")) settings["MinCapReq"] = 0 end
     # Available solvers: Gurobi, CPLEX, CLPs
-    if(!haskey(settings, "Solver")) settings["Solver"] =  "Gurobi" end
+    if(!haskey(settings, "Solver")) settings["Solver"] = "Gurobi" end
     # Turn on parameter scaling wherein load, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
     if(!haskey(settings, "ParameterScale")) settings["ParameterScale"] = 0 end
     # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
@@ -57,6 +57,9 @@ function configure_settings(settings_path::String)
     if(!haskey(settings, "ModelingToGenerateAlternatives")) settings["ModelingToGenerateAlternatives"] = 0 end
     # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
     if(!haskey(settings, "ModelingtoGenerateAlternativeSlack")) settings["ModelingtoGenerateAlternativeSlack"] = 0.1 end
+	# Multi-stage modeling; 0 if single-stage; 1 if multi-stage.
+	if(!haskey(settings, "MultiStage")) settings["MultiStage"] = 0 end
+
 
 return settings
 end
