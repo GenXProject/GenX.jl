@@ -1,9 +1,0 @@
-Myopic: 0
-ConvergenceTolerance: 0.01
-WACC: 0.045
-StageLengths:
-  - 10
-  - 10
-  - 10
-CurStage: 3
-NumStages: 3

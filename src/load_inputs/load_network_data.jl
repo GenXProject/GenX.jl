@@ -82,7 +82,9 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
 
     # Multi-Stage
     if setup["MultiStage"] == 1
-        num_stages = setup["MultiStageSettingsDict"]["NumStages"]
+        # Weighted Average Cost of Capital for Transmission Expansion
+        inputs_nw["transmission_WACC"]= convert(Array{Float64}, collect(skipmissing(network_var[!,:WACC])))
+        num_stages = setup["MultiStageSettingsDict"]["NumStages"] # Number of Planning Stages
         if setup["ParameterScale"] == 1
             for p in 1:num_stages
                 inputs_nw["pLine_Max_Flow_Possible_MW_p$p"] = convert(Array{Float64}, collect(skipmissing(network_var[!,:Line_Max_Flow_Possible_MW])))/ModelScalingFactor # Convert to GW
@@ -93,9 +95,6 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
             end
         end
     end
-
-    # Weighted Average Cost of Capital for Transmission Expansion
-    inputs_nw["transmission_WACC"]= convert(Array{Float64}, collect(skipmissing(network_var[!,:WACC])))
 
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)
     inputs_nw["pTrans_Loss_Coef"] = zeros(Float64, inputs_nw["L"])

@@ -34,8 +34,7 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 
 [compat]
 BenchmarkTools = "1.1.1"
-
-CPLEX = "0.6.1"
+#CPLEX = "0.6.1"
 CSV = "0.8.5"
 Cbc = "0.8.0"
 Clp = "0.8.4"

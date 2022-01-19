@@ -21,7 +21,7 @@ function set_default_if_absent!(settings::Dict, key::String, defaultval)
 end
 
 function configure_settings(settings_path::String)
-
+	println("Configuring Settings")
     settings = YAML.load(open(settings_path))
 
     # Optional settings parameters ############################################
@@ -65,6 +65,7 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "ModelingtoGenerateAlternativeSlack", 0.1)
     # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
     set_default_if_absent!(settings, "MultiStage", 0)
+
 
 return settings
 end

@@ -64,7 +64,7 @@ function write_storagedual(path::AbstractString, sep::AbstractString, inputs::Di
 		if setup["ParameterScale"]==1
 			dual_values[y,:] = x1[y,:]./inputs["omega"] *ModelScalingFactor
 		else
-			dual_values[y,:] = x1[y,:]./inputs["omega"] *ModelScalingFactor
+			dual_values[y,:] = x1[y,:]./inputs["omega"]
 		end
 	end
 
