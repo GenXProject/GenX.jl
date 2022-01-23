@@ -161,7 +161,7 @@ function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::I
     	end
 
 	# Transmission losses on each transmission line "l" at hour "t"
-	@variable(EP, vTLOSS[l in LOSS_LINES,t=1:T] >= 0)
+	@variable(EP, vTLOSS[l in LOSS_LINES, t=1:T] >= 0)
 
 	### Expressions ###
 

@@ -61,7 +61,7 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
     dfCO2MassCapRev.AnnualSum = sum(eachcol(dfCO2MassCapRev[:, 3:inputs["NCO2Cap"]+2]))
     CSV.write(string(path, sep, "CO2Revenue_mass.csv"), dfCO2MassCapRev, writeheader = false)
 
-    dfCO2MassCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
+    dfCO2MassCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
     for cap = 1:inputs["NCO2Cap"]
         temp_CO2MassCapCost = DataFrame(A = zeros(G))
         for g = 1:G

@@ -40,53 +40,58 @@ The sum of start-up costs is added to the objective function.
 """
 function ucommit(EP::Model, inputs::Dict, UCommit::Int)
 
-	println("Unit Commitment Module")
+    println("Unit Commitment Module")
 
-	dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
-	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
 
-	### Variables ###
+    ### Variables ###
 
-	## Decision variables for unit commitment
-	# commitment state variable
-	@variable(EP, vCOMMIT[y in COMMIT, t=1:T] >= 0)
-	# startup event variable
-	@variable(EP, vSTART[y in COMMIT, t=1:T] >= 0)
-	# shutdown event variable
-	@variable(EP, vSHUT[y in COMMIT, t=1:T] >= 0)
+    ## Decision variables for unit commitment
+    # commitment state variable
+    @variable(EP, vCOMMIT[y in COMMIT, t = 1:T] >= 0)
+    # startup event variable
+    @variable(EP, vSTART[y in COMMIT, t = 1:T] >= 0)
+    # shutdown event variable
+    @variable(EP, vSHUT[y in COMMIT, t = 1:T] >= 0)
 
-	### Expressions ###
+    ### Expressions ###
 
-	## Objective Function Expressions ##
+    ## Objective Function Expressions ##
 
-	# Startup costs of "generation" for resource "y" during hour "t"
-	@expression(EP, eCStart[y in COMMIT, t=1:T],(inputs["omega"][t]*inputs["C_Start"][y]*vSTART[y,t]))
+    # Startup costs of "generation" for resource "y" during hour "t"
+    @expression(EP, eCStart[y in COMMIT, t = 1:T], (inputs["omega"][t] * inputs["C_Start"][y] * vSTART[y, t]))
 
-	# Julia is fastest when summing over one row one column at a time
-	@expression(EP, eTotalCStartT[t=1:T], sum(eCStart[y,t] for y in COMMIT))
-	@expression(EP, eTotalCStart, sum(eTotalCStartT[t] for t=1:T))
+    # Julia is fastest when summing over one row one column at a time
+    # Sum to plant level
+    @expression(EP, ePlantCStart[y in COMMIT], sum(eCStart[y, t] for t in 1:T))
+    # Sum to zonal level
+    @expression(EP, eZonalCStart[z = 1:Z], EP[:vZERO] + sum(ePlantCStart[y] for y in intersect(COMMIT, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    # @expression(EP, eTotalCStartT[t = 1:T], sum(eCStart[y, t] for y in COMMIT))
+    # Sum to system level
+    @expression(EP, eTotalCStart, sum(eZonalCStart[z] for z = 1:Z))
 
-	EP[:eObj] += eTotalCStart
+    EP[:eObj] += eTotalCStart
 
-	### Constratints ###
-	## Declaration of integer/binary variables
-	if UCommit == 1 # Integer UC constraints
-		for y in COMMIT
-			set_integer.(vCOMMIT[y,:])
-			set_integer.(vSTART[y,:])
-			set_integer.(vSHUT[y,:])
-			if y in inputs["RET_CAP"]
-				set_integer(EP[:vRETCAP][y])
-			end
-			if y in inputs["NEW_CAP"]
-				set_integer(EP[:vCAP][y])
-			end
-		end
-	end #END unit commitment configuration
+    ### Constratints ###
+    ## Declaration of integer/binary variables
+    if UCommit == 1 # Integer UC constraints
+        for y in COMMIT
+            set_integer.(vCOMMIT[y, :])
+            set_integer.(vSTART[y, :])
+            set_integer.(vSHUT[y, :])
+            if y in inputs["RET_CAP"]
+                set_integer(EP[:vRETCAP][y])
+            end
+            if y in inputs["NEW_CAP"]
+                set_integer(EP[:vCAP][y])
+            end
+        end
+    end #END unit commitment configuration
 
-	return EP
+    return EP
 end

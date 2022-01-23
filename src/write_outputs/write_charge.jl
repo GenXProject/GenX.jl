@@ -20,41 +20,44 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 Function for writing the charging energy values of the different storage technologies.
 """
 function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	# Power withdrawn to charge each resource in each time step
-	dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
-	charge = zeros(G,T)
-	for i in 1:G
-		if setup["ParameterScale"] ==1
-			if i in inputs["STOR_ALL"]
-				charge[i,:] = value.(EP[:vCHARGE])[i,:] * ModelScalingFactor
-			elseif i in inputs["FLEX"]
-				charge[i,:] = value.(EP[:vCHARGE_FLEX])[i,:] * ModelScalingFactor
-			end
-		else
-			if i in inputs["STOR_ALL"]
-				charge[i,:] = value.(EP[:vCHARGE])[i,:]
-			elseif i in inputs["FLEX"]
-				charge[i,:] = value.(EP[:vCHARGE_FLEX])[i,:]
-			end
-		end
-		dfCharge[!,:AnnualSum][i] = sum(inputs["omega"].* charge[i,:])
-	end
-	dfCharge = hcat(dfCharge, DataFrame(charge, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfCharge,auxNew_Names)
-	total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfCharge[!,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfCharge[:,Symbol("t$t")][union(inputs["STOR_ALL"],inputs["FLEX"])])
-		end
-	end
-	rename!(total,auxNew_Names)
-	dfCharge = vcat(dfCharge, total)
-	CSV.write(string(path,sep,"charge.csv"), dftranspose(dfCharge, false), writeheader=false)
-	return dfCharge
+    dfGen = inputs["dfGen"]
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    STOR_ALL = inputs["STOR_ALL"]
+    FLEX = inputs["FLEX"]
+    # Power withdrawn to charge each resource in each time step
+    dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+    charge = zeros(G, T)
+    if setup["ParameterScale"] == 1
+        if !isempty(inputs["STOR_ALL"])
+            charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]) * ModelScalingFactor
+        end
+        if !isempty(inputs["FLEX"])
+            charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * ModelScalingFactor
+        end
+        dfCharge.AnnualSum .= charge * inputs["omega"] * ModelScalingFactor
+    else
+        if !isempty(inputs["STOR_ALL"])
+            charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
+        end
+        if !isempty(inputs["FLEX"])
+            charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :])
+        end
+        dfCharge.AnnualSum .= charge * inputs["omega"]
+    end
+    dfCharge = hcat(dfCharge, DataFrame(charge, :auto))
+
+    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
+    rename!(dfCharge, auxNew_Names)
+    total = DataFrame(["Total" 0 sum(dfCharge[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
+
+    if v"1.3" <= VERSION < v"1.4"
+        total[!, 4:T+3] .= sum(charge, dims = 1) # summing over the first dimension, g, so the result is a horizonalal array with dimension t
+    elseif v"1.4" <= VERSION < v"1.7"
+        total[:, 4:T+3] .= sum(charge, dims = 1)
+    end
+    rename!(total, auxNew_Names)
+    dfCharge = vcat(dfCharge, total)
+    CSV.write(string(path, sep, "charge.csv"), dftranspose(dfCharge, false), writeheader = false)
+    return dfCharge
 end

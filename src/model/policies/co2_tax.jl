@@ -60,23 +60,26 @@ Note that the generator-side rate-based constraint can be used to represent a fe
 """
 function co2_tax(EP::Model, inputs::Dict, setup::Dict)
 
-	println("C02 Tax Module")
+    println("C02 Tax Module")
 
-	dfGen = inputs["dfGen"]
-	SEG = inputs["SEG"]  # Number of lines
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
+    dfGen = inputs["dfGen"]
+    SEG = inputs["SEG"]  # Number of lines
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
 
-	### Expressions ###
-	#CO2 Tax
+    ### Expressions ###
+    #CO2 Tax
+    # Sum CO2 Tax to plant level
+    @expression(EP, ePlantCCO2Tax[y = 1:G], sum(inputs["omega"][t] * eEmissionsByPlant[y, t] for t in 1:T) * inputs["dfCO2Tax"][dfGen[y, :Zone], "CO2Tax"])
+    # Sum CO2 Tax to zonal level
+    @expression(EP, eZonalCCO2Tax[z = 1:Z], EP[:vZERO] + sum(ePlantCCO2Tax[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    # @expression(EP, eCCO2Tax[z = 1:Z], inputs["dfCO2Tax"][z, "CO2Tax"] * sum(inputs["omega"][t] * EP[:eEmissionsByZone][z, t] for t in 1:T))
+    # Sum CO2 Tax to system level
+    @expression(EP, eTotalCCO2Tax, sum(eZonalCCO2Tax[z] for z in 1:Z))
 
-	@expression(EP, eCCO2Tax[z=1:Z], inputs["dfCO2Tax"][!,"CO2Tax"][z]*sum(inputs["omega"][t]*EP[:eEmissionsByZone][z,t] for t in 1:T))
+    EP[:eObj] += eTotalCCO2Tax
 
-	@expression(EP, eTotalCCO2Tax,sum(eCCO2Tax[z] for z in 1:Z))
-
-	EP[:eObj] += eTotalCCO2Tax
-
-	return EP
+    return EP
 
 end

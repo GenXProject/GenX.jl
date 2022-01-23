@@ -20,29 +20,33 @@ piecewiseheatrate module allows piecewise-linear fitting of input thermal energy
 """
 
 function piecewiseheatrate(EP::Model, inputs::Dict)
-	println("Thermal (Piecewise heat rate) Resources Module")
-	dfGen = inputs["dfGen"]
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
-	G = inputs["G"]
-	THERM_COMMIT = inputs["THERM_COMMIT"]
-	# create variable for fuel consumption
-	@variable(EP, vFuel[y in THERM_COMMIT, t = 1:T])
+    println("Thermal (Piecewise heat rate) Resources Module")
+    dfGen = inputs["dfGen"]
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    G = inputs["G"]
+    THERM_COMMIT = inputs["THERM_COMMIT"]
+    # create variable for fuel consumption
+    @variable(EP, vFuel[y in THERM_COMMIT, t = 1:T])
 
-	# Piecewise heat rate UC
-	@constraint(EP, First_segement[y in THERM_COMMIT, t = 1:T],
-		vFuel[y,t] >= EP[:vP][y,t]*dfGen[!,:Slope1][y] + EP[:vCOMMIT][y,t]*dfGen[!,:Intercept1][y])
-	@constraint(EP, Second_segement[y in THERM_COMMIT, t = 1:T],
-		vFuel[y,t] >= EP[:vP][y,t]*dfGen[!,:Slope2][y] + EP[:vCOMMIT][y,t]*dfGen[!,:Intercept2][y])
-	@constraint(EP, Third_segement[y in THERM_COMMIT, t = 1:T],
-		vFuel[y,t] >= EP[:vP][y,t]*dfGen[!,:Slope3][y] + EP[:vCOMMIT][y,t]*dfGen[!,:Intercept3][y])
+    # Piecewise heat rate UC
+    @constraint(EP, First_segement[y in THERM_COMMIT, t = 1:T],
+        vFuel[y, t] >= EP[:vP][y, t] * dfGen[!, :Slope1][y] + EP[:vCOMMIT][y, t] * dfGen[!, :Intercept1][y])
+    @constraint(EP, Second_segement[y in THERM_COMMIT, t = 1:T],
+        vFuel[y, t] >= EP[:vP][y, t] * dfGen[!, :Slope2][y] + EP[:vCOMMIT][y, t] * dfGen[!, :Intercept2][y])
+    @constraint(EP, Third_segement[y in THERM_COMMIT, t = 1:T],
+        vFuel[y, t] >= EP[:vP][y, t] * dfGen[!, :Slope3][y] + EP[:vCOMMIT][y, t] * dfGen[!, :Intercept3][y])
 
 
-	# mutiplying eFuel and the fuel cost
-	@expression(EP, eCFuel_piecewise[y in THERM_COMMIT, t =1:T], vFuel[y,t]* (inputs["fuel_costs"][dfGen[!,:Fuel][y]])[t])
-	# sum up the fuel cost
-	@expression(EP,eCVar_fuel_piecewise, sum(eCFuel_piecewise[y,t] for y in THERM_COMMIT, t = 1:T))
+    # mutiplying eFuel and the fuel cost
+    @expression(EP, eCFuel_piecewise[y in THERM_COMMIT, t = 1:T], inputs["omega"][t] * vFuel[y, t] * (inputs["fuel_costs"][dfGen[!, :Fuel][y], t]))
+    # sum up the fuel cost from each period to the plant level
+    @expression(EP, ePlantCFuel_piecewise[y in THERM_COMMIT], sum(eCFuel_piecewise[y, t] for t in 1:T))
+    # sum up the fuel cost to the zonal level
+    @expression(EP, eZonalCFuel_piecewise[z in 1:Z], EP[:vZERO] + sum(ePlantCFuel_piecewise[y] for y in intersect(THERM_COMMIT, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+    # sum up the fuel cost to the system level
+    @expression(EP, eCVar_fuel_piecewise, sum(eZonalCFuel_piecewise[z] for z in 1:Z))
     # add to objective function
-	EP[:eObj] += eCVar_fuel_piecewise
-	return EP
+    EP[:eObj] += eCVar_fuel_piecewise
+    return EP
 end

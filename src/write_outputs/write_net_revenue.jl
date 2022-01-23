@@ -179,9 +179,9 @@ function write_net_revenue(path::AbstractString, sep::AbstractString, inputs::Di
         dfNetRevenue.EmissionsCost += dfCO2CaptureCredit.AnnualSum
     end
 	if setup["ParameterScale"] == 1
-	    dfNetRevenue.EmissionsCost += value.(EP[:eCCO2Sequestration_plant]) * (ModelScalingFactor^2)
+	    dfNetRevenue.EmissionsCost += value.(EP[:ePlantCCO2Sequestration]) * (ModelScalingFactor^2)
 	else
-	    dfNetRevenue.EmissionsCost += value.(EP[:eCCO2Sequestration_plant])
+	    dfNetRevenue.EmissionsCost += value.(EP[:ePlantCCO2Sequestration])
 	end
 
 

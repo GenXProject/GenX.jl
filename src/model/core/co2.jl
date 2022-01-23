@@ -38,8 +38,10 @@ function co2(EP::Model, inputs::Dict, setup::Dict)
                 (1 - dfGen[!, :CO2_Capture_Rate][y]) * dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t]
             end
         end)
-    @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T], sum(eEmissionsByPlant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
 
+    @expression(EP, eEmissionsByPlantYear[y = 1:G], sum(inputs["omega"][t] * eEmissionsByPlant[y, t] for t in 1:T))
+    @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T], sum(eEmissionsByPlant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eEmissionsByZoneYear[z = 1:Z], sum(inputs["omega"][t] * eEmissionsByZone[z, t] for t in 1:T))
     # CO2  captured from power plants in "Generator_data.csv"
     @expression(EP, eEmissionsCaptureByPlant[y = 1:G, t = 1:T],
         if setup["PieceWiseHeatRate"] == 1
@@ -58,11 +60,11 @@ function co2(EP::Model, inputs::Dict, setup::Dict)
 
 
     # add CO2 sequestration cost to objective function
-    @expression(EP, eCCO2Sequestration_plant[y = 1:G], sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] * dfGen[!, :CO2_Capture_Cost_per_Metric_Ton][y] for t in 1:T))
+    @expression(EP, ePlantCCO2Sequestration[y = 1:G], sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] * dfGen[y, :CO2_Capture_Cost_per_Metric_Ton] for t in 1:T))
 
-    @expression(EP, eCCO2Sequestration[z = 1:Z], sum(eCCO2Sequestration_plant[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCCO2Sequestration[z = 1:Z], sum(ePlantCCO2Sequestration[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
 
-    @expression(EP, eTotaleCCO2Sequestration, sum(eCCO2Sequestration[z] for z in 1:Z))
+    @expression(EP, eTotaleCCO2Sequestration, sum(eZonalCCO2Sequestration[z] for z in 1:Z))
 
     EP[:eObj] += eTotaleCCO2Sequestration
 

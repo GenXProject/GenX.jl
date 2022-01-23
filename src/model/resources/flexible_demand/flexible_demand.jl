@@ -51,131 +51,137 @@ A similar constraints maximum time steps of demand advancement. This is done by 
 If $t$ is first time step of the year (or the first time step of the representative period), then the above two constraints are implemented to look back over the last n time steps, starting with the last time step of the year (or the last time step of the representative period). This time-wrapping implementation is similar to the time-wrapping implementations used for defining the storage balance constraints for hydropower reservoir resources and energy storage resources.
 """
 function flexible_demand(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
-## Flexible demand resources available during all hours and can be either delayed or advanced (virtual storage-shiftable demand) - DR ==1
+    ## Flexible demand resources available during all hours and can be either delayed or advanced (virtual storage-shiftable demand) - DR ==1
 
-println("Flexible Demand Resources Module")
+    println("Flexible Demand Resources Module")
 
-dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-T = inputs["T"]     # Number of time steps (hours)
-Z = inputs["Z"]     # Number of zones
-FLEX = inputs["FLEX"] # Set of flexible demand resources
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    FLEX = inputs["FLEX"] # Set of flexible demand resources
 
-START_SUBPERIODS = inputs["START_SUBPERIODS"]
-INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+    START_SUBPERIODS = inputs["START_SUBPERIODS"]
+    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 
-hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
+    hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
 
-END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of each representative period
+    END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of each representative period
 
-### Variables ###
+    ### Variables ###
 
-# Variable tracking total advanced (negative) or deferred (positive) demand for demand flex resource y in period t
-@variable(EP, vS_FLEX[y in FLEX, t=1:T]);
+    # Variable tracking total advanced (negative) or deferred (positive) demand for demand flex resource y in period t
+    @variable(EP, vS_FLEX[y in FLEX, t = 1:T])
 
-# Variable tracking demand deferred by demand flex resource y in period t
-@variable(EP, vCHARGE_FLEX[y in FLEX, t=1:T] >= 0);
+    # Variable tracking demand deferred by demand flex resource y in period t
+    @variable(EP, vCHARGE_FLEX[y in FLEX, t = 1:T] >= 0)
 
-### Expressions ###
+    ### Expressions ###
 
-## Power Balance Expressions ##
-@expression(EP, ePowerBalanceDemandFlex[t=1:T, z=1:Z],
-    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:][!,:R_ID])))
+    ## Power Balance Expressions ##
+    @expression(EP, ePowerBalanceDemandFlex[t = 1:T, z = 1:Z],
+        sum(-EP[:vP][y, t] + EP[:vCHARGE_FLEX][y, t] for y in intersect(FLEX, dfGen[(dfGen[!, :Zone].==z), :][!, :R_ID])))
 
-EP[:ePowerBalance] += ePowerBalanceDemandFlex
+    EP[:ePowerBalance] += ePowerBalanceDemandFlex
 
-# Capacity Reserves Margin policy
-if CapacityReserveMargin > 0
-    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-    EP[:eCapResMarBalance] += eCapResMarBalanceFlex
-end
-
-## Objective Function Expressions ##
-
-# Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
-@expression(EP, eCVarFlex_in[y in FLEX,t=1:T], inputs["omega"][t]*dfGen[!,:Var_OM_Cost_per_MWh_In][y]*vCHARGE_FLEX[y,t])
-
-# Sum individual resource contributions to variable charging costs to get total variable charging costs
-@expression(EP, eTotalCVarFlexInT[t=1:T], sum(eCVarFlex_in[y,t] for y in FLEX))
-@expression(EP, eTotalCVarFlexIn, sum(eTotalCVarFlexInT[t] for t in 1:T))
-EP[:eObj] += eTotalCVarFlexIn
-
-### Constraints ###
-
-## Flexible demand is available only during specified hours with time delay or time advance (virtual storage-shiftable demand)
-for z in 1:Z
-    # NOTE: Flexible demand operates by zone since capacity is now related to zone demand
-    FLEX_Z = intersect(FLEX, dfGen[dfGen[!,:Zone].==z,:][!,:R_ID])
-
-    @constraints(EP, begin
-        # State of "charge" constraint (equals previous state + charge - discharge)
-        # NOTE: no maximum energy "stored" or deferred for later hours
-        # NOTE: Flexible_Demand_Energy_Eff corresponds to energy loss due to time shifting
-        [y in FLEX_Z, t in INTERIOR_SUBPERIODS], EP[:vS_FLEX][y,t] == EP[:vS_FLEX][y,t-1]-dfGen[!,:Flexible_Demand_Energy_Eff][y]*(EP[:vP][y,t])+(EP[:vCHARGE_FLEX][y,t])
-        # Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
-        [y in FLEX_Z, t in START_SUBPERIODS], EP[:vS_FLEX][y,t] == EP[:vS_FLEX][y,t+hours_per_subperiod-1]-dfGen[!,:Flexible_Demand_Energy_Eff][y]*(EP[:vP][y,t])+(EP[:vCHARGE_FLEX][y,t])
-
-        # Maximum charging rate
-        # NOTE: the maximum amount that can be shifted is given by hourly availability of the resource times the maximum capacity of the resource
-        [y in FLEX_Z, t=1:T], EP[:vCHARGE_FLEX][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
-        # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
-    end)
-
-
-    for y in FLEX_Z
-
-        # Require deferred demands to be satisfied within the specified time delay
-        max_flexible_demand_delay = Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y]))
-        FLEXIBLE_DEMAND_DELAY_HOURS = [] # Set of hours in the summation term of the maximum demand delay constraint for the first subperiod of each representative period
-        for s in START_SUBPERIODS
-            flexible_demand_delay_start = s+hours_per_subperiod-max_flexible_demand_delay
-            println("Max flexible demand delay type")
-            println(typeof(max_flexible_demand_delay))
-            println("Hours per subperiod type")
-            println(typeof(hours_per_subperiod))
-            println("Type of s")
-            println(typeof(s))
-            FLEXIBLE_DEMAND_DELAY_HOURS = union(FLEXIBLE_DEMAND_DELAY_HOURS, flexible_demand_delay_start:(s+hours_per_subperiod-2))
-        end
-
-        @constraints(EP, begin
-            # cFlexibleDemandDelay: Constraints looks back over last n hours, where n = dfGen[!,:Max_Flexible_Demand_Delay][y]
-            [t in setdiff(1:T,FLEXIBLE_DEMAND_DELAY_HOURS,END_HOURS)], sum(EP[:vP][y,e] for e=(t+1):(t+Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y])))) >= EP[:vS_FLEX][y,t]
-
-            # cFlexibleDemandDelayWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-            # cFlexibleDemandDelayWrap constraint is equivalant to: sum(EP[:vP][y,e] for e=(t+1):(hours_per_subperiod_max)+sum(EP[:vP][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Delay][y]-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y,t]
-            [t in FLEXIBLE_DEMAND_DELAY_HOURS], sum(EP[:vP][y,e] for e=(t+1):(t+hours_per_subperiod-(t%hours_per_subperiod)))+sum(EP[:vP][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y]))-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y,t]
-
-            # cFlexibleDemandDelayEnd: cFlexibleDemandDelayEnd constraint is equivalant to: sum(EP[:vP][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Delay][y])) >= EP[:vS_FLEX][y,t]
-            [t in END_HOURS], sum(EP[:vP][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+Int(floor(dfGen[!,:Max_Flexible_Demand_Delay][y])))) >= EP[:vS_FLEX][y,t]
-
-            # NOTE: Expression (hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1) is equivalant to "hours_per_subperiod_min"
-            # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-        end)
-
-        # Require advanced demands to be satisfied within the specified time period
-        max_flexible_demand_advance = Int(floor(dfGen[!,:Max_Flexible_Demand_Advance][y]))
-        FLEXIBLE_DEMAND_ADVANCE_HOURS = [] # Set of hours in the summation term of the maximum advance demand constraint for the first subperiod of each representative period
-        for s in START_SUBPERIODS
-            flexible_demand_advance_start = s+hours_per_subperiod-max_flexible_demand_advance
-            FLEXIBLE_DEMAND_ADVANCE_HOURS = union(FLEXIBLE_DEMAND_ADVANCE_HOURS, flexible_demand_advance_start:(s+hours_per_subperiod-2))
-        end
-
-        @constraints(EP, begin
-            # cFlexibleDemandAdvance: Constraint looks back over last n hours, where n = dfGen[!,:Max_Flexible_Demand_Advance][y]
-            [t in setdiff(1:T,FLEXIBLE_DEMAND_ADVANCE_HOURS,END_HOURS)], sum(EP[:vCHARGE_FLEX][y,e] for e=(t+1):(t+Int(dfGen[!,:Max_Flexible_Demand_Advance][y]))) >= -EP[:vS_FLEX][y,t]
-
-            # cFlexibleDemandAdvanceWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-            # cFlexibleDemandAdvanceWrap constraint is equivalant to: sum(EP[:vCHARGE_FLEX][y,e] for e=(t+1):hours_per_subperiod_max)+sum(EP[:vCHARGE_FLEX][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Advance][y]-(hours_per_subperiod-(t%hours_per_subperiod)))) >= -EP[:vS_FLEX][y,t]
-            [t in FLEXIBLE_DEMAND_ADVANCE_HOURS], sum(EP[:vCHARGE_FLEX][y,e] for e=(t+1):(t+hours_per_subperiod-(t%hours_per_subperiod)))+sum(EP[:vCHARGE_FLEX][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+Int(dfGen[!,:Max_Flexible_Demand_Advance][y])-(hours_per_subperiod-(t%hours_per_subperiod)))) >= -EP[:vS_FLEX][y,t]
-
-            # cFlexibleDemandAdvanceEnd: cFlexibleDemandAdvanceEnd constraint is equivalant to: sum(EP[:vCHARGE_FLEX][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Advance][y])) >= -EP[:vS_FLEX][y,t]
-            [t in END_HOURS], sum(EP[:vCHARGE_FLEX][y,e] for e=(hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1)-1+Int(dfGen[!,:Max_Flexible_Demand_Advance][y]))) >= -EP[:vS_FLEX][y,t]
-            # NOTE: Expression (hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1) is equivalant to "hours_per_subperiod_min"
-            # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-        end)
+    # Capacity Reserves Margin policy
+    if CapacityReserveMargin > 0
+        @expression(EP, eCapResMarBalanceFlex[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX))
+        EP[:eCapResMarBalance] += eCapResMarBalanceFlex
     end
-end
 
-return EP
+    ## Objective Function Expressions ##
+
+    # Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
+    @expression(EP, eCVarFlex_in[y in FLEX, t = 1:T], inputs["omega"][t] * dfGen[!, :Var_OM_Cost_per_MWh_In][y] * vCHARGE_FLEX[y, t])
+
+    # Sum individual resource contributions to variable charging costs to get total variable charging costs
+    # @expression(EP, eTotalCVarFlexInT[t=1:T], sum(eCVarFlex_in[y,t] for y in FLEX))
+    # Jan 21, 2022, not sure if there is no flex in one region but there are others, what will happen. adding EP[:vZERO]
+    # Sum to Plant level
+    @expression(EP, ePlantCVarFlexIn[y in FLEX], sum(eCVarFlex_in[y, t] for t in 1:T))
+    # Sum to zonal level
+    @expression(EP, eZonalCVarFlexIn[z = 1:Z], EP[:vZERO] + sum(ePlantCVarFlexIn[y] for y in intersect(FLEX, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+    # Sum to system level
+    @expression(EP, eTotalCVarFlexIn, sum(eZonalCVarFlexIn[z] for z in 1:Z))
+    EP[:eObj] += eTotalCVarFlexIn
+
+    ### Constraints ###
+
+    ## Flexible demand is available only during specified hours with time delay or time advance (virtual storage-shiftable demand)
+    for z in 1:Z
+        # NOTE: Flexible demand operates by zone since capacity is now related to zone demand
+        FLEX_Z = intersect(FLEX, dfGen[dfGen[!, :Zone].==z, :][!, :R_ID])
+
+        @constraints(EP, begin
+            # State of "charge" constraint (equals previous state + charge - discharge)
+            # NOTE: no maximum energy "stored" or deferred for later hours
+            # NOTE: Flexible_Demand_Energy_Eff corresponds to energy loss due to time shifting
+            [y in FLEX_Z, t in INTERIOR_SUBPERIODS], EP[:vS_FLEX][y, t] == EP[:vS_FLEX][y, t-1] - dfGen[!, :Flexible_Demand_Energy_Eff][y] * (EP[:vP][y, t]) + (EP[:vCHARGE_FLEX][y, t])
+            # Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
+            [y in FLEX_Z, t in START_SUBPERIODS], EP[:vS_FLEX][y, t] == EP[:vS_FLEX][y, t+hours_per_subperiod-1] - dfGen[!, :Flexible_Demand_Energy_Eff][y] * (EP[:vP][y, t]) + (EP[:vCHARGE_FLEX][y, t])
+
+            # Maximum charging rate
+            # NOTE: the maximum amount that can be shifted is given by hourly availability of the resource times the maximum capacity of the resource
+            [y in FLEX_Z, t = 1:T], EP[:vCHARGE_FLEX][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
+            # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
+        end)
+
+
+        for y in FLEX_Z
+
+            # Require deferred demands to be satisfied within the specified time delay
+            max_flexible_demand_delay = Int(floor(dfGen[!, :Max_Flexible_Demand_Delay][y]))
+            FLEXIBLE_DEMAND_DELAY_HOURS = [] # Set of hours in the summation term of the maximum demand delay constraint for the first subperiod of each representative period
+            for s in START_SUBPERIODS
+                flexible_demand_delay_start = s + hours_per_subperiod - max_flexible_demand_delay
+                # println("Max flexible demand delay type")
+                # println(typeof(max_flexible_demand_delay))
+                # println("Hours per subperiod type")
+                # println(typeof(hours_per_subperiod))
+                # println("Type of s")
+                # println(typeof(s))
+                FLEXIBLE_DEMAND_DELAY_HOURS = union(FLEXIBLE_DEMAND_DELAY_HOURS, flexible_demand_delay_start:(s+hours_per_subperiod-2))
+            end
+
+            @constraints(EP, begin
+                # cFlexibleDemandDelay: Constraints looks back over last n hours, where n = dfGen[!,:Max_Flexible_Demand_Delay][y]
+                [t in setdiff(1:T, FLEXIBLE_DEMAND_DELAY_HOURS, END_HOURS)], sum(EP[:vP][y, e] for e = (t+1):(t+Int(floor(dfGen[!, :Max_Flexible_Demand_Delay][y])))) >= EP[:vS_FLEX][y, t]
+
+                # cFlexibleDemandDelayWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
+                # cFlexibleDemandDelayWrap constraint is equivalant to: sum(EP[:vP][y,e] for e=(t+1):(hours_per_subperiod_max)+sum(EP[:vP][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Delay][y]-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y,t]
+                [t in FLEXIBLE_DEMAND_DELAY_HOURS], sum(EP[:vP][y, e] for e = (t+1):(t+hours_per_subperiod-(t%hours_per_subperiod))) + sum(EP[:vP][y, e] for e = (hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1)-1+Int(floor(dfGen[!, :Max_Flexible_Demand_Delay][y]))-(hours_per_subperiod-(t%hours_per_subperiod)))) >= EP[:vS_FLEX][y, t]
+
+                # cFlexibleDemandDelayEnd: cFlexibleDemandDelayEnd constraint is equivalant to: sum(EP[:vP][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Delay][y])) >= EP[:vS_FLEX][y,t]
+                [t in END_HOURS], sum(EP[:vP][y, e] for e = (hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1)-1+Int(floor(dfGen[!, :Max_Flexible_Demand_Delay][y])))) >= EP[:vS_FLEX][y, t]
+
+                # NOTE: Expression (hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1) is equivalant to "hours_per_subperiod_min"
+                # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
+            end)
+
+            # Require advanced demands to be satisfied within the specified time period
+            max_flexible_demand_advance = Int(floor(dfGen[!, :Max_Flexible_Demand_Advance][y]))
+            FLEXIBLE_DEMAND_ADVANCE_HOURS = [] # Set of hours in the summation term of the maximum advance demand constraint for the first subperiod of each representative period
+            for s in START_SUBPERIODS
+                flexible_demand_advance_start = s + hours_per_subperiod - max_flexible_demand_advance
+                FLEXIBLE_DEMAND_ADVANCE_HOURS = union(FLEXIBLE_DEMAND_ADVANCE_HOURS, flexible_demand_advance_start:(s+hours_per_subperiod-2))
+            end
+
+            @constraints(EP, begin
+                # cFlexibleDemandAdvance: Constraint looks back over last n hours, where n = dfGen[!,:Max_Flexible_Demand_Advance][y]
+                [t in setdiff(1:T, FLEXIBLE_DEMAND_ADVANCE_HOURS, END_HOURS)], sum(EP[:vCHARGE_FLEX][y, e] for e = (t+1):(t+Int(dfGen[!, :Max_Flexible_Demand_Advance][y]))) >= -EP[:vS_FLEX][y, t]
+
+                # cFlexibleDemandAdvanceWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
+                # cFlexibleDemandAdvanceWrap constraint is equivalant to: sum(EP[:vCHARGE_FLEX][y,e] for e=(t+1):hours_per_subperiod_max)+sum(EP[:vCHARGE_FLEX][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Advance][y]-(hours_per_subperiod-(t%hours_per_subperiod)))) >= -EP[:vS_FLEX][y,t]
+                [t in FLEXIBLE_DEMAND_ADVANCE_HOURS], sum(EP[:vCHARGE_FLEX][y, e] for e = (t+1):(t+hours_per_subperiod-(t%hours_per_subperiod))) + sum(EP[:vCHARGE_FLEX][y, e] for e = (hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1)-1+Int(dfGen[!, :Max_Flexible_Demand_Advance][y])-(hours_per_subperiod-(t%hours_per_subperiod)))) >= -EP[:vS_FLEX][y, t]
+
+                # cFlexibleDemandAdvanceEnd: cFlexibleDemandAdvanceEnd constraint is equivalant to: sum(EP[:vCHARGE_FLEX][y,e] for e=hours_per_subperiod_min:(hours_per_subperiod_min-1+dfGen[!,:Max_Flexible_Demand_Advance][y])) >= -EP[:vS_FLEX][y,t]
+                [t in END_HOURS], sum(EP[:vCHARGE_FLEX][y, e] for e = (hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1):((hours_per_subperiod*Int(floor((t - 1) / hours_per_subperiod))+1)-1+Int(dfGen[!, :Max_Flexible_Demand_Advance][y]))) >= -EP[:vS_FLEX][y, t]
+                # NOTE: Expression (hours_per_subperiod*Int(floor((t-1)/hours_per_subperiod))+1) is equivalant to "hours_per_subperiod_min"
+                # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
+            end)
+        end
+    end
+
+    return EP
 end

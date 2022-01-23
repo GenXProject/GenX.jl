@@ -21,29 +21,31 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 function co2_credit(EP::Model, inputs::Dict, setup::Dict)
 
-	println("C02 Credit Module")
+    println("C02 Credit Module")
 
-	dfGen = inputs["dfGen"]
-	SEG = inputs["SEG"]  # Number of lines
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
+    dfGen = inputs["dfGen"]
+    SEG = inputs["SEG"]  # Number of lines
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
 
-	#if setup["FLECCS"] >= 1
-	#    gen_ccs = inputs["dfGen_ccs"]
-	#end
+    #if setup["FLECCS"] >= 1
+    #    gen_ccs = inputs["dfGen_ccs"]
+    #end
 
-	### Expressions ###
+    ### Expressions ###
 
-	
+
     # determine the CO2 credit by mutiplying the capture co2 and co2 credit. This is a negative value.
-	@expression(EP, eCCO2Credit[z=1:Z], -inputs["dfCO2Credit"][!,"CO2Credit"][z]*sum(inputs["omega"][t]*EP[:eEmissionsCaptureByZone][z,t] for t in 1:T))
+    @expression(EP, ePlantCCO2Credit[y = 1:G], -inputs["dfCO2Credit"][dfGen[y, :Zone], "CO2Credit"] * sum(inputs["omega"][t] * EP[:eEmissionsCaptureByPlant][y, t] for t in 1:T))
+    # @expression(EP, eZonalCCO2Credit[z = 1:Z], EP[:vZERO] + sum(ePlantCCO2Credit[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCCO2Credit[z = 1:Z], EP[:vZERO] + sum(ePlantCCO2Credit[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
 
     # sum cross the zones
-	@expression(EP, eTotalCCO2Credit,sum(eCCO2Credit[z] for z in 1:Z))
+    @expression(EP, eTotalCCO2Credit, sum(eZonalCCO2Credit[z] for z in 1:Z))
     # add to objective function
-	EP[:eObj] += eTotalCCO2Credit
+    EP[:eObj] += eTotalCCO2Credit
 
-	return EP
+    return EP
 
 end

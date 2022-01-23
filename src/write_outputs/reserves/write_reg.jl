@@ -15,28 +15,32 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 function write_reg(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    REG = inputs["REG"]
+    # Regulation contributions for each resource in each time step
+    dfReg = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+    reg = zeros(G, T)
+    # for i in 1:G
+    #     if i in inputs["REG"]
+    #         reg[i, :] = value.(EP[:vREG])[i, :]
+    #     end
+    #     dfReg[!, :Sum][i] = sum(reg[i, :])
+    # end
+    reg[REG, :] = value.(EP[:vREG][REG, :])
+    dfReg.AnnualSum = reg * inputs["omega"]
+    dfReg = hcat(dfReg, DataFrame(reg, :auto))
+    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
+    rename!(dfReg, auxNew_Names)
 
-	# Regulation contributions for each resource in each time step
-	dfReg = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Sum = Array{Union{Missing,Float32}}(undef, G))
-	reg = zeros(G,T)
-	for i in 1:G
-		if i in inputs["REG"]
-			reg[i,:] = value.(EP[:vREG])[i,:]
-		end
-		dfReg[!,:Sum][i] = sum(reg[i,:])
-	end
-	dfReg = hcat(dfReg, DataFrame(reg, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfReg,auxNew_Names)
-	total = DataFrame(["Total" 0 sum(dfReg[!,:Sum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		total[!,t+3] .= sum(dfReg[!,Symbol("t$t")][1:G])
-	end
-	rename!(total,auxNew_Names)
-	dfReg = vcat(dfReg, total)
-	CSV.write(string(path,sep,"reg.csv"), dftranspose(dfReg, false), writeheader=false)
+    total = DataFrame(["Total" 0 sum(dfReg[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
+    # for t in 1:T
+    #     total[!, t+3] .= sum(dfReg[!, Symbol("t$t")][1:G])
+    # end
+    total[!, 4:T+3] .= sum(reg, dims = 1)
+    rename!(total, auxNew_Names)
+    dfReg = vcat(dfReg, total)
+    CSV.write(string(path, sep, "reg.csv"), dftranspose(dfReg, false), writeheader = false)
 end
