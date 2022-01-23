@@ -190,22 +190,25 @@ if setup["MultiStage"] == 0
         # println("Time elapsed for writing reserve margin is")
         #                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              println(elapsed_time_rsv_margin)
         dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, EP)
-
-        elapsed_time_cap_value = @elapsed write_capacity_value(path, sep, inputs, setup, dfPower, dfCharge, dfResMar, dfCap)
+    
+        elapsed_time_cap_value = @elapsed write_capacity_value(path, sep, inputs, setup, EP)
         println("Time elapsed for writing capacity value is")
         println(elapsed_time_cap_value)
     end
+    
     dfCO2MassCapCost = DataFrame()
     dfCO2MassCapRev = DataFrame()
     dfCO2Price = DataFrame()
     if setup["CO2Cap"] == 1 && has_duals(EP) == 1
         dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, sep, inputs, setup, EP)
     end
+    
     dfCO2GenRateCapCost = DataFrame()
     dfCO2GenRatePrice = DataFrame()
     if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
         dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
     end
+    
     dfCO2LoadRateCapCost = DataFrame()
     dfCO2LoadRateCapRev = DataFrame()
     dfCO2LoadRatePrice = DataFrame()

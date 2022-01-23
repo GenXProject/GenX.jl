@@ -31,7 +31,7 @@ function write_reserve_margin(path::AbstractString, sep::AbstractString, inputs:
         temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
     end
     dfResMar = hcat(dfResMar, DataFrame(temp_ResMar, :auto))
-    auxNew_Names_res = [Symbol("Constraint"); [Symbol("CapRes_$i") for i in 1:inputs["NCapacityReserveMargin"]]]
-    rename!(dfResMar_w, auxNew_Names_res)
-    CSV.write(string(path, sep, "ReserveMargin_w.csv"), dfResMar_w)
+    auxNew_Names = [Symbol("Constraint"); [Symbol("CapRes_$i") for i in 1:inputs["NCapacityReserveMargin"]]]
+    rename!(dfResMar, auxNew_Names)
+    CSV.write(string(path, sep, "ReserveMargin.csv"), dfResMar)
 end
