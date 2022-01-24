@@ -23,7 +23,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX currently exists in version 0.1.0 and runs only on Julia v1.6.x and v1.5.x series, where x>=0 and a minimum version of JuMP v0.21.x. There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series (For those users who has previously cloned GenX, and has been running it successfully so far, and therefore might be unwilling to run it on the latest version of Julia: please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version)). It is currently setup to use one of the following open-source freely available solvers: A) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems and (B) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems. We also provide the option to use one of these two commercial solvers: C) [Gurobi](https://www.gurobi.com), and D) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Note that using Gurobi and CPLEX requires a valid license on the host machine. There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Running an Instance of GenX`.
+GenX currently exists in version 0.1.0 and runs only on Julia v1.6.x and v1.5.x series, where x>=0 and a minimum version of JuMP v0.21.x. There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series (For those users who has previously cloned GenX, and has been running it successfully so far, and therefore might be unwilling to run it on the latest version of Julia: please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version)). It is currently setup to use one of the following open-source freely available solvers: A) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems and (B) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems. (C) [SCIP](https://www.scipopt.org) for faster solution of MILP problems. At this stage, we suggest users to prefer SCIP over Cbc, while solving MILP problem instances, because, the write outputs is much faster with SCIP. We also provide the option to use one of these two commercial solvers: D) [Gurobi](https://www.gurobi.com), and E) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Note that using Gurobi and CPLEX requires a valid license on the host machine. There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Running an Instance of GenX`.
 
 The file `julenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
 
@@ -47,37 +47,31 @@ Here are step-by-step instructions for running Run.jl, following the two slightl
 
 ### Method 1: Creating the Julia environment and installing dependencies from Project.toml file
 
-1. Start an instance of the Julia kernel from inside the GenX/ folder (which corresponds to the GenX repo, that you've just cloned) by typing `julia --project="GenX"`.
-2. Go to the package prompt by typing `]`. You will see that you're within a Julia virtual environment named `(GenX)`. However, at this point, this environment isn't loaded with the dependencies. Type `activate .` to activate the dependecnies in the environment.
-3. If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) run `instantiate` from the `(GenX) pkg` prompt.
-4. If you have an old `Manifest.toml` file file at the same file hierarchy as the `Project.toml` file and you get an error while running through the above steps, please delete the existing `Manifest.toml` file and execute steps 1-3 again.
-5. In order to make sure that the dependecies have been installed, type `st` in the package prompt.
 
-Execution of the entire sequence of the four steps above should look like the figure below:
+1. Start a terminal and navigate into the `GenX` folder.
+2. Type `julia --project=.` to start an instance of the `julia` kernal with the `project` set to the current folder. The `.` indicates the current folder.
 
-![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step1_Updated.png)
-*Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4*
+If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) execute steps 3-6.
 
-5. Type the back key to come back to the `julia>` prompt.
-6. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the ISONE_Singlezone case within the Example_Systems/RealSystemExample/, type `include("Example_Systems/RealSystemExample/ISONE_Singlezone/Run.jl")` from the `julia>` prompt (while being still in the GenX i.e. the root level in the folder hierarchy).
+3. Type `]` to bring up the package system `(GenX) pkg >` prompt. This indicates that the GenX project was detected. If you see `(@v1.6) pkg>` as the prompt, then the `project` was not successfully set.
+4. Type `instantiate` from the `(GenX) pkg` prompt.
+5. Type `st` to check that the dependecies have been installed.
+6. Type the back key to come back to the `julia>` prompt.
 
-Execution of the steps 5 and 6 above should look like the figure below:
+Steps 3-6 can be skipped on subsequent runs.
+Execution of the entire sequence of the six steps is shown in Figure 1.
 
-![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step2_Updated.png)
-*Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6*
+![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-6](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step1_Updated.png)
+*Figure 1. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-6*
 
-7. After the script runs to completion, results will be written to a folder called “Results”, also located in the same directory as `Run.jl`.
+7. Run the script by executing the command `julia> include(“<path to your case>/Run.jl”)`. For example, in order to run the OneZone case within the Example_Systems/SmallNewEngland folder, type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia>` prompt.
 
-If however, the user opens a julia kernel, while not yet inside the GenX folder, it's still possible to reach to the GenX folder while being inside the Julia REPL by executing the `pwd()` command first to check where on the directory structure the user is currently, and then by executing the `cd(<path to GenX>)` command. Afterwards, the steps are the same as above. This is shown in the three figures below:
+Execution of step 7 should look like the figure below:
 
-![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Changing path to GenX](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step1_Updated.png)
-*Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Changing path to GenX*
+![Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Step 7](docs/src/assets/Method1_Julia_Kernel_from_inside_GenX_Step2_Updated.png)
+*Figure 2. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Step 7*
 
-![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Steps 1-4](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step2_Updated.png)
-*Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 1-4*
-
-![Creating the Julia environment and installing dependencies from Project.toml file from outside the GenX folder: Steps 5-6](docs/src/assets/Method1_Julia_Kernel_from_outside_GenX_Step3_Updated.png)
-*Figure.Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 5-6*
+8. After the script runs to completion, results will be written to a folder called “Results”, located in the same directory as `Run.jl`.
 
 ### Method 2: Creating the Julia environment and installing the dependencies by building the Project.toml files by running activation script
 

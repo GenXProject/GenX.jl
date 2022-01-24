@@ -46,7 +46,7 @@ function ucommit(EP::Model, inputs::Dict, UCommit::Int)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-
+	Z = inputs["Z"]     # Number of zones
 	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
 
 	### Variables ###
@@ -87,6 +87,14 @@ function ucommit(EP::Model, inputs::Dict, UCommit::Int)
 			end
 		end
 	end #END unit commitment configuration
-
+	## From co2_cap.jl
+	@expression(EP, eEmissionsByPlant[y=1:G,t=1:T],
+	 	if y in inputs["COMMIT"]
+		 	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]+dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
+	 	else
+		 	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
+	 	end
+ 	)
+ 	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
 	return EP
 end

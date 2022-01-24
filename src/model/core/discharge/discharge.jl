@@ -15,21 +15,17 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	discharge(EP::Model, inputs::Dict)
-
+	discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int)
 This module defines the power decision variable $\Theta_{y,t} \forall y \in \mathcal{G}, t \in \mathcal{T}$, representing energy injected into the grid by resource $y$ by at time period $t$.
-
 This module additionally defines contributions to the objective function from variable costs of generation (variable O&M plus fuel cost) from all resources $y \in \mathcal{G}$ over all time periods $t \in \mathcal{T}$:
-
 ```math
 \begin{aligned}
 	Obj_{Var\_gen} =
 	\sum_{y \in \mathcal{G} } \sum_{t \in \mathcal{T}}\omega_{t}\times(\pi^{VOM}_{y} + \pi^{FUEL}_{y})\times \Theta_{y,t}
 \end{aligned}
 ```
-
 """
-function discharge(EP::Model, inputs::Dict)
+function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int)
 
 	println("Discharge Module")
 
@@ -37,7 +33,7 @@ function discharge(EP::Model, inputs::Dict)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps
-
+	Z = inputs["Z"]     # Number of zones
 	### Variables ###
 
 	# Energy injected into the grid by resource "y" at hour "t"
@@ -56,6 +52,15 @@ function discharge(EP::Model, inputs::Dict)
 
 	# Add total variable discharging cost contribution to the objective function
 	EP[:eObj] += eTotalCVarOut
+
+	# ESR Policy
+	if EnergyShareRequirement >= 1
+
+		@expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen[!,Symbol("ESR_$ESR")][y]*EP[:vP][y,t] for y=dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T) 
+						- sum(inputs["dfESR"][:,ESR][z]*inputs["omega"][t]*inputs["pD"][t,z] for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+
+		EP[:eESR] += eESRDischarge
+	end
 
 	return EP
 
