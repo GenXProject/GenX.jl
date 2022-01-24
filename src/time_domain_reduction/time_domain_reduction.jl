@@ -61,15 +61,9 @@ Get load, solar, wind, and other curves from the input data.
 
 """
 function parse_data(myinputs)
+    # Assumes no missing data
     RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
     ZONES = myinputs["R_ZONES"]
-    # Assuming no missing data
-    solar_col_names = []
-    wind_col_names = []
-    var_col_names = []
-    solar_profiles = []
-    wind_profiles = []
-    var_profiles = []
 
     # LOAD - Load_data.csv
     load_profiles = [ myinputs["pD"][:,l] for l in 1:size(myinputs["pD"],2) ]
@@ -78,6 +72,12 @@ function parse_data(myinputs)
     col_to_zone_map = Dict("Load_MW_z"*string(l) => l for l in 1:size(load_profiles)[1])
 
     # CAPACITY FACTORS - Generators_variability.csv
+    solar_profiles = []
+    wind_profiles = []
+    var_profiles = []
+    solar_col_names = []
+    wind_col_names = []
+    var_col_names = []
     for r in 1:length(RESOURCE_ZONES)
         if occursin("PV", RESOURCE_ZONES[r]) || occursin("pv", RESOURCE_ZONES[r]) || occursin("Pv", RESOURCE_ZONES[r]) || occursin("Solar", RESOURCE_ZONES[r]) || occursin("SOLAR", RESOURCE_ZONES[r]) || occursin("solar", RESOURCE_ZONES[r])
             push!(solar_col_names, RESOURCE_ZONES[r])
@@ -116,7 +116,7 @@ Get load, solar, wind, and other curves from multi-stage input data.
 """
 function parse_multi_stage_data(inputs_dict)
     # Assumes no missing data
-    # Assumes zones and resources remain the same across planning stages.
+    # Assumes zones and technologies remain the same across planning stages.
     RESOURCE_ZONES = inputs_dict[1]["RESOURCE_ZONES"]
     ZONES = inputs_dict[1]["R_ZONES"]
     solar_col_names = []
@@ -171,9 +171,9 @@ function parse_multi_stage_data(inputs_dict)
     fuel_profiles = []
     AllFuelsConst = true
     for f in 1:length(fuel_col_names)
-        fuel_all_periods = []
+        fuel_all_stages = []
         for t in 1:length(keys(inputs_dict))
-            fuel_all_stages = vcat(fuel_all_periods, inputs_dict[t]["fuel_costs"][fuel_col_names[f]])
+            fuel_all_stages = vcat(fuel_all_stages, inputs_dict[t]["fuel_costs"][fuel_col_names[f]])
             if AllFuelsConst && (minimum(inputs_dict[t]["fuel_costs"][fuel_col_names[f]]) != maximum(inputs_dict[t]["fuel_costs"][fuel_col_names[f]]))
                 AllFuelsConst = false
             end
@@ -432,7 +432,6 @@ hours that one hour in representative period $m$ represents in the original prof
 
 """
 function get_load_multipliers(ClusterOutputData, InputData, M, W, LoadCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols, v=false)
-
     # Compute original zonal total loads
     zone_sums = Dict()
     for loadcol in LoadCols
@@ -533,7 +532,6 @@ In Load_data.csv, include the following:
      of representative periods by closest Eucliden distance.
 """
 function cluster_inputs(inpath, settings_path, mysetup, v=false)
-
     if v println(now()) end
 
     ##### Step 0: Load in settings and data
@@ -626,20 +624,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
              load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
              col_to_zone_map, AllFuelsConst = parse_data(myinputs)
     end
-
     if v println() end
-#=Dev
-    if v println("Loading inputs") end
-    myinputs=Dict()
-    myinputs = load_inputs(mysetup_local,inpath)
-    if v println() end
-
-    # Parse input data into useful structures divided by type (load, wind, solar, fuel, groupings thereof, etc.)
-    # TO DO LATER: Replace these with collections of col_names, profiles, zones
-    load_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
-         load_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-         col_to_zone_map, AllFuelsConst = parse_data(myinputs)
-=#
 
     # Remove Constant Columns - Add back later in final output
     all_profiles, all_col_names, ConstData, ConstCols, ConstIdx = RemoveConstCols(all_profiles, all_col_names, v)
@@ -886,7 +871,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     end
 
     # Reorganize Data by Load, Solar, Wind, Fuel, and GrpWeight by Hour, Add Constant Data Back In
-    rpDFs = [] # Representative Period DataFrames - Load and Resource Profiles
+    rpDFs = [] # Representative Period DataFrames - All Profiles (Load, Resource, Fuel)
     gvDFs = [] # Generators Variability DataFrames - Just Resource Profiles
     lpDFs = [] # Load Profile DataFrames - Just Load Profiles
     fpDFs = [] # Fuel Profile DataFrames - Just Fuel Profiles
@@ -913,15 +898,9 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
         # Scale Load using previously identified multipliers
         #   Scale lpDF but not rpDF which compares to input data but is not written to file.
-#dev_ddp
         for loadcol in LoadCols
             if loadcol ∉ ConstCol_Syms
                 if !LoadExtremePeriod
-#=Dev
-        if !LoadExtremePeriod
-            for loadcol in LoadCols
-                if loadcol ∉ ConstCol_Syms
-=#
                     lpDF[!,loadcol] .*= load_mults[loadcol]
                 end
             end
@@ -963,7 +942,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             groups_per_stage = round.(Int, size(A,1)*relative_lengths)
             group_ranges = [if i == 1 1:groups_per_stage[1] else sum(groups_per_stage[1:i-1])+1:sum(groups_per_stage[1:i]) end for i in 1:size(relative_lengths,1)]
 
-            ### IMPLEMENT
             Stage_Weights = Dict()
             Stage_PeriodMaps = Dict()
             Stage_Outfiles = Dict()
@@ -983,9 +961,8 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 Stage_Outfiles[per]["PMap"] = joinpath("Inputs_p$per", PMap_Outfile)
                 Stage_Outfiles[per]["YAML"] = joinpath("Inputs_p$per", YAML_Outfile)
 
-                # TO IMPLEMENT
                 # Save output data to stage-specific locations
-                ### Load_data_clustered.csv
+                ### TDR_Results/Load_data_clustered.csv
                 load_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p$per",sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
                 load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
                 load_in[1:length(Stage_Weights[per]),:Sub_Weights] .= Stage_Weights[per]
@@ -1007,7 +984,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 if v println("Writing load file...") end
                 CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["Load"]), load_in)
 
-                ### Generators_variability_clustered.csv
+                ### TDR_Results/Generators_variability.csv
                 # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
                 GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(inputs_dict[1]["RESOURCES"]))
                 GVColMap["Time_Index"] = "Time_Index"
@@ -1017,7 +994,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 if v println("Writing resource file...") end
                 CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
 
-                ### Fuels_data_clustered.csv
+                ### TDR_Results/Fuels_data.csv
                 fuel_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p$per",sep,"Fuels_data.csv"), header=true), copycols=true)
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
@@ -1027,22 +1004,21 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 if v println("Writing fuel profiles...") end
                 CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["Fuel"]), NewFuelOutput)
 
-                ### Period_map.csv
+                ### TDR_Results/Period_map.csv
                 if v println("Writing period map...") end
                 CSV.write(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["PMap"]), Stage_PeriodMaps[per])
 
-                ### time_domain_reduction_settings.yml
+                ### TDR_Results/time_domain_reduction_settings.yml
                 if v println("Writing .yml settings...") end
                 YAML.write_file(string(inpath,sep,"Inputs",sep,Stage_Outfiles[per]["YAML"]), myTDRsetup)
 
-                #return PeriodMap, LPOutputData, lpDFs, InputData, R, A, W, M, N, groups_per_stage, group_ranges
             end
 
         else
             println("without Concatenation has not yet been FULLY implemented.")
             mkpath(joinpath(inpath,"Inputs","Inputs_p1", TimeDomainReductionFolder))
 
-            ### Load_data_clustered.csv
+            ### TDR_Results/Load_data.csv
             load_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
             load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
             load_in[1:length(W),:Sub_Weights] .= W
@@ -1064,7 +1040,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             if v println("Writing load file...") end
             CSV.write(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,Load_Outfile), load_in)
 
-            ### Generators_variability_clustered.csv
+            ### TDR_Results/Generators_variability.csv
 
             # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
             GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(myinputs["RESOURCES"]))
@@ -1075,7 +1051,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             if v println("Writing resource file...") end
             CSV.write(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,GVar_Outfile), GVOutputData, header=NewGVColNames)
 
-            ### Fuels_data_clustered.csv
+            ### TDR_Results/Fuels_data.csv
 
             fuel_in = DataFrame(CSV.File(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,"Fuels_data.csv"), header=true), copycols=true)
             select!(fuel_in, Not(:Time_Index))
@@ -1098,7 +1074,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         println("Outputs: Single-Stage")
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
-        ### Load_data_clustered.csv
+        ### TDR_Results/Load_data.csv
         load_in = DataFrame(CSV.File(string(inpath,sep,"Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
         load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
         load_in[1:length(W),:Sub_Weights] .= W
@@ -1120,7 +1096,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         if v println("Writing load file...") end
         CSV.write(string(inpath,sep,Load_Outfile), load_in)
 
-        ### Generators_variability_clustered.csv
+        ### TDR_Results/Generators_variability.csv
 
         # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
         GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(myinputs["RESOURCES"]))
@@ -1131,7 +1107,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         if v println("Writing resource file...") end
         CSV.write(string(inpath,sep,GVar_Outfile), GVOutputData, header=NewGVColNames)
 
-        ### Fuels_data_clustered.csv
+        ### TDR_Results/Fuels_data.csv
 
         fuel_in = DataFrame(CSV.File(string(inpath,sep,"Fuels_data.csv"), header=true), copycols=true)
         select!(fuel_in, Not(:Time_Index))
@@ -1142,15 +1118,14 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         if v println("Writing fuel profiles...") end
         CSV.write(string(inpath,sep,Fuel_Outfile), NewFuelOutput)
 
-        ### Period_map.csv
+        ### TDR_Results/Period_map.csv
         if v println("Writing period map...") end
         CSV.write(string(inpath,sep,PMap_Outfile), PeriodMap)
 
-        ### time_domain_reduction_settings.yml
+        ### TDR_Results/time_domain_reduction_settings.yml
         if v println("Writing .yml settings...") end
         YAML.write_file(string(inpath,sep,YAML_Outfile), myTDRsetup)
     end
 
     return FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict, R, A, M, DistMatrix, ClusteringInputDF
-
 end

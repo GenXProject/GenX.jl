@@ -27,7 +27,8 @@ function storage_multi_stage(EP::Model, inputs::Dict, Reserves::Int, OperationWr
 
 	if !isempty(inputs["STOR_ALL"])
 		EP = investment_energy_multi_stage(EP, inputs, MultiStageSettingsDict)
-		EP = storage_all(EP, inputs, Reserves, OperationWrapping, LongDurationStorage)
+		#EP = storage_all(EP, inputs, Reserves, OperationWrapping, LongDurationStorage) # LDS parameter removed 12102021 by jfmorris
+		EP = storage_all(EP, inputs, Reserves, OperationWrapping)
 
 		# Include LongDurationStorage only when modeling representative periods and long-duration storage
 		if OperationWrapping == 1 && LongDurationStorage == 1
