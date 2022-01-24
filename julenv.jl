@@ -50,7 +50,6 @@ Pkg.add(Pkg.PackageSpec(name="MathProgBase", version="0.7.8"))
 Pkg.add(Pkg.PackageSpec(name="StatsBase", version="0.33.8"))
 Pkg.add(Pkg.PackageSpec(name="YAML", version="0.4.7"))
 Pkg.add(Pkg.PackageSpec(name="LinearAlgebra"))
-=======
 #=if v"1.3" <= VERSION < v"1.5"
 	Pkg.add(Pkg.PackageSpec(name="Cbc", version="0.8.0"))
 	Pkg.add(Pkg.PackageSpec(name="Clp", version="0.8.1"))
@@ -97,7 +96,7 @@ elseif v"1.5" <= VERSION < v"1.7"=#
 	#Pkg.build("Gurobi")
 	##Add if elseif with Method of Morris for these
 	Pkg.add(Pkg.PackageSpec(name="DiffEqSensitivity", version="6.52.1"))
-	Pkg.add(Pkg.PackageSpec(name="Statistics", version="1.4.0"))
+	Pkg.add(Pkg.PackageSpec(name="Statistics", version="1.6.4")) # used to be 1.4.0
 	Pkg.add(Pkg.PackageSpec(name="OrdinaryDiffEq", version="5.60.1"))
 	Pkg.add(Pkg.PackageSpec(name="QuasiMonteCarlo", version="0.2.3"))
 	##Add if elseif with Method of Morris for these
