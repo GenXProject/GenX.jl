@@ -53,14 +53,16 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
         end
         temp_riskyhour[:, riskyhour_position] = repeat(transpose(repeat(1:1, inner = length(riskyhour_position))), G, 1)
         temp_cap_derate[existingplant_position, :] = repeat(dfGen[existingplant_position, Symbol("CapRes_$i")], 1, T)
-
-        temp_capvalue[THERM_ALL_EX, :] = temp_cap_derate[THERM_ALL_EX, :]
+    
+        temp_capvalue[THERM_ALL_EX, :] = temp_cap_derate[THERM_ALL_EX, :] .* temp_riskyhour[THERM_ALL_EX, :]
         temp_capvalue[VRE_EX, :] = temp_cap_derate[VRE_EX, :] .* (inputs["pP_Max"][VRE_EX, :]) .* temp_riskyhour[VRE_EX, :]
         temp_capvalue[MUST_RUN_EX, :] = temp_cap_derate[MUST_RUN_EX, :] .* (inputs["pP_Max"][MUST_RUN_EX, :]) .* temp_riskyhour[MUST_RUN_EX, :]
         temp_capvalue[HYDRO_RES_EX, :] = temp_cap_derate[HYDRO_RES_EX, :] .* (value.(EP[:vP][HYDRO_RES_EX, :])) .* temp_riskyhour[HYDRO_RES_EX, :] ./ totalcap[HYDRO_RES_EX, :]
         temp_capvalue[STOR_ALL_EX, :] = temp_cap_derate[STOR_ALL_EX, :] .* ((value.(EP[:vP][STOR_ALL_EX, :]) - value.(EP[:vCHARGE][STOR_ALL_EX, :]).data)) .* temp_riskyhour[STOR_ALL_EX, :] ./ totalcap[STOR_ALL_EX, :]
         temp_capvalue[FLEX_EX, :] = temp_cap_derate[FLEX_EX, :] .* ((value.(EP[:vCHARGE_FLEX][FLEX_EX, :]).data - value.(EP[:vP][FLEX_EX, :]))) .* temp_riskyhour[FLEX_EX, :] ./ totalcap[FLEX_EX, :]
-        temp_dfCapValue.AnnualAverage .= temp_capvalue * inputs["omega"] / sum(inputs["omega"])
+		if !isempty(riskyhour_position)
+        	temp_dfCapValue.AnnualAverage .= temp_capvalue * inputs["omega"] / sum(inputs["omega"][riskyhour_position])
+		end
         temp_dfCapValue = hcat(temp_dfCapValue, DataFrame(temp_capvalue, :auto))
         auxNew_Names = [Symbol("Region"); Symbol("Resource"); Symbol("Zone"); Symbol("Cluster"); Symbol("Reserve"); Symbol("AnnualAverage"); [Symbol("t$t") for t in 1:T]]
         rename!(temp_dfCapValue, auxNew_Names)

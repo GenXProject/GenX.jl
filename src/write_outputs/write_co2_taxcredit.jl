@@ -28,14 +28,18 @@ function write_credit_for_captured_emissions(path::AbstractString, sep::Abstract
 
 
     dfCO2CaptureCredit = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
-    for g = 1:G
-        temp_z = dfGen[g, :Zone]
-        if setup["ParameterScale"] == 1
-            dfCO2CaptureCredit[g, :AnnualSum] = sum(inputs["omega"] .* (value.(EP[:eEmissionsCaptureByPlant])[g, :])) * (-1) * inputs["dfCO2Credit"][!, "CO2Credit"][temp_z] * ModelScalingFactor * ModelScalingFactor
-        else
-            dfCO2CaptureCredit[g, :AnnualSum] = sum(inputs["omega"] .* (value.(EP[:eEmissionsCaptureByPlant])[g, :])) * (-1) * inputs["dfCO2Credit"][!, "CO2Credit"][temp_z]
-        end
-    end
-    CSV.write(string(path, sep, "CO2Credit.csv"), dfCO2CaptureCredit, writeheader = false)
+    dfCO2CaptureCredit.AnnualSum = value.(EP[:eEmissionsByPlantYear]) * (-1) * inputs["dfCO2Credit"][dfGen[:, :Zone], "CO2Credit"]
+    if setup["ParameterScale"] == 1
+        dfCO2CaptureCredit.AnnualSum .= dfCO2CaptureCredit.AnnualSum * (ModelScalingFactor^2)
+    end    
+    # for g = 1:G
+    #     temp_z = dfGen[g, :Zone]
+    #     if setup["ParameterScale"] == 1
+    #         dfCO2CaptureCredit[g, :AnnualSum] = sum(inputs["omega"] .* (value.(EP[:eEmissionsCaptureByPlant])[g, :])) * (-1) * inputs["dfCO2Credit"][!, "CO2Credit"][temp_z] * ModelScalingFactor * ModelScalingFactor
+    #     else
+    #         dfCO2CaptureCredit[g, :AnnualSum] = sum(inputs["omega"] .* (value.(EP[:eEmissionsCaptureByPlant])[g, :])) * (-1) * inputs["dfCO2Credit"][!, "CO2Credit"][temp_z]
+    #     end
+    # end
+    CSV.write(string(path, sep, "CO2Credit.csv"), dfCO2CaptureCredit)
     return dfCO2CaptureCredit
 end
