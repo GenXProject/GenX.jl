@@ -183,6 +183,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
+	# Model constraints, variables, expression related to fleccs
+	if (setup["FLECCS"] >= 1)
+		EP = fleccs(EP, inputs, setup["FLECCS"], setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"], setup["MinCapReq"])
+	end
+
 	# Policies
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)

@@ -1,0 +1,2 @@
+R_ID,pHeatRate_gt,pHeatRate_gt_add,pHeatRate_st_high,pHeatRate_st_mid,pHeatRate_st_low,pSteamRate_high,pSteamRate_mid,pSteamRate_low,pSteamRate_high_add,pSteamRate_mid_add,pSteamRate_low_add,pCO2CapRate,pPowerUseRate_Other,pPowerUseRate,pCO2CompressRate,pSteamUseRate,pPowerUseRate_ts,pPowerUseRate_heater,pColdUseRate,pEmissionsRate,pCO2_sequestration,pCapPercent
+1,10,7,32,23,13,0.4,1.1,0.9,0.2,1.1,0.9,0.95,0.003,0.15,0..007,3,0.3,0.25,0.5,0.05,23,0.15

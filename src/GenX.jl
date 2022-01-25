@@ -87,6 +87,8 @@ include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
+include("load_inputs/load_fleccs_data.jl")
+include("load_inputs/load_co2_tax.jl")
 
 include("load_inputs/load_inputs.jl")
 
@@ -124,6 +126,16 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+
+include("model/resources/fleccs/fleccs.jl")
+include("model/resources/fleccs/fleccs_fix.jl")
+include("model/resources/fleccs/fleccs1.jl")
+include("model/resources/fleccs/fleccs2.jl")
+include("model/resources/fleccs/fleccs3.jl")
+include("model/resources/fleccs/fleccs4.jl")
+include("model/resources/fleccs/fleccs8.jl")
+include("model/resources/fleccs/fleccs_no_commit.jl")
+include("model/resources/fleccs/fleccs_commit.jl")
 
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")
@@ -175,6 +187,10 @@ include("write_outputs/transmission/write_transmission_losses.jl")
 include("write_outputs/ucommit/write_commit.jl")
 include("write_outputs/ucommit/write_shutdown.jl")
 include("write_outputs/ucommit/write_start.jl")
+
+include("write_outputs/fleccs/write_capacity_fleccs.jl")
+include("write_outputs/fleccs/write_output_fleccs.jl")
+include("write_outputs/fleccs/write_power_fleccs.jl")
 
 include("write_outputs/write_outputs.jl")
 

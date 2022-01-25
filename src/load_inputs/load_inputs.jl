@@ -79,6 +79,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		inputs = load_period_map(setup, path, inputs)
 	end
 
+	if setup["FLECCS"] >= 1
+		inputs = load_fleccs_data(setup, path, inputs, cost_fuel, CO2_fuel)
+	end
+
 	println("CSV Files Successfully Read In From $path")
 
 	return inputs

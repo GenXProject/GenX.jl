@@ -1,0 +1,2 @@
+Network_zones,Network_Lines,z1,Line_Max_Flow_MW,Line_Min_Flow_MW,transmission_path_name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr
+z1,,,,,,,,,

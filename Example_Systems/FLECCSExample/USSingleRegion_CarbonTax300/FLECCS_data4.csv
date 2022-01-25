@@ -1,0 +1,10 @@
+R_ID,Zone,FLECCS_NO,Resource,Existing_Cap_Unit,TURBINE,COMPRESSOR,PCC,STORAGE,HEATPUMP,HEATER,BOP,THERM,DISP,NDISP,STOR,Commit,Min_Share,Max_Share,Existing_Cap_MW,Existing_Cap_MWh,New_Build,Num_unit,Cap_Size,Min_Cap_MW,Max_Cap_MW,Min_Share_percent,Max_Share_percent,Var_OM_Cost_per_Unit,Var_OM_cost_per_MWh_in,Inv_Cost_per_Unityr,Fixed_OM_Cost_per_Unityr,Start_Cost_per_Unit,Start_Fuel_MMBTU_per_Unit,Fuel,Min_Power,Self_disch,Eff_up,Eff_down,Ratio_power_to_energy,Min_Duration,Ramp_Up_Percentage,Ramp_Dn_Percentage,Up_Time,Down_Time,CapRes_1
+1,1,1,NGCT,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,2,477,0,-1,0,0,2,0,40000,15000,95,0,NG,0.2,0,1,1,0,0,1,1,6,6,1
+1,1,2,NGST,0,2,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,2,1,0,-1,0,0,2,0,35000,13000,95,0,None,0.2,0,1,1,0,0,1,1,6,6,0
+1,1,3,PCC,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,2,1,0,-1,0,0,3,0,1.30E+05,30000,0,0,None,0.2,0,1,1,0,0,1,1,6,6,0
+1,1,4,Compressor,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,2,1,0,-1,0,0,0,0,1.20E+05,20000,0,0,None,0.2,0,1,1,0,0,1,1,6,6,0
+1,1,5,Hot,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,2,1,0,-1,0,0,0.5,0,230,400,0,0,None,0,0,1,1,0,0,1,1,0,0,0
+1,1,6,Cold,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,2,1,0,-1,0,0,0.5,0,2800,400,0,0,None,0,0,1,1,0,0,1,1,0,0,0
+1,1,7,HeatPump,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,2,1,0,-1,0,0,0,0,71000,0,0,0,None,0,0,1,1,0,0,1,1,0,0,0
+1,1,8,Heater,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,2,1,0,-1,0,0,0,0,6600,0,0,0,None,0,0,1,1,0,0,1,1,0,0,0
+1,1,9,BOP,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,2,1,0,-1,0,0,0,0,36000,15000,0,0,None,0,0,1,1,0,0,1,1,0,0,0
