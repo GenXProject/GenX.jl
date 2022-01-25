@@ -89,8 +89,8 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 	@constraints(EP, begin
 
 		# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
-		[y in STOR_ALL, t in 1:T], EP[:eTotalCapEnergy][y] >= dfGen[!,:Min_Duration][y] * EP[:eTotalCap][y]
-		[y in STOR_ALL, t in 1:T], EP[:eTotalCapEnergy][y] <= dfGen[!,:Max_Duration][y] * EP[:eTotalCap][y]
+		[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= dfGen[!,:Min_Duration][y] * EP[:eTotalCap][y]
+		[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= dfGen[!,:Max_Duration][y] * EP[:eTotalCap][y]
 
 		# Maximum energy stored must be less than energy capacity
 		[y in STOR_ALL, t in 1:T], EP[:vS][y,t] <= EP[:eTotalCapEnergy][y]
