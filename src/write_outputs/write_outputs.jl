@@ -71,6 +71,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
     if setup["MultiStage"] == 1
         dfCap = write_capacity_multi_stage(path, sep, inputs, setup, EP)
+        write_costs(path, sep, inputs, setup, EP)
     else
         elapsed_time_costs = @elapsed write_costs(path, sep, inputs, setup, EP)
         println("Time elapsed for writing costs is")

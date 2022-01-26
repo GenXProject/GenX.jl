@@ -75,7 +75,7 @@ function investment_discharge_multi_stage(EP::Model, inputs::Dict, multi_stage_s
     dfGenMultiStage = inputs["dfGenMultiStage"]
 
     G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
-
+    Z = inputs["Z"]
     NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
     RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
     COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
@@ -241,7 +241,8 @@ function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
     dfGen = inputs["dfGen"]
     dfGenMultiStage = inputs["dfGenMultiStage"]
-
+    G = inputs["G"]
+    Z = inputs["Z"]
     STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
     NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
@@ -386,7 +387,8 @@ function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
     dfGen = inputs["dfGen"]
     dfGenMultiStage = inputs["dfGenMultiStage"]
-
+    G = inputs["G"]
+    Z = inputs["Z"]
     STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
     NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
     RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
@@ -473,7 +475,7 @@ function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
     # Construct and add the endogenous retirement constraint expressions
     @expression(EP, eRetCapTrackEnergy[y in STOR_ALL], sum(EP[:vRETCAPTRACKENERGY][y, p] for p = 1:cur_stage))
     @expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y, p] for p = 1:get_retirement_stage(cur_stage, dfGenMultiStage[!, :Lifetime][y], multi_stage_settings)))
-    @expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGenMultiStage[!, Symbol("Min_Retired_Energy_Cap_MW_p$p")][y]) for p = 1:cur_stage))
+    @expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGenMultiStage[!, Symbol("Min_Retired_Energy_Cap_MWh_p$p")][y]) for p = 1:cur_stage))
 
     ### Constratints ###
 
