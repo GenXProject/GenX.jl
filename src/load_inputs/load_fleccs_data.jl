@@ -24,7 +24,7 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 	if setup["FLECCS"] == 1
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data1.csv"), header=true), copycols=true)
 		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data1_process_parameters.csv"), header=true), copycols=true)
-		
+
 
 		println("FLECCS_data1.csv Successfully Read!, NGCC-CCS without flexible subcompoents")
 	elseif setup["FLECCS"] == 2
@@ -37,7 +37,7 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 		println("FLECCS_data3.csv Successfully Read!, NGCC-CCS with thermal storage - option1")
 
 	elseif setup["FLECCS"] == 4
-		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data4.csv"), header=true), copycols=true)	
+		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data4.csv"), header=true), copycols=true)
 		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data4_process_parameters.csv"), header=true), copycols=true)
 
 		println("FLECCS_data4.csv Successfully Read!, NGCC-CCS with thermal storage - option2")
@@ -70,8 +70,8 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 	inputs_ccs["FLECCS_ALL"] = unique(dfGen_ccs[!,:R_ID])
 
 
-	if setup["ParameterScale"] ==1 
-		if setup["FLECCS"] == 8 
+	if setup["ParameterScale"] ==1
+		if setup["FLECCS"] == 8
 			FLECCS_parameters[!,:intercept] = FLECCS_parameters[!,:intercept]/ModelScalingFactor
 		end
 	end
@@ -137,22 +137,22 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 		    inputs_ccs["C_Fuel_per_MMBTU_FLECCS"][y,i,:] = fuel_costs[fuel_type[y,i]]
 		    inputs_ccs["CO2_per_MMBTU_FLECCS"][y,i] = fuel_CO2[fuel_type[y,i]]
 			if setup["ParameterScale"] ==1
-			    inputs_ccs["C_Fuel_per_MMBTU_FLECCS"][y,i,:] = fuel_costs[fuel_type[y,i]]*ModelScalingFactor	
-		        inputs_ccs["CO2_per_MMBTU_FLECCS"][y,i] = fuel_CO2[fuel_type[y,i]]*ModelScalingFactor	
+			    inputs_ccs["C_Fuel_per_MMBTU_FLECCS"][y,i,:] = fuel_costs[fuel_type[y,i]]*ModelScalingFactor
+		        inputs_ccs["CO2_per_MMBTU_FLECCS"][y,i] = fuel_CO2[fuel_type[y,i]]*ModelScalingFactor
 			end
 		end
 	end
 
 	## delete CO2 seuquestration cost when adding qingyu's module
-	# scale CO2 sequestration cost 
+	# scale CO2 sequestration cost
 
 	if setup["ParameterScale"] == 1
 		inputs_ccs["FLECCS_parameters"][!,:pCO2_sequestration] = convert(Array{Float64}, inputs_ccs["FLECCS_parameters"][!,:pCO2_sequestration])/ModelScalingFactor
-	
+
 	end
 
-	
-	
+
+
 
     # Account for the CO2 emissions associated with start up fuel
 	if setup["UCommit"]>=1
@@ -169,7 +169,7 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 		start_fuel = permutedims(reshape(convert(Array{Float64}, collect(skipmissing(dfGen_ccs[!,:Start_Fuel_MMBTU_per_Unit]))),length(N_F), length(FLECCS_ALL)))
 		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
 		start_cost = permutedims(reshape(convert(Array{Float64}, collect(skipmissing(inputs_ccs["dfGen_ccs"][!,:Start_Cost_per_Unit]))),length(N_F), length(FLECCS_ALL)))
-		
+
 
 		inputs_ccs["C_Start_FLECCS"] = reshape(repeat(zeros(Float64, length(N_F), inputs_ccs["T"]), length(FLECCS_ALL)),  length(FLECCS_ALL), length(N_F),inputs_ccs["T"])
 		inputs_ccs["CO2_per_Start_FLECCS"] =zeros(Float64,length(FLECCS_ALL), length(N_F))
@@ -185,7 +185,8 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 			    inputs_ccs["CO2_per_Start_FLECCS"][y,i] = dfGen_ccs[(dfGen_ccs[!,:R_ID].==y),:Cap_Size][i] * (fuel_CO2[fuel_type[y,i]] .* start_fuel[y,i])
 				if setup["ParameterScale"] ==1
 				    inputs_ccs["CO2_per_Start_FLECCS"][y,i] = (fuel_CO2[fuel_type[y,i]] .* start_fuel[y,i]) * ModelScalingFactor
-			    end
+					inputs_ccs["C_Start_FLECCS"][y,i,:] = inputs_ccs["C_Start_FLECCS"][y,i,:]/ModelScalingFactor
+				end
 			end
 		end
 	else
@@ -197,25 +198,25 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 
     #setup subcompoents ID number
 	if setup["FLECCS"] == 1
-		# gas turbine 
+		# gas turbine
 	    inputs_ccs["NGCT_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==1),:FLECCS_NO][1]
 	    # steam turbine
 	    inputs_ccs["NGST_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==2),:FLECCS_NO][1]
-	    # absorber 
+	    # absorber
 	    inputs_ccs["PCC_id"] = dfGen_ccs[(dfGen_ccs[!,:ABSORBER].==1),:FLECCS_NO][1]
 	    # compressor
 	    inputs_ccs["Comp_id"] = dfGen_ccs[(dfGen_ccs[!,:COMPRESSOR].==1),:FLECCS_NO][1]
-	    #BOP 
+	    #BOP
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
 	elseif setup["FLECCS"] == 2
-	    # get the ID of each subcompoents 
-	    # gas turbine 
+	    # get the ID of each subcompoents
+	    # gas turbine
 	    inputs_ccs["NGCT_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==1),:FLECCS_NO][1]
 	    # steam turbine
 	    inputs_ccs["NGST_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==2),:FLECCS_NO][1]
-	    # absorber 
+	    # absorber
 	    inputs_ccs["Absorber_id"] = dfGen_ccs[(dfGen_ccs[!,:ABSORBER].==1),:FLECCS_NO][1]
-	    # regenerator 
+	    # regenerator
 	    inputs_ccs["Regen_id"] = dfGen_ccs[(dfGen_ccs[!,:REGEN].==1),:FLECCS_NO][1]
 	    # compressor
 	    inputs_ccs["Comp_id"] = dfGen_ccs[(dfGen_ccs[!,:COMPRESSOR].==1),:FLECCS_NO][1]
@@ -223,14 +224,14 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 		inputs_ccs["Rich_id"] = dfGen_ccs[(dfGen_ccs[!,:SOLVENT].==1),:FLECCS_NO][1]
 	    #lean tank
 	    inputs_ccs["Lean_id"] = dfGen_ccs[(dfGen_ccs[!,:SOLVENT].==2),:FLECCS_NO][1]
-	    #BOP 
+	    #BOP
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
 
 	elseif setup["FLECCS"] == 3
 		inputs_ccs["NGCT_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==1),:FLECCS_NO][1]
 	    # steam turbine
 	    inputs_ccs["NGST_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==2),:FLECCS_NO][1]
-	    # PCC 
+	    # PCC
 	    inputs_ccs["PCC_id"] = dfGen_ccs[(dfGen_ccs[!,:PCC].==1),:FLECCS_NO][1]
 	    # compressor
 	    inputs_ccs["Comp_id"] = dfGen_ccs[(dfGen_ccs[!,:COMPRESSOR].==1),:FLECCS_NO][1]
@@ -240,13 +241,13 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
         inputs_ccs["Cold_id"] = dfGen_ccs[(dfGen_ccs[!,:STORAGE].==2),:FLECCS_NO][1]
         # heat pump
         inputs_ccs["HeatPump_id"] = dfGen_ccs[(dfGen_ccs[!,:HEATPUMP].==1),:FLECCS_NO][1]
-	    #BOP 
+	    #BOP
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
 	elseif setup["FLECCS"] == 4
 		inputs_ccs["NGCT_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==1),:FLECCS_NO][1]
 	    # steam turbine
 	    inputs_ccs["NGST_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==2),:FLECCS_NO][1]
-	    # PCC 
+	    # PCC
 	    inputs_ccs["PCC_id"] = dfGen_ccs[(dfGen_ccs[!,:PCC].==1),:FLECCS_NO][1]
 	    # compressor
 	    inputs_ccs["Comp_id"] = dfGen_ccs[(dfGen_ccs[!,:COMPRESSOR].==1),:FLECCS_NO][1]
@@ -258,7 +259,7 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
         inputs_ccs["HeatPump_id"] = dfGen_ccs[(dfGen_ccs[!,:HEATPUMP].==1),:FLECCS_NO][1]
 		 # heater
 		inputs_ccs["Heater_id"] = dfGen_ccs[(dfGen_ccs[!,:HEATER].==1),:FLECCS_NO][1]
-	    #BOP 
+	    #BOP
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
 
 	elseif setup["FLECCS"] == 5
@@ -272,7 +273,7 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 		inputs_ccs["OXY_id"] = dfGen_ccs[(dfGen_ccs[!,:OXY].==1),:FLECCS_NO][1]
 	    # steam turbine
 	    inputs_ccs["ASU_id"] = dfGen_ccs[(dfGen_ccs[!,:ASU].==1),:FLECCS_NO][1]
-	    # PCC 
+	    # PCC
 	    inputs_ccs["LOX_id"] = dfGen_ccs[(dfGen_ccs[!,:LOX].==1),:FLECCS_NO][1]
 	    # compressor
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
