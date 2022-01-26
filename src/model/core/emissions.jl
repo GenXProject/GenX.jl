@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 This function creates expression to add the CO2 emissions by plants in each zone, which is subsequently added to the total emissions
 """
-function emissions(EP::Model, inputs::Dict)
+function emissions(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Emissions Module (for CO2 Policy modularization")
 
@@ -30,6 +30,11 @@ function emissions(EP::Model, inputs::Dict)
 	Z = inputs["Z"]     # Number of zones
 	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
 
+	if setup["FLECCS"] >= 1
+	    gen_ccs = inputs["dfGen_ccs"]
+	    FLECCS_ALL = inputs["FLECCS_ALL"] # set of Fleccs generator
+	end
+
 	@expression(EP, eEmissionsByPlant[y=1:G,t=1:T],
 	 	if y in inputs["COMMIT"]
 		 	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]+dfGen[!,:CO2_per_Start][y]*EP[:vSTART][y,t]
@@ -37,6 +42,12 @@ function emissions(EP::Model, inputs::Dict)
 		 	dfGen[!,:CO2_per_MWh][y]*EP[:vP][y,t]
 	 	end
  	)
- 	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
+	# CO2 emissions from FLECCS 
+	if setup["FLECCS"] >= 1
+	    @expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]) + sum(EP[:eEmissionsByPlantFLECCS][y,t] for y in unique(gen_ccs[(gen_ccs[!,:Zone].==z),:R_ID])))
+	else
+		@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
+	end
+
 	return EP
 end

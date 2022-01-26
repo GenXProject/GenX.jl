@@ -138,6 +138,7 @@ include("model/resources/fleccs/fleccs_no_commit.jl")
 include("model/resources/fleccs/fleccs_commit.jl")
 
 include("model/policies/co2_cap.jl")
+include("model/policies/co2_tax.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
