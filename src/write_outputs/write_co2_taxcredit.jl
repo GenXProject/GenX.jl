@@ -28,7 +28,7 @@ function write_credit_for_captured_emissions(path::AbstractString, sep::Abstract
 
 
     dfCO2CaptureCredit = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
-    dfCO2CaptureCredit.AnnualSum = value.(EP[:eEmissionsByPlantYear]) * (-1) * inputs["dfCO2Credit"][dfGen[:, :Zone], "CO2Credit"]
+    dfCO2CaptureCredit.AnnualSum = value.(EP[:eEmissionsByPlantYear]) * (-1) .* inputs["dfCO2Credit"][dfGen[:, :Zone], "CO2Credit"]
     if setup["ParameterScale"] == 1
         dfCO2CaptureCredit.AnnualSum .= dfCO2CaptureCredit.AnnualSum * (ModelScalingFactor^2)
     end    

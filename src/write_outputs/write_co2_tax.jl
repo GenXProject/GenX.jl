@@ -30,7 +30,7 @@ function write_co2_tax(path::AbstractString, sep::AbstractString, inputs::Dict, 
     SEG = inputs["SEG"] # Number of load curtailment segments
 
     dfCO2TaxCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
-    dfCO2TaxCost.AnnualSum = value.(EP[:eEmissionsByPlantYear]) * inputs["dfCO2Tax"][dfGen[:,:Zone]]
+    dfCO2TaxCost.AnnualSum = value.(EP[:eEmissionsByPlantYear]) .* inputs["dfCO2Tax"][dfGen[:,:Zone],"CO2Tax"]
     if setup["ParameterScale"] == 1
         dfCO2TaxCost.AnnualSum .= dfCO2TaxCost.AnnualSum * (ModelScalingFactor^2)
     end
