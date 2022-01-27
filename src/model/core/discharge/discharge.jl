@@ -47,17 +47,28 @@ function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int, PieceWi
         inputs["C_Fuel_per_MWh"][inputs["THERM_COMMIT"], :] .= 0
     end
     # Variable costs of "generation" for resource "y" during hour "t" = variable O&M plus fuel cost
-    @expression(EP, eCVar_out[y = 1:G, t = 1:T], (inputs["omega"][t] * (dfGen[!, :Var_OM_Cost_per_MWh][y] + inputs["C_Fuel_per_MWh"][y, t]) * vP[y, t]))
+    # @expression(EP, eCVar_out[y = 1:G, t = 1:T], (inputs["omega"][t] * (dfGen[!, :Var_OM_Cost_per_MWh][y] + inputs["C_Fuel_per_MWh"][y, t]) * vP[y, t]))
+    @expression(EP, eCVOM_out[y = 1:G, t = 1:T], (dfGen[!, :Var_OM_Cost_per_MWh][y] * vP[y, t]))
+    @expression(EP, eCFuel_out[y = 1:G, t = 1:T], (inputs["C_Fuel_per_MWh"][y, t] * vP[y, t]))
+    @expression(EP, eCVar_out[y = 1:G, t = 1:T], EP[:eCVOM_out][y, t] + EP[:eCFuel_out][y, t])
     #@expression(EP, eCVar_out[y=1:G,t=1:T], (round(inputs["omega"][t]*(dfGen[!,:Var_OM_Cost_per_MWh][y]+inputs["C_Fuel_per_MWh"][y,t]), digits=RD)*vP[y,t]))
     # Sum individual resource contributions to variable discharging costs to get total variable discharging costs
     # @expression(EP, eTotalCVarOutT[t = 1:T], sum(eCVar_out[y, t] for y in 1:G))
     # Sum to plant level
-    @expression(EP, ePlantCVarOut[y = 1:G], sum(eCVar_out[y, t] for t in 1:T))
+    # @expression(EP, ePlantCVarOut[y = 1:G], sum(eCVar_out[y, t] for t in 1:T))
+    @expression(EP, ePlantCVOMOut[y = 1:G], sum(inputs["omega"][t] * EP[:eCVOM_out][y, t] for t in 1:T))
+    @expression(EP, ePlantCFuelOut[y = 1:G], sum(inputs["omega"][t] * EP[:eCFuel_out][y, t] for t in 1:T))
+    @expression(EP, ePlantCVarOut[y = 1:G], EP[:ePlantCVOMOut][y] + EP[:ePlantCFuelOut][y])
     # Sum to zonal level
-    @expression(EP, eZonalCVarOut[z = 1:Z], EP[:vZERO] + sum(ePlantCVarOut[y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
-    # Sum to system level
-    @expression(EP, eTotalCVarOut, sum(eZonalCVarOut[z] for z in 1:Z))
 
+    @expression(EP, eZonalCVOMOut[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCVOMOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+    @expression(EP, eZonalCFuelOut[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+    @expression(EP, eZonalCVarOut[z = 1:Z], EP[:vZERO] + sum(ePlantCVarOut[y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+
+    # Sum to system level
+    @expression(EP, eTotalCFuelOut, sum(eZonalCFuelOut[z] for z in 1:Z))
+    @expression(EP, eTotalCVOMOut, sum(eZonalCVOMOut[z] for z in 1:Z))
+    @expression(EP, eTotalCVarOut, sum(eZonalCVarOut[z] for z in 1:Z))
     # Add total variable discharging cost contribution to the objective function
     EP[:eObj] += eTotalCVarOut
 

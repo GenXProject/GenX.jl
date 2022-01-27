@@ -184,19 +184,21 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	end
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
-	if setup["UCommit"]>=1
-		if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
-			# Cost per MW of nameplate capacity to start a generator
-			inputs_gen["dfGen"][!,:Start_Cost_per_MW] = gen_in[!,:Start_Cost_per_MW]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
-		end
-
-		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
-		start_fuel = convert(Array{Float64}, collect(skipmissing(gen_in[!,:Start_Fuel_MMBTU_per_MW])))
-		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
-		start_cost = convert(Array{Float64}, collect(skipmissing(inputs_gen["dfGen"][!,:Start_Cost_per_MW])))
-		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
-		inputs_gen["dfGen"][!,:CO2_per_Start] = zeros(Float64, G)
-		inputs_gen["dfGen"][!,:CO2_per_MMBTU] = zeros(Float64, G)
+	if setup["UCommit"] >= 1
+	    if setup["ParameterScale"] == 1  # Parameter scaling turned on - adjust values of subset of parameter values
+	        # Cost per MW of nameplate capacity to start a generator
+	        inputs_gen["dfGen"][!, :Start_Cost_per_MW] = gen_in[!, :Start_Cost_per_MW] / ModelScalingFactor # Convert to $ million/GW with objective function in millions
+	    end
+	
+	    # Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
+	    start_fuel = convert(Array{Float64}, collect(skipmissing(gen_in[!, :Start_Fuel_MMBTU_per_MW])))
+	    # Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
+	    start_cost = convert(Array{Float64}, collect(skipmissing(inputs_gen["dfGen"][!, :Start_Cost_per_MW])))
+	    inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
+	    inputs_gen["C_Start_Fuel"] = zeros(Float64, G, inputs_gen["T"])
+	    inputs_gen["C_Start_Other"] = zeros(Float64, G, inputs_gen["T"])
+	    inputs_gen["dfGen"][!, :CO2_per_Start] = zeros(Float64, G)
+	    inputs_gen["dfGen"][!, :CO2_per_MMBTU] = zeros(Float64, G)
 	end
 
 	# Heat rate of all resources (million BTUs/MWh)
@@ -217,19 +219,21 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		end
 		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
-			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup.
-			# CO2 from fuel consumption during startup also calculated
-
-			inputs_gen["C_Start"][g,:] = inputs_gen["dfGen"][!,:Cap_Size][g] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
-			# No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
-			inputs_gen["dfGen"][!,:CO2_per_Start][g]  = inputs_gen["dfGen"][!,:Cap_Size][g]*(fuel_CO2[fuel_type[g]]*start_fuel[g])
-			if setup["ParameterScale"] ==1
-				inputs_gen["dfGen"][!,:CO2_per_Start][g] = inputs_gen["dfGen"][!,:CO2_per_Start][g] * ModelScalingFactor
-			end
-			# Setup[ParameterScale] =1, inputs_gen["dfGen"][!,:Cap_Size][g] is GW, fuel_CO2[fuel_type[g]] is ktons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][!,:CO2_per_Start][g] is Mton, to get kton, change we need to multiply 1000
-			# Setup[ParameterScale] =0, inputs_gen["dfGen"][!,:Cap_Size][g] is MW, fuel_CO2[fuel_type[g]] is tons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][!,:CO2_per_Start][g] is ton
+		    # Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup.
+		    # CO2 from fuel consumption during startup also calculated
+		
+		    inputs_gen["C_Start"][g, :] = inputs_gen["dfGen"][!, :Cap_Size][g] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
+		    inputs_gen["C_Start_Fuel"][g, :] = inputs_gen["dfGen"][g, :Cap_Size] * (fuel_costs[fuel_type[g]] .* start_fuel[g])
+		    inputs_gen["C_Start_Other"][g, :] .= inputs_gen["dfGen"][g, :Cap_Size] * (start_cost[g])
+		    # No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
+		    inputs_gen["dfGen"][!, :CO2_per_Start][g] = inputs_gen["dfGen"][!, :Cap_Size][g] * (fuel_CO2[fuel_type[g]] * start_fuel[g])
+		    if setup["ParameterScale"] == 1
+		        inputs_gen["dfGen"][!, :CO2_per_Start][g] = inputs_gen["dfGen"][!, :CO2_per_Start][g] * ModelScalingFactor
+		    end
+		    # Setup[ParameterScale] =1, inputs_gen["dfGen"][!,:Cap_Size][g] is GW, fuel_CO2[fuel_type[g]] is ktons/MMBTU, start_fuel is MMBTU/MW,
+		    #   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][!,:CO2_per_Start][g] is Mton, to get kton, change we need to multiply 1000
+		    # Setup[ParameterScale] =0, inputs_gen["dfGen"][!,:Cap_Size][g] is MW, fuel_CO2[fuel_type[g]] is tons/MMBTU, start_fuel is MMBTU/MW,
+		    #   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][!,:CO2_per_Start][g] is ton
 		end
 	end
 	println("Generators_data.csv Successfully Read!")

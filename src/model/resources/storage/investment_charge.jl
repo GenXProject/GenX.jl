@@ -95,16 +95,29 @@ function investment_charge(EP::Model, inputs::Dict)
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new charge capacity, fixed costs are only O&M costs
-    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
+    # @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
+    #     if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
+    #         dfGen[!, :Inv_Cost_Charge_per_MWyr][y] * vCAPCHARGE[y] + dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y]
+    #     else
+    #         dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y]
+    #     end
+    # )
+    @expression(EP, eCInvChargeCap[y in STOR_ASYMMETRIC],
         if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
-            dfGen[!, :Inv_Cost_Charge_per_MWyr][y] * vCAPCHARGE[y] + dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y]
+            dfGen[!, :Inv_Cost_Charge_per_MWyr][y] * vCAPCHARGE[y]
         else
-            dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y]
+            EP[:vZERO]
         end
     )
-
+    @expression(EP, eCFOMChargeCap[y in STOR_ASYMMETRIC], dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y])
+    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC], EP[:eCInvChargeCap][y] + EP[:eCFOMChargeCap][y])
     # Sum individual resource contributions to fixed costs to get total fixed costs
+    @expression(EP, eZonalCFOMChargeCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMChargeCap][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCInvChargeCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvChargeCap][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
     @expression(EP, eZonalCFixCharge[z = 1:Z], EP[:vZERO] + sum(EP[:eCFixCharge][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+
+    @expression(EP, eTotalCFOMCharge, sum(EP[:eZonalCFOMChargeCap][z] for z in 1:Z))
+    @expression(EP, eTotalCInvCharge, sum(EP[:eZonalCInvChargeCap][z] for z in 1:Z))
     @expression(EP, eTotalCFixCharge, sum(EP[:eZonalCFixCharge][z] for z in 1:Z))
 
     # Add term to objective function expression

@@ -100,20 +100,39 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int, MaxCapReq
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new capacity, fixed costs are only O&M costs
-    @expression(EP, eCFix[y in 1:G],
+    # @expression(EP, eCFix[y in 1:G],
+    #     if y in NEW_CAP # Resources eligible for new capacity
+    #         if y in COMMIT
+    #             dfGen[!, :Inv_Cost_per_MWyr][y] * dfGen[!, :Cap_Size][y] * vCAP[y] + dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+    #         else
+    #             dfGen[!, :Inv_Cost_per_MWyr][y] * vCAP[y] + dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+    #         end
+    #     else
+    #         dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+    #     end
+    # )
+    @expression(EP, eCInvCap[y in 1:G],
         if y in NEW_CAP # Resources eligible for new capacity
             if y in COMMIT
-                dfGen[!, :Inv_Cost_per_MWyr][y] * dfGen[!, :Cap_Size][y] * vCAP[y] + dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+                dfGen[!, :Inv_Cost_per_MWyr][y] * dfGen[!, :Cap_Size][y] * vCAP[y]
             else
-                dfGen[!, :Inv_Cost_per_MWyr][y] * vCAP[y] + dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+                dfGen[!, :Inv_Cost_per_MWyr][y] * vCAP[y]
             end
         else
-            dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+            EP[:vZERO]
         end
     )
+    @expression(EP, eCFOMCap[y in 1:G], dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * EP[:eTotalCap][y])
+    @expression(EP, eCFix[y in 1:G], EP[:eCInvCap][y] + EP[:eCFOMCap][y])
 
     # Sum individual resource contributions to fixed costs to get total fixed costs
+
+    @expression(EP, eZonalCFOM[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMCap][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCInv[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvCap][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
     @expression(EP, eZonalCFix[z = 1:Z], EP[:vZERO] + sum(EP[:eCFix][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+
+    @expression(EP, eTotalCFOM, sum(EP[:eZonalCFOM][z] for z in 1:Z))
+    @expression(EP, eTotalCInv, sum(EP[:eZonalCInv][z] for z in 1:Z))
     @expression(EP, eTotalCFix, sum(EP[:eZonalCFix][z] for z in 1:Z))
 
     # Add term to objective function expression

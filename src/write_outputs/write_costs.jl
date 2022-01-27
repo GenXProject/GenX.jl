@@ -26,69 +26,91 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
     Z = inputs["Z"]     # Number of zones
     T = inputs["T"]     # Number of time steps (hours)
 
-    dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"], Total = zeros(Float64, 7))
+    dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"], Total = zeros(Float64, 9))
     dfCost.Total[1] = objective_value(EP)
-    dfCost.Total[2] = (value(EP[:eTotalCVarOut]) +
+    dfCost.Total[2] = (value(EP[:eTotalCInv]) +
+                       (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0) +
+                       (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0))
+    dfCost.Total[3] = (value(EP[:eTotalCFOM]) +
+                       (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFOMEnergy]) : 0) +
+                       (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFOMCharge]) : 0))
+    dfCost.Total[4] = value(EP[:eTotalCFuelOut])
+    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+        dfCost.Total[4] = dfCost.Total[4] + value(EP[:eCVar_fuel_piecewise])
+    end
+    dfCost.Total[5] = (value(EP[:eTotalCVOMOut]) +
                        (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) +
                        (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
-    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-        dfCost.Total[2] = dfCost.Total[2] + value(EP[:eCVar_fuel_piecewise])
-    end
+
     if setup["CO2Tax"] == 1
-        dfCost.Total[2] = dfCost.Total[2] + value(EP[:eTotalCCO2Tax])
+        dfCost.Total[5] = dfCost.Total[5] + value(EP[:eTotalCCO2Tax])
     end
     if setup["CO2Credit"] == 1
-        dfCost.Total[2] = dfCost.Total[2] + value(EP[:eTotalCCO2Credit])
+        dfCost.Total[5] = dfCost.Total[5] + value(EP[:eTotalCCO2Credit])
     end
-    dfCost.Total[2] = dfCost.Total[2] + value(EP[:eTotaleCCO2Sequestration])
-    dfCost.Total[3] = (value(EP[:eTotalCFix]) +
-                       (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) +
-                       (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0))
-    dfCost.Total[4] = value(EP[:eTotalCNSE])
+    dfCost.Total[5] = dfCost.Total[5] + value(EP[:eTotaleCCO2Sequestration])
+
+    dfCost.Total[6] = value(EP[:eTotalCNSE])
     if setup["UCommit"] >= 1
-        dfCost.Total[5] = value(EP[:eTotalCStart])
+        dfCost.Total[7] = value(EP[:eTotalCStart])
     end
     if setup["Reserves"] == 1
-        dfCost.Total[6] = value(EP[:eTotalCRsvPen])
+        dfCost.Total[8] = value(EP[:eTotalCRsvPen])
     end
     if setup["NetworkExpansion"] == 1 && Z > 1
-        dfCost.Total[7] = value(EP[:eTotalCNetworkExp])
+        dfCost.Total[9] = value(EP[:eTotalCNetworkExp])
     end
-	if setup["ParameterScale"] == 1
-	    dfCost.Total = dfCost.Total * (ModelScalingFactor^2)
-	end
+    if setup["ParameterScale"] == 1
+        dfCost.Total = dfCost.Total * (ModelScalingFactor^2)
+    end
 
 
-for z in 1:Z
-    tempCFix = (value.(EP[:eZonalCFix])[z] +
-                (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCFixEnergy])[z] : 0) +
-                (!isempty(inputs["STOR_ASYMMETRIC"]) ? value.(EP[:eZonalCFixCharge])[z] : 0))
+    for z in 1:Z
+        # tempCFix = (value.(EP[:eZonalCFix])[z] +
+        #             (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCFixEnergy])[z] : 0) +
+        #             (!isempty(inputs["STOR_ASYMMETRIC"]) ? value.(EP[:eZonalCFixCharge])[z] : 0))
+        tempCInv = (value.(EP[:eZonalCInv])[z] +
+                    (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCInvEnergyCap])[z] : 0) +
+                    (!isempty(inputs["STOR_ASYMMETRIC"]) ? value.(EP[:eZonalCInvChargeCap])[z] : 0))
+        tempCFOM = (value.(EP[:eZonalCFOM])[z] +
+                    (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCFOMEnergyCap])[z] : 0) +
+                    (!isempty(inputs["STOR_ASYMMETRIC"]) ? value.(EP[:eZonalCFOMChargeCap])[z] : 0))
+        # tempCVar = (value.(EP[:eZonalCVarOut])[z] +
+        #             (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCVarIn])[z] : 0) +
+        #             (!isempty(inputs["FLEX"]) ? value.(EP[:eZonalCVarFlexIn])[z] : 0))
+        tempCFuel = value.(EP[:eZonalCFuelOut])[z]
+        if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+            tempCFuel = tempCFuel + value.(EP[:eZonalCFuel_piecewise])[z]
+        end
+        tempCVOM = (value.(EP[:eZonalCVOMOut])[z] +
+                    (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCVarIn])[z] : 0) +
+                    (!isempty(inputs["FLEX"]) ? value.(EP[:eZonalCVarFlexIn])[z] : 0))
 
-    tempCVar = (value.(EP[:eZonalCVarOut])[z] +
-                (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCVarIn])[z] : 0) +
-                (!isempty(inputs["FLEX"]) ? value.(EP[:eZonalCVarFlexIn])[z] : 0))
-    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-        tempCVar = tempCVar + value.(EP[:eZonalCFuel_piecewise])[z]
+        if setup["CO2Tax"] == 1
+            tempCVOM = tempCVOM + value.(EP[:eZonalCCO2Tax])[z]
+        end
+        if setup["CO2Credit"] == 1
+            tempCVOM = tempCVOM + value.(EP[:eZonalCCO2Credit])[z]
+        end
+        tempCVOM = tempCVOM + value.(EP[:eZonalCCO2Sequestration])[z]
+        tempCStart = (!isempty(inputs["COMMIT"]) ? value.(EP[:eZonalCStart])[z] : 0)
+        tempCNSE = value.(EP[:eZonalCNSE])[z]
+        # tempCTotal = tempCFix + tempCVar + tempCStart + tempCNSE
+        tempCTotal = tempCInv + tempCFOM + tempCFuel + tempCVOM + tempCNSE + tempCStart
+        if setup["ParameterScale"] == 1
+            # tempCFix = tempCFix * (ModelScalingFactor^2)
+            # tempCVar = tempCVar * (ModelScalingFactor^2)
+            tempCInv = tempCInv * (ModelScalingFactor^2)
+            tempCFOM = tempCFOM * (ModelScalingFactor^2)
+            tempCFuel = tempCFuel * (ModelScalingFactor^2)
+            tempCVOM = tempCVOM * (ModelScalingFactor^2)
+            tempCStart = tempCStart * (ModelScalingFactor^2)
+            tempCNSE = tempCNSE * (ModelScalingFactor^2)
+            tempCTotal = tempCTotal * (ModelScalingFactor^2)
+        end
+    
+        # dfCost[!, Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+        dfCost[!, Symbol("Zone$z")] = [tempCTotal, tempCInv, tempCFOM, tempCFuel, tempCVOM, tempCNSE, tempCStart, "-", "-"]
     end
-    if setup["CO2Tax"] == 1
-        tempCVar = tempCVar + value.(EP[:eZonalCCO2Tax])[z]
-    end
-    if setup["CO2Credit"] == 1
-        tempCVar = tempCVar + value.(EP[:eZonalCCO2Credit])[z]
-    end
-    tempCVar = tempCVar + value.(EP[:eZonalCCO2Sequestration])[z]
-    tempCStart = (!isempty(inputs["COMMIT"]) ? value.(EP[:eZonalCStart])[z] : 0)
-    tempCNSE = value.(EP[:eZonalCNSE])[z]
-    tempCTotal = tempCFix + tempCVar + tempCStart + tempCNSE
-	if setup["ParameterScale"] == 1
-		tempCFix = tempCFix * (ModelScalingFactor^2)
-		tempCVar = tempCVar * (ModelScalingFactor^2)
-		tempCStart = tempCStart * (ModelScalingFactor^2)
-		tempCNSE = tempCNSE * (ModelScalingFactor^2)
-		tempCTotal = tempCTotal * (ModelScalingFactor^2)
-	end
-
-    dfCost[!, Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
-end
     CSV.write(string(path, sep, "costs.csv"), dfCost)
 end

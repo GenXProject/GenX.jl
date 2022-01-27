@@ -97,16 +97,29 @@ function investment_energy(EP::Model, inputs::Dict)
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new energy capacity, fixed costs are only O&M costs
-    @expression(EP, eCFixEnergy[y in STOR_ALL],
+    # @expression(EP, eCFixEnergy[y in STOR_ALL],
+    #     if y in NEW_CAP_ENERGY # Resources eligible for new capacity
+    #         dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y] + dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+    #     else
+    #         dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+    #     end
+    # )
+    @expression(EP, eCInvEnergyCap[y in STOR_ALL],
         if y in NEW_CAP_ENERGY # Resources eligible for new capacity
-            dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y] + dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+            dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y]
         else
-            dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+            EP[:vZERO]
         end
     )
-
+    @expression(EP, eCFOMEnergyCap[y in STOR_ALL], dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y])
+    @expression(EP, eCFixEnergy[y in STOR_ALL], EP[:eCFOMEnergyCap][y] + EP[:eCInvEnergyCap][y])
     # Sum individual resource contributions to fixed costs to get total fixed costs
+    @expression(EP, eZonalCFOMEnergyCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMEnergyCap][y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCInvEnergyCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvEnergyCap][y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
     @expression(EP, eZonalCFixEnergy[z = 1:Z], EP[:vZERO] + sum(eCFixEnergy[y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+
+    @expression(EP, eTotalCFOMEnergy, sum(EP[:eZonalCFOMEnergyCap][z] for z in 1:Z))
+    @expression(EP, eTotalCInvEnergy, sum(EP[:eZonalCInvEnergyCap][z] for z in 1:Z))
     @expression(EP, eTotalCFixEnergy, sum(EP[:eZonalCFixEnergy][z] for z in 1:Z))
 
     # Add term to objective function expression
