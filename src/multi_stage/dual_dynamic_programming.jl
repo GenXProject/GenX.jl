@@ -171,8 +171,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
         end
 
-        ## DEV NOTE: Jack, for the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
-        ### Please implement the appropriate If condition statements here.
+        ### For the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
 		if myopic
 			println("***********")
             println("Exiting After First Forward Pass! (Myopic)")
@@ -660,23 +659,17 @@ function initialize_cost_to_go(settings_d::Dict, EP::Model)
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
+	DF = 1/(1+wacc)^(stage_len*(cur_stage-1))  # Discount factor applied all to costs in each stage
+	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)]) # OPEX multiplier to count multiple years between two model stages
+
+	# Overwrite the objective function to include the cost-to-go variable (not in myopic case)
+	# Multiply discount factor to all terms except the alpha term or the cost-to-go function
+	# All OPEX terms get an additional adjustment factor
 	if myopic
-		# We do not apply the discount factor DF in the myopic case
-		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)]) # OPEX multiplier to count multiple years between two model stages
-
-		# Overwrite the objective function to include the cost-to-go variable vAlpha (not in myopic case)
-		# All OPEX terms get an additional adjustment factor OPEXMULT
-		@objective(EP, Min, OPEXMULT*EP[:eObj])
+		@objective(EP, Min, DF*OPEXMULT*EP[:eObj])
 	else
-    	DF = 1/(1+wacc)^(stage_len*(cur_stage-1))  # Discount factor applied all to costs in each stage
-		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)]) # OPEX multiplier to count multiple years between two model stages
-
 		# Initialize the cost-to-go variable
 	    @variable(EP, vALPHA >= 0);
-
-		# Overwrite the objective function to include the cost-to-go variable
-		# Multiply discount factor to all terms except the alpha term or the cost-to-go function
-		# All OPEX terms get an additional adjustment factor
 		@objective(EP, Min, DF*OPEXMULT*EP[:eObj] + vALPHA)
 	end
 
