@@ -203,9 +203,19 @@ if setup["MultiStage"] == 0
     # Capacity Market
     dfResMar = DataFrame()
     dfResRevenue = DataFrame()
+    dfResPayment = DataFrame()
+    dfResDRSaving = DataFrame()
+    dfResTransRevenue = DataFrame()
     if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1
         dfResMar = write_reserve_margin(path, sep, inputs, setup, EP)
         dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, EP)
+        dfResPayment = write_reserve_margin_payment(path, sep, inputs, setup, EP)
+        if inputs["SEG"] >= 2
+            dfResDRSaving = write_reserve_margin_demand_response_saving(path, sep, inputs, setup, EP)
+        end
+        if inputs["Z"] >= 2
+            dfResTransRevenue = write_reserve_margin_transmission_revenue(path, sep, inputs, setup, EP)
+        end
         elapsed_time_cap_value = @elapsed write_capacity_value(path, sep, inputs, setup, EP)
         println("Time elapsed for writing capacity value is")
         println(elapsed_time_cap_value)

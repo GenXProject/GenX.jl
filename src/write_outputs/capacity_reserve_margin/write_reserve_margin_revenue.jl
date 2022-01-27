@@ -37,13 +37,9 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
     MUST_RUN = inputs["MUST_RUN"]
-    ### calculating capacity reserve revenue
     dfResRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], AnnualSum = zeros(G))
     for i in 1:inputs["NCapacityReserveMargin"]
         tempresrev = zeros(G)
-        # print(dfGen[THERM_ALL, Symbol("CapRes_$i")])
-        # print(value.(EP[:eTotalCap][THERM_ALL]))
-        # print(dual.(EP[:cCapacityResMargin]))
         tempresrev[THERM_ALL] = dfGen[THERM_ALL, Symbol("CapRes_$i")] .* (value.(EP[:eTotalCap][THERM_ALL])) * sum(dual.(EP[:cCapacityResMargin][i, :]))
         tempresrev[VRE] = dfGen[VRE, Symbol("CapRes_$i")] .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * (dual.(EP[:cCapacityResMargin][i, :])))
         tempresrev[MUST_RUN] = dfGen[MUST_RUN, Symbol("CapRes_$i")] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * (dual.(EP[:cCapacityResMargin][i, :])))
@@ -53,39 +49,9 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
         if setup["ParameterScale"] == 1
             tempresrev = tempresrev * (ModelScalingFactor^2)
         end
-        # # transpose(dual.(EP[:cCapacityResMargin])) ./ inputs["omega"]
-        # # initiate the process by assuming everything is thermal
-        # dfResRevenue = hcat(dfResRevenue, round.(Int, dfCap[1:end-1, :EndCap] .* dfGen[!, Symbol("CapRes_$i")] .* sum(dfResMar[i, :])))
-        # for y in 1:G
-        #     if (y in STOR_ALL)
-        #         dfResRevenue[y, :x1] = round.(Int, sum(
-        #             (DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3, y+1] .-
-        #              DataFrame([[names(dfPower)]; collect.(eachrow(dfCharge))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3, y+1]) .*
-        #             DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!, i+1] .* dfGen[y, Symbol("CapRes_$i")]))
-        #     elseif (y in HYDRO_RES)
-        #         dfResRevenue[y, :x1] = round.(Int, sum((DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3, y+1]) .*
-        #                                                DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!, i+1] .* dfGen[y, Symbol("CapRes_$i")]))
-        #     elseif (y in VRE)
-        #         dfResRevenue[y, :x1] = round.(Int, sum(dfCap[y, :EndCap] .* inputs["pP_Max"][y, :] .*
-        #                                                DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!, i+1] .* dfGen[y, Symbol("CapRes_$i")]))
-        #     elseif (y in FLEX)
-        #         dfResRevenue[y, :x1] = round.(Int, sum(
-        #             (DataFrame([[names(dfPower)]; collect.(eachrow(dfCharge))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3, y+1] .-
-        #              DataFrame([[names(dfPower)]; collect.(eachrow(dfPower))], [:column; Symbol.(axes(dfPower, 1))])[4:T+3, y+1]) .*
-        #             DataFrame([[names(dfResMar)]; collect.(eachrow(dfResMar))], [:column; Symbol.(axes(dfResMar, 1))])[!, i+1] .* dfGen[y, Symbol("CapRes_$i")]))
-        #     end
-        # end
-        # the capacity and power is in MW already, no need to scale
-        # if setup["ParameterScale"] == 1
-        # 	dfResRevenue[!,:x1] = dfResRevenue[!,:x1] * ModelScalingFactor #(1e+3) # This is because although the unit of price is US$/MWh, the capacity or generation is in GW
-        # end
-        # rename!(dfResRevenue, Dict(:x1 => Symbol("CapRes_$i")))
         dfResRevenue.AnnualSum .= dfResRevenue.AnnualSum + tempresrev
         dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [Symbol("CapRes_$i")]))
     end
-    # dfResRevenue.AnnualSum = sum(eachcol(dfResRevenue[:,6:inputs["NCapacityReserveMargin"]+5]))
-    # auxNew_Names = [Symbol("Region"); Symbol("Resource"); Symbol("Zone"); Symbol("Cluster"); Symbol("AnnualSum"); [Symbol("CapRes_$i") for i in 1:inputs["NCapacityReserveMargin"]]]
-    # rename!(dfResRevenue, auxNew_Names)
     CSV.write(string(path, sep, "ReserveMarginRevenue.csv"), dfResRevenue)
     return dfResRevenue
 end

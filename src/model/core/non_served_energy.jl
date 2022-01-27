@@ -86,11 +86,13 @@ function non_served_energy(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
     # Add non-served energy/curtailed demand contribution to power balance expression
     EP[:ePowerBalance] += ePowerBalanceNse
-
+    if SEG >= 2
+        @expression(EP, eDemandResponse[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 2:SEG))
+    end
     # Capacity Reserves Margin policy
     if CapacityReserveMargin > 0
         if SEG >= 2
-            @expression(EP, eCapResMarBalanceNSE[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], sum(EP[:vNSE][s, t, z] for s in 2:SEG, z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
+            @expression(EP, eCapResMarBalanceNSE[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
             EP[:eCapResMarBalance] += eCapResMarBalanceNSE
         end
     end
