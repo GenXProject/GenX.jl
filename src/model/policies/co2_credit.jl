@@ -37,7 +37,7 @@ function co2_credit(EP::Model, inputs::Dict, setup::Dict)
 
 
     # determine the CO2 credit by mutiplying the capture co2 and co2 credit. This is a negative value.
-    @expression(EP, ePlantCCO2Credit[y = 1:G], -inputs["dfCO2Credit"][dfGen[y, :Zone], "CO2Credit"] * sum(inputs["omega"][t] * EP[:eEmissionsCaptureByPlant][y, t] for t in 1:T))
+    @expression(EP, ePlantCCO2Credit[y = 1:G], -inputs["dfCO2Credit"][dfGen[y, :Zone], :CO2Credit] * sum(inputs["omega"][t] * EP[:eEmissionsCaptureByPlant][y, t] for t in 1:T))
     # @expression(EP, eZonalCCO2Credit[z = 1:Z], EP[:vZERO] + sum(ePlantCCO2Credit[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
     @expression(EP, eZonalCCO2Credit[z = 1:Z], EP[:vZERO] + sum(ePlantCCO2Credit[y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
 
