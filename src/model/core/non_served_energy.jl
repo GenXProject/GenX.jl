@@ -66,7 +66,7 @@ function non_served_energy(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
     ### Expressions ###
 
     ## Objective Function Expressions ##
-
+    @expression(EP, eZonalNSE[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 1:SEG))
     # Cost of non-served energy/curtailed demand at hour "t" in zone "z"
     @expression(EP, eCNSE[s = 1:SEG, t = 1:T, z = 1:Z], (inputs["omega"][t] * inputs["pC_D_Curtail"][s] * vNSE[s, t, z]))
 

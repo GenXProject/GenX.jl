@@ -14,17 +14,22 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_reserve_margin(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    NCRM = inputs["NCapacityReserveMargin"]
+@doc raw"""
+	write_energy_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
+Function for writing energy payment of different zones.
+"""
+function write_energy_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    Z = inputs["Z"]
     T = inputs["T"]     # Number of time steps (hours)
-    #dfResMar dataframe with weights included for calculations
-    dfResMar = DataFrame(Constraint = [Symbol("t$t") for t in 1:T])
-    temp_ResMar = transpose(dual.(EP[:cCapacityResMargin])) ./ inputs["omega"]
+    SEG = inputs["SEG"]
+
+    dfEnergyPayment = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
+    statisfiedload = inputs["pD"] .- value.(EP[:eZonalNSE])
+    dfEnergyPayment.AnnualSum .= vec(sum(statisfiedload .* dual.(EP[:cPowerBalance]), dims = 1))
     if setup["ParameterScale"] == 1
-        temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
+        dfEnergyPayment.AnnualSum = dfEnergyPayment.AnnualSum * (ModelScalingFactor^2)
     end
-    dfResMar = hcat(dfResMar, DataFrame(temp_ResMar, [Symbol("CapRes_$i") for i in 1:NCRM]))
-    # auxNew_Names = [Symbol("Constraint"); [Symbol("CapRes_$i") for i in 1:NCRM]]
-    # rename!(dfResMar, auxNew_Names)
-    CSV.write(string(path, sep, "ReserveMargin.csv"), dfResMar)
+    CSV.write(string(path, sep, "EnergyPayment.csv"), dfEnergyPayment)
+    return dfEnergyPayment
 end

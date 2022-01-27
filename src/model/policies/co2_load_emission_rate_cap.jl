@@ -60,7 +60,7 @@ Note that the generator-side rate-based constraint can be used to represent a fe
 """
 function co2_load_side_emission_rate_cap(EP::Model, inputs::Dict, setup::Dict)
 
-    println("C02 Policies Module")
+    println("C02 Policies Module - Load-side Emission rate cap")
 
     dfGen = inputs["dfGen"]
     SEG = inputs["SEG"]  # Number of lines

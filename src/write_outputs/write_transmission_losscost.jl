@@ -14,17 +14,22 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_reserve_margin(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    NCRM = inputs["NCapacityReserveMargin"]
+@doc raw"""
+	write_transmission_losscost(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
+Function for writing energy payment of different zones.
+"""
+function write_transmission_losscost(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    Z = inputs["Z"]
     T = inputs["T"]     # Number of time steps (hours)
-    #dfResMar dataframe with weights included for calculations
-    dfResMar = DataFrame(Constraint = [Symbol("t$t") for t in 1:T])
-    temp_ResMar = transpose(dual.(EP[:cCapacityResMargin])) ./ inputs["omega"]
+    SEG = inputs["SEG"]
+
+    dfTransmissionLossCost = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
+    transmissionloss = 0.5 * value.(EP[:eLosses_By_Zone])
+    dfTransmissionLossCost.AnnualSum .= vec(sum(transmissionloss .* transpose(dual.(EP[:cPowerBalance])), dims = 2))
     if setup["ParameterScale"] == 1
-        temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
+        dfTransmissionLossCost.AnnualSum = dfTransmissionLossCost.AnnualSum * (ModelScalingFactor^2)
     end
-    dfResMar = hcat(dfResMar, DataFrame(temp_ResMar, [Symbol("CapRes_$i") for i in 1:NCRM]))
-    # auxNew_Names = [Symbol("Constraint"); [Symbol("CapRes_$i") for i in 1:NCRM]]
-    # rename!(dfResMar, auxNew_Names)
-    CSV.write(string(path, sep, "ReserveMargin.csv"), dfResMar)
+    CSV.write(string(path, sep, "TransmissionLossCost.csv"), dfTransmissionLossCost)
+    return dfTransmissionLossCost
 end
