@@ -133,20 +133,28 @@ function investment_discharge_multi_stage(EP::Model, inputs::Dict, multi_stage_s
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new capacity, fixed costs are only O&M costs
-    @expression(EP, eCFix[y in 1:G],
+    @expression(EP, eCInvCap[y in 1:G],
         if y in NEW_CAP # Resources eligible for new capacity
             if y in COMMIT
-                dfGen[!, :Inv_Cost_per_MWyr][y] * dfGen[!, :Cap_Size][y] * vCAP[y] + dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+                dfGen[!, :Inv_Cost_per_MWyr][y] * dfGen[!, :Cap_Size][y] * vCAP[y]
             else
-                dfGen[!, :Inv_Cost_per_MWyr][y] * vCAP[y] + dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+                dfGen[!, :Inv_Cost_per_MWyr][y] * vCAP[y]
             end
         else
-            dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * eTotalCap[y]
+            EP[:vZERO]
         end
     )
+    @expression(EP, eCFOMCap[y in 1:G], dfGen[!, :Fixed_OM_Cost_per_MWyr][y] * EP[:eTotalCap][y])
+    @expression(EP, eCFix[y in 1:G], EP[:eCInvCap][y] + EP[:eCFOMCap][y])
 
     # Sum individual resource contributions to fixed costs to get total fixed costs
+
+    @expression(EP, eZonalCFOM[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMCap][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCInv[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvCap][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
     @expression(EP, eZonalCFix[z = 1:Z], EP[:vZERO] + sum(EP[:eCFix][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+
+    @expression(EP, eTotalCFOM, sum(EP[:eZonalCFOM][z] for z in 1:Z))
+    @expression(EP, eTotalCInv, sum(EP[:eZonalCInv][z] for z in 1:Z))
     @expression(EP, eTotalCFix, sum(EP[:eZonalCFix][z] for z in 1:Z))
 
     # Add term to objective function expression
@@ -290,17 +298,24 @@ function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new charge capacity, fixed costs are only O&M costs
-    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
+    @expression(EP, eCInvChargeCap[y in STOR_ASYMMETRIC],
         if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
-            dfGen[!, :Inv_Cost_Charge_per_MWyr][y] * vCAPCHARGE[y] + dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y]
+            dfGen[!, :Inv_Cost_Charge_per_MWyr][y] * vCAPCHARGE[y]
         else
-            dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y]
+            EP[:vZERO]
         end
     )
-
+    @expression(EP, eCFOMChargeCap[y in STOR_ASYMMETRIC], dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr][y] * eTotalCapCharge[y])
+    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC], EP[:eCInvChargeCap][y] + EP[:eCFOMChargeCap][y])
     # Sum individual resource contributions to fixed costs to get total fixed costs
+    @expression(EP, eZonalCFOMChargeCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMChargeCap][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCInvChargeCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvChargeCap][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
     @expression(EP, eZonalCFixCharge[z = 1:Z], EP[:vZERO] + sum(EP[:eCFixCharge][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+
+    @expression(EP, eTotalCFOMCharge, sum(EP[:eZonalCFOMChargeCap][z] for z in 1:Z))
+    @expression(EP, eTotalCInvCharge, sum(EP[:eZonalCInvChargeCap][z] for z in 1:Z))
     @expression(EP, eTotalCFixCharge, sum(EP[:eZonalCFixCharge][z] for z in 1:Z))
+
 
     # Add term to objective function expression
     # DDP - OPEX multiplier to count multiple years between two model stages
@@ -435,16 +450,22 @@ function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new energy capacity, fixed costs are only O&M costs
-    @expression(EP, eCFixEnergy[y in STOR_ALL],
+    @expression(EP, eCInvEnergyCap[y in STOR_ALL],
         if y in NEW_CAP_ENERGY # Resources eligible for new capacity
-            dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y] + dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+            dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y]
         else
-            dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+            EP[:vZERO]
         end
     )
-
+    @expression(EP, eCFOMEnergyCap[y in STOR_ALL], dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y])
+    @expression(EP, eCFixEnergy[y in STOR_ALL], EP[:eCFOMEnergyCap][y] + EP[:eCInvEnergyCap][y])
     # Sum individual resource contributions to fixed costs to get total fixed costs
+    @expression(EP, eZonalCFOMEnergyCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMEnergyCap][y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCInvEnergyCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvEnergyCap][y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
     @expression(EP, eZonalCFixEnergy[z = 1:Z], EP[:vZERO] + sum(eCFixEnergy[y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+
+    @expression(EP, eTotalCFOMEnergy, sum(EP[:eZonalCFOMEnergyCap][z] for z in 1:Z))
+    @expression(EP, eTotalCInvEnergy, sum(EP[:eZonalCInvEnergyCap][z] for z in 1:Z))
     @expression(EP, eTotalCFixEnergy, sum(EP[:eZonalCFixEnergy][z] for z in 1:Z))
 
     # Add term to objective function expression

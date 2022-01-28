@@ -356,9 +356,10 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
     end
 
     # For OPEX costs, apply additional discounting
-    for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
-        if cost in df_costs[!,:Costs]
-			df_costs[df_costs[!,:Costs] .== cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!,:Costs] .== cost, 2:end]
+    # for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
+    for cost in ["cVOM","cFuel", "cNSE", "cStart", "cUnmetRsv"]
+        if cost in df_costs[!, :Costs]
+            df_costs[df_costs[!, :Costs].==cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!, :Costs].==cost, 2:end]
         end
     end
 
