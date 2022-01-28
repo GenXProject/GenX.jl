@@ -51,7 +51,7 @@ using Statistics
 #using Gurobi
 #using CPLEX
 #using MOI
-using SCIP
+#using SCIP
 using BenchmarkTools
 using Clp
 using Cbc
