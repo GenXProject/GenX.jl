@@ -190,45 +190,40 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
 end
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
-    if Sys.isunix()
-		sep = "/"
-    elseif Sys.iswindows()
-		sep = "\U005c"
-    else
-        sep = "/"
-	  end
     # Reading the input parameters
     Morris_range = DataFrame(CSV.File(joinpath(path, "Method_of_morris_range.csv"), header=true), copycols=true)
     groups = Morris_range[!,:Group]
     p_steps = Morris_range[!,:p_steps]
     p_steps[p_steps .< 1] .= 1
-    total_num_trajectory = Morris_range[!,:total_num_trajectory][1]
-    num_trajectory = Morris_range[!,:num_trajectory][1]
-    len_design_mat = Morris_range[!,:len_design_mat][1]
+    total_num_trajectory = Morris_range[1,:total_num_trajectory]
+    num_trajectory = Morris_range[1,:num_trajectory]
+    len_design_mat = Morris_range[1,:len_design_mat]
     files = unique(Morris_range[!,:File])
     lb = Morris_range[!,:Lower_bound]
     ub = Morris_range[!,:Upper_bound]
-    save_parameters = zeros(length(Morris_range[!,:Parameter]))
+    save_parameters = zeros(nrow(Morris_range))
+
+    dataframe_for_file = Dict("Generators_data"=>"dfGen",
+                              "Fleccs_data"=>"dfGen_ccs")
 
     # Creating the range of uncertain parameters in terms of absolute values
-    sigma = zeros((1, 2))
+	lower_sigmas = Float64[]
+	upper_sigmas = Float64[]
     for f in files
-        if f == "Generators_data"
-            uncertain_columns = unique(Morris_range[Morris_range[!,:File].=="Generators_data",:Parameter])
-            for column in uncertain_columns
-                sigma = [sigma; [inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[(Morris_range[!,:File].=="Generators_data").&(Morris_range[!,:Parameter].==column),:Lower_bound] ./100) inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[(Morris_range[!,:File].=="Generators_data").&(Morris_range[!,:Parameter].==column),:Upper_bound] ./100)]]
-            end
-        elseif f == "Fleccs_data"
-            uncertain_columns = unique(Morris_range[Morris_range[!,:File].=="Fleccs_data",:Parameter])
-            for column in uncertain_columns
-                sigma = [sigma; [inputs["dfGen_ccs"][!,Symbol(column)] .* (1 .+ Morris_range[(Morris_range[!,:File].=="Fleccs_data").&(Morris_range[!,:Parameter].==column),:Lower_bound] ./100) inputs["dfGen_ccs"][!,Symbol(column)] .* (1 .+ Morris_range[(Morris_range[!,:File].=="Fleccs_data").&(Morris_range[!,:Parameter].==column),:Upper_bound] ./100)]]
-            end
-        end
+		my_df = inputs[dataframe_for_file[f]]
+		entries_for_file = Morris_range[!, :File].==f
+		uncertain_columns = unique(Morris_range[entries_for_file, :Parameter])
+		for column in uncertain_columns
+			entries_for_param = Morris_range[!, :Parameter].==column
+			sel = entries_for_file .& entries_for_param
+			lower_sigma = my_df[!,Symbol(column)] .* (1 .+ Morris_range[sel, :Lower_bound] ./100)
+			upper_sigma = my_df[!,Symbol(column)] .* (1 .+ Morris_range[sel, :Upper_bound] ./100)
+			append!(lower_sigmas, lower_sigma)
+			append!(upper_sigmas, upper_sigma)
+		end
     end
 
-    sigma = sigma[2:end,:]
-
-    p_range = mapslices(x->[x], sigma, dims=2)[:]
+	p_range = mapslices(x->[x], [lower_sigmas upper_sigmas], dims=2)[:]
     obj_val = zeros(1)
 
     # Creating a function for iteratively solving the model with different sets of input parameters
@@ -238,19 +233,15 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
         save_parameters = hcat(save_parameters, sigma)
 
         for f in files
-            if f == "Generators_data"
-                uncertain_columns = unique(Morris_range[Morris_range[!,:File].=="Generators_data",:Parameter])
-                for column in uncertain_columns
-                    index = Morris_range[(Morris_range[!,:File].=="Generators_data").&(Morris_range[!,:Parameter].==column),:ID]
-                    inputs["dfGen"][!,Symbol(column)] = sigma[first(index):last(index)]
-                end
-            elseif f == "Fleccs_data"
-                uncertain_columns = unique(Morris_range[Morris_range[!,:File].=="Fleccs_data",:Parameter])
-                for column in uncertain_columns
-                    index = Morris_range[(Morris_range[!,:File].=="Fleccs_data").&(Morris_range[!,:Parameter].==column),:ID]
-                    inputs["dfGen_ccs"][!,Symbol(column)] = sigma[first(index):last(index)]
-                end
-            end
+			my_df = inputs[dataframe_for_file[f]]
+			entries_for_file = Morris_range[!, :File].==f
+			uncertain_columns = unique(Morris_range[entries_for_file, :Parameter])
+			for column in uncertain_columns
+				entries_for_param = Morris_range[!, :Parameter].==column
+				sel = entries_for_file .& entries_for_param
+				index = Morris_range[sel,:ID]
+				my_df[!,Symbol(column)] = sigma[first(index):last(index)]
+			end
         end
 
         EP = generate_model(setup, inputs, OPTIMIZER)
@@ -271,9 +262,9 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
     Morris_range[!,:means_star] = DataFrame(m.means_star', :auto)[!,:x1]
 
-    CSV.write(string(outpath,sep,"morris.csv"), Morris_range)
-    CSV.write(string(outpath,sep,"morris_objective.csv"), DataFrame(obj_val,:auto))
-    CSV.write(string(outpath,sep,"morris_parameters.csv"), DataFrame(save_parameters,:auto))
-    writedlm(string(outpath,sep,"morris_elementary_effects.csv"),  m.elementary_effects, ',')
+    CSV.write(joinpath(outpath,"morris.csv"), Morris_range)
+    CSV.write(joinpath(outpath,"morris_objective.csv"), DataFrame(obj_val,:auto))
+    CSV.write(joinpath(outpath,"morris_parameters.csv"), DataFrame(save_parameters,:auto))
+    writedlm(joinpath(outpath,"morris_elementary_effects.csv"),  m.elementary_effects, ',')
 
 end
