@@ -175,9 +175,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	if !isempty(inputs["STOR_ALL"])
 ##dev_ddp
 		if setup["MultiStage"] > 0 
-			EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["MultiStageSettingsDict"])
+			EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["MultiStageSettingsDict"])
 		else
-			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
 		end
 		
 ##Dev
