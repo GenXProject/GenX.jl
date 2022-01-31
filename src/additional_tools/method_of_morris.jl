@@ -189,9 +189,19 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
     #println(effects)
     MorrisResult(reduce(hcat, means),reduce(hcat, means_star),reduce(hcat, variances),effects)
 end
+
+function set_random_seed!(setup::Dict)
+    key = "MethodofMorrisRandomSeed"
+    if haskey(setup, key)
+        seed = setup[key]
+        Random.seed!(seed)
+    end
+end
+
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
     # Reading the input parameters
+    set_random_seed!(setup)
     Morris_range = DataFrame(CSV.File(joinpath(path, "Method_of_morris_range.csv"), header=true), copycols=true)
     groups = Morris_range[!,:Group]
     p_steps = Morris_range[!,:p_steps]
@@ -240,7 +250,7 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
             for column in uncertain_columns
                 entries_for_param = Morris_range[!, :Parameter].==column
                 sel = entries_for_file .& entries_for_param
-                index = Morris_range[sel,:ID]
+                index = (1:length(sel))[sel]
                 my_df[!,Symbol(column)] = sigma[first(index):last(index)]
             end
         end
