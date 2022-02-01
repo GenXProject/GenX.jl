@@ -75,7 +75,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	println("Time elapsed for writing power balance is")
 	println(elapsed_time_power_balance)
 	if inputs["Z"] > 1
-		elapsed_time_flows = @elapsed write_transmission_flows(path, inputs, EP)
+		elapsed_time_flows = @elapsed write_transmission_flows(path, inputs, setup, EP)
 		println("Time elapsed for writing transmission flows is")
 		println(elapsed_time_flows)
 		elapsed_time_losses = @elapsed write_transmission_losses(path, inputs, setup, EP)
