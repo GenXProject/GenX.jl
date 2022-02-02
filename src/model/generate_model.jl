@@ -217,21 +217,29 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CO2Cap"] == 1
         EP = co2_cap(EP, inputs, setup)
     end
-    if setup["CO2GenRateCap"] == 1
-        EP = co2_generation_side_emission_rate_cap(EP, inputs, setup)
+    if haskey(setup, "CO2GenRateCap")
+        if setup["CO2GenRateCap"] == 1
+            EP = co2_generation_side_emission_rate_cap(EP, inputs, setup)
+        end
     end
-    if setup["CO2LoadRateCap"] == 1
-        EP = co2_load_side_emission_rate_cap(EP, inputs, setup)
+    if haskey(setup, "CO2LoadRateCap")
+        if setup["CO2LoadRateCap"] == 1
+            EP = co2_load_side_emission_rate_cap(EP, inputs, setup)
+        end
     end
-    
+
     # CO2 tax
-    if setup["CO2Tax"] >= 1
-        EP = co2_tax(EP, inputs, setup)
+    if haskey(setup, "CO2Tax")
+        if setup["CO2Tax"] >= 1
+            EP = co2_tax(EP, inputs, setup)
+        end
     end
 
     # CO2 credit
-    if setup["CO2Credit"] >= 1
-        EP = co2_credit(EP, inputs, setup)
+    if haskey(setup, "CO2Credit")
+        if setup["CO2Credit"] >= 1
+            EP = co2_credit(EP, inputs, setup)
+        end
     end
 
 
@@ -248,8 +256,15 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if (setup["MinCapReq"] == 1)
         EP = minimum_capacity_requirement(EP, inputs, setup)
     end
-    if (setup["MaxCapReq"] == 1)
-        EP = maximum_capacity_limit(EP, inputs, setup)
+    if (haskey(setup, "MaxCapReq"))
+        if (setup["MaxCapReq"] == 1)
+            EP = maximum_capacity_limit(EP, inputs, setup)
+        end
+    end
+    if (haskey(setup, "TFS"))
+        if (setup["TFS"] == 1)
+            EP = twentyfourseven(EP, inputs, setup)
+        end
     end
     ## Define the objective function
     @objective(EP, Min, EP[:eObj])

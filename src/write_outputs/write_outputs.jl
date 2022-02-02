@@ -230,25 +230,37 @@ if setup["MultiStage"] == 0
 
     dfCO2GenRateCapCost = DataFrame()
     dfCO2GenRatePrice = DataFrame()
-    if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
-        dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
+    if haskey(setup, "CO2GenRateCap")
+        if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
+            dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
+        end
     end
 
     dfCO2LoadRateCapCost = DataFrame()
     dfCO2LoadRateCapRev = DataFrame()
     dfCO2LoadRatePrice = DataFrame()
-    if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
-        dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
+    if haskey(setup, "CO2LoadRateCap")
+        if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
+            dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
+        end
     end
 
     dfCO2TaxCost = DataFrame()
-    if setup["CO2Tax"] == 1
-        dfCO2TaxCost = write_co2_tax(path, sep, inputs, setup, EP)
+    if haskey(setup, "CO2Tax")
+        if setup["CO2Tax"] == 1
+            dfCO2TaxCost = write_co2_tax(path, sep, inputs, setup, EP)
+        end
     end
-
-    dfCO2CaptureCredit = DataFrame()
-    if setup["CO2Credit"] == 1
-        dfCO2CaptureCredit = write_credit_for_captured_emissions(path, sep, inputs, setup, EP)
+    if haskey(setup, "CO2Credit")
+        dfCO2CaptureCredit = DataFrame()
+        if setup["CO2Credit"] == 1
+            dfCO2CaptureCredit = write_credit_for_captured_emissions(path, sep, inputs, setup, EP)
+        end
+    end
+    if haskey(setup, "TFS")
+        if setup["TFS"] == 1
+            write_twentyfourseven(path, sep, inputs, setup, EP)
+        end
     end
 
     elapsed_time_net_rev = @elapsed write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost, dfCO2CaptureCredit)
