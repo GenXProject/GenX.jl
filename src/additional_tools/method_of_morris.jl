@@ -201,13 +201,13 @@ end
 ### functions for imputing zero rows so that not all generators need to be included
 lonely_row_names() = ["total_num_trajectory", "num_trajectory", "len_design_mat", "policy"]
 
-function get_lonely_information(df)
+function get_lonely_information(df::DataFrame)::Dict
     lonely_rows = lonely_row_names()
     dfr = df[1, lonely_rows]
     Dict(names(dfr) .=> values(dfr))
 end
 
-function reset_lonely_information!(df, lonely_row)
+function reset_lonely_information!(df::DataFrame, lonely_row::Dict)
     for col in keys(lonely_row)
         new_vec = similar(df[:, col])
         new_vec .= missing
@@ -217,8 +217,7 @@ function reset_lonely_information!(df, lonely_row)
     end
 end
 
-function construct_new_row_data(df::DataFrame,
-        row_dict::Dict)
+function construct_new_row_data(df::DataFrame, row_dict::Dict)
     col_names = names(df)
     lonely_names = lonely_row_names()
     zero_names = ["Upper_bound", "Lower_bound", "p_steps"]
@@ -301,7 +300,7 @@ function insert_absent_resource_rows!(df::DataFrame, df_from_file::Dict, inputs:
     end
 end
 
-function impute_morris_instructions!(df, df_from_file, inputs)
+function impute_morris_instructions!(df::DataFrame, df_from_file::Dict, inputs::Dict)
     lonely_data = get_lonely_information(df)
     insert_absent_resource_rows!(df, df_from_file, inputs)
     reset_lonely_information!(df, lonely_data)
