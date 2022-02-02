@@ -198,11 +198,122 @@ function set_random_seed!(setup::Dict)
     end
 end
 
+### functions for imputing zero rows so that not all generators need to be included
+lonely_row_names() = ["total_num_trajectory", "num_trajectory", "len_design_mat", "policy"]
+
+function get_lonely_information(df::DataFrame)::Dict
+    lonely_rows = lonely_row_names()
+    dfr = df[1, lonely_rows]
+    Dict(names(dfr) .=> values(dfr))
+end
+
+function reset_lonely_information!(df::DataFrame, lonely_row::Dict)
+    for col in keys(lonely_row)
+        new_vec = similar(df[:, col])
+        new_vec .= missing
+        new_vec[1] = lonely_row[col]
+
+        df[!, col] = new_vec
+    end
+end
+
+function construct_new_row_data(df::DataFrame, row_dict::Dict)
+    col_names = names(df)
+    lonely_names = lonely_row_names()
+    zero_names = ["Upper_bound", "Lower_bound", "p_steps"]
+    group_names = ["Group"]
+    r = Any[]
+    for c in col_names
+        if c in keys(row_dict)
+            push!(r, row_dict[c])
+        elseif c in lonely_names
+            push!(r, missing)
+        elseif c in zero_names
+            push!(r, 0)
+        elseif c in group_names
+            push!(r, "nogroup")
+        else
+            error("Unknown column ", c, " encountered")
+        end
+    end
+    return r
+end
+
+function fancyinsert!(df::DataFrame, rownum::Int, newrow::Vector{Any})
+    # https://stackoverflow.com/questions/51505007/julia-dataframes-insert-new-row-at-specific-index
+    foreach((c, v) -> insert!(c, rownum, v), eachcol(df), newrow)
+end
+
+
+function insert_absent_resource_rows!(df::DataFrame, df_from_file::Dict, inputs::Dict)
+    final = nrow(df)
+    i = 1
+    j = 1
+
+    resource_for_file(file) = inputs[df_from_file[file]][:, [:Resource, :Zone]]
+
+    function next_correct_row(file, parameter, block, j)
+        Dict("File"=>file, "Parameter"=>parameter,
+            "Resource"=>block[j, :Resource], "Zone"=>block[j, :Zone])
+    end
+
+    length_remaining = 0
+    file = ""
+    parameter = ""
+    block = DataFrame()
+    while i <= final
+        if length_remaining == 0
+            j = 1
+            file = df[i, :File]
+            block = resource_for_file(file)
+            parameter = df[i, :Parameter]
+            length_remaining = nrow(block)
+        end
+
+        row_dict = next_correct_row(file, parameter, block, j)
+
+        this_resource = df[i, :Resource]
+        this_parameter = df[i, :Parameter]
+        this_file = df[i, :File]
+        if this_resource != row_dict["Resource"] || this_parameter != row_dict["Parameter"] || this_file != row_dict["File"]
+            new_row_data = construct_new_row_data(df, row_dict)
+            fancyinsert!(df, i, new_row_data)
+            final += 1
+        end
+
+        length_remaining -= 1
+
+        i += 1
+        j += 1
+    end
+
+    # begin 'extra innings' to complete the last cycle
+    if i == final + 1 && length_remaining > 0
+        final += length_remaining
+        for i in i:final
+            row_dict = next_correct_row(file, parameter, block, j)
+            new_row_data = construct_new_row_data(df, row_dict)
+            fancyinsert!(df, i, new_row_data)
+            j += 1
+        end
+    end
+end
+
+function impute_morris_instructions!(df::DataFrame, df_from_file::Dict, inputs::Dict)
+    lonely_data = get_lonely_information(df)
+    insert_absent_resource_rows!(df, df_from_file, inputs)
+    reset_lonely_information!(df, lonely_data)
+end
+### functions for imputing zero rows so that not all generators need to be included
+
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
     # Reading the input parameters
     set_random_seed!(setup)
     Morris_range = DataFrame(CSV.File(joinpath(path, "Method_of_morris_range.csv"), header=true), copycols=true)
+    dataframe_for_file = Dict("Generators_data"=>"dfGen",
+                              "Fleccs_data"=>"dfGen_ccs")
+    impute_morris_instructions!(Morris_range, dataframe_for_file, inputs)
     groups = Morris_range[!,:Group]
     p_steps = Morris_range[!,:p_steps]
     p_steps[p_steps .< 1] .= 1
@@ -214,8 +325,6 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     ub = Morris_range[!,:Upper_bound]
     save_parameters = zeros(nrow(Morris_range))
 
-    dataframe_for_file = Dict("Generators_data"=>"dfGen",
-                              "Fleccs_data"=>"dfGen_ccs")
 
     # Creating the range of uncertain parameters in terms of absolute values
     lower_sigmas = Float64[]
