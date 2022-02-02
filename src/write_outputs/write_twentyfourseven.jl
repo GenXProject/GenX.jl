@@ -66,7 +66,7 @@ function write_twentyfourseven(path::AbstractString, sep::AbstractString, inputs
     if (NumberofTFS) > 1
         NumberofTFSPath = inputs["NumberofTFSPath"]
         dfTFSFlow = DataFrame(RPSH_PathID = 1:NumberofTFSPath, AnnualSum = zeros(NumberofTFSPath))
-        temptfsflow = value.(EP[:vTFSFlow_Sending]) - value.(EP[:vTFSFlow_Receiving])
+        temptfsflow = value.(EP[:vTFSFlow])
         if setup["ParameterScale"] == 1
             temptfsflow = temptfsflow * ModelScalingFactor
         end
@@ -84,20 +84,20 @@ function write_twentyfourseven(path::AbstractString, sep::AbstractString, inputs
         CSV.write(string(path, sep, "tfs_tfsexport.csv"), dftranspose(dfTFSExport, false), writeheader = false)
     end
 
-    dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(value.(EP[:cRPSH_Shortfalllimit])))
+    dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Shortfalllimit])))
     if setup["ParameterScale"] == 1
         dfShorfalllimitprice.Price = dfShorfalllimitprice.Price * ModelScalingFactor
     end
     CSV.write(string(path, sep, "tfs_shortfalllimitprice.csv"), dfShorfalllimitprice)
 
-    dfExceedlimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(value.(EP[:cRPSH_Exceedlimit])))
+    dfExceedlimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Exceedlimit])))
     if setup["ParameterScale"] == 1
         dfExceedlimitprice.Price = dfExceedlimitprice.Price * ModelScalingFactor
     end
     CSV.write(string(path, sep, "tfs_exceedlimitprice.csv"), dfExceedlimitprice)
 
     dfTFSPrice = DataFrame(Policy_ID = 1:NumberofTFS)
-    temprice = transpose((value.(EP[:cRPSH_HourlyMatching]) ./ inputs["omega"]))
+    temprice = transpose((dual.(EP[:cRPSH_HourlyMatching]) ./ inputs["omega"]))
     if setup["ParameterScale"] == 1
         temprice = temprice * ModelScalingFactor
     end
@@ -114,7 +114,7 @@ function write_twentyfourseven(path::AbstractString, sep::AbstractString, inputs
         tempinjection[FLEX, :] = (value.(EP[:vCHARGE_FLEX][FLEX, :])).data - value.(EP[:vP])[FLEX, :]
     end
     for rpsh in 1:NumberofTFS
-        temprevenue = (tempinjection * (value.(EP[:cRPSH_HourlyMatching][:,rpsh]))) .* dfGen[:, Symbol("RPSH_$rpsh")]
+        temprevenue = (tempinjection * (dual.(EP[:cRPSH_HourlyMatching][:, rpsh]))) .* dfGen[:, Symbol("RPSH_$rpsh")]
         if setup["ParameterScale"] == 1
             temprevenue = temprevenue * (ModelScalingFactor^2)
         end
@@ -124,11 +124,11 @@ function write_twentyfourseven(path::AbstractString, sep::AbstractString, inputs
     CSV.write(string(path, sep, "tfs_genrevenue.csv"), dfTFSGenRevenue)
 
     dfTFSLoadCost = DataFrame(Policy_ID = 1:NumberofTFS, AnnualSum = zeros(NumberofTFS))
-    tempcost = vec(sum(transpose(inputs["TFS_Load"] .* value.(EP[:cRPSH_HourlyMatching])), dims = 2))
+    tempcost = vec(sum(transpose(inputs["TFS_Load"] .* dual.(EP[:cRPSH_HourlyMatching])), dims = 2))
     if setup["ParameterScale"] == 1
         tempcost = tempcost * (ModelScalingFactor^2)
     end
-    dfTFSLoadCost.AnnualSum .= vec(sum(transpose(inputs["TFS_Load"] .* value.(EP[:cRPSH_HourlyMatching])), dims = 2))
+    dfTFSLoadCost.AnnualSum .= vec(sum(transpose(inputs["TFS_Load"] .* dual.(EP[:cRPSH_HourlyMatching])), dims = 2))
     CSV.write(string(path, sep, "tfs_loadcost.csv"), dfTFSLoadCost)
 
 end
