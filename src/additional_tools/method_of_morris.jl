@@ -281,7 +281,6 @@ function insert_absent_resource_rows!(df::DataFrame, df_from_file::Dict, inputs:
             final += 1
         end
 
-        num_resources_in_file = nrow(resource_for_file(row_dict["File"]))
         length_remaining -= 1
 
         i += 1
