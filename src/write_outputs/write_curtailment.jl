@@ -25,20 +25,6 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
     T = inputs["T"]     # Number of time steps (hours)
     VRE = inputs["VRE"]
     dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
-
-    # for i in 1:G
-    #     if i in inputs["VRE"]
-    #         dfCurtailment[!, :AnnualSum][i] = sum(inputs["omega"] .* (inputs["pP_Max"][i, :]) .* value.(EP[:eTotalCap])[i, :] .- inputs["omega"] .* value.(EP[:vP])[i, :])
-    #     else
-    #         dfCurtailment[!, :AnnualSum][i] = 0
-    #     end
-    # end
-    # if setup["ParameterScale"] == 1
-    # 	dfCurtailment.AnnualSum = dfCurtailment.AnnualSum * ModelScalingFactor
-    # 	dfCurtailment = hcat(dfCurtailment, DataFrame((ModelScalingFactor * (inputs["pP_Max"]) .* value.(EP[:eTotalCap]) .- value.(EP[:vP])), :auto))
-    # else
-    # 	dfCurtailment = hcat(dfCurtailment, DataFrame(((inputs["pP_Max"]) .* value.(EP[:eTotalCap]) .- value.(EP[:vP])), :auto))
-    # end
     curtailment = zeros(G, T)
     curtailment[VRE, :] = ((value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :]) .- value.(EP[:vP][VRE, :]))
     if setup["ParameterScale"] == 1
@@ -50,13 +36,6 @@ function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Di
     rename!(dfCurtailment, auxNew_Names)
 
     total = DataFrame(["Total" 0 sum(dfCurtailment[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
-    # for t in 1:T
-    #     if v"1.3" <= VERSION < v"1.4"
-    #         total[!, t+3] .= sum(dfCurtailment[!, Symbol("t$t")][1:G])
-    #     elseif v"1.4" <= VERSION < v"1.7"
-    #         total[:, t+3] .= sum(dfCurtailment[:, Symbol("t$t")][1:G])
-    #     end
-    # end
 	if v"1.3" <= VERSION < v"1.4"
 	    total[!, 4:T+3] .= sum(curtailment, dims = 1) # summing over the first dimension, g, so the result is a horizonalal array with dimension t
 	elseif v"1.4" <= VERSION < v"1.7"
