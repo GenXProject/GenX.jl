@@ -15,27 +15,43 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the costs pertaining to the objective function (fixed, variable O&M etc.).
 """
-function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Cost results
 	dfGen = inputs["dfGen"]
 	SEG = inputs["SEG"]  # Number of lines
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 
-	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
+	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cCO2Tax", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
 	if setup["ParameterScale"] == 1
-		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
+		cVar = (value(EP[:eTotalCVarOut])+value(EP[:eTotalCVarIn])+ (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
+		if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+			cVar = cVar + value(EP[:eCVar_fuel_piecewise]) * (ModelScalingFactor^2)
+		end
 		cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)) * (ModelScalingFactor^2)
-		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
+		if setup["FLECCS"] >= 1 
+			cVar = cVar + value.(EP[:eTotalCVar_FLECCS])* (ModelScalingFactor^2)
+			cFix = cFix  + value.(EP[:eTotalCFixFLECCS])* (ModelScalingFactor^2)
+		end
+		cCO2Tax = value.(EP[:eTotalCCO2Tax])* (ModelScalingFactor^2)
+
+		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, cCO2Tax, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
 	else
-		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
-		#cVar = value(EP[:eTotalCVarOut])+(!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
+		cVar = value(EP[:eTotalCVarOut])+value(EP[:eTotalCVarIn])+ (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
+		if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+			cVar = cVar + value(EP[:eCVar_fuel_piecewise])
+		end
 		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
+		if setup["FLECCS"] >= 1 
+			cVar = cVar + value.(EP[:eTotalCVar_FLECCS])
+			cFix = cFix  + value.(EP[:eTotalCFixFLECCS])
+		end
+		cCO2Tax = value.(EP[:eTotalCCO2Tax])
+		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, cCO2Tax, value(EP[:eTotalCNSE]), 0, 0, 0]
 	end
 
 	if setup["UCommit"]>=1
@@ -60,6 +76,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		end
 	end
 
+
 	for z in 1:Z
 		tempCTotal = 0
 		tempCFix = 0
@@ -70,10 +87,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 				(y in inputs["STOR_ALL"] ? value.(EP[:eCFixEnergy])[y] : 0) +
 				(y in inputs["STOR_ASYMMETRIC"] ? value.(EP[:eCFixCharge])[y] : 0) +
 				value.(EP[:eCFix])[y]
+
 			tempCVar = tempCVar +
 				(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
 				(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
 				sum(value.(EP[:eCVar_out])[y,:])
+
+
+			if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+				tempCVar = tempCVar + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y,:]) : 0)
+			end
+
 			if setup["UCommit"]>=1
 				tempCTotal = tempCTotal +
 					value.(EP[:eCFix])[y] +
@@ -83,6 +107,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 					(y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y,:]) : 0)
 				tempCStart = tempCStart +
 					(y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y,:]) : 0)
+				if setup["PieceWiseHeatRate"] == 1
+					tempCTotal = tempCTotal + (y in inputs["COMMIT"] ? sum(value.(EP[:eCFuel_piecewise])[y,:]) : 0)
+				end
+
+
 			else
 				tempCTotal = tempCTotal +
 					value.(EP[:eCFix])[y] +
@@ -103,7 +132,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		else
 			tempCNSE = sum(value.(EP[:eCNSE])[:,:,z])
 		end
-		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+		if Z >1			
+		    dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+		end
 	end
-	CSV.write(joinpath(path, "costs.csv"), dfCost)
+	CSV.write(string(path,sep,"costs.csv"), dfCost)
 end
