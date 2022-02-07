@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for reading input parameters related to electricity generators (plus storage and flexible demand resources)
 """
-function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+function load_fleccs_data(setup::Dict, path::AbstractString,  inputs_ccs::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 	if setup["FLECCS"] == 1
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data1.csv"), header=true), copycols=true)
@@ -186,7 +186,7 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 				if setup["ParameterScale"] ==1
 				    inputs_ccs["CO2_per_Start_FLECCS"][y,i] = (fuel_CO2[fuel_type[y,i]] .* start_fuel[y,i]) * ModelScalingFactor
 					inputs_ccs["C_Start_FLECCS"][y,i,:] = inputs_ccs["C_Start_FLECCS"][y,i,:]/ModelScalingFactor
-				end
+			    end
 			end
 		end
 	else
@@ -224,6 +224,8 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 		inputs_ccs["Rich_id"] = dfGen_ccs[(dfGen_ccs[!,:SOLVENT].==1),:FLECCS_NO][1]
 	    #lean tank
 	    inputs_ccs["Lean_id"] = dfGen_ccs[(dfGen_ccs[!,:SOLVENT].==2),:FLECCS_NO][1]
+		# AUX id
+		inputs_ccs["AUX_id"] = dfGen_ccs[(dfGen_ccs[!,:AUX].==1),:FLECCS_NO][1]
 	    #BOP
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
 
@@ -267,7 +269,13 @@ function load_fleccs_data(setup::Dict, path::AbstractString, inputs_ccs::Dict, f
 	elseif setup["FLECCS"] == 6
 		println("FLECCS_data5.csv Successfully Read!, NGCC-CCS coupled with DAC (Gtech or Upitt)")
 	elseif setup["FLECCS"] == 7
-		println("FLECCS_data6.csv Successfully Read!, NGCC-CCS coupled with DAC (MIT)")
+		println("FLECCS_data7.csv Successfully Read!, NGCC-CCS coupled with DAC (MIT)")
+		# NGCC ID
+		inputs_ccs["NGCC_id"] = dfGen_ccs[(dfGen_ccs[!,:NGCC].==1),:FLECCS_NO][1]
+	    # CAL unit
+	    inputs_ccs["CAL_id"] = dfGen_ccs[(dfGen_ccs[!,:CAL].==1),:FLECCS_NO][1]
+	    # DAC unit
+	    inputs_ccs["DAC_id"] = dfGen_ccs[(dfGen_ccs[!,:DAC].==1),:FLECCS_NO][1]
 	elseif setup["FLECCS"] == 8
 		println("FLECCS_data8.csv Successfully Read!, Allam cycle coupled with CO2 storage")
 		inputs_ccs["OXY_id"] = dfGen_ccs[(dfGen_ccs[!,:OXY].==1),:FLECCS_NO][1]

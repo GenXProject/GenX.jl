@@ -70,8 +70,10 @@ function co2_tax(EP::Model, inputs::Dict, setup::Dict)
 
 	### Expressions ###
 	#CO2 Tax
+	@expression(EP, eCO2Sum[z=1:Z], sum(inputs["omega"][t]*EP[:eEmissionsByZone][z,t] for t in 1:T))
+	@constraint(EP,[z=1:Z], eCO2Sum[z] >= 0 )
+	@expression(EP, eCCO2Tax[z=1:Z], inputs["dfCO2Tax"][!,"CO2Tax"][z] * eCO2Sum[z])
 
-	@expression(EP, eCCO2Tax[z=1:Z], inputs["dfCO2Tax"][!,"CO2Tax"][z]*sum(inputs["omega"][t]*EP[:eEmissionsByZone][z,t] for t in 1:T))
 
 	@expression(EP, eTotalCCO2Tax,sum(eCCO2Tax[z] for z in 1:Z))
 
