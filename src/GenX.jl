@@ -216,6 +216,7 @@ include("write_outputs/reserves/write_rsv.jl")
 include("write_outputs/transmission/write_nw_expansion.jl")
 include("write_outputs/transmission/write_transmission_flows.jl")
 include("write_outputs/transmission/write_transmission_losses.jl")
+include("write_outputs/transmission/write_zonaltransmission_loss.jl")
 
 include("write_outputs/ucommit/write_commit.jl")
 include("write_outputs/ucommit/write_shutdown.jl")

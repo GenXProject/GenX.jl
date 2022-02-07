@@ -30,7 +30,7 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
         dfPower.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
         dfPower = hcat(dfPower, DataFrame((value.(EP[:vP])) * ModelScalingFactor, :auto))
     else
-        dfPower.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
+        dfPower.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
         dfPower = hcat(dfPower, DataFrame(value.(EP[:vP]), :auto))
     end
 

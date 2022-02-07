@@ -105,14 +105,19 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         elapsed_time_flows = @elapsed write_transmission_flows(path, sep, setup, inputs, EP)
         println("Time elapsed for writing transmission flows is")
         println(elapsed_time_flows)
-
+    
         elapsed_time_losses = @elapsed write_transmission_losses(path, sep, inputs, setup, EP)
         println("Time elapsed for writing transmission losses is")
         println(elapsed_time_losses)
-
+    
+        elapsed_time_zonallosses = @elapsed write_zonal_transmission_losses(path, sep, inputs, setup, EP)
+        println("Time elapsed for writing zonal transmission losses is")
+        println(elapsed_time_zonallosses)
+    
         elapsed_time_expansion = @elapsed write_nw_expansion(path, sep, inputs, setup, EP)
         println("Time elapsed for writing network expansion is")
         println(elapsed_time_expansion)
+    
     end
     # elapsed_time_emissions = @elapsed write_emissions(path, sep, inputs, setup, EP)
     elapsed_time_emissions = @elapsed write_co2(path, sep, inputs, setup, EP)
