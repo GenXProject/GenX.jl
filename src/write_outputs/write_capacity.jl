@@ -41,15 +41,6 @@ function write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict,
             capdischarge[intersect(NEW_CAP, COMMIT)] = (value.(EP[:vCAP][intersect(NEW_CAP, COMMIT)]).data) .* dfGen[intersect(NEW_CAP, COMMIT), :Cap_Size]
         end
     end
-
-
-    # for i in inputs["NEW_CAP"]
-    #     if i in inputs["COMMIT"]
-    #         capdischarge[i] = value(EP[:vCAP][i]) * dfGen[!, :Cap_Size][i]
-    #     else
-    #         capdischarge[i] = value(EP[:vCAP][i])
-    #     end
-    # end
     retcapdischarge = zeros(G)
     if !isempty(RET_CAP)
         retcapdischarge[RET_CAP] = value.(EP[:vRETCAP][RET_CAP]).data
@@ -57,13 +48,6 @@ function write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict,
 		    retcapdischarge[intersect(RET_CAP, COMMIT)] = value.(EP[:vRETCAP][intersect(RET_CAP, COMMIT)]).data .* dfGen[intersect(RET_CAP, COMMIT), :Cap_Size]
 		end
     end
-    # for i in inputs["RET_CAP"]
-    #     if i in inputs["COMMIT"]
-    #         retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * dfGen[!, :Cap_Size][i]
-    #     else
-    #         retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
-    #     end
-    # end
 
     endcapcharge = zeros(G)
     capcharge = zeros(G)
@@ -78,17 +62,6 @@ function write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict,
         end
     end
 
-
-
-
-    # for i in inputs["STOR_ASYMMETRIC"]
-    #     if i in inputs["NEW_CAP_CHARGE"]
-    #         capcharge[i] = value(EP[:vCAPCHARGE][i])
-    #     end
-    #     if i in inputs["RET_CAP_CHARGE"]
-    #         retcapcharge[i] = value(EP[:vRETCAPCHARGE][i])
-    #     end
-    # end
     endcapenergy = zeros(G)
     capenergy = zeros(G)
     retcapenergy = zeros(G)
@@ -102,16 +75,6 @@ function write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict,
 		end
 	end
 
-    		
-
-    # for i in inputs["STOR_ALL"]
-    #     if i in inputs["NEW_CAP_ENERGY"]
-    #         capenergy[i] = value(EP[:vCAPENERGY][i])
-    #     end
-    #     if i in inputs["RET_CAP_ENERGY"]
-    #         retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
-    #     end
-    # end
     dfCap = DataFrame(
         Resource = inputs["RESOURCES"],
         Zone = dfGen[!, :Zone],

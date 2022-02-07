@@ -43,13 +43,6 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
             tempCO2Price = tempCO2Price * ModelScalingFactor
         end
-        # for z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap])
-        #     if setup["ParameterScale"] == 1
-        #         tempCO2Price[z, cap] = (-1) * dual.(EP[:cCO2Emissions_genrate])[cap] * ModelScalingFactor
-        #     else
-        #         tempCO2Price[z, cap] = (-1) * dual.(EP[:cCO2Emissions_genrate])[cap]
-        #     end
-        # end
     end
     dfCO2GenRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, [Symbol("CO2_GenRate_Price_$cap") for cap = 1:inputs["NCO2GenRateCap"]]))
     # auxNew_Names = [Symbol("Zone"); [Symbol("CO2_GenRate_Price_$cap") for cap = 1:inputs["NCO2GenRateCap"]]]
@@ -58,11 +51,7 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
 
     temp_totalpowerMWh = zeros(G)
     temp_totalpowerMWh[POWERGEN] .= value.(EP[:vP][POWERGEN, :]) * inputs["omega"] # in GenRate Cap constraint, generation is defined as the generation from the four types of resources
-    # for g = 1:G
-    #     if g in (dfGen[(dfGen[!, :THERM].>=1).|(dfGen[!, :MUST_RUN].>=1).|(dfGen[!, :VRE].>=1).|(dfGen[!, :HYDRO].>=1), :R_ID])
-    #         temp_totalpowerMWh[g] = sum(((transpose(value.(EP[:vP]))[:, g])) .* inputs["omega"])
-    #     end
-    # end
+
 
     dfCO2GenRateCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
     for cap = 1:inputs["NCO2GenRateCap"]
@@ -73,14 +62,6 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
             temp_CO2GenRateCapCost = temp_CO2GenRateCapCost * (ModelScalingFactor^2)
         end
-        # for g = 1:G
-        #     temp_z = dfGen[g, :Zone]
-        #     if setup["ParameterScale"] == 1
-        #         temp_CO2GenRateCapCost[g, :A] = (-1) * (dual.(EP[:cCO2Emissions_genrate])[cap]) * (inputs["dfCO2GenRateCapZones"][temp_z, cap]) * (sum(inputs["omega"] .* (value.(EP[:eEmissionsByPlant])[g, :])) - temp_totalpowerMWh[g] * inputs["dfMaxCO2GenRate"][temp_z, cap]) * ModelScalingFactor * ModelScalingFactor
-        #     else
-        #         temp_CO2GenRateCapCost[g, :A] = (-1) * (dual.(EP[:cCO2Emissions_genrate])[cap]) * (inputs["dfCO2GenRateCapZones"][temp_z, cap]) * (sum(inputs["omega"] .* (value.(EP[:eEmissionsByPlant])[g, :])) - temp_totalpowerMWh[g] * inputs["dfMaxCO2GenRate"][temp_z, cap])
-        #     end
-        # end
         dfCO2GenRateCapCost.AnnualSum .= dfCO2GenRateCapCost.AnnualSum + temp_CO2GenRateCapCost
         dfCO2GenRateCapCost = hcat(dfCO2GenRateCapCost, DataFrame([temp_CO2GenRateCapCost], [Symbol("CO2_GenRateCap_Cost_$cap")]))
         # rename!(dfCO2GenRateCapCost, Dict(:A => Symbol("CO2_GenRateCap_Cost_$cap")))

@@ -36,13 +36,6 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
             tempCO2Price = tempCO2Price * ModelScalingFactor
         end
-        # for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap])
-        #     tempCO2Price[z, cap] = dual.(EP[:cCO2Emissions_mass])[cap]
-        #     if setup["ParameterScale"] == 1
-        #         # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
-        #         tempCO2Price[z, cap] = (-1) * tempCO2Price[z, cap] * ModelScalingFactor
-        #     end
-        # end
     end
     dfCO2Price = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, [Symbol("CO2_Price_$cap") for cap = 1:inputs["NCO2Cap"]]))
     # auxNew_Names = [Symbol("Zone"); [Symbol("CO2_Price_$cap") for cap = 1:inputs["NCO2Cap"]]]
@@ -80,17 +73,6 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
             # Multiply scaling factor twice to get back US$.
             temp_CO2MassCapCost = temp_CO2MassCapCost * (ModelScalingFactor^2)
         end
-        # for g = 1:G
-        #     temp_z = dfGen[g, :Zone]
-        #     # when scaled, The dual variable function is in unit of Million US$/kton; 
-        #     # The emission is in unit of kton, and thus the product is in Million US$. 
-        #     # Multiply scaling factor twice to get back US$.
-        #     if setup["ParameterScale"] == 1
-        #         temp_CO2MassCapCost[g, :A] = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * sum(inputs["omega"] .* (value.(EP[:eEmissionsByPlant])[g, :])) * inputs["dfCO2CapZones"][temp_z, cap] * ModelScalingFactor * ModelScalingFactor
-        #     else
-        #         temp_CO2MassCapCost[g, :A] = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * sum(inputs["omega"] .* (value.(EP[:eEmissionsByPlant])[g, :])) * inputs["dfCO2CapZones"][temp_z, cap]
-        #     end
-        # end
         dfCO2MassCapCost.AnnualSum .= dfCO2MassCapCost.AnnualSum + temp_CO2MassCapCost
         dfCO2MassCapCost = hcat(dfCO2MassCapCost, DataFrame([temp_CO2MassCapCost], [Symbol("CO2_MassCap_Cost_$cap")]))
         # rename!(dfCO2MassCapCost, Dict(:A => Symbol("CO2_MassCap_Cost_$cap")))

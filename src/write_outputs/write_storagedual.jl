@@ -55,34 +55,6 @@ function write_storagedual(path::AbstractString, sep::AbstractString, inputs::Di
 	end
 
 
-    # for y in 1:G
-    #     if y in inputs["STOR_ALL"]
-    #         # print(y)
-    #         if setup["OperationWrapping"] == 1 && y in inputs["STOR_LONG_DURATION"]
-    #             for w in 1:REP_PERIOD
-    #                 x1[y, hours_per_subperiod*(w-1)+1] = dual.(EP[:cSoCBalLongDurationStorageStart][w, y])
-    #             end
-    #         else
-    #             for t in START_SUBPERIODS
-    #                 x1[y, t] = dual.(EP[:cSoCBalStart][t, y])
-    #             end
-    #         end
-    #         for t in INTERIOR_SUBPERIODS
-    #             x1[y, t] = dual.(EP[:cSoCBalInterior][t, y]) #Use this for getting dual values and put in the extracted codes from PJM
-    #         end
-    #     else
-    #         x1[y, :] = zeros(T, 1) # Empty values for the resource with no ability to store energy
-    #     end
-    # end
-
-    # Incorporating effect of time step weights (When OperationWrapping=1) and Parameter scaling (ParameterScale=1) on dual variables
-    # for y in 1:G
-    #     if setup["ParameterScale"] == 1
-    #         dual_values[y, :] = x1[y, :] ./ inputs["omega"] * ModelScalingFactor
-    #     else
-    #         dual_values[y, :] = x1[y, :] ./ inputs["omega"]
-    #     end
-    # end
     if setup["ParameterScale"] == 1
         dual_values = dual_values * ModelScalingFactor
     end

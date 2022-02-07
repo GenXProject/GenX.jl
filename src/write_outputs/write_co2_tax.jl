@@ -34,14 +34,6 @@ function write_co2_tax(path::AbstractString, sep::AbstractString, inputs::Dict, 
     if setup["ParameterScale"] == 1
         dfCO2TaxCost.AnnualSum .= dfCO2TaxCost.AnnualSum * (ModelScalingFactor^2)
     end
-    # for g = 1:G
-    #     temp_z = dfGen[g, :Zone]
-    #     if setup["ParameterScale"] == 1
-    #         dfCO2TaxCost[g, :AnnualSum] = sum(inputs["omega"] .* (value.(EP[:eEmissionsByPlant])[g, :])) * inputs["dfCO2Tax"][temp_z] * ModelScalingFactor * ModelScalingFactor
-    #     else
-    #         dfCO2TaxCost[g, :AnnualSum] = sum(inputs["omega"] .* (value.(EP[:eEmissionsByPlant])[g, :])) * inputs["dfCO2Tax"][temp_z]
-    #     end
-    # end
     CSV.write(string(path, sep, "CO2Cost_tax.csv"), dfCO2TaxCost)
     return dfCO2TaxCost
 end
