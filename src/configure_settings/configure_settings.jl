@@ -19,7 +19,7 @@ function configure_settings(settings_path::String)
     settings = YAML.load(open(settings_path))
 
     # Optional settings parameters ############################################
-	#Write the model formulation as an output; 0 = active; 1 = not active
+    #Write the model formulation as an output; 0 = active; 1 = not active
     if(!haskey(settings, "PrintModel")) settings["PrintModel"] = 0  end
     # Transmission network expansionl; 0 = not active; 1 = active systemwide
     if(!haskey(settings, "NetworkExpansion")) settings["NetworkExpansion"] = 0 end
@@ -47,8 +47,6 @@ function configure_settings(settings_path::String)
     if(!haskey(settings, "UCommit")) settings["UCommit"] = 0 end
     # Sets temporal resolution of the model; 0 = single period to represent the full year, with first-last time step linked; 1 = multiple representative periods
     if(!haskey(settings, "OperationWrapping")) settings["OperationWrapping"] = 0 end
-    # Inter-period energy exchange for storage technologies; 0 = not active; 1 = active systemwide
-    if(!haskey(settings, "LongDurationStorage")) settings["LongDurationStorage"] = 0 end
     # Directory name where results from time domain reduction will be saved. If results already exist here, these will be used without running time domain reduction script again.
     if(!haskey(settings, "TimeDomainReductionFolder")) settings["TimeDomainReductionFolder"] = "TDR_Results"  end
     # Time domain reduce (i.e. cluster) inputs based on Load_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
