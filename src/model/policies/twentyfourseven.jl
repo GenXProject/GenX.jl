@@ -28,7 +28,6 @@ function twentyfourseven(EP::Model, inputs::Dict, setup::Dict)
     @variable(EP, vEX[rpsh = 1:NumberofTFS, t = 1:T] >= 0) # exceedance
     @variable(EP, vSF[rpsh = 1:NumberofTFS, t = 1:T] >= 0) # shortfall
     @expression(EP, eCFE[rpsh = 1:NumberofTFS, t = 1:T], sum(dfGen[y, Symbol("RPSH_$rpsh")] * EP[:vP][y, t] for y in setdiff(ALLGEN, union(STOR_ALL, FLEX))))
-    # @expression(EP, eModifiedload[rpsh = 1:NumberofTFS, t = 1:T], (inputs["TFS_Load"][t, rpsh] - sum(dfGen[y, Symbol("RPSH_$rpsh")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for y in STOR_ALL) - sum(dfGen[y, Symbol("RPSH_$rpsh")] * (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX)))
     @expression(EP, eModifiedload[rpsh = 1:NumberofTFS, t = 1:T], (inputs["TFS_Load"][t, rpsh] + EP[:vZERO]))
     if !isempty(STOR_ALL)
         @expression(EP, eTFSStorage[rpsh = 1:NumberofTFS, t = 1:T], sum(dfGen[y, Symbol("RPSH_$rpsh")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for y in STOR_ALL))
