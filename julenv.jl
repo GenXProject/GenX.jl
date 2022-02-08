@@ -19,7 +19,7 @@ using Pkg
 Pkg.activate("GenXJulEnv")
 
 # Pkg.add(Pkg.PackageSpec(name="Cbc", version="0.7.1")) # 0.8.0
-Pkg.add(Pkg.PackageSpec(name="Clp", version="0.8.4"))
+# Pkg.add(Pkg.PackageSpec(name="Clp", version="0.8.4"))
 Pkg.add(Pkg.PackageSpec(name="DataStructures", version="0.18.9"))
 Pkg.add(Pkg.PackageSpec(name="Dates"))
 Pkg.add(Pkg.PackageSpec(name="GLPK", version="0.14.12"))
@@ -78,7 +78,7 @@ Pkg.add(Pkg.PackageSpec(name="LinearAlgebra"))
 	Pkg.add(Pkg.PackageSpec(name="LinearAlgebra"))
 elseif v"1.5" <= VERSION < v"1.7"=#
 	# Pkg.add(Pkg.PackageSpec(name="Cbc", version="0.7.1"))
-	Pkg.add(Pkg.PackageSpec(name="Clp", version="0.8.4"))
+	# Pkg.add(Pkg.PackageSpec(name="Clp", version="0.8.4"))
 	Pkg.add(Pkg.PackageSpec(name="DataStructures", version="0.18.9"))
 	Pkg.add(Pkg.PackageSpec(name="Dates"))
 	Pkg.add(Pkg.PackageSpec(name="GLPK", version="0.14.12"))
