@@ -25,7 +25,7 @@ function write_zonal_transmission_losses(path::AbstractString, sep::AbstractStri
     end
     dfZonalTransmissionLoss.AnnualSum .= transmissionloss * inputs["omega"]
     dfZonalTransmissionLoss = hcat(dfZonalTransmissionLoss, DataFrame(transmissionloss, [Symbol("t$t") for t in 1:T]))
-    auxNew_Names = [Symbol("Line"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
+    auxNew_Names = [Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
 
     total = DataFrame(["Total" sum(dfZonalTransmissionLoss[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
     if v"1.3" <= VERSION < v"1.4"
@@ -35,7 +35,7 @@ function write_zonal_transmission_losses(path::AbstractString, sep::AbstractStri
     end
     rename!(total, auxNew_Names)
     dfZonalTransmissionLoss = vcat(dfZonalTransmissionLoss, total)
-    
+
     CSV.write(string(path, sep, "zonaltransmissionlosses.csv"), dftranspose(dfZonalTransmissionLoss, false), writeheader = false)
     return dfZonalTransmissionLoss
 end
