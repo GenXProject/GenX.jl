@@ -147,6 +147,6 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\tau_{y,z}^{advance}$ | maximum  time  by which flexible demand resource can  be  advanced [hours]  |
 |$\tau_{y,z}^{delay}$ | maximum  time  by which flexible demand resource can  be  delayed [hours]  |
 |$\eta_{y,z}^{dflex}$ | energy losses associated with shifting the flexible load [%]|
-|$\mu_{p,z}^{\mathcal{RPS}}$ | share of total demand in each model zone $z \in \mathcal{RPS}^{p}$  that must be served by qualifying renewable energy resources $y \in \mathcal{G}^{RPS}_{p}$|
+|$\mu_{p,z}^{\mathcal{ESR}}$ | share of total demand in each model zone $z \in \mathcal{ESR}^{p}$  that must be served by qualifying renewable energy resources $y \in \mathcal{G}^{ESR}_{p}$|
 |$f(n)$ | Mapping each modeled period $n \in \mathcal{N}$ to corresponding representative period $w \in \mathcal{W}$|
 ---

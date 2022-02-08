@@ -38,22 +38,22 @@ function load_generators_data_multi_stage(setup::Dict, path::AbstractString, sep
 	inputs["dfGenMultiStage"] = gen_mp_in[!, [Symbol("Resource"), Symbol("Capital_Recovery_Period"), Symbol("Lifetime")]]
 	inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Cap_MW_p1")] = gen_mp_in[!,Symbol("Min_Retired_Cap_MW")]
 	inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Charge_Cap_MW_p1")] = gen_mp_in[!,Symbol("Min_Retired_Charge_Cap_MW")]
-	inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MW_p1")] = gen_mp_in[!,Symbol("Min_Retired_Energy_Cap_MW")]
+	inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MWh_p1")] = gen_mp_in[!,Symbol("Min_Retired_Energy_Cap_MWh")]
 	if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
 		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Cap_MW_p1")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Cap_MW_p1")]/ModelScalingFactor # Convert to GW
 		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Charge_Cap_MW_p1")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Charge_Cap_MW_p1")]/ModelScalingFactor # Convert to GW
-		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MW_p1")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MW_p1")]/ModelScalingFactor # Convert to GW
+		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MWh_p1")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MWh_p1")]/ModelScalingFactor # Convert to GWh
 	end
 
 	for p in 2:num_stages
 		gen_mp_in = DataFrame(CSV.File(string(path,sep,"Inputs_p$p",sep,"Generators_data.csv"), header=true), copycols=true)
 		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Cap_MW_p$p")] = gen_mp_in[!,Symbol("Min_Retired_Cap_MW")]
 		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Charge_Cap_MW_p$p")] = gen_mp_in[!,Symbol("Min_Retired_Charge_Cap_MW")]
-		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MW_p$p")] = gen_mp_in[!,Symbol("Min_Retired_Energy_Cap_MW")]
+		inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MWh_p$p")] = gen_mp_in[!,Symbol("Min_Retired_Energy_Cap_MWh")]
 		if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
 			inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Cap_MW_p$p")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Cap_MW_p$p")]/ModelScalingFactor # Convert to GW
 			inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Charge_Cap_MW_p$p")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Charge_Cap_MW_p$p")]/ModelScalingFactor # Convert to GW
-			inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MW_p$p")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MW_p$p")]/ModelScalingFactor # Convert to GW
+			inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MWh_p$p")] = inputs["dfGenMultiStage"][!,Symbol("Min_Retired_Energy_Cap_MWh_p$p")]/ModelScalingFactor # Convert to GWh
 		end
     end
 

@@ -51,7 +51,7 @@ function write_emissions(path::AbstractString, sep::AbstractString, inputs::Dict
 			auxNew_Names=[Symbol("Zone"); [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]]; Symbol("AnnualSum")]
 			rename!(dfEmissions,auxNew_Names)
 		else
-			dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Union{Missing,Float32}}(undef, Z))
+			dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Union{Missing,Float64}}(undef, Z))
 		end
 
 		for i in 1:Z

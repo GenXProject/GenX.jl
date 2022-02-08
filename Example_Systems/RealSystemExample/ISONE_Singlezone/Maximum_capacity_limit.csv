@@ -1,0 +1,4 @@
+MaxCapReqConstraint,Constraint_Description,Max_MW
+1,NEREST_NGCC,5000
+2,NE_CT_NGCC,1700
+3,NE_ME_NGCC,700

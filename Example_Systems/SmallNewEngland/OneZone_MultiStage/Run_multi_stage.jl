@@ -17,8 +17,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 cd(dirname(@__FILE__))
 settings_path = joinpath(pwd(), "Settings")
 
-environment_path = "../../../package_activate.jl"
-include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
+#environment_path = "../../../package_activate.jl"
+#include(environment_path) #Run this line to activate the Julia virtual environment for GenX; skip it, if the appropriate package versions are installed
 
 ### Set relevant directory paths
 src_path = "../../../src/"
@@ -29,15 +29,15 @@ inpath = pwd()
 println("Loading packages")
 push!(LOAD_PATH, src_path)
 
-using Pkg
-Pkg.activate("GenXJulEnv")
+#using Pkg
+#Pkg.activate("GenXJulEnv")
 
 using GenX
 using YAML
 using BenchmarkTools
 
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
-mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
+mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
 multistage_settings = joinpath(settings_path, "multi_stage_settings.yml") # Multi stage settings YAML file path
 mysetup["MultiStageSettingsDict"] = YAML.load(open(multistage_settings))
@@ -109,4 +109,4 @@ for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 end
 
 # Step 5) Write DDP summary outputs
-write_multi_stage_outputs(mystats_d, outpath, mysetup["MultiStageSettingsDict"])
+write_multi_stage_outputs(mystats_d, outpath, mysetup)

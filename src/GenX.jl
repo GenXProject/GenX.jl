@@ -25,6 +25,7 @@ export solve_model
 export write_outputs
 export cluster_inputs
 export mga
+export morris
 export simple_operation
 export choose_output_dir
 
@@ -46,13 +47,23 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
+
+using DiffEqSensitivity
+using OrdinaryDiffEq
+using QuasiMonteCarlo
+using Random
+using RecursiveArrayTools
+using Statistics
+
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 # using CPLEX
+using Gurobi
+# using CPLEX
+#using MOI
+#using SCIP
 #using Gurobi
 #using CPLEX
 using BenchmarkTools
-#using MOI
-using SCIP
 using Clp
 using Cbc
 
@@ -82,10 +93,16 @@ include("load_inputs/load_reserves.jl")
 include("load_inputs/load_cap_reserve_margin.jl")
 include("load_inputs/load_energy_share_requirement.jl")
 include("load_inputs/load_co2_cap.jl")
+include("load_inputs/load_co2_cap_genrate.jl")
+include("load_inputs/load_co2_cap_loadrate.jl")
 include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
+include("load_inputs/load_maximum_capacity_limit.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
+include("load_inputs/load_co2_tax.jl")
+include("load_inputs/load_co2_credit.jl")
+include("load_inputs/load_twentyfourseven.jl")
 
 include("load_inputs/load_inputs.jl")
 
@@ -101,6 +118,7 @@ include("model/core/ucommit.jl")
 include("model/core/reserves.jl")
 
 include("model/core/transmission.jl")
+include("model/core/co2.jl")
 
 include("model/resources/curtailable_variable_renewable/curtailable_variable_renewable.jl")
 
@@ -122,11 +140,18 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+include("model/resources/thermal/piecewiseheatrate.jl")
 
 include("model/policies/co2_cap.jl")
+include("model/policies/co2_generation_emission_rate_cap.jl")
+include("model/policies/co2_load_emission_rate_cap.jl")
+include("model/policies/co2_tax.jl")
+include("model/policies/co2_credit.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
+include("model/policies/maximum_capacity_limit.jl")
+include("model/policies/twentyfourseven.jl")
 
 include("multi_stage/model_multi_stage/storage_multi_stage.jl")
 include("multi_stage/model_multi_stage/investment_multi_stage.jl")
@@ -141,10 +166,20 @@ include("write_outputs/write_charge.jl")
 include("write_outputs/write_charging_cost.jl")
 include("write_outputs/write_costs.jl")
 include("write_outputs/write_curtailment.jl")
-include("write_outputs/write_emissions.jl")
+# include("write_outputs/write_emissions.jl")
+include("write_outputs/write_co2.jl")
+include("write_outputs/write_co2_cap.jl")
+include("write_outputs/write_co2_generation_emission_rate_cap.jl")
+include("write_outputs/write_co2_load_emission_rate_cap.jl")
+include("write_outputs/write_co2_tax.jl")
+include("write_outputs/write_co2_taxcredit.jl")
 include("write_outputs/write_energy_revenue.jl")
+include("write_outputs/write_energy_payment.jl")
+include("write_outputs/write_congestion_revenue.jl")
+include("write_outputs/write_transmission_losscost.jl")
 include("write_outputs/write_net_revenue.jl")
 include("write_outputs/write_nse.jl")
+include("write_outputs/write_zonalnse.jl")
 include("write_outputs/write_power.jl")
 include("write_outputs/write_power_balance.jl")
 include("write_outputs/write_price.jl")
@@ -154,15 +189,23 @@ include("write_outputs/write_storage.jl")
 include("write_outputs/write_storagedual.jl")
 include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_time_weights.jl")
+include("write_outputs/write_twentyfourseven.jl")
 include("write_outputs/choose_output_dir.jl")
+
+
 
 include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_w.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin.jl")
+include("write_outputs/capacity_reserve_margin/write_reserve_margin_payment.jl")
+include("write_outputs/capacity_reserve_margin/write_reserve_margin_demand_response_saving.jl")
+include("write_outputs/capacity_reserve_margin/write_reserve_margin_transmission_revenue.jl")
 
 include("write_outputs/energy_share_requirement/write_esr_prices.jl")
 include("write_outputs/energy_share_requirement/write_esr_revenue.jl")
+include("write_outputs/energy_share_requirement/write_esr_payment.jl")
+include("write_outputs/energy_share_requirement/write_esr_storageloss_payment.jl")
 
 include("write_outputs/long_duration_storage/write_opwrap_lds_dstor.jl")
 include("write_outputs/long_duration_storage/write_opwrap_lds_stor_init.jl")
@@ -173,6 +216,7 @@ include("write_outputs/reserves/write_rsv.jl")
 include("write_outputs/transmission/write_nw_expansion.jl")
 include("write_outputs/transmission/write_transmission_flows.jl")
 include("write_outputs/transmission/write_transmission_losses.jl")
+include("write_outputs/transmission/write_zonaltransmission_loss.jl")
 
 include("write_outputs/ucommit/write_commit.jl")
 include("write_outputs/ucommit/write_shutdown.jl")
@@ -183,7 +227,7 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
+#include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl") ## "Ref MGA" for latter comment
 
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
@@ -192,5 +236,7 @@ include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
 include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_capacity_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_settings.jl")
-include("additional_tools/modeling_to_generate_alternatives.jl") ##Note to Neha: Should we delete this and keep REF MGA rather?
+
+include("additional_tools/modeling_to_generate_alternatives.jl")
+include("additional_tools/method_of_morris_v2.jl")
 end

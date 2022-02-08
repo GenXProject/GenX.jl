@@ -19,37 +19,32 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing the capacities of different storage technologies, including hydro reservoir, flexible storage tech etc.
 """
-function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict,setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
-	T = inputs["T"]     # Number of time steps (hours)
-	G = inputs["G"]
+function write_storage(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    dfGen = inputs["dfGen"]
+    T = inputs["T"]     # Number of time steps (hours)
+    G = inputs["G"]
+    STOR_ALL = inputs["STOR_ALL"]
+    HYDRO_RES = inputs["HYDRO_RES"]
+    FLEX = inputs["FLEX"]
+    # Storage level (state of charge) of each resource in each time step
+    dfStorage = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
+    storagevcapvalue = zeros(G, T)
 
-	# Storage level (state of charge) of each resource in each time step
-	dfStorage = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])
-	s = zeros(G,T)
-	storagevcapvalue = zeros(G,T)
-	for i in 1:G
-		if i in inputs["STOR_ALL"]
-			s[i,:] = value.(EP[:vS])[i,:]
-		elseif i in inputs["HYDRO_RES"]
-			s[i,:] = value.(EP[:vS_HYDRO])[i,:]
-		elseif i in inputs["FLEX"]
-			s[i,:] = value.(EP[:vS_FLEX])[i,:]
-		end
+	if !isempty(inputs["STOR_ALL"])
+	    storagevcapvalue[STOR_ALL, :] = value.(EP[:vS][STOR_ALL, :])
 	end
-
-	# Incorporating effect of Parameter scaling (ParameterScale=1) on output values
-	for y in 1:G
-		if setup["ParameterScale"]==1
-			storagevcapvalue[y,:] = s[y,:].*ModelScalingFactor
-		else
-			storagevcapvalue[y,:] = s[y,:]
-		end
+	if !isempty(inputs["HYDRO_RES"])
+	    storagevcapvalue[HYDRO_RES, :] = value.(EP[:vS_HYDRO][HYDRO_RES, :])
 	end
-
-
-	dfStorage = hcat(dfStorage, DataFrame(storagevcapvalue, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
-	rename!(dfStorage,auxNew_Names)
-	CSV.write(string(path,sep,"storage.csv"), dftranspose(dfStorage, false), writeheader=false)
+	if !isempty(inputs["FLEX"])
+	    storagevcapvalue[FLEX, :] = value.(EP[:vS_FLEX][FLEX, :])
+	end
+	if setup["ParameterScale"] == 1
+	    storagevcapvalue = storagevcapvalue * ModelScalingFactor
+	end
+	
+    dfStorage = hcat(dfStorage, DataFrame(storagevcapvalue, :auto))
+    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
+    rename!(dfStorage, auxNew_Names)
+    CSV.write(string(path, sep, "storage.csv"), dftranspose(dfStorage, false), writeheader = false)
 end
