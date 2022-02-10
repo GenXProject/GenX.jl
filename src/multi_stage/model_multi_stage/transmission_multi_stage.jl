@@ -165,8 +165,11 @@ function transmission_multi_stage(EP::Model, inputs::Dict, UCommit::Int, Network
 	# If network expansion is used:
 	if NetworkExpansion == 1
 		# Transmission network related power flow and capacity constraints
-		# Constrain maximum line capacity reinforcement for lines eligible for expansion
-		@constraint(EP, cMaxLineReinforcement[l in EXPANSION_LINES], eAvail_Trans_Cap[l] <= inputs["pTrans_Max_Possible"][l])
+		# Constrain maximum possible flow for lines eligible for expansion regardless of previous expansions
+		@constraint(EP, cMaxFlowPossible[l in EXPANSION_LINES], eAvail_Trans_Cap[l] <= inputs["pTrans_Max_Possible"][l])
+
+		# Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
+		@constraint(EP, cMaxLineReinforcement[l in EXPANSION_LINES], vNEW_TRANS_CAP[l] <= inputs["pMax_Line_Reinforcement"][l])
 	end
 	#END network expansion contraints
 
