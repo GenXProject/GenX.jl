@@ -127,17 +127,11 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment stage
 		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"]
 
-        # Network lines and zones that are expandable have greater maximum possible line flow than that of the previous stage
-		if cur_stage > 1
-			inputs_d["EXPANSION_LINES"] = findall(inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .> inputs_d["pLine_Max_Flow_Possible_MW_p$(cur_stage-1)"])
-        	inputs_d["NO_EXPANSION_LINES"] = findall(inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .<= inputs_d["pLine_Max_Flow_Possible_MW_p$(cur_stage-1)"])
-		else
-			inputs_d["EXPANSION_LINES"] = findall(inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .> inputs_d["pTrans_Max"])
-			inputs_d["NO_EXPANSION_LINES"] = findall(inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .<= inputs_d["pTrans_Max"])
-
+        # Network lines and zones that are expandable have greater maximum possible line flow than the available capacity of the previous stage as well as available line reinforcement
+		inputs_d["EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .> inputs_d["pTrans_Max"]) .& (inputs_d["pMax_Line_Reinforcement"] .> 0))
+		inputs_d["NO_EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .<= inputs_d["pTrans_Max"]) .| (inputs_d["pMax_Line_Reinforcement"] .<= 0))
 			# To-Do: Error Handling
 			# 1.) Enforce that pLine_Max_Flow_Possible_MW_p1 be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in Inputs/Inputs_p1
-		end
     end
 
     return inputs_d
