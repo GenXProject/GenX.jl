@@ -25,32 +25,22 @@ function write_power(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	T = inputs["T"]     # Number of time steps (hours)
 
 	# Power injected by each resource in each time step
-	dfPower = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
-	if setup["ParameterScale"] ==1
-		for i in 1:G
-			dfPower[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vP])[i,:])) * ModelScalingFactor
-		end
-		dfPower = hcat(dfPower, DataFrame((value.(EP[:vP]))* ModelScalingFactor, :auto))
-	else
-		for i in 1:G
-			dfPower[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vP])[i,:]))
-		end
-		dfPower = hcat(dfPower, DataFrame(value.(EP[:vP]), :auto))
+	dfPower = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+	power = value.(EP[:vP])
+	if setup["ParameterScale"] == 1
+		power *= ModelScalingFactor
 	end
+	dfPower.AnnualSum .= power * inputs["omega"]
+	dfPower = hcat(dfPower, DataFrame(power, :auto))
 
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfPower,auxNew_Names)
 
 	total = DataFrame(["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfPower[!,Symbol("t$t")][1:G])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfPower[:,Symbol("t$t")][1:G])
-		end
-	end
+	total[:, 4:T+3] .= sum(power, dims = 1)
+
 	rename!(total,auxNew_Names)
 	dfPower = vcat(dfPower, total)
- 	CSV.write(string(path,sep,"power.csv"), dftranspose(dfPower, false), writeheader=false)
+	CSV.write(string(path,sep,"power.csv"), dftranspose(dfPower, false), writeheader=false)
 	return dfPower
 end
