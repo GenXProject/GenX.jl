@@ -23,45 +23,27 @@ function write_nse(path::AbstractString, sep::AbstractString, inputs::Dict, setu
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-    	SEG = inputs["SEG"] # Number of load curtailment segments
+	SEG = inputs["SEG"] # Number of load curtailment segments
 	# Non-served energy/demand curtailment by segment in each time step
-	dfNse = DataFrame()
-	dfTemp = Dict()
+	dfNse = DataFrame(Segment = repeat(1:SEG, outer = Z), Zone = repeat(1:Z, inner = SEG), AnnualSum = zeros(SEG * Z))
+	nse = zeros(SEG * Z, T)
 	for z in 1:Z
-		dfTemp = DataFrame(Segment=zeros(SEG), Zone=zeros(SEG), AnnualSum = Array{Union{Missing,Float32}}(undef, SEG))
-		dfTemp[!,:Segment] = (1:SEG)
-		dfTemp[!,:Zone] = fill(z,(SEG))
-		if setup["ParameterScale"]==1
-			for i in 1:SEG
-				dfTemp[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vNSE])[i,:,z]))* ModelScalingFactor
-			end
-			dfTemp = hcat(dfTemp, DataFrame((value.(EP[:vNSE])[:,:,z])* ModelScalingFactor, :auto))
+		if setup["ParameterScale"] == 1
+			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z] * ModelScalingFactor
 		else
-			for i in 1:SEG
-				dfTemp[!,:AnnualSum][i] = sum(inputs["omega"].* (value.(EP[:vNSE])[i,:,z]))
-			end
-			dfTemp = hcat(dfTemp, DataFrame(value.(EP[:vNSE])[:,:,z], :auto))
-		end
-		if z == 1
-			dfNse = dfTemp
-		else
-			dfNse = vcat(dfNse,dfTemp)
+			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z]
 		end
 	end
-
+	dfNse.AnnualSum .= nse * inputs["omega"]
+	dfNse = hcat(dfNse, DataFrame(nse, :auto))
 	auxNew_Names=[Symbol("Segment");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfNse,auxNew_Names)
+
 	total = DataFrame(["Total" 0 sum(dfNse[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfNse[!,Symbol("t$t")][1:Z])
-		elseif v"1.4" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfNse[:,Symbol("t$t")][1:Z])
-		end
-	end
+	total[:, 4:T+3] .= sum(nse, dims = 1)
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)
 
 	CSV.write(string(path,sep,"nse.csv"),  dftranspose(dfNse, false), writeheader=false)
-	return dfTemp
+	return dfNse
 end

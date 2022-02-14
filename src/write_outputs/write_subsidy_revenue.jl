@@ -21,45 +21,24 @@ Function for reporting subsidy revenue earned if a generator specified `Min_Cap`
 """
 function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, dfCap::DataFrame, EP::Model)
 	dfGen = inputs["dfGen"]
-	#NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
+	G = inputs["G"]
 
-	dfSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
-	#dfSubRevenue.SubsidyRevenue .= 0.0
-	
-	if v"1.3" <= VERSION < v"1.4"
-		dfSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfSubRevenue.SubsidyRevenue = zeros(size(dfSubRevenue, 1))
-		#dfSubRevenue[:,:SubsidyRevenue] = zeros(size(dfSubRevenue, 1))
-	end
-	
-	#dfSubRevenue[!,:SubsidyRevenue] .= 0.0
-	for y in (dfGen[(dfGen[!,:Min_Cap_MW].>0) ,:][!,:R_ID])
-		dfSubRevenue[y,:SubsidyRevenue] = (value.(EP[:eTotalCap])[y]) * (dual.(EP[:cMinCap])[y])
-	end
+	dfSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], R_ID=dfGen[!, :R_ID], SubsidyRevenue = zeros(G))
+	MIN_CAP = dfGen[(dfGen[!, :Min_Cap_MW].>0), :R_ID]
+	dfSubRevenue.SubsidyRevenue[MIN_CAP] .= (value.(EP[:eTotalCap])[MIN_CAP]) .* (dual.(EP[:cMinCap][MIN_CAP])).data
 
-	if setup["ParameterScale"] == 1
-		dfSubRevenue.SubsidyRevenue = dfSubRevenue.SubsidyRevenue*(ModelScalingFactor^2) #convert from Million US$ to US$
-	end
 	### calculating tech specific subsidy revenue
-
-	dfRegSubRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
-	#dfRegSubRevenue.SubsidyRevenue .= 0.0
-	if v"1.3" <= VERSION < v"1.4"
-		dfRegSubRevenue[!,:SubsidyRevenue] .= 0.0
-	elseif v"1.4" <= VERSION < v"1.7"
-		dfRegSubRevenue.SubsidyRevenue = zeros(size(dfRegSubRevenue, 1))
-	end
+	dfRegSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], R_ID=dfGen[!, :R_ID], SubsidyRevenue = zeros(G))
 	if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
-			for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]
-			   dfRegSubRevenue[y,:SubsidyRevenue] = (value.(EP[:eTotalCap])[y]) * (dual.(EP[:cZoneMinCapReq])[mincap])
-			end
+			MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID]
+			dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .= dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] + (value.(EP[:eTotalCap])[MIN_CAP_GEN]) * (dual.(EP[:cZoneMinCapReq])[mincap])
 		end
 	end
 
 	if setup["ParameterScale"] == 1
-		dfRegSubRevenue.SubsidyRevenue = dfRegSubRevenue.SubsidyRevenue*(ModelScalingFactor^2) #convert from Million US$ to US$
+		dfSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$
+		dfRegSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$
 	end
 
 	CSV.write(string(path,sep,"SubsidyRevenue.csv"), dfSubRevenue)
