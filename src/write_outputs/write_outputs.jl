@@ -155,7 +155,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfPrice = write_price(path, sep, inputs, setup, EP)
 			dfEnergyRevenue = write_energy_revenue(path, sep, inputs, setup, EP, dfPower, dfPrice, dfCharge)
 			dfChargingcost = write_charging_cost(path, sep, inputs, dfCharge, dfPrice, dfPower, setup)
-			dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, sep, inputs, setup, dfCap, EP)
+			dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, sep, inputs, setup, EP)
 		end
 
 		elapsed_time_time_weights = @elapsed write_time_weights(path, sep, inputs)
