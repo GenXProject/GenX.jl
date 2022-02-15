@@ -23,7 +23,7 @@ function write_transmission_losses(path::AbstractString, sep::AbstractString, in
 	tlosses = zeros(L, T)
 	tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
 	if setup["ParameterScale"] == 1
-	    tlosses[LOSS_LINES, :] *= ModelScalingFactor
+	    tlosses[LOSS_LINES, :] *= ModelScalingFactor^2
 	end
 	dfTLosses.Sum .= tlosses * inputs["omega"]
 	dfTLosses = hcat(dfTLosses, DataFrame(tlosses, :auto))
