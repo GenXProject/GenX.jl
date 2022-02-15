@@ -23,12 +23,6 @@ function write_reg(path::AbstractString, sep::AbstractString, inputs::Dict, setu
     # Regulation contributions for each resource in each time step
     dfReg = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
     reg = zeros(G, T)
-    # for i in 1:G
-    #     if i in inputs["REG"]
-    #         reg[i, :] = value.(EP[:vREG])[i, :]
-    #     end
-    #     dfReg[!, :Sum][i] = sum(reg[i, :])
-    # end
     reg[REG, :] = value.(EP[:vREG][REG, :])
     dfReg.AnnualSum = reg * inputs["omega"]
     dfReg = hcat(dfReg, DataFrame(reg, :auto))
@@ -36,9 +30,6 @@ function write_reg(path::AbstractString, sep::AbstractString, inputs::Dict, setu
     rename!(dfReg, auxNew_Names)
 
     total = DataFrame(["Total" 0 sum(dfReg[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
-    # for t in 1:T
-    #     total[!, t+3] .= sum(dfReg[!, Symbol("t$t")][1:G])
-    # end
     total[!, 4:T+3] .= sum(reg, dims = 1)
     rename!(total, auxNew_Names)
     dfReg = vcat(dfReg, total)
