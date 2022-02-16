@@ -183,6 +183,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
+	if !isempty(inputs["DAC"])
+		EP = dac(EP, inputs)
+	end
+
 	# Model constraints, variables, expression related to fleccs
 	if (setup["FLECCS"] >= 1)
 		EP = fleccs(EP, inputs, setup["FLECCS"], setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"], setup["MinCapReq"])

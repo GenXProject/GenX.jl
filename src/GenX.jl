@@ -127,6 +127,7 @@ include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
 
+include("model/resources/dac/dac.jl")
 include("model/resources/fleccs/fleccs.jl")
 include("model/resources/fleccs/fleccs_fix.jl")
 include("model/resources/fleccs/fleccs1.jl")
