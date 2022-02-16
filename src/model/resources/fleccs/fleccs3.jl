@@ -23,7 +23,7 @@ This module uses the following 'helper' functions in separate files: FLECCS2_com
 """
 
 function fleccs3(EP::Model, inputs::Dict,  FLECCS::Int, UCommit::Int, Reserves::Int)
-
+# this will be changed to solvent storage without aux boiler
 	println("FLECCS3, NGCC coupled with thermal storage Module")
 
 	T = inputs["T"]     # Number of time steps (hours)

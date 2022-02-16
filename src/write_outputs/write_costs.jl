@@ -43,7 +43,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			cVar = cVar + value.(EP[:eTotalCVar_FLECCS]) +  value.(EP[:eTotalCCO2Tax])
 			cFix = cFix  + value.(EP[:eTotalCFixFLECCS])
 		end
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, cCO2Tax, value(EP[:eTotalCNSE]), 0, 0, 0]
+		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
 	end
 
 	if setup["UCommit"]>=1

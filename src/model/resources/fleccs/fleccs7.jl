@@ -34,6 +34,7 @@ function fleccs7(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::I
 	FLECCS_parameters = inputs["FLECCS_parameters"] # FLECCS specific parameters
 	# get number of flexible subcompoents
 	N_F = inputs["N_F"]
+	n = length(N_F)
  
 
 

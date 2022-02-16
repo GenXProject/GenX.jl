@@ -35,6 +35,7 @@ function dac(EP::Model, inputs::Dict)
 
 	@expression(EP, ePowerBalanceDAC[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(DAC, dfGen[dfGen[!,:Zone].==z,:][!,:R_ID])))
+		
 	EP[:ePowerBalance] = EP[:ePowerBalance] - ePowerBalanceDAC
 
 	@constraint(EP, [y in DAC, t=1:T], EP[:vP][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y])

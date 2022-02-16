@@ -23,43 +23,43 @@ function load_fleccs_data(setup::Dict, path::AbstractString,  inputs_ccs::Dict, 
 
 	if setup["FLECCS"] == 1
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data1.csv"), header=true), copycols=true)
-		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data1_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data1_process_parameters.csv"), header=true), copycols=true)
 
 
 		println("FLECCS_data1.csv Successfully Read!, NGCC-CCS without flexible subcompoents")
 	elseif setup["FLECCS"] == 2
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data2.csv"), header=true), copycols=true)
-		FLECCS_parameters =  DataFrame(CSV.File(joinpath(path,"FLECCS_data2_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters =  DataFrame(CSV.File(joinpath(path,"FLECCS_data2_process_parameters.csv"), header=true), copycols=true)
 		println("FLECCS_data2.csv Successfully Read!, NGCC-CCS with solvent storage")
 	elseif setup["FLECCS"] == 3
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data3.csv"), header=true), copycols=true)
-		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data3_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data3_process_parameters.csv"), header=true), copycols=true)
 		println("FLECCS_data3.csv Successfully Read!, NGCC-CCS with thermal storage - option1")
 
 	elseif setup["FLECCS"] == 4
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data4.csv"), header=true), copycols=true)
-		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data4_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data4_process_parameters.csv"), header=true), copycols=true)
 
 		println("FLECCS_data4.csv Successfully Read!, NGCC-CCS with thermal storage - option2")
 
 	elseif setup["FLECCS"] == 5
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data5.csv"), header=true), copycols=true)
-		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data5_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data5_process_parameters.csv"), header=true), copycols=true)
 		println("FLECCS_data5.csv Successfully Read!, NGCC-CCS with hydrogen generation and storage")
 
 	elseif setup["FLECCS"] == 6
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data6.csv"), header=true), copycols=true)
-		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data6_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data6_process_parameters.csv"), header=true), copycols=true)
 		println("FLECCS_data6.csv Successfully Read!, NGCC-CCS with DAC")
 
 	elseif setup["FLECCS"] == 7
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data7.csv"), header=true), copycols=true)
-		FLECCS_parameters =  DataFrame(CSV.File(joinpath(path,"FLECCS_data7_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters =  DataFrame(CSV.File(joinpath(path,"FLECCS_data7_process_parameters.csv"), header=true), copycols=true)
 		println("FLECCS_data7.csv Successfully Read!, NGCC-CCS with DAC-MIT")
 
 	elseif setup["FLECCS"] == 8
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data8.csv"), header=true), copycols=true)
-		FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data8_process_parameters.csv"), header=true), copycols=true)
+		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data8_process_parameters.csv"), header=true), copycols=true)
 		println("FLECCS_data8.csv Successfully Read!, NGCC-CCS with Allam cycle")
 	end
 
@@ -70,16 +70,16 @@ function load_fleccs_data(setup::Dict, path::AbstractString,  inputs_ccs::Dict, 
 	inputs_ccs["FLECCS_ALL"] = unique(dfGen_ccs[!,:R_ID])
 
 
-	if setup["ParameterScale"] ==1
-		if setup["FLECCS"] == 8
-			FLECCS_parameters[!,:intercept] = FLECCS_parameters[!,:intercept]/ModelScalingFactor
-		end
-	end
+	#if setup["ParameterScale"] ==1
+	#	if setup["FLECCS"] == 8
+	#		FLECCS_parameters[!,:intercept] = FLECCS_parameters[!,:intercept]/ModelScalingFactor
+	#	end
+	#end
 
 
 
 
-	inputs_ccs["FLECCS_parameters"] = FLECCS_parameters
+	#inputs_ccs["FLECCS_parameters"] = FLECCS_parameters
 
     # Set indices for internal use
 	n_F =nrow(dfGen_ccs)
@@ -146,10 +146,9 @@ function load_fleccs_data(setup::Dict, path::AbstractString,  inputs_ccs::Dict, 
 	## delete CO2 seuquestration cost when adding qingyu's module
 	# scale CO2 sequestration cost
 
-	if setup["ParameterScale"] == 1
-		inputs_ccs["FLECCS_parameters"][!,:pCO2_sequestration] = convert(Array{Float64}, inputs_ccs["FLECCS_parameters"][!,:pCO2_sequestration])/ModelScalingFactor
-
-	end
+	#if setup["ParameterScale"] == 1
+	#	inputs_ccs["FLECCS_parameters"][!,:pCO2_sequestration] = convert(Array{Float64}, inputs_ccs["FLECCS_parameters"][!,:pCO2_sequestration])/ModelScalingFactor
+	#end
 
 
 

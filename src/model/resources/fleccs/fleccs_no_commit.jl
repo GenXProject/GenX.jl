@@ -71,7 +71,7 @@ function fleccs_no_commit(EP::Model, inputs::Dict, FLECCS::Int, Reserves::Int)
 	FLECCS_ALL = inputs["FLECCS_ALL"] # set of FLECCS generator
 	NO_COMMIT_ccs =  inputs["NO_COMMIT_CCS"]
 
-	FLECCS_parameters = inputs["FLECCS_parameters"] # FLECCS specific parameters
+#	FLECCS_parameters = inputs["FLECCS_parameters"] # FLECCS specific parameters
 	# get number of flexible subcompoents
 	N_F = inputs["N_F"]
 
