@@ -25,8 +25,8 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 		end
 	end
 	dfTransCap = DataFrame(
-	Line = 1:L, New_Trans_Capacity = convert(Array{Union{Missing,Float32}}, transcap),
-	Cost_Trans_Capacity = convert(Array{Union{Missing,Float32}}, transcap.*inputs["pC_Line_Reinforcement"]),
+	Line = 1:L, New_Trans_Capacity = convert(Array{Float64}, transcap),
+	Cost_Trans_Capacity = convert(Array{Float64}, transcap.*inputs["pC_Line_Reinforcement"]),
 	)
 	CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
 end

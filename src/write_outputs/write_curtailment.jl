@@ -23,28 +23,21 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, G))
-	for i in 1:G
-		if i in inputs["VRE"]
-			dfCurtailment[!,:AnnualSum][i] = sum(inputs["omega"].*(inputs["pP_Max"][i,:]).*value.(EP[:eTotalCap])[i,:].- inputs["omega"].*value.(EP[:vP])[i,:])
-		else
-			dfCurtailment[!,:AnnualSum][i] = 0
-		end
-	end
-	if setup["ParameterScale"] ==1
-		dfCurtailment.AnnualSum = dfCurtailment.AnnualSum * ModelScalingFactor
-		dfCurtailment = hcat(dfCurtailment, DataFrame(( ModelScalingFactor * (inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP])), :auto))
+	VRE = inputs["VRE"]
+	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Float64}(undef, G))
+	curtailment = zeros(G, T)
+	if setup["ParameterScale"] == 1
+		curtailment[VRE, :] = ModelScalingFactor * value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
 	else
-		dfCurtailment = hcat(dfCurtailment, DataFrame(((inputs["pP_Max"]).*value.(EP[:eTotalCap]).- value.(EP[:vP])), :auto))
+		curtailment[VRE, :] = value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
 	end
-
-
+	dfCurtailment.AnnualSum = curtailment * inputs["omega"]
+	dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCurtailment,auxNew_Names)
+
 	total = DataFrame(["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		total[:,t+3] .= sum(dfCurtailment[:,Symbol("t$t")][1:G])
-	end
+	total[:, 4:T+3] .= sum(curtailment, dims = 1)
 	rename!(total,auxNew_Names)
 	dfCurtailment = vcat(dfCurtailment, total)
 	CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), writeheader=false)
