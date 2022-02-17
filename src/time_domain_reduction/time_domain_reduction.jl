@@ -557,8 +557,10 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     TimeDomainReductionFolder = mysetup["TimeDomainReductionFolder"]
 
     MultiStage = mysetup["MultiStage"]
-    MultiStageConcatenate = myTDRsetup["MultiStageConcatenate"]
-    NumStages = mysetup["MultiStageSettingsDict"]["NumStages"]
+    if MultiStage == 1
+        MultiStageConcatenate = myTDRsetup["MultiStageConcatenate"]
+        NumStages = mysetup["MultiStageSettingsDict"]["NumStages"]
+    end
 
     Load_Outfile = joinpath(TimeDomainReductionFolder, "Load_data.csv")
     GVar_Outfile = joinpath(TimeDomainReductionFolder, "Generators_variability.csv")
@@ -570,7 +572,6 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     mysetup_local = mysetup
     # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
     mysetup_local["ParameterScale"]=0  # Performing cluster and report outputs in user-provided units
-#dev_ddp
 
     if MultiStage == 1
         model_dict=Dict()
@@ -809,43 +810,60 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         println("Representative Periods: ", M)
     end
 
-    # K-means/medoids returns indices from DistMatrix as its medoids.
-    #   This does not account for missing extreme weeks.
+    ##### Step 4: Aggregation
+    # Set clustering outputs in correct numeric order.
+    # Add the subperiods corresponding to the extreme periods back into the data.
+    # Rescale weights to total user-specified number of hours (e.g., 8760 for one year).
+    # If LoadExtremePeriod=false (because we don't want to change peak load day), rescale load to ensure total demand is equal.
+
+    ### K-means/medoids returns indices from DistMatrix as its medoids.
+    #   This does not account for missing extreme weeks nor "alphabetical" ordering of numeric columns (i.e., 1, 10, 11, ...).
     #   This is corrected retroactively here.
+    #   Optional to do later: reorder ClusterInputDF numerically before clustering instead
+
+    # ClusterInputDF Reframing of Centers/Medoids (i.e., alphabetical as opposed to indices, same order)
     M = [parse(Int64, string(names(ClusteringInputDF)[i])) for i in M]
     if v println("Fixed M: ", M) end
 
-
-    ##### Step 4: Aggregation
-    # Add the subperiods corresponding to the extreme periods back into the data.
-    # Rescale weights to total user-specified number of hours (e.g., 8760 for one year).
-    # If LoadExtremePeriod=false (because we don't want to change peak load day), rescale load to ensure total demand is equal
+    # ClusterInputDF Ordering of All Periods (i.e., alphabetical as opposed to indices)
+    A_Dict = Dict()   # States index of representative period within M for each period a in A
+    M_Dict = Dict()   # States representative period m for each period a in A
+    for i in 1:length(A)
+        A_Dict[parse(Int64, string(names(ClusteringInputDF)[i]))] = A[i]
+        M_Dict[parse(Int64, string(names(ClusteringInputDF)[i]))] = M[A[i]]
+    end
 
     # Add extreme periods into the clustering result with # of occurences = 1 for each
     ExtremeWksList = sort(ExtremeWksList)
     if UseExtremePeriods == 1
         if v println("Extreme Periods: ", ExtremeWksList) end
         M = [M; ExtremeWksList]
-        for w in 1:length(ExtremeWksList)
-            insert!(A, ExtremeWksList[w], NClusters+w)
+        A_idx = NClusters + 1
+        for w in ExtremeWksList
+            A_Dict[w] = A_idx
+            M_Dict[w] = w
             push!(W, 1)
+            A_idx += 1
         end
         NClusters += length(ExtremeWksList) #NClusers from this point forward is the ending number of periods
     end
+
+    # Recreate A in numeric order (as opposed to ClusterInputDF order)
+    A = [A_Dict[i] for i in 1:(length(A)+length(ExtremeWksList))]
 
     N = W  # Keep cluster version of weights stored as N, number of periods represented by RP
 
     # Rescale weights to total user-specified number of hours
     W = scale_weights(W, WeightTotal, v)
 
-    # Order representative periods chronologically
+    # Order representative periods chronologically for Load_data outputs
     #   SORT A W M in conjunction, chronologically by M, before handling them elsewhere to be consistent
     #   A points to an index of M. We need it to point to a new index of sorted M. Hence, AssignMap.
     old_M = M
-    df_sort = DataFrame( Weights = W, NumStagesRepresented = N, Rep_Period = M)
+    df_sort = DataFrame( Weights = W, NumPeriodsRepresented = N, Rep_Period = M)
     sort!(df_sort, [:Rep_Period])
     W = df_sort[!, :Weights]
-    N = df_sort[!, :NumStagesRepresented]
+    N = df_sort[!, :NumPeriodsRepresented]
     M = df_sort[!, :Rep_Period]
     AssignMap = Dict( i => findall(x->x==old_M[i], M)[1] for i in 1:length(M))
     A = [AssignMap[a] for a in A]
@@ -916,7 +934,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
     FinalOutputData = vcat(rpDFs...)  # For comparisons with input data to evaluate clustering process
     GVOutputData = vcat(gvDFs...)     # Generators Variability
     LPOutputData = vcat(lpDFs...)     # Load Profiles
-    FPOutputData = vcat(fpDFs...)     # Load Profiles
+    FPOutputData = vcat(fpDFs...)     # Fuel Profiles
 
 
     ##### Step 5: Evaluation
@@ -936,9 +954,9 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 	end
 
     if MultiStage == 1
-        print("Outputs: MultiStage")
+        if v print("Outputs: MultiStage") end
         if MultiStageConcatenate == 1
-            println(" with Concatenation")
+            if v println(" with Concatenation") end
             groups_per_stage = round.(Int, size(A,1)*relative_lengths)
             group_ranges = [if i == 1 1:groups_per_stage[1] else sum(groups_per_stage[1:i-1])+1:sum(groups_per_stage[1:i]) end for i in 1:size(relative_lengths,1)]
 
@@ -1015,7 +1033,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             end
 
         else
-            println("without Concatenation has not yet been FULLY implemented.")
+            println("without Concatenation has not yet been fully implemented.")
             mkpath(joinpath(inpath,"Inputs","Inputs_p1", TimeDomainReductionFolder))
 
             ### TDR_Results/Load_data.csv
@@ -1071,7 +1089,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
             YAML.write_file(string(inpath,sep,"Inputs",sep,"Inputs_p1",sep,YAML_Outfile), myTDRsetup)
         end
     else
-        println("Outputs: Single-Stage")
+        if v println("Outputs: Single-Stage") end
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
         ### TDR_Results/Load_data.csv
@@ -1127,5 +1145,13 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
         YAML.write_file(string(inpath,sep,YAML_Outfile), myTDRsetup)
     end
 
-    return FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict, R, A, M, DistMatrix, ClusteringInputDF
+    return Dict("OutputDF" => FinalOutputData,
+                "InputDF" => ClusteringInputDF,
+                "ColToZoneMap" => col_to_zone_map,
+                "TDRsetup" => myTDRsetup,
+                "ClusterObject" => R,
+                "Assignments" => A,
+                "Weights" => W,
+                "Centers" => M,
+                "RMSE" => RMSE)
 end

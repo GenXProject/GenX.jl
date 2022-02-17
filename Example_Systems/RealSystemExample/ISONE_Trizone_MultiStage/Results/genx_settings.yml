@@ -18,7 +18,6 @@ Trans_Loss_Segments: 1
 CapacityReserveMargin: 0
 ModelingtoGenerateAlternativeSlack: 0.1
 Solver: "Gurobi"
-LongDurationStorage: 0
 Reserves: 0
 StorageLosses: 1
 OperationWrapping: 1

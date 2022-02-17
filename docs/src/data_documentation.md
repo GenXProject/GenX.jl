@@ -12,9 +12,6 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 |OperationWrapping | Select temporal resolution for operations constraints.|
 ||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
 ||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|LongDurationStorage | Select whether inter-period energy exchange allowed for storage technologies.|
-||0= inter-period energy exchange not allowed.|
-||1 = inter-period energy exchange allowed.|
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
 ||0 = Use full input data as provided.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
