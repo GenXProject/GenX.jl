@@ -129,10 +129,9 @@ function transmission_multi_stage(EP::Model, inputs::Dict, UCommit::Int, Network
 		stage_len = multi_stage_settings_d["StageLengths"][cur_stage]
 
 		# DDP - OPEX multiplier to count multiple years between two model stages
-		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		EP[:eObj] += (1/OPEXMULT)*eTotalCNetworkExp
+		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCNetworkExp
 
     end
 
