@@ -94,20 +94,23 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
-	# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
-	# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
-	inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-	inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-	inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+	# Define OPEXMULT here, include in inputs_dict[t] for use in dual_dynamic_programming.jl, transmission_multi_stage.jl, and investment_multi_stage.jl
+	OPEXMULT = myopic ? 1 : sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
+	inputs_d["OPEXMULT"] = OPEXMULT
 
-	# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)]) # OPEX multiplier to count multiple years between two model stages
+	if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
+		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
+		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 
-	# Update fixed O&M costs
-	# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
-	inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
+		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
+		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
+	end
 
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID])
@@ -121,8 +124,10 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 
 		dfNetworkMultiStage = inputs_d["dfNetworkMultiStage"]
 
-		# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
-		inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiStage[!,:Capital_Recovery_Period], inputs_d["transmission_WACC"])
+		if !myopic ### Leave myopic costs in annualized form
+			# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
+			inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiStage[!,:Capital_Recovery_Period], inputs_d["transmission_WACC"])
+		end
 
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment stage
 		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"]
