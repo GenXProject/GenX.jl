@@ -236,7 +236,7 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 
 		@constraints(EP, begin
 			# cUpTimeInterior: Constraint looks back over last n hours, where n = dfGen[!,:Up_Time][y]
-			[t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-dfGen[!,:Up_Time][y]):t)
+			[t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-dfGen[!,:Up_Time][y])-1:t)
 
 			# cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
 			# cUpTimeWrap constraint equivalant to: sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
