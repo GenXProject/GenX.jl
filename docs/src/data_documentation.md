@@ -12,9 +12,6 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 |OperationWrapping | Select temporal resolution for operations constraints.|
 ||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
 ||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|LongDurationStorage | Select whether inter-period energy exchange allowed for storage technologies.|
-||0= inter-period energy exchange not allowed.|
-||1 = inter-period energy exchange allowed.|
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
 ||0 = Use full input data as provided.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
@@ -301,7 +298,7 @@ This file contains cost and performance parameters for various generators and ot
 |Max\_Duration  |Specifies the maximum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
 |Max\_Flexible\_Demand\_Delay  |Maximum number of hours that demand can be deferred or delayed. Applies to resources with FLEX type 1 (hours). |
 |Max\_Flexible\_Demand\_Advance  |Maximum number of hours that demand can be scheduled in advance of the original schedule. Applies to resources with FLEX type 1 (hours). |
-|Flexible\_Demand\_Energy\_Eff  |[0,1], Energy efficiency associated with time shifting demand. Represents energy losses due to time shifting (or 'snap back' effect of higher consumption due to delay in use) that may apply to some forms of flexible demand. Applies to resources with FLEX type 1 (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
+|Flexible\_Demand\_Energy\_Eff  |[0,1], Energy efficiency associated with time shifting demand. Values less than 1.0 represent energy losses due to time shifting (or ‘snap back’ effect of higher consumption due to delay in use) that may apply to some forms of flexible demand. Applies to resources with FLEX type 1 (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
 |**Required for writing outputs**|
 |region | Name of the model region|
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |

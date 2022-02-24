@@ -159,8 +159,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         else
             EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
         end
-        ##Aneesha's PR modification
-        #EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
         ##Dev
     end
 
@@ -180,12 +178,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if !isempty(inputs["STOR_ALL"])
         ##dev_ddp
         if setup["MultiStage"] > 0
-            EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["MultiStageSettingsDict"])
+            EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["MultiStageSettingsDict"])
         else
-            EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+            EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
         end
-        ##Aneesha's PR modification
-        #EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
         ##Dev
     end
 
