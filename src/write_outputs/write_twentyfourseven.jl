@@ -110,7 +110,7 @@ function write_twentyfourseven(path::AbstractString, sep::AbstractString, inputs
     if (!isempty(STOR_ALL))
         tempinjection[STOR_ALL, :] = value.(EP[:vP])[STOR_ALL, :] - (value.(EP[:vCHARGE][STOR_ALL, :])).data
     end
-    if (isempty(FLEX))
+    if (!isempty(FLEX))
         tempinjection[FLEX, :] = (value.(EP[:vCHARGE_FLEX][FLEX, :])).data - value.(EP[:vP])[FLEX, :]
     end
     for rpsh in 1:NumberofTFS
