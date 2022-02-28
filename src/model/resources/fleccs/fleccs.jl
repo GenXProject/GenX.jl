@@ -18,14 +18,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 	FLECCS(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
 
 The FLECCS module determines which flecce deisng should be implemented
-FLECCS1 = conventional NGCC-CCS
-FLECCS2 = NGCC coupled with solvent storate
-FLECCS3 = NGCC coupled with thermal storage - option1 cold + hot storage
-FLECCS4 = NGCC coupled with thermal storage - option2 cold storage + heater for hot storage
+FLECCS1 = conventional NGCC-CCS - retrofit is also elibigle
+FLECCS2 = NGCC coupled with solvent storate + aux boiler
+FLECCS3 = NGCC coupled with solvent storate 
+FLECCS4 = NGCC coupled with thermal storage - cold storage + heater for hot storage
 FLECCS5 = NGCC coupled with H2 storage
 FLECCS6 = NGCC coupled with DAC (GT+Upitt)
-FLECCS7 = NGCC coupled  with DAC (MIT)
-FLECCS8 = Allam cycle coupled with CO2 storage
+FLECCS7 = NGCC coupled  with lime based DAC 
+FLECCS8 = Allam cycle coupled with LOX storage 
 """
 
 function fleccs(EP::Model, inputs::Dict, FLECCS::Int,  UCommit::Int, Reserves::Int, CapacityReserveMargin::Int, MinCapReq::Int)

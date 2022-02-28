@@ -18,8 +18,6 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 	FLECCS7(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
 
 The FLECCS7 module creates decision variables, expressions, and constraints related to FLECCS Process with DAC (MIT). In this module, we will write up all the constraints formulations associated with the power plant.
-
-This module uses the following 'helper' functions in separate files: FLECCSX_commit() for FLECCS subcompoents subject to unit commitment decisions and constraints (if any) and FLECCSX_no_commit() for FLECCS subcompoents not subject to unit commitment (if any).
 """
 
 function fleccs7(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::Int)
@@ -92,11 +90,11 @@ function fleccs7(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::I
 
 	# Specific constraints for FLECCS system
 	# Piecewise heat rate UC Equation 16 and 17
-	#@constraint(EP, [y in FLECCS_ALL, t = 1:T], 
-	#    vFuel_use_NGCC[y,t] >= vP_NGCC[y,t]*dfGen_ccs[!,:c1][y] + EP[:vCOMMIT_FLECCS][y, NGCC_id, t]*dfGen_ccs[!,:d1][y])
-	#@constraint(EP, [y in FLECCS_ALL, t = 1:T],
-	#	vFuel_use_NGCC[y,t] >= vP_NGCC[y,t]*dfGen_ccs[!,:c2][y] + EP[:vCOMMIT_FLECCS][y, NGCC_id, t]*dfGen_ccs[!,:d2][y])
-	@expression(EP, vFuel_use_NGCC[y in FLECCS_ALL, t = 1:T], vP_NGCC[y,t] * 6.8)
+	@constraint(EP, [y in FLECCS_ALL, t = 1:T], 
+	    vFuel_use_NGCC[y,t] >= vP_NGCC[y,t]*dfGen_ccs[!,:c1][y] + EP[:vCOMMIT_FLECCS][y, NGCC_id, t]*dfGen_ccs[!,:d1][y])
+	@constraint(EP, [y in FLECCS_ALL, t = 1:T],
+		vFuel_use_NGCC[y,t] >= vP_NGCC[y,t]*dfGen_ccs[!,:c2][y] + EP[:vCOMMIT_FLECCS][y, NGCC_id, t]*dfGen_ccs[!,:d2][y])
+	#@expression(EP, vFuel_use_NGCC[y in FLECCS_ALL, t = 1:T], vP_NGCC[y,t] * 6.8)
     # (1) Molar flow rate of CO2 in the flue gas, eCO2use (kmol/hr) = 1:35eFuel_use_NGCCt (MMBtu/hr), p1 =  1.35
     @expression(EP, eCO2_flue[y in FLECCS_ALL,t=1:T], dfGen_ccs[!,:p1][1+n*(y-1)] * vFuel_use_NGCC[y,t])
     # (5) Molar flow rate of fuel into the calciner block, need to define eFuel_use_calciner first before using it in a formulation.
@@ -133,43 +131,6 @@ function fleccs7(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::I
     #@constraint(EP, [y in FLECCS_ALL, t in START_SUBPERIODS], nCaO_DAC[y, t] == nCaO_DAC[y,t+hours_per_subperiod-1] +  (CaO_out_calciner[y,t] - CaO_use[y,t]))
 
 
-	# (16) this is implemented elsewhere, in fleccs_commit 
-	#@constraint(EP, cMax_eCCS_net[y in FLECCS_ALL,t=1:T], eCCS_net[y,t] <= vCAP_NGCC[y,t])
-
-	# (19 Min) ///vCAP_calciner_min[y,t]? this is implemented elsewhere, in fleccs_commit 
-	#@constraint(EP, cMin_vCaCO3_use_calciner[y in FLECCS_ALL,t=1:T], vCaCO3_use_calciner[y,t] >= vCAP_calciner_min[y])
-	# (19 Max) ///vCAP_calciner[y,t]? this is implemented elsewhere, in fleccs_commit 
-	#@constraint(EP, cMax_vCaCO3_use_calciner[y in FLECCS_ALL,t=1:T], vCaCO3_use_calciner[y,t] <= vCAP_calciner[y])
-
-#= 
-	# All variables >= 0, those are already implemented when we created variables
-	@constraints(EP,begin
-		# Mass/Mass Flow
-		eFuel_use_calciner >= 0
-		vFuel_use_NGCC >= 0
-		eCO2_flue >= 0
-		vCaCO3_use_calciner >=0
-		CO2_liquified >= 0
-		eCO2_vent >= 0
-		CaO_out_calciner >= 0
-		nCaO_DAC >= 0
-		CaO_use >= 0
-		CO2_atmosphere >= 0
-		# Power
-		vP_calciner >= 0
-		vP_use_DAC >= 0			# vP_use_DAC is inproperly listed as vP_DAC in doc
-		vP_NGCC >= 0
-		eCCS_net >= 0
-		# Capacity
-		vCAP_calciner >= 0
-		vCAP_calciner_min >= 0
-		vCAP_DAC >= 0
-		vCAP_NGCC >= 0
-		vCAP_connection >=0		# used?
-	end)
- =#
-	#********************************************************
-	
 	# Power Balance /// I'm using eCCS_net to replace vP_out 
 	@expression(EP, ePowerBalanceFLECCS[t=1:T, z=1:Z], sum(eCCS_net[y,t] for y in unique(dfGen_ccs[(dfGen_ccs[!,:Zone].==z),:R_ID])))
 	EP[:ePowerBalance] += ePowerBalanceFLECCS
@@ -182,19 +143,9 @@ function fleccs7(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::I
 	@constraint(EP,[y in FLECCS_ALL, t=1:T], nCaO_DAC[y,t] <= EP[:eTotalCapFLECCS][y, NGCC_id] * 200000/688)
 
 
-
-	#@constraint(EP,[y in FLECCS_ALL], EP[:eTotalCapFLECCS][y, CAL_id] >= 3000)
-	#@constraint(EP,[y in FLECCS_ALL], EP[:eTotalCapFLECCS][y, CAL_id] <= 20000)
-	#@constraint(EP,[y in FLECCS_ALL], EP[:eTotalCapFLECCS][y, DAC_id] <= 2000000)
-
-
-	# Output
-	#@variable(EP, vFLECCS_output[y in FLECCS_ALL, i in N_F, 1:T]  >= 0) this has been implemented in fleccs.jl 
-	# create a container for FLECCS output.
 	@constraints(EP, begin
 	    [y in FLECCS_ALL, i in NGCC_id, t = 1:T], EP[:vFLECCS_output][y,i,t] == vP_NGCC[y,t]
 		[y in FLECCS_ALL, i in CAL_id,t = 1:T],EP[:vFLECCS_output][y,i,t] == vCaCO3_use_calciner[y,t]
-	#	[y in FLECCS_ALL, i in CAL_id,t = 1:T],vFLECCS_output[y,i,t] == eCO2_vent[y,t]
 		[y in FLECCS_ALL, i in DAC_id,t = 1:T],EP[:vFLECCS_output][y,i,t] == nCaO_DAC[y,t]
 	end)
 

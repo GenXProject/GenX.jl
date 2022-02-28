@@ -15,9 +15,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	FLECCS2(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
+	FLECCS8(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
 
-The FLECCS2 module creates decision variables, expressions, and constraints related to NGCC-CCS coupled with solvent storage systems. In this module, we will write up all the constraints formulations associated with the power plant.
+The FLECCS8 module creates decision variables, expressions, and constraints related to Allam cycle coupled with LOX. In this module, we will write up all the constraints formulations associated with the power plant.
 
 This module uses the following 'helper' functions in separate files: FLECCS2_commit() for FLECCS subcompoents subject to unit commitment decisions and constraints (if any) and FLECCS2_no_commit() for FLECCS subcompoents not subject to unit commitment (if any).
 """

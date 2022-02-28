@@ -24,7 +24,7 @@ This module uses the following 'helper' functions in separate files: FLECCS2_com
 
 function fleccs2(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::Int)
 
-	println("FLECCS2, NGCC coupled with solvent storage Resources Module - Envergex with Aux boiler")
+	println("FLECCS2, NGCC coupled with solvent storage Resources Module - with Aux boiler")
 
 	T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones

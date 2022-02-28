@@ -18,8 +18,6 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 	FLECCS1(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int)
 
 The FLECCS1 module creates decision variables, expressions, and constraints related to NGCC-CCS coupled with solvent storage systems. In this module, we will write up all the constraints formulations associated with the power plant.
-
-This module uses the following 'helper' functions in separate files: FLECCS1_commit() for FLECCS subcompoents subject to unit commitment decisions and constraints (if any) and FLECCS2_no_commit() for FLECCS subcompoents not subject to unit commitment (if any).
 """
 
 function fleccs1(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::Int)
