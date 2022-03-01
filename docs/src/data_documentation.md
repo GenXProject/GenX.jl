@@ -59,8 +59,12 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
 |WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|MultiStage | Model multiple planning stages |
+||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
+||0 = Model single planning stage |
+
 |**Miscellaneous**|
-|PrintModel | Flag for printnig the model equations as .lp file.|
+|PrintModel | Flag for printing the model equations as .lp file.|
 ||1= including the model equation as an output|
 ||0 for the model equation not being included as an output|
 |MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|
