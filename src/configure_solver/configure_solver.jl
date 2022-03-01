@@ -40,6 +40,9 @@ function configure_solver(solver::String, solver_settings_path::String)
 	elseif solver == "Cbc"
 		cbc_settings_path = joinpath(solver_settings_path, "cbc_settings.yml")
         OPTIMIZER = configure_cbc(cbc_settings_path)
+	elseif solver == "SCIP"
+		scip_settings_path = joinpath(solver_settings_path, "scip_settings.yml")
+	OPTIMIZER = configure_scip(scip_settings_path)
 	end
 
 	return OPTIMIZER

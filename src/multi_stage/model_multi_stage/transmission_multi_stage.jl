@@ -129,10 +129,9 @@ function transmission_multi_stage(EP::Model, inputs::Dict, UCommit::Int, Network
 		stage_len = multi_stage_settings_d["StageLengths"][cur_stage]
 
 		# DDP - OPEX multiplier to count multiple years between two model stages
-		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		EP[:eObj] += (1/OPEXMULT)*eTotalCNetworkExp
+		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCNetworkExp
 
     end
 
@@ -165,8 +164,11 @@ function transmission_multi_stage(EP::Model, inputs::Dict, UCommit::Int, Network
 	# If network expansion is used:
 	if NetworkExpansion == 1
 		# Transmission network related power flow and capacity constraints
-		# Constrain maximum line capacity reinforcement for lines eligible for expansion
-		@constraint(EP, cMaxLineReinforcement[l in EXPANSION_LINES], eAvail_Trans_Cap[l] <= inputs["pTrans_Max_Possible"][l])
+		# Constrain maximum possible flow for lines eligible for expansion regardless of previous expansions
+		@constraint(EP, cMaxFlowPossible[l in EXPANSION_LINES], eAvail_Trans_Cap[l] <= inputs["pTrans_Max_Possible"][l])
+
+		# Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
+		@constraint(EP, cMaxLineReinforcement[l in EXPANSION_LINES], vNEW_TRANS_CAP[l] <= inputs["pMax_Line_Reinforcement"][l])
 	end
 	#END network expansion contraints
 

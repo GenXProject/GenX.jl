@@ -33,7 +33,7 @@ using GenX
 using YAML
 
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
-mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
+mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
 ### Cluster time series inputs if necessary and if specified by the user
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
@@ -54,7 +54,7 @@ OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 
 ### Load inputs
 println("Loading Inputs")
-myinputs = Dict() # myinputs dictionary will store read-in data and computed parameters
+# myinputs dictionary will store read-in data and computed parameters
 myinputs = load_inputs(mysetup, inpath)
 
 ### Generate model

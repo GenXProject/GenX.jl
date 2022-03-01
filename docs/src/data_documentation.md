@@ -12,9 +12,6 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 |OperationWrapping | Select temporal resolution for operations constraints.|
 ||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
 ||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|LongDurationStorage | Select whether inter-period energy exchange allowed for storage technologies.|
-||0= inter-period energy exchange not allowed.|
-||1 = inter-period energy exchange allowed.|
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
 ||0 = Use full input data as provided.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
@@ -193,8 +190,9 @@ This input file contains input parameters related to: 1) definition of model zon
 ||0 = the transmission line is not eligible for adding firm capacity to the region|
 |DerateCapRes\_* | (0,1) value represents the derating of the firm transmission capacity for the capacity reserve margin constraint.|
 |CapResExcl\_* | (-1,1,0) = -1 if the designated direction of the transmission line is inbound to locational deliverability area (LDA) modeled by the capacity reserve margin constraint. = 1 if the designated direction of the transmission line is outbound from the LDA modeled by the capacity reserve margin constraint. Zero otherwise.|
-
-
+|**MultiStage == 1**|
+|Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for network transmission line expansion.  |
+|Line\_Max\_Flow\_Possible\_MW  |Maximum possible line flow in the current model period. Overrides Line\_Max\_Reinforcement\_MW, which is not used when performing multi-stage modeling.  |
 
 #### 2.1.3 Load\_data.csv
 
@@ -304,8 +302,13 @@ This file contains cost and performance parameters for various generators and ot
 |**Required for writing outputs**|
 |region | Name of the model region|
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
-
-
+|**MultiStage == 1**|
+|Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs.  |
+|Lifetime  |Lifetime (in years) used for determining endogenous retirements of newly built capacity.  |
+|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. |
+|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing discharge capacity. |
+|Min\_Retired\_Energy\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. |
+|Min\_Retired\_Charge\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing charge capacity. |
 ###### Table 6: Settings-specific columns in the Generators\_data.csv file
 ---
 |**Column Name** | **Description**|

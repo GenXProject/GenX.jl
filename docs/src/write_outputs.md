@@ -98,3 +98,8 @@ Pages = ["write_esr_revenue.jl"]
 Modules = [GenX]
 Pages = ["write_net_revenue.jl"]
 ```
+## Write Settings files
+```@autodocs
+Modules = [GenX]
+Pages = ["write_settings.jl"]
+```

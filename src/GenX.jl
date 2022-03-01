@@ -25,7 +25,15 @@ export solve_model
 export write_outputs
 export cluster_inputs
 export mga
+export morris
 export simple_operation
+export choose_output_dir
+
+# Multi-stage methods
+export run_ddp
+export configure_multi_stage_inputs
+export load_inputs_multi_stage
+export write_multi_stage_outputs
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -39,10 +47,20 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
+
+using DiffEqSensitivity
+using OrdinaryDiffEq
+using QuasiMonteCarlo
+using Random
+using RecursiveArrayTools
+using Statistics
+
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-using Gurobi
+# using CPLEX
+#using Gurobi
 #using CPLEX
-using BenchmarkTools
+#using MOI
+using SCIP
 using Clp
 using Cbc
 
@@ -58,6 +76,7 @@ include("configure_settings/configure_settings.jl")
 
 # Configure optimizer instance
 include("configure_solver/configure_gurobi.jl")
+include("configure_solver/configure_scip.jl")
 include("configure_solver/configure_cplex.jl")
 include("configure_solver/configure_clp.jl")
 include("configure_solver/configure_cbc.jl")
@@ -96,6 +115,7 @@ include("model/resources/curtailable_variable_renewable/curtailable_variable_ren
 include("model/resources/flexible_demand/flexible_demand.jl")
 
 include("model/resources/hydro/hydro_res.jl")
+include("model/resources/hydro/hydro_inter_period_linkage.jl")
 
 include("model/resources/must_run/must_run.jl")
 
@@ -111,12 +131,14 @@ include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
 
-include("model/resources/retrofit/retrofit.jl")
-
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
+
+include("multi_stage/model_multi_stage/storage_multi_stage.jl")
+include("multi_stage/model_multi_stage/investment_multi_stage.jl")
+include("multi_stage/model_multi_stage/transmission_multi_stage.jl")
 
 include("model/generate_model.jl")
 include("model/solve_model.jl")
@@ -169,5 +191,14 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-include("modeling_to_generate_alternatives/modeling_to_generate_alternatives.jl")
+include("multi_stage/dual_dynamic_programming.jl")
+include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
+include("multi_stage/load_inputs_multi_stage/load_generators_data_multi_stage.jl")
+include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
+include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
+include("multi_stage/write_outputs_multi_stage/write_capacity_multi_stage.jl")
+include("multi_stage/write_outputs_multi_stage/write_settings.jl")
+
+include("additional_tools/modeling_to_generate_alternatives.jl")
+include("additional_tools/method_of_morris_v2.jl")
 end

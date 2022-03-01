@@ -1,0 +1,5 @@
+Resource,Capital_Recovery_Period,Lifetime,Min_Retired_Cap_MW_p1,Min_Retired_Cap_MW_p2,Min_Retired_Cap_MW_p3,Min_Retired_Energy_Cap_MW_p1,Min_Retired_Energy_Cap_MW_p2,Min_Retired_Energy_Cap_MW_p3,Min_Retired_Charge_Cap_MW_p1,Min_Retired_Charge_Cap_MW_p2,Min_Retired_Charge_Cap_MW_p3
+natural_gas_combined_cycle,30,30,1000,2000,3000,0,0,0,0,0,0
+solar_pv,20,20,0,250,250,0,0,0,0,0,0
+onshore_wind,20,20,500,500,0,0,0,0,0,0,0
+battery,15,15,0,0,0,0,0,0,0,0,0

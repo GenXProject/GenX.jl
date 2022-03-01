@@ -98,7 +98,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
     # Step a.i) Initialize cost-to-go function for t = 1:num_stages
     for t in 1:num_stages
-        models_d[t] = initialize_cost_to_go(settings_d, models_d[t])
+        models_d[t] = initialize_cost_to_go(settings_d, models_d[t], inputs_d[t])
     end
 
     # Step a.ii) Set objective upper bound
@@ -171,8 +171,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
         end
 
-        ## DEV NOTE: Jack, for the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
-        ### Please implement the appropriate If condition statements here.
+        ### For the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
 		if myopic
 			println("***********")
             println("Exiting After First Forward Pass! (Myopic)")
@@ -249,7 +248,7 @@ inputs:
   * outpath – String which represents the path to the Results directory.
   * settings\_d - Dictionary containing settings configured in the GenX settings genx_settings.yml file as well as the multi-stage settings file multi\_stage\_settings.yml.
 """
-function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict)
+function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict, inputs_dict::Dict)
 
 	if Sys.isunix()
 		sep = "/"
@@ -265,7 +264,7 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     #write_capacities_charge(outpath, sep, multi_stage_settings_d)
     #write_capacities_energy(outpath, sep, multi_stage_settings_d)
     #write_network_expansion(outpath, sep, multi_stage_settings_d)
-    write_costs(outpath, sep, multi_stage_settings_d)
+    write_costs(outpath, sep, multi_stage_settings_d, inputs_dict)
     write_stats(outpath, sep, stats_d)
 	write_settings(outpath, sep, settings_d)
 
@@ -329,7 +328,7 @@ inputs:
   * sep – String which represents the file directory separator character.
   * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 """
-function write_costs(outpath::String, sep::String, settings_d::Dict)
+function write_costs(outpath::String, sep::String, settings_d::Dict, inputs_dict::Dict)
 
 	num_stages = settings_d["NumStages"] # Total number of DDP stages
 	wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
@@ -342,7 +341,8 @@ function write_costs(outpath::String, sep::String, settings_d::Dict)
         costs_d[p] = DataFrame(CSV.File(string(cur_path,sep,"costs.csv"), header=true), copycols=true)
     end
 
-	OPEXMULTS = [ sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_lens[j])]) for j in 1:num_stages] # Stage-wise OPEX multipliers to count multiple years between two model stages
+	OPEXMULTS = [ inputs_dict[j]["OPEXMULT"] for j in 1:num_stages ] # Stage-wise OPEX multipliers to count multiple years between two model stages
+
     # Set first column of DataFrame as resource names from the first stage
     df_costs = DataFrame(Costs = costs_d[1][!,:Costs])
 
@@ -653,30 +653,24 @@ inputs:
 
 returns: JuMP model with updated objective function.
 """
-function initialize_cost_to_go(settings_d::Dict, EP::Model)
+function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
 
 	cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
 	stage_len = settings_d["StageLengths"][cur_stage]
 	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
 	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
+	OPEXMULT = inputs["OPEXMULT"] # OPEX multiplier to count multiple years between two model stages, set in configure_multi_stage_inputs.jl
 
+	# Overwrite the objective function to include the cost-to-go variable (not in myopic case)
+	# Multiply discount factor to all terms except the alpha term or the cost-to-go function
+	# All OPEX terms get an additional adjustment factor
 	if myopic
-		# We do not apply the discount factor DF in the myopic case
-		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)]) # OPEX multiplier to count multiple years between two model stages
-
-		# Overwrite the objective function to include the cost-to-go variable vAlpha (not in myopic case)
-		# All OPEX terms get an additional adjustment factor OPEXMULT
-		@objective(EP, Min, OPEXMULT*EP[:eObj])
+		### No discount factor or OPEX multiplier applied in myopic case as costs are left annualized.
+		@objective(EP, Min, EP[:eObj])
 	else
-    	DF = 1/(1+wacc)^(stage_len*(cur_stage-1))  # Discount factor applied all to costs in each stage
-		OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)]) # OPEX multiplier to count multiple years between two model stages
-
+		DF = 1/(1+wacc)^(stage_len*(cur_stage-1))  # Discount factor applied all to costs in each stage ###
 		# Initialize the cost-to-go variable
 	    @variable(EP, vALPHA >= 0);
-
-		# Overwrite the objective function to include the cost-to-go variable
-		# Multiply discount factor to all terms except the alpha term or the cost-to-go function
-		# All OPEX terms get an additional adjustment factor
 		@objective(EP, Min, DF*OPEXMULT*EP[:eObj] + vALPHA)
 	end
 

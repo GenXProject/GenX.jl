@@ -150,11 +150,9 @@ function investment_discharge_multi_stage(EP::Model, inputs::Dict, multi_stage_s
 
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
-
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between stages for fixed costs.
-	EP[:eObj] += (1/OPEXMULT)*eTotalCFix
+	EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFix
 
 	## DDP - Endogenous Retirements ##
 
@@ -301,10 +299,9 @@ function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between stages for fixed costs.
-	EP[:eObj] += (1/OPEXMULT)*eTotalCFixCharge
+	EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixCharge
 
 	## DDP - Endogenous Retirements ##
 
@@ -444,10 +441,9 @@ function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between stages for fixed costs.
-	EP[:eObj] += (1/OPEXMULT)*eTotalCFixEnergy
+	EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixEnergy
 
 	## DDP - Endogenous Retirements ##
 

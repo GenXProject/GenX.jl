@@ -54,7 +54,7 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
     inputs_nw["pTrans_Max_Possible"] = zeros(Float64, inputs_nw["L"])
-        
+
     if setup["NetworkExpansion"]==1
         if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
             # Read between zone network reinforcement costs per peak MW of capacity added
@@ -78,6 +78,26 @@ function load_network_data(setup::Dict, path::AbstractString, sep::AbstractStrin
         end
     else
         inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"]
+    end
+
+    # Multi-Stage
+    if setup["MultiStage"] == 1
+        # Weighted Average Cost of Capital for Transmission Expansion
+        if setup["NetworkExpansion"]>=1
+            inputs_nw["transmission_WACC"]= convert(Array{Float64}, collect(skipmissing(network_var[!,:WACC])))
+        end
+
+        # Max Flow Possible on Each Line
+        num_stages = setup["MultiStageSettingsDict"]["NumStages"] # Number of Planning Stages
+        if setup["ParameterScale"] == 1
+            for p in 1:num_stages
+                inputs_nw["pLine_Max_Flow_Possible_MW_p$p"] = convert(Array{Float64}, collect(skipmissing(network_var[!,:Line_Max_Flow_Possible_MW])))/ModelScalingFactor # Convert to GW
+            end
+        else
+            for p in 1:num_stages
+                inputs_nw["pLine_Max_Flow_Possible_MW_p$p"] = convert(Array{Float64}, collect(skipmissing(network_var[!,:Line_Max_Flow_Possible_MW])))
+            end
+        end
     end
 
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)

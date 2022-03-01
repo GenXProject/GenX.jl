@@ -109,12 +109,36 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Initialize Objective Function Expression
 	@expression(EP, eObj, 0)
 
+
+	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
+	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+	# Initialize Capacity Reserve Margin Expression
+	if setup["CapacityReserveMargin"] > 0
+		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+	end
+
+	# Energy Share Requirement
+	if setup["EnergyShareRequirement"] >= 1
+		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+	end
+
+	if (setup["MinCapReq"] == 1)
+		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+	end
+
 	# Infrastructure
-	EP = discharge(EP, inputs)
+	EP = discharge(EP, inputs, setup["EnergyShareRequirement"])
 
-	EP = non_served_energy(EP, inputs)
+	EP = non_served_energy(EP, inputs, setup["CapacityReserveMargin"])
 
-	EP = investment_discharge(EP, inputs)
+##dev_ddp
+	if setup["MultiStage"] > 0
+		EP = investment_discharge_multi_stage(EP, inputs, setup["MultiStageSettingsDict"])
+	else
+		EP = investment_discharge(EP, inputs, setup["MinCapReq"])
+	end
+	
+##Dev
 
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
@@ -125,38 +149,57 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if Z > 1
-		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"])
+##dev_ddp
+		if setup["MultiStage"] > 0
+			EP = transmission_multi_stage(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiStageSettingsDict"])
+		else
+			EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
+		end
+		
+##Dev
 	end
 
 	# Technologies
 	# Model constraints, variables, expression related to dispatchable renewable resources
 
 	if !isempty(inputs["VRE"])
-		EP = curtailable_variable_renewable(EP, inputs, setup["Reserves"])
+		EP = curtailable_variable_renewable(EP, inputs, setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
 	# Model constraints, variables, expression related to non-dispatchable renewable resources
 	if !isempty(inputs["MUST_RUN"])
-		EP = must_run(EP, inputs)
+		EP = must_run(EP, inputs, setup["CapacityReserveMargin"])
 	end
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"])
+##dev_ddp
+		if setup["MultiStage"] > 0 
+			EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["MultiStageSettingsDict"])
+		else
+			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+		end
+		
+##Dev
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
 	if !isempty(inputs["HYDRO_RES"])
-		EP = hydro_res(EP, inputs, setup["Reserves"])
+		EP = hydro_res(EP, inputs, setup["Reserves"], setup["CapacityReserveMargin"])
+	end
+
+	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
+	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+		EP = hydro_inter_period_linkage(EP, inputs)
 	end
 
 	# Model constraints, variables, expression related to demand flexibility resources
 	if !isempty(inputs["FLEX"])
-		EP = flexible_demand(EP, inputs)
+		EP = flexible_demand(EP, inputs, setup["CapacityReserveMargin"])
 	end
 	# Model constraints, variables, expression related to thermal resource technologies
 	if !isempty(inputs["THERM_ALL"])
-		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"])
+		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
 	# Model constraints, variables, expression related to retrofit technologies
@@ -180,7 +223,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if (setup["MinCapReq"] == 1)
-		EP = minimum_capacity_requirement(EP, inputs)
+		EP = minimum_capacity_requirement(EP, inputs, setup)
 	end
 
 	## Define the objective function

@@ -87,6 +87,14 @@ ClusterFuelPrices: 1
   #   minimum wind cf as extreme periods.
 UseExtremePeriods: 1
 
+  #   - MultiStageConcatenate 
+  #   (Only considered if MultiStage = 1 in genx_settings.yml)
+  #   If 1, this designates that the model should time domain reduce the input data
+  #   of all model stages together. Else if 0, [still in development] the model will time domain reduce only
+  #   the first stage and will apply the periods of each other model stage to this set
+  #   of representative periods by closest Eucliden distance.
+MultiStageConcatenate: 1
+
 # STILL IN DEVELOPMENT - Currently just uses integral max load, integral min PV and wind.
 #   - ExtremePeriods
 #   Use this to define which periods to be included among the final representative periods 

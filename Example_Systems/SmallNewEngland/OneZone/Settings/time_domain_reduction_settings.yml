@@ -37,7 +37,7 @@ MaxPeriods: 11
   #   The minimum number of periods used to represent the input data. If using
   #   UseExtremePeriods, this must be at least the number of extreme periods requests. If 
   #   IterativelyAddPeriods if off, this will be the total number of periods.
-MinPeriods: 6
+MinPeriods: 8
 
   #   - IterativelyAddPeriods
   #   Either 'yes' or 'no', this designates whether or not to add periods
@@ -73,8 +73,8 @@ LoadWeight: 1
 WeightTotal: 8760
 
   #   - ClusterFuelPrices
-  #   Either 'yes' ro 'no', this indicates whether or not to use the fuel price
-  #   time series in Fuels_data.csv in the clustering process. If 'no', this function will still write
+  #   Either 1 (yes) or 0 (no), this indicates whether or not to use the fuel price
+  #   time series in Fuels_data.csv in the clustering process. If 0, this function will still write
   #   Fuels_data_clustered.csv with reshaped fuel prices based on the number and size of the
   #   representative weeks, assuming a constant time series of fuel prices with length equal to the
   #   number of timesteps in the raw input data.
@@ -86,6 +86,14 @@ ClusterFuelPrices: 1
   #   This setting automatically includes the periods with maximum load, minimum solar cf and
   #   minimum wind cf as extreme periods.
 UseExtremePeriods: 1
+
+  #   - MultiStageConcatenate 
+  #   (Only considered if MultiStage = 1 in genx_settings.yml)
+  #   If 1, this designates that the model should time domain reduce the input data
+  #   of all model stages together. Else if 0, [still in development] the model will time domain reduce only
+  #   the first stage and will apply the periods of each other model stage to this set
+  #   of representative periods by closest Eucliden distance.
+MultiStageConcatenate: 1
 
 # STILL IN DEVELOPMENT - Currently just uses integral max load, integral min PV and wind.
 #   - ExtremePeriods

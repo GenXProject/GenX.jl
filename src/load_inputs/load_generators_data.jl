@@ -45,6 +45,11 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	# Set of all storage resources
 	inputs_gen["STOR_ALL"] = union(inputs_gen["STOR_SYMMETRIC"],inputs_gen["STOR_ASYMMETRIC"])
 
+	# Set of storage resources with long duration storage capabilitites
+	inputs_gen["STOR_HYDRO_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.HYDRO.==1),:R_ID]
+	inputs_gen["STOR_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.STOR.==1),:R_ID]
+	inputs_gen["STOR_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.STOR.==1),:R_ID]
+
 	# Set of all reservoir hydro resources
 	inputs_gen["HYDRO_RES"] = gen_in[(gen_in[!,:HYDRO].==1),:R_ID]
 	# Set of reservoir hydro resources modeled with known reservoir energy capacity
