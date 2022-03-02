@@ -63,7 +63,7 @@ function fleccs7(EP::Model, inputs::Dict, FLECCS::Int, UCommit::Int, Reserves::I
     @variables(EP, begin
         # Continuous decision variables
         vP_NGCC[y in FLECCS_ALL, 1:T] >= 0  # Net power produced by the NGCC
-		#vFuel_use_NGCC[y in FLECCS_ALL, 1:T] # Molar flow rate of fuel into the NGCC block
+		vFuel_use_NGCC[y in FLECCS_ALL, 1:T] >= 0 # Molar flow rate of fuel into the NGCC block
         vCaCO3_use_calciner[y in FLECCS_ALL, 1:T] >= 0  # Molar flow rate of fresh CaCO3 into the calciner block
 		vCO2_atmosphere[y in FLECCS_ALL, 1:T] >=0  # mole of CO2 captured from atmosphere 
 		nCaO_DAC[y in FLECCS_ALL, 1:T] >= 0  # mol of CaO stored in the DAC unit

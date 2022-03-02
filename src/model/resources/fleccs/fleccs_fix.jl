@@ -104,7 +104,7 @@ function fleccs_fix(EP::Model, inputs::Dict,  FLECCS::Int, UCommit::Int, Reserve
 	# If resource is not eligible for new capacity, fixed costs are only O&M costs
 
 	@expression(EP, eCFixFLECCS[y in FLECCS_ALL,i in N_F],
-	    if y in NEW_CAP_ccs # Resources eligible for new capacity
+	    if i in NEW_CAP_ccs # Resources eligible for new capacity
 		    if i in COMMIT_ccs
 		    	dfGen_ccs[(dfGen_ccs[!,:R_ID].==y),:Inv_Cost_per_Unityr][i] * dfGen_ccs[(dfGen_ccs[!,:R_ID].==y),:Cap_Size][i] *vCAP_FLECCS[y,i] + dfGen_ccs[(dfGen_ccs[!,:R_ID].==y),:Fixed_OM_Cost_per_Unityr][i] *eTotalCapFLECCS[y,i]
 	    	else
