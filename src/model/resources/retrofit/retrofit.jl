@@ -37,13 +37,25 @@ function retrofit(EP::Model, inputs::Dict)
 
 	G = inputs["G"]   # Number of resources (generators, storage, DR, and DERs)
 	RETRO = inputs["RETRO"] # Set of all retrofit resources
+	NEW_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity expansion
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	RETRO_SOURCE = inputs["RETROFIT_SOURCES"] # Source technology for the retrofit [1:G]
 	RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"] # Maximum ratio of retrofitted capacity to source capacity [1:G]
 
-	### Constraints ###
+	println("RETRO SOURCE")
+	println(inputs["RETROFIT_SOURCES"])
+	println("RETIREMENT-ELIGBLE RESOURCES")
+	println(RET_CAP)
+	println("EXPANSION-ELIGIBLE RESOURCES")
+	println(NEW_CAP)
+	println("RETROFIT-ELIGIBLE RESOURCES")
+	println(RETRO)
+	println("  Intersection: ")
+	println([intersect(findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G), findall(x->x in NEW_CAP, 1:G)) for y in RET_CAP])
 
-	@constraint(EP, cRetroMaxCap[y in RET_CAP], sum(EP[:vCAP][yr]/RETRO_EFFICIENCY[yr] for yr in findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G)) <= EP[:vRETCAP][y])
+	### Constraints ###
+	# Fix New Build error - see current GenData
+	@constraint(EP, cRetroMaxCap[y in RET_CAP], sum(EP[:vCAP][yr]/RETRO_EFFICIENCY[yr] for yr in intersect(findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G), findall(x->x in NEW_CAP, 1:G))) <= EP[:vRETCAP][y])
 
 	return EP
 end
