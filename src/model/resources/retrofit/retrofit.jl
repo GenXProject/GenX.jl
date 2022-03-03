@@ -42,6 +42,8 @@ function retrofit(EP::Model, inputs::Dict)
 	RETRO_SOURCE = inputs["RETROFIT_SOURCES"] # Source technology for the retrofit [1:G]
 	RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"] # Maximum ratio of retrofitted capacity to source capacity [1:G]
 
+	# CONFIRM that this works if techs have New_Build=0 (In addition to 1 and -1 which I believe work as of now)
+
 	println("RETRO SOURCE")
 	println(inputs["RETROFIT_SOURCES"])
 	println("RETIREMENT-ELIGBLE RESOURCES")
