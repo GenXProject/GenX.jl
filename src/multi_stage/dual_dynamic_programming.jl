@@ -27,7 +27,7 @@ inputs:
 returns:
 
 * start\_cap\_d – Dictionary which contains linking expression names as keys and linking constraint names as values, used for setting the end capacity in stage $p$ to the starting capacity in stage $p+1$.
-* cap\_track\_d– Dictionary which contains linking variable names as keys and linking constraint names as values, used for enforcing endogenous retirements.
+* cap\_track\_d – Dictionary which contains linking variable names as keys and linking constraint names as values, used for enforcing endogenous retirements.
 """
 function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
@@ -246,7 +246,7 @@ inputs:
 
   * stats\_d – Dictionary which contains the run time, upper bound, and lower bound of each DDP iteration.
   * outpath – String which represents the path to the Results directory.
-  * settings\_d - Dictionary containing settings configured in the GenX settings genx_settings.yml file as well as the multi-stage settings file multi\_stage\_settings.yml.
+  * settings\_d - Dictionary containing settings configured in the GenX settings genx\_settings.yml file as well as the multi-stage settings file multi\_stage\_settings.yml.
 """
 function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict)
 
@@ -372,7 +372,7 @@ end
 @doc raw"""
 	function write_stats(outpath::String, sep::String, stats_d::Dict)
 
-    This function writes the file stats\_multi\_stage.csv. to the Results directory. This file contains the runtime, upper bound, lower bound, and relative optimality gap for each iteration of the DDP algorithm.
+This function writes the file stats\_multi\_stage.csv. to the Results directory. This file contains the runtime, upper bound, lower bound, and relative optimality gap for each iteration of the DDP algorithm.
 
 inputs:
 

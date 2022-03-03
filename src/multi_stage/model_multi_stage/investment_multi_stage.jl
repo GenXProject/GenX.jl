@@ -224,7 +224,7 @@ end
 @doc raw"""
 	function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available power charge capacity across all storage resources with asymmetric charge/discharge as well as constraints on charge capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment_discharge_multi_stage().
+This function defines the expressions and constraints keeping track of total available power charge capacity across all storage resources with asymmetric charge/discharge as well as constraints on charge capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment\_discharge\_multi\_stage().
 
 inputs:
 
@@ -368,7 +368,7 @@ end
 @doc raw"""
 	function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available energy capacity across all storage resources as well as constraints on energy capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment_discharge_multi_stage().
+This function defines the expressions and constraints keeping track of total available energy capacity across all storage resources as well as constraints on energy capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investment\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment\_discharge\_multi\_stage().
 
 inputs:
 
