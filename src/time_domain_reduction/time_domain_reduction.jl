@@ -126,6 +126,15 @@ function parse_multi_stage_data(inputs_dict)
     wind_profiles = []
     var_profiles = []
 
+    println("ZONES")
+    println(ZONES)
+    println("RESOURCE_ZONES")
+    println(RESOURCE_ZONES)
+    println("LOAD SHAPE")
+    println(size(inputs_dict[1]["pD"]))
+    println(size(inputs_dict[2]["pD"]))
+    println(size(inputs_dict[3]["pD"]))
+
     # [ REPLACE THIS with multi_stage_settings.yml StageLengths ]
     # In case not all stages have the same length, check relative lengths
     stage_lengths = [ size(inputs_dict[t]["pD"][:,1],1) for t in 1:length(keys(inputs_dict)) ]
@@ -134,7 +143,16 @@ function parse_multi_stage_data(inputs_dict)
 
     # LOAD - Load_data.csv
     stage_load_profiles = [ inputs_dict[t]["pD"][:,l] for t in 1:length(keys(inputs_dict)), l in 1:size(inputs_dict[1]["pD"],2) ]
-    vector_lps = [stage_load_profiles[:,t] for t in 1:length(keys(inputs_dict))]
+    println("size of stage_load_profiles")
+    println(size(stage_load_profiles))
+    println(size(stage_load_profiles[1,1]))
+    #println(stage_load_profiles)
+    #vector_lps = [stage_load_profiles[:,t] for t in 1:length(keys(inputs_dict))]
+    vector_lps = [stage_load_profiles[:,l] for l in 1:size(inputs_dict[1]["pD"],2)]
+    println("size of vector_lps")
+    println(size(vector_lps))
+    println(size(vector_lps[1]))
+    println(size(vector_lps[1][1]))
     load_profiles = [reduce(vcat,vector_lps[l]) for l in 1:size(inputs_dict[1]["pD"],2)]
     load_col_names = ["Load_MW_z"*string(l) for l in 1:size(load_profiles)[1]]
     load_zones = [l for l in 1:size(load_profiles)[1]]
