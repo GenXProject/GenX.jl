@@ -1,0 +1,16 @@
+Region,Resource,Zone,Cluster,R_ID,SubsidyRevenue
+MO,NGCC,1,1,1,0.0
+MO,NGCT,1,1,2,0.0
+MO,NGST,1,1,3,0.0
+MO,Coal,1,1,4,0.0
+MO,Nuclear,1,1,5,0.0
+MO,Biomass,1,1,6,0.0
+MO,SolarPV,1,1,7,0.0
+MO,Wind,1,1,8,0.0
+MO,Hydro,1,1,9,0.0
+MO,PHS,1,0,10,0.0
+MO,Li-ion,1,0,11,0.0
+MO,Retro_NGCC_CCS,1,1,12,0.0
+MO,Retro_NGCC_H2,1,1,13,0.0
+MO,Retro_Coal_TES,1,0,14,0.0
+MO,Retro_Coal_SMR,1,1,15,0.0

@@ -1,0 +1,16 @@
+Region,Resource,Zone,Cluster,AnnualSum
+MO,NGCC,1,1,0.0
+MO,NGCT,1,1,0.0
+MO,NGST,1,1,0.0
+MO,Coal,1,1,0.0
+MO,Nuclear,1,1,0.0
+MO,Biomass,1,1,0.0
+MO,SolarPV,1,1,0.0
+MO,Wind,1,1,0.0
+MO,Hydro,1,1,0.0
+MO,PHS,1,0,0.0
+MO,Li-ion,1,0,1.11013224e8
+MO,Retro_NGCC_CCS,1,1,0.0
+MO,Retro_NGCC_H2,1,1,0.0
+MO,Retro_Coal_TES,1,0,0.0
+MO,Retro_Coal_SMR,1,1,0.0

@@ -51,6 +51,7 @@ MaxPeriods: 11
 LoadWeight: 1
 ClusterFuelPrices: 1
 nReps: 100
+MultiStageConcatenate: 1
 Threshold: 0.05
 TimestepsPerRepPeriod: 168
 IterateMethod: "cluster"
