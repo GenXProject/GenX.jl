@@ -19,9 +19,9 @@ Instead of one set of input files, there is a directory of stage-specific sets o
 
 |                              |                                                                   **Generators_data.csv**                                                                  |
 |:------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Min_Retirement_Cap_MW        | Minimum capacity in MW that must retire in this planning stage.                                                                                            |
-| Min_Retirement_Energy_Cap_MW | Minimum energy capacity in MW that must retire in this planning stage.                                                                                     |
-| Min_Retirement_Charge_Cap_MW | Minimum charge capacity in MW that must retire in this planning stage.                                                                                     |
+| Min_Retired_Cap_MW        | Minimum capacity in MW that must retire in this planning stage.                                                                                            |
+| Min_Retired_Energy_Cap_MW | Minimum energy capacity in MW that must retire in this planning stage.                                                                                     |
+| Min_Retired_Charge_Cap_MW | Minimum charge capacity in MW that must retire in this planning stage.                                                                                     |
 | Lifetime                     | The operational lifespan in years of this technology after which it must be retired.                                                                       |
 | Capital_Recovery_Period      | The technology-specific period in years over which initial capital costs must be recovered.                                                                |
 | WACC                         | The technology-specific weighted average cost of capital.                                                                                                  |
