@@ -134,7 +134,7 @@ function parse_multi_stage_data(inputs_dict)
 
     # LOAD - Load_data.csv
     stage_load_profiles = [ inputs_dict[t]["pD"][:,l] for t in 1:length(keys(inputs_dict)), l in 1:size(inputs_dict[1]["pD"],2) ]
-    vector_lps = [stage_load_profiles[:,t] for t in 1:length(keys(inputs_dict))]
+    vector_lps = [stage_load_profiles[:,l] for l in 1:size(inputs_dict[1]["pD"],2)]
     load_profiles = [reduce(vcat,vector_lps[l]) for l in 1:size(inputs_dict[1]["pD"],2)]
     load_col_names = ["Load_MW_z"*string(l) for l in 1:size(load_profiles)[1]]
     load_zones = [l for l in 1:size(load_profiles)[1]]
