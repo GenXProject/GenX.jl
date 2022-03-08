@@ -211,6 +211,9 @@ function fleccs4(EP::Model, inputs::Dict,  FLECCS::Int, UCommit::Int, Reserves::
 	# steam——use——pcc >0
 	@constraint(EP, [y in FLECCS_ALL,t=1:T], eSteam_use_pcc[y,t] >= 0)
 
+	# cold energy constraint
+	@constraint(EP, [y in FLECCS_ALL,t=1:T], vCOLD_out[y,t] <= eFuel[y,t]*dfGen_ccs[!,:pColdDischarge][1+n*(y-1)] )
+
 
 	EP[:ePowerBalance] += ePowerBalanceFLECCS
 
