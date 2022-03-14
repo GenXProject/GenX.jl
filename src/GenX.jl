@@ -60,7 +60,7 @@ using Statistics
 #using Gurobi
 #using CPLEX
 #using MOI
-using SCIP
+#using SCIP
 using Clp
 using Cbc
 

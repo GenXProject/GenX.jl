@@ -18,27 +18,18 @@ function write_start(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-
+	COMMIT = inputs["COMMIT"]
 	# Startup state for each resource in each time step
-	dfStart = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Sum = Array{Union{Missing,Float32}}(undef, G))
+	dfStart = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Sum = Array{Float64}(undef, G))
 	start = zeros(G,T)
-	for i in 1:G
-		if i in inputs["COMMIT"]
-			start[i,:] = value.(EP[:vSTART])[i,:]
-		end
-		dfStart[!,:Sum][i] = sum(start[i,:])
-	end
+	start[COMMIT, :] = value.(EP[:vSTART][COMMIT, :])
+	dfStart.Sum .= sum(start, dims=2)[:]
 	dfStart = hcat(dfStart, DataFrame(start, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfStart,auxNew_Names)
+
 	total = DataFrame(["Total" 0 sum(dfStart[!,:Sum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		if v"1.3" <= VERSION < v"1.4"
-			total[!,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
-		elseif v"1.5" <= VERSION < v"1.7"
-			total[:,t+3] .= sum(dfStart[:,Symbol("t$t")][1:G])
-		end
-	end
+	total[:, 4:T+3] .= sum(start, dims = 1)
 	rename!(total,auxNew_Names)
 	dfStart = vcat(dfStart, total)
 	CSV.write(string(path,sep,"start.csv"), dftranspose(dfStart, false), writeheader=false)

@@ -17,7 +17,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
     load_network_data_multi_stage(setup::Dict, path::AbstractString, sep::AbstractString, inputs::Dict)
 
-Loads multi-stage network data inputs from Network_multi_stage.csv in path directory and stores variables in a Dictionary object for use in generate_model() function
+Loads multi-stage network data inputs from Network\_multi\_stage.csv in path directory and stores variables in a Dictionary object for use in generate_model() function
 
 inputs:
   * setup - Dictonary object containing setup parameters
