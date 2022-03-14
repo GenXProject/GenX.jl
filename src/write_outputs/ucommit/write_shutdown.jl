@@ -21,14 +21,14 @@ function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict,
 	# Operational decision variable states
 	COMMIT = inputs["COMMIT"]
 	# Shutdown state for each resource in each time step
-	dfShutdown = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Sum = Array{Union{Missing,Float64}}(undef, G))
+	dfShutdown = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
 	shut = zeros(G,T)
 	shut[COMMIT, :] = value.(EP[:vSHUT][COMMIT, :])
-	dfShutdown.Sum .= sum(shut, dims=2)[:]
+	dfShutdown.AnnualSum = shut * inputs["omega"]
 	dfShutdown = hcat(dfShutdown, DataFrame(shut, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfShutdown,auxNew_Names)
-	total=DataFrame(["Total" 0 sum(dfShutdown[!,:Sum]) fill(0.0, (1,T))], :auto)
+	total=DataFrame(["Total" 0 sum(dfShutdown.AnnualSum) fill(0.0, (1,T))], :auto)
 	total[:, 4:T+3] .= sum(shut, dims = 1)
 	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
