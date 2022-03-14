@@ -106,4 +106,4 @@ for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 end
 
 # Step 5) Write DDP summary outputs
-write_multi_stage_outputs(mystats_d, outpath, mysetup)
+write_multi_stage_outputs(mystats_d, outpath, mysetup, inputs_dict)

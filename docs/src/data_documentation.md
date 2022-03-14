@@ -12,9 +12,6 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 |OperationWrapping | Select temporal resolution for operations constraints.|
 ||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
 ||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|LongDurationStorage | Select whether inter-period energy exchange allowed for storage technologies.|
-||0= inter-period energy exchange not allowed.|
-||1 = inter-period energy exchange allowed.|
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
 ||0 = Use full input data as provided.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
@@ -59,8 +56,12 @@ Model settings parameters are specified in a `GenX_Settings.yml` file which shou
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
 |WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|MultiStage | Model multiple planning stages |
+||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
+||0 = Model single planning stage |
+
 |**Miscellaneous**|
-|PrintModel | Flag for printnig the model equations as .lp file.|
+|PrintModel | Flag for printing the model equations as .lp file.|
 ||1= including the model equation as an output|
 ||0 for the model equation not being included as an output|
 |MacOrWindows | Set to either Mac (also works for Linux) or Windows to ensure use of proper file directory separator \ or /.|

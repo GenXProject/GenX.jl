@@ -57,6 +57,7 @@ pages = OrderedDict(
             ]
         ],
         "Multi_stage" => [
+            "Overview" => "multi_stage_model_overview.md",
             "Load inputs for multi-stage modeling" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
                 #"Load inputs" => "load_inputs_multi_stage.md",

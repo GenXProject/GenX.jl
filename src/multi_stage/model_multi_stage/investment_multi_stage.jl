@@ -150,11 +150,9 @@ function investment_discharge_multi_stage(EP::Model, inputs::Dict, multi_stage_s
 
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
-
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between stages for fixed costs.
-	EP[:eObj] += (1/OPEXMULT)*eTotalCFix
+	EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFix
 
 	## DDP - Endogenous Retirements ##
 
@@ -224,7 +222,7 @@ end
 @doc raw"""
 	function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available power charge capacity across all storage resources with asymmetric charge/discharge as well as constraints on charge capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment_discharge_multi_stage().
+This function defines the expressions and constraints keeping track of total available power charge capacity across all storage resources with asymmetric charge/discharge as well as constraints on charge capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment\_discharge\_multi\_stage().
 
 inputs:
 
@@ -301,10 +299,9 @@ function investment_charge_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between stages for fixed costs.
-	EP[:eObj] += (1/OPEXMULT)*eTotalCFixCharge
+	EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixCharge
 
 	## DDP - Endogenous Retirements ##
 
@@ -368,7 +365,7 @@ end
 @doc raw"""
 	function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
-This function defines the expressions and constraints keeping track of total available energy capacity across all storage resources as well as constraints on energy capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investmen\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment_discharge_multi_stage().
+This function defines the expressions and constraints keeping track of total available energy capacity across all storage resources as well as constraints on energy capacity retirements, compatible with multi-stage modeling. It includes all of the variables, expressions, and constraints of investment\_discharge() with additional constraints and variables introduced for compatibility with multi-stage modeling, all analogous to those described in investment\_discharge\_multi\_stage().
 
 inputs:
 
@@ -444,10 +441,9 @@ function investment_energy_multi_stage(EP::Model, inputs::Dict, multi_stage_sett
 
 	# Add term to objective function expression
 	# DDP - OPEX multiplier to count multiple years between two model stages
-	OPEXMULT = sum([1/(1+wacc)^(i-1) for i in range(1,stop=stage_len)])
 	# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 	# and we have already accounted for multiple years between stages for fixed costs.
-	EP[:eObj] += (1/OPEXMULT)*eTotalCFixEnergy
+	EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixEnergy
 
 	## DDP - Endogenous Retirements ##
 

@@ -53,8 +53,6 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "UCommit", 0)
     # Sets temporal resolution of the model; 0 = single period to represent the full year, with first-last time step linked; 1 = multiple representative periods
     set_default_if_absent!(settings, "OperationWrapping", 0)
-    # Inter-period energy exchange for storage technologies; 0 = not active; 1 = active systemwide
-    set_default_if_absent!(settings, "LongDurationStorage", 0)
     # Directory name where results from time domain reduction will be saved. If results already exist here, these will be used without running time domain reduction script again.
     set_default_if_absent!(settings, "TimeDomainReductionFolder", "TDR_Results")
     # Time domain reduce (i.e. cluster) inputs based on Load_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
