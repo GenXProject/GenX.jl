@@ -47,7 +47,7 @@ TDRpath = joinpath(inpath, "Inputs", "Inputs_p1", mysetup["TimeDomainReductionFo
 if mysetup["TimeDomainReduction"] == 1
     if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
         println("Clustering Time Series Data...")
-        FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict, R, A, M, DistMatrix, ClusteringInputDF = cluster_inputs(inpath, settings_path, mysetup)
+        cluster_inputs(inpath, settings_path, mysetup)
     else
         println("Time Series Data Already Clustered.")
     end
