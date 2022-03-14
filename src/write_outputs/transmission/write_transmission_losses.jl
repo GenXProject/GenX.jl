@@ -16,36 +16,22 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 function write_transmission_losses(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
 	L = inputs["L"]     # Number of transmission lines
-
+	LOSS_LINES = inputs["LOSS_LINES"]
 	# Power losses for transmission between zones at each time step
-	dfTLosses = DataFrame(Line = 1:L, Sum = Array{Union{Missing,Float32}}(undef, L))
-	tlosses = zeros(L,T)
+	dfTLosses = DataFrame(Line = 1:L)
+	tlosses = zeros(L, T)
+	tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
 	if setup["ParameterScale"] == 1
-		for i in 1:L
-			if i in inputs["LOSS_LINES"]
-				tlosses[i,:] = value.(EP[:vTLOSS])[i,:] * ModelScalingFactor
-			end
-			dfTLosses[!,:Sum][i] = sum(inputs["omega"].* tlosses[i,:]) * ModelScalingFactor
-		end
-		dfTLosses = hcat(dfTLosses, DataFrame(tlosses * ModelScalingFactor, :auto))
-	else
-		for i in 1:L
-			if i in inputs["LOSS_LINES"]
-				tlosses[i,:] = value.(EP[:vTLOSS])[i,:]
-			end
-			dfTLosses[!,:Sum][i] = sum(inputs["omega"].* tlosses[i,:])
-		end
-		dfTLosses = hcat(dfTLosses, DataFrame(tlosses, :auto))
+	    tlosses[LOSS_LINES, :] *= ModelScalingFactor^2
 	end
-
-	auxNew_Names=[Symbol("Line");Symbol("Sum");[Symbol("t$t") for t in 1:T]]
+	dfTLosses.AnnualSum = tlosses * inputs["omega"]
+	dfTLosses = hcat(dfTLosses, DataFrame(tlosses, :auto))
+	auxNew_Names=[Symbol("Line");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfTLosses,auxNew_Names)
-	total = DataFrame(["Total" sum(dfTLosses[!,:Sum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		total[:,t+2] .= sum(dfTLosses[:,Symbol("t$t")][1:L])
-	end
+
+	total = DataFrame(["Total" sum(dfTLosses.AnnualSum) fill(0.0, (1,T))], :auto)
+	total[:, 3:T+2] .= sum(tlosses, dims = 1)
 	rename!(total,auxNew_Names)
 	dfTLosses = vcat(dfTLosses, total)
 
