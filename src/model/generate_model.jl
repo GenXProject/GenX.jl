@@ -137,7 +137,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = ucommit(EP, inputs, setup["UCommit"])
 	end
 
-	EP = emissions(EP, inputs)
+	#EP = emissions(EP, inputs, setup) I need to move emissions module after the FLECCS module, otherwise, the emissions from FLECCS cannot be accounted, move it to line 195, FC, 1/25/2022
 
 	if setup["Reserves"] > 0
 		EP = reserves(EP, inputs, setup["UCommit"])
@@ -183,6 +183,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
+	if !isempty(inputs["DAC"])
+		EP = dac(EP, inputs)
+	end
+
 	# Model constraints, variables, expression related to fleccs
 	if (setup["FLECCS"] >= 1)
 		EP = fleccs(EP, inputs, setup["FLECCS"], setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"], setup["MinCapReq"])
@@ -191,6 +195,13 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Policies
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)
+
+	EP = emissions(EP, inputs, setup) 
+
+	#CO2 tax module, penalize CO2 emissions, this need to be added in order to assess how CO2 tax affect the results. FC 1/25/2022
+	if setup["CO2Tax"] == 1
+		EP = co2_tax(EP, inputs, setup)
+	end
 
 
 	# Energy Share Requirement

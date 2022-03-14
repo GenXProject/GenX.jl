@@ -49,13 +49,13 @@ using Statistics
 using DelimitedFiles
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-#using Gurobi
+using Gurobi
 #using CPLEX
 #using MOI
-using SCIP
-using BenchmarkTools
-using Clp
-using Cbc
+#using SCIP
+#using BenchmarkTools
+#using Clp
+#using Cbc
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -127,17 +127,20 @@ include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
 
+include("model/resources/dac/dac.jl")
 include("model/resources/fleccs/fleccs.jl")
 include("model/resources/fleccs/fleccs_fix.jl")
 include("model/resources/fleccs/fleccs1.jl")
 include("model/resources/fleccs/fleccs2.jl")
 include("model/resources/fleccs/fleccs3.jl")
 include("model/resources/fleccs/fleccs4.jl")
+include("model/resources/fleccs/fleccs7.jl")
 include("model/resources/fleccs/fleccs8.jl")
 include("model/resources/fleccs/fleccs_no_commit.jl")
 include("model/resources/fleccs/fleccs_commit.jl")
 
 include("model/policies/co2_cap.jl")
+include("model/policies/co2_tax.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")

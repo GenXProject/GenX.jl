@@ -74,6 +74,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		inputs = load_co2_cap(setup, path, inputs)
 	end
 
+	if setup["CO2Tax"] >= 1
+		inputs = load_co2_tax(setup, path, inputs)
+	end
+
 	# Read in mapping of modeled periods to representative periods
 	if setup["OperationWrapping"]==1 && !isempty(inputs["STOR_LONG_DURATION"]) && (isfile(data_directory*"/Period_map.csv") || isfile(joinpath(data_directory,joinpath(setup["TimeDomainReductionFolder"],"Period_map.csv")))) # Use Time Domain Reduced data for GenX)
 		inputs = load_period_map(setup, path, inputs)

@@ -64,6 +64,9 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	# Set of controllable variable renewable resources
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
+	# Set of DAC
+	inputs_gen["DAC"] = gen_in[gen_in.DAC.==1,:R_ID]
+
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1
 		# Set of thermal resources eligible for unit committment

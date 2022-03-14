@@ -30,11 +30,19 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	if setup["ParameterScale"] == 1
 		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
 		cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)) * (ModelScalingFactor^2)
-		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
+		if setup["FLECCS"] >= 1
+	        cVar = cVar + value.(EP[:eTotalCVar_FLECCS])* (ModelScalingFactor^2) + value.(EP[:eTotalCCO2Tax])* (ModelScalingFactor^2)
+	        cFix = cFix  + value.(EP[:eTotalCFixFLECCS])* (ModelScalingFactor^2)
+	    end
+		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar,value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
 	else
 		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
 		#cVar = value(EP[:eTotalCVarOut])+(!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
 		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
+		if setup["FLECCS"] >= 1
+			cVar = cVar + value.(EP[:eTotalCVar_FLECCS]) +  value.(EP[:eTotalCCO2Tax])
+			cFix = cFix  + value.(EP[:eTotalCFixFLECCS])
+		end
 		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
 	end
 
@@ -103,7 +111,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		else
 			tempCNSE = sum(value.(EP[:eCNSE])[:,:,z])
 		end
-		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+		if Z >1
+		    dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+		end
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
 end

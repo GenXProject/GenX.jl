@@ -71,20 +71,20 @@ function fleccs_no_commit(EP::Model, inputs::Dict, FLECCS::Int, Reserves::Int)
 	FLECCS_ALL = inputs["FLECCS_ALL"] # set of FLECCS generator
 	NO_COMMIT_ccs =  inputs["NO_COMMIT_CCS"]
 
-	FLECCS_parameters = inputs["FLECCS_parameters"] # FLECCS specific parameters
+#	FLECCS_parameters = inputs["FLECCS_parameters"] # FLECCS specific parameters
 	# get number of flexible subcompoents
 	N_F = inputs["N_F"]
 
 	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 	START_SUBPERIODS = inputs["START_SUBPERIODS"]
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"] 
+	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 
 
 	### Constraints ###
 	### Maximum ramp up and down between consecutive hours (Constraints #1-2)
 	@constraints(EP, begin
 		## Maximum ramp up between consecutive hours
-		## Gas turbine 
+		## Gas turbine
 		# Start Hours: Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
 		# NOTE: We should make wrap-around a configurable option
 		[y in FLECCS_ALL, i in NO_COMMIT_ccs, t in START_SUBPERIODS], EP[:vFLECCS_output][y,i,t]-EP[:vFLECCS_output][y,i,(t+hours_per_subperiod-1)] <=  dfGen_ccs[(dfGen_ccs[!,:R_ID].==y),:Ramp_Up_Percentage][i]*EP[:eTotalCapFLECCS][y,i]
@@ -102,9 +102,9 @@ function fleccs_no_commit(EP::Model, inputs::Dict, FLECCS::Int, Reserves::Int)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
 	@constraints(EP, begin
-	    # gas turbine 
+	    # gas turbine
 		# Minimum stable power generated per technology "y" at hour "t" Min_Power
-		#[y in FLECCS_ALL,i in NO_COMMIT_ccs, t=1:T], EP[:vFLECCS_output][y,i,t] >= dfGen_ccs[!,:Min_Power][y]*EP[:eTotalCapFLECCS][y,i]
+		[y in FLECCS_ALL,i in NO_COMMIT_ccs, t=1:T], EP[:vFLECCS_output][y,i,t] >= dfGen_ccs[(dfGen_ccs[!,:R_ID].==y),:Min_Power][i]*EP[:eTotalCapFLECCS][y,i]
 		# Maximum power generated per technology "y" at hour "t"
 		[y in FLECCS_ALL,i in NO_COMMIT_ccs, t=1:T], EP[:vFLECCS_output][y,i,t] <= EP[:eTotalCapFLECCS][y,i]
 
@@ -114,7 +114,7 @@ function fleccs_no_commit(EP::Model, inputs::Dict, FLECCS::Int, Reserves::Int)
 	# END Constraints for FLECCS resources not subject to unit commitment
 
 	##### CO2 emissioms
-	
+
 	# Add CO2 from start up fuel and vented CO2
 	#@expression(EP, eEmissionsByPlantFLECCS[y in FLECCS_ALL, t=1:T], EP[:eCO2_vent][y,t])
 
