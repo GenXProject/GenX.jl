@@ -108,7 +108,7 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 ```
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, LongDurationStorage::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int)
+function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int)
 
 	println("Storage Resources Module")
 	dfGen = inputs["dfGen"]

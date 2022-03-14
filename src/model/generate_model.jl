@@ -161,7 +161,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["LongDurationStorage"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
