@@ -27,81 +27,82 @@ function write_costs(path::AbstractString, sep::AbstractString, inputs::Dict, se
 	T = inputs["T"]     # Number of time steps (hours)
 
 	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
+	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
+	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
+	dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0]
+
 	if setup["ParameterScale"] == 1
-		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)) * (ModelScalingFactor^2)
-		cFix = (value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)) * (ModelScalingFactor^2)
-		dfCost[!,Symbol("Total")] = [objective_value(EP) * (ModelScalingFactor^2), cFix, cVar, value(EP[:eTotalCNSE]) * (ModelScalingFactor^2), 0, 0, 0]
-	else
-		cVar = (value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
-		#cVar = value(EP[:eTotalCVarOut])+(!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0)
-		cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0)
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0, 0, 0]
+		dfCost.Total *= ModelScalingFactor^2
 	end
 
 	if setup["UCommit"]>=1
-		if setup["ParameterScale"] == 1
-			dfCost[!,2][5] = value(EP[:eTotalCStart]) * (ModelScalingFactor^2)
-		else
-			dfCost[!,2][5] = value(EP[:eTotalCStart])
-		end
+		dfCost[5,2] = value(EP[:eTotalCStart])
 	end
+
 	if setup["Reserves"]==1
-		if setup["ParameterScale"] == 1
-			dfCost[!,2][6] = value(EP[:eTotalCRsvPen]) * (ModelScalingFactor^2)
-		else
-			dfCost[!,2][6] = value(EP[:eTotalCRsvPen])
-		end
+		dfCost[6,2] = value(EP[:eTotalCRsvPen])
 	end
+
 	if setup["NetworkExpansion"] == 1 && Z > 1
-		if setup["ParameterScale"] == 1
-			dfCost[!,2][7] = value(EP[:eTotalCNetworkExp]) * (ModelScalingFactor^2)
-		else
-			dfCost[!,2][7] = value(EP[:eTotalCNetworkExp])
-		end
+		dfCost[7,2] = value(EP[:eTotalCNetworkExp])
+	end
+
+	if setup["ParameterScale"] == 1
+		dfCost[5,2] *= ModelScalingFactor^2
+		dfCost[6,2] *= ModelScalingFactor^2
+		dfCost[7,2] *= ModelScalingFactor^2
 	end
 
 	for z in 1:Z
-		tempCTotal = 0
-		tempCFix = 0
-		tempCVar = 0
-		tempCStart = 0
-		for y in dfGen[dfGen[!,:Zone].==z,:][!,:R_ID]
-			tempCFix = tempCFix +
-				(y in inputs["STOR_ALL"] ? value.(EP[:eCFixEnergy])[y] : 0) +
-				(y in inputs["STOR_ASYMMETRIC"] ? value.(EP[:eCFixCharge])[y] : 0) +
-				value.(EP[:eCFix])[y]
-			tempCVar = tempCVar +
-				(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
-				(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
-				sum(value.(EP[:eCVar_out])[y,:])
-			if setup["UCommit"]>=1
-				tempCTotal = tempCTotal +
-					value.(EP[:eCFix])[y] +
-					(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
-					(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
-					sum(value.(EP[:eCVar_out])[y,:])
-					(y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y,:]) : 0)
-				tempCStart = tempCStart +
-					(y in inputs["COMMIT"] ? sum(value.(EP[:eCStart])[y,:]) : 0)
-			else
-				tempCTotal = tempCTotal +
-					value.(EP[:eCFix])[y] +
-					(y in inputs["STOR_ALL"] ? sum(value.(EP[:eCVar_in])[y,:]) : 0) +
-					(y in inputs["FLEX"] ? sum(value.(EP[:eCVarFlex_in])[y,:]) : 0) +
-					sum(value.(EP[:eCVar_out])[y,:])
-			end
+		tempCTotal = 0.0
+		tempCFix = 0.0
+		tempCVar = 0.0
+		tempCStart = 0.0
+		tempCNSE = 0.0
+
+		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
+		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
+		STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
+		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
+		COMMIT_ZONE = intersect(inputs["COMMIT"], Y_ZONE)
+
+		eCFix = sum(value.(EP[:eCFix][Y_ZONE]))
+		tempCFix += eCFix
+		tempCTotal += eCFix
+
+		tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE,:]))
+		tempCTotal += tempCVar
+
+		if !isempty(STOR_ALL_ZONE)
+			eCVar_in = sum(value.(EP[:eCVar_in][STOR_ALL_ZONE,:]))
+			tempCVar += eCVar_in
+			tempCFix += sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
+
+			tempCTotal += eCVar_in
+		end
+		if !isempty(STOR_ASYMMETRIC_ZONE)
+			tempCFix += sum(value.(EP[:eCFixCharge][STOR_ASYMMETRIC_ZONE]))
+		end
+		if !isempty(FLEX_ZONE)
+			eCVarFlex_in = sum(value.(EP[:eCVarFlex_in][FLEX_ZONE,:]))
+			tempCVar += eCVarFlex_in
+			tempCTotal += eCVarFlex_in
 		end
 
-		if setup["ParameterScale"] == 1
-			tempCFix = tempCFix * (ModelScalingFactor^2)
-			tempCVar = tempCVar * (ModelScalingFactor^2)
-			tempCTotal = tempCTotal * (ModelScalingFactor^2)
-			tempCStart = tempCStart * (ModelScalingFactor^2)
+		if setup["UCommit"] >= 1
+			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:]))
+			tempCStart += eCStart
+			tempCTotal += eCStart
 		end
+
+		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
+
 		if setup["ParameterScale"] == 1
-			tempCNSE = sum(value.(EP[:eCNSE])[:,:,z]) * (ModelScalingFactor^2)
-		else
-			tempCNSE = sum(value.(EP[:eCNSE])[:,:,z])
+			tempCTotal *= ModelScalingFactor^2
+			tempCFix *= ModelScalingFactor^2
+			tempCVar *= ModelScalingFactor^2
+			tempCNSE *= ModelScalingFactor^2
+			tempCStart *= ModelScalingFactor^2
 		end
 		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
 	end
