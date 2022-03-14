@@ -131,6 +131,22 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		end
  	end
 
+
+	if setup["CO2Tax"] >=1 && has_duals(EP) == 1
+		for z in 1:Z
+			for y in 1:G
+		        dfNetRevenue.EmissionsCost[y] =   inputs["dfCO2Tax"][!,"CO2Tax"][z]*sum(value.(EP[:eEmissionsByPlant][y,t])* inputs["omega"][t] for t in 1:T) 
+			end
+		end
+
+		if setup["ParameterScale"] == 1
+			dfNetRevenue[!,:EmissionsCost] = dfNetRevenue[!,:EmissionsCost] * (ModelScalingFactor^2) # converting Million US$ to US$
+		end
+	end
+
+
+
+
 	# Add regional technology subsidy revenue to the dataframe
 	dfNetRevenue.RegSubsidyRevenue = zeros(size(dfNetRevenue, 1))
 	if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$

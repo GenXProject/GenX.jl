@@ -97,7 +97,7 @@ function write_capacity_fleccs(path::AbstractString, inputs::Dict, setup::Dict, 
 			NewCap = sum(dfCapFLECCS[!,:NewCap]), EndCap = sum(dfCapFLECCS[!,:EndCap]),
 		)
 
-	dfCapFLECCS = vcat(dfCapFLECCS, total)
-	CSV.write(joinpath(path,"capacity_FLECCS.csv"), dfCapFLECCS)
-	return dfCapFLECCS
+	dfCap_FLECCS = vcat(dfCapFLECCS, total)
+	CSV.write(joinpath(path,"capacity_FLECCS.csv"), dfCap_FLECCS)
+	return dfCap_FLECCS
 end
