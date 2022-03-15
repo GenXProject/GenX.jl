@@ -21,17 +21,16 @@ function write_nw_expansion(path::AbstractString, sep::AbstractString, inputs::D
 	# Transmission network reinforcements
 	transcap = zeros(L)
 	transcapcost = zeros(L)
-    transendcap = zeros(L)
+	transendcap = zeros(L)
 	for !isempty(inputs["EXPANSION_LINES"])
 		transendcap[EXPANSION_LINES] = value.(EP[:vNEW_TRANS_CAP][EXPANSION_LINES])
-        transcapcost[EXPANSION_LINES] = transendcap .* inputs["pC_Line_Reinforcement"]
+		transcapcost[EXPANSION_LINES] = transendcap .* inputs["pC_Line_Reinforcement"]
 	end
 	transendcap = value.(EP[:eAvail_Trans_Cap])
-    dfTransCap = DataFrame(
-        Line = 1:L,
-        End_Trans_Capacity = convert(Array{Union{Missing,Float64}}, transendcap),
-        New_Trans_Capacity = convert(Array{Union{Missing,Float64}}, transcap),
-        Cost_Trans_Capacity = convert(Array{Union{Missing,Float64}}, transcapcost)
-    )
-	CSV.write(string(path,sep,"network_expansion.csv"), dfTransCap)
+	dfTransCap = DataFrame(
+		Line = 1:L,
+		End_Trans_Capacity = convert(Array{Union{Missing,Float64}}, transendcap),
+		New_Trans_Capacity = convert(Array{Union{Missing,Float64}}, transcap),
+		Cost_Trans_Capacity = convert(Array{Union{Missing,Float64}}, transcapcost))
+	CSV.write(joinpath(path,"network_expansion.csv"), dfTransCap)
 end
