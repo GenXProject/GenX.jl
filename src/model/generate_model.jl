@@ -202,6 +202,14 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"])
 	end
 
+	if !isempty(findall(x -> x>=0, inputs["Minimum_Supply_MMBTU"]))
+		EP = minimum_supply_mmbtu(EP, inputs, setup)
+	end
+	
+	if !isempty(findall(x -> x>=0, inputs["Maximum_Supply_MMBTU"]))
+		EP = maximum_supply_mmbtu(EP, inputs, setup)
+	end
+
 	# Policies
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)

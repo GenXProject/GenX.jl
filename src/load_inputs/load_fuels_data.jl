@@ -29,27 +29,59 @@ function load_fuels_data(setup::Dict, path::AbstractString, sep::AbstractString,
 	else  # Run without Time Domain Reduction OR Getting original input data for Time Domain Reduction
 		fuels_in = DataFrame(CSV.File(string(path,sep,"Fuels_data.csv"), header=true), copycols=true)
 	end
-
+    
+	use_minmax_supply = false
+	start_ind = 2
+	if (fuels_in[1, :Time_Index] == -2) && (fuels_in[2, :Time_Index] == -1)
+		println("\tMinimum and Maximum supply constraints found")
+		start_ind += 2
+		use_minmax_supply = true
+	end
+        
 	# Fuel costs .&  CO2 emissions rate for each fuel type (stored in dictionary objects)
 	fuels = names(fuels_in)[2:end] # fuel type indexes
-	costs = Matrix(fuels_in[2:end,2:end])
+	costs = Matrix(fuels_in[start_ind:end,2:end])
 	# New addition for variable fuel price
-	CO2_content = fuels_in[1,2:end] # tons CO2/MMBtu
+	CO2_content = fuels_in[start_ind-1,2:end] # tons CO2/MMBtu
 	fuel_costs = Dict{AbstractString,Array{Float64}}()
 	fuel_CO2 = Dict{AbstractString,Float64}()
+	Minimum_Supply_MMBTU = Vector{Float64}(undef, length(fuels))
+	Maximum_Supply_MMBTU = Vector{Float64}(undef, length(fuels))
+	if use_minmax_supply
+		Minimum_Supply_MMBTU_content = fuels_in[1,2:end] # New addition for minimum supply constraint
+		Maximum_Supply_MMBTU_content = fuels_in[2,2:end] # New addition for maximum supply constraint
+	end
 	for i = 1:length(fuels)
 		if setup["ParameterScale"] ==1
 			fuel_costs[string(fuels[i])] = costs[:,i]/ModelScalingFactor
 			fuel_CO2[string(fuels[i])] = CO2_content[i]/ModelScalingFactor # kton/MMBTU
+			if use_minmax_supply
+				if Minimum_Supply_MMBTU_content[i] >= 0
+					Minimum_Supply_MMBTU[i] = Minimum_Supply_MMBTU_content[i]/ModelScalingFactor 
+				else
+					Minimum_Supply_MMBTU[i] = Minimum_Supply_MMBTU_content[i]
+				end
+				if Maximum_Supply_MMBTU_content[i] >= 0
+					Maximum_Supply_MMBTU[i] = Maximum_Supply_MMBTU_content[i]/ModelScalingFactor 
+				else
+					Maximum_Supply_MMBTU[i] = Maximum_Supply_MMBTU_content[i]
+				end
+			end
 		else
 			fuel_costs[string(fuels[i])] = costs[:,i]
 			fuel_CO2[string(fuels[i])] = CO2_content[i] # ton/MMBTU
+			if use_minmax_supply
+				Minimum_Supply_MMBTU[i] = Minimum_Supply_MMBTU_content[i]
+				Maximum_Supply_MMBTU[i] = Maximum_Supply_MMBTU_content[i]
+			end
 		end
 	end
 
 	inputs_fuel["fuels"] = fuels
 	inputs_fuel["fuel_costs"] = fuel_costs
 	inputs_fuel["fuel_CO2"] = fuel_CO2
+	inputs_fuel["Minimum_Supply_MMBTU"] = Minimum_Supply_MMBTU
+	inputs_fuel["Maximum_Supply_MMBTU"] = Maximum_Supply_MMBTU
 
 	println("Fuels_data.csv Successfully Read!")
 
