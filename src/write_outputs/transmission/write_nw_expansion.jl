@@ -22,7 +22,7 @@ function write_nw_expansion(path::AbstractString, sep::AbstractString, inputs::D
 	transcap = zeros(L)
 	transcapcost = zeros(L)
 	transendcap = zeros(L)
-	for !isempty(inputs["EXPANSION_LINES"])
+	if !isempty(inputs["EXPANSION_LINES"])
 		transendcap[EXPANSION_LINES] = value.(EP[:vNEW_TRANS_CAP][EXPANSION_LINES])
 		transcapcost[EXPANSION_LINES] = transendcap .* inputs["pC_Line_Reinforcement"]
 	end
