@@ -28,12 +28,7 @@ function minimum_supply_mmbtu(EP::Model, inputs::Dict, setup::Dict)
 	println("Minimum Supply MMBTU Module")
 
 	dfGen = inputs["dfGen"]
-	#SEG = inputs["SEG"]  # Number of lines
-	#G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	#Z = inputs["Z"]     # Number of zones
-
-	### Expressions ###
 
 	### Constraints ###
 	fuels_with_constraint = findall(x -> x>-0, inputs["Minimum_Supply_MMBTU"])
@@ -43,8 +38,6 @@ function minimum_supply_mmbtu(EP::Model, inputs::Dict, setup::Dict)
 		C[i] = @constraint(EP, sum(EP[:vP][y,t]*dfGen[!,:Heat_Rate_MMBTU_per_MWh][y] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:][!,:R_ID], t=1:T) >= inputs["Minimum_Supply_MMBTU"][f])
 		set_name(C[i], "cMinFuelSupply"*string(f))
 	end
-
-	#@constraint(EP, cMinFuelSupply[1:length(fuels_with_constraint)], (for f in fuels_with_constraint sum(EP[:vP][y,t]*dfGen[!,:Heat_Rate_MMBTU_per_MWh][y] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:][!,:R_ID], t=1:T) <= inputs["Minimum_Supply_MMBTU"][f]))
 
 	return EP
 
@@ -64,12 +57,7 @@ function maximum_supply_mmbtu(EP::Model, inputs::Dict, setup::Dict)
 	println("Maximum Supply MMBTU Module")
 
 	dfGen = inputs["dfGen"]
-	#SEG = inputs["SEG"]  # Number of lines
-	#G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	#Z = inputs["Z"]     # Number of zones
-
-	### Expressions ###
 
 	### Constraints ###
 	fuels_with_constraint = findall(x -> x>-0, inputs["Maximum_Supply_MMBTU"])
@@ -79,8 +67,6 @@ function maximum_supply_mmbtu(EP::Model, inputs::Dict, setup::Dict)
 		C[i] = @constraint(EP, sum(EP[:vP][y,t]*dfGen[!,:Heat_Rate_MMBTU_per_MWh][y] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:][!,:R_ID], t=1:T) <= inputs["Maximum_Supply_MMBTU"][f])
 		set_name(C[i], "cMaxFuelSupply"*string(f))
 	end
-
-	#@constraint(EP, cMaxFuelSupply[1:length(fuels_with_constraint)], (for f in fuels_with_constraint sum(EP[:vP][y,t]*dfGen[!,:Heat_Rate_MMBTU_per_MWh][y] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:][!,:R_ID], t=1:T) <= inputs["Maximum_Supply_MMBTU"][f]))
 
 	return EP
 
