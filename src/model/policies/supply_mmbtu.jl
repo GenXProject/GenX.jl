@@ -35,7 +35,7 @@ function minimum_supply_mmbtu(EP::Model, inputs::Dict, setup::Dict)
 	C = Array{ConstraintRef}(undef, length(fuels_with_constraint))
 	for i in 1:length(fuels_with_constraint)
 		f = fuels_with_constraint[i]
-		C[i] = @constraint(EP, sum(EP[:vP][y,t]*dfGen[!,:Heat_Rate_MMBTU_per_MWh][y] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:][!,:R_ID], t=1:T) >= inputs["Minimum_Supply_MMBTU"][f])
+		C[i] = @constraint(EP, sum(EP[:vP][y,t]*dfGen[y,:Heat_Rate_MMBTU_per_MWh] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:R_ID], t=1:T) >= inputs["Minimum_Supply_MMBTU"][f])
 		set_name(C[i], "cMinFuelSupply"*string(f))
 	end
 
@@ -64,7 +64,7 @@ function maximum_supply_mmbtu(EP::Model, inputs::Dict, setup::Dict)
 	C = Array{ConstraintRef}(undef, length(fuels_with_constraint))
 	for i in 1:length(fuels_with_constraint)
 		f = fuels_with_constraint[i]
-		C[i] = @constraint(EP, sum(EP[:vP][y,t]*dfGen[!,:Heat_Rate_MMBTU_per_MWh][y] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:][!,:R_ID], t=1:T) <= inputs["Maximum_Supply_MMBTU"][f])
+		C[i] = @constraint(EP, sum(EP[:vP][y,t]*dfGen[y,:Heat_Rate_MMBTU_per_MWh] for y in dfGen[dfGen[!,:Fuel].==inputs["fuels"][f],:R_ID], t=1:T) <= inputs["Maximum_Supply_MMBTU"][f])
 		set_name(C[i], "cMaxFuelSupply"*string(f))
 	end
 
