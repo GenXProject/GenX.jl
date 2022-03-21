@@ -114,8 +114,38 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 
 	# Retrofit Information
 	if length(inputs_gen["RETRO"]) > 0 # If there are any retrofit technologies in consideration, read relevant data
-		inputs_gen["RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:retro_source][1:inputs_gen["G"]])) # The origin technology that is retrofitted into this new technology
-		inputs_gen["RETROFIT_EFFICIENCIES"] = collect(skipmissing(gen_in[!,:retro_efficiency][1:inputs_gen["G"]])) # The ratio of source nameplate capacity to retrofitted nameplate capacity
+		##inputs_gen["RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:retro_source][1:inputs_gen["G"]])) # The origin technology that is retrofitted into this new technology
+		##inputs_gen["RETROFIT_EFFICIENCIES"] = collect(skipmissing(gen_in[!,:retro_efficiency][1:inputs_gen["G"]])) # The ratio of source nameplate capacity to retrofitted nameplate capacity
+
+		inputs_gen["NUM_RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:Num_RETRO_Sources][1:inputs_gen["G"]]))   # Number of retrofit sources for this technology (0 if not a retrofit technology)
+		max_retro_sources = maximum(inputs_gen["NUM_RETROFIT_SOURCES"])
+
+		source_cols = [ Symbol(string("Retro",i,"_Source")) for i in 1:max_retro_sources ]
+		efficiency_cols = [ Symbol(string("Retro",i,"_Efficiency")) for i in 1:max_retro_sources ]
+		inv_cap_cols = [ Symbol(string("Retro",i,"_Inv_Cost_per_MWyr")) for i in 1:max_retro_sources ]
+		inv_stor_cols = [ Symbol(string("Retro",i,"_Inv_Cost_per_MWhyr")) for i in 1:max_retro_sources ]
+		inv_charge_cols = [ Symbol(string("Retro",i,"_Inv_Cost_Charge_per_MWyr")) for i in 1:max_retro_sources ]
+
+		sources = [ collect(skipmissing(gen_in[!,c][1:G])) for c in source_cols ]
+		inputs_gen["RETROFIT_SOURCES"] = [ [ sources[i][y] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ]  # The origin technologies that can be retrofitted into this new technology
+		inputs_gen["RETROFIT_SOURCE_IDS"] = [ [ findall(x->x==sources[i][y],inputs_gen["RESOURCES"])[1] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ] # The R_IDs of these origin technologies
+
+		# OPTIONAL TO DO: INSTEAD (FOR EFFICIENCIES AND COSTS) create GxG matrices of all 0s/-1s and input values only where real retrofit options are
+		# This makes access easy/readable, but it introduces lots of unnecessary information that would result in odd behavior (instead of an error) if accidentally misindexed. 
+
+		efficiencies = [ collect(skipmissing(gen_in[!,c][1:G])) for c in efficiency_cols ]
+		inputs_gen["RETROFIT_EFFICIENCIES"] = [ [ efficiencies[i][y] for i in 1:max_retro_sources if efficiencies[i][y] != 0 ] for y in 1:G ]  # The efficiencies of each retrofit by source (ratio of outgoing to incoming nameplate capacity)
+		inv_cap = [ collect(skipmissing(gen_in[!,c][1:G])) for c in inv_cap_cols ]
+		inv_stor = [ collect(skipmissing(gen_in[!,c][1:G])) for c in inv_stor_cols ]
+		inv_charge = [ collect(skipmissing(gen_in[!,c][1:G])) for c in inv_charge_cols ]
+		if setup["ParameterScale"] ==1
+			inv_cap /= ModelScalingFactor
+			inv_stor /= ModelScalingFactor
+			inv_charge /= ModelScalingFactor
+		end
+		inputs_gen["RETROFIT_INV_CAP_COSTS"] = [ [ inv_cap[i][y] for i in 1:max_retro_sources if inv_cap[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (capacity $/MWyr) of each retrofit by source
+		inputs_gen["RETROFIT_INV_STOR_COSTS"] = [ [ inv_stor[i][y] for i in 1:max_retro_sources if inv_stor[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (storage $/MWhyr) of each retrofit by source
+		inputs_gen["RETROFIT_INV_CHARGE_COSTS"] = [ [ inv_charge[i][y] for i in 1:max_retro_sources if inv_charge[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (charge $/MWyr) of each retrofit by source
 	end
 
 	if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
@@ -153,6 +183,7 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		inputs_gen["dfGen"][!,:Max_Charge_Cap_MW] = gen_in[!,:Max_Charge_Cap_MW]/ModelScalingFactor # Convert to GW
 
 		## Investment cost terms
+		# (Retrofit costs scaled separately in retrofit information section)
 		# Annualized capacity investment cost of a generation technology
 		inputs_gen["dfGen"][!,:Inv_Cost_per_MWyr] = gen_in[!,:Inv_Cost_per_MWyr]/ModelScalingFactor # Convert to $ million/GW/yr with objective function in millions
 		# Annualized investment cost of the energy capacity for a storage technology with STOR = 1 or STOR = 2

@@ -37,10 +37,14 @@ function retrofit(EP::Model, inputs::Dict)
 
 	G = inputs["G"]   # Number of resources (generators, storage, DR, and DERs)
 	RETRO = inputs["RETRO"] # Set of all retrofit resources
-	NEW_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity expansion
+	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for capacity expansion
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
-	RETRO_SOURCE = inputs["RETROFIT_SOURCES"] # Source technology for the retrofit [1:G]
+	RETRO_SOURCES = inputs["RETROFIT_SOURCES"] # Source technologies (Resource Name) for each retrofit [1:G]
+	RETRO_SOURCE_IDS = inputs["RETROFIT_SOURCE_IDS"] # Source technologies (ID) for each retrofit [1:G]
 	RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"] # Maximum ratio of retrofitted capacity to source capacity [1:G]
+	RETRO_INV_CAP_COSTS = inputs["RETROFIT_INV_CAP_COSTS"] # The set of investment costs (capacity $/MWyr) of each retrofit by source
+	RETRO_INV_STOR_COSTS = inputs["RETROFIT_INV_STOR_COSTS"] # The set of investment costs (storage $/MWhyr) of each retrofit by source
+	RETRO_INV_CHARGE_COSTS = inputs["RETROFIT_INV_CHARGE_COSTS"] # The set of investment costs (charge $/MWyr) of each retrofit by source
 
 	# CONFIRM that this works if techs have New_Build=0 (In addition to 1 and -1 which I believe work as of now)
 
@@ -53,11 +57,24 @@ function retrofit(EP::Model, inputs::Dict)
 	println("RETROFIT-ELIGIBLE RESOURCES")
 	println(RETRO)
 	println("  Intersection: ")
-	println([intersect(findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G), findall(x->x in NEW_CAP, 1:G)) for y in RET_CAP])
+	println([intersect(findall(x->inputs["RESOURCES"][y]==RETRO_SOURCES[x], 1:G), findall(x->x in NEW_CAP, 1:G)) for y in RET_CAP])
+
+	### Variables ###
+
+	# See if this dependent iteration is accepted - if not, try to set individual indices and use outer for loop
+	@variable(EP, vRETROFIT[yr in RETRO_SOURCE_IDS[r], r in RETRO] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
 
 	### Constraints ###
-	# Fix New Build error - see current GenData
-	@constraint(EP, cRetroMaxCap[y in RET_CAP], sum(EP[:vCAP][yr]/RETRO_EFFICIENCY[yr] for yr in intersect(findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G), findall(x->x in NEW_CAP, 1:G))) <= EP[:vRETCAP][y])
+
+	# (Many-to-One) New installed capacity of retrofit technology r must be equal to the (efficiency-downscaled) sum of capacity retrofitted to technology r from source technologies yr
+	#@constraint(EP, cRetroInstall[r in RETRO], EP[:vCAP][r] == sum(EP[:vRETROFIT][yr,r]*RETRO_EFFICIENCY[yr,r] for yr in RETRO_SOURCE_ID[r]))   # Optional matrix formulation. Everything is source-dest indexed, but many of those indices mean nothing and might lead to odd behavior if mishandled.
+	@constraint(EP, cRetroInstall[r in RETRO], EP[:vCAP][r] == sum(EP[:vRETROFIT][RETRO_SOURCE_IDS[r][i],r]*RETRO_EFFICIENCY[r][i] for i in 1:inputs_gen["NUM_RETROFIT_SOURCES"][r]))   # Smaller, maybe less intuitive list formulation. RE is indexed by retrofit tech index then by source index of that retrofit tech
+
+	# (One-to-Many) Sum of retrofitted capacity from a given source technology must not exceed the retired capacity of that technology. (Retrofitting is included within retirement, not a distinct category)
+	@constraint(EP, cRetroRetire[y in RET_CAP], EP[:vRETCAP][y] >= sum( EP[:vRETROFIT][y][r] for r in intersect(findall(x->in(inputs["RESOURCES"][y],RETRO_SOURCES[x])), findall(x->x in NEW_CAP, 1:G)) ))
+	
+	## # Fix New Build error - see current GenData
+	##@constraint(EP, cRetroMaxCap[y in RET_CAP], sum(EP[:vCAP][yr]/RETRO_EFFICIENCY[yr] for yr in intersect(findall(x->inputs["RESOURCES"][y]==RETRO_SOURCE[x], 1:G), findall(x->x in NEW_CAP, 1:G))) <= EP[:vRETCAP][y])
 
 	return EP
 end
