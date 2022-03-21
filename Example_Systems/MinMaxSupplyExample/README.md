@@ -13,17 +13,17 @@ Sum of fuel consumed by each resource using a contrained fuel type (`dfFuels[:Ma
 
 In the example, when no fuel-supply constraints are provided:
 
-* `natural_gas_combined` generator type generates about 18 TWh.
+* `natural_gas_combined` generator type generates about 46 GWh.
 * `solar_pv` generator type is not built out at all.
 
 ## With fuel-supply constraints
 
 Adding fuel-supply constraints:
 
-* Maximum for fuel 'NG': 67873273 MMBTU (`natural_gas_combined`).
-* Minimum for fuel 'sun': 100 MMBTU (`solar_pv`).
+* Maximum for fuel 'NG': 170229 MMBTU (`natural_gas_combined`) which corresponds to half of what was generated without fuel-supply constraints.
+* Minimum for fuel 'sun': 100 MMBTU (`solar_pv`) which corresponds to 100 MWh.
 
 Results in capacity expansion:
 
-* `natural_gas_combined` generator type generates about 9 TWh.
+* `natural_gas_combined` generator type generates about 23 GWh.
 * `solar_pv` generator type is built and generates 100 MWh.
