@@ -130,12 +130,12 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
-include("model/resources/thermal/supply_mmbtu.jl")
 
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
+include("model/policies/supply_mmbtu.jl")
 
 include("multi_stage/model_multi_stage/storage_multi_stage.jl")
 include("multi_stage/model_multi_stage/investment_multi_stage.jl")
