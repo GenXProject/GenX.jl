@@ -53,7 +53,9 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	# Set of all reservoir hydro resources
 	inputs_gen["HYDRO_RES"] = gen_in[(gen_in[!,:HYDRO].==1),:R_ID]
 	# Set of reservoir hydro resources modeled with known reservoir energy capacity
-	inputs_gen["HYDRO_RES_KNOWN_CAP"] = intersect(gen_in[gen_in.Hydro_Energy_to_Power_Ratio.>0,:R_ID], inputs_gen["HYDRO_RES"])
+	if !isempty(inputs_gen["HYDRO_RES"])
+		inputs_gen["HYDRO_RES_KNOWN_CAP"] = intersect(gen_in[gen_in.Hydro_Energy_to_Power_Ratio.>0,:R_ID], inputs_gen["HYDRO_RES"])
+	end
 
 	# Set of flexible demand-side resources
 	inputs_gen["FLEX"] = gen_in[gen_in.FLEX.==1,:R_ID]
