@@ -58,17 +58,7 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
-	COMMIT = inputs["COMMIT"]   # Set of all resources eligible for unit commitment
-	RETRO = inputs["RETRO"]     # Set of all retrofit resources
-
-	# Additional retrofit information if necessary
-	if !isempty(RETRO)
-		NUM_RETRO_SOURCES = inputs["NUM_RETROFIT_SOURCES"]       # The number of source resources for each retrofit resource
-		RETRO_SOURCES = inputs["RETROFIT_SOURCES"]               # Source technologies (Resource Name) for each retrofit [1:G]
-		RETRO_SOURCE_IDS = inputs["RETROFIT_SOURCE_IDS"]         # Source technologies (IDs) for each retrofit [1:G]
-		RETRO_INV_CAP_COSTS = inputs["RETROFIT_INV_CAP_COSTS"]   # The set of investment costs (capacity $/MWyr) of each retrofit by source
-		RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"]       # Ratio of installed retrofit capacity to retired source capacity [0:1]
-	end
+	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
 
 	### Variables ###
 
@@ -77,23 +67,6 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 
     # New installed capacity of resource "y"
 	@variable(EP, vCAP[y in NEW_CAP] >= 0);
-
-	# Capacity from source resource "yr" that is being retrofitted into capacity of retrofit resource "r"
-	if !isempty(RETRO)
-		println("Retrofit Transition Variables...")
-		# Dependent iterators only allowed in forward sequence, so we reconstruct retrofit destinations from sources.
-		ALL_SOURCES = intersect(collect(Set(collect(Iterators.flatten(RETRO_SOURCE_IDS)))),RET_CAP)
-		print("Retro sources: ")
-		println(ALL_SOURCES)
-		DESTS_BY_SOURCE = [ y in ALL_SOURCES ? intersect(findall(x->in(inputs["RESOURCES"][y],RETRO_SOURCES[x]), 1:G), findall(x->x in NEW_CAP, 1:G)) : []  for y in 1:G]
-		print("Retro destinations: ")
-		println(DESTS_BY_SOURCE)
-		#@variable(EP, vRETROFIT[yr in RETRO_SOURCE_IDS[r], r in RETRO] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
-		@variable(EP, vRETROFIT[yr in ALL_SOURCES, r in DESTS_BY_SOURCE[yr]] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
-		println("vRETROFIT: ")
-		println(vRETROFIT)
-		println("Retrofit Fixed Costs...")
-	end
 
 	### Expressions ###
 
@@ -128,21 +101,11 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
 	# If resource is not eligible for new capacity, fixed costs are only O&M costs
 	@expression(EP, eCFix[y in 1:G],
-		#if (y in NEW_CAP) & !(y in RETRO) # Resources eligible for new capacity (Non-Retrofit)
-		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
+		if y in NEW_CAP # Resources eligible for new capacity
 			if y in COMMIT
 				dfGen[!,:Inv_Cost_per_MWyr][y]*dfGen[!,:Cap_Size][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
 			else
 				dfGen[!,:Inv_Cost_per_MWyr][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
-			end
-		#elseif (y in NEW_CAP) & (y in RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
-		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
-			if y in COMMIT
-				#dfGen[!,:Inv_Cost_per_MWyr][y]*dfGen[!,:Cap_Size][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
-				sum( RETRO_INV_CAP_COSTS[y][i]*dfGen[!,:Cap_Size][y]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
-			else
-				#dfGen[!,:Inv_Cost_per_MWyr][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
-				sum( RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
 			end
 		else
 			dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
