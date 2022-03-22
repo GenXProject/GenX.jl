@@ -121,11 +121,7 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		# Cap_Size scales only capacities for those technologies with capacity >1
 		# Step 1: convert vector to float
 		inputs_gen["dfGen"][!,:Cap_Size] =convert(Array{Float64}, gen_in[!,:Cap_Size])
-		for g in 1:G  # Scale only those capacities for which Cap_Size > 1
-			if inputs_gen["dfGen"][!,:Cap_Size][g]>1.0
-				inputs_gen["dfGen"][!,:Cap_Size][g] = gen_in[!,:Cap_Size][g]/ModelScalingFactor # Convert to GW
-			end
-		end
+		inputs_gen["dfGen"][!,:Cap_Size] ./= ModelScalingFactor
 
 		# Min capacity terms
 		# Limit on minimum discharge capacity of the resource. -1 if no limit on minimum capacity
