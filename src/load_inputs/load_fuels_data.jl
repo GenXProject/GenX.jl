@@ -56,16 +56,8 @@ function load_fuels_data(setup::Dict, path::AbstractString, sep::AbstractString,
 			fuel_costs[string(fuels[i])] = costs[:,i]/ModelScalingFactor
 			fuel_CO2[string(fuels[i])] = CO2_content[i]/ModelScalingFactor # kton/MMBTU
 			if use_minmax_supply
-				if Minimum_Supply_MMBTU_content[i] >= 0
-					Minimum_Supply_MMBTU[i] = Minimum_Supply_MMBTU_content[i]/ModelScalingFactor 
-				else
-					Minimum_Supply_MMBTU[i] = Minimum_Supply_MMBTU_content[i]
-				end
-				if Maximum_Supply_MMBTU_content[i] >= 0
-					Maximum_Supply_MMBTU[i] = Maximum_Supply_MMBTU_content[i]/ModelScalingFactor 
-				else
-					Maximum_Supply_MMBTU[i] = Maximum_Supply_MMBTU_content[i]
-				end
+				Minimum_Supply_MMBTU[i] = Minimum_Supply_MMBTU_content[i]/ModelScalingFactor 
+				Maximum_Supply_MMBTU[i] = Maximum_Supply_MMBTU_content[i]/ModelScalingFactor 
 			end
 		else
 			fuel_costs[string(fuels[i])] = costs[:,i]
