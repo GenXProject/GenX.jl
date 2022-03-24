@@ -34,7 +34,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	## Declare Dict (dictionary) object used to store parameters
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
-    if isfile(joinpath(path,"Network.csv"))
+    	if isfile(joinpath(path,"Network.csv"))
 		inputs, network_var = load_network_data(setup, path, inputs)
 	else
 		inputs["Z"] = 1

@@ -19,7 +19,6 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	SEG = inputs["SEG"]  # Number of lines
-	Z = inputs["Z"]     # Number of zonests
 	L = inputs["L"] # Number of lines
 	THERM_ALL = inputs["THERM_ALL"]
 	VRE = inputs["VRE"]
