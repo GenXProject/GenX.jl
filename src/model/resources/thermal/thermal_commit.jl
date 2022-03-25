@@ -225,50 +225,18 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 	end
 
 	### Minimum up and down times (Constraints #9-10)
-	for y in THERM_COMMIT
+	p = hours_per_subperiod
+	Up_Time = zeros(Int, nrow(dfGen))
+	Up_Time[THERM_COMMIT] .= Int.(floor.(dfGen[THERM_COMMIT,:Up_Time]))
+	@constraint(EP, [y in THERM_COMMIT, t in 1:T],
+		EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y, hoursbefore(p, t, 0:(Up_Time[y] - 1))])
+	)
 
-		## up time
-		Up_Time = Int(floor(dfGen[!,:Up_Time][y]))
-		Up_Time_HOURS = [] # Set of hours in the summation term of the maximum up time constraint for the first subperiod of each representative period
-		for s in START_SUBPERIODS
-			Up_Time_HOURS = union(Up_Time_HOURS, (s+1):(s+Up_Time-1))
-		end
-
-		@constraints(EP, begin
-			# cUpTimeInterior: Constraint looks back over last n hours, where n = dfGen[!,:Up_Time][y]
-			[t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-dfGen[!,:Up_Time][y]):t)
-
-			# cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-			# cUpTimeWrap constraint equivalant to: sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
-			[t in Up_Time_HOURS], EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(dfGen[!,:Up_Time][y]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
-
-			# cUpTimeStart:
-			# NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-			[t in START_SUBPERIODS], EP[:vCOMMIT][y,t] >= EP[:vSTART][y,t]+sum(EP[:vSTART][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Up_Time][y]-1)):(t+hours_per_subperiod-1))
-		end)
-
-		## down time
-		Down_Time = Int(floor(dfGen[!,:Down_Time][y]))
-		Down_Time_HOURS = [] # Set of hours in the summation term of the maximum down time constraint for the first subperiod of each representative period
-		for s in START_SUBPERIODS
-			Down_Time_HOURS = union(Down_Time_HOURS, (s+1):(s+Down_Time-1))
-		end
-
-		# Constraint looks back over last n hours, where n = dfGen[!,:Down_Time][y]
-		# TODO: Replace LHS of constraints in this block with eNumPlantsOffline[y,t]
-		@constraints(EP, begin
-			# cDownTimeInterior: Constraint looks back over last n hours, where n = inputs["pDMS_Time"][y]
-			[t in setdiff(INTERIOR_SUBPERIODS,Down_Time_HOURS)], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-dfGen[!,:Down_Time][y]):t)
-
-			# cDownTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-			# cDownTimeWrap constraint equivalant to: EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=(hours_per_subperiod_max-(dfGen[!,:Down_Time][y]-(t%hours_per_subperiod))):hours_per_subperiod_max)
-			[t in Down_Time_HOURS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(dfGen[!,:Down_Time][y]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
-
-			# cDownTimeStart:
-			# NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-			[t in START_SUBPERIODS], EP[:eTotalCap][y]/dfGen[!,:Cap_Size][y]-EP[:vCOMMIT][y,t]  >= EP[:vSHUT][y,t]+sum(EP[:vSHUT][y,e] for e=((t+hours_per_subperiod-1)-(dfGen[!,:Down_Time][y]-1)):(t+hours_per_subperiod-1))
-		end)
-	end
+	Down_Time = zeros(Int, nrow(dfGen))
+	Down_Time[THERM_COMMIT] .= Int.(floor.(dfGen[THERM_COMMIT,:Down_Time]))
+	@constraint(EP, [y in THERM_COMMIT, t in 1:T],
+		EP[:eTotalCap][y]/dfGen[y,:Cap_Size]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y, hoursbefore(p, t, 0:(Down_Time[y] - 1))])
+	)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
 
@@ -389,4 +357,33 @@ function thermal_commit_reserves(EP::Model, inputs::Dict)
 	end
 
 	return EP
+end
+
+@doc raw"""
+    hoursbefore(p::Int, t::Int, b::Int)
+
+Determines the time index b hours before index t in
+a landscape starting from t=1 which is separated
+into distinct periods of length p.
+
+For example, if p = 10,
+1 hour before t=1 is t=10,
+1 hour before t=10 is t=9
+1 hour before t=11 is t=20
+"""
+function hoursbefore(p::Int, t::Int, b::Int)::Int
+	period = div(t - 1, p)
+	return period * p + mod1(t - b, p)
+end
+
+@doc raw"""
+    hoursbefore(p::Int, t::Int, b::UnitRange)
+
+This is a generalization of hoursbefore(... b::Int)
+to allow for example b=1:3 to fetch a Vector{Int} of the three hours before
+time index t.
+"""
+function hoursbefore(p::Int, t::Int, b::UnitRange{Int})::Vector{Int}
+	period = div(t - 1, p)
+	return period * p .+ mod1.(t .- b, p)
 end
