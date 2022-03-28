@@ -41,6 +41,7 @@ function fleccs(EP::Model, inputs::Dict, FLECCS::Int,  UCommit::Int, Reserves::I
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	N_F = inputs["N_F"]
+	n = length(N_F)
 
 	EP = fleccs_fix(EP, inputs, FLECCS,  UCommit, Reserves)
 
@@ -73,6 +74,8 @@ function fleccs(EP::Model, inputs::Dict, FLECCS::Int,  UCommit::Int, Reserves::I
 		EP = fleccs7(EP, inputs, FLECCS, UCommit, Reserves)
 	elseif FLECCS ==8
 		EP = fleccs8(EP, inputs, FLECCS, UCommit, Reserves)
+	elseif FLECCS ==9
+		EP = fleccs9(EP, inputs, FLECCS, UCommit, Reserves)
 	end
 
 
@@ -101,7 +104,19 @@ function fleccs(EP::Model, inputs::Dict, FLECCS::Int,  UCommit::Int, Reserves::I
 		EP[:eMinCapRes] += eMinCapResFLECCS
 	end
 
+	# substation and transmission, 03/18/2022
 
+	@variable(EP, vCAP_FLECCS_tx[y in FLECCS_ALL] >= 0)
+
+	@constraint(EP, [y in FLECCS_ALL, t = 1:T], EP[:eCCS_net][y,t] <= vCAP_FLECCS_tx[y])
+
+	@expression(EP, eC_FLECCS_tx[y in FLECCS_ALL], dfGen_ccs[!,:CAPEX_tx][1+n*(y-1)]  * vCAP_FLECCS_tx[y] )
+	
+	@expression(EP, eTotalCFLECCS_tx, sum( eC_FLECCS_tx[y] for y in FLECCS_ALL) )
+
+	EP[:eObj] += eTotalCFLECCS_tx
+
+	
 
 
 	return EP

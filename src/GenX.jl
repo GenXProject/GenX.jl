@@ -40,7 +40,7 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
-using DiffEqSensitivity
+#using DiffEqSensitivity
 using OrdinaryDiffEq
 using QuasiMonteCarlo
 using Random
@@ -192,8 +192,10 @@ include("write_outputs/ucommit/write_shutdown.jl")
 include("write_outputs/ucommit/write_start.jl")
 
 include("write_outputs/fleccs/write_capacity_fleccs.jl")
-include("write_outputs/fleccs/write_output_fleccs.jl")
 include("write_outputs/fleccs/write_power_fleccs.jl")
+include("write_outputs/fleccs/write_energy_revenue_fleccs.jl")
+include("write_outputs/fleccs/write_reserve_margin_revenue_fleccs.jl")
+include("write_outputs/fleccs/write_net_revenue_fleccs.jl")
 
 include("write_outputs/write_outputs.jl")
 

@@ -60,7 +60,10 @@ function load_fleccs_data(setup::Dict, path::AbstractString,  inputs_ccs::Dict, 
 	elseif setup["FLECCS"] == 8
 		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data8.csv"), header=true), copycols=true)
 		#FLECCS_parameters = DataFrame(CSV.File(joinpath(path,"FLECCS_data8_process_parameters.csv"), header=true), copycols=true)
-		println("FLECCS_data8.csv Successfully Read!, NGCC-CCS with Allam cycle")
+		println("FLECCS_data8.csv Successfully Read!, Allam cycle")
+	elseif setup["FLECCS"] == 9
+		dfGen_ccs = DataFrame(CSV.File(joinpath(path,"FLECCS_data9.csv"), header=true), copycols=true)
+		println("FLECCS_data9.csv Successfully Read!, NGCC-CCS with retrofit")
 	end
 
 	inputs_ccs["n_F"] =nrow(dfGen_ccs)
@@ -284,7 +287,26 @@ function load_fleccs_data(setup::Dict, path::AbstractString,  inputs_ccs::Dict, 
 	    inputs_ccs["LOX_id"] = dfGen_ccs[(dfGen_ccs[!,:LOX].==1),:FLECCS_NO][1]
 	    # compressor
 	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
+	elseif setup["FLECCS"] == 9
+		# gas turbine
+	    inputs_ccs["NGCT_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==1),:FLECCS_NO][1]
+	    # steam turbine
+	    inputs_ccs["NGST_id"] = dfGen_ccs[(dfGen_ccs[!,:TURBINE].==2),:FLECCS_NO][1]
+	    # absorber
+	    inputs_ccs["PCC_id"] = dfGen_ccs[(dfGen_ccs[!,:ABSORBER].==1),:FLECCS_NO][1]
+	    # compressor
+	    inputs_ccs["Comp_id"] = dfGen_ccs[(dfGen_ccs[!,:COMPRESSOR].==1),:FLECCS_NO][1]
+	    #BOP
+	    inputs_ccs["BOP_id"] = dfGen_ccs[(dfGen_ccs[!,:BOP].==1),:FLECCS_NO][1]
 	end
+
+
+	# add substantial + transmissions, right now I just directly add the number for simplicity. 8382 $/MW - yr (2020) is the value from Wilson , 03/18/2022
+    if setup["ParameterScale"] ==1
+	    inputs_ccs["dfGen_ccs"][!,:CAPEX_tx] = dfGen_ccs[!,:CAPEX_tx]/ModelScalingFactor 
+	end
+		# Convert to $ million/GW/yr with objective function in millions
+
 
 
 

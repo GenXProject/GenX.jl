@@ -76,10 +76,11 @@ function write_power_fleccs(path::AbstractString, inputs::Dict, setup::Dict, EP:
 	#end
 	#rename!(total,auxNew_Names)
 	#dfPower = vcat(dfPower, total)
-	dfPower_FLECCS = dftranspose(dfPower_FLECCS, false)
+	#dfPower_FLECCS = dftranspose(dfPower_FLECCS, false)
 	#rename!(dfPower_FLECCS,:Compressor => :Other_auxiliary)
 	#rename!(dfPower_FLECCS,:BOP => :Net_Power)
 
- 	CSV.write(joinpath(path,"power_FLECCS.csv"), dfPower_FLECCS, writeheader=false)
+
+ 	CSV.write(joinpath(path,"power_FLECCS.csv"),dftranspose(dfPower_FLECCS, false), writeheader=false)
 	return dfPower_FLECCS
 end
