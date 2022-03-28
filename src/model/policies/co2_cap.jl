@@ -88,7 +88,7 @@ function co2_cap(EP::Model, inputs::Dict, setup::Dict)
 	=#
 	###############
 	# UNCOMMENTED jfmorris 3/22/2021 because eLOSSBByZone was never instantiated
-	if setup["CO2Cap"] == 2
+	if (setup["CO2Cap"] == 2) & (isempty(inputs["STOR_ALL"]))      # TEMPORARY
 		@expression(EP, eELOSSByZone[z=1:Z],
 			sum(EP[:eELOSS][y] for y in intersect(inputs["STOR_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
 		)
