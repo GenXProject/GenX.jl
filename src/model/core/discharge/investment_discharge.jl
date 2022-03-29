@@ -128,21 +128,17 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
 	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
 	# If resource is not eligible for new capacity, fixed costs are only O&M costs
 	@expression(EP, eCFix[y in 1:G],
-		#if (y in NEW_CAP) & !(y in RETRO) # Resources eligible for new capacity (Non-Retrofit)
 		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
 			if y in COMMIT
 				dfGen[!,:Inv_Cost_per_MWyr][y]*dfGen[!,:Cap_Size][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
 			else
 				dfGen[!,:Inv_Cost_per_MWyr][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
 			end
-		#elseif (y in NEW_CAP) & (y in RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
 		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
 			if y in COMMIT
-				#dfGen[!,:Inv_Cost_per_MWyr][y]*dfGen[!,:Cap_Size][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
-				sum( RETRO_INV_CAP_COSTS[y][i]*dfGen[!,:Cap_Size][y]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*dfGen[!,:Cap_Size][y]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
 			else
-				#dfGen[!,:Inv_Cost_per_MWyr][y]*vCAP[y] + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
-				sum( RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]
 			end
 		else
 			dfGen[!,:Fixed_OM_Cost_per_MWyr][y]*eTotalCap[y]

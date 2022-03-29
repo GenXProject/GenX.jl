@@ -17,6 +17,8 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
 	retrofit(EP::Model, inputs::Dict)
 
+UPDATE THIS WITH NEW MATH
+
 This function defines the constraints for operation of retrofit technologies, including
 	but not limited to carbon capture, natural gas-hydrogen blending, and thermal energy storage.
 
@@ -94,9 +96,9 @@ function retrofit(EP::Model, inputs::Dict)
 	println("eRetroInstallCapMap")
 	@expression(EP, eRetroInstallCapMap[r in intersect(RETRO, NEW_CAP)],
 		if r in COMMIT
-			sum( EP[:vRETROFIT][RETRO_SOURCE_IDS[r][i], r]*CAP_SIZE[RETRO_SOURCE_IDS[r][i]]*RETRO_EFFICIENCY[r][i] for i in 1:NUM_RETRO_SOURCES[r]; init=0 )
+			sum( RETRO_SOURCE_IDS[r][i] in RET_CAP ? EP[:vRETROFIT][RETRO_SOURCE_IDS[r][i], r]*CAP_SIZE[RETRO_SOURCE_IDS[r][i]]*RETRO_EFFICIENCY[r][i] : 0 for i in 1:NUM_RETRO_SOURCES[r]; init=0 )
 		else
-			sum( EP[:vRETROFIT][RETRO_SOURCE_IDS[r][i], r]*RETRO_EFFICIENCY[r][i] for i in 1:NUM_RETRO_SOURCES[r]; init=0 )
+			sum( RETRO_SOURCE_IDS[r][i] in RET_CAP ? EP[:vRETROFIT][RETRO_SOURCE_IDS[r][i], r]*RETRO_EFFICIENCY[r][i] : 0 for i in 1:NUM_RETRO_SOURCES[r]; init=0 )
 		end
 	)
 
@@ -114,22 +116,14 @@ function retrofit(EP::Model, inputs::Dict)
 
 	println("Constraints...")
 
-
-
-	# ISSUE: for resources y/r in COMMIT, we need cap_size multipliers
-	# QUESTION: What if source resource is not in RET_CAP?
-	###@constraint(EP, cRetroInstall[r in RETRO], EP[:vCAP][r] == sum(EP[:vRETROFIT][RETRO_SOURCE_IDS[r][i],r]*RETRO_EFFICIENCY[r][i] for i in 1:inputs["NUM_RETROFIT_SOURCES"][r]))   # Smaller, maybe less intuitive list formulation. RE is indexed by retrofit tech index then by source index of that retrofit tech
-
 	println("Retrofit Source (LHS) Constraint...")
 	# (One-to-Many) Sum of retrofitted capacity from a given source technology must not exceed the retired capacity of that technology. (Retrofitting is included within retirement, not a distinct category)
-	###@constraint(EP, cRetroRetire[y in RET_CAP], EP[:vRETCAP][y] >= sum( EP[:vRETROFIT][y,r] for r in intersect(findall(x->in(inputs["RESOURCES"][y],RETRO_SOURCES[x]),1:G), findall(x->x in NEW_CAP, 1:G)) ))
 	# TO DO: Add term for decommissioned capacity on RHS and make it an equality constraint
 	@constraint(EP, cRetroSource[y in RET_CAP], eRetroRetireCap[y] >= eRetroRetireCapMap[y])
 
 
 	println("Retrofit Desintation (RHS) Constraint...")
 	# (Many-to-One) New installed capacity of retrofit technology r must be equal to the (efficiency-downscaled) sum of capacity retrofitted to technology r from source technologies yr
-	###@constraint(EP, cRetroInstall[r in RETRO], EP[:vCAP][r] == sum(EP[:vRETROFIT][yr,r]*RETRO_EFFICIENCY[yr,r] for yr in RETRO_SOURCE_ID[r]))   # Optional matrix formulation. Everything is source-dest indexed, but many of those indices mean nothing and might lead to odd behavior if mishandled.
 	@constraint(EP, cRetroDest[r in intersect(RETRO, NEW_CAP)], eRetroInstallCapMap[r] == eRetroInstallCap[r])
 
 
