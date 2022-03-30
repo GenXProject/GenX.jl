@@ -43,8 +43,6 @@ function load_inputs_multi_stage(setup::Dict,path::AbstractString)
 	## Declare Dict (dictionary) object used to store parameters
 	inputs_multi_stage = Dict()
 
-	inputs_multi_stage = load_generators_data_multi_stage(setup, path, sep, inputs_multi_stage)
-
 	if setup["NetworkExpansion"] > 0
 		inputs_multi_stage = load_network_data_multi_stage(setup, path, sep, inputs_multi_stage)
 	end

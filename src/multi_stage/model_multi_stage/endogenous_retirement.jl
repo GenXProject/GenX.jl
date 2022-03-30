@@ -64,7 +64,6 @@ function endogenous_retirement_discharge(EP::Model, inputs::Dict, num_stages::In
 	println("Endogenous Retirement (Discharge) Module")
 	
 	dfGen = inputs["dfGen"]
-	dfGenMultiStage = inputs["dfGenMultiStage"]
 
 	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
 
@@ -98,12 +97,12 @@ function endogenous_retirement_discharge(EP::Model, inputs::Dict, num_stages::In
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrack[y=1:G], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGenMultiStage[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
 	@expression(EP, eMinRetCapTrack[y=1:G],
 		if y in COMMIT
-			sum((dfGenMultiStage[!,Symbol("Min_Retired_Cap_MW_p$p")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_stage)
+			sum((dfGen[!,Symbol("Min_Retired_Cap_MW")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_stage)
 		else
-			sum((dfGenMultiStage[!,Symbol("Min_Retired_Cap_MW_p$p")][y]) for p=1:cur_stage)
+			sum((dfGen[!,Symbol("Min_Retired_Cap_MW")][y]) for p=1:cur_stage)
 		end
 	)
 
@@ -128,7 +127,7 @@ function endogenous_retirement_charge(EP::Model, inputs::Dict, num_stages::Int, 
 
 	println("Endogenous Retirement (Charge) Module")
 
-	dfGenMultiStage = inputs["dfGenMultiStage"]
+	dfGen = inputs["dfGen"]
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
@@ -161,8 +160,8 @@ function endogenous_retirement_charge(EP::Model, inputs::Dict, num_stages::Int, 
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGenMultiStage[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackCharge[y in STOR_ASYMMETRIC], sum((dfGenMultiStage[!,Symbol("Min_Retired_Charge_Cap_MW_p$p")][y]) for p=1:cur_stage))
+	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eMinRetCapTrackCharge[y in STOR_ASYMMETRIC], sum((dfGen[!,Symbol("Min_Retired_Charge_Cap_MW")][y]) for p=1:cur_stage))
 
 	### Constratints ###
 
@@ -185,7 +184,7 @@ function endogenous_retirement_energy(EP::Model, inputs::Dict, num_stages::Int, 
 
 	println("Endogenous Retirement (Energy) Module")
 
-	dfGenMultiStage = inputs["dfGenMultiStage"]
+	dfGen = inputs["dfGen"]
 
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
@@ -217,8 +216,8 @@ function endogenous_retirement_energy(EP::Model, inputs::Dict, num_stages::Int, 
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackEnergy[y in STOR_ALL], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGenMultiStage[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGenMultiStage[!,Symbol("Min_Retired_Energy_Cap_MW_p$p")][y]) for p=1:cur_stage))
+	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGen[!,Symbol("Min_Retired_Energy_Cap_MW")][y]) for p=1:cur_stage))
 
 	### Constratints ###
 

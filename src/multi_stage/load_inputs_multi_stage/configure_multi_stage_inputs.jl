@@ -86,7 +86,6 @@ returns: dictionary containing updated model inputs, to be used in the generate\
 function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
     dfGen = inputs_d["dfGen"]
-	dfGenMultiStage = inputs_d["dfGenMultiStage"]
 
 	# Parameter inputs when multi-year discounting is activated
 	cur_stage = settings_d["CurStage"]
@@ -101,9 +100,9 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
 		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 
 		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years

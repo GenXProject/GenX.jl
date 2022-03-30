@@ -191,7 +191,6 @@ include("simple_operation.jl")
 
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
-include("multi_stage/load_inputs_multi_stage/load_generators_data_multi_stage.jl")
 include("multi_stage/load_inputs_multi_stage/load_network_data_multi_stage.jl")
 include("multi_stage/load_inputs_multi_stage/load_inputs_multi_stage.jl")
 include("multi_stage/write_outputs_multi_stage/write_settings.jl")

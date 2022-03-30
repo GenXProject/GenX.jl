@@ -111,7 +111,7 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
 
-	if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
+	if setup["ParameterScale"] == 1  # Parameter scaling turned on - adjust values of subset of parameter values
 
 		# The existing capacity of a power plant in megawatts
 		inputs_gen["dfGen"][!,:Existing_Charge_Cap_MW] = gen_in[!,:Existing_Charge_Cap_MW]/ModelScalingFactor # Convert to GW
@@ -168,6 +168,11 @@ function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractSt
 		# Cost of providing spinning reserves
 		inputs_gen["dfGen"][!,:Rsv_Cost] = gen_in[!,:Rsv_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
 
+		if setup["MultiStage"] == 1
+			inputs_gen["dfGen"][!,:Min_Retired_Cap_MW] = gen_in[!,:Min_Retired_Cap_MW]/ModelScalingFactor
+			inputs_gen["dfGen"][!,:Min_Retired_Charge_Cap_MW] = gen_in[!,:Min_Retired_Charge_Cap_MW]/ModelScalingFactor
+			inputs_gen["dfGen"][!,:Min_Retired_Energy_Cap_MW] = gen_in[!,:Min_Retired_Energy_Cap_MW]/ModelScalingFactor
+		end
 	end
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
