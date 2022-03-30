@@ -136,8 +136,6 @@ include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
 
-include("multi_stage/model_multi_stage/endogenous_retirement.jl")
-
 include("model/generate_model.jl")
 include("model/solve_model.jl")
 
@@ -189,9 +187,11 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
+# Multi Stage files
 include("multi_stage/dual_dynamic_programming.jl")
-include("multi_stage/load_inputs_multi_stage/configure_multi_stage_inputs.jl")
-include("multi_stage/write_outputs_multi_stage/write_settings.jl")
+include("multi_stage/configure_multi_stage_inputs.jl")
+include("multi_stage/endogenous_retirement.jl")
+include("multi_stage//write_settings.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
 include("additional_tools/method_of_morris_v2.jl")
