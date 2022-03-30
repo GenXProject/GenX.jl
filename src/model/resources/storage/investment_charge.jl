@@ -54,13 +54,11 @@ In addition, this function adds investment and fixed O&M related costs related t
 \end{aligned}
 ```
 """
-function investment_charge(EP::Model, inputs::Dict)
+function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
 
 	println("Charge Investment Module")
 
 	dfGen = inputs["dfGen"]
-
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
@@ -77,17 +75,27 @@ function investment_charge(EP::Model, inputs::Dict)
 	# Retired charge capacity of resource "y" from existing capacity
 	@variable(EP, vRETCAPCHARGE[y in RET_CAP_CHARGE] >= 0)
 
+	if MultiStage == 1
+		@variable(EP, vEXISTINGCAPCHARGE[y in STOR_ASYMMETRIC] >= 0);
+	end
+
 	### Expressions ###
+
+	if MultiStage == 1
+		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], vEXISTINGCAPCHARGE[y])
+	else
+		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], dfGen[!,:Existing_Charge_Cap_MW][y])
+	end
 
 	@expression(EP, eTotalCapCharge[y in STOR_ASYMMETRIC],
 		if (y in intersect(NEW_CAP_CHARGE, RET_CAP_CHARGE))
-			dfGen[!,:Existing_Charge_Cap_MW][y] + EP[:vCAPCHARGE][y] - EP[:vRETCAPCHARGE][y]
+			eExistingCapCharge[y] + EP[:vCAPCHARGE][y] - EP[:vRETCAPCHARGE][y]
 		elseif (y in setdiff(NEW_CAP_CHARGE, RET_CAP_CHARGE))
-			dfGen[!,:Existing_Charge_Cap_MW][y] + EP[:vCAPCHARGE][y]
+			eExistingCapCharge[y] + EP[:vCAPCHARGE][y]
 		elseif (y in setdiff(RET_CAP_CHARGE, NEW_CAP_CHARGE))
-			dfGen[!,:Existing_Charge_Cap_MW][y] - EP[:vRETCAPCHARGE][y]
+			eExistingCapCharge[y] - EP[:vRETCAPCHARGE][y]
 		else
-			dfGen[!,:Existing_Charge_Cap_MW][y] + EP[:vZERO]
+			eExistingCapCharge[y] + EP[:vZERO]
 		end
 	)
 
@@ -107,13 +115,25 @@ function investment_charge(EP::Model, inputs::Dict)
 	@expression(EP, eTotalCFixCharge, sum(EP[:eCFixCharge][y] for y in STOR_ASYMMETRIC))
 
 	# Add term to objective function expression
-	EP[:eObj] += eTotalCFixCharge
+	if MultiStage == 1
+		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
+		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
+		# and we have already accounted for multiple years between stages for fixed costs.
+		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixCharge
+	else
+		EP[:eObj] += eTotalCFixCharge
+	end
 
 	### Constratints ###
 
+	if MultiStage == 1
+		# Existing capacity variable is equal to existing capacity specified in the input file
+		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == dfGen[!,:Existing_Charge_Cap_MW][y])
+	end
+
 	## Constraints on retirements and capacity additions
 	#Cannot retire more charge capacity than existing charge capacity
- 	@constraint(EP, cMaxRetCharge[y in RET_CAP_CHARGE], vRETCAPCHARGE[y] <= dfGen[!,:Existing_Charge_Cap_MW][y])
+ 	@constraint(EP, cMaxRetCharge[y in RET_CAP_CHARGE], vRETCAPCHARGE[y] <= eExistingCapCharge[y])
 
   	#Constraints on new built capacity
 
