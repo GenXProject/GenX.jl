@@ -60,8 +60,6 @@ OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 model_dict=Dict()
 inputs_dict=Dict()
 
-inputs_multi_stage = load_inputs_multi_stage(mysetup, string("$inpath/Inputs"))
-
 for t in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 
 	# Step 0) Set Model Year
@@ -71,8 +69,6 @@ for t in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 	inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
 	inputs_dict[t] = load_inputs(mysetup, inpath_sub)
-
-	merge!(inputs_dict[t],inputs_multi_stage)
 	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
 
 	# Step 2) Generate model
