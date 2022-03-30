@@ -62,13 +62,32 @@ function write_charge(path::AbstractString, sep::AbstractString, inputs::Dict, s
 		dfCharge_DC = hcat(dfCharge_DC, DataFrame(charge_dc, :auto))
 		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 		rename!(dfCharge_DC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		total = DataFrame(["Total" 0 sum(dfCharge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 		for t in 1:T
 			total[:,t+3] .= sum(dfCharge_DC[:,Symbol("t$t")][1:VRE_STOR])
 		end
 		rename!(total,auxNew_Names)
 		dfCharge_DC = vcat(dfCharge_DC, total)
-		CSV.write(string(path,sep,"vre_stor_charge.csv"), dftranspose(dfCharge_DC, false), writeheader=false)
+		CSV.write(string(path,sep,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), writeheader=false)
+
+		# VRE-Stor charging
+		dfCharge_VRE = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+		charge_vre = zeros(VRE_STOR, T)
+		for i in 1:VRE_STOR
+			charge_vre[i,:] = value.(EP[:eVRECharging][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+			dfCharge_VRE[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_vre[i,:])
+		end
+
+		dfCharge_VRE = hcat(dfCharge_VRE, DataFrame(charge_vre, :auto))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfCharge_VRE,auxNew_Names)
+		total = DataFrame(["Total" 0 sum(dfCharge_VRE[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		for t in 1:T
+			total[:,t+3] .= sum(dfCharge_VRE[:,Symbol("t$t")][1:VRE_STOR])
+		end
+		rename!(total,auxNew_Names)
+		dfCharge_VRE = vcat(dfCharge_VRE, total)
+		CSV.write(string(path,sep,"vre_stor_vre_charge.csv"), dftranspose(dfCharge_VRE, false), writeheader=false)
 
 		# Concatenate AC charging to grid
 		
