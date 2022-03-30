@@ -43,10 +43,6 @@ function load_inputs_multi_stage(setup::Dict,path::AbstractString)
 	## Declare Dict (dictionary) object used to store parameters
 	inputs_multi_stage = Dict()
 
-	if setup["NetworkExpansion"] > 0
-		inputs_multi_stage = load_network_data_multi_stage(setup, path, sep, inputs_multi_stage)
-	end
-
 	println("multi-stage CSV Files Successfully Read In From $path$sep")
 
 	return inputs_multi_stage
