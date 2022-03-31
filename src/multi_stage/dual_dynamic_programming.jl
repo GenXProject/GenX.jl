@@ -230,6 +230,30 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     println(string("Lower Bound = ", z_lower))
     println("***********")
 
+
+	### STEP I) One final forward pass to guarantee convergence
+	# Forward pass for t = 1:num_stages
+	t = 1 #  update forward pass solution for the first stage
+	models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
+	inputs_d[t]["solve_time"] = solve_time_d[t]
+	## Forward pass for t=2:num_stages
+	for t in 2:num_stages
+		println("***********")
+		println(string("Final Forward Pass t = ", t))
+		println("***********")
+
+		# Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
+		models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
+
+		# Step d.ii) Fix capacity tracking variables for endogenous retirements
+		models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
+
+		# Step d.iii) Solve the model at time t
+		models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
+		inputs_d[t]["solve_time"] = solve_time_d[t]
+	end
+	##### END of final forward pass
+
     stats_d["TIMES"] = times_a
     stats_d["UPPER_BOUNDS"] = upper_bounds_a
     stats_d["LOWER_BOUNDS"] = lower_bounds_a
