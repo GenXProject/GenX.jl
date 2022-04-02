@@ -119,7 +119,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, Energy
     @expression(EP, eTotalCap_GRID[y in 1:VRE_STOR], dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW][y] + EP[:vGRIDCAP][y] - EP[:vRETGRIDCAP][y])
     
     # Energy losses related to technologies (increase in effective demand)
-    @expression(EP, eELOSS_VRE_STOR[y=1:VRE_STOR], sum(inputs["omega"][t]*(vCHARGE_DC[y,t]/dfGen_VRE_STOR[!,:EtaInverter][y] + vCHARGE_VRE_STOR[y,t] - vDISCHARGE_DC[y,t]/dfGen_VRE_STOR[!,:EtaInverter][y]) for t in 1:T))
+    @expression(EP, eELOSS_VRE_STOR[y=1:VRE_STOR], sum(inputs["omega"][t]*(vCHARGE_DC[y,t]/dfGen_VRE_STOR[!,:EtaInverter][y] - vDISCHARGE_DC[y,t]/dfGen_VRE_STOR[!,:EtaInverter][y]) for t in 1:T))
    
     ### Objective Function Expressions ###
 
