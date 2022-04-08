@@ -57,13 +57,11 @@ In addition, this function adds investment and fixed O\&M related costs related 
 \end{aligned}
 ```
 """
-function investment_energy(EP::Model, inputs::Dict)
+function investment_energy(EP::Model, inputs::Dict, MultiStage::Int)
 
 	println("Storage Investment Module")
 
 	dfGen = inputs["dfGen"]
-
-	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
 
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
@@ -79,17 +77,27 @@ function investment_energy(EP::Model, inputs::Dict)
 	# Retired energy capacity of resource "y" from existing capacity
 	@variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY] >= 0)
 
+	if MultiStage == 1
+		@variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL] >= 0);
+	end
+
 	### Expressions ###
+
+	if MultiStage == 1
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], vEXISTINGCAPENERGY[y])
+	else
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], dfGen[!,:Existing_Cap_MWh][y])
+	end
 
 	@expression(EP, eTotalCapEnergy[y in STOR_ALL],
 		if (y in intersect(NEW_CAP_ENERGY, RET_CAP_ENERGY))
-			dfGen[!,:Existing_Cap_MWh][y] + EP[:vCAPENERGY][y] - EP[:vRETCAPENERGY][y]
+			eExistingCapEnergy[y] + EP[:vCAPENERGY][y] - EP[:vRETCAPENERGY][y]
 		elseif (y in setdiff(NEW_CAP_ENERGY, RET_CAP_ENERGY))
-			dfGen[!,:Existing_Cap_MWh][y] + EP[:vCAPENERGY][y]
+			eExistingCapEnergy[y] + EP[:vCAPENERGY][y]
 		elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
-			dfGen[!,:Existing_Cap_MWh][y] - EP[:vRETCAPENERGY][y]
+			eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
 		else
-			dfGen[!,:Existing_Cap_MWh][y] + EP[:vZERO]
+			eExistingCapEnergy[y] + EP[:vZERO]
 		end
 	)
 
@@ -109,13 +117,24 @@ function investment_energy(EP::Model, inputs::Dict)
 	@expression(EP, eTotalCFixEnergy, sum(EP[:eCFixEnergy][y] for y in STOR_ALL))
 
 	# Add term to objective function expression
-	EP[:eObj] += eTotalCFixEnergy
+	if MultiStage == 1
+		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
+		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
+		# and we have already accounted for multiple years between stages for fixed costs.
+		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixEnergy
+	else
+		EP[:eObj] += eTotalCFixEnergy
+	end
 
 	### Constratints ###
 
+	if MultiStage == 1
+		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == dfGen[!,:Existing_Cap_MWh][y])
+	end
+	
 	## Constraints on retirements and capacity additions
 	# Cannot retire more energy capacity than existing energy capacity
-	@constraint(EP, cMaxRetEnergy[y in RET_CAP_ENERGY], vRETCAPENERGY[y] <= dfGen[!,:Existing_Cap_MWh][y])
+	@constraint(EP, cMaxRetEnergy[y in RET_CAP_ENERGY], vRETCAPENERGY[y] <= eExistingCapEnergy[y])
 
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]

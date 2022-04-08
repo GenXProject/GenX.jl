@@ -86,7 +86,6 @@ returns: dictionary containing updated model inputs, to be used in the generate\
 function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
     dfGen = inputs_d["dfGen"]
-	dfGenMultiStage = inputs_d["dfGenMultiStage"]
 
 	# Parameter inputs when multi-year discounting is activated
 	cur_stage = settings_d["CurStage"]
@@ -101,9 +100,9 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
 		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGenMultiStage[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
 
 		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
@@ -122,21 +121,19 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	# Transmission
 	if NetworkExpansion == 1 && inputs_d["Z"] > 1
 
-		dfNetworkMultiStage = inputs_d["dfNetworkMultiStage"]
-
 		if !myopic ### Leave myopic costs in annualized form
 			# 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
-			inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],dfNetworkMultiStage[!,:Capital_Recovery_Period], inputs_d["transmission_WACC"])
+			inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,inputs_d["pC_Line_Reinforcement"],inputs_d["Capital_Recovery_Period_Trans"],inputs_d["transmission_WACC"])
 		end
 
 		# Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment stage
-		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"]
+		inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW"]
 
         # Network lines and zones that are expandable have greater maximum possible line flow than the available capacity of the previous stage as well as available line reinforcement
-		inputs_d["EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .> inputs_d["pTrans_Max"]) .& (inputs_d["pMax_Line_Reinforcement"] .> 0))
-		inputs_d["NO_EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW_p$cur_stage"] .<= inputs_d["pTrans_Max"]) .| (inputs_d["pMax_Line_Reinforcement"] .<= 0))
+		inputs_d["EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .> inputs_d["pTrans_Max"]) .& (inputs_d["pMax_Line_Reinforcement"] .> 0))
+		inputs_d["NO_EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .<= inputs_d["pTrans_Max"]) .| (inputs_d["pMax_Line_Reinforcement"] .<= 0))
 			# To-Do: Error Handling
-			# 1.) Enforce that pLine_Max_Flow_Possible_MW_p1 be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in Inputs/Inputs_p1
+			# 1.) Enforce that pLine_Max_Flow_Possible_MW for the first model stage be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in Inputs/Inputs_p1
     end
 
     return inputs_d

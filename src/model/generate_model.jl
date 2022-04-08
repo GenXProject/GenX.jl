@@ -131,14 +131,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	EP = non_served_energy(EP, inputs, setup["CapacityReserveMargin"])
 
-##dev_ddp
-	if setup["MultiStage"] > 0
-		EP = investment_discharge_multi_stage(EP, inputs, setup["MultiStageSettingsDict"])
-	else
-		EP = investment_discharge(EP, inputs, setup["MinCapReq"])
-	end
-	
-##Dev
+	EP = investment_discharge(EP, inputs, setup["MinCapReq"], setup["MultiStage"])
 
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
@@ -149,14 +142,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if Z > 1
-##dev_ddp
-		if setup["MultiStage"] > 0
-			EP = transmission_multi_stage(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiStageSettingsDict"])
-		else
-			EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
-		end
-		
-##Dev
+		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"], setup["MultiStage"])
 	end
 
 	# Technologies
@@ -173,14 +159,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-##dev_ddp
-		if setup["MultiStage"] > 0 
-			EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["MultiStageSettingsDict"])
-		else
-			EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
-		end
-		
-##Dev
+		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"], setup["MultiStage"])
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
@@ -206,6 +185,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)
 
+	# Endogenous Retirements
+	if setup["MultiStage"] > 0
+		EP = endogenous_retirement(EP, inputs, setup["MultiStageSettingsDict"])
+	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
