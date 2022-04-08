@@ -114,7 +114,6 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
 
-<<<<<<< HEAD
 ## Multi-stage investment planning
 Recent improvements in the GenX source code enable its use for studying long-term evolution of the power system across multiple investment stages. More information of this feature can be found in the section on `Multi-stage` under the `Model function reference` tab. In brief, GenX can be used to study multi-stage power system planning in the following two ways: 
 - The user can formulate and solve a single deterministic multi-stage investment planning problem with perfect foresight i.e. cost and policy assumptions about all stages are known and exploited to determine the least-cost investment trajectory. The solution of this multi-stage problem relies on exploiting the decomposable nature of the multi-stage problem via the implementation of the dual dynamic programming algorithm, described [elsewhere](https://www.sciencedirect.com/science/article/abs/pii/S0377221718304466). 
@@ -146,8 +145,6 @@ GenX assumes rational decision making, with perfect information and perfect fore
 
 GenX assumes price-elastic demand segments that are represented using piece-wise approximation rather than an inverse demand curve to keep the model linear.
 
-=======
->>>>>>> 772f3cd1cafe72355e58f4ed00ea50804d49ab76
 ## pygenx: Python interface for GenX
 
 Python users can now run GenX from a thin-python-wrapper interface, developed by [Daniel Olsen](https://github.com/danielolsen). This tool is called `pygenx` and can be cloned from the github page: [pygenx](https://github.com/danielolsen/pygenx). It needs installation of Julia 1.3 and a clone of GenX repo along with your python installation.
