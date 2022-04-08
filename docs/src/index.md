@@ -113,6 +113,32 @@ Recent improvements in the GenX source code enable its use for studying long-ter
 - The user can formulate and solve a single deterministic multi-stage investment planning problem with perfect foresight i.e. cost and policy assumptions about all stages are known and exploited to determine the least-cost investment trajectory. The solution of this multi-stage problem relies on exploiting the decomposable nature of the multi-stage problem via the implementation of the dual dynamic programming algorithm, described [elsewhere](https://www.sciencedirect.com/science/article/abs/pii/S0377221718304466). 
 - The user can formulate and solve a sequence of single-stage investment planning wherein investment decisions in each stage are individually optimized, while investment decisions from previous stages treated as fixed. We refer to this as "Myopic" mode of the multi-stage model since the solution does not account for information about future stages in determining investments for a given stage.
 
+
+# Limitations of the GenX Model
+
+While the benefits of an openly available generation and transmission expansion model are high, many approximations have been made due to missing data or to manage computational tractability. The assumptions of the GenX model are listed below. It serves as a caveat to the user and as an encouragement to improve the approximations.
+## Time period
+
+GenX makes the simplifying assumption that each time period contains n copies of a single, representative year. GenX optimizes generation and transmission capacity for just this characteristic year within each time period, assuming the results for different years in the same time period are identical. However, the GenX objective function accounts only for the cost of the final model time period.
+## Cost
+
+The GenX objective function assumes that the cost of powerplants is specified in the unit of currency per unit of capacity. GenX also assumes that the capital cost of technologies is paid through loans.
+## Market
+
+GenX is a bottom-up (technology-explicit), partial equilibrium model that assumes perfect markets for commodities. In other words, each commodity is produced such that the sum of producer and consumer surplus is maximized.
+## Technology
+
+Behavioral response and acceptance of new technology are often modeled simplistically as a discount rate or by externally fixing the technology capacity. A higher, technology-specific discount rate represents consumer reluctance to accept newer technologies.
+## Uncertainty
+
+Because each model realization assumes a particular state of the world based on the input values drawn, the parameter uncertainty is propagated through the model in the case of myopic model runs
+## Decision-making
+
+GenX assumes rational decision making, with perfect information and perfect foresight, and simultaneously optimizes all decisions over the user-specified time horizon.
+## Demand
+
+GenX assumes price-elastic demand segments that are represented using piece-wise approximation rather than an inverse demand curve to keep the model linear.
+
 ## pygenx: Python interface for GenX
 
 Python users can now run GenX from a thin-python-wrapper interface, developed by [Daniel Olsen](https://github.com/danielolsen). This tool is called `pygenx` and can be cloned from the github page: [pygenx](https://github.com/danielolsen/pygenx). It needs installation of Julia 1.3 and a clone of GenX repo along with your python installation.
