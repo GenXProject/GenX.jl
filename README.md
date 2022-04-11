@@ -136,7 +136,12 @@ GenX assumes rational decision making, with perfect information and perfect fore
 
 GenX assumes price-elastic demand segments that are represented using piece-wise approximation rather than an inverse demand curve to keep the model linear.
 
-## pygenx: Python interface for GenX
+# How to cite GenX
+
+We recommend users of GenX to cite it in their academic publications and patent filings. Here's the text to put up as the citation for GenX:
+`MIT Energy Initiative and Princeton University ZERO lab. [GenX](https://github.com/GenXProject/GenX): a configurable power system capacity expansion model for studying low-carbon energy futures n.d. https://github.com/GenXProject/GenX
+
+# pygenx: Python interface for GenX
 
 Python users can now run GenX from a thin-python-wrapper interface, developed by [Daniel Olsen](https://github.com/danielolsen). This tool is called `pygenx` and can be cloned from the github page: [pygenx](https://github.com/danielolsen/pygenx). It needs installation of Julia 1.3 and a clone of GenX repo along with your python installation. 
 
