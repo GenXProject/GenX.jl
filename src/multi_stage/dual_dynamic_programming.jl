@@ -33,7 +33,7 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
     # start_cap_d dictionary contains key-value pairs of available capacity investment expressions
     # as keys and their corresponding linking constraints as values
-    start_cap_d = Dict([(Symbol("eTotalCap"),Symbol("cExistingCap"))])
+    start_cap_d = Dict([(Symbol("eTotalCap"), Symbol("cExistingCap"))])
 
     if !isempty(inputs["STOR_ALL"])
         start_cap_d[Symbol("eTotalCapEnergy")] = Symbol("cExistingCapEnergy")
@@ -43,13 +43,13 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
         start_cap_d[Symbol("eTotalCapCharge")] = Symbol("cExistingCapCharge")
     end
 
-    if setup["NetworkExpansion"]==1 && inputs["Z"] > 1
+    if setup["NetworkExpansion"] == 1 && inputs["Z"] > 1
         start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
     end
 
     # This dictionary contains the endogenous retirement constraint name as a key,
     # and a tuple consisting of the associated tracking array constraint and variable as the value
-    cap_track_d = Dict([(Symbol("vCAPTRACK"),Symbol("cCapTrack"))])
+    cap_track_d = Dict([(Symbol("vCAPTRACK"), Symbol("cCapTrack"))])
 
     if !isempty(inputs["STOR_ALL"])
         cap_track_d[Symbol("vCAPTRACKENERGY")] = Symbol("cCapTrackEnergy")
@@ -84,7 +84,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     settings_d = setup["MultiStageSettingsDict"]
     num_stages = settings_d["NumStages"]  # Total number of investment planning stages
     EPSILON = settings_d["ConvergenceTolerance"] # Tolerance
-	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
+    myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     start_cap_d, cap_track_d = configure_ddp_dicts(setup, inputs_d[1])
 
@@ -113,14 +113,14 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     t = 1 # Stage = 1
     solve_time_d = Dict()
     ddp_prev_time = time() # Begin tracking time of each iteration
-    models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
+    models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
     inputs_d[t]["solve_time"] = solve_time_d[t]
 
     # Step c.i) Initialize the lower bound, equal to the objective function value for the first period in the first iteration
     global z_lower = objective_value(models_d[t])
 
     # Step c.ii) If the relative difference between upper and lower bounds are small, break loop
-    while((z_upper - z_lower)/z_lower > EPSILON)
+    while ((z_upper - z_lower) / z_lower > EPSILON)
 
         ic = ic + 1 # Increase iteration counter by 1
 
@@ -145,14 +145,14 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
         println("***********")
 
         # Step d) Forward pass for t = 1:num_stages
-		## For first iteration we dont need to solve forward pass for first stage (we did that already above),
-		## but we need to update forward pass solution for the first stage for subsequent iterations
-		if ic > 1
-			t = 1 #  update forward pass solution for the first stage
-			models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
+        ## For first iteration we dont need to solve forward pass for first stage (we did that already above),
+        ## but we need to update forward pass solution for the first stage for subsequent iterations
+        if ic > 1
+            t = 1 #  update forward pass solution for the first stage
+            models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
-		end
-		## Forward pass for t=2:num_stages
+        end
+        ## Forward pass for t=2:num_stages
         for t in 2:num_stages
 
             println("***********")
@@ -166,25 +166,25 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
             models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
 
             # Step d.iii) Solve the model at time t
-            models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
+            models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
 
         end
 
         ### For the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
-		if myopic
-			println("***********")
+        if myopic
+            println("***********")
             println("Exiting After First Forward Pass! (Myopic)")
             println(string("Upper Bound = ", z_upper))
             println(string("Lower Bound = ", z_lower))
             println("***********")
 
-			stats_d["TIMES"] = times_a
-		    stats_d["UPPER_BOUNDS"] = upper_bounds_a
-		    stats_d["LOWER_BOUNDS"] = lower_bounds_a
-			return models_d, stats_d, inputs_d
-		end
-		###
+            stats_d["TIMES"] = times_a
+            stats_d["UPPER_BOUNDS"] = upper_bounds_a
+            stats_d["LOWER_BOUNDS"] = lower_bounds_a
+            return models_d, stats_d, inputs_d
+        end
+        ###
 
         # Step e) Calculate the new upper bound
         z_upper_temp = 0
@@ -210,7 +210,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
             models_d[t-1] = add_cut(models_d[t-1], models_d[t], start_cap_d, cap_track_d)
 
             # Step f.ii) Solve the model with the additional cut at time t-1
-            models_d[t-1], solve_time_d[t-1] = solve_model(models_d[t-1],setup)
+            models_d[t-1], solve_time_d[t-1] = solve_model(models_d[t-1], setup)
             inputs_d[t-1]["solve_time"] = solve_time_d[t-1]
         end
 
@@ -231,28 +231,28 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     println("***********")
 
 
-	### STEP I) One final forward pass to guarantee convergence
-	# Forward pass for t = 1:num_stages
-	t = 1 #  update forward pass solution for the first stage
-	models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
-	inputs_d[t]["solve_time"] = solve_time_d[t]
-	## Forward pass for t=2:num_stages
-	for t in 2:num_stages
-		println("***********")
-		println(string("Final Forward Pass t = ", t))
-		println("***********")
+    ### STEP I) One final forward pass to guarantee convergence
+    # Forward pass for t = 1:num_stages
+    t = 1 #  update forward pass solution for the first stage
+    models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
+    inputs_d[t]["solve_time"] = solve_time_d[t]
+    ## Forward pass for t=2:num_stages
+    for t in 2:num_stages
+        println("***********")
+        println(string("Final Forward Pass t = ", t))
+        println("***********")
 
-		# Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-		models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
+        # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
+        models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
 
-		# Step d.ii) Fix capacity tracking variables for endogenous retirements
-		models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
+        # Step d.ii) Fix capacity tracking variables for endogenous retirements
+        models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
 
-		# Step d.iii) Solve the model at time t
-		models_d[t], solve_time_d[t] = solve_model(models_d[t],setup)
-		inputs_d[t]["solve_time"] = solve_time_d[t]
-	end
-	##### END of final forward pass
+        # Step d.iii) Solve the model at time t
+        models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
+        inputs_d[t]["solve_time"] = solve_time_d[t]
+    end
+    ##### END of final forward pass
 
     stats_d["TIMES"] = times_a
     stats_d["UPPER_BOUNDS"] = upper_bounds_a
@@ -274,15 +274,15 @@ inputs:
 """
 function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict, inputs_dict::Dict)
 
-	if Sys.isunix()
-		sep = "/"
+    if Sys.isunix()
+        sep = "/"
     elseif Sys.iswindows()
-		sep = "\U005c"
+        sep = "\U005c"
     else
         sep = "/"
-	end
+    end
 
-	multi_stage_settings_d = settings_d["MultiStageSettingsDict"]
+    multi_stage_settings_d = settings_d["MultiStageSettingsDict"]
 
     write_capacities_discharge(outpath, sep, multi_stage_settings_d)
     #write_capacities_charge(outpath, sep, multi_stage_settings_d)
@@ -290,7 +290,7 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     #write_network_expansion(outpath, sep, multi_stage_settings_d)
     write_costs(outpath, sep, multi_stage_settings_d, inputs_dict)
     write_stats(outpath, sep, stats_d)
-	write_settings(outpath, sep, settings_d)
+    write_settings(outpath, sep, settings_d)
 
 end
 
@@ -306,36 +306,34 @@ inputs:
   * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 """
 function write_capacities_discharge(outpath::String, sep::String, settings_d::Dict)
-	# TO DO - DO THIS FOR ENERGY CAPACITY AS WELL
+    # TO DO - DO THIS FOR ENERGY CAPACITY AS WELL
 
     num_stages = settings_d["NumStages"] # Total number of investment planning stages
     capacities_d = Dict()
 
     for p in 1:num_stages
-        inpath = string(outpath,sep,"Results_p$p")
-        capacities_d[p] = DataFrame(CSV.File(string(inpath,sep,"capacity.csv"), header=true), copycols=true)
+        inpath = string(outpath, sep, "Results_p$p")
+        capacities_d[p] = DataFrame(CSV.File(string(inpath, sep, "capacity.csv"), header=true), copycols=true)
     end
 
     # Set first column of DataFrame as resource names from the first stage
-    df_cap = DataFrame(Resource = capacities_d[1][!,:Resource], Zone = capacities_d[1][!,:Zone])
+    df_cap = DataFrame(Resource=capacities_d[1][!, :Resource], Zone=capacities_d[1][!, :Zone])
 
     # Store starting capacities from the first stage
-    df_cap[!,Symbol("StartCap_p1")] = capacities_d[1][!,:StartCap]
+    df_cap[!, Symbol("StartCap_p1")] = capacities_d[1][!, :StartCap]
 
     # Store end capacities for all stages
     for p in 1:num_stages
-        df_cap[!, Symbol("EndCap_p$p")] = capacities_d[p][!,:EndCap]
+        df_cap[!, Symbol("EndCap_p$p")] = capacities_d[p][!, :EndCap]
     end
 
-    CSV.write(string(outpath,sep,"capacities_multi_stage.csv"), df_cap)
+    CSV.write(string(outpath, sep, "capacities_multi_stage.csv"), df_cap)
 
 end
 
-function write_capacities_charge(outpath::String, sep::String, settings_d::Dict)
-end
+function write_capacities_charge(outpath::String, sep::String, settings_d::Dict) end
 
-function write_capacities_energy(outpath::String, sep::String, settings_d::Dict)
-end
+function write_capacities_energy(outpath::String, sep::String, settings_d::Dict) end
 
 function write_network_expansion(outpath::String, sep::String, settings_d::Dict)
     # Include discounted NE costs and capacities for each model period
@@ -354,43 +352,43 @@ inputs:
 """
 function write_costs(outpath::String, sep::String, settings_d::Dict, inputs_dict::Dict)
 
-	num_stages = settings_d["NumStages"] # Total number of DDP stages
-	wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
-	stage_lens = settings_d["StageLengths"]
-	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
+    num_stages = settings_d["NumStages"] # Total number of DDP stages
+    wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
+    stage_lens = settings_d["StageLengths"]
+    myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     costs_d = Dict()
     for p in 1:num_stages
-        cur_path = string(outpath,sep,"Results_p$p")
-        costs_d[p] = DataFrame(CSV.File(string(cur_path,sep,"costs.csv"), header=true), copycols=true)
+        cur_path = string(outpath, sep, "Results_p$p")
+        costs_d[p] = DataFrame(CSV.File(string(cur_path, sep, "costs.csv"), header=true), copycols=true)
     end
 
-	OPEXMULTS = [ inputs_dict[j]["OPEXMULT"] for j in 1:num_stages ] # Stage-wise OPEX multipliers to count multiple years between two model stages
+    OPEXMULTS = [inputs_dict[j]["OPEXMULT"] for j in 1:num_stages] # Stage-wise OPEX multipliers to count multiple years between two model stages
 
     # Set first column of DataFrame as resource names from the first stage
-    df_costs = DataFrame(Costs = costs_d[1][!,:Costs])
+    df_costs = DataFrame(Costs=costs_d[1][!, :Costs])
 
     # Store discounted total costs for each stage in a data frame
     for p in 1:num_stages
-		if myopic
-			DF = 1 # DF=1 because we do not apply discount factor in myopic case
-		else
-			DF = 1/(1+wacc)^(stage_lens[p]*(p-1))  # Discount factor applied to ALL costs in each stage
-		end
-        df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!,Symbol("Total")]
+        if myopic
+            DF = 1 # DF=1 because we do not apply discount factor in myopic case
+        else
+            DF = 1 / (1 + wacc)^(stage_lens[p] * (p - 1))  # Discount factor applied to ALL costs in each stage
+        end
+        df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!, Symbol("Total")]
     end
 
     # For OPEX costs, apply additional discounting
     for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
-        if cost in df_costs[!,:Costs]
-			df_costs[df_costs[!,:Costs] .== cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!,:Costs] .== cost, 2:end]
+        if cost in df_costs[!, :Costs]
+            df_costs[df_costs[!, :Costs].==cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!, :Costs].==cost, 2:end]
         end
     end
 
     # Remove "cTotal" from results (as this includes Cost-to-Go)
-    df_costs = df_costs[df_costs[!,:Costs].!="cTotal",:]
+    df_costs = df_costs[df_costs[!, :Costs].!="cTotal", :]
 
-    CSV.write(string(outpath,sep,"costs_multi_stage.csv"), df_costs)
+    CSV.write(string(outpath, sep, "costs_multi_stage.csv"), df_costs)
 
 end
 
@@ -417,13 +415,13 @@ function write_stats(outpath::String, sep::String, stats_d::Dict)
     realtive_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
 
     # Construct dataframe where first column is iteration number, second is iteration time
-    df_stats = DataFrame(Iteration_Number = iteration_count_a,
-                        Seconds = times_a,
-                        Upper_Bound = upper_bounds_a,
-                        Lower_Bound = lower_bounds_a,
-                        Relative_Gap = realtive_gap_a)
+    df_stats = DataFrame(Iteration_Number=iteration_count_a,
+        Seconds=times_a,
+        Upper_Bound=upper_bounds_a,
+        Lower_Bound=lower_bounds_a,
+        Relative_Gap=realtive_gap_a)
 
-    CSV.write(string(outpath,sep,"stats_multi_stage.csv"), df_stats)
+    CSV.write(string(outpath, sep, "stats_multi_stage.csv"), df_stats)
 
 end
 
@@ -447,18 +445,20 @@ function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dic
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
 
-	        # Set the right hand side value of the linking initial capacity constraint in the current
-	        # stage to the value of the available capacity variable solved for in the previous stages
+            # Set the right hand side value of the linking initial capacity constraint in the current
+            # stage to the value of the available capacity variable solved for in the previous stages
             set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
         end
     end
-	return EP_cur
+    return EP_cur
 end
 
 @doc raw"""
 	function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict, cur_stage::Int)
 
 This function sets the right hand side values of the new and retired capacity tracking linking constraints in the current stage $p$ to the realized values of the new and retired capacity tracking linking variables from the previous stage $p-1$ as part of the forward pass.
+where tracking linking variables are defined variables for tracking, linking and passing realized expansion and retirement of capacities of each stage to the next stage.
+Tracking linking variables are each defined in endogenous\_retirement\_discharge, endogenous\_retirement\_energy, and endogenous\_retirement\_charge functions. Three examples are "vCAPTRACK", "vCAPTRACKCHARGE", and ""vCAPTRACKENERGY"
 
 inputs:
 
@@ -475,26 +475,26 @@ function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict,
     # and the associated linking constraint name (c) as a value
     for (v, c) in cap_track_d
 
-	    # Tracking variables and constraints for retired capacity are named identicaly to those for newly
-	    # built capacity, except have the prefex "vRET" and "cRet", accordingly
-        rv = Symbol("vRET",string(v)[2:end]) # Retired capacity tracking variable name (rv)
-	    rc = Symbol("cRet",string(c)[2:end]) # Retired capacity tracking constraint name (rc)
+        # Tracking variables and constraints for retired capacity are named identicaly to those for newly
+        # built capacity, except have the prefex "vRET" and "cRet", accordingly
+        rv = Symbol("vRET", string(v)[2:end]) # Retired capacity tracking variable name (rv)
+        rc = Symbol("cRet", string(c)[2:end]) # Retired capacity tracking constraint name (rc)
 
         for i in keys(EP_cur[c])
             i = i[1] # Extract integer index value from keys tuple - corresponding to generator index
 
-	        # For all previous stages, set the right hand side value of the tracking constraint in the current
-	        # stage to the value of the tracking constraint observed in the previous stage
+            # For all previous stages, set the right hand side value of the tracking constraint in the current
+            # stage to the value of the tracking constraint observed in the previous stage
             for p in 1:(cur_stage-1)
-		        # Tracking newly buily capacity over all previous stages
-                JuMP.set_normalized_rhs(EP_cur[c][i,p],value(EP_prev[v][i,p]))
-		        # Tracking retired capacity over all previous stages
-                JuMP.set_normalized_rhs(EP_cur[rc][i,p],value(EP_prev[rv][i,p]))
+                # Tracking newly buily capacity over all previous stages
+                JuMP.set_normalized_rhs(EP_cur[c][i, p], value(EP_prev[v][i, p]))
+                # Tracking retired capacity over all previous stages
+                JuMP.set_normalized_rhs(EP_cur[rc][i, p], value(EP_prev[rv][i, p]))
             end
         end
     end
 
-	return EP_cur
+    return EP_cur
 end
 
 @doc raw"""
@@ -519,7 +519,7 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::
 
     # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
     # and the associated linking constraint name (c) as a value
-    for (e,c) in start_cap_d
+    for (e, c) in start_cap_d
 
         # Continue if nothing to add to the cut
         if isempty(EP_next[e])
@@ -537,7 +537,7 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::
 
     # cap_track_d dictionary contains the endogenous retirement tracking array variable name (v) as a key,
     # and the associated linking constraint name (c) as a value
-    for (v,c) in cap_track_d
+    for (v, c) in cap_track_d
 
         # Continue if nothing to add to the cut
         if isempty(EP_next[c])
@@ -547,8 +547,8 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::
         # Generate the cut component for new capacity
         eCurRHS_cap = generate_cut_component_track(EP_cur, EP_next, v, c)
 
-        rv = Symbol("vRET",string(v)[2:end]) # Retired capacity tracking variable (rv)
-        rc = Symbol("cRet",string(c)[2:end]) # Retired capacity tracking constraint (rc)
+        rv = Symbol("vRET", string(v)[2:end]) # Retired capacity tracking variable (rv)
+        rc = Symbol("cRet", string(c)[2:end]) # Retired capacity tracking constraint (rc)
 
         # Generate the cut component for retired capacity
         eCurRHS_ret = generate_cut_component_track(EP_cur, EP_next, rv, rc)
@@ -593,12 +593,12 @@ function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::S
         y = k[1] # Index representing resource
         p = k[2] # Index representing stage
 
-        push!(next_dual_value, getdual(EP_next[constr_name][y,p]))
-        push!(cur_inv_value, getvalue(EP_cur[var_name][y,p]))
-        push!(cur_inv_var, EP_cur[var_name][y,p])
+        push!(next_dual_value, getdual(EP_next[constr_name][y, p]))
+        push!(cur_inv_value, getvalue(EP_cur[var_name][y, p]))
+        push!(cur_inv_var, EP_cur[var_name][y, p])
     end
 
-    eCutComponent = @expression(EP_cur, dot(next_dual_value,(cur_inv_value .- cur_inv_var)))
+    eCutComponent = @expression(EP_cur, dot(next_dual_value, (cur_inv_value .- cur_inv_var)))
 
     return eCutComponent
 end
@@ -636,7 +636,7 @@ function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Sy
         push!(cur_inv_var, EP_cur[expr_name][y])
     end
 
-    eCutComponent = @expression(EP_cur, dot(next_dual_value,(cur_inv_value .- cur_inv_var)))
+    eCutComponent = @expression(EP_cur, dot(next_dual_value, (cur_inv_value .- cur_inv_var)))
 
     return eCutComponent
 end
@@ -679,25 +679,25 @@ returns: JuMP model with updated objective function.
 """
 function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
 
-	cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
-	stage_len = settings_d["StageLengths"][cur_stage]
-	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
-	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
-	OPEXMULT = inputs["OPEXMULT"] # OPEX multiplier to count multiple years between two model stages, set in configure_multi_stage_inputs.jl
+    cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
+    stage_len = settings_d["StageLengths"][cur_stage]
+    wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+    myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
+    OPEXMULT = inputs["OPEXMULT"] # OPEX multiplier to count multiple years between two model stages, set in configure_multi_stage_inputs.jl
 
-	# Overwrite the objective function to include the cost-to-go variable (not in myopic case)
-	# Multiply discount factor to all terms except the alpha term or the cost-to-go function
-	# All OPEX terms get an additional adjustment factor
-	if myopic
-		### No discount factor or OPEX multiplier applied in myopic case as costs are left annualized.
-		@objective(EP, Min, EP[:eObj])
-	else
-		DF = 1/(1+wacc)^(stage_len*(cur_stage-1))  # Discount factor applied all to costs in each stage ###
-		# Initialize the cost-to-go variable
-	    @variable(EP, vALPHA >= 0);
-		@objective(EP, Min, DF*OPEXMULT*EP[:eObj] + vALPHA)
-	end
+    # Overwrite the objective function to include the cost-to-go variable (not in myopic case)
+    # Multiply discount factor to all terms except the alpha term or the cost-to-go function
+    # All OPEX terms get an additional adjustment factor
+    if myopic
+        ### No discount factor or OPEX multiplier applied in myopic case as costs are left annualized.
+        @objective(EP, Min, EP[:eObj])
+    else
+        DF = 1 / (1 + wacc)^(stage_len * (cur_stage - 1))  # Discount factor applied all to costs in each stage ###
+        # Initialize the cost-to-go variable
+        @variable(EP, vALPHA >= 0)
+        @objective(EP, Min, DF * OPEXMULT * EP[:eObj] + vALPHA)
+    end
 
-	return EP
+    return EP
 
 end
