@@ -1,0 +1,2 @@
+Reg_Req_Percent_Load,Reg_Req_Percent_VRE,Rsv_Up_Req_Percent_Load,Rsv_Up_Req_Percent_VRE,Rsv_Dn_Req_Percent_Load,Rsv_Dn_Req_Percent_VRE,Unmet_Rsv_Penalty_dollar_per_MW,Dynamic_Contingency,Network_Contingency
+0.01,0.006,0.03,0,0,0,1000,0,0
