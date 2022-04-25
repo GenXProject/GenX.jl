@@ -102,12 +102,8 @@ deploydocs(;
     target = "build",
     branch = "gh-pages",
     devbranch = "main",
-<<<<<<< HEAD
     devurl = "dev",
     push_preview=true,
     versions = ["stable" => "v^", "v#.#"],
-)
-=======
     push_preview = true,
 )
->>>>>>> main
