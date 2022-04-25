@@ -27,6 +27,13 @@ export cluster_inputs
 export mga
 export morris
 export simple_operation
+export choose_output_dir
+
+# Multi-stage methods
+export run_ddp
+export configure_multi_stage_inputs
+export load_inputs_multi_stage
+export write_multi_stage_outputs
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -40,6 +47,7 @@ using Clustering
 using Distances
 using Combinatorics
 using Documenter
+
 using DiffEqSensitivity
 using OrdinaryDiffEq
 using QuasiMonteCarlo
@@ -48,6 +56,7 @@ using RecursiveArrayTools
 using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
+# using CPLEX
 #using Gurobi
 #using CPLEX
 #using MOI
@@ -180,6 +189,13 @@ include("write_outputs/write_outputs.jl")
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
+# Multi Stage files
+include("multi_stage/dual_dynamic_programming.jl")
+include("multi_stage/configure_multi_stage_inputs.jl")
+include("multi_stage/endogenous_retirement.jl")
+include("multi_stage//write_settings.jl")
+
 include("additional_tools/modeling_to_generate_alternatives.jl")
+include("additional_tools/method_of_morris_v2.jl")
 include("additional_tools/method_of_morris.jl")
 end

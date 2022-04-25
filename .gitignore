@@ -17,9 +17,21 @@ time_domain_reduction/TSC.jl
 
 gurobi.log
 cplex.log
-
+Example_Systems/SmallNewEngland/ThreeZones/TDR_*
+Example_Systems/RealSystemExample/ISONE_Singlezone/Manifest.toml
+Example_Systems/RealSystemExample/ISONE_Singlezone/Results*
+Example_Systems/RealSystemExample/ISONE_Trizone/Results*
+Example_Systems/RealSystemExample/ISONE_Trizone_FullTimeseries/Results*
+Example_Systems/RealSystemExample/MGA_ISONE_Trizone_FullTimeseries/Results*
+Example_Systems/SmallNewEngland/OneZone/Results*
+Example_Systems/SmallNewEngland/OneZone_3VREBin/Results*
+Example_Systems/SmallNewEngland/ThreeZones/Results*
+Example_Systems/SmallNewEngland/Simple_Test_Case/
+Example_Systems/SmallNewEngland/Simple_Test_Case_Modified/
+Example_Systems/SmallNewEngland/Test_Up_Time/
+Example_Systems/SmallNewEngland/Test_Down_Time/
 /docs/build/
-
+Example_Systems/**/GenXJulEnv/
 # Microsoft office temporary files
 ~$*
 
@@ -35,3 +47,12 @@ Example_Systems/SmallNewEngland/ThreeZones_full*
 2050/
 Example_Systems/SmallNewEngland/ThreeZones_MultiPeriod/Inputs/Inputs_p2/TDR_Results/
 Example_Systems/SmallNewEngland/ThreeZones_MultiPeriod/Inputs/Inputs_p3/TDR_Results/
+
+Example_Systems/SmallNewEngland/ThreeZones_full.zip
+Example_Systems/SmallNewEngland/ThreeZones_full/*
+
+Example_Systems/SmallNewEngland/ThreeZones_MultiStage/Inputs/*
+Example_Systems/SmallNewEngland/ThreeZones_MultiStage/Results*
+test_get_retirement_period.jl
+
+Example_Systems/SmallNewEngland/OneZone/TDR_Results/*

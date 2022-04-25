@@ -22,6 +22,8 @@ Function for writing the diferent capacities for the different generation techno
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	# Capacity decisions
 	dfGen = inputs["dfGen"]
+	MultiStage = setup["MultiStage"]
+	
 	capdischarge = zeros(size(inputs["RESOURCES"]))
 	for i in inputs["NEW_CAP"]
 		if i in inputs["COMMIT"]
@@ -42,6 +44,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
 	capcharge = zeros(size(inputs["RESOURCES"]))
 	retcapcharge = zeros(size(inputs["RESOURCES"]))
+	existingcapcharge = zeros(size(inputs["RESOURCES"]))
 	for i in inputs["STOR_ASYMMETRIC"]
 		if i in inputs["NEW_CAP_CHARGE"]
 			capcharge[i] = value(EP[:vCAPCHARGE][i])
@@ -49,10 +52,12 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_CHARGE"]
 			retcapcharge[i] = value(EP[:vRETCAPCHARGE][i])
 		end
+		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : dfGen[!,:Existing_Charge_Cap_MW][i]
 	end
 
 	capenergy = zeros(size(inputs["RESOURCES"]))
 	retcapenergy = zeros(size(inputs["RESOURCES"]))
+	existingcapenergy = zeros(size(inputs["RESOURCES"]))
 	for i in inputs["STOR_ALL"]
 		if i in inputs["NEW_CAP_ENERGY"]
 			capenergy[i] = value(EP[:vCAPENERGY][i])
@@ -60,21 +65,22 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_ENERGY"]
 			retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
 		end
+		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[!,:Existing_Cap_MWh][i]
 	end
 	dfCap = DataFrame(
 		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone],
-		StartCap = dfGen[!,:Existing_Cap_MW],
+		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!,:Existing_Cap_MW],
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
 		EndCap = value.(EP[:eTotalCap]),
-		StartEnergyCap = dfGen[!,:Existing_Cap_MWh],
+		StartEnergyCap = existingcapenergy[:],
 		RetEnergyCap = retcapenergy[:],
 		NewEnergyCap = capenergy[:],
-		EndEnergyCap = dfGen[!,:Existing_Cap_MWh]+capenergy[:]-retcapenergy[:],
-		StartChargeCap = dfGen[!,:Existing_Charge_Cap_MW],
+		EndEnergyCap = existingcapenergy[:] - retcapenergy[:] + capenergy[:],
+		StartChargeCap = existingcapcharge[:],
 		RetChargeCap = retcapcharge[:],
 		NewChargeCap = capcharge[:],
-		EndChargeCap = dfGen[!,:Existing_Charge_Cap_MW]+capcharge[:]-retcapcharge[:]
+		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:]
 	)
 	if setup["ParameterScale"] ==1
 		dfCap.StartCap = dfCap.StartCap * ModelScalingFactor

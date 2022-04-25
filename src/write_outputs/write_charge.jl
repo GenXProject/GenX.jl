@@ -26,7 +26,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	# Power withdrawn to charge each resource in each time step
-	dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Float64}(undef, G))
+	dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	charge = zeros(G,T)
 	if setup["ParameterScale"] == 1
 	    if !isempty(inputs["STOR_ALL"])
@@ -49,6 +49,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCharge,auxNew_Names)
 	total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+
 	total[:, 4:T+3] .= sum(charge, dims = 1)
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)

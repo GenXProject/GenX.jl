@@ -130,43 +130,46 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		println(elapsed_time_lds_dstor)
 	end
 
-	dfPrice = DataFrame()
-	dfEnergyRevenue = DataFrame()
-	dfChargingcost = DataFrame()
-	dfSubRevenue = DataFrame()
-	dfRegSubRevenue = DataFrame()
-	if has_duals(EP) == 1
-		dfPrice = write_price(path, inputs, setup, EP)
-		dfEnergyRevenue = write_energy_revenue(path, inputs, setup, EP)
-		dfChargingcost = write_charging_cost(path, inputs, setup, EP)
-		dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
-	end
+	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
+	if setup["MultiStage"] == 0
+		dfPrice = DataFrame()
+		dfEnergyRevenue = DataFrame()
+		dfChargingcost = DataFrame()
+		dfSubRevenue = DataFrame()
+		dfRegSubRevenue = DataFrame()
+		if has_duals(EP) == 1
+			dfPrice = write_price(path, inputs, setup, EP)
+			dfEnergyRevenue = write_energy_revenue(path, sep, inputs, setup, EP)
+			dfChargingcost = write_charging_cost(path, sep, inputs, setup, EP)
+			dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
+		end
 
-	elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
-	println("Time elapsed for writing time weights is")
-	println(elapsed_time_time_weights)
-	dfESR = DataFrame()
-	dfESRRev = DataFrame()
-	if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
-		dfESR = write_esr_prices(path, inputs, setup, EP)
-		dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR)
-	end
-	dfResMar = DataFrame()
-	dfResRevenue = DataFrame()
-	if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
-		dfResMar = write_reserve_margin(path, setup, EP)
-		elapsed_time_rsv_margin = @elapsed write_reserve_margin_w(path, inputs, setup, EP)
-		println("Time elapsed for writing reserve margin is")
-		println(elapsed_time_rsv_margin)
-		dfResRevenue = write_reserve_margin_revenue(path, inputs, setup, EP)
-		elapsed_time_cap_value = @elapsed write_capacity_value(path, inputs, setup, EP)
-		println("Time elapsed for writing capacity value is")
-		println(elapsed_time_cap_value)
-	end
+		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
+	  println("Time elapsed for writing time weights is")
+	  println(elapsed_time_time_weights)
+		dfESR = DataFrame()
+		dfESRRev = DataFrame()
+		if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
+			dfESR = write_esr_prices(path, inputs, setup, EP)
+			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR)
+		end
+		dfResMar = DataFrame()
+		dfResRevenue = DataFrame()
+		if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
+			dfResMar = write_reserve_margin(path, setup, EP)
+			elapsed_time_rsv_margin = @elapsed write_reserve_margin_w(path, inputs, setup, EP)
+		  println("Time elapsed for writing reserve margin is")
+		  println(elapsed_time_rsv_margin)
+			dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, EP)
+			elapsed_time_cap_value = @elapsed write_capacity_value(path, sep, inputs, setup, EP)
+		  println("Time elapsed for writing capacity value is")
+		  println(elapsed_time_cap_value)
+		end
 
-	elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
-	println("Time elapsed for writing net revenue is")
-	println(elapsed_time_net_rev)
+		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
+	  println("Time elapsed for writing net revenue is")
+	  println(elapsed_time_net_rev)
+	end
 	## Print confirmation
 	println("Wrote outputs to $path")
 

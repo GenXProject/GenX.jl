@@ -109,6 +109,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Initialize Objective Function Expression
 	@expression(EP, eObj, 0)
 
+
+	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
+	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
 		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
@@ -124,14 +127,14 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+	#@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) ##From main
 
 	# Infrastructure
 	EP = discharge(EP, inputs, setup["EnergyShareRequirement"])
 
 	EP = non_served_energy(EP, inputs, setup["CapacityReserveMargin"])
 
-	EP = investment_discharge(EP, inputs, setup["MinCapReq"])
+	EP = investment_discharge(EP, inputs, setup["MinCapReq"], setup["MultiStage"])
 
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
@@ -144,7 +147,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	if Z > 1
-		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
+		EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"], setup["MultiStage"])
 	end
 
 	# Technologies
@@ -161,7 +164,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Model constraints, variables, expression related to energy storage modeling
 	if !isempty(inputs["STOR_ALL"])
-		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+		EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"], setup["MultiStage"])
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources
@@ -187,6 +190,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# CO2 emissions limits
 	EP = co2_cap(EP, inputs, setup)
 
+	# Endogenous Retirements
+	if setup["MultiStage"] > 0
+		EP = endogenous_retirement(EP, inputs, setup["MultiStageSettingsDict"])
+	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1

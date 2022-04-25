@@ -45,11 +45,6 @@ Function for reading input parameters related to participation of transmission i
 function load_cap_reserve_margin_trans(setup::Dict, inputs_crm::Dict, network_var::DataFrame)
 	res = inputs_crm["NCapacityReserveMargin"]
 
-	first_col_trans = findall(s -> s == "CapRes_1", names(network_var))[1]
-	last_col_trans = findall(s -> s == "CapRes_$res", names(network_var))[1]
-	dfTransCapRes = network_var[:,first_col_trans:last_col_trans]
-	inputs_crm["dfTransCapRes"] = Matrix{Float64}(dfTransCapRes[completecases(dfTransCapRes),:])
-
 	first_col_trans_derate = findall(s -> s == "DerateCapRes_1", names(network_var))[1]
 	last_col_trans_derate = findall(s -> s == "DerateCapRes_$res", names(network_var))[1]
 	dfDerateTransCapRes = network_var[:,first_col_trans_derate:last_col_trans_derate]

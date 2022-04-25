@@ -33,7 +33,8 @@ using GenX
 using YAML
 
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
-mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
+mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
+#mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
 
 ### Cluster time series inputs if necessary and if specified by the user
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])
@@ -80,3 +81,8 @@ if mysetup["MethodofMorris"] == 1
     println("Starting Global sensitivity analysis with Method of Morris")
     morris(EP,inpath,mysetup,myinputs,outpath, OPTIMIZER)
 end
+
+#=if mysetup["MonteCarlo"] == 1
+    println("Starting Monte Carlo analysis")
+    montecarlo(EP,inpath,mysetup,myinputs,outpath)
+end=#

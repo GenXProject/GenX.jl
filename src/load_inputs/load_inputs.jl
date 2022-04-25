@@ -27,7 +27,14 @@ returns: Dict (dictionary) object containing all data inputs
 """
 function load_inputs(setup::Dict,path::AbstractString)
 
-	data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
+	## Use appropriate directory separator depending on Mac or Windows config
+	if Sys.isunix()
+		sep = "/"
+    	elseif Sys.iswindows()
+		sep = "\U005c"
+    	else
+        	sep = "/"
+	end
 
 	## Read input files
 	println("Reading Input CSV Files")
@@ -75,11 +82,23 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 
 	# Read in mapping of modeled periods to representative periods
-	if setup["OperationWrapping"]==1 && !isempty(inputs["STOR_LONG_DURATION"]) && (isfile(data_directory*"/Period_map.csv") || isfile(joinpath(data_directory,joinpath(setup["TimeDomainReductionFolder"],"Period_map.csv")))) # Use Time Domain Reduced data for GenX)
-		inputs = load_period_map(setup, path, inputs)
+	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
+		inputs = load_period_map(setup, path, sep, inputs)
 	end
-
-	println("CSV Files Successfully Read In From $path")
-
+	
+	println("CSV Files Successfully Read In From $path$sep")
 	return inputs
+end
+
+function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict)
+	ow = setup["OperationWrapping"]==1
+	has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
+	ow && has_stor_lds
+end
+
+function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
+	data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
+	is_here = isfile(joinpath(data_directory,"Period_map.csv"))
+	is_in_folder = isfile(joinpath(data_directory, setup["TimeDomainReductionFolder"], "Period_map.csv"))
+	is_here || is_in_folder
 end

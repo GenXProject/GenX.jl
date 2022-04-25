@@ -46,16 +46,16 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	inputs_gen["STOR_ALL"] = union(inputs_gen["STOR_SYMMETRIC"],inputs_gen["STOR_ASYMMETRIC"])
 
 	# Set of storage resources with long duration storage capabilitites
-	#if setup["LongDurationStorage"] == 1
-		inputs_gen["STOR_HYDRO_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.HYDRO.==1),:R_ID]
-		inputs_gen["STOR_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.STOR.==1),:R_ID]
-		inputs_gen["STOR_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.STOR.==1),:R_ID]
-	#end
+	inputs_gen["STOR_HYDRO_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.HYDRO.==1),:R_ID]
+	inputs_gen["STOR_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.STOR.>=1),:R_ID]
+	inputs_gen["STOR_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.STOR.>=1),:R_ID]
 
 	# Set of all reservoir hydro resources
 	inputs_gen["HYDRO_RES"] = gen_in[(gen_in[!,:HYDRO].==1),:R_ID]
 	# Set of reservoir hydro resources modeled with known reservoir energy capacity
-	inputs_gen["HYDRO_RES_KNOWN_CAP"] = intersect(gen_in[gen_in.Hydro_Energy_to_Power_Ratio.>0,:R_ID], inputs_gen["HYDRO_RES"])
+	if !isempty(inputs_gen["HYDRO_RES"])
+		inputs_gen["HYDRO_RES_KNOWN_CAP"] = intersect(gen_in[gen_in.Hydro_Energy_to_Power_Ratio.>0,:R_ID], inputs_gen["HYDRO_RES"])
+	end
 
 	# Set of flexible demand-side resources
 	inputs_gen["FLEX"] = gen_in[gen_in.FLEX.==1,:R_ID]
@@ -111,7 +111,7 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
 
-	if setup["ParameterScale"] ==1  # Parameter scaling turned on - adjust values of subset of parameter values
+	if setup["ParameterScale"] == 1  # Parameter scaling turned on - adjust values of subset of parameter values
 
 		# The existing capacity of a power plant in megawatts
 		inputs_gen["dfGen"][!,:Existing_Charge_Cap_MW] = gen_in[!,:Existing_Charge_Cap_MW]/ModelScalingFactor # Convert to GW
@@ -123,11 +123,7 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 		# Cap_Size scales only capacities for those technologies with capacity >1
 		# Step 1: convert vector to float
 		inputs_gen["dfGen"][!,:Cap_Size] =convert(Array{Float64}, gen_in[!,:Cap_Size])
-		for g in 1:G  # Scale only those capacities for which Cap_Size > 1
-			if inputs_gen["dfGen"][!,:Cap_Size][g]>1.0
-				inputs_gen["dfGen"][!,:Cap_Size][g] = gen_in[!,:Cap_Size][g]/ModelScalingFactor # Convert to GW
-			end
-		end
+		inputs_gen["dfGen"][!,:Cap_Size] ./= ModelScalingFactor
 
 		# Min capacity terms
 		# Limit on minimum discharge capacity of the resource. -1 if no limit on minimum capacity
@@ -172,6 +168,11 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 		# Cost of providing spinning reserves
 		inputs_gen["dfGen"][!,:Rsv_Cost] = gen_in[!,:Rsv_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
 
+		if setup["MultiStage"] == 1
+			inputs_gen["dfGen"][!,:Min_Retired_Cap_MW] = gen_in[!,:Min_Retired_Cap_MW]/ModelScalingFactor
+			inputs_gen["dfGen"][!,:Min_Retired_Charge_Cap_MW] = gen_in[!,:Min_Retired_Charge_Cap_MW]/ModelScalingFactor
+			inputs_gen["dfGen"][!,:Min_Retired_Energy_Cap_MW] = gen_in[!,:Min_Retired_Energy_Cap_MW]/ModelScalingFactor
+		end
 	end
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled

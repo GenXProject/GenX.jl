@@ -56,11 +56,18 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
 |WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+<<<<<<< HEAD
+|MultiStage | Model multiple planning stages |
+||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
+||0 = Model single planning stage |
+
+=======
 |MethodofMorris | Method of Morris algorithm |
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
+>>>>>>> main
 |**Miscellaneous**|
-|PrintModel | Flag for printnig the model equations as .lp file.|
+|PrintModel | Flag for printing the model equations as .lp file.|
 ||1= including the model equation as an output|
 ||0 for the model equation not being included as an output|
 
@@ -192,8 +199,9 @@ This input file contains input parameters related to: 1) definition of model zon
 ||0 = the transmission line is not eligible for adding firm capacity to the region|
 |DerateCapRes\_* | (0,1) value represents the derating of the firm transmission capacity for the capacity reserve margin constraint.|
 |CapResExcl\_* | (-1,1,0) = -1 if the designated direction of the transmission line is inbound to locational deliverability area (LDA) modeled by the capacity reserve margin constraint. = 1 if the designated direction of the transmission line is outbound from the LDA modeled by the capacity reserve margin constraint. Zero otherwise.|
-
-
+|**MultiStage == 1**|
+|Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for network transmission line expansion.  |
+|Line\_Max\_Flow\_Possible\_MW  |Maximum possible line flow in the current model period. Overrides Line\_Max\_Reinforcement\_MW, which is not used when performing multi-stage modeling.  |
 
 #### 2.1.3 Load\_data.csv
 
@@ -306,8 +314,13 @@ This file contains cost and performance parameters for various generators and ot
 |**Required for writing outputs**|
 |region | Name of the model region|
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
-
-
+|**MultiStage == 1**|
+|Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs.  |
+|Lifetime  |Lifetime (in years) used for determining endogenous retirements of newly built capacity.  |
+|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. |
+|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing discharge capacity. |
+|Min\_Retired\_Energy\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. |
+|Min\_Retired\_Charge\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing charge capacity. |
 ###### Table 6: Settings-specific columns in the Generators\_data.csv file
 ---
 |**Column Name** | **Description**|

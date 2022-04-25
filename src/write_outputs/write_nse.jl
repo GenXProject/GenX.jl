@@ -29,9 +29,9 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	nse = zeros(SEG * Z, T)
 	for z in 1:Z
 		if setup["ParameterScale"] == 1
-			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE][:, :, z]) * ModelScalingFactor
+			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z] * ModelScalingFactor
 		else
-			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE][:, :, z])
+			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z]
 		end
 	end
 	dfNse.AnnualSum .= nse * inputs["omega"]
@@ -44,6 +44,6 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)
 
-	CSV.write(joinpath(path, "nse.csv"),  dftranspose(dfNse, false), writeheader=false)
+	CSV.write(string(path,sep,"nse.csv"),  dftranspose(dfNse, false), writeheader=false)
 	return dfNse
 end

@@ -76,12 +76,15 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		if !isempty(STOR_ALL_ZONE)
 			eCVar_in = sum(value.(EP[:eCVar_in][STOR_ALL_ZONE,:]))
 			tempCVar += eCVar_in
-			tempCFix += sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
+			eCFixEnergy = sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
+			tempCFix += eCFixEnergy
 
-			tempCTotal += eCVar_in
+			tempCTotal += eCVar_in + eCFixEnergy
 		end
 		if !isempty(STOR_ASYMMETRIC_ZONE)
-			tempCFix += sum(value.(EP[:eCFixCharge][STOR_ASYMMETRIC_ZONE]))
+			eCFixCharge = sum(value.(EP[:eCFixCharge][STOR_ASYMMETRIC_ZONE]))
+			tempCFix += eCFixCharge
+			tempCTotal += eCFixCharge
 		end
 		if !isempty(FLEX_ZONE)
 			eCVarFlex_in = sum(value.(EP[:eCVarFlex_in][FLEX_ZONE,:]))
@@ -96,6 +99,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		end
 
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
+		tempCTotal += tempCNSE
 
 		if setup["ParameterScale"] == 1
 			tempCTotal *= ModelScalingFactor^2
