@@ -1,6 +1,6 @@
 # Objective Function
 
-The objective function of GenX minimizes total annual electricity system costs over the following six components shown in the below equation:
+The objective function of GenX minimizes total annual electricity system costs over the following components shown in the below equation:
 
 ```math
 \begin{aligned}

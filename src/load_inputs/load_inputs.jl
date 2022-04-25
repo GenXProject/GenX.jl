@@ -30,10 +30,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 	## Use appropriate directory separator depending on Mac or Windows config
 	if Sys.isunix()
 		sep = "/"
-    elseif Sys.iswindows()
+    	elseif Sys.iswindows()
 		sep = "\U005c"
-    else
-        sep = "/"
+    	else
+        	sep = "/"
 	end
 
 	## Read input files
@@ -41,44 +41,44 @@ function load_inputs(setup::Dict,path::AbstractString)
 	## Declare Dict (dictionary) object used to store parameters
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
-    if isfile(string(path,sep,"Network.csv"))
-		inputs, network_var = load_network_data(setup, path, sep, inputs)
+    	if isfile(joinpath(path,"Network.csv"))
+		inputs, network_var = load_network_data(setup, path, inputs)
 	else
 		inputs["Z"] = 1
 		inputs["L"] = 0
 	end
 
 	# Read temporal-resolved load data, and clustering information if relevant
-	inputs = load_load_data(setup, path, sep, inputs)
+	inputs = load_load_data(setup, path, inputs)
 	# Read fuel cost data, including time-varying fuel costs
-	inputs, cost_fuel, CO2_fuel = load_fuels_data(setup, path, sep, inputs)
+	inputs, cost_fuel, CO2_fuel = load_fuels_data(setup, path, inputs)
 	# Read in generator/resource related inputs
-	inputs = load_generators_data(setup, path, sep, inputs, cost_fuel, CO2_fuel)
+	inputs = load_generators_data(setup, path, inputs, cost_fuel, CO2_fuel)
 	# Read in generator/resource availability profiles
-	inputs = load_generators_variability(setup, path, sep, inputs)
+	inputs = load_generators_variability(setup, path, inputs)
 
 	if setup["CapacityReserveMargin"]==1
-		inputs = load_cap_reserve_margin(setup, path, sep, inputs)
+		inputs = load_cap_reserve_margin(setup, path, inputs)
 		if inputs["Z"] >1
-			inputs = load_cap_reserve_margin_trans(setup, path, sep, inputs,network_var)
+			inputs = load_cap_reserve_margin_trans(setup, inputs,network_var)
 		end
 	end
 
 	# Read in general configuration parameters for reserves (resource-specific reserve parameters are read in generators_data())
 	if setup["Reserves"]==1
-		inputs = load_reserves(setup, path, sep, inputs)
+		inputs = load_reserves(setup, path, inputs)
 	end
 
 	if setup["MinCapReq"] == 1
-		inputs = load_minimum_capacity_requirement(path,sep, inputs, setup)
+		inputs = load_minimum_capacity_requirement(path, inputs, setup)
 	end
 
 	if setup["EnergyShareRequirement"]==1
-		inputs = load_energy_share_requirement(setup, path, sep, inputs)
+		inputs = load_energy_share_requirement(setup, path, inputs)
 	end
 
 	if setup["CO2Cap"] >= 1
-		inputs = load_co2_cap(setup, path, sep, inputs)
+		inputs = load_co2_cap(setup, path, inputs)
 	end
 
 	# Read in mapping of modeled periods to representative periods
@@ -87,7 +87,6 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 	
 	println("CSV Files Successfully Read In From $path$sep")
-
 	return inputs
 end
 

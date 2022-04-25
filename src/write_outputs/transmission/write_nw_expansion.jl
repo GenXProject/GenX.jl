@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_nw_expansion(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	L = inputs["L"]     # Number of transmission lines
 
 	# Transmission network reinforcements
@@ -25,8 +25,8 @@ function write_nw_expansion(path::AbstractString, sep::AbstractString, inputs::D
 		end
 	end
 	dfTransCap = DataFrame(
-	Line = 1:L, New_Trans_Capacity = convert(Array{Union{Missing,Float32}}, transcap),
-	Cost_Trans_Capacity = convert(Array{Union{Missing,Float32}}, transcap.*inputs["pC_Line_Reinforcement"]),
+	Line = 1:L, New_Trans_Capacity = convert(Array{Float64}, transcap),
+	Cost_Trans_Capacity = convert(Array{Float64}, transcap.*inputs["pC_Line_Reinforcement"]),
 	)
-	CSV.write(string(path,sep,"network_expansion.csv"), dfTransCap)
+	CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
 end

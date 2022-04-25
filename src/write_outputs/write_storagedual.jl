@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_storagedual(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting dual of storage level (state of charge) balance of each resource in each time step.
 """
-function write_storagedual(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
@@ -56,5 +56,5 @@ function write_storagedual(path::AbstractString, sep::AbstractString, inputs::Di
 	dfStorageDual=hcat(dfStorageDual, DataFrame(dual_values, :auto))
 	rename!(dfStorageDual,[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]])
 
-	CSV.write(string(path,sep,"storagebal_duals.csv"), dftranspose(dfStorageDual, false), writeheader=false)
+	CSV.write(joinpath(path, "storagebal_duals.csv"), dftranspose(dfStorageDual, false), writeheader=false)
 end

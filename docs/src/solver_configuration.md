@@ -27,3 +27,9 @@ Pages = ["configure_clp.jl"]
 Modules = [GenX]
 Pages = ["configure_cbc.jl"]
 ```
+
+## Configuring SCIP
+```@autodocs
+Modules = [GenX]
+Pages = ["configure_scip.jl"]
+```

@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	configure_cscip(solver_settings_path::String)
+	configure_scip(solver_settings_path::String)
 
 Reads user-specified solver settings from scip\_settings.yml in the directory specified by the string solver\_settings\_path.
 
@@ -23,13 +23,8 @@ Returns a MathOptInterface OptimizerWithAttributes SCIP optimizer instance to be
 
 The SCIP optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
- - seconds = 1e-6
- - logLevel = 1e-6
- - maxSolutions = -1
- - maxNodes = -1
- - allowableGap = -1
- - ratioGap = Inf
- - threads = 1
+ - Dispverblevel = 0
+ - limitsgap = 0.05
 
 """
 function configure_scip(solver_settings_path::String)

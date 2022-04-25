@@ -945,6 +945,7 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
 
     ##### Step 6: Print to File
 
+#<<<<<<< HEAD
     if Sys.isunix()
 		sep = "/"
     elseif Sys.iswindows()
@@ -1154,4 +1155,61 @@ function cluster_inputs(inpath, settings_path, mysetup, v=false)
                 "Weights" => W,
                 "Centers" => M,
                 "RMSE" => RMSE)
+#=
+    mkpath(joinpath(inpath, TimeDomainReductionFolder))
+
+    ### Load_data_clustered.csv
+    load_in = DataFrame(CSV.File(joinpath(inpath, "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+    load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
+    load_in[1:length(W),:Sub_Weights] .= W
+    load_in[!,:Rep_Periods][1] = length(W)
+    load_in[!,:Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
+    select!(load_in, Not(LoadCols))
+    select!(load_in, Not(:Time_Index))
+    Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(load_in,1)]
+    Time_Index_M[1:size(LPOutputData,1)] = 1:size(LPOutputData,1)
+    load_in[!,:Time_Index] .= Time_Index_M
+
+    for c in LoadCols
+        new_col = Union{Float64, Missings.Missing}[missing for i in 1:size(load_in,1)]
+        new_col[1:size(LPOutputData,1)] = LPOutputData[!,c]
+        load_in[!,c] .= new_col
+    end
+    load_in = load_in[1:size(LPOutputData,1),:]
+
+    if v println("Writing load file...") end
+    CSV.write(joinpath(inpath, Load_Outfile), load_in)
+
+    ### Generators_variability_clustered.csv
+
+    # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
+    GVColMap = Dict(myinputs["RESOURCE_ZONES"][i] => myinputs["RESOURCES"][i] for i in 1:length(myinputs["RESOURCES"]))
+    GVColMap["Time_Index"] = "Time_Index"
+    GVOutputData = GVOutputData[!, Symbol.(myinputs["RESOURCE_ZONES"])]
+    insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
+    NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
+    if v println("Writing resource file...") end
+    CSV.write(joinpath(inpath, GVar_Outfile), GVOutputData, header=NewGVColNames)
+
+    ### Fuels_data_clustered.csv
+
+    fuel_in = DataFrame(CSV.File(joinpath(inpath, "Fuels_data.csv"), header=true), copycols=true)
+    select!(fuel_in, Not(:Time_Index))
+    SepFirstRow = DataFrame(fuel_in[1, :])
+    NewFuelOutput = vcat(SepFirstRow, FPOutputData)
+    rename!(NewFuelOutput, FuelCols)
+    insertcols!(NewFuelOutput, 1, :Time_Index => 0:size(NewFuelOutput,1)-1)
+    if v println("Writing fuel profiles...") end
+    CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
+
+    ### Period_map.csv
+    if v println("Writing period map...") end
+    CSV.write(joinpath(inpath, PMap_Outfile), PeriodMap)
+
+    ### time_domain_reduction_settings.yml
+    if v println("Writing .yml settings...") end
+    YAML.write_file(joinpath(inpath, YAML_Outfile), myTDRsetup)
+
+    return FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map
+>>>>>>> main =#
 end

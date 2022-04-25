@@ -15,15 +15,15 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    load_network_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_nw::Dict)
+    load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
 Function for reading input parameters related to the electricity transmission network
 """
 #DEV NOTE:  add DC power flow related parameter inputs in a subsequent commit
-function load_network_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_nw::Dict)
+function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     # Network zones inputs and Network topology inputs
-    network_var = DataFrame(CSV.File(string(path,sep,"Network.csv"), header=true), copycols=true)
+    network_var = DataFrame(CSV.File(joinpath(path,"Network.csv"), header=true), copycols=true)
 
     # Number of zones in the network
     inputs_nw["Z"] = size(findall(s -> (startswith(s, "z")) & (tryparse(Float64, s[2:end]) != nothing), names(network_var)),1)

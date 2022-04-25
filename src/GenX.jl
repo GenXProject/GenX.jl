@@ -61,6 +61,7 @@ using Statistics
 #using CPLEX
 #using MOI
 #using SCIP
+using BenchmarkTools
 using Clp
 using Cbc
 
@@ -105,6 +106,7 @@ include("model/core/discharge/investment_discharge.jl")
 
 include("model/core/non_served_energy.jl")
 include("model/core/ucommit.jl")
+include("model/core/emissions.jl")
 
 include("model/core/reserves.jl")
 
@@ -195,4 +197,5 @@ include("multi_stage//write_settings.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
 include("additional_tools/method_of_morris_v2.jl")
+include("additional_tools/method_of_morris.jl")
 end

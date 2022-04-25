@@ -1,7 +1,7 @@
 name = "GenX"
 uuid = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
 authors = ["Jesse Jenkins", "Nestor Sepulveda", "Dharik Mallapragada", "Aaron Schwartz", "Neha Patankar", "Qingyu Xu", "Jack Morris", "Sambuddha Chakrabarti"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -29,7 +29,10 @@ OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 QuasiMonteCarlo = "8a4e6c94-4038-4cdc-81c3-7e6ffdb2a71b"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
+<<<<<<< HEAD
 SCIP = "82193955-e24f-5292-bf16-6f2c5261a85f"
+=======
+>>>>>>> main
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
@@ -57,8 +60,11 @@ MathProgBase = "0.7.8"
 OrdinaryDiffEq = "5.60.1"
 QuasiMonteCarlo = "0.2.3"
 RecursiveArrayTools = "2.17.2"
+<<<<<<< HEAD
 SCIP = "0.10.1"
 Statistics = "1.4.0"
+=======
+>>>>>>> main
 StatsBase = "0.33.8"
 YAML = "0.4.7"
 julia = "1"

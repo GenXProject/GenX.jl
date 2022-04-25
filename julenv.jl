@@ -26,8 +26,8 @@ Pkg.add(Pkg.PackageSpec(name="GLPK", version="0.14.12"))
 Pkg.add(Pkg.PackageSpec(name="Ipopt", version="0.7.0"))
 Pkg.add(Pkg.PackageSpec(name="JuMP", version="0.21.8"))
 Pkg.add("MathOptInterface")
-Pkg.add(Pkg.PackageSpec(name="SCIP"))
-Pkg.build("SCIP")
+#Pkg.add(Pkg.PackageSpec(name="SCIP"))
+#Pkg.build("SCIP")
 Pkg.add(Pkg.PackageSpec(name="HiGHS"))
 ############################################################################################
 #Uncomment either of the following two lines for the particular version of CPLEX.jl desired

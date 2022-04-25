@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_commit(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -26,5 +26,5 @@ function write_commit(path::AbstractString, sep::AbstractString, inputs::Dict, s
 	dfCommit = hcat(dfCommit, DataFrame(commit, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCommit,auxNew_Names)
-	CSV.write(string(path,sep,"commit.csv"), dftranspose(dfCommit, false), writeheader=false)
+	CSV.write(joinpath(path, "commit.csv"), dftranspose(dfCommit, false), writeheader=false)
 end

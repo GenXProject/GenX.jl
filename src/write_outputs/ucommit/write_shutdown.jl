@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -32,5 +32,5 @@ function write_shutdown(path::AbstractString, sep::AbstractString, inputs::Dict,
 	total[:, 4:T+3] .= sum(shut, dims = 1)
 	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
-	CSV.write(string(path,sep,"shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
+	CSV.write(joinpath(path, "shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
 end

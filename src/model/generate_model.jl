@@ -126,6 +126,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
 	end
 
+	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
+	#@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) ##From main
+
 	# Infrastructure
 	EP = discharge(EP, inputs, setup["EnergyShareRequirement"])
 
@@ -136,6 +139,8 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	if setup["UCommit"] > 0
 		EP = ucommit(EP, inputs, setup["UCommit"])
 	end
+
+	EP = emissions(EP, inputs)
 
 	if setup["Reserves"] > 0
 		EP = reserves(EP, inputs, setup["UCommit"])

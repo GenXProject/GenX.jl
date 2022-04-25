@@ -2,7 +2,7 @@
 *.jl.*.cov
 *.jl.mem
 *.DS_Store
-/Manifest.toml
+Manifest.toml
 .Rhistory
 deps/deps.jl
 .vscode/
@@ -14,6 +14,7 @@ YourModel.lp
 time_domain_reduction/PreCluster_Plots.jl
 time_domain_reduction/TSC_Plots.jl
 time_domain_reduction/TSC.jl
+
 gurobi.log
 cplex.log
 Example_Systems/SmallNewEngland/ThreeZones/TDR_*

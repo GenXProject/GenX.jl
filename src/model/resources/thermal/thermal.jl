@@ -49,6 +49,12 @@ function thermal(EP::Model, inputs::Dict, UCommit::Int, Reserves::Int, CapacityR
 		@expression(EP, eCapResMarBalanceThermal[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] for y in THERM_ALL))
 		EP[:eCapResMarBalance] += eCapResMarBalanceThermal
 	end
-
+#=
+	##CO2 Polcy Module Thermal Generation by zone
+	@expression(EP, eGenerationByThermAll[z=1:Z, t=1:T], # the unit is GW
+		sum(EP[:vP][y,t] for y in intersect(inputs["THERM_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
+	)
+	EP[:eGenerationByZone] += eGenerationByThermAll
+	=# ##From main
 	return EP
 end

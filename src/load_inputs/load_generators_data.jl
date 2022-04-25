@@ -15,14 +15,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_generators_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+	load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 Function for reading input parameters related to electricity generators (plus storage and flexible demand resources)
 """
-function load_generators_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 	# Generator related inputs
-	gen_in = DataFrame(CSV.File(string(path,sep,"Generators_data.csv"), header=true), copycols=true)
+	gen_in = DataFrame(CSV.File(joinpath(path, "Generators_data.csv"), header=true), copycols=true)
 
 	# Add Resource IDs after reading to prevent user errors
 	gen_in[!,:R_ID] = 1:size(collect(skipmissing(gen_in[!,1])),1)

@@ -15,19 +15,19 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_load::Dict)
+	load_data(setup::Dict, path::AbstractString, inputs_load::Dict)
 
 Function for reading input parameters related to electricity load (demand)
 """
-function load_load_data(setup::Dict, path::AbstractString, sep::AbstractString, inputs_load::Dict)
+function load_load_data(setup::Dict, path::AbstractString, inputs_load::Dict)
 
 	# Load related inputs
 	#data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
 	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
 	if setup["TimeDomainReduction"] == 1  && isfile(joinpath(data_directory,"Load_data.csv")) && isfile(joinpath(data_directory,"Generators_variability.csv")) && isfile(joinpath(data_directory,"Fuels_data.csv")) # Use Time Domain Reduced data for GenX
-		load_in = DataFrame(CSV.File(string(joinpath(data_directory,"Load_data.csv")), header=true), copycols=true)
+		load_in = DataFrame(CSV.File(joinpath(data_directory,"Load_data.csv"), header=true), copycols=true)
 	else # Run without Time Domain Reduction OR Getting original input data for Time Domain Reduction
-		load_in = DataFrame(CSV.File(string(path,sep,"Load_data.csv"), header=true), copycols=true)
+		load_in = DataFrame(CSV.File(joinpath(path,"Load_data.csv"), header=true), copycols=true)
 	end
 
 

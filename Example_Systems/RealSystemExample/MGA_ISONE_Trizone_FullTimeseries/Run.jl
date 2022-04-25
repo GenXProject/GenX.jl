@@ -73,12 +73,5 @@ outpath = "$inpath/Results"
 write_outputs(EP, outpath, mysetup, myinputs)
 if mysetup["ModelingToGenerateAlternatives"] == 1
     println("Starting Model to Generate Alternatives (MGA) Iterations")
-    if Sys.isunix()
-		sep = "/"
-    elseif Sys.iswindows()
-		sep = "\U005c"
-    else
-        sep = "/"
-	end
-    mga(EP,inpath,mysetup,myinputs,outpath, sep)
+    mga(EP,inpath,mysetup,myinputs,outpath)
 end

@@ -29,3 +29,7 @@ Pages = ["transmission.jl"]
 Modules = [GenX]
 Pages = ["ucommit.jl"]
 ```
+## Emissions
+```@autodocs
+Modules = [GenX]
+Pages = ["emissions.jl"]
