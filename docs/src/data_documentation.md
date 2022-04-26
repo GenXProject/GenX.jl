@@ -56,16 +56,13 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
 |WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
-<<<<<<< HEAD
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
 
-=======
 |MethodofMorris | Method of Morris algorithm |
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
->>>>>>> main
 |**Miscellaneous**|
 |PrintModel | Flag for printing the model equations as .lp file.|
 ||1= including the model equation as an output|
