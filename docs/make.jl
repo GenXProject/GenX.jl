@@ -105,5 +105,5 @@ deploydocs(;
     devurl = "dev",
     push_preview=true,
     versions = ["stable" => "v^", "v#.#"],
-    push_preview = true,
+    #push_preview = true,
 )
