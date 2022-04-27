@@ -27,21 +27,12 @@ returns: Dict (dictionary) object containing all data inputs
 """
 function load_inputs(setup::Dict,path::AbstractString)
 
-	## Use appropriate directory separator depending on Mac or Windows config
-	if Sys.isunix()
-		sep = "/"
-    	elseif Sys.iswindows()
-		sep = "\U005c"
-    	else
-        	sep = "/"
-	end
-
 	## Read input files
 	println("Reading Input CSV Files")
 	## Declare Dict (dictionary) object used to store parameters
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
-    	if isfile(joinpath(path,"Network.csv"))
+	if isfile(joinpath(path,"Network.csv"))
 		inputs, network_var = load_network_data(setup, path, inputs)
 	else
 		inputs["Z"] = 1
@@ -83,10 +74,11 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
-		inputs = load_period_map(setup, path, sep, inputs)
+		inputs = load_period_map(setup, path, inputs)
 	end
-	
-	println("CSV Files Successfully Read In From $path$sep")
+
+	println("CSV Files Successfully Read In From $path")
+
 	return inputs
 end
 

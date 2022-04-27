@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_capacity_value(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -67,5 +67,5 @@ function write_capacity_value(path::AbstractString, sep::AbstractString, inputs:
 		rename!(temp_dfCapValue, auxNew_Names)
 		append!(dfCapValue, temp_dfCapValue)
 	end
-	CSV.write(string(path,sep,"CapacityValue.csv"), dfCapValue)
+	CSV.write(joinpath(path, "CapacityValue.csv"), dfCapValue)
 end

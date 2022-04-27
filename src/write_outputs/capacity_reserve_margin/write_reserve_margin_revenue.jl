@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_reserve_margin_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the capacity revenue earned by each generator listed in the input file.
     GenX will print this file only when capacity reserve margin is modeled and the shadow price can be obtained form the solver.
@@ -24,7 +24,7 @@ Function for reporting the capacity revenue earned by each generator listed in t
     The last column is the total revenue received from all capacity reserve margin constraints.
     As a reminder, GenX models the capacity reserve margin (aka capacity market) at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -56,6 +56,6 @@ function write_reserve_margin_revenue(path::AbstractString, sep::AbstractString,
 		dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [sym]))
 	end
 	dfResRevenue.AnnualSum = annual_sum
-	CSV.write(string(path,sep,"ReserveMarginRevenue.csv"), dfResRevenue)
+	CSV.write(joinpath(path, "ReserveMarginRevenue.csv"), dfResRevenue)
 	return dfResRevenue
 end

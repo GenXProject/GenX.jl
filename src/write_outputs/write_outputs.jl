@@ -139,8 +139,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		dfRegSubRevenue = DataFrame()
 		if has_duals(EP) == 1
 			dfPrice = write_price(path, inputs, setup, EP)
-			dfEnergyRevenue = write_energy_revenue(path, sep, inputs, setup, EP)
-			dfChargingcost = write_charging_cost(path, sep, inputs, setup, EP)
+			dfEnergyRevenue = write_energy_revenue(path, inputs, setup, EP)
+			dfChargingcost = write_charging_cost(path, inputs, setup, EP)
 			dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
 		end
 
@@ -160,8 +160,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			elapsed_time_rsv_margin = @elapsed write_reserve_margin_w(path, inputs, setup, EP)
 		  println("Time elapsed for writing reserve margin is")
 		  println(elapsed_time_rsv_margin)
-			dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, EP)
-			elapsed_time_cap_value = @elapsed write_capacity_value(path, sep, inputs, setup, EP)
+			dfResRevenue = write_reserve_margin_revenue(path, inputs, setup, EP)
+			elapsed_time_cap_value = @elapsed write_capacity_value(path, inputs, setup, EP)
 		  println("Time elapsed for writing capacity value is")
 		  println(elapsed_time_cap_value)
 		end

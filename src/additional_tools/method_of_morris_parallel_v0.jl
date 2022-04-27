@@ -54,12 +54,6 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     #save the variance of effect of each uncertain variable on the objective function
     Morris_range[!,:variance] = DataFrame(m.variances')[!,:x1]
 
-    if setup["MacOrWindows"]=="Mac"
-		sep = "/"
-	else
-		sep = "\U005c"
-	end
-
-    CSV.write(string(outpath,sep,"morris.csv"), Morris_range)
+    CSV.write(joinpath(outpath, "morris.csv"), Morris_range)
 
 end
