@@ -65,23 +65,32 @@ function write_twentyfourseven(path::AbstractString, sep::AbstractString, inputs
 
     if (NumberofTFS) > 1
         NumberofTFSPath = inputs["NumberofTFSPath"]
-        dfTFSFlow = DataFrame(RPSH_PathID = 1:NumberofTFSPath, AnnualSum = zeros(NumberofTFSPath))
+        dfTFSFlow = DataFrame(RPSH_PathID=1:NumberofTFSPath, AnnualSum=zeros(NumberofTFSPath))
         temptfsflow = value.(EP[:vTFSFlow])
         if setup["ParameterScale"] == 1
             temptfsflow = temptfsflow * ModelScalingFactor
         end
         dfTFSFlow.AnnualSum .= temptfsflow * inputs["omega"]
         dfTFSFlow = hcat(dfTFSFlow, DataFrame(temptfsflow, [Symbol("t$t") for t in 1:T]))
-        CSV.write(string(path, sep, "tfs_tfsflow.csv"), dftranspose(dfTFSFlow, false), writeheader = false)
-
-        dfTFSExport = DataFrame(RPSH_PathID = 1:NumberofTFS, AnnualSum = zeros(NumberofTFS))
+        CSV.write(string(path, sep, "tfs_tfsflow.csv"), dftranspose(dfTFSFlow, false), writeheader=false)
+    
+        dfTFSExport = DataFrame(Policy_ID=1:NumberofTFS, AnnualSum=zeros(NumberofTFS))
         temptfsexport = value.(EP[:eTFSNetExport])
         if setup["ParameterScale"] == 1
             temptfsexport = temptfsexport * ModelScalingFactor
         end
         dfTFSExport.AnnualSum .= temptfsexport * inputs["omega"]
         dfTFSExport = hcat(dfTFSExport, DataFrame(temptfsexport, [Symbol("t$t") for t in 1:T]))
-        CSV.write(string(path, sep, "tfs_tfsexport.csv"), dftranspose(dfTFSExport, false), writeheader = false)
+        CSV.write(string(path, sep, "tfs_tfsexport.csv"), dftranspose(dfTFSExport, false), writeheader=false)
+    
+        dfTFSTransactionCost = DataFrame(RPSH_PathID=1:NumberofTFS, AnnualSum=zeros(NumberofTFS))
+        temptfstranscationcost = value.(EP[:eTFSTranscationCost])
+        if setup["ParameterScale"] == 1
+            temptfstranscationcost = temptfstranscationcost * (ModelScalingFactor^2)
+        end
+        dfTFSTransactionCost.AnnualSum .= temptfstranscationcost * inputs["omega"]
+        dfTFSTransactionCost = hcat(dfTFSTransactionCost, DataFrame(temptfstranscationcost, [Symbol("t$t") for t in 1:T]))
+        CSV.write(string(path, sep, "tfs_tfstransactioncost.csv"), dftranspose(dfTFSTransactionCost, false), writeheader=false)
     end
 
     dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Shortfalllimit])))

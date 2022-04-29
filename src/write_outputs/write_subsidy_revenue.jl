@@ -55,8 +55,8 @@ function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs
     # end
     if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
-			MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID]
-			dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .= dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] + (value.(EP[:eTotalCap])[MIN_CAP_GEN]) * (dual.(EP[:cZoneMinCapReq])[mincap])
+			MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].>0), :R_ID]
+			dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .= dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] + (value.(EP[:eTotalCap])[MIN_CAP_GEN]) * (dual.(EP[:cZoneMinCapReq])[mincap]) * dfGen[MIN_CAP_GEN, Symbol("MinCapTag_$mincap")]
 			# for y in dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :][!, :R_ID]
 			#     dfRegSubRevenue[y, :SubsidyRevenue] = (value.(EP[:eTotalCap])[y]) * (dual.(EP[:cZoneMinCapReq])[mincap])
 			# end

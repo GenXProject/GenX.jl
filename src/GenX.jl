@@ -191,6 +191,7 @@ include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_time_weights.jl")
 include("write_outputs/write_twentyfourseven.jl")
 include("write_outputs/choose_output_dir.jl")
+include("write_outputs/write_capacityfactor.jl")
 
 
 
@@ -206,6 +207,7 @@ include("write_outputs/energy_share_requirement/write_esr_prices.jl")
 include("write_outputs/energy_share_requirement/write_esr_revenue.jl")
 include("write_outputs/energy_share_requirement/write_esr_payment.jl")
 include("write_outputs/energy_share_requirement/write_esr_storageloss_payment.jl")
+include("write_outputs/energy_share_requirement/write_esr_transmissionloss_payment.jl")
 
 include("write_outputs/long_duration_storage/write_opwrap_lds_dstor.jl")
 include("write_outputs/long_duration_storage/write_opwrap_lds_stor_init.jl")

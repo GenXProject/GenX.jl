@@ -29,9 +29,55 @@ The final term in the summation above adds roundtrip storage losses to the total
 """
 function energy_share_requirement(EP::Model, inputs::Dict, setup::Dict)
 
-	println("Energy Share Requirement Policies Module")
+    println("Energy Share Requirement Policies Module")
 
-	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
-	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
-	return EP
+    dfGen = inputs["dfGen"]
+    SEG = inputs["SEG"]  # Number of lines
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    STOR_ALL = inputs["STOR_ALL"]
+    FLEX = inputs["FLEX"]
+
+    # ESR Policy
+    # Set up right hand side (i.e., demand)
+    @expression(EP, eESRRHS[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (inputs["pD"][t, z] - EP[:eZonalNSE[t, z]]) for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+    # ESR Transmission loss
+    # Consider transmission loss, the default is take transmission loss into consideration
+    if Z > 1
+        if haskey(setup, "PolicyTransmissionLossCoverage")
+            if (setup["PolicyTransmissionLossCoverage"] == 1)
+                @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (1 / 2) * eTransLossByZone[z, t] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+                EP[:eESRRHS] += eESRTLoss
+            end
+        else
+            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (1 / 2) * eTransLossByZone[z, t] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            EP[:eESRRHS] += eESRTLoss
+        end
+    end
+
+    # ESR Lossses
+    # Consider storage loss, the default is take storage loss into consideration
+    if !isempty(STOR_ALL)
+        if haskey(setup, "StorageLosses")
+            if setup["StorageLosses"] == 1
+                @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * EP[:eStorageLossByZone][z] for z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+                EP[:eESRRHS] += eESRStor
+            end
+        else
+            @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * EP[:eStorageLossByZone][z] for z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            EP[:eESRRHS] += eESRStor
+        end
+    end
+
+    # Setup left hand side, i.e., supply
+    @expression(EP, eESRLHS[ESR=1:inputs["nESR"]], 0)
+    # only the production of non-storage/flexible load is used
+    @expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], sum(inputs["omega"][t] * dfGen[y, Symbol("ESR_$ESR")] * EP[:vP][y, t] for y = setdiff(dfGen[findall(x -> x > 0, dfGen[!, Symbol("ESR_$ESR")]), :R_ID], union(STOR_ALL, FLEX)), t = 1:T))
+    EP[:eESRLHS] += eESRDischarge
+
+    ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
+
+    @constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESRLHS][ESR] >= EP[:eESRRHS][ESR])
+    return EP
 end

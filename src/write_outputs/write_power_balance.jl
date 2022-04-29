@@ -64,7 +64,7 @@ for z in 1:Z
     powerbalance[(z-1)*10+7, :] = value.(EP[:vNSE][1, :, z])
     if Z >= 2
         powerbalance[(z-1)*10+8, :] = (value.(EP[:ePowerBalanceNetExportFlows][:, z]))' # Transpose
-        powerbalance[(z-1)*10+9, :] = (-0.5) * (value.(EP[:eLosses_By_Zone][z, :]))
+        powerbalance[(z-1)*10+9, :] = (-0.5) * (value.(EP[:eTransLossByZone][z, :]))
     end
     powerbalance[(z-1)*10+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
     # for t in 1:T
@@ -93,12 +93,12 @@ for z in 1:Z
     #     #=
     #        	     	if setup["NetworkExpansion"] == 1
     #        	     	    dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
-    #        	     	    dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eLosses_By_Zone][z,t])
+    #        	     	    dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eTransLossByZone][z,t])
     #        	     	end
     #        		=#
     #     if Z >= 2
     #         dfTemp1[t+rowoffset, 8] = value(EP[:ePowerBalanceNetExportFlows][t, z])
-    #         dfTemp1[t+rowoffset, 9] = -1 / 2 * value(EP[:eLosses_By_Zone][z, t])
+    #         dfTemp1[t+rowoffset, 9] = -1 / 2 * value(EP[:eTransLossByZone][z, t])
     #     end
     #     dfTemp1[t+rowoffset, 10] = -inputs["pD"][t, z]
 

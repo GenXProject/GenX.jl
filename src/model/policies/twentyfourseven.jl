@@ -42,18 +42,25 @@ function twentyfourseven(EP::Model, inputs::Dict, setup::Dict)
         NumberofTFSPath = inputs["NumberofTFSPath"]
         @variable(EP, vTFSFlow[rpsh_path = 1:NumberofTFSPath, t = 1:T])
         @variable(EP, vTFSFlow_Sending[rpsh_path = 1:NumberofTFSPath, t = 1:T] >= 0)
-        @constraint(EP, cTFSFlow_Upperbound[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow])
+        @constraint(EP, cTFSFlow_Upperbound[rpsh_path= 1 :NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow_Forward])
         @constraint(EP, cTFSFlow_Upperbound_byCFE[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= sum(EP[:eCFE][rpsh, t] for rpsh in inputs["TFS_Network"][findall(x -> x == rpsh_path, inputs["TFS_Network"][:, :RPSH_PathID]), :From]))
-
         @variable(EP, vTFSFlow_Receiving[rpsh_path = 1:NumberofTFSPath, t = 1:T] >= 0)
-        @constraint(EP, cTFSFlow_Lowerbound[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Receiving][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow])
+        
+        @constraint(EP, cTFSFlow_Lowerbound[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Receiving][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow_Backward])
         @constraint(EP, cTFSFlow_Lowerbound_byModifiedLoad[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Receiving][rpsh_path, t] <= sum(EP[:eModifiedload][rpsh, t] for rpsh in inputs["TFS_Network"][findall(x -> x == rpsh_path, inputs["TFS_Network"][:, :RPSH_PathID]), :To]))
-
+    
         @constraint(EP, cTFSFlowRelation[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow][rpsh_path, t] == EP[:vTFSFlow_Sending][rpsh_path, t] - EP[:vTFSFlow_Receiving][rpsh_path, t])
-
+    
         @expression(EP, eTFSNetExport[rpsh = 1:NumberofTFS, t = 1:T], (sum(EP[:vTFSFlow][rpsh_path, t] for rpsh_path in findall(x -> x == rpsh, inputs["TFS_Network"][:, :From])) -
                                                                        sum(EP[:vTFSFlow][rpsh_path, t] for rpsh_path in findall(x -> x == rpsh, inputs["TFS_Network"][:, :To]))))
         @constraint(EP, cRPSH_HourlyMatching[t = 1:T, rpsh = 1:NumberofTFS], - EP[:eModifiedload][rpsh, t] + eCFE[rpsh, t] - EP[:eTFSNetExport][rpsh, t] + EP[:vSF][rpsh, t] - EP[:vEX][rpsh, t] == 0)
+    
+        
+        @expression(EP, eTFSTranscationCost[rpsh_path = 1:NumberofTFSPath, t = 1:T], ((EP[:vTFSFlow_Sending][rpsh_path, t] * inputs["TFS_Network"][rpsh_path, :HurdleRate_Forward]) +
+                                                                                  (EP[:vTFSFlow_Receiving][rpsh_path, t] * inputs["TFS_Network"][rpsh_path, :HurdleRate_Backward])))
+        @expression(EP, eTFSAnnualTranscationCost[rpsh_path = 1:NumberofTFSPath], sum(EP[:eTFSTranscationCost][rpsh_path, t] * inputs["omega"][t] for t in 1:T))
+        @expression(EP, eTFSTotalTranscationCost, sum(EP[:eTFSAnnualTranscationCost][rpsh_path] for rpsh_path in 1:NumberofTFSPath))
+        EP[:eObj] += eTFSTotalTranscationCost
     else
         @constraint(EP, cModifiedloadLowerbound[rpsh = 1:NumberofTFS, t = 1:T], EP[:eModifiedload][rpsh, t] >= 0)
         @constraint(EP, cRPSH_HourlyMatching[t = 1:T, rpsh = 1:NumberofTFS], - EP[:eModifiedload][rpsh, t] + eCFE[rpsh, t] + EP[:vSF][rpsh, t] - EP[:vEX][rpsh, t] == 0)
