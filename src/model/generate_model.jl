@@ -248,10 +248,13 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CapacityReserveMargin"] > 0
         EP = cap_reserve_margin(EP, inputs, setup)
     end
-
-    if (setup["MinCapReq"] == 1)
-        EP = minimum_capacity_requirement(EP, inputs, setup)
+    
+    if (haskey(setup, "MinCapReq"))
+        if (setup["MinCapReq"] == 1)
+            EP = minimum_capacity_requirement(EP, inputs, setup)
+        end
     end
+
     if (haskey(setup, "MaxCapReq"))
         if (setup["MaxCapReq"] == 1)
             EP = maximum_capacity_limit(EP, inputs, setup)
@@ -268,7 +271,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     ## Power balance constraints
     # demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
     #          + incoming power flows - outgoing power flows - flow losses - charge of heat storage + generation from NACC
-    @constraint(EP, cPowerBalance[t = 1:T, z = 1:Z], EP[:ePowerBalance][t, z] == inputs["pD"][t, z])
+    @constraint(EP, cPowerBalance[t=1:T, z=1:Z], EP[:ePowerBalance][t, z] == inputs["pD"][t, z])
 
     ## Record pre-solver time
     presolver_time = time() - presolver_start_time

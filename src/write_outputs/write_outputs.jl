@@ -187,13 +187,19 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             dfEnergyRevenue = write_energy_revenue(path, sep, inputs, setup, EP)
             dfChargingcost = write_charging_cost(path, sep, inputs, setup, EP)
             dfEnergyPayment = write_energy_payment(path, sep, inputs, setup, EP)
-            dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, sep, inputs, setup, EP)
+            dfSubRevenue = write_subsidy_revenue(path, sep, inputs, setup, EP)
             if inputs["Z"] > 1
                 dfCongestionRevenue = write_congestion_revenue(path, sep, inputs, setup, EP)
                 dfTransmissionLossCost = write_transmission_losscost(path, sep, inputs, setup, EP)
             end
         end
-    
+
+        if (haskey(setup, "MinCapReq"))
+            if setup["MinCapReq"] == 1 && has_duals(EP) == 1
+                dfRegSubRevenue = write_regional_subsidy_revenue(path, sep, inputs, setup, EP)
+            end
+        end
+
         elapsed_time_time_weights = @elapsed write_time_weights(path, sep, inputs)
         println("Time elapsed for writing time weights is")
         println(elapsed_time_time_weights)
@@ -217,7 +223,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                     dfESRStoragelossPayment = write_esr_storagelosspayment(path, sep, inputs, setup, EP)
                 end
             end
-            if Z > 1
+            if inputs["Z"] > 1
                 if haskey(setup, "PolicyTransmissionLossCoverage")
                     if setup["PolicyTransmissionLossCoverage"] == 1
                         dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, sep, inputs, setup, EP)
