@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	investment_charge(EP::Model, inputs::Dict)
+	investment_charge!(EP::Model, inputs::Dict)
 
 This function defines the expressions and constraints keeping track of total available storage charge capacity across all resources as well as constraints on capacity retirements. The function also adds investment and fixed O\&M related costs related to charge capacity to the objective function.
 
@@ -54,11 +54,12 @@ In addition, this function adds investment and fixed O&M related costs related t
 \end{aligned}
 ```
 """
-function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
+function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Charge Investment Module")
 
 	dfGen = inputs["dfGen"]
+	MultiStage = setup["MultiStage"]
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
@@ -145,5 +146,4 @@ function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
 	@constraint(EP, cMinCapCharge[y in intersect(dfGen[!,:Min_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] >= dfGen[!,:Min_Charge_Cap_MW][y])
 
-	return EP
 end

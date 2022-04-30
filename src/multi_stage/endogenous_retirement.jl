@@ -38,7 +38,7 @@ function get_retirement_stage(cur_stage::Int, lifetime::Int, stage_lens::Array{I
     return Int(ret_stage)
 end
 
-function endogenous_retirement(EP::Model, inputs::Dict, multi_stage_settings::Dict)
+function endogenous_retirement!(EP::Model, inputs::Dict, multi_stage_settings::Dict)
 
 	println("Endogenous Retirement Module")
 
@@ -46,20 +46,19 @@ function endogenous_retirement(EP::Model, inputs::Dict, multi_stage_settings::Di
 	cur_stage = multi_stage_settings["CurStage"]
 	stage_lens = multi_stage_settings["StageLengths"]
 
-	EP = endogenous_retirement_discharge(EP, inputs, num_stages, cur_stage, stage_lens)
+	endogenous_retirement_discharge!(EP, inputs, num_stages, cur_stage, stage_lens)
 
 	if !isempty(inputs["STOR_ALL"])
-		EP = endogenous_retirement_energy(EP, inputs, num_stages, cur_stage, stage_lens)
+		endogenous_retirement_energy!(EP, inputs, num_stages, cur_stage, stage_lens)
 	end
 
 	if !isempty(inputs["STOR_ASYMMETRIC"])
-		EP = endogenous_retirement_charge(EP, inputs, num_stages, cur_stage, stage_lens)
+		endogenous_retirement_charge!(EP, inputs, num_stages, cur_stage, stage_lens)
 	end
 
-	return EP
 end
 
-function endogenous_retirement_discharge(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
+function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
 
 	println("Endogenous Retirement (Discharge) Module")
 	
@@ -120,10 +119,9 @@ function endogenous_retirement_discharge(EP::Model, inputs::Dict, num_stages::In
 
 	@constraint(EP, cLifetimeRet[y=1:G], eNewCapTrack[y] + eMinRetCapTrack[y]  <= eRetCapTrack[y])
 
-	return EP
 end
 
-function endogenous_retirement_charge(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
+function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
 
 	println("Endogenous Retirement (Charge) Module")
 
@@ -177,10 +175,9 @@ function endogenous_retirement_charge(EP::Model, inputs::Dict, num_stages::Int, 
 
 	@constraint(EP, cLifetimeRetCharge[y in STOR_ASYMMETRIC], eNewCapTrackCharge[y] + eMinRetCapTrackCharge[y]  <= eRetCapTrackCharge[y])
 
-	return EP
 end
 
-function endogenous_retirement_energy(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
+function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
 
 	println("Endogenous Retirement (Energy) Module")
 
@@ -233,5 +230,4 @@ function endogenous_retirement_energy(EP::Model, inputs::Dict, num_stages::Int, 
 
 	@constraint(EP, cLifetimeRetEnergy[y in STOR_ALL], eNewCapTrackEnergy[y] + eMinRetCapTrackEnergy[y]  <= eRetCapTrackEnergy[y])
 
-	return EP
 end

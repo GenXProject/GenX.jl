@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	ucommit(EP::Model, inputs::Dict, UCommit::Int)
+	ucommit(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates decision variables and cost expressions associated with thermal plant unit commitment or start-up and shut-down decisions (cycling on/off)
 
@@ -38,7 +38,7 @@ The total cost of start-ups across all generators subject to unit commitment ($y
 
 The sum of start-up costs is added to the objective function.
 """
-function ucommit(EP::Model, inputs::Dict, UCommit::Int)
+function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Unit Commitment Module")
 
@@ -74,7 +74,7 @@ function ucommit(EP::Model, inputs::Dict, UCommit::Int)
 
 	### Constratints ###
 	## Declaration of integer/binary variables
-	if UCommit == 1 # Integer UC constraints
+	if setup["UCommit"] == 1 # Integer UC constraints
 		for y in COMMIT
 			set_integer.(vCOMMIT[y,:])
 			set_integer.(vSTART[y,:])

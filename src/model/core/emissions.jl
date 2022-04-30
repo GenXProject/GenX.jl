@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	emissions(EP::Model, inputs::Dict, UCommit::Int)
+	emissions(EP::Model, inputs::Dict)
 
 This function creates expression to add the CO2 emissions by plants in each zone, which is subsequently added to the total emissions
 """
-function emissions(EP::Model, inputs::Dict)
+function emissions!(EP::Model, inputs::Dict)
 
 	println("Emissions Module (for CO2 Policy modularization")
 
@@ -38,5 +38,5 @@ function emissions(EP::Model, inputs::Dict)
 	 	end
  	)
  	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
-	return EP
+
 end

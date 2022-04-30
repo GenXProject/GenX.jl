@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	hydro_inter_period_linkage(EP::Model, inputs::Dict)
+	hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
 **Storage inventory balance at beginning of each representative period**
 The constraints in this section are used to approximate the behavior of long-duration energy storage technologies when approximating annual grid operations by modeling operations over representative periods. Previously, the state of charge balance for storage (as defined in ```storage_all()```) assumed that state of charge at the beginning and end of each representative period has to be the same. In other words, the amount of energy built up or consumed by storage technology $o$ in zone $z$ over the representative period $m$, $\Delta Q_{o,z,m} = 0$. This assumption implicitly excludes the possibility of transferring energy from one representative period to the other which could be cost-optimal when the capital cost of energy storage capacity is relatively small. To model long-duration energy storage using representative periods, we replace the state of charge equation, such that the first term on the right hand side accounts for change in storage inventory associated with representative period $m$ ($\Delta Q_{o,z,m}$), which could be positive (net accumulation) or negative (net reduction).
@@ -57,7 +57,7 @@ Finally, the next constraint enforces that the initial storage level for each in
 \end{aligned}
 ```
 """
-function hydro_inter_period_linkage(EP::Model, inputs::Dict)
+function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
 	println("Long Duration Storage Module for Hydro Reservoir")
 
@@ -118,5 +118,4 @@ function hydro_inter_period_linkage(EP::Model, inputs::Dict)
 	@constraint(EP, cSoCBalLongDurationStorageSub_H[y in STOR_HYDRO_LONG_DURATION, r in REP_PERIODS_INDEX],
 					vSOC_HYDROw[y,r] == EP[:vS_HYDRO][y,hours_per_subperiod*dfPeriodMap[!,:Rep_Period_Index][r]] - vdSOC_HYDRO[y,dfPeriodMap[!,:Rep_Period_Index][r]])
 
-	return EP
 end
