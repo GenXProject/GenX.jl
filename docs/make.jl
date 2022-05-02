@@ -27,7 +27,13 @@ println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
-    "Welcome Page" => "index.md",
+    "Welcome Page" => [
+        "GenX: Introduction" => "index.md",
+        "Running GenX Cases" => "how_to_run_genx.md",
+        "Multi-Stage Capacity Expansion Planning with GenX" => "multi_stage_genx.md",
+        "Limitation of GenX" => "limitations_genx.md",
+        "Third Party Extensions" => "third_party_genx.md"
+    ],
     "Model Concept and Overview" => [
         "Model Introduction" => "model_introduction.md",
         "Notation" => "model_notation.md",
@@ -91,7 +97,7 @@ makedocs(;
     sitename="GenX",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://genxproject.github.io/GenX",
+        canonical="https://genxproject.github.io/GenX/stable",
         assets=String[],
     ),
     pages=[p for p in pages]
