@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
+	hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 This module defines the operational constraints for reservoir hydropower plants.
 Hydroelectric generators with water storage reservoirs ($y \in \mathcal{W}$) are effectively modeled as energy storage devices that cannot charge from the grid and instead receive exogenous inflows to their storage reservoirs, reflecting stream flow inputs. For resources with unknown reservoir capacity ($y \in \mathcal{W}^{nocap}$), their operation is parametrized by their generation efficiency, $\eta_{y,z}^{down}$, and energy inflows to the reservoir at every time-step, represented as a fraction of the total power capacity,($\rho^{max}_{y,z,t}$).  In case reservoir capacity is known ($y \in \mathcal{W}^{cap}$), an additional parameter, $\mu^{stor}_{y,z}$, referring to the ratio of energy capacity to discharge power capacity, is used to define the available reservoir storage capacity.
 **Storage inventory balance**
@@ -72,7 +72,7 @@ In case the reservoir capacity is known ($y \in W^{cap}$), then an additional co
 \end{aligned}
 ```
 """
-function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
+function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Hydro Reservoir Core Resources Module")
 
@@ -105,7 +105,7 @@ function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin
 	EP[:ePowerBalance] += ePowerBalanceHydroRes
 
 	# Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
+	if setup["CapacityReserveMargin"] > 0
 		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in HYDRO_RES))
 		EP[:eCapResMarBalance] += eCapResMarBalanceHydro
 	end
@@ -118,22 +118,22 @@ function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin
 		# Energy stored in reservoir at end of each other hour is equal to energy at end of prior hour less generation and spill and + inflows in the current hour
 		# The ["pP_Max"][y,t] term here refers to inflows as a fraction of peak discharge power capacity.
 		# DEV NOTE: Last inputs["pP_Max"][y,t] term above is inflows; currently part of capacity factors inputs in Generators_variability.csv but should be moved to its own Hydro_inflows.csv input in future.
-		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y,t-1] - (1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t]) - vSPILL[y,t] +inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
+		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y,t-1] - (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] +inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
 
 		# Constraints for reservoir hydro with time wrapping from end of sample period to start
 		cHydroReservoirWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y,t+hours_per_subperiod-1]
-				- (1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t]) - vSPILL[y,t] +  inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] +  inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down between consecutive hours
-		cRampUpInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t-1] <= dfGen[!,:Ramp_Up_Percentage][y]*EP[:eTotalCap][y]
-		cRampDownInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t-1] - EP[:vP][y,t] <= dfGen[!,:Ramp_Dn_Percentage][y]*EP[:eTotalCap][y]
+		cRampUpInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
+		cRampDownInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 
 		# Maximum ramp up and down between consecutive hours, wrapping from end of sample period to start of sample period
 		cRampUpWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t+hours_per_subperiod-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
 		cRampDownWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t+hours_per_subperiod-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
-		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[!,:Min_Power][y]*EP[:eTotalCap][y]
+		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 		# DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
 
 		# Maximum discharging rate must be less than power rating OR available stored energy at start of hour, whichever is less
@@ -148,22 +148,22 @@ function hydro_res(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin
 
 	### Constraints to limit maximum energy in storage based on known limits on reservoir energy capacity (only for HYDRO_RES_KNOWN_CAP)
 	# Maximum energy stored in reservoir must be less than energy capacity in all hours - only applied to HYDRO_RES_KNOWN_CAP
-	@constraint(EP, cHydroMaxEnergy[y in HYDRO_RES_KNOWN_CAP, t in 1:T], EP[:vS_HYDRO][y,t] <= dfGen[!,:Hydro_Energy_to_Power_Ratio][y]*EP[:eTotalCap][y])
+	@constraint(EP, cHydroMaxEnergy[y in HYDRO_RES_KNOWN_CAP, t in 1:T], EP[:vS_HYDRO][y,t] <= dfGen[y,:Hydro_Energy_to_Power_Ratio]*EP[:eTotalCap][y])
 
-	if Reserves == 1
+	if setup["Reserves"] == 1
 		### Reserve related constraints for reservoir hydro resources (y in HYDRO_RES), if used
-		EP = hydro_res_reserves(EP, inputs)
+		hydro_res_reserves!(EP, inputs)
 	end
 	##CO2 Polcy Module Hydro Res Generation by zone
 	@expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
 		sum(EP[:vP][y,t] for y in intersect(inputs["HYDRO_RES"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
 	EP[:eGenerationByZone] += eGenerationByHydroRes
-	return EP
+
 end
 
 @doc raw"""
-	hydro_res_reserves(EP::Model, inputs::Dict, Reserves::Int)
+	hydro_res_reserves!(EP::Model, inputs::Dict)
 This module defines the modified constraints and additional constraints needed when modeling operating reserves
 **Modifications when operating reserves are modeled**
 When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
@@ -190,7 +190,7 @@ r_{y,z, t} \leq \upsilon^{rsv}_{y,z}\times \Delta^{total}_{y,z}
 \end{aligned}
 ```
 """
-function hydro_res_reserves(EP::Model, inputs::Dict)
+function hydro_res_reserves!(EP::Model, inputs::Dict)
 
 	println("Hydro Reservoir Reserves Module")
 
@@ -240,5 +240,4 @@ function hydro_res_reserves(EP::Model, inputs::Dict)
 		end)
 	end
 
-	return EP
 end

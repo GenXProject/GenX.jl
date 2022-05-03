@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	hydro_inter_period_linkage(EP::Model, inputs::Dict)
+	hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
 **Storage inventory balance at beginning of each representative period**
 The constraints in this section are used to approximate the behavior of long-duration energy storage technologies when approximating annual grid operations by modeling operations over representative periods. Previously, the state of charge balance for storage (as defined in ```storage_all()```) assumed that state of charge at the beginning and end of each representative period has to be the same. In other words, the amount of energy built up or consumed by storage technology $o$ in zone $z$ over the representative period $m$, $\Delta Q_{o,z,m} = 0$. This assumption implicitly excludes the possibility of transferring energy from one representative period to the other which could be cost-optimal when the capital cost of energy storage capacity is relatively small. To model long-duration energy storage using representative periods, we replace the state of charge equation, such that the first term on the right hand side accounts for change in storage inventory associated with representative period $m$ ($\Delta Q_{o,z,m}$), which could be positive (net accumulation) or negative (net reduction).
@@ -57,7 +57,7 @@ Finally, the next constraint enforces that the initial storage level for each in
 \end{aligned}
 ```
 """
-function hydro_inter_period_linkage(EP::Model, inputs::Dict)
+function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
 	println("Long Duration Storage Module for Hydro Reservoir")
 
@@ -98,25 +98,25 @@ function hydro_inter_period_linkage(EP::Model, inputs::Dict)
 	# Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
 	# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
 	@constraint(EP, cSoCBalLongDurationStorageStart_H[w=1:REP_PERIOD, y in STOR_HYDRO_LONG_DURATION],
-				    EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1] == (EP[:vS_HYDRO][y,hours_per_subperiod*w]-vdSOC_HYDRO[y,w])-(1/dfGen[!,:Eff_Down][y]*EP[:vP][y,hours_per_subperiod*(w-1)+1])-EP[:vSPILL][y,hours_per_subperiod*(w-1)+1]+inputs["pP_Max"][y,hours_per_subperiod*(w-1)+1]*EP[:eTotalCap][y])
+				    EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1] == (EP[:vS_HYDRO][y,hours_per_subperiod*w]-vdSOC_HYDRO[y,w])-(1/dfGen[y,:Eff_Down]*EP[:vP][y,hours_per_subperiod*(w-1)+1])-EP[:vSPILL][y,hours_per_subperiod*(w-1)+1]+inputs["pP_Max"][y,hours_per_subperiod*(w-1)+1]*EP[:eTotalCap][y])
 
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
 	@constraint(EP, cSoCBalLongDurationStorageInterior_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX[1:(end-1)]],
-					vSOC_HYDROw[y,r+1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[!,:Rep_Period_Index][r]])
+					vSOC_HYDROw[y,r+1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 	## Last period is linked to first period
 	@constraint(EP, cSoCBalLongDurationStorageEnd_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX[end]],
-					vSOC_HYDROw[y,1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[!,:Rep_Period_Index][r]])
+					vSOC_HYDROw[y,1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 	# Storage at beginning of each modeled period cannot exceed installed energy capacity
 	@constraint(EP, cSoCBalLongDurationStorageUpper_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-					vSOC_HYDROw[y,r] <= dfGen[!,:Hydro_Energy_to_Power_Ratio][y]*EP[:eTotalCap][y])
+					vSOC_HYDROw[y,r] <= dfGen[y,:Hydro_Energy_to_Power_Ratio]*EP[:eTotalCap][y])
 
 	# Initial storage level for representative periods must also adhere to sub-period storage inventory balance
 	# Initial storage = Final storage - change in storage inventory across representative period
 	@constraint(EP, cSoCBalLongDurationStorageSub_H[y in STOR_HYDRO_LONG_DURATION, r in REP_PERIODS_INDEX],
-					vSOC_HYDROw[y,r] == EP[:vS_HYDRO][y,hours_per_subperiod*dfPeriodMap[!,:Rep_Period_Index][r]] - vdSOC_HYDRO[y,dfPeriodMap[!,:Rep_Period_Index][r]])
+					vSOC_HYDROw[y,r] == EP[:vS_HYDRO][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
 
-	return EP
+
 end

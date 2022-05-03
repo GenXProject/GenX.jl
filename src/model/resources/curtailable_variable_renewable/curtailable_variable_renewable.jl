@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
+	curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 This function defines the constraints for operation of variable renewable energy (VRE) resources whose output can be curtailed ($y \in \mathcal{VRE}$), such as utility-scale solar PV or wind power resources or run-of-river hydro resources that can spill water.
 The operational constraints for VRE resources are a function of each technology's time-dependent hourly capacity factor (or availability factor, $\rho^{max}_{y,z,t}$), in per unit terms, and the total available capacity ($\Delta^{total}_{y,z}$).
 **Power output in each time step**
@@ -26,15 +26,18 @@ For each VRE technology type $y$ and model zone $z$, the model allows for incorp
 \end{aligned}
 ```
 The above constraint is defined as an inequality instead of an equality to allow for VRE power output to be curtailed if desired. This adds the possibility of introducing VRE curtailment as an extra degree of freedom to guarantee that generation exactly meets demand in each time step.
-Note that if ```Reserves=1``` indicating that frequency regulation and operating reserves are modeled, then this function calls ```curtailable_variable_renewable_reserves()```, which replaces the above constraints with a formulation inclusive of reserve provision.
+Note that if ```Reserves=1``` indicating that frequency regulation and operating reserves are modeled, then this function calls ```curtailable_variable_renewable_reserves!()```, which replaces the above constraints with a formulation inclusive of reserve provision.
 """
-function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
+function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Controllable variable renewable generators
 	### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Generators_data.csv  >1
 	## Default value of Num_VRE_Bins ==1
 	println("Dispatchable Resources Module")
 
 	dfGen = inputs["dfGen"]
+
+	Reserves = setup["Reserves"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -50,7 +53,7 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, 
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
-	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:][!,:R_ID])))
+	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
 	EP[:ePowerBalance] += ePowerBalanceDisp
 
@@ -65,11 +68,11 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, 
 	for y in VRE_POWER_OUT
 		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
 		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[!,:Num_VRE_Bins][y]-1,:R_ID])
+		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
 
 		# Constraints on contribution to regulation and reserves
 		if Reserves == 1
-			EP = curtailable_variable_renewable_reserves(EP, inputs)
+			curtailable_variable_renewable_reserves!(EP, inputs)
 		else
 			# Maximum power generated per hour by renewable generators must be less than
 			# sum of product of hourly capacity factor for each bin times its the bin installed capacity
@@ -88,11 +91,11 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, 
 		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
 	EP[:eGenerationByZone] += eGenerationByVRE
-	return EP
+
 end
 
 @doc raw"""
-	curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
+	curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
 When modeling operating reserves, this function is called by ```curtailable_variable_renewable()```, which modifies the constraint for maximum power output in each time step from VRE resources to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and upward operating (spinning) reserves ($r_{y,z,t}$).
 ```math
 \begin{aligned}
@@ -114,7 +117,7 @@ The amount of frequency regulation and operating reserves procured in each time 
 \end{aligned}
 ```
 """
-function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
+function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
@@ -124,13 +127,13 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 	for y in VRE_POWER_OUT
 		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
 		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[!,:Num_VRE_Bins][y]-1,:R_ID])
+		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
 
 		if y in inputs["REG"] && y in inputs["RSV"] # Resource eligible for regulation and spinning reserves
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vREG][y,t] <= dfGen[!,:Reg_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
-				[t=1:T], EP[:vRSV][y,t] <= dfGen[!,:Rsv_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
 
 				# Power generated and regulation reserve contributions down per hour must be greater than zero
 				[t=1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
@@ -142,7 +145,7 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 		elseif y in inputs["REG"] # Resource only eligible for regulation reserves
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vREG][y,t] <= dfGen[!,:Reg_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
 
 				# Power generated and regulation reserve contributions down per hour must be greater than zero
 				[t=1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
@@ -156,7 +159,7 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 
 			@constraints(EP, begin
 				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vRSV][y,t] <= dfGen[!,:Rsv_Max][y]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+				[t=1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
 
 				# Power generated and reserve contributions up per hour by renewable generators must be less than
 				# hourly capacity factor. Note: inequality constraint allows curtailment of output below maximum level.
@@ -170,5 +173,5 @@ function curtailable_variable_renewable_reserves(EP::Model, inputs::Dict)
 		end
 	end
 
-	return EP
+
 end

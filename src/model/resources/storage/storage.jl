@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int)
+	storage!(EP::Model, inputs::Dict, setup::Dict)
 A wide range of energy storage devices (all $o \in \mathcal{O}$) can be modeled in GenX, using one of two generic storage formulations: (1) storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), such as Lithium-ion batteries and most other electrochemical storage devices that use the same components for both charge and discharge; and (2) storage technologies that employ distinct and potentially asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), such as most thermal storage technologies or hydrogen electrolysis/storage/fuel cell or combustion turbine systems.
 **Storage with symmetric charge and discharge capacity**
 For storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), charge rate, $\Pi_{o,z,t}$, is constrained by the total installed power capacity, $\Omega_{o,z}$. Since storage resources generally represent a `cluster' of multiple similar storage devices of the same type/cost in the same zone, GenX permits storage resources to simultaneously charge and discharge (as some units could be charging while others discharge), with the simultaenous sum of charge, $\Pi_{o,z,t}$, and discharge, $\Theta_{o,z,t}$, also limited by the total installed power capacity, $\Delta^{total}_{o,z}$. These two constraints are as follows:
@@ -25,7 +25,7 @@ For storage technologies with symmetric charge and discharge capacity (all $o \i
 	&  \Pi_{o,z,t} + \Theta_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}^{sym}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-These constraints are created with the function ```storage_symmetric()``` in ```storage_symmetric.jl```.
+These constraints are created with the function ```storage_symmetric!()``` in ```storage_symmetric.jl```.
 If reserves are modeled, the following two constraints replace those above:
 ```math
 \begin{aligned}
@@ -34,7 +34,7 @@ If reserves are modeled, the following two constraints replace those above:
 \end{aligned}
 ```
 where $f^{charge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while charging, $f^{discharge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while discharging, and $r^{discharge}_{o,z,t}$ is the contribution of storage resources to upward reserves while discharging. Note that as storage resources can contribute to regulation and reserves while either charging or discharging, the proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources where the total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is the sum of the proxy variables.
-These constraints are created with the function ```storage_symmetric_reserves()``` in ```storage_symmetric.jl```.
+These constraints are created with the function ```storage_symmetric_reserves!()``` in ```storage_symmetric.jl```.
 **Storage with asymmetric charge and discharge capacity**
 For storage technologies with asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), charge rate, $\Pi_{o,z,t}$, is constrained by the total installed charge capacity, $\Delta^{total, charge}_{o,z}$, as follows:
 ```math
@@ -69,7 +69,7 @@ The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z
 	&  \Theta_{o,z,t} \leq \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-The above constraints are established in ```storage_all()``` in ```storage_all.jl```.
+The above constraints are established in ```storage_all!()``` in ```storage_all.jl```.
 If reserves are modeled, two pairs of proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources, to denote the contribution of storage resources to regulation or reserves while charging or discharging, respectively. The total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is then the sum of the proxy variables:
 ```math
 \begin{aligned}
@@ -106,39 +106,44 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 	&  \Theta_{o,z,t} + f^{discharge}_{o,z,t} + r^{discharge}_{o,z,t} \leq \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
+The above reserve related constraints are established by ```storage_all_reserves!()``` in ```storage_all.jl```
 """
-function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int, MultiStage::Int)
-#function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int) ##From main
+function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Resources Module")
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
+	Reserves = setup["Reserves"]
+	OperationWrapping = setup["OperationWrapping"]
+	EnergyShareRequirement = setup["EnergyShareRequirement"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
+	StorageLosses = setup["StorageLosses"]
+	MultiStage = setup["MultiStage"]
+
 	if !isempty(STOR_ALL)
-		EP = investment_energy(EP, inputs, MultiStage)
-		#EP = investment_energy(EP, inputs) ##From main
-		EP = storage_all(EP, inputs, Reserves, OperationWrapping)
+		investment_energy!(EP, inputs, setup)
+		storage_all!(EP, inputs, setup)
 
 		# Include Long Duration Storage only when modeling representative periods and long-duration storage
 		if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
-			EP = long_duration_storage(EP, inputs)
+			long_duration_storage!(EP, inputs)
 		end
 	end
 
 	if !isempty(inputs["STOR_ASYMMETRIC"])
-		EP = investment_charge(EP, inputs, MultiStage)
-		EP = storage_asymmetric(EP, inputs, Reserves)
+		investment_charge!(EP, inputs, setup)
+		storage_asymmetric!(EP, inputs, setup)
 	end
 
 	if !isempty(inputs["STOR_SYMMETRIC"])
-		EP = storage_symmetric(EP, inputs, Reserves)
+		storage_symmetric!(EP, inputs, setup)
 	end
 
 	# ESR Lossses
 	if EnergyShareRequirement >= 1
-		@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][:,ESR][z]*StorageLosses*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+		@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*StorageLosses*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 		EP[:eESR] -= eESRStor
 	end
 
@@ -148,5 +153,4 @@ function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int,
 		EP[:eCapResMarBalance] += eCapResMarBalanceStor
 	end
 
-	return EP
 end
