@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	long_duration_storage(EP::Model, inputs::Dict)
+	long_duration_storage!(EP::Model, inputs::Dict)
 
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
 
@@ -71,7 +71,7 @@ Finally, the next constraint enforces that the initial storage level for each in
 \end{aligned}
 ```
 """
-function long_duration_storage(EP::Model, inputs::Dict)
+function long_duration_storage!(EP::Model, inputs::Dict)
 
 	println("Long Duration Storage Module")
 
@@ -131,5 +131,4 @@ function long_duration_storage(EP::Model, inputs::Dict)
 	@constraint(EP, cSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
 					vSOCw[y,r] == EP[:vS][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
 
-	return EP
 end

@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
+	storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 Sets up variables and constraints specific to storage resources with symmetric charge and discharge capacities. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
+function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 	# Set up additional variables, constraints, and expressions associated with storage resources with symmetric charge & discharge capacity
 	# (e.g. most electrochemical batteries that use same components for charge & discharge)
 	# STOR = 1 corresponds to storage with distinct power and energy capacity decisions but symmetric charge/discharge power ratings
@@ -27,6 +27,7 @@ function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
 	println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
 
 	dfGen = inputs["dfGen"]
+	Reserves = setup["Reserves"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 
@@ -36,7 +37,7 @@ function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
 
 	# Storage discharge and charge power (and reserve contribution) related constraints for symmetric storage resources:
 	if Reserves == 1
-		EP = storage_symmetric_reserves(EP, inputs)
+		storage_symmetric_reserves!(EP, inputs)
 	else
 		@constraints(EP, begin
 			# Maximum charging rate must be less than symmetric power rating
@@ -47,15 +48,14 @@ function storage_symmetric(EP::Model, inputs::Dict, Reserves::Int)
 		end)
 	end
 
-	return EP
 end
 
 @doc raw"""
-	storage_symmetric_reserves(EP::Model, inputs::Dict)
+	storage_symmetric_reserves!(EP::Model, inputs::Dict)
 
 Sets up variables and constraints specific to storage resources with symmetric charge and discharge capacities when reserves are modeled. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-function storage_symmetric_reserves(EP::Model, inputs::Dict)
+function storage_symmetric_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
@@ -115,5 +115,4 @@ function storage_symmetric_reserves(EP::Model, inputs::Dict)
 		end)
 	end
 
-	return EP
 end

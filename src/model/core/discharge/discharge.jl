@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int)
+	discharge(EP::Model, inputs::Dict, setup::Dict)
 This module defines the power decision variable $\Theta_{y,t} \forall y \in \mathcal{G}, t \in \mathcal{T}$, representing energy injected into the grid by resource $y$ by at time period $t$.
 This module additionally defines contributions to the objective function from variable costs of generation (variable O&M plus fuel cost) from all resources $y \in \mathcal{G}$ over all time periods $t \in \mathcal{T}$:
 ```math
@@ -25,7 +25,7 @@ This module additionally defines contributions to the objective function from va
 \end{aligned}
 ```
 """
-function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int)
+function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Discharge Module")
 
@@ -54,14 +54,12 @@ function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int)
 	EP[:eObj] += eTotalCVarOut
 
 	# ESR Policy
-	if EnergyShareRequirement >= 1
+	if setup["EnergyShareRequirement"] >= 1
 
 		@expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen[y,Symbol("ESR_$ESR")]*EP[:vP][y,t] for y=dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
 						- sum(inputs["dfESR"][z,ESR]*inputs["omega"][t]*inputs["pD"][t,z] for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 
 		EP[:eESR] += eESRDischarge
 	end
-
-	return EP
 
 end

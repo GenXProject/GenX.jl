@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int)
+	investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements.
 The total capacity of each resource is defined as the sum of the existing capacity plus the newly invested capacity minus any retired capacity. Note for storage resources, additional energy and charge power capacity decisions and constraints are defined in the storage module.
 ```math
@@ -48,9 +48,10 @@ In addition, this function adds investment and fixed O\&M related costs related 
 \end{aligned}
 ```
 """
-function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int, MultiStage::Int)
+function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Investment Discharge Module")
+	MultiStage = setup["MultiStage"]
 
 	dfGen = inputs["dfGen"]
 
@@ -156,10 +157,9 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int, MultiStag
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
 	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0,:R_ID], 1:G)], eTotalCap[y] >= dfGen[y,:Min_Cap_MW])
 
-	if (MinCapReq == 1)
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:R_ID]))
+	if setup["MinCapReq"] == 1
+		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
 		EP[:eMinCapRes] += eMinCapResInvest
 	end
 
-	return EP
 end

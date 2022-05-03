@@ -15,15 +15,17 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int)
+	storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 Sets up variables and constraints common to all storage resources. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int)
+function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	# Setup variables, constraints, and expressions common to all storage resources
 	println("Storage Core Resources Module")
 
 	dfGen = inputs["dfGen"]
+	Reserves = setup["Reserves"]
+	OperationWrapping = setup["OperationWrapping"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -102,7 +104,7 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 
 	# Storage discharge and charge power (and reserve contribution) related constraints:
 	if Reserves == 1
-		EP = storage_all_reserves(EP, inputs)
+		storage_all_reserves!(EP, inputs)
 	else
 		# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
 		# this constraint is set in functions below for each storage type
@@ -119,10 +121,9 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
 	@expression(EP, eELOSSByZone[z=1:Z],
 		sum(EP[:eELOSS][y] for y in intersect(inputs["STOR_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
-	return EP
 end
 
-function storage_all_reserves(EP::Model, inputs::Dict)
+function storage_all_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
@@ -238,5 +239,4 @@ function storage_all_reserves(EP::Model, inputs::Dict)
 			[y in STOR_NO_RES, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
-	return EP
 end

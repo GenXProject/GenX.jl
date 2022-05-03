@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	thermal_no_commit(EP::Model, inputs::Dict, Reserves::Int)
+	thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 This function defines the operating constraints for thermal power plants NOT subject to unit commitment constraints on power plant start-ups and shut-down decisions ($y \in H \setminus UC$).
 
@@ -57,7 +57,7 @@ When not modeling regulation and reserves, thermal units not subject to unit com
 ```
 (See Constraints 3-4 in the code)
 """
-function thermal_no_commit(EP::Model, inputs::Dict, Reserves::Int)
+function thermal_no_commit(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Thermal (No Unit Commitment) Resources Module")
 
@@ -103,9 +103,9 @@ function thermal_no_commit(EP::Model, inputs::Dict, Reserves::Int)
 	end)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
-	if Reserves == 1
+	if setup["Reserves"] == 1
 		# If modeling with regulation and reserves, constraints are established by thermal_no_commit_reserves() function below
-		EP = thermal_no_commit_reserves(EP, inputs)
+		thermal_no_commit_reserves!(EP, inputs)
 	else
 		@constraints(EP, begin
 			# Minimum stable power generated per technology "y" at hour "t" Min_Power
@@ -117,12 +117,10 @@ function thermal_no_commit(EP::Model, inputs::Dict, Reserves::Int)
 
 	end
 	# END Constraints for thermal resources not subject to unit commitment
-
-	return EP
 end
 
 @doc raw"""
-	thermal_no_commit_reservesEP::Model, inputs::Dict)
+	thermal_no_commit_reserves!(EP::Model, inputs::Dict)
 
 This function is called by the ```thermal_no_commit()``` function when regulation and reserves constraints are active and defines reserve related constraints for thermal power plants not subject to unit commitment constraints on power plant start-ups and shut-down decisions.
 
@@ -164,7 +162,7 @@ When modeling regulation and spinning reserves, thermal units not subject to uni
 
 Note there are multiple versions of these constraints in the code in order to avoid creation of unecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. ```Reg_Max=0``` and/or ```RSV_Max=0```).
 """
-function thermal_no_commit_reserves(EP::Model, inputs::Dict)
+function thermal_no_commit_reserves!(EP::Model, inputs::Dict)
 
 	println("Thermal No Commit Reserves Module")
 
@@ -238,5 +236,4 @@ function thermal_no_commit_reserves(EP::Model, inputs::Dict)
 		end)
 	end
 
-	return EP
 end
