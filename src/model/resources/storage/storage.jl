@@ -135,11 +135,6 @@ function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int,
 		EP = storage_symmetric(EP, inputs, Reserves)
 	end
 
-	# ESR Lossses
-	if EnergyShareRequirement >= 1
-		@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][:,ESR][z]*StorageLosses*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-		EP[:eESR] -= eESRStor
-	end
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0

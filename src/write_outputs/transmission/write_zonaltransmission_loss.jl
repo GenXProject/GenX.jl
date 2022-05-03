@@ -19,7 +19,7 @@ function write_zonal_transmission_losses(path::AbstractString, sep::AbstractStri
     Z = inputs["Z"]     # Number of zones
     L = inputs["L"]     # Number of transmission lines
     dfZonalTransmissionLoss = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
-    transmissionloss = 0.5 * value.(EP[:eLosses_By_Zone])
+    transmissionloss = 0.5 * value.(EP[:eTransLossByZone])
     if setup["ParameterScale"] == 1
         transmissionloss = transmissionloss * ModelScalingFactor
     end

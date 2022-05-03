@@ -28,6 +28,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, se
     # L = inputs["L"]     # Number of transmission lines
     # W = inputs["REP_PERIOD"]     # Number of subperiods
     SEG = inputs["SEG"] # Number of load curtailment segments
+    STOR_ALL = inputs["STOR_ALL"]
 
     tempCO2Price = zeros(Z, inputs["NCO2LoadRateCap"])
     for cap = 1:inputs["NCO2LoadRateCap"]
@@ -37,34 +38,53 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, se
             tempCO2Price = tempCO2Price * ModelScalingFactor
         end
     end
-    dfCO2LoadRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]))
+    dfCO2LoadRatePrice = hcat(DataFrame(Zone=1:Z), DataFrame(tempCO2Price, [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]))
     # auxNew_Names = [Symbol("Zone"); [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]]
     # rename!(dfCO2LoadRatePrice, auxNew_Names)
     CSV.write(string(path, sep, "CO2Price_loadrate.csv"), dfCO2LoadRatePrice)
 
 
-    temp_NSE = sum(value.(EP[:vNSE])[s, :, :] for s = 1:SEG) # nse is [S x T x Z], thus temp_NSE is [T x Z]
-    CO2CapEligibleLoad = DataFrame(CO2CapEligibleLoad_MWh = (transpose(inputs["pD"] - temp_NSE) * inputs["omega"]))
-    Storageloss = DataFrame(Storageloss_MWh = (setup["StorageLosses"] * value.(EP[:eELOSSByZone])))
+    # temp_NSE = sum(value.(EP[:vNSE])[s, :, :] for s = 1:SEG) # nse is [S x T x Z], thus temp_NSE is [T x Z]
+    CO2CapEligibleLoad = DataFrame(CO2CapEligibleLoad_MWh = (transpose(inputs["pD"] - value.(EP[:eZonalNSE])) * inputs["omega"]))
+    Storageloss = DataFrame(Storageloss_MWh = zeros(Z))
+    if !isempty(inputs["STOR_ALL"])
+        if haskey(setup, "StorageLosses")
+            if (setup["StorageLosses"] == 1)
+                Storageloss.Storageloss_MWh .= value.(EP[:eStorageLossByZone])
+            end
+        else
+            Storageloss.Storageloss_MWh .= value.(EP[:eStorageLossByZone])
+        end        
+    end
+    Transmissionloss = DataFrame(Transmissionloss_MWh = zeros(Z))
+    if Z > 1
+        if haskey(setup, "PolicyTransmissionLossCoverage")
+            if (setup["PolicyTransmissionLossCoverage"] == 1)
+                Transmissionloss.Transmissionloss_MWh .= 0.5 * value.(EP[:eTransLossByZone])
+            end
+        else
+            Transmissionloss.Transmissionloss_MWh .= 0.5 * value.(EP[:eTransLossByZone])
+        end
+    end
 
 
-
-    dfCO2LoadRateCapRev = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
+    dfCO2LoadRateCapRev = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     for cap = 1:inputs["NCO2LoadRateCap"]
-        temp_CO2LoadRateCapRev = zeros(Z, 2)
+        temp_CO2LoadRateCapRev = zeros(Z, 3)
         temp_CO2LoadRateCapRev[:, 1] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2LoadRateCapZones"][:, cap]) .* (inputs["dfMaxCO2LoadRate"][:, cap]) .* CO2CapEligibleLoad[!, :CO2CapEligibleLoad_MWh]
         temp_CO2LoadRateCapRev[:, 2] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2LoadRateCapZones"][:, cap]) .* (inputs["dfMaxCO2LoadRate"][:, cap]) .* Storageloss[!, :Storageloss_MWh]
+        temp_CO2LoadRateCapRev[:, 3] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2LoadRateCapZones"][:, cap]) .* (inputs["dfMaxCO2LoadRate"][:, cap]) .* Transmissionloss[!, :Transmissionloss_MWh]
         if setup["ParameterScale"] == 1
             temp_CO2LoadRateCapRev = temp_CO2LoadRateCapRev * (ModelScalingFactor^2)
         end
         # print(temp_CO2LoadRateCapRev)
-        dfCO2LoadRateCapRev.AnnualSum .= dfCO2LoadRateCapRev.AnnualSum + vec(sum(temp_CO2LoadRateCapRev, dims = 2))
+        dfCO2LoadRateCapRev.AnnualSum .= dfCO2LoadRateCapRev.AnnualSum + vec(sum(temp_CO2LoadRateCapRev, dims=2))
         dfCO2LoadRateCapRev = hcat(dfCO2LoadRateCapRev, DataFrame(temp_CO2LoadRateCapRev, [Symbol("CO2_LoadRateCap_Revenue_$cap"); Symbol("CO2_LoadRateCap_Revenue_StorageLoss_$cap")]))
     end
     # dfCO2LoadRateCapRev.AnnualSum = sum(eachcol(dfCO2LoadRateCapRev[:, 3:(2*inputs["NCO2LoadRateCap"]+2)]))
     CSV.write(string(path, sep, "CO2Revenue_loadrate.csv"), dfCO2LoadRateCapRev)
 
-    dfCO2LoadRateCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
+    dfCO2LoadRateCapCost = DataFrame(Resource=inputs["RESOURCES"], AnnualSum=zeros(G))
     for cap = 1:inputs["NCO2LoadRateCap"]
         temp_CO2MassCapCost = zeros(G)
         GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2LoadRateCapZones"][dfGen[:, :Zone], cap]))

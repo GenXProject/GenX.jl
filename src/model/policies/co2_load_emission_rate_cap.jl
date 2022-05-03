@@ -67,19 +67,51 @@ function co2_load_side_emission_rate_cap(EP::Model, inputs::Dict, setup::Dict)
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
-
+    STOR_ALL = inputs["STOR_ALL"]
 
     ### Constraints ###
 
     ## Load emission rate-based: Emissions constraint in load-side emission rate limit (tons/MWh)
     ## Load + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-    @constraint(EP, cCO2Emissions_loadrate[cap = 1:inputs["NCO2LoadRateCap"]],
-        sum(inputs["omega"][t] * EP[:eEmissionsByZone][z, t] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]), t = 1:T) <=
-        sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - sum(EP[:vNSE][s, t, z] for s = 1:SEG)) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])) +
-        sum(inputs["dfMaxCO2LoadRate"][z, cap] * setup["StorageLosses"] * EP[:eELOSSByZone][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
-    )
+    # @constraint(EP, cCO2Emissions_loadrate[cap=1:inputs["NCO2LoadRateCap"]],
+    #     sum(inputs["omega"][t] * EP[:eEmissionsByZone][z, t] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]), t = 1:T) <=
+    #     sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - sum(EP[:vNSE][s, t, z] for s = 1:SEG)) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])) +
+    #     sum(inputs["dfMaxCO2LoadRate"][z, cap] * setup["StorageLosses"] * EP[:eStorageLossByZone][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
+    #     sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum((1 / 2) * inputs["omega"][t] * EP[:eTransLossByZone][z, t] for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
+    # )
 
 
+    @expression(EP, eCO2Emissions_loadrate_LHS[cap=1:inputs["NCO2LoadRateCap"]], EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
+    @expression(EP, eCO2Emissions_loadrate_RHS[cap=1:inputs["NCO2LoadRateCap"]], inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - EP[:eZonalNSE][t, z]) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
+    
+    if !isempty(STOR_ALL)
+        # The default without the key is "StorageLosses" to include storage loss in the policy
+        if haskey(setup, "StorageLosses")
+            if (setup["StorageLosses"] == 1)
+                @expression(EP, eCO2Emissions_loadrate_RHS_STORLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * EP[:eStorageLossByZone][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
+                EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_STORLOSS]
+            end
+        else
+            @expression(EP, eCO2Emissions_loadrate_RHS_STORLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * EP[:eStorageLossByZone][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
+            EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_STORLOSS]
+        end
+    end
+
+    
+    if Z > 1
+        # The default without the key "PolicyTransmissionLossCoverage" is to include transmission loss in the policy
+        if haskey(setup, "PolicyTransmissionLossCoverage")
+            if (setup["PolicyTransmissionLossCoverage"] == 1)
+                @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum((1 / 2) * inputs["omega"][t] * EP[:eTransLossByZone][z, t] for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
+                EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_TLOSS]
+            end
+        else
+            @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum((1 / 2) * inputs["omega"][t] * EP[:eTransLossByZone][z, t] for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
+            EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_TLOSS]
+        end
+    end
+
+    @constraint(EP, cCO2Emissions_loadrate[cap=1:inputs["NCO2LoadRateCap"]], EP[:eCO2Emissions_loadrate_LHS][cap] <= EP[:eCO2Emissions_loadrate_RHS][cap])
     return EP
 
 end

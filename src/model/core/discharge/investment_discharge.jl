@@ -155,11 +155,11 @@ function investment_discharge(EP::Model, inputs::Dict, MinCapReq::Int, MaxCapReq
     @constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] >= dfGen[!, :Min_Cap_MW][y])
 
     if (MinCapReq == 1)
-        @expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :][!, :R_ID]))
+        @expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(dfGen[y, Symbol("MinCapTag_$mincap")] * EP[:eTotalCap][y] for y in 1:G))
         EP[:eMinCapRes] += eMinCapResInvest
     end
     if (MaxCapReq == 1)
-        @expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!, Symbol("MaxCapTag_$maxcap")].==1), :][!, :R_ID]))
+        @expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(dfGen[y, Symbol("MaxCapTag_$maxcap")] * EP[:eTotalCap][y] for y in 1:G))
         EP[:eMaxCapRes] += eMaxCapResInvest
     end
     return EP

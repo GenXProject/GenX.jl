@@ -111,16 +111,16 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
 
     #@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-    @expression(EP, eGenerationByZone[z = 1:Z, t = 1:T], 0)
+    @expression(EP, eGenerationByZone[z = 1:Z, t = 1:T], 0) # this eGenerationByZone does not include the grid injection of storage and flexible load
     # Initialize Capacity Reserve Margin Expression
     if setup["CapacityReserveMargin"] > 0
         @expression(EP, eCapResMarBalance[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], 0)
     end
 
-    # Energy Share Requirement
-    if setup["EnergyShareRequirement"] >= 1
-        @expression(EP, eESR[ESR = 1:inputs["nESR"]], 0)
-    end
+    # # Energy Share Requirement
+    # if setup["EnergyShareRequirement"] == 1
+    #     @expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+    # end
 
     if (setup["MinCapReq"] == 1)
         @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
@@ -248,10 +248,13 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CapacityReserveMargin"] > 0
         EP = cap_reserve_margin(EP, inputs, setup)
     end
-
-    if (setup["MinCapReq"] == 1)
-        EP = minimum_capacity_requirement(EP, inputs, setup)
+    
+    if (haskey(setup, "MinCapReq"))
+        if (setup["MinCapReq"] == 1)
+            EP = minimum_capacity_requirement(EP, inputs, setup)
+        end
     end
+
     if (haskey(setup, "MaxCapReq"))
         if (setup["MaxCapReq"] == 1)
             EP = maximum_capacity_limit(EP, inputs, setup)
@@ -268,7 +271,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     ## Power balance constraints
     # demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
     #          + incoming power flows - outgoing power flows - flow losses - charge of heat storage + generation from NACC
-    @constraint(EP, cPowerBalance[t = 1:T, z = 1:Z], EP[:ePowerBalance][t, z] == inputs["pD"][t, z])
+    @constraint(EP, cPowerBalance[t=1:T, z=1:Z], EP[:ePowerBalance][t, z] == inputs["pD"][t, z])
 
     ## Record pre-solver time
     presolver_time = time() - presolver_start_time

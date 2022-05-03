@@ -72,15 +72,6 @@ function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int, PieceWi
     # Add total variable discharging cost contribution to the objective function
     EP[:eObj] += eTotalCVarOut
 
-    # ESR Policy
-    if EnergyShareRequirement >= 1
-
-        @expression(EP, eESRDischarge[ESR = 1:inputs["nESR"]], sum(inputs["omega"][t] * dfGen[!, Symbol("ESR_$ESR")][y] * EP[:vP][y, t] for y = dfGen[findall(x -> x > 0, dfGen[!, Symbol("ESR_$ESR")]), :R_ID], t = 1:T)
-                                                               -
-                                                               sum(inputs["dfESR"][:, ESR][z] * inputs["omega"][t] * inputs["pD"][t, z] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
-
-        EP[:eESR] += eESRDischarge
-    end
 
     return EP
 
