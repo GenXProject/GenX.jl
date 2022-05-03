@@ -143,7 +143,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	# ESR Lossses
 	if EnergyShareRequirement >= 1
-		@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][:,ESR][z]*StorageLosses*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+		@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*StorageLosses*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 		EP[:eESR] -= eESRStor
 	end
 

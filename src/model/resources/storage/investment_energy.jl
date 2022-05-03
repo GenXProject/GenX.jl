@@ -87,7 +87,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCapEnergy[y in STOR_ALL], vEXISTINGCAPENERGY[y])
 	else
-		@expression(EP, eExistingCapEnergy[y in STOR_ALL], dfGen[!,:Existing_Cap_MWh][y])
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], dfGen[y,:Existing_Cap_MWh])
 	end
 
 	@expression(EP, eTotalCapEnergy[y in STOR_ALL],
@@ -108,9 +108,9 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	# If resource is not eligible for new energy capacity, fixed costs are only O&M costs
 	@expression(EP, eCFixEnergy[y in STOR_ALL],
 		if y in NEW_CAP_ENERGY # Resources eligible for new capacity
-			dfGen[!,:Inv_Cost_per_MWhyr][y]*vCAPENERGY[y] + dfGen[!,:Fixed_OM_Cost_per_MWhyr][y]*eTotalCapEnergy[y]
+			dfGen[y,:Inv_Cost_per_MWhyr]*vCAPENERGY[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
 		else
-			dfGen[!,:Fixed_OM_Cost_per_MWhyr][y]*eTotalCapEnergy[y]
+			dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
 		end
 	)
 
@@ -127,10 +127,10 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 		EP[:eObj] += eTotalCFixEnergy
 	end
 
-	### Constratints ###
+	### Constraints ###
 
 	if MultiStage == 1
-		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == dfGen[!,:Existing_Cap_MWh][y])
+		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == dfGen[y,:Existing_Cap_MWh])
 	end
 	
 	## Constraints on retirements and capacity additions
@@ -140,10 +140,10 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapEnergy[y in intersect(dfGen[dfGen.Max_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] <= dfGen[!,:Max_Cap_MWh][y])
+	@constraint(EP, cMaxCapEnergy[y in intersect(dfGen[dfGen.Max_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] <= dfGen[y,:Max_Cap_MWh])
 
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapEnergy[y in intersect(dfGen[dfGen.Min_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] >= dfGen[!,:Min_Cap_MWh][y])
+	@constraint(EP, cMinCapEnergy[y in intersect(dfGen[dfGen.Min_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] >= dfGen[y,:Min_Cap_MWh])
 
 end
