@@ -42,7 +42,7 @@ function twentyfourseven(EP::Model, inputs::Dict, setup::Dict)
         NumberofTFSPath = inputs["NumberofTFSPath"]
         @variable(EP, vTFSFlow[rpsh_path = 1:NumberofTFSPath, t = 1:T])
         @variable(EP, vTFSFlow_Sending[rpsh_path = 1:NumberofTFSPath, t = 1:T] >= 0)
-        @constraint(EP, cTFSFlow_Upperbound[rpsh_path= 1 :NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow_Forward])
+        @constraint(EP, cTFSFlow_Upperbound[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow_Forward])
         @constraint(EP, cTFSFlow_Upperbound_byCFE[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= sum(EP[:eCFE][rpsh, t] for rpsh in inputs["TFS_Network"][findall(x -> x == rpsh_path, inputs["TFS_Network"][:, :RPSH_PathID]), :From]))
         @variable(EP, vTFSFlow_Receiving[rpsh_path = 1:NumberofTFSPath, t = 1:T] >= 0)
         
