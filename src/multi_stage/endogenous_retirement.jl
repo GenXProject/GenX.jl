@@ -38,7 +38,8 @@ function get_retirement_stage(cur_stage::Int, lifetime::Int, stage_lens::Array{I
     return Int(ret_stage)
 end
 
-function endogenous_retirement!(EP::Model, inputs::Dict, multi_stage_settings::Dict)
+function endogenous_retirement!(EP::Model, inputs::Dict, setup::Dict)
+	multi_stage_settings = setup["MultiStageSettingsDict"]
 
 	println("Endogenous Retirement Module")
 
