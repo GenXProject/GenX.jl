@@ -34,6 +34,7 @@ using YAML
 
 genx_settings = joinpath(settings_path, "genx_settings.yml") #Settings YAML file path
 mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
+#mysetup = YAML.load(open(genx_settings)) # mysetup dictionary stores settings and GenX-specific parameters
 
 ### Cluster time series inputs if necessary and if specified by the user
 TDRpath = joinpath(inpath, mysetup["TimeDomainReductionFolder"])

@@ -77,21 +77,20 @@ function ucommit(EP::Model, inputs::Dict, UCommit::Int)
 
     EP[:eObj] += eTotalCStart
 
-    ### Constratints ###
-    ## Declaration of integer/binary variables
-    if UCommit == 1 # Integer UC constraints
-        for y in COMMIT
-            set_integer.(vCOMMIT[y, :])
-            set_integer.(vSTART[y, :])
-            set_integer.(vSHUT[y, :])
-            if y in inputs["RET_CAP"]
-                set_integer(EP[:vRETCAP][y])
-            end
-            if y in inputs["NEW_CAP"]
-                set_integer(EP[:vCAP][y])
-            end
-        end
-    end #END unit commitment configuration
-
-    return EP
+	### Constratints ###
+	## Declaration of integer/binary variables
+	if UCommit == 1 # Integer UC constraints
+		for y in COMMIT
+			set_integer.(vCOMMIT[y,:])
+			set_integer.(vSTART[y,:])
+			set_integer.(vSHUT[y,:])
+			if y in inputs["RET_CAP"]
+				set_integer(EP[:vRETCAP][y])
+			end
+			if y in inputs["NEW_CAP"]
+				set_integer(EP[:vCAP][y])
+			end
+		end
+	end #END unit commitment configuration
+	return EP
 end

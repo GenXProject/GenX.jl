@@ -15,17 +15,17 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_minimum_capacity_requirement(path::AbstractString,sep::AbstractString, inputs::Dict, setup::Dict)
+	load_minimum_capacity_requirement(path::AbstractString, inputs::Dict, setup::Dict)
 
 Function for reading input parameters related to mimimum capacity requirement constraints (e.g. technology specific deployment mandates)
 """
-function load_minimum_capacity_requirement(path::AbstractString,sep::AbstractString, inputs::Dict, setup::Dict)
-	MinCapReq = DataFrame(CSV.File(string(path, sep,"Minimum_capacity_requirement.csv"), header=true), copycols=true)
+function load_minimum_capacity_requirement(path::AbstractString, inputs::Dict, setup::Dict)
+	MinCapReq = DataFrame(CSV.File(joinpath(path, "Minimum_capacity_requirement.csv"), header=true), copycols=true)
 	NumberOfMinCapReqs = size(collect(skipmissing(MinCapReq[!,:MinCapReqConstraint])),1)
 	inputs["NumberOfMinCapReqs"] = NumberOfMinCapReqs
 	inputs["MinCapReq"] = MinCapReq[!,:Min_MW]
 	if setup["ParameterScale"] == 1
-		inputs["MinCapReq"] = inputs["MinCapReq"]/ModelScalingFactor # Convert to GW
+		inputs["MinCapReq"] /= ModelScalingFactor # Convert to GW
 	end
 	println("Minimum_capacity_requirement.csv Successfully Read!")
 	return inputs

@@ -15,81 +15,71 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model))
-
+	write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
 Function for writing the diferent capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
 """
-function write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     # Capacity decisions
     dfGen = inputs["dfGen"]
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
-    RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
-    COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
-    STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
-    NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"]
-    RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"]
-    STOR_ALL = inputs["STOR_ALL"]
-    NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"]
-    RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"]
+    MultiStage = setup["MultiStage"]
 
-    endcapdischarge = value.(EP[:eTotalCap])
-    capdischarge = zeros(G)
-    if !isempty(NEW_CAP)
-        capdischarge[NEW_CAP] = value.(EP[:vCAP][NEW_CAP]).data
-        if !isempty(intersect(NEW_CAP, COMMIT))
-            capdischarge[intersect(NEW_CAP, COMMIT)] = (value.(EP[:vCAP][intersect(NEW_CAP, COMMIT)]).data) .* dfGen[intersect(NEW_CAP, COMMIT), :Cap_Size]
-        end
-    end
-    retcapdischarge = zeros(G)
-    if !isempty(RET_CAP)
-        retcapdischarge[RET_CAP] = value.(EP[:vRETCAP][RET_CAP]).data
-		if !isempty(intersect(RET_CAP, COMMIT))
-		    retcapdischarge[intersect(RET_CAP, COMMIT)] = value.(EP[:vRETCAP][intersect(RET_CAP, COMMIT)]).data .* dfGen[intersect(RET_CAP, COMMIT), :Cap_Size]
-		end
-    end
-
-    endcapcharge = zeros(G)
-    capcharge = zeros(G)
-    retcapcharge = zeros(G)
-    if !isempty(STOR_ASYMMETRIC)
-        endcapcharge[STOR_ASYMMETRIC] = value.(EP[:eTotalCapCharge][STOR_ASYMMETRIC]).data
-        if !isempty(NEW_CAP_CHARGE)
-            capcharge[NEW_CAP_CHARGE] = value.(EP[:vCAPCHARGE][NEW_CAP_CHARGE]).data
-        end
-        if !isempty(RET_CAP_CHARGE)
-            retcapcharge[RET_CAP_CHARGE] = value.(EP[:vRETCAPCHARGE][RET_CAP_CHARGE]).data
+    capdischarge = zeros(size(inputs["RESOURCES"]))
+    for i in inputs["NEW_CAP"]
+        if i in inputs["COMMIT"]
+            capdischarge[i] = value(EP[:vCAP][i]) * dfGen[!, :Cap_Size][i]
+        else
+            capdischarge[i] = value(EP[:vCAP][i])
         end
     end
 
-    endcapenergy = zeros(G)
-    capenergy = zeros(G)
-    retcapenergy = zeros(G)
-	if !isempty(STOR_ALL)
-		endcapenergy[STOR_ALL] = value.(EP[:eTotalCapEnergy][STOR_ALL].data)
-		if !isempty(NEW_CAP_ENERGY)
-		    capenergy[NEW_CAP_ENERGY] = value.(EP[:vCAPENERGY][NEW_CAP_ENERGY]).data
-		end
-		if !isempty(RET_CAP_ENERGY)
-			retcapenergy[RET_CAP_ENERGY] = value.(EP[:vRETCAPENERGY][RET_CAP_ENERGY]).data
-		end
-	end
+    retcapdischarge = zeros(size(inputs["RESOURCES"]))
+    for i in inputs["RET_CAP"]
+        if i in inputs["COMMIT"]
+            retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * dfGen[!, :Cap_Size][i]
+        else
+            retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
+        end
+    end
 
+    capcharge = zeros(size(inputs["RESOURCES"]))
+    retcapcharge = zeros(size(inputs["RESOURCES"]))
+    existingcapcharge = zeros(size(inputs["RESOURCES"]))
+    for i in inputs["STOR_ASYMMETRIC"]
+        if i in inputs["NEW_CAP_CHARGE"]
+            capcharge[i] = value(EP[:vCAPCHARGE][i])
+        end
+        if i in inputs["RET_CAP_CHARGE"]
+            retcapcharge[i] = value(EP[:vRETCAPCHARGE][i])
+        end
+        existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : dfGen[!, :Existing_Charge_Cap_MW][i]
+    end
+
+    capenergy = zeros(size(inputs["RESOURCES"]))
+    retcapenergy = zeros(size(inputs["RESOURCES"]))
+    existingcapenergy = zeros(size(inputs["RESOURCES"]))
+    for i in inputs["STOR_ALL"]
+        if i in inputs["NEW_CAP_ENERGY"]
+            capenergy[i] = value(EP[:vCAPENERGY][i])
+        end
+        if i in inputs["RET_CAP_ENERGY"]
+            retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
+        end
+        existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) : dfGen[!, :Existing_Cap_MWh][i]
+    end
     dfCap = DataFrame(
-        Resource = inputs["RESOURCES"],
-        Zone = dfGen[!, :Zone],
-        StartCap = dfGen[!, :Existing_Cap_MW],
-        RetCap = retcapdischarge[:],
-        NewCap = capdischarge[:],
-        EndCap = endcapdischarge[:],
-        StartEnergyCap = dfGen[!, :Existing_Cap_MWh],
-        RetEnergyCap = retcapenergy[:],
-        NewEnergyCap = capenergy[:],
-        EndEnergyCap = endcapenergy[:],
-        StartChargeCap = dfGen[!, :Existing_Charge_Cap_MW],
-        RetChargeCap = retcapcharge[:],
-        NewChargeCap = capcharge[:],
-        EndChargeCap = endcapcharge[:]
+        Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone],
+        StartCap=MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!, :Existing_Cap_MW],
+        RetCap=retcapdischarge[:],
+        NewCap=capdischarge[:],
+        EndCap=value.(EP[:eTotalCap]),
+        StartEnergyCap=existingcapenergy[:],
+        RetEnergyCap=retcapenergy[:],
+        NewEnergyCap=capenergy[:],
+        EndEnergyCap=existingcapenergy[:] - retcapenergy[:] + capenergy[:],
+        StartChargeCap=existingcapcharge[:],
+        RetChargeCap=retcapcharge[:],
+        NewChargeCap=capcharge[:],
+        EndChargeCap=existingcapcharge[:] - retcapcharge[:] + capcharge[:]
     )
     if setup["ParameterScale"] == 1
         dfCap.StartCap = dfCap.StartCap * ModelScalingFactor
@@ -106,23 +96,16 @@ function write_capacity(path::AbstractString, sep::AbstractString, inputs::Dict,
         dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
     end
     total = DataFrame(
-        Resource = "Total",
-        Zone = "n/a",
-        StartCap = sum(dfCap[!, :StartCap]),
-        RetCap = sum(dfCap[!, :RetCap]),
-        NewCap = sum(dfCap[!, :NewCap]),
-        EndCap = sum(dfCap[!, :EndCap]),
-        StartEnergyCap = sum(dfCap[!, :StartEnergyCap]),
-        RetEnergyCap = sum(dfCap[!, :RetEnergyCap]),
-        NewEnergyCap = sum(dfCap[!, :NewEnergyCap]),
-        EndEnergyCap = sum(dfCap[!, :EndEnergyCap]),
-        StartChargeCap = sum(dfCap[!, :StartChargeCap]),
-        RetChargeCap = sum(dfCap[!, :RetChargeCap]),
-        NewChargeCap = sum(dfCap[!, :NewChargeCap]),
-        EndChargeCap = sum(dfCap[!, :EndChargeCap])
+        Resource="Total", Zone="n/a",
+        StartCap=sum(dfCap[!, :StartCap]), RetCap=sum(dfCap[!, :RetCap]),
+        NewCap=sum(dfCap[!, :NewCap]), EndCap=sum(dfCap[!, :EndCap]),
+        StartEnergyCap=sum(dfCap[!, :StartEnergyCap]), RetEnergyCap=sum(dfCap[!, :RetEnergyCap]),
+        NewEnergyCap=sum(dfCap[!, :NewEnergyCap]), EndEnergyCap=sum(dfCap[!, :EndEnergyCap]),
+        StartChargeCap=sum(dfCap[!, :StartChargeCap]), RetChargeCap=sum(dfCap[!, :RetChargeCap]),
+        NewChargeCap=sum(dfCap[!, :NewChargeCap]), EndChargeCap=sum(dfCap[!, :EndChargeCap])
     )
 
     dfCap = vcat(dfCap, total)
-    CSV.write(string(path, sep, "capacity.csv"), dfCap)
+    CSV.write(joinpath(path, "capacity.csv"), dfCap)
     return dfCap
 end

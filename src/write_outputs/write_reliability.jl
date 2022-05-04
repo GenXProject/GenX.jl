@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_reliability(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting dual variable of maximum non-served energy constraint (shadow price of reliability constraint) for each model zone and time step.
 """
-function write_reliability(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 
@@ -36,6 +36,6 @@ function write_reliability(path::AbstractString, sep::AbstractString, inputs::Di
 	auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfReliability,auxNew_Names)
 
-	CSV.write(string(path,sep,"reliabilty.csv"), dftranspose(dfReliability, false), writeheader=false)
+	CSV.write(joinpath(path, "reliabilty.csv"), dftranspose(dfReliability, false), writeheader=false)
 
 end

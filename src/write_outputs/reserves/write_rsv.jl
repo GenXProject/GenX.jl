@@ -14,39 +14,28 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_rsv(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	dfGen = inputs["dfGen"]
 
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
-    RSV = inputs["RSV"]
-    # Contingency reserves contribution for each resource in each time step
-    # dfRsv = DataFrame(Resource = vcat(inputs["RESOURCES"], "unmet"), Zone = vcat(dfGen[!,:Zone], "na"), Sum = Array{Union{Missing,Float64}}(undef, G+1))
-    dfRsv = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
-    rsv = zeros(G, T)
-    # for i in 1:G
-    #     if i in inputs["RSV"]
-    #         rsv[i, :] = value.(EP[:vRSV])[i, :]
-    #     end
-    #     dfRsv[!, :Sum][i] = sum(rsv[i, :])
-    # end
-    rsv[RSV, :] = value.(EP[:vRSV][RSV, :])
-    dfRsv.AnnualSum .= rsv * inputs["omega"]
-    dfRsv = hcat(dfRsv, DataFrame(rsv, :auto))
-    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("Annual"); [Symbol("t$t") for t in 1:T]]
-    rename!(dfRsv, auxNew_Names)
-    # dfRsv[!, :Sum][G+1] = sum(value.(EP[:vUNMET_RSV]))
-    # reg = DataFrame(rsv, :auto)
-    # push!(reg, transpose(convert(Array{Union{Missing,Float64}}, value.(EP[:vUNMET_RSV]))))
-    # dfRsv = hcat(dfRsv, reg)
-    # auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("Sum"); [Symbol("t$t") for t in 1:T]]
-    # rename!(dfRsv, auxNew_Names)
-    total = DataFrame(["Total" 0 sum(dfRsv[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
-    # for t in 1:T
-    #     total[!, t+3] .= sum(dfRsv[!, Symbol("t$t")][1:G])
-    # end
-    total[!, 4:T+3] .= sum(rsv, dims = 1)
-    rename!(total, auxNew_Names)
-    dfRsv = vcat(dfRsv, total)
-    CSV.write(string(path, sep, "reg_dn.csv"), dftranspose(dfRsv, false), writeheader = false)
+	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+	T = inputs["T"]     # Number of time steps (hours)
+	RSV = inputs["RSV"]
+
+	dfRsv = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
+	rsv = zeros(G,T)
+	unmet_vec = zeros(T)
+	rsv[RSV, :] = value.(EP[:vRSV][RSV, :])
+	unmet_vec[RSV] = value.(EP[:vUNMET_RSV][RSV])
+	total_unmet = sum(unmet_vec)
+	dfRsv.AnnualSum = rsv * inputs["omega"]
+	dfRsv = hcat(dfRsv, DataFrame(rsv, :auto))
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	rename!(dfRsv,auxNew_Names)
+
+	total = DataFrame(["Total" 0 sum(dfRsv.AnnualSum) zeros(1, T)], auxNew_Names)
+	unmet = DataFrame(["unmet" 0 total_unmet zeros(1, T)], auxNew_Names)
+	total[!, 4:T+3] .= sum(rsv, dims = 1)
+	unmet[!, 4:T+3] .= transpose(unmet_vec)
+	dfRsv = vcat(dfRsv, unmet, total)
+	CSV.write(joinpath(path, "reg_dn.csv"), dftranspose(dfRsv, false), writeheader=false)
 end

@@ -39,7 +39,10 @@ pages = OrderedDict(
         "Resources" => [
             "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
             "Flexible Demand" => "flexible_demand.md",
-            "Hydro" => "hydro_res.md",
+            "Hydro" => [
+                "Hydro Reservoir" => "hydro_res.md",
+                "Long Duration Hydro" => "hydro_inter_period_linkage.md"
+            ],
             "Must Run" => "must_run.md",
             "Storage" => [
                 "Storage" => "storage.md",
@@ -57,6 +60,7 @@ pages = OrderedDict(
             ]
         ],
         "Multi_stage" => [
+            "Overview" => "multi_stage_model_overview.md",
             "Load inputs for multi-stage modeling" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
                 #"Load inputs" => "load_inputs_multi_stage.md",
@@ -74,6 +78,7 @@ pages = OrderedDict(
     "Solver Configurations" => "solver_configuration.md",
     "Solving the Model" => "solve_model.md",
     "Additional Features" => "additional_features.md",
+    "Third Party Extensions" => "additional_third_party_extensions.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
     "GenX Inputs Functions" => "load_inputs.md",
     "GenX Outputs Functions" =>"write_outputs.md",
@@ -97,5 +102,8 @@ deploydocs(;
     target = "build",
     branch = "gh-pages",
     devbranch = "main",
-    push_preview = true,
+    devurl = "dev",
+    push_preview=true,
+    versions = ["stable" => "v^", "v#.#"],
+    #push_preview = true,
 )

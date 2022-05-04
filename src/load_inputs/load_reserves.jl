@@ -15,13 +15,13 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_reserves(setup::Dict,path::AbstractString,sep::AbstractString, inputs_res::Dict)
+	load_reserves(setup::Dict,path::AbstractString, inputs_res::Dict)
 
 Function for reading input parameters related to frequency regulation and operating reserve requirements
 """
-function load_reserves(setup::Dict,path::AbstractString,sep::AbstractString, inputs_res::Dict)
+function load_reserves(setup::Dict,path::AbstractString, inputs_res::Dict)
 	##Reserve inputs
-	res_in = DataFrame(CSV.File(string(path,sep,"Reserves.csv"), header=true), copycols=true)
+	res_in = DataFrame(CSV.File(joinpath(path, "Reserves.csv"), header=true), copycols=true)
 
 	# Regulation requirement as a percent of hourly load; here load is the total across all model zones
 	inputs_res["pReg_Req_Load"] = convert(Float64, res_in[!,:Reg_Req_Percent_Load][1])

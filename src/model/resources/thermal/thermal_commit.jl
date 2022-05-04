@@ -229,13 +229,13 @@ function thermal_commit(EP::Model, inputs::Dict, Reserves::Int)
 	Up_Time = zeros(Int, nrow(dfGen))
 	Up_Time[THERM_COMMIT] .= Int.(floor.(dfGen[THERM_COMMIT,:Up_Time]))
 	@constraint(EP, [y in THERM_COMMIT, t in 1:T],
-		EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y, hoursbefore(p, t, 1:Up_Time[y])])
+		EP[:vCOMMIT][y,t] >= sum(EP[:vSTART][y, hoursbefore(p, t, 0:(Up_Time[y] - 1))])
 	)
 
 	Down_Time = zeros(Int, nrow(dfGen))
 	Down_Time[THERM_COMMIT] .= Int.(floor.(dfGen[THERM_COMMIT,:Down_Time]))
 	@constraint(EP, [y in THERM_COMMIT, t in 1:T],
-		EP[:eTotalCap][y]/dfGen[y,:Cap_Size]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y, hoursbefore(p, t, 1:Down_Time[y])])
+		EP[:eTotalCap][y]/dfGen[y,:Cap_Size]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y, hoursbefore(p, t, 0:(Down_Time[y] - 1))])
 	)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
@@ -361,9 +361,11 @@ end
 
 @doc raw"""
     hoursbefore(p::Int, t::Int, b::Int)
+
 Determines the time index b hours before index t in
 a landscape starting from t=1 which is separated
 into distinct periods of length p.
+
 For example, if p = 10,
 1 hour before t=1 is t=10,
 1 hour before t=10 is t=9

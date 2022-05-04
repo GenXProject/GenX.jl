@@ -61,15 +61,6 @@ Note that the generator-side rate-based constraint can be used to represent a fe
 function co2_cap(EP::Model, inputs::Dict, setup::Dict)
 
     println("C02 Policies Module")
-
-    dfGen = inputs["dfGen"]
-    SEG = inputs["SEG"]  # Number of lines
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-
- 
-
     ## Mass-based: Emissions constraint in absolute emissions limit (tons)
     @constraint(EP, cCO2Emissions_mass[cap = 1:inputs["NCO2Cap"]],
         sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap])) <=

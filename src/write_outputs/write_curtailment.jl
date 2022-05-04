@@ -15,34 +15,30 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_curtailment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the curtailment values of the different variable renewable resources.
 """
-function write_curtailment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     VRE = inputs["VRE"]
-    dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+    dfCurtailment = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum = zeros(G))
     curtailment = zeros(G, T)
     curtailment[VRE, :] = ((value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :]) .- value.(EP[:vP][VRE, :]))
     if setup["ParameterScale"] == 1
-        curtailment = curtailment * ModelScalingFactor
+        curtailment *= ModelScalingFactor
     end
     dfCurtailment.AnnualSum = curtailment * inputs["omega"]
     dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
     rename!(dfCurtailment, auxNew_Names)
 
-    total = DataFrame(["Total" 0 sum(dfCurtailment[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
-	if v"1.3" <= VERSION < v"1.4"
-	    total[!, 4:T+3] .= sum(curtailment, dims = 1) # summing over the first dimension, g, so the result is a horizonalal array with dimension t
-	elseif v"1.4" <= VERSION < v"1.7"
-	    total[:, 4:T+3] .= sum(curtailment, dims = 1)
-	end
-    rename!(total, auxNew_Names)
+    total = DataFrame(["Total" 0 sum(dfCurtailment.AnnualSum) fill(0.0, (1, T))], auxNew_Names)
+    total[:, 4:T+3] .= sum(curtailment, dims=1)
     dfCurtailment = vcat(dfCurtailment, total)
-    CSV.write(string(path, sep, "curtail.csv"), dftranspose(dfCurtailment, false), writeheader = false)
+	
+    CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), writeheader=false)
     return dfCurtailment
 end

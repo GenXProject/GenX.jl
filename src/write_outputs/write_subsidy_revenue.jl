@@ -15,22 +15,22 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
 Function for reporting subsidy revenue earned if a generator specified `Min_Cap` is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is \$.
 """
-function write_subsidy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]
 
-    dfSubRevenue = DataFrame(Region=dfGen[!, :region], Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], Cluster=dfGen[!, :cluster], SubsidyRevenue=zeros(G))
+    dfSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], SubsidyRevenue = zeros(G))
     MIN_CAP = dfGen[(dfGen[!, :Min_Cap_MW].>0), :R_ID]
     dfSubRevenue.SubsidyRevenue[MIN_CAP] .= (value.(EP[:eTotalCap])[MIN_CAP]) .* (dual.(EP[:cMinCap][MIN_CAP])).data
 
-
     if setup["ParameterScale"] == 1
-        dfSubRevenue.SubsidyRevenue = dfSubRevenue.SubsidyRevenue * (ModelScalingFactor^2) #convert from Million US$ to US$
+        dfSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$
     end
 
-    CSV.write(string(path, sep, "SubsidyRevenue.csv"), dfSubRevenue)
+    CSV.write(joinpath(path, "SubsidyRevenue.csv"), dfSubRevenue)
     return dfSubRevenue
 end

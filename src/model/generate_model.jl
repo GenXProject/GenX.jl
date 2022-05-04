@@ -87,7 +87,7 @@ The power balance constraint of the model ensures that electricity demand is met
 ## returns: Model EP object containing the entire optimization problem model to be solved by SolveModel.jl
 ##
 ################################################################################
-function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes, modeloutput = nothing)
+function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes, modeloutput=nothing)
 
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -104,45 +104,44 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     # Initialize Power Balance Expression
     # Expression for "baseline" power balance constraint
-    @expression(EP, ePowerBalance[t = 1:T, z = 1:Z], 0)
+    @expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
 
     # Initialize Objective Function Expression
     @expression(EP, eObj, 0)
 
 
     #@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-    @expression(EP, eGenerationByZone[z = 1:Z, t = 1:T], 0) # this eGenerationByZone does not include the grid injection of storage and flexible load
+    @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) # this eGenerationByZone does not include the grid injection of storage and flexible load
     # Initialize Capacity Reserve Margin Expression
-    if setup["CapacityReserveMargin"] > 0
-        @expression(EP, eCapResMarBalance[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], 0)
+    if haskey(setup, "CapacityReserveMargin")
+        if setup["CapacityReserveMargin"] > 0
+            @expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+        end
     end
 
-    # # Energy Share Requirement
-    # if setup["EnergyShareRequirement"] == 1
-    #     @expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
-    # end
-
-    if (setup["MinCapReq"] == 1)
-        @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+    if haskey(setup, "MinCapReq")
+        if (setup["MinCapReq"] == 1)
+            @expression(EP, eMinCapRes[mincap=1:inputs["NumberOfMinCapReqs"]], 0)
+        end
     end
-    if (setup["MaxCapReq"] == 1)
-        @expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
+    if haskey(setup, "MaxCapReq")
+        if (setup["MaxCapReq"] == 1)
+            @expression(EP, eMaxCapRes[maxcap=1:inputs["NumberOfMaxCapReqs"]], 0)
+        end
     end
     # Infrastructure
-    EP = discharge(EP, inputs, setup["EnergyShareRequirement"], setup["PieceWiseHeatRate"])
+    EP = discharge(EP, inputs, setup)
 
-    EP = non_served_energy(EP, inputs, setup["CapacityReserveMargin"])
+    EP = non_served_energy(EP, inputs, setup)
 
-
-    ##dev_ddp
-    if setup["MultiStage"] > 0
-        EP = investment_discharge_multi_stage(EP, inputs, setup["MultiStageSettingsDict"])
-    else
-        EP = investment_discharge(EP, inputs, setup["MinCapReq"], setup["MaxCapReq"])
+    # Endogenous Retirements
+    if haskey(setup, "MultiStage")
+        if setup["MultiStage"] > 0
+            EP = endogenous_retirement(EP, inputs, setup["MultiStageSettingsDict"])
+        end
     end
-    ##Aneesha's PR modification
-    #EP = investment_discharge(EP, inputs, setup["MinCapReq"])
-    ##Dev
+
+    EP = investment_discharge(EP, inputs, setup)
 
     if setup["UCommit"] > 0
         EP = ucommit(EP, inputs, setup["UCommit"])
@@ -153,41 +152,29 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     if Z > 1
-        ##dev_ddp
-        if setup["MultiStage"] > 0
-            EP = transmission_multi_stage(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["MultiStageSettingsDict"])
-        else
-            EP = transmission(EP, inputs, setup["UCommit"], setup["NetworkExpansion"], setup["CapacityReserveMargin"])
-        end
-        ##Dev
+        EP = transmission(EP, inputs, setup)
     end
 
     # Technologies
     # Model constraints, variables, expression related to dispatchable renewable resources
 
     if !isempty(inputs["VRE"])
-        EP = curtailable_variable_renewable(EP, inputs, setup["Reserves"], setup["CapacityReserveMargin"])
+        EP = curtailable_variable_renewable(EP, inputs, setup)
     end
 
     # Model constraints, variables, expression related to non-dispatchable renewable resources
     if !isempty(inputs["MUST_RUN"])
-        EP = must_run(EP, inputs, setup["CapacityReserveMargin"])
+        EP = must_run(EP, inputs, setup)
     end
 
     # Model constraints, variables, expression related to energy storage modeling
     if !isempty(inputs["STOR_ALL"])
-        ##dev_ddp
-        if setup["MultiStage"] > 0
-            EP = storage_multi_stage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["MultiStageSettingsDict"])
-        else
-            EP = storage(EP, inputs, setup["Reserves"], setup["OperationWrapping"], setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
-        end
-        ##Dev
+        EP = storage(EP, inputs, setup)
     end
 
     # Model constraints, variables, expression related to reservoir hydropower resources
     if !isempty(inputs["HYDRO_RES"])
-        EP = hydro_res(EP, inputs, setup["Reserves"], setup["CapacityReserveMargin"])
+        EP = hydro_res(EP, inputs, setup)
     end
 
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
@@ -201,7 +188,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
     # Model constraints, variables, expression related to thermal resource technologies
     if !isempty(inputs["THERM_ALL"])
-        EP = thermal(EP, inputs, setup["UCommit"], setup["Reserves"], setup["CapacityReserveMargin"], setup["PieceWiseHeatRate"])
+        EP = thermal(EP, inputs, setup)
     end
 
     # Policies
@@ -248,7 +235,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CapacityReserveMargin"] > 0
         EP = cap_reserve_margin(EP, inputs, setup)
     end
-    
+
     if (haskey(setup, "MinCapReq"))
         if (setup["MinCapReq"] == 1)
             EP = minimum_capacity_requirement(EP, inputs, setup)

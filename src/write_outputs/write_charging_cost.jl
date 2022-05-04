@@ -14,28 +14,24 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_charging_cost(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
-    STOR_ALL = inputs["STOR_ALL"]
-    FLEX = inputs["FLEX"]
-    #calculating charging cost
-    dfChargingcost = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], AnnualSum = Array{Union{Missing,Float64}}(undef, G),)
-    chargecost = zeros(G, T)
-    if !isempty(STOR_ALL)
-        chargecost[STOR_ALL, :] = (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[STOR_ALL, :Zone], :]
-    end
-    if !isempty(FLEX)
-        chargecost[FLEX, :] = value.(EP[:vP][FLEX, :]) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[FLEX, :Zone], :]
-    end
-    if setup["ParameterScale"] == 1
-        chargecost = chargecost * (ModelScalingFactor^2)
-    end
-    dfChargingcost.AnnualSum .= chargecost * inputs["omega"]
-    dfChargingcost = hcat(dfChargingcost, DataFrame(chargecost, [Symbol("t$t") for t in 1:T]))
-    # auxNew_Names = [Symbol("Region"); Symbol("Resource"); Symbol("Zone"); Symbol("Cluster"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
-    # rename!(dfChargingcost, auxNew_Names)
-    CSV.write(string(path, sep, "ChargingCost.csv"), dftranspose(dfChargingcost, false), writeheader = false)
-    return dfChargingcost
+function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	dfGen = inputs["dfGen"]
+	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+	T = inputs["T"]     # Number of time steps (hours)
+	STOR_ALL = inputs["STOR_ALL"]
+	FLEX = inputs["FLEX"]
+	dfChargingcost = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], AnnualSum = Array{Float64}(undef, G),)
+	chargecost = zeros(G, T)
+	if !isempty(STOR_ALL)
+	    chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[STOR_ALL, :Zone], :]
+	end
+	if !isempty(FLEX)
+	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[FLEX, :Zone], :]
+	end
+	if setup["ParameterScale"] == 1
+	    chargecost *= ModelScalingFactor^2
+	end
+	dfChargingcost.AnnualSum .= chargecost * inputs["omega"]
+	CSV.write(joinpath(path,"ChargingCost.csv"), dfChargingcost)
+	return dfChargingcost
 end

@@ -56,122 +56,66 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     ## Check if solved sucessfully - time out is included
     if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
         if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
-            write_status(path, sep, inputs, setup, EP)
+            write_status(path, inputs, setup, EP)
             return
             # Model reached timelimit but failed to find a feasible solution
             #### Aaron Schwartz - Not sure if the below condition is valid anymore. We should revisit ####
         elseif isnan(objective_value(EP)) == true
             # Model failed to solve, so record solver status and exit
-            write_status(path, sep, inputs, setup, EP)
+            write_status(path, inputs, setup, EP)
             return
         end
     end
 
-    write_status(path, sep, inputs, setup, EP)
-    # write_costs(path, sep, inputs, setup, EP) # On Jan 21, 2022, seems unnecessary as below.
-
-    if setup["MultiStage"] == 1
-        dfCap = write_capacity_multi_stage(path, sep, inputs, setup, EP)
-        write_costs(path, sep, inputs, setup, EP)
-    else
-        elapsed_time_costs = @elapsed write_costs(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing costs is")
-        println(elapsed_time_costs)
-        dfCap = write_capacity(path, sep, inputs, setup, EP)
-    end
-    dfPower = write_power(path, sep, inputs, setup, EP)
-
-    dfCharge = write_charge(path, sep, inputs, setup, EP)
-
-    dfCapacityfactor = write_capacityfactor(path, sep, inputs, setup, EP)
-
-    elapsed_time_storage = @elapsed write_storage(path, sep, inputs, setup, EP)
-    println("Time elapsed for writing storage is")
-    println(elapsed_time_storage)
-
-    dfCurtailment = write_curtailment(path, sep, inputs, setup, EP)
-
-    elapsed_time_nse = @elapsed write_nse(path, sep, inputs, setup, EP)
-    println("Time elapsed for writing nse is")
-    println(elapsed_time_nse)
-
-    elapsed_time_nse = @elapsed write_zonalnse(path, sep, inputs, setup, EP)
-    println("Time elapsed for writing zonal nse is")
-    println(elapsed_time_nse)
-
-    elapsed_time_power_balance = @elapsed write_power_balance(path, sep, inputs, setup, EP)
-    println("Time elapsed for writing power balance is")
-    println(elapsed_time_power_balance)
+    write_status(path, inputs, setup, EP)
+    write_costs(path, inputs, setup, EP)
+    dfCap = write_capacity(path, inputs, setup, EP)
+    dfPower = write_power(path, inputs, setup, EP)
+    write_charge(path, inputs, setup, EP)
+    write_capacityfactor(path, inputs, setup, EP)
+    write_storage(path, inputs, setup, EP)
+    write_curtailment(path, inputs, setup, EP)
+    write_nse(path, inputs, setup, EP)
+    write_zonalnse(path, inputs, setup, EP)
+    write_power_balance(path, inputs, setup, EP)
 
     if inputs["Z"] > 1
-        elapsed_time_flows = @elapsed write_transmission_flows(path, sep, setup, inputs, EP)
-        println("Time elapsed for writing transmission flows is")
-        println(elapsed_time_flows)
-    
-        elapsed_time_losses = @elapsed write_transmission_losses(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing transmission losses is")
-        println(elapsed_time_losses)
-    
-        elapsed_time_zonallosses = @elapsed write_zonal_transmission_losses(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing zonal transmission losses is")
-        println(elapsed_time_zonallosses)
-    
-        elapsed_time_expansion = @elapsed write_nw_expansion(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing network expansion is")
-        println(elapsed_time_expansion)
-    
+        write_transmission_flows(path, inputs, setup, EP)
+        write_transmission_losses(path, inputs, setup, EP)
+        write_zonal_transmission_losses(path, inputs, setup, EP)
+        write_nw_expansion(path, inputs, setup, EP)
     end
-    # elapsed_time_emissions = @elapsed write_emissions(path, sep, inputs, setup, EP)
-    elapsed_time_emissions = @elapsed write_co2(path, sep, inputs, setup, EP)
-    println("Time elapsed for writing emissions is")
-    println(elapsed_time_emissions)
+
+    write_co2(path, inputs, setup, EP)
 
     if has_duals(EP) == 1
-        elapsed_time_reliability = @elapsed write_reliability(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing reliability is")
-        println(elapsed_time_reliability)
+        write_reliability(path, inputs, setup, EP)
 
-        # elapsed_time_stordual = @elapsed write_storagedual(path, sep, inputs, setup, EP)
-        # println("Time elapsed for writing storage duals is")
-        # println(elapsed_time_stordual)
+        # write_storagedual(path, inputs, setup, EP)
     end
 
     if setup["UCommit"] >= 1
-        elapsed_time_commit = @elapsed write_commit(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing commitment is")
-        println(elapsed_time_commit)
-
-        elapsed_time_start = @elapsed write_start(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing startup is")
-        println(elapsed_time_start)
-
-        elapsed_time_shutdown = @elapsed write_shutdown(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing shutdown is")
-        println(elapsed_time_shutdown)
-
-        if setup["Reserves"] == 1
-            elapsed_time_reg = @elapsed write_reg(path, sep, inputs, setup, EP)
-            println("Time elapsed for writing regulation is")
-            println(elapsed_time_reg)
-
-            elapsed_time_rsv = @elapsed write_rsv(path, sep, inputs, setup, EP)
-            println("Time elapsed for writing reserves is")
-            println(elapsed_time_rsv)
+        write_commit(path, inputs, setup, EP)
+        write_start(path, inputs, setup, EP)
+        write_shutdown(path, inputs, setup, EP)
+        if haskey(setup, "Reserves")
+            if setup["Reserves"] == 1
+                write_reg(path, inputs, setup, EP)
+                write_rsv(path, inputs, setup, EP)
+            end
         end
     end
 
 
     # Output additional variables related inter-period energy transfer via storage
     if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_LONG_DURATION"])
-        elapsed_time_lds_init = @elapsed write_opwrap_lds_stor_init(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing lds init is")
-        println(elapsed_time_lds_init)
-        elapsed_time_lds_dstor = @elapsed write_opwrap_lds_dstor(path, sep, inputs, setup, EP)
-        println("Time elapsed for writing lds dstor is")
-        println(elapsed_time_lds_dstor)
+        write_opwrap_lds_stor_init(path, inputs, setup, EP)
+
+        write_opwrap_lds_dstor(path, inputs, setup, EP)
     end
 
     # Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
+
     if setup["MultiStage"] == 0
         # Energy Market & Subsidy
         dfPrice = DataFrame()
@@ -183,53 +127,53 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         dfCongestionRevenue = DataFrame()
         dfTransmissionLossCost = DataFrame()
         if has_duals(EP) == 1
-            dfPrice = write_price(path, sep, inputs, setup, EP)
-            dfEnergyRevenue = write_energy_revenue(path, sep, inputs, setup, EP)
-            dfChargingcost = write_charging_cost(path, sep, inputs, setup, EP)
-            dfEnergyPayment = write_energy_payment(path, sep, inputs, setup, EP)
-            dfSubRevenue = write_subsidy_revenue(path, sep, inputs, setup, EP)
+            dfPrice = write_price(path, inputs, setup, EP)
+            dfEnergyRevenue = write_energy_revenue(path, inputs, setup, EP)
+            dfChargingcost = write_charging_cost(path, inputs, setup, EP)
+            dfEnergyPayment = write_energy_payment(path, inputs, setup, EP)
+            dfSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
             if inputs["Z"] > 1
-                dfCongestionRevenue = write_congestion_revenue(path, sep, inputs, setup, EP)
-                dfTransmissionLossCost = write_transmission_losscost(path, sep, inputs, setup, EP)
+                dfCongestionRevenue = write_congestion_revenue(path, inputs, setup, EP)
+                dfTransmissionLossCost = write_transmission_losscost(path, inputs, setup, EP)
             end
         end
 
         if (haskey(setup, "MinCapReq"))
             if setup["MinCapReq"] == 1 && has_duals(EP) == 1
-                dfRegSubRevenue = write_regional_subsidy_revenue(path, sep, inputs, setup, EP)
+                dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
             end
         end
 
-        elapsed_time_time_weights = @elapsed write_time_weights(path, sep, inputs)
-        println("Time elapsed for writing time weights is")
-        println(elapsed_time_time_weights)
-    
+        write_time_weights(path, inputs)
+
         #Energy Share Requirement Market
         dfESR = DataFrame()
         dfESRRev = DataFrame()
         dfESRPayment = DataFrame()
         dfESRStoragelossPayment = DataFrame()
         dfESRtransmissionlosspayment = DataFrame()
-        if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1
-            dfESR = write_esr_prices(path, sep, inputs, setup, EP)
-            dfESRRev = write_esr_revenue(path, sep, inputs, setup, EP)
-            dfESRPayment = write_esr_payment(path, sep, inputs, setup, EP)
-            if !isempty(inputs["STOR_ALL"])
-                if haskey(setup, "StorageLosses")
-                    if setup["StorageLosses"] == 1
-                        dfESRStoragelossPayment = write_esr_storagelosspayment(path, sep, inputs, setup, EP)
+        if haskey(setup, "EnergyShareRequirement")
+            if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1
+                dfESR = write_esr_prices(path, inputs, setup, EP)
+                dfESRRev = write_esr_revenue(path, inputs, setup, EP)
+                dfESRPayment = write_esr_payment(path, inputs, setup, EP)
+                if !isempty(inputs["STOR_ALL"])
+                    if haskey(setup, "StorageLosses")
+                        if setup["StorageLosses"] == 1
+                            dfESRStoragelossPayment = write_esr_storagelosspayment(path, inputs, setup, EP)
+                        end
+                    else
+                        dfESRStoragelossPayment = write_esr_storagelosspayment(path, inputs, setup, EP)
                     end
-                else
-                    dfESRStoragelossPayment = write_esr_storagelosspayment(path, sep, inputs, setup, EP)
                 end
-            end
-            if inputs["Z"] > 1
-                if haskey(setup, "PolicyTransmissionLossCoverage")
-                    if setup["PolicyTransmissionLossCoverage"] == 1
-                        dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, sep, inputs, setup, EP)
+                if inputs["Z"] > 1
+                    if haskey(setup, "PolicyTransmissionLossCoverage")
+                        if setup["PolicyTransmissionLossCoverage"] == 1
+                            dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, inputs, setup, EP)
+                        end
+                    else
+                        dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, inputs, setup, EP)
                     end
-                else
-                    dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, sep, inputs, setup, EP)
                 end
             end
         end
@@ -239,69 +183,71 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         dfResPayment = DataFrame()
         dfResDRSaving = DataFrame()
         dfResTransRevenue = DataFrame()
-        if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1
-            dfResMar = write_reserve_margin(path, sep, inputs, setup, EP)
-            dfResRevenue = write_reserve_margin_revenue(path, sep, inputs, setup, EP)
-            dfResPayment = write_reserve_margin_payment(path, sep, inputs, setup, EP)
-            if inputs["SEG"] >= 2
-                dfResDRSaving = write_reserve_margin_demand_response_saving(path, sep, inputs, setup, EP)
+        if haskey(setup, "CapacityReserveMargin")
+            if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1
+                dfResMar = write_reserve_margin(path, inputs, setup, EP)
+                dfResRevenue = write_reserve_margin_revenue(path, inputs, setup, EP)
+                dfResPayment = write_reserve_margin_payment(path, inputs, setup, EP)
+                if inputs["SEG"] >= 2
+                    dfResDRSaving = write_reserve_margin_demand_response_saving(path, inputs, setup, EP)
+                end
+                if inputs["Z"] > 1
+                    dfResTransRevenue = write_reserve_margin_transmission_revenue(path, inputs, setup, EP)
+                end
+                write_capacity_value(path, inputs, setup, EP)
             end
-            if inputs["Z"] >= 2
-                dfResTransRevenue = write_reserve_margin_transmission_revenue(path, sep, inputs, setup, EP)
-            end
-            elapsed_time_cap_value = @elapsed write_capacity_value(path, sep, inputs, setup, EP)
-            println("Time elapsed for writing capacity value is")
-            println(elapsed_time_cap_value)
         end
-    
+
         dfCO2MassCapCost = DataFrame()
         dfCO2MassCapRev = DataFrame()
         dfCO2Price = DataFrame()
-        if setup["CO2Cap"] == 1 && has_duals(EP) == 1
-            dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, sep, inputs, setup, EP)
+        if haskey(setup, "CO2Cap")
+            if setup["CO2Cap"] == 1 && has_duals(EP) == 1
+                dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, inputs, setup, EP)
+            end
         end
-    
+
+
         dfCO2GenRateCapCost = DataFrame()
         dfCO2GenRatePrice = DataFrame()
         if haskey(setup, "CO2GenRateCap")
             if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
-                dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
+                dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, inputs, setup, EP)
             end
         end
-    
+
         dfCO2LoadRateCapCost = DataFrame()
         dfCO2LoadRateCapRev = DataFrame()
         dfCO2LoadRatePrice = DataFrame()
         if haskey(setup, "CO2LoadRateCap")
             if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
-                dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, sep, inputs, setup, EP)
+                dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, inputs, setup, EP)
             end
         end
-    
+
         dfCO2TaxCost = DataFrame()
         if haskey(setup, "CO2Tax")
             if setup["CO2Tax"] == 1
-                dfCO2TaxCost = write_co2_tax(path, sep, inputs, setup, EP)
+                dfCO2TaxCost = write_co2_tax(path, inputs, setup, EP)
             end
         end
+        dfCO2CaptureCredit = DataFrame()
         if haskey(setup, "CO2Credit")
-            dfCO2CaptureCredit = DataFrame()
             if setup["CO2Credit"] == 1
-                dfCO2CaptureCredit = write_credit_for_captured_emissions(path, sep, inputs, setup, EP)
+                dfCO2CaptureCredit = write_credit_for_captured_emissions(path, inputs, setup, EP)
             end
         end
+
         if haskey(setup, "TFS")
             if setup["TFS"] == 1
-                write_twentyfourseven(path, sep, inputs, setup, EP)
+                write_twentyfourseven(path, inputs, setup, EP)
             end
         end
-    
-        elapsed_time_net_rev = @elapsed write_net_revenue(path, sep, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost, dfCO2CaptureCredit)
-        println("Time elapsed for writing net revenue is")
-        println(elapsed_time_net_rev)
-    
-    
-    
+
+        write_net_revenue(path, inputs, setup, EP, dfESRRev, dfResRevenue, dfChargingcost, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost, dfCO2CaptureCredit)
+
+
+
     end
     ## Print confirmation
     println("Wrote outputs to $path$sep")

@@ -57,7 +57,7 @@ In addition, this function adds investment and fixed O\&M related costs related 
 \end{aligned}
 ```
 """
-function investment_energy(EP::Model, inputs::Dict)
+function investment_energy(EP::Model, inputs::Dict, MultiStage::Int)
 
     println("Storage Investment Module")
 
@@ -68,6 +68,7 @@ function investment_energy(EP::Model, inputs::Dict)
     STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
     NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
     RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
+
 
     ### Variables ###
 
@@ -81,19 +82,29 @@ function investment_energy(EP::Model, inputs::Dict)
 
     ### Expressions ###
 
-    @expression(EP, eTotalCapEnergy[y in STOR_ALL],
-        if (y in intersect(NEW_CAP_ENERGY, RET_CAP_ENERGY))
-            dfGen[!, :Existing_Cap_MWh][y] + EP[:vCAPENERGY][y] - EP[:vRETCAPENERGY][y]
-        elseif (y in setdiff(NEW_CAP_ENERGY, RET_CAP_ENERGY))
-            dfGen[!, :Existing_Cap_MWh][y] + EP[:vCAPENERGY][y]
-        elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
-            dfGen[!, :Existing_Cap_MWh][y] - EP[:vRETCAPENERGY][y]
-        else
-            dfGen[!, :Existing_Cap_MWh][y] + EP[:vZERO]
-        end
-    )
+	if MultiStage == 1
+		@variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL] >= 0);
+	end
 
-    ## Objective Function Expressions ##
+	### Expressions ###
+
+	if MultiStage == 1
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], vEXISTINGCAPENERGY[y])
+	else
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], dfGen[!,:Existing_Cap_MWh][y])
+	end
+
+	@expression(EP, eTotalCapEnergy[y in STOR_ALL],
+		if (y in intersect(NEW_CAP_ENERGY, RET_CAP_ENERGY))
+			eExistingCapEnergy[y] + EP[:vCAPENERGY][y] - EP[:vRETCAPENERGY][y]
+		elseif (y in setdiff(NEW_CAP_ENERGY, RET_CAP_ENERGY))
+			eExistingCapEnergy[y] + EP[:vCAPENERGY][y]
+		elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
+			eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
+		else
+			eExistingCapEnergy[y] + EP[:vZERO]
+		end
+	)
 
     # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
     # If resource is not eligible for new energy capacity, fixed costs are only O&M costs
@@ -125,16 +136,27 @@ function investment_energy(EP::Model, inputs::Dict)
     # Add term to objective function expression
     EP[:eObj] += eTotalCFixEnergy
 
-    ### Constratints ###
+	# Add term to objective function expression
+	if MultiStage == 1
+		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
+		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
+		# and we have already accounted for multiple years between stages for fixed costs.
+		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixEnergy
+	else
+		EP[:eObj] += eTotalCFixEnergy
+	end
 
     ## Constraints on retirements and capacity additions
     # Cannot retire more energy capacity than existing energy capacity
     @constraint(EP, cMaxRetEnergy[y in RET_CAP_ENERGY], vRETCAPENERGY[y] <= dfGen[!, :Existing_Cap_MWh][y])
 
-    ## Constraints on new built energy capacity
-    # Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-    @constraint(EP, cMaxCapEnergy[y in intersect(dfGen[dfGen.Max_Cap_MWh.>0, :R_ID], STOR_ALL)], eTotalCapEnergy[y] <= dfGen[!, :Max_Cap_MWh][y])
+	if MultiStage == 1
+		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == dfGen[!,:Existing_Cap_MWh][y])
+	end
+	
+	## Constraints on retirements and capacity additions
+	# Cannot retire more energy capacity than existing energy capacity
+	@constraint(EP, cMaxRetEnergy[y in RET_CAP_ENERGY], vRETCAPENERGY[y] <= eExistingCapEnergy[y])
 
     # Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty

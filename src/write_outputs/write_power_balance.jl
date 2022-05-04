@@ -14,7 +14,7 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_power_balance(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -22,7 +22,7 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
     THERM_ALL = inputs["THERM_ALL"]
     VRE = inputs["VRE"]
     MUST_RUN = inputs["MUST_RUN"]
-    HYDRO_RES = inputs["HYDRO_RES"]	
+    HYDRO_RES = inputs["HYDRO_RES"]
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
     ## Power balance for each zone
@@ -32,104 +32,40 @@ function write_power_balance(path::AbstractString, sep::AbstractString, inputs::
         "Demand_Response", "Nonserved_Energy",
         "Transmission_NetExport", "Transmission_Losses",
         "Demand"]
-    dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = 10), AnnualSum = zeros(10 * Z))
+    dfPowerBalance = DataFrame(BalanceComponent=repeat(Com_list, outer=Z), Zone=repeat(1:Z, inner=10), AnnualSum=zeros(10 * Z))
     # rowoffset = 3
     powerbalance = zeros(Z * 10, T) # following the same style of power/charge/storage/nse
-for z in 1:Z
-    # dfTemp1 = Array{Any}(nothing, T + rowoffset, 10)
-    # dfTemp1[1, 1:size(dfTemp1, 2)] = ["Generation", "Storage_Discharge", "Storage_Charge",
-    #     "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
-    #     "Demand_Response", "Nonserved_Energy",
-    #     "Transmission_NetExport", "Transmission_Losses",
-    #     "Demand"]
-    # dfTemp1[2, 1:size(dfTemp1, 2)] = repeat([z], size(dfTemp1, 2))
-    POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
-    powerbalance[(z-1)*10+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
-	if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
-	    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
-	    powerbalance[(z-1)*10+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1)
-	    # You cannot do the following because vCHARGE is not one-based. use [CartesianIndex(1:length(STOR_ALL_ZONE))]
-	    #powerbalance[(z-1)*10+3, :] = (-1) * sum(value.(EP[:vCHARGE])[STOR_ALL_ZONE, :], dims = 1)
-	    powerbalance[(z-1)*10+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1)
-	end
-    if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
-        FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)
-        powerbalance[(z-1)*10+4, :] = sum((value.(EP[:vCHARGE_FLEX][FLEX_ZONE, :]).data), dims = 1)
-        # powerbalance[(z-1)*10+4, :] = sum(value.(EP[:vCHARGE_FLEX])[FLEX_ZONE, :], dims = 1)
-        powerbalance[(z-1)*10+5, :] = (-1) * sum(value.(EP[:vP][FLEX_ZONE, :]), dims = 1)
+    for z in 1:Z
+        POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
+        powerbalance[(z-1)*10+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims=1)
+        if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
+            STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
+            powerbalance[(z-1)*10+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims=1)
+            # You cannot do the following because vCHARGE is not one-based. use [CartesianIndex(1:length(STOR_ALL_ZONE))]
+            #powerbalance[(z-1)*10+3, :] = (-1) * sum(value.(EP[:vCHARGE])[STOR_ALL_ZONE, :], dims = 1)
+            powerbalance[(z-1)*10+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims=1)
+        end
+        if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
+            FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)
+            powerbalance[(z-1)*10+4, :] = sum((value.(EP[:vCHARGE_FLEX][FLEX_ZONE, :]).data), dims=1)
+            powerbalance[(z-1)*10+5, :] = (-1) * sum(value.(EP[:vP][FLEX_ZONE, :]), dims=1)
+        end
+        if SEG > 1
+            powerbalance[(z-1)*10+6, :] = sum(value.(EP[:vNSE][2:SEG, :, z]), dims=1)
+        end
+        powerbalance[(z-1)*10+7, :] = value.(EP[:vNSE][1, :, z])
+        if Z >= 2
+            powerbalance[(z-1)*10+8, :] = (value.(EP[:ePowerBalanceNetExportFlows][:, z]))' # Transpose
+            powerbalance[(z-1)*10+9, :] = (-0.5) * (value.(EP[:eTransLossByZone][z, :]))
+        end
+        powerbalance[(z-1)*10+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
     end
-    if SEG > 1
-        powerbalance[(z-1)*10+6, :] = sum(value.(EP[:vNSE][2:SEG, :, z]), dims = 1)
+    if setup["ParameterScale"] == 1
+        powerbalance *= ModelScalingFactor
     end
-    powerbalance[(z-1)*10+7, :] = value.(EP[:vNSE][1, :, z])
-    if Z >= 2
-        powerbalance[(z-1)*10+8, :] = (value.(EP[:ePowerBalanceNetExportFlows][:, z]))' # Transpose
-        powerbalance[(z-1)*10+9, :] = (-0.5) * (value.(EP[:eTransLossByZone][z, :]))
-    end
-    powerbalance[(z-1)*10+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
-    # for t in 1:T
-    #     dfTemp1[t+rowoffset, 1] = sum(value.(EP[:vP][dfGen[(dfGen[!, :THERM].==1).&(dfGen[!, :Zone].==z), :][!, :R_ID], t])) +
-    #                               sum(value.(EP[:vP][dfGen[(dfGen[!, :VRE].==1).&(dfGen[!, :Zone].==z), :][!, :R_ID], t])) +
-    #                               sum(value.(EP[:vP][dfGen[(dfGen[!, :MUST_RUN].==1).&(dfGen[!, :Zone].==z), :][!, :R_ID], t])) +
-    #                               sum(value.(EP[:vP][dfGen[(dfGen[!, :HYDRO].>=1).&(dfGen[!, :Zone].==z), :][!, :R_ID], t]))
-    #     dfTemp1[t+rowoffset, 2] = sum(value.(EP[:vP][dfGen[(dfGen[!, :STOR].>=1).&(dfGen[!, :Zone].==z), :][!, :R_ID], t]))
-    #     dfTemp1[t+rowoffset, 3] = 0
-    #     if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
-    #         dfTemp1[t+rowoffset, 3] = -sum(value.(EP[:vCHARGE][y, t]) for y in intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
-    #     end
-    #     dfTemp1[t+rowoffset, 4] = 0
-    #     if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
-    #         dfTemp1[t+rowoffset, 4] = sum(value.(EP[:vCHARGE_FLEX][y, t]) for y in intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
-    #     end
-    #     dfTemp1[t+rowoffset, 5] = -sum(value.(EP[:vP][dfGen[(dfGen[!, :FLEX].>=1).&(dfGen[!, :Zone].==z), :][!, :R_ID], t]))
-    #     if SEG > 1
-    #         dfTemp1[t+rowoffset, 6] = sum(value.(EP[:vNSE][2:SEG, t, z]))
-    #     else
-    #         dfTemp1[t+rowoffset, 6] = 0
-    #     end
-    #     dfTemp1[t+rowoffset, 7] = value(EP[:vNSE][1, t, z])
-    #     dfTemp1[t+rowoffset, 8] = 0
-    #     dfTemp1[t+rowoffset, 9] = 0
-    #     #=
-    #        	     	if setup["NetworkExpansion"] == 1
-    #        	     	    dfTemp1[t+rowoffset,8] = value(EP[:ePowerBalanceNetExportFlows][t,z])
-    #        	     	    dfTemp1[t+rowoffset,9] = -1/2 * value(EP[:eTransLossByZone][z,t])
-    #        	     	end
-    #        		=#
-    #     if Z >= 2
-    #         dfTemp1[t+rowoffset, 8] = value(EP[:ePowerBalanceNetExportFlows][t, z])
-    #         dfTemp1[t+rowoffset, 9] = -1 / 2 * value(EP[:eTransLossByZone][z, t])
-    #     end
-    #     dfTemp1[t+rowoffset, 10] = -inputs["pD"][t, z]
-
-    #     if setup["ParameterScale"] == 1
-    #         dfTemp1[t+rowoffset, 1] = dfTemp1[t+rowoffset, 1] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 2] = dfTemp1[t+rowoffset, 2] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 3] = dfTemp1[t+rowoffset, 3] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 4] = dfTemp1[t+rowoffset, 4] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 5] = dfTemp1[t+rowoffset, 5] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 6] = dfTemp1[t+rowoffset, 6] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 7] = dfTemp1[t+rowoffset, 7] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 8] = dfTemp1[t+rowoffset, 8] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 9] = dfTemp1[t+rowoffset, 9] * ModelScalingFactor
-    #         dfTemp1[t+rowoffset, 10] = dfTemp1[t+rowoffset, 10] * ModelScalingFactor
-    #     end
-    # end
-
-    # if z == 1
-    #     dfPowerBalance = hcat(vcat(["", "Zone", "AnnualSum"], ["t$t" for t in 1:T]), dfTemp1)
-    # else
-    #     dfPowerBalance = hcat(dfPowerBalance, dfTemp1)
-    # end
-
-end
     dfPowerBalance.AnnualSum .= powerbalance * inputs["omega"]
     dfPowerBalance = hcat(dfPowerBalance, DataFrame(powerbalance, :auto))
     auxNew_Names = [Symbol("BalanceComponent"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
     rename!(dfPowerBalance, auxNew_Names)
-    # for c in 2:size(dfPowerBalance, 2)
-    #     dfPowerBalance[rowoffset, c] = sum(inputs["omega"] .* dfPowerBalance[(rowoffset+1):size(dfPowerBalance, 1), c])
-    # end
-    # dfPowerBalance = DataFrame(dfPowerBalance, :auto)
-    CSV.write(string(path, sep, "power_balance.csv"), dftranspose(dfPowerBalance, false), writeheader = false)
+    CSV.write(joinpath(path, "power_balance.csv"), dftranspose(dfPowerBalance, false), writeheader=false)
 end

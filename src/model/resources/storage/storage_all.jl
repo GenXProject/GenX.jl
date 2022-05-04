@@ -80,48 +80,46 @@ function storage_all(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::
     # Links state of charge in first time step with decisions in last time step of each subperiod
     # We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
 
-    if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
-        @constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_SHORT_DURATION], EP[:vS][y, t] ==
-                                                                                       EP[:vS][y, t+hours_per_subperiod-1] - (1 / dfGen[!, :Eff_Down][y] * EP[:vP][y, t])
-                                                                                       +
-                                                                                       (dfGen[!, :Eff_Up][y] * EP[:vCHARGE][y, t]) - (dfGen[!, :Self_Disch][y] * EP[:vS][y, t+hours_per_subperiod-1]))
-    else
-        @constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_ALL], EP[:vS][y, t] ==
-                                                                            EP[:vS][y, t+hours_per_subperiod-1] - (1 / dfGen[!, :Eff_Down][y] * EP[:vP][y, t])
-                                                                            +
-                                                                            (dfGen[!, :Eff_Up][y] * EP[:vCHARGE][y, t]) - (dfGen[!, :Self_Disch][y] * EP[:vS][y, t+hours_per_subperiod-1]))
-    end
+	if OperationWrapping ==1 && !isempty(inputs["STOR_LONG_DURATION"])
+		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_SHORT_DURATION], EP[:vS][y,t] ==
+			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t])
+			+(dfGen[!,:Eff_Up][y]*EP[:vCHARGE][y,t])-(dfGen[!,:Self_Disch][y]*EP[:vS][y,t+hours_per_subperiod-1]))
+	else
+		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_ALL], EP[:vS][y,t] ==
+			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t])
+			+(dfGen[!,:Eff_Up][y]*EP[:vCHARGE][y,t])-(dfGen[!,:Self_Disch][y]*EP[:vS][y,t+hours_per_subperiod-1]))
+	end
+	
 
+	@constraints(EP, begin
 
-    @constraints(EP, begin
+		# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
+		[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= dfGen[!,:Min_Duration][y] * EP[:eTotalCap][y]
+		[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= dfGen[!,:Max_Duration][y] * EP[:eTotalCap][y]
 
-        # Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
-        [y in STOR_ALL, t in 1:T], EP[:eTotalCapEnergy][y] >= dfGen[!, :Min_Duration][y] * EP[:eTotalCap][y]
-        [y in STOR_ALL, t in 1:T], EP[:eTotalCapEnergy][y] <= dfGen[!, :Max_Duration][y] * EP[:eTotalCap][y]
+		# Maximum energy stored must be less than energy capacity
+		[y in STOR_ALL, t in 1:T], EP[:vS][y,t] <= EP[:eTotalCapEnergy][y]
 
-        # Maximum energy stored must be less than energy capacity
-        [y in STOR_ALL, t in 1:T], EP[:vS][y, t] <= EP[:eTotalCapEnergy][y]
+		# energy stored for the next hour
+		cSoCBalInterior[t in INTERIOR_SUBPERIODS, y in STOR_ALL], EP[:vS][y,t] ==
+			EP[:vS][y,t-1]-(1/dfGen[!,:Eff_Down][y]*EP[:vP][y,t])+(dfGen[!,:Eff_Up][y]*EP[:vCHARGE][y,t])-(dfGen[!,:Self_Disch][y]*EP[:vS][y,t-1])
+	end)
 
-        # energy stored for the next hour
-        cSoCBalInterior[t in INTERIOR_SUBPERIODS, y in STOR_ALL], EP[:vS][y, t] ==
-                                                                  EP[:vS][y, t-1] - (1 / dfGen[!, :Eff_Down][y] * EP[:vP][y, t]) + (dfGen[!, :Eff_Up][y] * EP[:vCHARGE][y, t]) - (dfGen[!, :Self_Disch][y] * EP[:vS][y, t-1])
-    end)
+	# Storage discharge and charge power (and reserve contribution) related constraints:
+	if Reserves == 1
+		EP = storage_all_reserves(EP, inputs)
+	else
+		# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
+		# this constraint is set in functions below for each storage type
 
-    # Storage discharge and charge power (and reserve contribution) related constraints:
-    if Reserves == 1
-        EP = storage_all_reserves(EP, inputs)
-    else
-        # Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
-        # this constraint is set in functions below for each storage type
-
-        # Maximum discharging rate must be less than power rating OR available stored energy in the prior period, whichever is less
-        # wrapping from end of sample period to start of sample period for energy capacity constraint
-        @constraints(EP, begin
-            [y in STOR_ALL, t = 1:T], EP[:vP][y, t] <= EP[:eTotalCap][y]
-            [y in STOR_ALL, t in INTERIOR_SUBPERIODS], EP[:vP][y, t] <= EP[:vS][y, t-1] * dfGen[!, :Eff_Down][y]
-            [y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y, t] <= EP[:vS][y, t+hours_per_subperiod-1] * dfGen[!, :Eff_Down][y]
-        end)
-    end
+		# Maximum discharging rate must be less than power rating OR available stored energy in the prior period, whichever is less
+		# wrapping from end of sample period to start of sample period for energy capacity constraint
+		@constraints(EP, begin
+			[y in STOR_ALL, t=1:T], EP[:vP][y,t] <= EP[:eTotalCap][y]
+			[y in STOR_ALL, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t-1]*dfGen[!,:Eff_Down][y]
+			[y in STOR_ALL, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]*dfGen[!,:Eff_Down][y]
+		end)
+	end
 	
     @expression(EP, eStorageLossByZone[z = 1:Z],
         sum(EP[:eELOSS][y] for y in intersect(inputs["STOR_ALL"], dfGen[dfGen[!, :Zone].==z, :R_ID])) + 0

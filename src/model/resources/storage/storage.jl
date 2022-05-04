@@ -108,16 +108,17 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 ```
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int)
+function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int, MultiStage::Int)
+#function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int) ##From main
 
 	println("Storage Resources Module")
 	dfGen = inputs["dfGen"]
-	G = inputs["G"]
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
 	if !isempty(STOR_ALL)
-		EP = investment_energy(EP, inputs)
+		EP = investment_energy(EP, inputs, MultiStage)
+		#EP = investment_energy(EP, inputs) ##From main
 		EP = storage_all(EP, inputs, Reserves, OperationWrapping)
 
 		# Include Long Duration Storage only when modeling representative periods and long-duration storage
@@ -127,7 +128,7 @@ function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int,
 	end
 
 	if !isempty(inputs["STOR_ASYMMETRIC"])
-		EP = investment_charge(EP, inputs)
+		EP = investment_charge(EP, inputs, MultiStage)
 		EP = storage_asymmetric(EP, inputs, Reserves)
 	end
 

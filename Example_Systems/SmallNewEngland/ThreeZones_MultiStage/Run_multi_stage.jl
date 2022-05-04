@@ -47,7 +47,7 @@ TDRpath = joinpath(inpath, "Inputs", "Inputs_p1", mysetup["TimeDomainReductionFo
 if mysetup["TimeDomainReduction"] == 1
     if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
         println("Clustering Time Series Data...")
-        FinalOutputData, W, RMSE, myTDRsetup, col_to_zone_map, inputs_dict, R, A, M, DistMatrix, ClusteringInputDF = cluster_inputs(inpath, settings_path, mysetup)
+        cluster_inputs(inpath, settings_path, mysetup)
     else
         println("Time Series Data Already Clustered.")
     end
@@ -61,8 +61,6 @@ OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 model_dict=Dict()
 inputs_dict=Dict()
 
-inputs_multi_stage = load_inputs_multi_stage(mysetup, string("$inpath/Inputs"))
-
 for t in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 
 	# Step 0) Set Model Year
@@ -72,8 +70,6 @@ for t in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
 	inputs_dict[t] = load_inputs(mysetup, inpath_sub)
-
-	merge!(inputs_dict[t],inputs_multi_stage)
 	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
 
 	# Step 2) Generate model

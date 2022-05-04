@@ -41,8 +41,8 @@ function load_inputs(setup::Dict, path::AbstractString)
 	## Declare Dict (dictionary) object used to store parameters
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
-    if isfile(string(path,sep,"Network.csv"))
-		inputs, network_var = load_network_data(setup, path, sep, inputs)
+    	if isfile(joinpath(path,"Network.csv"))
+		inputs, network_var = load_network_data(setup, path, inputs)
 	else
 		inputs["Z"] = 1
 		inputs["L"] = 0
@@ -53,83 +53,93 @@ function load_inputs(setup::Dict, path::AbstractString)
     ## Declare Dict (dictionary) object used to store parameters
     inputs = Dict()
     # Read input data about power network topology, operating and expansion attributes
-    if isfile(string(path, sep, "Network.csv"))
-        inputs, network_var = load_network_data(setup, path, sep, inputs)
+    if isfile(joinpath(path, "Network.csv"))
+        inputs, network_var = load_network_data(setup, path, inputs)
     else
         inputs["Z"] = 1
         inputs["L"] = 0
     end
 
     # Read temporal-resolved load data, and clustering information if relevant
-    inputs = load_load_data(setup, path, sep, inputs)
+    inputs = load_load_data(setup, path, inputs)
     # Read fuel cost data, including time-varying fuel costs
-    inputs, cost_fuel, CO2_fuel = load_fuels_data(setup, path, sep, inputs)
+    inputs, cost_fuel, CO2_fuel = load_fuels_data(setup, path, inputs)
     # Read in generator/resource related inputs
-    inputs = load_generators_data(setup, path, sep, inputs, cost_fuel, CO2_fuel)
+    inputs = load_generators_data(setup, path, inputs, cost_fuel, CO2_fuel)
     # Read in generator/resource availability profiles
-    inputs = load_generators_variability(setup, path, sep, inputs)
+    inputs = load_generators_variability(setup, path, inputs)
+    
+    if haskey(setup, "CapacityReserveMargin")
+        if setup["CapacityReserveMargin"] == 1
+            inputs = load_cap_reserve_margin(setup, path, inputs)
+            if inputs["Z"] > 1
+                inputs = load_cap_reserve_margin_trans(setup, inputs, network_var)
+            end
+        end
+    end
 
-    if setup["CapacityReserveMargin"] == 1
-        inputs = load_cap_reserve_margin(setup, path, sep, inputs)
-        if inputs["Z"] > 1
-            inputs = load_cap_reserve_margin_trans(setup, path, sep, inputs, network_var)
+    if haskey(setup, "EnergyShareRequirement")
+        if setup["EnergyShareRequirement"] == 1
+            inputs = load_energy_share_requirement(setup, path, inputs)
         end
     end
 
     # Read in general configuration parameters for reserves (resource-specific reserve parameters are read in generators_data())
-    if setup["Reserves"] == 1
-        inputs = load_reserves(setup, path, sep, inputs)
+    if haskey(setup, "Reserves")
+        if setup["Reserves"] == 1
+            inputs = load_reserves(setup, path, inputs)
+        end
     end
 
-    if setup["MinCapReq"] == 1
-        inputs = load_minimum_capacity_requirement(path, sep, inputs, setup)
-    end
-	if haskey(setup, "MaxCapReq")
-		if setup["MaxCapReq"] == 1
-			inputs = load_maximum_capacity_limit(path, sep, inputs, setup)
-		end
-	end
-    if setup["EnergyShareRequirement"] == 1
-        inputs = load_energy_share_requirement(setup, path, sep, inputs)
+    if haskey(setup, "MinCapReq")
+        if setup["MinCapReq"] == 1
+            inputs = load_minimum_capacity_requirement(path, inputs, setup)
+        end
     end
 
-    if setup["CO2Cap"] == 1
-        inputs = load_co2_cap(setup, path, sep, inputs)
+    if haskey(setup, "MaxCapReq")
+        if setup["MaxCapReq"] == 1
+            inputs = load_maximum_capacity_limit(path, inputs, setup)
+        end
+    end
+    if haskey(setup, "CO2Cap")
+        if setup["CO2Cap"] == 1
+            inputs = load_co2_cap(setup, path, inputs)
+        end
     end
     if haskey(setup, "CO2GenRateCap")
         if setup["CO2GenRateCap"] == 1
-            inputs = load_co2_generation_side_emission_rate_cap(setup, path, sep, inputs)
+            inputs = load_co2_generation_side_emission_rate_cap(setup, path, inputs)
         end
     end
     if haskey(setup, "CO2LoadRateCap")
         if setup["CO2LoadRateCap"] == 1
-            inputs = load_co2_load_side_emission_rate_cap(setup, path, sep, inputs)
+            inputs = load_co2_load_side_emission_rate_cap(setup, path, inputs)
         end
     end
     if haskey(setup, "CO2Tax")
         if setup["CO2Tax"] >= 1
-            inputs = load_co2_tax(setup, path, sep, inputs)
+            inputs = load_co2_tax(setup, path, inputs)
         end
     end
     if haskey(setup, "CO2Credit")
         if setup["CO2Credit"] >= 1
-            inputs = load_co2_credit(setup, path, sep, inputs)
+            inputs = load_co2_credit(setup, path, inputs)
         end
     end
     if haskey(setup, "TFS")
         if setup["TFS"] == 1
-            inputs = load_twentyfourseven(setup, path, sep, inputs)
+            inputs = load_twentyfourseven(setup, path, inputs)
         end
     end
 
 
-	# Read in mapping of modeled periods to representative periods
-	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
-		inputs = load_period_map(setup, path, sep, inputs)
-	end
-	
-	println("CSV Files Successfully Read In From $path$sep")
+    # Read in mapping of modeled periods to representative periods
+    if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
+        inputs = load_period_map(setup, path, inputs)
+    end
 
+    println("CSV Files Successfully Read In From $path$sep")
     return inputs
 end
 
