@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_esr_transmissionlosspayment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_esr_transmissionlosspayment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the renewable/clean credit revenue earned by each generator listed in the input file. 
     GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. 
@@ -23,17 +23,17 @@ Function for reporting the renewable/clean credit revenue earned by each generat
     The revenue is calculated as the total annual generation (if elgible for the corresponding constraint) multiplied by the RPS/CES price. 
     The last column is the total revenue received from all constraint. The unit is \$.
 """
-function write_esr_transmissionlosspayment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_esr_transmissionlosspayment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]
     nESR = inputs["nESR"]
     dfESRtransmissionlosspayment = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     tempesrpayment = zeros(Z, nESR)
     tempesrpayment = (inputs["dfESR"] .* (value.(EP[:eTransLossByZone]))) .* repeat(transpose(dual.(EP[:cESRShare])), Z, 1)
     if setup["ParameterScale"] == 1
-        tempesrpayment = tempesrpayment * (ModelScalingFactor^2)
+        tempesrpayment *= ModelScalingFactor^2
     end
     dfESRtransmissionlosspayment.AnnualSum .= vec(sum(tempesrpayment, dims=2))
     dfESRtransmissionlosspayment = hcat(dfESRtransmissionlosspayment, DataFrame(tempesrpayment, [Symbol("ESR_$i") for i in 1:nESR]))
-    CSV.write(string(path, sep, "ESR_TransmissionlossPayment.csv"), dfESRtransmissionlosspayment)
+    CSV.write(joinpath(path, "ESR_TransmissionlossPayment.csv"), dfESRtransmissionlosspayment)
     return dfESRtransmissionlosspayment
 end

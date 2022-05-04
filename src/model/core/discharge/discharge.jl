@@ -25,7 +25,7 @@ This module additionally defines contributions to the objective function from va
 \end{aligned}
 ```
 """
-function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int, PieceWiseHeatRate::Int)
+function discharge(EP::Model, inputs::Dict, setup::Dict)
 
     println("Discharge Module")
 
@@ -43,6 +43,11 @@ function discharge(EP::Model, inputs::Dict, EnergyShareRequirement::Int, PieceWi
 
     ## Objective Function Expressions ##
     # if piecewiseheatrate option and ucommit commitment option are active, skip the fuel consumption
+    if haskey(setup, "PieceWiseHeatRate")
+        PieceWiseHeatRate = copy(setup["PieceWiseHeatRate"])
+    else
+        PieceWiseHeatRate = 0
+    end
     if (PieceWiseHeatRate == 1) & (!isempty(inputs["THERM_COMMIT"]))
         inputs["C_Fuel_per_MWh"][inputs["THERM_COMMIT"], :] .= 0
     end

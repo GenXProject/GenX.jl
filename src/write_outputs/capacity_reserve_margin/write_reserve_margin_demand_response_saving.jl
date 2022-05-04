@@ -22,7 +22,7 @@ Function for reporting the capacity revenue earned by each generator listed in t
     Each row corresponds to a zone, and each column starting from the 3rd to the last is the total payment from each capacity reserve margin constraint. 
     As a reminder, GenX models the capacity reserve margin (aka capacity market) at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_reserve_margin_demand_response_saving(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_reserve_margin_demand_response_saving(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]     # Number of zonests
     SEG = inputs["SEG"]
     dfResDRSaving = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
@@ -31,11 +31,11 @@ function write_reserve_margin_demand_response_saving(path::AbstractString, sep::
         pariticpatingzone[findall(x -> x > 0, inputs["dfCapRes"][:, i])] .= 1
         resdrsaving = (transpose(value.(EP[:eDemandResponse])) .* pariticpatingzone) * dual.(EP[:cCapacityResMargin][i, :])
         if setup["ParameterScale"] == 1
-            resdrsaving = resdrsaving * (ModelScalingFactor^2)
+            resdrsaving *= ModelScalingFactor^2
         end
-        dfResDRSaving.AnnualSum .= dfResDRSaving.AnnualSum + resdrsaving
+        dfResDRSaving.AnnualSum .+= resdrsaving
         dfResDRSaving = hcat(dfResDRSaving, DataFrame([resdrsaving], [Symbol("CapRes_$i")]))
     end
-    CSV.write(string(path, sep, "ReserveMarginDemandResponseSaving.csv"), dfResDRSaving)
+    CSV.write(joinpath(path, "ReserveMarginDemandResponseSaving.csv"), dfResDRSaving)
     return dfResDRSaving
 end

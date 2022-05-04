@@ -28,7 +28,7 @@ For must-run resources ($y\in \mathcal{MR}$) output in each time period $t$ must
 \end{aligned}
 ```
 """
-function must_run(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
+function must_run(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Must-Run Resources Module")
 
@@ -40,6 +40,11 @@ function must_run(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
 
 	MUST_RUN = inputs["MUST_RUN"]
 
+	if haskey(setup, "CapacityReserveMargin")
+	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
+	else
+	    CapacityReserveMargin = 0
+	end
 	### Expressions ###
 
 	## Power Balance Expressions ##

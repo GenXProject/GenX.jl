@@ -19,9 +19,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for reading input parameters related to CO$_2$ generation-side emission rate cap constraints
 """
-function load_co2_generation_side_emission_rate_cap(setup::Dict, path::AbstractString, sep::AbstractString, inputs_co2::Dict)
+function load_co2_generation_side_emission_rate_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
     # Definition of Cap requirements by zone (as Max Mtons per MWh)
-    inputs_co2["dfCO2Cap_GenRate"] = DataFrame(CSV.File(string(path, sep, "CO2_genrate_cap.csv"), header = true), copycols = true)
+    inputs_co2["dfCO2Cap_GenRate"] = DataFrame(CSV.File(joinpath(path, "CO2_genrate_cap.csv"), header = true), copycols = true)
 
     # determine the number of caps
     cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap_GenRate"]))

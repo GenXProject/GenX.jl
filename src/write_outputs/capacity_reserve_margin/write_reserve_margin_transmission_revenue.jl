@@ -22,17 +22,17 @@ Function for reporting the capacity revenue earned by each generator listed in t
     Each row corresponds to a zone, and each column starting from the 3rd to the last is the total payment from each capacity reserve margin constraint. 
     As a reminder, GenX models the capacity reserve margin (aka capacity market) at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_reserve_margin_transmission_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_reserve_margin_transmission_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     L = inputs["L"]     # Number of lines
     dfResTransRevenue = DataFrame(Line = 1:L, AnnualSum = zeros(L))
     for i in 1:inputs["NCapacityReserveMargin"]
         restransrevenue = (-1) * ((value.(EP[:vFLOW])) .* inputs["dfTransCapRes_excl"][:, i] .* inputs["dfDerateTransCapRes"][:, i]) * dual.(EP[:cCapacityResMargin][i, :])
         if setup["ParameterScale"] == 1
-            restransrevenue = restransrevenue * (ModelScalingFactor^2)
+            restransrevenue *= (ModelScalingFactor^2)
         end
-        dfResTransRevenue.AnnualSum .= dfResTransRevenue.AnnualSum + restransrevenue
+        dfResTransRevenue.AnnualSum .+= restransrevenue
         dfResTransRevenue = hcat(dfResTransRevenue, DataFrame([restransrevenue], [Symbol("CapRes_$i")]))
     end
-    CSV.write(string(path, sep, "ReserveMarginTransmissionRevenue.csv"), dfResTransRevenue)
+    CSV.write(joinpath(path, "ReserveMarginTransmissionRevenue.csv"), dfResTransRevenue)
     return dfResTransRevenue
 end

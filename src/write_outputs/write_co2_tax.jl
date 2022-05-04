@@ -15,25 +15,20 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_co2_tax(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_co2_tax(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting carbon tax.
 
 """
-function write_co2_tax(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_co2_tax(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-    L = inputs["L"]     # Number of transmission lines
-    W = inputs["REP_PERIOD"]     # Number of subperiods
-    SEG = inputs["SEG"] # Number of load curtailment segments
 
     dfCO2TaxCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
     dfCO2TaxCost.AnnualSum = value.(EP[:eEmissionsByPlantYear]) .* inputs["dfCO2Tax"][dfGen[:,:Zone],"CO2Tax"]
     if setup["ParameterScale"] == 1
-        dfCO2TaxCost.AnnualSum .= dfCO2TaxCost.AnnualSum * (ModelScalingFactor^2)
+        dfCO2TaxCost.AnnualSum *= ModelScalingFactor^2
     end
-    CSV.write(string(path, sep, "CO2Cost_tax.csv"), dfCO2TaxCost)
+    CSV.write(joinpath(path, "CO2Cost_tax.csv"), dfCO2TaxCost)
     return dfCO2TaxCost
 end

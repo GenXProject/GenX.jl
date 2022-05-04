@@ -26,6 +26,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     G = inputs["G"]     # Number of generators
     COMMIT = inputs["COMMIT"]# Thermal units for unit commitment
     STOR_ALL = inputs["STOR_ALL"]
+    FLEX = inputs["FLEX"]
     # Create a NetRevenue dataframe
     dfNetRevenue = DataFrame(Region=dfGen[!, :region], Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], Cluster=dfGen[!, :cluster])
 
@@ -38,11 +39,10 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     dfNetRevenue.Inv_cost_MWh = zeros(nrow(dfNetRevenue))
     if !isempty(STOR_ALL)
         dfNetRevenue.Inv_cost_MWh[STOR_ALL] .= value.(EP[:eCInvEnergyCap][STOR_ALL])
-        if setup["ParameterScale"] == 1
-            dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
-        end
     end
-
+    if setup["ParameterScale"] == 1
+        dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
+    end
     # Add operations and maintenance cost to the dataframe
     dfNetRevenue.Fixed_OM_cost_MW = value.(EP[:eCFOMCap])
     if setup["ParameterScale"] == 1
@@ -52,9 +52,9 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     dfNetRevenue.Fixed_OM_cost_MWh = zeros(nrow(dfNetRevenue))
     if !isempty(STOR_ALL)
         dfNetRevenue.Fixed_OM_cost_MWh[STOR_ALL] .= value.(EP[:eCFOMEnergyCap][STOR_ALL])
-        if setup["ParameterScale"] == 1
-            dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor
-        end
+    end
+    if setup["ParameterScale"] == 1
+        dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor
     end
 
     dfNetRevenue.Var_OM_cost_out = value.(EP[:ePlantCVOMOut])
@@ -72,11 +72,14 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     dfNetRevenue.Var_OM_cost_in = zeros(nrow(dfNetRevenue))
     if !isempty(STOR_ALL)
         dfNetRevenue.Var_OM_cost_in[STOR_ALL] .= value.(EP[:ePlantCVarIn][STOR_ALL])
-        if setup["ParameterScale"] == 1
-            dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$
-        end
     end
-
+    if !isempty(FLEX)
+        dfNetRevenue.Var_OM_cost_in[FLEX] .= value.(EP[:ePlantCVarFlexIn][FLEX])
+    end    
+    if setup["ParameterScale"] == 1
+        dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$
+    end
+    
     # Add start-up cost to the dataframe
     dfNetRevenue.StartCost = zeros(nrow(dfNetRevenue))
     if setup["UCommit"] >= 1 && !isempty(COMMIT)

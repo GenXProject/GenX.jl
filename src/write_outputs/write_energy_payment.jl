@@ -15,21 +15,19 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_energy_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_energy_payment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing energy payment of different zones.
 """
-function write_energy_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_energy_payment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]
-    T = inputs["T"]     # Number of time steps (hours)
-    SEG = inputs["SEG"]
 
     dfEnergyPayment = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     statisfiedload = inputs["pD"] .- value.(EP[:eZonalNSE])
     dfEnergyPayment.AnnualSum .= vec(sum(statisfiedload .* dual.(EP[:cPowerBalance]), dims = 1))
     if setup["ParameterScale"] == 1
-        dfEnergyPayment.AnnualSum = dfEnergyPayment.AnnualSum * (ModelScalingFactor^2)
+        dfEnergyPayment.AnnualSum *= (ModelScalingFactor^2)
     end
-    CSV.write(string(path, sep, "EnergyPayment.csv"), dfEnergyPayment)
+    CSV.write(joinpath(path, "EnergyPayment.csv"), dfEnergyPayment)
     return dfEnergyPayment
 end

@@ -48,7 +48,7 @@ Additionally, total demand curtailed in each time step cannot exceed total deman
 \end{aligned}
 ```
 """
-function non_served_energy(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
+function non_served_energy(EP::Model, inputs::Dict, setup::Dict)
 
     println("Non-served Energy Module")
 
@@ -90,10 +90,12 @@ function non_served_energy(EP::Model, inputs::Dict, CapacityReserveMargin::Int)
         @expression(EP, eDemandResponse[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 2:SEG))
     end
     # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
-        if SEG >= 2
-            @expression(EP, eCapResMarBalanceNSE[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
-            EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+    if haskey(setup, "CapacityReserveMargin")
+        if setup["CapacityReserveMargin"] == 1
+            if SEG >= 2
+                @expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
+                EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+            end
         end
     end
 

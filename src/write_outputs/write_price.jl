@@ -28,16 +28,13 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfPrice = DataFrame(Zone = 1:Z) # The unit is $/MWh
 
 	# Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of generation
+	energyprice = transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])
 	if setup["ParameterScale"] == 1
-		dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]*ModelScalingFactor), :auto))
-	else
-		dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]), :auto))
+	    energyprice *= ModelScalingFactor
 	end
+	dfPrice = hcat(dfPrice, DataFrame(energyprice, [Symbol("t$t") for t in 1:T]))
 
-	auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]
-	rename!(dfPrice,auxNew_Names)
-
-	## Linear configuration final output
-	CSV.write(joinpath(path, "prices.csv"), dftranspose(dfPrice, false), writeheader=false)
-	return dfPrice
+    ## Linear configuration final output
+    CSV.write(joinpath(path, "prices.csv"), dftranspose(dfPrice, false), writeheader=false)
+    return dfPrice
 end

@@ -15,14 +15,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_reserve_margin_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_reserve_margin_payment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the capacity revenue earned by each generator listed in the input file. 
     GenX will print this file only when capacity reserve margin is modeled and the shadow price can be obtained form the solver. 
     Each row corresponds to a zone, and each column starting from the 3rd to the last is the total payment from each capacity reserve margin constraint. 
     As a reminder, GenX models the capacity reserve margin (aka capacity market) at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_reserve_margin_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_reserve_margin_payment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]     # Number of zonests
     dfResPayment = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     for i in 1:inputs["NCapacityReserveMargin"]
@@ -30,11 +30,11 @@ function write_reserve_margin_payment(path::AbstractString, sep::AbstractString,
         oneplusreservemargin[findall(x -> x == 0, inputs["dfCapRes"][:, i])] .= 0
         reservemarginpayment = (transpose(inputs["pD"]) .* oneplusreservemargin) * dual.(EP[:cCapacityResMargin][i, :])
         if setup["ParameterScale"] == 1
-            reservemarginpayment = reservemarginpayment * (ModelScalingFactor^2)
+            reservemarginpayment *= ModelScalingFactor^2
         end
-        dfResPayment.AnnualSum .= dfResPayment.AnnualSum + reservemarginpayment
+        dfResPayment.AnnualSum .+= reservemarginpayment
         dfResPayment = hcat(dfResPayment, DataFrame([reservemarginpayment], [Symbol("CapRes_$i")]))
     end
-    CSV.write(string(path, sep, "ReserveMarginPayment.csv"), dfResPayment)
+    CSV.write(joinpath(path, "ReserveMarginPayment.csv"), dfResPayment)
     return dfResPayment
 end

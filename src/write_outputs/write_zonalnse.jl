@@ -19,31 +19,25 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for reporting non-served energy for every model zone and time step.
 """
-function write_zonalnse(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+function write_zonalnse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
     T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-    SEG = inputs["SEG"] # Number of load curtailment segments
+    Z = inputs["Z"]     # Number of Zones
+
     # Non-served energy/demand curtailment by segment in each time step
-    dfZonalNse = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
+    dfZonalNse = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     znse = transpose(value.(EP[:eZonalNSE]))
     if setup["ParameterScale"] == 1
-        znse = znse * ModelScalingFactor
+        znse *= ModelScalingFactor
     end
     dfZonalNse.AnnualSum .= (znse * inputs["omega"])
     dfZonalNse = hcat(dfZonalNse, DataFrame(znse, [Symbol("t$t") for t in 1:T]))
     auxNew_Names = [Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
-    # rename!(dfZonalNse, auxNew_Names)
 
-    total = DataFrame(["Total" sum(dfZonalNse[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-    if v"1.3" <= VERSION < v"1.4"
-        total[!, 3:T+2] .= sum(znse, dims = 1)
-    elseif v"1.4" <= VERSION < v"1.7"
-        total[:, 3:T+2] .= sum(znse, dims = 1)
-    end
-    # rename!(total, auxNew_Names)
+    total = DataFrame(["Total" sum(dfZonalNse.AnnualSum) fill(0.0, (1, T))], auxNew_Names)
+    total[:, 3:T+2] .= sum(znse, dims=1)
     dfZonalNse = vcat(dfZonalNse, total)
 
-    CSV.write(string(path, sep, "zonalnse.csv"), dftranspose(dfZonalNse, false), writeheader = false)
+    CSV.write(joinpath(path, "zonalnse.csv"), dftranspose(dfZonalNse, false), writeheader=false)
     return dfZonalNse
 end

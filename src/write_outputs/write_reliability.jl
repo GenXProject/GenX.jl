@@ -26,16 +26,12 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# reliability: Dual variable of maximum NSE constraint = shadow value of reliability constraint
 	dfReliability = DataFrame(Zone = 1:Z)
 	# Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of generation
+	tempreliability = transpose(dual.(EP[:cMaxNSE]) ./ inputs["omega"])
 	if setup["ParameterScale"] == 1
-		dfReliability = hcat(dfReliability, DataFrame(transpose(dual.(EP[:cMaxNSE])./inputs["omega"]* ModelScalingFactor), :auto))
-	else
-		dfReliability = hcat(dfReliability, DataFrame(transpose(dual.(EP[:cMaxNSE])./inputs["omega"]), :auto))
+	    tempreliability *= ModelScalingFactor
 	end
-
-
-	auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]
-	rename!(dfReliability,auxNew_Names)
-
-	CSV.write(joinpath(path, "reliabilty.csv"), dftranspose(dfReliability, false), writeheader=false)
+	dfReliability = hcat(dfReliability, DataFrame(tempreliability, [Symbol("t$t") for t in 1:T]))
+	
+    CSV.write(joinpath(path, "reliabilty.csv"), dftranspose(dfReliability, false), writeheader=false)
 
 end

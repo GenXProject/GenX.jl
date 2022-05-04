@@ -19,15 +19,15 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing congestion revenue of each line.
 """
-function write_congestion_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_congestion_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]
     L = inputs["L"]
     T = inputs["T"]     # Number of time steps (hours)
     dfCongestionRevenue = DataFrame(Line = 1:L, AnnualSum = zeros(L))
     dfCongestionRevenue.AnnualSum = (-1) * vec(sum(value.(EP[:vFLOW]) .* (inputs["pNet_Map"] * transpose(dual.(EP[:cPowerBalance]))), dims = 2))
     if setup["ParameterScale"] == 1
-        dfCongestionRevenue.AnnualSum = dfCongestionRevenue.AnnualSum * (ModelScalingFactor^2)
+        dfCongestionRevenue.AnnualSum *= (ModelScalingFactor^2)
     end
-    CSV.write(string(path, sep, "CongestionRevenue.csv"), dfCongestionRevenue)
+    CSV.write(joinpath(path, "CongestionRevenue.csv"), dfCongestionRevenue)
     return dfCongestionRevenue
 end

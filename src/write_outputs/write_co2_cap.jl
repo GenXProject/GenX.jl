@@ -15,12 +15,12 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting carbon price of mass-based carbon cap.
 
 """
-function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
@@ -34,14 +34,12 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
         tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) .* inputs["dfCO2CapZones"][:, cap]
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
-            tempCO2Price = tempCO2Price * ModelScalingFactor
+            tempCO2Price *= ModelScalingFactor
         end
     end
     dfCO2Price = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, [Symbol("CO2_Price_$cap") for cap = 1:inputs["NCO2Cap"]]))
-    # auxNew_Names = [Symbol("Zone"); [Symbol("CO2_Price_$cap") for cap = 1:inputs["NCO2Cap"]]]
-    # rename!(dfCO2Price, auxNew_Names)
 
-    CSV.write(string(path, sep, "CO2Price_mass.csv"), dfCO2Price)
+    CSV.write(joinpath(path, "CO2Price_mass.csv"), dfCO2Price)
 
     dfCO2MassCapRev = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     temp_CO2MassCapRev = zeros(Z)
@@ -51,17 +49,14 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
             # when scaled, The dual variable function is in unit of Million US$/kton; 
             # The budget is in unit of kton, and thus the product is in Million US$. 
             # Multiply scaling factor twice to get back US$.
-            temp_CO2MassCapRev = temp_CO2MassCapRev * (ModelScalingFactor^2)
+            temp_CO2MassCapRev *= ModelScalingFactor^2
         end
-        dfCO2MassCapRev.AnnualSum .= dfCO2MassCapRev.AnnualSum + temp_CO2MassCapRev
+        dfCO2MassCapRev.AnnualSum .+= temp_CO2MassCapRev
         dfCO2MassCapRev = hcat(dfCO2MassCapRev, DataFrame([temp_CO2MassCapRev], [Symbol("CO2_MassCap_Revenue_$cap")]))
-        # rename!(dfCO2MassCapRev, Dict(:A => Symbol("CO2_MassCap_Revenue_$cap")))
     end
-    # dfCO2MassCapRev.AnnualSum = sum(eachcol(dfCO2MassCapRev[:, 3:inputs["NCO2Cap"]+2]))
-    CSV.write(string(path, sep, "CO2Revenue_mass.csv"), dfCO2MassCapRev)
+    CSV.write(joinpath(path, "CO2Revenue_mass.csv"), dfCO2MassCapRev)
 
     dfCO2MassCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
-
     for cap = 1:inputs["NCO2Cap"]
         # temp_CO2MassCapCost = DataFrame(A = zeros(G))
         temp_CO2MassCapCost = zeros(G)
@@ -71,14 +66,12 @@ function write_co2_cap_price_revenue(path::AbstractString, sep::AbstractString, 
             # when scaled, The dual variable function is in unit of Million US$/kton; 
             # The budget is in unit of kton, and thus the product is in Million US$. 
             # Multiply scaling factor twice to get back US$.
-            temp_CO2MassCapCost = temp_CO2MassCapCost * (ModelScalingFactor^2)
+            temp_CO2MassCapCost *= (ModelScalingFactor^2)
         end
-        dfCO2MassCapCost.AnnualSum .= dfCO2MassCapCost.AnnualSum + temp_CO2MassCapCost
+        dfCO2MassCapCost.AnnualSum .+= temp_CO2MassCapCost
         dfCO2MassCapCost = hcat(dfCO2MassCapCost, DataFrame([temp_CO2MassCapCost], [Symbol("CO2_MassCap_Cost_$cap")]))
-        # rename!(dfCO2MassCapCost, Dict(:A => Symbol("CO2_MassCap_Cost_$cap")))
     end
-    # dfCO2MassCapCost.AnnualSum = sum(eachcol(dfCO2MassCapCost[:, 3:inputs["NCO2Cap"]+2]))
-    CSV.write(string(path, sep, "CO2Cost_mass.csv"), dfCO2MassCapCost)
+    CSV.write(joinpath(path, "CO2Cost_mass.csv"), dfCO2MassCapCost)
 
     return dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost
 end

@@ -108,40 +108,60 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 ```
 The above reserve related constraints are established by ```storage_all_reserves()``` in ```storage_all.jl```
 """
-function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int, MultiStage::Int)
-#function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int) ##From main
+function storage(EP::Model, inputs::Dict, setup::Dict)
+    #function storage(EP::Model, inputs::Dict, Reserves::Int, OperationWrapping::Int, EnergyShareRequirement::Int, CapacityReserveMargin::Int, StorageLosses::Int) ##From main
 
-	println("Storage Resources Module")
-	dfGen = inputs["dfGen"]
-	T = inputs["T"]
-	STOR_ALL = inputs["STOR_ALL"]
-
-	if !isempty(STOR_ALL)
-		EP = investment_energy(EP, inputs, MultiStage)
-		#EP = investment_energy(EP, inputs) ##From main
-		EP = storage_all(EP, inputs, Reserves, OperationWrapping)
-
-		# Include Long Duration Storage only when modeling representative periods and long-duration storage
-		if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
-			EP = long_duration_storage(EP, inputs)
-		end
+    println("Storage Resources Module")
+    dfGen = inputs["dfGen"]
+    T = inputs["T"]
+    STOR_ALL = inputs["STOR_ALL"]
+    OperationWrapping = setup["OperationWrapping"]
+	if haskey(setup, "Reserves")
+	    Reserves = copy(setup["Reserves"])
+	else
+	    Reserves = 0
 	end
-
-	if !isempty(inputs["STOR_ASYMMETRIC"])
-		EP = investment_charge(EP, inputs, MultiStage)
-		EP = storage_asymmetric(EP, inputs, Reserves)
+	if haskey(setup, "CapacityReserveMargin")
+	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
+	else
+	    CapacityReserveMargin = 0
 	end
-
-	if !isempty(inputs["STOR_SYMMETRIC"])
-		EP = storage_symmetric(EP, inputs, Reserves)
+	if haskey(setup, "StorageLosses")
+	    StorageLosses = copy(setup["StorageLosses"])
+	else
+	    StorageLosses = 0
+	end	
+	if haskey(setup, "MultiStage")
+	    MultiStage = copy(setup["MultiStage"])
+	else
+	    MultiStage = 0
 	end
+    if !isempty(STOR_ALL)
+        EP = investment_energy(EP, inputs, MultiStage)
+        #EP = investment_energy(EP, inputs) ##From main
+        EP = storage_all(EP, inputs, Reserves, OperationWrapping)
+
+        # Include Long Duration Storage only when modeling representative periods and long-duration storage
+        if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
+            EP = long_duration_storage(EP, inputs)
+        end
+    end
+
+    if !isempty(inputs["STOR_ASYMMETRIC"])
+        EP = investment_charge(EP, inputs, MultiStage)
+        EP = storage_asymmetric(EP, inputs, Reserves)
+    end
+
+    if !isempty(inputs["STOR_SYMMETRIC"])
+        EP = storage_symmetric(EP, inputs, Reserves)
+    end
 
 
-	# Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceStor
-	end
+    # Capacity Reserves Margin policy
+    if CapacityReserveMargin > 0
+        @expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y, Symbol("CapRes_$res")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for y in STOR_ALL))
+        EP[:eCapResMarBalance] += eCapResMarBalanceStor
+    end
 
-	return EP
+    return EP
 end

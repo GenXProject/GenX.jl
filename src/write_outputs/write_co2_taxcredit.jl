@@ -15,23 +15,17 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_credit_for_captured_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_credit_for_captured_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 """
-function write_credit_for_captured_emissions(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_credit_for_captured_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-    L = inputs["L"]     # Number of transmission lines
-    W = inputs["REP_PERIOD"]     # Number of subperiods
-    SEG = inputs["SEG"] # Number of load curtailment segments
-
 
     dfCO2CaptureCredit = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
     dfCO2CaptureCredit.AnnualSum = value.(EP[:eEmissionsCaptureByPlantYear]) * (-1) .* inputs["dfCO2Credit"][dfGen[:, :Zone], "CO2Credit"]
     if setup["ParameterScale"] == 1
-        dfCO2CaptureCredit.AnnualSum .= dfCO2CaptureCredit.AnnualSum * (ModelScalingFactor^2)
+        dfCO2CaptureCredit.AnnualSum *= ModelScalingFactor^2
     end
-    CSV.write(string(path, sep, "CO2Credit.csv"), dfCO2CaptureCredit)
+    CSV.write(joinpath(path, "CO2Credit.csv"), dfCO2CaptureCredit)
     return dfCO2CaptureCredit
 end

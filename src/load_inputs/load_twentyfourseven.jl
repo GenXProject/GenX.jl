@@ -15,19 +15,19 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_twentyfourseven(setup::Dict, path::AbstractString, sep::AbstractString, inputs_tfs::Dict)
+	load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dict)
 
 Function for reading input parameters related to 24-7 constraints
 """
-function load_twentyfourseven(setup::Dict, path::AbstractString, sep::AbstractString, inputs_tfs::Dict)
-    inputs_tfs["TFS"] = DataFrame(CSV.File(string(path, sep, "RPSH.csv"), header = true), copycols = true)
+function load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dict)
+    inputs_tfs["TFS"] = DataFrame(CSV.File(joinpath(path, "RPSH.csv"), header = true), copycols = true)
 
     # determine the number of TFS requirement
     NumberofTFS = size(collect(inputs_tfs["TFS"][:, :Policy_ID]), 1)
     inputs_tfs["NumberofTFS"] = NumberofTFS
     println("RPSH.csv Successfully Read!")
 
-    tfs_load_in = DataFrame(CSV.File(string(path, sep, "RPSH_Load_data.csv"), header = true), copycols = true)
+    tfs_load_in = DataFrame(CSV.File(joinpath(path, "RPSH_Load_data.csv"), header = true), copycols = true)
     first_col = findall(s -> s == "Load_MW_RPSH_1", names(tfs_load_in))[1]
     last_col = findall(s -> s == "Load_MW_RPSH_$NumberofTFS", names(tfs_load_in))[1]
     inputs_tfs["TFS_Load"] = Matrix{Float64}(tfs_load_in[:, first_col:last_col])
@@ -38,14 +38,14 @@ function load_twentyfourseven(setup::Dict, path::AbstractString, sep::AbstractSt
 
     println("RPSH_Load_data.csv Successfully Read!")
 
-    tfs_dirtiness_in = DataFrame(CSV.File(string(path, sep, "RPSH_SFDT.csv"), header = true), copycols = true)
+    tfs_dirtiness_in = DataFrame(CSV.File(joinpath(path, "RPSH_SFDT.csv"), header = true), copycols = true)
     first_col = findall(s -> s == "RPSH_SFDT_1", names(tfs_dirtiness_in))[1]
     last_col = findall(s -> s == "RPSH_SFDT_$NumberofTFS", names(tfs_dirtiness_in))[1]
     inputs_tfs["TFS_SFDT"] = Matrix{Float64}(tfs_dirtiness_in[:, first_col:last_col])
     println("RPSH_SFDT.csv Successfully Read!")
 
     if (NumberofTFS) > 1
-        inputs_tfs["TFS_Network"] = DataFrame(CSV.File(string(path, sep, "RPSH_Network.csv"), header = true), copycols = true)
+        inputs_tfs["TFS_Network"] = DataFrame(CSV.File(joinpath(path, "RPSH_Network.csv"), header = true), copycols = true)
         NumberofTFSPath = size(collect(inputs_tfs["TFS_Network"][:, :RPSH_PathID]), 1)
         inputs_tfs["NumberofTFSPath"] = NumberofTFSPath
         if setup["ParameterScale"] == 1

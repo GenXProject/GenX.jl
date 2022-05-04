@@ -14,28 +14,24 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_zonal_transmission_losses(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_zonal_transmission_losses(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-    L = inputs["L"]     # Number of transmission lines
-    dfZonalTransmissionLoss = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
+    Z = inputs["Z"]     # Number of Zones
+
+    dfZonalTransmissionLoss = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     transmissionloss = 0.5 * value.(EP[:eTransLossByZone])
     if setup["ParameterScale"] == 1
-        transmissionloss = transmissionloss * ModelScalingFactor
+        transmissionloss *= ModelScalingFactor
     end
     dfZonalTransmissionLoss.AnnualSum .= transmissionloss * inputs["omega"]
     dfZonalTransmissionLoss = hcat(dfZonalTransmissionLoss, DataFrame(transmissionloss, [Symbol("t$t") for t in 1:T]))
     auxNew_Names = [Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
 
-    total = DataFrame(["Total" sum(dfZonalTransmissionLoss[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
-    if v"1.3" <= VERSION < v"1.4"
-        total[!, 3:T+2] .= sum(transmissionloss, dims = 1)
-    elseif v"1.4" <= VERSION < v"1.7"
-        total[:, 3:T+2] .= sum(transmissionloss, dims = 1)
-    end
-    rename!(total, auxNew_Names)
+    total = DataFrame(["Total" sum(dfZonalTransmissionLoss[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
+    total[:, 3:T+2] .= sum(transmissionloss, dims=1)
+    
     dfZonalTransmissionLoss = vcat(dfZonalTransmissionLoss, total)
 
-    CSV.write(string(path, sep, "zonaltransmissionlosses.csv"), dftranspose(dfZonalTransmissionLoss, false), writeheader = false)
+    CSV.write(joinpath(path, "zonaltransmissionlosses.csv"), dftranspose(dfZonalTransmissionLoss, false), writeheader=false)
     return dfZonalTransmissionLoss
 end

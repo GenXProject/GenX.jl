@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_transmission_losscost(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_transmission_losscost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing energy payment of different zones.
 """
-function write_transmission_losscost(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_transmission_losscost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]
     T = inputs["T"]     # Number of time steps (hours)
     SEG = inputs["SEG"]
@@ -28,8 +28,8 @@ function write_transmission_losscost(path::AbstractString, sep::AbstractString, 
     transmissionloss = 0.5 * value.(EP[:eTransLossByZone])
     dfTransmissionLossCost.AnnualSum .= vec(sum(transmissionloss .* transpose(dual.(EP[:cPowerBalance])), dims = 2))
     if setup["ParameterScale"] == 1
-        dfTransmissionLossCost.AnnualSum = dfTransmissionLossCost.AnnualSum * (ModelScalingFactor^2)
+        dfTransmissionLossCost.AnnualSum *= (ModelScalingFactor^2)
     end
-    CSV.write(string(path, sep, "TransmissionLossCost.csv"), dfTransmissionLossCost)
+    CSV.write(joinpath(path, "TransmissionLossCost.csv"), dfTransmissionLossCost)
     return dfTransmissionLossCost
 end

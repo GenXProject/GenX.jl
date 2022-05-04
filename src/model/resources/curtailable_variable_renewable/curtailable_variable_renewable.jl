@@ -28,7 +28,7 @@ For each VRE technology type $y$ and model zone $z$, the model allows for incorp
 The above constraint is defined as an inequality instead of an equality to allow for VRE power output to be curtailed if desired. This adds the possibility of introducing VRE curtailment as an extra degree of freedom to guarantee that generation exactly meets demand in each time step.
 Note that if ```Reserves=1``` indicating that frequency regulation and operating reserves are modeled, then this function calls ```curtailable_variable_renewable_reserves()```, which replaces the above constraints with a formulation inclusive of reserve provision.
 """
-function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, CapacityReserveMargin::Int)
+function curtailable_variable_renewable(EP::Model, inputs::Dict, setup::Dict)
 	## Controllable variable renewable generators
 	### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Generators_data.csv  >1
 	## Default value of Num_VRE_Bins ==1
@@ -44,6 +44,18 @@ function curtailable_variable_renewable(EP::Model, inputs::Dict, Reserves::Int, 
 
 	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
 	VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
+
+	if haskey(setup, "Reserves")
+	    Reserves = copy(setup["Reserves"])
+	else
+	    Reserves = 0
+	end
+
+	if haskey(setup, "CapacityReserveMargin")
+	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
+	else
+	    CapacityReserveMargin = 0
+	end
 
 	### Expressions ###
 

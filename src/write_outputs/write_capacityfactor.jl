@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_capacityfactor(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the capacity factor of different resources.
 """
-function write_capacityfactor(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
@@ -29,17 +29,17 @@ function write_capacityfactor(path::AbstractString, sep::AbstractString, inputs:
     MUST_RUN = inputs["MUST_RUN"]
 
     dfCapacityfactor = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
+    dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
+    dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
     if setup["ParameterScale"] == 1
-        dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
-        dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * ModelScalingFactor
-    else
-        dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
-        dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
+        dfCapacityfactor.AnnualSum *= ModelScalingFactor
+        dfCapacityfactor.Capacity *= ModelScalingFactor
     end
+    
     EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactor.AnnualSum), findall(x -> x >= 1, dfCapacityfactor.Capacity))
     CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN), EXISTING)
     dfCapacityfactor.CapacityFactor[CF_GEN] .= (dfCapacityfactor.AnnualSum[CF_GEN] ./ dfCapacityfactor.Capacity[CF_GEN]) / sum(inputs["omega"][t] for t in 1:T)
 
-    CSV.write(string(path, sep, "capacityfactor.csv"), dfCapacityfactor)
+    CSV.write(joinpath(path, "capacityfactor.csv"), dfCapacityfactor)
     return dfCapacityfactor
 end
