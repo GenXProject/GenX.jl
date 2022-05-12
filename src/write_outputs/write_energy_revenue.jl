@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing energy revenue from the different generation technologies.
 """
-function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -35,6 +35,6 @@ function write_energy_revenue(path::AbstractString, sep::AbstractString, inputs:
 		energyrevenue *= ModelScalingFactor^2
 	end
 	dfEnergyRevenue.AnnualSum .= energyrevenue * inputs["omega"]
-	CSV.write(string(path,sep,"EnergyRevenue.csv"), dfEnergyRevenue)
+	CSV.write(joinpath(path,"EnergyRevenue.csv"), dfEnergyRevenue)
 	return dfEnergyRevenue
 end

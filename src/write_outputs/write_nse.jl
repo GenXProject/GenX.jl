@@ -44,6 +44,6 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)
 
-	CSV.write(string(path,sep,"nse.csv"),  dftranspose(dfNse, false), writeheader=false)
+	CSV.write(joinpath(path,"nse.csv"),  dftranspose(dfNse, false), writeheader=false)
 	return dfNse
 end
