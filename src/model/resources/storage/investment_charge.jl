@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	investment_charge(EP::Model, inputs::Dict)
+	investment_charge!(EP::Model, inputs::Dict)
 
 This function defines the expressions and constraints keeping track of total available storage charge capacity across all resources as well as constraints on capacity retirements. The function also adds investment and fixed O\&M related costs related to charge capacity to the objective function.
 
@@ -54,11 +54,12 @@ In addition, this function adds investment and fixed O&M related costs related t
 \end{aligned}
 ```
 """
-function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
+function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Charge Investment Module")
 
 	dfGen = inputs["dfGen"]
+	MultiStage = setup["MultiStage"]
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
@@ -84,7 +85,7 @@ function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
 	if MultiStage == 1
 		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], vEXISTINGCAPCHARGE[y])
 	else
-		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], dfGen[!,:Existing_Charge_Cap_MW][y])
+		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], dfGen[y,:Existing_Charge_Cap_MW])
 	end
 
 	@expression(EP, eTotalCapCharge[y in STOR_ASYMMETRIC],
@@ -105,9 +106,9 @@ function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
 	# If resource is not eligible for new charge capacity, fixed costs are only O&M costs
 	@expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
 		if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
-			dfGen[!,:Inv_Cost_Charge_per_MWyr][y]*vCAPCHARGE[y] + dfGen[!,:Fixed_OM_Cost_Charge_per_MWyr][y]*eTotalCapCharge[y]
+			dfGen[y,:Inv_Cost_Charge_per_MWyr]*vCAPCHARGE[y] + dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
 		else
-			dfGen[!,:Fixed_OM_Cost_Charge_per_MWyr][y]*eTotalCapCharge[y]
+			dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
 		end
 	)
 
@@ -128,22 +129,21 @@ function investment_charge(EP::Model, inputs::Dict, MultiStage::Int)
 
 	if MultiStage == 1
 		# Existing capacity variable is equal to existing capacity specified in the input file
-		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == dfGen[!,:Existing_Charge_Cap_MW][y])
+		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == dfGen[y,:Existing_Charge_Cap_MW])
 	end
 
 	## Constraints on retirements and capacity additions
 	#Cannot retire more charge capacity than existing charge capacity
- 	@constraint(EP, cMaxRetCharge[y in RET_CAP_CHARGE], vRETCAPCHARGE[y] <= eExistingCapCharge[y])
+	@constraint(EP, cMaxRetCharge[y in RET_CAP_CHARGE], vRETCAPCHARGE[y] <= eExistingCapCharge[y])
 
   	#Constraints on new built capacity
 
 	# Constraint on maximum charge capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapCharge[y in intersect(dfGen[!,:Max_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] <= dfGen[!,:Max_Charge_Cap_MW][y])
+	@constraint(EP, cMaxCapCharge[y in intersect(dfGen[!,:Max_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] <= dfGen[y,:Max_Charge_Cap_MW])
 
 	# Constraint on minimum charge capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapCharge[y in intersect(dfGen[!,:Min_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] >= dfGen[!,:Min_Charge_Cap_MW][y])
+	@constraint(EP, cMinCapCharge[y in intersect(dfGen[!,:Min_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] >= dfGen[y,:Min_Charge_Cap_MW])
 
-	return EP
 end

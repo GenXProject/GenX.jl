@@ -68,7 +68,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 
         # Constraint to compute total generation in each zone from a given Technology Type
 	    @constraint(EP,cGeneration[tt = 1:length(TechTypes), z = 1:Z], vSumvP[tt,z] == sum(EP[:vP][y,t] * inputs["omega"][t]
-	    for y in dfGen[(dfGen[!,:Resource_Type] .== TechTypes[tt]) .& (dfGen[!,:Zone] .== z),:][!,:R_ID], t in 1:T))
+	    for y in dfGen[(dfGen[!,:Resource_Type] .== TechTypes[tt]) .& (dfGen[!,:Zone] .== z), :R_ID], t in 1:T))
 
 	    ### End Constraints ###
 

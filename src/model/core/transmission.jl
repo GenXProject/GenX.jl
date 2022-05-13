@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int, CapacityReserveMargin::Int)
+	function transmission!(EP::Model, inputs::Dict, setup::Dict)
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
 The function adds transmission reinforcement or construction costs to the objective function. Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$.
 ```math
@@ -108,13 +108,18 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 \end{aligned}
 ```
 """
-function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::Int, CapacityReserveMargin::Int, MultiStage::Int)
+function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Transmission Module")
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	L = inputs["L"]     # Number of transmission lines
+
+	UCommit = setup["UCommit"]
+	NetworkExpansion = setup["NetworkExpansion"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
+	MultiStage = setup["MultiStage"]
 
 	## sets and indices for transmission losses and expansion
 	TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -336,5 +341,4 @@ function transmission(EP::Model, inputs::Dict, UCommit::Int, NetworkExpansion::I
 		end
 	end # End if(TRANS_LOSS_SEGS > 0) block
 
-	return EP
 end

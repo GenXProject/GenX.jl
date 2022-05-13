@@ -15,12 +15,12 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    write_settings(outpath::AbstractString, sep::AbstractString, settings_d::Dict)
+    write_settings(outpath::AbstractString, settings_d::Dict)
 
 Function for writing the multi-stage settings file to the output path for future reference.
 """
-function write_settings(outpath::AbstractString, sep::AbstractString, settings_d::Dict)
+function write_settings(outpath::AbstractString, settings_d::Dict)
     multi_stage_settings_d = settings_d["MultiStageSettingsDict"]
-    YAML.write_file(string(outpath,sep,"genx_settings.yml"), settings_d)
-    YAML.write_file(string(outpath,sep,"multi_stage_settings.yml"), multi_stage_settings_d)
+    YAML.write_file(joinpath(outpath, "genx_settings.yml"), settings_d)
+    YAML.write_file(joinpath(outpath, "multi_stage_settings.yml"), multi_stage_settings_d)
 end

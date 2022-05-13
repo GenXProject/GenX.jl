@@ -27,7 +27,13 @@ println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
-    "Welcome Page" => "index.md",
+    "Welcome Page" => [
+        "GenX: Introduction" => "index.md",
+        "Running GenX Cases" => "how_to_run_genx.md",
+        "Multi-Stage Capacity Expansion Planning with GenX" => "multi_stage_genx.md",
+        "Limitation of GenX" => "limitations_genx.md",
+        "Third Party Extensions" => "third_party_genx.md"
+    ],
     "Model Concept and Overview" => [
         "Model Introduction" => "model_introduction.md",
         "Notation" => "model_notation.md",
@@ -91,19 +97,25 @@ makedocs(;
     sitename="GenX",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://genxproject.github.io/GenX",
+        canonical="https://genxproject.github.io/GenX/stable",
         assets=String[],
     ),
     pages=[p for p in pages]
 )
 
 deploydocs(;
+    root = "<current-directory>",
+    dirname = "",
     repo="github.com/GenXProject/GenX.git",
     target = "build",
     branch = "gh-pages",
-    devbranch = "main",
+    devbranch = nothing, #"main",
     devurl = "dev",
     push_preview=true,
-    versions = ["stable" => "v^", "v#.#"],
-    #push_preview = true,
+    versions = ["stable" => "v^", "v#.#", devurl => devurl],
+    forcepush = false,
+    deploy_config = auto_detect_deploy_system(),
+    repo_previews = repo,
+    branch_previews = branch,
 )
+
