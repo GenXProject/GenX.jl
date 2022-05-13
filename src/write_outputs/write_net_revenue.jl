@@ -124,6 +124,20 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		end
 	end
 
+	# Add CO2 Capture cost and Credit to the dataframe
+	# dfNetRevenue.CO2Credit = zeros(nrow(dfNetRevenue))
+	dfNetRevenue.SequestrationCost = zeros(nrow(dfNetRevenue))
+	if setup["CO2Capture"] == 1
+		dfNetRevenue.SequestrationCost .+= value.(EP[:ePlantCCO2Sequestration])
+		# if setup["CO2Credit"] == 1
+		# 	dfNetRevenue.CO2Credit .-= value.(EP[:ePlantCCO2Credit]) # note that the expression is a negative number
+		# end
+		if setup["ParameterScale"] == 1
+			dfNetRevenue.SequestrationCost *= ModelScalingFactor^2
+			# dfNetRevenue.CO2Credit *= ModelScalingFactor^2
+		end
+	end
+	
 	# Add regional technology subsidy revenue to the dataframe
 	dfNetRevenue.RegSubsidyRevenue = zeros(nrow(dfNetRevenue))
 	if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
@@ -131,7 +145,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue .+ dfNetRevenue.SubsidyRevenue .+ dfNetRevenue.ReserveMarginRevenue .+ dfNetRevenue.ESRRevenue .+ dfNetRevenue.RegSubsidyRevenue
-	dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW .+ dfNetRevenue.Inv_cost_MWh .+ dfNetRevenue.Fixed_OM_cost_MW .+ dfNetRevenue.Fixed_OM_cost_MWh .+ dfNetRevenue.Var_OM_cost_out .+ dfNetRevenue.Var_OM_cost_in .+ dfNetRevenue.Fuel_cost .+ dfNetRevenue.Charge_cost .+ dfNetRevenue.EmissionsCost .+ dfNetRevenue.StartCost
+	dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW .+ dfNetRevenue.Inv_cost_MWh .+ dfNetRevenue.Fixed_OM_cost_MW .+ dfNetRevenue.Fixed_OM_cost_MWh .+ dfNetRevenue.Var_OM_cost_out .+ dfNetRevenue.Var_OM_cost_in .+ dfNetRevenue.Fuel_cost .+ dfNetRevenue.Charge_cost .+ dfNetRevenue.EmissionsCost .+ dfNetRevenue.StartCost .+ dfNetRevenue.SequestrationCost
 	dfNetRevenue.Profit = dfNetRevenue.Revenue .- dfNetRevenue.Cost
 
 	CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)

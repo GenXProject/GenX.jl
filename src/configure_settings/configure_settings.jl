@@ -63,7 +63,10 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "ModelingtoGenerateAlternativeSlack", 0.1)
     # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
     set_default_if_absent!(settings, "MultiStage", 0)
-
+    # CO2 carbon capture and sequestration; 0 = not active; 1 = active, co2 capture will be modeled, cost and caputred emission will be printed;
+    set_default_if_absent!(settings, "CO2Capture", 0)
+    # Piecewise Heat Rate; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "PieceWiseHeatRate", 0)    
 
 return settings
 end

@@ -87,7 +87,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println(elapsed_time_expansion)
 		end
 	end
-	elapsed_time_emissions = @elapsed write_emissions(path, inputs, setup, EP)
+	# elapsed_time_emissions = @elapsed write_emissions(path, inputs, setup, EP)
+	elapsed_time_emissions = @elapsed write_co2(path, inputs, setup, EP)
 	println("Time elapsed for writing emissions is")
 	println(elapsed_time_emissions)
 	if has_duals(EP) == 1
