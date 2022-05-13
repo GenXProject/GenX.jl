@@ -66,18 +66,13 @@ If however, the user opens a julia kernel, while not yet inside the GenX folder,
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
+## When using commercial solvers, Gurobi and CPLEX
 If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
-
-1. Uncomment the relevant lines in the `[deps]` and `[compat]` in the Project.toml file within GenX/ folder. If the CPLEX and/or Gurobi lines are missing, add the following lines to the `[deps]`:
-`CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"`
-`Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"`
-and the following lines to the `[compat]`:
-`CPLEX = "0.7.7"`
-`Gurobi = "0.9.14"`
-depending on whether you are going to use CPLEX or Gurobi, respectively.
-2. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
-3. Set the appropriate solver in the `genx_settings.yml` file
-4. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
+1. Open the `Guide_to_Project.toml` file within the `GenX` folder
+2. If you want to have only Gurobi (but, not CPLEX) solver, use the `[deps]` and the `[compat]` from underneath the header: `[deps]/UUIDs to be used when not using CPLEX` and the header `[compat]/version numbers to be used when not using CPLEX` respectively. If one the other hand, if you want to use CPLEX (along with Gurobi; you can delete the relevant lines of Gurobi, in case you don't want to use it) then use the `[deps]` and the `[compat]` from underneath the header: `[deps]/UUIDs to be used when using CPLEX` and the header `[compat]/version numbers to be used when using CPLEX` respectively, from the `Guide_to_Project.toml` file. Copy the corresponding lines and paste them in the `Project.toml` file. Alternatively, you can also copy only the `[deps]` and `[compat]` for just the commercial solvers and paste those at respective places in the `Project.toml` file.
+3. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
+4. Set the appropriate solver in the `genx_settings.yml` file
+5. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
 
 ## Running Modeling to Generate Alternatives with GenX
 

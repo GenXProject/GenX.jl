@@ -57,7 +57,7 @@ When not modeling regulation and reserves, thermal units not subject to unit com
 ```
 (See Constraints 3-4 in the code)
 """
-function thermal_no_commit(EP::Model, inputs::Dict, setup::Dict)
+function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Thermal (No Unit Commitment) Resources Module")
 
