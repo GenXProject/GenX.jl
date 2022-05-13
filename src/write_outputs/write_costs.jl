@@ -35,6 +35,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost.Total *= ModelScalingFactor^2
 	end
 
+    if setup["CO2Capture"] == 1
+		temp = value(EP[:eTotaleCCO2Sequestration])
+		if setup["ParameterScale"] == 1
+			temp *= ModelScalingFactor^2
+		end		
+        dfCost[3,2] += temp
+        # if setup["CO2Credit"] == 1
+        #     dfCost[3,2]+= value(EP[:eTotalCCO2Credit])
+        # end
+    end
+
 	if setup["UCommit"]>=1
 		dfCost[5,2] = value(EP[:eTotalCStart])
 	end
@@ -91,7 +102,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCVar += eCVarFlex_in
 			tempCTotal += eCVarFlex_in
 		end
-
+        if setup["CO2Capture"] == 1
+			tempCVar += value.(EP[:eZonalCCO2Sequestration])[z]
+            # if setup["CO2Credit"] == 1
+            #     tempCVar += value.(EP[:eZonalCCO2Credit])[z]
+            # end
+        end
 		if setup["UCommit"] >= 1
 			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:]))
 			tempCStart += eCStart
