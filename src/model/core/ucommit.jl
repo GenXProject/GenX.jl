@@ -63,12 +63,16 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Objective Function Expressions ##
 
-	# Startup costs of "generation" for resource "y" during hour "t"
-	@expression(EP, eCStart[y in COMMIT, t=1:T],(inputs["omega"][t]*inputs["C_Start"][y]*vSTART[y,t]))
+    # Startup costs of "generation" for resource "y" during hour "t"
+    @expression(EP, eCStart[y in COMMIT, t = 1:T], (inputs["omega"][t] * inputs["C_Start"][y] * vSTART[y, t]))
 
-	# Julia is fastest when summing over one row one column at a time
-	@expression(EP, eTotalCStartT[t=1:T], sum(eCStart[y,t] for y in COMMIT))
-	@expression(EP, eTotalCStart, sum(eTotalCStartT[t] for t=1:T))
+    # Julia is fastest when summing over one row one column at a time
+    # Sum to plant level
+    @expression(EP, ePlantCStart[y in COMMIT], sum(eCStart[y, t] for t in 1:T))
+    # Sum to zonal level
+    @expression(EP, eZonalCStart[z = 1:Z], EP[:vZERO] + sum(ePlantCStart[y] for y in intersect(COMMIT, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    # Sum to system level
+    @expression(EP, eTotalCStart, sum(eZonalCStart[z] for z = 1:Z))
 
 	EP[:eObj] += eTotalCStart
 
