@@ -28,42 +28,42 @@ function co2!(EP::Model, inputs::Dict, setup::Dict)
     # CO2 emissions from power plants in "Generator_data.csv"
     if setup["CO2Capture"] == 0
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            if setup["PieceWiseHeatRate"] == 1
-                if y in inputs["COMMIT"]
-                    (dfGen[!, :CO2_per_MMBTU][y] * EP[:vFuel][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
-                end
-            else
+            # if setup["PieceWiseHeatRate"] == 1
+            #     if y in inputs["COMMIT"]
+            #         (dfGen[!, :CO2_per_MMBTU][y] * EP[:vFuel][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
+            #     end
+            # else
                 if y in inputs["COMMIT"]
                     (dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
                 else
                     dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t]
-                end
+                # end
             end)
     else # setup["CO2Capture"] == 1
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            if setup["PieceWiseHeatRate"] == 1
-                if y in inputs["COMMIT"]
-                    (1 - dfGen[!, :CO2_Capture_Rate][y]) * (dfGen[!, :CO2_per_MMBTU][y] * EP[:vFuel][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
-                end
-            else
+            # if setup["PieceWiseHeatRate"] == 1
+            #     if y in inputs["COMMIT"]
+            #         (1 - dfGen[!, :CO2_Capture_Rate][y]) * (dfGen[!, :CO2_per_MMBTU][y] * EP[:vFuel][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
+            #     end
+            # else
                 if y in inputs["COMMIT"]
                     (1 - dfGen[!, :CO2_Capture_Rate][y]) * (dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
                 else
                     (1 - dfGen[!, :CO2_Capture_Rate][y]) * dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t]
-                end
+                # end
             end)
         # CO2  captured from power plants in "Generator_data.csv"
         @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
-            if setup["PieceWiseHeatRate"] == 1
-                if y in inputs["COMMIT"]
-                    (dfGen[!, :CO2_Capture_Rate][y]) * (dfGen[!, :CO2_per_MMBTU][y] * EP[:vFuel][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
-                end
-            else
+            # if setup["PieceWiseHeatRate"] == 1
+            #     if y in inputs["COMMIT"]
+            #         (dfGen[!, :CO2_Capture_Rate][y]) * (dfGen[!, :CO2_per_MMBTU][y] * EP[:vFuel][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
+            #     end
+            # else
                 if y in inputs["COMMIT"]
                     (dfGen[!, :CO2_Capture_Rate][y]) * (dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t] + dfGen[!, :CO2_per_Start][y] * EP[:vSTART][y, t])
                 else
                     dfGen[!, :CO2_per_MWh][y] * EP[:vP][y, t] * (dfGen[!, :CO2_Capture_Rate][y])
-                end
+                # end
             end)
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] for t in 1:T))
         @expression(EP, eEmissionsCaptureByZone[z=1:Z, t=1:T], sum(eEmissionsCaptureByPlant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))

@@ -93,11 +93,15 @@ end
 ## Objective Function Expressions ##
 
 # Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
-@expression(EP, eCVarFlex_in[y in FLEX,t=1:T], inputs["omega"][t]*dfGen[!,:Var_OM_Cost_per_MWh_In][y]*vCHARGE_FLEX[y,t])
+@expression(EP, eCVarFlex_in[y in FLEX, t= 1:T], inputs["omega"][t]*dfGen[y, :Var_OM_Cost_per_MWh_In] * vCHARGE_FLEX[y, t])
 
-# Sum individual resource contributions to variable charging costs to get total variable charging costs
-@expression(EP, eTotalCVarFlexInT[t=1:T], sum(eCVarFlex_in[y,t] for y in FLEX))
-@expression(EP, eTotalCVarFlexIn, sum(eTotalCVarFlexInT[t] for t in 1:T))
+# Sum to Plant level
+@expression(EP, ePlantCVarFlexIn[y in FLEX], sum(EP[:eCVarFlex_in][y, t] for t in 1:T))
+# Sum to zonal level
+@expression(EP, eZonalCVarFlexIn[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCVarFlexIn][y] for y in intersect(FLEX, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+# Sum to system level
+@expression(EP, eTotalCVarFlexIn, sum(EP[:eZonalCVarFlexIn][z] for z in 1:Z))
+
 EP[:eObj] += eTotalCVarFlexIn
 
 ### Constraints ###

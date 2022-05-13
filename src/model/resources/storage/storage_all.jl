@@ -55,11 +55,20 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	## Objective Function Expressions ##
 
 	#Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
-	@expression(EP, eCVar_in[y in STOR_ALL,t=1:T], inputs["omega"][t]*dfGen[y,:Var_OM_Cost_per_MWh_In]*vCHARGE[y,t])
+	@expression(EP, eCVar_in[y in STOR_ALL, t = 1:T], inputs["omega"][t]*dfGen[y, :Var_OM_Cost_per_MWh_In]*vCHARGE[y, t])
 
-	# Sum individual resource contributions to variable charging costs to get total variable charging costs
-	@expression(EP, eTotalCVarInT[t=1:T], sum(eCVar_in[y,t] for y in STOR_ALL))
-	@expression(EP, eTotalCVarIn, sum(eTotalCVarInT[t] for t in 1:T))
+    # Sum individual resource contributions to variable charging costs to get total variable charging costs
+
+    # Sum to the plant level
+    @expression(EP, ePlantCVarIn[y in STOR_ALL], sum(EP[:eCVar_in][y, t] for t in 1:T))
+    
+	# Sum to the zonal level
+    @expression(EP, eZonalCVarIn[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCVarIn][y] for y in intersect(STOR_ALL, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+    
+	# Sum to the system level
+    @expression(EP, eTotalCVarIn, sum(EP[:eZonalCVarIn][z] for z in 1:Z))
+
+	# Add to objective function
 	EP[:eObj] += eTotalCVarIn
 
 	## Power Balance Expressions ##
