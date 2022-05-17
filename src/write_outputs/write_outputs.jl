@@ -81,6 +81,9 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		elapsed_time_losses = @elapsed write_transmission_losses(path, inputs, setup, EP)
 		println("Time elapsed for writing transmission losses is")
 		println(elapsed_time_losses)
+		elapsed_time_zonallosses = @elapsed write_zonal_transmission_losses(path, inputs, setup, EP)
+        println("Time elapsed for writing zonal transmission losses is")
+        println(elapsed_time_zonallosses)
 		if setup["NetworkExpansion"] == 1
 			elapsed_time_expansion = @elapsed write_nw_expansion(path, inputs, setup, EP)
 			println("Time elapsed for writing network expansion is")
@@ -143,6 +146,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfEnergyRevenue = write_energy_revenue(path, inputs, setup, EP)
 			dfChargingcost = write_charging_cost(path, inputs, setup, EP)
 			dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
+			if inputs["Z"] > 1
+                dfCongestionRevenue = write_congestion_revenue(path, inputs, setup, EP)
+                dfTransmissionLossCost = write_transmission_losscost(path, inputs, setup, EP)
+            end
 		end
 
 		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
@@ -153,6 +160,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
 			dfESR = write_esr_prices(path, inputs, setup, EP)
 			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR)
+			if inputs["Z"] > 1
+                if setup["PolicyTransmissionLossCoverage"] == 1
+                    dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, inputs, setup, EP)
+                end
+            end
 		end
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()
