@@ -28,7 +28,14 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Minimum Capacity Requirement Module")
 	NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
+	
+	### Expressions ###
+	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 0)
+	
+	@expression(EP, eMinCapResInvest[mincap = 1:NumberOfMinCapReqs], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:R_ID]))
+	EP[:eMinCapRes] += eMinCapResInvest
 
+	### Constraints ###
 	@constraint(EP, cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs], EP[:eMinCapRes][mincap] >= inputs["MinCapReq"][mincap])
 
 end

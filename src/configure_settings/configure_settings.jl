@@ -51,6 +51,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "PolicyTransmissionLossCoverage", 0)
     # Activate minimum technology carveout constraints; 0 = not active; 1 = active
     set_default_if_absent!(settings, "MinCapReq", 0)
+    # Activate maximum technology limit constraints; 0 = not active; 1 = active
+    set_default_if_absent!(settings, "MaxCapReq", 0)
     # Available solvers: Gurobi, CPLEX, CLPs
     set_default_if_absent!(settings, "Solver", "Gurobi")
     # Turn on parameter scaling wherein load, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
