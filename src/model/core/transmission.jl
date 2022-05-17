@@ -194,7 +194,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     	@expression(EP, eNet_Export_Flows[z=1:Z,t=1:T], sum(inputs["pNet_Map"][l,z] * vFLOW[l,t] for l=1:L))
 
 	# Losses from power flows into or out of zone "z" in MW
-    	@expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * vTLOSS[l,t] for l in LOSS_LINES))
+    	@expression(EP, eTransLossByZone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * vTLOSS[l,t] for l in LOSS_LINES))
 
 	## Objective Function Expressions ##
 
@@ -218,7 +218,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceNetExportFlows[t=1:T, z=1:Z],
 		-eNet_Export_Flows[z,t])
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
-		-(1/2)*eLosses_By_Zone[z,t])
+		-0.5 * eTransLossByZone[z,t])
 
 	EP[:ePowerBalance] += ePowerBalanceLossesByZone
 	EP[:ePowerBalance] += ePowerBalanceNetExportFlows

@@ -39,8 +39,10 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "CapacityReserveMargin", 0)
     # CO2 emissions cap; 0 = not active (no CO2 emission limit); 1 = mass-based emission limit constraint; 2 = load + rate-based emission limit constraint; 3 = generation + rate-based emission limit constraint
     set_default_if_absent!(settings, "CO2Cap", 0)
-    # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
+    # Energy Share Requirement and CO2 constraints account for energy losses of storage; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
     set_default_if_absent!(settings, "StorageLosses", 1)
+    # Energy Share Requirement and CO2 constraints account for energy losses of transmission; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
+    set_default_if_absent!(settings, "PolicyTransmissionLossCoverage", 0)
     # Activate minimum technology carveout constraints; 0 = not active; 1 = active
     set_default_if_absent!(settings, "MinCapReq", 0)
     # Available solvers: Gurobi, CPLEX, CLPs

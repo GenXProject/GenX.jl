@@ -30,6 +30,14 @@ The final term in the summation above adds roundtrip storage losses to the total
 function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Energy Share Requirement Policies Module")
+	Z = inputs["Z"]     # Number of zones
+	T = inputs["T"]     # Number of time steps (hours)
+    if Z > 1
+        if (setup["PolicyTransmissionLossCoverage"] == 1)
+            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (1 / 2) * EP[:eTransLossByZone][z, t] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            EP[:eESR] -= eESRTLoss
+        end
+    end
 
 	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
 	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)

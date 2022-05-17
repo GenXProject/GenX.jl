@@ -170,6 +170,7 @@ include("write_outputs/capacity_reserve_margin/write_reserve_margin.jl")
 
 include("write_outputs/energy_share_requirement/write_esr_prices.jl")
 include("write_outputs/energy_share_requirement/write_esr_revenue.jl")
+include("write_outputs/energy_share_requirement/write_esr_transmissionloss_payment.jl")
 
 include("write_outputs/long_duration_storage/write_opwrap_lds_dstor.jl")
 include("write_outputs/long_duration_storage/write_opwrap_lds_stor_init.jl")
@@ -180,6 +181,9 @@ include("write_outputs/reserves/write_rsv.jl")
 include("write_outputs/transmission/write_nw_expansion.jl")
 include("write_outputs/transmission/write_transmission_flows.jl")
 include("write_outputs/transmission/write_transmission_losses.jl")
+include("write_outputs/transmission/write_zonaltransmission_loss.jl")
+include("write_outputs/transmission/write_transmission_losscost.jl")
+include("write_outputs/transmission/write_congestion_revenue.jl")
 
 include("write_outputs/ucommit/write_commit.jl")
 include("write_outputs/ucommit/write_shutdown.jl")
