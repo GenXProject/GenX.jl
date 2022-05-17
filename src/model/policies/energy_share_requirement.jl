@@ -32,6 +32,17 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	println("Energy Share Requirement Policies Module")
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
+    STOR_ALL = inputs["STOR_ALL"]
+    
+    # Considering storage losses
+    if !isempty(STOR_ALL)
+        if (setup["StorageLosses"] == 1)
+            @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * EP[:eStorageLossByZone][z] for z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            EP[:eESR] -= eESRStor
+        end
+    end
+
+    # Considering transmission losses
     if Z > 1
         if (setup["PolicyTransmissionLossCoverage"] == 1)
             @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (1 / 2) * EP[:eTransLossByZone][z, t] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))

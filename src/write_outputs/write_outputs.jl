@@ -162,6 +162,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
 			dfESR = write_esr_prices(path, inputs, setup, EP)
 			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR)
+			if !isempty(inputs["STOR_ALL"])
+                if setup["StorageLosses"] == 1
+                    dfESRStoragelossPayment = write_esr_storagelosspayment(path, inputs, setup, EP)
+                end
+            end
 			if inputs["Z"] > 1
                 if setup["PolicyTransmissionLossCoverage"] == 1
                     dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, inputs, setup, EP)
