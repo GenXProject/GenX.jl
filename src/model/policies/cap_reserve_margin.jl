@@ -31,8 +31,13 @@ Note that multiple capacity reserve margin requirements can be specified coverin
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	# capacity reserve margin constraint
 	T = inputs["T"]
+	SEG = inputs["SEG"]
+	
 	println("Capacity Reserve Margin Policies Module")
-
+	if SEG >= 2
+		@expression(EP, eCapResMarBalanceNSE[res = 1:inputs["NCapacityReserveMargin"], t = 1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
+		EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+	end
 	@constraint(EP, cCapacityResMargin[res=1:inputs["NCapacityReserveMargin"], t=1:T], EP[:eCapResMarBalance][res, t]
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])
 				for z=findall(x->x>0,inputs["dfCapRes"][:,res])))
