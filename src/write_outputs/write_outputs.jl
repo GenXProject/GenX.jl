@@ -141,14 +141,13 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		dfEnergyRevenue = DataFrame()
 		dfChargingcost = DataFrame()
 		dfSubRevenue = DataFrame()
-		dfRegSubRevenue = DataFrame()
 		dfCongestionRevenue = DataFrame()
 		dfTransmissionLossCost = DataFrame()
 		if has_duals(EP) == 1
 			dfPrice = write_price(path, inputs, setup, EP)
 			dfEnergyRevenue = write_energy_revenue(path, inputs, setup, EP)
 			dfChargingcost = write_charging_cost(path, inputs, setup, EP)
-			dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
+			dfSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
 			if inputs["Z"] > 1
                 dfCongestionRevenue = write_congestion_revenue(path, inputs, setup, EP)
                 dfTransmissionLossCost = write_transmission_losscost(path, inputs, setup, EP)
@@ -156,8 +155,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
-	  println("Time elapsed for writing time weights is")
-	  println(elapsed_time_time_weights)
+	  	println("Time elapsed for writing time weights is")
+	  	println(elapsed_time_time_weights)
         dfESR = DataFrame()
         dfESRRev = DataFrame()
         dfESRPayment = DataFrame()
@@ -178,6 +177,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 end
             end
 		end
+
+		dfRegSubRevenue = DataFrame()
+		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
+            dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
+        end
+
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()
 		if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
