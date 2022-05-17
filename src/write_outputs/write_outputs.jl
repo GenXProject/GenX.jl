@@ -157,11 +157,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
 	  println("Time elapsed for writing time weights is")
 	  println(elapsed_time_time_weights)
-		dfESR = DataFrame()
-		dfESRRev = DataFrame()
+        dfESR = DataFrame()
+        dfESRRev = DataFrame()
+        dfESRPayment = DataFrame()
+        dfESRStoragelossPayment = DataFrame()
+        dfESRtransmissionlosspayment = DataFrame()
 		if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
 			dfESR = write_esr_prices(path, inputs, setup, EP)
-			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR)
+			dfESRRev = write_esr_revenue(path, inputs, setup, EP)
+			dfESRPayment = write_esr_payment(path, inputs, setup, EP)
 			if !isempty(inputs["STOR_ALL"])
                 if setup["StorageLosses"] == 1
                     dfESRStoragelossPayment = write_esr_storagelosspayment(path, inputs, setup, EP)
