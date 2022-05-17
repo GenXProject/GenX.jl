@@ -33,18 +33,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	cVOM = value(EP[:eTotalCVOMOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0]
 
-	# CO2 Capture Cost is counted as an VOM cost
-    if setup["CO2Capture"] == 1
-		temp = value(EP[:eTotaleCCO2Sequestration])
-		if setup["ParameterScale"] == 1
-			temp *= ModelScalingFactor^2
-		end		
-        dfCost[5,2] += temp
-        # if setup["CO2Credit"] == 1
-        #     dfCost[3,2]+= value(EP[:eTotalCCO2Credit])
-        # end
-    end
+	if setup["CO2Tax"] == 1
+		dfCost[5,2] += value(EP[:eTotalCCO2Tax])
+	end
 
+	# CO2 Capture Cost is counted as an VOM cost
+    if setup["CO2Capture"] == 1	
+        dfCost[5,2] += value(EP[:eTotaleCCO2Sequestration])
+        if setup["CO2Credit"] == 1
+            dfCost[5,2]+= value(EP[:eTotalCCO2Credit])
+        end
+    end
 	if setup["UCommit"]>=1
 		dfCost[7,2] = value(EP[:eTotalCStart])
 	end
@@ -92,8 +91,14 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	if !isempty(FLEX)
 		tempzonalcost[5, :] += vec(value.(EP[:eZonalCVarFlexIn]))
 	end
+	if setup["CO2Tax"] == 1
+		tempzonalcost[5, :] += vec(value(EP[:eZonalCCO2Tax]))
+	end
 	if setup["CO2Capture"] == 1
 		tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Sequestration]))
+		if setup["CO2Credit"] == 1
+			tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Credit]))
+		end
 	end
 
 	# Start up cost
@@ -108,7 +113,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	tempzonalcost[1, :] = vec(sum(tempzonalcost[2:end, :], dims = 1))
 
 	# build the dataframe to append on total
-	dfCost = hcat(dfCost, DataFrame(tempzonalcost, [Symbol("Zone$z") for z in 1:Z]))
+	dfCost = hcat(dfCost, DataFrame([tempzonalcost], [Symbol("Zone$z") for z in 1:Z]))
 
 	# for z in 1:Z
 	# 	tempCTotal = 0.0

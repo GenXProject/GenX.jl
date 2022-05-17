@@ -68,10 +68,23 @@ function load_inputs(setup::Dict,path::AbstractString)
 		inputs = load_energy_share_requirement(setup, path, inputs)
 	end
 
-	if setup["CO2Cap"] >= 1
+	if setup["CO2Cap"] == 1
 		inputs = load_co2_cap(setup, path, inputs)
 	end
-
+	if setup["CO2LoadRateCap"] == 1
+		inputs = load_co2_load_side_emission_rate_cap(setup, path, inputs)
+	end
+	if setup["CO2GenRateCap"] == 1
+		inputs = load_co2_generation_side_emission_rate_cap(setup, path, inputs)
+	end
+	if setup["CO2Tax"] == 1
+		inputs = load_co2_tax(setup, path, inputs)
+	end
+	if setup["CO2Capture"] ==1
+		if setup["CO2Credit"] == 1
+			inputs = load_co2_credit(setup, path, inputs)
+		end
+	end
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
 		inputs = load_period_map(setup, path, inputs)

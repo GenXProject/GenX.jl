@@ -203,9 +203,41 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println(elapsed_time_cap_value)
 		end
 
-		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
-	  println("Time elapsed for writing net revenue is")
-	  println(elapsed_time_net_rev)
+        dfCO2MassCapCost = DataFrame()
+        dfCO2MassCapRev = DataFrame()
+        dfCO2Price = DataFrame()
+        if setup["CO2Cap"] == 1 && has_duals(EP) == 1
+            dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, inputs, setup, EP)
+        end
+    
+        dfCO2GenRateCapCost = DataFrame()
+        dfCO2GenRatePrice = DataFrame()
+        if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
+            dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, inputs, setup, EP)
+        end
+    
+        dfCO2LoadRateCapCost = DataFrame()
+        dfCO2LoadRateCapRev = DataFrame()
+        dfCO2LoadRatePrice = DataFrame()
+        if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
+            dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, inputs, setup, EP)
+        end
+        
+        dfCO2TaxCost = DataFrame()
+        if setup["CO2Tax"] == 1
+            dfCO2TaxCost = write_co2_tax(path, inputs, setup, EP)
+        end
+    
+        dfCO2CaptureCredit = DataFrame()
+		if setup["CO2Capture"] == 1
+			if setup["CO2Credit"] == 1
+				dfCO2CaptureCredit = write_credit_for_captured_emissions(path, inputs, setup, EP)
+			end
+		end
+
+		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost)
+		println("Time elapsed for writing net revenue is")
+		println(elapsed_time_net_rev)
 	end
 	## Print confirmation
 	println("Wrote outputs to $path")
