@@ -86,11 +86,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	for y in VRE_NO_POWER_OUT
 		fix.(EP[:vP][y,:], 0.0, force=true)
 	end
-	##CO2 Polcy Module VRE Generation by zone
-	@expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
-		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-	)
-	EP[:eGenerationByZone] += eGenerationByVRE
+
 
 end
 

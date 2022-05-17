@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing net revenue of different generation technologies.
 """
-function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame)
+function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfCO2MassCapCost::DataFrame, dfCO2LoadRateCapCost::DataFrame, dfCO2GenRateCapCost::DataFrame, dfCO2TaxCost::DataFrame)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
@@ -126,42 +126,29 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
 	# Calculate emissions cost
 	dfNetRevenue.EmissionsCost = zeros(nrow(dfNetRevenue))
-	if setup["CO2Cap"] >=1 && has_duals(EP) == 1
-		for cap in 1:inputs["NCO2Cap"]
-			co2_cap_dual = dual(EP[:cCO2Emissions_systemwide][cap])
-			CO2ZONES = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
-			GEN_IN_ZONE = dfGen[[y in CO2ZONES for y in dfGen[:, :Zone]], :R_ID]
-			if setup["CO2Cap"]==1 # Mass-based
-				# Cost = sum(sum(emissions of gen y * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
-				dfNetRevenue.EmissionsCost[GEN_IN_ZONE] += - co2_cap_dual * temp_vec
-			elseif setup["CO2Cap"]==2 # Demand + Rate-based
-				# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
-				dfNetRevenue.EmissionsCost[GEN_IN_ZONE] += - co2_cap_dual * temp_vec
-			elseif setup["CO2Cap"]==3 # Generation + Rate-based
-				SET_WITH_MAXCO2RATE = union(inputs["THERM_ALL"],inputs["VRE"], inputs["VRE"],inputs["MUST_RUN"],inputs["HYDRO_RES"])
-				Y = intersect(GEN_IN_ZONE, SET_WITH_MAXCO2RATE)
-				temp_vec = (value.(EP[:eEmissionsByPlant][Y,:]) - (value.(EP[:vP][Y,:]) .* inputs["dfMaxCO2Rate"][dfGen[Y, :Zone], cap])) * inputs["omega"]
-				dfNetRevenue.EmissionsCost[Y] += - co2_cap_dual * temp_vec
-			end
-		end
-		if setup["ParameterScale"] == 1
-			dfNetRevenue.EmissionsCost *= ModelScalingFactor^2 # converting Million US$ to US$
-		end
-	end
-
+    if setup["CO2Cap"] == 1 && has_duals(EP) == 1
+        dfNetRevenue.EmissionsCost += dfCO2MassCapCost.AnnualSum
+    end
+    if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
+        dfNetRevenue.EmissionsCost += dfCO2LoadRateCapCost.AnnualSum
+    end
+    if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
+        dfNetRevenue.EmissionsCost += dfCO2GenRateCapCost.AnnualSum
+    end
+    if setup["CO2Tax"] == 1
+        dfNetRevenue.EmissionsCost += dfCO2TaxCost.AnnualSum
+    end
 	# Add CO2 Capture cost and Credit to the dataframe
-	# dfNetRevenue.CO2Credit = zeros(nrow(dfNetRevenue))
+	dfNetRevenue.CO2Credit = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.SequestrationCost = zeros(nrow(dfNetRevenue))
 	if setup["CO2Capture"] == 1
 		dfNetRevenue.SequestrationCost .+= value.(EP[:ePlantCCO2Sequestration])
-		# if setup["CO2Credit"] == 1
-		# 	dfNetRevenue.CO2Credit .-= value.(EP[:ePlantCCO2Credit]) # note that the expression is a negative number
-		# end
+		if setup["CO2Credit"] == 1
+			dfNetRevenue.CO2Credit .-= value.(EP[:ePlantCCO2Credit]) # note that the expression is a negative number
+		end
 		if setup["ParameterScale"] == 1
 			dfNetRevenue.SequestrationCost *= ModelScalingFactor^2
-			# dfNetRevenue.CO2Credit *= ModelScalingFactor^2
+			dfNetRevenue.CO2Credit *= ModelScalingFactor^2
 		end
 	end
 	

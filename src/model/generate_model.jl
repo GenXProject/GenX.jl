@@ -109,9 +109,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Initialize Objective Function Expression
 	@expression(EP, eObj, 0)
 
-
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
 		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
@@ -126,8 +123,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
 	end
 
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	#@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) ##From main
 
 	# Infrastructure
 	discharge!(EP, inputs, setup)
@@ -188,8 +183,25 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Policies
 	# CO2 emissions limits
-	co2_cap!(EP, inputs, setup)
-
+	if setup["CO2Cap"] == 1
+		co2_cap!(EP, inputs, setup)
+	end
+	if setup["CO2LoadRateCap"] == 1
+		co2_load_side_emission_rate_cap!(EP, inputs, setup)
+	end
+	if setup["CO2GenRateCap"] == 1
+		co2_generation_side_emission_rate_cap!(EP, inputs, setup)
+	end
+	# CO2 Tax
+	if setup["CO2Tax"] == 1
+		co2_tax!(EP, inputs, setup)
+	end
+	# CO2 Capture Credit
+	if setup["CO2Capture"] == 1
+		if setup["CO2Cap"] == 1
+			co2_credit!(EP, inputs, setup)
+		end
+	end
 	# Endogenous Retirements
 	if setup["MultiStage"] > 0
 		endogenous_retirement!(EP, inputs, setup)
