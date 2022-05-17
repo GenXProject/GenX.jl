@@ -143,6 +143,7 @@ include("model/solve_model.jl")
 
 include("write_outputs/dftranspose.jl")
 include("write_outputs/write_capacity.jl")
+include("write_outputs/write_capacityfactor.jl")
 include("write_outputs/write_charge.jl")
 include("write_outputs/write_charging_cost.jl")
 include("write_outputs/write_costs.jl")
