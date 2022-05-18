@@ -250,6 +250,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 				dfCO2CaptureCredit = write_credit_for_captured_emissions(path, inputs, setup, EP)
 			end
 		end
+		
+		if setup["TFS"] == 1
+			write_twentyfourseven(path, inputs, setup, EP)
+		end
 
 		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost)
 		println("Time elapsed for writing net revenue is")

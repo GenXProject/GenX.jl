@@ -78,7 +78,9 @@ function configure_settings(settings_path::String)
     # CO2 capture credit; 0 = not active; 1 = active;
     set_default_if_absent!(settings, "CO2Credit", 0)
     # Piecewise Heat Rate; 0 = not activate; 1 = active
-    set_default_if_absent!(settings, "PieceWiseHeatRate", 0)    
+    set_default_if_absent!(settings, "PieceWiseHeatRate", 0)
+    # Twenty-four Seven Module; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "TFS", 0)    
 
 return settings
 end
