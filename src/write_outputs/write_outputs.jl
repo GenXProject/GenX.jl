@@ -139,17 +139,18 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
 	if setup["MultiStage"] == 0
+		# Energy Market
 		dfPrice = DataFrame()
 		dfEnergyRevenue = DataFrame()
 		dfChargingcost = DataFrame()
-		dfSubRevenue = DataFrame()
+		dfEnergyPayment = DataFrame()
 		dfCongestionRevenue = DataFrame()
 		dfTransmissionLossCost = DataFrame()
 		if has_duals(EP) == 1
 			dfPrice = write_price(path, inputs, setup, EP)
 			dfEnergyRevenue = write_energy_revenue(path, inputs, setup, EP)
 			dfChargingcost = write_charging_cost(path, inputs, setup, EP)
-			dfSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
+			dfEnergyPayment = write_energy_payment(path, inputs, setup, EP)
 			if inputs["Z"] > 1
                 dfCongestionRevenue = write_congestion_revenue(path, inputs, setup, EP)
                 dfTransmissionLossCost = write_transmission_losscost(path, inputs, setup, EP)
@@ -159,6 +160,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
 	  	println("Time elapsed for writing time weights is")
 	  	println(elapsed_time_time_weights)
+		
+		# Energy Share Requirmeent Market
         dfESR = DataFrame()
         dfESRRev = DataFrame()
         dfESRPayment = DataFrame()
@@ -179,12 +182,20 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 end
             end
 		end
-
+		
+		# Individual plant subsidy
+		dfSubRevenue = DataFrame()
+		if has_duals(EP) == 1
+			dfSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
+		end
+		
+		# Regional technology mandate subsidy
 		dfRegSubRevenue = DataFrame()
 		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
             dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
         end
 
+		# Capactiy Reserve Margin Market
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()
 		dfResPayment = DataFrame()
@@ -204,32 +215,37 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println("Time elapsed for writing capacity value is")
 			println(elapsed_time_cap_value)
 		end
-
+		
+		# Carbon Emission Credit Market -- Mase-based
         dfCO2MassCapCost = DataFrame()
         dfCO2MassCapRev = DataFrame()
         dfCO2Price = DataFrame()
         if setup["CO2Cap"] == 1 && has_duals(EP) == 1
             dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, inputs, setup, EP)
         end
-    
+
+		# Carbon Emission Credit Market -- Generation Emission Rate Based
         dfCO2GenRateCapCost = DataFrame()
         dfCO2GenRatePrice = DataFrame()
         if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
             dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, inputs, setup, EP)
         end
-    
+
+		# Carbon Emission Credit Market -- Load Emission Rate Based
         dfCO2LoadRateCapCost = DataFrame()
         dfCO2LoadRateCapRev = DataFrame()
         dfCO2LoadRatePrice = DataFrame()
         if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
             dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, inputs, setup, EP)
         end
-        
+
+        # Carbon Tax
         dfCO2TaxCost = DataFrame()
         if setup["CO2Tax"] == 1
             dfCO2TaxCost = write_co2_tax(path, inputs, setup, EP)
         end
-    
+
+		# Emissions Captured Credit
         dfCO2CaptureCredit = DataFrame()
 		if setup["CO2Capture"] == 1
 			if setup["CO2Credit"] == 1
