@@ -62,6 +62,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	println("Storage Investment Module")
 
 	dfGen = inputs["dfGen"]
+	Z = inputs["Z"]
 	MultiStage = setup["MultiStage"]
 
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources

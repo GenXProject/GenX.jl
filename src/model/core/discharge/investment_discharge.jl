@@ -56,7 +56,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 
 	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
-
+	Z = inputs["Z"]
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
