@@ -21,6 +21,7 @@ Function for reporting the renewable/clean credit revenue earned by each generat
 """
 function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
+	G = inputs["G"]
 	dfESRRev = DataFrame(Region = dfGen[!,:region], Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], AnnualSum = zeros(G))
 
 	for i in 1:inputs["nESR"]
