@@ -42,7 +42,7 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
             tempCO2Price *= ModelScalingFactor
         end
     end
-    dfCO2GenRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame([tempCO2Price], [Symbol("CO2_GenRate_Price_$cap") for cap = 1:inputs["NCO2GenRateCap"]]))
+    dfCO2GenRatePrice = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, [Symbol("CO2_GenRate_Price_$cap") for cap = 1:inputs["NCO2GenRateCap"]]))
     CSV.write(joinpath(path, "CO2Price_genrate.csv"), dfCO2GenRatePrice)
 
     temp_totalpowerMWh = zeros(G)

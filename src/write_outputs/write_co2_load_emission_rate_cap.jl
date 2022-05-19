@@ -39,7 +39,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
             tempCO2Price *= ModelScalingFactor
         end
     end
-    dfCO2LoadRatePrice = hcat(DataFrame(Zone=1:Z), DataFrame([tempCO2Price], [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]))
+    dfCO2LoadRatePrice = hcat(DataFrame(Zone=1:Z), DataFrame(tempCO2Price, [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]))
     CSV.write(joinpath(path, "CO2Price_loadrate.csv"), dfCO2LoadRatePrice)
 
     CO2CapEligibleLoad = DataFrame(CO2CapEligibleLoad_MWh = (transpose(inputs["pD"] - value.(EP[:eZonalNSE])) * inputs["omega"]))
@@ -65,7 +65,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
             temp_CO2LoadRateCapRev *= (ModelScalingFactor^2)
         end
         dfCO2LoadRateCapRev.AnnualSum .+= vec(sum(temp_CO2LoadRateCapRev, dims=2))
-        dfCO2LoadRateCapRev = hcat(dfCO2LoadRateCapRev, DataFrame([temp_CO2LoadRateCapRev], [Symbol("CO2_LoadRateCap_Revenue_$cap"); Symbol("CO2_LoadRateCap_Revenue_StorageLoss_$cap")]))
+        dfCO2LoadRateCapRev = hcat(dfCO2LoadRateCapRev, DataFrame(temp_CO2LoadRateCapRev, [Symbol("CO2_LoadRateCap_Revenue_$cap"); Symbol("CO2_LoadRateCap_Revenue_StorageLoss_$cap"); Symbol("CO2_LoadRateCap_Revenue_Transmissionloss_$cap")]))
     end
     CSV.write(joinpath(path, "CO2Revenue_loadrate.csv"), dfCO2LoadRateCapRev)
 
