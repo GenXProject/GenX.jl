@@ -96,7 +96,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempzonalcost[5, :] += vec(value.(EP[:eZonalCVarFlexIn]))
 	end
 	if setup["CO2Tax"] == 1
-		tempzonalcost[5, :] += vec(value(EP[:eZonalCCO2Tax]))
+		tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Tax]))
 	end
 	if setup["CO2Capture"] == 1
 		tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Sequestration]))
@@ -117,7 +117,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	tempzonalcost[1, :] = vec(sum(tempzonalcost[2:end, :], dims = 1))
 
 	# build the dataframe to append on total
-	dfCost = hcat(dfCost, DataFrame([tempzonalcost], [Symbol("Zone$z") for z in 1:Z]))
+	dfCost = hcat(dfCost, DataFrame(tempzonalcost, [Symbol("Zone$z") for z in 1:Z]))
 
 	# for z in 1:Z
 	# 	tempCTotal = 0.0
