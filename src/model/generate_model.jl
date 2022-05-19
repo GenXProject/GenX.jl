@@ -130,7 +130,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		ucommit!(EP, inputs, setup)
 	end
 
-	emissions!(EP, inputs)
+	co2!(EP, inputs, setup)
 
 	if setup["Reserves"] > 0
 		reserves!(EP, inputs, setup)
