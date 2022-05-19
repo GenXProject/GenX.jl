@@ -64,7 +64,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost.Total *= ModelScalingFactor^2
 	end
 
-
+	# Grab zonal cost, because nonmet reserve cost, and transmission expansion cost is system wide,
+	# They are put as zero.
 	tempzonalcost = zeros(9, Z)
 	# Investment Cost
 	tempzonalcost[2, :] += vec(value.(EP[:eZonalCInv]))
@@ -119,95 +120,5 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	# build the dataframe to append on total
 	dfCost = hcat(dfCost, DataFrame(tempzonalcost, [Symbol("Zone$z") for z in 1:Z]))
 
-	# for z in 1:Z
-	# 	tempCTotal = 0.0
-	# 	tempCInv = 0.0
-	# 	tempCFOM = 0.0
-	# 	tempCFuel = 0.0
-	# 	tempCVOM = 0.0
-	# 	tempCStart = 0.0
-	# 	tempCNSE = 0.0
-
-	# 	Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
-	# 	STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
-	# 	STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
-	# 	FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
-	# 	COMMIT_ZONE = intersect(inputs["COMMIT"], Y_ZONE)
-
-	# 	eCInv = value.(EP[:eZonalCInv][z])
-	# 	tempCInv += eCInv
-	# 	tempCTotal += eCInv
-
-	# 	eCFOM = value.(EP[:eZonalCFOM][z])
-	# 	tempCFOM += eCFOM
-	# 	tempCTotal += eCFOM
-
-	# 	eCFuel = value.(EP[:eZonalCFuelOut][z])
-	# 	tempCFuel += eCFuel
-	# 	tempCTotal += eCFuel
-
-	# 	eCVOM = value.(EP[:eZonalCVOMOut][z])
-	# 	tempCVOM += eCVOM
-	# 	tempCTotal += eCVOM
-
-	# 	if !isempty(STOR_ALL_ZONE)
-	# 		eCVar_in = value.(EP[:eZonalCVarIn][z])
-	# 		tempCVOM += eCVar_in
-	# 		tempCTotal += eCVar_in
-
-	# 		eCInvEnergy = value.(EP[:eZonalCInvEnergyCap][z])
-	# 		tempCInv += eCInvEnergy
-	# 		tempCTotal += eCInvEnergy
-
-	# 		eCFOMEnergy = value.(EP[:eZonalCFOMEnergyCap][z])
-	# 		tempCFOM += eCFOMEnergy
-	# 		tempCTotal += eCFOMEnergy
-	# 	end
-
-	# 	if !isempty(STOR_ASYMMETRIC_ZONE)
-	# 		eCInvCharge = value.(EP[:eZonalCInvChargeCap][z])
-	# 		tempCInv += eCInvCharge
-	# 		tempCTotal += eCInvCharge
-
-	# 		eCFOMCharge = value.(EP[:eZonalCFOMChargeCap][z])
-	# 		tempCFOM += eCFOMCharge
-	# 		tempCTotal += eCFOMCharge
-	# 	end
-
-	# 	if !isempty(FLEX_ZONE)
-	# 		eCVarFlex_in = value.(EP[:eZonalCVarFlexIn][z])
-	# 		tempCVOM += eCVarFlex_in
-	# 		tempCTotal += eCVarFlex_in
-	# 	end
-
-    #     if setup["CO2Capture"] == 1
-	# 		eCCO2Capture += value.(EP[:eZonalCCO2Sequestration])[z]
-	# 		tempCVOM += eCCO2Capture
-	# 		tempCTotal += eCCO2Capture
-    #         # if setup["CO2Credit"] == 1
-    #         #     tempCVar += value.(EP[:eZonalCCO2Credit])[z]
-    #         # end
-    #     end
-
-	# 	if setup["UCommit"] >= 1
-	# 		eCStart = sum(value.(EP[:eZonalCStart][z]))
-	# 		tempCStart += eCStart
-	# 		tempCTotal += eCStart
-	# 	end
-
-	# 	tempCNSE = sum(value.(EP[:eZonalCNSE][z]))
-	# 	tempCTotal += tempCNSE
-
-	# 	if setup["ParameterScale"] == 1
-	# 		tempCTotal *= ModelScalingFactor^2
-	# 		tempCInv *= ModelScalingFactor^2
-	# 		tempCFOM *= ModelScalingFactor^2
-	# 		tempCFuel *= ModelScalingFactor^2
-	# 		tempCVOM *= ModelScalingFactor^2			
-	# 		tempCNSE *= ModelScalingFactor^2
-	# 		tempCStart *= ModelScalingFactor^2
-	# 	end
-	# 	dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCInv, tempCFOM, tempCFuel, tempCVOM, tempCNSE, tempCStart, "-", "-"]
-	# end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
 end
