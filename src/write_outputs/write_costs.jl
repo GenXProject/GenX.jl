@@ -25,6 +25,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	SEG = inputs["SEG"]  # Number of lines
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
+	STOR_ALL = inputs["STOR_ALL"]
+	FLEX = inputs["FLEX"]
+	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
+
 
 	dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
 	cInv = value(EP[:eTotalCInv]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0.0)
