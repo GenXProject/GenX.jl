@@ -38,10 +38,4 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	if !isempty(THERM_NO_COMMIT)
 		thermal_no_commit!(EP, inputs, setup)
 	end
-
-	# Capacity Reserves Margin policy
-	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalanceThermal[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] for y in THERM_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceThermal
-	end
 end

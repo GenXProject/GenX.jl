@@ -140,10 +140,4 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 		storage_symmetric!(EP, inputs, setup)
 	end
 
-	# Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceStor
-	end
-
 end
