@@ -61,11 +61,11 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 
 	if setup["MinCapReq"] == 1
-		inputs = load_minimum_capacity_requirement(path, inputs, setup)
+		inputs = load_minimum_capacity_requirement(setup, path, inputs)
 	end
 
 	if setup["MaxCapReq"] == 1
-		inputs = load_maximum_capacity_limit(path, inputs, setup)
+		inputs = load_maximum_capacity_limit(setup, path, inputs)
 	end
 
 	if setup["EnergyShareRequirement"]==1
