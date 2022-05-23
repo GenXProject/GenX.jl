@@ -83,7 +83,7 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
 	sum(vNSE[s,t,z] for s=1:SEG))
 
 	# Add non-served energy/curtailed demand contribution to power balance expression
-	EP[:ePowerBalance] += ePowerBalanceNse
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceNse])
 	# Demand response is the NSE from the 2nd segment and above.
     if SEG >= 2
         @expression(EP, eDemandResponse[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 2:SEG))

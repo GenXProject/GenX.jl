@@ -220,8 +220,8 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
 		-0.5 * eTransLossByZone[z,t])
 
-	EP[:ePowerBalance] += ePowerBalanceLossesByZone
-	EP[:ePowerBalance] += ePowerBalanceNetExportFlows
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceLossesByZone])
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceNetExportFlows])
 
 	### Constraints ###
 

@@ -48,7 +48,7 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceNdisp[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z, :R_ID])))
 
-	EP[:ePowerBalance] += ePowerBalanceNdisp
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceNdisp])
 
 
 	### Constratints ###

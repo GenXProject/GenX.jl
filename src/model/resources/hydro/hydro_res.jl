@@ -102,7 +102,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceHydroRes[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
 
-	EP[:ePowerBalance] += ePowerBalanceHydroRes
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceHydroRes])
 
 	### Constratints ###
 
