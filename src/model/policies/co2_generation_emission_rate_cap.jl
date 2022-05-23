@@ -56,6 +56,7 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
             sum(EP[:vP][y,t] for y in intersect(THERM_ALL, dfGen[dfGen[!,:Zone].==z,:R_ID]))
         )
         EP[:eGenerationByZone] += eGenerationByThermAll
+        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByThermAll])
     end
 	##CO2 Polcy Module Hydro Res Generation by zone
     if !isempty(HYDRO_RES)
@@ -63,6 +64,7 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
             sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[dfGen[!,:Zone].==z,:R_ID]))
         )
         EP[:eGenerationByZone] += eGenerationByHydroRes
+        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByHydroRes])
     end
     ##CO2 Polcy Module VRE Generation by zone
     if !isempty(VRE)
@@ -70,6 +72,7 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
             sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID]))
         )
         EP[:eGenerationByZone] += eGenerationByVRE
+        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByVRE])
     end
 	##CO2 Polcy Module Must Run Generation by zone
     if !isempty(MUST_RUN)
@@ -77,6 +80,7 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
             sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z, :R_ID]))
         )
         EP[:eGenerationByZone] += eGenerationByMustRun
+        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByMustRun])
     end
     ### Constraints ###
 

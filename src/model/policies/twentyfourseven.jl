@@ -45,10 +45,12 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(STOR_ALL)
         @expression(EP, eTFSStorage[rpsh = 1:NumberofTFS, t = 1:T], sum(dfGen[y, Symbol("RPSH_$rpsh")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for y in STOR_ALL) - EP[:vZERO])
         EP[:eModifiedload] -= EP[:eTFSStorage]
+        # add_to_expression!(EP[:eModifiedload], -1, EP[:eTFSStorage])
     end
     if !isempty(FLEX)
         @expression(EP, eTFSDR[rpsh = 1:NumberofTFS, t = 1:T], sum(dfGen[y, Symbol("RPSH_$rpsh")] * (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX) - EP[:vZERO])
         EP[:eModifiedload] -= EP[:eTFSDR]
+        # add_to_expression!(EP[:eModifiedload], -1, EP[:eTFSDR])
     end
     @expression(EP, eConsumedCFE[rpsh = 1:NumberofTFS, t = 1:T], EP[:eCFE][rpsh, t] - EP[:vEX][rpsh, t] + ((1 - inputs["TFS_SFDT"][t, rpsh]) * EP[:vSF][rpsh, t]))
     
@@ -60,6 +62,7 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
                                                                         sum(EP[:eTFSFlow][rpsh_path, t] for rpsh_path in findall(x -> x == rpsh, inputs["TFS_Network"][:, :To]))))
         # The net export is taken out of the consumed CFE
         EP[:eConsumedCFE] -= EP[:eTFSNetExport]
+        # add_to_expression!(EP[:eConsumedCFE], -1, EP[:eTFSNetExport])
         # This expression calcualte the friction cost on each path at each hour
         @expression(EP, eTFSTranscationCost[rpsh_path = 1:NumberofTFSPath, t = 1:T], ((EP[:vTFSFlow_Sending][rpsh_path, t] * inputs["TFS_Network"][rpsh_path, :HurdleRate_Forward]) +
                                                                                   (EP[:vTFSFlow_Receiving][rpsh_path, t] * inputs["TFS_Network"][rpsh_path, :HurdleRate_Backward])))
@@ -68,6 +71,7 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
         # this expression calculate the total friction cost on each path
         @expression(EP, eTFSTotalTranscationCost, sum(EP[:eTFSAnnualTranscationCost][rpsh_path] for rpsh_path in 1:NumberofTFSPath))
         EP[:eObj] += EP[:eTFSTotalTranscationCost]
+        # add_to_expression!(EP[:eObj], EP[:eTFSTotalTranscationCost])
     end
     
     ## Define constraints

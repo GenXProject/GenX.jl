@@ -45,7 +45,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if setup["CO2Capture"] == 1	
         dfCost[5,2] += value(EP[:eTotaleCCO2Sequestration])
         if setup["CO2Credit"] == 1
-            dfCost[5,2]+= value(EP[:eTotalCCO2Credit])
+            dfCost[5,2] -= value(EP[:eTotalCCO2Credit])
         end
     end
 
@@ -108,7 +108,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	if setup["CO2Capture"] == 1
 		tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Sequestration]))
 		if setup["CO2Credit"] == 1
-			tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Credit]))
+			tempzonalcost[5, :] -= vec(value.(EP[:eZonalCCO2Credit]))
 		end
 	end
 	if setup["EnergyCredit"] == 1
