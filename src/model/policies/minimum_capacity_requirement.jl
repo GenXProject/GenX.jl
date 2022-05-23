@@ -31,7 +31,7 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	G = inputs["G"]
 	
 	### Expressions ###
-	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 0)
+	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 1*EP[:vZERO])
 	
 	@expression(EP, eMinCapResInvest[mincap = 1:NumberOfMinCapReqs], sum(dfGen[y, Symbol("MinCapTag_$mincap")] * EP[:eTotalCap][y] for y in 1:G))
 	# EP[:eMinCapRes] += eMinCapResInvest
