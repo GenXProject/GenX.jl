@@ -104,14 +104,17 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
-
+	# note that the coefficient 1 is to making sure this expression is an expression, rather an a variable
+	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 1*EP[:vZERO])
+	
 	# Initialize Objective Function Expression
-	@expression(EP, eObj, 0)
+	# note that the coefficient 1 is to making sure this expression is an expression, rather an a variable
+	@expression(EP, eObj, 1*EP[:vZERO])
 
 	# Energy Share Requirement
+	# note that the coefficient 1 is to making sure this expression is an expression, rather an a variable
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+		@expression(EP, eESR[ESR=1:inputs["nESR"]], 1*EP[:vZERO])
 	end
 
 	# Infrastructure
@@ -188,7 +191,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 	# CO2 Capture Credit
 	if setup["CO2Capture"] == 1
-		if setup["CO2Cap"] == 1
+		if setup["CO2Credit"] == 1
 			co2_credit!(EP, inputs, setup)
 		end
 	end
