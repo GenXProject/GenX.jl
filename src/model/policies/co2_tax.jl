@@ -37,6 +37,7 @@ function co2_tax!(EP::Model, inputs::Dict, setup::Dict)
     # Sum CO2 Tax to system level
     @expression(EP, eTotalCCO2Tax, sum(EP[:eZonalCCO2Tax][z] for z in 1:Z))
 
-    EP[:eObj] += eTotalCCO2Tax
+    # EP[:eObj] += eTotalCCO2Tax
+    add_to_expression!(EP[:eObj], EP[:eTotalCCO2Tax])
 
 end

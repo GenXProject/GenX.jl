@@ -77,7 +77,8 @@ function co2!(EP::Model, inputs::Dict, setup::Dict)
     
         @expression(EP, eTotaleCCO2Sequestration, sum(eZonalCCO2Sequestration[z] for z in 1:Z))
     
-        EP[:eObj] += eTotaleCCO2Sequestration
+        # EP[:eObj] += eTotaleCCO2Sequestration
+        add_to_expression!(EP[:eObj], EP[:eTotaleCCO2Sequestration])
     end
 
     @expression(EP, eEmissionsByPlantYear[y = 1:G], sum(inputs["omega"][t] * eEmissionsByPlant[y, t] for t in 1:T))

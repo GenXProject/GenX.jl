@@ -54,7 +54,8 @@ function co2_load_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::Dict)
         # The default without the key is "StorageLosses" not to include storage loss in the policy
         if (setup["StorageLosses"] == 1)
             @expression(EP, eCO2Emissions_loadrate_RHS_STORLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * EP[:eStorageLossByZone][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
-            EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_STORLOSS]
+            # EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_STORLOSS]
+            add_to_expression!(EP[:eCO2Emissions_loadrate_RHS], EP[:eCO2Emissions_loadrate_RHS_STORLOSS])
         end
     end
       
@@ -62,7 +63,8 @@ function co2_load_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::Dict)
         # The default without the key "PolicyTransmissionLossCoverage" is not to include transmission loss in the policy
         if (setup["PolicyTransmissionLossCoverage"] == 1)
             @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum((1 / 2) * inputs["omega"][t] * EP[:eTransLossByZone][z, t] for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
-            EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_TLOSS]
+            # EP[:eCO2Emissions_loadrate_RHS] += EP[:eCO2Emissions_loadrate_RHS_TLOSS]
+            add_to_expression!(EP[:eCO2Emissions_loadrate_RHS], EP[:eCO2Emissions_loadrate_RHS_TLOSS])
         end
     end
 

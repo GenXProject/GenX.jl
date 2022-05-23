@@ -145,7 +145,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if setup["CO2Capture"] == 1
 		dfNetRevenue.SequestrationCost .+= value.(EP[:ePlantCCO2Sequestration])
 		if setup["CO2Credit"] == 1
-			dfNetRevenue.CO2Credit .-= value.(EP[:ePlantCCO2Credit]) # note that the expression is a negative number
+			dfNetRevenue.CO2Credit .+= value.(EP[:ePlantCCO2Credit])
 		end
 		if setup["ParameterScale"] == 1
 			dfNetRevenue.SequestrationCost *= ModelScalingFactor^2
