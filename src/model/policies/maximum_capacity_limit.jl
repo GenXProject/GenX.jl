@@ -23,12 +23,14 @@ function maximum_capacity_limit!(EP::Model, inputs::Dict, setup::Dict)
 
     println("Maxmimum Capacity limit Module")
     NumberOfMaxCapReqs = inputs["NumberOfMaxCapReqs"]
-
+    G = inputs["G"]
+    
     ### Expressions ###
     @expression(EP, eMaxCapRes[maxcap = 1:NumberOfMaxCapReqs], 0)
 
-    @expression(EP, eMaxCapResInvest[maxcap = 1:NumberOfMaxCapReqs], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MaxCapTag_$maxcap")].== 1) ,:R_ID]))
-    EP[:eMaxCapRes] += eMaxCapResInvest
+    @expression(EP, eMaxCapResInvest[maxcap = 1:NumberOfMaxCapReqs], sum(dfGen[y,Symbol("MaxCapTag_$maxcap")] * EP[:eTotalCap][y] for y in 1:G))
+    # EP[:eMaxCapRes] += eMaxCapResInvest
+    add_to_expression!(EP[:eMaxCapRes], EP[:eMaxCapResInvest])
 
     ### Constraint ###
     @constraint(EP, cZoneMaxCapReq[maxcap = 1:NumberOfMaxCapReqs], EP[:eMaxCapRes][maxcap] <= inputs["MaxCapReq"][maxcap])
