@@ -101,6 +101,7 @@ include("load_inputs/load_maximum_capacity_limit.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
 include("load_inputs/load_twentyfourseven.jl")
+include("load_inputs/load_energy_credit.jl")
 
 include("load_inputs/load_inputs.jl")
 
@@ -149,6 +150,7 @@ include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
 include("model/policies/maximum_capacity_limit.jl")
 include("model/policies/twentyfourseven.jl")
+include("model/policies/energy_credit.jl")
 
 include("model/generate_model.jl")
 include("model/solve_model.jl")
@@ -185,6 +187,7 @@ include("write_outputs/write_time_weights.jl")
 include("write_outputs/choose_output_dir.jl")
 
 include("write_outputs/write_twentyfourseven.jl")
+include("write_outputs/write_energy_credit.jl")
 
 include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
