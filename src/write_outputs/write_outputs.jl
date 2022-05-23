@@ -258,6 +258,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			write_twentyfourseven(path, inputs, setup, EP)
 		end
 
+		if setup["EnergyCredit"] == 1
+			write_energy_credit(path, inputs, setup, EP)
+		end
+
 		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost)
 		println("Time elapsed for writing net revenue is")
 		println(elapsed_time_net_rev)

@@ -48,6 +48,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             dfCost[5,2]+= value(EP[:eTotalCCO2Credit])
         end
     end
+
+	# Energy Credit cost is counted as an VOM cost
+	if setup["EnergyCredit"] == 1
+		dfCost[5,2] -= value(EP[:eCTotalEnergyCredit])
+	end
+
 	if setup["UCommit"]>=1
 		dfCost[7,2] = value(EP[:eTotalCStart])
 	end
@@ -104,6 +110,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		if setup["CO2Credit"] == 1
 			tempzonalcost[5, :] += vec(value.(EP[:eZonalCCO2Credit]))
 		end
+	end
+	if setup["EnergyCredit"] == 1
+		tempzonalcost[5, :] -= vec(value.(EP[:eCEnergyCreditZonalTotal]))
 	end
 
 	# Start up cost

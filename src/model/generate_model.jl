@@ -224,6 +224,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		twentyfourseven!(EP, inputs, setup)
 	end
 
+	if setup["EnergyCredit"] == 1
+		energy_credit!(EP, inputs, setup)
+	end
+
 	## Define the objective function
 	@objective(EP,Min,EP[:eObj])
 

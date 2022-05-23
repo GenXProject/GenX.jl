@@ -81,6 +81,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "PieceWiseHeatRate", 0)
     # Twenty-four Seven Module; 0 = not activate; 1 = active
     set_default_if_absent!(settings, "TFS", 0)    
+    # Energy Credit Module; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "EnergyCredit", 0)
 
 return settings
 end

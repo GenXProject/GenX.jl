@@ -94,6 +94,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		inputs = load_twentyfourseven(setup, path, inputs)
 	end
 
+	if setup["EnergyCredit"] == 1
+		inputs = load_energy_credit(setup, path, inputs)
+	end
+
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
 		inputs = load_period_map(setup, path, inputs)
