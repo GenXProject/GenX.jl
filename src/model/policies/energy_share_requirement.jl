@@ -30,16 +30,28 @@ The final term in the summation above adds roundtrip storage losses to the total
 function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Energy Share Requirement Policies Module")
+    dfGen = inputs["dfGen"]
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
     STOR_ALL = inputs["STOR_ALL"]
     
+    ### Expressions ###
+    # Initialize
+    @expression(EP, eESR[ESR=1:inputs["nESR"]], 1*EP[:vZERO])
+
+    # Total Energy 
+    @expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen[y,Symbol("ESR_$ESR")]*EP[:vP][y,t] for y=dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T))
+    add_to_expression!.(EP[:eESR], EP[:eESRDischarge])
+
+    # Total Demand of Energy 
+    @expression(EP, eESRDemand[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR] * inputs["omega"][t] * (inputs["pD"][t,z] - EP[:eZonalNSE][t,z]) for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+    add_to_expression!.(EP[:eESR], -1, EP[:eESRDemand])
+
     # Considering storage losses
     if !isempty(STOR_ALL)
         if (setup["StorageLosses"] == 1)
             @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * EP[:eStorageLossByZone][z] for z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
-            # EP[:eESR] -= eESRStor
-            add_to_expression!(EP[:eESR], -1, EP[:eESRStor])
+            add_to_expression!.(EP[:eESR], -1, EP[:eESRStor])
         end
     end
 
@@ -47,8 +59,7 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     if Z > 1
         if (setup["PolicyTransmissionLossCoverage"] == 1)
             @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (1 / 2) * EP[:eTransLossByZone][z, t] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
-            # EP[:eESR] -= eESRTLoss
-            add_to_expression!(EP[:eESR], -1, EP[:eESRTLoss])
+            add_to_expression!.(EP[:eESR], -1, EP[:eESRTLoss])
         end
     end
 

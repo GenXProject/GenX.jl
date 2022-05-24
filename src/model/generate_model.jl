@@ -104,18 +104,12 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	# note that the coefficient 1 is to making sure this expression is an expression, rather an a variable
+	# note that the coefficient 1 is to making sure this expression is an expression, rather than a variable
 	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 1*EP[:vZERO])
 	
 	# Initialize Objective Function Expression
-	# note that the coefficient 1 is to making sure this expression is an expression, rather an a variable
+	# note that the coefficient 1 is to making sure this expression is an expression, rather than a variable
 	@expression(EP, eObj, 1*EP[:vZERO])
-
-	# Energy Share Requirement
-	# note that the coefficient 1 is to making sure this expression is an expression, rather an a variable
-	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eESR[ESR=1:inputs["nESR"]], 1*EP[:vZERO])
-	end
 
 	# Infrastructure
 	discharge!(EP, inputs, setup)
