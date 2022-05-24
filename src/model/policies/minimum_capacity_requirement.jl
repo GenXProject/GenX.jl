@@ -29,7 +29,7 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	println("Minimum Capacity Requirement Module")
 	NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
 	G = inputs["G"]
-	
+	dfGen = inputs["dfGen"]
 	### Expressions ###
 	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 1*EP[:vZERO])
 	

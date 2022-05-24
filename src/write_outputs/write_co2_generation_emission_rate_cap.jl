@@ -59,7 +59,7 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
         dfCO2GenRateCapCost.AnnualSum .+= temp_CO2GenRateCapCost
         dfCO2GenRateCapCost = hcat(dfCO2GenRateCapCost, DataFrame([temp_CO2GenRateCapCost], [Symbol("CO2_GenRateCap_Cost_$cap")]))
     end
-    CSV.write(joinpathn(path, "CO2Cost_genrate.csv"), dfCO2GenRateCapCost)
+    CSV.write(joinpath(path, "CO2Cost_genrate.csv"), dfCO2GenRateCapCost)
 
     return dfCO2GenRatePrice, dfCO2GenRateCapCost
 end

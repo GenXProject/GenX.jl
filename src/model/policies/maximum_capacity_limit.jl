@@ -24,7 +24,7 @@ function maximum_capacity_limit!(EP::Model, inputs::Dict, setup::Dict)
     println("Maxmimum Capacity limit Module")
     NumberOfMaxCapReqs = inputs["NumberOfMaxCapReqs"]
     G = inputs["G"]
-    
+    dfGen = inputs["dfGen"]
     ### Expressions ###
     @expression(EP, eMaxCapRes[maxcap = 1:NumberOfMaxCapReqs], 1*EP[:vZERO])
 
