@@ -70,8 +70,7 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eTFSAnnualTranscationCost[rpsh_path = 1:NumberofTFSPath], sum(EP[:eTFSTranscationCost][rpsh_path, t] * inputs["omega"][t] for t in 1:T))
         # this expression calculate the total friction cost on each path
         @expression(EP, eTFSTotalTranscationCost, sum(EP[:eTFSAnnualTranscationCost][rpsh_path] for rpsh_path in 1:NumberofTFSPath))
-        EP[:eObj] += EP[:eTFSTotalTranscationCost]
-        # add_to_expression!(EP[:eObj], EP[:eTFSTotalTranscationCost])
+        add_to_expression!(EP[:eObj], EP[:eTFSTotalTranscationCost])
     end
     
     ## Define constraints

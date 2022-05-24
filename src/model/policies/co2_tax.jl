@@ -33,11 +33,9 @@ function co2_tax!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, ePlantCCO2Tax[y = 1:G], sum(inputs["omega"][t] * EP[:eEmissionsByPlant][y, t] for t in 1:T) * inputs["dfCO2Tax"][dfGen[y, :Zone], "CO2Tax"])
     # Sum CO2 Tax to zonal level
     @expression(EP, eZonalCCO2Tax[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCCO2Tax][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
-    # @expression(EP, eCCO2Tax[z = 1:Z], inputs["dfCO2Tax"][z, "CO2Tax"] * sum(inputs["omega"][t] * EP[:eEmissionsByZone][z, t] for t in 1:T))
     # Sum CO2 Tax to system level
     @expression(EP, eTotalCCO2Tax, sum(EP[:eZonalCCO2Tax][z] for z in 1:Z))
 
-    # EP[:eObj] += eTotalCCO2Tax
     add_to_expression!(EP[:eObj], EP[:eTotalCCO2Tax])
 
 end

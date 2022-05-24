@@ -34,7 +34,6 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 1*EP[:vZERO])
 	
 	@expression(EP, eMinCapResInvest[mincap = 1:NumberOfMinCapReqs], sum(dfGen[y, Symbol("MinCapTag_$mincap")] * EP[:eTotalCap][y] for y in 1:G))
-	# EP[:eMinCapRes] += eMinCapResInvest
 	add_to_expression!.(EP[:eMinCapRes], EP[:eMinCapResInvest])
 
 	### Constraints ###

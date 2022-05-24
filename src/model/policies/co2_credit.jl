@@ -40,7 +40,6 @@ function co2_credit!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCCO2Credit, sum(eZonalCCO2Credit[z] for z in 1:Z))
     # add to objective function
 
-    # EP[:eObj] += eTotalCCO2Credit
     add_to_expression!(EP[:eObj], -1, EP[:eTotalCCO2Credit])
 
 end
