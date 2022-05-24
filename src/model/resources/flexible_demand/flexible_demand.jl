@@ -96,7 +96,7 @@ add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceDemandFlex])
 # Sum to system level
 @expression(EP, eTotalCVarFlexIn, sum(EP[:eZonalCVarFlexIn][z] for z in 1:Z))
 
-EP[:eObj] += eTotalCVarFlexIn
+add_to_expression!(EP[:eObj], EP[:eTotalCVarFlexIn])
 
 ### Constraints ###
 

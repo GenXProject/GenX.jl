@@ -69,7 +69,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCVarIn, sum(EP[:eZonalCVarIn][z] for z in 1:Z))
 
 	# Add to objective function
-	EP[:eObj] += eTotalCVarIn
+	add_to_expression!(EP[:eObj], EP[:eTotalCVarIn])
 
 	## Power Balance Expressions ##
 

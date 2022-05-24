@@ -47,6 +47,7 @@ function piecewiseheatrate(EP::Model, inputs::Dict)
     # sum up the fuel cost to the system level
     @expression(EP, eCVar_fuel_piecewise, sum(eZonalCFuel_piecewise[z] for z in 1:Z))
     # add to objective function
-    EP[:eObj] += eCVar_fuel_piecewise
+    # EP[:eObj] += eCVar_fuel_piecewise
+    add_to_expression!(EP[:eObj], EP[:eCVar_fuel_piecewise])
     return EP
 end

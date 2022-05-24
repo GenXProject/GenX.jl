@@ -76,8 +76,7 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCNSE, sum(eZonalCNSE[z] for z in 1:Z))
 
 	# Add total cost contribution of non-served energy/curtailed demand to the objective function
-	EP[:eObj] += eTotalCNSE
-
+	add_to_expression!(EP[:eObj], EP[:eTotalCNSE])
 	## Power Balance Expressions ##
 	@expression(EP, ePowerBalanceNse[t=1:T, z=1:Z],
 	sum(vNSE[s,t,z] for s=1:SEG))

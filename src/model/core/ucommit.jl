@@ -74,7 +74,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
     # Sum to system level
     @expression(EP, eTotalCStart, sum(eZonalCStart[z] for z = 1:Z))
 
-	EP[:eObj] += eTotalCStart
+	add_to_expression!(EP[:eObj], EP[:eTotalCStart])
 
 	### Constratints ###
 	## Declaration of integer/binary variables
