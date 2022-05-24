@@ -48,39 +48,39 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
     MUST_RUN = inputs["MUST_RUN"]
     THERM_ALL = inputs["THERM_ALL"]
     ### Expressions ###
-    @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+    @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 1*EP[:vZERO])
 
 	##CO2 Polcy Module Thermal Generation by zone
     if !isempty(THERM_ALL)
         @expression(EP, eGenerationByThermAll[z=1:Z, t=1:T], # the unit is GW
             sum(EP[:vP][y,t] for y in intersect(THERM_ALL, dfGen[dfGen[!,:Zone].==z,:R_ID]))
         )
-        EP[:eGenerationByZone] += eGenerationByThermAll
-        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByThermAll])
+        # EP[:eGenerationByZone] += eGenerationByThermAll
+        add_to_expression!.(EP[:eGenerationByZone], EP[:eGenerationByThermAll])
     end
 	##CO2 Polcy Module Hydro Res Generation by zone
     if !isempty(HYDRO_RES)
         @expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
             sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[dfGen[!,:Zone].==z,:R_ID]))
         )
-        EP[:eGenerationByZone] += eGenerationByHydroRes
-        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByHydroRes])
+        # EP[:eGenerationByZone] += eGenerationByHydroRes
+        add_to_expression!.(EP[:eGenerationByZone], EP[:eGenerationByHydroRes])
     end
     ##CO2 Polcy Module VRE Generation by zone
     if !isempty(VRE)
         @expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
             sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID]))
         )
-        EP[:eGenerationByZone] += eGenerationByVRE
-        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByVRE])
+        # EP[:eGenerationByZone] += eGenerationByVRE
+        add_to_expression!.(EP[:eGenerationByZone], EP[:eGenerationByVRE])
     end
 	##CO2 Polcy Module Must Run Generation by zone
     if !isempty(MUST_RUN)
         @expression(EP, eGenerationByMustRun[z=1:Z, t=1:T], # the unit is GW
             sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z, :R_ID]))
         )
-        EP[:eGenerationByZone] += eGenerationByMustRun
-        # add_to_expression!(EP[:eGenerationByZone], EP[:eGenerationByMustRun])
+        # EP[:eGenerationByZone] += eGenerationByMustRun
+        add_to_expression!.(EP[:eGenerationByZone], EP[:eGenerationByMustRun])
     end
     ### Constraints ###
 
