@@ -19,10 +19,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 function write_esr_transmissionlosspayment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]
+    T = inputs["T"]
     nESR = inputs["nESR"]
     dfESRtransmissionlosspayment = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     tempesrpayment = zeros(Z, nESR)
-    tempesrpayment = (inputs["dfESR"] .* 0.5 .* (value.(EP[:eTransLossByZone]))) .* repeat(transpose(dual.(EP[:cESRShare])), Z, 1)
+    tempesrpayment = (inputs["dfESR"] .*  (1/2) .* value.(EP[:eTransLossByZoneYear])) .* repeat(transpose(dual.(EP[:cESRShare])), Z, 1)
     if setup["ParameterScale"] == 1
         tempesrpayment *= (ModelScalingFactor^2)
     end

@@ -58,7 +58,7 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     # Considering transmission losses
     if Z > 1
         if (setup["PolicyTransmissionLossCoverage"] == 1)
-            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (1 / 2) * EP[:eTransLossByZone][z, t] for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * (1/2) * EP[:eTransLossByZoneYear][z] for z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
             add_to_expression!.(EP[:eESR], -1, EP[:eESRTLoss])
         end
     end
