@@ -47,8 +47,8 @@ function co2_load_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::Dict)
     STOR_ALL = inputs["STOR_ALL"]
 
     ### Expressions ###
-    @expression(EP, eCO2Emissions_loadrate_LHS[cap=1:inputs["NCO2LoadRateCap"]], EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
-    @expression(EP, eCO2Emissions_loadrate_RHS[cap=1:inputs["NCO2LoadRateCap"]], inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - EP[:eZonalNSE][t, z]) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap]))
+    @expression(EP, eCO2Emissions_loadrate_LHS[cap=1:inputs["NCO2LoadRateCap"]], sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
+    @expression(EP, eCO2Emissions_loadrate_RHS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum(inputs["omega"][t] * (inputs["pD"][t, z] - EP[:eZonalNSE][t, z]) for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
     
     if !isempty(STOR_ALL)
         # The default without the key is "StorageLosses" not to include storage loss in the policy
@@ -61,7 +61,7 @@ function co2_load_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::Dict)
     if Z > 1
         # The default without the key "PolicyTransmissionLossCoverage" is not to include transmission loss in the policy
         if (setup["PolicyTransmissionLossCoverage"] == 1)
-            @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * sum((1 / 2) * inputs["omega"][t] * EP[:eTransLossByZone][z, t] for t = 1:T) for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
+            @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfMaxCO2LoadRate"][z, cap] * (1/2) * EP[:eTransLossByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2LoadRateCapZones"][:, cap])))
             add_to_expression!.(EP[:eCO2Emissions_loadrate_RHS], EP[:eCO2Emissions_loadrate_RHS_TLOSS])
         end
     end
