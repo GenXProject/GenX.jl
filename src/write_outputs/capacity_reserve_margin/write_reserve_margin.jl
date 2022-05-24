@@ -24,5 +24,6 @@ function write_reserve_margin(path::AbstractString, inputs::Dict, setup::Dict, E
     end
     dfResMar = hcat(dfResMar, DataFrame(temp_ResMar, [Symbol("CapRes_$i") for i in 1:NCRM]))
     CSV.write(joinpath(path,  "ReserveMargin.csv"), dfResMar)
+    return dfResMar
 end
 
