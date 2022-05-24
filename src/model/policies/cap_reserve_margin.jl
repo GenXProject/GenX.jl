@@ -45,54 +45,54 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	println("Capacity Reserve Margin Policies Module")
 	### Expression
 	# Initialize Capacity Reserve Margin Expression
-	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], 0)
+	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], 1*EP[:vZERO])
 
 	# Hydro with Res
 	if !isempty(HYDRO_RES)
 		@expression(EP, eCapResMarBalanceHydro[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t] for y in HYDRO_RES))
-		EP[:eCapResMarBalance] += eCapResMarBalanceHydro
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceHydro])
 	end
 
 	# Variable generations
 	if !isempty(VRE)
 		@expression(EP, eCapResMarBalanceVRE[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
-		EP[:eCapResMarBalance] += eCapResMarBalanceVRE
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceVRE])
 	end
 
 	# Must run generations
 	if !isempty(MUST_RUN)
 		@expression(EP, eCapResMarBalanceMustRun[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
-		EP[:eCapResMarBalance] += eCapResMarBalanceMustRun
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceMustRun])
 	end
 
 	# Thermal units
 	if !isempty(THERM_ALL)
 		@expression(EP, eCapResMarBalanceThermal[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] for y in THERM_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceThermal
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceThermal])
 	end
 
 	# Storages
 	if !isempty(STOR_ALL)
 		@expression(EP, eCapResMarBalanceStor[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceStor
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceStor])
 	end
 
 	# Flexible demand
 	if !isempty(FLEX)
 		@expression(EP, eCapResMarBalanceFlex[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-		EP[:eCapResMarBalance] += eCapResMarBalanceFlex
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceFlex])
 	end
 
 	# Demand Response (SEG >=2)
 	if SEG >= 2
 		@expression(EP, eCapResMarBalanceNSE[res=1:NCRM, t=1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
-		EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceNSE])
 	end
 
 	# Transmission's contribution
 	if Z > 1 
 		@expression(EP, eCapResMarBalanceTrans[res=1:NCRM, t=1:T], sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L))
-		EP[:eCapResMarBalance] -= eCapResMarBalanceTrans
+		add_to_expression!.(EP[:eCapResMarBalance], -1, EP[:eCapResMarBalanceTrans])
 	end
 
 	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
