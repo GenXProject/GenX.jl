@@ -94,6 +94,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println(elapsed_time_expansion)
 		end
 	end
+	if !isempty(inputs["STOR_ALL"])
+		write_storagelosses(path, inputs, setup, EP)
+		write_zonal_storagelosses(path, inputs, setup, EP)
+	end
+	write_zonal_energyconsumption(path, inputs, setup, EP)
 	# elapsed_time_emissions = @elapsed write_emissions(path, inputs, setup, EP)
 	elapsed_time_emissions = @elapsed write_co2(path, inputs, setup, EP)
 	println("Time elapsed for writing emissions is")
