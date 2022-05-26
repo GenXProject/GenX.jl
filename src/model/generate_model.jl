@@ -208,7 +208,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		minimum_capacity_requirement!(EP, inputs, setup)
 	end
 
-	if (setup["MinCapReq"] == 1)
+	if (setup["MaxCapReq"] == 1)
 		maximum_capacity_limit!(EP, inputs, setup)
 	end
 
