@@ -225,6 +225,18 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 			#   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][g,:CO2_per_Start] is ton
 		end
 	end
+
+	# if piecewise fuel consumption is on, set the C_Fuel_Per_MWh to be zero because we will account for fuel consumption in a separate module. 
+	if (setup["PieceWiseHeatRate"] == 1) & (!isempty(inputs_gen["THERM_COMMIT"]))
+        inputs_gen["C_Fuel_per_MWh"][inputs_gen["THERM_COMMIT"], :] .= 0
+		if setup["ParameterScale"] == 1 # if the Parameter scaling turned on, the slope stay the same, but intercepts should be divided by modeling scale parameter
+			inputs_gen["dfGen"][!,:Intercept1] = gen_in[!,:Intercept1]/ModelScalingFactor
+			inputs_gen["dfGen"][!,:Intercept2] = gen_in[!,:Intercept2]/ModelScalingFactor
+			inputs_gen["dfGen"][!,:Intercept3] = gen_in[!,:Intercept3]/ModelScalingFactor
+		end
+	end
+
+
 	println("Generators_data.csv Successfully Read!")
 
 	return inputs_gen
