@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-write hourly fuel consumption of each power plants
+write hourly fuel consumption of each power plant. This module is applicable even if piecewiseheatrate is off.
 """
 function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
@@ -41,14 +41,14 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 	# Fuel consumption by each resource in each time step
 	dfFuel = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef,  G))
 
-	# convert MMBTU to BBTU if parameterscale is on 
+	
 	if setup["ParameterScale"] ==1
-		for y in COMMIT
+		for y in 1:G
 			dfFuel[!,:AnnualSum][y] = sum(inputs["omega"].* (fuel[y,:])) * ModelScalingFactor
 		end
 		dfFuel = hcat(dfFuel, DataFrame(fuel* ModelScalingFactor, :auto))
 	else
-		for y in COMMIT
+		for y in 1:G
 			dfFuel[!,:AnnualSum][y] = sum(inputs["omega"].* (fuel[y,:]))
 		end
 		dfFuel = hcat(dfFuel, DataFrame(fuel, :auto))
