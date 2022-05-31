@@ -189,6 +189,8 @@ include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_regional_subsidy_revenue.jl")
 include("write_outputs/write_time_weights.jl")
 include("write_outputs/choose_output_dir.jl")
+# fuel consumption, 531 FC
+include("write_outputs/write_fuel_consumption.jl")
 
 include("write_outputs/write_twentyfourseven.jl")
 include("write_outputs/write_energy_credit.jl")
@@ -223,6 +225,7 @@ include("write_outputs/transmission/write_congestion_revenue.jl")
 include("write_outputs/ucommit/write_commit.jl")
 include("write_outputs/ucommit/write_shutdown.jl")
 include("write_outputs/ucommit/write_start.jl")
+
 
 include("write_outputs/write_outputs.jl")
 
