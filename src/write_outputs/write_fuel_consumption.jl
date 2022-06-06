@@ -20,26 +20,28 @@ write hourly fuel consumption of each power plant. This module is applicable eve
 function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]
-	COMMIT = inputs["COMMIT"]     # Number of resources (generators, storage, DR, and DERs)
+	COMMIT = inputs["COMMIT"]    
+	THERM_ALL = inputs["THERM_ALL"]
 	T = inputs["T"]     # Number of time steps (hours)
 
 	fuel = zeros(G,T)
-	# this module include the hourly fuel consumption of thermal units. 
-	for y in COMMIT
+
+	# this module will write hourly fuel consumption of thermal units, regardless of UC status
+	for y in THERM_ALL # THERM_ALL include all the thermal units even if UC is off
 		# eCFuelout = $ of fuel ; inputs["fuel_costs"][dfGen[!, :Fuel][y]][t] = $/MMTBU for generator y at time t.
 		# eCFuelOut/inputs["fuel_costs"][dfGen[!, :Fuel][y]][t]  = MMTBU of generator at time t
 		for t in 1:T
 			fuel[y,t] = value.(EP[:eCFuel_out][y,t]) /inputs["fuel_costs"][dfGen[!, :Fuel][y]][t]
 		end 
-		# replace the fuel consumption of piecewise fuel consumption is on 
-		if (setup["PieceWiseHeatRate"] == 1) & (!isempty(inputs["THERM_COMMIT"]))
+		# replace the fuel consumption if piecewise fuel consumption and UC are on 
+		if (setup["PieceWiseHeatRate"] == 1) & (!isempty(COMMIT))
 			fuel[y,:] = value.(EP[:vFuel])[y,:]
 		end
 	end
 			
 
 	# Fuel consumption by each resource in each time step
-	dfFuel = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef,  G))
+	dfFuel = DataFrame(Resource = inputs["RESOURCES"],Fuel= dfGen[!, :Fuel], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef,  G))
 
 	
 	if setup["ParameterScale"] ==1
@@ -54,14 +56,32 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 		dfFuel = hcat(dfFuel, DataFrame(fuel, :auto))
 	end
 
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	auxNew_Names=[Symbol("Resource");Symbol("Fuel");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfFuel,auxNew_Names)
 
-	total = DataFrame(["Total" 0 sum(dfFuel[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	for t in 1:T
-		total[:,t+3] .= sum(dfFuel[:,Symbol("t$t")][COMMIT])
+
+	# types of fuel
+	fuel_types = unique(dfGen[!, :Fuel])
+	fuel_number = length(fuel_types) 
+
+
+    #data frame for total fuel consumption
+	total_fuel_df = DataFrame([[Symbol("Total_$i") for i in fuel_types][1] fuel_types[1] 0 sum(dfFuel[dfFuel[!,:Fuel] .== fuel_types[1],:AnnualSum])  fill(0.0, (1,T)) ], :auto)
+	if fuel_number > 1
+		for i in 2:fuel_number
+		    total_fuel_df = vcat(total_fuel_df, DataFrame([[Symbol("Total_$i") for i in fuel_types][i] fuel_types[i] 0 sum(dfFuel[dfFuel[!,:Fuel] .== fuel_types[i],:AnnualSum])  fill(0.0, (1,T)) ], :auto))
+	    end
 	end
-	rename!(total,auxNew_Names)
-	dfFuel = vcat(dfFuel, total)
+
+
+    # total fuel consumption by fuel types
+	for t in 1:T
+		for i in 1:fuel_number
+			total_fuel_df[i,t+4] = sum(dfFuel[:,Symbol("t$t")][dfGen[dfGen[!,:Fuel] .== fuel_types[i],:R_ID]])
+		end
+	end
+
+	rename!(total_fuel_df,auxNew_Names)
+	dfFuel = vcat(dfFuel, total_fuel_df)
  	CSV.write(joinpath(path,"fuel_consumption.csv"), dftranspose(dfFuel, false), writeheader=false)
 end

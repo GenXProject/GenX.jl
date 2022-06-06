@@ -21,6 +21,7 @@ piecewiseheatrate module allows piecewise-linear fitting of input thermal energy
 
 function piecewiseheatrate!(EP::Model, inputs::Dict)
     println("Thermal (Piecewise heat rate) Resources Module")
+    # Piecewise heat rate module is applicable to themral units that are subjected to unit commitment (THERM_COMMIT or COMMIT)
     dfGen = inputs["dfGen"]
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
