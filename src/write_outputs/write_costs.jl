@@ -74,7 +74,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[10,2] += value(EP[:eCTotalCapResSlack])
 	end
 
-	if setup["CapacityReserveMargin"] == 1
+	if setup["CO2Cap"] == 1
 		dfCost[10,2] += value(EP[:eCTotalCO2Emissions_mass_slack])
 	end
 
