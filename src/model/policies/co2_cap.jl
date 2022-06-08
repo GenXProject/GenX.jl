@@ -45,12 +45,21 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 
+	### Variable ###
+	@variable(EP, vCO2Emissions_mass_slack[cap = 1:inputs["NCO2Cap"]] >=0)
+
+	### Expression ###
+	@expression(EP, eCCO2Emissions_mass_slack[cap = 1:inputs["NCO2Cap"]], inputs["dfCO2Cap_slack"][cap,:PriceCap] * EP[:vCO2Emissions_mass_slack][cap])
+	@expression(EP, eCTotalCO2Emissions_mass_slack, sum(EP[:eCCO2Emissions_mass_slack][cap] for cap = 1:inputs["NCO2Cap"]))
+	add_to_expression!(EP[:eObj], EP[:eCTotalCO2Emissions_mass_slack])
+
 	### Constraints ###
 
     ## Mass-based: Emissions constraint in absolute emissions limit (tons)
     @constraint(EP, cCO2Emissions_mass[cap = 1:inputs["NCO2Cap"]],
-        sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap])) <=
-        sum(inputs["dfMaxCO2"][z, cap] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap]))
+        sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2Cap"][:, Symbol("CO_2_Cap_Zone_$cap")])) <=
+        (sum(inputs["dfCO2Cap"][z, Symbol("CO_2_Max_Mtons_$cap")] for z in findall(x -> x == 1, inputs["dfCO2Cap"][:, Symbol("CO_2_Cap_Zone_$cap")])) + 
+		EP[:vCO2Emissions_mass_slack][cap])
     )
 
 end

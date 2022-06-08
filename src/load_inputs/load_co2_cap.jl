@@ -20,28 +20,19 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 Function for reading input parameters related to CO$_2$ emissions cap constraints
 """
 function load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
+    inputs_co2["dfCO2Cap_slack"] = DataFrame(CSV.File(joinpath(path,"CO2_cap_slack.csv"), header=true), copycols=true)
+    if setup["ParameterScale"] == 1
+		inputs_co2["dfCO2Cap_slack"][!,:PriceCap] ./= ModelScalingFactor #from $/ton to million$/kton.
+	end
+	# Determine the number of ESR constraints
+	inputs_co2["NCO2Cap"] = size(collect(skipmissing(inputs_co2["dfCO2Cap_slack"][!,:CO2_Mass_Constraint])),1)
 	# Definition of Cap requirements by zone (as Max Mtons)
 	inputs_co2["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path,"CO2_cap.csv"), header=true), copycols=true)
     
-	# determine the number of caps
-	cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap"]))
-    inputs_co2["NCO2Cap"] = cap
-    
-	# read in the zone-cap membership
-	first_col = findall(s -> s == "CO_2_Cap_Zone_1", names(inputs_co2["dfCO2Cap"]))[1]
-    last_col = findall(s -> s == "CO_2_Cap_Zone_$cap", names(inputs_co2["dfCO2Cap"]))[1]
-    inputs_co2["dfCO2CapZones"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:, first_col:last_col])
-
-    #  CO2 emissions cap in metric tons
-    first_col = findall(s -> s == "CO_2_Max_Mtons_1", names(inputs_co2["dfCO2Cap"]))[1]
-    last_col = findall(s -> s == "CO_2_Max_Mtons_$cap", names(inputs_co2["dfCO2Cap"]))[1]
-    # note the default inputs is in million tons
     if setup["ParameterScale"] == 1
-        inputs_co2["dfMaxCO2"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:, first_col:last_col]) * (1e6) / ModelScalingFactor
-        # when scaled, the constraint unit is kton
+        inputs_co2["dfCO2Cap"][:, [Symbol("CO_2_Max_Mtons_$cap") for cap = 1:inputs_co2["NCO2Cap"]]] .*= ((1e6) / ModelScalingFactor)
     else
-        inputs_co2["dfMaxCO2"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:, first_col:last_col]) * (1e6)
-        # when not scaled, the constraint unit is ton
+        inputs_co2["dfCO2Cap"][:, [Symbol("CO_2_Max_Mtons_$cap") for cap = 1:inputs_co2["NCO2Cap"]]] .*= (1e6)
     end
     println("CO2_cap.csv Successfully Read!")
     return inputs_co2

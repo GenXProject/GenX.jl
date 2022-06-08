@@ -26,21 +26,22 @@ function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    tempCO2Price = zeros(Z, inputs["NCO2Cap"])
-    for cap = 1:inputs["NCO2Cap"]
-        tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) .* inputs["dfCO2CapZones"][:, cap]
-        if setup["ParameterScale"] == 1
-            # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
-            tempCO2Price *= ModelScalingFactor
-        end
+
+    dfCO2Price = DataFrame(CO2_Mass_Constraint = [Symbol("CO2_Mass_Cap_$cap") for cap = 1:inputs["NCO2Cap"]],
+                            CO2_Mass_Price = (-1) * (dual.(EP[:cCO2Emissions_mass])),
+                            CO2_Mass_Slack = value.(EP[:vCO2Emissions_mass_slack]),
+                            CO2_Mass_Penalty = value.(EP[:eCCO2Emissions_mass_slack]))
+    if setup["ParameterScale"] == 1
+        dfCO2Price.CO2_Mass_Price .*= ModelScalingFactor
+        dfCO2Price.CO2_Mass_Slack .*= ModelScalingFactor
+        dfCO2Price.CO2_Mass_Penalty .*= ModelScalingFactor^2
     end
-    dfCO2Price = hcat(DataFrame(Zone = 1:Z), DataFrame(tempCO2Price, [Symbol("CO2_Price_$cap") for cap = 1:inputs["NCO2Cap"]]))
-    CSV.write(joinpath(path, "CO2Price_mass.csv"), dfCO2Price)
+    CSV.write(joinpath(path, "CO2Price_n_penalty_mass.csv"), dfCO2Price)
 
     dfCO2MassCapRev = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     temp_CO2MassCapRev = zeros(Z)
     for cap = 1:inputs["NCO2Cap"]
-        temp_CO2MassCapRev = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * (inputs["dfCO2CapZones"][:, cap]) .* (inputs["dfMaxCO2"][:, cap])
+        temp_CO2MassCapRev = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * (inputs["dfCO2Cap"][:, Symbol("CO_2_Cap_Zone_$cap")]) .* (inputs["dfCO2Cap"][:, Symbol("CO_2_Max_Mtons_$cap")])
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable function is in unit of Million US$/kton; 
             # The budget is in unit of kton, and thus the product is in Million US$. 
@@ -55,7 +56,7 @@ function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::
     dfCO2MassCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
     for cap = 1:inputs["NCO2Cap"]
         temp_CO2MassCapCost = zeros(G)
-        GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2CapZones"][dfGen[:, :Zone], cap]))
+        GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2Cap"][dfGen[:, :Zone], Symbol("CO_2_Cap_Zone_$cap")]))
         temp_CO2MassCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]))
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable function is in unit of Million US$/kton; 
