@@ -47,7 +47,15 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
     HYDRO_RES = inputs["HYDRO_RES"]
     MUST_RUN = inputs["MUST_RUN"]
     THERM_ALL = inputs["THERM_ALL"]
+    ### Variable ###
+    @variable(EP, vCO2Emissions_genrate_slack[cap = 1:inputs["NCO2GenRateCap"]] >=0)
+
     ### Expressions ###
+    @expression(EP, eCCO2Emissions_genrate_slack[cap = 1:inputs["NCO2GenRateCap"]], 
+                inputs["dfCO2Cap_GenRate_slack"][cap,:PriceCap] * EP[:vCO2Emissions_genrate_slack][cap])
+    @expression(EP, eCTotalCO2Emissions_genrate_slack, sum(EP[:eCCO2Emissions_genrate_slack][cap] for cap = 1:inputs["NCO2GenRateCap"]))
+    add_to_expression!(EP[:eObj], EP[:eCTotalCO2Emissions_genrate_slack])
+
     @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 1*EP[:vZERO])
 
 	##CO2 Polcy Module Thermal Generation by zone
@@ -86,8 +94,9 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
 
     ## Generation + Rate-based: Emissions constraint in terms of rate (tons/MWh)
     @constraint(EP, cCO2Emissions_genrate[cap = 1:inputs["NCO2GenRateCap"]],
-        sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap])) <=
-        sum(inputs["dfMaxCO2GenRate"][z, cap] * inputs["omega"][t] * EP[:eGenerationByZone][z, t] for t = 1:T, z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap]))
+        sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2Cap_GenRate"][:, Symbol("CO_2_Cap_Zone_$cap")])) <=
+        (sum(inputs["dfCO2Cap_GenRate"][z, Symbol("CO_2_Max_GenRate_$cap")] * inputs["omega"][t] * EP[:eGenerationByZone][z, t] for t = 1:T, z in findall(x -> x == 1, inputs["dfCO2Cap_GenRate"][:, Symbol("CO_2_Cap_Zone_$cap")])) +
+        EP[:vCO2Emissions_genrate_slack][cap])
     )
 
 end
