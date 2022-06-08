@@ -30,12 +30,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
 
 
-	dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
+	dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
 	cInv = value(EP[:eTotalCInv]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0.0)
 	cFOM = value(EP[:eTotalCFOM]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFOMEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFOMCharge]) : 0.0)
 	cFuel = value(EP[:eTotalCFuelOut])
 	cVOM = value(EP[:eTotalCVOMOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
-	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0]
+	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
 
 	if setup["CO2Tax"] == 1
 		dfCost[5,2] += value(EP[:eTotalCCO2Tax])
@@ -66,13 +66,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[9,2] = value(EP[:eTotalCNetworkExp])
 	end
 
+	if setup["EnergyShareRequirement"] == 1
+		dfCost[10,2] = value(EP[:eCTotalESRSlack])
+	end
+
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
 	end
 
 	# Grab zonal cost, because nonmet reserve cost, and transmission expansion cost is system wide,
 	# They are put as zero.
-	tempzonalcost = zeros(9, Z)
+	tempzonalcost = zeros(10, Z)
 	# Investment Cost
 	tempzonalcost[2, :] += vec(value.(EP[:eZonalCInv]))
 	if !isempty(STOR_ALL)

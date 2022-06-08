@@ -22,13 +22,15 @@ function write_esr_storagelosspayment(path::AbstractString, inputs::Dict, setup:
     Z = inputs["Z"]
     nESR = inputs["nESR"]
     dfESRStoragelosspayment = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
-    tempesrpayment = zeros(Z, nESR)
-    tempesrpayment = (inputs["dfESR"] .* (value.(EP[:eStorageLossByZone]))) .* repeat(transpose(dual.(EP[:cESRShare])), Z, 1)
-    if setup["ParameterScale"] == 1
-        tempesrpayment *= (ModelScalingFactor^2)
-    end
-    dfESRStoragelosspayment.AnnualSum .= vec(sum(tempesrpayment, dims=2))
-    dfESRStoragelosspayment = hcat(dfESRStoragelosspayment, DataFrame(tempesrpayment, [Symbol("ESR_$i") for i in 1:nESR]))
+    for i in 1:inputs["nESR"]
+	    tempesrpayment = zeros(Z)
+	    tempesrpayment = (value.(EP[:eStorageLossByZone])) .* inputs["dfESR"][:,Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
+	    if setup["ParameterScale"] == 1
+	        tempesrpayment *= (ModelScalingFactor^2)
+	    end
+	    dfESRStoragelosspayment.AnnualSum .+= tempesrpayment
+	    dfESRStoragelosspayment = hcat(dfESRStoragelosspayment, DataFrame([tempesrpayment], [Symbol("ESR_$i")]))
+	end
     CSV.write(joinpath(path, "ESR_StoragelossPayment.csv"), dfESRStoragelosspayment)
     return dfESRStoragelosspayment
 end
