@@ -199,6 +199,7 @@ include("write_outputs/capacity_reserve_margin/write_reserve_margin.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_demand_response_saving.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_payment.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_transmission_revenue.jl")
+include("write_outputs/capacity_reserve_margin/write_reserve_margin_slack.jl")
 
 include("write_outputs/energy_share_requirement/write_esr_prices.jl")
 include("write_outputs/energy_share_requirement/write_esr_revenue.jl")

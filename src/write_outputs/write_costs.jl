@@ -67,7 +67,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 
 	if setup["EnergyShareRequirement"] == 1
-		dfCost[10,2] = value(EP[:eCTotalESRSlack])
+		dfCost[10,2] += value(EP[:eCTotalESRSlack])
+	end
+
+	if setup["CapacityReserveMargin"] == 1
+		dfCost[10,2] += value(EP[:eCTotalCapResSlack])
 	end
 
 	if setup["ParameterScale"] == 1

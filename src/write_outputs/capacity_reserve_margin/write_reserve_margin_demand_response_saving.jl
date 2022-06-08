@@ -26,7 +26,7 @@ function write_reserve_margin_demand_response_saving(path::AbstractString, input
     dfResDRSaving = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     for i in 1:inputs["NCapacityReserveMargin"]
         pariticpatingzone = zeros(Z)
-        pariticpatingzone[findall(x -> x > 0, inputs["dfCapRes"][:, i])] .= 1
+        pariticpatingzone[findall(x -> x > 0, inputs["dfCapRes"][:, Symbol("CapRes_$i")])] .= 1
         resdrsaving = (transpose(value.(EP[:eDemandResponse])) .* pariticpatingzone) * dual.(EP[:cCapacityResMargin][i, :])
         if setup["ParameterScale"] == 1
             resdrsaving *= ModelScalingFactor^2

@@ -211,6 +211,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfResMar = write_reserve_margin(path, inputs, setup, EP)
 			dfResRevenue = write_reserve_margin_revenue(path, inputs, setup, EP)
 			dfResPayment = write_reserve_margin_payment(path, inputs, setup, EP)
+			dfResMar_slack = write_reserve_margin_slack(path, inputs, setup, EP)
             if inputs["SEG"] >= 2
                 dfResDRSaving = write_reserve_margin_demand_response_saving(path, inputs, setup, EP)
             end
