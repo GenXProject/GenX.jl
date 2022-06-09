@@ -34,7 +34,7 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	@variable(EP, vMinCap_slack[mincap = 1:NumberOfMinCapReqs]>=0)
 	### Expressions ###
 	@expression(EP, eCMinCap_slack[mincap = 1:NumberOfMinCapReqs], inputs["MinCapPriceCap"][mincap] * EP[:vMinCap_slack][mincap])
-	@expression(EP, eTotalCMinCap_slack, sum(EP[:eCMinCap_slack]))
+	@expression(EP, eTotalCMinCap_slack, sum(EP[:eCMinCap_slack][mincap] for mincap = 1:NumberOfMinCapReqs))
 	add_to_expression!(EP[:eObj], EP[:eTotalCMinCap_slack])
 
 	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 1*EP[:vZERO])
