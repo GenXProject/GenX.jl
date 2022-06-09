@@ -30,17 +30,16 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     SEG = inputs["SEG"] # Number of load curtailment segments
     STOR_ALL = inputs["STOR_ALL"]
 
-    tempCO2Price = zeros(Z, inputs["NCO2LoadRateCap"])
-    for cap = 1:inputs["NCO2LoadRateCap"]
-        tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) .* inputs["dfCO2LoadRateCapZones"][:, cap]
-        if setup["ParameterScale"] == 1
-            # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, 
-            # to get $/ton, multiply 1000
-            tempCO2Price *= ModelScalingFactor
-        end
+    dfCO2GenRatePrice = DataFrame(CO2_LoadRate_Constraint = [Symbol("CO2_LoadRate_Cap_$cap") for cap = 1:inputs["NCO2Cap"]],
+                            CO2_LoadRate_Price = (-1) * (dual.(EP[:cCO2Emissions_loadrate])),
+                            CO2_LoadRate_Slack = value.(EP[:vCO2Emissions_loadrate_slack]),
+                            CO2_LoadRate_Penalty = value.(EP[:cCCO2Emissions_loadrate_slack]))
+    if setup["ParameterScale"] == 1
+        dfCO2GenRatePrice.CO2_LoadRate_Price .*= ModelScalingFactor
+        dfCO2GenRatePrice.CO2_LoadRate_Slack .*= ModelScalingFactor
+        dfCO2GenRatePrice.CO2_LoadRate_Penalty .*= ModelScalingFactor^2
     end
-    dfCO2LoadRatePrice = hcat(DataFrame(Zone=1:Z), DataFrame(tempCO2Price, [Symbol("CO2_LoadRate_Price_$cap") for cap = 1:inputs["NCO2LoadRateCap"]]))
-    CSV.write(joinpath(path, "CO2Price_loadrate.csv"), dfCO2LoadRatePrice)
+    CSV.write(joinpath(path, "CO2Price_n_penalty_loadrate.csv"), dfCO2GenRatePrice)
 
     CO2CapEligibleLoad = DataFrame(CO2CapEligibleLoad_MWh = (transpose(inputs["pD"] - value.(EP[:eZonalNSE])) * inputs["omega"]))
     Storageloss = DataFrame(Storageloss_MWh = zeros(Z))
@@ -58,9 +57,9 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     dfCO2LoadRateCapRev = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     for cap = 1:inputs["NCO2LoadRateCap"]
         temp_CO2LoadRateCapRev = zeros(Z, 3)
-        temp_CO2LoadRateCapRev[:, 1] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2LoadRateCapZones"][:, cap]) .* (inputs["dfMaxCO2LoadRate"][:, cap]) .* CO2CapEligibleLoad[!, :CO2CapEligibleLoad_MWh]
-        temp_CO2LoadRateCapRev[:, 2] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2LoadRateCapZones"][:, cap]) .* (inputs["dfMaxCO2LoadRate"][:, cap]) .* Storageloss[!, :Storageloss_MWh]
-        temp_CO2LoadRateCapRev[:, 3] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2LoadRateCapZones"][:, cap]) .* (inputs["dfMaxCO2LoadRate"][:, cap]) .* Transmissionloss[!, :Transmissionloss_MWh]
+        temp_CO2LoadRateCapRev[:, 1] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Max_LoadRate_$cap")]) .* (inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Cap_Zone_$cap")]) .* CO2CapEligibleLoad[!, :CO2CapEligibleLoad_MWh]
+        temp_CO2LoadRateCapRev[:, 2] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Max_LoadRate_$cap")]) .* (inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Cap_Zone_$cap")]) .* Storageloss[!, :Storageloss_MWh]
+        temp_CO2LoadRateCapRev[:, 3] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Max_LoadRate_$cap")]) .* (inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Cap_Zone_$cap")]) .* Transmissionloss[!, :Transmissionloss_MWh]
         if setup["ParameterScale"] == 1
             temp_CO2LoadRateCapRev *= (ModelScalingFactor^2)
         end
@@ -72,7 +71,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     dfCO2LoadRateCapCost = DataFrame(Resource=inputs["RESOURCES"], AnnualSum=zeros(G))
     for cap = 1:inputs["NCO2LoadRateCap"]
         temp_CO2MassCapCost = zeros(G)
-        GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2LoadRateCapZones"][dfGen[:, :Zone], cap]))
+        GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2Cap_LoadRate"][dfGen[:, :Zone], Symbol("CO_2_Cap_Zone_$cap")]))
         temp_CO2MassCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Emissions_loadrate])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]))
         if setup["ParameterScale"] == 1
             temp_CO2MassCapCost *= (ModelScalingFactor^2)
@@ -82,5 +81,5 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     end
     CSV.write(joinpath(path, "CO2Cost_loadrate.csv"), dfCO2LoadRateCapCost)
 
-    return dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost
+    return dfCO2GenRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost
 end

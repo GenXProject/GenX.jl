@@ -20,22 +20,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 Function for reading input parameters related to CO$_2$ load-side emission rate cap constraints
 """
 function load_co2_load_side_emission_rate_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
+    inputs_co2["dfCO2Cap_LoadRate_slack"] = DataFrame(CSV.File(joinpath(path,"CO2_loadrate_cap_slack.csv"), header=true), copycols=true)
+    if setup["ParameterScale"] == 1
+		inputs_co2["dfCO2Cap_LoadRate_slack"][!,:PriceCap] ./= ModelScalingFactor #from $/ton to million$/kton.
+	end
+    inputs_co2["NCO2LoadRateCap"] = size(collect(skipmissing(inputs_co2["dfCO2Cap_LoadRate_slack"][!,:CO2_LoadRate_Constraint])),1)
+
     # Definition of Cap requirements by zone (as Max Mtons per MWh)
     inputs_co2["dfCO2Cap_LoadRate"] = DataFrame(CSV.File(joinpath(path, "CO2_loadrate_cap.csv"), header = true), copycols = true)
-
-    # determine the number of caps
-    cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap_LoadRate"]))
-    inputs_co2["NCO2LoadRateCap"] = cap
-
-    # read in zone-cap membership
-    first_col = findall(s -> s == "CO_2_Cap_Zone_1", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    last_col = findall(s -> s == "CO_2_Cap_Zone_$cap", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    inputs_co2["dfCO2LoadRateCapZones"] = Matrix{Float64}(inputs_co2["dfCO2Cap_LoadRate"][:, first_col:last_col])
-
-    # read in CO2 emissions cap in metric tons/MWh, with or without Scaling, the unit of emission cap (load rate) are both ton/MWh.
-    first_col = findall(s -> s == "CO_2_Max_LoadRate_1", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    last_col = findall(s -> s == "CO_2_Max_LoadRate_$cap", names(inputs_co2["dfCO2Cap_LoadRate"]))[1]
-    inputs_co2["dfMaxCO2LoadRate"] = Matrix{Float64}(inputs_co2["dfCO2Cap_LoadRate"][:, first_col:last_col])
 
     println("CO2_loadrate_cap.csv Successfully Read!")
     return inputs_co2

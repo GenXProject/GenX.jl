@@ -82,6 +82,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[10,2] += value(EP[:eCTotalCO2Emissions_genrate_slack])
 	end
 
+	if setup["CO2LoadRateCap"] == 1
+		dfCost[10,2] += value(EP[:cCTotalCO2Emissions_loadrate_slack])
+	end
+
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
 	end
