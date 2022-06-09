@@ -203,7 +203,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
             dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
         end
-
+		# Max Capacity limit
+		if setup["MaxCapReq"] == 1
+			write_maxcap_penalty(path, inputs, setup, EP)
+		end
 		# Capactiy Reserve Margin Market
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()

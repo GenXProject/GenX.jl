@@ -24,8 +24,10 @@ function load_maximum_capacity_limit(setup::Dict, path::AbstractString, inputs::
     NumberOfMaxCapReqs = size(collect(skipmissing(MaxCapReq[!, :MaxCapReqConstraint])), 1)
     inputs["NumberOfMaxCapReqs"] = NumberOfMaxCapReqs
     inputs["MaxCapReq"] = MaxCapReq[!, :Max_MW]
+    inputs["MaxCapPriceCap"] = MaxCapReq[!, :PriceCap]
     if setup["ParameterScale"] == 1
         inputs["MaxCapReq"] /= ModelScalingFactor # Convert to GW
+        inputs["MaxCapPriceCap"] /= ModelScalingFactor # Convert to $/MW-year to MillionUSD/GW-year
     end
     println("Maximum_capacity_limit.csv Successfully Read!")
     return inputs
