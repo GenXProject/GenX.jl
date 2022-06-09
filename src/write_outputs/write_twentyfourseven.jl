@@ -93,7 +93,8 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
         CSV.write(joinpath(path, "tfs_tfstransactioncost.csv"), dftranspose(dfTFSTransactionCost, false), writeheader=false)
     end
 
-    dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Shortfalllimit])))
+    # dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Shortfalllimit])))
+    dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_CFETarget])))
     if setup["ParameterScale"] == 1
         dfShorfalllimitprice.Price = dfShorfalllimitprice.Price * ModelScalingFactor
     end
@@ -104,9 +105,14 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
         dfExceedlimitprice.Price = dfExceedlimitprice.Price * ModelScalingFactor
     end
     CSV.write(joinpath(path, "tfs_exceedlimitprice.csv"), dfExceedlimitprice)
-
+    
+    dfTFSPenalty = DataFrame(Policy_ID = 1:NumberofTFS,
+                            TFSSlack = value.(EP[:vTFSslack]),
+                            TFSPenalty = value.(EP[:eCTFSSlack]))
+    CSV.write(joinpath(path, "tfs_missingtargetpenalty.csv"), dfTFSPenalty)
+    
     dfTFSPrice = DataFrame(Policy_ID = 1:NumberofTFS)
-    temprice = transpose((dual.(EP[:cRPSH_HourlyMatching]) ./ inputs["omega"]))
+    temprice = transpose((dual.(EP[:cTFS_NodalTrading]) ./ inputs["omega"]))
     if setup["ParameterScale"] == 1
         temprice = temprice * ModelScalingFactor
     end
@@ -116,14 +122,14 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
     dfTFSGenRevenue = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = zeros(G))
     tempinjection = zeros(G, T)
     tempinjection[setdiff(ALLGEN, union(STOR_ALL, FLEX)), :] = value.(EP[:vP])[setdiff(ALLGEN, union(STOR_ALL, FLEX)), :]
-    if (!isempty(STOR_ALL))
-        tempinjection[STOR_ALL, :] = value.(EP[:vP])[STOR_ALL, :] - (value.(EP[:vCHARGE][STOR_ALL, :])).data
-    end
-    if (!isempty(FLEX))
-        tempinjection[FLEX, :] = (value.(EP[:vCHARGE_FLEX][FLEX, :])).data - value.(EP[:vP])[FLEX, :]
-    end
+    # if (!isempty(STOR_ALL))
+    #     tempinjection[STOR_ALL, :] = value.(EP[:vP])[STOR_ALL, :] - (value.(EP[:vCHARGE][STOR_ALL, :])).data
+    # end
+    # if (!isempty(FLEX))
+    #     tempinjection[FLEX, :] = (value.(EP[:vCHARGE_FLEX][FLEX, :])).data - value.(EP[:vP])[FLEX, :]
+    # end
     for rpsh in 1:NumberofTFS
-        temprevenue = (tempinjection * (dual.(EP[:cRPSH_HourlyMatching][:, rpsh]))) .* dfGen[:, Symbol("RPSH_$rpsh")]
+        temprevenue = (tempinjection * (dual.(EP[:cTFS_NodalTrading][:, rpsh]))) .* dfGen[:, Symbol("RPSH_$rpsh")]
         if setup["ParameterScale"] == 1
             temprevenue = temprevenue * (ModelScalingFactor^2)
         end
@@ -133,11 +139,21 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
     CSV.write(joinpath(path, "tfs_genrevenue.csv"), dfTFSGenRevenue)
 
     dfTFSLoadCost = DataFrame(Policy_ID = 1:NumberofTFS, AnnualSum = zeros(NumberofTFS))
-    tempcost = vec(sum(transpose(inputs["TFS_Load"] .* dual.(EP[:cRPSH_HourlyMatching])), dims = 2))
+    # tempcost = vec(sum(transpose(inputs["TFS_Load"] .* dual.(EP[:cRPSH_HourlyMatching])), dims = 2))
+    tempcost = vec(sum(value.(EP[:vProcuredCFE]) .* transpose(dual.(EP[:cTFS_NodalTrading])), dims = 2))
     if setup["ParameterScale"] == 1
-        tempcost = tempcost * (ModelScalingFactor^2)
+        tempcost *= (ModelScalingFactor^2)
     end
-    dfTFSLoadCost.AnnualSum .= vec(sum(transpose(inputs["TFS_Load"] .* dual.(EP[:cRPSH_HourlyMatching])), dims = 2))
+    dfTFSLoadCost.AnnualSum .+= tempcost
     CSV.write(joinpath(path, "tfs_loadcost.csv"), dfTFSLoadCost)
-
+    
+    if (NumberofTFS) > 1
+        dfTFSExportRevenue = DataFrame(Policy_ID = 1:NumberofTFS, AnnualSum = zeros(NumberofTFS))
+        tempexportrevenue = vec(sum(value.(EP[:eTFSNetExport]) .* transpose(dual.(EP[:cTFS_NodalTrading])), dims = 2))
+        if setup["ParameterScale"] == 1
+            tempexportrevenue *= (ModelScalingFactor^2)
+        end
+        dfTFSExportRevenue.AnnualSum .+= tempexportrevenue
+        CSV.write(joinpath(path, "tfs_exportrevenue.csv"), dfTFSExportRevenue)
+    end
 end

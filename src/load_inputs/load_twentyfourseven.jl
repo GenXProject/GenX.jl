@@ -21,7 +21,9 @@ Function for reading input parameters related to 24-7 constraints
 """
 function load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dict)
     inputs_tfs["TFS"] = DataFrame(CSV.File(joinpath(path, "RPSH.csv"), header = true), copycols = true)
-
+    if setup["ParameterScale"] == 1
+        inputs_tfs["TFS"][!,:Penalty] ./= ModelScalingFactor
+    end    
     # determine the number of TFS requirement
     NumberofTFS = size(collect(inputs_tfs["TFS"][:, :Policy_ID]), 1)
     inputs_tfs["NumberofTFS"] = NumberofTFS
