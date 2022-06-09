@@ -197,6 +197,9 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		
 		# Regional technology mandate subsidy
 		dfRegSubRevenue = DataFrame()
+		if setup["MinCapReq"] == 1
+			write_mincap_penalty(path, inputs, setup, EP)
+		end
 		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
             dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
         end

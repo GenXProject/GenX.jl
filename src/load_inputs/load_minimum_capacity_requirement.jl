@@ -24,8 +24,10 @@ function load_minimum_capacity_requirement(setup::Dict, path::AbstractString, in
 	NumberOfMinCapReqs = size(collect(skipmissing(MinCapReq[!,:MinCapReqConstraint])),1)
 	inputs["NumberOfMinCapReqs"] = NumberOfMinCapReqs
 	inputs["MinCapReq"] = MinCapReq[!,:Min_MW]
+	inputs["MinCapPriceCap"] = MinCapReq[!,:PriceCap]
 	if setup["ParameterScale"] == 1
-		inputs["MinCapReq"] = inputs["MinCapReq"]/ModelScalingFactor # Convert to GW
+		inputs["MinCapReq"] /= ModelScalingFactor # Convert to GW
+		inputs["MinCapPriceCap"] /= ModelScalingFactor # Convert from $/MW-year to Million$/GW-year
 	end
 	println("Minimum_capacity_requirement.csv Successfully Read!")
 	return inputs
