@@ -186,6 +186,8 @@ include("write_outputs/write_zonal_storagelosses.jl")
 include("write_outputs/write_zonalenergyconsumption.jl")
 include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_regional_subsidy_revenue.jl")
+include("write_outputs/write_mincap_penalty.jl")
+include("write_outputs/write_maxcap_penalty.jl")
 include("write_outputs/write_time_weights.jl")
 include("write_outputs/choose_output_dir.jl")
 
