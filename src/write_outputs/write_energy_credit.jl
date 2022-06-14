@@ -46,7 +46,6 @@ function write_energy_credit(path::AbstractString, inputs::Dict, setup::Dict, EP
     # Energy Credit earned by plants of each zone
     # if assumes intra-zonal allocation, this is also the cost paied by the consumers in each zone.
     dfEnergyCreditZonalCost = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
-    # dfEnergyCreditZonalCost.AnnualSum .+= value.(EP[:eCEnergyCreditZonalTotal])
     tempzonalannualsum = value.(EP[:eCEnergyCreditZonalTotal])
     zonaleccost = value.(EP[:eCEnergyCreditZonal])
     if setup["ParameterScale"] == 1

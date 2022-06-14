@@ -102,7 +102,6 @@ include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
 include("load_inputs/load_twentyfourseven.jl")
 include("load_inputs/load_energy_credit.jl")
-
 include("load_inputs/load_investment_credit.jl")
 include("load_inputs/load_inputs.jl")
 
@@ -195,7 +194,6 @@ include("write_outputs/choose_output_dir.jl")
 
 include("write_outputs/write_twentyfourseven.jl")
 include("write_outputs/write_energy_credit.jl")
-
 include("write_outputs/write_investment_credit.jl")
 include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
