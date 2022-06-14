@@ -21,19 +21,38 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 function energy_credit!(EP::Model, inputs::Dict, setup::Dict)
     dfGen = inputs["dfGen"]
 	println("Energy Credit Module")
-	NumberofEnergyCreditCategory = inputs["NumberofEnergyCreditCategory"]
+	NECC = inputs["NumberofEnergyCreditCategory"]
 	G = inputs["G"]
 	Z = inputs["Z"]
     T = inputs["T"]
+    ALLGEN = collect(1:inputs["G"])
+    STOR_ALL = inputs["STOR_ALL"]
+    FLEX = inputs["FLEX"]
 	### Expressions ###
     # Energy credits earned by each plant under each credit category
-	@expression(EP, eCEnergyCredit[y = 1:G, ec = 1:NumberofEnergyCreditCategory], sum(inputs["omega"][t] * EP[:vP][y] * dfGen[y, Symbol("EC_Eligibility_$ec")] * inputs["EnergyCredit"][ec] for t in 1:T))
+	@expression(EP, eCEnergyCredit[y = 1:G, ec = 1:NECC], 
+        if y in setdiff(ALLGEN, union(STOR_ALL, FLEX)) # for normal generation, they earn credit 
+            sum(inputs["omega"][t] * EP[:vP][y,t] * dfGen[y, Symbol("EC_Eligibility_$ec")] * inputs["EnergyCredit"][ec] for t in 1:T)
+        elseif y in STOR_ALL # for storage, they pay credit
+            if setup["StorageLosses"] == 1
+                (-1) * EP[:eELOSS][y] * dfGen[y, Symbol("EC_Eligibility_$ec")] * inputs["EnergyCredit"][ec]
+            else
+                1*EP[:vZERO]
+            end
+        elseif y in FLEX # for flexible load, they pay credit
+            if setup["StorageLosses"] == 1
+                (-1) * EP[:eExtraDemand][y] * dfGen[y, Symbol("EC_Eligibility_$ec")] * inputs["EnergyCredit"][ec]
+            else
+                1*EP[:vZERO]
+            end
+        end
+    )
     # Energy credits earned by each plant
-    @expression(EP, eCEnergyCreditPlantTotal[y = 1:G], sum(EP[:eCEnergyCredit][y, ec] for ec in 1:NumberofEnergyCreditCategory))
+    @expression(EP, eCEnergyCreditPlantTotal[y = 1:G], sum(EP[:eCEnergyCredit][y, ec] for ec in 1:NECC))
     # Energy credits earned plants of each zone under each credit category
-    @expression(EP, eCEnergyCreditZonal[z = 1:Z, ec = 1:NumberofEnergyCreditCategory], sum(EP[:eCEnergyCredit][y, ec] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eCEnergyCreditZonal[z = 1:Z, ec = 1:NECC], sum(EP[:eCEnergyCredit][y, ec] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
     # Energy credits earned plants of each zone
-    @expression(EP, eCEnergyCreditZonalTotal[z = 1:Z], sum(EP[:eCEnergyCreditZonal][z, ec] for ec in 1:NumberofEnergyCreditCategory))
+    @expression(EP, eCEnergyCreditZonalTotal[z = 1:Z], sum(EP[:eCEnergyCreditZonal][z, ec] for ec in 1:NECC))
 	# Total energy credits earned by the system
     @expression(EP, eCTotalEnergyCredit, sum(EP[:eCEnergyCreditZonalTotal][z] for z in 1:Z))
     # Add the total energy credit 
