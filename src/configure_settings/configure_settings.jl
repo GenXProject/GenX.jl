@@ -82,7 +82,9 @@ function configure_settings(settings_path::String)
     # Twenty-four Seven Module; 0 = not activate; 1 = active
     set_default_if_absent!(settings, "TFS", 0)    
     # Energy Credit Module; 0 = not activate; 1 = active
-    set_default_if_absent!(settings, "EnergyCredit", 0)
+    set_default_if_absent!(settings, "EnergyCredit", 0)    
+    # Investment Credit Module; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "InvestmentCredit", 0)
 
 return settings
 end

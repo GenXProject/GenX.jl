@@ -37,6 +37,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	cVOM = value(EP[:eTotalCVOMOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
 
+	if setup["InvestmentCredit"] == 1
+		dfCost[2,2] -= value(EP[:eCTotalInvCredit])
+	end
+
 	if setup["CO2Tax"] == 1
 		dfCost[5,2] += value(EP[:eTotalCCO2Tax])
 	end
@@ -113,6 +117,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 	if !isempty(STOR_ASYMMETRIC)
 		tempzonalcost[2, :] += vec(value.(EP[:eZonalCInvChargeCap]))
+	end
+
+	if setup["InvestmentCredit"] == 1
+		tempzonalcost[2, :] -= vec(value.(EP[:eCZonalTotalInvCredit]))
 	end
 
 	# FOM Cost
