@@ -98,6 +98,11 @@ add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceDemandFlex])
 
 add_to_expression!(EP[:eObj], EP[:eTotalCVarFlexIn])
 
+# Calcualte the extra energy consumption of flexible demand
+@expression(EP, eExtraDemand[y in FLEX], 
+        sum(inputs["omega"][t] * (EP[:vP][y, t] - EP[:vCHARGE_FLEX][y, t]) for t in 1:T))
+
+
 ### Constraints ###
 
 ## Flexible demand is available only during specified hours with time delay or time advance (virtual storage-shiftable demand)
