@@ -111,17 +111,18 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
 	# If resource is not eligible for new capacity, fixed costs are only O&M costs
-    @expression(EP, eCInvCap[y in 1:G],
-        if y in NEW_CAP # Resources eligible for new capacity
-            if y in COMMIT
-                dfGen[y, :Inv_Cost_per_MWyr] * dfGen[y, :Cap_Size] * vCAP[y]
-            else
-                dfGen[y, :Inv_Cost_per_MWyr] * vCAP[y]
-            end
-        else
-            EP[:vZERO]
-        end
-    )
+	@expression(EP, eInvCap[y in 1:G],
+		if y in NEW_CAP # Resources eligible for new capacity
+			if y in COMMIT
+				dfGen[y, :Cap_Size] * vCAP[y]
+			else
+				vCAP[y]
+			end
+		else
+			EP[:vZERO]
+		end	
+	)
+    @expression(EP, eCInvCap[y in 1:G], dfGen[y, :Inv_Cost_per_MWyr] * EP[:eInvCap][y])
     @expression(EP, eCFOMCap[y in 1:G], dfGen[y, :Fixed_OM_Cost_per_MWyr] * EP[:eTotalCap][y])
     @expression(EP, eCFix[y in 1:G], EP[:eCInvCap][y] + EP[:eCFOMCap][y])
 
