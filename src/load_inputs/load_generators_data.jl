@@ -163,10 +163,12 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 		# Variable operations and maintenance cost of the charging aspect of a storage technology with STOR = 2,
 		# or variable operations and maintenance costs associated with flexible demand with FLEX = 1
 		inputs_gen["dfGen"][!,:Var_OM_Cost_per_MWh_In] = gen_in[!,:Var_OM_Cost_per_MWh_In]/ModelScalingFactor # Convert to $ million/GWh with objective function in millions
-		# Cost of providing regulation reserves
-		inputs_gen["dfGen"][!,:Reg_Cost] = gen_in[!,:Reg_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
-		# Cost of providing spinning reserves
-		inputs_gen["dfGen"][!,:Rsv_Cost] = gen_in[!,:Rsv_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
+		if setup["Reserves"] >= 1
+			# Cost of providing regulation reserves
+			inputs_gen["dfGen"][!,:Reg_Cost] = gen_in[!,:Reg_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
+			# Cost of providing spinning reserves
+			inputs_gen["dfGen"][!,:Rsv_Cost] = gen_in[!,:Rsv_Cost]/ModelScalingFactor # Convert to $ million/GW with objective function in millions
+		end
 
 		if setup["MultiStage"] == 1
 			inputs_gen["dfGen"][!,:Min_Retired_Cap_MW] = gen_in[!,:Min_Retired_Cap_MW]/ModelScalingFactor
