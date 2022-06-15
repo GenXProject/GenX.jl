@@ -282,6 +282,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		println("Time elapsed for writing net revenue is")
 		println(elapsed_time_net_rev)
 	end
+
+
+	elapsed_time_fuel_consumption = @elapsed write_fuel_consumption(path, inputs, setup, EP)
+	println("Time elapsed for writing fuel consumption is")
+	println(elapsed_time_fuel_consumption)
+
 	## Print confirmation
 	println("Wrote outputs to $path")
 

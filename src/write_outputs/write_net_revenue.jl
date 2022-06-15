@@ -98,6 +98,13 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     # Add fuel cost to the dataframe
     dfNetRevenue.Fuel_cost = value.(EP[:ePlantCFuelOut])
+    if (setup["PieceWiseHeatRate"] == 1) & (!isempty(inputs["THERM_COMMIT"]))
+		for i in COMMIT
+            dfNetRevenue.Fuel_cost[i] += value.(EP[:ePlantCFuel_piecewise])[i]
+        end
+	end
+
+
     if setup["ParameterScale"] == 1
         dfNetRevenue.Fuel_cost *= ModelScalingFactor^2 # converting Million US$ to US$
     end

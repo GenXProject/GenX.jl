@@ -57,7 +57,7 @@ using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 # using CPLEX
-# using Gurobi
+using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
@@ -139,6 +139,7 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+include("model/resources/thermal/piecewiseheatrate.jl")
 
 include("model/policies/co2_cap.jl")
 include("model/policies/co2_load_emission_rate_cap.jl")
@@ -191,6 +192,8 @@ include("write_outputs/write_mincap_penalty.jl")
 include("write_outputs/write_maxcap_penalty.jl")
 include("write_outputs/write_time_weights.jl")
 include("write_outputs/choose_output_dir.jl")
+# fuel consumption, 531 FC
+include("write_outputs/write_fuel_consumption.jl")
 
 include("write_outputs/write_twentyfourseven.jl")
 include("write_outputs/write_energy_credit.jl")
@@ -226,6 +229,7 @@ include("write_outputs/transmission/write_congestion_revenue.jl")
 include("write_outputs/ucommit/write_commit.jl")
 include("write_outputs/ucommit/write_shutdown.jl")
 include("write_outputs/ucommit/write_start.jl")
+
 
 include("write_outputs/write_outputs.jl")
 

@@ -34,6 +34,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	cInv = value(EP[:eTotalCInv]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0.0)
 	cFOM = value(EP[:eTotalCFOM]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFOMEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFOMCharge]) : 0.0)
 	cFuel = value(EP[:eTotalCFuelOut])
+	# if piecewise fuel consumption if on, add eCVar_fuel_piecewise to cFuel
+	if (setup["PieceWiseHeatRate"] == 1) & (!isempty(inputs["THERM_COMMIT"]))
+		cFuel += value.(EP[:eCVar_fuel_piecewise])
+	end
 	cVOM = value(EP[:eTotalCVOMOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
 
@@ -134,6 +138,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	# Fuel Cost
 	tempzonalcost[4, :] += vec(value.(EP[:eZonalCFuelOut]))
+	# if piecewise fuel consumption if on, add eZonalCFuel_piecewise to tempzonalcost
+	if (setup["PieceWiseHeatRate"] == 1) & (!isempty(inputs["THERM_COMMIT"]))
+		tempzonalcost[4, :] += value.(EP[:eZonalCFuel_piecewise])
+	end
+	
 
 	# Variable OM Cost
 	tempzonalcost[5, :] += vec(value.(EP[:eZonalCVOMOut]))

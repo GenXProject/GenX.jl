@@ -19,8 +19,9 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 piecewiseheatrate module allows piecewise-linear fitting of input thermal energy at part load. When setup["PieceWiseHeatRate"] == 1 and setup["UCommit"] >= 1, this module is on.
 """
 
-function piecewiseheatrate(EP::Model, inputs::Dict)
+function piecewiseheatrate!(EP::Model, inputs::Dict)
     println("Thermal (Piecewise heat rate) Resources Module")
+    # Piecewise heat rate module is applicable to themral units that are subjected to unit commitment (THERM_COMMIT or COMMIT)
     dfGen = inputs["dfGen"]
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -39,9 +40,9 @@ function piecewiseheatrate(EP::Model, inputs::Dict)
 
 
     # mutiplying eFuel and the fuel cost
-    @expression(EP, eCFuel_piecewise[y in THERM_COMMIT, t = 1:T], inputs["omega"][t] * vFuel[y, t] * (inputs["fuel_costs"][dfGen[!, :Fuel][y], t]))
+    @expression(EP, eCFuel_piecewise[y in THERM_COMMIT, t = 1:T],  vFuel[y, t] * (inputs["fuel_costs"][dfGen[!, :Fuel][y]][t]))
     # sum up the fuel cost from each period to the plant level
-    @expression(EP, ePlantCFuel_piecewise[y in THERM_COMMIT], sum(eCFuel_piecewise[y, t] for t in 1:T))
+    @expression(EP, ePlantCFuel_piecewise[y in THERM_COMMIT], inputs["omega"][t] * sum(eCFuel_piecewise[y, t] for t in 1:T))
     # sum up the fuel cost to the zonal level
     @expression(EP, eZonalCFuel_piecewise[z in 1:Z], EP[:vZERO] + sum(ePlantCFuel_piecewise[y] for y in intersect(THERM_COMMIT, dfGen[dfGen[!, :Zone].==z, :R_ID])))
     # sum up the fuel cost to the system level
