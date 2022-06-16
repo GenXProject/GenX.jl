@@ -33,10 +33,6 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 
 	if !isempty(THERM_COMMIT)
 		thermal_commit!(EP, inputs, setup)
-		# add piecewise fuel comsumption module
-		if setup["PieceWiseHeatRate"] == 1
-			piecewiseheatrate!(EP, inputs)
-		end
 	end
 
 	if !isempty(THERM_NO_COMMIT)
