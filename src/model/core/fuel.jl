@@ -36,7 +36,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # if unit commitment is modelled
     @expression(EP, eStartFuel[y in 1:G, t = 1:T],
         if y in THERM_COMMIT
-            (inputs_gen["dfGen"][y,:Cap_Size] * EP[:vSTART][y, t] * 
+            (dfGen[y,:Cap_Size] * EP[:vSTART][y, t] * 
                 dfGen[y,:Start_Fuel_MMBTU_per_MW])
         else
             1*EP[:vZERO]
@@ -47,7 +47,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         sum(inputs["omega"][t] * EP[:ePlantFuel][y, t] for t in 1:T))
     @expression(EP, eFuelConsumption[f in 1:FUEL, t in 1:T],
         sum(EP[:ePlantFuel][y, t] 
-            for y in dfGen[dfGen[!,:Fuel] == inputs["fuels"][f] ,:R_ID]))
+            for y in dfGen[dfGen[!,:Fuel] .== string(inputs["fuels"][f]) ,:R_ID]))
     @expression(EP, eFuelConsumptionYear[f in 1:FUEL],
         sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
     # fuel_cost is in $/MMBTU (k$/MMBTU or M$/kMMBTU if scaled)
@@ -63,7 +63,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
     # system level total fuel cost for output
     @expression(EP, eTotalCFuelOut, sum(eZonalCFuelOut[z] for z in 1:Z))
-    @add_to_expression(EP[:eObj], EP[:eTotalCFuelOut])
+    add_to_expression!(EP[:eObj], EP[:eTotalCFuelOut])
 
     ### Constraint ###
     @constraint(EP, FuelCalculation[y in setdiff(ALLGEN, THERM_COMMIT), t = 1:T],
