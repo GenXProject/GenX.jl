@@ -66,7 +66,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
     # Startup costs of "generation" for resource "y" during hour "t"
 	# Fixed cost per start-up if unit commitment is modelled
     @expression(EP, eCStart[y in COMMIT, t = 1:T], 
-		(dfGen[y, :Start_Cost_per_MW] * vSTART[y, t] * dfGen[y, :Cap_size]))
+		(dfGen[y, :Start_Cost_per_MW] * vSTART[y, t] * dfGen[y, :Cap_Size]))
 
     # Julia is fastest when summing over one row one column at a time
     # Sum to plant level
