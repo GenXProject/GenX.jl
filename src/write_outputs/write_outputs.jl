@@ -107,9 +107,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		elapsed_time_reliability = @elapsed write_reliability(path, inputs, setup, EP)
 		println("Time elapsed for writing reliability is")
 		println(elapsed_time_reliability)
-		elapsed_time_stordual = @elapsed write_storagedual(path, inputs, setup, EP)
-		println("Time elapsed for writing storage duals is")
-		println(elapsed_time_stordual)
+		if !isempty(inputs["STOR_ALL"])
+			elapsed_time_stordual = @elapsed write_storagedual(path, inputs, setup, EP)
+			println("Time elapsed for writing storage duals is")
+			println(elapsed_time_stordual)
+		end
 	end
 
 	if setup["UCommit"] >= 1

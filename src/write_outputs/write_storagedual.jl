@@ -38,7 +38,6 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Loop over W separately hours_per_subperiod
 	STOR_ALL_NONLDS = setdiff(STOR_ALL, inputs["STOR_LONG_DURATION"])
 	STOR_ALL_LDS = intersect(STOR_ALL, inputs["STOR_LONG_DURATION"])
-	# println("STOR ALL LDS is ", STOR_ALL_LDS)
 	dual_values[STOR_ALL, INTERIOR_SUBPERIODS] = (dual.(EP[:cSoCBalInterior][INTERIOR_SUBPERIODS, STOR_ALL]).data ./ inputs["omega"][INTERIOR_SUBPERIODS])'
 	dual_values[STOR_ALL_NONLDS, START_SUBPERIODS] = (dual.(EP[:cSoCBalStart][START_SUBPERIODS, STOR_ALL_NONLDS]).data ./ inputs["omega"][START_SUBPERIODS])'
 	if !isempty(STOR_ALL_LDS)
