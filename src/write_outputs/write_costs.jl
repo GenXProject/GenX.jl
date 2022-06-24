@@ -101,6 +101,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	if setup["TFS"] == 1
 		dfCost[10,2] += value(EP[:eCTotalTFSSlack])
 		dfCost[10,2] += value(EP[:eTFSTotalTranscationCost])
+		dfCost[10,2] += value(EP[:eCTotalCOSlack])
 	end
 
 	if setup["ParameterScale"] == 1

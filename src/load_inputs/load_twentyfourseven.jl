@@ -20,10 +20,15 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 Function for reading input parameters related to 24-7 constraints
 """
 function load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dict)
-    inputs_tfs["TFS"] = DataFrame(CSV.File(joinpath(path, "RPSH.csv"), header = true), copycols = true)
+    inputs_tfs["TFS"] = DataFrame(CSV.File(joinpath(path, "RPSH.csv"), header = true), 
+        copycols = true)
+    inputs_tfs["TFS"][!,:Carbon_Offset_Target] .*= (1e6) # Mton to ton
     if setup["ParameterScale"] == 1
         inputs_tfs["TFS"][!,:Penalty] ./= ModelScalingFactor
-    end    
+        inputs_tfs["TFS"][!,:MWhExtraBudget] ./= ModelScalingFactor
+        inputs_tfs["TFS"][!,:Carbon_Offset_Target] ./= ModelScalingFactor #ton to kton
+        inputs_tfs["TFS"][!,:Carbon_Offset_Penalty] ./= ModelScalingFactor #$/ton to M$/kton
+    end
     # determine the number of TFS requirement
     NumberofTFS = size(collect(inputs_tfs["TFS"][:, :Policy_ID]), 1)
     inputs_tfs["NumberofTFS"] = NumberofTFS
@@ -35,7 +40,7 @@ function load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dic
     inputs_tfs["TFS_Load"] = Matrix{Float64}(tfs_load_in[:, first_col:last_col])
     
     if setup["ParameterScale"] == 1
-        inputs_tfs["TFS_Load"] = inputs_tfs["TFS_Load"]/ModelScalingFactor
+        inputs_tfs["TFS_Load"] /= ModelScalingFactor
     end
 
     println("RPSH_Load_data.csv Successfully Read!")
@@ -46,15 +51,21 @@ function load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dic
     inputs_tfs["TFS_SFDT"] = Matrix{Float64}(tfs_dirtiness_in[:, first_col:last_col])
     println("RPSH_SFDT.csv Successfully Read!")
 
+    tfs_mer_in = DataFrame(CSV.File(joinpath(path, "RPSH_MER.csv"), header = true), copycols = true)
+    first_col = findall(s -> s == "RPSH_MER_1", names(tfs_mer_in))[1]
+    last_col = findall(s -> s == "RPSH_MER_$NumberofTFS", names(tfs_mer_in))[1]
+    inputs_tfs["TFS_MER"] = Matrix{Float64}(tfs_mer_in[:, first_col:last_col])
+    println("RPSH_MER.csv Successfully Read!")
+
     if (NumberofTFS) > 1
         inputs_tfs["TFS_Network"] = DataFrame(CSV.File(joinpath(path, "RPSH_Network.csv"), header = true), copycols = true)
         NumberofTFSPath = size(collect(inputs_tfs["TFS_Network"][:, :RPSH_PathID]), 1)
         inputs_tfs["NumberofTFSPath"] = NumberofTFSPath
         if setup["ParameterScale"] == 1
-            inputs_tfs["TFS_Network"][:, :MaxFlow_Forward] = inputs_tfs["TFS_Network"][:, :MaxFlow_Forward] ./ ModelScalingFactor
-            inputs_tfs["TFS_Network"][:, :MaxFlow_Backward] = inputs_tfs["TFS_Network"][:, :MaxFlow_Backward] ./ ModelScalingFactor
-            inputs_tfs["TFS_Network"][:, :HurdleRate_Forward] = inputs_tfs["TFS_Network"][:, :HurdleRate_Forward] ./ ModelScalingFactor
-            inputs_tfs["TFS_Network"][:, :HurdleRate_Backward] = inputs_tfs["TFS_Network"][:, :HurdleRate_Backward] ./ ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :MaxFlow_Forward] ./= ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :MaxFlow_Backward] ./= ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :HurdleRate_Forward] ./= ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :HurdleRate_Backward] ./= ModelScalingFactor
         end        
         println("RPSH_Network.csv Successfully Read!")
     end

@@ -35,6 +35,16 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
     dfCFE = hcat(dfCFE, DataFrame(tempcfe, [Symbol("t$t") for t in 1:T]))
     CSV.write(joinpath(path, "tfs_cfe.csv"), dftranspose(dfCFE, false), writeheader = false)
 
+    dfProcuredCFE = DataFrame(Policy_ID = 1:NumberofTFS, AnnualSum = zeros(NumberofTFS))
+    tempprocuredcfe = value.(EP[:vProcuredCFE])
+    if setup["ParameterScale"] == 1
+        tempprocuredcfe *= ModelScalingFactor
+    end
+    dfProcuredCFE.AnnualSum .= tempprocuredcfe * inputs["omega"]
+    dfProcuredCFE = hcat(dfProcuredCFE, 
+        DataFrame(tempprocuredcfe, [Symbol("t$t") for t in 1:T]))
+    CSV.write(joinpath(path, "tfs_procuredcfe.csv"), 
+        dftranspose(dfProcuredCFE, false), writeheader = false)
 
     dfEX = DataFrame(Policy_ID = 1:NumberofTFS, AnnualSum = zeros(NumberofTFS))
     tempex = value.(EP[:vEX])
@@ -94,15 +104,17 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
     end
 
     # dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Shortfalllimit])))
-    dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_CFETarget])))
+    dfShorfalllimitprice = DataFrame(Policy_ID = 1:NumberofTFS, 
+        Price = vec(dual.(EP[:cRPSH_CFETarget])))
     if setup["ParameterScale"] == 1
-        dfShorfalllimitprice.Price = dfShorfalllimitprice.Price * ModelScalingFactor
+        dfShorfalllimitprice.Price *= ModelScalingFactor
     end
     CSV.write(joinpath(path, "tfs_shortfalllimitprice.csv"), dfShorfalllimitprice)
 
-    dfExceedlimitprice = DataFrame(Policy_ID = 1:NumberofTFS, Price = vec(dual.(EP[:cRPSH_Exceedlimit])))
+    dfExceedlimitprice = DataFrame(Policy_ID = 1:NumberofTFS, 
+        Price = vec(dual.(EP[:cRPSH_Exceedlimit])))
     if setup["ParameterScale"] == 1
-        dfExceedlimitprice.Price = dfExceedlimitprice.Price * ModelScalingFactor
+        dfExceedlimitprice.Price *= ModelScalingFactor
     end
     CSV.write(joinpath(path, "tfs_exceedlimitprice.csv"), dfExceedlimitprice)
     
@@ -114,10 +126,17 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
     dfTFSPrice = DataFrame(Policy_ID = 1:NumberofTFS)
     temprice = transpose((dual.(EP[:cTFS_NodalTrading]) ./ inputs["omega"]))
     if setup["ParameterScale"] == 1
-        temprice = temprice * ModelScalingFactor
+        temprice *= ModelScalingFactor
     end
     dfTFSPrice = hcat(dfTFSPrice, DataFrame(temprice, [Symbol("t$t") for t in 1:T]))
     CSV.write(joinpath(path, "tfs_price.csv"), dftranspose(dfTFSPrice, false), writeheader = false)
+
+    dfCarbonoffset = DataFrame(Policy_ID = 1:NumberofTFS, 
+        FinalCarbonOffset = value.(EP[:eCarbonOffset]),
+        Price = dual.(EP[:cCarbonOffsetTarget]),
+        COSlack = value.(EP[:vCOslack]),
+        COPenalty = value.(EP[:eCCOSlack]))
+    CSV.write(joinpath(path, "tfs_carbonpriceandoffset.csv"), dfCarbonoffset)    
 
     dfTFSGenRevenue = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = zeros(G))
     tempinjection = zeros(G, T)

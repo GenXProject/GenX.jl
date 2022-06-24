@@ -32,6 +32,7 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
     @variable(EP, vEX[rpsh = 1:NumberofTFS, t = 1:T] >= 0) # excess
     @variable(EP, vSF[rpsh = 1:NumberofTFS, t = 1:T] >= 0) # shortfall, also known as gridsupply
     @variable(EP, vTFSslack[rpsh = 1:NumberofTFS] >=0) # The slack variable
+    @variable(EP, vCOslack[rpsh = 1:NumberofTFS] >=0) # The slack variable for carbon offset target
     @variable(EP, vProcuredCFE[rpsh = 1:NumberofTFS, t = 1:T] >=0)
     if NumberofTFS > 1
         @variable(EP, vTFSFlow_Sending[rpsh_path = 1:NumberofTFSPath, t = 1:T] >= 0) # positive flow from sending end to receiving end
@@ -57,7 +58,18 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
         add_to_expression!.(EP[:eModifiedload], -1, EP[:eTFSDR])
     end
     @expression(EP, eConsumedCFE[rpsh = 1:NumberofTFS, t = 1:T], EP[:vProcuredCFE][rpsh, t] - EP[:vEX][rpsh, t] + ((1 - inputs["TFS_SFDT"][t, rpsh]) * EP[:vSF][rpsh, t]))
-    
+
+    ### Carbon offset calculation
+    @expression(EP, eCCOSlack[rpsh = 1:NumberofTFS], 
+        inputs["TFS"][rpsh, :Carbon_Offset_Penalty] * EP[:vCOslack][rpsh])
+    @expression(EP, eCTotalCOSlack, sum(EP[:eCCOSlack][rpsh] for rpsh = 1:NumberofTFS))
+    add_to_expression!(EP[:eObj], EP[:eCTotalCOSlack])
+
+    @expression(EP, eCarbonOffset[rpsh = 1:NumberofTFS], 
+        sum((EP[:vProcuredCFE][rpsh, t] * inputs["TFS_MER"][t, rpsh]) * 
+            inputs["omega"][t] for t in 1:T))
+
+
     if NumberofTFS > 1
         # Net TEAC flow on a path is equal to the net of the flow in the opposite direction
         @expression(EP, eTFSFlow[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] - EP[:vTFSFlow_Receiving][rpsh_path, t])
@@ -78,13 +90,23 @@ function twentyfourseven!(EP::Model, inputs::Dict, setup::Dict)
     # Hourly matching constraint
     @constraint(EP, cRPSH_HourlyMatching[t = 1:T, rpsh = 1:NumberofTFS], -EP[:eModifiedload][rpsh, t] + EP[:vProcuredCFE][rpsh, t] + EP[:vSF][rpsh, t] - EP[:vEX][rpsh, t] == 0)
     # Excess limit constraint
-    @constraint(EP, cRPSH_Exceedlimit[rpsh = 1:NumberofTFS], sum(inputs["omega"][t] * EP[:vEX][rpsh, t] for t = 1:T) <= inputs["TFS"][rpsh, :RPSH_EXLIMIT] * sum(inputs["omega"][t] * EP[:eModifiedload][rpsh, t] for t = 1:T))
+    @constraint(EP, cRPSH_Exceedlimit[rpsh = 1:NumberofTFS], 
+        sum(inputs["omega"][t] * EP[:vEX][rpsh, t] for t = 1:T) <= 
+            (inputs["TFS"][rpsh, :RPSH_EXLIMIT] * 
+                sum(inputs["omega"][t] * EP[:eModifiedload][rpsh, t] for t = 1:T)) + 
+                inputs["TFS"][rpsh, :MWhExtraBudget])
     # Shortfall Limit constraint, equivalent to Target Constraint below
     # @constraint(EP, cRPSH_Shortfalllimit[rpsh = 1:NumberofTFS], sum(inputs["omega"][t] * inputs["TFS_SFDT"][t, rpsh] * EP[:vSF][rpsh, t] for t = 1:T) <= 
     #             inputs["TFS"][rpsh, :RPSH_SFLIMIT] * sum(inputs["omega"][t] * EP[:eModifiedload][rpsh, t] for t = 1:T)  +  EP[:vTFSslack][rpsh])
-    # CFE Score Target Target Constraint
-    @constraint(EP, cRPSH_CFETarget[rpsh = 1:NumberofTFS], sum(inputs["omega"][t] * EP[:eConsumedCFE][rpsh, t] for t = 1:T) +  EP[:vTFSslack][rpsh] >=  (1 - inputs["TFS"][rpsh, :RPSH_SFLIMIT]) * sum(inputs["omega"][t] * EP[:eModifiedload][rpsh, t] for t = 1:T))
-    
+    # CFE Score Target Constraint
+    @constraint(EP, cRPSH_CFETarget[rpsh = 1:NumberofTFS], 
+        sum(inputs["omega"][t] * EP[:eConsumedCFE][rpsh, t] for t = 1:T) +  EP[:vTFSslack][rpsh] >=  
+            (1 - inputs["TFS"][rpsh, :RPSH_SFLIMIT]) * sum(inputs["omega"][t] * EP[:eModifiedload][rpsh, t] for t = 1:T))
+    # Carbon offset target constraint 
+    @constraint(EP, cCarbonOffsetTarget[rpsh = 1:NumberofTFS],
+        (EP[:eCarbonOffset][rpsh] + EP[:vCOslack][rpsh]) >= 
+            inputs["TFS"][rpsh, :Carbon_Offset_Target])
+
     if NumberofTFS > 1
         # TEAC flow from the sending end to receiving end of a path must be lower than a predefined upper bound, like transmisison power flow
         @constraint(EP, cTFSFlow_Upperbound[rpsh_path = 1:NumberofTFSPath, t = 1:T], EP[:vTFSFlow_Sending][rpsh_path, t] <= inputs["TFS_Network"][rpsh_path, :MaxFlow_Forward])
