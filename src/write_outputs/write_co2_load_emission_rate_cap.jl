@@ -30,7 +30,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     SEG = inputs["SEG"] # Number of load curtailment segments
     STOR_ALL = inputs["STOR_ALL"]
 
-    dfCO2GenRatePrice = DataFrame(CO2_LoadRate_Constraint = [Symbol("CO2_LoadRate_Cap_$cap") for cap = 1:inputs["NCO2Cap"]],
+    dfCO2GenRatePrice = DataFrame(CO2_LoadRate_Constraint = [Symbol("CO2_LoadRate_Cap_$cap") for cap = 1:inputs["NCO2LoadRateCap"]],
                             CO2_LoadRate_Price = (-1) * (dual.(EP[:cCO2Emissions_loadrate])),
                             CO2_LoadRate_Slack = value.(EP[:vCO2Emissions_loadrate_slack]),
                             CO2_LoadRate_Penalty = value.(EP[:cCCO2Emissions_loadrate_slack]))
