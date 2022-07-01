@@ -33,10 +33,12 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
     MUST_RUN = inputs["MUST_RUN"]
     POWERGEN = union(THERM_ALL, HYDRO_RES, VRE, MUST_RUN)
 
-    dfCO2GenRatePrice = DataFrame(CO2_GenRate_Constraint = [Symbol("CO2_GenRate_Cap_$cap") for cap = 1:inputs["NCO2GenRateCap"]],
-                        CO2_GenRate_Price = (-1) * (dual.(EP[:cCO2Emissions_genrate])),
-                        CO2_GenRate_Slack = value.(EP[:vCO2Emissions_genrate_slack]),
-                        CO2_GenRate_Penalty = value.(EP[:eCCO2Emissions_genrate_slack]))
+    dfCO2GenRatePrice = DataFrame(
+        CO2_GenRate_Constraint = [Symbol("CO2_GenRate_Cap_$cap") 
+            for cap = 1:inputs["NCO2GenRateCap"]],
+        CO2_GenRate_Price = (-1) * (dual.(EP[:cCO2Emissions_genrate])),
+        CO2_GenRate_Slack = value.(EP[:vCO2Emissions_genrate_slack]),
+        CO2_GenRate_Penalty = value.(EP[:eCCO2Emissions_genrate_slack]))
     if setup["ParameterScale"] == 1
         dfCO2GenRatePrice.CO2_GenRate_Price .*= ModelScalingFactor
         dfCO2GenRatePrice.CO2_GenRate_Slack .*= ModelScalingFactor
@@ -47,16 +49,23 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
     temp_totalpowerMWh = zeros(G)
     # in GenRate Cap constraint, generation is defined as the generation from the four types of resources
     temp_totalpowerMWh[POWERGEN] .= value.(EP[:vP][POWERGEN, :]) * inputs["omega"] 
-    dfCO2GenRateCapCost = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
+    dfCO2GenRateCapCost = DataFrame(Resource = inputs["RESOURCES"], 
+        AnnualSum = zeros(G))
     for cap = 1:inputs["NCO2GenRateCap"]
         temp_CO2GenRateCapCost = zeros(G)
-        GEN_UNDERCAP = intersect(findall(x -> x == 1, (inputs["dfCO2Cap_GenRate"][dfGen[:, :Zone], Symbol("CO_2_Cap_Zone_$cap")])), POWERGEN)
-        temp_CO2GenRateCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Emissions_genrate])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]) - temp_totalpowerMWh[GEN_UNDERCAP] .* inputs["dfCO2Cap_GenRate"][dfGen[GEN_UNDERCAP, :Zone], Symbol("CO_2_Max_GenRate_$cap")])
+        GEN_UNDERCAP = intersect(findall(x -> x == 1, 
+            (inputs["dfCO2Cap_GenRate"][dfGen[:, :Zone], Symbol("CO_2_Cap_Zone_$cap")])), 
+            POWERGEN)
+        temp_CO2GenRateCapCost[GEN_UNDERCAP] = ((-1) * (dual.(EP[:cCO2Emissions_genrate])[cap]) * 
+            (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]) - 
+            (temp_totalpowerMWh[GEN_UNDERCAP] .* 
+                inputs["dfCO2Cap_GenRate"][dfGen[GEN_UNDERCAP, :Zone], Symbol("CO_2_Max_GenRate_$cap")])))
         if setup["ParameterScale"] == 1
             temp_CO2GenRateCapCost *= (ModelScalingFactor^2)
         end
         dfCO2GenRateCapCost.AnnualSum .+= temp_CO2GenRateCapCost
-        dfCO2GenRateCapCost = hcat(dfCO2GenRateCapCost, DataFrame([temp_CO2GenRateCapCost], [Symbol("CO2_GenRateCap_Cost_$cap")]))
+        dfCO2GenRateCapCost = hcat(dfCO2GenRateCapCost, 
+            DataFrame([temp_CO2GenRateCapCost], [Symbol("CO2_GenRateCap_Cost_$cap")]))
     end
     CSV.write(joinpath(path, "CO2Cost_genrate.csv"), dfCO2GenRateCapCost)
 
