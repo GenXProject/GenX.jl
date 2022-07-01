@@ -87,7 +87,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 
 	if setup["CO2LoadRateCap"] == 1
-		dfCost[10,2] += value(EP[:cCTotalCO2Emissions_loadrate_slack])
+		dfCost[10,2] += value(EP[:eCTotalCO2Emissions_loadrate_slack])
 	end
 
 	if setup["MinCapReq"] == 1

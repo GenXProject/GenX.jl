@@ -49,9 +49,11 @@ function co2_load_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::Dict)
     @variable(EP, vCO2Emissions_loadrate_slack[cap=1:inputs["NCO2LoadRateCap"]] >=0)
 
     ### Expressions ###
-    @expression(EP, cCCO2Emissions_loadrate_slack[cap=1:inputs["NCO2LoadRateCap"]], inputs["dfCO2Cap_LoadRate_slack"][cap, :PriceCap] * EP[:vCO2Emissions_loadrate_slack][cap])
-    @expression(EP, cCTotalCO2Emissions_loadrate_slack, sum(cCCO2Emissions_loadrate_slack[cap] for cap = 1:inputs["NCO2LoadRateCap"]))
-    add_to_expression!(EP[:eObj], EP[:cCTotalCO2Emissions_loadrate_slack])
+    @expression(EP, eCCO2Emissions_loadrate_slack[cap=1:inputs["NCO2LoadRateCap"]], 
+        inputs["dfCO2Cap_LoadRate_slack"][cap, :PriceCap] * EP[:vCO2Emissions_loadrate_slack][cap])
+    @expression(EP, eCTotalCO2Emissions_loadrate_slack, 
+        sum(eCCO2Emissions_loadrate_slack[cap] for cap = 1:inputs["NCO2LoadRateCap"]))
+    add_to_expression!(EP[:eObj], EP[:eCTotalCO2Emissions_loadrate_slack])
 
     @expression(EP, eCO2Emissions_loadrate_LHS[cap=1:inputs["NCO2LoadRateCap"]], 
                 sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Cap_Zone_$cap")])))
