@@ -49,8 +49,10 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 	@variable(EP, vCO2Emissions_mass_slack[cap = 1:inputs["NCO2Cap"]] >=0)
 
 	### Expression ###
-	@expression(EP, eCCO2Emissions_mass_slack[cap = 1:inputs["NCO2Cap"]], inputs["dfCO2Cap_slack"][cap,:PriceCap] * EP[:vCO2Emissions_mass_slack][cap])
-	@expression(EP, eCTotalCO2Emissions_mass_slack, sum(EP[:eCCO2Emissions_mass_slack][cap] for cap = 1:inputs["NCO2Cap"]))
+	@expression(EP, eCCO2Emissions_mass_slack[cap = 1:inputs["NCO2Cap"]], 
+		inputs["dfCO2Cap_slack"][cap,:PriceCap] * EP[:vCO2Emissions_mass_slack][cap])
+	@expression(EP, eCTotalCO2Emissions_mass_slack, 
+		sum(EP[:eCCO2Emissions_mass_slack][cap] for cap = 1:inputs["NCO2Cap"]))
 	add_to_expression!(EP[:eObj], EP[:eCTotalCO2Emissions_mass_slack])
 
 	### Constraints ###
