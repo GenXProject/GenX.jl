@@ -31,10 +31,8 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 	)
 
 	if setup["ParameterScale"] == 1
-		GW_to_MW = 10^3
-		MUSD_to_USD = 10^6
-		dfTransCap.New_Trans_Capacity *= GW_to_MW
-		dfTransCap.Cost_Trans_Capacity *= MUSD_to_USD
+		dfTransCap.New_Trans_Capacity *= ModelScalingFactor  # GW to MW
+		dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
 	end
 
 	CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
