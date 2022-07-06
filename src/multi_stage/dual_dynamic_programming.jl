@@ -65,7 +65,7 @@ end
 @doc raw"""
 	function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
-This function run the dual dynamic programming (DDP) algorithm, as described in [Pereira and Pinto (1991)](https://doi.org/10.1007/BF01582895), and more recently, [Lara et al. (2018)](https://doi.org/10.1016/j.ejor.2018.05.039). Note that if the algorithm does not converge within 10,000 (currently hardcoded) iterations, this function will return models with sub-optimal solutions. However, results will still be printed as if the model is finished solving.
+This function run the dual dynamic programming (DDP) algorithm, as described in [Pereira and Pinto (1991)](https://doi.org/10.1007/BF01582895), and more recently, [Lara et al. (2018)](https://doi.org/10.1016/j.ejor.2018.05.039). Note that if the algorithm does not converge within 10,000 (currently hardcoded) iterations, this function will return models with sub-optimal solutions. However, results will still be printed as if the model is finished solving. This sub-optimal termination is noted in the output with the 'Exiting Without Covergence!' message.
 
 inputs:
 
@@ -276,141 +276,13 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
 
     multi_stage_settings_d = settings_d["MultiStageSettingsDict"]
 
-    write_capacities_discharge(outpath, multi_stage_settings_d)
-    #write_capacities_charge(outpath, multi_stage_settings_d)
-    #write_capacities_energy(outpath, multi_stage_settings_d)
-    #write_network_expansion(outpath, multi_stage_settings_d)
-    write_costs(outpath, multi_stage_settings_d, inputs_dict)
-    write_stats(outpath, stats_d)
-    write_settings(outpath, settings_d)
-
-end
-
-@doc raw"""
-	function write_capacities_discharge(outpath::String, settings_d::Dict)
-
-This function writes the file capacities\_multi\_stage.csv to the Results directory. This file contains starting resource capcities from the first model stage and end resource capacities for the first and all subsequent model stages.
-
-inputs:
-
-  * outpath – String which represents the path to the Results directory.
-  * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
-"""
-function write_capacities_discharge(outpath::String, settings_d::Dict)
-    # TO DO - DO THIS FOR ENERGY CAPACITY AS WELL
-
-    num_stages = settings_d["NumStages"] # Total number of investment planning stages
-    capacities_d = Dict()
-
-    for p in 1:num_stages
-        inpath = joinpath(outpath, "Results_p$p")
-        capacities_d[p] = DataFrame(CSV.File(joinpath(inpath, "capacity.csv"), header=true), copycols=true)
-    end
-
-    # Set first column of DataFrame as resource names from the first stage
-    df_cap = DataFrame(Resource=capacities_d[1][!, :Resource], Zone=capacities_d[1][!, :Zone])
-
-    # Store starting capacities from the first stage
-    df_cap[!, Symbol("StartCap_p1")] = capacities_d[1][!, :StartCap]
-
-    # Store end capacities for all stages
-    for p in 1:num_stages
-        df_cap[!, Symbol("EndCap_p$p")] = capacities_d[p][!, :EndCap]
-    end
-
-    CSV.write(joinpath(outpath, "capacities_multi_stage.csv"), df_cap)
-
-end
-
-function write_capacities_charge(outpath::String, settings_d::Dict) end
-
-function write_capacities_energy(outpath::String, settings_d::Dict) end
-
-function write_network_expansion(outpath::String, settings_d::Dict)
-    # Include discounted NE costs and capacities for each model period
-end
-
-@doc raw"""
-	function write_costs(outpath::String, settings_d::Dict)
-
-This function writes the file costs\_multi\_stage.csv to the Results directory. This file contains variable, fixed, startup, network expansion, unmet reserve, and non-served energy costs discounted to year zero.
-
-inputs:
-
-  * outpath – String which represents the path to the Results directory.
-  * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
-"""
-function write_costs(outpath::String, settings_d::Dict, inputs_dict::Dict)
-
-    num_stages = settings_d["NumStages"] # Total number of DDP stages
-    wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
-    stage_lens = settings_d["StageLengths"]
-    myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
-
-    costs_d = Dict()
-    for p in 1:num_stages
-        cur_path = joinpath(outpath, "Results_p$p")
-        costs_d[p] = DataFrame(CSV.File(joinpath(cur_path, "costs.csv"), header=true), copycols=true)
-    end
-
-    OPEXMULTS = [inputs_dict[j]["OPEXMULT"] for j in 1:num_stages] # Stage-wise OPEX multipliers to count multiple years between two model stages
-
-    # Set first column of DataFrame as resource names from the first stage
-    df_costs = DataFrame(Costs=costs_d[1][!, :Costs])
-
-    # Store discounted total costs for each stage in a data frame
-    for p in 1:num_stages
-        if myopic
-            DF = 1 # DF=1 because we do not apply discount factor in myopic case
-        else
-            DF = 1 / (1 + wacc)^(stage_lens[p] * (p - 1))  # Discount factor applied to ALL costs in each stage
-        end
-        df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!, Symbol("Total")]
-    end
-
-    # For OPEX costs, apply additional discounting
-    for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
-        if cost in df_costs[!, :Costs]
-            df_costs[df_costs[!, :Costs].==cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!, :Costs].==cost, 2:end]
-        end
-    end
-
-    # Remove "cTotal" from results (as this includes Cost-to-Go)
-    df_costs = df_costs[df_costs[!, :Costs].!="cTotal", :]
-
-    CSV.write(joinpath(outpath, "costs_multi_stage.csv"), df_costs)
-
-end
-
-@doc raw"""
-	function write_stats(outpath::String, stats_d::Dict)
-
-This function writes the file stats\_multi\_stage.csv. to the Results directory. This file contains the runtime, upper bound, lower bound, and relative optimality gap for each iteration of the DDP algorithm.
-
-inputs:
-
-  * outpath – String which represents the path to the Results directory.
-  * stats\_d – Dictionary which contains the run time, upper bound, and lower bound of each DDP iteration.
-"""
-function write_stats(outpath::String, stats_d::Dict)
-
-    times_a = stats_d["TIMES"] # Time (seconds) of each iteration
-    upper_bounds_a = stats_d["UPPER_BOUNDS"] # Upper bound of each iteration
-    lower_bounds_a = stats_d["LOWER_BOUNDS"] # Lower bound of each iteration
-
-    # Create an array of numbers 1 through total number of iterations
-    iteration_count_a = collect(1:length(times_a))
-
-    realtive_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
-
-    # Construct dataframe where first column is iteration number, second is iteration time
-    df_stats = DataFrame(Iteration_Number=iteration_count_a,
-        Seconds=times_a,
-        Upper_Bound=upper_bounds_a,
-        Lower_Bound=lower_bounds_a,
-        Relative_Gap=realtive_gap_a)
-
-    CSV.write(joinpath(outpath, "stats_multi_stage.csv"), df_stats)
+    write_multi_stage_capacities_discharge(outpath, multi_stage_settings_d)
+    write_multi_stage_capacities_charge(outpath, multi_stage_settings_d)
+    write_multi_stage_capacities_energy(outpath, multi_stage_settings_d)
+    write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
+    write_multi_stage_costs(outpath, multi_stage_settings_d, inputs_dict)
+    write_multi_stage_stats(outpath, stats_d)
+    write_multi_stage_settings(outpath, settings_d)
 
 end
 
