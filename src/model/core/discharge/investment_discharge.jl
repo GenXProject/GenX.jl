@@ -85,19 +85,10 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity from source resource "yr" that is being retrofitted into capacity of retrofit resource "r"
 	if !isempty(RETRO)
-		println("Retrofit Transition Variables...")
 		# Dependent iterators only allowed in forward sequence, so we reconstruct retrofit destinations from sources.
 		ALL_SOURCES = intersect(collect(Set(collect(Iterators.flatten(RETRO_SOURCE_IDS)))),RET_CAP)
-		print("Retro sources: ")
-		println(ALL_SOURCES)
 		DESTS_BY_SOURCE = [ y in ALL_SOURCES ? intersect(findall(x->in(inputs["RESOURCES"][y],RETRO_SOURCES[x]), 1:G), findall(x->x in NEW_CAP, 1:G)) : []  for y in 1:G]
-		print("Retro destinations: ")
-		println(DESTS_BY_SOURCE)
-		#@variable(EP, vRETROFIT[yr in RETRO_SOURCE_IDS[r], r in RETRO] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
 		@variable(EP, vRETROFIT[yr in ALL_SOURCES, r in DESTS_BY_SOURCE[yr]] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
-		println("vRETROFIT: ")
-		println(vRETROFIT)
-		println("Retrofit Fixed Costs...")
 	end
 
 	### Expressions ###
