@@ -56,12 +56,13 @@ using RecursiveArrayTools
 using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-# using CPLEX
+#using CPLEX
 #using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
 using BenchmarkTools
+using HiGHS
 using Clp
 using Cbc
 
@@ -76,6 +77,7 @@ ModelScalingFactor = 1e+3
 include("configure_settings/configure_settings.jl")
 
 # Configure optimizer instance
+include("configure_solver/configure_highs.jl")
 include("configure_solver/configure_gurobi.jl")
 include("configure_solver/configure_scip.jl")
 include("configure_solver/configure_cplex.jl")
