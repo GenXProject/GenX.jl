@@ -24,8 +24,8 @@ Returns a MathOptInterface OptimizerWithAttributes HiGHS optimizer instance to b
 The HiGHS optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
  - FeasibilityTol = 1e-6 (Constraint (primal) feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/feasibilitytol.html)
- - OptimalityTol = 1e-6 (Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol)
- - Presolve = -1 (Controls presolve level. See https://www.gurobi.com/documentation/8.1/refman/presolve.html)
+ - OptimalityTol = 1e-3 (Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol)
+ - Presolve = choose (Controls presolve level. See https://www.gurobi.com/documentation/8.1/refman/presolve.html)
  - AggFill = -1 (Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill)
  - PreDual = -1 (Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual)
  - TimeLimit = Inf	(Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html)
@@ -43,7 +43,7 @@ function configure_highs(solver_settings_path::String)
 	# Optional solver parameters ############################################
 	MyFeasibilityTol = 1e-6 # Constraint (primal) feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "Feasib_Tol")) MyFeasibilityTol = solver_settings["Feasib_Tol"] end
-	MyOptimalityTol = 1e-6  # Dual feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
+	MyOptimalityTol = 1e-3  # Dual feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "Optimal_Tol")) MyOptimalityTol = solver_settings["Optimal_Tol"] end
 	MyPresolve = "choose" 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "Pre_Solve")) MyPresolve = solver_settings["Pre_Solve"] end
@@ -53,8 +53,8 @@ function configure_highs(solver_settings_path::String)
 		if(haskey(solver_settings, "Method")) MyMethod = solver_settings["Method"] end
 	Myparallel = "choose"	# Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill
 		if(haskey(solver_settings, "parallel")) Myparallel = solver_settings["parallel"] end
-	#Myranging = "off"		# Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual
-		#if(haskey(solver_settings, "ranging")) Myranging = solver_settings["ranging"] end
+	Myranging = "off"		# Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual
+		if(haskey(solver_settings, "ranging")) Myranging = solver_settings["ranging"] end
 	Myinfinite_cost = 1e+20	# Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). See https://www.gurobi.com/documentation/8.1/refman/mipgap2.html
 		if(haskey(solver_settings, "infinite_cost")) Myinfinite_cost = solver_settings["infinite_cost"] end
 	Myinfinite_bound = 1e+20 # Barrier crossver strategy. See https://www.gurobi.com/documentation/8.1/refman/crossover.html#parameter:Crossover
@@ -69,10 +69,10 @@ function configure_highs(solver_settings_path::String)
 		if(haskey(solver_settings, "objective_bound")) Myobjective_bound = solver_settings["objective_bound"] end
 	Myobjective_target = -Inf  # Dual feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "objective_target")) Myobjective_target = solver_settings["objective_target"] end
-	#Myrandom_seed = 0 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
-		#if(haskey(solver_settings, "random_seed")) Myrandom_seed = solver_settings["random_seed"] end
-	#Mythreads = 0	# Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
-		#if(haskey(solver_settings, "threads")) Mythreads = solver_settings["threads"] end
+	Myrandom_seed = 0 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
+		if(haskey(solver_settings, "random_seed")) Myrandom_seed = solver_settings["random_seed"] end
+	Mythreads = 0	# Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
+		if(haskey(solver_settings, "threads")) Mythreads = solver_settings["threads"] end
 	Myhighs_debug_level = 0	# Algorithm used to solve continuous models (including MIP root relaxation). See https://www.gurobi.com/documentation/8.1/refman/method.html
 		if(haskey(solver_settings, "highs_debug_level")) Myhighs_debug_level = solver_settings["highs_debug_level"] end
 	Myhighs_analysis_level = 0	# Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill
@@ -93,23 +93,23 @@ function configure_highs(solver_settings_path::String)
 		if(haskey(solver_settings, "simplex_update_limit")) Mysimplex_update_limit = solver_settings["simplex_update_limit"] end
 	Myipm_iteration_limit = 2147483647  # Dual feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "ipm_iteration_limit")) Myipm_iteration_limit = solver_settings["ipm_iteration_limit"] end
-	#Mysimplex_min_concurrency = 1 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
-		#if(haskey(solver_settings, "simplex_min_concurrency")) Mysimplex_min_concurrency = solver_settings["simplex_min_concurrency"] end
-	#Mysimplex_max_concurrency = 8	# Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
-		#if(haskey(solver_settings, "simplex_max_concurrency")) Mysimplex_max_concurrency = solver_settings["simplex_max_concurrency"] end
+	Mysimplex_min_concurrency = 1 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
+		if(haskey(solver_settings, "simplex_min_concurrency")) Mysimplex_min_concurrency = solver_settings["simplex_min_concurrency"] end
+	Mysimplex_max_concurrency = 8	# Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
+		if(haskey(solver_settings, "simplex_max_concurrency")) Mysimplex_max_concurrency = solver_settings["simplex_max_concurrency"] end
 	Myoutput_flag = true	# Algorithm used to solve continuous models (including MIP root relaxation). See https://www.gurobi.com/documentation/8.1/refman/method.html
 		if(haskey(solver_settings, "output_flag")) Myoutput_flag = solver_settings["output_flag"] end
 	Mylog_to_console = true	# Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill
 		if(haskey(solver_settings, "log_to_console")) Mylog_to_console = solver_settings["log_to_console"] end
-	Mysolution_file = 		# Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual
+	Mysolution_file = ""		# Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual
 		if(haskey(solver_settings, "solution_file")) Mysolution_file = solver_settings["solution_file"] end
-	Mylog_file = 	# Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). See https://www.gurobi.com/documentation/8.1/refman/mipgap2.html
+	Mylog_file = ""	# Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). See https://www.gurobi.com/documentation/8.1/refman/mipgap2.html
 		if(haskey(solver_settings, "log_file")) Mylog_file = solver_settings["log_file"] end
 	Mywrite_solution_to_file = false # Barrier crossver strategy. See https://www.gurobi.com/documentation/8.1/refman/crossover.html#parameter:Crossover
 		if(haskey(solver_settings, "write_solution_to_file")) Mywrite_solution_to_file = solver_settings["write_solution_to_file"] end
 	Mywrite_solution_style = 0	# Barrier convergence tolerance (determines when barrier terminates). See https://www.gurobi.com/documentation/8.1/refman/barconvtol.html
 		if(haskey(solver_settings, "write_solution_style")) Mywrite_solution_style = solver_settings["write_solution_style"] end
-	Mywrite_model_file = 	# Numerical precision emphasis. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
+	Mywrite_model_file = ""	# Numerical precision emphasis. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
 		if(haskey(solver_settings, "write_model_file")) Mywrite_model_file = solver_settings["write_model_file"] end
 	Mywrite_model_to_file = false	# Controls Gurobi output. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
 		if(haskey(solver_settings, "write_model_to_file")) Mywrite_model_to_file = solver_settings["write_model_to_file"] end
@@ -185,11 +185,11 @@ function configure_highs(solver_settings_path::String)
 		if(haskey(solver_settings, "rebuild_refactor_solution_error_tolerance")) Myrebuild_refactor_solution_error_tolerance = solver_settings["rebuild_refactor_solution_error_tolerance"] end
 	Mydual_steepest_edge_weight_error_tolerance = Inf	# Controls Gurobi output. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
 		if(haskey(solver_settings, "dual_steepest_edge_weight_error_tolerance")) Mydual_steepest_edge_weight_error_tolerance = solver_settings["dual_steepest_edge_weight_error_tolerance"] end
-	Mydual_steepest_edge_weight_log_error_threshold = 10 # Constraint (primal) feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
+	Mydual_steepest_edge_weight_log_error_threshold = 10.0 # Constraint (primal) feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "dual_steepest_edge_weight_log_error_threshold")) Mydual_steepest_edge_weight_log_error_threshold = solver_settings["dual_steepest_edge_weight_log_error_threshold"] end
-	Mydual_simplex_cost_perturbation_multiplier = 1  # Dual feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
+	Mydual_simplex_cost_perturbation_multiplier = 1.0  # Dual feasibility tolerances. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "dual_simplex_cost_perturbation_multiplier")) Mydual_simplex_cost_perturbation_multiplier = solver_settings["dual_simplex_cost_perturbation_multiplier"] end
-	Myprimal_simplex_bound_perturbation_multiplier = 1 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
+	Myprimal_simplex_bound_perturbation_multiplier = 1.0 	# Controls presolve level. See https://github.com/jump-dev/HiGHS.jl, https://github.com/ERGO-Code/HiGHS, and https://highs.dev/
 		if(haskey(solver_settings, "primal_simplex_bound_perturbation_multiplier")) Myprimal_simplex_bound_perturbation_multiplier = solver_settings["primal_simplex_bound_perturbation_multiplier"] end
 	Mydual_simplex_pivot_growth_tolerance = 1e-09	# Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
 		if(haskey(solver_settings, "dual_simplex_pivot_growth_tolerance")) Mydual_simplex_pivot_growth_tolerance = solver_settings["dual_simplex_pivot_growth_tolerance"] end
@@ -218,7 +218,7 @@ function configure_highs(solver_settings_path::String)
 		"presolve" => MyPresolve,
 		"solver" => MyMethod,
 		"parallel" => Myparallel,
-		#"ranging" => Myranging,
+		"ranging" => Myranging,
 		"infinite_cost" => Myinfinite_cost,
 		"infinite_bound" => Myinfinite_bound,
 		"small_matrix_value" => Mysmall_matrix_value,
@@ -226,8 +226,8 @@ function configure_highs(solver_settings_path::String)
 		"ipm_optimality_tolerance" => Myipm_optimality_tolerance,
 		"objective_bound" => Myobjective_bound,
 		"objective_target" => Myobjective_target,
-		#"random_seed" => Myrandom_seed,
-		#"threads" => Mythreads,
+		"random_seed" => Myrandom_seed,
+		"threads" => Mythreads,
 		"highs_debug_level" => Myhighs_debug_level,
 		"highs_analysis_level" => Myhighs_analysis_level,
 		"simplex_strategy" => Mysimplex_strategy,
@@ -238,8 +238,8 @@ function configure_highs(solver_settings_path::String)
 		"simplex_iteration_limit" => Mysimplex_iteration_limit,
 		"simplex_update_limit" => Mysimplex_update_limit,
 		"ipm_iteration_limit" => Myipm_iteration_limit,
-		#"simplex_min_concurrency" => Mysimplex_min_concurrency,
-		#"simplex_max_concurrency" => Mysimplex_max_concurrency,
+		"simplex_min_concurrency" => Mysimplex_min_concurrency,
+		"simplex_max_concurrency" => Mysimplex_max_concurrency,
 		"output_flag" => Myoutput_flag,
 		"log_to_console" => Mylog_to_console,
 		"solution_file" => Mysolution_file,

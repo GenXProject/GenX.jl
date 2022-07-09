@@ -87,7 +87,7 @@ The power balance constraint of the model ensures that electricity demand is met
 ## returns: Model EP object containing the entire optimization problem model to be solved by SolveModel.jl
 ##
 ################################################################################
-function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes,modeloutput = nothing)
+function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)#,modeloutput = nothing)
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -221,6 +221,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	presolver_time = time() - presolver_start_time
     	#### Question - What do we do with this time now that we've split this function into 2?
 	if setup["PrintModel"] == 1
+		filepath = joinpath(pwd(), "YourModel.lp")
+		JuMP.write_to_file(EP, filepath)
+		#=
 		if modeloutput === nothing
 			filepath = joinpath(pwd(), "YourModel.lp")
 			JuMP.write_to_file(EP, filepath)
@@ -228,6 +231,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 			filepath = joinpath(modeloutput, "YourModel.lp")
 			JuMP.write_to_file(EP, filepath)
 		end
+		=#
 		println("Model Printed")
     	end
 
