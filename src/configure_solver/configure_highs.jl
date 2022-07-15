@@ -30,7 +30,7 @@ The HiGHS optimizer instance is configured with the following default parameters
 	Optimal_Tol: 1.0e-03       # Dual feasibility tolerance # [type: double, advanced: false, range: [1e-10, inf], default: 1e-07]
 	TimeLimit: Inf             # Time limit # [type: double, advanced: false, range: [0, inf], default: inf]
 	Pre_Solve: choose          # Presolve option: "off", "choose" or "on" # [type: string, advanced: false, default: "choose"]
-	Method: ipm #choose             #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
+	Method: ipm #choose        #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"] In order to run a case when the UCommit is set to 1, i.e. MILP instance, set the Method to choose
 	
 	#HiGHS-specific solver settings
 	# Parallel option: "off", "choose" or "on"

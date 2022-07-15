@@ -32,6 +32,7 @@ Example_Systems/SmallNewEngland/Test_Up_Time/
 Example_Systems/SmallNewEngland/Test_Down_Time/
 /docs/build/
 Example_Systems/**/GenXJulEnv/
+Example_System/**/Highs.log
 # Microsoft office temporary files
 ~$*
 
