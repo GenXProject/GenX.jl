@@ -87,7 +87,7 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
 		if SEG >=2
-			@expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x>0,inputs["dfCapRes"][:,res])))
+			@expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x!=0,inputs["dfCapRes"][:,res])))
 			EP[:eCapResMarBalance] += eCapResMarBalanceNSE
 		end
 	end
