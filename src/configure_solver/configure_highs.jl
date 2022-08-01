@@ -358,7 +358,7 @@ function configure_highs(solver_settings_path::String)
 	# Optional solver parameters ############################################
 	MyFeasibilityTol = 1e-6 
 		if(haskey(solver_settings, "Feasib_Tol")) MyFeasibilityTol = solver_settings["Feasib_Tol"] end
-	MyOptimalityTol = 1e-3
+	MyOptimalityTol = 1e-4
 		if(haskey(solver_settings, "Optimal_Tol")) MyOptimalityTol = solver_settings["Optimal_Tol"] end
 	MyPresolve = "choose"
 		if(haskey(solver_settings, "Pre_Solve")) MyPresolve = solver_settings["Pre_Solve"] end
@@ -454,7 +454,7 @@ function configure_highs(solver_settings_path::String)
 		if(haskey(solver_settings, "mip_feasibility_tolerance")) Mymip_feasibility_tolerance = solver_settings["mip_feasibility_tolerance"] end
 	Mymip_heuristic_effort = 0.05
 		if(haskey(solver_settings, "mip_heuristic_effort")) Mymip_heuristic_effort = solver_settings["mip_heuristic_effort"] end
-	Mymip_rel_gap = 0.0001
+	Mymip_rel_gap = 0.001
 		if(haskey(solver_settings, "mip_rel_gap")) Mymip_rel_gap = solver_settings["mip_rel_gap"] end
 	Mymip_abs_gap = 1e-06
 		if(haskey(solver_settings, "mip_abs_gap")) Mymip_abs_gap = solver_settings["mip_abs_gap"] end
