@@ -77,7 +77,7 @@ The power balance constraint of the model ensures that electricity demand is met
 
 """
 
-## generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes,modeloutput = nothing)
+## generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
 ################################################################################
 ##
 ## description: Sets up and solves constrained optimization model of electricity
@@ -87,7 +87,7 @@ The power balance constraint of the model ensures that electricity demand is met
 ## returns: Model EP object containing the entire optimization problem model to be solved by SolveModel.jl
 ##
 ################################################################################
-function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)#,modeloutput = nothing)
+function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -125,9 +125,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	if (setup["MinCapReq"] == 1)
 		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
 	end
-
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	#@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) ##From main
 
 	# Infrastructure
 	discharge!(EP, inputs, setup)
@@ -219,19 +216,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	## Record pre-solver time
 	presolver_time = time() - presolver_start_time
-    	#### Question - What do we do with this time now that we've split this function into 2?
 	if setup["PrintModel"] == 1
 		filepath = joinpath(pwd(), "YourModel.lp")
 		JuMP.write_to_file(EP, filepath)
-		#=
-		if modeloutput === nothing
-			filepath = joinpath(pwd(), "YourModel.lp")
-			JuMP.write_to_file(EP, filepath)
-		else
-			filepath = joinpath(modeloutput, "YourModel.lp")
-			JuMP.write_to_file(EP, filepath)
-		end
-		=#
 		println("Model Printed")
     	end
 
