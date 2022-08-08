@@ -1,15 +1,15 @@
 # HiGHS Solver Parameters
 # Common solver settings
-Feasib_Tol: 1.0e-06        # Primal feasibility tolerance # [type: double, advanced: false, range: [1e-10, inf], default: 1e-07]
-Optimal_Tol: 1.0e-04       # Dual feasibility tolerance # [type: double, advanced: false, range: [1e-10, inf], default: 1e-07]
+Feasib_Tol: 1.0e-05        # Primal feasibility tolerance # [type: double, advanced: false, range: [1e-10, inf], default: 1e-07]
+Optimal_Tol: 1.0e-05       # Dual feasibility tolerance # [type: double, advanced: false, range: [1e-10, inf], default: 1e-07]
 TimeLimit: Inf             # Time limit # [type: double, advanced: false, range: [0, inf], default: inf]
 Pre_Solve: choose          # Presolve option: "off", "choose" or "on" # [type: string, advanced: false, default: "choose"]
-Method: ipm #choose             #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
+Method: ipm           #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
 
 #HiGHS-specific solver settings
 
 # Run the crossover routine for IPX
 # [type: bool, advanced: true, range: {false, true}, default: true]
-run_crossover: false #true
+run_crossover: false
 
 
