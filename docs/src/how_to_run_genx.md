@@ -1,6 +1,22 @@
 ## Requirements
 
-GenX currently exists in version 0.3.0 and runs only on Julia v1.6.x and v1.5.x series, where x>=0 and a minimum version of JuMP v0.21.x. There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series (For those users who has previously cloned GenX, and has been running it successfully so far, and therefore might be unwilling to run it on the latest version of Julia: please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version)). It is currently setup to use one of the following open-source freely available solvers: A) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems and (B) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems. (C) [SCIP](https://www.scipopt.org) for faster solution of MILP problems. Even though we suggest users to prefer SCIP over Cbc, while solving MILP problem instances, because, the write outputs is much faster with SCIP, but there's still some issues with running SCIP especially in the Windows evnironment. We, therefore, recommend following the same procedure for running with SCIP solver as we for using Gurobi and CPLEX as detailed in the following section: `When using commercial solvers, Gurobi and CPLEX, and the non-commercial solver SCIP`(Note: Windows users need to download and install SCIP (just like a commercial solver) from the [SCIP](https://www.scipopt.org) webpage). We also provide the option to use one of these two commercial solvers: D) [Gurobi](https://www.gurobi.com), and E) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer). Note that using Gurobi and CPLEX requires a valid license on the host machine. There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Running an Instance of GenX`.
+GenX currently exists in version 0.3.1 and runs only on Julia v1.6.x and v1.5.x series, where x>=0 and a minimum version of JuMP v1.1.1.
+There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
+For those users who has previously cloned GenX, and has been running it successfully so far, and therefore might be unwilling to run it on the latest version of Julia:
+please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version).
+It is currently setup to use one of the following open-source freely available solvers:
+(A) the default solver: [HiGHS](https://github.com/jump-dev/HiGHS.jl) for linear programming and MILP,
+(B) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems,
+(C) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems,
+or (D) [SCIP](https://www.scipopt.org) for faster solution of MILP problems.
+At this stage, we suggest users to use SCIP only when running GenX from either a Mac or Linux machine;
+it is not recommended yet to run GenX with SCIP, while working in a Windows environment.
+We also suggest the users (on Mac or Linux) to prefer SCIP to Cbc while solving the MILP version of GenX.
+We also provide the option to use one of these two commercial solvers: 
+(E) [Gurobi](https://www.gurobi.com), or
+(F) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+Note that using Gurobi and CPLEX requires a valid license on the host machine.
+There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Running an Instance of GenX`.
 
 The file `julenv.jl` in the parent directory lists all of the packages and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` on the package manager command line in the Jula REPL.
 
@@ -66,13 +82,14 @@ If however, the user opens a julia kernel, while not yet inside the GenX folder,
 
 Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
-## When using commercial solvers, Gurobi and CPLEX, and the non-commercial solver SCIP
-If you want to use either of Gurobi, CPLEX, or, SCIP solvers, instead or Clp or Cbc do the following:
-1. Open the `Guide_to_Project.toml` file within the `GenX` folder
-2. If you want to have only Gurobi or SCIP (but, not CPLEX) solver, use the `[deps]` and the `[compat]` from underneath the header: `[deps]/UUIDs to be used when not using CPLEX` and the header `[compat]/version numbers to be used when not using CPLEX` respectively. If one the other hand, if you want to use CPLEX (along with Gurobi or SCIP; you can delete the relevant lines of Gurobi, in case you don't want to use it) then use the `[deps]` and the `[compat]` from underneath the header: `[deps]/UUIDs to be used when using CPLEX` and the header `[compat]/version numbers to be used when using CPLEX` respectively, from the `Guide_to_Project.toml` file. Copy the corresponding lines and paste them in the `Project.toml` file. Alternatively, you can also copy only the `[deps]` and `[compat]` for just the commercial solvers and paste those at respective places in the `Project.toml` file.
-3. Uncomment the relevent `using Gurobi` and/or `using CPLEX` and/or `using SCIP` at the beginning of the `GenX.jl` file
+## When using commercial solvers, Gurobi and CPLEX
+If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
+1. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
+2. In the `julenv.jl` file, uncomment the respective lines pertaining to the particular version of Gurobi and/or CPLEX Julia interface you want to run.
+3. At the beginning of the `GenX.jl` file, uncomment `using Gurobi` and/or `using CPLEX`.
 4. Set the appropriate solver in the `genx_settings.yml` file
-5. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine. If you are working in a Windows environment, please make sure you have downloaded and installed SCIP as well. 
+5. At the current stage of GenX development, we recommend the users to follow Method 2 for running GenX with Gurobi or CPLEX. Please refer to the steps of Method 2. 
+
 
 ## Running Modeling to Generate Alternatives with GenX
 

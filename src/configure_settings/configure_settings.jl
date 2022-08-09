@@ -44,7 +44,7 @@ function configure_settings(settings_path::String)
     # Activate minimum technology carveout constraints; 0 = not active; 1 = active
     set_default_if_absent!(settings, "MinCapReq", 0)
     # Available solvers: Gurobi, CPLEX, CLPs
-    set_default_if_absent!(settings, "Solver", "Gurobi")
+    set_default_if_absent!(settings, "Solver", "HiGHS")
     # Turn on parameter scaling wherein load, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
     set_default_if_absent!(settings, "ParameterScale", 0)
     # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
