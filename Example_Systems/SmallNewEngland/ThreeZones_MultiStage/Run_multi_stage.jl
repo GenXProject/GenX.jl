@@ -43,11 +43,20 @@ multistage_settings = joinpath(settings_path, "multi_stage_settings.yml") # Mult
 mysetup["MultiStageSettingsDict"] = YAML.load(open(multistage_settings))
 
 ### Cluster time series inputs if necessary and if specified by the user
+tdr_settings = joinpath(settings_path, "time_domain_reduction_settings.yml") # Multi stage settings YAML file path
+TDRSettingsDict = YAML.load(open(tdr_settings))
 TDRpath = joinpath(inpath, "Inputs", "Inputs_p1", mysetup["TimeDomainReductionFolder"])
 if mysetup["TimeDomainReduction"] == 1
     if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
-        println("Clustering Time Series Data...")
-        cluster_inputs(inpath, settings_path, mysetup)
+        if (mysetup["MultiStage"] == 1) && (TDRSettingsDict["MultiStageConcatenate"] == 0)
+			println("Clustering Time Series Data (Individually)...")
+			for stage_id in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+				cluster_inputs(inpath, settings_path, mysetup, stage_id)
+			end
+		else
+			println("Clustering Time Series Data (Grouped)...")
+        	cluster_inputs(inpath, settings_path, mysetup)
+		end
     else
         println("Time Series Data Already Clustered.")
     end
