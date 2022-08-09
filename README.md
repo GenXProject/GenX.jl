@@ -99,7 +99,7 @@ If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do t
 4. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
 5. At the current stage of GenX development, we recommend the users to follow Method 2 for running GenX with Gurobi or CPLEX. Please refer to the steps of Method 2. 
 
-Note that if you have not already installed the required Julia packages, you are using a version of JuMP other than v0.21.4, or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
+Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
 ## Running Modeling to Generate Alternatives with GenX
 GenX includes a modeling to generate alternatives (MGA) package that can be used to automatically enumerate a diverse set of near cost-optimal solutions to electricity system planning problems. To use the MGA algorithm, user will need to perform the following tasks:
