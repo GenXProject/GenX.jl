@@ -1,6 +1,6 @@
 # Clp Solver parameters https://github.com/jump-dev/Clp.jl
 # Common solver settings
-Feasib_Tol: 1e-7              # Primal/Dual feasibility tolerance
+Feasib_Tol: 1e-5             # Primal/Dual feasibility tolerance
 TimeLimit: -1.0               # Terminate after this many seconds have passed. A negative value means no time limit
 Pre_Solve: 0                  # Set to 1 to disable presolve
 Method: 5                     # Solution method: dual simplex (0), primal simplex (1), sprint (2), barrier with crossover (3), barrier without crossover (4), automatic (5)

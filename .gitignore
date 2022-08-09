@@ -18,6 +18,7 @@ time_domain_reduction/TSC.jl
 gurobi.log
 cplex.log
 Example_Systems/SmallNewEngland/ThreeZones/TDR_*
+Example_Systems/RealSystemExample/ISONE_Singlezone/TDR_*
 Example_Systems/RealSystemExample/ISONE_Singlezone/Manifest.toml
 Example_Systems/RealSystemExample/ISONE_Singlezone/Results*
 Example_Systems/RealSystemExample/ISONE_Trizone/Results*
@@ -32,6 +33,7 @@ Example_Systems/SmallNewEngland/Test_Up_Time/
 Example_Systems/SmallNewEngland/Test_Down_Time/
 /docs/build/
 Example_Systems/**/GenXJulEnv/
+Example_Systems/**/Highs.log
 # Microsoft office temporary files
 ~$*
 
