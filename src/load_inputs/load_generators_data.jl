@@ -66,6 +66,9 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	# Set of controllable variable renewable resources
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
+	# Set of retrofit resources
+	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
+
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1
 		# Set of thermal resources eligible for unit committment
@@ -110,6 +113,29 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	# Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
+
+	# Retrofit Information
+	if length(inputs_gen["RETRO"]) > 0 # If there are any retrofit technologies in consideration, read relevant data
+		inputs_gen["NUM_RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:Num_RETRO_Sources][1:inputs_gen["G"]]))   # Number of retrofit sources for this technology (0 if not a retrofit technology)
+		max_retro_sources = maximum(inputs_gen["NUM_RETROFIT_SOURCES"])
+
+		source_cols = [ Symbol(string("Retro",i,"_Source")) for i in 1:max_retro_sources ]
+		efficiency_cols = [ Symbol(string("Retro",i,"_Efficiency")) for i in 1:max_retro_sources ]
+		inv_cap_cols = [ Symbol(string("Retro",i,"_Inv_Cost_per_MWyr")) for i in 1:max_retro_sources ]
+
+		sources = [ collect(skipmissing(gen_in[!,c][1:G])) for c in source_cols ]
+		inputs_gen["RETROFIT_SOURCES"] = [ [ sources[i][y] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ]  # The origin technologies that can be retrofitted into this new technology
+		inputs_gen["RETROFIT_SOURCE_IDS"] = [ [ findall(x->x==sources[i][y],inputs_gen["RESOURCES"])[1] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ] # The R_IDs of these origin technologies
+
+		efficiencies = [ collect(skipmissing(gen_in[!,c][1:G])) for c in efficiency_cols ]
+		inputs_gen["RETROFIT_EFFICIENCIES"] = [ [ efficiencies[i][y] for i in 1:max_retro_sources if efficiencies[i][y] != 0 ] for y in 1:G ]  # The efficiencies of each retrofit by source (ratio of outgoing to incoming nameplate capacity)
+		inv_cap = [ collect(skipmissing(gen_in[!,c][1:G])) for c in inv_cap_cols ]
+
+		if setup["ParameterScale"] ==1
+			inv_cap /= ModelScalingFactor
+		end
+		inputs_gen["RETROFIT_INV_CAP_COSTS"] = [ [ inv_cap[i][y] for i in 1:max_retro_sources if inv_cap[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (capacity $/MWyr) of each retrofit by source
+	end
 
 	if setup["ParameterScale"] == 1  # Parameter scaling turned on - adjust values of subset of parameter values
 

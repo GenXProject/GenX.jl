@@ -83,10 +83,9 @@ ClusterFuelPrices: 1
   #   - MultiStageConcatenate
   #   (Only considered if MultiStage = 1 in genx_settings.yml)
   #   If 1, this designates that the model should time domain reduce the input data
-  #   of all model stages together. Else if 0, [still in development] the model will time domain reduce only
-  #   the first stage and will apply the periods of each other model stage to this set
-  #   of representative periods by closest Eucliden distance.
-MultiStageConcatenate: 1
+  #   of all model stages together. Else if 0, the model will time domain reduce each
+  #   stage separately
+MultiStageConcatenate: 0
 
   #   - UseExtremePeriods
   #   Either 'yes' or 'no', this designates whether or not to include

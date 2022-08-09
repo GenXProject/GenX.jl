@@ -183,6 +183,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		thermal!(EP, inputs, setup)
 	end
 
+	# Model constraints, variables, expression related to retrofit technologies
+	if !isempty(inputs["RETRO"])
+		EP = retrofit(EP, inputs)
+	end
+
 	# Policies
 	# CO2 emissions limits
 	co2_cap!(EP, inputs, setup)
