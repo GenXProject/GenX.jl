@@ -68,11 +68,11 @@ Note that if you have not already installed the required Julia packages, you are
 
 ## When using commercial solvers, Gurobi and CPLEX
 If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
-1. Open the `Guide_to_Project.toml` file within the `GenX` folder
-2. If you want to have only Gurobi (but, not CPLEX) solver, use the `[deps]` and the `[compat]` from underneath the header: `[deps]/UUIDs to be used when not using CPLEX` and the header `[compat]/version numbers to be used when not using CPLEX` respectively. If one the other hand, if you want to use CPLEX (along with Gurobi; you can delete the relevant lines of Gurobi, in case you don't want to use it) then use the `[deps]` and the `[compat]` from underneath the header: `[deps]/UUIDs to be used when using CPLEX` and the header `[compat]/version numbers to be used when using CPLEX` respectively, from the `Guide_to_Project.toml` file. Copy the corresponding lines and paste them in the `Project.toml` file. Alternatively, you can also copy only the `[deps]` and `[compat]` for just the commercial solvers and paste those at respective places in the `Project.toml` file.
-3. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
-4. Set the appropriate solver in the `genx_settings.yml` file
-5. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
+1. Uncomment the respective lines pertaining to the particular version of Gurobi and/or CPLEX Julia interface you want to run, from the `julenv.jl` file. 
+2. Uncomment the relevent `using Gurobi` and/or `using CPLEX` at the beginning of the `GenX.jl` file
+3. Set the appropriate solver in the `genx_settings.yml` file
+4. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
+5. At the current stage of GenX development, we recommend the users to follow Method 2 for running GenX with Gurobi or CPLEX. Please refer to the steps of Method 2. 
 
 ## Running Modeling to Generate Alternatives with GenX
 

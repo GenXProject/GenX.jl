@@ -3,6 +3,7 @@
 *.jl.mem
 *.DS_Store
 Manifest.toml
+Guide_to_Project.toml
 .Rhistory
 deps/deps.jl
 .vscode/

@@ -21,21 +21,20 @@ Pkg.add("Cbc")
 Pkg.add("Clp")
 Pkg.add("DataStructures")
 Pkg.add(Pkg.PackageSpec(name="Dates"))
-Pkg.add("GLPK")
-Pkg.add("Ipopt")
 Pkg.add("JuMP")
 Pkg.add("MathOptInterface")
 Pkg.add("SCIP")
 Pkg.add(Pkg.PackageSpec(name="HiGHS"))
-############################################################################################
-#Uncomment either of the following two lines for the particular version of CPLEX.jl desired
-############################################################################################
+####################################################################################################################################
+#Uncomment either of the following three lines for the latest compatible or, the two other particular versions of CPLEX.jl desired
+####################################################################################################################################
+#Pkg.add("CPLEX")
 #Pkg.add(Pkg.PackageSpec(name="CPLEX", version="0.6.1"))
 #Pkg.add(Pkg.PackageSpec(name="CPLEX", version="0.7.7"))
-############################################################################################
-#Uncomment either of the following two lines for the particular version of Gurobi.jl desired
-############################################################################################
-Pkg.add("Gurobi")
+#####################################################################################################################################
+#Uncomment either of the following three lines for the latest compatible or, the two other particular versions of Gurobi.jl desired
+#####################################################################################################################################
+#Pkg.add("Gurobi")
 #Pkg.add(Pkg.PackageSpec(name="Gurobi", version="0.10.3"))
 #Pkg.add(Pkg.PackageSpec(name="Gurobi", version="0.9.14"))
 Pkg.add("CSV")
