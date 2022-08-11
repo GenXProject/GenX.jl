@@ -34,6 +34,7 @@ export run_ddp
 export configure_multi_stage_inputs
 export load_inputs_multi_stage
 export write_multi_stage_outputs
+export run_genx_case!
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -69,6 +70,9 @@ using Cbc
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 ModelScalingFactor = 1e+3
+
+# Case runner
+include("case_runners/case_runner.jl")
 
 # Configure settings
 include("configure_settings/configure_settings.jl")
