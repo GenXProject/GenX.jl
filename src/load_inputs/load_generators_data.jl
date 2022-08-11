@@ -67,6 +67,10 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
 	# Set of retrofit resources
+	if !("RETRO" in names(gen_in))
+		gen_in[!, "RETRO"] = zero(gen_in[!, "R_ID"])
+	end
+		
 	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
 
 	# Set of thermal generator resources
