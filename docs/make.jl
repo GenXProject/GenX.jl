@@ -112,7 +112,7 @@ deploydocs(;
     devbranch = nothing, #"main",
     devurl = "dev",
     push_preview=true,
-    versions = ["stable" => "v^", "v#.#", devurl => devurl],
+    versions = ["stable" => "v^", "v#.#"],
     forcepush = false,
     deploy_config = auto_detect_deploy_system(),
     repo_previews = repo,
