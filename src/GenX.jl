@@ -48,7 +48,6 @@ using Distances
 using Combinatorics
 using Documenter
 
-using DiffEqSensitivity
 using OrdinaryDiffEq
 using QuasiMonteCarlo
 using Random
