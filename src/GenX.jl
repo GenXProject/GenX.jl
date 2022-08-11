@@ -49,7 +49,6 @@ using Combinatorics
 using Documenter
 
 using OrdinaryDiffEq
-using QuasiMonteCarlo
 using Random
 using RecursiveArrayTools
 using Statistics
