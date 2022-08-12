@@ -104,8 +104,6 @@ makedocs(;
 )
 
 deploydocs(;
-    root = "<current-directory>",
-    dirname = "",
     repo="github.com/GenXProject/GenX.git",
     target = "build",
     branch = "gh-pages",
@@ -114,8 +112,6 @@ deploydocs(;
     push_preview=true,
     versions = ["stable" => "v^", "v#.#"],
     forcepush = false,
-    deploy_config = auto_detect_deploy_system(),
     repo_previews = repo,
     branch_previews = branch,
 )
-
