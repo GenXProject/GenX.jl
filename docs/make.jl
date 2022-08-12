@@ -109,7 +109,7 @@ deploydocs(;
     repo="github.com/GenXProject/GenX.git",
     target = "build",
     branch = "gh-pages",
-    devbranch = nothing, #"main",
+    devbranch = "main",
     devurl = "dev",
     push_preview=true,
     versions = ["stable" => "v^", "v#.#"],
