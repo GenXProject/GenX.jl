@@ -112,6 +112,4 @@ deploydocs(;
     push_preview=true,
     versions = ["stable" => "v^", "v#.#"],
     forcepush = false,
-    repo_previews = repo,
-    branch_previews = branch,
 )
