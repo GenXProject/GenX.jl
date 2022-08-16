@@ -48,7 +48,7 @@ If it's your first time running GenX (or, if you have pulled after some major up
 These steps can be skipped on subsequent runs.
 Steps 2-5 are shown in Figure 1 and Steps 6-8 are shown in Figure 2.
 
-![Creating the Julia environment and installing dependencies: Steps 2-7](docs/src/assets/GenX_setup_tutorial_part_1.png)
+![Creating the Julia environment and installing dependencies: Steps 2-7](assets/GenX_setup_tutorial_part_1.png)
 *Figure 1. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 2-5*
 
 8. Since we have already started Julia, we can run a case by executing the command `julia> include(“<path to your case>/Run.jl”)`. 
@@ -56,7 +56,7 @@ Steps 2-5 are shown in Figure 1 and Steps 6-8 are shown in Figure 2.
 For example, in order to run the OneZone case within the `Example_Systems/SmallNewEngland` folder,
 type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia>` prompt.
 
-![Creating the Julia environment and installing dependencies: Steps 6-8](docs/src/assets/GenX_setup_tutorial_part_2.png)
+![Creating the Julia environment and installing dependencies: Steps 6-8](assets/GenX_setup_tutorial_part_2.png)
 *Figure 2. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 6-8*
 
 After the script runs to completion, results will be written to a folder called “Results”, located in the same directory as `Run.jl`.
