@@ -46,7 +46,6 @@ using Dates
 using Clustering
 using Distances
 using Combinatorics
-using Documenter
 
 using OrdinaryDiffEq
 using Random
