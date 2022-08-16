@@ -103,6 +103,7 @@ type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia
 
 After the script runs to completion, results will be written to a folder called “Results”, located in the same directory as `Run.jl`.
 
+
 ### Running a case
 
 Once Steps 1-6 have been performed, a case can be run from the terminal in a single line.
@@ -134,13 +135,26 @@ The following are the main steps performed in that function:
 
 If your needs are more complex, it is possible to use a customized run script in place of simply calling `run_genx_case!`; the contents of that function could be a starting point. 
 
-## When using commercial solvers, Gurobi and CPLEX
-If you want to use either of Gurobi or CPLEX solvers, instead or Clp or Cbc do the following:
+### Using commercial solvers: Gurobi or CPLEX
+If you want to use the commercial solvers Gurobi or CPLEX:
+
 1. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
-2. At the beginning of the `GenX.jl` file, uncomment `using Gurobi` and/or `using CPLEX`.
-3. Set the appropriate solver in the `genx_settings.yml` file
+2. Add Gurobi or CPLEX to the Julia Project.
+
+```
+> julia --project=/home/youruser/GenX
+
+julia> <press close-bracket ] to access the package manager>
+(GenX) pkg> add Gurobi
+-or-
+(GenX) pkg> add CPLEX
+```
+
+3. At the beginning of the `GenX/src/GenX.jl` file, uncomment `using Gurobi` and/or `using CPLEX`.
+4. Set the appropriate solver in the `genx_settings.yml` file of your case
 
 Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
+
 
 ## Running Modeling to Generate Alternatives with GenX
 GenX includes a modeling to generate alternatives (MGA) package that can be used to automatically enumerate a diverse set of near cost-optimal solutions to electricity system planning problems. To use the MGA algorithm, user will need to perform the following tasks:
