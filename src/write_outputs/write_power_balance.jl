@@ -56,7 +56,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		powerbalance[(z-1)*10+7, :] = value.(EP[:vNSE][1, :, z])
 		if Z >= 2
 		    powerbalance[(z-1)*10+8, :] = (value.(EP[:ePowerBalanceNetExportFlows][:, z]))' # Transpose
-		    powerbalance[(z-1)*10+9, :] = (-0.5) * (value.(EP[:eLosses_By_Zone][z, :]))
+		    powerbalance[(z-1)*10+9, :] = (-0.5) * (value.(EP[:eTransLossByZone][z, :]))
 		end
 		powerbalance[(z-1)*10+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
 	end

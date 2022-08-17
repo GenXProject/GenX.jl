@@ -104,27 +104,12 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
-
+	# note that the coefficient 1 is to making sure this expression is an expression, rather than a variable
+	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 1*EP[:vZERO])
+	
 	# Initialize Objective Function Expression
-	@expression(EP, eObj, 0)
-
-
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
-	# Initialize Capacity Reserve Margin Expression
-	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
-	end
-
-	# Energy Share Requirement
-	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
-	end
-
-	if (setup["MinCapReq"] == 1)
-		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
-	end
+	# note that the coefficient 1 is to making sure this expression is an expression, rather than a variable
+	@expression(EP, eObj, 1*EP[:vZERO])
 
 	# Infrastructure
 	discharge!(EP, inputs, setup)
@@ -136,8 +121,8 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	if setup["UCommit"] > 0
 		ucommit!(EP, inputs, setup)
 	end
-
-	emissions!(EP, inputs)
+	fuel!(EP, inputs, setup)
+	co2!(EP, inputs, setup)
 
 	if setup["Reserves"] > 0
 		reserves!(EP, inputs, setup)
@@ -190,8 +175,25 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Policies
 	# CO2 emissions limits
-	co2_cap!(EP, inputs, setup)
-
+	if setup["CO2Cap"] == 1
+		co2_cap!(EP, inputs, setup)
+	end
+	if setup["CO2LoadRateCap"] == 1
+		co2_load_side_emission_rate_cap!(EP, inputs, setup)
+	end
+	if setup["CO2GenRateCap"] == 1
+		co2_generation_side_emission_rate_cap!(EP, inputs, setup)
+	end
+	# CO2 Tax
+	if setup["CO2Tax"] == 1
+		co2_tax!(EP, inputs, setup)
+	end
+	# CO2 Capture Credit
+	if setup["CO2Capture"] == 1
+		if setup["CO2Credit"] == 1
+			co2_credit!(EP, inputs, setup)
+		end
+	end
 	# Endogenous Retirements
 	if setup["MultiStage"] > 0
 		endogenous_retirement!(EP, inputs, setup)
@@ -209,6 +211,22 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	if (setup["MinCapReq"] == 1)
 		minimum_capacity_requirement!(EP, inputs, setup)
+	end
+
+	if (setup["MaxCapReq"] == 1)
+		maximum_capacity_limit!(EP, inputs, setup)
+	end
+
+	if setup["TFS"] == 1
+		twentyfourseven!(EP, inputs, setup)
+	end
+
+	if setup["EnergyCredit"] == 1
+		energy_credit!(EP, inputs, setup)
+	end
+
+	if setup["InvestmentCredit"] == 1
+		investment_credit!(EP, inputs, setup)
 	end
 
 	## Define the objective function

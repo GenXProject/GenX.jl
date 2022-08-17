@@ -80,25 +80,28 @@ END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of eac
 
 ## Power Balance Expressions ##
 @expression(EP, ePowerBalanceDemandFlex[t=1:T, z=1:Z],
-    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:][!,:R_ID])))
+    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
 
-EP[:ePowerBalance] += ePowerBalanceDemandFlex
-
-# Capacity Reserves Margin policy
-if setup["CapacityReserveMargin"] > 0
-    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-    EP[:eCapResMarBalance] += eCapResMarBalanceFlex
-end
+add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceDemandFlex])
 
 ## Objective Function Expressions ##
 
 # Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
-@expression(EP, eCVarFlex_in[y in FLEX,t=1:T], inputs["omega"][t]*dfGen[!,:Var_OM_Cost_per_MWh_In][y]*vCHARGE_FLEX[y,t])
+@expression(EP, eCVarFlex_in[y in FLEX, t= 1:T], inputs["omega"][t]*dfGen[y, :Var_OM_Cost_per_MWh_In] * vCHARGE_FLEX[y, t])
 
-# Sum individual resource contributions to variable charging costs to get total variable charging costs
-@expression(EP, eTotalCVarFlexInT[t=1:T], sum(eCVarFlex_in[y,t] for y in FLEX))
-@expression(EP, eTotalCVarFlexIn, sum(eTotalCVarFlexInT[t] for t in 1:T))
-EP[:eObj] += eTotalCVarFlexIn
+# Sum to Plant level
+@expression(EP, ePlantCVarFlexIn[y in FLEX], sum(EP[:eCVarFlex_in][y, t] for t in 1:T))
+# Sum to zonal level
+@expression(EP, eZonalCVarFlexIn[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCVarFlexIn][y] for y in intersect(FLEX, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+# Sum to system level
+@expression(EP, eTotalCVarFlexIn, sum(EP[:eZonalCVarFlexIn][z] for z in 1:Z))
+
+add_to_expression!(EP[:eObj], EP[:eTotalCVarFlexIn])
+
+# Calcualte the extra energy consumption of flexible demand
+@expression(EP, eExtraDemand[y in FLEX], 
+        sum(inputs["omega"][t] * (EP[:vP][y, t] - EP[:vCHARGE_FLEX][y, t]) for t in 1:T))
+
 
 ### Constraints ###
 
