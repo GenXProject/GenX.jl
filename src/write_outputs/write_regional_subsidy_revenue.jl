@@ -30,7 +30,9 @@ function write_regional_subsidy_revenue(path::AbstractString, inputs::Dict, setu
     dfRegSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], SubsidyRevenue = zeros(G))
     for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
         MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].>0), :R_ID]
+        # check for VRE-Storage module
         dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .+= (dual.(EP[:cZoneMinCapReq])[mincap]) * (value.(EP[:eTotalCap])[MIN_CAP_GEN]) .* dfGen[MIN_CAP_GEN, Symbol("MinCapTag_$mincap")]
+
     end
 
     if setup["ParameterScale"] == 1

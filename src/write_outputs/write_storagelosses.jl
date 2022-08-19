@@ -20,6 +20,14 @@ function write_storagelosses(path::AbstractString, inputs::Dict, setup::Dict, EP
     STOR_ALL = inputs["STOR_ALL"]     # Number of transmission lines
     dfStorageLoss = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
     dfStorageLoss.AnnualSum[STOR_ALL] .+= value.(EP[:eELOSS][STOR_ALL]).data
+
+    if setup["VreStor"] == 1
+        VRE_STOR = inputs["VRE_STOR"]
+        dfStorageLoss_VRE_STOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], AnnualSum = zeros(VRE_STOR))
+        dfStorageLoss_VRE_STOR.AnnualSum .+= value.(EP[:eELOSS_VRE_STOR]).data
+        dfStorageLoss = vcat(dfStorageLoss, dfStorageLoss_VRE_STOR)
+    end
+
     if setup["ParameterScale"] == 1
         dfStorageLoss.AnnualSum .*= ModelScalingFactor
     end

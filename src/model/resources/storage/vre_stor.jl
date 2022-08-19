@@ -123,53 +123,45 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, Energy
    
     ### Objective Function Expressions ###
 
-    # Fixed costs for VRE-STOR resources
-    @expression(EP, eCFix_VRE_STOR[y in 1:VRE_STOR], 
+    # Investment costs for VRE-STOR resources
+    @expression(EP, eCInv_VRE_STOR[y in 1:VRE_STOR], 
     dfGen_VRE_STOR[!,:Inv_Cost_VRE_per_MWyr][y]*vCAP_VRE[y] 
     + dfGen_VRE_STOR[!,:Inv_Cost_GRID_per_MWyr][y]*vGRIDCAP[y] 
+    + dfGen_VRE_STOR[!,:Inv_Cost_per_MWhyr][y]*vCAPSTORAGE_VRE_STOR[y])
+
+    # Fixed costs for VRE-STOR resources
+    @expression(EP, eCFix_VRE_STOR[y in 1:VRE_STOR], 
     + dfGen_VRE_STOR[!,:Fixed_OM_VRE_Cost_per_MWyr][y]*eTotalCap_VRE[y]
     + dfGen_VRE_STOR[!,:Fixed_OM_GRID_Cost_per_MWyr][y]*eTotalCap_GRID[y]
-    + dfGen_VRE_STOR[!,:Inv_Cost_per_MWhyr][y]*vCAPSTORAGE_VRE_STOR[y] 
     + dfGen_VRE_STOR[!,:Fixed_OM_Cost_per_MWhyr][y]*eTotalCap_STOR[y])
 
     # Variable costs of "generation" for VRE-STOR resource "y" during hour "t" = variable O&M plus fuel cost
     @expression(EP, eCVar_out_VRE_STOR[y in 1:VRE_STOR, t in 1:T], (inputs["omega"][t]*(dfGen_VRE_STOR[!,:Var_OM_Cost_per_MWh][y]+dfGen_VRE_STOR[!,:C_Fuel_per_MWh][y])*vP_DC[y,t]*dfGen_VRE_STOR[!,:EtaInverter][y]))
+    @expression(EP, eCVar_temp_VRE_STOR[y in 1:VRE_STOR], sum(eCVar_out_VRE_STOR[y, t] for t in 1:T))
 
 	# Sum individual resource contributions to variable charging costs to get total variable charging costs
+    @expression(EP, eTotalCInv_VRE_STOR, sum(eCInv_VRE_STOR[y] for y in 1:VRE_STOR))
 	@expression(EP, eTotalCFix_VRE_STOR, sum(eCFix_VRE_STOR[y] for y in 1:VRE_STOR))
     @expression(EP, eTotalCVar_VRE_STOR, sum(eCVar_out_VRE_STOR[y, t] for y in 1:VRE_STOR, t in 1:T))
-	EP[:eObj] += (eTotalCFix_VRE_STOR + eTotalCVar_VRE_STOR)
+	EP[:eObj] += (eTotalCInv_VRE_STOR + eTotalCFix_VRE_STOR + eTotalCVar_VRE_STOR)
 
     # Separate grid costs
-    @expression(EP, eTotalCGrid, 
-    sum(dfGen_VRE_STOR[!,:Inv_Cost_GRID_per_MWyr][y]*vGRIDCAP[y]
-    + dfGen_VRE_STOR[!,:Fixed_OM_GRID_Cost_per_MWyr][y]*eTotalCap_GRID[y] for y in 1:VRE_STOR))
+    @expression(EP, eCGrid_VRE_STOR[y in 1:VRE_STOR], 
+    dfGen_VRE_STOR[!,:Inv_Cost_GRID_per_MWyr][y]*vGRIDCAP[y]
+    + dfGen_VRE_STOR[!,:Fixed_OM_GRID_Cost_per_MWyr][y]*eTotalCap_GRID[y])
+    @expression(EP, eTotalCGrid, sum(eCGrid_VRE_STOR[y] for y in 1:VRE_STOR))
 
+    # Zonal Costs
+    @expression(EP, eZonalCFOM_VRE_STOR[z=1:Z], EP[:vZERO] + sum(EP[:eCFix_VRE_STOR][y] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCInv_VRE_STOR[z=1:Z], EP[:vZERO] + sum(EP[:eCInv_VRE_STOR][y] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCVar_VRE_STOR[z=1:Z], EP[:vZERO] + sum(EP[:eCVar_temp_VRE_STOR][y] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCGrid_VRE_STOR[z=1:Z], EP[:vZERO] + sum(EP[:eCGrid_VRE_STOR][y] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Zone].==z), :R_ID]))
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalance_VRE_STOR[t=1:T, z=1:Z],
 	sum(vP_VRE_STOR[y,t]-vCHARGE_VRE_STOR[y,t] for y=dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID]))
 
 	EP[:ePowerBalance] += ePowerBalance_VRE_STOR
-
-    ## Policy Expressions ##
-
-    if (MinCapReq == 1)
-        @expression(EP, eMinCapResVREStor[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap_VRE] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
-		EP[:eMinCapRes] += eMinCapResVREStor
-	end
-
-    if EnergyShareRequirement >= 1
-        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen_VRE_STOR[!,Symbol("ESR_$ESR")][y]*EP[:vP_DC][y,t]*dfGen_VRE_STOR[!,:EtaInverter][y] for y=dfGen_VRE_STOR[findall(x->x>0,dfGen_VRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T) 
-						- sum(inputs["dfESR"][:,ESR][z]*StorageLosses*sum(EP[:eELOSS_VRE_STOR][y] for y=dfGen_VRE_STOR[(dfGen_VRE_STOR[!,:Zone].==z),:][!,:R_ID]) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-		EP[:eESR] += eESRVREStor												
-	end
-
-    # Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-        @expression(EP, eCapResMarBalanceVREStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen_VRE_STOR[y,Symbol("CapRes_$res")] * (EP[:vP_VRE_STOR][y, t] - EP[:vCHARGE_VRE_STOR][y, t]) for y in 1:VRE_STOR))
-		EP[:eCapResMarBalance] += eCapResMarBalanceVREStor
-	end
 
     ## Module Expressions ##
 
