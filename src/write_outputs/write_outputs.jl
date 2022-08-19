@@ -44,7 +44,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	status = termination_status(EP)
 
 	## Check if solved sucessfully - time out is included
-	if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
+	if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED && status != MOI.OTHER_ERROR
 		if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
 			write_status(path, inputs, setup, EP)
 			return

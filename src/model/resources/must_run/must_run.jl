@@ -51,6 +51,12 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceNdisp])
 
 
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		@expression(EP, eCapResMarBalanceMustRun[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
+		EP[:eCapResMarBalance] += eCapResMarBalanceMustRun
+	end
+
 	### Constratints ###
 
 	@constraint(EP, [y in MUST_RUN, t=1:T], EP[:vP][y,t] == inputs["pP_Max"][y,t]*EP[:eTotalCap][y])

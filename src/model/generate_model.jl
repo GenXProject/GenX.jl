@@ -111,6 +111,20 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# note that the coefficient 1 is to making sure this expression is an expression, rather than a variable
 	@expression(EP, eObj, 1*EP[:vZERO])
 
+	# Initialize Capacity Reserve Margin Expression
+	if setup["CapacityReserveMargin"] > 0
+		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+	end
+
+	# Energy Share Requirement
+	if setup["EnergyShareRequirement"] >= 1
+		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+	end
+
+	if (setup["MinCapReq"] == 1)
+		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+	end
+
 	# Infrastructure
 	discharge!(EP, inputs, setup)
 
@@ -173,6 +187,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = retrofit(EP, inputs)
 	end
 
+	# Model constraints, variables, expressions related to the co-located VRE-storage resources
+	if setup["VreStor"] == 1
+		EP = vre_stor(EP, inputs, setup["Reserves"], setup["MinCapReq"],setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+	end
+	
 	# Policies
 	# CO2 emissions limits
 	if setup["CO2Cap"] == 1

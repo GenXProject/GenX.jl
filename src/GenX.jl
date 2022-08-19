@@ -105,6 +105,9 @@ include("load_inputs/load_fuels_data.jl")
 include("load_inputs/load_twentyfourseven.jl")
 include("load_inputs/load_energy_credit.jl")
 include("load_inputs/load_investment_credit.jl")
+include("load_inputs/load_vre_stor_data.jl")
+include("load_inputs/load_vre_stor_variability.jl")
+
 include("load_inputs/load_inputs.jl")
 
 include("time_domain_reduction/time_domain_reduction.jl")
@@ -138,6 +141,7 @@ include("model/resources/storage/long_duration_storage.jl")
 include("model/resources/storage/investment_charge.jl")
 include("model/resources/storage/storage_asymmetric.jl")
 include("model/resources/storage/storage_symmetric.jl")
+include("model/resources/storage/vre_stor.jl")
 
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")

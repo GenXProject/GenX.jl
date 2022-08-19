@@ -98,6 +98,13 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceNSE])
 	end
 
+	# VRE-STOR 
+	if (setup["VreStor"] == 1)
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		@expression(EP, eMinCapResVREStor[res = 1:NCRM], sum(EP[:eTotalCap_VRE] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eMinCapResVREStor])
+	end
+
 	# Transmission's contribution
 	if Z > 1 
 		@expression(EP, eCapResMarBalanceTrans[res=1:NCRM, t=1:T], sum(inputs["dfCapRes_network"][l, Symbol("DerateCapRes_$res")] * inputs["dfCapRes_network"][l, Symbol("CapRes_Excl_$res")] * EP[:vFLOW][l,t] for l in 1:L))

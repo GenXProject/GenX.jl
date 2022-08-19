@@ -36,8 +36,26 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCurtailment,auxNew_Names)
 
+	# VRE-storage module
+	if setup["VreStor"]==1
+		VRE_STOR = inputs["VRE_STOR"]
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfCurtailmentVRESTOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+		curtailment_VRE_STOR = zeros(VRE_STOR, T)
+		if setup["ParameterScale"] == 1
+			curtailment_VRE_STOR = ModelScalingFactor * value.(EP[:eTotalCap_VRE]) .* inputs["pP_Max_VRE_STOR"] .- value.(EP[:vP_DC])
+		else
+			curtailment_VRE_STOR = value.(EP[:eTotalCap_VRE]) .* inputs["pP_Max_VRE_STOR"] .- value.(EP[:vP_DC])
+		end
+
+		dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, DataFrame(curtailment_VRE_STOR, :auto))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfCurtailmentVRESTOR,auxNew_Names)
+		dfCurtailment = vcat(dfCurtailment, dfCurtailmentVRESTOR)
+	end
+
 	total = DataFrame(["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(curtailment, dims = 1)
+	total[:, 4:T+3] .= sum(curtailment, dims = 1) + (setup["VreStor"]==1 ? sum(curtailment_VRE_STOR) : zeros(1, T)) 
 	rename!(total,auxNew_Names)
 	dfCurtailment = vcat(dfCurtailment, total)
 	CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), writeheader=false)

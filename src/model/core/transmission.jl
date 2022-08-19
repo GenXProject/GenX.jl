@@ -225,6 +225,14 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceLossesByZone])
 	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceNetExportFlows])
 
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		if Z > 1 
+			@expression(EP, eCapResMarBalanceTrans[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L))
+			EP[:eCapResMarBalance] -= eCapResMarBalanceTrans
+		end
+	end
+
 	### Constraints ###
 
 	if MultiStage == 1

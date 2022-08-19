@@ -84,6 +84,12 @@ END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of eac
 
 add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceDemandFlex])
 
+# Capacity Reserves Margin policy
+if CapacityReserveMargin > 0
+    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
+    EP[:eCapResMarBalance] += eCapResMarBalanceFlex
+end
+
 ## Objective Function Expressions ##
 
 # Variable costs of "charging" for technologies "y" during hour "t" in zone "z"

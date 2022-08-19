@@ -29,6 +29,14 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
     dfSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], SubsidyRevenue = zeros(G))
     MIN_CAP = dfGen[(dfGen[!, :Min_Cap_MW].>0), :R_ID]
     dfSubRevenue.SubsidyRevenue[MIN_CAP] .= (value.(EP[:eTotalCap])[MIN_CAP]) .* (dual.(EP[:cMinCap][MIN_CAP])).data
+	if setup["VreStor"] == 1
+		# do we want to to the same for storage/grid capacities?
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfSubRevenueVRE = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], SubsidyRevenue = zeros(VRE_STOR))
+		MIN_CAP_VRE = dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Min_Cap_VRE_MW].>0), :R_ID]
+		dfSubRevenueVRE.SubsidyRevenue[MIN_CAP_VRE] .= (value.(EP[:eTotalCap_VRE])[MIN_CAP_VRE]) .* (dual.(EP[:cMinCap_VRE][MIN_CAP_VRE])).data
+		dfSubRevenue = vcat(dfSubRevenue, dfSubRevenueVRE)
+	end
 
     if setup["ParameterScale"] == 1
         dfSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$

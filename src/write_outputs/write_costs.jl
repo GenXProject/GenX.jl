@@ -29,13 +29,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	FLEX = inputs["FLEX"]
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
 
-
-	dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
-	cInv = value(EP[:eTotalCInv]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0.0)
-	cFOM = value(EP[:eTotalCFOM]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFOMEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFOMCharge]) : 0.0)
+	dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "eGridCost"])
+	cInv = value(EP[:eTotalCInv]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0.0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCInv_VRE_STOR]) : 0.0) 
+	cFOM = value(EP[:eTotalCFOM]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFOMEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFOMCharge]) : 0.0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCFix_VRE_STOR]) : 0.0) 
 	cFuel = value(EP[:eTotalCFuelOut])
-	cVOM = value(EP[:eTotalCVOMOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
-	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
+	cVOM = value(EP[:eTotalCVOMOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0) + ((setup["VreStor"] == 1) ? value(EP[:eTotalCVar_VRE_STOR]) : 0.0)
+	dfCost[!,Symbol("Total")] = [objective_value(EP), cInv, cFOM, cFuel, cVOM, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 
 	if setup["InvestmentCredit"] == 1
 		dfCost[2,2] -= value(EP[:eCTotalInvCredit])
@@ -74,6 +73,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[10,2] += value(EP[:eCTotalESRSlack])
 	end
 
+
 	if setup["CapacityReserveMargin"] == 1
 		dfCost[10,2] += value(EP[:eCTotalCapResSlack])
 	end
@@ -104,6 +104,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[10,2] += value(EP[:eCTotalCOSlack])
 	end
 
+	# If VRE-Storage module is activated, output total grid connection capacity costs
+	if setup["VreStor"] == 1
+		dfCost[11,2] = value(EP[:eTotalCGrid])
+	end
+
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
 	end
@@ -112,7 +117,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	# They are put as zero.
 	tempzonalcost = zeros(10, Z)
 	# Investment Cost
-	tempzonalcost[2, :] += vec(value.(EP[:eZonalCInv]))
+	tempzonalcost[2, :] += (vec(value.(EP[:eZonalCInv])) + ((setup["VreStor"] == 1) ? vec(value.(EP[:eZonalCFOM_VRE_STOR])) : zeros(1, Z)))
 	if !isempty(STOR_ALL)
 		tempzonalcost[2, :] += vec(value.(EP[:eZonalCInvEnergyCap]))
 	end
@@ -125,7 +130,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 
 	# FOM Cost
-	tempzonalcost[3, :] += vec(value.(EP[:eZonalCFOM]))
+	tempzonalcost[3, :] += (vec(value.(EP[:eZonalCFOM])) + ((setup["VreStor"] == 1) ? vec(value.(EP[:eZonalCInv_VRE_STOR])) : zeros(1, Z)))
 	if !isempty(STOR_ALL)
 		tempzonalcost[3, :] += vec(value.(EP[:eZonalCFOMEnergyCap]))
 	end
@@ -137,7 +142,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	tempzonalcost[4, :] += vec(value.(EP[:eZonalCFuelOut]))
 
 	# Variable OM Cost
-	tempzonalcost[5, :] += vec(value.(EP[:eZonalCVOMOut]))
+	tempzonalcost[5, :] += (vec(value.(EP[:eZonalCVOMOut])) + ((setup["VreStor"] == 1) ? vec(value.(EP[:eZonalCVar_VRE_STOR])) : zeros(1, Z)))
 	if !isempty(STOR_ALL)
 		tempzonalcost[5, :] += vec(value.(EP[:eZonalCVarIn]))
 	end
@@ -153,6 +158,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempzonalcost[5, :] -= vec(value.(EP[:eZonalCCO2Credit]))
 		end
 	end
+
 	if setup["EnergyCredit"] == 1
 		tempzonalcost[5, :] -= vec(value.(EP[:eCEnergyCreditZonalTotal]))
 	end
@@ -167,6 +173,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	# Sum of the total
 	tempzonalcost[1, :] = vec(sum(tempzonalcost[2:end, :], dims = 1))
+
+	# Grid Connection costs for VRE-Storage module
+	if setup["VreStor"] == 1
+		tempzonalcost[11, :] = vec(value.(EP[:eZonalCGrid_VRE_STOR]))
+	end
 
 	# build the dataframe to append on total
 	dfCost = hcat(dfCost, DataFrame(tempzonalcost, [Symbol("Zone$z") for z in 1:Z]))

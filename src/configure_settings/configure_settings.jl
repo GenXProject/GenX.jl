@@ -85,6 +85,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "EnergyCredit", 0)    
     # Investment Credit Module; 0 = not activate; 1 = active
     set_default_if_absent!(settings, "InvestmentCredit", 0)
+    # Activate the VRE-storage module and constraints; 0 = not active; 1 = active
+    set_default_if_absent!(settings, "VreStor", 0)
 
 return settings
 end

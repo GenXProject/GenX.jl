@@ -35,6 +35,19 @@ function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, E
 		energyrevenue *= ModelScalingFactor^2
 	end
 	dfEnergyRevenue.AnnualSum .= energyrevenue * inputs["omega"]
+
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfEnergyRevenueVRESTOR = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], AnnualSum = Array{Float64}(undef, inputs["VRE_STOR"]), )
+		energyrevenueVRESTOR = zeros(VRE_STOR, T)
+		energyrevenueVRESTOR = value.(EP[:vP_VRE_STOR]) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen_VRE_STOR[:, :Zone], :]
+		if setup["ParameterScale"] == 1
+			energyrevenueVRESTOR *= ModelScalingFactor^2
+		end
+		dfEnergyRevenueVRESTOR.AnnualSum .= energyrevenueVRESTOR * inputs["omega"]
+		dfEnergyRevenue = vcat(dfEnergyRevenue, dfEnergyRevenueVRESTOR)
+	end
+
 	CSV.write(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue)
 	return dfEnergyRevenue
 end

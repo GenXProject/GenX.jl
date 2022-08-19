@@ -33,6 +33,22 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	    dfESRRev.AnnualSum .+= tempesrrevenue
 	    dfESRRev = hcat(dfESRRev, DataFrame([tempesrrevenue], [Symbol("ESR_$i")]))
 	end
+
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfESRRevVRESTOR = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], AnnualSum = zeros(VRE_STOR))
+		for i in 1:inputs["nESR"]
+			tempesrrevenue_VRE_STOR = zeros(VRE_STOR)
+			tempesrrevenue_VRE_STOR = (value.(EP[:vP_VRE_STOR]) * inputs["omega"]) .* dfGen_VRE_STOR[:, Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
+			if setup["ParameterScale"] == 1
+				tempesrrevenue_VRE_STOR *= (ModelScalingFactor^2)
+			end
+			dfESRRevVRESTOR.AnnualSum .+= tempesrrevenue_VRE_STOR
+			dfESRRevVRESTOR = hcat(dfESRRevVRESTOR, DataFrame([tempesrrevenue_VRE_STOR], [Symbol("ESR_$i")]))
+		end
+
+		dfESRRev = vcat(dfESRRev, dfESRRevVRESTOR)
+	end
 	CSV.write(joinpath(path, "ESR_Revenue.csv"), dfESRRev)
 	return dfESRRev
 end

@@ -133,7 +133,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     # Add charge cost to the dataframe
     dfNetRevenue.Charge_cost = zeros(nrow(dfNetRevenue))
     if has_duals(EP) == 1
-        dfNetRevenue.Charge_cost = dfChargingcost[!, :AnnualSum] # Unit is confirmed to be US$
+        dfNetRevenue.Charge_cost = dfChargingcost[1:G, :AnnualSum] # Unit is confirmed to be US$
     end
     dfNetRevenue.Charge_cost = round.(dfNetRevenue.Charge_cost, digits = 2)
     dfNetRevenue.Cost .+= dfNetRevenue.Charge_cost
@@ -141,7 +141,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add energy revenue to the dataframe
 	dfNetRevenue.EnergyRevenue = zeros(nrow(dfNetRevenue))
     if has_duals(EP) == 1
-        dfNetRevenue.EnergyRevenue = dfEnergyRevenue[!,:AnnualSum] # Unit is confirmed to be US$
+        dfNetRevenue.EnergyRevenue = dfEnergyRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
     end
     dfNetRevenue.EnergyRevenue = round.(dfNetRevenue.EnergyRevenue, digits = 2)
     dfNetRevenue.Revenue .+= dfNetRevenue.EnergyRevenue
@@ -149,7 +149,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     # Add subsidy revenue to the dataframe
 	dfNetRevenue.SubsidyRevenue = zeros(nrow(dfNetRevenue))
 	if has_duals(EP) == 1
-	 	dfNetRevenue.SubsidyRevenue = dfSubRevenue[!,:SubsidyRevenue] # Unit is confirmed to be US$
+	 	dfNetRevenue.SubsidyRevenue = dfSubRevenue[1:G,:SubsidyRevenue] # Unit is confirmed to be US$
 	end
     dfNetRevenue.SubsidyRevenue = round.(dfNetRevenue.SubsidyRevenue, digits = 2)
     dfNetRevenue.Revenue .+= dfNetRevenue.SubsidyRevenue
@@ -157,7 +157,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     # Add capacity revenue to the dataframe, aka capacity market
     dfNetRevenue.ReserveMarginRevenue = zeros(nrow(dfNetRevenue))
     if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
-        dfNetRevenue.ReserveMarginRevenue += dfResRevenue.AnnualSum
+        dfNetRevenue.ReserveMarginRevenue += dfResRevenue.AnnualSum[1:G]
     end
     dfNetRevenue.ReserveMarginRevenue = round.(dfNetRevenue.ReserveMarginRevenue, digits = 2)
     dfNetRevenue.Revenue .+= dfNetRevenue.ReserveMarginRevenue
@@ -165,7 +165,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     # Add RPS/CES revenue to the dataframe
     dfNetRevenue.ESRRevenue = zeros(nrow(dfNetRevenue))
     if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
-        dfNetRevenue.ESRRevenue += dfESRRev.AnnualSum
+        dfNetRevenue.ESRRevenue += dfESRRev.AnnualSum[1:G]
     end
     dfNetRevenue.ESRRevenue = round.(dfNetRevenue.ESRRevenue, digits = 2)
     dfNetRevenue.Revenue .+= dfNetRevenue.ESRRevenue
@@ -230,13 +230,117 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     # Add regional technology subsidy revenue to the dataframe, aka min cap
     dfNetRevenue.RegSubsidyRevenue = zeros(nrow(dfNetRevenue))
     if setup["MinCapReq"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
-        dfNetRevenue.RegSubsidyRevenue .+= dfRegSubRevenue.SubsidyRevenue
+        dfNetRevenue.RegSubsidyRevenue .+= dfRegSubRevenue.SubsidyRevenue[1:G]
     end
     dfNetRevenue.RegSubsidyRevenue = round.(dfNetRevenue.RegSubsidyRevenue, digits = 2)
     dfNetRevenue.Revenue .+= dfNetRevenue.RegSubsidyRevenue
     
     # Calculate the Net
     dfNetRevenue.Profit = dfNetRevenue.Revenue .- dfNetRevenue.Cost
+ 	
+	# Add VRE-STORAGE module
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfNetRevenueVRESTOR = DataFrame(
+            region = dfGen_VRE_STOR[!,:region], 
+            Resource = inputs["RESOURCES_VRE_STOR"], 
+            zone = dfGen_VRE_STOR[!,:Zone], 
+            Cluster = dfGen_VRE_STOR[!,:cluster], 
+            R_ID = dfGen_VRE_STOR[!,:R_ID],
+            Revenue = zeros(VRE_STOR),
+            Cost = zeros(VRE_STOR),
+            Profit = zeros(VRE_STOR))
+
+        # Add investment cost to the dataframe
+        dfNetRevenueVRESTOR.Inv_cost_MW = value.(EP[:eCInv_VRE_STOR])
+        if setup["ParameterScale"] == 1
+            eCFix_VRE_STOR.Inv_cost_MW *= ModelScalingFactor^2 # converting Million US$ to US$
+        end
+        dfNetRevenueVRESTOR.Inv_cost_MW = round.(dfNetRevenue.Inv_cost_MW, digits = 2)
+        dfNetRevenueVRESTOR.Cost .+= dfNetRevenueVRESTOR.Inv_cost_MW
+
+        # Add operations and maintenance cost to the dataframe
+        dfNetRevenueVRESTOR.Fixed_OM_cost_MW = value.(EP[:eCFix_VRE_STOR])
+        if setup["ParameterScale"] == 1
+            dfNetRevenueVRESTOR.Fixed_OM_cost_MW *= ModelScalingFactor^2 # converting Million US$ to US$
+        end
+        dfNetRevenueVRESTOR.Fixed_OM_cost_MW = round.(dfNetRevenueVRESTOR.Fixed_OM_cost_MW, digits = 2)
+        dfNetRevenueVRESTOR.Cost .+= dfNetRevenueVRESTOR.Fixed_OM_cost_MW
+
+        # Add variable cost to the dataframe
+        dfNetRevenueVRESTOR.Var_OM_cost_out = value.(EP[:eCVar_temp_VRE_STOR])
+        if setup["ParameterScale"] == 1
+            dfNetRevenueVRESTOR.Var_OM_cost_out *= ModelScalingFactor^2 # converting Million US$ to US$
+        end
+        dfNetRevendfNetRevenueVRESTORue.Var_OM_cost_out = round.(dfNetRevenueVRESTOR.Var_OM_cost_out, digits = 2)
+        dfNetRevenueVRESTOR.Cost .+= dfNetRevenueVRESTOR.Var_OM_cost_out
+         
+        dfNetRevenueVRESTOR.Var_OM_cost_in .= zeros(nrow(dfNetRevenueVRESTOR)) # need to add storage
+        dfNetRevenueVRESTOR.Fuel_cost .= zeros(nrow(dfNetRevenueVRESTOR))
+        dfNetRevenueVRESTOR.StartCost .= zeros(nrow(dfNetRevenueVRESTOR))
+
+        # Add charge cost to the dataframe
+        dfNetRevenueVRESTOR.Charge_cost = zeros(nrow(dfNetRevenueVRESTOR))
+        if has_duals(EP) == 1
+            dfNetRevenueVRESTOR.Charge_cost = dfChargingcost[G+1:G+VRE_STOR, :AnnualSum] # Unit is confirmed to be US$
+        end
+        dfNetRevenueVRESTOR.Charge_cost = round.(dfNetRevenueVRESTOR.Charge_cost, digits = 2)
+        dfNetRevenueVRESTOR.Cost .+= dfNetRevenueVRESTOR.Charge_cost
+
+        # Add energy revenue to the dataframe
+        dfNetRevenueVRESTOR.EnergyRevenue = zeros(nrow(dfNetRevenueVRESTOR))
+        if has_duals(EP) == 1
+            dfNetRevenueVRESTOR.EnergyRevenue = dfEnergyRevenue[G+1:G+VRE_STOR,:AnnualSum] # Unit is confirmed to be US$
+        end
+        dfNetRevenueVRESTOR.EnergyRevenue = round.(dfNetRevenueVRESTOR.EnergyRevenue, digits = 2)
+        dfNetRevenueVRESTOR.Revenue .+= dfNetRevenueVRESTOR.EnergyRevenue
+
+        # Add subsidy revenue to the dataframe
+        dfNetRevenueVRESTOR.SubsidyRevenue = zeros(nrow(dfNetRevenueVRESTOR))
+        if has_duals(EP) == 1
+            dfNetRevenueVRESTOR.SubsidyRevenue = dfNetRevenueVRESTOR[G+1:G+VRE_STOR,:SubsidyRevenue] # Unit is confirmed to be US$
+        end
+        dfNetRevenueVRESTOR.SubsidyRevenue = round.(dfSubRevenue.SubsidyRevenue, digits = 2)
+        dfNetRevenueVRESTOR.Revenue .+= dfNetRevenueVRESTOR.SubsidyRevenue
+
+        # Add capacity revenue to the dataframe, aka capacity market
+        dfNetRevenueVRESTOR.ReserveMarginRevenue = zeros(nrow(dfNetRevenueVRESTOR))
+        if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
+            dfNetRevenueVRESTOR.ReserveMarginRevenue += dfResRevenue.AnnualSum[G+1:G+VRE_STOR]
+        end
+        dfNetRevenueVRESTOR.ReserveMarginRevenue = round.(dfNetRevenueVRESTOR.ReserveMarginRevenue, digits = 2)
+        dfNetRevenueVRESTOR.Revenue .+= dfNetRevenueVRESTOR.ReserveMarginRevenue
+
+        # Add RPS/CES revenue to the dataframe
+        dfNetRevenueVRESTOR.ESRRevenue = zeros(nrow(dfNetRevenueVRESTOR))
+        if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
+            dfNetRevenueVRESTOR.ESRRevenue += dfESRRev.AnnualSum[G+1:G+VRE_STOR]
+        end
+        dfNetRevenueVRESTOR.ESRRevenue = round.(dfNetRevenueVRESTOR.ESRRevenue, digits = 2)
+        dfNetRevenueVRESTOR.Revenue .+= dfNetRevenueVRESTOR.ESRRevenue
+
+        dfNetRevenueVRESTOR.EmissionsCost .= zeros(nrow(dfNetRevenueVRESTOR))
+        dfNetRevenueVRESTOR.CO2Credit .= zeros(nrow(dfNetRevenueVRESTOR))
+        dfNetRevenueVRESTOR.SequestrationCost .= zeros(nrow(dfNetRevenueVRESTOR))
+        dfNetRevenueVRESTOR.EnergyCredit .= zeros(nrow(dfNetRevenueVRESTOR))
+        dfNetRevenueVRESTOR.InvestmentCredit .= zeros(nrow(dfNetRevenueVRESTOR))
+        dfNetRevenueVRESTOR.RegSubsidyRevenue .= zeros(nrow(dfNetRevenueVRESTOR))
+        
+        
+        # Add regional technology subsidy revenue to the dataframe, aka min cap
+        dfNetRevenueVRESTOR.RegSubsidyRevenue = zeros(nrow(dfNetRevenueVRESTOR))
+        if setup["MinCapReq"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
+            dfNetRevenueVRESTOR.RegSubsidyRevenue .+= dfRegSubRevenue.SubsidyRevenue[G+1:G+VRE_STOR]
+        end
+        dfNetRevenueVRESTOR.RegSubsidyRevenue = round.(dfNetRevenueVRESTOR.RegSubsidyRevenue, digits = 2)
+        dfNetRevenueVRESTOR.Revenue .+= dfNetRevenueVRESTOR.RegSubsidyRevenue
+        
+        # Calculate the Net
+        dfNetRevenueVRESTOR.Profit = dfNetRevenueVRESTOR.Revenue .- dfNetRevenueVRESTOR.Cost
+
+        dfNetRevenue = vcat(dfNetRevenue, dfNetRevenueVRESTOR)
+	end
+
 
 	CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)
 end

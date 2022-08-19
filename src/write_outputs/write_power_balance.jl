@@ -25,6 +25,9 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	HYDRO_RES = inputs["HYDRO_RES"]
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	if setup["VreStor"]==1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+	end
 	## Power balance for each zone
 	# dfPowerBalance = Array{Any}
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
@@ -37,13 +40,19 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	powerbalance = zeros(Z * 10, T) # following the same style of power/charge/storage/nse
 	for z in 1:Z
 		POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
-		powerbalance[(z-1)*10+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
+		powerbalance[(z-1)*10+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1) 
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
 		    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
 		    powerbalance[(z-1)*10+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1)
 		    # You cannot do the following because vCHARGE is not one-based. use [CartesianIndex(1:length(STOR_ALL_ZONE))]
 		    #powerbalance[(z-1)*10+3, :] = (-1) * sum(value.(EP[:vCHARGE])[STOR_ALL_ZONE, :], dims = 1)
 		    powerbalance[(z-1)*10+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1)
+		end
+		if setup["VreStor"] == 1
+			POWER_ZONE_VRE_STOR = dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Zone].==z), :R_ID]
+			powerbalance[(z-1)*10+1, :] .+= (sum(value.(EP[:vP_DC][POWER_ZONE_VRE_STOR, :]), dims = 1) - sum(value.(EP[:eVRECharging][POWER_ZONE_VRE_STOR, :]), dims = 1))
+			powerbalance[(z-1)*10+2, :] .+= sum(dfGen_VRE_STOR[POWER_ZONE_VRE_STOR,:][!,:EtaInverter] .* value.(EP[:vDISCHARGE_DC][POWER_ZONE_VRE_STOR, :]), dims = 1)
+			powerbalance[(z-1)*10+3, :] .+= sum(value.(EP[:vCHARGE_VRE_STOR][POWER_ZONE_VRE_STOR, :]), dims = 1)
 		end
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
 		    FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)
@@ -68,4 +77,5 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	auxNew_Names = [Symbol("BalanceComponent"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
 	rename!(dfPowerBalance,auxNew_Names)
 	CSV.write(joinpath(path, "power_balance.csv"), dftranspose(dfPowerBalance, false), writeheader=false)
+		
 end

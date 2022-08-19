@@ -58,6 +58,12 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceDisp])
 
 
+	# Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
+		EP[:eCapResMarBalance] += eCapResMarBalanceVRE
+	end
+
 	### Constratints ###
 	# For resource for which we are modeling hourly power output
 	for y in VRE_POWER_OUT
