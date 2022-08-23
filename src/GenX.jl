@@ -34,10 +34,10 @@ export run_ddp
 export configure_multi_stage_inputs
 export load_inputs_multi_stage
 export write_multi_stage_outputs
+export run_genx_case!
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
-using MathProgBase #for fix_integers
 using CSV
 using StatsBase
 using LinearAlgebra
@@ -46,11 +46,8 @@ using Dates
 using Clustering
 using Distances
 using Combinatorics
-using Documenter
 
-using DiffEqSensitivity
 using OrdinaryDiffEq
-using QuasiMonteCarlo
 using Random
 using RecursiveArrayTools
 using Statistics
@@ -72,6 +69,9 @@ using Cbc
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 ModelScalingFactor = 1e+3
+
+# Case runner
+include("case_runners/case_runner.jl")
 
 # Configure settings
 include("configure_settings/configure_settings.jl")
@@ -134,6 +134,8 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+
+include("model/resources/retrofits/retrofits.jl")
 
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")
