@@ -30,6 +30,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		temp_capvalue = zeros(G, T)
 		temp_riskyhour = zeros(G, T)
 		temp_cap_derate = zeros(G, T)
+		temp_cap_derate[existingplant_position, :] = repeat(dfGen[existingplant_position, Symbol("CapRes_$i")], 1, T)
 		if setup["ParameterScale"] == 1
 			riskyhour_position = findall(x -> x >= 1, ((dual.(EP[:cCapacityResMargin][i, :])) ./ inputs["omega"] * ModelScalingFactor))
 		else
