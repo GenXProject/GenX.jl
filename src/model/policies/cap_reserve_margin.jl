@@ -16,7 +16,39 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 @doc raw"""
 	cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
-Instead of modeling capacity reserve margin requirement (a.k.a. capacity market or resource adequacy requirement) using an annual constraint, we model each requirement with hourly constraint by simulating the activation of the capacity obligation. We define capacity reserve margin constraint for subsets of zones,$z  \in \mathcal{Z}^{CRM}_{p}$, and each subset stands for a locational deliverability area (LDA) or a reserve sharing group.  For thermal resources, the available capacity is the total capacity in the LDA derated by the outage rate, $\epsilon_{y,z,p}^{CRM}$. For storage ($y \in \mathcal{O}$), variable renewable energy ($y \in \mathcal{VRE}$), and  flexibile demand resources ($y \in \mathcal{DF}$), the available capacity is the net injection into the transmission network in time step $t$ derated by the derating factor, also stored in the parameter, $\epsilon_{y,z,p}^{CRM}$. If the imported capacity is eligible to provide capacity to the CRM constraint, the inbound powerflow on all lines $\mathcal{L}_{p}^{in}$ in time step $t$ will be derated to form the available capacity from outside of the LDA. The reverse is true as well: the outbound derated powerflow on all lines $\mathcal{L}_{p}^{out}$ in time step $t$ is taken out from the total available capacity. The derating factor should be equal to the expected availability of the resource during periods when the capacity reserve constraint is binding (e.g. accounting for forced outages during supply constrained periods) and is similar to derating factors used in the capacity markets. On top of the flexible demand resources, load curtailment can also provide capacity (i.e., demand response or load management). We allow all segments of voluntary load curtailment, $s \geq 2 \in S$, to contribute to capacity requirements. The first segment $s = 1 \in S$ corresponds to involuntary demand curtailment or emergency load shedding at the price cap or value of lost load, and thus does not contribute to reserve requirements.  Note that the time step-weighted sum of the shadow prices of this constraint corresponds to the capacity market payments reported by ISOs with mandate capacity market mechanism.
+Instead of modeling capacity reserve margin requirement (a.k.a. capacity market or resource adequacy requirement) using an annual constraint, 
+we model each requirement with hourly constraint by simulating the activation of the capacity obligation. 
+We define capacity reserve margin constraint for subsets of zones, $z  \in \mathcal{Z}^{CRM}_{p}$, and each subset stands 
+	for a locational deliverability area (LDA) or a reserve sharing group.  
+For thermal resources, the available capacity is the total capacity in the LDA 
+	derated by the outage rate, $\epsilon_{y,z,p}^{CRM}$. 
+For storage ($y \in \mathcal{O}$), the available capacity is the minimum of the 
+	state of the charge (SoC) at the begining of the time-step or the maximum 
+	discharge capacity, derated by the derating factor.
+For variable renewable energy ($y \in \mathcal{VRE}$), the available capacity is 
+	the capacity mutiplied by the hourly cacity factor at time-step $t$ and further 
+	derated by the derating factor. 
+For hydro and flexibile demand resources ($y \in \mathcal{DF}$), the available capacity is 
+	the net injection into the transmission network in time step $t$ derated by 
+	the derating factor, also stored in the parameter, $\epsilon_{y,z,p}^{CRM}$. 
+If the imported capacity is eligible to provide capacity to the CRM constraint, 
+	the inbound powerflow on all lines $\mathcal{L}_{p}^{in}$ in time step $t$ 
+	will be derated to form the available capacity from outside of the LDA. 
+	The reverse is true as well: the outbound derated powerflow on all lines 
+	$\mathcal{L}_{p}^{out}$ in time step $t$ is taken out from the total available capacity. 
+The derating factor should be equal to the expected availability of the resource 
+	during periods when the capacity reserve constraint is binding (e.g. accounting 
+	for forced outages during supply constrained periods) and is similar to derating 
+	factors used in the capacity markets. 
+On top of the flexible demand resources, load curtailment can also provide capacity 
+	(i.e., demand response or load management). We allow all segments of voluntary 
+	load curtailment, $s \geq 2 \in S$, to contribute to capacity requirements. 
+	The first segment $s = 1 \in S$ corresponds to involuntary demand curtailment 
+	or emergency load shedding at the price cap or value of lost load, and thus 
+	does not contribute to reserve requirements.  
+Note that the time step-weighted sum of the shadow prices of this constraint 
+	corresponds to the capacity market payments reported by ISOs with mandate 
+	capacity market mechanism.
 ```math
 \begin{aligned}
    & \sum_{z  \in \mathcal{Z}^{CRM}_{p}} \Big( \sum_{y \in \mathcal{H}} \epsilon_{y,z,p}^{CRM} \times \Delta^{\text{total}}_{y,z} + \sum_{y \in \mathcal{VRE}} \epsilon_{y,z,p}^{CRM} \times \Theta_{y,z,t} \\
@@ -26,7 +58,9 @@ Instead of modeling capacity reserve margin requirement (a.k.a. capacity market 
    & \geq \sum_{z  \in \mathcal{Z}^{CRM}_{p}} \left( \left(1 + RM_{z,p}^{CRM} \right) \times D_{z,t} \right)  \hspace{1 cm}  \forall t \in \mathcal{T}, \forall p\in \mathcal{P}^{CRM}
 \end{aligned}
 ```
-Note that multiple capacity reserve margin requirements can be specified covering different individual zones or aggregations of zones, where the total number of constraints is specified by the GenX settings parameter ```CapacityReserveMargin``` (where this parameter should be an integer value > 0).
+Note that multiple capacity reserve margin requirements can be specified covering 
+different individual zones or aggregations of zones, where the total number of 
+constraints will automatically be detected.
 """
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	# capacity reserve margin constraint
@@ -42,69 +76,107 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	SEG = inputs["SEG"]
 	Z = inputs["Z"]
 	L = inputs["L"]
+	OperationWrapping = setup["OperationWrapping"]
+	START_SUBPERIODS = inputs["START_SUBPERIODS"]
+	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
+
 	println("Capacity Reserve Margin Policies Module")
 	### Variable
 	@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
-
+	@variable(EP, vCapContribution[y = 1:G, t = 1:T] >=0)
+	if Z > 1
+		@variable(EP, vCapContributionTrans[l = 1:L, t = 1:T] >=0)
+	end
 	### Expression
 	# Initialize Capacity Reserve Margin Expression
 	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], 1*EP[:vCapResSlack][res,t])
-
+	@expression(EP, eCapContributionGenAll[res=1:NCRM, t = 1:T],
+		sum(dfGen[y, Symbol("CapRes_$res")] * EP[:vCapContribution][y, t] for y in 1:G)
+	)
+	add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapContributionGenAll])
+	if Z > 1
+		@expression(EP, eCapContributionTransAll[res=1:NCRM, t = 1:T],
+			sum(inputs["dfCapRes_network"][l, Symbol("DerateCapRes_$res")] * 
+				inputs["dfCapRes_network"][l, Symbol("CapRes_Excl_$res")] * 
+				vCapContributionTrans[l, t] for l in 1:L)
+		)
+		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapContributionTransAll])
+	end
 	# add penalty to the objective function
-	@expression(EP, eCapResSlack_Year[res=1:NCRM], sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
-	@expression(EP, eCCapResSlack[res=1:NCRM], inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])
+	@expression(EP, eCapResSlack_Year[res=1:NCRM], 
+		sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
+	@expression(EP, eCCapResSlack[res=1:NCRM], 
+		inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])
 	@expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res = 1:NCRM))
 	add_to_expression!(EP[:eObj], EP[:eCTotalCapResSlack])
 
 	# Hydro with Res
 	if !isempty(HYDRO_RES)
-		@expression(EP, eCapResMarBalanceHydro[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t] for y in HYDRO_RES))
-		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceHydro])
+		@constraint(EP, cCapContriHydro[y in HYDRO_RES, t = 1:T], 
+			EP[:vCapContribution][y, t] == EP[:vP][y,t])
 	end
 
 	# Variable generations
 	if !isempty(VRE)
-		@expression(EP, eCapResMarBalanceVRE[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
-		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceVRE])
+		@constraint(EP, cCapContriVRE[y in VRE, t = 1:T], 
+			EP[:vCapContribution][y, t] == (inputs["pP_Max"][y,t] * EP[:eTotalCap][y]))
 	end
 
 	# Must run generations
 	if !isempty(MUST_RUN)
-		@expression(EP, eCapResMarBalanceMustRun[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
-		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceMustRun])
+		@constraint(EP, cCapContriMUSTRUN[y in MUST_RUN, t = 1:T], 
+			EP[:vCapContribution][y, t] == (inputs["pP_Max"][y,t] * EP[:eTotalCap][y]))
 	end
 
 	# Thermal units
 	if !isempty(THERM_ALL)
-		@expression(EP, eCapResMarBalanceThermal[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] for y in THERM_ALL))
-		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceThermal])
+		@constraint(EP, cCapContriTHERMAL[y in THERM_ALL, t = 1:T], 
+			EP[:vCapContribution][y, t] == (EP[:eTotalCap][y]))
 	end
 
 	# Storages
 	if !isempty(STOR_ALL)
-		@expression(EP, eCapResMarBalanceStor[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
-		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceStor])
+		@constraint(EP, cCapContriSTORCap[y in STOR_ALL, t = 1:T], 
+			EP[:vCapContribution][y, t] <= (EP[:eTotalCap][y]))
+		if OperationWrapping ==1
+			@constraint(EP, cCapContriSTORSoC[y in STOR_ALL, t = 1:T],
+				if t in START_SUBPERIODS
+					EP[:vCapContribution][y, t] <= (EP[:vS][y, t + hours_per_subperiod - 1])
+				elseif t in INTERIOR_SUBPERIODS
+					EP[:vCapContribution][y, t] <= (EP[:vS][y, t - 1])
+				end
+			)
+		else
+			@constraint(EP, cCapContriSTORSoC[y in STOR_ALL, t = 2:T], 
+			EP[:vCapContribution][y, t] <= (EP[:vS][y, t-1]))
+		end
 	end
 
 	# Flexible demand
 	if !isempty(FLEX)
-		@expression(EP, eCapResMarBalanceFlex[res=1:NCRM, t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceFlex])
+		@constraint(EP, cCapContriFLEX[y in FLEX, t = 1:T], 
+			EP[:vCapContribution][y, t] == (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t])
+		)
 	end
 
 	# Demand Response (SEG >=2)
 	if SEG >= 2
-		@expression(EP, eCapResMarBalanceNSE[res=1:NCRM, t=1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, Symbol("CapRes_$res")])))
+		@expression(EP, eCapResMarBalanceNSE[res=1:NCRM, t=1:T], 
+			sum(EP[:eDemandResponse][t, z] 
+			for z in findall(x -> x != 0, inputs["dfCapRes"][:, Symbol("CapRes_$res")])))
 		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceNSE])
 	end
 
 	# Transmission's contribution
-	if Z > 1 
-		@expression(EP, eCapResMarBalanceTrans[res=1:NCRM, t=1:T], sum(inputs["dfCapRes_network"][l, Symbol("DerateCapRes_$res")] * inputs["dfCapRes_network"][l, Symbol("CapRes_Excl_$res")] * EP[:vFLOW][l,t] for l in 1:L))
-		add_to_expression!.(EP[:eCapResMarBalance], -1, EP[:eCapResMarBalanceTrans])
+	if Z > 1
+		@constraint(EP, cCapContriTrans[l in 1:L, t = 1:T], 
+			EP[:vCapContributionTrans][l, t] == (-1) * EP[:vFLOW][l,t]
+		)
 	end
 
 	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
-				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,Symbol("CapRes_$res")]) for z=findall(x->x>0,inputs["dfCapRes"][:,Symbol("CapRes_$res")])))
+				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,Symbol("CapRes_$res")]) 
+					for z=findall(x -> x != 0,inputs["dfCapRes"][:,Symbol("CapRes_$res")])))
 
 end

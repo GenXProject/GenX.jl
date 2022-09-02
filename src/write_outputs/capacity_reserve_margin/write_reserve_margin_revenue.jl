@@ -28,27 +28,12 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	THERM_ALL = inputs["THERM_ALL"]
-	VRE = inputs["VRE"]
-	HYDRO_RES = inputs["HYDRO_RES"]
-	STOR_ALL = inputs["STOR_ALL"]
-	FLEX = inputs["FLEX"]
-	MUST_RUN = inputs["MUST_RUN"]
 	dfResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
 	annual_sum = zeros(G)
 	for i in 1:inputs["NCapacityReserveMargin"]
 		sym = Symbol("CapRes_$i")
 		tempresrev = zeros(G)
-		tempresrev[THERM_ALL] = dfGen[THERM_ALL, sym] .* (value.(EP[:eTotalCap][THERM_ALL])) * sum(dual.(EP[:cCapacityResMargin][i, :]))
-		tempresrev[VRE] = dfGen[VRE, sym] .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * (dual.(EP[:cCapacityResMargin][i, :])))
-		tempresrev[MUST_RUN] = dfGen[MUST_RUN, sym] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * (dual.(EP[:cCapacityResMargin][i, :])))
-		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* (value.(EP[:vP][HYDRO_RES, :]) * (dual.(EP[:cCapacityResMargin][i, :])))
-		if !isempty(STOR_ALL)
-			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
-		end
-		if !isempty(FLEX)
-			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
-		end
+		tempresrev = dfGen[:, sym] .* (value.(EP[:vCapContribution]) * dual.(EP[:cCapacityResMargin][i, :]))
 		if setup["ParameterScale"] == 1
 			tempresrev *= ModelScalingFactor^2
 		end

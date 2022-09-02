@@ -21,7 +21,10 @@ function write_reserve_margin_transmission_revenue(path::AbstractString, inputs:
     L = inputs["L"]     # Number of lines
     dfResTransRevenue = DataFrame(Line = 1:L, AnnualSum = zeros(L))
     for i in 1:inputs["NCapacityReserveMargin"]
-        restransrevenue = (-1) * ((value.(EP[:vFLOW])) .* inputs["dfCapRes_network"][:, Symbol("DerateCapRes_$i")] .* inputs["dfCapRes_network"][:, Symbol("CapRes_Excl_$i")]) * dual.(EP[:cCapacityResMargin][i, :])
+        restransrevenue = (value.(EP[:vCapContributionTrans]) .* 
+            inputs["dfCapRes_network"][:, Symbol("DerateCapRes_$i")] .* 
+            inputs["dfCapRes_network"][:, Symbol("CapRes_Excl_$i")]) * 
+            dual.(EP[:cCapacityResMargin][i, :])
         if setup["ParameterScale"] == 1
             restransrevenue *= (ModelScalingFactor^2)
         end
