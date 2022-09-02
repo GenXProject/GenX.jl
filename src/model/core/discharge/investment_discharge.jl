@@ -60,6 +60,16 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
+	RETRO = inputs["RETRO"]     # Set of all retrofit resources
+
+	# Additional retrofit information if necessary
+	if !isempty(RETRO)
+		NUM_RETRO_SOURCES = inputs["NUM_RETROFIT_SOURCES"]       # The number of source resources for each retrofit resource
+		RETRO_SOURCES = inputs["RETROFIT_SOURCES"]               # Source technologies (Resource Name) for each retrofit [1:G]
+		RETRO_SOURCE_IDS = inputs["RETROFIT_SOURCE_IDS"]         # Source technologies (IDs) for each retrofit [1:G]
+		RETRO_INV_CAP_COSTS = inputs["RETROFIT_INV_CAP_COSTS"]   # The set of investment costs (capacity $/MWyr) of each retrofit by source
+		RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"]       # Ratio of installed retrofit capacity to retired source capacity [0:1]
+	end
 
 	### Variables ###
 
@@ -73,6 +83,14 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		@variable(EP, vEXISTINGCAP[y=1:G] >= 0);
 	end
 
+	# Capacity from source resource "yr" that is being retrofitted into capacity of retrofit resource "r"
+	if !isempty(RETRO)
+		# Dependent iterators only allowed in forward sequence, so we reconstruct retrofit destinations from sources.
+		ALL_SOURCES = intersect(collect(Set(collect(Iterators.flatten(RETRO_SOURCE_IDS)))),RET_CAP)
+		DESTS_BY_SOURCE = [ y in ALL_SOURCES ? intersect(findall(x->in(inputs["RESOURCES"][y],RETRO_SOURCES[x]), 1:G), findall(x->x in NEW_CAP, 1:G)) : []  for y in 1:G]
+		@variable(EP, vRETROFIT[yr in ALL_SOURCES, r in DESTS_BY_SOURCE[yr]] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
+	end
+
 	### Expressions ###
 
 	if MultiStage == 1
@@ -82,7 +100,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	end
 
 	# Cap_Size is set to 1 for all variables when unit UCommit == 0
-	# When UCommit > 0, Cap_Size is set to 1 for all variables except those where THERM == 1	
+	# When UCommit > 0, Cap_Size is set to 1 for all variables except those where THERM == 1
 	@expression(EP, eTotalCap[y in 1:G],
 		if y in intersect(NEW_CAP, RET_CAP) # Resources eligible for new capacity and retirements
 			if y in COMMIT
@@ -112,11 +130,17 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
 	# If resource is not eligible for new capacity, fixed costs are only O&M costs
 	@expression(EP, eInvCap[y in 1:G],
-		if y in NEW_CAP # Resources eligible for new capacity
+		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
 			if y in COMMIT
 				dfGen[y, :Cap_Size] * vCAP[y]
 			else
 				vCAP[y]
+			end
+		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
+			if y in COMMIT
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*dfGen[y,:Cap_Size]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+			else
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
 			end
 		else
 			EP[:vZERO]

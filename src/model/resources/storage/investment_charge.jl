@@ -148,10 +148,11 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Constraint on maximum charge capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapCharge[y in intersect(dfGen[!,:Max_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] <= dfGen[y,:Max_Charge_Cap_MW])
+    @constraint(EP, cMaxCapCharge[y in intersect(dfGen[dfGen.Max_Charge_Cap_MW.>0,:R_ID], STOR_ASYMMETRIC)], eTotalCapCharge[y] <= dfGen[y,:Max_Charge_Cap_MW])
 
 	# Constraint on minimum charge capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapCharge[y in intersect(dfGen[!,:Min_Charge_Cap_MW].>0, STOR_ASYMMETRIC)], eTotalCapCharge[y] >= dfGen[y,:Min_Charge_Cap_MW])
+    @constraint(EP, cMinCapCharge[y in intersect(dfGen[dfGen.Min_Charge_Cap_MW.>0,:R_ID], STOR_ASYMMETRIC)], eTotalCapCharge[y] >= dfGen[y,:Min_Charge_Cap_MW])
+
 
 end

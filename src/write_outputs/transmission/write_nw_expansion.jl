@@ -34,6 +34,5 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
         dfTransCap.New_Trans_Capacity *= ModelScalingFactor
         dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2
     end
-
 	CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
 end

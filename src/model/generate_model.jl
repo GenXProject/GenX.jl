@@ -77,7 +77,7 @@ The power balance constraint of the model ensures that electricity demand is met
 
 """
 
-## generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes,modeloutput = nothing)
+## generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
 ################################################################################
 ##
 ## description: Sets up and solves constrained optimization model of electricity
@@ -87,7 +87,7 @@ The power balance constraint of the model ensures that electricity demand is met
 ## returns: Model EP object containing the entire optimization problem model to be solved by SolveModel.jl
 ##
 ################################################################################
-function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes,modeloutput = nothing)
+function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -168,6 +168,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		thermal!(EP, inputs, setup)
 	end
 
+	# Model constraints, variables, expression related to retrofit technologies
+	if !isempty(inputs["RETRO"])
+		EP = retrofit(EP, inputs)
+	end
+
 	# Policies
 	# CO2 emissions limits
 	if setup["CO2Cap"] == 1
@@ -234,15 +239,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	## Record pre-solver time
 	presolver_time = time() - presolver_start_time
-    	#### Question - What do we do with this time now that we've split this function into 2?
 	if setup["PrintModel"] == 1
-		if modeloutput === nothing
-			filepath = joinpath(pwd(), "YourModel.lp")
-			JuMP.write_to_file(EP, filepath)
-		else
-			filepath = joinpath(modeloutput, "YourModel.lp")
-			JuMP.write_to_file(EP, filepath)
-		end
+		filepath = joinpath(pwd(), "YourModel.lp")
+		JuMP.write_to_file(EP, filepath)
 		println("Model Printed")
     	end
 
