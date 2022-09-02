@@ -65,6 +65,7 @@ constraints will automatically be detected.
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	# capacity reserve margin constraint
 	dfGen = inputs["dfGen"]
+	G = inputs["G"]
 	T = inputs["T"]
 	NCRM = inputs["NCapacityReserveMargin"]
 	HYDRO_RES = inputs["HYDRO_RES"]
