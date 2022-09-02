@@ -142,14 +142,18 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 			EP[:vCapContribution][y, t] <= (EP[:eTotalCap][y]))
 		if OperationWrapping ==1
 			@constraint(EP, cCapContriSTORSoC_Start[y in STOR_ALL, t in START_SUBPERIODS],
-				EP[:vCapContribution][y, t] <= (EP[:vS][y, t + hours_per_subperiod - 1])
+				EP[:vCapContribution][y, t] <= (EP[:vS][y, t + hours_per_subperiod - 1] * 
+				dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement])
 			)
 			@constraint(EP, cCapContriSTORSoC_Interior[y in STOR_ALL, t in INTERIOR_SUBPERIODS],
-				EP[:vCapContribution][y, t] <= (EP[:vS][y, t - 1])
+				EP[:vCapContribution][y, t] <= (EP[:vS][y, t - 1]* 
+				dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement])
 			)
 		else
 			@constraint(EP, cCapContriSTORSoC[y in STOR_ALL, t = 2:T], 
-			EP[:vCapContribution][y, t] <= (EP[:vS][y, t-1]))
+			EP[:vCapContribution][y, t] <= (EP[:vS][y, t-1]* 
+			dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement])
+			)
 		end
 	end
 
