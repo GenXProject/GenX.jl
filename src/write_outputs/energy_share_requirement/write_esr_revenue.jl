@@ -39,7 +39,7 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfESRRevVRESTOR = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], AnnualSum = zeros(VRE_STOR))
 		for i in 1:inputs["nESR"]
 			tempesrrevenue_VRE_STOR = zeros(VRE_STOR)
-			tempesrrevenue_VRE_STOR = (value.(EP[:vP_VRE_STOR]) * inputs["omega"]) .* dfGen_VRE_STOR[:, Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
+			tempesrrevenue_VRE_STOR = (value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter] * inputs["omega"]) .* dfGen_VRE_STOR[:, Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
 			if setup["ParameterScale"] == 1
 				tempesrrevenue_VRE_STOR *= (ModelScalingFactor^2)
 			end

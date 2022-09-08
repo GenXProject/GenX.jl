@@ -60,7 +60,7 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		CSV.write(string(path,sep,"vre_stor_bat_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
 
 		dfVP_VRE_STOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, VRE_STOR))
-		power_vre = value.(EP[:vP_VRE_STOR])
+		power_vre = value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter]
 		if setup["ParameterScale"] == 1
 			power_vre *= ModelScalingFactor
 		end
@@ -75,10 +75,10 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 		rename!(total,auxNew_Names)
 		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
-		CSV.write(string(path,sep,"vre_stor_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
+		CSV.write(string(path,sep,"vre_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
 
 		dfPowerVRESTOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
-		power_vre_stor = value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter]
+		power_vre_stor = value.(EP[:vP_VRE_STOR])
 		if setup["ParameterScale"] == 1
 			power_vre_stor *= ModelScalingFactor
 		end
