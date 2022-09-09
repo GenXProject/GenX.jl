@@ -138,15 +138,27 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 			end
 		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
 			if y in COMMIT
-				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*dfGen[y,:Cap_Size]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? dfGen[y,:Cap_Size]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y])
 			else
-				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y])
 			end
 		else
 			EP[:vZERO]
 		end	
 	)
-    @expression(EP, eCInvCap[y in 1:G], dfGen[y, :Inv_Cost_per_MWyr] * EP[:eInvCap][y])
+	@expression(EP, eCInvCap[y in 1:G],
+		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
+			dfGen[y, :Inv_Cost_per_MWyr] * EP[:eInvCap][y]
+		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
+			if y in COMMIT
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*dfGen[y,:Cap_Size]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y])
+			else
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y])
+			end
+		else
+			EP[:vZERO]
+		end	
+	)
     @expression(EP, eCFOMCap[y in 1:G], dfGen[y, :Fixed_OM_Cost_per_MWyr] * EP[:eTotalCap][y])
     @expression(EP, eCFix[y in 1:G], EP[:eCInvCap][y] + EP[:eCFOMCap][y])
 
