@@ -117,8 +117,6 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	Reserves = setup["Reserves"]
 	OperationWrapping = setup["OperationWrapping"]
-	EnergyShareRequirement = setup["EnergyShareRequirement"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
 
 	if !isempty(STOR_ALL)

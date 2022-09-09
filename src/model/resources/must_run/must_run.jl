@@ -39,7 +39,6 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 	G = inputs["G"] 	# Number of generators
 
 	MUST_RUN = inputs["MUST_RUN"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	### Expressions ###
 
