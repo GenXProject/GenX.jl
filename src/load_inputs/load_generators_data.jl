@@ -117,7 +117,11 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 	# Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
-
+	# Name of the variaiblity timeseries that resources are using
+	if !("Variability" in names(gen_in))
+		gen_in.Variability = gen_in.Resource
+	end
+	inputs_gen["VARIABILITY"] = collect(skipmissing(gen_in[!,:Variability][1:inputs_gen["G"]]))
 	# Retrofit Information
 	if length(inputs_gen["RETRO"]) > 0 # If there are any retrofit technologies in consideration, read relevant data
 		inputs_gen["NUM_RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:Num_RETRO_Sources][1:inputs_gen["G"]]))   # Number of retrofit sources for this technology (0 if not a retrofit technology)
