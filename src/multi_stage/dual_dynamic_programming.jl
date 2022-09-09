@@ -582,8 +582,8 @@ function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::S
         y = k[1] # Index representing resource
         p = k[2] # Index representing stage
 
-        push!(next_dual_value, getdual(EP_next[constr_name][y, p]))
-        push!(cur_inv_value, getvalue(EP_cur[var_name][y, p]))
+        push!(next_dual_value, dual(EP_next[constr_name][y, p]))
+        push!(cur_inv_value, value(EP_cur[var_name][y, p]))
         push!(cur_inv_var, EP_cur[var_name][y, p])
     end
 

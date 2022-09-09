@@ -5,29 +5,29 @@
 #  Set parameters here that organize how your full timeseries
 #   data will be divided into representative period clusters.
 #   Ensure that time_domain_reduction is set to 1 in GenX_settings.yml
-#   before running. Run within GenX or use PreCluster.jl to test and 
-#   examine representative period output before proceeding. 
+#   before running. Run within GenX or use PreCluster.jl to test and
+#   examine representative period output before proceeding.
 #   Specify your data input directory as inpath within Run_test.jl
-#   or PreCluster.jl. 
-#   
+#   or PreCluster.jl.
+#
 #####
 
-  #   - TimestepsPerRepPeriod 
-  #   Typically 168 timesteps (e.g., hours) per period, this designates 
+  #   - TimestepsPerRepPeriod
+  #   Typically 168 timesteps (e.g., hours) per period, this designates
   #   the length of each representative period.
 TimestepsPerRepPeriod: 168
 
-  #   - ClusterMethod 
+  #   - ClusterMethod
   #   Either 'kmeans' or 'kmedoids', this designates the method used to cluster
   #   periods and determine each point's representative period.
 ClusterMethod: 'kmeans'
 
-  #   - ScalingMethod 
+  #   - ScalingMethod
   #   Either 'N' or 'S', this designates directs the module to normalize ([0,1])
   #   or standardize (mean 0, variance 1) the input data.
 ScalingMethod: "S"
 
-  #   - MaxPeriods 
+  #   - MaxPeriods
   #   The maximum number of periods - both clustered periods and extreme periods -
   #   that may be used to represent the input data. If IterativelyAddPeriods is on and the
   #   error threshold is never met, this will be the total number of periods.
@@ -35,7 +35,7 @@ MaxPeriods: 11
 
   #   - MinPeriods
   #   The minimum number of periods used to represent the input data. If using
-  #   UseExtremePeriods, this must be at least the number of extreme periods requests. If 
+  #   UseExtremePeriods, this must be at least the number of extreme periods requests. If
   #   IterativelyAddPeriods if off, this will be the total number of periods.
 MinPeriods: 6
 
@@ -80,7 +80,14 @@ WeightTotal: 8760
   #   number of timesteps in the raw input data.
 ClusterFuelPrices: 1
 
-  #   - UseExtremePeriods 
+  #   - MultiStageConcatenate
+  #   (Only considered if MultiStage = 1 in genx_settings.yml)
+  #   If 1, this designates that the model should time domain reduce the input data
+  #   of all model stages together. Else if 0, the model will time domain reduce each
+  #   stage separately
+MultiStageConcatenate: 0
+
+  #   - UseExtremePeriods
   #   Either 'yes' or 'no', this designates whether or not to include
   #   outliers (by performance or load/resource extreme) as their own representative periods.
   #   This setting automatically includes the periods with maximum load, minimum solar cf and
@@ -89,11 +96,11 @@ UseExtremePeriods: 1
 
 # STILL IN DEVELOPMENT - Currently just uses integral max load, integral min PV and wind.
 #   - ExtremePeriods
-#   Use this to define which periods to be included among the final representative periods 
-#   as "Extreme Periods". 
+#   Use this to define which periods to be included among the final representative periods
+#   as "Extreme Periods".
 #   Select by profile type: load ("Load"), solar PV capacity factors ("PV"), and wind capacity factors ("Wind").
-#   Select whether to examine these profiles by zone ("Zone") or across the whole system ("System"). 
-#   Select whether to look for absolute max/min at the timestep level ("Absolute") 
+#   Select whether to examine these profiles by zone ("Zone") or across the whole system ("System").
+#   Select whether to look for absolute max/min at the timestep level ("Absolute")
 #      or max/min sum across the period ("Integral").
 #   Select whether you want the maximum ("Max") or minimum ("Min") (of the prior type) for each profile type.
 ExtremePeriods:
@@ -117,7 +124,7 @@ ExtremePeriods:
          Absolute:
             Max: 0
             Min: 0
-         Integral:   
+         Integral:
             Max: 0
             Min: 1
       System:
@@ -131,14 +138,14 @@ ExtremePeriods:
       Zone:
          Absolute:
             Max: 0
-            Min: 0  
+            Min: 0
          Integral:
             Max: 0
             Min: 1
       System:
          Absolute:
             Max: 0
-            Min: 0 
+            Min: 0
          Integral:
             Max: 0
             Min: 0

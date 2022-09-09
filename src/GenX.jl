@@ -34,10 +34,10 @@ export run_ddp
 export configure_multi_stage_inputs
 export load_inputs_multi_stage
 export write_multi_stage_outputs
+export run_genx_case!
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
-using MathProgBase #for fix_integers
 using CSV
 using StatsBase
 using LinearAlgebra
@@ -46,22 +46,20 @@ using Dates
 using Clustering
 using Distances
 using Combinatorics
-using Documenter
 
-using DiffEqSensitivity
 using OrdinaryDiffEq
-using QuasiMonteCarlo
 using Random
 using RecursiveArrayTools
 using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-# using CPLEX
+#using CPLEX
 #using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
 using BenchmarkTools
+using HiGHS
 using Clp
 using Cbc
 
@@ -72,10 +70,14 @@ using Cbc
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 ModelScalingFactor = 1e+3
 
+# Case runner
+include("case_runners/case_runner.jl")
+
 # Configure settings
 include("configure_settings/configure_settings.jl")
 
 # Configure optimizer instance
+include("configure_solver/configure_highs.jl")
 include("configure_solver/configure_gurobi.jl")
 include("configure_solver/configure_scip.jl")
 include("configure_solver/configure_cplex.jl")
@@ -132,6 +134,8 @@ include("model/resources/storage/storage_symmetric.jl")
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")
 include("model/resources/thermal/thermal_no_commit.jl")
+
+include("model/resources/retrofits/retrofits.jl")
 
 include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")

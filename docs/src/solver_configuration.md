@@ -4,6 +4,13 @@ Modules = [GenX]
 Pages = ["configure_solver.jl"]
 ```
 
+## Configuring HiGHS
+```@autodocs
+Modules = [GenX]
+Pages = ["configure_highs.jl"]
+```
+
+
 ## Configuring Gurobi
 ```@autodocs
 Modules = [GenX]
