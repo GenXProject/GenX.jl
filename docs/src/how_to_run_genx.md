@@ -107,7 +107,6 @@ julia> <press close-bracket ] to access the package manager>
 -or-
 (GenX) pkg> add CPLEX
 ```
-
 3. At the beginning of the `GenX/src/GenX.jl` file, uncomment `using Gurobi` and/or `using CPLEX`.
 4. Set the appropriate solver in the `genx_settings.yml` file of your case
 
