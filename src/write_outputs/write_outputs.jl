@@ -209,6 +209,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		if setup["MaxCapReq"] == 1
 			write_maxcap_penalty(path, inputs, setup, EP)
 		end
+		# Max Capacity limit
+		if setup["MaxInvReq"] == 1
+			write_maxinv_penalty(path, inputs, setup, EP)
+		end
 		# Capactiy Reserve Margin Market
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()

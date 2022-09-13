@@ -68,6 +68,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		inputs = load_maximum_capacity_limit(setup, path, inputs)
 	end
 
+	if setup["MaxInvReq"] == 1
+		inputs = load_maximum_investment_limit(setup, path, inputs)
+	end
+
 	if setup["EnergyShareRequirement"]==1
 		inputs = load_energy_share_requirement(setup, path, inputs)
 	end

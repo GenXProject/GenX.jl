@@ -98,6 +98,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[10,2] += value(EP[:eTotalCMaxCap_slack])
 	end
 
+	if setup["MaxInvReq"] == 1
+		dfCost[10,2] += value(EP[:eTotalCMaxInv_slack])
+	end
+
 	if setup["TFS"] == 1
 		dfCost[10,2] += value(EP[:eCTotalTFSSlack])
 		dfCost[10,2] += value(EP[:eTFSTotalTranscationCost])
