@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 function write_maxinv_penalty(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    NoMaxReq = inputs["NumberOfMaxInvReqs"]
+    NoMaxReq = inputs["NumberOfMaxInvReq"]
     dfMaxInvPenalty = DataFrame(Constraint = [Symbol("MaxInv_$maxinv") for maxinv = 1:NoMaxReq],
                                 Price= dual.(EP[:cZoneMaxInvReq]),
                                 Slack = value.(EP[:vMaxInv_slack]),
