@@ -198,7 +198,7 @@ include("simple_operation.jl")
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/configure_multi_stage_inputs.jl")
 include("multi_stage/endogenous_retirement.jl")
-include("multi_stage//write_multi_stage_settings.jl")
+include("multi_stage/write_multi_stage_settings.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
 include("additional_tools/method_of_morris.jl")
