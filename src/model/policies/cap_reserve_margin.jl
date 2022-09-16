@@ -85,9 +85,9 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	println("Capacity Reserve Margin Policies Module")
 	### Variable
 	@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
-	@variable(EP, vCapContribution[y = 1:G, t = 1:T] >=0)
+	@variable(EP, vCapContribution[y = 1:G, t = 1:T])
 	if Z > 1
-		@variable(EP, vCapContributionTrans[l = 1:L, t = 1:T] >=0)
+		@variable(EP, vCapContributionTrans[l = 1:L, t = 1:T])
 	end
 	### Expression
 	# Initialize Capacity Reserve Margin Expression
