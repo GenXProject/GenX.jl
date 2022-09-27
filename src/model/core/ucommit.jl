@@ -32,7 +32,7 @@ $\zeta_{y,t,z}$ represents number of shutdown decisions in cluster $y$ in zone $
 The total cost of start-ups across all generators subject to unit commitment ($y \in UC$) and all time periods, t is expressed as:
 ```math
 \begin{aligned}
-	C^{start} = \sum_{y \in UC, t \in T} \omega_t \times start\_cost_{y} \times \chi_{y,t}
+	C^{start} = \sum_{y \in UC, t \in T} \omega_t \times start\_cost_{y,t} \times \chi_{y,t}
 \end{aligned}
 ```
 
