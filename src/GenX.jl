@@ -47,7 +47,6 @@ using Clustering
 using Distances
 using Combinatorics
 
-using OrdinaryDiffEq
 using Random
 using RecursiveArrayTools
 using Statistics
