@@ -202,7 +202,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict)
 			# Maximum discharging rate and contribution to reserves up must be less than power rating OR available stored energy in prior period, whichever is less
 			# wrapping from end of sample period to start of sample period for energy capacity constraint
 			[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] + EP[:vREG_discharge][y,t] <= EP[:eTotalCap][y]
-			[y in STOR_REG_ONLY, t in INTERIOR_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down]* <= EP[:vS][y,t-1]
+			[y in STOR_REG_ONLY, t in INTERIOR_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t-1]
 			[y in STOR_REG_ONLY, t in START_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
