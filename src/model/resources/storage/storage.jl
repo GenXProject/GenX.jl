@@ -93,10 +93,10 @@ When charging, reducing the charge rate is contributing to upwards reserve and f
 	&  \Theta_{o,z,t} - f^{discharge}_{o,z,t} \geq 0 & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-Additionally, when reserves are modeled, the maximum charge rate and contribution to regulation while charging can be no greater than the available energy storage capacity, or the difference between the total energy storage capacity, $\Delta^{total, energy}_{o,z}$, and the state of charge at the end of the previous time period, $\Gamma_{o,z,t-1}$. Note that for storage to contribute to reserves down while charging, the storage device must be capable of increasing the charge rate (which increase net load).
+Additionally, when reserves are modeled, the maximum charge rate and contribution to regulation while charging can be no greater than the available energy storage capacity, or the difference between the total energy storage capacity, $\Delta^{total, energy}_{o,z}$, and the state of charge at the end of the previous time period, $\Gamma_{o,z,t-1}$, while accounting for charging losses $\eta_{o,z}^{charge}$. Note that for storage to contribute to reserves down while charging, the storage device must be capable of increasing the charge rate (which increase net load).
 ```math
 \begin{aligned}
-	&  \Pi_{o,z,t} + f^{charge}_{o,z,t} \leq \Delta^{energy, total}_{o,z} - \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
+	&  \eta_{o,z}^{charge} \times (\Pi_{o,z,t} + f^{charge}_{o,z,t}) \leq \Delta^{energy, total}_{o,z} - \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 Finally, the constraints on maximum discharge rate are replaced by the following, to account for capacity contributed to regulation and reserves:
