@@ -164,17 +164,16 @@ function storage_all_reserves!(EP::Model, inputs::Dict)
 			[y in STOR_REG_RSV, t=1:T], EP[:vP][y,t]-EP[:vREG_discharge][y,t] >= 0
 
 			# Maximum charging rate plus contribution to regulation down must be less than available storage capacity
-			## Made change to let the model run and not have key error issue for time -Sam (04/20/2021)
-			[y in STOR_REG_RSV, t in START_SUBPERIODS], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t] <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t+hours_per_subperiod-1]
-			[y in STOR_REG_RSV, t in INTERIOR_SUBPERIODS], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t] <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t-1]
+			[y in STOR_REG_RSV, t in START_SUBPERIODS], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_REG_RSV, t in INTERIOR_SUBPERIODS], dfGen[y,:Eff_Down]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t-1]
 			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
 			# this constraint is set in functions below for each storage type
 
 			# Maximum discharging rate and contribution to reserves up must be less than power rating OR available stored energy in prior period, whichever is less
 			# wrapping from end of sample period to start of sample period for energy capacity constraint
 			[y in STOR_REG_RSV, t=1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t] <= EP[:eTotalCap][y]
-			[y in STOR_REG_RSV, t in INTERIOR_SUBPERIODS], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t] <= EP[:vS][y,t-1]
-			[y in STOR_REG_RSV, t in START_SUBPERIODS], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_REG_RSV, t in INTERIOR_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t-1]
+			[y in STOR_REG_RSV, t in START_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
 	if !isempty(STOR_REG_ONLY)
@@ -195,16 +194,16 @@ function storage_all_reserves!(EP::Model, inputs::Dict)
 			[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] - EP[:vREG_discharge][y,t] >= 0
 
 			# Maximum charging rate plus contribution to regulation down must be less than available storage capacity
-			[y in STOR_REG_ONLY, t in START_SUBPERIODS], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t] <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t+hours_per_subperiod-1]
-			[y in STOR_REG_ONLY, t in INTERIOR_SUBPERIODS], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t] <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t-1]
+			[y in STOR_REG_ONLY, t in START_SUBPERIODS], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_REG_ONLY, t in INTERIOR_SUBPERIODS], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y,t-1]
 			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
 			# this constraint is set in functions below for each storage type
 
 			# Maximum discharging rate and contribution to reserves up must be less than power rating OR available stored energy in prior period, whichever is less
 			# wrapping from end of sample period to start of sample period for energy capacity constraint
 			[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] + EP[:vREG_discharge][y,t] <= EP[:eTotalCap][y]
-			[y in STOR_REG_ONLY, t in INTERIOR_SUBPERIODS], EP[:vP][y,t]+EP[:vREG_discharge][y,t] <= EP[:vS][y,t-1]
-			[y in STOR_REG_ONLY, t in START_SUBPERIODS], EP[:vP][y,t]+EP[:vREG_discharge][y,t]<= EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_REG_ONLY, t in INTERIOR_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down]* <= EP[:vS][y,t-1]
+			[y in STOR_REG_ONLY, t in START_SUBPERIODS], (EP[:vP][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
 	if !isempty(STOR_RSV_ONLY)
@@ -226,8 +225,8 @@ function storage_all_reserves!(EP::Model, inputs::Dict)
 			# Maximum discharging rate and contribution to reserves up must be less than power rating OR available stored energy in prior period, whichever is less
 			# wrapping from end of sample period to start of sample period for energy capacity constraint
 			[y in STOR_RSV_ONLY, t=1:T], EP[:vP][y,t]+EP[:vRSV_discharge][y,t] <= EP[:eTotalCap][y]
-			[y in STOR_RSV_ONLY, t in INTERIOR_SUBPERIODS], EP[:vP][y,t]+EP[:vRSV_discharge][y,t] <= EP[:vS][y,t-1]
-			[y in STOR_RSV_ONLY, t in START_SUBPERIODS], EP[:vP][y,t]+EP[:vRSV_discharge][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_RSV_ONLY, t in INTERIOR_SUBPERIODS], (EP[:vP][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t-1]
+			[y in STOR_RSV_ONLY, t in START_SUBPERIODS], (EP[:vP][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
 	if !isempty(STOR_NO_RES)
@@ -235,8 +234,8 @@ function storage_all_reserves!(EP::Model, inputs::Dict)
 		# wrapping from end of sample period to start of sample period for energy capacity constraint
 		@constraints(EP, begin
 			[y in STOR_NO_RES, t=1:T], EP[:vP][y,t] <= EP[:eTotalCap][y]
-			[y in STOR_NO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t-1]
-			[y in STOR_NO_RES, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS][y,t+hours_per_subperiod-1]
+			[y in STOR_NO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t]/dfGen[y,:Eff_Down] <= EP[:vS][y,t-1]
+			[y in STOR_NO_RES, t in START_SUBPERIODS], EP[:vP][y,t]/dfGen[y,:Eff_Down] <= EP[:vS][y,t+hours_per_subperiod-1]
 		end)
 	end
 end
