@@ -15,7 +15,8 @@ UCommit: 0 # Unit committment of thermal power plants; 0 = not active; 1 = activ
 OperationWrapping: 1 # Sets temporal resolution of the model; 0 = single period to represent the full year, with first-last time step linked; 1 = multiple representative periods
 TimeDomainReductionFolder: "TDR_Results" # Directory name where results from time domain reduction will be saved. If results already exist here, these will be used without running time domain reduction script again.
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Load_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
-ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
+ModelingToGenerateAlternatives: 1 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
+ModelingToGenerateAlternativeIterations: 3
 MethodofMorris: 1 #Flag for turning on the Method of Morris analysis
 MonteCarlo: 1 #Flag for starting Monte Carlo analysis
