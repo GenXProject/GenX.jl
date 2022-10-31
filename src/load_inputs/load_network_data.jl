@@ -148,3 +148,45 @@ function load_network_map(network_var::DataFrame, Z, L)
         load_network_map_from_matrix(network_var, Z, L)
     end
 end
+
+function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
+    start_col, end_col = list_columns
+    mat = zeros(L, Z)
+    start_zones = collect(skipmissing(network_var[!, start_col]))
+    end_zones = collect(skipmissing(network_var[!, end_col]))
+    for l in 1:L
+        mat[l, start_zones[l]] = 1
+        mat[l, end_zones[l]] = -1
+    end
+    mat
+end
+
+function load_network_map_from_matrix(network_var::DataFrame, Z, L)
+    # Topology of the network source-sink matrix
+    col = findall(s -> s == "z1", names(network_var))[1]
+    mat = Matrix{Float64}(network_var[1:L, col:col+Z-1])
+end
+
+function load_network_map(network_var::DataFrame, Z, L)
+    columns = names(network_var)
+
+    list_columns = ["Start_Node", "End_Node"]
+    has_network_list = all([c in columns for c in list_columns])
+
+    zones_as_strings = ["z" * string(i) for i in 1:Z]
+    has_network_matrix =  all([c in columns for c in zones_as_strings])
+
+    instructions = """The transmission network should be specified in the form of a matrix
+           (with columns z1, z2, ... zN) or in the form of lists (with Start_Node, End_Node),
+           but not both. See the documentation for examples."""
+
+    if has_network_list && has_network_matrix
+        error("two types of transmission network map were provided.\n" * instructions)
+    elseif !(has_network_list || has_network_matrix)
+        error("no transmission network map was detected.\n" * instructions)
+    elseif has_network_list
+        load_network_map_from_list(network_var, Z, L, list_columns)
+    elseif has_network_matrix
+        load_network_map_from_matrix(network_var, Z, L)
+    end
+end
