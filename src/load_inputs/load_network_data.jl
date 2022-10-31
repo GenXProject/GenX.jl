@@ -27,32 +27,30 @@ function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Network zones inputs and Network topology inputs
     network_var = DataFrame(CSV.File(joinpath(path,"Network.csv"), header=true), copycols=true)
 
-    function to_array(col::Symbol)
-        return convert(Array{Float64}, collect(skipmissing(network_var[!, col])))
-    end
+    as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
+    to_floats(col::Symbol) = convert(Array{Float64}, as_vector(col))
 
     # Number of zones in the network
-    Z = length(to_array(:Network_zones))
+    Z = length(as_vector(:Network_zones))
     inputs_nw["Z"] = Z
     # Number of lines in the network
-    L = length(collect(skipmissing(network_var[!,:Network_Lines])))
+    L = length(as_vector(:Network_Lines))
     inputs_nw["L"] = L
 
     # Topology of the network source-sink matrix
-    start = findall(s -> s == "z1", names(network_var))[1]
-    inputs_nw["pNet_Map"] = Matrix{Float64}(network_var[1:L, start:start+Z-1])
+    inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
 
     # Transmission capacity of the network (in MW)
-    inputs_nw["pTrans_Max"] = to_array(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
 
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
-        inputs_nw["pPercent_Loss"] = to_array(:Line_Loss_Percentage)
+        inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)
     elseif setup["Trans_Loss_Segments"] >= 2
         # Transmission line voltage (in kV)
-        inputs_nw["kV"] = to_array(:Line_Voltage_kV)
+        inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
         # Transmission line resistance (in Ohms) - Used when modeling quadratic transmission losses
-        inputs_nw["Ohms"] = to_array(:Line_Resistance_ohms)
+        inputs_nw["Ohms"] = to_floats(:Line_Resistance_ohms)
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
@@ -60,10 +58,10 @@ function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     if setup["NetworkExpansion"]==1
         # Read between zone network reinforcement costs per peak MW of capacity added
-        inputs_nw["pC_Line_Reinforcement"] = to_array(:Line_Reinforcement_Cost_per_MWyr) / scale_factor # convert to million $/GW/yr with objective function in millions
+        inputs_nw["pC_Line_Reinforcement"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) / scale_factor # convert to million $/GW/yr with objective function in millions
         # Maximum reinforcement allowed in MW
         #NOTE: values <0 indicate no expansion possible
-        inputs_nw["pMax_Line_Reinforcement"] = map(x->max(0, x), to_array(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
+        inputs_nw["pMax_Line_Reinforcement"] = map(x->max(0, x), to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
     end
 
@@ -71,12 +69,12 @@ function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
     if setup["MultiStage"] == 1
         # Weighted Average Cost of Capital for Transmission Expansion
         if setup["NetworkExpansion"]>=1
-            inputs_nw["transmission_WACC"]= to_array(:WACC)
-            inputs_nw["Capital_Recovery_Period_Trans"]= to_array(:Capital_Recovery_Period)
+            inputs_nw["transmission_WACC"]= to_floats(:WACC)
+            inputs_nw["Capital_Recovery_Period_Trans"]= to_floats(:Capital_Recovery_Period)
         end
 
         # Max Flow Possible on Each Line
-        inputs_nw["pLine_Max_Flow_Possible_MW"] = to_array(:Line_Max_Flow_Possible_MW) / scale_factor # Convert to GW
+        inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) / scale_factor # Convert to GW
     end
 
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)
@@ -101,4 +99,46 @@ function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
     println("Network.csv Successfully Read!")
 
     return inputs_nw, network_var
+end
+
+function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
+    start_col, end_col = list_columns
+    mat = zeros(L, Z)
+    start_zones = collect(skipmissing(network_var[!, start_col]))
+    end_zones = collect(skipmissing(network_var[!, end_col]))
+    for l in 1:L
+        mat[l, start_zones[l]] = 1
+        mat[l, end_zones[l]] = -1
+    end
+    mat
+end
+
+function load_network_map_from_matrix(network_var::DataFrame, Z, L)
+    # Topology of the network source-sink matrix
+    col = findall(s -> s == "z1", names(network_var))[1]
+    mat = Matrix{Float64}(network_var[1:L, col:col+Z-1])
+end
+
+function load_network_map(network_var::DataFrame, Z, L)
+    columns = names(network_var)
+
+    list_columns = ["Start_Node", "End_Node"]
+    has_network_list = all([c in columns for c in list_columns])
+
+    zones_as_strings = ["z" * string(i) for i in 1:Z]
+    has_network_matrix =  all([c in columns for c in zones_as_strings])
+
+    instructions = """The transmission network should be specified in the form of a matrix
+           (with columns z1, z2, ... zN) or in the form of lists (with Start_Node, End_Node),
+           but not both. See the documentation for examples."""
+
+    if has_network_list && has_network_matrix
+        error("two types of transmission network map were provided.\n" * instructions)
+    elseif !(has_network_list || has_network_matrix)
+        error("no transmission network map was detected.\n" * instructions)
+    elseif has_network_list
+        load_network_map_from_list(network_var, Z, L, list_columns)
+    elseif has_network_matrix
+        load_network_map_from_matrix(network_var, Z, L)
+    end
 end
