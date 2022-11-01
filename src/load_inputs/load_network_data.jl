@@ -20,10 +20,10 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 Function for reading input parameters related to the electricity transmission network
 """
 #DEV NOTE:  add DC power flow related parameter inputs in a subsequent commit
-function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
+function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
-    # Network zones inputs and Network topology inputs
-    network_var = DataFrame(CSV.File(joinpath(path,"Network.csv"), header=true), copycols=true)
+    filename = "Network.csv"
+    network_var = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
 
     # Number of zones in the network
     inputs_nw["Z"] = size(findall(s -> (startswith(s, "z")) & (tryparse(Float64, s[2:end]) != nothing), names(network_var)),1)
@@ -122,7 +122,7 @@ function load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].<0)
     end
 
-    println("Network.csv Successfully Read!")
+    println(filename * " Successfully Read!")
 
-    return inputs_nw, network_var
+    return network_var
 end

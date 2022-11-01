@@ -33,48 +33,48 @@ function load_inputs(setup::Dict,path::AbstractString)
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
 	if isfile(joinpath(path,"Network.csv"))
-		inputs, network_var = load_network_data(setup, path, inputs)
+		network_var = load_network_data!(setup, path, inputs)
 	else
 		inputs["Z"] = 1
 		inputs["L"] = 0
 	end
 
 	# Read temporal-resolved load data, and clustering information if relevant
-	inputs = load_load_data(setup, path, inputs)
+	load_load_data!(setup, path, inputs)
 	# Read fuel cost data, including time-varying fuel costs
-	inputs, cost_fuel, CO2_fuel = load_fuels_data(setup, path, inputs)
+	cost_fuel, CO2_fuel = load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
-	inputs = load_generators_data(setup, path, inputs, cost_fuel, CO2_fuel)
+	load_generators_data!(setup, path, inputs, cost_fuel, CO2_fuel)
 	# Read in generator/resource availability profiles
-	inputs = load_generators_variability(setup, path, inputs)
+	load_generators_variability!(setup, path, inputs)
 
 	if setup["CapacityReserveMargin"]==1
-		inputs = load_cap_reserve_margin(setup, path, inputs)
+		load_cap_reserve_margin!(setup, path, inputs)
 		if inputs["Z"] >1
-			inputs = load_cap_reserve_margin_trans(setup, inputs,network_var)
+			load_cap_reserve_margin_trans!(setup, inputs, network_var)
 		end
 	end
 
 	# Read in general configuration parameters for reserves (resource-specific reserve parameters are read in generators_data())
 	if setup["Reserves"]==1
-		inputs = load_reserves(setup, path, inputs)
+		load_reserves!(setup, path, inputs)
 	end
 
 	if setup["MinCapReq"] == 1
-		inputs = load_minimum_capacity_requirement(path, inputs, setup)
+		load_minimum_capacity_requirement!(path, inputs, setup)
 	end
 
 	if setup["EnergyShareRequirement"]==1
-		inputs = load_energy_share_requirement(setup, path, inputs)
+		load_energy_share_requirement!(setup, path, inputs)
 	end
 
 	if setup["CO2Cap"] >= 1
-		inputs = load_co2_cap(setup, path, inputs)
+		load_co2_cap!(setup, path, inputs)
 	end
 
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
-		inputs = load_period_map(setup, path, inputs)
+		load_period_map!(setup, path, inputs)
 	end
 
 	println("CSV Files Successfully Read In From $path")

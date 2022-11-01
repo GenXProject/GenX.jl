@@ -15,22 +15,22 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_energy_share_requirement(setup::Dict, path::AbstractString, inputs_ESR::Dict)
+    load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
 
-Function for reading input parameters related to mimimum energy share requirement constraints (e.g. renewable portfolio standard or clean electricity standard policies)
+Read input parameters related to mimimum energy share requirement constraints
+(e.g. renewable portfolio standard or clean electricity standard policies)
 """
-function load_energy_share_requirement(setup::Dict, path::AbstractString, inputs_ESR::Dict)
-	# Definition of ESR requirements by zone (as % of load)
-	# e.g. any policy requiring a min share of qualifying resources (Renewable Portfolio Standards / Renewable Energy Obligations / Clean Energy Standards etc.)
-	inputs_ESR["dfESR"] = DataFrame(CSV.File(joinpath(path,"Energy_share_requirement.csv"), header=true), copycols=true)
-	# Ensure float format values:
-	ESR = count(s -> startswith(String(s), "ESR"), names(inputs_ESR["dfESR"]))
-	first_col = findall(s -> s == "ESR_1", names(inputs_ESR["dfESR"]))[1]
-	last_col = findall(s -> s == "ESR_$ESR", names(inputs_ESR["dfESR"]))[1]
+function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
+    filename = "Energy_share_requirement.csv"
+    df = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
 
-	inputs_ESR["dfESR"] = Matrix{Float64}(inputs_ESR["dfESR"][:,first_col:last_col])
-	inputs_ESR["nESR"] = ESR
+    f = s -> startswith(s, "ESR")
+    columns = names(df)
+    first_col = findfirst(f, columns)
+    last_col = findlast(f, columns)
 
-	println("Energy_share_requirement.csv Successfully Read!")
-	return inputs_ESR
+    inputs["dfESR"] = Matrix{Float64}(df[:, first_col:last_col])
+    inputs["nESR"] = count(f, columns)
+
+    println(filename * " Successfully Read!")
 end
