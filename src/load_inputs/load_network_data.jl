@@ -149,6 +149,16 @@ function load_network_map(network_var::DataFrame, Z, L)
     end
 end
 
+@doc raw"""
+    load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
+
+Loads the network map from a list-style interface
+```
+..., Network_Lines, Start_Node, End_Node, ...
+                 1,          1,        2,
+                 2,          1,        3,
+```
+"""
 function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
     start_col, end_col = list_columns
     mat = zeros(L, Z)
@@ -161,6 +171,18 @@ function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
     mat
 end
 
+@doc raw"""
+    load_network_map_from_matrix(network_var::DataFrame, Z, L)
+
+Loads the network map from a matrix-style interface
+```
+..., Network_Lines, z1, z2, z3, ...
+                 1,  1, -1,  0,
+                 2,  1,  0, -1,
+```
+This is equivalent to the list-style interface where the zone zN with entry +1 is the
+starting node of the line and the zone with entry -1 is the ending node of the line.
+"""
 function load_network_map_from_matrix(network_var::DataFrame, Z, L)
     # Topology of the network source-sink matrix
     col = findall(s -> s == "z1", names(network_var))[1]
