@@ -106,9 +106,9 @@ end
 
 Loads the network map from a list-style interface
 ```
-..., Network_Lines, Start_Node, End_Node, ...
-                 1,          1,        2,
-                 2,          1,        3,
+..., Network_Lines, Origin_Zone, Destination_Zone, ...
+                 1,           1,                2,
+                 2,           1,                3,
 ```
 """
 function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
@@ -144,7 +144,7 @@ end
 function load_network_map(network_var::DataFrame, Z, L)
     columns = names(network_var)
 
-    list_columns = ["Start_Node", "End_Node"]
+    list_columns = ["Origin_Zone", "Destination_Zone"]
     has_network_list = all([c in columns for c in list_columns])
 
     zones_as_strings = ["z" * string(i) for i in 1:Z]
