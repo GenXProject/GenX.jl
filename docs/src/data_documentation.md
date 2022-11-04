@@ -179,8 +179,8 @@ This input file contains input parameters related to: 1) definition of model zon
 | :------------ | :-----------|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
-|Network\_Lines | Numerical index for each network line/|
-| z* (Network map) | Next n columns, one per zone, with column header in format of z* where * is the number of the zone. L rows, one for each network line (or interregional path), with a 1 in the column corresponding to the 'origin' zone and a -1 in the column corresponding to the 'destination' zone for each line. No more than one column may be marked as origin and one as destination for each line, or the model will not function correctly. Note that positive flows indicate flow from origin to destination zone; negative flows indicate flow from destination to origin zone.|
+|Network\_Lines | Numerical index for each network line. The length of this column is counted but the actual values are not used.|
+| z* (Network map) **OR** Origin_Zone, Destination_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
@@ -199,6 +199,31 @@ This input file contains input parameters related to: 1) definition of model zon
 |**MultiStage == 1**|
 |Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for network transmission line expansion.  |
 |Line\_Max\_Flow\_Possible\_MW  |Maximum possible line flow in the current model period. Overrides Line\_Max\_Reinforcement\_MW, which is not used when performing multi-stage modeling.  |
+
+There are two interfaces implemented for specifying the network topology itself: a matrix interface and a list interface.
+Only one choice is permitted in a given file.
+
+The list interface consists of a column for the lines origin zone and one for the line's destination zone.
+Here is a snippet of the Network.csv file for a map with three zones and two lines:
+```
+Network_Lines, Origin_Zone, Destination_Zone,
+            1,           1,                2,
+            2,           1,                3,
+```
+
+The matrix interface requires N columns labeled `z1, z2, z3 ... zN`,
+and L rows, one for each network line (or interregional path), with a `1` in the column corresponding to the 'origin' zone 
+and a `-1` in the column corresponding to the 'destination' zone for each line.
+Here is the same network map implemented as a matrix:
+```
+Network_Lines, z1, z2, z3,
+            1,  1, -1,  0,
+            2,  1,  0, -1,
+```
+
+Note that in either case, positive flows indicate flow from origin to destination zone;
+negative flows indicate flow from destination to origin zone.
+
 
 #### 2.1.3 Load\_data.csv
 

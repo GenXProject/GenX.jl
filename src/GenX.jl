@@ -47,7 +47,6 @@ using Clustering
 using Distances
 using Combinatorics
 
-#using OrdinaryDiffEq
 using Random
 using RecursiveArrayTools
 using Statistics
@@ -195,10 +194,17 @@ include("write_outputs/write_outputs.jl")
 include("simple_operation.jl")
 
 # Multi Stage files
+include("multi_stage/write_multi_stage_settings.jl")
+include("multi_stage/write_multi_stage_capacities_discharge.jl")
+include("multi_stage/write_multi_stage_capacities_charge.jl")
+include("multi_stage/write_multi_stage_capacities_energy.jl")
+include("multi_stage/write_multi_stage_network_expansion.jl")
+include("multi_stage/write_multi_stage_costs.jl")
+include("multi_stage/write_multi_stage_stats.jl")
+include("multi_stage/write_multi_stage_settings.jl")
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/configure_multi_stage_inputs.jl")
 include("multi_stage/endogenous_retirement.jl")
-include("multi_stage/write_multi_stage_settings.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
 include("additional_tools/method_of_morris.jl")

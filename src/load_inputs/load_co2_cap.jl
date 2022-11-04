@@ -15,47 +15,42 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
+    load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
 
-Function for reading input parameters related to CO$_2$ emissions cap constraints
+Read input parameters related to CO$_2$ emissions cap constraints
 """
-function load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
-	# Definition of Cap requirements by zone (as Max Mtons)
-	inputs_co2["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path,"CO2_cap.csv"), header=true), copycols=true)
-	cap = count(s -> startswith(String(s), "CO_2_Cap_Zone"), names(inputs_co2["dfCO2Cap"]))
-	first_col = findall(s -> s == "CO_2_Cap_Zone_1", names(inputs_co2["dfCO2Cap"]))[1]
-	last_col = findall(s -> s == "CO_2_Cap_Zone_$cap", names(inputs_co2["dfCO2Cap"]))[1]
+function load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
+    filename = "CO2_cap.csv"
+    inputs["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    columns = names(inputs["dfCO2Cap"])
 
-	inputs_co2["dfCO2CapZones"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:,first_col:last_col])
-	inputs_co2["NCO2Cap"] = cap
+    function column_range(heading::AbstractString)
+        f = s -> startswith(s, heading)
+        findfirst(f, columns):findlast(f, columns)
+    end
 
-	# Emission limits
-	if setup["CO2Cap"]==1
-		#  CO2 emissions cap in mass
-		first_col = findall(s -> s == "CO_2_Max_Mtons_1", names(inputs_co2["dfCO2Cap"]))[1]
-		last_col = findall(s -> s == "CO_2_Max_Mtons_$cap", names(inputs_co2["dfCO2Cap"]))[1]
-		# note the default inputs is in million tons
-		if setup["ParameterScale"] ==1
-			inputs_co2["dfMaxCO2"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:,first_col:last_col])*(1e6)/ModelScalingFactor
-			# when scaled, the constraint unit is kton
-		else
-			inputs_co2["dfMaxCO2"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:,first_col:last_col])*(1e6)
-			# when not scaled, the constraint unit is ton
-		end
+    my_range = column_range("CO_2_Cap_Zone")
 
-	elseif (setup["CO2Cap"]==2 || setup["CO2Cap"]==3)
-		#  CO2 emissions rate applied per MWh
-		first_col = findall(s -> s == "CO_2_Max_tons_MWh_1", names(inputs_co2["dfCO2Cap"]))[1]
-		last_col = findall(s -> s == "CO_2_Max_tons_MWh_$cap", names(inputs_co2["dfCO2Cap"]))[1]
-		if setup["ParameterScale"] ==1
-			inputs_co2["dfMaxCO2Rate"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:,first_col:last_col])
-			# when scaled, the constraint unit is kton, thus the emission rate should be in kton/GWh = ton/MWh
-		else
-			inputs_co2["dfMaxCO2Rate"] = Matrix{Float64}(inputs_co2["dfCO2Cap"][:,first_col:last_col])
-			# when not scaled, the constraint unit is ton/MWh
-		end
+    inputs["dfCO2CapZones"] = Matrix{Float64}(inputs["dfCO2Cap"][:, my_range])
+    inputs["NCO2Cap"] = length(my_range)
 
-	end
-	println("CO2_cap.csv Successfully Read!")
-	return inputs_co2
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    # Emission limits
+    if setup["CO2Cap"] == 1
+        #  CO2 emissions cap in mass
+        my_range = column_range("CO_2_Max_Mtons")
+        # note the default inputs is in million tons
+        # when scaled, the constraint unit is kton
+        # when not scaled, the constraint unit is ton
+        inputs["dfMaxCO2"] = Matrix{Float64}(inputs["dfCO2Cap"][:, my_range]) * 1e6 / scale_factor
+
+    elseif setup["CO2Cap"] == 2 || setup["CO2Cap"] == 3
+        #  CO2 emissions rate applied per MWh
+        my_range = column_range("CO_2_Max_tons_MWh")
+        # no scale_factor is needed since this is a ratio
+        inputs["dfMaxCO2Rate"] = Matrix{Float64}(inputs["dfCO2Cap"][:, my_range])
+    end
+
+    println(filename * " Successfully Read!")
 end
