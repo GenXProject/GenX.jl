@@ -1,7 +1,6 @@
 # Requirements
 
-GenX currently exists in version 0.3.1 and runs only on Julia v1.6.x and v1.5.x series, where x>=0 and a minimum version of JuMP v1.1.1.
-There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
+GenX currently exists in version 0.3.3 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
 please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version).

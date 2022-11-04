@@ -18,4 +18,5 @@ TimeDomainReductionFolder: "TDR_Results" # Directory name where results from tim
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Load_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
 ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
+ModelingToGenerateAlternativeIterations: 3
 MultiStage: 1 # 0 = Single-stage GenX, 1 = Multi-stage GenX
