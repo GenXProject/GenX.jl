@@ -15,23 +15,23 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+	load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 Function for reading input parameters related to electricity generators (plus storage and flexible demand resources)
 """
-function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
-	# Generator related inputs
-	gen_in = DataFrame(CSV.File(joinpath(path, "Generators_data.csv"), header=true), copycols=true)
+    filename = "Generators_data.csv"
+	gen_in = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
 
 	# Add Resource IDs after reading to prevent user errors
-	gen_in[!,:R_ID] = 1:size(collect(skipmissing(gen_in[!,1])),1)
+	gen_in[!,:R_ID] = 1:length(collect(skipmissing(gen_in[!,1])))
 
 	# Store DataFrame of generators/resources input data for use in model
 	inputs_gen["dfGen"] = gen_in
 
 	# Number of resources
-	inputs_gen["G"] = size(collect(skipmissing(gen_in[!,:R_ID])),1)
+	inputs_gen["G"] = length(collect(skipmissing(gen_in[!,:R_ID])))
 
 	# Set indices for internal use
 	G = inputs_gen["G"]   # Number of resources (generators, storage, DR, and DERs)
@@ -251,7 +251,5 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 			#   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][g,:CO2_per_Start] is ton
 		end
 	end
-	println("Generators_data.csv Successfully Read!")
-
-	return inputs_gen
+	println(filename * " Successfully Read!")
 end
