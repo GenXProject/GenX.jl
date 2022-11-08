@@ -21,7 +21,7 @@ Read input parameters related to frequency regulation and operating reserve requ
 """
 function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Reserves.csv"
-	res_in = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    res_in = load_dataframe(joinpath(path, filename))
 
 	# Regulation requirement as a percent of hourly load; here load is the total across all model zones
 	inputs["pReg_Req_Load"] = float(res_in[1,:Reg_Req_Percent_Load])

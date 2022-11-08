@@ -28,7 +28,7 @@ function load_period_map!(setup::Dict, path::AbstractString, inputs::Dict)
 		my_dir = path
 	end
 	file_path = joinpath(my_dir, period_map)
-	inputs["Period_Map"] = DataFrame(CSV.File(file_path, header=true), copycols=true)
+    inputs["Period_Map"] = load_dataframe(file_path)
 
 	println(period_map * " Successfully Read!")
 end

@@ -21,7 +21,7 @@ Read input parameters related to CO$_2$ emissions cap constraints
 """
 function load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "CO2_cap.csv"
-    inputs["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    inputs["dfCO2Cap"] = load_dataframe(joinpath(path, filename))
     columns = names(inputs["dfCO2Cap"])
 
     function column_range(heading::AbstractString)

@@ -29,8 +29,7 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
         my_dir = path
 	end
     filename = "Load_data.csv"
-    file_path = joinpath(my_dir, filename)
-    load_in = DataFrame(CSV.File(file_path, header=true), copycols=true)
+    load_in = load_dataframe(joinpath(my_dir, filename))
 
     as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
 
