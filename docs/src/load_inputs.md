@@ -63,3 +63,11 @@ Pages = ["load_energy_share_requirement.jl"]
 Modules = [GenX]
 Pages = ["load_period_map.jl"]
 ```
+
+# Functions for developers
+
+## Standardized loading of dataframes from CSV files
+```@autodocs
+Modules = [GenX]
+Pages = ["load_dataframe.jl"]
+```
