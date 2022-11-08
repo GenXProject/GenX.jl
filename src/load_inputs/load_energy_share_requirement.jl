@@ -23,14 +23,9 @@ Read input parameters related to mimimum energy share requirement constraints
 function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Energy_share_requirement.csv"
     df = load_dataframe(joinpath(path, filename))
-
-    f = s -> startswith(s, "ESR")
-    columns = names(df)
-    first_col = findfirst(f, columns)
-    last_col = findlast(f, columns)
-
-    inputs["dfESR"] = Matrix{Float64}(df[:, first_col:last_col])
-    inputs["nESR"] = count(f, columns)
+    mat = extract_matrix_from_dataframe(df, "ESR")
+    inputs["dfESR"] = mat
+    inputs["nESR"] = size(mat, 2)
 
     println(filename * " Successfully Read!")
 end
