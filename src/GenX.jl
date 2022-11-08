@@ -4,6 +4,7 @@ module GenX
 export configure_settings
 export configure_solver
 export load_inputs
+export load_dataframe
 export generate_model
 export solve_model
 export write_outputs
@@ -69,6 +70,7 @@ include("configure_solver/configure_cbc.jl")
 include("configure_solver/configure_solver.jl")
 
 # Load input data
+include("load_inputs/load_dataframe.jl")
 include("load_inputs/load_generators_data.jl")
 include("load_inputs/load_generators_variability.jl")
 include("load_inputs/load_network_data.jl")

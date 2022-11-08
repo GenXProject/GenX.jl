@@ -13,8 +13,7 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
         my_dir = path
     end
     filename = "Fuels_data.csv"
-    file_path = joinpath(my_dir, filename)
-    fuels_in = DataFrame(CSV.File(file_path, header=true), copycols=true)
+    fuels_in = load_dataframe(joinpath(my_dir, filename))
 
     # Fuel costs & CO2 emissions rate for each fuel type
     fuels = names(fuels_in)[2:end]

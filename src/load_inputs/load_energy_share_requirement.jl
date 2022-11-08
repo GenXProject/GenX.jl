@@ -6,7 +6,7 @@ Read input parameters related to mimimum energy share requirement constraints
 """
 function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Energy_share_requirement.csv"
-    df = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    df = load_dataframe(joinpath(path, filename))
 
     f = s -> startswith(s, "ESR")
     columns = names(df)

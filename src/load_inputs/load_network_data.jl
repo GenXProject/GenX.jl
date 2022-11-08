@@ -9,7 +9,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     filename = "Network.csv"
-    network_var = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    network_var = load_dataframe(joinpath(path, filename))
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
     to_floats(col::Symbol) = convert(Array{Float64}, as_vector(col))
