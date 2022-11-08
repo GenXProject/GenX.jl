@@ -4,12 +4,6 @@ Modules = [GenX]
 Pages = ["load_inputs.jl"]
 ```
 
-## Cleaner Case-Insensitive Loading of DataFrames from CSV 
-```@autodocs
-Modules = [GenX]
-Pages = ["load_dataframe.jl"]
-```
-
 ## Fuels Data
 ```@autodocs
 Modules = [GenX]
@@ -68,4 +62,12 @@ Pages = ["load_energy_share_requirement.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["load_period_map.jl"]
+```
+
+# Functions for developers
+
+## Standardized loading of dataframes from CSV files
+```@autodocs
+Modules = [GenX]
+Pages = ["load_dataframe.jl"]
 ```
