@@ -31,7 +31,6 @@ function write_multi_stage_capacities_charge(outpath::String, settings_d::Dict)
 
     for p in 1:num_stages
         inpath = joinpath(outpath, "Results_p$p")
-        #capacities_d[p] = DataFrame(CSV.File(joinpath(inpath, "capacity.csv"), header=true), copycols=true)
         capacities_d[p] = load_dataframe(joinpath(inpath, "capacity.csv"))
     end
 
