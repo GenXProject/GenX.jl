@@ -4,6 +4,12 @@ Modules = [GenX]
 Pages = ["load_inputs.jl"]
 ```
 
+## Cleaner Case-Insensitive Loading of DataFrames from CSV 
+```@autodocs
+Modules = [GenX]
+Pages = ["load_dataframe.jl"]
+```
+
 ## Fuels Data
 ```@autodocs
 Modules = [GenX]
