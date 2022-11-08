@@ -177,7 +177,7 @@ end
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
     # Reading the input parameters
-    Morris_range = DataFrame(CSV.File(joinpath(path, "Method_of_morris_range.csv"), header=true), copycols=true)
+    Morris_range = load_dataframe(joinpath(path, "Method_of_morris_range.csv"))
     groups = Morris_range[!,:Group]
     p_steps = Morris_range[!,:p_steps]
     total_num_trajectory = Morris_range[!,:total_num_trajectory][1]
