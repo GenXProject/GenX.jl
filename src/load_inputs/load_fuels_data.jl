@@ -31,6 +31,13 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Fuels_data.csv"
     fuels_in = load_dataframe(joinpath(my_dir, filename))
 
+    existing_fuels = names(fuels_in)
+    for nonfuel in ("None",)
+        if nonfuel ∉ existing_fuels
+            ensure_column!(fuels_in, nonfuel, 0.0)
+        end
+    end
+
     # Fuel costs & CO2 emissions rate for each fuel type
     fuels = names(fuels_in)[2:end]
     costs = Matrix(fuels_in[2:end, 2:end])
@@ -53,4 +60,10 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     println(filename * " Successfully Read!")
 
     return fuel_costs, fuel_CO2
+end
+
+function ensure_column!(df::DataFrame, col::AbstractString, fill_element)
+    if col ∉ names(df)
+        df[!, col] = fill(fill_element, nrow(df))
+    end
 end
