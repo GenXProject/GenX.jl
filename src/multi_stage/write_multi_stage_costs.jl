@@ -18,7 +18,6 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
     costs_d = Dict()
     for p in 1:num_stages
         cur_path = joinpath(outpath, "Results_p$p")
-        #costs_d[p] = DataFrame(CSV.File(joinpath(cur_path, "costs.csv"), header=true), copycols=true)
         costs_d[p] = load_dataframe(joinpath(cur_path, "costs.csv"))
     end
 
