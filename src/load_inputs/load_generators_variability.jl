@@ -29,8 +29,7 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
         my_dir = path
 	end
     filename = "Generators_variability.csv"
-    file_path = joinpath(my_dir, filename)
-    gen_var = DataFrame(CSV.File(file_path, header=true), copycols=true)
+    gen_var = load_dataframe(joinpath(my_dir, filename))
 
 	# Reorder DataFrame to R_ID order (order provided in Generators_data.csv)
 	select!(gen_var, [:Time_Index; Symbol.(inputs["RESOURCES"]) ])

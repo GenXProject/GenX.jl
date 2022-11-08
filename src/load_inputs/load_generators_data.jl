@@ -22,7 +22,7 @@ Function for reading input parameters related to electricity generators (plus st
 function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
     filename = "Generators_data.csv"
-	gen_in = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    gen_in = load_dataframe(joinpath(path, filename))
 
 	# Add Resource IDs after reading to prevent user errors
 	gen_in[!,:R_ID] = 1:length(collect(skipmissing(gen_in[!,1])))

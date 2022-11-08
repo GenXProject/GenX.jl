@@ -21,8 +21,7 @@ Read input parameters related to planning reserve margin constraints
 """
 function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Capacity_reserve_margin.csv"
-    # Definition of capacity reserve margin (crm) by locational deliverability area (LDA)
-    df = DataFrame(CSV.File(joinpath(path, filename), header=true), copycols=true)
+    df = load_dataframe(joinpath(path, filename))
 
     # Identifying # of planning reserve margin constraints for the system
     columns = names(df)
