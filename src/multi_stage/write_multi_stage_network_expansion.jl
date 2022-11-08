@@ -15,7 +15,8 @@ function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
 
     for p in 1:num_stages
         inpath = joinpath(outpath, "Results_p$p")
-        trans_capacities_d[p] = DataFrame(CSV.File(joinpath(inpath, "network_expansion.csv"), header=true), copycols=true)
+        #trans_capacities_d[p] = DataFrame(CSV.File(joinpath(inpath, "network_expansion.csv"), header=true), copycols=true)
+        trans_capacities_d[p] = load_dataframe(joinpath(inpath, "network_expansion.csv"))
     end
 
     # Set first column of output DataFrame as line IDs
