@@ -60,17 +60,14 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Links state of charge in first time step with decisions in last time step of each subperiod
 	# We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
-	
 	if OperationWrapping ==1 && !isempty(inputs["STOR_LONG_DURATION"])
-		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_SHORT_DURATION], EP[:vS][y,t] ==
-			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[y,:Eff_Down]*EP[:vP][y,t])
-			+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,t])-(dfGen[y,:Self_Disch]*EP[:vS][y,t+hours_per_subperiod-1]))
+		CONSTRAINTSET = STOR_SHORT_DURATION
 	else
-		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_ALL], EP[:vS][y,t] ==
-			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[y,:Eff_Down]*EP[:vP][y,t])
-			+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,t])-(dfGen[y,:Self_Disch]*EP[:vS][y,t+hours_per_subperiod-1]))
+		CONSTRAINTSET = STOR_ALL
 	end
-	
+	@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in CONSTRAINTSET], EP[:vS][y,t] ==
+		EP[:vS][y,t+hours_per_subperiod-1] - (1/dfGen[y,:Eff_Down] * EP[:vP][y,t])
+		+ (dfGen[y,:Eff_Up]*EP[:vCHARGE][y,t]) - (dfGen[y,:Self_Disch] * EP[:vS][y,t+hours_per_subperiod-1]))
 
 	@constraints(EP, begin
 
@@ -102,7 +99,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	end
 	#From co2 Policy module
 	@expression(EP, eELOSSByZone[z=1:Z],
-		sum(EP[:eELOSS][y] for y in intersect(inputs["STOR_ALL"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
+		sum(EP[:eELOSS][y] for y in intersect(STOR_ALL, dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
 end
 
