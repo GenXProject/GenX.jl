@@ -45,12 +45,7 @@ T = inputs["T"]     # Number of time steps (hours)
 Z = inputs["Z"]     # Number of zones
 FLEX = inputs["FLEX"] # Set of flexible demand resources
 
-START_SUBPERIODS = inputs["START_SUBPERIODS"]
-INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-
 hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
-
-END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of each representative period
 
 ### Variables ###
 
