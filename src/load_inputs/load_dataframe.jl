@@ -57,8 +57,34 @@ function look_for_file_with_alternate_case(dir, base)
     return target
 end
 
+function csv_header(path::AbstractString)
+    f = open(path, "r")
+    header = readline(f)
+    close(f)
+    header
+end
+
+function keep_duplicated_entries!(s, uniques)
+    for u in uniques
+        deleteat!(s, first(findall(x->x==u, s)))
+    end
+    return s
+end
+
+function check_for_duplicate_keys(path::AbstractString)
+    header = csv_header(path)
+    keys = split(header, ',')
+    uniques = unique(keys)
+    if length(keys) > length(uniques)
+        dupes = keep_duplicated_entries!(keys, uniques)
+        @error """Some duplicate column names detected in the header of $path: $dupes.
+        Duplicate column names may cause errors, as only the first is used.
+        """
+    end
+end
 
 function load_dataframe_from_file(path)
+    check_for_duplicate_keys(path)
     CSV.read(path, DataFrame, header=1)
 end
 
