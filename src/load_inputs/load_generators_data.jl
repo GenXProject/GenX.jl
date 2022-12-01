@@ -1,3 +1,54 @@
+function is_nonzero(df::DataFrame, col::Symbol)::BitVector
+	convert(BitVector, df[!, col] .> 0)::BitVector
+end
+
+function check_thermal_storage_validity(df::DataFrame)
+	ts = is_nonzero(df, :TS)
+	r_id = df[:, :R_ID]
+
+	error_strings = String[]
+
+	c = ts .& .!is_nonzero(df, :THERM)
+	if any(c)
+		e = string("Generators ", r_id[c], ", marked as TS, do not also have THERM=1")
+		push!(error_strings, e)
+	end
+
+	function error_feedback(data::Vector{Int}, col::Symbol)::String
+		string("Generators ", data, ", marked as TS, have ", col, " ≠ 0. ", col, " must be 0.")
+	end
+
+	function check_any_nonzero_with_ts!(error_strings::Vector{String}, df::DataFrame, col::Symbol)
+		check = ts .& is_nonzero(df, col)
+		if any(check)
+			e = error_feedback(r_id[check], col)
+			push!(error_strings, e)
+		end
+	end
+
+	check_any_nonzero_with_ts!(error_strings, df, :STOR)
+	check_any_nonzero_with_ts!(error_strings, df, :FLEX)
+	check_any_nonzero_with_ts!(error_strings, df, :HYDRO)
+	check_any_nonzero_with_ts!(error_strings, df, :VRE)
+	check_any_nonzero_with_ts!(error_strings, df, :MUST_RUN)
+
+	return error_strings
+end
+
+function summarize_errors(error_strings::Vector{String})
+	if !isempty(error_strings)
+		println(length(error_strings), " problem(s) in the configuration of the generators:")
+		for es in error_strings
+			println(es)
+		end
+		error("There were errors in the configuration of the generators.")
+	end
+end
+
+function check_generators_validity(df::DataFrame)
+end
+
+
 @doc raw"""
 	load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
@@ -166,7 +217,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
         end
     end
 
-# Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
 	if setup["UCommit"]>=1
 		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
 		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])
@@ -203,5 +253,47 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is ton
 		end
 	end
-	println(filename * " Successfully Read!")
+
+	load_thermal_storage_data!(setup, path, inputs_gen, gen_in)
+	println("Generators_data.csv Successfully Read!")
+
+	return inputs_gen
+end
+
+@doc raw"""
+	load_thermal_storage_data(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+
+Function for reading input parameters related to resources that combine thermal generation and storage.
+If there are no TS columns, TS is a vector of length 0 and dfTS is an empty Dataframe.
+"""
+function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+	error_strings = String[]
+
+	inputs_gen["TS"] = "TS" in names(gen_in) ? gen_in[gen_in.TS.==1,:R_ID] : Int[]
+
+	if !isempty(inputs_gen["TS"])
+		thermal_storage_errors = check_thermal_storage_validity(gen_in)
+		append!(error_strings, thermal_storage_errors)
+
+		inputs_gen["TS_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.TS.==1),:R_ID]
+		inputs_gen["TS_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.TS.==1),:R_ID]
+
+		ts_in = DataFrame(CSV.File(joinpath(path,"Thermal_storage.csv"), header=true), copycols=true)
+
+		if setup["ParameterScale"] == 1
+			columns_to_scale = [:System_Max_Cap_MWe_net,
+								:Cap_Size,
+								:Max_Cap_MW_th,
+								:Fixed_Cost_per_MW_th,
+								:Var_OM_Cost_per_MWh_th,
+								:Fixed_Cost_per_MWh_th]
+			ts_in[!, columns_to_scale] ./= ModelScalingFactor
+		end
+		inputs_gen["dfTS"] = ts_in
+		println("Thermal_storage.csv Successfully Read!")
+	else
+		inputs_gen["dfTS"] = DataFrame()
+	end
+
+	summarize_errors(error_strings)
 end

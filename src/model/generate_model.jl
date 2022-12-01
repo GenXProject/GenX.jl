@@ -176,6 +176,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = retrofit(EP, inputs)
 	end
 
+	# Model constraints, variables, expression related to thermal+storage resources
+	if !isempty(inputs["TS"])
+		EP = thermal_storage(EP, inputs, setup)
+	end
+
 	# Policies
 	# CO2 emissions limits
 	if setup["CO2Cap"] > 0
