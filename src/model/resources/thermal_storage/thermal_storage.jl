@@ -15,14 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
-	f = df[df.R_ID .== rid, sym]
-	@info f
-	return f[]
+	return df[df.R_ID .== rid, sym][]
 end
 
 function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
-	indices = [findall(==(y), df.R_ID)[] for y in rid]
-	@info indices
+	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
 	return df[indices, sym]
 end
 
@@ -36,34 +33,18 @@ function get_nonfus(inputs::Dict)::Vector{Int}
 	dfTS[dfTS.FUS.==0,:R_ID]
 end
 
+function get_resistive_heating(inputs::Dict)::Vector{Int}
+	dfTS = inputs["dfTS"]
+	dfTS[dfTS.RH.==1,:R_ID]
+end
+
 function get_maintenance(inputs::Dict)::Vector{Int}
 	dfTS = inputs["dfTS"]
 	if "MAINT" in names(dfTS)
-		FUS = get_fus(inputs)
-		intersect(FUS, dfTS[dfTS.MAINT.>0, :R_ID])
+		dfTS[dfTS.MAINT.>0, :R_ID]
 	else
 		Vector{Int}[]
 	end
-end
-
-function get_maintenance_with_formulation(inputs::Dict, form::Int)::Vector{Int}
-	MAINTENANCE = get_maintenance(inputs)
-	if !isempty(MAINTENANCE)
-		dfTS = inputs["dfTS"]
-		intersect(MAINTENANCE, dfTS[dfTS.MAINT.==form, :R_ID])
-	else
-		Vector{Int}[]
-	end
-end
-
-function get_yearly_maintenance(inputs::Dict)::Vector{Int}
-	YEARLY_MAINT = 1
-	get_maintenance_with_formulation(inputs, YEARLY_MAINT)
-end
-
-function get_usage_based_maintenance(inputs::Dict)::Vector{Int}
-	USAGE_BASED_MAINT = 2
-	get_maintenance_with_formulation(inputs, USAGE_BASED_MAINT)
 end
 
 function get_nonmaintenance(inputs::Dict)::Vector{Int}
@@ -99,38 +80,43 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 
-	START_SUBPERIODS = inputs["START_SUBPERIODS"]
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-	hours_per_subperiod = inputs["hours_per_subperiod"]
+	p = inputs["hours_per_subperiod"]
 
 	# Load thermal storage inputs
 	TS = inputs["TS"]
 	dfTS = inputs["dfTS"]
+	RH = get_resistive_heating(inputs)
 
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
+	load_thermal_storage_fuel_data!(inputs, setup)
 
 	@variables(EP, begin
-	# Thermal core variables
-	vCP[y in TS, t = 1:T] >= 0 		#thermal core power for resource y at timestep t
-	vCCAP[y in TS] >= 0  			#thermal core capacity for resource y
+		# Thermal core variables
+		vCP[y in TS, t = 1:T] >= 0 		#thermal core power for resource y at timestep t
+		vCCAP[y in TS] >= 0  			#thermal core capacity for resource y
 
-	# Thermal storage variables
-	vTS[y in TS, t = 1:T] >= 0		#thermal storage state of charge for resource y at timestep t
-	vTSCAP[y in TS] >= 0			#thermal storage energy capacity for resource y
+		# Thermal storage variables
+		vTS[y in TS, t = 1:T] >= 0		#thermal storage state of charge for resource y at timestep t
+		vTSCAP[y in TS] >= 0			#thermal storage energy capacity for resource y
 	end)
+
+	# resistive heating variables
+	@variables(EP, begin
+		vRH[y in RH, t = 1:T] >= 0 		#electrical energy from grid
+		vRHCAP[y in RH] >= 0			#RH power capacity for resource
+	end)
+
 
 	### THERMAL CORE CONSTRAINTS ###
 	# Core power output must be <= installed capacity, including hourly capacity factors
 	@constraint(EP, cCPMax[y in TS, t=1:T], vCP[y,t] <= vCCAP[y]*inputs["pP_Max"][y,t])
 	# Total installed capacity is less than specified maximum limit
-	those_with_max_cap = dfTS[dfTS.Max_Cap_MW_th.>0, :R_ID]
-	if any(those_with_max_cap)
-		@constraint(EP, cCCAPMax[y in those_with_max_cap], vCCAP[y] <= by_rid(y, :Max_Cap_MW_th))
-	end
+	those_with_max_cap = dfTS[dfTS.Max_Cap_MW_th.>=0, :R_ID]
+	@constraint(EP, cCCAPMax[y in those_with_max_cap], vCCAP[y] <= by_rid(y, :Max_Cap_MW_th))
 
 	# Variable cost of core operation
 	# Variable cost at timestep t for thermal core y
-	@expression(EP, eCVar_Core[y in TS, t=1:T], inputs["omega"][t] * by_rid(y, :Var_OM_Cost_per_MWh_th) * vCP[y,t])
+	@expression(EP, eCVar_Core[y in TS, t=1:T], inputs["omega"][t] * (by_rid(y, :Var_OM_Cost_per_MWh_th) + inputs["TS_C_Fuel_per_MWh"][y][t]) * vCP[y,t])
 	# Variable cost from all thermal cores at timestep t)
 	@expression(EP, eTotalCVarCoreT[t=1:T], sum(eCVar_Core[y,t] for y in TS))
 	# Total variable cost for all thermal cores
@@ -151,23 +137,32 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 
 	# thermal state of charge balance for interior timesteps:
 	# (previous SOC) - (discharge to turbines) - (turbine startup energy use) + (core power output) - (self discharge)
-	@constraint(EP, cTSocBalInterior[t in INTERIOR_SUBPERIODS, y in TS], (
-		vTS[y,t] == vTS[y,t-1]
+    @expression(EP, eTSSoCBalRHS[t in 1:T, y in TS],
+		vTS[y, hoursbefore(p, t, 1)]
 		- (1 / dfGen[y, :Eff_Down] * EP[:vP][y,t])
 		- (1 / dfGen[y, :Eff_Down] * dfGen[y, :Start_Fuel_MMBTU_per_MW] * dfGen[y,:Cap_Size] * EP[:vSTART][y,t])
 		+ (dfGen[y,:Eff_Up] * vCP[y,t])
-		- (dfGen[y,:Self_Disch] * vTS[y,t-1]))
+		- (dfGen[y,:Self_Disch] * vTS[y, hoursbefore(p, t, 1)]))
+
+    for y in RH, t in 1:T
+        add_to_expression!(EP[:eTSSoCBalRHS][t,y], vRH[y,t])
+    end
+
+	@constraint(EP, cTSSoCBal[t in 1:T, y in TS], vTS[y,t] == eTSSoCBalRHS[t,y])
+
+	# add resistive heating to power balance
+	@expression(EP, ePowerBalanceRH[t=1:T, z=1:Z],
+		- sum(vRH[y, t] for y in intersect(RH, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+	EP[:ePowerBalance] += ePowerBalanceRH
+
+	# add capacity constraint for RH
+	@constraint(EP, cRHMax[t = 1:T, y in RH],
+		vRH[y, t] <= vRHCAP[y]
 	)
+
 
 	# TODO: perhaps avoid recomputing these; instead use sets TS_LONG_DURATION, etc
 	TS_and_LDS, TS_and_nonLDS = split_LDS_and_nonLDS(dfGen, inputs, setup)
-
-	@constraint(EP, cTSoCBalStart[t in START_SUBPERIODS, y in TS_and_nonLDS],(
-	 vTS[y,t] == vTS[y, t + hours_per_subperiod - 1]
-		- (1 / dfGen[y, :Eff_Down] * EP[:vP][y,t])
-		- (1 / dfGen[y, :Eff_Down] * dfGen[y, :Start_Fuel_MMBTU_per_MW] * dfGen[y, :Cap_Size] * EP[:vSTART][y,t])
-		+ (dfGen[y, :Eff_Up] * vCP[y,t]) - (dfGen[y, :Self_Disch] * vTS[y,t + hours_per_subperiod - 1])
-		))
 
 	if !isempty(TS_and_LDS)
 		REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
@@ -215,27 +210,41 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCFixedTS, sum(eCFixed_TS[y] for y in TS))
 	EP[:eObj] += eTotalCFixedTS
 
+	# Resistive heating investment costs
+	# Fixed costs for resource y
+	@expression(EP, eCFixed_RH[y in RH], by_rid(y, :Fixed_Cost_per_MW_RH) * vRHCAP[y])
+	# Total fixed costs for all resistive heating
+	@expression(EP, eTotalCFixedRH, sum(eCFixed_RH[y] for y in RH))
+	EP[:eObj] += eTotalCFixedRH
+
 	# Parameter Fixing Constraints
 	# Fixed ratio of gross generator capacity to core equivalent gross electric power
-	@constraint(EP, cCPRatMax[y in dfTS[dfTS.Max_Generator_Core_Power_Ratio.>0,:R_ID]],
+	@constraint(EP, cCPRatMax[y in dfTS[dfTS.Max_Generator_Core_Power_Ratio.>=0,:R_ID]],
 				vCCAP[y] * dfGen[y,:Eff_Down] * by_rid(y,:Max_Generator_Core_Power_Ratio) >=
 				EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
-	@constraint(EP, cCPRatMin[y in dfTS[dfTS.Min_Generator_Core_Power_Ratio.>0,:R_ID]],
+	@constraint(EP, cCPRatMin[y in dfTS[dfTS.Min_Generator_Core_Power_Ratio.>=0,:R_ID]],
 				vCCAP[y] * dfGen[y,:Eff_Down] * by_rid(y,:Min_Generator_Core_Power_Ratio) <=
 				EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
 	# Limits on storage duration
-	@constraint(EP, cTSMinDur[y in TS], vTSCAP[y] >= dfGen[y,:Min_Duration] * vCCAP[y])
-	@constraint(EP, cTSMaxDur[y in TS], vTSCAP[y] <= dfGen[y,:Max_Duration] * vCCAP[y])
+	MIN_DURATION = intersect(TS, dfGen[dfGen.Min_Duration .>= 0, :R_ID])
+	MAX_DURATION = intersect(TS, dfGen[dfGen.Max_Duration .>= 0, :R_ID])
+	@constraint(EP, cTSMinDur[y in MIN_DURATION], vTSCAP[y] >= dfGen[y,:Min_Duration] * vCCAP[y])
+	@constraint(EP, cTSMaxDur[y in MAX_DURATION], vTSCAP[y] <= dfGen[y,:Max_Duration] * vCCAP[y])
 
 	### FUSION CONSTRAINTS ###
 	FUS =  get_fus(inputs)
 
-	# TODO: define expressions & constraints for NONFUS
-	NONFUS =  get_nonfus(inputs)
-
 	# Use fusion constraints if thermal cores tagged 'FUS' are present
 	if !isempty(FUS)
 		fusion_constraints!(EP, inputs, setup)
+	end
+
+	### NONFUSION CONSTRAINTS ###
+	NONFUS = get_nonfus(inputs)
+
+	# use thermal core constraints for thermal cores not tagged 'FUS'
+	if !isempty(NONFUS)
+		thermal_core_constraints!(EP, inputs, setup)
 	end
 
 	# Capacity Reserves Margin policy
@@ -245,16 +254,96 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 		@expression(EP, eCapResMarBalanceThermalStorageAdjustment[res=1:ncap, t=1:T],
 					sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:eTotalCap][y]) for y in TS))
 
+		EP[:eCapResMarBalance] += eCapResMarBalanceThermalStorageAdjustment
+
 		@expression(EP, eCapResMarBalanceFusionAdjustment[res=1:ncap, t=1:T],
 					sum(dfGen[y,Symbol("CapRes_$res")] * (- EP[:eStartPowerFus][y,t]
 														  - EP[:ePassiveRecircFus][y,t]
 														  - EP[:eActiveRecircFus][y,t]) for y in FUS))
 
-		EP[:eCapResMarBalance] += eCapResMarBalanceThermalStorageAdjustment
+
 		EP[:eCapResMarBalance] += eCapResMarBalanceFusionAdjustment
 	end
 
-return EP
+	# add emissions
+	thermal_core_emissions!(EP, inputs, setup)
+
+	return EP
+end
+
+function load_thermal_storage_fuel_data!(inputs::Dict, setup::Dict)
+
+	dfTS = inputs["dfTS"]
+	TS = inputs["TS"]
+	NONFUS = get_nonfus(inputs)
+	TSG = nrow(dfTS)
+	THERM_COMMIT = inputs["THERM_COMMIT"]
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+	# for unit commitment decisions
+	if setup["UCommit"]>=1
+		# Convert to $ million/GW with objective function in millions
+		dfTS[!,:Start_Cost_per_MW] /= scale_factor
+
+
+		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
+		start_fuel = convert(Array{Float64}, dfTS[!,:Start_Fuel_MMBTU_per_MW])
+		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
+		start_cost = convert(Array{Float64}, dfTS[!,:Start_Cost_per_MW])
+		inputs["TS_C_Start"] = Dict()
+		dfTS[!,:CO2_per_Start] = zeros(Float64, TSG)
+	end
+
+	# Heat rate of all resources (million BTUs/MWh)
+	heat_rate = convert(Array{Float64}, dfTS[!,:Heat_Rate_MMBTU_per_MWh])
+	# Fuel used by each resource
+	fuel_type = dfTS[!,:Fuel]
+	# fuel cost in $ per MWh and CO2 emissions in tons per MWh
+	inputs["TS_C_Fuel_per_MWh"] = Dict()
+	dfTS[!,:CO2_per_MWh] = zeros(Float64, TSG)
+
+	for gen_id in 1:TSG
+		#calculate fuel costs
+		inputs["TS_C_Fuel_per_MWh"][dfTS[gen_id, :R_ID]] = inputs["fuel_costs"][fuel_type[gen_id]] .* heat_rate[gen_id]
+		#calculate fuel emissions
+		dfTS[gen_id, :CO2_per_MWh] = inputs["fuel_CO2"][fuel_type[gen_id]] .* heat_rate[gen_id]
+		dfTS[gen_id,:CO2_per_MWh] *= scale_factor
+
+
+		# add start up costs and emissions for committed thermal cores.
+		if dfTS[gen_id, :R_ID] in THERM_COMMIT
+			inputs["TS_C_Start"][dfTS[gen_id, :R_ID]] = dfTS[gen_id, :Cap_Size] .* (inputs["fuel_costs"][fuel_type[gen_id]] .* start_fuel[gen_id] .+ start_cost[gen_id])
+
+			dfTS[gen_id, :CO2_per_Start] = dfTS[gen_id, :Cap_Size] * (inputs["fuel_CO2"][fuel_type[gen_id]] * start_fuel[gen_id])
+
+			#scale appropriately
+			dfTS[gen_id, :CO2_per_Start] *= scale_factor
+		end
+	end
+end
+
+function nonfus_max_cap_constraint!(EP::Model, inputs::Dict, setup::Dict)
+
+	dfGen = inputs["dfGen"]
+
+	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+	TS = inputs["TS"]
+
+	dfTS = inputs["dfTS"]
+	by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
+
+	# convert thermal capacities to electrical capacities
+	NONFUS =  get_nonfus(inputs)
+	@expression(EP, eCElectric[y in NONFUS], EP[:vCCAP][y] * by_rid_df(y, :Eff_Down, dfGen))
+
+	#System-wide installed capacity is less than a specified maximum limit
+	FIRST_ROW = 1
+	if "Nonfus_System_Max_Cap_MWe" in names(dfTS)
+		max_cap = dfTS[FIRST_ROW, :Nonfus_System_Max_Cap_MWe]
+		if max_cap >= 0
+			@constraint(EP, cNonfusSystemTot, sum(eCElectric[NONFUS]) <= max_cap)
+		end
+	end
 end
 
 function fusion_max_cap_constraint!(EP::Model, inputs::Dict, setup::Dict)
@@ -262,6 +351,7 @@ function fusion_max_cap_constraint!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+	TS = inputs["TS"]
 
 	dfTS = inputs["dfTS"]
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
@@ -269,7 +359,8 @@ function fusion_max_cap_constraint!(EP::Model, inputs::Dict, setup::Dict)
 	FUS =  get_fus(inputs)
 
 	#System-wide installed capacity is less than a specified maximum limit
-	has_max_up = dfTS[by_rid(FUS, :Max_Up) .> 0, :R_ID]
+	has_max_up = dfTS[dfTS.Max_Up .>= 0, :R_ID]
+	has_max_up = intersect(has_max_up, FUS)
 
 	active_frac = ones(G)
 	avg_start_power = zeros(G)
@@ -367,7 +458,7 @@ function fusion_constraints!(EP::Model, inputs::Dict, setup::Dict)
 		by_rid(y, :Max_Starts) * EP[:vCCAP][y] / by_rid(y,:Cap_Size)
 	)
 
-	MAX_UPTIME = intersect(FUS, dfTS[dfTS.Max_Up.>0, :R_ID])
+	MAX_UPTIME = intersect(FUS, dfTS[dfTS.Max_Up.>=0, :R_ID])
 	# TODO: throw error if Max_Up == 0 since it's confusing & illdefined
 
 	max_uptime = zeros(Int, G)
@@ -429,6 +520,111 @@ function get_maintenance_duration(inputs::Dict)
 	return maint_dur
 end
 
+# TODO make compatible with reserves
+function thermal_core_constraints!(EP::Model, inputs::Dict, setup::Dict)
+
+	dfGen = inputs["dfGen"]
+	dfTS = inputs["dfTS"]
+	by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
+
+	T = inputs["T"]     # Number of time steps (hours)
+	G = inputs["G"]     # Number of resources
+	NONFUS = get_nonfus(inputs) # non fusion thermal cores
+	THERM_COMMIT = inputs["THERM_COMMIT"]
+
+	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
+
+	COMMIT = intersect(THERM_COMMIT, NONFUS)
+	NON_COMMIT = intersect(inputs["THERM_NO_COMMIT"], NONFUS)
+
+	# constraints for generators not subject to UC
+	if !isempty(NON_COMMIT)
+
+		# ramp up and ramp down rates
+		@constraints(EP, begin
+			[y in NON_COMMIT, t in T], EP[:vCP][y, t] - EP[:vCP][y, hoursbefore(p, t, 1)] <= by_rid(y, :Ramp_Up_Percentage) * EP[:vCCAP][y]
+			[y in NON_COMMIT, t in T], EP[:vCP][y, hoursbefore(p, t, 1)] - EP[:vCP][y,t] <= by_rid(y, :Ramp_Dn_Percentage) * EP[:vCCAP][y]
+		end)
+
+		# minimum stable power
+		@constraint(EP, [y in NON_COMMIT, t=1:T], EP[:vCP][y,t] >= by_rid(y, :Min_Power)* EP[:vCCAP][y])
+	end
+
+	# constraints for generatiors subject to UC
+	if !isempty(COMMIT)
+
+		### Decision variables for unit commitment  ###
+		# commitment state variable
+		@variable(EP, vCCOMMIT[y in COMMIT, t=1:T] >= 0)
+		# startup event variable
+		@variable(EP, vCSTART[y in COMMIT, t=1:T] >= 0)
+		# shutdown event variable
+		@variable(EP, vCSHUT[y in COMMIT, t=1:T] >= 0)
+
+		### Add startup costs ###
+		@expression(EP, eCStartTS[y in COMMIT, t=1:T], (inputs["omega"][t] * inputs["TS_C_Start"][y][t] * vCSTART[y, t]))
+		@expression(EP, eTotalCStartTST[t=1:T], sum(eCStartTS[y,t] for y in COMMIT))
+		@expression(EP, eTotalCStartTS, sum(eTotalCStartTST[t] for t=1:T))
+		EP[:eObj] += eTotalCStartTS
+
+		## Declaration of integer/binary variables
+		if setup["UCommit"] == 1 # Integer UC constraints
+			for y in COMMIT
+				set_integer.(vCCOMMIT[y,:])
+				set_integer.(vCSTART[y,:])
+				set_integer.(vCSHUT[y,:])
+				set_integer(EP[:vCCAP][y])
+			end
+		end
+
+		### Capacitated limits on unit commitment decision variables
+		@constraints(EP, begin
+			[y in COMMIT, t=1:T], vCCOMMIT[y,t] <= EP[:vCCAP][y] / by_rid(y,:Cap_Size)
+			[y in COMMIT, t=1:T], vCSTART[y,t] <= EP[:vCCAP][y] / by_rid(y,:Cap_Size)
+			[y in COMMIT, t=1:T], vCSHUT[y,t] <= EP[:vCCAP][y] / by_rid(y,:Cap_Size)
+		end)
+
+		# Commitment state constraint linking startup and shutdown decisions (Constraint #4)
+		@constraints(EP, begin
+			[y in COMMIT, t = 1:T], vCCOMMIT[y,t] == vCCOMMIT[y,hoursbefore(p, t, 1)] + vCSTART[y,t] - vCSHUT[y,t]
+		end)
+
+		#ramp up
+		@constraint(EP,[y in COMMIT, t= 1:T],
+			EP[:vCP][y,t]-EP[:vCP][y,hoursbefore(p, t, 1)] <= by_rid(y,:Ramp_Up_Percentage)*by_rid(y,:Cap_Size)*(vCCOMMIT[y,t]-vCSTART[y,t])
+			+ min(1, max(by_rid(y,:Min_Power), by_rid(y,:Ramp_Up_Percentage)))*by_rid(y,:Cap_Size)*vCSTART[y,t]
+			- by_rid(y,:Min_Power)*by_rid(y,:Cap_Size)*vCSHUT[y,t])
+
+		#ramp down
+		@constraint(EP,[y in COMMIT, t= 1:T],
+			EP[:vCP][y,hoursbefore(p, t, 1)]-EP[:vCP][y,t] <= by_rid(y,:Ramp_Dn_Percentage)*by_rid(y,:Cap_Size)*(vCCOMMIT[y,t]-vCSTART[y,t])
+			- by_rid(y,:Min_Power)*by_rid(y,:Cap_Size)*vCSTART[y,t]
+			+ min(1,max(by_rid(y,:Min_Power), by_rid(y,:Ramp_Dn_Percentage)))*by_rid(y,:Cap_Size)*vCSHUT[y,t])
+
+		# minimum and maximum stable power
+		@constraints(EP, begin
+			[y in COMMIT, t=1:T], EP[:vCP][y,t] >= by_rid(y,:Min_Power)*by_rid(y,:Cap_Size)*vCCOMMIT[y,t]
+			[y in COMMIT, t=1:T], EP[:vCP][y,t] <= by_rid(y, :Cap_Size) * vCCOMMIT[y,t]
+		end)
+
+		### Minimum up and down times (Constraints #9-10)
+		Up_Time = zeros(Int, nrow(dfGen))
+		Up_Time[COMMIT] .= Int.(floor.(by_rid_df(COMMIT,:Up_Time,dfTS)))
+		@constraint(EP, [y in COMMIT, t in 1:T],
+			vCCOMMIT[y,t] >= sum(vCSTART[y, hoursbefore(p, t, 0:(Up_Time[y] - 1))])
+		)
+
+		Down_Time = zeros(Int, nrow(dfGen))
+		Down_Time[COMMIT] .= Int.(floor.(by_rid_df(COMMIT,:Down_Time,dfTS)))
+		@constraint(EP, [y in COMMIT, t in 1:T],
+			EP[:vCCAP][y]/by_rid(y,:Cap_Size)-vCCOMMIT[y,t] >= sum(vCSHUT[y, hoursbefore(p, t, 0:(Down_Time[y] - 1))])
+		)
+
+		nonfus_max_cap_constraint!(EP, inputs, setup)
+
+	end
+end
+
 function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Fusion Core Maintenance Module")
@@ -444,8 +640,6 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
 	FUS = get_fus(inputs)
 	MAINTENANCE = get_maintenance(inputs)
-	YEARLY_MAINTENANCE = get_yearly_maintenance(inputs)
-	USAGE_BASED_MAINTENANCE = get_usage_based_maintenance(inputs)
 	HAS_vFMDOWN = union(FUS, MAINTENANCE)
 
 	NONMAINTENANCE = get_nonmaintenance(inputs)
@@ -484,14 +678,41 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	@constraint(EP, [y in MAINTENANCE, t in 1:T],
 				EP[:vFMDOWN][y,t] == sum(EP[:vFMSHUT][y, controlling_maintenance_start_hours(hours_per_subperiod, t, maint_dur[y], maintenance_begin_hours)]))
 
-	@constraint(EP, [y in YEARLY_MAINTENANCE],
+	@constraint(EP, [y in MAINTENANCE],
 		sum(EP[:vFMSHUT][y,t]*omega[t] for t in maintenance_begin_hours) >= EP[:vCCAP][y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
-	@constraint(EP, [y in USAGE_BASED_MAINTENANCE],
-		sum(EP[:vFMSHUT][y,t]*omega[t] for t in maintenance_begin_hours) >= sum(EP[:vCP][y,t]*omega[t] for t in 1:T) / by_rid(y,:Full_Power_Hours_Until_Maintenance) / by_rid(y,:Cap_Size))
 
 	# Passive recirculating power, depending on built capacity
 	@expression(EP, ePassiveRecircFus[y in FUS, t=1:T],
 		(EP[:vCCAP][y] - by_rid(y,:Cap_Size) * EP[:vFMDOWN][y,t]) * dfGen[y,:Eff_Down] * by_rid(y,:Recirc_Pass))
+end
+
+function thermal_core_emissions!(EP::Model, inputs::Dict, setup::Dict)
+
+	dfTS = inputs["dfTS"]
+	dfGen = inputs["dfGen"]
+
+	TS = inputs["TS"]	# R_IDs of resources with thermal storage
+	G = inputs["G"]		# R_IDs of all resources
+	T = inputs["T"]     # Number of time steps (hours)
+	Z = inputs["Z"]     # Number of zones
+	FUS = get_fus(inputs) #FUS generators
+	NONFUS = get_nonfus(inputs)	#NONFUS generators
+	THERM_COMMIT = inputs["THERM_COMMIT"] # units subject to UC
+	by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
+
+	@expression(EP, eEmissionsByPlantTS[y = 1:G, t = 1:T],
+		if y ∉ TS
+			0
+		elseif y in intersect(THERM_COMMIT, NONFUS)
+			by_rid(y, :CO2_per_MWh) * EP[:vCP][y, t] + by_rid(y, :CO2_per_Start) * EP[:vCSTART][y, t]
+		else
+			by_rid(y, :CO2_per_MWh) * EP[:vCP][y,t]
+		end
+	)
+
+	@expression(EP, eEmissionsByZoneTS[z=1:Z, t=1:T], sum(eEmissionsByPlantTS[y,t] for y in intersect(TS, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
+		EP[:eEmissionsByPlant] += eEmissionsByPlantTS
+		EP[:eEmissionsByZone] += eEmissionsByZoneTS
 end
 
 
