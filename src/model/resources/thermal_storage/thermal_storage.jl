@@ -236,6 +236,22 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 		fusion_constraints!(EP, inputs, setup)
 	end
 
+	# Capacity Reserves Margin policy
+	if setup["CapacityReserveMargin"] > 0
+		ncap = inputs["NCapacityReserveMargin"]
+
+		@expression(EP, eCapResMarBalanceThermalStorageAdjustment[res=1:ncap, t=1:T],
+					sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:eTotalCap][y]) for y in TS))
+
+		@expression(EP, eCapResMarBalanceFusionAdjustment[res=1:ncap, t=1:T],
+					sum(dfGen[y,Symbol("CapRes_$res")] * (-by_rid(y, :Cap_Size)*EP[:vFSTART][y,t]*dfGen[y,:Eff_Down]*by_rid(y, :Start_Power)
+															- EP[:ePassiveRecircFus][y,t]
+															- EP[:eActiveRecircFus][y,t]) for y in FUS))
+
+		EP[:eCapResMarBalance] += eCapResMarBalanceThermalStorageAdjustment
+		EP[:eCapResMarBalance] += eCapResMarBalanceFusionAdjustment
+	end
+
 return EP
 end
 
