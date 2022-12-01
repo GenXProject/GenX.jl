@@ -144,16 +144,16 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 			GEN_IN_ZONE = dfGen[[y in CO2ZONES for y in dfGen[:, :Zone]], :R_ID]
 			if setup["CO2Cap"]==1 # Mass-based
 				# Cost = sum(sum(emissions of gen y * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
+				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :].data) * inputs["omega"]
 				dfNetRevenue.EmissionsCost[GEN_IN_ZONE] += - co2_cap_dual * temp_vec
 			elseif setup["CO2Cap"]==2 # Demand + Rate-based
 				# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
+				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :].data) * inputs["omega"]
 				dfNetRevenue.EmissionsCost[GEN_IN_ZONE] += - co2_cap_dual * temp_vec
 			elseif setup["CO2Cap"]==3 # Generation + Rate-based
 				SET_WITH_MAXCO2RATE = union(inputs["THERM_ALL"],inputs["VRE"], inputs["VRE"],inputs["MUST_RUN"],inputs["HYDRO_RES"])
 				Y = intersect(GEN_IN_ZONE, SET_WITH_MAXCO2RATE)
-				temp_vec = (value.(EP[:eEmissionsByPlant][Y,:]) - (value.(EP[:vP][Y,:]) .* inputs["dfMaxCO2Rate"][dfGen[Y, :Zone], cap])) * inputs["omega"]
+				temp_vec = (value.(EP[:eEmissionsByPlant][Y,:].data) - (value.(EP[:vP][Y,:]) .* inputs["dfMaxCO2Rate"][dfGen[Y, :Zone], cap])) * inputs["omega"]
 				dfNetRevenue.EmissionsCost[Y] += - co2_cap_dual * temp_vec
 			end
 		end

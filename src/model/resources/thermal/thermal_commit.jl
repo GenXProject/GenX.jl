@@ -324,7 +324,7 @@ function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup:
     maint_freq(y) = Int(floor(by_rid(y, :Maintenance_Cycle_Length_Years)))
     maint_begin_cadence(y) = Int(floor(by_rid(y, :Maintenance_Begin_Cadence)))
 
-    integer_operational_unit_committment = setup["UCommit"] == 1
+    integer_operational_unit_commitment = setup["UCommit"] == 1
 
     vcommit = :vCOMMIT
     ecap = :eTotalCap
@@ -342,7 +342,7 @@ function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup:
                                 cap(y),
                                 vcommit,
                                 ecap,
-                                integer_operational_unit_committment)
+                                integer_operational_unit_commitment)
     end
 end
 

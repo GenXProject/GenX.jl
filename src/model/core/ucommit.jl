@@ -31,7 +31,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
+	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Commitment
 
 	### Variables ###
 

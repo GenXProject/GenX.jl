@@ -100,6 +100,44 @@ function check_maintenance_applicability(r::GenXResource)
 end
 
 @doc raw"""
+	check_fusion_applicability(r::GenXResource)
+
+Check whether the FUSION flag is set appropriately
+"""
+function check_fusion_applicability(r::GenXResource)
+    applicable_resources = [:THERM]
+
+    not_set = resource_attribute_not_set()
+    value = get(r, :FUSION, not_set)
+
+    error_strings = String[]
+
+    if value == not_set
+        # not FUSION so the rest is not applicable
+        return error_strings
+    end
+
+    check_for_flag_set(el) = get(r, el, not_set) > 0
+    statuses = check_for_flag_set.(applicable_resources)
+
+    if count(statuses) == 0
+        e = string("Resource ", resource_name(r), " has :FUSION = ", value, ".\n",
+                   "This setting is valid only for resources where the type is \n",
+                   "one of $applicable_resources. \n",
+                  )
+        push!(error_strings, e)
+    end
+
+    if get(r, :THERM, not_set) == 2
+        e = string("Resource ", resource_name(r), " has :FUSION = ", value, ".\n",
+                   "This is valid only for resources with unit commitment (:THERM = 1);\n",
+                   "this has :THERM = 2.")
+        push!(error_strings, e)
+    end
+    return error_strings
+end
+
+@doc raw"""
     check_resource(r::GenXResource)::Vector{String}
 
 Top-level function for validating the self-consistency of a GenX resource.
@@ -110,6 +148,7 @@ function check_resource(r::GenXResource)::Vector{String}
     e = [e; check_resource_type_flags(r)]
     e = [e; check_longdurationstorage_applicability(r)]
     e = [e; check_maintenance_applicability(r)]
+    e = [e; check_fusion_applicability(r)]
     return e
 end
 
