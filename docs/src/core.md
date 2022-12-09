@@ -33,3 +33,4 @@ Pages = ["ucommit.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["emissions.jl"]
+```
