@@ -32,18 +32,22 @@ Order = [:type, :function]
 Modules = [GenX]
 Pages = ["investment_multi_stage.jl"]
 Order = [:type, :function]
+```
 
 ```@autodocs
 Modules = [GenX]
 Pages = ["storage_multi_stage.jl"]
 Order = [:type, :function]
+```
 
 ```@autodocs
 Modules = [GenX]
 Pages = ["transmission_multi_stage.jl"]
 Order = [:type, :function]
+```
 
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_capacity_multi_stage.jl"]
 Order = [:type, :function]
+```
