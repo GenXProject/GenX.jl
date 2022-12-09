@@ -53,7 +53,7 @@ using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 #using CPLEX
-#using Gurobi
+using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
@@ -201,7 +201,6 @@ include("multi_stage/write_multi_stage_capacities_energy.jl")
 include("multi_stage/write_multi_stage_network_expansion.jl")
 include("multi_stage/write_multi_stage_costs.jl")
 include("multi_stage/write_multi_stage_stats.jl")
-include("multi_stage/write_multi_stage_settings.jl")
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/configure_multi_stage_inputs.jl")
 include("multi_stage/endogenous_retirement.jl")
