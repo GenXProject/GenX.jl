@@ -97,7 +97,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Generate Energy Portfolio (EP) Model
 	EP = Model(OPTIMIZER)
-
+	if setup["ModelExpedite"] == 1
+		set_string_names_on_creation(EP, false)
+	end
 	# Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
 	# eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
 	@variable(EP, vZERO == 0);
