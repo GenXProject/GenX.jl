@@ -20,4 +20,3 @@ ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not a
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
 ModelingToGenerateAlternativeIterations: 3
 MultiStage: 1 # 0 = Single-stage GenX, 1 = Multi-stage GenX
-EnableJuMPStringNames: 0 #Flag set to 1 for enabling string name reporting (slows model generation), 0 otherwise and by default
