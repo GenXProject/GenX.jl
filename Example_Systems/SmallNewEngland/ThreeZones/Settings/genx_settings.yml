@@ -20,4 +20,3 @@ ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cos
 ModelingToGenerateAlternativeIterations: 3 # Number of MGA iterations with maximization and minimization objective
 MultiStage: 0 # Multi-stage modeling; 0 if single-stage; 1 if multi-stage.
 MethodofMorris: 0 #Flag for turning on the Method of Morris analysis
-EnableJuMPStringNames: 0 #Flag set to 1 for enabling string name reporting (slows model generation), 0 otherwise and by default
