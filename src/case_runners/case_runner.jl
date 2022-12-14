@@ -74,7 +74,9 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
     myinputs = load_inputs(mysetup, case)
 
     println("Generating the Optimization Model")
-    EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    println("Time elapsed for model building is")
+    println(time_elapsed)
 
     println("Solving Model")
     EP, solve_time = solve_model(EP, mysetup)

@@ -63,6 +63,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "ModelingtoGenerateAlternativeSlack", 0.1)
     # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
     set_default_if_absent!(settings, "MultiStage", 0)
+    # No JuMP String name reporting at model generation by default, to expedite model generation; true if JuMP string names need to be enabled
+    set_default_if_absent!(settings, "EnableJuMPStringNames", false)
 
 
 return settings
