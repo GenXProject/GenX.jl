@@ -19,4 +19,3 @@ ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not a
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
 ModelingToGenerateAlternativeIterations: 3 # Number of MGA iterations with maximization and minimization objective
 MethodofMorris: 0 #Flag for turning on the Method of Morris analysis
-EnableJuMPStringNames: 0 #Flag set to 1 for enabling string name reporting (slows model generation), 0 otherwise and by default
