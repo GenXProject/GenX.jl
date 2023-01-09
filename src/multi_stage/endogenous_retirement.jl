@@ -74,12 +74,12 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	### Variables ###
 
 	# Keep track of all new and retired capacity from all stages
-	@variable(EP, vCAPTRACK[y=1:G,p=1:num_stages] >= 0 )
-	@variable(EP, vRETCAPTRACK[y=1:G,p=1:num_stages] >= 0 )
+	@variable(EP, vCAPTRACK[y in RET_CAP,p=1:num_stages] >= 0 )
+	@variable(EP, vRETCAPTRACK[y in RET_CAP,p=1:num_stages] >= 0 )
 
 	### Expressions ###
 
-	@expression(EP, eNewCap[y in 1:G],
+	@expression(EP, eNewCap[y in RET_CAP],
 		if y in NEW_CAP
 			EP[:vCAP][y]
 		else
@@ -87,18 +87,12 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 		end
 	)
 
-	@expression(EP, eRetCap[y in 1:G],
-		if y in RET_CAP
-			EP[:vRETCAP][y]
-		else
-			EP[:vZERO]
-		end
-	)
+	@expression(EP, eRetCap[y in RET_CAP], EP[:vRETCAP][y])
 
 	# Construct and add the endogenous retirement constraint expressions
-	@expression(EP, eRetCapTrack[y=1:G], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrack[y=1:G], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrack[y=1:G],
+	@expression(EP, eRetCapTrack[y in RET_CAP], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
+	@expression(EP, eNewCapTrack[y in RET_CAP], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eMinRetCapTrack[y in RET_CAP],
 		if y in COMMIT
 			sum((dfGen[!,Symbol("Min_Retired_Cap_MW")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_stage)
 		else
@@ -109,16 +103,16 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	### Constraints ###
 
 	# Keep track of newly built capacity from previous stages
-	@constraint(EP, cCapTrackNew[y=1:G], eNewCap[y] == vCAPTRACK[y,cur_stage])
+	@constraint(EP, cCapTrackNew[y in RET_CAP], eNewCap[y] == vCAPTRACK[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cCapTrack[y=1:G,p=1:(cur_stage-1)], vCAPTRACK[y,p] == 0)
+	@constraint(EP, cCapTrack[y in RET_CAP,p=1:(cur_stage-1)], vCAPTRACK[y,p] == 0)
 
 	# Keep track of retired capacity from previous stages
-	@constraint(EP, cRetCapTrackNew[y=1:G], eRetCap[y] == vRETCAPTRACK[y,cur_stage])
+	@constraint(EP, cRetCapTrackNew[y in RET_CAP], eRetCap[y] == vRETCAPTRACK[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cRetCapTrack[y=1:G,p=1:(cur_stage-1)], vRETCAPTRACK[y,p] == 0)
+	@constraint(EP, cRetCapTrack[y in RET_CAP,p=1:(cur_stage-1)], vRETCAPTRACK[y,p] == 0)
 
-	@constraint(EP, cLifetimeRet[y=1:G], eNewCapTrack[y] + eMinRetCapTrack[y]  <= eRetCapTrack[y])
+	@constraint(EP, cLifetimeRet[y in RET_CAP], eNewCapTrack[y] + eMinRetCapTrack[y]  <= eRetCapTrack[y])
 
 end
 
@@ -136,12 +130,12 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 	### Variables ###
 
 	# Keep track of all new and retired capacity from all stages
-	@variable(EP, vCAPTRACKCHARGE[y in STOR_ASYMMETRIC,p=1:num_stages] >= 0)
-	@variable(EP, vRETCAPTRACKCHARGE[y in STOR_ASYMMETRIC,p=1:num_stages] >= 0)
+	@variable(EP, vCAPTRACKCHARGE[y in RET_CAP_CHARGE,p=1:num_stages] >= 0)
+	@variable(EP, vRETCAPTRACKCHARGE[y in RET_CAP_CHARGE,p=1:num_stages] >= 0)
 
 	### Expressions ###
 
-	@expression(EP, eNewCapCharge[y in STOR_ASYMMETRIC],
+	@expression(EP, eNewCapCharge[y in RET_CAP_CHARGE],
 		if y in NEW_CAP_CHARGE
 			EP[:vCAPCHARGE][y]
 		else
@@ -149,32 +143,26 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 		end
 	)
 
-	@expression(EP, eRetCapCharge[y in STOR_ASYMMETRIC],
-		if y in RET_CAP_CHARGE
-			EP[:vRETCAPCHARGE][y]
-		else
-			EP[:vZERO]
-		end
-	)
+	@expression(EP, eRetCapCharge[y in RET_CAP_CHARGE], EP[:vRETCAPCHARGE][y])
 
 	# Construct and add the endogenous retirement constraint expressions
-	@expression(EP, eRetCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackCharge[y in STOR_ASYMMETRIC], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackCharge[y in STOR_ASYMMETRIC], sum((dfGen[!,Symbol("Min_Retired_Charge_Cap_MW")][y]) for p=1:cur_stage))
+	@expression(EP, eRetCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_stage))
+	@expression(EP, eNewCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eMinRetCapTrackCharge[y in RET_CAP_CHARGE], sum((dfGen[!,Symbol("Min_Retired_Charge_Cap_MW")][y]) for p=1:cur_stage))
 
 	### Constratints ###
 
 	# Keep track of newly built capacity from previous stages
-	@constraint(EP, cCapTrackChargeNew[y in STOR_ASYMMETRIC], eNewCapCharge[y] == vCAPTRACKCHARGE[y,cur_stage])
+	@constraint(EP, cCapTrackChargeNew[y in RET_CAP_CHARGE], eNewCapCharge[y] == vCAPTRACKCHARGE[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cCapTrackCharge[y in STOR_ASYMMETRIC,p=1:(cur_stage-1)], vCAPTRACKCHARGE[y,p] == 0)
+	@constraint(EP, cCapTrackCharge[y in RET_CAP_CHARGE,p=1:(cur_stage-1)], vCAPTRACKCHARGE[y,p] == 0)
 
 	# Keep track of retired capacity from previous stages
-	@constraint(EP, cRetCapTrackChargeNew[y in STOR_ASYMMETRIC], eRetCapCharge[y] == vRETCAPTRACKCHARGE[y,cur_stage])
+	@constraint(EP, cRetCapTrackChargeNew[y in RET_CAP_CHARGE], eRetCapCharge[y] == vRETCAPTRACKCHARGE[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cRetCapTrackCharge[y in STOR_ASYMMETRIC,p=1:(cur_stage-1)], vRETCAPTRACKCHARGE[y,p] == 0)
+	@constraint(EP, cRetCapTrackCharge[y in RET_CAP_CHARGE,p=1:(cur_stage-1)], vRETCAPTRACKCHARGE[y,p] == 0)
 
-	@constraint(EP, cLifetimeRetCharge[y in STOR_ASYMMETRIC], eNewCapTrackCharge[y] + eMinRetCapTrackCharge[y]  <= eRetCapTrackCharge[y])
+	@constraint(EP, cLifetimeRetCharge[y in RET_CAP_CHARGE], eNewCapTrackCharge[y] + eMinRetCapTrackCharge[y]  <= eRetCapTrackCharge[y])
 
 end
 
@@ -191,12 +179,12 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 	### Variables ###
 
 	# Keep track of all new and retired capacity from all stages
-	@variable(EP, vCAPTRACKENERGY[y in STOR_ALL,p=1:num_stages] >= 0)
-	@variable(EP, vRETCAPTRACKENERGY[y in STOR_ALL,p=1:num_stages] >= 0)
+	@variable(EP, vCAPTRACKENERGY[y in RET_CAP_ENERGY,p=1:num_stages] >= 0)
+	@variable(EP, vRETCAPTRACKENERGY[y in RET_CAP_ENERGY,p=1:num_stages] >= 0)
 
 	### Expressions ###
 
-	@expression(EP, eNewCapEnergy[y in STOR_ALL],
+	@expression(EP, eNewCapEnergy[y in RET_CAP_ENERGY],
 		if y in NEW_CAP_ENERGY
 			EP[:vCAPENERGY][y]
 		else
@@ -204,31 +192,25 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 		end
 	)
 
-	@expression(EP, eRetCapEnergy[y in STOR_ALL],
-		if y in RET_CAP_ENERGY
-			EP[:vRETCAPENERGY][y]
-		else
-			EP[:vZERO]
-		end
-	)
+	@expression(EP, eRetCapEnergy[y in RET_CAP_ENERGY], EP[:vRETCAPENERGY][y])
 
 	# Construct and add the endogenous retirement constraint expressions
-	@expression(EP, eRetCapTrackEnergy[y in STOR_ALL], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackEnergy[y in STOR_ALL], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackEnergy[y in STOR_ALL], sum((dfGen[!,Symbol("Min_Retired_Energy_Cap_MW")][y]) for p=1:cur_stage))
+	@expression(EP, eRetCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_stage))
+	@expression(EP, eNewCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eMinRetCapTrackEnergy[y in RET_CAP_ENERGY], sum((dfGen[!,Symbol("Min_Retired_Energy_Cap_MW")][y]) for p=1:cur_stage))
 
 	### Constratints ###
 
 	# Keep track of newly built capacity from previous stages
-	@constraint(EP, cCapTrackEnergyNew[y in STOR_ALL], eNewCapEnergy[y] == vCAPTRACKENERGY[y,cur_stage])
+	@constraint(EP, cCapTrackEnergyNew[y in RET_CAP_ENERGY], eNewCapEnergy[y] == vCAPTRACKENERGY[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cCapTrackEnergy[y in STOR_ALL,p=1:(cur_stage-1)], vCAPTRACKENERGY[y,p] == 0)
+	@constraint(EP, cCapTrackEnergy[y in RET_CAP_ENERGY,p=1:(cur_stage-1)], vCAPTRACKENERGY[y,p] == 0)
 
 	# Keep track of retired capacity from previous stages
-	@constraint(EP, cRetCapTrackEnergyNew[y in STOR_ALL], eRetCapEnergy[y] == vRETCAPTRACKENERGY[y,cur_stage])
+	@constraint(EP, cRetCapTrackEnergyNew[y in RET_CAP_ENERGY], eRetCapEnergy[y] == vRETCAPTRACKENERGY[y,cur_stage])
 	# The RHS of this constraint will be updated in the forward pass
-	@constraint(EP, cRetCapTrackEnergy[y in STOR_ALL,p=1:(cur_stage-1)], vRETCAPTRACKENERGY[y,p] == 0)
+	@constraint(EP, cRetCapTrackEnergy[y in RET_CAP_ENERGY,p=1:(cur_stage-1)], vRETCAPTRACKENERGY[y,p] == 0)
 
-	@constraint(EP, cLifetimeRetEnergy[y in STOR_ALL], eNewCapTrackEnergy[y] + eMinRetCapTrackEnergy[y]  <= eRetCapTrackEnergy[y])
+	@constraint(EP, cLifetimeRetEnergy[y in RET_CAP_ENERGY], eNewCapTrackEnergy[y] + eMinRetCapTrackEnergy[y]  <= eRetCapTrackEnergy[y])
 
 end

@@ -160,7 +160,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
             println("***********")
 
             # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-            models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
+            models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
 
             # Step d.ii) Fix capacity tracking variables for endogenous retirements
             models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
@@ -243,7 +243,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
         println("***********")
 
         # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-        models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
+        models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
 
         # Step d.ii) Fix capacity tracking variables for endogenous retirements
         models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
@@ -301,16 +301,19 @@ inputs:
 
 returns: JuMP model with updated linking constraints.
 """
-function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
+function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict, inputs_d::Dict)
+	
+    RET_CAP = inputs_d["RET_CAP"] # Set of all resources subject to inter-stage capacity tracking
 
     # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-
-            # Set the right hand side value of the linking initial capacity constraint in the current
-            # stage to the value of the available capacity variable solved for in the previous stages
-            set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+            if y in RET_CAP
+                # Set the right hand side value of the linking initial capacity constraint in the current
+                # stage to the value of the available capacity variable solved for in the previous stages
+                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+            end
         end
     end
     return EP_cur
