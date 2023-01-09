@@ -122,14 +122,14 @@ Thermal resources subject to unit commitment adhere to the following constraints
 
 ```math
 \begin{aligned}
-	\nu_{y,z,t} \geq \displaystyle \sum_{\hat{t} = t-\tau^{up}_{y,z}}^t \chi_{y,z,\hat{t}}
+	\nu_{y,z,t} \geq \displaystyle \sum_{\hat{t} = t-(\tau^{up}_{y,z}-1)}^t \chi_{y,z,\hat{t}}
 	\hspace{1.5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
 
 ```math
 \begin{aligned}
-	\frac{\overline{\Delta_{y,z}} + \Omega_{y,z} - \Delta_{y,z}}{\Omega^{size}_{y,z}} -  \nu_{y,z,t} \geq \displaystyle \sum_{\hat{t} = t-\tau^{down}_{y,z}}^t \zeta_{y,z,\hat{t}}
+	\frac{\overline{\Delta_{y,z}} + \Omega_{y,z} - \Delta_{y,z}}{\Omega^{size}_{y,z}} -  \nu_{y,z,t} \geq \displaystyle \sum_{\hat{t} = t-(\tau^{down}_{y,z}-1)}^t \zeta_{y,z,\hat{t}}
 	\hspace{1.5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
