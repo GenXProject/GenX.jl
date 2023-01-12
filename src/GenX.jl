@@ -157,9 +157,14 @@ include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_w.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin.jl")
+include("write_outputs/capacity_reserve_margin/write_reserve_margin_slack.jl")
 
 include("write_outputs/energy_share_requirement/write_esr_prices.jl")
 include("write_outputs/energy_share_requirement/write_esr_revenue.jl")
+
+include("write_outputs/co2_cap/write_co2_cap.jl")
+
+include("write_outputs/minimum_capacity_requirement/write_minimum_capacity_requirement.jl")
 
 include("write_outputs/long_duration_storage/write_opwrap_lds_dstor.jl")
 include("write_outputs/long_duration_storage/write_opwrap_lds_stor_init.jl")

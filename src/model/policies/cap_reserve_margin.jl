@@ -15,6 +15,7 @@ Note that multiple capacity reserve margin requirements can be specified coverin
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	# capacity reserve margin constraint
 	T = inputs["T"]
+	NCRM = inputs["NCapacityReserveMargin"]
 	println("Capacity Reserve Margin Policies Module")
 
 	if !haskey(setup, "CapResPeriodLength")
@@ -22,8 +23,18 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 		println("The value of CapResPeriodLength should be equal to the longest anticipated continuous period over which a CapRes constraint is binding")
 	end
 
-	@constraint(EP, cCapacityResMargin[res=1:inputs["NCapacityReserveMargin"], t=1:T], EP[:eCapResMarBalance][res, t]
+	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])
 				for z=findall(x->x!=0,inputs["dfCapRes"][:,res])))
 
+	# if input files are present, add capacity reserve margin slack variables
+	if haskey(inputs, "dfCapRes_slack")
+		@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
+		EP[:eCapResMarBalance] += vCapResSlack
+
+		@expression(EP, eCapResSlack_Year[res=1:NCRM], sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
+		@expression(EP, eCCapResSlack[res=1:NCRM], inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])
+		@expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res = 1:NCRM))
+		EP[:eObj] += eCTotalCapResSlack
+	end
 end
