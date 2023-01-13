@@ -70,11 +70,44 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	if setup["CO2Cap"] >= 1
 		load_co2_cap!(setup, path, inputs)
+
+	end
+	if setup["CO2LoadRateCap"] == 1
+		inputs = load_co2_load_side_emission_rate_cap(setup, path, inputs)
+	end
+	if setup["CO2GenRateCap"] == 1
+		inputs = load_co2_generation_side_emission_rate_cap(setup, path, inputs)
+	end
+	if setup["CO2Tax"] == 1
+		inputs = load_co2_tax(setup, path, inputs)
+	end
+	if setup["CO2Capture"] ==1
+		if setup["CO2Credit"] == 1
+			inputs = load_co2_credit(setup, path, inputs)
+		end
+	end
+
+	if setup["TFS"] == 1
+		inputs = load_twentyfourseven(setup, path, inputs)
+	end
+
+	if setup["EnergyCredit"] == 1
+		inputs = load_energy_credit(setup, path, inputs)
+	end
+
+	if setup["InvestmentCredit"] == 1
+		inputs = load_investment_credit(setup, path, inputs)
 	end
 
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
 		load_period_map!(setup, path, inputs)
+	end
+
+	# Read in VRE-storage resource module related inputs & resource availability profiles
+	if setup["VreStor"] == 1
+		inputs = load_vre_stor_data(setup, path, sep, inputs, cost_fuel, CO2_fuel)
+		inputs = load_vre_stor_variability(setup, path, sep, inputs)
 	end
 
 	println("CSV Files Successfully Read In From $path")

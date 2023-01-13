@@ -36,11 +36,31 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
     end
+
     # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+
     EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactor.AnnualSum), findall(x -> x >= 1, dfCapacityfactor.Capacity))
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
     CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN), EXISTING)
     dfCapacityfactor.CapacityFactor[CF_GEN] .= (dfCapacityfactor.AnnualSum[CF_GEN] ./ dfCapacityfactor.Capacity[CF_GEN]) / sum(inputs["omega"][t] for t in 1:T)
+
+    # VRE-Storage Module
+    if setup["VreStor"] == 1
+        dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+        dfCapacityfactorVRESTOR = DataFrame(Resource=inputs["RESOURCES_VRE"], Zone=dfGen_VRE_STOR[!, :Zone], AnnualSum=zeros(VRE_STOR), Capacity=zeros(VRE_STOR), CapacityFactor=zeros(VRE_STOR))
+        if setup["ParameterScale"] == 1
+            dfCapacityfactorVRESTOR.AnnualSum .= value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter] * inputs["omega"] * ModelScalingFactor
+            dfCapacityfactorVRESTOR.Capacity .= value.(EP[:eTotalCap_VRE]) * ModelScalingFactor
+        else
+            dfCapacityfactorVRESTOR.AnnualSum .= value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter]
+            dfCapacityfactorVRESTOR.Capacity .= value.(EP[:eTotalCap_VRE])
+        end
+        # We only calculate the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+        EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactorVRESTOR.AnnualSum), findall(x -> x >= 1, dfCapacityfactorVRESTOR.Capacity))
+        dfCapacityfactorVRESTOR.CapacityFactor[EXISTING] .= (dfCapacityfactorVRESTOR.AnnualSum[EXISTING] ./ dfCapacityfactorVRESTOR.Capacity[EXISTING]) / sum(inputs["omega"][t] for t in 1:T)
+        CSV.write(joinpath(path, "vrestor_capacityfactor.csv"), dfCapacityfactorVRESTOR)
+    end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), dfCapacityfactor)
     return dfCapacityfactor

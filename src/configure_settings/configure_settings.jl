@@ -33,16 +33,26 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "Trans_Loss_Segments", 1)
     # Regulation (primary) and operating (secondary) reserves; 0 = not active, 1 = active systemwide
     set_default_if_absent!(settings, "Reserves", 0)
-    # Minimum qualifying renewables penetration; 0 = not active; 1 = active systemwide
+    # If there is any energy share requirement; 0 = no; 1 = yes
     set_default_if_absent!(settings, "EnergyShareRequirement", 0)
-    # Number of capacity reserve margin constraints; 0 = not active; 1 = active systemwide
+    # If there is any capacity reserve margin constraints; 0 = no; 1 = yes
     set_default_if_absent!(settings, "CapacityReserveMargin", 0)
-    # CO2 emissions cap; 0 = not active (no CO2 emission limit); 1 = mass-based emission limit constraint; 2 = load + rate-based emission limit constraint; 3 = generation + rate-based emission limit constraint
+    # CO2 mass-based emissions cap; 0 = not active; 1 = active;
     set_default_if_absent!(settings, "CO2Cap", 0)
-    # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
+    # CO2 loadrate-based emissions cap; 0 = not active; 1 = active;
+    set_default_if_absent!(settings, "CO2LoadRateCap", 0)
+    # CO2 generation rate-based emissions cap; 0 = not active; 1 = active;
+    set_default_if_absent!(settings, "CO2GenRateCap", 0)
+    # CO2 tax; 0 = not active; 1 = active;
+    set_default_if_absent!(settings, "CO2Tax", 0)
+    # Energy Share Requirement and CO2 constraints account for energy losses of storage; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
     set_default_if_absent!(settings, "StorageLosses", 1)
+    # Energy Share Requirement and CO2 constraints account for energy losses of transmission; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
+    set_default_if_absent!(settings, "PolicyTransmissionLossCoverage", 0)
     # Activate minimum technology carveout constraints; 0 = not active; 1 = active
     set_default_if_absent!(settings, "MinCapReq", 0)
+    # Activate maximum technology limit constraints; 0 = not active; 1 = active
+    set_default_if_absent!(settings, "MaxCapReq", 0)
     # Available solvers: Gurobi, CPLEX, CLPs
     set_default_if_absent!(settings, "Solver", "HiGHS")
     # Turn on parameter scaling wherein load, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
@@ -63,9 +73,22 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "ModelingtoGenerateAlternativeSlack", 0.1)
     # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
     set_default_if_absent!(settings, "MultiStage", 0)
+    # CO2 carbon capture and sequestration; 0 = not active; 1 = active, co2 capture will be modeled, cost and caputred emission will be printed;
+    set_default_if_absent!(settings, "CO2Capture", 0)
+    # CO2 capture credit; 0 = not active; 1 = active;
+    set_default_if_absent!(settings, "CO2Credit", 0)
+    # Piecewise Heat Rate; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "PieceWiseHeatRate", 0)
+    # Twenty-four Seven Module; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "TFS", 0)    
+    # Energy Credit Module; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "EnergyCredit", 0)    
+    # Investment Credit Module; 0 = not activate; 1 = active
+    set_default_if_absent!(settings, "InvestmentCredit", 0)
+    # Activate the VRE-storage module and constraints; 0 = not active; 1 = active
+    set_default_if_absent!(settings, "VreStor", 0)
     # No JuMP String name reporting at model generation by default, to expedite model generation; true if JuMP string names need to be enabled
     set_default_if_absent!(settings, "EnableJuMPStringNames", false)
-
 
 return settings
 end

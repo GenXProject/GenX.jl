@@ -1,0 +1,7 @@
+,Network_zones,CapRes_1,CapRes_2,CapRes_3,CapRes_4
+CA_N,z1,0.21,0,0,0
+CA_S,z2,0.21,0,0,0
+WECC_N,z3,0,0.205,0,0
+WECC_NMAZ,z4,0,0,0,0.195
+WECC_PNW,z5,0,0.205,0,0
+WECC_WYCO,z6,0,0,0.305,0

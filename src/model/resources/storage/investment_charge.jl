@@ -60,7 +60,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
 	MultiStage = setup["MultiStage"]
-
+	Z = inputs["Z"]
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
 	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
@@ -102,27 +102,35 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Objective Function Expressions ##
 
-	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
-	# If resource is not eligible for new charge capacity, fixed costs are only O&M costs
-	@expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
-		if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
-			dfGen[y,:Inv_Cost_Charge_per_MWyr]*vCAPCHARGE[y] + dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
-		else
-			dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
-		end
-	)
+    # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
+    # If resource is not eligible for new charge capacity, fixed costs are only O&M costs
+    @expression(EP, eCInvChargeCap[y in STOR_ASYMMETRIC],
+        if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
+            dfGen[y, :Inv_Cost_Charge_per_MWyr] * EP[:vCAPCHARGE][y]
+        else
+            EP[:vZERO]
+        end
+    )
+    @expression(EP, eCFOMChargeCap[y in STOR_ASYMMETRIC], dfGen[y, :Fixed_OM_Cost_Charge_per_MWyr] * eTotalCapCharge[y])
+    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC], EP[:eCInvChargeCap][y] + EP[:eCFOMChargeCap][y])
+    # Sum individual resource contributions to fixed costs to get total fixed costs
+    @expression(EP, eZonalCFOMChargeCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMChargeCap][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCInvChargeCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvChargeCap][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCFixCharge[z = 1:Z], EP[:vZERO] + sum(EP[:eCFixCharge][y] for y in intersect(STOR_ASYMMETRIC, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
 
-	# Sum individual resource contributions to fixed costs to get total fixed costs
-	@expression(EP, eTotalCFixCharge, sum(EP[:eCFixCharge][y] for y in STOR_ASYMMETRIC))
+    @expression(EP, eTotalCFOMCharge, sum(EP[:eZonalCFOMChargeCap][z] for z in 1:Z))
+    @expression(EP, eTotalCInvCharge, sum(EP[:eZonalCInvChargeCap][z] for z in 1:Z))
+    @expression(EP, eTotalCFixCharge, sum(EP[:eZonalCFixCharge][z] for z in 1:Z))
 
 	# Add term to objective function expression
 	if MultiStage == 1
 		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixCharge
+		# EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixCharge
+		add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), EP[:eTotalCFixCharge])
 	else
-		EP[:eObj] += eTotalCFixCharge
+		add_to_expression!(EP[:eObj], EP[:eTotalCFixCharge])
 	end
 
 	### Constratints ###

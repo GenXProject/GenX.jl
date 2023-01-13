@@ -19,6 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Read input parameters related to planning reserve margin constraints
 """
+
 function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Capacity_reserve_margin.csv"
     df = load_dataframe(joinpath(path, filename))
@@ -28,6 +29,7 @@ function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dic
     inputs["NCapacityReserveMargin"] = size(mat, 2)
 
     println(filename * " Successfully Read!")
+
 end
 
 @doc raw"""
@@ -35,6 +37,7 @@ end
 
 Read input parameters related to participation of transmission imports/exports in capacity reserve margin constraint.
 """
+
 function load_cap_reserve_margin_trans!(setup::Dict, inputs::Dict, network_var::DataFrame)
     mat = extract_matrix_from_dataframe(network_var, "DerateCapRes")
     inputs["dfDerateTransCapRes"] = mat

@@ -65,6 +65,8 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 				inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
 			end
 		end
+		n_totalhour = sum(inputs_load["omega"])
+		inputs_load["omega"] .*= (8760/n_totalhour)
 	end
 
 	# Create time set steps indicies

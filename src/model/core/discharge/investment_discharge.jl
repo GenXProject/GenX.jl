@@ -56,7 +56,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 
 	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
-
+	Z = inputs["Z"]
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
@@ -129,12 +129,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
 	# If resource is not eligible for new capacity, fixed costs are only O&M costs
-	@expression(EP, eCFix[y in 1:G],
-		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
+	@expression(EP, eInvCap[y in 1:G],
+		if y in NEW_CAP # Resources eligible for new capacity
 			if y in COMMIT
-				dfGen[y,:Inv_Cost_per_MWyr]*dfGen[y,:Cap_Size]*vCAP[y] + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				dfGen[y, :Cap_Size] * vCAP[y]
 			else
-				dfGen[y,:Inv_Cost_per_MWyr]*vCAP[y] + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				vCAP[y]
 			end
 		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
 			if y in COMMIT
@@ -143,21 +143,32 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
 			end
 		else
-			dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
-		end
+			EP[:vZERO]
+		end	
 	)
+    @expression(EP, eCInvCap[y in 1:G], dfGen[y, :Inv_Cost_per_MWyr] * EP[:eInvCap][y])
+    @expression(EP, eCFOMCap[y in 1:G], dfGen[y, :Fixed_OM_Cost_per_MWyr] * EP[:eTotalCap][y])
+    @expression(EP, eCFix[y in 1:G], EP[:eCInvCap][y] + EP[:eCFOMCap][y])
 
-	# Sum individual resource contributions to fixed costs to get total fixed costs
-	@expression(EP, eTotalCFix, sum(EP[:eCFix][y] for y in 1:G))
+    # Sum individual resource contributions to fixed costs to get total fixed costs
+
+    @expression(EP, eZonalCFOM[z=1:Z], EP[:vZERO] + sum(EP[:eCFOMCap][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCInv[z=1:Z], EP[:vZERO] + sum(EP[:eCInvCap][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+    @expression(EP, eZonalCFix[z=1:Z], EP[:vZERO] + sum(EP[:eCFix][y] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+
+    @expression(EP, eTotalCFOM, sum(EP[:eZonalCFOM][z] for z in 1:Z))
+    @expression(EP, eTotalCInv, sum(EP[:eZonalCInv][z] for z in 1:Z))
+    @expression(EP, eTotalCFix, sum(EP[:eZonalCFix][z] for z in 1:Z))
 
 	# Add term to objective function expression
 	if MultiStage == 1
 		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFix
+		# EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFix
+		add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), EP[:eTotalCFix])
 	else
-		EP[:eObj] += eTotalCFix
+		add_to_expression!(EP[:eObj], EP[:eTotalCFix])
 	end
 
 	### Constratints ###
@@ -180,10 +191,5 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
 	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0,:R_ID], 1:G)], eTotalCap[y] >= dfGen[y,:Min_Cap_MW])
-
-	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
-		EP[:eMinCapRes] += eMinCapResInvest
-	end
 
 end

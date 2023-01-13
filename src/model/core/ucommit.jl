@@ -63,6 +63,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Objective Function Expressions ##
 
+
 	# Startup costs of "generation" for resource "y" during hour "t"
 	@expression(EP, eCStart[y in COMMIT, t=1:T],(inputs["omega"][t]*inputs["C_Start"][y,t]*vSTART[y,t]))
 
@@ -71,6 +72,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCStart, sum(eTotalCStartT[t] for t=1:T))
 
 	EP[:eObj] += eTotalCStart
+
 
 	### Constratints ###
 	## Declaration of integer/binary variables

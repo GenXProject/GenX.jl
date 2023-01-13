@@ -30,6 +30,54 @@ The final term in the summation above adds roundtrip storage losses to the total
 function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Energy Share Requirement Policies Module")
+    dfGen = inputs["dfGen"]
+    G = inputs["G"]
+	Z = inputs["Z"]     # Number of zones
+	T = inputs["T"]     # Number of time steps (hours)
+    STOR_ALL = inputs["STOR_ALL"]
+    
+    ### Variables ####
+    @variable(EP, vESRSlack[ESR=1:inputs["nESR"]]>=0)
+
+    ### Expressions ###
+    # Initialize
+    @expression(EP, eESR[ESR=1:inputs["nESR"]], 1*EP[:vESRSlack][ESR])
+
+    # Add Penalty to the objective function
+    @expression(EP, eCESRSlack[ESR=1:inputs["nESR"]], inputs["dfESR_slack"][ESR,:PriceCap] * EP[:vESRSlack][ESR])
+    @expression(EP, eCTotalESRSlack, sum(EP[:eCESRSlack][ESR] for ESR = 1:inputs["nESR"]))
+    add_to_expression!(EP[:eObj], EP[:eCTotalESRSlack])
+
+    # Total Energy 
+    @expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen[y,Symbol("ESR_$ESR")]*EP[:vP][y,t] for y=1:G, t=1:T))
+    add_to_expression!.(EP[:eESR], EP[:eESRDischarge])
+
+    # Total Demand of Energy 
+    @expression(EP, eESRDemand[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,Symbol("ESR_$ESR")] * inputs["omega"][t] * (inputs["pD"][t,z] - EP[:eZonalNSE][t,z]) for t=1:T, z=1:Z))
+    add_to_expression!.(EP[:eESR], -1, EP[:eESRDemand])
+
+    # Considering storage losses
+    if !isempty(STOR_ALL)
+        if (setup["StorageLosses"] == 1)
+            @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,Symbol("ESR_$ESR")] * EP[:eStorageLossByZone][z] for z = 1:Z))
+            add_to_expression!.(EP[:eESR], -1, EP[:eESRStor])
+        end
+    end
+
+    # VRE-STOR 
+	if (setup["VreStor"] == 1)
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		@expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen_VRE_STOR[!,Symbol("ESR_$ESR")][y]*EP[:vP_DC][y,t]*dfGen_VRE_STOR[!,:EtaInverter][y] for y=dfGen_VRE_STOR[findall(x->x>0,dfGen_VRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T))
+        add_to_expression!.(EP[:eESR], EP[:eESRVREStor])
+	end
+
+    # Considering transmission losses
+    if Z > 1
+        if (setup["PolicyTransmissionLossCoverage"] == 1)
+            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,Symbol("ESR_$ESR")] * (1/2) * EP[:eTransLossByZoneYear][z] for z = 1:Z))
+            add_to_expression!.(EP[:eESR], -1, EP[:eESRTLoss])
+        end
+    end
 
 	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
 	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)

@@ -38,7 +38,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 			tempCO2Price = zeros(Z,inputs["NCO2Cap"])
 			if has_duals(EP) == 1
 				for cap in 1:inputs["NCO2Cap"]
-					for z in findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
+					for z in findall(x->x==1, inputs["dfCO2Cap"][:,Symbol("CO_2_Cap_Zone_$cap")])
 						tempCO2Price[z,cap] = dual.(EP[:cCO2Emissions_systemwide])[cap]
 						# when scaled, The objective function is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
 						if setup["ParameterScale"] ==1

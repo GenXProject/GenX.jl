@@ -276,11 +276,13 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
 
     multi_stage_settings_d = settings_d["MultiStageSettingsDict"]
 
+
     write_multi_stage_capacities_discharge(outpath, multi_stage_settings_d)
     write_multi_stage_capacities_charge(outpath, multi_stage_settings_d)
     write_multi_stage_capacities_energy(outpath, multi_stage_settings_d)
     if settings_d["NetworkExpansion"] == 1
     	write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
+
     end
     write_multi_stage_costs(outpath, multi_stage_settings_d, inputs_dict)
     write_multi_stage_stats(outpath, stats_d)

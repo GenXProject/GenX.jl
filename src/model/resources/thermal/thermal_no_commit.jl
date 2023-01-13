@@ -76,7 +76,7 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceThermNoCommit[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(THERM_NO_COMMIT, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
-	EP[:ePowerBalance] += ePowerBalanceThermNoCommit
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceThermNoCommit])
 
 	### Constraints ###
 
@@ -96,8 +96,9 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 		thermal_no_commit_reserves!(EP, inputs)
 	else
 		@constraints(EP, begin
+		    # This does not look reaonable...I guess we should delete this line, other wise thermal units will be online all the time, which does not make sense
 			# Minimum stable power generated per technology "y" at hour "t" Min_Power
-			[y in THERM_NO_COMMIT, t=1:T], EP[:vP][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
+			#[y in THERM_NO_COMMIT, t=1:T], EP[:vP][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 
 			# Maximum power generated per technology "y" at hour "t"
 			[y in THERM_NO_COMMIT, t=1:T], EP[:vP][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]

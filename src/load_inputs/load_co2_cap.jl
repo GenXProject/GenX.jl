@@ -19,6 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Read input parameters related to CO$_2$ emissions cap constraints
 """
+
 function load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "CO2_cap.csv"
     df = load_dataframe(joinpath(path, filename))

@@ -55,12 +55,21 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	## Objective Function Expressions ##
 
 	#Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
-	@expression(EP, eCVar_in[y in STOR_ALL,t=1:T], inputs["omega"][t]*dfGen[y,:Var_OM_Cost_per_MWh_In]*vCHARGE[y,t])
+	@expression(EP, eCVar_in[y in STOR_ALL, t = 1:T], inputs["omega"][t]*dfGen[y, :Var_OM_Cost_per_MWh_In]*vCHARGE[y, t])
 
-	# Sum individual resource contributions to variable charging costs to get total variable charging costs
-	@expression(EP, eTotalCVarInT[t=1:T], sum(eCVar_in[y,t] for y in STOR_ALL))
-	@expression(EP, eTotalCVarIn, sum(eTotalCVarInT[t] for t in 1:T))
-	EP[:eObj] += eTotalCVarIn
+    # Sum individual resource contributions to variable charging costs to get total variable charging costs
+
+    # Sum to the plant level
+    @expression(EP, ePlantCVarIn[y in STOR_ALL], sum(EP[:eCVar_in][y, t] for t in 1:T))
+    
+	# Sum to the zonal level
+    @expression(EP, eZonalCVarIn[z = 1:Z], EP[:vZERO] + sum(EP[:ePlantCVarIn][y] for y in intersect(STOR_ALL, dfGen[dfGen[!, :Zone].==z, :R_ID])))
+    
+	# Sum to the system level
+    @expression(EP, eTotalCVarIn, sum(EP[:eZonalCVarIn][z] for z in 1:Z))
+
+	# Add to objective function
+	add_to_expression!(EP[:eObj], EP[:eTotalCVarIn])
 
 	## Power Balance Expressions ##
 
@@ -68,7 +77,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceStor[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t]-EP[:vCHARGE][y,t] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)))
 
-	EP[:ePowerBalance] += ePowerBalanceStor
+	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceStor])
 
 	### Constraints ###
 
@@ -113,6 +122,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 			[y in STOR_ALL, t=1:T], EP[:vP][y,t] <= EP[:vS][y, hoursbefore(hours_per_subperiod,t,1)]*dfGen[y,:Eff_Down]
 		end)
 	end
+
 	#From co2 Policy module
 	@expression(EP, eELOSSByZone[z=1:Z],
 		sum(EP[:eELOSS][y] for y in intersect(STOR_ALL, dfGen[dfGen[!,:Zone].==z,:R_ID]))

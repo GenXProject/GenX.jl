@@ -30,8 +30,21 @@ Note that multiple capacity reserve margin requirements can be specified coverin
 """
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	# capacity reserve margin constraint
+	dfGen = inputs["dfGen"]
 	T = inputs["T"]
+	NCRM = inputs["NCapacityReserveMargin"]
+	HYDRO_RES = inputs["HYDRO_RES"]
+	VRE = inputs["VRE"]
+	MUST_RUN = inputs["MUST_RUN"]
+	FLEX = inputs["FLEX"]
+	THERM_ALL = inputs["THERM_ALL"]
+	STOR_ALL = inputs["STOR_ALL"]
+	SEG = inputs["SEG"]
+	Z = inputs["Z"]
+	L = inputs["L"]
 	println("Capacity Reserve Margin Policies Module")
+	### Variable
+	@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
 
 	@constraint(EP, cCapacityResMargin[res=1:inputs["NCapacityReserveMargin"], t=1:T], EP[:eCapResMarBalance][res, t]
 				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])

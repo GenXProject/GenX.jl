@@ -56,6 +56,36 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [sym]))
 	end
 	dfResRevenue.AnnualSum = annual_sum
+
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		dfResRevenueVRE = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster])
+		dfResRevenueSTOR = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster])
+
+		annual_sum_vre = zeros(VRE_STOR)
+		annual_sum_stor = zeros(VRE_STOR)
+		for i in 1:inputs["NCapacityReserveMargin"]
+			sym = Symbol("CapRes_$i")
+			tempresrev_VRE = zeros(VRE_STOR)
+			tempresrev_STOR = zeros(VRE_STOR)
+			tempresrev_VRE = dfGen_VRE_STOR[:, sym] .* (value.(EP[:eTotalCap_VRE])) .* (inputs["pP_Max_VRE_STOR"] * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev_STOR = dfGen_VRE_STOR[:, sym] .* ((value.(EP[:vP_VRE_STOR]) - value.(EP[:vCHARGE_VRE_STOR]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
+			if setup["ParameterScale"] == 1
+				tempresrev_VRE *= ModelScalingFactor^2
+				tempresrev_STOR *= ModelScalingFactor^2
+			end
+			annual_sum_vre .+= tempresrev_VRE
+			annual_sum_stor .+= tempresrev_STOR
+			dfResRevenueVRE = hcat(dfResRevenueVRE, DataFrame([tempresrev_VRE], [sym]))
+			dfResRevenueSTOR = hcat(dfResRevenueSTOR, DataFrame([tempresrev_STOR], [sym]))
+		end
+
+		dfResRevenueVRE.AnnualSum = annual_sum_vre
+		dfResRevenueSTOR.AnnualSum = annual_sum_stor
+		dfResRevenue = vcat(dfResRevenue, dfResRevenueVRE)
+		dfResRevenue = vcat(dfResRevenue, dfResRevenueSTOR)
+	end
+	
 	CSV.write(joinpath(path, "ReserveMarginRevenue.csv"), dfResRevenue)
 	return dfResRevenue
 end
