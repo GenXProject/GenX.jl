@@ -82,11 +82,15 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
 	sum(vNSE[s,t,z] for s=1:SEG))
 
 	# Add non-served energy/curtailed demand contribution to power balance expression
-	add_to_expression!.(EP[:ePowerBalance], EP[:ePowerBalanceNse])
-	# Demand response is the NSE from the 2nd segment and above.
-    if SEG >= 2
-        @expression(EP, eDemandResponse[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 2:SEG))
-    end
+	EP[:ePowerBalance] += ePowerBalanceNse
+
+	# Capacity Reserves Margin policy
+	if setup["CapacityReserveMargin"] > 0
+		if SEG >=2
+			@expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x!=0,inputs["dfCapRes"][:,res])))
+			EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+		end
+	end
 	### Constratints ###
 
 	# Demand curtailed in each segment of curtailable demands cannot exceed maximum allowable share of demand

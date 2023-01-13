@@ -36,7 +36,9 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
     end
-    # We only calculate the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+
+    # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+
     EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactor.AnnualSum), findall(x -> x >= 1, dfCapacityfactor.Capacity))
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
     CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN), EXISTING)

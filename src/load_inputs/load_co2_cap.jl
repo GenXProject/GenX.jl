@@ -15,25 +15,37 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
+    load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
 
-Function for reading input parameters related to CO$_2$ emissions cap constraints
+Read input parameters related to CO$_2$ emissions cap constraints
 """
-function load_co2_cap(setup::Dict, path::AbstractString, inputs_co2::Dict)
-    inputs_co2["dfCO2Cap_slack"] = DataFrame(CSV.File(joinpath(path,"CO2_cap_slack.csv"), header=true), copycols=true)
-    if setup["ParameterScale"] == 1
-		inputs_co2["dfCO2Cap_slack"][!,:PriceCap] ./= ModelScalingFactor #from $/ton to million$/kton.
-	end
-	# Determine the number of ESR constraints
-	inputs_co2["NCO2Cap"] = size(collect(skipmissing(inputs_co2["dfCO2Cap_slack"][!,:CO2_Mass_Constraint])),1)
-	# Definition of Cap requirements by zone (as Max Mtons)
-	inputs_co2["dfCO2Cap"] = DataFrame(CSV.File(joinpath(path,"CO2_cap.csv"), header=true), copycols=true)
-    
-    if setup["ParameterScale"] == 1
-        inputs_co2["dfCO2Cap"][:, [Symbol("CO_2_Max_Mtons_$cap") for cap = 1:inputs_co2["NCO2Cap"]]] .*= ((1e6) / ModelScalingFactor)
-    else
-        inputs_co2["dfCO2Cap"][:, [Symbol("CO_2_Max_Mtons_$cap") for cap = 1:inputs_co2["NCO2Cap"]]] .*= (1e6)
+
+function load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
+    filename = "CO2_cap.csv"
+    df = load_dataframe(joinpath(path, filename))
+
+    inputs["dfCO2Cap"] = df
+    mat = extract_matrix_from_dataframe(df, "CO_2_Cap_Zone")
+    inputs["dfCO2CapZones"] = mat
+    inputs["NCO2Cap"] = size(mat, 2)
+
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    # Emission limits
+    if setup["CO2Cap"] == 1
+        #  CO2 emissions cap in mass
+        # note the default inputs is in million tons
+        # when scaled, the constraint unit is kton
+        # when not scaled, the constraint unit is ton
+        mat = extract_matrix_from_dataframe(df, "CO_2_Max_Mtons")
+        inputs["dfMaxCO2"] = mat * 1e6 / scale_factor
+
+    elseif setup["CO2Cap"] == 2 || setup["CO2Cap"] == 3
+        #  CO2 emissions rate applied per MWh
+        mat = extract_matrix_from_dataframe(df, "CO_2_Max_tons_MWh")
+        # no scale_factor is needed since this is a ratio
+        inputs["dfMaxCO2Rate"] = mat
     end
-    println("CO2_cap.csv Successfully Read!")
-    return inputs_co2
+
+    println(filename * " Successfully Read!")
 end

@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_period_map(setup::Dict, path::AbstractString, inputs::Dict)
+	load_period_map!(setup::Dict, path::AbstractString, inputs::Dict)
 
-Function for reading input parameters related to mapping of representative time periods to full chronological time series
+Read input parameters related to mapping of representative time periods to full chronological time series
 """
-function load_period_map(setup::Dict, path::AbstractString, inputs::Dict)
+function load_period_map!(setup::Dict, path::AbstractString, inputs::Dict)
 	period_map = "Period_map.csv"
 	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
 	if setup["TimeDomainReduction"] == 1 && isfile(joinpath(data_directory, period_map))  # Use Time Domain Reduced data for GenX
@@ -28,9 +28,7 @@ function load_period_map(setup::Dict, path::AbstractString, inputs::Dict)
 		my_dir = path
 	end
 	file_path = joinpath(my_dir, period_map)
-	inputs["Period_Map"] = DataFrame(CSV.File(file_path, header=true), copycols=true)
+    inputs["Period_Map"] = load_dataframe(file_path)
 
 	println(period_map * " Successfully Read!")
-
-	return inputs
 end

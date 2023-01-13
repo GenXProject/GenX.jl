@@ -32,6 +32,7 @@ using StatsBase
 using Clustering
 using Distances
 using CSV
+using GenX
 
 
 @doc raw"""
@@ -976,7 +977,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
 
                 # Save output data to stage-specific locations
                 ### TDR_Results/Load_data_clustered.csv
-                load_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", "Inputs_p$per", "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+                load_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", "Load_data.csv"))
                 load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
                 load_in[1:length(Stage_Weights[per]),:Sub_Weights] .= Stage_Weights[per]
                 load_in[!,:Rep_Periods][1] = length(Stage_Weights[per])
@@ -1008,7 +1009,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
                 CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
 
                 ### TDR_Results/Fuels_data.csv
-                fuel_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"), header=true), copycols=true)
+                fuel_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"))
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1034,7 +1035,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
             mkpath(joinpath(inpath,"Inputs",input_stage_directory, TimeDomainReductionFolder))
 
             ### TDR_Results/Load_data.csv
-            load_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", input_stage_directory, "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+            load_in = load_dataframe(joinpath(inpath, "Inputs", input_stage_directory, "Load_data.csv"))
             load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
             load_in[1:length(W),:Sub_Weights] .= W
             load_in[!,:Rep_Periods][1] = length(W)
@@ -1068,7 +1069,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
 
             ### TDR_Results/Fuels_data.csv
 
-            fuel_in = DataFrame(CSV.File(joinpath(inpath,"Inputs",input_stage_directory,"Fuels_data.csv"), header=true), copycols=true)
+            fuel_in = load_dataframe(joinpath(inpath,"Inputs",input_stage_directory,"Fuels_data.csv"))
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1090,7 +1091,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
         ### TDR_Results/Load_data.csv
-        load_in = DataFrame(CSV.File(joinpath(inpath, "Load_data.csv"), header=true), copycols=true) #Setting header to false doesn't take the names of the columns; not including it, not including copycols, or, setting copycols to false has no effect
+        load_in = load_dataframe(joinpath(inpath, "Load_data.csv"))
         load_in[!,:Sub_Weights] = load_in[!,:Sub_Weights] * 1.
         load_in[1:length(W),:Sub_Weights] .= W
         load_in[!,:Rep_Periods][1] = length(W)
@@ -1124,7 +1125,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
 
         ### TDR_Results/Fuels_data.csv
 
-        fuel_in = DataFrame(CSV.File(joinpath(inpath, "Fuels_data.csv"), header=true), copycols=true)
+        fuel_in = load_dataframe(joinpath(inpath, "Fuels_data.csv"))
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
         NewFuelOutput = vcat(SepFirstRow, FPOutputData)

@@ -1,7 +1,6 @@
 # Requirements
 
-GenX currently exists in version 0.3.1 and runs only on Julia v1.6.x and v1.5.x series, where x>=0 and a minimum version of JuMP v1.1.1.
-There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
+GenX currently exists in version 0.3.3 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
 please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version).
@@ -36,12 +35,13 @@ For this tutorial it will be assumed to be within your home directory: `/home/yo
 
 2. Start a terminal and navigate into the `GenX` folder.
 3. Type `julia --project=.` to start an instance of the `julia` kernel with the `project` set to the current folder.
-The `.` indicates the current folder.
+The `.` indicates the current folder. On Windows the location of Julia can also be specified as e.g., 'C:\julia-1.6.0\bin\julia.exe --project=.'
 
 If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) execute steps 3-6.
 
 4. Type `]` to bring up the package system `(GenX) pkg >` prompt. This indicates that the GenX project was detected. If you see `(@v1.6) pkg>` as the prompt, then the `project` was not successfully set.
 5. Type `instantiate` from the `(GenX) pkg` prompt.
+   On Windows there is an issue with the prepopulated MUMPS_seq_jll v5.5.1 that prevents compilation of the solvers. To avoid this issue type 'add MUMPS_seq_jll@5.4.1' after running instantiate.
 6. Type `st` to check that the dependecies have been installed. If there is no error, it has been successful.
 7. Type the back key to come back to the `julia>` prompt.
 
@@ -106,7 +106,6 @@ julia> <press close-bracket ] to access the package manager>
 -or-
 (GenX) pkg> add CPLEX
 ```
-
 3. At the beginning of the `GenX/src/GenX.jl` file, uncomment `using Gurobi` and/or `using CPLEX`.
 4. Set the appropriate solver in the `genx_settings.yml` file of your case
 

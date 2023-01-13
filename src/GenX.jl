@@ -20,6 +20,7 @@ module GenX
 export configure_settings
 export configure_solver
 export load_inputs
+export load_dataframe
 export generate_model
 export solve_model
 export write_outputs
@@ -47,7 +48,6 @@ using Clustering
 using Distances
 using Combinatorics
 
-using OrdinaryDiffEq
 using Random
 using RecursiveArrayTools
 using Statistics
@@ -86,6 +86,7 @@ include("configure_solver/configure_cbc.jl")
 include("configure_solver/configure_solver.jl")
 
 # Load input data
+include("load_inputs/load_dataframe.jl")
 include("load_inputs/load_generators_data.jl")
 include("load_inputs/load_generators_variability.jl")
 include("load_inputs/load_network_data.jl")
@@ -113,6 +114,7 @@ include("load_inputs/load_inputs.jl")
 include("time_domain_reduction/time_domain_reduction.jl")
 
 #Core GenX Features
+include("model/utility.jl")
 include("model/core/discharge/discharge.jl")
 include("model/core/discharge/investment_discharge.jl")
 
@@ -246,10 +248,16 @@ include("write_outputs/write_outputs.jl")
 include("simple_operation.jl")
 
 # Multi Stage files
+include("multi_stage/write_multi_stage_settings.jl")
+include("multi_stage/write_multi_stage_capacities_discharge.jl")
+include("multi_stage/write_multi_stage_capacities_charge.jl")
+include("multi_stage/write_multi_stage_capacities_energy.jl")
+include("multi_stage/write_multi_stage_network_expansion.jl")
+include("multi_stage/write_multi_stage_costs.jl")
+include("multi_stage/write_multi_stage_stats.jl")
 include("multi_stage/dual_dynamic_programming.jl")
 include("multi_stage/configure_multi_stage_inputs.jl")
 include("multi_stage/endogenous_retirement.jl")
-include("multi_stage//write_settings.jl")
 
 include("additional_tools/modeling_to_generate_alternatives.jl")
 include("additional_tools/method_of_morris.jl")

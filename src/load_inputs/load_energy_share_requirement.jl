@@ -15,21 +15,17 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_energy_share_requirement(setup::Dict, path::AbstractString, inputs_ESR::Dict)
+    load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
 
-Function for reading input parameters related to mimimum energy share requirement constraints (e.g. renewable portfolio standard or clean electricity standard policies)
+Read input parameters related to mimimum energy share requirement constraints
+(e.g. renewable portfolio standard or clean electricity standard policies)
 """
-function load_energy_share_requirement(setup::Dict, path::AbstractString, inputs_ESR::Dict)
-	# Define the alternative compliance penalty of energy share requirement, aka the price cap.
-	inputs_ESR["dfESR_slack"] = DataFrame(CSV.File(joinpath(path,"Energy_share_requirement_slack.csv"), header=true), copycols=true)
-	if setup["ParameterScale"] == 1
-		inputs_ESR["dfESR_slack"][!,:PriceCap] ./= ModelScalingFactor
-	end
-	# Determine the number of ESR constraints
-	inputs_ESR["nESR"] = size(collect(skipmissing(inputs_ESR["dfESR_slack"][!,:ESR_Constraint])),1)
-	# Definition of ESR requirements by zone (as % of load)
-	# e.g. any policy requiring a min share of qualifying resources (Renewable Portfolio Standards / Renewable Energy Obligations / Clean Energy Standards etc.)
-	inputs_ESR["dfESR"] = DataFrame(CSV.File(joinpath(path,"Energy_share_requirement.csv"), header=true), copycols=true)
-	println("Energy_share_requirement.csv Successfully Read!")
-	return inputs_ESR
+function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
+    filename = "Energy_share_requirement.csv"
+    df = load_dataframe(joinpath(path, filename))
+    mat = extract_matrix_from_dataframe(df, "ESR")
+    inputs["dfESR"] = mat
+    inputs["nESR"] = size(mat, 2)
+
+    println(filename * " Successfully Read!")
 end
