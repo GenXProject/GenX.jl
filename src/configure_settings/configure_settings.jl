@@ -25,7 +25,7 @@ function configure_settings(settings_path::String)
     settings = YAML.load(open(settings_path))
 
     # Optional settings parameters ############################################
-    #Write the model formulation as an output; 0 = active; 1 = not active
+    # Write the model formulation as an output; 0 = active; 1 = not active
     set_default_if_absent!(settings, "PrintModel", 0)
     # Transmission network expansionl; 0 = not active; 1 = active systemwide
     set_default_if_absent!(settings, "NetworkExpansion", 0)
@@ -65,6 +65,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "MultiStage", 0)
     # No JuMP String name reporting at model generation by default, to expedite model generation; true if JuMP string names need to be enabled
     set_default_if_absent!(settings, "EnableJuMPStringNames", false)
+    # Activate the VRE-storage module and constraints; 0 = not active; 1 = active
+    set_default_if_absent!(settings, "VreStor", 0)
 
 
 return settings
