@@ -188,6 +188,11 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		EP = retrofit(EP, inputs)
 	end
 
+	# Model constraints, variables, expressions related to the co-located VRE-storage resources
+	if setup["VreStor"] == 1
+		EP = vre_stor(EP, inputs, setup["Reserves"], setup["MinCapReq"],setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
+	end
+	
 	# Policies
 	# CO2 emissions limits
 	co2_cap!(EP, inputs, setup)
