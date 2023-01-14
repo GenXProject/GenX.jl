@@ -88,7 +88,17 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in HYDRO_RES))
+		CRPL = setup["CapResPeriodLength"]
+		@variable(EP, vCAPCONTRHYDRO_DISCHARGE[y in HYDRO_RES, t=1:T]) # Hydro capacity contribution from net discharge
+		@variable(EP, vCAPCONTRHYDRO_SOC[y in HYDRO_RES, t=1:T] >= 0) # Hydro capacity contribution from charge held in reserve
+		@variable(EP, vMINSOCHYDRO[y in HYDRO_RES, t=1:T] >= 0) # Minimum SOC maintained over following n hours
+
+		@constraint(EP, cCapContrHydroEnergy[y in HYDRO_RES, t=1:T], vCAPCONTRHYDRO_DISCHARGE[y,t] <= EP[:vP][y,t])
+		@constraint(EP, cMinSocTrackHydro[y in HYDRO_RES, t=1:T, n=1:CRPL], vMINSOCHYDRO[y,t] <= EP[:vS_HYDRO][y, hoursafter(p,t,n)])
+		@constraint(EP, cCapContrHydroSOC[y in HYDRO_RES, t=1:T], vCAPCONTRHYDRO_SOC[y,t] <= dfGen[y,:Eff_Down]*vMINSOCHYDRO[y,t]/CRPL)
+		@constraint(EP, cCapContrHydroSOCPartLim[y in HYDRO_RES, t=1:T], vCAPCONTRHYDRO_SOC[y,t] <= EP[:eTotalCap][y] - vCAPCONTRHYDRO_DISCHARGE[y,t])
+
+		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (vCAPCONTRHYDRO_DISCHARGE[y,t] + vCAPCONTRHYDRO_SOC[y,t])  for y in HYDRO_RES))
 		EP[:eCapResMarBalance] += eCapResMarBalanceHydro
 	end
 
