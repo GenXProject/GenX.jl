@@ -68,7 +68,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[!,:Existing_Cap_MWh][i]
 	end
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone],
+		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Technology = dfGen[!,:technology], Cluster=dfGen[!,:cluster], 
 		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!,:Existing_Cap_MW],
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
@@ -82,6 +82,63 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		NewChargeCap = capcharge[:],
 		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:]
 	)
+
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+		dfVRECAP = DataFrame(
+			Resource = inputs["RESOURCES_VRE"], Technology = dfGen_VRE_STOR[!,:technology], Cluster=dfGen_VRE_STOR[!,:cluster], Zone = dfGen_VRE_STOR[!,:Zone],
+			StartCap = dfGen_VRE_STOR[!,:Existing_Cap_MW],
+			RetCap = value.(EP[:vRETCAP_VRE]),
+			NewCap = value.(EP[:vCAP_VRE]),
+			EndCap = value.(EP[:eTotalCap_VRE]),
+			StartEnergyCap = zeros(VRE_STOR),
+			RetEnergyCap = zeros(VRE_STOR), 
+			NewEnergyCap = zeros(VRE_STOR), 
+			EndEnergyCap = zeros(VRE_STOR), 
+			StartChargeCap = zeros(VRE_STOR), 
+			RetChargeCap = zeros(VRE_STOR), 
+			NewChargeCap = zeros(VRE_STOR), 
+			EndChargeCap = zeros(VRE_STOR)
+		)
+
+		dfSTORCAP = DataFrame(
+			Resource = inputs["RESOURCES_STOR"], Technology = dfGen_VRE_STOR[!,:technology], Cluster=dfGen_VRE_STOR[!,:cluster], Zone = dfGen_VRE_STOR[!,:Zone],
+			StartCap = dfGen_VRE_STOR[!,:Existing_Cap_MWh] .* dfGen_VRE_STOR[!,:Power_To_Energy_Ratio],
+			RetCap = value.(EP[:vRETCAPSTORAGE_VRE_STOR]) .* dfGen_VRE_STOR[!,:Power_To_Energy_Ratio],
+			NewCap = value.(EP[:vCAPSTORAGE_VRE_STOR]) .* dfGen_VRE_STOR[!,:Power_To_Energy_Ratio],
+			EndCap = value.(EP[:eTotalCap_STOR]) .* dfGen_VRE_STOR[!,:Power_To_Energy_Ratio],
+			StartEnergyCap = dfGen_VRE_STOR[!,:Existing_Cap_MWh],
+			RetEnergyCap = value.(EP[:vRETCAPSTORAGE_VRE_STOR]), 
+			NewEnergyCap = value.(EP[:vCAPSTORAGE_VRE_STOR]), 
+			EndEnergyCap = value.(EP[:eTotalCap_STOR]), 
+			StartChargeCap = zeros(VRE_STOR), 
+			RetChargeCap = zeros(VRE_STOR), 
+			NewChargeCap = zeros(VRE_STOR), 
+			EndChargeCap = zeros(VRE_STOR)
+		)
+
+		dfGRIDCAP = DataFrame(
+			Resource = inputs["RESOURCES_GRID"], Technology = dfGen_VRE_STOR[!,:technology], Cluster=dfGen_VRE_STOR[!,:cluster], Zone = dfGen_VRE_STOR[!,:Zone],
+			StartCap = dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW],
+			RetCap = value.(EP[:vRETGRIDCAP]),
+			NewCap = value.(EP[:vGRIDCAP]),
+			EndCap = value.(EP[:eTotalCap_GRID]),
+			StartEnergyCap = zeros(VRE_STOR),
+			RetEnergyCap = zeros(VRE_STOR), 
+			NewEnergyCap = zeros(VRE_STOR), 
+			EndEnergyCap = zeros(VRE_STOR), 
+			StartChargeCap = zeros(VRE_STOR), 
+			RetChargeCap = zeros(VRE_STOR), 
+			NewChargeCap = zeros(VRE_STOR), 
+			EndChargeCap = zeros(VRE_STOR)
+		)
+
+		dfCap = vcat(dfCap, dfVRECAP)
+		dfCap = vcat(dfCap, dfSTORCAP)
+		dfCap = vcat(dfCap, dfGRIDCAP)
+	end
+
 	if setup["ParameterScale"] ==1
 		dfCap.StartCap = dfCap.StartCap * ModelScalingFactor
 		dfCap.RetCap = dfCap.RetCap * ModelScalingFactor
@@ -97,7 +154,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
 	end
 	total = DataFrame(
-			Resource = "Total", Zone = "n/a",
+			Resource = "Total", Zone = "n/a", Technology = "Total", Cluster= "n/a", 
 			StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 			NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
 			StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),
