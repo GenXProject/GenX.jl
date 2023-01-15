@@ -173,6 +173,13 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	  println("Time elapsed for writing net revenue is")
 	  println(elapsed_time_net_rev)
 	end
+
+	if setup["VreStor"] == 1
+		elapsed_vre_stor_costs = @elapsed write_vre_stor(path, inputs, setup, EP)
+		println("Time elapsed for writing vre-stor module additional outputs is")
+		println(elapsed_vre_stor_costs)
+	end
+	
 	## Print confirmation
 	println("Wrote outputs to $path")
 

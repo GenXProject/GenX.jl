@@ -55,5 +55,25 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfStorageDual=hcat(dfStorageDual, DataFrame(dual_values, :auto))
 	rename!(dfStorageDual,[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]])
 
+	# will need to edit for LDES constraints, VRE-storage constraints for storage dual
+	if setup["VreStor"] == 1
+		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+		VRE_STOR = inputs["VRE_STOR"]
+
+		dfStorageDual_VRE_STOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!, :Zone])
+		dual_values_vre_stor = zeros(VRE_STOR, T)
+		dual_values_vre_stor[:, INTERIOR_SUBPERIODS] = (dual.(EP[:cSoCBalInterior_VRE_STOR][INTERIOR_SUBPERIODS, :]).data ./ inputs["omega"][INTERIOR_SUBPERIODS])'
+		dual_values_vre_stor[:, START_SUBPERIODS] = (dual.(EP[:cSoCBalStart_VRE_STOR][START_SUBPERIODS, :]).data ./ inputs["omega"][START_SUBPERIODS])'
+
+		if setup["ParameterScale"] == 1
+			dual_values_vre_stor *= ModelScalingFactor
+		end
+
+		dfStorageDual_VRE_STOR=hcat(dfStorageDual_VRE_STOR, DataFrame(dual_values_vre_stor, :auto))
+		rename!(dfStorageDual_VRE_STOR,[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]])
+
+		dfStorageDual = vcat(dfStorageDual, dfStorageDual_VRE_STOR)
+	end
+
 	CSV.write(joinpath(path, "storagebal_duals.csv"), dftranspose(dfStorageDual, false), writeheader=false)
 end
