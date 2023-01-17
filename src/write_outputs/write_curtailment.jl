@@ -43,9 +43,9 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfCurtailmentVRESTOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
 		curtailment_vre_stor = zeros(VRE_STOR, T)
 		if setup["ParameterScale"] == 1
-			curtailment_vre_stor[VRE_STOR, :] = ModelScalingFactor * value.(EP[:eTotalCap_VRE_STOR]) .* inputs["pP_Max_VRE_STOR"] .- value.(EP[:vP_DC])
+			curtailment_vre_stor = ModelScalingFactor * value.(EP[:eTotalCap_VRE]) .* inputs["pP_Max_VRE_STOR"] .- value.(EP[:vP_DC])
 		else
-			curtailment_vre_stor[VRE_STOR, :] = value.(EP[:eTotalCap_VRE_STOR]) .* inputs["pP_Max_VRE_STOR"] .- value.(EP[:vP_DC])
+			curtailment_vre_stor = value.(EP[:eTotalCap_VRE]) .* inputs["pP_Max_VRE_STOR"] .- value.(EP[:vP_DC])
 		end
 		dfCurtailmentVRESTOR.AnnualSum = curtailment_vre_stor * inputs["omega"]
 		dfCurtailmentVRESTOR = hcat(dfCurtailmentVRESTOR, DataFrame(curtailment_vre_stor, :auto))

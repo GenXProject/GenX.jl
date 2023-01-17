@@ -22,7 +22,7 @@ Function for reporting the renewable/clean credit revenue earned by each generat
 function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfESR::DataFrame)
 	dfGen = inputs["dfGen"]
 	dfESRRev = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
-
+	G = inputs["G"]
 	for i in 1:inputs["nESR"]
 		dfESRRev =  hcat(dfESRRev, dfPower[1:G,:AnnualSum] .* dfGen[!,Symbol("ESR_$i")] * dfESR[i,:ESR_Price])
 		# dfpower is in MWh already, price is in $/MWh already, no need to scale

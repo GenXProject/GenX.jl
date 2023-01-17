@@ -31,9 +31,9 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 	if setup["VreStor"]==1
 		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
 		VRE_STOR = inputs["VRE_STOR"]
-		dfSubRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID], SubsidyRevenue = zeros(VRE_STOR))
+		dfSubRevenueVRESTOR = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID], SubsidyRevenue = zeros(VRE_STOR))
 		MIN_CAP_VRE_STOR = dfGen_VRE_STOR[(dfGen_VRE_STOR[!, :Min_Cap_VRE_MW].>0), :R_ID]
-		dfSubRevenueVRESTOR.SubsidyRevenue[MIN_CAP_VRE_STOR] .= (value.(EP[:eTotalCap_VRE])[Min_Cap_VRE_MW]) .* (dual.(EP[:cMinCap_VRE][Min_Cap_VRE_MW])).data
+		dfSubRevenueVRESTOR.SubsidyRevenue[MIN_CAP_VRE_STOR] .= (value.(EP[:eTotalCap_VRE])[MIN_CAP_VRE_STOR]) .* (dual.(EP[:cMinCap_VRE][MIN_CAP_VRE_STOR])).data
 		dfSubRevenue = vcat(dfSubRevenue, dfSubRevenueVRESTOR)
 	end
 
@@ -47,7 +47,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 	end
 
 	if setup["VreStor"]==1
-		dfRegSubRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID], SubsidyRevenue = zeros(VRE_STOR))
+		dfRegSubRevenueVRESTOR = DataFrame(Region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID], SubsidyRevenue = zeros(VRE_STOR))
 		if (setup["MinCapReq"] >= 1)
 			for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
 				MIN_CAP_GEN_VRE_STOR = dfGen_VRE_STOR[(dfGen_VRE_STOR[!, Symbol("MinCapTag_$mincap")].==1), :R_ID]
