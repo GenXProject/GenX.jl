@@ -171,6 +171,7 @@ include("write_outputs/write_storagedual.jl")
 include("write_outputs/write_subsidy_revenue.jl")
 include("write_outputs/write_time_weights.jl")
 include("write_outputs/choose_output_dir.jl")
+include("write_outputs/write_vre_stor.jl")
 
 include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
 include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")

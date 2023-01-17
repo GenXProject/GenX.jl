@@ -21,109 +21,109 @@ Function for writing the vre-storage internal/DC charging, discharging energy va
 """
 
 function write_vre_stor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+	VRE_STOR = inputs["VRE_STOR"]
+	T = inputs["T"] 
+	Z = inputs["Z"]
 
-        dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-		VRE_STOR = inputs["VRE_STOR"]
+	# DC charging of battery dataframe
+	dfCharge_DC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+	charge_dc = zeros(VRE_STOR, T)
+	for i in 1:VRE_STOR
+		charge_dc[i,:] = value.(EP[:vCHARGE_DC][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+		dfCharge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_dc[i,:])
+	end
 
-		# DC charging of battery dataframe
-		dfCharge_DC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
-		charge_dc = zeros(VRE_STOR, T)
+	dfCharge_DC = hcat(dfCharge_DC, DataFrame(charge_dc, :auto))
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	rename!(dfCharge_DC,auxNew_Names)
+	total = DataFrame(["Total" 0 sum(dfCharge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+	for t in 1:T
+		total[:,t+3] .= sum(dfCharge_DC[:,Symbol("t$t")][1:VRE_STOR])
+	end
+	rename!(total,auxNew_Names)
+	dfCharge_DC = vcat(dfCharge_DC, total)
+	CSV.write(joinpath(path,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), writeheader=false)
+
+	# DC charging of battery (specifically from VRE resource) datafrfame
+	dfCharge_VRE = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+	charge_vre = zeros(VRE_STOR, T)
+	for i in 1:VRE_STOR
+		charge_vre[i,:] = value.(EP[:eVRECharging][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+		dfCharge_VRE[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_vre[i,:])
+	end
+
+	dfCharge_VRE = hcat(dfCharge_VRE, DataFrame(charge_vre, :auto))
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	rename!(dfCharge_VRE,auxNew_Names)
+	total = DataFrame(["Total" 0 sum(dfCharge_VRE[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+	for t in 1:T
+		total[:,t+3] .= sum(dfCharge_VRE[:,Symbol("t$t")][1:VRE_STOR])
+	end
+	rename!(total,auxNew_Names)
+	dfCharge_VRE = vcat(dfCharge_VRE, total)
+	CSV.write(joinpath(path,"vre_stor_vre_charge.csv"), dftranspose(dfCharge_VRE, false), writeheader=false)
+
+	dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
+	VRE_STOR = inputs["VRE_STOR"]
+
+	# DC discharging of battery dataframe
+	dfDischarge_DC = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+	if setup["ParameterScale"] == 1
 		for i in 1:VRE_STOR
-			charge_dc[i,:] = value.(EP[:vCHARGE_DC][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
-			dfCharge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_dc[i,:])
+			dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vDISCHARGE_DC])[i,:]) * ModelScalingFactor * dfGen_VRE_STOR[!,:EtaInverter][i]
 		end
-
-		dfCharge_DC = hcat(dfCharge_DC, DataFrame(charge_dc, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfCharge_DC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfCharge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		for t in 1:T
-			total[:,t+3] .= sum(dfCharge_DC[:,Symbol("t$t")][1:VRE_STOR])
-		end
-		rename!(total,auxNew_Names)
-		dfCharge_DC = vcat(dfCharge_DC, total)
-		CSV.write(string(path,sep,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), writeheader=false)
-
-		# DC charging of battery (specifically from VRE resource) datafrfame
-		dfCharge_VRE = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
-		charge_vre = zeros(VRE_STOR, T)
+		dfDischarge_DC = hcat(dfDischarge_DC, DataFrame((value.(EP[:vDISCHARGE_DC])) * ModelScalingFactor, :auto))
+	else
 		for i in 1:VRE_STOR
-			charge_vre[i,:] = value.(EP[:eVRECharging][i,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
-			dfCharge_VRE[!,:AnnualSum][i] = sum(inputs["omega"] .* charge_vre[i,:])
+			dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vDISCHARGE_DC])[i,:]) * dfGen_VRE_STOR[!,:EtaInverter][i]
 		end
+		dfDischarge_DC = hcat(dfDischarge_DC, DataFrame((value.(EP[:vDISCHARGE_DC])), :auto))
+	end
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	rename!(dfDischarge_DC,auxNew_Names)
+	total = DataFrame(["Total" 0 sum(dfDischarge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+	for t in 1:T
+		total[:,t+3] .= sum(dfDischarge_DC[:,Symbol("t$t")][1:VRE_STOR])
+	end
+	rename!(total,auxNew_Names)
+	dfDischarge_DC = vcat(dfDischarge_DC, total)
+	CSV.write(joinpath(path,"vre_stor_bat_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
 
-		dfCharge_VRE = hcat(dfCharge_VRE, DataFrame(charge_vre, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfCharge_VRE,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfCharge_VRE[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		for t in 1:T
-			total[:,t+3] .= sum(dfCharge_VRE[:,Symbol("t$t")][1:VRE_STOR])
+	# VRE generation of co-located resource dataframe
+	dfVP_VRE_STOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
+	if setup["ParameterScale"] == 1
+		for i in 1:VRE_STOR
+			dfVP_VRE_STOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_DC])[i,:]) * ModelScalingFactor * dfGen_VRE_STOR[!,:EtaInverter][i]
 		end
-		rename!(total,auxNew_Names)
-		dfCharge_VRE = vcat(dfCharge_VRE, total)
-		CSV.write(string(path,sep,"vre_stor_vre_charge.csv"), dftranspose(dfCharge_VRE, false), writeheader=false)
-
-        dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-		VRE_STOR = inputs["VRE_STOR"]
-
-		# DC discharging of battery dataframe
-		dfDischarge_DC = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
-		if setup["ParameterScale"] == 1
-			for i in 1:VRE_STOR
-				dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vDISCHARGE_DC])[i,:]) * ModelScalingFactor * dfGen_VRE_STOR[!,:EtaInverter][i]
-			end
-			dfDischarge_DC = hcat(dfDischarge_DC, DataFrame((value.(EP[:vDISCHARGE_DC])) * ModelScalingFactor, :auto))
-		else
-			for i in 1:VRE_STOR
-				dfDischarge_DC[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vDISCHARGE_DC])[i,:]) * dfGen_VRE_STOR[!,:EtaInverter][i]
-			end
-			dfDischarge_DC = hcat(dfDischarge_DC, DataFrame((value.(EP[:vDISCHARGE_DC])), :auto))
+		dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame((vdfGen_VRE_STOR[!,:EtaInverter] .* alue.(EP[:vP_DC])) * ModelScalingFactor, :auto))
+	else
+		for i in 1:VRE_STOR
+			dfVP_VRE_STOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_DC])[i,:]) * dfGen_VRE_STOR[!,:EtaInverter][i]
 		end
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfDischarge_DC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfDischarge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		for t in 1:T
-			total[:,t+3] .= sum(dfDischarge_DC[:,Symbol("t$t")][1:VRE_STOR])
-		end
-		rename!(total,auxNew_Names)
-		dfDischarge_DC = vcat(dfDischarge_DC, total)
-		CSV.write(string(path,sep,"vre_stor_bat_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
+		dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame((dfGen_VRE_STOR[!,:EtaInverter] .* value.(EP[:vP_DC])), :auto))
+	end
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	rename!(dfVP_VRE_STOR,auxNew_Names)
+	total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+	for t in 1:T
+		total[:,t+3] .= sum(dfVP_VRE_STOR[:,Symbol("t$t")][1:VRE_STOR])
+	end
+	rename!(total,auxNew_Names)
+	dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
+	CSV.write(joinpath(path,"vre_stor_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
 
-        # VRE generation of co-located resource dataframe
-		dfVP_VRE_STOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
-		if setup["ParameterScale"] == 1
-			for i in 1:VRE_STOR
-				dfVP_VRE_STOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_DC])[i,:]) * ModelScalingFactor * dfGen_VRE_STOR[!,:EtaInverter][i]
-			end
-			dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame((value.(EP[:vP_DC])) * ModelScalingFactor, :auto))
-		else
-			for i in 1:VRE_STOR
-				dfVP_VRE_STOR[!,:AnnualSum][i] = sum(inputs["omega"] .* value.(EP[:vP_DC])[i,:]) * dfGen_VRE_STOR[!,:EtaInverter][i]
-			end
-			dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame((value.(EP[:vP_DC])), :auto))
-		end
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfVP_VRE_STOR,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		for t in 1:T
-			total[:,t+3] .= sum(dfVP_VRE_STOR[:,Symbol("t$t")][1:VRE_STOR])
-		end
-		rename!(total,auxNew_Names)
-		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
-		CSV.write(string(path,sep,"vre_stor_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
-
-        # Capacity Factor code
-        dfCapacityfactorVRESTOR = DataFrame(Resource=inputs["RESOURCES_VRE"], Zone=dfGen_VRE_STOR[!, :Zone], AnnualSum=zeros(VRE_STOR), Capacity=zeros(VRE_STOR), CapacityFactor=zeros(VRE_STOR))
-        if setup["ParameterScale"] == 1
-            dfCapacityfactorVRESTOR.AnnualSum .= value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter] * inputs["omega"] * ModelScalingFactor
-            dfCapacityfactorVRESTOR.Capacity .= value.(EP[:eTotalCap_VRE]) * ModelScalingFactor
-        else
-            dfCapacityfactorVRESTOR.AnnualSum .= value.(EP[:vP_DC]) * dfGen_VRE_STOR[!,:EtaInverter]
-            dfCapacityfactorVRESTOR.Capacity .= value.(EP[:eTotalCap_VRE])
-        end
-        # We only calculate the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
-        EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactorVRESTOR.AnnualSum), findall(x -> x >= 1, dfCapacityfactorVRESTOR.Capacity))
-        dfCapacityfactorVRESTOR.CapacityFactor[EXISTING] .= (dfCapacityfactorVRESTOR.AnnualSum[EXISTING] ./ dfCapacityfactorVRESTOR.Capacity[EXISTING]) / sum(inputs["omega"][t] for t in 1:T)
-        CSV.write(joinpath(path, "vrestor_capacityfactor.csv"), dfCapacityfactorVRESTOR)
-
+	# Capacity Factor code
+	dfCapacityfactorVRESTOR = DataFrame(Resource=inputs["RESOURCES_VRE"], Zone=dfGen_VRE_STOR[!, :Zone], AnnualSum=zeros(VRE_STOR), Capacity=zeros(VRE_STOR), CapacityFactor=zeros(VRE_STOR))
+	if setup["ParameterScale"] == 1
+		dfCapacityfactorVRESTOR.AnnualSum .= dfGen_VRE_STOR[!,:EtaInverter] .* value.(EP[:vP_DC]) * inputs["omega"]  * ModelScalingFactor
+		dfCapacityfactorVRESTOR.Capacity .= value.(EP[:eTotalCap_VRE]) * ModelScalingFactor
+	else
+		dfCapacityfactorVRESTOR.AnnualSum .= dfGen_VRE_STOR[!,:EtaInverter] .* value.(EP[:vP_DC]) * inputs["omega"] 
+		dfCapacityfactorVRESTOR.Capacity .= value.(EP[:eTotalCap_VRE])
+	end
+	# We only calculate the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+	EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactorVRESTOR.AnnualSum), findall(x -> x >= 1, dfCapacityfactorVRESTOR.Capacity))
+	dfCapacityfactorVRESTOR.CapacityFactor[EXISTING] .= (dfCapacityfactorVRESTOR.AnnualSum[EXISTING] ./ dfCapacityfactorVRESTOR.Capacity[EXISTING]) / sum(inputs["omega"][t] for t in 1:T)
+	CSV.write(joinpath(path, "vrestor_capacityfactor.csv"), dfCapacityfactorVRESTOR)
 end

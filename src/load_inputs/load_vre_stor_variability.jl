@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_vre_stor_variability!(setup::Dict, path::AbstractString, sep::AbstractString, inputs_vre_stor::Dict)
+	load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs_vre_stor::Dict)
 
 Function for reading input parameters related to hourly maximum capacity factors for co-located and co-optimized generators
 """
-function load_vre_stor_variability!(setup::Dict, path::AbstractString, sep::AbstractString, inputs_vre_stor::Dict)
+function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs_vre_stor::Dict)
 
 	# Hourly capacity factors
 	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])

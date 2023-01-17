@@ -158,7 +158,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, Energy
     ## Policy Expressions ##
 
     if (MinCapReq == 1)
-        @expression(EP, eMinCapResVREStor[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap_VRE] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
+        @expression(EP, eMinCapResVREStor[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap_VRE][y]*dfGen_VRE_STOR[!,:EtaInverter][y] for y in dfGen_VRE_STOR[(dfGen_VRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
 		EP[:eMinCapRes] += eMinCapResVREStor
 	end
 
@@ -198,7 +198,7 @@ function vre_stor(EP::Model, inputs::Dict, Reserves::Int, MinCapReq::Int, Energy
 		@constraint(EP, cCapContributionLimit_Grid_VRE_STOR[y in 1:VRE_STOR, t in 1:T], 
 			EP[:vCapContribution_VRE_STOR][y,t] <= EP[:eTotalCap_GRID][y]
 		)
-		@expression(EP, eMinCapResVREStor[res = 1:inputs["NCapacityReserveMargin"]], sum(dfGen_VRE_STOR[y, Symbol("CapRes_$res")] * EP[:vCapContribution_VRE_STOR][y] for y in 1:VRE_STOR))
+		@expression(EP, eMinCapResVREStor[res = 1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen_VRE_STOR[y, Symbol("CapRes_$res")] * EP[:vCapContribution_VRE_STOR][y, t] for y in 1:VRE_STOR))
         EP[:eCapResMarBalance] += eMinCapResVREStor
 	end
 

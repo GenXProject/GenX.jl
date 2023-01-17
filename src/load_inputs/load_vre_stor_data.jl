@@ -15,11 +15,11 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	load_vre_stor_data!(setup::Dict, path::AbstractString, sep::AbstractString, inputs_vre_stor::Dict)
+	load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_vre_stor::Dict)
 
 Function for reading input parameters related to specifically co-located VRE-storage generators or co-optimized VRE resources.
 """
-function load_vre_stor_data!(setup::Dict, path::AbstractString, sep::AbstractString, inputs_vre_stor::Dict)
+function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_vre_stor::Dict)
 
 	filename = "Vre_and_storage_data.csv"
 	vre_stor_in = load_dataframe(joinpath(path, filename))

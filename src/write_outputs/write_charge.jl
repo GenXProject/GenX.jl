@@ -56,7 +56,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 		# Power withdrawn to charge each VRE-Storage in each time step (AC grid charging)
 		dfChargeVRESTOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
 		charge_vre_stor = zeros(VRE_STOR, T)
-		charge_vre_stor[VRE_STOR,:] = value.(EP[:vCHARGE_VRE_STOR][VRE_STOR,:]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+		charge_vre_stor = value.(EP[:vCHARGE_VRE_STOR]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
 		dfChargeVRESTOR.AnnualSum .= charge_vre_stor * inputs["omega"]
 		dfChargeVRESTOR = hcat(dfChargeVRESTOR, DataFrame(charge_vre_stor, :auto))
 		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
