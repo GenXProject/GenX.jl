@@ -31,4 +31,14 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 	@constraint(EP, cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs], EP[:eMinCapRes][mincap] >= inputs["MinCapReq"][mincap])
 
+	# if input files are present, add minimum capacity requirement slack variables
+	if haskey(inputs, "MinCapPriceCap")
+		@variable(EP, vMinCap_slack[mincap = 1:NumberOfMinCapReqs]>=0)
+		EP[:eMinCapRes] += vMinCap_slack
+
+		@expression(EP, eCMinCap_slack[mincap = 1:NumberOfMinCapReqs], inputs["MinCapPriceCap"][mincap] * EP[:vMinCap_slack][mincap])
+		@expression(EP, eTotalCMinCapSlack, sum(EP[:eCMinCap_slack][mincap] for mincap = 1:NumberOfMinCapReqs))
+		
+		EP[:eObj] += eTotalCMinCapSlack
+	end
 end
