@@ -52,30 +52,20 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 		# Simple scaling factor for number of subperiods
 		inputs["omega"] .= 1 #changes all rows of inputs["omega"] from 0.0 to 1.0
 	elseif setup["OperationWrapping"]==1
-		# if setup["TimeDomainReduction"]==0
-		# 	@warn (
-		# 		"OperationWrapping is set to 1, but TimeDomainReduction is OFF (set to 0).
-		# 		This will cause GenX to apply period weights to the full year.
-		# 		GenX will set the period weights (omega) = 1 instead"
-		# 	)
-		# 	setup["OperationWrapping"]==0
-		# 	inputs["omega"] .= 1
-		# else
-			# Weights for each period - assumed same weights for each sub-period within a period
-			inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
+		# Weights for each period - assumed same weights for each sub-period within a period
+		inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
 
-			# Total number of periods and subperiods
-			inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
-			inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
+		# Total number of periods and subperiods
+		inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
+		inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
 
-			# Creating sub-period weights from weekly weights
-			for w in 1:inputs["REP_PERIOD"]
-				for h in 1:inputs["H"]
-					t = inputs["H"]*(w-1)+h
-					inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
-				end
+		# Creating sub-period weights from weekly weights
+		for w in 1:inputs["REP_PERIOD"]
+			for h in 1:inputs["H"]
+				t = inputs["H"]*(w-1)+h
+				inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
 			end
-		# end
+		end
 	end
 
 	# Create time set steps indicies
