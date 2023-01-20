@@ -10,7 +10,7 @@ Method: 2                  # Algorithm used to solve continuous models (includin
 MIPGap: 1e-3                  # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise).
 BarConvTol: 1.0e-08           # Barrier convergence tolerance (determines when barrier terminates).
 NumericFocus: 0               # Numerical precision emphasis.
-Crossover: 0                # Barrier crossver strategy.
+Crossover: 1                # Barrier crossver strategy.
 BarObjRng: 1e+75              # Sets the maximum absolute value of the objective function
 PreDual: 0                    # Decides whether presolve should pass the primal or dual linear programming problem to the LP optimization algorithm.
 AggFill: 10                   # Allowed fill during presolve aggregation.
