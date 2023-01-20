@@ -64,6 +64,45 @@ function configure_settings(settings_path::String)
     # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
     set_default_if_absent!(settings, "MultiStage", 0)
 
+    sanitize_settings!(settings)
 
 return settings
+end
+
+function sanitize_settings!(settings::Dict{Any,Any})
+    # Check for any settings combinations that are not allowed.
+    # If we find any then make a response and issue a note to the user.
+
+    ###### HARD-CODED COMBINATIONS OF SETTING COMBINATIONS WHICH CAUSE PROBLEMS ######
+    if settings["OperationWrapping"] == 1 && settings["TimeDomainReduction"] == 0
+        @warn "OperationWrapping = 1, but TimeDomainReduction = 0 (is OFF).\nThis will cause GenX to apply period weights to the full year.\nGenX will set OperationWrapping = 0 and set the period weights (omega) = 1"
+        settings["OperationWrapping"] = 0
+
+    problem_settings = Dict{Expr, Tuple{Union{Expr, Vector{Expr}}, Expr}}(
+        :(settings["OperationWrapping"] == 1 && settings["TimeDomainReduction"] == 0) => (
+            :(settings["OperationWrapping"] = 0), 
+            :(@warn "OperationWrapping = 1, but TimeDomainReduction = 0 (is OFF).\nThis will cause GenX to apply period weights to the full year.\nGenX will set OperationWrapping = 0 and set the period weights (omega) = 1")
+            )
+    )
+    ###### HARD-CODED COMBINATIONS OF SETTING COMBINATIONS WHICH CAUSE PROBLEMS ######
+
+    for (condition, outcome) in problem_settings
+        sanitize_setting!(settings, condition, outcome[1], outcome[2])
+    end
+end
+
+function sanitize_setting!(settings::Dict{Any,Any}, condition::Expr, response::Expr, note::Expr)
+    if eval(condition)
+        eval(note)
+        eval(response)
+    end    
+end
+
+function sanitize_setting!(settings::Dict{Any,Any}, condition::Expr, responses::Vector{Expr}, note::Expr)
+    if eval(condition)
+        eval(note)
+        for res in responses
+            eval(res)
+        end
+    end
 end
