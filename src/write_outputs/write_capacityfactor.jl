@@ -29,13 +29,9 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     MUST_RUN = inputs["MUST_RUN"]
 
     dfCapacityfactor = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
-    if setup["ParameterScale"] == 1
-        dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
-        dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * ModelScalingFactor
-    else
-        dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
-        dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
-    end
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * scale_factor
+    dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * scale_factor
     # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
     EXISTING = intersect(findall(x -> x >= 1, dfCapacityfactor.AnnualSum), findall(x -> x >= 1, dfCapacityfactor.Capacity))
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
