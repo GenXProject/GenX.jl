@@ -27,12 +27,9 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	# Non-served energy/demand curtailment by segment in each time step
 	dfNse = DataFrame(Segment = repeat(1:SEG, outer = Z), Zone = repeat(1:Z, inner = SEG), AnnualSum = zeros(SEG * Z))
 	nse = zeros(SEG * Z, T)
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	for z in 1:Z
-		if setup["ParameterScale"] == 1
-			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z] * ModelScalingFactor
-		else
-			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z]
-		end
+		nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z] * scale_factor
 	end
 	dfNse.AnnualSum .= nse * inputs["omega"]
 	dfNse = hcat(dfNse, DataFrame(nse, :auto))
