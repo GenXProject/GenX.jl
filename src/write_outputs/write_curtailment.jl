@@ -8,13 +8,11 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE = inputs["VRE"]
-	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = zeros(G))
 	curtailment = zeros(G, T)
-	if setup["ParameterScale"] == 1
-		curtailment[VRE, :] = ModelScalingFactor * value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
-	else
-		curtailment[VRE, :] = value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
-	end
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	curtailment[VRE, :] = scale_factor * value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
+
 	dfCurtailment.AnnualSum = curtailment * inputs["omega"]
 	dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]

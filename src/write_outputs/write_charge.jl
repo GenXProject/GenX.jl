@@ -12,23 +12,16 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	# Power withdrawn to charge each resource in each time step
 	dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	charge = zeros(G,T)
-	if setup["ParameterScale"] == 1
-	    if !isempty(inputs["STOR_ALL"])
-	        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]) * ModelScalingFactor
-	    end
-	    if !isempty(inputs["FLEX"])
-	        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * ModelScalingFactor
-	    end
-	    dfCharge.AnnualSum .= charge * inputs["omega"]
-	else
-	    if !isempty(inputs["STOR_ALL"])
-	        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
-	    end
-	    if !isempty(inputs["FLEX"])
-	        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :])
-	    end
-	    dfCharge.AnnualSum .= charge * inputs["omega"]
+
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	if !isempty(STOR_ALL)
+	    charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]) * scale_factor
 	end
+	if !isempty(FLEX)
+	    charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * scale_factor
+	end
+
+	dfCharge.AnnualSum .= charge * inputs["omega"]
 	dfCharge = hcat(dfCharge, DataFrame(charge, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCharge,auxNew_Names)

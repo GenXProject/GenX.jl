@@ -10,13 +10,9 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Extract dual variables of constraints
 	# Electricity price: Dual variable of hourly power balance constraint = hourly price
 	dfPrice = DataFrame(Zone = 1:Z) # The unit is $/MWh
-
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	# Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of generation
-	if setup["ParameterScale"] == 1
-		dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]*ModelScalingFactor), :auto))
-	else
-		dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]), :auto))
-	end
+	dfPrice = hcat(dfPrice, DataFrame(transpose(dual.(EP[:cPowerBalance])./inputs["omega"]*scale_factor), :auto))
 
 	auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfPrice,auxNew_Names)
