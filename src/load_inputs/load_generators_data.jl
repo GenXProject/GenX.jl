@@ -15,6 +15,57 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
+check_vre_stor_validity(df::DataFrame)
+
+	Function for checking that no other flags have been activated for VRE-STOR module.
+"""
+function check_vre_stor_validity(df::DataFrame)
+	# Determine if any VRE-STOR resources exist
+	vre_stor = is_nonzero(df, :VRE_STOR)
+	r_id = df[:, :R_ID]
+
+	error_strings = String[]
+
+	function error_feedback(data::Vector{Int}, col::Symbol)::String
+		string("Generators ", data, ", marked as VRE-STOR, have ", col, " ≠ 0. ", col, " must be 0.")
+	end
+
+	function check_any_nonzero_with_vre_stor!(error_strings::Vector{String}, df::DataFrame, col::Symbol)
+		check = vre_stor .& is_nonzero(df, col)
+		if any(check)
+			e = error_feedback(r_id[check], col)
+			push!(error_strings, e)
+		end
+	end
+
+	# Confirm that any other flags are not activated (all other flags should be activated in the vre_stor_data.csv)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :STOR)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :THERM)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :FLEX)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :HYDRO)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :VRE)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :MUST_RUN)
+	check_any_nonzero_with_vre_stor!(error_strings, df, :LDS)
+
+	return error_strings
+end
+
+@doc raw"""
+	summarize_errors(error_strings::Vector{String})
+
+	Function for printing out to user how many errors there were in the configuration of the generators data.
+"""
+function summarize_errors(error_strings::Vector{String})
+	if !isempty(error_strings)
+		println(length(error_strings), " problem(s) in the configuration of the generators:")
+		for es in error_strings
+			println(es)
+		end
+		error("There were errors in the configuration of the generators.")
+	end
+end
+
+@doc raw"""
 	load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
 Function for reading input parameters related to electricity generators (plus storage and flexible demand resources)
@@ -251,5 +302,48 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 			#   thus the overall is MTons/GW, and thus inputs_gen["dfGen"][g,:CO2_per_Start] is ton
 		end
 	end
+
+	load_vre_stor_data!(setup, path, inputs_gen, gen_in)
 	println(filename * " Successfully Read!")
+end
+
+
+@doc raw"""
+	load_vre_stor_data(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+Function for reading input parameters related to resources that combine VRE and storage.
+If there are no VRE_STOR columns, VRE_STOR is a vector of length 0 and dfVRE_STOR is an empty Dataframe.
+"""
+function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+	error_strings = String[]
+
+	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(gen_in) ? gen_in[gen_in.VRE_STOR.==1,:R_ID] : Int[]
+
+	# Check if VRE-STOR resources exist
+	if !isempty(inputs_gen["VRE_STOR"])
+		# Check input data format
+		vre_stor_errors = check_vre_stor_validity(gen_in)
+		append!(error_strings, vre_stor_errors)
+
+		vre_stor_in = DataFrame(CSV.File(joinpath(path,"Vre_stor_data.csv"), header=true), copycols=true)
+
+		inputs["VRE_STOR_SYM"] = vre_stor_in[(vre_stor_in.STOR.==1),:R_ID]
+    	inputs["VRE_STOR_ASYM"] = vre_stor_in[(vre_stor_in.STOR.==2),:R_ID]
+
+		if setup["ParameterScale"] == 1
+			columns_to_scale = [:Existing_Cap_Grid_MW,
+								:Min_Cap_Grid_MW,
+								:Max_Cap_Grid_MW,
+								:Inv_Cost_GRID_per_MWyr,
+								:Fixed_OM_GRID_Cost_per_MWyr,
+								:Var_OM_Cost_per_MWh_VRE_STOR,
+								:Var_OM_Cost_per_MWh_In_VRE_STOR]
+			vre_stor_in[!, columns_to_scale] ./= ModelScalingFactor
+		end
+		inputs_gen["dfVRE_STOR"] = vre_stor_in
+		println("Vre_stor_data.csv Successfully Read!")
+	else
+		inputs_gen["dfVRE_STOR"] = DataFrame()
+	end
+
+	summarize_errors(error_strings)
 end

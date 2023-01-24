@@ -73,3 +73,26 @@ function hoursafter(p::Int, t::Int, a::UnitRange{Int})::Vector{Int}
     return period * p .+ mod1.(t .+ a, p)
 
 end
+
+@doc raw"""
+    is_nonzero(df::DataFrame, col::Symbol)::BitVector
+
+This function checks if a column in a dataframe is all zeros.
+"""
+function is_nonzero(df::DataFrame, col::Symbol)::BitVector
+	convert(BitVector, df[!, col] .> 0)::BitVector
+end
+
+@doc raw"""
+    by_rid_df(df::DataFrame, col::Symbol)::BitVector
+
+This function
+"""
+function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
+	return df[df.R_ID .== rid, sym][]
+end
+
+function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
+	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
+	return df[indices, sym]
+end
