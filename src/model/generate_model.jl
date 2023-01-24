@@ -189,7 +189,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	# Model constraints, variables, expressions related to the co-located VRE-storage resources
-	if setup["VreStor"] == 1
+	if !isempty(inputs["VRE_STOR"])
 		EP = vre_stor(EP, inputs, setup["Reserves"], setup["MinCapReq"],setup["EnergyShareRequirement"], setup["CapacityReserveMargin"], setup["StorageLosses"])
 	end
 	
