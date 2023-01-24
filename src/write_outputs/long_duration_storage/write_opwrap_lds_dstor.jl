@@ -27,6 +27,9 @@ function write_opwrap_lds_dstor(path::AbstractString, inputs::Dict, setup::Dict,
 		if i in inputs["STOR_LONG_DURATION"]
 			dsoc[i,:] = value.(EP[:vdSOC])[i,:]
 		end
+		if i in inputs["VRE_STOR_and_LDS"]
+			dsoc[i,:] = value.(EP[:vdSOC_VRE_STOR])[i,:]
+		end
 	end
 	dfdStorage = hcat(dfdStorage, DataFrame(dsoc, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("w$t") for t in 1:W]]

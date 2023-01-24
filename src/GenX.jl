@@ -132,7 +132,8 @@ include("model/resources/storage/long_duration_storage.jl")
 include("model/resources/storage/investment_charge.jl")
 include("model/resources/storage/storage_asymmetric.jl")
 include("model/resources/storage/storage_symmetric.jl")
-include("model/resources/storage/vre_stor.jl")
+
+include("model/resources/vre_stor/vre_stor.jl")
 
 include("model/resources/thermal/thermal.jl")
 include("model/resources/thermal/thermal_commit.jl")

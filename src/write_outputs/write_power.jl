@@ -35,27 +35,7 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfPower,auxNew_Names)
-
-	# VRE-Storage module
-	if setup["VreStor"] == 1
-		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-		VRE_STOR = inputs["VRE_STOR"]
-
-		dfPowerVRESTOR = DataFrame(Resource = dfGen_VRE_STOR[!,:technology], Zone = dfGen_VRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, VRE_STOR))
-		power_vre_stor = value.(EP[:vP_VRE_STOR])
-		if setup["ParameterScale"] == 1
-			power_vre_stor *= ModelScalingFactor
-		end
-		dfPowerVRESTOR.AnnualSum .= power_vre_stor * inputs["omega"]
-		dfPowerVRESTOR = hcat(dfPowerVRESTOR, DataFrame(power_vre_stor, :auto))
 	
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfPowerVRESTOR,auxNew_Names)
-
-		# Concatenate VRE-storage resources to power csv
-		dfPower = vcat(dfPower, dfPowerVRESTOR)
-	end
-
 	total = DataFrame(["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	total[:, 4:T+3] .= sum(power, dims = 1)
 

@@ -25,9 +25,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	HYDRO_RES = inputs["HYDRO_RES"]
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
-	if setup["VreStor"]==1
-		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-	end
+	VRE_STOR = inputs["VRE_STOR"]
 	## Power balance for each zone
 	# dfPowerBalance = Array{Any}
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
@@ -43,10 +41,11 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		powerbalance[(z-1)*10+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
 		    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
-		    powerbalance[(z-1)*10+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1) + (setup["VreStor"]==1 ? sum(value.(EP[:vP_VRE_STOR]), dims=1) : zeros(1, T))
+			VRE_STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], VRE_STOR)
+		    powerbalance[(z-1)*10+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1) + (!isempty(VRE_STOR) ? sum(value.(EP[:vP][VRE_STOR_ALL_ZONE, :]), dims=1) : zeros(1, T))
 		    # You cannot do the following because vCHARGE is not one-based. use [CartesianIndex(1:length(STOR_ALL_ZONE))]
 		    #powerbalance[(z-1)*10+3, :] = (-1) * sum(value.(EP[:vCHARGE])[STOR_ALL_ZONE, :], dims = 1)
-		    powerbalance[(z-1)*10+3, :] = (-1) * (sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1) + (setup["VreStor"]==1 ? sum(value.(EP[:vCHARGE_VRE_STOR]), dims=1) : zeros(1, T)))
+		    powerbalance[(z-1)*10+3, :] = (-1) * (sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1) + (!isempty(VRE_STOR) ? sum(value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_ALL_ZONE, :]), dims=1) : zeros(1, T)))
 		end
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
 		    FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)

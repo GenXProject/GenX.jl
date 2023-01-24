@@ -26,6 +26,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
+	VRE_STOR = inputs["VRE_STOR"]
 	if setup["ParameterScale"] == 1
 		existingplant_position = findall(x -> x >= 1, (value.(EP[:eTotalCap])) * ModelScalingFactor)
 	else
@@ -37,6 +38,11 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	STOR_ALL_EX = intersect(STOR_ALL, existingplant_position)
 	FLEX_EX = intersect(FLEX, existingplant_position)
 	MUST_RUN_EX = intersect(MUST_RUN, existingplant_position)
+	# Will only be activated if grid connection capacity exists (because may build standalone storage/VRE, which will only be telling by grid connection capacity)
+	if !isempty(VRE_STOR)
+		existingplant_position_vre_stor = findall(x -> x >= 1, (value.(EP[:eTotalCap_GRID])) * (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1))
+	end
+	VRE_STOR_EX = intersect(VRE_STOR, existingplant_position_vre_stor) 
 	totalcap = repeat((value.(EP[:eTotalCap])), 1, T)
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
@@ -61,6 +67,9 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		end
 		if !isempty(FLEX_EX)
 			temp_capvalue[FLEX_EX, :] = temp_cap_derate[FLEX_EX, :] .* ((value.(EP[:vCHARGE_FLEX][FLEX_EX, :]).data - value.(EP[:vP][FLEX_EX, :]))) .* temp_riskyhour[FLEX_EX, :] ./ totalcap[FLEX_EX, :]
+		end
+		if !isempty(VRE_STOR)
+			temp_capvalue[VRE_STOR_EX, :] = temp_cap_derate[VRE_STOR_EX, :] .* ((value.(EP[:vP][VRE_STOR_EX, :]) - value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_EX, :]).data)) .* temp_riskyhour[VRE_STOR_EX, :] ./ totalcap[VRE_STOR_EX, :]
 		end
 		temp_dfCapValue = hcat(temp_dfCapValue, DataFrame(temp_capvalue, :auto))
 		auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("Reserve"); [Symbol("t$t") for t in 1:T]]
