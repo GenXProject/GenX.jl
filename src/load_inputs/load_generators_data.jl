@@ -316,6 +316,7 @@ If there are no VRE_STOR columns, VRE_STOR is a vector of length 0 and dfVRE_STO
 function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
 	error_strings = String[]
 
+	dfGen = inputs_gen["dfGen"]
 	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(gen_in) ? gen_in[gen_in.VRE_STOR.==1,:R_ID] : Int[]
 
 	# Check if VRE-STOR resources exist
@@ -326,9 +327,25 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 
 		vre_stor_in = DataFrame(CSV.File(joinpath(path,"Vre_stor_data.csv"), header=true), copycols=true)
 
-		inputs["VRE_STOR_SYM"] = vre_stor_in[(vre_stor_in.STOR.==1),:R_ID]
-    	inputs["VRE_STOR_ASYM"] = vre_stor_in[(vre_stor_in.STOR.==2),:R_ID]
-
+		# Set of all storage resources eligible for new energy capacity
+		inputs["NEW_CAP_ENERGY_VRE_STOR"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], dfGen[dfGen.Max_Cap_MWh.!=0,:R_ID], VRE_STOR)
+		# Set of all storage resources eligible for energy capacity retirements
+		inputs["RET_CAP_ENERGY_VRE_STOR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], dfGen[dfGen.Existing_Cap_MWh.>=0,:R_ID], VRE_STOR)
+		# Set of all storage resources eligible for new grid capacity
+		inputs["NEW_CAP_GRID"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_Grid_MW.!=0,:R_ID])
+		# Set of all storage resources eligible for grid capacity retirements
+		inputs["RET_CAP_GRID"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_Grid_MW.>=0,:R_ID])
+		
+		# Names for systemwide resources, VRE-components, and storage components
+		inputs_vre_stor["RESOURCES_VRE_STOR"] = collect(skipmissing(vre_stor_in[!,:Resource][1:VRE_STOR]))
+		inputs_vre_stor["RESOURCES_VRE"] = collect(skipmissing(vre_stor_in[!,:Resource_VRE][1:VRE_STOR]))
+		inputs_vre_stor["RESOURCES_STOR"] = collect(skipmissing(vre_stor_in[!,:Resource_STOR][1:VRE_STOR]))
+		inputs_vre_stor["RESOURCES_GRID"] = collect(skipmissing(vre_stor_in[!,:Resource_GRID][1:VRE_STOR]))
+		
+		# All resources with storage capacities
+		inputs["STOR_VRE_STOR"] = vre_stor_in[vre_stor_in.STOR.>=1,:R_ID]
+	
+		# Scale the parameters as needed
 		if setup["ParameterScale"] == 1
 			columns_to_scale = [:Existing_Cap_Grid_MW,
 								:Min_Cap_Grid_MW,

@@ -34,16 +34,9 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
+	VRE_STOR = inputs["VRE_STOR"]
 	dfResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
 	annual_sum = zeros(G)
-
-	if setup["VreStor"] == 1
-		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-		VRE_STOR = inputs["VRE_STOR"]
-		dfResRevenue_VRE_STOR = DataFrame(Region = dfGen_VRE_STOR.region, Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfGen_VRE_STOR.Zone, Cluster = dfGen_VRE_STOR.cluster)
-		annual_sum_vre_stor = zeros(VRE_STOR)
-	end
-
 	for i in 1:inputs["NCapacityReserveMargin"]
 		sym = Symbol("CapRes_$i")
 		tempresrev = zeros(G)
@@ -57,26 +50,16 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		if !isempty(FLEX)
 			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
+		if !isempty(VRE_STOR)
+			tempresrev[VRE_STOR] = dfGen[VRE_STOR, sym] .* ((value.(EP[:vP][VRE_STOR, :]).data - value.(EP[:vCHARGE_VRE_STOR][VRE_STOR, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
+		end
 		if setup["ParameterScale"] == 1
 			tempresrev *= ModelScalingFactor^2
 		end
 		annual_sum .+= tempresrev
 		dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [sym]))
-
-		if setup["VreStor"] == 1
-			tempresrev_vre_stor = zeros(VRE_STOR)
-			tempresrev_vre_stor[1:VRE_STOR] = dfGen_VRE_STOR[:, sym] .* ((value.(EP[:vP_VRE_STOR][1:VRE_STOR, :]) - value.(EP[:vCHARGE_VRE_STOR][1:VRE_STOR, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
-			annual_sum_vre_stor .+= tempresrev_vre_stor
-			dfResRevenue_VRE_STOR = hcat(dfResRevenue_VRE_STOR, DataFrame([tempresrev_vre_stor], [sym]))
-		end
 	end
 	dfResRevenue.AnnualSum = annual_sum
-
-	if setup["VreStor"] == 1
-		dfResRevenue_VRE_STOR.AnnualSum = annual_sum_vre_stor
-		dfResRevenue = vcat(dfResRevenue, dfResRevenue_VRE_STOR)
-	end
-
 	CSV.write(joinpath(path, "ReserveMarginRevenue.csv"), dfResRevenue)
 	return dfResRevenue
 end

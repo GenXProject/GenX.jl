@@ -184,7 +184,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	  println(elapsed_time_net_rev)
 	end
 
-	if setup["VreStor"] == 1
+	if !isempty(inputs["VRE_STOR"])
 		write_vre_stor(path, inputs, setup, EP)
 	end
 	
