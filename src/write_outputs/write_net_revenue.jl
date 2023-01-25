@@ -26,6 +26,8 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	G = inputs["G"]     			# Number of generators
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
+	VRE_STOR = inputs["VRE_STOR"]
+	dfVRE_STOR = inputs["dfVRE_STOR"]
 
 	# Create a NetRevenue dataframe
  	dfNetRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
@@ -33,6 +35,10 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add investment cost to the dataframe
 	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:G,:NewCap]
 	dfNetRevenue.Inv_cost_MWh = dfGen[!,:Inv_Cost_per_MWhyr] .* dfCap[1:G,:NewEnergyCap]
+	if !isempty(VRE_STOR)
+		dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Grid_per_MWyr] .* value.(EP[:vGRIDCAP])
+		dfNetRevenue.Inv_cost_MWh[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_per_MWhyr] .* value.(EP[:vCAPSTORAGE_VRE_STOR])
+	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
 		dfNetRevenue.Inv_cost_MW *= ModelScalingFactor # converting Million US$ to US$
@@ -42,6 +48,11 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfNetRevenue.Fixed_OM_cost_MW = dfGen[!,:Fixed_OM_Cost_per_MWyr] .* dfCap[1:G,:EndCap]
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
+	if !isempty(VRE_STOR)
+		dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Grid_Cost_per_MWyr] .* value.(EP[:eTotalCap_GRID])
+		dfNetRevenue.Fixed_OM_cost_MWh[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Cost_per_MWhyr] .* value.(EP[:eTotalCap_STOR])
+		dfNetRevenue.Var_OM_cost_out[VRE_STOR] += dfVRE_STOR[!,:Var_OM_Cost_per_MWh_VRE_STOR] .* value.(EP[:vP_DC]) .* dfVRE_STOR[!,:EtaInverter]
+	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
 		dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
@@ -58,6 +69,9 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfNetRevenue.Var_OM_cost_in = zeros(nrow(dfNetRevenue))
 	if !isempty(STOR_ALL)
 		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = dfGen[STOR_ALL,:Var_OM_Cost_per_MWh_In] .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
+ 	end
+	 if !isempty(VRE_STOR)
+		dfNetRevenue.Var_OM_cost_in[VRE_STOR] = dfVRE_STOR[VRE_STOR,:Var_OM_Cost_per_MWh_In_VRE_STOR] .* ((value.(EP[:vCHARGE_VRE_STOR][VRE_STOR,:]).data) * inputs["omega"])
  	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$
@@ -128,55 +142,6 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfNetRevenue.RegSubsidyRevenue = zeros(nrow(dfNetRevenue))
 	if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
 		dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[1:G,:SubsidyRevenue]
-	end
-
-	# Add VRE-STORAGE module (parameter scaling??)
-	if setup["VreStor"]==1
-		dfGen_VRE_STOR = inputs["dfGen_VRE_STOR"]
-		VRE_STOR = inputs["VRE_STOR"]
-		dfNetRevenueVRESTOR = DataFrame(region = dfGen_VRE_STOR[!,:region], Resource = inputs["RESOURCES_VRE_STOR"], zone = dfGen_VRE_STOR[!,:Zone], Cluster = dfGen_VRE_STOR[!,:cluster], R_ID = dfGen_VRE_STOR[!,:R_ID])
-		dfNetRevenueVRESTOR.Inv_cost_MW = dfGen_VRE_STOR[!,:Inv_Cost_VRE_per_MWyr] .* value.(EP[:vCAP_VRE]) + dfGen_VRE_STOR[!,:Inv_Cost_GRID_per_MWyr] .* value.(EP[:vGRIDCAP])
-		dfNetRevenueVRESTOR.Inv_cost_MWh = dfGen_VRE_STOR[!,:Inv_Cost_per_MWhyr] .* value.(EP[:vCAPSTORAGE_VRE_STOR])
-		dfNetRevenueVRESTOR.Fixed_OM_cost_MW = dfGen_VRE_STOR[!,:Fixed_OM_VRE_Cost_per_MWyr] .* value.(EP[:eTotalCap_VRE]) + dfGen_VRE_STOR[!,:Fixed_OM_GRID_Cost_per_MWyr] .* value.(EP[:eTotalCap_GRID])
-		dfNetRevenueVRESTOR.Fixed_OM_cost_MWh = dfGen_VRE_STOR[!,:Fixed_OM_Cost_per_MWhyr] .* value.(EP[:eTotalCap_STOR])
-		dfNetRevenueVRESTOR.Var_OM_cost_out = (dfGen_VRE_STOR[!,:Var_OM_Cost_per_MWh]) .* dfPower[(G+1):end-1,:AnnualSum]
-		dfNetRevenueVRESTOR[!,:Fuel_cost] .= 0.0
-		dfNetRevenueVRESTOR[!,:Var_OM_cost_in] .= 0.0
-		dfNetRevenueVRESTOR[!,:StartCost] .= 0.0
-		dfNetRevenueVRESTOR[!,:EmissionsCost] .= 0.0
-
-		# Charge costs
-		dfNetRevenueVRESTOR.Charge_cost = zeros(nrow(dfNetRevenueVRESTOR))
-		if has_duals(EP) == 1
-			dfNetRevenueVRESTOR.Charge_cost = dfChargingcost[G+1:G+VRE_STOR,:AnnualSum] # Unit is confirmed to be US$
-		end
-
-		# Energy Revenue
-		dfNetRevenueVRESTOR.EnergyRevenue = zeros(nrow(dfNetRevenueVRESTOR))
-		dfNetRevenueVRESTOR.SubsidyRevenue = zeros(nrow(dfNetRevenueVRESTOR))
-		if setup["EnergyShareRequirement"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
-			dfNetRevenueVRESTOR.EnergyRevenue = dfEnergyRevenue[G+1:G+VRE_STOR,:AnnualSum]
-			dfNetRevenueVRESTOR.SubsidyRevenue = dfSubRevenue[G+1:G+VRE_STOR,:SubsidyRevenue] # Unit is confirmed to be US$
-		end
-		# Add capacity revenue to the dataframe
-		dfNetRevenueVRESTOR.ReserveMarginRevenue = zeros(nrow(dfNetRevenueVRESTOR))
-		if setup["CapacityReserveMargin"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
-			dfNetRevenueVRESTOR.ReserveMarginRevenue = dfResRevenue[G+1:G+VRE_STOR,:AnnualSum]
-		end
-		
-		# Add ESR revenue to the dataframe
-		dfNetRevenueVRESTOR.ESRRevenue = zeros(nrow(dfNetRevenueVRESTOR))
-		if setup["EnergyShareRequirement"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
-			dfNetRevenue.ESRRevenue = dfESRRev[G+1:G+VRE_STOR,:AnnualSum]
-		end
-
-		# Add regional technology subsidy revenue to the dataframe
-		dfNetRevenueVRESTOR.RegSubsidyRevenue = zeros(nrow(dfNetRevenueVRESTOR))
-		if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
-			dfNetRevenueVRESTOR.RegSubsidyRevenue = dfRegSubRevenue[G+1:G+VRE_STOR,:SubsidyRevenue]
-		end
-
-		dfNetRevenue = vcat(dfNetRevenue, dfNetRevenueVRESTOR)
 	end
 
 	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue .+ dfNetRevenue.SubsidyRevenue .+ dfNetRevenue.ReserveMarginRevenue .+ dfNetRevenue.ESRRevenue .+ dfNetRevenue.RegSubsidyRevenue
