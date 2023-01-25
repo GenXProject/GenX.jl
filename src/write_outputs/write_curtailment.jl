@@ -11,7 +11,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = zeros(G))
 	curtailment = zeros(G, T)
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	curtailment[VRE, :] = scale_factor * value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
+	curtailment[VRE, :] = scale_factor * (value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :]))
 
 	dfCurtailment.AnnualSum = curtailment * inputs["omega"]
 	dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
