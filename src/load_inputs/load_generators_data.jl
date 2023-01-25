@@ -318,6 +318,8 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 
 	dfGen = inputs_gen["dfGen"]
 	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(gen_in) ? gen_in[gen_in.VRE_STOR.==1,:R_ID] : Int[]
+	inputs_gen["VRE_STOR_and_ASYM"] = Int[]
+	inputs_gen["STOR_VRE_STOR"] = Int[]
 
 	# Check if VRE-STOR resources exist
 	if !isempty(inputs_gen["VRE_STOR"])
@@ -338,7 +340,7 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 		
 		# Names for systemwide resources, VRE-components, and storage components
 		inputs_gen["RESOURCES_VRE_STOR"] = vre_stor_in[!,:Resource][inputs_gen["VRE_STOR"]]
-		inputs_gen["RESOURCES_GRID"] = vre_stor_in[!,:Resource_GRID][inputs_gen["VRE_STOR"]]
+		inputs_gen["RESOURCES_GRID"] = vre_stor_in[!,:Resource_Grid][inputs_gen["VRE_STOR"]]
 		
 		# All resources with storage capacities
 		inputs_gen["STOR_VRE_STOR"] = vre_stor_in[vre_stor_in.STOR.>=1,:R_ID]

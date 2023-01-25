@@ -281,7 +281,7 @@ function split_LDS_and_ASYM(df::DataFrame, inputs::Dict, setup::Dict)
     VRE_STOR_and_SYM = df[df.STOR.==1,:R_ID]
     VRE_STOR_and_ASYM = df[df.STOR.==2,:R_ID]
 
-	return VRE_STOR_and_LDS, VRE_STOR_and_nonLDS, VRE_STOR_and_SYM, VRE_STOR_AND_ASYM
+	return VRE_STOR_and_LDS, VRE_STOR_and_nonLDS, VRE_STOR_and_SYM, VRE_STOR_and_ASYM
 end
 
 @doc raw"""
@@ -344,7 +344,7 @@ investment_charge_vre_stor!(EP::Model, inputs::Dict)
 function investment_charge_vre_stor!(EP::Model, inputs::Dict)
     println("VRE-STOR Charge Investment Module")
 
-    VRE_STOR_ASYM = inputs["VRE_STOR_ASYM"]
+    VRE_STOR_ASYM = inputs["VRE_STOR_and_ASYM"]
     dfGen = inputs["dfGen"]
 
     NEW_CAP_CHARGE = intersect(inputs["NEW_CAP_CHARGE"], VRE_STOR_ASYM) # Set of asymmetric charge/discharge storage resources eligible for new charge capacity

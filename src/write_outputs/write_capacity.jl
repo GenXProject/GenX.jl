@@ -54,7 +54,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		end
 		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : dfGen[!,:Existing_Charge_Cap_MW][i]
 	end
-	for i in inputs["VRE_STOR_AND_ASYM"]
+	for i in inputs["VRE_STOR_and_ASYM"]
 		if i in inputs["NEW_CAP_CHARGE_VRE_STOR"]
 			capcharge[i] = value(EP[:vCAPCHARGE_VRE_STOR][i])
 		end
@@ -87,7 +87,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	end
 
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Technology = dfGen[!,:technology], Cluster=dfGen[!,:cluster], 
+		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Resource_Type = dfGen[!,:Resource_Type], Cluster=dfGen[!,:cluster], 
 		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!,:Existing_Cap_MW],
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
@@ -103,9 +103,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	)
 
 	if !isempty(inputs["VRE_STOR"])
+		dfVRE_STOR = inputs["dfVRE_STOR"]
 		dfGRIDCAP = DataFrame(
-			Resource = inputs["RESOURCES_GRID"], Technology = dfGen_VRE_STOR[!,:technology], Cluster=dfGen_VRE_STOR[!,:cluster], Zone = dfGen_VRE_STOR[!,:Zone],
-			StartCap = dfGen_VRE_STOR[!,:Existing_Cap_Grid_MW],
+			Resource = inputs["RESOURCES_GRID"], Resource_Type = dfVRE_STOR[!,:Resource_Type], Cluster=dfVRE_STOR[!,:cluster], Zone = dfVRE_STOR[!,:Zone],
+			StartCap = dfVRE_STOR[!,:Existing_Cap_Grid_MW],
 			RetCap = value.(EP[:vRETGRIDCAP]),
 			NewCap = value.(EP[:vGRIDCAP]),
 			EndCap = value.(EP[:eTotalCap_GRID]),
@@ -136,7 +137,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
 	end
 	total = DataFrame(
-			Resource = "Total", Zone = "n/a", Technology = "Total", Cluster= "n/a", 
+			Resource = "Total", Zone = "n/a", Resource_Type = "Total", Cluster= "n/a", 
 			StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 			NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
 			StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),

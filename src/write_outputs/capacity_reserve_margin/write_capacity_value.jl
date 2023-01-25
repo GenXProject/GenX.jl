@@ -41,8 +41,11 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	# Will only be activated if grid connection capacity exists (because may build standalone storage/VRE, which will only be telling by grid connection capacity)
 	if !isempty(VRE_STOR)
 		existingplant_position_vre_stor = findall(x -> x >= 1, (value.(EP[:eTotalCap_GRID])) * (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1))
+		VRE_STOR_EX = intersect(VRE_STOR, existingplant_position_vre_stor) 
+	else
+		VRE_STOR_EX = Int[]
 	end
-	VRE_STOR_EX = intersect(VRE_STOR, existingplant_position_vre_stor) 
+	
 	totalcap = repeat((value.(EP[:eTotalCap])), 1, T)
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
