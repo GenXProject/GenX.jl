@@ -167,7 +167,17 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			elapsed_time_cap_value = @elapsed write_capacity_value(path, inputs, setup, EP)
 		  println("Time elapsed for writing capacity value is")
 		  println(elapsed_time_cap_value)
+			if haskey(inputs, "dfCapRes_slack")
+				dfResMar_slack = write_reserve_margin_slack(path, inputs, setup, EP)
+			end		  
 		end
+		if setup["CO2Cap"]>0 && has_duals(EP) == 1
+			dfCO2Cap = write_co2_cap(path, inputs, setup, EP)
+		end
+		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
+			dfMinCapReq = write_minimum_capacity_requirement(path, inputs, setup, EP)
+		end
+
 
 		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
 	  println("Time elapsed for writing net revenue is")

@@ -28,16 +28,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	VRE_STOR = inputs["VRE_STOR"]
 
 	if !isempty(VRE_STOR)
-		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cGridConnection"])
+		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cGridConnection"])
 	else
-		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"])
+		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
 	end
+
 	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0) + (!isempty(VRE_STOR) ? value(EP[:eTotalCVar_VRE_STOR]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0) + (!isempty(VRE_STOR) ? value(EP[:eTotalCFix_VRE_STOR]) : 0.0) + (!isempty(inputs["VRE_STOR_ASYM"]) ? value(EP[:eTotalCFixCharge_VRE_STOR]) : 0.0)
 	if !isempty(VRE_STOR)
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
+		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0]
+		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
 	end
 
 	if setup["ParameterScale"] == 1
@@ -56,6 +57,22 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[7,2] = value(EP[:eTotalCNetworkExp])
 	end
 
+	if haskey(inputs, "dfCapRes_slack")
+		dfCost[8,2] += value(EP[:eCTotalCapResSlack])
+	end
+
+	if haskey(inputs, "dfESR_slack")
+		dfCost[8,2] += value(EP[:eCTotalESRSlack])
+	end
+	
+	if haskey(inputs, "dfCO2Cap_slack")
+		dfCost[8,2] += value(EP[:eCTotalCO2CapSlack])
+	end
+	
+	if haskey(inputs, "MinCapPriceCap")
+		dfCost[8,2] += value(EP[:eTotalCMinCapSlack])
+	end	
+	
 	if !isempty(VRE_STOR)
 		dfCost[!,2][8] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
@@ -64,6 +81,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[5,2] *= ModelScalingFactor^2
 		dfCost[6,2] *= ModelScalingFactor^2
 		dfCost[7,2] *= ModelScalingFactor^2
+		dfCost[8,2] *= ModelScalingFactor^2
 	end
 
 	for z in 1:Z
@@ -137,9 +155,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCStart *= ModelScalingFactor^2
 		end
 		if !isempty(VRE_STOR)
-			dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
+			dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-", "-"]
 		else
-			dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-"]
+			dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
 		end
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
