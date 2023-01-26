@@ -126,6 +126,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		if !isempty(VRE_STOR)
 			dfVRE_STOR = inputs["dfVRE_STOR"]
 			Y_ZONE_VRE_STOR = dfVRE_STOR[dfVRE_STOR[!,:Zone].==z,:R_ID]
+			STOR_ALL_ZONE_VRE_STOR = intersect(inputs["VRE_STOR"], Y_ZONE_VRE_STOR)
+			STOR_ASYMMETRIC_ZONE_VRE_STOR = intersect(inputs["VRE_STOR_and_ASYM"], Y_ZONE_VRE_STOR)
 
 			# Fixed Costs
 			eCFix_VRE_STOR = sum(value.(EP[:eCFix_VRE_STOR][Y_ZONE_VRE_STOR]))
@@ -135,8 +137,19 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			eCVar_VRE_STOR = sum(value.(EP[:eCVar_out_VRE_STOR][Y_ZONE_VRE_STOR,:]))
 			tempCVar += eCVar_VRE_STOR
 
+			# Var_In costs
+			eCVar_in_VRE_STOR = sum(value.(EP[:eCVar_in_VRE_STOR][STOR_ALL_ZONE_VRE_STOR,:]))
+			tempCVar += eCVar_in_VRE_STOR
+
+			# Asymmetric costs
+			if !isempty(STOR_ASYMMETRIC_ZONE_VRE_STOR)
+				eCFixCharge_VRE_STOR = sum(value.(EP[:eCFixCharge_VRE_STOR][STOR_ASYMMETRIC_ZONE_VRE_STOR]))
+				tempCFix += eCFixCharge_VRE_STOR
+				tempCTotal += eCFixCharge_VRE_STOR
+			end
+
 			# Total Added Costs
-			tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR)
+			tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR + eCVar_in_VRE_STOR)
 		end
 
 		if setup["UCommit"] >= 1

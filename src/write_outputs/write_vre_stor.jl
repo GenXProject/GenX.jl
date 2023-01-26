@@ -39,54 +39,56 @@ Function for writing the vre-storage capacities.
 """
 function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	VRE_STOR = inputs["VRE_STOR"]
+	dfGen = inputs["dfGen"]
+	dfVRE_STOR = inputs["dfVRE_STOR"]
 
 	capdischarge = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in intersect(inputs["NEW_CAP"], VRE_STOR)
-		capdischarge[i] = value(EP[:vCAP][i])
-	end
-
 	retcapdischarge = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in intersect(inputs["RET_CAP"], VRE_STOR)
-		retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
-	end
-
 	existingcap = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in VRE_STOR
-		existingcap[i] = dfGen[!,:Existing_Cap_MW][i]
-	end
-
 	capenergy = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in inputs["NEW_CAP_ENERGY_VRE_STOR"]
-		capenergy[i] = value(EP[:vCAPENERGY_VRE_STOR][i])
-	end
-
 	retcapenergy = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in inputs["RET_CAP_ENERGY_VRE_STOR"]
-		retcapdischarge[i] = first(value.(EP[:vRETCAPENERGY_VRE_STOR][i]))
-	end
-
 	existingcapenergy = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in VRE_STOR
-		existingcapenergy[i] = dfGen[!,:Existing_Cap_MWh][i]
-	end
-
 	capcharge = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in inputs["NEW_CAP_ENERGY_VRE_STOR"]
-		capcharge[i] = value(EP[:vCAPCHARGE_VRE_STOR][i])
-	end
-
 	retcapcharge = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in inputs["RET_CAP_ENERGY_VRE_STOR"]
-		retcapcharge[i] = first(value.(EP[:vRETCAPCHARGE_VRE_STOR][i]))
-	end
-
 	existingcapcharge = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	for i in VRE_STOR
-		existingcapcharge[i] = dfGen[!,:Existing_Charge_Cap_MW][i]
+	capgrid = zeros(size(inputs["RESOURCES_GRID"]))
+	retcapgrid = zeros(size(inputs["RESOURCES_GRID"]))
+	j = 1
+	for i in inputs["VRE_STOR"]
+		if i in intersect(inputs["NEW_CAP"], VRE_STOR)
+			capdischarge[j] = value(EP[:vCAP][i])
+		end
+		if i in intersect(inputs["RET_CAP"], VRE_STOR)
+			retcapdischarge[j] = first(value.(EP[:vRETCAP][i]))
+		end
+		if i in inputs["NEW_CAP_ENERGY_VRE_STOR"]
+			capenergy[j] = value(EP[:vCAPENERGY_VRE_STOR][i])
+		end
+		if i in inputs["RET_CAP_ENERGY_VRE_STOR"]
+			retcapdischarge[j] = first(value.(EP[:vRETCAPENERGY_VRE_STOR][i]))
+		end
+		if i in inputs["NEW_CAP_GRID"]
+			capgrid[j] = value(EP[:vGRIDCAP][i])
+		end
+		if i in inputs["RET_CAP_GRID"]
+			retcapgrid[j] = value((EP[:vRETGRIDCAP])[i])
+		end
+		if !isempty(inputs["VRE_STOR_and_ASYM"])
+			if i in inputs["NEW_CAP_CHARGE_VRE_STOR"]
+				capcharge[j] = value(EP[:vCAPCHARGE_VRE_STOR][i])
+			end
+			if i in inputs["RET_CAP_CHARGE_VRE_STOR"]
+				retcapcharge[j] = first(value.(EP[:vRETCAPCHARGE_VRE_STOR][i]))
+			end
+		end
+		existingcap[j] = dfGen[!,:Existing_Cap_MW][i]
+		existingcapenergy[j] = dfGen[!,:Existing_Cap_MWh][i]
+		existingcapcharge[j] = dfGen[!,:Existing_Charge_Cap_MW][i]
+		j += 1
 	end
 
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], Technology = dfGen[!,:technology], Cluster=dfGen[!,:cluster], 
+		Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], Resource_Type = dfVRE_STOR[!,:Resource_Type], Cluster=dfVRE_STOR[!,:cluster], 
 		StartCap = existingcap[:],
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
@@ -99,10 +101,10 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		RetChargeCap = retcapcharge[:],
 		NewChargeCap = capcharge[:],
 		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:],
-		StartGridCap = value.(EP[:vRETGRIDCAP]),
-		RetGridCap = value.(EP[:vRETGRIDCAP]),
-		NewGridCap = value.(EP[:vGRIDCAP]),
-		EndGridCap = value.(EP[:eTotalCap_GRID])
+		StartGridCap = dfVRE_STOR[!,:Existing_Cap_Grid_MW],
+		RetGridCap = retcapgrid[:],
+		NewGridCap = capgrid[:],
+		EndGridCap = dfVRE_STOR[!,:Existing_Cap_Grid_MW] - retcapgrid[:] + capgrid[:]
 	)
 
 	if setup["ParameterScale"] ==1
@@ -125,7 +127,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	end
 
 	total = DataFrame(
-		Resource = "Total", Zone = "n/a", Technology = "Total", Cluster= "n/a", 
+		Resource = "Total", Zone = "n/a", Resource_Type = "Total", Cluster= "n/a", 
 		StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 		NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
 		StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),
@@ -152,8 +154,8 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 
 	# DC charging of battery dataframe
 	dfCharge_DC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
-	charge_dc = zeros(VRE_STOR, T)
-	charge_dc = value.(EP[:vCHARGE_DC]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+	charge_dc = zeros(size(VRE_STOR)[1], T)
+	charge_dc = value.(EP[:vCHARGE_DC]).data * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
 	dfCharge_DC.AnnualSum .= charge_dc * inputs["omega"]
 	dfCharge_DC = hcat(dfCharge_DC, DataFrame(charge_dc, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
@@ -166,8 +168,8 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 
 	# DC charging of battery (specifically from VRE resource) dataframe
 	dfCharge_VRE = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
-	charge_vre = zeros(VRE_STOR, T)
-	charge_vre = value.(EP[:eVRECharging]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
+	charge_vre = zeros(size(VRE_STOR)[1], T)
+	charge_vre = value.(EP[:eVRECharging]).data * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
 	dfCharge_VRE.AnnualSum .= charge_vre * inputs["omega"]
 	dfCharge_VRE = hcat(dfCharge_VRE, DataFrame(charge_vre, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
@@ -190,8 +192,8 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 	T = inputs["T"] 
 
 	# DC discharging of battery dataframe
-	dfDischarge_DC = DataFrame(Resource = dfVRE_STOR[!,:technology], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
-	power_vre_stor = value.(EP[:vDISCHARGE_DC])
+	dfDischarge_DC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
+	power_vre_stor = value.(EP[:vDISCHARGE_DC]).data
 	if setup["ParameterScale"] == 1
 		power_vre_stor *= ModelScalingFactor
 	end
@@ -206,8 +208,8 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 	CSV.write(joinpath(path, "vre_stor_bat_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
 
 	# VRE generation of co-located resource dataframe
-	dfVP_VRE_STOR = DataFrame(Resource = dfVRE_STOR[!,:technology], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
-	vre_vre_stor = value.(EP[:vP_DC]) .* dfVRE_STOR[!,:EtaInverter]
+	dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
+	vre_vre_stor = value.(EP[:vP_DC]).data .* dfVRE_STOR[!,:EtaInverter]
 	if setup["ParameterScale"] == 1
 		vre_vre_stor *= ModelScalingFactor
 	end

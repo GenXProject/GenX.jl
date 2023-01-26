@@ -22,8 +22,10 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("VRE-Storage Module")
 
-	dfGen = inputs["dfGen"]
+    ### LOAD DATA ###
 
+    # Load generators dataframe, sets, and time periods
+	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -39,39 +41,39 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     StorageLosses = setup["StorageLosses"]
 
     # Load VRE-storage inputs
-	VRE_STOR = inputs["VRE_STOR"] 	# Set of VRE-STOR generators
-    dfVRE_STOR = inputs["dfVRE_STOR"]
+	VRE_STOR = inputs["VRE_STOR"] 	                                # Set of VRE-STOR generators
+    dfVRE_STOR = inputs["dfVRE_STOR"]                               # Dataframe of VRE-STOR specific parameters
 
     NEW_CAP_ENERGY_VRE_STOR = inputs["NEW_CAP_ENERGY_VRE_STOR"]
     RET_CAP_ENERGY_VRE_STOR = inputs["RET_CAP_ENERGY_VRE_STOR"]
     NEW_CAP_GRID = inputs["NEW_CAP_GRID"]
     RET_CAP_GRID = inputs["RET_CAP_GRID"]
-    STOR_VRE_STOR = inputs["STOR_VRE_STOR"]
 
     by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
 
-    ### Variables ###
-    @variables(EP, begin
-    # Grid capacity core variables
-    vRETGRIDCAP[y in RET_CAP_GRID] >= 0                         # Retired grid capacity [MW]
-    vGRIDCAP[y in NEW_CAP_GRID] >= 0                            # New installed grid capacity [AC MW]
-    
-    # "Behind the inverter" VRE core generation [MW]
-    vP_DC[y in VRE_STOR, t=1:T] >= 0
+    ### VARIABLES ###
 
-    # All core storage variables
-    vCAPENERGY_VRE_STOR[y in NEW_CAP_ENERGY_VRE_STOR] >= 0      # Energy storage reservoir capacity (MWh capacity) built for VRE storage [MWh]
-    vRETCAPENERGY_VRE_STOR[y in RET_CAP_ENERGY_VRE_STOR] >= 0   # Energy storage reservoir capacity retired for VRE storage [MWh]
-    vS_VRE_STOR[y in STOR_VRE_STOR,t=1:T] >= 0                  # Storage level of resource "y" at hour "t" [MWh] on zone "z"
-    vCHARGE_DC[y in STOR_VRE_STOR, t=1:T] >= 0                  # "Behind the inverter" charge from the VRE-component [MW]
-    vDISCHARGE_DC[y in STOR_VRE_STOR, t=1:T] >= 0               # "Behind the inverter" discharge [MW]
-    vCHARGE_VRE_STOR[y in STOR_VRE_STOR,t=1:T] >= 0             # Energy withdrawn from grid by resource VRE_STOR at hour "t" [MW]
+    @variables(EP, begin
+        # Grid capacity core variables
+        vRETGRIDCAP[y in RET_CAP_GRID] >= 0                         # Retired grid capacity [MW]
+        vGRIDCAP[y in NEW_CAP_GRID] >= 0                            # New installed grid capacity [AC MW]
+        
+        # "Behind the inverter" VRE core generation [MW]
+        vP_DC[y in VRE_STOR, t=1:T] >= 0
+
+        # All core storage variables
+        vCAPENERGY_VRE_STOR[y in NEW_CAP_ENERGY_VRE_STOR] >= 0      # Energy storage reservoir capacity (MWh capacity) built for VRE storage [MWh]
+        vRETCAPENERGY_VRE_STOR[y in RET_CAP_ENERGY_VRE_STOR] >= 0   # Energy storage reservoir capacity retired for VRE storage [MWh]
+        vS_VRE_STOR[y in VRE_STOR,t=1:T] >= 0                  # Storage level of resource "y" at hour "t" [MWh] on zone "z"
+        vCHARGE_DC[y in VRE_STOR, t=1:T] >= 0                  # "Behind the inverter" charge from the VRE-component [MW]
+        vDISCHARGE_DC[y in VRE_STOR, t=1:T] >= 0               # "Behind the inverter" discharge [MW]
+        vCHARGE_VRE_STOR[y in VRE_STOR,t=1:T] >= 0             # Energy withdrawn from grid by resource VRE_STOR at hour "t" [MW]
     end)
    
-	### Expressions ###
+	### EXPRESSIONS ###
 
     # Total energy capacity
-    @expression(EP, eTotalCap_STOR[y in STOR_VRE_STOR],
+    @expression(EP, eTotalCap_STOR[y in VRE_STOR],
 		if (y in intersect(NEW_CAP_ENERGY_VRE_STOR, RET_CAP_ENERGY_VRE_STOR)) # Resources eligible for new capacity and retirements
 			dfGen[y,:Existing_Cap_MWh] + EP[:vCAPENERGY_VRE_STOR][y] - EP[:vRETCAPENERGY_VRE_STOR][y]
 		elseif (y in setdiff(NEW_CAP_ENERGY_VRE_STOR, RET_CAP_ENERGY_VRE_STOR)) # Resources eligible for only new capacity
@@ -96,54 +98,52 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end
     )
 
-    ## Objective Function Expressions ###
+    ## Objective Function Expressions ##
 
-    # Fixed costs for storage resources
-	# If resource is not eligible for new energy capacity, fixed costs are only O&M costs
-	@expression(EP, eCFixEnergy_VRE_STOR[y in STOR_VRE_STOR],
-    if y in NEW_CAP_ENERGY_VRE_STOR # Resources eligible for new capacity
-        dfGen[y,:Inv_Cost_per_MWhyr]*vCAPENERGY_VRE_STOR[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCap_STOR[y]
-    else
-        dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCap_STOR[y]
-    end
+    # Fixed costs for storage resources (if resource is not eligible for new energy capacity, fixed costs are only O&M costs)
+	@expression(EP, eCFixEnergy_VRE_STOR[y in VRE_STOR],
+        if y in NEW_CAP_ENERGY_VRE_STOR # Resources eligible for new capacity
+            dfGen[y,:Inv_Cost_per_MWhyr]*vCAPENERGY_VRE_STOR[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCap_STOR[y]
+        else
+            dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCap_STOR[y]
+        end
     )
 
-    # Fixed costs for grid connection
-    # If resource is not eligible for new grid capacity, fixed costs are only O&M costs
+    # Fixed costs for grid connection (f resource is not eligible for new grid capacity, fixed costs are only O&M costs)
 	@expression(EP, eCFixGrid[y in VRE_STOR],
-    if y in NEW_CAP_GRID # Resources eligible for new capacity
-        by_rid(y, :Inv_Cost_Grid_per_MWyr)*vCAPENERGY_VRE_STOR[y] + by_rid(y, :Fixed_OM_Grid_Cost_per_MWyr)*eTotalCap_Grid[y]
-    else
-        by_rid(y, :Fixed_OM_Grid_Cost_per_MWyr)*eTotalCap_Grid[y]
-    end
+        if y in NEW_CAP_GRID # Resources eligible for new capacity
+            by_rid(y, :Inv_Cost_Grid_per_MWyr)*vGRIDCAP[y] + by_rid(y, :Fixed_OM_Grid_Cost_per_MWyr)*eTotalCap_GRID[y]
+        else
+            by_rid(y, :Fixed_OM_Grid_Cost_per_MWyr)*eTotalCap_GRID[y]
+        end
     )
 
     # Fixed costs for VRE-STOR resources
     @expression(EP, eCFix_VRE_STOR[y in VRE_STOR], eCFixEnergy_VRE_STOR[y] + eCFixGrid[y])
     # Variable costs of "generation" for VRE-STOR resource "y" during hour "t" = variable O&M plus fuel cost
-    @expression(EP, eCVar_out_VRE_STOR[y in VRE_STOR, t=1:T], inputs["omega"][t]*(by_rid(y, :Var_OM_Cost_per_MWh_VRE_STOR)*vP_DC[y,t]*by_rid(y, :EtaInverter) + by_rid(y, :Var_OM_Cost_per_MWh_In)*vCHARGE_VRE_STOR[y,t]))
+    @expression(EP, eCVar_out_VRE_STOR[y in VRE_STOR, t=1:T], inputs["omega"][t]*(by_rid(y, :Var_OM_Cost_per_MWh_VRE_STOR)*vP_DC[y,t]*by_rid(y, :EtaInverter)))
+    # Variable costs of charging for VRE-STOR resources "y" during hour "t"
+    @expression(EP, eCVar_in_VRE_STOR[y in VRE_STOR, t=1:T], inputs["omega"][t]*(by_rid(y, :Var_OM_Cost_per_MWh_In_VRE_STOR)*vCHARGE_VRE_STOR[y,t]))
 
 	# Sum individual resource contributions to variable charging costs to get total variable charging costs
 	@expression(EP, eTotalCFix_VRE_STOR, sum(eCFix_VRE_STOR[y] for y in VRE_STOR))
-    @expression(EP, eTotalCVar_VRE_STOR, sum(eCVar_out_VRE_STOR[y, t] for y in VRE_STOR, t in 1:T))
+    @expression(EP, eTotalCVar_VRE_STOR, sum(eCVar_out_VRE_STOR[y, t] + eCVar_in_VRE_STOR[y, t] for y in VRE_STOR, t in 1:T))
 	EP[:eObj] += (eTotalCFix_VRE_STOR + eTotalCVar_VRE_STOR)
 
     # Separate grid costs
-    @expression(EP, eTotalCGrid, 
-    sum(by_rid(y, :Inv_Cost_Grid_per_MWyr)*vGRIDCAP[y]
-    + by_rid(y,:Fixed_OM_Grid_Cost_per_MWyr)*eTotalCap_GRID[y] for y in VRE_STOR))
+    @expression(EP, eTotalCGrid, sum(by_rid(y, :Inv_Cost_Grid_per_MWyr)*vGRIDCAP[y]
+                                    + by_rid(y,:Fixed_OM_Grid_Cost_per_MWyr)*eTotalCap_GRID[y] for y in VRE_STOR))
 
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalance_VRE_STOR[t=1:T, z=1:Z],
-	sum(vP[y,t]-vCHARGE_VRE_STOR[y,t] for y=dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID]))
-
+	sum(EP[:vP][y,t]-vCHARGE_VRE_STOR[y,t] for y=dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID]))
 	EP[:ePowerBalance] += ePowerBalance_VRE_STOR
 
     ## Policy Expressions ##
 
     # Energy losses related to technologies (increase in effective demand)
-    @expression(EP, eELOSS_VRE_STOR[y in STOR_VRE_STOR], sum(inputs["omega"][t]*(vCHARGE_DC[y,t]/by_rid(y, :EtaInverter) - vDISCHARGE_DC[y,t]/by_rid(y, :EtaInverter)) for t in 1:T))
+    @expression(EP, eELOSS_VRE_STOR[y in VRE_STOR], sum(inputs["omega"][t]*(vCHARGE_DC[y,t]/by_rid(y, :EtaInverter) - vDISCHARGE_DC[y,t]/by_rid(y, :EtaInverter)) for t in 1:T))
     
     # From CO2 Policy module
 	@expression(EP, eELOSSByZone_VRE_STOR[z=1:Z],
@@ -151,12 +151,12 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     )
 
     if (MinCapReq == 1)
-        @expression(EP, eMinCapResVREStor[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap_VRE][y]*by_rid(y, EtaInverter) for y in dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
+        @expression(EP, eMinCapResVREStor[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y]*by_rid(y, :EtaInverter) for y in dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
 		EP[:eMinCapRes] += eMinCapResVREStor
 	end
 
     if EnergyShareRequirement >= 1
-        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfVRE_STOR[y,Symbol("ESR_$ESR")]*EP[:vP_DC][y,t]*by_rid(y, EtaInverter) for y=dfVRE_STOR[findall(x->x>0,dfVRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T) 
+        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfVRE_STOR[y,Symbol("ESR_$ESR")]*EP[:vP_DC][y,t]*by_rid(y, :EtaInverter) for y=dfVRE_STOR[findall(x->x>0,dfVRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T) 
 						- sum(inputs["dfESR"][z,ESR]*StorageLosses*sum(EP[:eELOSS_VRE_STOR][y] for y=dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID]) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 		EP[:eESR] += eESRVREStor		
         
@@ -180,7 +180,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eDCExports[y in VRE_STOR, t in 1:T], vDISCHARGE_DC[y, t] + vP_DC[y, t])
 
     # Grid charging of battery
-    @expression(EP, eGridCharging[y in VRE_STOR, t in 1:T], vCHARGE_VRE_STOR[y, t]*dfGen_VRE_STOR[y,:EtaInverter])
+    @expression(EP, eGridCharging[y in VRE_STOR, t in 1:T], vCHARGE_VRE_STOR[y, t]*by_rid(y,:EtaInverter))
 
     # VRE charging of battery
     @expression(EP, eVRECharging[y in VRE_STOR, t in 1:T], vCHARGE_DC[y, t] - eGridCharging[y, t])
@@ -207,19 +207,19 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Constraint 3: Inverter Ratio between capacity and grid
     @constraint(EP, cInverterRatio[y in dfVRE_STOR[dfVRE_STOR.Inverter_Ratio.>0,:R_ID]], 
-    eTotalCap_VRE[y] == by_rid(y, :Inverter_Ratio) * eTotalCap_GRID[y])
+    EP[:eTotalCap][y] == by_rid(y, :Inverter_Ratio) * eTotalCap_GRID[y])
 
     # Constraint 4: VRE Generation Maximum Constraint
     @constraint(EP, cVREGenMax[y in VRE_STOR, t=1:T],
-    vP_DC[y,t] <= inputs["pP_Max"][y,t]*eTotalCap_VRE[y])
+    vP_DC[y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
     # Constraint 5: Energy Balance Constraint
     @constraint(EP, cEnergyBalance[y in VRE_STOR, t=1:T],
-    vDISCHARGE_DC[y, t] + vP_DC[y, t] - vCHARGE_DC[y, t] == vP[y, t]/by_rid(y, :EtaInverter) - eGridCharging[y, t])
+    vDISCHARGE_DC[y, t] + vP_DC[y, t] - vCHARGE_DC[y, t] == EP[:vP][y, t]/by_rid(y, :EtaInverter) - eGridCharging[y, t])
     
     # Constraint 6: Grid Export/Import Maximum
     @constraint(EP, cGridExport[y in VRE_STOR, t=1:T],
-    vP[y,t] + vCHARGE_VRE_STOR[y,t] <= eTotalCap_GRID[y])	
+    EP[:vP][y,t] + vCHARGE_VRE_STOR[y,t] <= eTotalCap_GRID[y])	
 
     # Constraint 6: Charging + Discharging Maximum 
     @constraint(EP, cChargeDischargeMax[y in VRE_STOR, t=1:T],
@@ -229,9 +229,15 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cSOCMax[y in VRE_STOR, t=1:T],
     vS_VRE_STOR[y,t] <= eTotalCap_STOR[y])
 
+    # Activate additional storage constraints as needed
+    VRE_STOR_and_LDS, VRE_STOR_and_nonLDS, VRE_STOR_and_SYM, VRE_STOR_AND_ASYM = split_LDS_and_ASYM(dfVRE_STOR, inputs, setup)
+    inputs["VRE_STOR_and_LDS"] = VRE_STOR_and_LDS
+    inputs["VRE_STOR_and_nonLDS"] = VRE_STOR_and_nonLDS
+    inputs["VRE_STOR_and_ASYM"] = VRE_STOR_AND_ASYM
+
     # Constraint 8: State of Charge (energy stored for the next hour)
-    if OperationWrapping == 1 && !isempty(inputs["VRE_STOR_LONG_DURATION"])
-		CONSTRAINTSET = inputs["VRE_STOR_SHORT_DURATION"]
+    if setup["OperationWrapping"] == 1 && !isempty(VRE_STOR_and_LDS) # Check for LDS=1 & OperationWrapping=1
+		CONSTRAINTSET = VRE_STOR_and_nonLDS
 	else
 		CONSTRAINTSET = VRE_STOR
 	end
@@ -246,11 +252,6 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                         (dfGen[y,:Eff_Up]*vCHARGE_DC[y,t]) -
                         (dfGen[y,:Self_Disch]*vS_VRE_STOR[y,t+hours_per_subperiod-1]))
 
-    # Activate additional storage constraints as needed
-    VRE_STOR_and_LDS, VRE_STOR_and_nonLDS, VRE_STOR_and_SYM, VRE_STOR_AND_ASYM = split_LDS_and_ASYM(dfVRE_STOR, inputs, setup)
-    inputs["VRE_STOR_and_LDS"] = VRE_STOR_and_LDS
-    inputs["VRE_STOR_and_nonLDS"] = VRE_STOR_and_nonLDS
-    inputs["VRE_STOR_and_ASYM"] = VRE_STOR_AND_ASYM
 
     # Activate LDS constraints if nonempty set
     if !isempty(VRE_STOR_and_LDS)
@@ -271,8 +272,8 @@ end
 function split_LDS_and_ASYM(df::DataFrame, inputs::Dict, setup::Dict)
 	VRE_STOR = inputs["VRE_STOR"]
 	if setup["OperationWrapping"] == 1
-		VRE_STOR_and_LDS = df[df.LDS.==1,:R_ID]
-		VRE_STOR_and_nonLDS = df[df.LDS.!=1,:R_ID]
+		VRE_STOR_and_LDS = df[(df.LDS.==1) .& (df.STOR.>=1),:R_ID]
+		VRE_STOR_and_nonLDS = df[(df.LDS.!=1) .& (df.STOR.>=1),:R_ID]
 	else
 		VRE_STOR_and_LDS = Int[]
 		VRE_STOR_and_nonLDS = VRE_STOR
@@ -291,17 +292,18 @@ end
 """
 function lds_vre_stor!(EP::Model, inputs::Dict)
     println("VRE-STOR LDS Module")
-    REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
 
+    VRE_STOR_and_LDS = inputs["VRE_STOR_and_LDS"]
+    dfGen = inputs["dfGen"]
+
+    REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
 	dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
 	NPeriods = nrow(dfPeriodMap) # Number of modeled periods
 
 	MODELED_PERIODS_INDEX = 1:NPeriods
 	REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap.Rep_Period .== MODELED_PERIODS_INDEX]
 
-    VRE_STOR_AND_LDS = inputs["VRE_STOR_and_LDS"]
-    dfGen = inputs["dfGen"]
-
+    # State of charge of storage at beginning of each modeled period n
 	@variable(EP, vSOCw_VRE_STOR[y in VRE_STOR_and_LDS, n in MODELED_PERIODS_INDEX] >= 0)
 
     # Build up in storage inventory over each representative period w
@@ -392,8 +394,6 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict)
     ## Constraints on retirements and capacity additions
 	#Cannot retire more charge capacity than existing charge capacity
 	@constraint(EP, cVreStorMaxRetCharge[y in RET_CAP_CHARGE], vRETCAPCHARGE_VRE_STOR[y] <= dfGen[y,:Existing_Charge_Cap_MW])
-
-    #Constraints on new built capacity
 
     # Constraint on maximum charge capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty

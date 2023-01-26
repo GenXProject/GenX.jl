@@ -36,8 +36,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:G,:NewCap]
 	dfNetRevenue.Inv_cost_MWh = dfGen[!,:Inv_Cost_per_MWhyr] .* dfCap[1:G,:NewEnergyCap]
 	if !isempty(VRE_STOR)
-		dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Grid_per_MWyr] .* value.(EP[:vGRIDCAP])
-		dfNetRevenue.Inv_cost_MWh[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_per_MWhyr] .* value.(EP[:vCAPSTORAGE_VRE_STOR])
+		dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Grid_per_MWyr] .* value.(EP[:vGRIDCAP]).data
 	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
@@ -49,9 +48,8 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
-		dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Grid_Cost_per_MWyr] .* value.(EP[:eTotalCap_GRID])
-		dfNetRevenue.Fixed_OM_cost_MWh[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Cost_per_MWhyr] .* value.(EP[:eTotalCap_STOR])
-		dfNetRevenue.Var_OM_cost_out[VRE_STOR] += dfVRE_STOR[!,:Var_OM_Cost_per_MWh_VRE_STOR] .* value.(EP[:vP_DC]) .* dfVRE_STOR[!,:EtaInverter]
+		dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Grid_Cost_per_MWyr] .* value.(EP[:eTotalCap_GRID]).data
+		dfNetRevenue.Var_OM_cost_out[VRE_STOR] += dfVRE_STOR[!,:Var_OM_Cost_per_MWh_VRE_STOR] .* (value.(EP[:vP_DC]).data .* dfVRE_STOR[!,:EtaInverter] * inputs["omega"])
 	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
@@ -71,7 +69,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = dfGen[STOR_ALL,:Var_OM_Cost_per_MWh_In] .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
  	end
 	 if !isempty(VRE_STOR)
-		dfNetRevenue.Var_OM_cost_in[VRE_STOR] = dfVRE_STOR[VRE_STOR,:Var_OM_Cost_per_MWh_In_VRE_STOR] .* ((value.(EP[:vCHARGE_VRE_STOR][VRE_STOR,:]).data) * inputs["omega"])
+		dfNetRevenue.Var_OM_cost_in[VRE_STOR] = dfVRE_STOR[!,:Var_OM_Cost_per_MWh_In_VRE_STOR] .* ((value.(EP[:vCHARGE_VRE_STOR][VRE_STOR,:]).data) * inputs["omega"])
  	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$

@@ -45,7 +45,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		    powerbalance[(z-1)*10+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1) + (!isempty(VRE_STOR) ? sum(value.(EP[:vP][VRE_STOR_ALL_ZONE, :]), dims=1) : zeros(1, T))
 		    # You cannot do the following because vCHARGE is not one-based. use [CartesianIndex(1:length(STOR_ALL_ZONE))]
 		    #powerbalance[(z-1)*10+3, :] = (-1) * sum(value.(EP[:vCHARGE])[STOR_ALL_ZONE, :], dims = 1)
-		    powerbalance[(z-1)*10+3, :] = (-1) * (sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1) + (!isempty(VRE_STOR) ? sum(value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_ALL_ZONE, :]), dims=1) : zeros(1, T)))
+		    powerbalance[(z-1)*10+3, :] = (-1) * (sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1) + (!isempty(VRE_STOR) ? sum(value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_ALL_ZONE, :]).data, dims=1) : zeros(1, T)))
 		end
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
 		    FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)

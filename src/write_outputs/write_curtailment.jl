@@ -30,12 +30,12 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if setup["ParameterScale"] == 1
 		curtailment[VRE, :] = ModelScalingFactor * value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
 		if !isempty(VRE_STOR)
-			curtailment[VRE_STOR, :] = ModelScalingFactor * (value.(EP[:eTotalCap][VRE_STOR]) .* inputs["pP_Max"][VRE_STOR, :] .- value.(EP[:vP_DC][VRE_STOR, :])) .* inputs["dfVRE_STOR"][VRE_STOR, :EtaInverter]
+			curtailment[VRE_STOR, :] = ModelScalingFactor * (value.(EP[:eTotalCap][VRE_STOR]) .* inputs["pP_Max"][VRE_STOR, :] .- value.(EP[:vP_DC][VRE_STOR, :])) .* inputs["dfVRE_STOR"][!, :EtaInverter]
 		end
 	else
 		curtailment[VRE, :] = value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
 		if !isempty(VRE_STOR)
-			curtailment[VRE_STOR, :] = (value.(EP[:eTotalCap][VRE_STOR]) .* inputs["pP_Max"][VRE_STOR, :] .- value.(EP[:vP_DC][VRE_STOR, :])) .*  inputs["dfVRE_STOR"][VRE_STOR, :EtaInverter]
+			curtailment[VRE_STOR, :] = (value.(EP[:eTotalCap][VRE_STOR]) .* inputs["pP_Max"][VRE_STOR, :] .- value.(EP[:vP_DC][VRE_STOR, :])) .*  inputs["dfVRE_STOR"][!, :EtaInverter]
 		end
 	end
 	dfCurtailment.AnnualSum = curtailment * inputs["omega"]
