@@ -10,4 +10,4 @@ Method: choose             #HiGHS-specific solver settings # Solver option: "sim
 
 # Run the crossover routine for IPX
 # [type: bool, advanced: true, range: {false, true}, default: true]
-run_crossover: false
+run_crossover: off

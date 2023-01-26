@@ -170,9 +170,6 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         #end
 	end
 
-    # Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-	end
 
     ## Module Expressions ##
 
@@ -261,6 +258,23 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Activate Asymmetric charging constraints if nonempty set
     if !isempty(VRE_STOR_AND_ASYM)
 		investment_charge_vre_stor!(EP, inputs)
+	end
+
+    # Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		CRPL = setup["CapResPeriodLength"]
+		@variable(EP, vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y in VRE_STOR, t=1:T]) # VREStor capacity contribution from net discharge
+		@variable(EP, vCAPCONTRSTOR_SOC_VRE_STOR[y in VRE_STOR, t=1:T] >= 0) # VREStor capacity contribution from charge held in reserve
+		@variable(EP, vMINSOCSTOR_VRE_STOR[y in VRE_STOR, t=1:T] >= 0) # Minimum SOC maintained over following n hours
+
+		@constraint(EP, cCapContrStorEnergy_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y,t] <= EP[:vP][y,t] - EP[:vCHARGE_VRE_STOR][y,t])
+		@constraint(EP, cMinSocTrackStor_VRE_STOR[y in VRE_STOR, t=1:T, n=1:CRPL], vMINSOCSTOR_VRE_STOR[y,t] <= EP[:vS_VRE_STOR][y, hoursafter(p,t,n)])
+		@constraint(EP, cCapContrStorSOC_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC_VRE_STOR[y,t] <= dfGen[y,:Eff_Down]*vMINSOCSTOR_VRE_STOR[y,t]/CRPL)
+		@constraint(EP, cCapContrStorSOCLim_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC_VRE_STOR[y,t] <= EP[:eTotalCap_GRID][y])
+		@constraint(EP, cCapContrStorSOCPartLim_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC_VRE_STOR[y,t] <= EP[:eTotalCap_GRID][y] - vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y,t])
+
+		@expression(EP, eCapResMarBalanceStor_VRE_STOR[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y,t] + vCAPCONTRSTOR_SOC_VRE_STOR[y,t])  for y in VRE_STOR))
+		EP[:eCapResMarBalance] += eCapResMarBalanceStor_VRE_STOR
 	end
 end
 
