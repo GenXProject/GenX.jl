@@ -170,9 +170,6 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         #end
 	end
 
-    # Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-	end
 
     ## Module Expressions ##
 
@@ -262,22 +259,22 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 		investment_charge_vre_stor!(EP, inputs)
 	end
 
-    # 	# Capacity Reserves Margin policy
-	# if CapacityReserveMargin > 0
-	# 	CRPL = setup["CapResPeriodLength"]
-	# 	@variable(EP, vCAPCONTRSTOR_DISCHARGE[y in VRE_STOR, t=1:T]) # Storage capacity contribution from net discharge
-	# 	@variable(EP, vCAPCONTRSTOR_SOC[y in VRE_STOR, t=1:T] >= 0) # Storage capacity contribution from charge held in reserve
-	# 	@variable(EP, vMINSOCSTOR[y in VRE_STOR, t=1:T] >= 0) # Minimum SOC maintained over following n hours
+    # Capacity Reserves Margin policy
+	if CapacityReserveMargin > 0
+		CRPL = setup["CapResPeriodLength"]
+		@variable(EP, vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y in VRE_STOR, t=1:T]) # VREStor capacity contribution from net discharge
+		@variable(EP, vCAPCONTRSTOR_SOC_VRE_STOR[y in VRE_STOR, t=1:T] >= 0) # VREStor capacity contribution from charge held in reserve
+		@variable(EP, vMINSOCSTOR_VRE_STOR[y in VRE_STOR, t=1:T] >= 0) # Minimum SOC maintained over following n hours
 
-	# 	@constraint(EP, cCapContrStorEnergy[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_DISCHARGE[y,t] <= EP[:vP][y,t] - EP[:vCHARGE][y,t])
-	# 	@constraint(EP, cMinSocTrackStor[y in VRE_STOR, t=1:T, n=1:CRPL], vMINSOCSTOR[y,t] <= EP[:vS][y, hoursafter(p,t,n)])
-	# 	@constraint(EP, cCapContrStorSOC[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC[y,t] <= dfGen[y,:Eff_Down]*vMINSOCSTOR[y,t]/CRPL)
-	# 	@constraint(EP, cCapContrStorSOCLim[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC[y,t] <= EP[:eTotalCap][y])
-	# 	@constraint(EP, cCapContrStorSOCPartLim[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC[y,t] <= EP[:eTotalCap][y] - vCAPCONTRSTOR_DISCHARGE[y,t])
+		@constraint(EP, cCapContrStorEnergy_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y,t] <= EP[:vP][y,t] - EP[:vCHARGE_VRE_STOR][y,t])
+		@constraint(EP, cMinSocTrackStor_VRE_STOR[y in VRE_STOR, t=1:T, n=1:CRPL], vMINSOCSTOR_VRE_STOR[y,t] <= EP[:vS_VRE_STOR][y, hoursafter(p,t,n)])
+		@constraint(EP, cCapContrStorSOC_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC_VRE_STOR[y,t] <= dfGen[y,:Eff_Down]*vMINSOCSTOR_VRE_STOR[y,t]/CRPL)
+		@constraint(EP, cCapContrStorSOCLim_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC_VRE_STOR[y,t] <= EP[:eTotalCap_GRID][y])
+		@constraint(EP, cCapContrStorSOCPartLim_VRE_STOR[y in VRE_STOR, t=1:T], vCAPCONTRSTOR_SOC_VRE_STOR[y,t] <= EP[:eTotalCap_GRID][y] - vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y,t])
 
-	# 	@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (vCAPCONTRSTOR_DISCHARGE[y,t] + vCAPCONTRSTOR_SOC[y,t])  for y in VRE_STOR))
-	# 	EP[:eCapResMarBalance] += eCapResMarBalanceStor
-	# end
+		@expression(EP, eCapResMarBalanceStor_VRE_STOR[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (vCAPCONTRSTOR_DISCHARGE_VRE_STOR[y,t] + vCAPCONTRSTOR_SOC_VRE_STOR[y,t])  for y in VRE_STOR))
+		EP[:eCapResMarBalance] += eCapResMarBalanceStor_VRE_STOR
+	end
 end
 
 @doc raw"""
