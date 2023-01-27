@@ -64,19 +64,26 @@ function configure_settings(settings_path::String)
     # Multistage expansion; 0 = Single-stage GenX; 1 = Multi-stage GenX
     set_default_if_absent!(settings, "MultiStage", 0)
 
-    sanitize_settings!(settings)
+    validate_settings!(settings)
 
 return settings
 end
 
-function sanitize_settings!(settings::Dict{Any,Any})
+function validate_settings!(settings::Dict{Any,Any})
     # Check for any settings combinations that are not allowed.
     # If we find any then make a response and issue a note to the user.
 
     ###### HARD-CODED COMBINATIONS OF SETTING COMBINATIONS WHICH CAUSE PROBLEMS ######
+    
+    # If OperationWrapping = 1, then TimeDomainReduction must be 1.
+    # Will be fixed by removing OperationWrapping in future versions.
     if settings["OperationWrapping"] == 1 && settings["TimeDomainReduction"] == 0
-        @warn "OperationWrapping = 1, but TimeDomainReduction = 0 (is OFF).\nThis will cause GenX to apply period weights to the full year.\nGenX will set OperationWrapping = 0 and set the period weights (omega) = 1"
-        settings["OperationWrapping"] = 0
+        error(
+            "OperationWrapping = 1, but TimeDomainReduction = 0 (is OFF).
+            This combination of settings does not currently work.
+            If you want to use time domain reduction, set TimeDomainReduction = 1 in the settings.
+            Otherwise set OperationWrapping = 0."
+        )
     end
     
 end
