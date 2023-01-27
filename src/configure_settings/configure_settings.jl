@@ -20,6 +20,8 @@ function default_settings()
         "ModelingtoGenerateAlternativeSlack" => 0.1,
         "MultiStage" => 0,
         "MethodofMorris" => 0,
+        "EnableJuMPStringNames" => false,
+        "CapResPeriodLength" => 0,
     )
 end
 
