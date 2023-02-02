@@ -92,7 +92,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		StartCap = existingcap[:],
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
-		EndCap = existingcap[:] - retcapdischarge[:] - capdischarge[:],
+		EndCap = existingcap[:] - retcapdischarge[:] + capdischarge[:],
 		StartEnergyCap = existingcapenergy[:],
 		RetEnergyCap = retcapenergy[:],
 		NewEnergyCap = capenergy[:],

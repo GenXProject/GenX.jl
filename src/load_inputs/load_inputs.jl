@@ -84,13 +84,19 @@ end
 
 function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict)
 	ow = setup["OperationWrapping"]==1
-	has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
+	if !isempty(inputs["VRE_STOR"])
+		df = inputs["dfVRE_STOR"]
+		VRE_STOR_LDS = df[(df.LDS.==1) .& (df.STOR.>=1),:R_ID]
+	else
+		VRE_STOR_LDS = Int[]
+	end
+	has_stor_lds = (!isempty(inputs["STOR_LONG_DURATION"])) || (!isempty(VRE_STOR_LDS))
 	ow && has_stor_lds
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
 	data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
-	is_here = isfile(joinpath(data_directory,"Period_map.csv"))
-	is_in_folder = isfile(joinpath(data_directory, setup["TimeDomainReductionFolder"], "Period_map.csv"))
+	is_here = isfile(joinpath(path,"Period_map.csv"))
+	is_in_folder = isfile(joinpath(path, setup["TimeDomainReductionFolder"], "Period_map.csv"))
 	is_here || is_in_folder
 end

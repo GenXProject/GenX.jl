@@ -32,7 +32,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
 
     dfCapacityfactor = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
     if setup["ParameterScale"] == 1
-        capacityfactor[:, 1] .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
+        dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * ModelScalingFactor
         if !isempty(VRE_STOR)
             dfCapacityfactor.AnnualSum[VRE_STOR] .= value.(EP[:vP_DC][VRE_STOR, :]).data .* dfVRE_STOR[!, :EtaInverter] * inputs["omega"] * ModelScalingFactor

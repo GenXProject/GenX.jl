@@ -154,7 +154,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		dfESRRev = DataFrame()
 		if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
 			dfESR = write_esr_prices(path, inputs, setup, EP)
-			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR)
+			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR, EP)
 		end
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()
