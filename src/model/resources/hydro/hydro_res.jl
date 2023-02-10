@@ -16,13 +16,13 @@ Note: in future updates, an option to model hydro resources with large reservoir
 The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$).
 ```math
 \begin{aligned}
-&\Theta_{y,z,t} - \Theta_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
+&\Theta_{y,z,t} + f_{y,z,t} + r_{y,z,t} - \Theta_{y,z,t-1} - f_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 ```math
 \begin{aligned}
-&\Theta_{y,z,t-1} - \Theta_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
+&\Theta_{y,z,t-1} + f_{y,z,t-1}  + r_{y,z,t-1} - \Theta_{y,z,t} - f_{y,z,t}\leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
@@ -106,9 +106,8 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down
-		cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
-		cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
-
+		cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t]+ EP[:vREG][y,t]+EP[:vRSV][y,t] - EP[:vP][y, hoursbefore(p,t,1)]-EP[:vREG][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
+		cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)]+EP[:vREG][y, hoursbefore(p,t,1)] + EP[:vRSV][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - EP[:vREG][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
 		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 		# DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
