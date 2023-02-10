@@ -67,6 +67,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "EnableJuMPStringNames", false)
     # When set to 1, adds the transmission losses to the demand when determining the ESR requirement
     set_default_if_absent!(settings, "include_transmission_losses_in_esr", 0)
+    set_default_if_absent!(settings, "CapResPeriodLength", 0)
+    # Capacity Reserve Period Length for storage
 
 
 return settings
