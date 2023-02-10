@@ -65,6 +65,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "MultiStage", 0)
     # No JuMP String name reporting at model generation by default, to expedite model generation; true if JuMP string names need to be enabled
     set_default_if_absent!(settings, "EnableJuMPStringNames", false)
+    # When set to 1, adds the transmission losses to the demand when determining the ESR requirement
+    set_default_if_absent!(settings, "include_transmission_losses_in_esr", 0)
 
 
 return settings
