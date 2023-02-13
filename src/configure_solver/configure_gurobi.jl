@@ -8,7 +8,7 @@ Returns a MathOptInterface OptimizerWithAttributes Gurobi optimizer instance to 
 The Gurobi optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
  - FeasibilityTol = 1e-6 (Constraint (primal) feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/feasibilitytol.html)
- - OptimalityTol = 1e-6 (Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol)
+ - OptimalityTol = 1e-4 (Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol)
  - Presolve = -1 (Controls presolve level. See https://www.gurobi.com/documentation/8.1/refman/presolve.html)
  - AggFill = -1 (Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill)
  - PreDual = -1 (Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual)
@@ -23,48 +23,31 @@ The Gurobi optimizer instance is configured with the following default parameter
 function configure_gurobi(solver_settings_path::String)
 
 	solver_settings = YAML.load(open(solver_settings_path))
+	solver_settings = convert(Dict{String, Any}, solver_settings)
 
-	# Optional solver parameters ############################################
-	MyFeasibilityTol = 1e-6 # Constraint (primal) feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/feasibilitytol.html
-		if(haskey(solver_settings, "Feasib_Tol")) MyFeasibilityTol = solver_settings["Feasib_Tol"] end
-	MyOptimalityTol = 1e-4 # Dual feasibility tolerances. See https://www.gurobi.com/documentation/8.1/refman/optimalitytol.html#parameter:OptimalityTol
-		if(haskey(solver_settings, "Optimal_Tol")) MyOptimalityTol = solver_settings["Optimal_Tol"] end
-	MyPresolve = -1 	# Controls presolve level. See https://www.gurobi.com/documentation/8.1/refman/presolve.html
-		if(haskey(solver_settings, "Pre_Solve")) MyPresolve = solver_settings["Pre_Solve"] end
-	MyAggFill = -1 		# Allowed fill during presolve aggregation. See https://www.gurobi.com/documentation/8.1/refman/aggfill.html#parameter:AggFill
-		if(haskey(solver_settings, "AggFill")) MyAggFill = solver_settings["AggFill"] end
-	MyPreDual = -1		# Presolve dualization. See https://www.gurobi.com/documentation/8.1/refman/predual.html#parameter:PreDual
-		if(haskey(solver_settings, "PreDual")) MyPreDual = solver_settings["PreDual"] end
-	MyTimeLimit = Inf	# Limits total time solver. See https://www.gurobi.com/documentation/8.1/refman/timelimit.html
-		if(haskey(solver_settings, "TimeLimit")) MyTimeLimit = solver_settings["TimeLimit"] end
-	MyMIPGap = 1e-3		# Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). See https://www.gurobi.com/documentation/8.1/refman/mipgap2.html
-		if(haskey(solver_settings, "MIPGap")) MyMIPGap = solver_settings["MIPGap"] end
-	MyCrossover = -1 	# Barrier crossver strategy. See https://www.gurobi.com/documentation/8.1/refman/crossover.html#parameter:Crossover
-		if(haskey(solver_settings, "Crossover")) MyCrossover = solver_settings["Crossover"] end
-	MyMethod = -1		# Algorithm used to solve continuous models (including MIP root relaxation). See https://www.gurobi.com/documentation/8.1/refman/method.html
-		if(haskey(solver_settings, "Method")) MyMethod = solver_settings["Method"] end
-	MyBarConvTol = 1e-8 	# Barrier convergence tolerance (determines when barrier terminates). See https://www.gurobi.com/documentation/8.1/refman/barconvtol.html
-		if(haskey(solver_settings, "BarConvTol")) MyBarConvTol = solver_settings["BarConvTol"] end
-	MyNumericFocus = 0 	# Numerical precision emphasis. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
-		if(haskey(solver_settings, "NumericFocus")) MyNumericFocus = solver_settings["NumericFocus"] end
-	MyOutputFlag = 1 	# Controls Gurobi output. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html
-		if(haskey(solver_settings, "OutputFlag")) MyOutputFlag = solver_settings["OutputFlag"] end
-	########################################################################
+    default_settings = Dict("Feasib_Tol" => 1e-6,
+                            "Optimal_Tol" => 1e-4,
+                            "Pre_Solve" => -1,
+                            "AggFill" => -1,
+                            "PreDual" => -1,
+                            "TimeLimit" => Inf,
+                            "MIPGap" => 1e-3,
+                            "Crossover" => -1,
+                            "Method" => -1,
+                            "BarConvTol" => 1e-8,
+                            "NumericFocus" => 0,
+                            "OutputFlag" => 1
+                           )
 
-	OPTIMIZER = optimizer_with_attributes(Gurobi.Optimizer,
-		"OptimalityTol" => MyOptimalityTol,
-		"FeasibilityTol" => MyFeasibilityTol,
-		"Presolve" => MyPresolve,
-		"AggFill" => MyAggFill,
-		"PreDual" => MyPreDual,
-		"TimeLimit" => MyTimeLimit,
-		"MIPGap" => MyMIPGap,
-		"Method" => MyMethod,
-		"BarConvTol" => MyBarConvTol,
-		"NumericFocus" => MyNumericFocus,
-		"Crossover" =>  MyCrossover,
-		"OutputFlag" => MyOutputFlag
-	)
+    attributes = merge(default_settings, solver_settings)
 
-	return OPTIMIZER
+    key_replacement = Dict("Feasib_Tol" => "FeasibilityTol",
+                           "Optimal_Tol" => "OptimalityTol",
+                           "Pre_Solve" => "Presolve",
+                          )
+
+    attributes = rename_keys(attributes, key_replacement)
+
+    attributes::Dict{String, Any}
+	return optimizer_with_attributes(Gurobi.Optimizer, attributes...)
 end

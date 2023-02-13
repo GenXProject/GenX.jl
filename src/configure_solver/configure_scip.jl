@@ -14,18 +14,19 @@ The SCIP optimizer instance is configured with the following default parameters 
 function configure_scip(solver_settings_path::String)
 
 	solver_settings = YAML.load(open(solver_settings_path))
+	solver_settings = convert(Dict{String, Any}, solver_settings)
 
-	# Optional solver parameters ############################################
-	Mydisplay_verblevel = 0
-		if(haskey(solver_settings, "display_verblevel")) Mydisplay_verblevel = solver_settings["display_verblevel"] end
-	Mylimits_gap = 0.05
-		if(haskey(solver_settings, "limits_gap")) Mylimits_gap = solver_settings["limits_gap"] end
-	########################################################################
+    default_settings = Dict("Dispverblevel" => 0,
+                            "limitsgap" => 0.05,
+                           )
+    attributes = merge(default_settings, solver_settings)
 
-	OPTIMIZER = optimizer_with_attributes(SCIP.Optimizer,
-		#"display_verblevel" => Mydisplay_verblevel, 
-		#"limits_gap" => Mylimits_gap
-	)
+    key_replacement = Dict("Dispverblevel" => "display_verblevel",
+                           "limitsgap" => "limits_gap",
+                          )
 
-	return OPTIMIZER
+    attributes = rename_keys(attributes, key_replacement)
+
+    attributes::Dict{String, Any}
+	return optimizer_with_attributes(SCIP.Optimizer, attributes...)
 end

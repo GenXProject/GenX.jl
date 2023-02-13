@@ -19,33 +19,24 @@ The Cbc optimizer instance is configured with the following default parameters i
 function configure_cbc(solver_settings_path::String)
 
 	solver_settings = YAML.load(open(solver_settings_path))
+	solver_settings = convert(Dict{String, Any}, solver_settings)
 
-	# Optional solver parameters ############################################
-	Myseconds = 1e-6
-		if(haskey(solver_settings, "TimeLimit")) Myseconds = solver_settings["TimeLimit"] end
-	MylogLevel = 1e-6
-		if(haskey(solver_settings, "logLevel")) MylogLevel = solver_settings["logLevel"] end
-	MymaxSolutions = -1
-		if(haskey(solver_settings, "maxSolutions")) MymaxSolutions = solver_settings["maxSolutions"] end
-	MymaxNodes = -1
-		if(haskey(solver_settings, "maxNodes")) MymaxNodes = solver_settings["maxNodes"] end
-	MyallowableGap = -1
-		if(haskey(solver_settings, "allowableGap")) MyallowableGap = solver_settings["allowableGap"] end
-	MyratioGap = Inf
-		if(haskey(solver_settings, "ratioGap")) MyratioGap = solver_settings["ratioGap"] end
-	Mythreads = 1
-		if(haskey(solver_settings, "threads")) Mythreads = solver_settings["threads"] end
-	########################################################################
+    default_settings = Dict("TimeLimit" => 1e-6,
+                            "logLevel" => 1e-6,
+                            "maxSolutions" => -1,
+                            "maxNodes" => -1,
+                            "allowableGap" => -1,
+                            "ratioGap" => Inf,
+                            "threads" => 1,
+                           )
 
-	OPTIMIZER = optimizer_with_attributes(Cbc.Optimizer,
-		"seconds" => Myseconds,
-		"logLevel" => MylogLevel,
-		"maxSolutions" => MymaxSolutions,
-		"maxNodes" => MymaxNodes,
-		"allowableGap" => MyallowableGap,
-		"ratioGap" => MyratioGap,
-		"threads" => Mythreads
-	)
+    attributes = merge(default_settings, solver_settings)
 
-	return OPTIMIZER
+    key_replacement = Dict("TimeLimit" => "seconds",
+                          )
+
+    attributes = rename_keys(attributes, key_replacement)
+
+    attributes::Dict{String, Any}
+	return optimizer_with_attributes(Cbc.Optimizer, attributes...)
 end
