@@ -444,9 +444,9 @@ function configure_highs(solver_settings_path::String)
 		if(haskey(solver_settings, "mip_abs_gap")) Mymip_abs_gap = solver_settings["mip_abs_gap"] end
 	Mylog_dev_level = 0
 		if(haskey(solver_settings, "log_dev_level")) Mylog_dev_level = solver_settings["log_dev_level"] end
-	Myrun_crossover = off
+	Myrun_crossover = "off"
 		if(haskey(solver_settings, "run_crossover")) Myrun_crossover = solver_settings["run_crossover"] end
-	Myallow_unbounded_or_infeasible = on
+	Myallow_unbounded_or_infeasible = false
 		if(haskey(solver_settings, "allow_unbounded_or_infeasible")) Myallow_unbounded_or_infeasible = solver_settings["allow_unbounded_or_infeasible"] end
 	Myuse_implied_bounds_from_presolve = false
 		if(haskey(solver_settings, "use_implied_bounds_from_presolve")) Myuse_implied_bounds_from_presolve = solver_settings["use_implied_bounds_from_presolve"] end
