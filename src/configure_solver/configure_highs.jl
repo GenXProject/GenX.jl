@@ -340,7 +340,6 @@ function configure_highs(solver_settings_path::String)
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)
 
-    # Optional solver parameters ############################################
     default_settings = Dict{String,Any}(
         "Feasib_Tol" => 1e-6,
         "Optimal_Tol" => 1e-4,
@@ -437,24 +436,8 @@ function configure_highs(solver_settings_path::String)
                            "Method" => "solver",
                           )
 
-    function rename_keys(attributes::Dict, new_key_names::Dict)
-        updated_attributes = typeof(attributes)()
-        for (old_key, value) in attributes
-            if ~haskey(new_key_names, old_key)
-                new_key = old_key
-            else
-                new_key = new_key_names[old_key]
-                if haskey(attributes, new_key)
-                    @error "Colliding keys: '$old_key' needs to be renamed to '$new_key' but '$new_key' already exists in", attributes
-                end
-            end
-            updated_attributes[new_key] = value
-        end
-        return updated_attributes
-    end
-
     attributes = rename_keys(attributes, key_replacement)
 
-    attributes::Dict(String, Any)
+    attributes::Dict{String, Any}
     return optimizer_with_attributes(HiGHS.Optimizer, attributes...)
 end
