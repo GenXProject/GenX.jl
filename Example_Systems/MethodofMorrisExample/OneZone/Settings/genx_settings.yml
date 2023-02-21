@@ -1,4 +1,3 @@
-MacOrWindows: Mac  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
 PrintModel: 0 # Write the model formulation as an output; 0 = active; 1 = not active
 NetworkExpansion: 0 # Transmission network expansionl; 0 = not active; 1 = active systemwide
 Trans_Loss_Segments: 1 # Number of segments used in piecewise linear approximation of transmission losses; 1 = linear, >2 = piecewise quadratic
@@ -8,15 +7,13 @@ CapacityReserveMargin: 0 # Number of capacity reserve margin constraints; 0 = no
 CO2Cap: 0 # CO2 emissions cap; 0 = not active (no CO2 emission limit); 1 = mass-based emission limit constraint; 2 = load + rate-based emission limit constraint; 3 = generation + rate-based emission limit constraint
 StorageLosses: 1 # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
 MinCapReq: 0  # Activate minimum technology carveout constraints; 0 = not active; 1 = active
-Solver: HiGHS # Available solvers: Gurobi, CPLEX, Clp, Cbc
+Solver: CPLEX # Available solvers: Gurobi, CPLEX, CLP, SCIP
 ParameterScale: 1 # Turn on parameter scaling wherein load, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
-UCommit: 0 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
+UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
 OperationWrapping: 1 # Sets temporal resolution of the model; 0 = single period to represent the full year, with first-last time step linked; 1 = multiple representative periods
 TimeDomainReductionFolder: "TDR_Results" # Directory name where results from time domain reduction will be saved. If results already exist here, these will be used without running time domain reduction script again.
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Load_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
-ModelingToGenerateAlternatives: 1 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
+ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
-ModelingToGenerateAlternativeIterations: 3 #Number of MGA Iterations
 MethodofMorris: 1 #Flag for turning on the Method of Morris analysis
-MonteCarlo: 1 #Flag for starting Monte Carlo analysis

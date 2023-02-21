@@ -1,13 +1,13 @@
 # Gurobi Solver Parameters
 # Common solver settings
-Feasib_Tol: 1.0e-05           # Constraint (primal) feasibility tolerances.
-Optimal_Tol: 1e-5           # Dual feasibility tolerances.
+Feasib_Tol: 1.0e-06           # Constraint (primal) feasibility tolerances.
+Optimal_Tol: 1e-6             # Dual feasibility tolerances.
 TimeLimit: 110000             # Limits total time solver.
 Pre_Solve: 1                  # Controls presolve level.
 Method: 4                     # Algorithm used to solve continuous models (including MIP root relaxation).
 
 #Gurobi-specific solver settings
-MIPGap: 1e-3                  # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise).
+MIPGap: 1e-4                  # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise).
 BarConvTol: 1.0e-08           # Barrier convergence tolerance (determines when barrier terminates).
 NumericFocus: 0               # Numerical precision emphasis.
 Crossover: -1                 # Barrier crossver strategy.
