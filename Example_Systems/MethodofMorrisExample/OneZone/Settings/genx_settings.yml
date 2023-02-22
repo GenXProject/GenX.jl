@@ -7,7 +7,7 @@ CapacityReserveMargin: 0 # Number of capacity reserve margin constraints; 0 = no
 CO2Cap: 0 # CO2 emissions cap; 0 = not active (no CO2 emission limit); 1 = mass-based emission limit constraint; 2 = load + rate-based emission limit constraint; 3 = generation + rate-based emission limit constraint
 StorageLosses: 1 # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
 MinCapReq: 0  # Activate minimum technology carveout constraints; 0 = not active; 1 = active
-Solver: CPLEX # Available solvers: Gurobi, CPLEX, CLP, SCIP
+Solver: HiGHS # Available solvers: Gurobi, CPLEX, CLP, SCIP
 ParameterScale: 1 # Turn on parameter scaling wherein load, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
 UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering

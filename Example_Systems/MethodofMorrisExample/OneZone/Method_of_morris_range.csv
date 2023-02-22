@@ -1,5 +1,5 @@
 File,ID,Resource,Zone,Lower_bound,Upper_bound,Parameter,Group,p_steps,total_num_trajectory,num_trajectory,len_design_mat,policy
-Generators_data,1,ngcc,1,0,0,Inv_Cost_per_MWyr,ng_e,0,5,2,15,reference
+Generators_data,1,ngcc,1,0,0,Inv_Cost_per_MWyr,ng_e,0,5,2,16,reference
 Generators_data,2,natural_gas_combined_cycle,1,-5,5,Inv_Cost_per_MWyr,ng,10,,,,
 Generators_data,3,solar_pv,1,-10,10,Inv_Cost_per_MWyr,solar,20,,,,
 Generators_data,4,onshore_wind,1,-7,7,Inv_Cost_per_MWyr,wind,14,,,,
