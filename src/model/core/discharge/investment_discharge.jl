@@ -185,5 +185,10 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
 		EP[:eMinCapRes] += eMinCapResInvest
 	end
+	
+	if setup["MaxCapReq"] == 1
+		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MaxCapTag_$maxcap")].== 1) ,:][!,:R_ID]))
+		EP[:eMaxCapRes] += eMaxCapResInvest
+	end
 
 end
