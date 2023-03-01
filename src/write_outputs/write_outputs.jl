@@ -178,6 +178,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfMinCapReq = write_minimum_capacity_requirement(path, inputs, setup, EP)
 		end
 
+		if setup["MaxCapReq"] == 1 && has_duals(EP) == 1
+			dfMinCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
+		end
+
 
 		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
 	  println("Time elapsed for writing net revenue is")
