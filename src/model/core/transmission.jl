@@ -342,10 +342,12 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 		end
 	end # End if(TRANS_LOSS_SEGS > 0) block
 
+	@expression(EP, eTLOSS[y in LOSS_LINES], sum(inputs["omega"][t]*EP[:vTLOSS][y,t] for t in 1:T))
+
 	# ESR Lossses
 	if EnergyShareRequirement >= 1
 		if IncludeLossesInESR == 1
-			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:vTLOSS][l,t] for l in LOSS_LINES, t=1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:eTLOSS][l,t] for l in LOSS_LINES) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 			EP[:eESR] -= eESRTran
 		end
 	end
