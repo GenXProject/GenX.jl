@@ -118,7 +118,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
 
 	# Retrofit Information
-	if length(inputs_gen["RETRO"]) > 0 # If there are any retrofit technologies in consideration, read relevant data
+	if !isempty(inputs_gen["RETRO"]) # If there are any retrofit technologies in consideration, read relevant data
 		inputs_gen["NUM_RETROFIT_SOURCES"] = gen_in[!,:Num_RETRO_Sources]   # Number of retrofit sources for this technology (0 if not a retrofit technology)
 		max_retro_sources = maximum(inputs_gen["NUM_RETROFIT_SOURCES"])
 
@@ -126,19 +126,21 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		efficiency_cols = [ Symbol(string("Retro",i,"_Efficiency")) for i in 1:max_retro_sources ]
 		inv_cap_cols = [ Symbol(string("Retro",i,"_Inv_Cost_per_MWyr")) for i in 1:max_retro_sources ]
 
-		sources = [ collect(skipmissing(gen_in[!,c][1:G])) for c in source_cols ]
+		sources = [ gen_in[!,c] for c in source_cols ]
 		inputs_gen["RETROFIT_SOURCES"] = [ [ sources[i][y] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ]  # The origin technologies that can be retrofitted into this new technology
 		inputs_gen["RETROFIT_SOURCE_IDS"] = [ [ findall(x->x==sources[i][y],inputs_gen["RESOURCES"])[1] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ] # The R_IDs of these origin technologies
 
-		efficiencies = [ collect(skipmissing(gen_in[!,c][1:G])) for c in efficiency_cols ]
+		efficiencies = [ gen_in[!,c] for c in efficiency_cols ]
 		inputs_gen["RETROFIT_EFFICIENCIES"] = [ [ efficiencies[i][y] for i in 1:max_retro_sources if efficiencies[i][y] != 0 ] for y in 1:G ]  # The efficiencies of each retrofit by source (ratio of outgoing to incoming nameplate capacity)
-		inv_cap = [ collect(skipmissing(gen_in[!,c][1:G])) for c in inv_cap_cols ]
+		inv_cap = [ gen_in[!,c] for c in inv_cap_cols ]
 		inv_cap /= scale_factor
 
 		inputs_gen["RETROFIT_INV_CAP_COSTS"] = [ [ inv_cap[i][y] for i in 1:max_retro_sources if inv_cap[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (capacity $/MWyr) of each retrofit by source
 	end
 
-    # see documentation for descriptions of each column
+    # See documentation for descriptions of each column
+    # Generally, these scalings converts energy and power units from MW to GW
+    # and $/MW to $M/GW. Both are done by dividing the values by 1000.
     columns_to_scale = [:Existing_Charge_Cap_MW,       # to GW
                        :Existing_Cap_MWh,              # to GWh
                        :Existing_Cap_MW,               # to GW
@@ -170,6 +172,8 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
                        :Min_Retired_Cap_MW,            # to GW
                        :Min_Retired_Charge_Cap_MW,     # to GW
                        :Min_Retired_Energy_Cap_MW,     # to GW
+
+                       :Start_Cost_per_MW,             # to $M/GW
                       ]
 
     for column in columns_to_scale
@@ -180,9 +184,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
 	if setup["UCommit"]>=1
-		# Cost per MW of nameplate capacity to start a generator
-		gen_in[!,:Start_Cost_per_MW] /= scale_factor # Convert to $ million/GW with objective function in millions
-
 		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
 		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])
 		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
