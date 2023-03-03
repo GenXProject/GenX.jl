@@ -120,7 +120,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	NetworkExpansion = setup["NetworkExpansion"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
-	TranLosses = setup["include_transmission_losses_in_esr"]
+	IncludeLossesInESR = setup["IncludeLossesInESR"]
 
 	## sets and indices for transmission losses and expansion
 	TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -344,8 +344,9 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	# ESR Lossses
 	if EnergyShareRequirement >= 1
-		@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*TranLosses*sum(EP[:vTLOSS][l,t] for l in LOSS_LINES, t=1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-		EP[:eESR] -= eESRTran
+		if IncludeLossesInESR == 1
+			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:vTLOSS][l,t] for l in LOSS_LINES, t=1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+			EP[:eESR] -= eESRTran
 	end
 
 end
