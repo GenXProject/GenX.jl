@@ -110,16 +110,16 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	inputs_gen["RET_CAP_CHARGE"] = intersect(gen_in[gen_in.New_Build.!=-1,:R_ID], gen_in[gen_in.Existing_Charge_Cap_MW.>=0,:R_ID], inputs_gen["STOR_ASYMMETRIC"])
 
 	# Names of resources
-	inputs_gen["RESOURCES"] = collect(skipmissing(gen_in[!,:Resource][1:inputs_gen["G"]]))
+	inputs_gen["RESOURCES"] = gen_in[!,:Resource]
 	# Zones resources are located in
-	zones = collect(skipmissing(gen_in[!,:Zone][1:inputs_gen["G"]]))
+	zones = gen_in[!,:Zone]
 	# Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
 	inputs_gen["R_ZONES"] = zones
 	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
 
 	# Retrofit Information
 	if length(inputs_gen["RETRO"]) > 0 # If there are any retrofit technologies in consideration, read relevant data
-		inputs_gen["NUM_RETROFIT_SOURCES"] = collect(skipmissing(gen_in[!,:Num_RETRO_Sources][1:inputs_gen["G"]]))   # Number of retrofit sources for this technology (0 if not a retrofit technology)
+		inputs_gen["NUM_RETROFIT_SOURCES"] = gen_in[!,:Num_RETRO_Sources]   # Number of retrofit sources for this technology (0 if not a retrofit technology)
 		max_retro_sources = maximum(inputs_gen["NUM_RETROFIT_SOURCES"])
 
 		source_cols = [ Symbol(string("Retro",i,"_Source")) for i in 1:max_retro_sources ]
@@ -184,17 +184,17 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		gen_in[!,:Start_Cost_per_MW] /= scale_factor # Convert to $ million/GW with objective function in millions
 
 		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
-		start_fuel = convert(Array{Float64}, collect(skipmissing(gen_in[!,:Start_Fuel_MMBTU_per_MW])))
+		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])
 		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
-		start_cost = convert(Array{Float64}, collect(skipmissing(gen_in[!,:Start_Cost_per_MW])))
+		start_cost = convert(Array{Float64}, gen_in[!,:Start_Cost_per_MW])
 		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
 		gen_in[!,:CO2_per_Start] = zeros(Float64, G)
 	end
 
 	# Heat rate of all resources (million BTUs/MWh)
-	heat_rate = convert(Array{Float64}, collect(skipmissing(gen_in[!,:Heat_Rate_MMBTU_per_MWh])) )
+	heat_rate = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
 	# Fuel used by each resource
-	fuel_type = collect(skipmissing(gen_in[!,:Fuel]))
+	fuel_type = gen_in[!,:Fuel]
 	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
 	inputs_gen["C_Fuel_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
 	gen_in[!,:CO2_per_MWh] = zeros(Float64, G)
