@@ -347,6 +347,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 		if IncludeLossesInESR == 1
 			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:vTLOSS][l,t] for l in LOSS_LINES, t=1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 			EP[:eESR] -= eESRTran
+		end
 	end
 
 end
