@@ -160,7 +160,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
                        :Inv_Cost_Charge_per_MWyr,      # to $M/GW/yr
 
                        :Fixed_OM_Cost_per_MWyr,        # to $M/GW/yr
-                       :Fixed_OM_Cost_per_MWhyr,       # to $M/GW/yr
+                       :Fixed_OM_Cost_per_MWhyr,       # to $M/GWh/yr
                        :Fixed_OM_Cost_Charge_per_MWyr, # to $M/GW/yr
 
                        :Var_OM_Cost_per_MWh,           # to $M/GWh
