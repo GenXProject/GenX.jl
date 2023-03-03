@@ -8,17 +8,15 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     filename = "Generators_data.csv"
     gen_in = load_dataframe(joinpath(path, filename))
 
-	# Add Resource IDs after reading to prevent user errors
-	gen_in[!,:R_ID] = 1:length(collect(skipmissing(gen_in[!,1])))
+    # Store DataFrame of generators/resources input data for use in model
+    inputs_gen["dfGen"] = gen_in
 
-	# Store DataFrame of generators/resources input data for use in model
-	inputs_gen["dfGen"] = gen_in
+    # Number of resources (generators, storage, DR, and DERs)
+    G = nrow(gen_in)
+    inputs_gen["G"] = G
 
-	# Number of resources
-	inputs_gen["G"] = length(collect(skipmissing(gen_in[!,:R_ID])))
-
-	# Set indices for internal use
-	G = inputs_gen["G"]   # Number of resources (generators, storage, DR, and DERs)
+    # Add Resource IDs after reading to prevent user errors
+    gen_in[!,:R_ID] = 1:G
 
 	## Defining sets of generation and storage resources
 
