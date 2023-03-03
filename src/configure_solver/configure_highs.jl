@@ -207,7 +207,7 @@ The HiGHS optimizer instance is configured with the following default parameters
 	
 	# Run the crossover routine for IPX
 	# [type: bool, advanced: on, range: {off, on}, default: on]
- 	run_crossover: off #on
+ 	run_crossover: on
 	
 	# Allow ModelStatus::kUnboundedOrInfeasible
 	# [type: bool, advanced: true, range: {false, true}, default: false]
