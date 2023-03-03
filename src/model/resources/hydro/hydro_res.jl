@@ -132,7 +132,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down
-		cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t]+ EP[:vREG][y,t]+EP[:vRSV][y,t]- EP[:vP][y, hoursbefore(p,t,1)]-EP[:vREG][y, hoursbefore(p,t,1)]-EP[:vRSV][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
+		cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t]+ EP[:vREG][y,t]+EP[:vRSV][y,t] - EP[:vP][y, hoursbefore(p,t,1)]-EP[:vREG][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
 		cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)]+EP[:vREG][y, hoursbefore(p,t,1)]+EP[:vRSV][y, hoursbefore(p,t,1)] - EP[:vP][y,t]-EP[:vREG][y,t]-EP[:vRSV][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
