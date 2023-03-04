@@ -73,8 +73,8 @@ function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
-	data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
-	is_here = isfile(joinpath(data_directory,"Period_map.csv"))
-	is_in_folder = isfile(joinpath(data_directory, setup["TimeDomainReductionFolder"], "Period_map.csv"))
+	filename = "Period_map.csv"
+	is_here = isfile(joinpath(path, filename))
+	is_in_folder = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
 	is_here || is_in_folder
 end
