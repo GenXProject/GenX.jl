@@ -32,13 +32,13 @@ Note: in future updates, an option to model hydro resources with large reservoir
 The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$).
 ```math
 \begin{aligned}
-&\Theta_{y,z,t} - \Theta_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
+&\Theta_{y,z,t} + f_{y,z,t} + r_{y,z,t} - \Theta_{y,z,t-1} - f_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 ```math
 \begin{aligned}
-&\Theta_{y,z,t-1} - \Theta_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
+&\Theta_{y,z,t-1} + f_{y,z,t-1} - \Theta_{y,z,t} - f_{y,z,t} - r_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
