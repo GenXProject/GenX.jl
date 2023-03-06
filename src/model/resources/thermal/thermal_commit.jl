@@ -180,13 +180,13 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 	## For Start Hours
 	# Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
-		# rampup constraints
+	# rampup constraints
 	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
-		EP[:vP][y,t]+EP[:vREG][y,t]+EP[:vRSV][y,t]-EP[:vP][y, hoursbefore(p, t, 1)]-EP[:vREG][y,hoursbefore(p, t, 1)]-EP[:vRSV][y,hoursbefore(p, t, 1)] <= dfGen[y,:Ramp_Up_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
+		EP[:vP][y,t]+EP[:vREG][y,t]+EP[:vRSV][y,t]-EP[:vP][y, hoursbefore(p, t, 1)]-EP[:vREG][y,hoursbefore(p, t, 1)] <= dfGen[y,:Ramp_Up_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			+ min(inputs["pP_Max"][y,t],max(dfGen[y,:Min_Power],dfGen[y,:Ramp_Up_Percentage]))*dfGen[y,:Cap_Size]*EP[:vSTART][y,t]
 			- dfGen[y,:Min_Power]*dfGen[y,:Cap_Size]*EP[:vSHUT][y,t])
 
-		# rampdown constraints
+	# rampdown constraints
 	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
 		EP[:vP][y, hoursbefore(p, t, 1)]+EP[:vREG][y,hoursbefore(p, t, 1)]+EP[:vRSV][y,hoursbefore(p, t, 1)]-EP[:vP][y,t]-EP[:vREG][y,t]-EP[:vRSV][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			- dfGen[y,:Min_Power]*dfGen[y,:Cap_Size]*EP[:vSTART][y,t]
