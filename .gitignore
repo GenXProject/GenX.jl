@@ -44,3 +44,4 @@ Example_Systems/SmallNewEngland/ThreeZones_full/*
 
 Example_Systems/SmallNewEngland/ThreeZones_MultiStage/Inputs/*
 test_get_retirement_period.jl
+.CondaPkg/*
