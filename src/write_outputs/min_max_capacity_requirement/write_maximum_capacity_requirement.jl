@@ -1,7 +1,7 @@
 function write_maximum_capacity_requirement(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     NumberOfMaxCapReqs = inputs["NumberOfMaxCapReqs"]
     dfMaxCapPrice = DataFrame(Constraint = [Symbol("MaxCapReq_$maxcap") for maxcap = 1:NumberOfMaxCapReqs],
-                                Price= dual.(EP[:cZoneMaxCapReq]))
+                                Price=-dual.(EP[:cZoneMaxCapReq]))
 
     # Generally the scale_factor is used to convert
     # GW (in the model) back to MW (for output)
