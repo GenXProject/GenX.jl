@@ -28,14 +28,38 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs_vr
 	else
         my_dir = path
 	end
-	filename = "Vre_and_storage_variability.csv"
-	vre_stor_var = load_dataframe(joinpath(my_dir, filename))
+	filename = "Vre_and_storage_solar_variability.csv"
+	vre_stor_solar = load_dataframe(joinpath(my_dir, filename))
+
+	filename = "Vre_and_storage_wind_variability.csv"
+	vre_stor_wind = load_dataframe(joinpath(my_dir, filename))
+
+	all_resources = inputs["RESOURCES_VRE_STOR"]
+	VRE_STOR = length(inputs["VRE_STOR"])
+
+	existing_variability = names(vre_stor_solar)
+    for r in all_resources
+        if r ∉ existing_variability
+            @info "assuming availability of 0.0 for resource $r."
+            ensure_column!(vre_stor_solar, r, 0.0)
+        end
+    end
+
+	existing_variability = names(vre_stor_wind)
+    for r in all_resources
+        if r ∉ existing_variability
+            @info "assuming availability of 0.0 for resource $r."
+            ensure_column!(vre_stor_wind, r, 0.0)
+        end
+    end
 
 	# Reorder DataFrame to R_ID order (order provided in Vre_and_storage_data.csv)
-	select!(vre_stor_var, [:Time_Index; Symbol.(inputs_vre_stor["RESOURCES_VRE_STOR"]) ])
+	select!(vre_stor_solar, [:Time_Index; Symbol.(all_resources) ])
+	select!(vre_stor_wind, [:Time_Index; Symbol.(all_resources) ])
 
 	# Maximum power output and variability of each energy resource
-	inputs_vre_stor["pP_Max_VRE_STOR"] = transpose(Matrix{Float64}(vre_stor_var[1:inputs_vre_stor["T"],2:(inputs_vre_stor["VRE_STOR"]+1)]))
+	inputs_vre_stor["pP_Max_Solar"] = transpose(Matrix{Float64}(vre_stor_solar[1:inputs_vre_stor["T"],2:(VRE_STOR+1)]))
+	inputs_vre_stor["pP_Max_Wind"] = transpose(Matrix{Float64}(vre_stor_wind[1:inputs_vre_stor["T"],2:(VRE_STOR+1)]))
 
 	println(filename * " Successfully Read!")
 end

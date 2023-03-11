@@ -28,6 +28,13 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	STOR_ALL = inputs["STOR_ALL"]
 	VRE_STOR = inputs["VRE_STOR"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
+	if !isempty(VRE_STOR)
+		SOLAR = inputs["VS_SOLAR"]
+		WIND = inputs["VS_WIND"]
+		DC = inputs["VS_DC"]
+		STOR = inputs["VS_STOR"]
+		# Should read in charge asymmetric capacities
+	end
 
 	# Create a NetRevenue dataframe
  	dfNetRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
@@ -36,7 +43,16 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:G,:NewCap]
 	dfNetRevenue.Inv_cost_MWh = dfGen[!,:Inv_Cost_per_MWhyr] .* dfCap[1:G,:NewEnergyCap]
 	if !isempty(VRE_STOR)
-		dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Grid_per_MWyr] .* value.(EP[:vGRIDCAP]).data
+		# Doesn't include charge capacities
+		if !isempty(SOLAR)
+			dfNetRevenue.Inv_cost_MW[SOLAR] += dfVRE_STOR[SOLAR,:Inv_Cost_Solar_per_MWyr] .* value.(EP[:vSOLARCAP]).data
+		end
+		if !isempty(WIND)
+			dfNetRevenue.Inv_cost_MW[WIND] += dfVRE_STOR[SOLAR,:Inv_Cost_Wind_per_MWyr] .* value.(EP[:vWINDCAP]).data
+		end	
+		if !isempty(DC)
+			dfNetRevenue.Inv_cost_MW[DC] += dfVRE_STOR[DC,:Inv_Cost_Inverter_per_MWyr] .* value.(EP[:vDCCAP]).data
+		end	
 	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
@@ -48,8 +64,17 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
-		dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Grid_Cost_per_MWyr] .* value.(EP[:eTotalCap_GRID]).data
-		dfNetRevenue.Var_OM_cost_out[VRE_STOR] += dfVRE_STOR[!,:Var_OM_Cost_per_MWh_VRE_STOR] .* (value.(EP[:vP_DC]).data .* dfVRE_STOR[!,:EtaInverter] * inputs["omega"])
+		if !isempty(SOLAR)
+			dfNetRevenue.Fixed_OM_cost_MW[SOLAR] += dfVRE_STOR[SOLAR,:Fixed_OM_Solar_Cost_per_MWyr] .* value.(EP[:eTotalCap_SOLAR]).data
+			dfNetRevenue.Var_OM_cost_out[SOLAR] += dfVRE_STOR[SOLAR,:Var_OM_Cost_per_MWh_Solar] .* (value.(EP[:vP_SOLAR]).data .* dfVRE_STOR[!,:EtaInverter] * inputs["omega"])
+		end
+		if !isempty(WIND)
+			dfNetRevenue.Fixed_OM_cost_MW[WIND] += dfVRE_STOR[SOLAR,:Fixed_OM_Wind_Cost_per_MWyr] .* value.(EP[:eTotalCap_WIND]).data
+			dfNetRevenue.Var_OM_cost_out[WIND] += dfVRE_STOR[SOLAR,:Var_OM_Cost_per_MWh_Wind] .* (value.(EP[:vP_WIND]).data * inputs["omega"])
+		end	
+		if !isempty(DC)
+			dfNetRevenue.Fixed_OM_cost_MW[DC] += dfVRE_STOR[DC,:Fixed_OM_Inverter_Cost_per_MWyr] .* value.(EP[:eTotalCap_DC]).data
+		end	
 	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
@@ -68,9 +93,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if !isempty(STOR_ALL)
 		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = dfGen[STOR_ALL,:Var_OM_Cost_per_MWh_In] .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
  	end
-	 if !isempty(VRE_STOR)
-		dfNetRevenue.Var_OM_cost_in[VRE_STOR] = dfVRE_STOR[!,:Var_OM_Cost_per_MWh_In_VRE_STOR] .* ((value.(EP[:vCHARGE_VRE_STOR][VRE_STOR,:]).data) * inputs["omega"])
- 	end
+	# need to add for storage VRE-storage resources
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$
 	end

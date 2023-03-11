@@ -33,10 +33,15 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
 	end
 
-	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0) + (!isempty(VRE_STOR) ? value(EP[:eTotalCVar_VRE_STOR]) : 0.0)
-	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0) + (!isempty(VRE_STOR) ? value(EP[:eTotalCFix_VRE_STOR]) : 0.0)
-	if !isempty(VRE_STOR)
-		cFix += (!isempty(inputs["VRE_STOR_and_ASYM"]) ? value(EP[:eTotalCFixCharge_VRE_STOR]) : 0.0)
+	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0) 
+	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
+	if !isempty(VRE_STOR) 
+		cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) + (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
+		cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
+		if !isempty(inputs["VS_STOR"])
+			cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ? value(EP[:eTotalCFixCharge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ? value(EP[:eTotalCFixCharge_AC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_AC]) : 0.0)) 
+			cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
+		end
 		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
 		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
@@ -126,30 +131,71 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		if !isempty(VRE_STOR)
 			dfVRE_STOR = inputs["dfVRE_STOR"]
 			Y_ZONE_VRE_STOR = dfVRE_STOR[dfVRE_STOR[!,:Zone].==z,:R_ID]
-			STOR_ALL_ZONE_VRE_STOR = intersect(inputs["VRE_STOR"], Y_ZONE_VRE_STOR)
-			STOR_ASYMMETRIC_ZONE_VRE_STOR = intersect(inputs["VRE_STOR_and_ASYM"], Y_ZONE_VRE_STOR)
 
 			# Fixed Costs
-			eCFix_VRE_STOR = sum(value.(EP[:eCFix_VRE_STOR][Y_ZONE_VRE_STOR]))
+			eCFix_VRE_STOR = 0.0
+			if !isempty(inputs["VS_SOLAR"])
+				SOLAR_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_SOLAR"])
+				eCFix_VRE_STOR += sum(value.(EP[:eCFixSolar][SOLAR_ZONE_VRE_STOR]))
+			end
+			if !isempty(inputs["VS_WIND"])
+				WIND_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_WIND"])
+				eCFix_VRE_STOR += sum(value.(EP[:eCFixWind][WIND_ZONE_VRE_STOR]))
+			end
+			if !isempty(inputs["VS_DC"])
+				DC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_DC"])
+				eCFix_VRE_STOR += sum(value.(EP[:eCFixDC][DC_ZONE_VRE_STOR]))
+			end
+			if !isempty(inputs["VS_STOR"])
+				STOR_ALL_ZONE_VRE_STOR = intersect(inputs["VS_STOR"], Y_ZONE_VRE_STOR)
+				eCFix_VRE_STOR += sum(value.(EP[:eCFixEnergy_VS][STOR_ALL_ZONE_VRE_STOR]))
+				
+				if !isempty(inputs["VS_ASYM_DC_CHARGE"])
+					DC_CHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_DC_CHARGE"], Y_ZONE_VRE_STOR)
+					eCFix_VRE_STOR += sum(value.(EP[:eCFixCharge_DC][DC_CHARGE_ALL_ZONE_VRE_STOR]))
+				end
+				if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
+					DC_DISCHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_DC_DISCHARGE"], Y_ZONE_VRE_STOR)
+					eCFix_VRE_STOR += sum(value.(EP[:eCFixDischarge_DC][DC_DISCHARGE_ALL_ZONE_VRE_STOR]))
+				end
+				if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
+					AC_DISCHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_AC_DISCHARGE"], Y_ZONE_VRE_STOR)
+					eCFix_VRE_STOR += sum(value.(EP[:eCFixDischarge_AC][AC_DISCHARGE_ALL_ZONE_VRE_STOR]))
+				end
+				if !isempty(inputs["VS_ASYM_AC_CHARGE"])
+					AC_CHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_AC_CHARGE"], Y_ZONE_VRE_STOR)
+					eCFix_VRE_STOR += sum(value.(EP[:eCFixCharge_AC][AC_CHARGE_ALL_ZONE_VRE_STOR]))
+				end
+			end
 			tempCFix += eCFix_VRE_STOR
 
 			# Variable Costs
-			eCVar_VRE_STOR = sum(value.(EP[:eCVar_out_VRE_STOR][Y_ZONE_VRE_STOR,:]))
+			eCVar_VRE_STOR = 0.0
+			if !isempty(inputs["VS_SOLAR"])
+				eCVar_VRE_STOR += sum(value.(EP[:eCVarOutSolar][SOLAR_ZONE_VRE_STOR,:]))
+			end
+			if !isempty(inputs["VS_WIND"])
+				WIND_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_WIND"])
+				eCVar_VRE_STOR += sum(value.(EP[:eCVarOutWind][WIND_ZONE_VRE_STOR, :]))
+			end
+			if !isempty(inputs["VS_STOR"])
+				if !isempty(inputs["VS_ASYM_DC_CHARGE"])
+					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Charge_DC][DC_CHARGE_ALL_ZONE_VRE_STOR, :]))
+				end
+				if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
+					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Discharge_DC][DC_DISCHARGE_ALL_ZONE_VRE_STOR, :]))
+				end
+				if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
+					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Discharge_AC][AC_DISCHARGE_ALL_ZONE_VRE_STOR, :]))
+				end
+				if !isempty(inputs["VS_ASYM_AC_CHARGE"])
+					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Charge_AC][AC_CHARGE_ALL_ZONE_VRE_STOR, :]))
+				end
+			end
 			tempCVar += eCVar_VRE_STOR
 
-			# Var_In costs
-			eCVar_in_VRE_STOR = sum(value.(EP[:eCVar_in_VRE_STOR][STOR_ALL_ZONE_VRE_STOR,:]))
-			tempCVar += eCVar_in_VRE_STOR
-
-			# Asymmetric costs
-			if !isempty(STOR_ASYMMETRIC_ZONE_VRE_STOR)
-				eCFixCharge_VRE_STOR = sum(value.(EP[:eCFixCharge_VRE_STOR][STOR_ASYMMETRIC_ZONE_VRE_STOR]))
-				tempCFix += eCFixCharge_VRE_STOR
-				tempCTotal += eCFixCharge_VRE_STOR
-			end
-
 			# Total Added Costs
-			tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR + eCVar_in_VRE_STOR)
+			tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR)
 		end
 
 		if setup["UCommit"] >= 1

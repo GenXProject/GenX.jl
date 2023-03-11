@@ -51,10 +51,10 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
 	# Loop over W for VRE-Storage resources
 	if !isempty(VRE_STOR)
-		dfVRE_STOR = inputs["dfVRE_STOR"]
-		VRE_STOR_ALL_NONLDS = setdiff(VRE_STOR, inputs["VRE_STOR_and_LDS"])
-		VRE_STOR_ALL_LDS = intersect(VRE_STOR, inputs["VRE_STOR_and_LDS"])
-		dual_values[VRE_STOR, INTERIOR_SUBPERIODS] = (dual.(EP[:cSoCBalInterior_VRE_STOR][INTERIOR_SUBPERIODS, VRE_STOR]).data ./ inputs["omega"][INTERIOR_SUBPERIODS])'
+		VS_STOR = inputs["VS_STOR"]
+		VRE_STOR_ALL_NONLDS = setdiff(VRE_STOR, inputs["VS_LDS"])
+		VRE_STOR_ALL_LDS = intersect(VRE_STOR, inputs["VS_LDS"])
+		dual_values[VS_STOR, INTERIOR_SUBPERIODS] = (dual.(EP[:cSoCBalInterior_VRE_STOR][INTERIOR_SUBPERIODS, VS_STOR]).data ./ inputs["omega"][INTERIOR_SUBPERIODS])'
 		dual_values[VRE_STOR_ALL_NONLDS, START_SUBPERIODS] = (dual.(EP[:cSoCBalStart_VRE_STOR][START_SUBPERIODS, VRE_STOR_ALL_NONLDS]).data ./ inputs["omega"][START_SUBPERIODS])'
 		if !isempty(VRE_STOR_ALL_LDS)
 			if setup["OperationWrapping"] == 1

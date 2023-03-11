@@ -54,15 +54,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		end
 		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : dfGen[!,:Existing_Charge_Cap_MW][i]
 	end
-	for i in inputs["VRE_STOR_and_ASYM"]
-		if i in inputs["NEW_CAP_CHARGE_VRE_STOR"]
-			capcharge[i] = value(EP[:vCAPCHARGE_VRE_STOR][i])
-		end
-		if i in inputs["RET_CAP_CHARGE_VRE_STOR"]
-			retcapcharge[i] = value(EP[:vRETCAPCHARGE_VRE_STOR][i])
-		end
-		existingcapcharge[i] = dfGen[!,:Existing_Charge_Cap_MW][i] # multistage functionality doesn't exist yet for VRE-storage resources
-	end
 
 	capenergy = zeros(size(inputs["RESOURCES"]))
 	retcapenergy = zeros(size(inputs["RESOURCES"]))
@@ -77,11 +68,11 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[!,:Existing_Cap_MWh][i]
 	end
 	for i in inputs["VRE_STOR"]
-		if i in inputs["NEW_CAP_ENERGY_VRE_STOR"]
-			capenergy[i] = value(EP[:vCAPENERGY_VRE_STOR][i])
+		if i in inputs["NEW_CAP_STOR"]
+			capenergy[i] = value(EP[:vCAPENERGY_VS][i])
 		end
-		if i in inputs["RET_CAP_ENERGY_VRE_STOR"]
-			retcapenergy[i] = value(EP[:vRETCAPENERGY_VRE_STOR][i])
+		if i in inputs["RET_CAP_STOR"]
+			retcapenergy[i] = value(EP[:vRETCAPENERGY_VS][i])
 		end
 		existingcapenergy[i] = dfGen[!,:Existing_Cap_MWh][i] # multistage functionality doesn't exist yet for VRE-storage resources
 	end
@@ -101,41 +92,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		NewChargeCap = capcharge[:],
 		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:]
 	)
-
-	if !isempty(inputs["VRE_STOR"])
-		dfVRE_STOR = inputs["dfVRE_STOR"]
-		VRE_STOR = size(inputs["VRE_STOR"])[1]
-
-		capgrid = zeros(size(inputs["RESOURCES_GRID"]))
-		retcapgrid = zeros(size(inputs["RESOURCES_GRID"]))
-		j = 1
-		for i in inputs["VRE_STOR"]
-			if i in inputs["NEW_CAP_GRID"]
-				capgrid[j] = value((EP[:vGRIDCAP])[i])
-			end
-			if i in inputs["RET_CAP_GRID"]
-				retcapgrid[j] = value((EP[:vRETGRIDCAP])[i])
-			end
-			j += 1
-		end
-
-		dfGRIDCAP = DataFrame(
-			Resource = inputs["RESOURCES_GRID"], Resource_Type = dfVRE_STOR[!,:Resource_Type], Cluster=dfVRE_STOR[!,:cluster], Zone = dfVRE_STOR[!,:Zone],
-			StartCap = dfVRE_STOR[!,:Existing_Cap_Grid_MW],
-			RetCap = retcapgrid[:],
-			NewCap = capgrid[:],
-			EndCap = dfVRE_STOR[!,:Existing_Cap_Grid_MW] + capgrid[:] - retcapgrid[:],
-			StartEnergyCap = zeros(VRE_STOR),
-			RetEnergyCap = zeros(VRE_STOR), 
-			NewEnergyCap = zeros(VRE_STOR), 
-			EndEnergyCap = zeros(VRE_STOR), 
-			StartChargeCap = zeros(VRE_STOR), 
-			RetChargeCap = zeros(VRE_STOR), 
-			NewChargeCap = zeros(VRE_STOR), 
-			EndChargeCap = zeros(VRE_STOR)
-		)
-		vcat(dfCap, dfGRIDCAP)
-	end
 
 	if setup["ParameterScale"] ==1
 		dfCap.StartCap = dfCap.StartCap * ModelScalingFactor

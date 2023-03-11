@@ -98,6 +98,7 @@ include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
+include("load_inputs/load_vre_stor_variability.jl")
 
 include("load_inputs/load_inputs.jl")
 

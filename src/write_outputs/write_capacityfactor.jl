@@ -29,21 +29,37 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     MUST_RUN = inputs["MUST_RUN"]
     VRE_STOR = inputs["VRE_STOR"]
     dfVRE_STOR = inputs["dfVRE_STOR"]
+    if !isempty(VRE_STOR)
+        SOLAR = inputs["VS_SOLAR"]
+        WIND = inputs["VS_WIND"]
+    end
 
     dfCapacityfactor = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
     if setup["ParameterScale"] == 1
         dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * ModelScalingFactor
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * ModelScalingFactor
         if !isempty(VRE_STOR)
-            dfCapacityfactor.AnnualSum[VRE_STOR] .= value.(EP[:vP_DC][VRE_STOR, :]).data .* dfVRE_STOR[!, :EtaInverter] * inputs["omega"] * ModelScalingFactor
-		    dfCapacityfactor.Capacity[VRE_STOR] .= value.(EP[:eTotalCap][VRE_STOR]) * ModelScalingFactor
+            if !isempty(SOLAR)
+                dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[SOLAR, :EtaInverter] * inputs["omega"] * ModelScalingFactor
+		        dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR]) * ModelScalingFactor
+            end
+            if !isempty(WIND)
+                dfCapacityfactor.AnnualSum[WIND] .= value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"] * ModelScalingFactor
+		        dfCapacityfactor.Capacity[WIND] .= value.(EP[:eTotalCap_WIND][WIND]) * ModelScalingFactor
+            end
         end
     else
         dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"]
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
         if !isempty(VRE_STOR)
-            dfCapacityfactor.AnnualSum[VRE_STOR] .= value.(EP[:vP_DC][VRE_STOR, :]).data .* dfVRE_STOR[!, :EtaInverter] * inputs["omega"] 
-		    dfCapacityfactor.Capacity[VRE_STOR] .= value.(EP[:eTotalCap][VRE_STOR])
+            if !isempty(SOLAR)
+                dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[SOLAR, :EtaInverter] * inputs["omega"] 
+		        dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR])
+            end
+            if !isempty(WIND)
+                dfCapacityfactor.AnnualSum[WIND] .= value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"]
+		        dfCapacityfactor.Capacity[WIND] .= value.(EP[:eTotalCap_WIND][WIND])
+            end
         end
     end
     # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh

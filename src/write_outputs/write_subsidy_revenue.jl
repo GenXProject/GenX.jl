@@ -35,7 +35,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 		end
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
 			if !isempty(inputs["VRE_STOR"])
-				MIN_CAP_GEN = intersect(dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID], dfVRE_STOR[(dfVRE_STOR[!, Symbol("MinCapTag_$mincap")].==1), :R_ID])
+				MIN_CAP_GEN = union(dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID], dfVRE_STOR[(dfVRE_STOR[!, Symbol("MinCapTag_$mincap")].==1), :R_ID])
 			else
 				MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID]
 			end

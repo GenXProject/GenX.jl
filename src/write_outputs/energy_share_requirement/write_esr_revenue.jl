@@ -25,6 +25,10 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	G = inputs["G"]
 	VRE_STOR = inputs["VRE_STOR"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
+	if !isempty(VRE_STOR)
+		SOLAR = inputs["SOLAR"]
+		WIND = inputs["WIND"]
+	end
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
 	for i in 1:inputs["nESR"]
 		dfESRRev =  hcat(dfESRRev, dfPower[1:G,:AnnualSum] .* dfGen[!,Symbol("ESR_$i")] * dfESR[i,:ESR_Price])
@@ -35,7 +39,12 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		# end
 		rename!(dfESRRev, Dict(:x1 => Symbol("ESR_$i")))
 		if !isempty(VRE_STOR)
-			dfESRRev[VRE_STOR, Symbol("ESR_$i")] = (value.(EP[:vP_DC]).data .* dfVRE_STOR[!, :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[!,Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
+			if !isempty(SOLAR)
+				dfESRRev[SOLAR, Symbol("ESR_$i")] = (value.(EP[:vP_SOLAR]).data .* dfVRE_STOR[SOLAR, :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[SOLAR,Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
+			end
+			if !isempty(WIND)
+				dfESRRev[WIND, Symbol("ESR_$i")] = (value.(EP[:vP_WIND]).data * inputs["omega"]) .* dfVRE_STOR[WIND,Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
+			end
 		end
 	end
 	dfESRRev.AnnualSum = sum(eachcol(dfESRRev[:,6:inputs["nESR"]+5]))
