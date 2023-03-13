@@ -96,6 +96,7 @@ include("load_inputs/load_energy_share_requirement.jl")
 include("load_inputs/load_co2_cap.jl")
 include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
+include("load_inputs/load_maximum_capacity_requirement.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
 
