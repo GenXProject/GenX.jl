@@ -67,8 +67,6 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "MultiStage", 0)
     # No JuMP String name reporting at model generation by default, to expedite model generation; true if JuMP string names need to be enabled
     set_default_if_absent!(settings, "EnableJuMPStringNames", false)
-    set_default_if_absent!(settings, "CapResPeriodLength", 0)
-    # Capacity Reserve Period Length for storage
 
 
 return settings
