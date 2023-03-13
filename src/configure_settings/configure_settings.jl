@@ -22,7 +22,6 @@ function default_settings()
         "MultiStage" => 0,
         "MethodofMorris" => 0,
         "EnableJuMPStringNames" => false,
-        "CapResPeriodLength" => 0,
     )
 end
 
