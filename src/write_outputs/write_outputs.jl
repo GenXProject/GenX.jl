@@ -179,7 +179,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		if setup["MaxCapReq"] == 1 && has_duals(EP) == 1
-			dfMinCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
+			dfMaxCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
 		end
 
 
