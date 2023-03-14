@@ -79,6 +79,7 @@ include("load_inputs/load_energy_share_requirement.jl")
 include("load_inputs/load_co2_cap.jl")
 include("load_inputs/load_period_map.jl")
 include("load_inputs/load_minimum_capacity_requirement.jl")
+include("load_inputs/load_maximum_capacity_requirement.jl")
 include("load_inputs/load_load_data.jl")
 include("load_inputs/load_fuels_data.jl")
 
@@ -126,6 +127,7 @@ include("model/policies/co2_cap.jl")
 include("model/policies/energy_share_requirement.jl")
 include("model/policies/cap_reserve_margin.jl")
 include("model/policies/minimum_capacity_requirement.jl")
+include("model/policies/maximum_capacity_requirement.jl")
 
 include("model/generate_model.jl")
 include("model/solve_model.jl")
@@ -163,7 +165,8 @@ include("write_outputs/energy_share_requirement/write_esr_revenue.jl")
 
 include("write_outputs/co2_cap/write_co2_cap.jl")
 
-include("write_outputs/minimum_capacity_requirement/write_minimum_capacity_requirement.jl")
+include("write_outputs/min_max_capacity_requirement/write_minimum_capacity_requirement.jl")
+include("write_outputs/min_max_capacity_requirement/write_maximum_capacity_requirement.jl")
 
 include("write_outputs/long_duration_storage/write_opwrap_lds_dstor.jl")
 include("write_outputs/long_duration_storage/write_opwrap_lds_stor_init.jl")

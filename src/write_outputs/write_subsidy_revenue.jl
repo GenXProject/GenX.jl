@@ -10,7 +10,6 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 	dfSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], R_ID=dfGen[!, :R_ID], SubsidyRevenue = zeros(G))
 	MIN_CAP = dfGen[(dfGen[!, :Min_Cap_MW].>0), :R_ID]
 	dfSubRevenue.SubsidyRevenue[MIN_CAP] .= (value.(EP[:eTotalCap])[MIN_CAP]) .* (dual.(EP[:cMinCap][MIN_CAP])).data
-
 	### calculating tech specific subsidy revenue
 	dfRegSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], R_ID=dfGen[!, :R_ID], SubsidyRevenue = zeros(G))
 	if (setup["MinCapReq"] >= 1)

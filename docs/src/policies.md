@@ -22,3 +22,9 @@ Pages = ["energy_share_requirement.jl"]
 Modules = [GenX]
 Pages = ["minimum_capacity_requirement.jl"]
 ```
+
+## Maximum Capacity Requirement
+```@autodocs
+Modules = [GenX]
+Pages = ["maximum_capacity_requirement.jl"]
+```

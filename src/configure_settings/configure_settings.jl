@@ -9,6 +9,7 @@ function default_settings()
         "CO2Cap" => 0,
         "StorageLosses" => 1,
         "MinCapReq" => 0,
+        "MaxCapReq" => 0,
         "Solver" => "HiGHS",
         "ParameterScale" => 0,
         "WriteShadowPrices" => 0,
