@@ -178,9 +178,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Policies
 	# CO2 emissions limits
-	if setup["CO2Cap"] >= 1
- 		co2_cap!(EP, inputs, setup)
- 	end
+	if setup["CO2Cap"] > 0
+		co2_cap!(EP, inputs, setup)
+	end
 
 	# Endogenous Retirements
 	if setup["MultiStage"] > 0
