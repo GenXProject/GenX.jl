@@ -453,9 +453,9 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 | :------------ | :-----------|
 |Region\_description |Region name|
 |Network\_zones| zone number represented as z*|
-|CO\_2\_Cap\_Zone* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
-|CO\_2\_Max\_tons\_MWh* |Emission limit in terms of rate|
-|CO\_2\_Max\_Mtons* |Emission limit in absolute values, in Million of tons |
+|CO\_2\_Cap\_Zone_* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
+|CO\_2\_Max\_tons\_MWh_* |Emission limit in terms of rate|
+|CO\_2\_Max\_Mtons_* |Emission limit in absolute values, in Million of tons |
 | | where in the above inputs, * represents the number of the emission limit constraints. For example, if the model has 2 emission limit constraints applied separately for 2 zones, the above CSV file will have 2 columns for specifying emission limit in terms on rate: CO\_2\_Max\_tons\_MWh\_1 and CO\_2\_Max\_tons\_MWh\_2.|
 
 
