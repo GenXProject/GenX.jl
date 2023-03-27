@@ -77,7 +77,7 @@ Thermal resources subject to unit commitment ($y \in UC$) adhere to the followin
 
 ```math
 \begin{aligned}
-	\Theta_{y,z,t-1} + f_{y, z, t-1}- \Theta_{y,z,t}-f_{y, z, t}-r_{y, z, t} &\leq  \kappa^{down}_{y,z} \cdot \Omega^{size}_{y,z} \cdot (\nu_{y,z,t} - \chi_{y,z,t}) & \\[6pt]
+	\Theta_{y,z,t-1} + f_{y, z, t-1}+r_{y, z, t-1} - \Theta_{y,z,t}-f_{y, z, t}&\leq  \kappa^{down}_{y,z} \cdot \Omega^{size}_{y,z} \cdot (\nu_{y,z,t} - \chi_{y,z,t}) & \\[6pt]
 	\qquad & - \: \rho^{min}_{y,z} \cdot \Omega^{size}_{y,z} \cdot \chi_{y,z,t} & \hspace{0.5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}  \\[6pt]
 	\qquad & + \: \text{min}( \rho^{max}_{y,z,t}, \text{max}( \rho^{min}_{y,z}, \kappa^{down}_{y,z} ) ) \cdot \Omega^{size}_{y,z} \cdot \zeta_{y,z,t} &
 \end{aligned}
@@ -187,10 +187,12 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 			- dfGen[y,:Min_Power]*dfGen[y,:Cap_Size]*EP[:vSHUT][y,t])
 
 	# rampdown constraints
-	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
-		EP[:vP][y, hoursbefore(p, t, 1)]+EP[:vREG][y,hoursbefore(p, t, 1)]-EP[:vP][y,t]-EP[:vREG][y,t]-EP[:vRSV][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
+	@constraint(EP,[y in THERM_COMMIT, t in 1:T], 
+		EP[:vP][y, hoursbefore(p,t,1)] + EP[:vREG][y, hoursbefore(p,t,1)] + EP[:vRSV][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - EP[:vREG][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			- dfGen[y,:Min_Power]*dfGen[y,:Cap_Size]*EP[:vSTART][y,t]
 			+ min(inputs["pP_Max"][y,t],max(dfGen[y,:Min_Power],dfGen[y,:Ramp_Dn_Percentage]))*dfGen[y,:Cap_Size]*EP[:vSHUT][y,t])
+
+
 
 
 	### Minimum and maximum power output constraints (Constraints #7-8)
