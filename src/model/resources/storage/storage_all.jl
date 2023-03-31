@@ -25,7 +25,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
-	OperationWrapping = setup["OperationWrapping"]
+	#OperationWrapping = setup["OperationWrapping"]
+	TDR = setup["TimeDomainReduction"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -76,7 +77,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Links state of charge in first time step with decisions in last time step of each subperiod
 	# We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
-	if OperationWrapping ==1 && !isempty(inputs["STOR_LONG_DURATION"])
+	if TDR ==1 && !isempty(inputs["STOR_LONG_DURATION"])
 		CONSTRAINTSET = STOR_SHORT_DURATION
 	else
 		CONSTRAINTSET = STOR_ALL
