@@ -8,11 +8,11 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
     res_in = load_dataframe(joinpath(path, filename))
 
 	# Regulation requirement as a percent of hourly load; here load is the total across all model zones
-	inputs["pReg_Req_Load"] = float(res_in[1,:Reg_Req_Percent_Load])
+	inputs["pReg_Req_Demand"] = float(res_in[1,:Reg_Req_Percent_Load])
 	# Regulation requirement as a percent of hourly wind and solar generation (summed across all model zones)
 	inputs["pReg_Req_VRE"] = float(res_in[1,:Reg_Req_Percent_VRE])
 	# Spinning up reserve requirement as a percent of hourly load (which is summed across all zones)
-	inputs["pRsv_Req_Load"] = float(res_in[1,:Rsv_Req_Percent_Load])
+	inputs["pRsv_Req_Demand"] = float(res_in[1,:Rsv_Req_Percent_Load])
 	# Spinning up reserve requirement as a percent of hourly wind and solar generation (which is summed across all zones)
 	inputs["pRsv_Req_VRE"] = float(res_in[1,:Rsv_Req_Percent_VRE])
 

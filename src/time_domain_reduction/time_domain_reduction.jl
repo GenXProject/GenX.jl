@@ -41,7 +41,7 @@ end
 @doc raw"""
     parse_data(myinputs)
 
-Get load, solar, wind, and other curves from the input data.
+Get demand, solar, wind, and other curves from the input data.
 
 """
 function parse_data(myinputs)
@@ -49,7 +49,7 @@ function parse_data(myinputs)
     RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
     ZONES = myinputs["R_ZONES"]
 
-    # LOAD - Load_data.csv
+    # DEMAND - Load_data.csv
     load_profiles = [ myinputs["pD"][:,l] for l in 1:size(myinputs["pD"],2) ]
     load_col_names = ["Load_MW_z"*string(l) for l in 1:size(load_profiles)[1]]
     load_zones = [l for l in 1:size(load_profiles)[1]]

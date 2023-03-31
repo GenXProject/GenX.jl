@@ -7,7 +7,7 @@
 |$t \in \mathcal{T}$ | where $t$ denotes an time step and $\mathcal{T}$ is the set of time steps over which grid operations are modeled|
 |$\mathcal{T}^{interior} \subseteq \mathcal{T}^{}$ | where $\mathcal{T}^{interior}$ is the set of interior timesteps in the data series|
 |$\mathcal{T}^{start} \subseteq \mathcal{T}$ |  where $\mathcal{T}^{start}$ is the set of initial timesteps in the data series. $\mathcal{T}^{start}={1}$ when representing entire year as a single contiguous period; $\mathcal{T}^{start}=\{\left(m-1\right) \times \tau^{period}+1 \| m \in \mathcal{M}\}$, which corresponds to the first time step of each representative period $m \in \mathcal{M}$|
-|$n \in \mathcal{N}$ | where $n$ corresponds to a contiguous time period and $\mathcal{N}$ corresponds to the set of contiguous periods of length $\tau^{period}$ that make up the input time series (e.g. load, variable renewable energy availability) to the model|
+|$n \in \mathcal{N}$ | where $n$ corresponds to a contiguous time period and $\mathcal{N}$ corresponds to the set of contiguous periods of length $\tau^{period}$ that make up the input time series (e.g. demand, variable renewable energy availability) to the model|
 |$\mathcal{N}^{rep} \subseteq \mathcal{N}$ | where $\mathcal{N}^{rep}$ corresponds to the set of representative time periods that are selected from the set of contiguous periods, $\mathcal{M}$|
 |$m \in \mathcal{M}$ | where $m$ corresponds to a representative time period and $\mathcal{M}$ corresponds to the set of representative time periods indexed as per their chronological ocurrence in the set of contiguous periods spanning the input time series data, i.e. $\mathcal{N}$|
 $z \in \mathcal{Z}$ | where $z$ denotes a zone and $\mathcal{Z}$ is the set of zones in the network|
@@ -257,7 +257,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\tau_{y,z}^{down}$ | Minimum downtime or thermal generator type y in zone z before new restart [hours].|
 |$\tau_{y,z}^{advance}$ | maximum  time  by which flexible demand resource can  be  advanced [hours]  |
 |$\tau_{y,z}^{delay}$ | maximum  time  by which flexible demand resource can  be  delayed [hours]  |
-|$\eta_{y,z}^{dflex}$ | energy losses associated with shifting the flexible load [%]|
+|$\eta_{y,z}^{dflex}$ | energy losses associated with shifting the flexible demand [%]|
 |$\mu_{p,z}^{\mathcal{ESR}}$ | share of total demand in each model zone $z \in \mathcal{ESR}^{p}$  that must be served by qualifying renewable energy resources $y \in \mathcal{G}^{ESR}_{p}$|
 |$f(n)$ | Mapping each modeled period $n \in \mathcal{N}$ to corresponding representative period $w \in \mathcal{W}$|
 ---

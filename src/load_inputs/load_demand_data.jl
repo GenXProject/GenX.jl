@@ -1,9 +1,9 @@
 @doc raw"""
-	load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
+	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 Read input parameters related to electricity load (demand)
 """
-function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
+function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 	# Load related inputs
 	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
@@ -12,8 +12,9 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	else
         my_dir = path
 	end
-    filename = "Load_data.csv"
-    load_in = load_dataframe(joinpath(my_dir, filename))
+    filename = "Demand_data.csv"
+    deprecated_synonym = "Load_data.csv"
+    load_in = load_dataframe(my_dir, [filename])
 
     as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
 
