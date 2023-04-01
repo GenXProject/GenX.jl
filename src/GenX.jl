@@ -36,6 +36,7 @@ export configure_multi_stage_inputs
 export load_inputs_multi_stage
 export write_multi_stage_outputs
 export run_genx_case!
+export run_timedomainreduction!
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -88,8 +89,8 @@ include_all_in_folder("load_inputs")
 include_all_in_folder("model")
 include_all_in_folder("write_outputs")
 
-# don't want to include PreCluster.jl
 include("time_domain_reduction/time_domain_reduction.jl")
+include("time_domain_reduction/precluster.jl")
 
 #Just for unit testing; Under active development
 include("simple_operation.jl")
