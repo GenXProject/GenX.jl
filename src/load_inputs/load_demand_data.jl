@@ -14,7 +14,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	end
     filename = "Demand_data.csv"
     deprecated_synonym = "Load_data.csv"
-    load_in = load_dataframe(my_dir, [filename])
+    load_in = load_dataframe(my_dir, [filename, deprecated_synonym])
 
     as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
 
