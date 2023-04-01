@@ -89,7 +89,8 @@ end
 function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict)
 	ow = setup["OperationWrapping"]==1
 	has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
-	ow && has_stor_lds
+	has_hydro_lds = !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+    ow && (has_stor_lds || has_hydro_lds)
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
