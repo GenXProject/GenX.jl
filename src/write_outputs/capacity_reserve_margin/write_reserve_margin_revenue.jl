@@ -42,9 +42,9 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		tempresrev[THERM_ALL] = dfGen[THERM_ALL, sym] .* (value.(EP[:eTotalCap][THERM_ALL])) * sum(dual.(EP[:cCapacityResMargin][i, :]))
 		tempresrev[VRE] = dfGen[VRE, sym] .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * (dual.(EP[:cCapacityResMargin][i, :])))
 		tempresrev[MUST_RUN] = dfGen[MUST_RUN, sym] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * (dual.(EP[:cCapacityResMargin][i, :])))
-		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* ((value.(EP[:vCAPCONTRHYDRO_DISCHARGE][HYDRO_RES, :]).data + value.(EP[:vCAPCONTRHYDRO_SOC][HYDRO_RES, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
+		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* (value.(EP[:vP][HYDRO_RES, :]) * (dual.(EP[:cCapacityResMargin][i, :])))
 		if !isempty(STOR_ALL)
-			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vCAPCONTRSTOR_DISCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPCONTRSTOR_SOC][STOR_ALL, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
 		if !isempty(FLEX)
 			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * (dual.(EP[:cCapacityResMargin][i, :])))

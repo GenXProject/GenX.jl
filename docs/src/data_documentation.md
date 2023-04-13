@@ -46,6 +46,9 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 |MinCapReq | Minimum technology carve out requirement constraints.|
 || 1 = if one or more minimum technology capacity constraints are specified|
 || 0 = otherwise|
+|MaxCapReq | Maximum system-wide technology capacity limit constraints.|
+|| 1 = if one or more maximum technology capacity constraints are specified|
+|| 0 = otherwise|
 |**Solution strategy and outputs**||
 |Solver | Solver name is not case sensitive (CPLEX, cplex, Gurobi, gurobi, Clp, clp). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
@@ -370,7 +373,8 @@ This file contains cost and performance parameters for various generators and ot
 |Resource\_Type |For the MGA run, we categorize all the resources in a few resource types. We then find maximally different generation portfolio based on these resource types. For example, existing solar and new solar resources could be represented by a resource type names `Solar`. Categorization of resources into resource types is user dependent.|
 |**MinCapReq = 1**|
 |MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`.|
-
+|**MaxCapReq = 1**|
+|MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.|
 
 
 ### 2.2 Optional inputs files
@@ -449,9 +453,9 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 | :------------ | :-----------|
 |Region\_description |Region name|
 |Network\_zones| zone number represented as z*|
-|CO\_2\_Cap\_Zone* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
-|CO\_2\_Max\_tons\_MWh* |Emission limit in terms of rate|
-|CO\_2\_Max\_Mtons* |Emission limit in absolute values, in Million of tons |
+|CO\_2\_Cap\_Zone_* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
+|CO\_2\_Max\_tons\_MWh_* |Emission limit in terms of rate|
+|CO\_2\_Max\_Mtons_* |Emission limit in absolute values, in Million of tons |
 | | where in the above inputs, * represents the number of the emission limit constraints. For example, if the model has 2 emission limit constraints applied separately for 2 zones, the above CSV file will have 2 columns for specifying emission limit in terms on rate: CO\_2\_Max\_tons\_MWh\_1 and CO\_2\_Max\_tons\_MWh\_2.|
 
 
@@ -487,11 +491,27 @@ This file contains the minimum capacity carve-out requirement to be imposed (e.g
 
 Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
 
-#### 2.2.7 Method\_of\_morris\_range.csv
+#### 2.2.7 Maximum\_capacity\_requirement.csv
+
+This contains the maximum capacity limits to be imposed (e.g. limits on total deployment of solar, wind, or batteries in the system as a whole or in certain collections of zones).
+It is required if the `MaxCapReq` flag has a non-zero value in `genx_settings.yml`.
+
+###### Table 13: Structure of the Maximum\_capacity\_requirement.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|MaxCapReqConstraint |Index of the maximum capacity limit.|
+|Constraint\_Description |Names of maximum capacity limit; not to be read by model, but used as a helpful notation to the model user. |
+|Max\_MW | maximum capacity limit [MW]|
+
+
+Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
+
+#### 2.2.8 Method\_of\_morris\_range.csv
 
 This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
 
-###### Table 12: Structure of the Method\_of\_morris\_range.csv file
+###### Table 14: Structure of the Method\_of\_morris\_range.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -530,7 +550,7 @@ The table below summarizes the units of each output variable reported as part of
 
 Reports optimal values of investment variables (except StartCap, which is an input)
 
-###### Table 14: Structure of the capacity.csv file
+###### Table 15: Structure of the capacity.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -553,7 +573,7 @@ Reports optimal values of investment variables (except StartCap, which is an inp
 
 Reports optimal objective function value and contribution of each term by zone.
 
-###### Table 15: Structure of the costs.csv file
+###### Table 16: Structure of the costs.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -573,7 +593,7 @@ Reports optimal objective function value and contribution of each term by zone.
 
 Reports CO2 emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
 
-###### Table 16: Structure of emission prices in the emissions.csv file
+###### Table 17: Structure of emission prices in the emissions.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -605,7 +625,7 @@ Reports marginal electricity price for each model zone and time step. Marginal e
 
 Reports computational performance of the model and objective function related information.
 
-###### Table 17: Structure of the status.csv file
+###### Table 18: Structure of the status.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -621,7 +641,7 @@ Reports computational performance of the model and objective function related in
 
 This file summarizes the cost, revenue and profit for each generation technology for each region.
 
-###### Table 18: Stucture of the NetRevenue.csv file
+###### Table 19: Stucture of the NetRevenue.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
