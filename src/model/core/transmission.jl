@@ -120,6 +120,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	NetworkExpansion = setup["NetworkExpansion"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
+	IncludeLossesInESR = setup["IncludeLossesInESR"]
 
 	## sets and indices for transmission losses and expansion
 	TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -194,7 +195,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     	@expression(EP, eNet_Export_Flows[z=1:Z,t=1:T], sum(inputs["pNet_Map"][l,z] * vFLOW[l,t] for l=1:L))
 
 	# Losses from power flows into or out of zone "z" in MW
-    	@expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * vTLOSS[l,t] for l in LOSS_LINES))
+    	@expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * (1/2) *vTLOSS[l,t] for l in LOSS_LINES))
 
 	## Objective Function Expressions ##
 
@@ -218,7 +219,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceNetExportFlows[t=1:T, z=1:Z],
 		-eNet_Export_Flows[z,t])
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
-		-(1/2)*eLosses_By_Zone[z,t])
+		-eLosses_By_Zone[z,t])
 
 	EP[:ePowerBalance] += ePowerBalanceLossesByZone
 	EP[:ePowerBalance] += ePowerBalanceNetExportFlows
@@ -340,5 +341,13 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 			end)
 		end
 	end # End if(TRANS_LOSS_SEGS > 0) block
+
+	# ESR Lossses
+	if EnergyShareRequirement >= 1
+		if IncludeLossesInESR == 1
+			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(inputs["omega"][t]*EP[:eLosses_By_Zone][z,t] for t in 1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+			EP[:eESR] -= eESRTran
+		end
+	end
 
 end
