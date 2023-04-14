@@ -7,14 +7,10 @@ please look into the GitHub branch, [old_version](https://github.com/GenXProject
 It is currently setup to use one of the following open-source freely available solvers:
 (A) the default solver: [HiGHS](https://github.com/jump-dev/HiGHS.jl) for linear programming and MILP,
 (B) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems,
-(C) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems,
-or (D) [SCIP](https://www.scipopt.org) for faster solution of MILP problems.
-At this stage, we suggest users to use SCIP only when running GenX from either a Mac or Linux machine;
-it is not recommended yet to run GenX with SCIP, while working in a Windows environment.
-We also suggest the users (on Mac or Linux) to prefer SCIP to Cbc while solving the MILP version of GenX.
+(C) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems
 We also provide the option to use one of these two commercial solvers: 
-(E) [Gurobi](https://www.gurobi.com), or 
-(F) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+(D) [Gurobi](https://www.gurobi.com), or 
+(E) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
 Note that using Gurobi and CPLEX requires a valid license on the host machine.
 There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Running an Instance of GenX`.
 
