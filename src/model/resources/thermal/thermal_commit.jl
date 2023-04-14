@@ -166,7 +166,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
         regulation_term = @expression(EP, [y in THERM_COMMIT, t in 1:T],
                            y ∈ THERM_COMMIT_REG ? EP[:vREG][y,t] - EP[:vREG][y, hoursbefore(p, t, 1)] : 0)
         reserves_term = @expression(EP, [y in THERM_COMMIT, t in 1:T],
-                           y ∈ THERM_COMMIT_REG ? EP[:vRSV][y,t] : 0)
+                           y ∈ THERM_COMMIT_RSV ? EP[:vRSV][y,t] : 0)
     end
 
 	## Power Balance Expressions ##
