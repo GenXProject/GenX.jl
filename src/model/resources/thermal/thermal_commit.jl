@@ -156,6 +156,19 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 	### Expressions ###
 
+    # These variables are used in the ramp-up and ramp-down expressions
+    reserves_term = @expression(EP, [y in THERM_COMMIT, t in 1:T], 0)
+    regulation_term = @expression(EP, [y in THERM_COMMIT, t in 1:T], 0)
+
+    if setup["Reserves"] > 0
+        THERM_COMMIT_REG = intersect(THERM_COMMIT, inputs["REG"]) # Set of thermal resources with regulation reserves
+        THERM_COMMIT_RSV = intersect(THERM_COMMIT, inputs["RSV"]) # Set of thermal resources with spinning reserves
+        regulation_term = @expression(EP, [y in THERM_COMMIT, t in 1:T],
+                           y ∈ THERM_COMMIT_REG ? EP[:vREG][y,t] - EP[:vREG][y, hoursbefore(p, t, 1)] : 0)
+        reserves_term = @expression(EP, [y in THERM_COMMIT, t in 1:T],
+                           y ∈ THERM_COMMIT_REG ? EP[:vRSV][y,t] : 0)
+    end
+
 	## Power Balance Expressions ##
 	@expression(EP, ePowerBalanceThermCommit[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(THERM_COMMIT, dfGen[dfGen[!,:Zone].==z,:R_ID])))
@@ -182,17 +195,15 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 	# Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
 	# rampup constraints
 	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
-		EP[:vP][y,t]+EP[:vREG][y,t]+EP[:vRSV][y,t]-EP[:vP][y, hoursbefore(p, t, 1)]-EP[:vREG][y,hoursbefore(p, t, 1)] <= dfGen[y,:Ramp_Up_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
+               EP[:vP][y,t] - EP[:vP][y, hoursbefore(p, t, 1)] + regulation_term[y,t] + reserves_term[y,t] <= dfGen[y,:Ramp_Up_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			+ min(inputs["pP_Max"][y,t],max(dfGen[y,:Min_Power],dfGen[y,:Ramp_Up_Percentage]))*dfGen[y,:Cap_Size]*EP[:vSTART][y,t]
 			- dfGen[y,:Min_Power]*dfGen[y,:Cap_Size]*EP[:vSHUT][y,t])
 
 	# rampdown constraints
-	@constraint(EP,[y in THERM_COMMIT, t in 1:T], 
-		EP[:vP][y, hoursbefore(p,t,1)] + EP[:vREG][y, hoursbefore(p,t,1)] + EP[:vRSV][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - EP[:vREG][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
+	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
+               EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Dn_Percentage]*dfGen[y,:Cap_Size]*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			- dfGen[y,:Min_Power]*dfGen[y,:Cap_Size]*EP[:vSTART][y,t]
 			+ min(inputs["pP_Max"][y,t],max(dfGen[y,:Min_Power],dfGen[y,:Ramp_Dn_Percentage]))*dfGen[y,:Cap_Size]*EP[:vSHUT][y,t])
-
-
 
 
 	### Minimum and maximum power output constraints (Constraints #7-8)
