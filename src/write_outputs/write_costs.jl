@@ -29,7 +29,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
 	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-	dfCost[!,Symbol("Total")] = [value(EP[:eObj]), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0] 
+	dfCost[!,Symbol("Total")] = [value(EP[:eObj]), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0] 
 
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
