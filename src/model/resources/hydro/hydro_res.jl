@@ -70,6 +70,19 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	HYDRO_RES = inputs["HYDRO_RES"]	# Set of all reservoir hydro resources, used for common constraints
 	HYDRO_RES_KNOWN_CAP = inputs["HYDRO_RES_KNOWN_CAP"] # Reservoir hydro resources modeled with unknown reservoir energy capacity
 
+    # These variables are used in the ramp-up and ramp-down expressions
+    reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
+    regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
+
+    if setup["Reserves"] > 0
+        HYDRO_RES_REG = intersect(HYDRO_RES, inputs["REG"]) # Set of reservoir hydro resources with regulation reserves
+        HYDRO_RES_RSV = intersect(HYDRO_RES, inputs["RSV"]) # Set of reservoir hydro resources with spinning reserves
+        regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T],
+                           y ∈ HYDRO_RES_REG ? EP[:vREG][y,t] - EP[:vREG][y, hoursbefore(p, t, 1)] : 0)
+        reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T],
+                           y ∈ HYDRO_RES_RSV ? EP[:vRSV][y,t] : 0)
+    end
+
 	### Variables ###
 
 	# Reservoir hydro storage level of resource "y" at hour "t" [MWh] on zone "z" - unbounded
@@ -106,8 +119,8 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down
-		cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t]+ EP[:vREG][y,t]+EP[:vRSV][y,t] - EP[:vP][y, hoursbefore(p,t,1)]-EP[:vREG][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
-		cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)]+EP[:vREG][y, hoursbefore(p,t,1)] + EP[:vRSV][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - EP[:vREG][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
+        cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + regulation_term[y,t] + reserves_term[y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
+        cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
 		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 		# DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
