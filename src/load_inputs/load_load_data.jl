@@ -29,7 +29,7 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 	inputs["omega"] = zeros(Float64, T) # weights associated with operational sub-period in the model - sum of weight = 8760
 	inputs["REP_PERIOD"] = 1   # Number of periods initialized
-	inputs["H"] = 1   # Number of sub-periods within each period
+	inputs["H"] = T   # Number of sub-periods within each period
 
 	if setup["OperationWrapping"]==0 # Modeling full year chronologically at hourly resolution
 		# Simple scaling factor for number of subperiods
@@ -74,4 +74,69 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
     inputs["pMax_D_Curtail"] = as_vector(:Max_Demand_Curtailment)
 
 	println(filename * " Successfully Read!")
+end
+
+# ensure that the length of load data exactly matches
+# the number of subperiods times their length
+# and that the number of subperiods equals the list of provided weights
+function validatetimebasis(inputs::Dict)
+    println("Validating time basis")
+    demand_length = size(inputs["pD"], 1)
+    generators_variability_length = size(inputs["pP_Max"], 2)
+
+    typical_fuel = first(inputs["fuels"])
+    fuel_costs_length = size(inputs["fuel_costs"][typical_fuel], 1)
+
+    T = inputs["T"]
+    hours_per_subperiod = inputs["hours_per_subperiod"]
+    number_of_representative_periods = inputs["REP_PERIOD"]
+    expected_length_1 = hours_per_subperiod * number_of_representative_periods
+
+    H = inputs["H"]
+    expected_length_2 = H * number_of_representative_periods
+
+    check_equal = [T,
+                   demand_length,
+                   generators_variability_length,
+                   fuel_costs_length,
+                   expected_length_1,
+                   expected_length_2]
+
+    allequal(x) = all(y->y==x[1], x)
+    ok = allequal(check_equal)
+
+    if ~ok
+        error("""Critical error in time series construction:
+                 lengths of the various time series, and/or the expected
+                 total length based on the number of representative periods and their length,
+                 are not all equal.
+
+                 Expected length:                    $T
+                     (set by the Time index in demand_data.csv [or load_data.csv])
+                 Demand series length:               $demand_length
+                     (demand_data.csv [or load_data.csv])
+                 Resource time profiles length:      $generators_variability_length
+                     (generators_variability.csv)
+                 Fuel costs length:                  $fuel_costs_length
+                     (fuels_data.csv)
+
+                 Metrics from demand_data.csv [load_data.csv]:
+                 Detected time steps:            $T
+                 No. of representative periods:  $number_of_representative_periods
+                     Euclidean quotient of these:    $hours_per_subperiod
+
+                 No. of representative periods:  $number_of_representative_periods
+                 Time steps per rep. period:     $H
+                     Product of these:               $expected_length_2
+              """)
+    end
+
+    weights = inputs["Weights"]
+    num_weights = length(weights)
+    if num_weights != number_of_representative_periods
+        error("""Critical error in time series construction:
+              In demand_data.csv [or load_data.csv],
+              the number of subperiod weights ($num_weights) does not match
+              the expected number of representative periods, ($number_of_representative_periods).""")
+    end
 end
