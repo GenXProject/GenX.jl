@@ -69,14 +69,12 @@ Interested users may also want to browse through [prior publications](https://en
 ## Running an Instance of GenX
 1. Download or clone the GenX repository on your machine.
 For this tutorial it will be assumed to be within your home directory: `/home/youruser/GenX`.
-
 ### Creating the Julia environment and installing dependencies
-
 2. Start a terminal and navigate into the `GenX` folder.
 3. Type `julia --project=.` to start an instance of the `julia` kernel with the `project` set to the current folder.
 The `.` indicates the current folder. On Windows the location of Julia can also be specified as e.g., 'C:\julia-1.6.0\bin\julia.exe --project=.'
 
-If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) execute steps 3-6.
+    If it's your first time running GenX (or, if you have pulled after some major upgrades/release/version) execute steps 3-6.
 
 4. Type `]` to bring up the package system `(GenX) pkg >` prompt. This indicates that the GenX project was detected. If you see `(@v1.6) pkg>` as the prompt, then the `project` was not successfully set.
 5. Type `instantiate` from the `(GenX) pkg` prompt.
@@ -84,11 +82,12 @@ If it's your first time running GenX (or, if you have pulled after some major up
 6. Type `st` to check that the dependecies have been installed. If there is no error, it has been successful.
 7. Type the back key to come back to the `julia>` prompt.
 
-These steps can be skipped on subsequent runs.
-Steps 2-5 are shown in Figure 1 and Steps 6-8 are shown in Figure 2.
+    These steps can be skipped on subsequent runs.
 
-![Creating the Julia environment and installing dependencies: Steps 2-7](docs/src/assets/GenX_setup_tutorial_part_1.png)
-*Figure 1. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 2-5*
+    Steps 2-5 are shown in Figure 1 and Steps 6-8 are shown in Figure 2.
+    
+    ![Creating the Julia environment and installing dependencies: Steps 2-7](docs/src/assets/GenX_setup_tutorial_part_1.png)
+    *Figure 1. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 2-5*
 
 8. Since we have already started Julia, we can run a case by executing the command `julia> include(“<path to your case>/Run.jl”)`. 
 
