@@ -343,8 +343,8 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	end # End if(TRANS_LOSS_SEGS > 0) block
 
 	# ESR Lossses
-	if EnergyShareRequirement >= 1
-		if IncludeLossesInESR == 1
+    if setup["EnergyShareRequirement"] >= 1
+        if setup["IncludeLossesInESR"] == 1
 			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(inputs["omega"][t]*EP[:eLosses_By_Zone][z,t] for t in 1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 			EP[:eESR] -= eESRTran
 		end
