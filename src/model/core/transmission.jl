@@ -104,6 +104,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	NetworkExpansion = setup["NetworkExpansion"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
+	EnergyShareRequirement = setup["EnergyShareRequirement"]
 	IncludeLossesInESR = setup["IncludeLossesInESR"]
 
 	## sets and indices for transmission losses and expansion
@@ -327,11 +328,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	end # End if(TRANS_LOSS_SEGS > 0) block
 
 	# ESR Lossses
-    if setup["EnergyShareRequirement"] >= 1
-        if setup["IncludeLossesInESR"] == 1
-			@expression(EP, eESRTran[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(inputs["omega"][t]*EP[:eLosses_By_Zone][z,t] for t in 1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-			EP[:eESR] -= eESRTran
-		end
+    if EnergyShareRequirement >= 1 && IncludeLossesInESR ==1
+        @expression(EP, eESRTran[ESR=1:inputs["nESR"]],
+                    sum(inputs["dfESR"][z,ESR]*sum(inputs["omega"][t]*EP[:eLosses_By_Zone][z,t] for t in 1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+        EP[:eESR] -= eESRTran
 	end
 
 end
