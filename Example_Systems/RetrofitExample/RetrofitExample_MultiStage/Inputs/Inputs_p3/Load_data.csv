@@ -1,5 +1,5 @@
 Voll,Demand_Segment,Cost_of_Demand_Curtailment_per_MW,Max_Demand_Curtailment,Rep_Periods,Timesteps_per_Rep_Period,Sub_Weights,Time_Index,Load_MW_z1
-50000,1,1,1,1,168,1,1,66885.0249
+50000,1,1,1,1,8760,8760,1,66885.0249
 ,,,,,,,2,67137.28793
 ,,,,,,,3,67933.5795
 ,,,,,,,4,68846.93683
