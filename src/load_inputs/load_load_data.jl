@@ -147,12 +147,14 @@ function validatetimebasis(inputs::Dict)
               """)
     end
 
-    weights = inputs["Weights"]
-    num_weights = length(weights)
-    if num_weights != number_of_representative_periods
-        error("""Critical error in time series construction:
-              In demand_data.csv [or load_data.csv],
-              the number of subperiod weights ($num_weights) does not match
-              the expected number of representative periods, ($number_of_representative_periods).""")
+    if "Weights" in keys(inputs)
+        weights = inputs["Weights"]
+        num_weights = length(weights)
+        if num_weights != number_of_representative_periods
+            error("""Critical error in time series construction:
+                  In demand_data.csv [or load_data.csv],
+                  the number of subperiod weights ($num_weights) does not match
+                  the expected number of representative periods, ($number_of_representative_periods).""")
+        end
     end
 end
