@@ -20,15 +20,15 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	RSV = inputs["RSV"]
-
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfRsv = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
 	rsv = zeros(G,T)
 	unmet_vec = zeros(T)
 	rsv[RSV, :] = value.(EP[:vRSV][RSV, :])
 	unmet_vec[RSV] = value.(EP[:vUNMET_RSV][RSV])
-	total_unmet = sum(unmet_vec)
-	dfRsv.AnnualSum = rsv * inputs["omega"]
-	dfRsv = hcat(dfRsv, DataFrame(rsv, :auto))
+	total_unmet = (sum(unmet_vec)*scale_factor)
+	dfRsv.AnnualSum = (rsv*scale_factor) * inputs["omega"]
+	dfRsv = hcat(dfRsv, DataFrame((rsv*scale_factor), :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfRsv,auxNew_Names)
 
