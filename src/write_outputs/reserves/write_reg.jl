@@ -20,13 +20,13 @@ function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	REG = inputs["REG"]
-
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	# Regulation contributions for each resource in each time step
 	dfReg = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])
 	reg = zeros(G,T)
 	reg[REG, :] = value.(EP[:vREG][REG, :])
-	dfReg.AnnualSum = reg * inputs["omega"]
-	dfReg = hcat(dfReg, DataFrame(reg, :auto))
+	dfReg.AnnualSum = (reg*scale_factor) * inputs["omega"]
+	dfReg = hcat(dfReg, DataFrame(reg*scale_factor, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfReg,auxNew_Names)
 
