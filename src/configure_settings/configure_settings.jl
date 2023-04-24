@@ -1,28 +1,35 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-function set_default_if_absent!(settings::Dict, key::String, defaultval)
-    if !haskey(settings, key)
-        settings[key] = defaultval
-    end
+function default_settings()
+    Dict{Any,Any}(
+        "PrintModel" => 0,
+        "NetworkExpansion" => 0,
+        "Trans_Loss_Segments" => 1,
+        "Reserves" => 0,
+        "EnergyShareRequirement" => 0,
+        "CapacityReserveMargin" => 0,
+        "CO2Cap" => 0,
+        "StorageLosses" => 1,
+        "MinCapReq" => 0,
+        "Solver" => "HiGHS",
+        "ParameterScale" => 0,
+        "WriteShadowPrices" => 0,
+        "UCommit" => 0,
+        "OperationWrapping" => 0,
+        "TimeDomainReduction" => 0,
+        "TimeDomainReductionFolder" => "TDR_Results",
+        "ModelingToGenerateAlternatives" => 0,
+        "ModelingtoGenerateAlternativeSlack" => 0.1,
+        "MultiStage" => 0,
+        "MethodofMorris" => 0,
+    )
 end
 
 function configure_settings(settings_path::String)
-	println("Configuring Settings")
-    settings = YAML.load(open(settings_path))
+    println("Configuring Settings")
+    model_settings = YAML.load(open(settings_path))
+
+    settings = default_settings()
+
+    merge!(settings, model_settings)
 
     # Optional settings parameters ############################################
     #Write the model formulation as an output; 0 = active; 1 = not active
@@ -72,6 +79,17 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "CapResPeriodLength", 0)
     # Capacity Reserve Period Length for storage
 
+    ###### HARD-CODED COMBINATIONS OF SETTING COMBINATIONS WHICH CAUSE PROBLEMS ######
 
-return settings
+    # If OperationWrapping = 1, then TimeDomainReduction must be 1.
+    # Will be fixed by removing OperationWrapping in future versions.
+    if settings["OperationWrapping"] == 1 && settings["TimeDomainReduction"] == 0
+        error(
+            "OperationWrapping = 1, but TimeDomainReduction = 0 (is OFF).
+            This combination of settings does not currently work.
+            If you want to use time domain reduction, set TimeDomainReduction = 1 in the settings.
+            Otherwise set OperationWrapping = 0."
+        )
+    end
+
 end

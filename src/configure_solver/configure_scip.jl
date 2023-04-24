@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	configure_scip(solver_settings_path::String)
 
@@ -30,18 +14,19 @@ The SCIP optimizer instance is configured with the following default parameters 
 function configure_scip(solver_settings_path::String)
 
 	solver_settings = YAML.load(open(solver_settings_path))
+	solver_settings = convert(Dict{String, Any}, solver_settings)
 
-	# Optional solver parameters ############################################
-	Mydisplay_verblevel = 0
-		if(haskey(solver_settings, "display_verblevel")) Mydisplay_verblevel = solver_settings["display_verblevel"] end
-	Mylimits_gap = 0.05
-		if(haskey(solver_settings, "limits_gap")) Mylimits_gap = solver_settings["limits_gap"] end
-	########################################################################
+    default_settings = Dict("Dispverblevel" => 0,
+                            "limitsgap" => 0.05,
+                           )
+    attributes = merge(default_settings, solver_settings)
 
-	OPTIMIZER = optimizer_with_attributes(SCIP.Optimizer,
-		#"display_verblevel" => Mydisplay_verblevel, 
-		#"limits_gap" => Mylimits_gap
-	)
+    key_replacement = Dict("Dispverblevel" => "display_verblevel",
+                           "limitsgap" => "limits_gap",
+                          )
 
-	return OPTIMIZER
+    attributes = rename_keys(attributes, key_replacement)
+
+    attributes::Dict{String, Any}
+	return optimizer_with_attributes(SCIP.Optimizer, attributes...)
 end

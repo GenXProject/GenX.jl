@@ -6,7 +6,7 @@ TimeLimit: 1.0e23             # Time limit # [type: double, advanced: false, ran
 Pre_Solve: choose          # Presolve option: "off", "choose" or "on" # [type: string, advanced: false, default: "choose"]
 Method: choose             #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
 
-#HiGHS-specific solver settings
+#highs-specific solver settings
 
 # Run the crossover routine for IPX
 # [type: bool, advanced: true, range: {false, true}, default: true]
