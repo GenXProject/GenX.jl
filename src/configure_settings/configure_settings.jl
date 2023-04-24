@@ -23,6 +23,12 @@ function default_settings()
     )
 end
 
+function set_default_if_absent!(settings::Dict, key::String, defaultval)
+    if !haskey(settings, key)
+        settings[key] = defaultval
+    end
+end
+
 function configure_settings(settings_path::String)
     println("Configuring Settings")
     model_settings = YAML.load(open(settings_path))
@@ -91,5 +97,6 @@ function configure_settings(settings_path::String)
             Otherwise set OperationWrapping = 0."
         )
     end
+    return settings
 
 end
