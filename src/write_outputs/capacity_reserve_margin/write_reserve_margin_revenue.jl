@@ -35,6 +35,7 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
 	VRE_STOR = inputs["VRE_STOR"]
+	dfVRE_STOR = inputs["dfVRE_STOR"]
 	dfResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
 	annual_sum = zeros(G)
 	for i in 1:inputs["NCapacityReserveMargin"]
@@ -53,7 +54,7 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
 		if !isempty(VRE_STOR)
-			tempresrev[VRE_STOR] = dfGen[VRE_STOR, sym] .* ((value.(EP[:vP][VRE_STOR, :]).data - value.(EP[:vCHARGE_VRE_STOR][VRE_STOR, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[VRE_STOR] = dfVRE_STOR[!, sym] .* ((value.(EP[:vCAPCONTRSTOR_DISCHARGE_VRE_STOR][VRE_STOR, :]).data + value.(EP[:vCAPCONTRSTOR_SOC_VRE_STOR][VRE_STOR, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
 		if setup["ParameterScale"] == 1
 			tempresrev *= ModelScalingFactor^2

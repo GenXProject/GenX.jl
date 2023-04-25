@@ -156,11 +156,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Set of all storage resources eligible for energy capacity retirements
 	inputs_gen["RET_CAP_ENERGY"] = intersect(gen_in[gen_in.New_Build.!=-1,:R_ID], gen_in[gen_in.Existing_Cap_MWh.>=0,:R_ID], inputs_gen["STOR_ALL"])
 
-	# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
-	inputs_gen["NEW_CAP_CHARGE"] = intersect(gen_in[gen_in.New_Build.==1,:R_ID], gen_in[gen_in.Max_Charge_Cap_MW.!=0,:R_ID], inputs_gen["STOR_ASYMMETRIC"])
-	# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-	inputs_gen["RET_CAP_CHARGE"] = intersect(gen_in[gen_in.New_Build.!=-1,:R_ID], gen_in[gen_in.Existing_Charge_Cap_MW.>=0,:R_ID], inputs_gen["STOR_ASYMMETRIC"])
-
 	# Names of resources
 	inputs_gen["RESOURCES"] = collect(skipmissing(gen_in[!,:Resource][1:inputs_gen["G"]]))
 	# Zones resources are located in
@@ -318,6 +313,7 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 
 	dfGen = inputs_gen["dfGen"]
 	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(gen_in) ? gen_in[gen_in.VRE_STOR.==1,:R_ID] : Int[]
+	inputs_gen["VS_STOR"] = []
 
 	# Check if VRE-STOR resources exist
 	if !isempty(inputs_gen["VRE_STOR"])
@@ -357,39 +353,22 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 		inputs_gen["VS_LDS"] = vre_stor_in[(vre_stor_in.LDS.!=0),:R_ID]
 
 		# Set of all VRE-STOR resources eligible for new solar capacity
-		inputs_gen["NEW_CAP_SOLAR"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.SOLAR.!=0,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_Solar.!=0,:R_ID])
+		inputs_gen["NEW_CAP_SOLAR"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.SOLAR.!=0,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_Solar_MW.!=0,:R_ID])
 		# Set of all VRE_STOR resources eligible for solar capacity retirements
-		inputs_gen["RET_CAP_SOLAR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID],  vre_stor_in[vre_stor_in.SOLAR.!=0,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_Solar.>=0,:R_ID])
+		inputs_gen["RET_CAP_SOLAR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID],  vre_stor_in[vre_stor_in.SOLAR.!=0,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_Solar_MW.>=0,:R_ID])
 		# Set of all VRE-STOR resources eligible for new wind capacity
-		inputs_gen["NEW_CAP_WIND"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.WIND.!=0,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_Wind.!=0,:R_ID])
+		inputs_gen["NEW_CAP_WIND"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.WIND.!=0,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_Wind_MW.!=0,:R_ID])
 		# Set of all VRE_STOR resources eligible for wind capacity retirements
-		inputs_gen["RET_CAP_WIND"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.WIND.!=0,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_Wind.>=0,:R_ID])
+		inputs_gen["RET_CAP_WIND"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.WIND.!=0,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_Wind_MW.>=0,:R_ID])
 		# Set of all VRE-STOR resources eligible for new inverter capacity
-		inputs_gen["NEW_CAP_DC"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_Inverter.!=0,:R_ID], inputs_gen["VS_DC"])
+		inputs_gen["NEW_CAP_DC"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_Inverter_MW.!=0,:R_ID], inputs_gen["VS_DC"])
 		# Set of all VRE_STOR resources eligible for inverter capacity retirements
-		inputs_gen["RET_CAP_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_Inverter.>=0,:R_ID], inputs_gen["VS_DC"])
+		inputs_gen["RET_CAP_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_Inverter_MW.>=0,:R_ID], inputs_gen["VS_DC"])
 		# Set of all storage resources eligible for new energy capacity
-		inputs_gen["NEW_CAP_ENERGY_VRE_STOR"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], dfGen[dfGen.Max_Cap_MWh.!=0,:R_ID], inputs_gen["VS_STOR"])
+		inputs_gen["NEW_CAP_STOR"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], dfGen[dfGen.Max_Cap_MWh.!=0,:R_ID], inputs_gen["VS_STOR"])
 		# Set of all storage resources eligible for energy capacity retirements
-		inputs_gen["RET_CAP_ENERGY_VRE_STOR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], dfGen[dfGen.Existing_Cap_MWh.>=0,:R_ID], inputs_gen["VS_STOR"])
+		inputs_gen["RET_CAP_STOR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], dfGen[dfGen.Existing_Cap_MWh.>=0,:R_ID], inputs_gen["VS_STOR"])
 		
-		# Set of all storage resources eligible for new DC discharge capacity
-		inputs_gen["NEW_CAP_DC_DISCHARGE"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_DC_Discharge.!=0,:R_ID], inputs_gen["VS_STOR_DC_DISCHARGE"])
-		# Set of all storage resources eligible for DC discharge capacity retirements
-		inputs_gen["RET_CAP_DC_DISCHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_DC_Discharge.>=0,:R_ID], inputs_gen["VS_STOR_DC_DISCHARGE"])
-		# Set of all storage resources eligible for new DC charge capacity
-		inputs_gen["NEW_CAP_DC_CHARGE"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_DC_Charge.!=0,:R_ID], inputs_gen["VS_STOR_DC_CHARGE"])
-		# Set of all storage resources eligible for DC charge capacity retirements
-		inputs_gen["RET_CAP_DC_CHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_DC_Charge.>=0,:R_ID], inputs_gen["VS_STOR_DC_CHARGE"])
-		# Set of all storage resources eligible for new AC discharge capacity
-		inputs_gen["NEW_CAP_AC_DISCHARGE"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_AC_Discharge.!=0,:R_ID], inputs_gen["VS_STOR_AC_DISCHARGE"])
-		# Set of all storage resources eligible for AC discharge capacity retirements
-		inputs_gen["RET_CAP_AC_DISCHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_AC_Discharge.>=0,:R_ID], inputs_gen["VS_STOR_AC_DISCHARGE"])
-		# Set of all storage resources eligible for new AC charge capacity
-		inputs_gen["NEW_CAP_AC_CHARGE"] = intersect(dfGen[dfGen.New_Build.==1,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_MW_AC_Charge.!=0,:R_ID], inputs_gen["VS_STOR_AC_CHARGE"])
-		# Set of all storage resources eligible for AC charge capacity retirements
-		inputs_gen["RET_CAP_AC_CHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_MW_AC_Charge.>=0,:R_ID], inputs_gen["VS_STOR_AC_CHARGE"])
-
 		# Send warnings for battery resources discharging
 		if !isempty(intersect(inputs_gen["VS_STOR_DC_DISCHARGE"], inputs_gen["VS_STOR_AC_DISCHARGE"]))
 			@warn("Both AC and DC discharging functionalities are turned on.")
@@ -410,24 +389,24 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 			columns_to_scale = [:Existing_Cap_Inverter_MW,
 								:Existing_Cap_Solar_MW,
 								:Existing_Cap_Wind_MW,
-								:Existing_Charge_DC_Cap_MW,
-								:Existing_Charge_AC_Cap_MW,
-								:Existing_Discharge_DC_Cap_MW,
-								:Existing_Discharge_AC_Cap_MW,
+								:Existing_Cap_Charge_DC_MW,
+								:Existing_Cap_Charge_AC_MW,
+								:Existing_Cap_Discharge_DC_MW,
+								:Existing_Cap_Discharge_AC_MW,
 								:Min_Cap_Inverter_MW,
 								:Max_Cap_Inverter_MW,
 								:Min_Cap_Solar_MW,
 								:Max_Cap_Solar_MW,
 								:Min_Cap_Wind_MW,
 								:Max_Cap_Wind_MW,
-								:Min_Charge_AC_Cap_MW,
-								:Max_Charge_AC_Cap_MW,
-								:Min_Charge_DC_Cap_MW,
-								:Max_Charge_DC_Cap_MW,
-								:Min_Discharge_AC_Cap_MW,
-								:Max_Discharge_AC_Cap_MW,
-								:Min_Discharge_DC_Cap_MW,
-								:Max_Discharge_DC_Cap_MW,
+								:Min_Cap_Charge_AC_MW,
+								:Max_Cap_Charge_AC_MW,
+								:Min_Cap_Charge_DC_MW,
+								:Max_Cap_Charge_DC_MW,
+								:Min_Cap_Discharge_AC_MW,
+								:Max_Cap_Discharge_AC_MW,
+								:Min_Cap_Discharge_DC_MW,
+								:Max_Cap_Discharge_DC_MW,
 								:Inv_Cost_Inverter_per_MWyr,
 								:Fixed_OM_Inverter_Cost_per_MWyr,
 								:Inv_Cost_Solar_per_MWyr,

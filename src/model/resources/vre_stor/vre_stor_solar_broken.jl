@@ -57,14 +57,20 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         # Solar-component generation [MWh]
         vP_SOLAR[y in VRE_STOR, t=1:T] >= 0
 
+        # Solar-component generation charging [MWh]
+        vP_SOLAR_CHARGE[y in VRE_STOR, t=1:T] >= 0
+
         # Wind-component generation [MWh]
         vP_WIND[y in VRE_STOR, t=1:T] >= 0
 
         # DC-battery discharge [MWh]
         vP_DC_DISCHARGE[y in VRE_STOR, t=1:T] >= 0
 
-        # DC-battery charge [MWh]
+        # DC-battery charge total [MWh]
         vP_DC_CHARGE[y in VRE_STOR, t=1:T] >= 0
+
+        # DC-battery charge from grid [MWh]
+        vP_DC_CHARGE_GRID[y in VRE_STOR, t=1:T] >= 0
 
         # AC-battery discharge [MWh]
         vP_AC_DISCHARGE[y in VRE_STOR, t=1:T] >= 0
@@ -92,7 +98,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     ## 3. Module Expressions ##
 
     # Inverter AC Balance
-    @expression(EP, eInvACBalance[y in VRE_STOR, t in 1:T], by_rid(y, :EtaInverter)*(vP_DC_DISCHARGE[y, t] + vP_SOLAR[y, t]) - vP_DC_CHARGE[y,t]/by_rid(y, :EtaInverter))
+    @expression(EP, eInvACBalance[y in VRE_STOR, t in 1:T], by_rid(y, :EtaInverter)*(vP_DC_DISCHARGE[y, t] + vP_SOLAR[y, t]) - vP_DC_CHARGE_GRID[y,t]/by_rid(y, :EtaInverter))
 
 	### CONSTRAINTS ###
 
@@ -110,13 +116,16 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
     @constraint(EP, cDCGenMaxDischarge[y in NONDC, t in 1:T], EP[:vP_DC_DISCHARGE][y, t] == 0)
     @constraint(EP, cDCGenMaxCharge[y in NONDC, t in 1:T], EP[:vP_DC_CHARGE][y, t] == 0)
+    @constraint(EP, cDCGenMaxCharge2[y in NONDC, t in 1:T], EP[:vP_DC_CHARGE_GRID][y, t] == 0)
     @constraint(EP, cDCGenMaxSolar[y in NONDC, t in 1:T], EP[:vP_SOLAR][y, t] == 0)
+    @constraint(EP, cDCGenMaxSolar2[y in NONDC, t in 1:T], EP[:vP_SOLAR_CHARGE][y, t] == 0)
 
     # Activate solar module
     if !isempty(SOLAR)
         solar_vre_stor!(EP, inputs, setup)
     end
     @constraint(EP, cSolarGenMaxN[y in NONSOLAR, t in 1:T], EP[:vP_SOLAR][y, t] == 0)
+    @constraint(EP, cSolarGenMaxN2[y in NONSOLAR, t in 1:T], EP[:vP_SOLAR_CHARGE][y, t] == 0)
 
     # Activate wind module
     if !isempty(WIND)
@@ -130,6 +139,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
     @constraint(EP, cChargeACMaxN[y in NONSTOR, t in 1:T], vP_AC_CHARGE[y, t] == 0)
     @constraint(EP, cChargeDCMaxN[y in NONSTOR, t in 1:T], vP_DC_CHARGE[y, t] == 0)
+    @constraint(EP, cChargeDCMaxN2[y in NONSTOR, t in 1:T], vP_DC_CHARGE_GRID[y, t] == 0)
     @constraint(EP, cDischargeDCMaxN[y in NONSTOR, t in 1:T], vP_DC_DISCHARGE[y, t] == 0)
     @constraint(EP, cDischargeACMaxN[y in NONSTOR, t in 1:T], vP_AC_DISCHARGE[y, t] == 0)
 
@@ -146,7 +156,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Energy Share Requirement
     if EnergyShareRequirement >= 1
-        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*by_rid(y,Symbol("ESR_$ESR"))*EP[:vP_SOLAR][y,t]*by_rid(y, :EtaInverter) for y=dfVRE_STOR[findall(x->x>0,dfVRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
+        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*by_rid(y,Symbol("ESR_$ESR"))*(EP[:vP_SOLAR][y,t]+EP[:vP_SOLAR_CHARGE])*by_rid(y, :EtaInverter) for y=dfVRE_STOR[findall(x->x>0,dfVRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
                         + sum(inputs["omega"][t]*by_rid(y,Symbol("ESR_$ESR"))*EP[:vP_WIND][y,t] for y=dfVRE_STOR[findall(x->x>0,dfVRE_STOR[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
 						- sum(inputs["dfESR"][z,ESR]*StorageLosses*sum(EP[:eELOSS_VRE_STOR][y] for y=dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID]) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 		EP[:eESR] += eESRVREStor		
@@ -244,7 +254,7 @@ function inverter_vre_stor!(EP::Model, inputs::Dict)
     eTotalCap_DC[y] >= by_rid(y, :Min_Cap_Inverter_MW))
 
     # Constraint 2: Inverter Exports Maximum
-    @constraint(EP, cInverterExport[y in DC, t in 1:T], by_rid(y, :EtaInverter)*(EP[:vP_SOLAR][y, t]+EP[:vP_DC_DISCHARGE][y,t]) + EP[:vP_DC_CHARGE][y,t]/by_rid(y, :EtaInverter) <= eTotalCap_DC[y])
+    @constraint(EP, cInverterExport[y in DC, t in 1:T], by_rid(y, :EtaInverter)*(EP[:vP_SOLAR][y, t]+EP[:vP_DC_DISCHARGE][y,t]) + EP[:vP_DC_CHARGE_GRID][y,t]/by_rid(y, :EtaInverter) <= eTotalCap_DC[y])
 end
 
 @doc raw"""
@@ -297,7 +307,7 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end
     )
     # Variable costs of "generation" for solar resource "y" during hour "t"
-    @expression(EP, eCVarOutSolar[y in SOLAR, t=1:T], inputs["omega"][t]*(by_rid(y, :Var_OM_Cost_per_MWh_Solar)*EP[:vP_SOLAR][y,t]*by_rid(y, :EtaInverter)))
+    @expression(EP, eCVarOutSolar[y in SOLAR, t=1:T], inputs["omega"][t]*(by_rid(y, :Var_OM_Cost_per_MWh_Solar)*(EP[:vP_SOLAR][y,t]+EP[vP_SOLAR_CHARGE][y,t])*by_rid(y, :EtaInverter)))
     
     # Sum individual resource contributions
     @expression(EP, eTotalCFixSolar, sum(eCFixSolar[y] for y in SOLAR))
@@ -325,7 +335,7 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     eTotalCap_SOLAR[y] >= by_rid(y, :Min_Cap_Solar_MW))
 
     # Constraint 2: PV Generation
-    @constraint(EP, cSolarGenMaxS[y in SOLAR, t in 1:T], EP[:vP_SOLAR][y, t] <= inputs["pP_Max_Solar"][y,t]*eTotalCap_SOLAR[y])
+    @constraint(EP, cSolarGenMaxS[y in SOLAR, t in 1:T], EP[:vP_SOLAR][y, t] + EP[:vP_SOLAR_CHARGE] <= inputs["pP_Max_Solar"][y,t]*eTotalCap_SOLAR[y])
 
     # Constraint 3: Inverter Ratio between solar capacity and grid
     @constraint(EP, cInverterRatio_Solar[y in dfVRE_STOR[dfVRE_STOR.Inverter_Ratio_Solar.>0,:R_ID]], 
@@ -514,10 +524,13 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     ### CONSTRAINTS ###
 
+    @constraint(EP, cDCChargeBalance[y in intersect(DC_CHARGE), t=1:T], EP[:vP_DC_CHARGE][y,t] == EP[:vP_DC_CHARGE_GRID][y,t] + EP[:vP_SOLAR_CHARGE][y,t])
+
     # Constraint 0: Set generators with no storage component with no discharge/charging abiliites
     @constraint(EP, cDCDischargeN[y in setdiff(VRE_STOR, DC_DISCHARGE), t=1:T], EP[:vP_DC_DISCHARGE][y, t] == 0)
     @constraint(EP, cACDischargeN[y in setdiff(VRE_STOR, AC_DISCHARGE), t=1:T], EP[:vP_AC_DISCHARGE][y, t] == 0)
     @constraint(EP, cDCChargeN[y in setdiff(VRE_STOR, DC_CHARGE), t=1:T], EP[:vP_DC_CHARGE][y, t] == 0)
+    @constraint(EP, cDCChargeN2[y in setdiff(VRE_STOR, DC_CHARGE), t=1:T], EP[:vP_DC_CHARGE_GRID][y, t] == 0)
     @constraint(EP, cACChargeN[y in setdiff(VRE_STOR, AC_CHARGE), t=1:T], EP[:vP_AC_CHARGE][y, t] == 0)
 
     # Constraints 1: Retirements and capacity additions

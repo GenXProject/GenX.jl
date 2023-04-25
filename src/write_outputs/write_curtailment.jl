@@ -28,6 +28,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if !isempty(VRE_STOR)
         SOLAR = inputs["VS_SOLAR"]
         WIND = inputs["VS_WIND"]
+		dfVRE_STOR = inputs["dfVRE_STOR"]
     end
 	dfCurtailment = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	curtailment = zeros(G, T)
@@ -35,20 +36,20 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		curtailment[VRE, :] = ModelScalingFactor * value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
 		if !isempty(VRE_STOR)
 			if !isempty(SOLAR)
-				curtailment[SOLAR, :] = ModelScalingFactor * (value.(EP[:eTotalCap_SOLAR][SOLAR]) .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :])) .* inputs["dfVRE_STOR"][!, :EtaInverter]
+				curtailment[SOLAR, :] = ModelScalingFactor * (value.(EP[:eTotalCap_SOLAR])[SOLAR] .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :]).data) .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter]
 			end
 			if !isempty(WIND)
-				curtailment[WIND, :] = ModelScalingFactor * (value.(EP[:eTotalCap_WIND][WIND]) .* inputs["pP_Max_Wind"][WIND, :] .- value.(EP[:vP_WIND][WIND, :]))
+				curtailment[WIND, :] = ModelScalingFactor * (value.(EP[:eTotalCap_WIND][WIND]) .* inputs["pP_Max_Wind"][WIND, :] .- value.(EP[:vP_WIND][WIND, :]).data)
 			end
 		end
 	else
 		curtailment[VRE, :] = value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :])
 		if !isempty(VRE_STOR)
 			if !isempty(SOLAR)
-				curtailment[SOLAR, :] = (value.(EP[:eTotalCap_SOLAR][SOLAR]) .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :])) .* inputs["dfVRE_STOR"][!, :EtaInverter]
+				curtailment[SOLAR, :] = (value.(EP[:eTotalCap_SOLAR])[SOLAR] .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :]).data) .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter]
 			end
 			if !isempty(WIND)
-				curtailment[WIND, :] = (value.(EP[:eTotalCap_WIND][WIND]) .* inputs["pP_Max_Wind"][WIND, :] .- value.(EP[:vP_WIND][WIND, :]))
+				curtailment[WIND, :] = (value.(EP[:eTotalCap_WIND][WIND]) .* inputs["pP_Max_Wind"][WIND, :] .- value.(EP[:vP_WIND][WIND, :]).data)
 			end
 		end
 	end

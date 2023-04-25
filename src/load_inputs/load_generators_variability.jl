@@ -47,5 +47,6 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
 	# Maximum power output and variability of each energy resource
 	inputs["pP_Max"] = transpose(Matrix{Float64}(gen_var[1:inputs["T"],2:(inputs["G"]+1)]))
 
+    println(size(inputs["pP_Max"]))
 	println(filename * " Successfully Read!")
 end

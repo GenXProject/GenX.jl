@@ -40,12 +40,14 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * ModelScalingFactor
         if !isempty(VRE_STOR)
             if !isempty(SOLAR)
-                dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[SOLAR, :EtaInverter] * inputs["omega"] * ModelScalingFactor
-		        dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR]) * ModelScalingFactor
+                dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter] * inputs["omega"] * ModelScalingFactor
+                println(size(dfCapacityfactor.Capacity[SOLAR]))
+                println(size(value.(EP[:eTotalCap_SOLAR])[SOLAR] * ModelScalingFactor))
+                dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR])[SOLAR] * ModelScalingFactor
             end
             if !isempty(WIND)
                 dfCapacityfactor.AnnualSum[WIND] .= value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"] * ModelScalingFactor
-		        dfCapacityfactor.Capacity[WIND] .= value.(EP[:eTotalCap_WIND][WIND]) * ModelScalingFactor
+		        dfCapacityfactor.Capacity[WIND] .= value.(EP[:eTotalCap_WIND])[WIND] * ModelScalingFactor
             end
         end
     else
@@ -53,12 +55,12 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         dfCapacityfactor.Capacity .= value.(EP[:eTotalCap])
         if !isempty(VRE_STOR)
             if !isempty(SOLAR)
-                dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[SOLAR, :EtaInverter] * inputs["omega"] 
-		        dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR])
+                dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter] * inputs["omega"] 
+		        dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR])[SOLAR]
             end
             if !isempty(WIND)
                 dfCapacityfactor.AnnualSum[WIND] .= value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"]
-		        dfCapacityfactor.Capacity[WIND] .= value.(EP[:eTotalCap_WIND][WIND])
+		        dfCapacityfactor.Capacity[WIND] .= value.(EP[:eTotalCap_WIND])[WIND]
             end
         end
     end

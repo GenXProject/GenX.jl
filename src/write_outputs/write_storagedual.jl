@@ -30,6 +30,11 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	REP_PERIOD = inputs["REP_PERIOD"]
 	STOR_ALL = inputs["STOR_ALL"]
 	VRE_STOR = inputs["VRE_STOR"]
+	if !isempty(VRE_STOR)
+		VS_STOR = inputs["VS_STOR"]
+	else
+		VS_STOR = []
+	end
 	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
 	# # Dual of storage level (state of charge) balance of each resource in each time step
@@ -50,7 +55,7 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Loop over W for VRE-Storage resources
-	if !isempty(VRE_STOR)
+	if !isempty(VS_STOR)
 		VS_STOR = inputs["VS_STOR"]
 		VRE_STOR_ALL_NONLDS = setdiff(VRE_STOR, inputs["VS_LDS"])
 		VRE_STOR_ALL_LDS = intersect(VRE_STOR, inputs["VS_LDS"])

@@ -90,7 +90,7 @@ function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict
 	ow = setup["OperationWrapping"]==1
 	if !isempty(inputs["VRE_STOR"])
 		df = inputs["dfVRE_STOR"]
-		VRE_STOR_LDS = df[(df.LDS.==1) .& (df.STOR.>=1),:R_ID]
+		VRE_STOR_LDS = df[(df.LDS.==1),:R_ID]
 	else
 		VRE_STOR_LDS = Int[]
 	end

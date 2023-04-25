@@ -158,7 +158,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	end
 
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], Resource_Type = dfVRE_STOR[!,:Resource_Type], Cluster=dfVRE_STOR[!,:cluster], 
+		Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], Resource_Type = dfVRE_STOR[!,:technology], Cluster=dfVRE_STOR[!,:cluster], 
 		StartCapSolar = dfVRE_STOR[!,:Existing_Cap_Solar_MW],
 		RetCapSolar = retcapsolar[:],
 		NewCapSolar = capsolar[:],
@@ -293,20 +293,6 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 	rename!(total,auxNew_Names)
 	dfCharge_DC = vcat(dfCharge_DC, total)
 	CSV.write(joinpath(path,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), writeheader=false)
-
-	# AC charging of battery dataframe
-	dfCharge_AC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
-	charge_ac = zeros(size(VRE_STOR)[1], T)
-	charge_ac = value.(EP[:vP_AC_CHARGE]).data * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
-	dfCharge_AC.AnnualSum .= charge_ac * inputs["omega"]
-	dfCharge_AC = hcat(dfCharge_AC, DataFrame(charge_ac, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfCharge_AC,auxNew_Names)
-	total = DataFrame(["Total" 0 sum(dfCharge_AC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(charge_ac, dims = 1)
-	rename!(total,auxNew_Names)
-	dfCharge_AC = vcat(dfCharge_AC, total)
-	CSV.write(joinpath(path,"vre_stor_ac_charge.csv"), dftranspose(dfCharge_AC, false), writeheader=false)
 end
 
 @doc raw"""
@@ -334,22 +320,6 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 	rename!(total,auxNew_Names)
 	dfDischarge_DC = vcat(dfDischarge_DC, total)
 	CSV.write(joinpath(path, "vre_stor_dc_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
-
-	# AC discharging of battery dataframe
-	dfDischarge_AC = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))
-	power_vre_stor = value.(EP[:vP_AC_DISCHARGE]).data
-	if setup["ParameterScale"] == 1
-		power_vre_stor *= ModelScalingFactor
-	end
-	dfDischarge_AC.AnnualSum .= power_vre_stor * inputs["omega"]
-	dfDischarge_AC = hcat(dfDischarge_AC, DataFrame(power_vre_stor, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfDischarge_AC,auxNew_Names)
-	total = DataFrame(["Total" 0 sum(dfDischarge_AC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(power_vre_stor, dims = 1)
-	rename!(total,auxNew_Names)
-	dfDischarge_AC = vcat(dfDischarge_AC, total)
-	CSV.write(joinpath(path, "vre_stor_ac_discharge.csv"), dftranspose(dfDischarge_AC, false), writeheader=false)
 
 	# Wind generation of co-located resource dataframe
 	dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCES_VRE_STOR"], Zone = dfVRE_STOR[!,:Zone], AnnualSum = Array{Union{Missing,Float32}}(undef, size(VRE_STOR)[1]))

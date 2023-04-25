@@ -26,8 +26,8 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	VRE_STOR = inputs["VRE_STOR"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 	if !isempty(VRE_STOR)
-		SOLAR = inputs["SOLAR"]
-		WIND = inputs["WIND"]
+		SOLAR = inputs["VS_SOLAR"]
+		WIND = inputs["VS_WIND"]
 	end
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
 	for i in 1:inputs["nESR"]
@@ -40,10 +40,10 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		rename!(dfESRRev, Dict(:x1 => Symbol("ESR_$i")))
 		if !isempty(VRE_STOR)
 			if !isempty(SOLAR)
-				dfESRRev[SOLAR, Symbol("ESR_$i")] = (value.(EP[:vP_SOLAR]).data .* dfVRE_STOR[SOLAR, :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[SOLAR,Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
+				dfESRRev[SOLAR, Symbol("ESR_$i")] = (value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0),Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
 			end
 			if !isempty(WIND)
-				dfESRRev[WIND, Symbol("ESR_$i")] = (value.(EP[:vP_WIND]).data * inputs["omega"]) .* dfVRE_STOR[WIND,Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
+				dfESRRev[WIND, Symbol("ESR_$i")] = (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[(dfVRE_STOR.WIND.!=0),Symbol("ESR_$i")] * dfESR[i,:ESR_Price]
 			end
 		end
 	end
