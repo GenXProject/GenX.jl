@@ -7,7 +7,6 @@ Pre_Solve: choose          # Presolve option: "off", "choose" or "on" # [type: s
 Method: ipm             #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
 
 #highs-specific solver settings
-
 # run the crossover routine for ipx
 # [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
 run_crossover: "off"
