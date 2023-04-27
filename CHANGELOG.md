@@ -1,0 +1,63 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- This changelog
+
+### Fixed
+
+- Not having a changelog (#423).
+
+## [0.3.4] - 2023-04-28
+
+### Added
+
+- Validation of the time basis in `load_data.csv` (#413).
+- Arbitrary option keys can be passed to Solvers (#356).
+- Validation for OperationWrapping and TimeDomainReduction settings (#337).
+- Ability to use *'slack variables'* to violate policy constraints---at a cost (#328).
+- Documented minimum up & down-time constraints (#324).
+- Validation preventing two columns of input data with the same name (#309).
+- Fuel type `None` is no longer need to be listed as a column in `fuels_data.csv`, e.g. for solar panels (#303).
+- Non-varying generators (e.g. thermal generators) no longer need to be listed in `generators_variability.csv` (#303).
+- Ability to load the transmission network representation from lists rather than a matrix (#292).
+- Maximum Capacity Requirement *policy constraint*.
+- New `run_genx_case!` function for use in scripts.
+- New `run_timedomainreduction!` function for pre-clustering a case.
+- Improved documentation.
+
+### Fixed
+
+- Corrected the interaction of Reserves and Regulation policies with ramp rates (#415).
+- Removed the useless `MinCapTag` column from examples (#380).
+- Removed invalid `BarObjRng` key from gurobi settings (#374).
+- Default `crossover` or `run_crossover` settings (#363).
+- HYDRO resources now allow the period map to be loaded (#362).
+- Numbering in documentation (#330).
+- Correct scaling of emission outputs (#322).
+- Add transmission losses to ESR constraints (#320).
+- Author's name spelling in docs (#317).
+- Unset executable bits on files (#297).
+- Morris method example now runs.
+- Various other settings issues with example cases.
+
+### Changed
+
+- Simplified the `Simple_Test_Case` example (#414).
+- SmallNewEngland/Onezone example now uses linearized unit committment by default (#404).
+- Removed the unused dependency BenchmarkTools (#381).
+
+### Removed
+
+- The unmaintained MonteCarlo code (#357).
+- License blocks from most file headers (#353).
+- Extra `LDS` columns from several examples (#312).
+- SCIP from the Project and from documentation.
+
