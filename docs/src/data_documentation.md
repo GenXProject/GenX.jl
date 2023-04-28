@@ -240,11 +240,9 @@ This file includes parameters to characterize model temporal resolution to appro
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
 |Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
-|**Settings-specific Columns**|
-|**OperationWrapping = 1**|
-|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations.|
-|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps).|
-|Sub\_Weights |Number of annual time steps (e.g. hours) represented by a given representative period. Length of this column is equal to the number of representative periods. Sum of the elements of this column should be equal to the total number of time steps in a model time horizon, defined in parameterWeightTotal (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
+|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations. This is always a single entry. For a full-year model, this is `1`.|
+|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps). This is always a single entry: all representative periods have the same length. For a full-year model, this entry is equal to the number of time steps.|
+|Sub\_Weights |Number of annual time steps (e.g. hours) represented by each timestep in a representative period. The length of this column is equal to the number of representative periods. The sum of the elements should be equal to the total number of time steps in a model time horizon (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
 
 
 
