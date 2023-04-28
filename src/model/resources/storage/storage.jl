@@ -44,7 +44,7 @@ The following two constraints track the state of charge of the storage resources
 	&  \Gamma_{o,z,t} =\Gamma_{o,z,t+\tau^{period}-1} - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,t} + \eta_{o,z}^{charge}\Pi_{o,z,t} - \eta_{o,z}^{loss}\Gamma_{o,z,t+\tau^{period}-1}  \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```
-When modeling the entire year as a single chronological period with total number of time steps of $\tau^{period}$, storage inventory in the first time step is linked to storage inventory at the last time step of the period representing the year. Alternatively, when modeling the entire year with multiple representative periods, this constraint relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of $\tau^{period}$ time steps. In this implementation, energy exchange between representative periods is not permitted. When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year. If ```OperationWrapping=1``` and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
+When modeling the entire year as a single chronological period with total number of time steps of $\tau^{period}$, storage inventory in the first time step is linked to storage inventory at the last time step of the period representing the year. Alternatively, when modeling the entire year with multiple representative periods, this constraint relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of $\tau^{period}$ time steps. In this implementation, energy exchange between representative periods is not permitted. When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year. If there are more than one representative periods and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
 The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{o,z}$. Finally, the maximum discharge rate for storage resources, $\Pi_{o,z,t}$, is constrained to be less than the discharge power capacity, $\Omega_{o,z,t}$ or the state of charge at the end of the last period, $\Gamma_{o,z,t-1}$, whichever is lessor.
 ```math
 \begin{aligned}
@@ -99,10 +99,10 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
-	p = inputs["hours_per_subperiod"] 
+	p = inputs["hours_per_subperiod"]
+    rep_periods = inputs["REP_PERIOD"]
 
 	Reserves = setup["Reserves"]
-	OperationWrapping = setup["OperationWrapping"]
 	EnergyShareRequirement = setup["EnergyShareRequirement"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	IncludeLossesInESR = setup["IncludeLossesInESR"]
@@ -113,7 +113,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 		storage_all!(EP, inputs, setup)
 
 		# Include Long Duration Storage only when modeling representative periods and long-duration storage
-		if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
+		if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
 			long_duration_storage!(EP, inputs)
 		end
 	end
