@@ -134,3 +134,36 @@ function validatetimebasis(inputs::Dict)
         end
     end
 end
+
+
+@doc raw"""
+    prevent_doubled_tdr(setup::Dict, path::AbstractString)
+
+This function prevents TimeDomainReduction from running on a case which
+already has more than one Representative Period or has more than one Sub_Weight specified.
+"""
+function prevent_doubled_timedomainreduction(setup::Dict, path::AbstractString)
+
+    data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
+    if setup["TimeDomainReduction"] == 0
+        return
+    end
+
+    filename = "Load_data.csv"
+    load_in = load_dataframe(joinpath(path, filename))
+    as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
+    representative_periods = convert(Int16, as_vector(:Rep_Periods)[1])
+    sub_weights = as_vector(:Sub_Weights)
+    num_sub_weights = length(sub_weights)
+    if representative_periods != 1 || num_sub_weights > 1
+        error("""Critical error in time series construction:
+              Time domain reduction (clustering) is being called for,
+              on data which may already be clustered. In demand_data.csv [or load_data.csv],
+              the number of representative periods (:Rep_Period) is ($representative_periods)
+              and the number of subperiod weights entries (:Sub_Weights) is ($num_sub_weights).
+              Each of these must be 1: only a single period can have TimeDomainReduction=1 applied.""")
+    end
+
+end
+
+
