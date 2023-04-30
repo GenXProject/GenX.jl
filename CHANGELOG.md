@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- This changelog
+- This changelog (#424).
+- Validation: against trying to perform time domain reduction (clustering)
+  on data which has already been clustered.
 
 ### Fixed
 
 - Not having a changelog (#423).
+
+### Removed
+
+- The settings key `OperationsWrapping`. Its functionality has now been folded into the 
+  `TimeDomainReduction` setting. Using the key now will print a gentle warning.
 
 ## [0.3.4] - 2023-04-28
 
