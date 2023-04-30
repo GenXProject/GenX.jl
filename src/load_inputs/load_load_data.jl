@@ -155,8 +155,8 @@ function prevent_doubled_timedomainreduction(path::AbstractString)
               Time domain reduction (clustering) is being called for,
               on data which may already be clustered. In demand_data.csv [or load_data.csv],
               the number of representative periods (:Rep_Period) is ($representative_periods)
-              and the number of subperiod weights entries (:Sub_Weights) is ($num_sub_weights).
-              Each of these must be 1: only a single period can have TimeDomainReduction=1 applied.""")
+              and the number of subperiod weight entries (:Sub_Weights) is ($num_sub_weights).
+              Each of these must be 1: only a single period can have TimeDomainReduction applied.""")
     end
 
 end
