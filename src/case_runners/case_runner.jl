@@ -39,7 +39,6 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
     TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
 
     if mysetup["TimeDomainReduction"] == 1
-        prevent_doubled_timedomainreduction(case)
         if !time_domain_reduced_files_exist(TDRpath)
             println("Clustering Time Series Data (Grouped)...")
             cluster_inputs(inputs_path, settings_path, mysetup)
@@ -97,7 +96,6 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
     first_input_case_path = joinpath(case, "Inputs", "Inputs_p1")
     TDRpath = joinpath(first_input_case_path, mysetup["TimeDomainReductionFolder"]
     if mysetup["TimeDomainReduction"] == 1
-        prevent_doubled_timedomainreduction(first_input_case_path)
         if !time_domain_reduced_files_exist(TDRpath)
             if (mysetup["MultiStage"] == 1) && (TDRSettingsDict["MultiStageConcatenate"] == 0)
                 println("Clustering Time Series Data (Individually)...")

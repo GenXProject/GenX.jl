@@ -574,6 +574,8 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         	# Step 1) Load Inputs
         	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
+            prevent_doubled_timedomainreduction(inpath_sub)
+
         	inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
 
         	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
@@ -603,6 +605,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         end
     else
         if v println("Not MultiStage") end
+        prevent_doubled_timedomainreduction(inpath)
         myinputs = load_inputs(mysetup_local,inpath)
         RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
         RESOURCES = myinputs["RESOURCES"]
