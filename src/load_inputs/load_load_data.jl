@@ -137,17 +137,12 @@ end
 
 
 @doc raw"""
-    prevent_doubled_tdr(setup::Dict, path::AbstractString)
+    prevent_doubled_timedomainreduction(path::AbstractString)
 
 This function prevents TimeDomainReduction from running on a case which
 already has more than one Representative Period or has more than one Sub_Weight specified.
 """
-function prevent_doubled_timedomainreduction(setup::Dict, path::AbstractString)
-
-    data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
-    if setup["TimeDomainReduction"] == 0
-        return
-    end
+function prevent_doubled_timedomainreduction(path::AbstractString)
 
     filename = "Load_data.csv"
     load_in = load_dataframe(joinpath(path, filename))
