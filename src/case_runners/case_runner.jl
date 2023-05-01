@@ -143,7 +143,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
 
     outpath = get_default_output_folder(case)
 
-    if !haskey(mysetup, "OverwriteResults") || mysetup["OverwriteResults"] == 1
+    if mysetup["OverwriteResults"] == 1
         # Overwrite existing results if dir exists
         # This is the default behaviour when there is no flag, to avoid breaking existing code
         if !(isdir(outpath))
