@@ -104,7 +104,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
-	p = inputs["hours_per_subperiod"]
+    p = inputs["hours_per_subperiod"]
     rep_periods = inputs["REP_PERIOD"]
 
 	Reserves = setup["Reserves"]
