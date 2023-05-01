@@ -119,3 +119,22 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 6. Solve the model using `Run.jl` file.
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.
+
+## Additional method for running GenX cases
+_Added in 0.3.4_
+
+The `GenX` module exports a function called `run_genx_case!`.
+This function is designed to be used in a script; in fact it is used in each `Run.jl` file.
+If one wants to run multiple GenX cases in sequence, this can be especially useful, as `GenX` needs only to be compiled by Julia once, and can be somewhat faster.
+
+
+Start julia pointed at the appropriate Project, and then proceed as follows:
+```
+> julia --project=/home/youruser/GenX
+
+julia> using GenX
+
+julia> run_genx_case!("/path/to/case")
+```
+All output will be written in that case's folder, as usual.
+
