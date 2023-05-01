@@ -48,7 +48,7 @@ When modeling the entire year as a single chronological period with total number
 Alternatively, when modeling the entire year with multiple representative periods, this constraint relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of $\tau^{period}$ time steps.
 In this implementation, energy exchange between representative periods is not permitted.
 When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year.
-If there are more than one representative periods and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
+If there is more than one representative period and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
 The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{o,z}$.
 Finally, the maximum discharge rate for storage resources, $\Pi_{o,z,t}$, is constrained to be less than the discharge power capacity, $\Omega_{o,z,t}$ or the state of charge at the end of the last period, $\Gamma_{o,z,t-1}$, whichever is less.
 ```math
