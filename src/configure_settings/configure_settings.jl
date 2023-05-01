@@ -42,9 +42,10 @@ function validate_settings!(settings::Dict{Any,Any})
     # If we find any then make a response and issue a note to the user.
 
     if "OperationWrapping" in keys(settings)
-        @warn """The behavior of the Time Domain Reduction and OperationWrapping
-        settings has changed recently. OperationWrapping is no longer a valid key,
-        and is ignored. Please see the documentation."""
+        @warn """The behavior of the TimeDomainReduction and OperationWrapping
+        settings have changed recently. OperationWrapping has been removed,
+        and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
+        Please see the Methods page in the documentation."""
     end
 
 end
