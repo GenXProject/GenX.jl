@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	load_inputs(setup::Dict,path::AbstractString)
 
@@ -48,6 +32,8 @@ function load_inputs(setup::Dict,path::AbstractString)
 	# Read in generator/resource availability profiles
 	load_generators_variability!(setup, path, inputs)
 
+    validatetimebasis(inputs)
+
 	if setup["CapacityReserveMargin"]==1
 		load_cap_reserve_margin!(setup, path, inputs)
 		if inputs["Z"] >1
@@ -62,6 +48,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	if setup["MinCapReq"] == 1
 		load_minimum_capacity_requirement!(path, inputs, setup)
+	end
+
+	if setup["MaxCapReq"] == 1
+		load_maximum_capacity_requirement!(path, inputs, setup)
 	end
 
 	if setup["EnergyShareRequirement"]==1
@@ -85,12 +75,13 @@ end
 function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict)
 	ow = setup["OperationWrapping"]==1
 	has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
-	ow && has_stor_lds
+	has_hydro_lds = !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+    ow && (has_stor_lds || has_hydro_lds)
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
-	data_directory = chop(replace(path, pwd() => ""), head = 1, tail = 0)
-	is_here = isfile(joinpath(data_directory,"Period_map.csv"))
-	is_in_folder = isfile(joinpath(data_directory, setup["TimeDomainReductionFolder"], "Period_map.csv"))
+	filename = "Period_map.csv"
+	is_here = isfile(joinpath(path, filename))
+	is_in_folder = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
 	is_here || is_in_folder
 end

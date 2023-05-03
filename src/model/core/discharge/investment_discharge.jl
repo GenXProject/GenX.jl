@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across all resources as well as constraints on capacity retirements.
@@ -175,15 +159,20 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built capacity
 	# Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-	@constraint(EP, cMaxCap[y in intersect(dfGen[dfGen.Max_Cap_MW.>0,:R_ID], 1:G)], eTotalCap[y] <= dfGen[y,:Max_Cap_MW])
+	@constraint(EP, cMaxCap[y in intersect(dfGen[dfGen.Max_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] <= dfGen[y, :Max_Cap_MW])
 
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0,:R_ID], 1:G)], eTotalCap[y] >= dfGen[y,:Min_Cap_MW])
+	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] >= dfGen[y, :Min_Cap_MW])
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,Symbol("MinCapTag_$mincap")].== 1) ,:][!,:R_ID]))
+		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
 		EP[:eMinCapRes] += eMinCapResInvest
+	end
+
+	if setup["MaxCapReq"] == 1
+		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
+		EP[:eMaxCapRes] += eMaxCapResInvest
 	end
 
 end

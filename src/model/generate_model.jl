@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes,modeloutput = nothing)
 
@@ -97,7 +81,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Generate Energy Portfolio (EP) Model
 	EP = Model(OPTIMIZER)
-
+	set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
 	# Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
 	# eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
 	@variable(EP, vZERO == 0);
@@ -122,8 +106,12 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
 	end
 
-	if (setup["MinCapReq"] == 1)
+	if setup["MinCapReq"] == 1
 		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+	end
+
+	if setup["MaxCapReq"] == 1
+		@expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
 	end
 
 	# Infrastructure
@@ -190,7 +178,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Policies
 	# CO2 emissions limits
-	co2_cap!(EP, inputs, setup)
+	if setup["CO2Cap"] > 0
+		co2_cap!(EP, inputs, setup)
+	end
 
 	# Endogenous Retirements
 	if setup["MultiStage"] > 0
@@ -209,6 +199,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	if (setup["MinCapReq"] == 1)
 		minimum_capacity_requirement!(EP, inputs, setup)
+	end
+
+	if setup["MaxCapReq"] == 1
+		maximum_capacity_requirement!(EP, inputs, setup)
 	end
 
 	## Define the objective function

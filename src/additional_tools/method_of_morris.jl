@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
@@ -177,7 +161,7 @@ end
 function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
     # Reading the input parameters
-    Morris_range = DataFrame(CSV.File(joinpath(path, "Method_of_morris_range.csv"), header=true), copycols=true)
+    Morris_range = load_dataframe(joinpath(path, "Method_of_morris_range.csv"))
     groups = Morris_range[!,:Group]
     p_steps = Morris_range[!,:p_steps]
     total_num_trajectory = Morris_range[!,:total_num_trajectory][1]

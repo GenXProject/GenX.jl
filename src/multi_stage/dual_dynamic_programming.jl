@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
     function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
@@ -160,7 +144,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
             println("***********")
 
             # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-            models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
+            models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
 
             # Step d.ii) Fix capacity tracking variables for endogenous retirements
             models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
@@ -243,7 +227,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
         println("***********")
 
         # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-        models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d)
+        models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
 
         # Step d.ii) Fix capacity tracking variables for endogenous retirements
         models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
@@ -301,16 +285,19 @@ inputs:
 
 returns: JuMP model with updated linking constraints.
 """
-function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
+function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict, inputs_d::Dict)
+	
+    RET_CAP = inputs_d["RET_CAP"] # Set of all resources subject to inter-stage capacity tracking
 
     # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-
-            # Set the right hand side value of the linking initial capacity constraint in the current
-            # stage to the value of the available capacity variable solved for in the previous stages
-            set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+	    if y[1] in RET_CAP # extract resource integer index value from key
+                # Set the right hand side value of the linking initial capacity constraint in the current
+                # stage to the value of the available capacity variable solved for in the previous stages
+                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+            end
         end
     end
     return EP_cur
