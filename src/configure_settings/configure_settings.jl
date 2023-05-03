@@ -14,7 +14,6 @@ function default_settings()
         "ParameterScale" => 0,
         "WriteShadowPrices" => 0,
         "UCommit" => 0,
-        "OperationWrapping" => 0,
         "TimeDomainReduction" => 0,
         "TimeDomainReductionFolder" => "TDR_Results",
         "ModelingToGenerateAlternatives" => 0,
@@ -42,17 +41,11 @@ function validate_settings!(settings::Dict{Any,Any})
     # Check for any settings combinations that are not allowed.
     # If we find any then make a response and issue a note to the user.
 
-    ###### HARD-CODED COMBINATIONS OF SETTING COMBINATIONS WHICH CAUSE PROBLEMS ######
-
-    # If OperationWrapping = 1, then TimeDomainReduction must be 1.
-    # Will be fixed by removing OperationWrapping in future versions.
-    if settings["OperationWrapping"] == 1 && settings["TimeDomainReduction"] == 0
-        error(
-            "OperationWrapping = 1, but TimeDomainReduction = 0 (is OFF).
-            This combination of settings does not currently work.
-            If you want to use time domain reduction, set TimeDomainReduction = 1 in the settings.
-            Otherwise set OperationWrapping = 0."
-        )
+    if "OperationWrapping" in keys(settings)
+        @warn """The behavior of the TimeDomainReduction and OperationWrapping
+        settings have changed recently. OperationWrapping has been removed,
+        and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
+        Please see the Methods page in the documentation."""
     end
 
 end
