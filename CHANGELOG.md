@@ -9,11 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- This changelog
+- Added a description of how to use time domain reduction (#426).
+- Validation: against trying to perform time domain reduction (clustering)
+  on data which has already been clustered.
+- This changelog (#424).
 
 ### Fixed
 
 - Not having a changelog (#423).
+
+### Changed
+
+- The columns `Rep_Periods`, `Timesteps_per_Rep_Period`, and `Sub_Weights` are now required in `Load_data.csv`
+  for all cases (#426).
+
+### Removed
+
+- The settings key `OperationsWrapping`. Its functionality has now been folded into the 
+  `TimeDomainReduction` setting. Using the key now will print a gentle warning (#426).
 
 ## [0.3.4] - 2023-04-28
 

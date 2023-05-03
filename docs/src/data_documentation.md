@@ -9,9 +9,6 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
 |**Model structure related**||
-|OperationWrapping | Select temporal resolution for operations constraints.|
-||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
-||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
 ||0 = Use full input data as provided.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
@@ -243,11 +240,9 @@ This file includes parameters to characterize model temporal resolution to appro
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
 |Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
-|**Settings-specific Columns**|
-|**OperationWrapping = 1**|
-|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations.|
-|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps).|
-|Sub\_Weights |Number of annual time steps (e.g. hours) represented by a given representative period. Length of this column is equal to the number of representative periods. Sum of the elements of this column should be equal to the total number of time steps in a model time horizon, defined in parameterWeightTotal (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
+|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations. This is always a single entry. For a full-year model, this is `1`.|
+|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps). This is always a single entry: all representative periods have the same length. For a full-year model, this entry is equal to the number of time steps.|
+|Sub\_Weights |Number of annual time steps (e.g. hours) represented by each timestep in a representative period. The length of this column is equal to the number of representative periods. The sum of the elements should be equal to the total number of time steps in a model time horizon (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
 
 
 
@@ -383,11 +378,10 @@ This file contains cost and performance parameters for various generators and ot
 
 Modeling grid operations for each hour of the year can be computationally expensive for models with many zones and resources. Time-domain reduction is often employed in capacity expansion models as a way to balance model spatial and temporal resolution as well as representation of dispatch, while ensuring reasonable computational times. GenX allows the option of performing time-domain reduction on the user supplied time-series input data to produce a representative time series at the desired level of temporal resolution. The below table summarizes the list of parameters to be specified by the user to perform the time domain reduction implemented in GenX. These parameters are passed to GenX via the YAML file `time_domain_reduction_settings.yml`.
 
-###### Table 7: Structure of the Load\_data.csv file
+###### Table 7: Structure of the time_domain_reduction.yml file
 ---
-|**Column Name** | **Description**|
+|**Key** | **Description**|
 | :------------ | :-----------|
-|**TimeDomainReduction = 1**||
 |Timesteps\_per\_period | The number of timesteps (e.g., hours) in each representative period (i.e. 168 for weeks, 24 for days, 72 for three-day periods, etc).|
 |UseExtremePeriods | 1 = Include outliers (by performance or load/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to load profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most load across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
 ||0 = Do not include extreme periods.|
