@@ -138,24 +138,3 @@ julia> run_genx_case!("/path/to/case")
 ```
 All output will be written in that case's folder, as usual.
 
-## Performing time domain reduction (TDR) separately from optimization
-_Added in 0.3.4_
-
-It may be useful to perform time domain reduction (TDR) (or "clustering") on a set of inputs before using them as part of full GenX optimization case.
-For example, a user might want to test various TDR settings and examine the resulting clustered inputs.
-This can now be performed using the `run_timedomainreduction!` function.
-
-```
-> julia --project=/home/youruser/GenX
-
-julia> using GenX
-julia> run_timedomainreduction!("/path/to/case")
-```
-
-This function will obey the settings in `path/to/case/Settings/time_domain_reduction_settings.yml`.
-It will output the resulting clustered time series files in the case.
-
-Running this function will *overwrite* these files in the case.
-(Note that when running a case normally, if these clustered files exist they will *not* be overwritten.)
-
-
