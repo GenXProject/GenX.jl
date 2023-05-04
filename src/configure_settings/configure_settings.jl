@@ -1,6 +1,7 @@
 function default_settings()
     Dict{Any,Any}(
         "PrintModel" => 0,
+        "OverwriteResults" => 0,
         "NetworkExpansion" => 0,
         "Trans_Loss_Segments" => 1,
         "Reserves" => 0,
