@@ -63,6 +63,7 @@ pages = OrderedDict(
                 ],
         ],
         "Policies" => "policies.md"
+        "Slack Variables for Policies" => "slack_variables_overview.md"
     ],
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",
