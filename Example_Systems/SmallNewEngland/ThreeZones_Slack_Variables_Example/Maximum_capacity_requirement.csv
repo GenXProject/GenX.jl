@@ -1,2 +1,2 @@
-MinCapReqConstraint,ConstraintDescription,Min_MW,PriceCap
+MaxCapReqConstraint,ConstraintDescription,Max_MW,PriceCap
 1,MA_CT_Gas,4000,9999
