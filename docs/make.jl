@@ -68,11 +68,11 @@ pages = OrderedDict(
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",
     "Solving the Model" => "solve_model.md",
-    "Additional Features" => "additional_features.md",
-    "Third Party Extensions" => "additional_third_party_extensions.md",
     "Model Inputs/Outputs Documentation" => "data_documentation.md",
     "GenX Inputs Functions" => "load_inputs.md",
     "GenX Outputs Functions" =>"write_outputs.md",
+    "Additional Features" => "additional_features.md",
+    "Third Party Extensions" => "additional_third_party_extensions.md",
     #"Unit Testing (Under Development)" => "unit_testing.md"
 )
 makedocs(;
