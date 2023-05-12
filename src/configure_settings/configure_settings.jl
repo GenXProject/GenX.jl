@@ -23,17 +23,25 @@ function default_settings()
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
+        "NumStages" => 1,
+        "StageLengths" => [1],
+        "WACC" => 0.045,
+        "ConvergenceTolerance" => 0.01,
+        "Myopic" => 0,
     )
 end
 
-function configure_settings(settings_path::String)
+function configure_settings(case::AbstractString)
     println("Configuring Settings")
-    model_settings = YAML.load(open(settings_path))
-
+    genx_settings = get_settings_path(case, "genx_settings.yml") #Settings YAML file path
+    model_settings = YAML.load(open(genx_settings))
     settings = default_settings()
-
     merge!(settings, model_settings)
-
+    if isfile(joinpath(case, "multi_stage_settings.yml"))
+        multi_stage_settings=get_settings_path(case, "multi_stage_settings.yml")
+        model_multistage_settings = YAML.load(open(multi_stage_settings))
+        merge!(settings, model_multistage_settings)
+    end
     validate_settings!(settings)
     return settings
 end
