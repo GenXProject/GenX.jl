@@ -13,7 +13,7 @@ Note that all settings parameters are case sensitive.
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
 |**Model structure related**||
-|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name.|
+|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results there.|
 ||0 = Use the data in the main case folder; do not perform clustering.|
 |TimeDomainReductionFolder | Name of the folder where time domain reduced input data is stored.|
 |UCommit | Select technical resolution of of modeling thermal generators.|
