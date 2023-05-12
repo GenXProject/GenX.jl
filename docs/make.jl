@@ -53,12 +53,8 @@ pages = OrderedDict(
             "Overview" => "multi_stage_model_overview.md",
             "Load inputs for multi-stage modeling" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
-                #"Load inputs" => "load_inputs_multi_stage.md",
-                #"Load generators data" => "load_generators_data_multi_stage.md",
-                #"Load network data" => "load_network_data_multi_stage.md",
             ],
             "Model multi stage" => [
-                #"Investment multi stage" => "investment_multi_stage.md",
                 "Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
                 ],
         ],
@@ -73,7 +69,6 @@ pages = OrderedDict(
     "GenX Outputs Functions" =>"write_outputs.md",
     "Additional Features" => "additional_features.md",
     "Third Party Extensions" => "additional_third_party_extensions.md",
-    #"Unit Testing (Under Development)" => "unit_testing.md"
 )
 makedocs(;
     modules=[GenX],
