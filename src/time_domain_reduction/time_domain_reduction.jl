@@ -543,7 +543,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
     MultiStage = mysetup["MultiStage"]
     if MultiStage == 1
         MultiStageConcatenate = myTDRsetup["MultiStageConcatenate"]
-        NumStages = mysetup["MultiStageSettingsDict"]["NumStages"]
+        NumStages = mysetup["NumStages"]
     end
 
     Load_Outfile = joinpath(TimeDomainReductionFolder, "Load_data.csv")
@@ -569,7 +569,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         for t in 1:NumStages
 
         	# Step 0) Set Model Year
-        	mysetup["MultiStageSettingsDict"]["CurStage"] = t
+        	mysetup["CurStage"] = t
 
         	# Step 1) Load Inputs
         	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
@@ -580,7 +580,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
 
         	inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
 
-        	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
+        	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup,mysetup["NetworkExpansion"])
         end
         if MultiStageConcatenate == 1
             if v println("MultiStage with Concatenation") end
