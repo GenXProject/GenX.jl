@@ -50,13 +50,8 @@ pages = OrderedDict(
             ]
         ],
         "Multi_stage" => [
-            "Overview" => "multi_stage_model_overview.md",
-            "Load inputs for multi-stage modeling" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
-            ],
-            "Model multi stage" => [
-                "Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
-                ],
+                "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
         ],
         "Policies" => "policies.md"
         "Slack Variables for Policies" => "slack_variables_overview.md"
@@ -64,11 +59,15 @@ pages = OrderedDict(
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",
     "Solving the Model" => "solve_model.md",
-    "Model Inputs/Outputs Documentation" => "data_documentation.md",
+    "Model Inputs/Outputs Documentation" => [
+        "Single-stage Model" => "data_documentation.md",
+        "Multi-stage Model" => "multi_stage_model_overview.md",
+    ],
     "GenX Inputs Functions" => "load_inputs.md",
     "GenX Outputs Functions" =>"write_outputs.md",
     "Additional Features" => "additional_features.md",
     "Third Party Extensions" => "additional_third_party_extensions.md",
+    #"Unit Testing (Under Development)" => "unit_testing.md"
 )
 makedocs(;
     modules=[GenX],
