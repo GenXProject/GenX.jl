@@ -23,6 +23,8 @@ function default_settings()
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
+        "PieceWiseHeatRate" => 0,
+        "CO2Capture" =>0
     )
 end
 
