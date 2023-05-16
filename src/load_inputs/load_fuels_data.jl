@@ -1,6 +1,5 @@
 @doc raw"""
-    load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
-
+load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
 Read input parameters related to fuel costs and CO$_2$ content of fuels
 """
 function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
@@ -32,9 +31,10 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     for i = 1:length(fuels)
+            # fuel cost is in $/MMBTU w/o scaling, $/Billon BTU w/ scaling
             fuel_costs[fuels[i]] = costs[:,i] / scale_factor
-            # fuel_CO2 is kton/MMBTU with scaling, or ton/MMBTU without scaling.
-            fuel_CO2[fuels[i]] = CO2_content[i] / scale_factor
+            # No need to scale fuel_CO2, fuel_CO2 is ton/MMBTU or kton/Billion BTU 
+            fuel_CO2[fuels[i]] = CO2_content[i] 
     end
 
     inputs["fuels"] = fuels

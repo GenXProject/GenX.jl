@@ -29,8 +29,14 @@ Pages = ["transmission.jl"]
 Modules = [GenX]
 Pages = ["ucommit.jl"]
 ```
-## Emissions
+## CO2
 ```@autodocs
 Modules = [GenX]
-Pages = ["emissions.jl"]
+Pages = ["co2.jl"]
+```
+
+## Fuel
+```@autodocs
+Modules = [GenX]
+Pages = ["fuel.jl"]
 ```

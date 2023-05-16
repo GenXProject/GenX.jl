@@ -185,44 +185,39 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
         end
     end
 
-	if setup["UCommit"]>=1
-		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
-		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])
-		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
+	if setup["UCommit"] >= 1
 		start_cost = convert(Array{Float64}, gen_in[!,:Start_Cost_per_MW])
 		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
-		gen_in[!,:CO2_per_Start] = zeros(Float64, G)
 	end
 
-	# Heat rate of all resources (million BTUs/MWh)
-	heat_rate = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
-	# Fuel used by each resource
-	fuel_type = gen_in[!,:Fuel]
-	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
-	inputs_gen["C_Fuel_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
-	gen_in[!,:CO2_per_MWh] = zeros(Float64, G)
+	# scale the start costs 
 	for g in 1:G
-		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
-		inputs_gen["C_Fuel_per_MWh"][g,:] = fuel_costs[fuel_type[g]].*heat_rate[g]
-		gen_in[g,:CO2_per_MWh] = fuel_CO2[fuel_type[g]]*heat_rate[g]
-		gen_in[g,:CO2_per_MWh] *= scale_factor
-		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
-			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup.
-			# CO2 from fuel consumption during startup also calculated
-
-			inputs_gen["C_Start"][g,:] = gen_in[g,:Cap_Size] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
-			# No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
-			gen_in[g,:CO2_per_Start]  = gen_in[g,:Cap_Size]*(fuel_CO2[fuel_type[g]]*start_fuel[g])
-			gen_in[g,:CO2_per_Start] *= scale_factor
-			# Setup[ParameterScale] =1, gen_in[g,:Cap_Size] is GW, fuel_CO2[fuel_type[g]] is ktons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is Mton, to get kton, change we need to multiply 1000
-			# Setup[ParameterScale] =0, gen_in[g,:Cap_Size] is MW, fuel_CO2[fuel_type[g]] is tons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is ton
+			# Start-up cost is sum of fixed cost per start startup.
+			inputs_gen["C_Start"][g,:] .= gen_in[g,:Cap_Size] * ( start_cost[g])
 		end
 	end
 
 	load_vre_stor_data!(inputs_gen, setup, path)
+
+	
+	# write zeros if col names are not in the gen_in dataframe
+	required_cols_for_co2 = ["Biomass", "CO2_Capture_Fraction", "CO2_Capture_Fraction_Startup", "CCS_Disposal_Cost_per_Metric_Ton"]
+	for col in required_cols_for_co2
+		ensure_column!(gen_in, col, 0)
+	end
+	
+	# Scale CCS_Disposal_Cost_per_Metric_Ton for CCS units 
+	gen_in.CCS_Disposal_Cost_per_Metric_Ton /= scale_factor
+
+	# get R_ID when fuel is not None
+	inputs_gen["HAS_FUEL"] = gen_in[(gen_in[!,:Fuel] .!= "None"),:R_ID]
+
+	# Piecewise fuel usage option
+	if setup["UCommit"] > 0
+		process_piecewisefuelusage!(inputs_gen, scale_factor)
+	end
+
 	println(filename * " Successfully Read!")
 end
 
@@ -501,4 +496,107 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 		inputs_gen["dfVRE_STOR"] = DataFrame()
 	end
 	summarize_errors(error_strings)
+end
+
+
+function process_piecewisefuelusage!(inputs::Dict, scale_factor)
+	gen_in = inputs["dfGen"]
+	inputs["PWFU_Num_Segments"] = 0
+	inputs["THERM_COMMIT_PWFU"] = Int64[]
+
+	if any(occursin.(Ref("PWFU_"), names(gen_in)))
+		heat_rate_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Heat_Rate_MMBTU_per_MWh")
+		load_point_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Load_Point_MW")
+		
+		# check data input 
+		validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
+
+        # determine if a generator contains piecewise fuel usage segment based on non-zero heatrate
+		gen_in.HAS_PWFU = any(heat_rate_mat .!= 0 , dims = 2)[:]
+		num_segments =  size(heat_rate_mat)[2]
+
+		# translate the inital fuel usage, heat rate, and load points into intercept for each segment
+		fuel_usage_zero_load = gen_in[!,"PWFU_Fuel_Usage_Zero_Load_MMBTU_per_h"]
+		# construct a matrix for intercept
+		intercept_mat = zeros(size(heat_rate_mat))
+		# PWFU_Fuel_Usage_MMBTU_per_h is always the intercept of the first segment
+		intercept_mat[:,1] = fuel_usage_zero_load
+
+		# create a function to compute intercept if we have more than one segment
+		function calculate_intercepts(slope, intercept_1, load_point)
+			m, n = size(slope)
+			# Initialize the intercepts matrix with zeros
+			intercepts = zeros(m, n)
+			# The first segment's intercepts should be intercept_1 vector
+			intercepts[:, 1] = intercept_1
+			# Calculate intercepts for the other segments using the load points (i.e., intersection points)
+			for j in 1:n-1
+				for i in 1:m
+					current_slope = slope[i, j+1]
+					previous_slope = slope[i, j]
+					# If the current slope is 0, then skip the calculation and return 0
+					if current_slope == 0
+						intercepts[i, j+1] = 0.0
+					else
+						# y = a*x + b; => b = y - ax
+						# Calculate y-coordinate of the intersection
+						y = previous_slope * load_point[i, j] + intercepts[i, j]	
+						# determine the new intercept
+						b = y - current_slope * load_point[i, j]
+						intercepts[i, j+1] = b
+					end
+				end
+			end	 
+			return intercepts
+		end
+		
+		if num_segments > 1
+			# determine the intercept for the rest of segment if num_segments > 1
+			intercept_mat = calculate_intercepts(heat_rate_mat, fuel_usage_zero_load, load_point_mat)
+		end
+
+		# create a PWFU_data that contain processed intercept and slope (i.e., heat rate)
+		intercept_cols = [Symbol("PWFU_Intercept_", i) for i in 1:num_segments]
+		intercept_df = DataFrame(intercept_mat, Symbol.(intercept_cols))
+		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Heat_Rate_MMBTU_per_MWh"),names(gen_in)))
+		slope_df = DataFrame(heat_rate_mat, Symbol.(slope_cols))
+		PWFU_data = hcat(slope_df, intercept_df)
+		# no need to scale sclope, but intercept should be scaled when parameterscale is on (MMBTU -> billion BTU)
+		PWFU_data[!, intercept_cols] ./= scale_factor
+
+		inputs["slope_cols"] = slope_cols
+		inputs["intercept_cols"] = intercept_cols
+		inputs["PWFU_data"] = PWFU_data
+		inputs["PWFU_Num_Segments"] =num_segments
+		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU,:R_ID])
+	end
+end
+
+function validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
+	# it's possible to construct piecewise fuel consumption with n of heat rate and n-1 of load point. 
+	# if a user feed n of heat rate and more than n of load point, throw a error message, and then use 
+	# n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
+	if size(heat_rate_mat)[2] < size(load_point_mat)[2]
+		@error """ The numbers of heatrate data are less than load points, we found $(size(heat_rate_mat)[2]) of heat rate,
+		and $(size(load_point_mat)[2]) of load points. We will just use $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
+		load point to create piecewise fuel usage
+		"""
+	end
+
+	# check if values for piecewise fuel consumption make sense. Negative heat rate or load point are not allowed
+	if any(heat_rate_mat .< 0) | any(load_point_mat .< 0)
+		@error """ Neither heat rate nor load point can be negative
+		"""
+		error("Invalid inputs detected for piecewise fuel usage")
+	end
+	# for non-zero values, heat rates and load points should follow an increasing trend 
+	if any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(heat_rate_mat)]) 
+		@error """ Heat rates should follow an increasing trend
+		"""
+		error("Invalid inputs detected for piecewise fuel usage")
+	elseif  any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(load_point_mat)])
+		@error """load points should follow an increasing trend
+		"""
+		error("Invalid inputs detected for piecewise fuel usage")
+	end
 end

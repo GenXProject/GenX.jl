@@ -12,7 +12,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	VRE_STOR = inputs["VRE_STOR"]
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	
-	cost_list = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"]
+	cost_list = ["cTotal", "cFix", "cVar", "cFuel" ,"cNSE", "cStart",  "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cCO2"]
 	if !isempty(VRE_STOR)
 		push!(cost_list, "cGridConnection")
 	end
@@ -23,7 +23,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-
+	
+	cFuel = value.(EP[:eTotalCFuelOut])
+	
 	if !isempty(VRE_STOR) 
 		cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) + (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
 		cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
@@ -31,9 +33,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ? value(EP[:eTotalCFixCharge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ? value(EP[:eTotalCFixCharge_AC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_AC]) : 0.0)) 
 			cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
 		end
-		total_cost = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
+		total_cost =[objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
-		total_cost = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
+		total_cost = [objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 	end
 
 	if !isempty(ELECTROLYZER)
@@ -47,51 +49,58 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 
 	if setup["UCommit"]>=1
-		dfCost[5,2] = value(EP[:eTotalCStart])
+		dfCost[6,2] = value(EP[:eTotalCStart]) + value(EP[:eTotalCFuelStart]) 
 	end
 
 	if setup["Reserves"]==1
-		dfCost[6,2] = value(EP[:eTotalCRsvPen])
+		dfCost[7,2] = value(EP[:eTotalCRsvPen])
 	end
 
 	if setup["NetworkExpansion"] == 1 && Z > 1
-		dfCost[7,2] = value(EP[:eTotalCNetworkExp])
+		dfCost[8,2] = value(EP[:eTotalCNetworkExp])
 	end
 
 	if haskey(inputs, "dfCapRes_slack")
-		dfCost[8,2] += value(EP[:eCTotalCapResSlack])
+		dfCost[9,2] += value(EP[:eCTotalCapResSlack])
 	end
 
 	if haskey(inputs, "dfESR_slack")
-		dfCost[8,2] += value(EP[:eCTotalESRSlack])
+		dfCost[9,2] += value(EP[:eCTotalESRSlack])
 	end
 	
 	if haskey(inputs, "dfCO2Cap_slack")
-		dfCost[8,2] += value(EP[:eCTotalCO2CapSlack])
+		dfCost[9,2] += value(EP[:eCTotalCO2CapSlack])
 	end
 	
 	if haskey(inputs, "MinCapPriceCap")
-		dfCost[8,2] += value(EP[:eTotalCMinCapSlack])
+		dfCost[9,2] += value(EP[:eTotalCMinCapSlack])
 	end	
 	
 	if !isempty(VRE_STOR)
-		dfCost[!,2][9] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
+		dfCost[!,2][11] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
+	end
+
+	if any(dfGen.CO2_Capture_Fraction .!= 0)
+		dfCost[10,2] += value(EP[:eTotaleCCO2Sequestration])
 	end
 
 	if setup["ParameterScale"] == 1
-		dfCost[5,2] *= ModelScalingFactor^2
 		dfCost[6,2] *= ModelScalingFactor^2
 		dfCost[7,2] *= ModelScalingFactor^2
 		dfCost[8,2] *= ModelScalingFactor^2
+		dfCost[9,2] *= ModelScalingFactor^2
+		dfCost[10,2] *= ModelScalingFactor^2
 	end
 
 	for z in 1:Z
 		tempCTotal = 0.0
 		tempCFix = 0.0
 		tempCVar = 0.0
+		tempCFuel = 0.0
 		tempCStart = 0.0
 		tempCNSE = 0.0
 		tempHydrogenValue = 0.0
+		tempCCO2 = 0.0
 
 		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
@@ -106,6 +115,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 		tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE,:]))
 		tempCTotal += tempCVar
+
+		tempCFuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE,:]))
+		tempCTotal += tempCFuel
 
 		if !isempty(STOR_ALL_ZONE)
 			eCVar_in = sum(value.(EP[:eCVar_in][STOR_ALL_ZONE,:]))
@@ -192,7 +204,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		end
 
 		if setup["UCommit"] >= 1 && !isempty(COMMIT_ZONE)
-			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:]))
+			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:])) + sum(value.(EP[:ePlantCFuelStart][COMMIT_ZONE,:]))
 			tempCStart += eCStart
 			tempCTotal += eCStart
 		end
@@ -206,16 +218,22 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
+		if any(dfGen.CO2_Capture_Fraction .!=0)
+			tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][Y_ZONE,:]))
+			tempCTotal += tempCCO2		
+		end
+
 		if setup["ParameterScale"] == 1
 			tempCTotal *= ModelScalingFactor^2
 			tempCFix *= ModelScalingFactor^2
 			tempCVar *= ModelScalingFactor^2
+			tempCFuel *= ModelScalingFactor^2
 			tempCNSE *= ModelScalingFactor^2
 			tempCStart *= ModelScalingFactor^2
 			tempHydrogenValue *= ModelScalingFactor^2
+			tempCCO2 *= ModelScalingFactor^2
 		end
-
-		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
+		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCFuel,tempCNSE, tempCStart, "-", "-", "-", tempCCO2]
 		if !isempty(VRE_STOR)
 			push!(temp_cost_list, "-")
 		end

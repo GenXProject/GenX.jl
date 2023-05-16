@@ -128,6 +128,14 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		println(elapsed_time_lds_dstor)
 	end
 
+	elapsed_time_fuel_consumption = @elapsed write_fuel_consumption(path, inputs, setup, EP)
+	println("Time elapsed for writing fuel consumption is")
+	println(elapsed_time_fuel_consumption)
+
+	elapsed_time_emissions = @elapsed write_co2(path, inputs, setup, EP)
+	println("Time elapsed for writing co2 is")
+	println(elapsed_time_emissions)
+
 	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
 	if setup["MultiStage"] == 0
 		dfPrice = DataFrame()

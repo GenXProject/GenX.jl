@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Feature CO2 and fuel module (#536)
+  Adds a fuel module which enables modeling of fuel usage via (1) a constant heat rate and (2) 
+  piecewise-linear approximation of heat rate curves. 
+  Adds a CO2 module that determines the CO2 emissions based on fuel consumption, CO2 capture 
+  fraction, and whether the feedstock is biomass.
 - Feature electrolysis basic (#525)
   Adds hydrogen electrolyzer model which enables the addition of hydrogen electrolyzer
   demands along with optional clean supply constraints.
