@@ -24,6 +24,7 @@ function default_settings()
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
         "HydrogenHourlyMatching" => 0,
+        "PieceWiseHeatRate" => 0
     )
 end
 

@@ -33,8 +33,9 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
     for i = 1:length(fuels)
             fuel_costs[fuels[i]] = costs[:,i] / scale_factor
-            # fuel_CO2 is kton/MMBTU with scaling, or ton/MMBTU without scaling.
-            fuel_CO2[fuels[i]] = CO2_content[i] / scale_factor
+            # fuel_CO2 is kton/MMBTU with scaling, or ton/Billion BTU without scaling.
+            #fuel_CO2[fuels[i]] = CO2_content[i] / scale_factor
+            fuel_CO2[fuels[i]] = CO2_content[i] 
     end
 
     inputs["fuels"] = fuels

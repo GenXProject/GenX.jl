@@ -105,6 +105,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCTotal += eCFix
 
 		tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE,:]))
+		CVar_fuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE,:]))
+		tempCVar +=  CVar_fuel
+		
 		tempCTotal += tempCVar
 
 		if !isempty(STOR_ALL_ZONE)
