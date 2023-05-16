@@ -209,9 +209,11 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
 			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup.
-			# CO2 from fuel consumption during startup also calculated
+			# CO2 from fuel consumption during startup also calculate
+			# remove the start fuel as the cost of start fuel will be accounted in fuel.jl
 
-			inputs_gen["C_Start"][g,:] = gen_in[g,:Cap_Size] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
+			inputs_gen["C_Start"][g,:] .= gen_in[g,:Cap_Size] * ( start_cost[g])
+			#inputs_gen["C_Start"][g,:] = gen_in[g,:Cap_Size] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
 			# No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
 			gen_in[g,:CO2_per_Start]  = gen_in[g,:Cap_Size]*(fuel_CO2[fuel_type[g]]*start_fuel[g])
 			gen_in[g,:CO2_per_Start] *= scale_factor
