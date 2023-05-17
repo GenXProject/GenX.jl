@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.5] - 2023-05-17
 
 ### Added
 
+- Added ability to apply run_timedomainreduction to multistage problems (#443).
 - Added a description of how to use time domain reduction (#426).
 - Validation: against trying to perform time domain reduction (clustering)
   on data which has already been clustered.
@@ -16,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- run_timedomainreduction did not support multi-stage problems (#441).
 - Not having a changelog (#423).
 
 ### Changed
@@ -35,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation of the time basis in `load_data.csv` (#413).
 - Arbitrary option keys can be passed to Solvers (#356).
 - Validation for OperationWrapping and TimeDomainReduction settings (#337).
-- Ability to use *'slack variables'* to violate policy constraints---at a cost (#328).
+- Ability to use *'slack variables'* to violate policy constraints---at a cost (#328, #435).
 - Documented minimum up & down-time constraints (#324).
 - Validation preventing two columns of input data with the same name (#309).
 - Fuel type `None` is no longer need to be listed as a column in `fuels_data.csv`, e.g. for solar panels (#303).
