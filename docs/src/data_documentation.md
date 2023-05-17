@@ -2,32 +2,36 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
+Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file).
+Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameters affect the formulation of the model constraints and objective function.
+Computational performance related parameters affect the accuracy of the solution.
+Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses.
+Note that all settings parameters are case sensitive.
 
 ###### Table 1a: Summary of the Model settings parameters
 ---
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
 |**Model structure related**||
-|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
-||0 = Use full input data as provided.|
-|TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
+|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results there.|
+||0 = Use the data in the main case folder; do not perform clustering.|
+|TimeDomainReductionFolder | Name of the folder where time domain reduced input data is stored.|
 |UCommit | Select technical resolution of of modeling thermal generators.|
 ||0 = no unit commitment.|
 ||1 = unit commitment with integer clustering.|
 ||2 = unit commitment with linearized clustering.|
 |NetworkExpansion | Flag for activating or deactivating inter-regional transmission expansion.|
 ||1 = active|
-||0 = modeling single zone or for multi-zone problems, inter regional transmission expansion is not allowed.|
+||0 = modeling single zone or for multi-zone problems in which inter regional transmission expansion is not allowed.|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
-||1 = linear|
-||>=2 = piece-wise quadratic|
+||1: linear|
+||>=2: piece-wise quadratic|
 |Reserves | Flag for modeling operating reserves .|
-||0 = no operating reserves |
-||1 regulation (primary) and spinning (secondary) reserves |
+||0 = No operating reserves considered. |
+||1 = Consider regulation (primary) and spinning (secondary) reserves. |
 |StorageLosses | Flag to account for storage related losses.|
-||0 = VRE and CO2 constraint DO NOT account for energy lost. |
-||1 = constraint DO account for energy lost. |
+||0 = VRE and CO2 constraints DO NOT account for energy lost. |
+||1 = constraints account for energy lost. |
 |**Policy related**|
 |EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
 || Default = 0 (No RPS or CES constraints).|
@@ -47,28 +51,31 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 || 1 = if one or more maximum technology capacity constraints are specified|
 || 0 = otherwise|
 |**Solution strategy and outputs**||
-|Solver | Solver name is not case sensitive (CPLEX, cplex, Gurobi, gurobi, Clp, clp). |
+|Solver | Specifies the solver name (This is not case sensitive i.e. CPLEX/cplex, Gurobi/gurobi, Clp/clp indicate the same solvers, respectively). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
-|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. |
+|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
-|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|WriteShadowPrices | Get the optimal values of dual variables of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
-
 |MethodofMorris | Method of Morris algorithm |
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
-|**Miscellaneous**|
+|**Miscellaneous**||
 |PrintModel | Flag for printing the model equations as .lp file.|
-||1= including the model equation as an output|
-||0 for the model equation not being included as an output|
+||1 = including the model equation as an output|
+||0 = the model equation won't be included as an output|
 
-Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`), which should be located in the current working directory (or to specify an alternative location, edit the `solver_settings_path` variable in your Run.jl file). Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. Note that appropriate solver settings are specific to each solver.
+Additionally, Solver related settings parameters are specified in the appropriate .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`),
+which should be located in the current working directory.
+Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the `src/configure_solver/` directory.
+To overwrite default settings, you can specify the below Solver specific settings.
+Settings are specific to each solver.
 
 ###### Table 1b: Summary of the Solver settings parameters
 ---
@@ -79,6 +86,7 @@ Additionally, Solver related settings parameters are specified in the appropriat
 || CPLEX: CPX\_PARAM\_LPMETHOD - Default = 0; See [link](https://www.ibm.com/docs/en/icos/20.1.0?topic=parameters-algorithm-continuous-linear-problems) for more specifications.|
 || Gurobi: Method - Default = -1; See [link](https://www.gurobi.com/documentation/8.1/refman/method.html) for more specifications.|
 || clp: SolveType - Default = 5; See [link](https://www.coin-or.org/Doxygen/Clp/classClpSolve.html) for more specifications.|
+|| HiGHS: Method - Default = "choose"; See [link](https://ergo-code.github.io/HiGHS/dev/options/definitions/)
 |BarConvTol | Convergence tolerance for barrier algorithm.|
 || CPLEX: CPX\_PARAM\_BAREPCOMP - Default = 1e-8; See [link](https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-convergence-tolerance-lp-qp-problems) for more specifications.|
 || Gurobi: BarConvTol - Default = 1e-8; See [link](https://www.gurobi.com/documentation/8.1/refman/barconvtol.html)link for more specifications.|
