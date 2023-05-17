@@ -75,6 +75,13 @@ function co2!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eEmissionsByPlantYear[y = 1:G], 
         sum(inputs["omega"][t] * eEmissionsByPlant[y, t] for t in 1:T))
 
+    @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T], 
+        sum(eEmissionsByPlant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+
+    @expression(EP, eEmissionsByZoneYear[z = 1:Z], 
+        sum(inputs["omega"][t] * eEmissionsByZone[z, t] for t in 1:T))
+
+
     return EP
 
 end
