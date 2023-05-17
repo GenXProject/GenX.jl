@@ -47,14 +47,14 @@ pages = OrderedDict(
                 "Thermal" => "thermal.md",
                 "Thermal Commit" => "thermal_commit.md",
                 "Thermal No Commit" => "thermal_no_commit.md"
-            ]
+            ],
         ],
         "Multi_stage" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
-                "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
+                "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md",
         ],
-        "Policies" => "policies.md"
-        "Slack Variables for Policies" => "slack_variables_overview.md"
+        "Policies" => "policies.md",
+        "Slack Variables for Policies" => "slack_variables_overview.md",
     ],
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",
