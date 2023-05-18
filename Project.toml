@@ -37,7 +37,7 @@ JuMP = "1.1.1"
 MathOptInterface = "1.6.1"
 RecursiveArrayTools = "2.31.2"
 Statistics = "1.4.0"
-StatsBase = "0.33.21"
+StatsBase = "0.33.21, 0.34"
 YAML = "0.4.7"
 julia = "1"
 
