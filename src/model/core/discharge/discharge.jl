@@ -23,6 +23,13 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	# Energy injected into the grid by resource "y" at hour "t"
 	@variable(EP, vP[y=1:G,t=1:T] >=0);
 
+	# change vP1 and vP1 and make vP == vP1 + vP2
+	@variable(EP, vP1[y=1:G,t=1:T] >=0);
+	@variable(EP, vP2[y=1:G,t=1:T] >=0);
+
+	@constraint(EP, PoweTotal[y = 1:G, t = 1:T], 
+		EP[:vP1][y, t] + EP[:vP2][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
+
 	### Expressions ###
 
 	## Objective Function Expressions ##

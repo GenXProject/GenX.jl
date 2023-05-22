@@ -29,7 +29,9 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     FUEL = length(inputs["fuels"])
     ALLGEN = collect(1:G)
     # create variable for fuel consumption for output
-    @variable(EP, vFuel[y in 1:G, t = 1:T] >= 0)
+    # two variables for two fuel types respectively
+    @variable(EP, vFuel1[y in 1:G, t = 1:T] >= 0)   # unit: mmBtu or kmmbtu
+    @variable(EP, vFuel2[y in 1:G, t = 1:T] >= 0)
     
     ### Expressions ####
     # Fuel consumed on start-up (MMBTU or kMMBTU (scaled)) 
@@ -41,23 +43,41 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         else
             1*EP[:vZERO]
         end)
-    @expression(EP, ePlantFuel[y in 1:G, t = 1:T], 
-        (EP[:vFuel][y, t] + EP[:eStartFuel][y, t]))
-    @expression(EP, ePlantFuelConsumptionYear[y in 1:G], 
-        sum(inputs["omega"][t] * EP[:ePlantFuel][y, t] for t in 1:T))
-    @expression(EP, eFuelConsumption[f in 1:FUEL, t in 1:T],
-        sum(EP[:ePlantFuel][y, t] 
-            for y in dfGen[dfGen[!,:Fuel] .== string(inputs["fuels"][f]) ,:R_ID]))
-    @expression(EP, eFuelConsumptionYear[f in 1:FUEL],
-        sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
+    @expression(EP, ePlantFuel1[y in 1:G, t = 1:T], 
+        (EP[:vFuel1][y, t] + EP[:eStartFuel][y, t] + EP[:vFuel2][y, t] ))
+    @expression(EP, ePlantFuel2[y in 1:G, t = 1:T], 
+        (EP[:vFuel2][y, t] ))
+    
+    @expression(EP, ePlantFuel1ConsumptionYear[y in 1:G], 
+        sum(inputs["omega"][t] * EP[:ePlantFuel1][y, t] for t in 1:T))
+    @expression(EP, ePlantFuel2ConsumptionYear[y in 1:G], 
+        sum(inputs["omega"][t] * EP[:ePlantFuel2][y, t] for t in 1:T))
+    
+    @expression(EP, eFuel1Consumption[f in 1:FUEL, t in 1:T],
+        sum(EP[:ePlantFuel1][y, t] 
+            for y in dfGen[dfGen[!,:Fuel1] .== string(inputs["fuels"][f]) ,:R_ID]))
+    @expression(EP, eFuel2Consumption[f in 1:FUEL, t in 1:T],
+        sum(EP[:ePlantFuel2][y, t] 
+            for y in dfGen[dfGen[!,:Fuel2] .== string(inputs["fuels"][f]) ,:R_ID]))
+
+    @expression(EP, eFuel1ConsumptionYear[f in 1:FUEL],
+        sum(inputs["omega"][t] * EP[:eFuel1Consumption][f, t] for t in 1:T))
+     @expression(EP, eFuel2ConsumptionYear[f in 1:FUEL],
+        sum(inputs["omega"][t] * EP[:eFuel2Consumption][f, t] for t in 1:T))
+
     # fuel_cost is in $/MMBTU (k$/MMBTU or M$/kMMBTU if scaled)
     # vFuel is MMBTU (or kMMBTU if scaled)
     # therefore eCFuel_out is $ or Million$)
-    @expression(EP, eCFuel_out[y = 1:G, t = 1:T], 
-        (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:ePlantFuel][y, t]))
+    @expression(EP, eCFuel1_out[y = 1:G, t = 1:T], 
+        (inputs["fuel_costs"][dfGen[y,:Fuel1]][t] * EP[:ePlantFuel1][y, t]))
+     @expression(EP, eCFuel2_out[y = 1:G, t = 1:T], 
+        (inputs["fuel_costs"][dfGen[y,:Fuel2]][t] * EP[:ePlantFuel2][y, t]))
+
     # plant level total fuel cost for output
+    # merge fuel 1 and fuel 2 at this point
+
     @expression(EP, ePlantCFuelOut[y = 1:G], 
-        sum(inputs["omega"][t] * EP[:eCFuel_out][y, t] for t in 1:T))
+        sum(inputs["omega"][t] * EP[:eCFuel1_out][y, t] for t in 1:T) + sum(inputs["omega"][t] * EP[:eCFuel2_out][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelOut[z = 1:Z], EP[:vZERO] + 
         sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
@@ -67,22 +87,22 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     ### Constraint ###
     @constraint(EP, FuelCalculation[y in setdiff(ALLGEN, THERM_COMMIT), t = 1:T],
-        EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
+        EP[:vFuel1][y, t] + EP[:vFuel2][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
     if !isempty(THERM_COMMIT)
         if setup["PieceWiseHeatRate"] == 1
-            # Piecewise heat rate UC
+            # Piecewise heat rate UC only for starup?
             @constraint(EP, First_segement[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope1][y] + 
+                EP[:vFuel1][y, t] + EP[:vFuel2][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope1][y] + 
                     EP[:vCOMMIT][y, t] * dfGen[!, :Intercept1][y]))
             @constraint(EP, Second_segement[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope2][y] + 
+                EP[:vFuel1][y, t] + EP[:vFuel2][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope2][y] + 
                     EP[:vCOMMIT][y, t] * dfGen[!, :Intercept2][y]))
             @constraint(EP, Third_segement[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope3][y] + 
+                EP[:vFuel1][y, t] + EP[:vFuel2][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope3][y] + 
                     EP[:vCOMMIT][y, t] * dfGen[!, :Intercept3][y]))
         else
             @constraint(EP, FuelCalculationCommit[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
+                EP[:vFuel1][y, t] + EP[:vFuel2][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
         end
     end
 

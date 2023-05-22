@@ -179,14 +179,24 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Heat rate of all resources (million BTUs/MWh)
 	heat_rate = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
 	# Fuel used by each resource
-	fuel_type = gen_in[!,:Fuel]
+	# adding dual fuel
+
+	fuel_type1 = gen_in[!,:Fuel1]
+	fuel_type2 = gen_in[!,:Fuel2]
+
+
 	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
-	inputs_gen["C_Fuel_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
+	inputs_gen["C_Fuel1_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
+	inputs_gen["C_Fuel2_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
+	
 	gen_in[!,:CO2_per_MWh] = zeros(Float64, G)
+
 	for g in 1:G
 		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
-		inputs_gen["C_Fuel_per_MWh"][g,:] = fuel_costs[fuel_type[g]].*heat_rate[g]
-		gen_in[g,:CO2_per_MWh] = fuel_CO2[fuel_type[g]]*heat_rate[g]
+		inputs_gen["C_Fuel1_per_MWh"][g,:] = fuel_costs[fuel_type1[g]].*heat_rate[g]
+		inputs_gen["C_Fuel2_per_MWh"][g,:] = fuel_costs[fuel_type2[g]].*heat_rate[g]
+
+		gen_in[g,:CO2_per_MWh] = fuel_CO2[fuel_type1[g]]*heat_rate[g]+fuel_CO2[fuel_type2[g]]*heat_rate[g]
 		gen_in[g,:CO2_per_MWh] *= scale_factor
 		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
@@ -197,7 +207,9 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 			inputs_gen["C_Start"][g,:] .= gen_in[g,:Cap_Size] * ( start_cost[g])
 			#inputs_gen["C_Start"][g,:] = gen_in[g,:Cap_Size] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
 			# No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
-			gen_in[g,:CO2_per_Start]  = gen_in[g,:Cap_Size]*(fuel_CO2[fuel_type[g]]*start_fuel[g])
+			
+			# Fuel 1 is used for startup
+			gen_in[g,:CO2_per_Start]  = gen_in[g,:Cap_Size]*(fuel_CO2[fuel_type1[g]]*start_fuel[g])
 			gen_in[g,:CO2_per_Start] *= scale_factor
 			# Setup[ParameterScale] =1, gen_in[g,:Cap_Size] is GW, fuel_CO2[fuel_type[g]] is ktons/MMBTU, start_fuel is MMBTU/MW,
 			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is Mton, to get kton, change we need to multiply 1000
