@@ -184,7 +184,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	fuel_type1 = gen_in[!,:Fuel1]
 	fuel_type2 = gen_in[!,:Fuel2]
 
-
 	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
 	inputs_gen["C_Fuel1_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
 	inputs_gen["C_Fuel2_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
