@@ -9,13 +9,16 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
 
 	# Power injected by each resource in each time step
-	dfPower = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+	dfPower = DataFrame(Resource = inputs["RESOURCES"], 
+						Zone = dfGen[!,:Zone], 
+						AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	power = value.(EP[:vP])
 	if setup["ParameterScale"] == 1
 		power *= ModelScalingFactor
 	end
 	dfPower.AnnualSum .= power * inputs["omega"]
 	dfPower = hcat(dfPower, DataFrame(power, :auto))
+
 
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfPower,auxNew_Names)
@@ -26,5 +29,52 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(total,auxNew_Names)
 	dfPower = vcat(dfPower, total)
 	CSV.write(joinpath(path, "power.csv"), dftranspose(dfPower, false), writeheader=false)
+
+
+	dfPower2 = DataFrame(Resource = inputs["RESOURCES"], 
+						Zone = dfGen[!,:Zone],
+						AnnualSum2 = Array{Union{Missing,Float64}}(undef, G))
+
+	power2 = value.(EP[:vP2])
+	if setup["ParameterScale"] == 1
+
+		power2 *= ModelScalingFactor
+	end
+	dfPower2.AnnualSum2 .= power2 * inputs["omega"]
+	dfPower2 = hcat(dfPower2, DataFrame(power2, :auto))
+
+	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+	rename!(dfPower2,auxNew_Names)
+
+	total2 = DataFrame(["Total" 0 sum(dfPower2[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+	total2[:, 4:T+3] .= sum(power2, dims = 1)
+
+	rename!(total2,auxNew_Names)
+	dfPower2 = vcat(dfPower2, total2)
+	CSV.write(joinpath(path, "power2.csv"), dftranspose(dfPower2, false), writeheader=false)
+
+	dfPower1 = DataFrame(Resource = inputs["RESOURCES"], 
+						Zone = dfGen[!,:Zone],
+						AnnualSum1 = Array{Union{Missing,Float64}}(undef, G))
+
+	power1 = value.(EP[:vP1])
+	if setup["ParameterScale"] == 1
+
+		power1 *= ModelScalingFactor
+	end
+	dfPower1.AnnualSum1 .= power1 * inputs["omega"]
+	dfPower1 = hcat(dfPower1, DataFrame(power1, :auto))
+
+	rename!(dfPower1,auxNew_Names)
+
+	total1 = DataFrame(["Total" 0 sum(dfPower1[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+	total1[:, 4:T+3] .= sum(power1, dims = 1)
+
+	rename!(total1,auxNew_Names)
+	dfPower1 = vcat(dfPower1, total1)
+	CSV.write(joinpath(path, "power1.csv"), dftranspose(dfPower1, false), writeheader=false)
+
+
+	
 	return dfPower
 end

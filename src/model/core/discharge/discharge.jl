@@ -21,18 +21,18 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	### Variables ###
 
 	# Energy injected into the grid by resource "y" at hour "t"
-	@variable(EP, vP[y=1:G,t=1:T] >=0);
+	@variable(EP, vP[y=1:G,t=1:T] >=0);  # MW
 
 	# change vP1 and vP1 and make vP == vP1 + vP2
-	@variable(EP, vP1[y=1:G,t=1:T] >=0);
+	@variable(EP, vP1[y=1:G,t=1:T] >=0); # mmbtu
 	@variable(EP, vP2[y=1:G,t=1:T] >=0);
 
+	# Add contraints on total power input
 	@constraint(EP, PoweTotal[y = 1:G, t = 1:T], 
-		EP[:vP1][y, t] + EP[:vP2][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
-
-	### Expressions ###
-
-	## Objective Function Expressions ##
+		EP[:vP1][y, t] + EP[:vP2][y, t] - EP[:vP][y, t]  == 0)
+	# Add constraints on heat input from fuel 2 (EPA cofiring requirements)
+	@constraint(EP, MinCofire[y = 1:G, t = 1:T], 
+		EP[:vP2][y, t] >= EP[:vP][y, t] * dfGen[y, :Min_Cofire_Level])
 
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M plus fuel cost
 	# remove the fuel cost in discharge.jl and account fuel costs in fuel.jl
