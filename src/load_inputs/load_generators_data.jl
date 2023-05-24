@@ -195,25 +195,30 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	end
 
 	# Heat rate of all resources (million BTUs/MWh)
-	heat_rate = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
+	heat_rate1 = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
+	heat_rate2 = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
+
 	# Fuel used by each resource
 	# adding dual fuel
 
-	fuel_type1 = gen_in[!,:Fuel1]
+	fuel_type1 = gen_in[!,:Fuel]
 	fuel_type2 = gen_in[!,:Fuel2]
 
+	
+
 	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
-	inputs_gen["C_Fuel1_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
-	inputs_gen["C_Fuel2_per_MWh"] = zeros(Float64, G, inputs_gen["T"])
+	inputs_gen["C_Fuel_per_mmBtu"] = zeros(Float64, G, inputs_gen["T"])
+	inputs_gen["C_Fuel2_per_mmBtu"] = zeros(Float64, G, inputs_gen["T"])
 	
 	gen_in[!,:CO2_per_MWh] = zeros(Float64, G)
 
 	for g in 1:G
 		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
-		inputs_gen["C_Fuel1_per_MWh"][g,:] = fuel_costs[fuel_type1[g]].*heat_rate[g]
-		inputs_gen["C_Fuel2_per_MWh"][g,:] = fuel_costs[fuel_type2[g]].*heat_rate[g]
 
-		gen_in[g,:CO2_per_MWh] = fuel_CO2[fuel_type1[g]]*heat_rate[g]+fuel_CO2[fuel_type2[g]]*heat_rate[g]
+		inputs_gen["C_Fuel_per_mmBtu"][g,:] = fuel_costs[fuel_type1[g]]
+		inputs_gen["C_Fuel2_per_mmBtu"][g,:] = fuel_costs[fuel_type2[g]]
+
+		gen_in[g,:CO2_per_MWh] = fuel_CO2[fuel_type1[g]]*heat_rate1[g]+fuel_CO2[fuel_type2[g]]*heat_rate2[g]
 		gen_in[g,:CO2_per_MWh] *= scale_factor
 		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
