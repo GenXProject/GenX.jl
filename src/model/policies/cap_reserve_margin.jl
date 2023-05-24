@@ -17,11 +17,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]
 	NCRM = inputs["NCapacityReserveMargin"]
 	println("Capacity Reserve Margin Policies Module")
-
-	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
-				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])
-				for z=findall(x->x!=0,inputs["dfCapRes"][:,res])))
-
+	
 	# if input files are present, add capacity reserve margin slack variables
 	if haskey(inputs, "dfCapRes_slack")
 		@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
@@ -32,4 +28,10 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 		@expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res = 1:NCRM))
 		EP[:eObj] += eCTotalCapResSlack
 	end
+	
+	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
+				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])
+				for z=findall(x->x!=0,inputs["dfCapRes"][:,res])))
+
+
 end
