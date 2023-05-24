@@ -49,6 +49,7 @@ function configure_cplex(solver_settings_path::String)
          "TimeLimit" => "CPX_PARAM_TILIM",
          "MIPGap" => "CPX_PARAM_EPGAP",
          "Method" => "CPX_PARAM_LPMETHOD",
+         "Pre_Solve" => "CPX_PARAM_PREIND",
          "BarConvTol" => "CPX_PARAM_BAREPCOMP",
          "NumericFocus" => "CPX_PARAM_NUMERICALEMPHASIS",
          "BarObjRng" => "CPX_PARAM_BAROBJRNG",
