@@ -21,44 +21,45 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]
 	T = inputs["T"]     # Number of time steps (hours)
+	THERM_COMMIT = inputs["THERM_COMMIT"]
 
 
 	# Fuel consumption by each resource
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"], 
 		Zone = dfGen[!,:Zone], 
-		Fuel1 = dfGen[!, :Fuel1], 
-		AnnualSum_Fuel1_HeatInput = zeros(G),
-		AnnualSum_Fuel1_Cost = zeros(G),
+		Fuel = dfGen[!, :Fuel], 
+		AnnualSum_Fuel_HeatInput = zeros(G),
+		AnnualSum_Fuel_Cost = zeros(G),
 		Fuel2 = dfGen[!, :Fuel2],
 		AnnualSum_Fuel2_HeatInput = zeros(G),
 		AnnualSum_Fuel2_Cost = zeros(G))
 		
-	tempannualsum_fuel1_heat = value.(EP[:ePlantFuel1ConsumptionYear])  
-	tempannualsum_fuel1_cost = value.(EP[:ePlantCFuel1Out])
+	tempannualsum_Fuel_heat = value.(EP[:ePlantFuelConsumptionYear])  
+	tempannualsum_Fuel_cost = value.(EP[:ePlantCFuelOut])
 	tempannualsum_fuel2_heat = value.(EP[:ePlantFuel2ConsumptionYear])  
 	tempannualsum_fuel2_cost = value.(EP[:ePlantCFuel2Out])
 
     if setup["ParameterScale"] == 1
-        tempannualsum_fuel1_heat *= ModelScalingFactor # kMMBTU to MMBTU
+        tempannualsum_Fuel_heat *= ModelScalingFactor # kMMBTU to MMBTU
 		tempannualsum_fuel2_heat *= ModelScalingFactor 
-		tempannualsum_fuel1_cost *= ModelScalingFactor * ModelScalingFactor # million $ to $ ?? 
+		tempannualsum_Fuel_cost *= ModelScalingFactor * ModelScalingFactor # million $ to $ 
 		tempannualsum_fuel2_cost *= ModelScalingFactor * ModelScalingFactor
     end
-    tempannualsum_fuel1_heat = round.(tempannualsum_fuel1_heat, digits = 2)
-	tempannualsum_fuel1_cost = round.(tempannualsum_fuel1_cost, digits = 2)
+    tempannualsum_Fuel_heat = round.(tempannualsum_Fuel_heat, digits = 2)
+	tempannualsum_Fuel_cost = round.(tempannualsum_Fuel_cost, digits = 2)
 	tempannualsum_fuel2_heat = round.(tempannualsum_fuel2_heat, digits = 2)
 	tempannualsum_fuel2_cost = round.(tempannualsum_fuel2_cost, digits = 2)
 
-    dfPlantFuel.AnnualSum_Fuel1_HeatInput .+= tempannualsum_fuel1_heat
-	dfPlantFuel.AnnualSum_Fuel1_Cost .+= tempannualsum_fuel1_cost
-	dfPlantFuel.AnnualSum_Fuel2_HeatInput .+= tempannualsum_fuel2_heat
-	dfPlantFuel.AnnualSum_Fuel2_Cost .+= tempannualsum_fuel2_cost
+    dfPlantFuel.AnnualSum_Fuel_HeatInput = tempannualsum_Fuel_heat
+	dfPlantFuel.AnnualSum_Fuel_Cost = tempannualsum_Fuel_cost
+	dfPlantFuel.AnnualSum_Fuel2_HeatInput[THERM_COMMIT] = tempannualsum_fuel2_heat
+	dfPlantFuel.AnnualSum_Fuel2_Cost[THERM_COMMIT] = tempannualsum_fuel2_cost
 
     CSV.write(joinpath(path, "FuelConsumption_plant.csv"), dfPlantFuel)
 
 	# Fuel consumption by each resource per time step
 	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"])
-	tempts = value.(EP[:ePlantFuel1]) + value.(EP[:ePlantFuel2]) ## fuel consumption at mmbtu
+	tempts = value.(EP[:ePlantFuel]) + value.(EP[:ePlantFuel2]) ## fuel consumption at mmbtu
     if setup["ParameterScale"] == 1
         tempts *= ModelScalingFactor # kMMBTU to MMBTU
     end
@@ -69,18 +70,6 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
     CSV.write(joinpath(path, "FuelConsumption_plant_ts.csv"), 
 		dftranspose(dfPlantFuel_TS, false), writeheader=false)
 
-	# Fuel consumption by each resource per time step
-	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"])
-	tempts1 = value.(EP[:ePlantFuel1])  ## fuel consumption at mmbtu
-    if setup["ParameterScale"] == 1
-		tempts1 *= ModelScalingFactor
-    end
-    tempts1 = round.(tempts1, digits = 2)
-	
-	dfPlantFuel_TS = hcat(dfPlantFuel_TS,
-		DataFrame(tempts1, [Symbol("t$t") for t in 1:T]))
-    CSV.write(joinpath(path, "FuelConsumption_plant_ts1.csv"), 
-		dftranspose(dfPlantFuel_TS, false), writeheader=false)
 
 
 	# # types of fuel
@@ -88,7 +77,7 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 	# fuel_number = length(fuel_types) 
 	# dfFuel = DataFrame(Fuel = fuel_types, 
 	# 	AnnualSum_mmbtu = zeros(fuel_number))
-	# tempannualsum = value.(EP[:eFuel1ConsumptionYear]) + value.(EP[:eFuel2ConsumptionYear])
+	# tempannualsum = value.(EP[:eFuelConsumptionYear]) + value.(EP[:eFuel2ConsumptionYear])
     # if setup["ParameterScale"] == 1
     #     tempannualsum *= ModelScalingFactor # kMMBTU to MMBTU
     # end

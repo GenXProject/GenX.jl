@@ -10,7 +10,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	G = inputs["G"]     			# Number of generators
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
-
+	THERM_COMMIT = inputs["THERM_COMMIT"]
 	# Create a NetRevenue dataframe
  	dfNetRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
 
@@ -33,7 +33,13 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Add fuel cost to the dataframe
-	dfNetRevenue.Fuel_cost = (inputs["C_Fuel1_per_MWh"] .* value.(EP[:vP1])) * inputs["omega"] + (inputs["C_Fuel2_per_MWh"] .* value.(EP[:vP2])) * inputs["omega"]
+	dfNetRevenue.Fuel_cost = inputs["C_Fuel_per_mmBtu"] .* value.(EP[:vFuel]) * inputs["omega"] 
+	dfNetRevenue.Fuel2_cost = zeros(nrow(dfNetRevenue))
+	dfNetRevenue.Fuel2_cost[THERM_COMMIT] = inputs["C_Fuel2_per_mmBtu"][THERM_COMMIT] .* (value.(EP[:vFuel2][THERM_COMMIT,:]).data) * inputs["omega"]
+	dfNetRevenue.Fuel_cost = dfNetRevenue.Fuel_cost .+ dfNetRevenue.Fuel2_cost
+
+
+	# dfNetRevenue.Fuel_cost[THERM_NO_COMMIT] = inputs["C_Fuel_per_mmBtu"][THERM_NO_COMMIT] .* value.(EP[:vFuel][THERM_NO_COMMIT,:]) * inputs["omega"]
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fuel_cost *= ModelScalingFactor^2 # converting Million US$ to US$
 	end
