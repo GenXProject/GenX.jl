@@ -14,10 +14,7 @@ The final term in the summation above adds roundtrip storage losses to the total
 function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Energy Share Requirement Policies Module")
-
-	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
-	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
-
+	
 	# if input files are present, add energy share requirement slack variables
 	if haskey(inputs, "dfESR_slack")
 		@variable(EP, vESR_slack[ESR=1:inputs["nESR"]]>=0)
@@ -28,4 +25,9 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
 		EP[:eObj] += eCTotalESRSlack
 	end
+	
+	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
+	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
+
+
 end
