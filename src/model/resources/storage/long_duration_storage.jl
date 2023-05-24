@@ -55,11 +55,12 @@ Finally, the next constraint enforces that the initial storage level for each in
 \end{aligned}
 ```
 """
-function long_duration_storage!(EP::Model, inputs::Dict)
+function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Long Duration Storage Module")
 
 	dfGen = inputs["dfGen"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -88,6 +89,14 @@ function long_duration_storage!(EP::Model, inputs::Dict)
 	# Build up inventory can be positive or negative
 	@variable(EP, vdSOC[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
 
+			
+	# State of charge held in reserve for storage at beginning of each modeled period n
+	@variable(EP, vCAPCONTRSTOR_VSOCw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX] >= 0)
+
+	# Build up in storage inventory held in reserve over each representative period w
+	# Build up inventory can be positive or negative
+	@variable(EP, vCAPCONTRSTOR_VdSOC[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
+
 	### Constraints ###
 
 	# Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
@@ -95,7 +104,8 @@ function long_duration_storage!(EP::Model, inputs::Dict)
 	# Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
 	# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
 	@constraint(EP, cSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
-				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])-(1/dfGen[y,:Eff_Down]*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
+				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])
+					-(1/dfGen[y,:Eff_Down]*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
 
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
@@ -115,4 +125,39 @@ function long_duration_storage!(EP::Model, inputs::Dict)
 	@constraint(EP, cSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
 					vSOCw[y,r] == EP[:vS][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
 
+	# Capacity Reserve Margin policy
+	if CapacityReserveMargin == 1
+		# LDES Constraints for storage held in reserve
+
+		# Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
+		# Modified initial virtual state of storage for long-duration storage - initialize wth value carried over from last period
+		# Alternative to cVSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
+		# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
+		@constraint(EP, cVSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
+						EP[:vCAPCONTRSTOR_VS][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vCAPCONTRSTOR_VS][y,hours_per_subperiod*w]-vCAPCONTRSTOR_VdSOC[y,w])
+						+(1/dfGen[y,:Eff_Down]*EP[:vCAPCONTRSTOR_VP][y,hours_per_subperiod*(w-1)+1])-(dfGen[y,:Eff_Up]*EP[:vCAPCONTRSTOR_VCHARGE][y,hours_per_subperiod*(w-1)+1]))
+
+		# Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
+		## Multiply storage build up term from prior period with corresponding weight
+		@constraint(EP, cVSoCBalLongDurationStorageInterior[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX[1:(end-1)]],
+						vCAPCONTRSTOR_VSOCw[y,r+1] == vCAPCONTRSTOR_VSOCw[y,r] + vCAPCONTRSTOR_VdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+
+		## Last period is linked to first period
+		@constraint(EP, cVSoCBalLongDurationStorageEnd[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX[end]],
+						vCAPCONTRSTOR_VSOCw[y,1] == vCAPCONTRSTOR_VSOCw[y,r] + vCAPCONTRSTOR_VdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+
+		# Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
+		# Initial storage = Final storage - change in storage inventory across representative period
+		@constraint(EP, cVSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
+						vCAPCONTRSTOR_VSOCw[y,r] == EP[:vCAPCONTRSTOR_VS][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vCAPCONTRSTOR_VdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+
+		# energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
+		@constraint(EP, cSOCMinCapResLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX], vSOCw[y,r] >= vCAPCONTRSTOR_VSOCw[y,r])
+	else
+		# Set values for all capacity reserve margin variables to 0
+		@constraints(EP, begin
+		[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX], EP[:vCAPCONTRSTOR_VSOCw][y,n] == 0
+		[y in STOR_LONG_DURATION, w=1:REP_PERIOD], EP[:vCAPCONTRSTOR_VdSOC][y,w] == 0
+		end)
+	end
 end
