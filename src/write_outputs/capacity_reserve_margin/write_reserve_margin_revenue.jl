@@ -28,7 +28,7 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		tempresrev[MUST_RUN] = dfGen[MUST_RUN, sym] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * (dual.(EP[:cCapacityResMargin][i, :])))
 		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* (value.(EP[:vP][HYDRO_RES, :]) * (dual.(EP[:cCapacityResMargin][i, :])))
 		if !isempty(STOR_ALL)
-			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPCONTRSTOR_VP][STOR_ALL, :]).data - value.(EP[:vCAPCONTRSTOR_VCHARGE][STOR_ALL, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
 		if !isempty(FLEX)
 			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
