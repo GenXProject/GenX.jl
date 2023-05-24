@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Order of slack policy constraint declarations
+- Order of slack policy constraint declarations (#464)
 - Sign error in the Maximum Capacity Requirement slack objective term (#461)
 
 ## [0.3.5] - 2023-05-18
