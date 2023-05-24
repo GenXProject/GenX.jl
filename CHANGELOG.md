@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Add ability of storage to contribute to capacity reserves (#475)
+
 ## [0.3.6] - 2023-07-13
 
 ### Fixed
