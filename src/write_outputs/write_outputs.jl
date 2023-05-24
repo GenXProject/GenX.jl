@@ -146,6 +146,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
 			dfResMar = write_reserve_margin(path, setup, EP)
 			elapsed_time_rsv_margin = @elapsed write_reserve_margin_w(path, inputs, setup, EP)
+			dfVirtualDischarge = write_virtual_discharge(path, inputs, setup, EP)
 		  println("Time elapsed for writing reserve margin is")
 		  println(elapsed_time_rsv_margin)
 			dfResRevenue = write_reserve_margin_revenue(path, inputs, setup, EP)

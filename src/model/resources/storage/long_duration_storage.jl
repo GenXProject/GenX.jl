@@ -1,5 +1,5 @@
 @doc raw"""
-	long_duration_storage!(EP::Model, inputs::Dict)
+	long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
 
@@ -52,12 +52,22 @@ Finally, the next constraint enforces that the initial storage level for each in
 \quad \forall n \in \mathcal{N}, o \in \mathcal{O}^{LDES}
 \end{aligned}
 ```
+
+If the capacity reserve margin constraint is enabled, a similar set of constraints is used to track the evolution of the energy held in reserve across representative periods. The main linking constraint is as follows:
+```math
+\begin{aligned}
+& \Gamma^{CRM}_{o,z,(m-1)\times \tau^{period}+1 } =\left(1-\eta_{o,z}^{loss}\right)\times \left(\Gamma^{CRM}_{o,z,m\times \tau^{period}} -\Delta Q_{o,z,m}\right) +  \\
+& \frac{1}{\eta_{o,z}^{discharge}}\Theta^{CRM}_{o,z,(m-1)\times \tau^{period}+1} - \eta_{o,z}^{charge}\Pi^{CRM}_{o,z,(m-1)\times \tau^{period}+1} \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}
+\end{aligned}
+```
+All other constraints are identical to those used to track the actual state of charge, except with the new variables $Q^{CRM}_{o,z,n}$ and $\Delta Q^{CRM}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively.
 """
-function long_duration_storage!(EP::Model, inputs::Dict)
+function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Long Duration Storage Module")
 
 	dfGen = inputs["dfGen"]
+	capacity_reserve_margin = setup["CapacityReserveMargin"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -86,6 +96,14 @@ function long_duration_storage!(EP::Model, inputs::Dict)
 	# Build up inventory can be positive or negative
 	@variable(EP, vdSOC[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
 
+			
+	# State of charge held in reserve for storage at beginning of each modeled period n
+	@variable(EP, vCAPRES_socw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX] >= 0)
+
+	# Build up in storage inventory held in reserve over each representative period w
+	# Build up inventory can be positive or negative
+	@variable(EP, vCAPRES_dsoc[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
+
 	### Constraints ###
 
 	# Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
@@ -93,7 +111,8 @@ function long_duration_storage!(EP::Model, inputs::Dict)
 	# Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
 	# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
 	@constraint(EP, cSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
-				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])-(1/dfGen[y,:Eff_Down]*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
+				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])
+					-(1/dfGen[y,:Eff_Down]*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
 
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
@@ -109,4 +128,35 @@ function long_duration_storage!(EP::Model, inputs::Dict)
 	@constraint(EP, cSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
 					vSOCw[y,r] == EP[:vS][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
 
+	# Capacity Reserve Margin policy
+	if capacity_reserve_margin == 1
+		# LDES Constraints for storage held in reserve
+
+		# Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
+		# Modified initial virtual state of storage for long-duration storage - initialize wth value carried over from last period
+		# Alternative to cVSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
+		# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
+		@constraint(EP, cVSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
+						EP[:vCAPRES_socinreserve][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vCAPRES_socinreserve][y,hours_per_subperiod*w]-vCAPRES_dsoc[y,w])
+						+(1/dfGen[y,:Eff_Down]*EP[:vCAPRES_discharge][y,hours_per_subperiod*(w-1)+1])-(dfGen[y,:Eff_Up]*EP[:vCAPRES_charge][y,hours_per_subperiod*(w-1)+1]))
+
+		# Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
+		## Multiply storage build up term from prior period with corresponding weight
+		@constraint(EP, cVSoCBalLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+						vCAPRES_socw[y,mod1(r+1, NPeriods)] == vCAPRES_socw[y,r] + vCAPRES_dsoc[y,dfPeriodMap[r,:Rep_Period_Index]])
+
+		# Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
+		# Initial storage = Final storage - change in storage inventory across representative period
+		@constraint(EP, cVSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
+						vCAPRES_socw[y,r] == EP[:vCAPRES_socinreserve][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vCAPRES_dsoc[y,dfPeriodMap[r,:Rep_Period_Index]])
+
+		# energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
+		@constraint(EP, cSOCMinCapResLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX], vSOCw[y,r] >= vCAPRES_socw[y,r])
+	else
+		# Set values for all capacity reserve margin variables to 0
+		@constraints(EP, begin
+		[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX], EP[:vCAPRES_socw][y,n] == 0
+		[y in STOR_LONG_DURATION, w=1:REP_PERIOD], EP[:vCAPRES_dsoc][y,w] == 0
+		end)
+	end
 end
