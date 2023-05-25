@@ -53,8 +53,8 @@ using RecursiveArrayTools
 using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-using CPLEX
-#using Gurobi
+# using CPLEX
+using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
