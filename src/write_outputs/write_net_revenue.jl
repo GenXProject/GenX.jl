@@ -32,6 +32,16 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfNetRevenue.Var_OM_cost_out *= ModelScalingFactor # converting Million US$ to US$
 	end
 
+	# Add capacity constraint dual
+	dfNetRevenue[!, "Capacity_constraint_dual"] = fill(NaN, nrow(dfNetRevenue))
+	for y in intersect(dfGen[dfGen.Max_Cap_MW.>0, :R_ID], 1:G)
+		dual_val = dual.(EP[:cMaxCap][y])
+		if setup["ParameterScale"] == 1
+			dual_val *= ModelScalingFactor # converting Million US$ to US$
+		end
+		dfNetRevenue[y, "Capacity_constraint_dual"] = dual_val
+	end
+
 	# Add fuel cost to the dataframe
 	dfNetRevenue.Fuel_cost = (inputs["C_Fuel_per_MWh"] .* value.(EP[:vP])) * inputs["omega"]
 	if setup["ParameterScale"] == 1
