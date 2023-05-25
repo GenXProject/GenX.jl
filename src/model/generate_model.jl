@@ -127,9 +127,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	fuel!(EP, inputs, setup)
     
-	# remove emissions as they will be accounted in co2.jl
-	#emissions!(EP, inputs)
-
 	if setup["Reserves"] > 0
 		reserves!(EP, inputs, setup)
 	end
