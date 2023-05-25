@@ -13,16 +13,17 @@ function maximum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	println("Maximum Capacity Requirement Module")
 	NumberOfMaxCapReqs = inputs["NumberOfMaxCapReqs"]
 
-	@constraint(EP, cZoneMaxCapReq[maxcap = 1:NumberOfMaxCapReqs], EP[:eMaxCapRes][maxcap] <= inputs["MaxCapReq"][maxcap])
-
 	# if input files are present, add maximum capacity requirement slack variables
 	if haskey(inputs, "MaxCapPriceCap")
 		@variable(EP, vMaxCap_slack[maxcap = 1:NumberOfMaxCapReqs]>=0)
-		EP[:eMaxCapRes] += vMaxCap_slack
+		EP[:eMaxCapRes] -= vMaxCap_slack
 
 		@expression(EP, eCMaxCap_slack[maxcap = 1:NumberOfMaxCapReqs], inputs["MaxCapPriceCap"][maxcap] * EP[:vMaxCap_slack][maxcap])
 		@expression(EP, eTotalCMaxCapSlack, sum(EP[:eCMaxCap_slack][maxcap] for maxcap = 1:NumberOfMaxCapReqs))
 		
 		EP[:eObj] += eTotalCMaxCapSlack
 	end
+	
+	@constraint(EP, cZoneMaxCapReq[maxcap = 1:NumberOfMaxCapReqs], EP[:eMaxCapRes][maxcap] <= inputs["MaxCapReq"][maxcap])
+
 end
