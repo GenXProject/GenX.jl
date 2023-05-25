@@ -90,15 +90,8 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         else
             sum(inputs["omega"][t] * EP[:eCFuel_out][y, t] for t in 1:T)
         end)
-    # @expression(EP, ePlantCFuelOut[y = 1:G], 
-    # sum(inputs["omega"][t] * EP[:eCFuel_out][y, t] for t in 1:T) + sum(inputs["omega"][t] * EP[:eCFuel2_out][y, t] for t in 1:T))
-
+    
     # zonal level total fuel cost for output
-    # @expression(EP, eZonalCFuelOut[z = 1:Z], EP[:vZERO] + 
-    #     sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
-    # system level total fuel cost for output
-    # @expression(EP, eTotalCFuelOut, sum(eZonalCFuelOut[z] for z in 1:Z))
-    # @expression(EP, eTotalCFuelOut, sum(EP[:ePlantCFuelOut][y] for y in 1:G))
     @expression(EP, eTotalCFuelOut, sum(EP[:ePlantCFuelOut][y] for y in 1:G))
     add_to_expression!(EP[:eObj], EP[:eTotalCFuelOut])
 

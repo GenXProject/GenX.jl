@@ -185,32 +185,21 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
         end
     end
 
+	# Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
 	if setup["UCommit"]>=1
-		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
-		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])
 		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
 		start_cost = convert(Array{Float64}, gen_in[!,:Start_Cost_per_MW])
 		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
-		gen_in[!,:CO2_per_Start] = zeros(Float64, G)
 	end
 
-	# Heat rate of all resources (million BTUs/MWh)
-	heat_rate1 = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
-	heat_rate2 = convert(Array{Float64}, gen_in[!,:Heat_Rate_MMBTU_per_MWh])
-
-	# Fuel used by each resource
-	# adding dual fuel
+	# Fuel used by each resource, with possibility of dual fuel
 
 	fuel_type1 = gen_in[!,:Fuel]
 	fuel_type2 = gen_in[!,:Fuel2]
 
-	
-
-	# Maximum fuel cost in $ per MWh and CO2 emissions in tons per MWh
+	# Fuel cost in $ per MMBTU
 	inputs_gen["C_Fuel_per_mmBtu"] = zeros(Float64, G, inputs_gen["T"])
 	inputs_gen["C_Fuel2_per_mmBtu"] = zeros(Float64, G, inputs_gen["T"])
-	
-	gen_in[!,:CO2_per_MWh] = zeros(Float64, G)
 
 	for g in 1:G
 		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
@@ -218,25 +207,11 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		inputs_gen["C_Fuel_per_mmBtu"][g,:] = fuel_costs[fuel_type1[g]]
 		inputs_gen["C_Fuel2_per_mmBtu"][g,:] = fuel_costs[fuel_type2[g]]
 
-		gen_in[g,:CO2_per_MWh] = fuel_CO2[fuel_type1[g]]*heat_rate1[g]+fuel_CO2[fuel_type2[g]]*heat_rate2[g]
-		gen_in[g,:CO2_per_MWh] *= scale_factor
-		# kton/MMBTU * MMBTU/MWh = kton/MWh, to get kton/GWh, we need to mutiply 1000
 		if g in inputs_gen["COMMIT"]
-			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup.
-			# CO2 from fuel consumption during startup also calculate
-			# remove the start fuel as the cost of start fuel will be accounted in fuel.jl
-
-			inputs_gen["C_Start"][g,:] .= gen_in[g,:Cap_Size] * ( start_cost[g])
-			#inputs_gen["C_Start"][g,:] = gen_in[g,:Cap_Size] * (fuel_costs[fuel_type[g]] .* start_fuel[g] .+ start_cost[g])
+			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup. The cost of start_fuel si accounted for in fuel.jl
+			inputs_gen["C_Start"][g,:] .= gen_in[g,:Cap_Size] * start_cost[g]
 			# No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
 			
-			# Fuel 1 is used for startup
-			gen_in[g,:CO2_per_Start]  = gen_in[g,:Cap_Size]*(fuel_CO2[fuel_type1[g]]*start_fuel[g])
-			gen_in[g,:CO2_per_Start] *= scale_factor
-			# Setup[ParameterScale] =1, gen_in[g,:Cap_Size] is GW, fuel_CO2[fuel_type[g]] is ktons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is Mton, to get kton, change we need to multiply 1000
-			# Setup[ParameterScale] =0, gen_in[g,:Cap_Size] is MW, fuel_CO2[fuel_type[g]] is tons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is ton
 		end
 	end
 
