@@ -37,7 +37,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	for y in intersect(dfGen[dfGen.Max_Cap_MW.>0, :R_ID], 1:G)
 		dual_val = dual.(EP[:cMaxCap][y])
 		if setup["ParameterScale"] == 1
-			dual_val *= ModelScalingFactor # converting Million US$ to US$
+			dual_val *= ModelScalingFactor # converting MM$/GW-yr to $/MW-yr
 		end
 		dfNetRevenue[y, "Capacity_constraint_dual"] = dual_val
 	end
