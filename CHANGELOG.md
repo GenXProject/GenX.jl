@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation: against trying to perform time domain reduction (clustering)
   on data which has already been clustered.
 - This changelog (#424).
+- Add output for dual of capacity constraint (#473)
 
 ### Fixed
 
