@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on data which has already been clustered.
 - This changelog (#424).
 - Add output for dual of capacity constraint (#473)
+- Add ability of storage to contribute to capacity reserves (#474)
 
 ### Fixed
 
