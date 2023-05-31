@@ -93,8 +93,8 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	# Initialize Objective Function Expression
 	EP[:eObj] = AffExpr(0.0)
 
-	create_empty_expression!(EP, :eGenerationByZone, (Z, T))
-	
+
+	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
 		create_empty_expression!(EP, :eCapResMarBalance, (inputs["NCapacityReserveMargin"], T))
@@ -186,6 +186,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Policies
 	co2!(EP, inputs, setup) 
+	
 	# CO2 emissions limits
 	if setup["CO2Cap"] > 0
 		co2_cap!(EP, inputs, setup)

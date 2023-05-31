@@ -21,9 +21,7 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]
 	T = inputs["T"]     # Number of time steps (hours)
-	THERM_COMMIT = inputs["THERM_COMMIT"]
-
-
+	THERM_ALL = inputs["THERM_ALL"]
 	# Fuel consumption by each resource
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"], 
 		Zone = dfGen[!,:Zone], 
@@ -36,8 +34,10 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 		
 	tempannualsum_Fuel_heat = value.(EP[:ePlantFuelConsumptionYear])  
 	tempannualsum_Fuel_cost = value.(EP[:ePlantCFuelOut])
-	tempannualsum_fuel2_heat = value.(EP[:ePlantFuel2ConsumptionYear])  
-	tempannualsum_fuel2_cost = value.(EP[:ePlantCFuel2Out])
+	tempannualsum_fuel2_heat = zeros(G);
+	tempannualsum_fuel2_heat[THERM_ALL] = value.(EP[:ePlantFuel2ConsumptionYear].data);
+	tempannualsum_fuel2_cost = zeros(G);
+	tempannualsum_fuel2_cost[THERM_ALL] = value.(EP[:ePlantCFuel2Out].data)
 
     if setup["ParameterScale"] == 1
         tempannualsum_Fuel_heat *= ModelScalingFactor # kMMBTU to MMBTU
@@ -52,8 +52,8 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 
     dfPlantFuel.AnnualSum_Fuel_HeatInput = tempannualsum_Fuel_heat
 	dfPlantFuel.AnnualSum_Fuel_Cost = tempannualsum_Fuel_cost
-	dfPlantFuel.AnnualSum_Fuel2_HeatInput[THERM_COMMIT] = tempannualsum_fuel2_heat
-	dfPlantFuel.AnnualSum_Fuel2_Cost[THERM_COMMIT] = tempannualsum_fuel2_cost
+	dfPlantFuel.AnnualSum_Fuel2_HeatInput = tempannualsum_fuel2_heat
+	dfPlantFuel.AnnualSum_Fuel2_Cost = tempannualsum_fuel2_cost
 
     CSV.write(joinpath(path, "FuelConsumption_plant.csv"), dfPlantFuel)
 
