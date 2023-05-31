@@ -8,6 +8,17 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     filename = "Generators_data.csv"
     gen_in = load_dataframe(joinpath(path, filename))
 
+	existing_cols = names(gen_in)
+	default_vals = Dict()
+	default_vals["Heat_Rate2_MMBTU_per_MWh"] = 0.0;
+	default_vals["Fuel2"] = "None";
+	default_vals["Min_Cofire_Level"] = 0.0;
+    for s in ("Heat_Rate2_MMBTU_per_MWh","Fuel2","Min_Cofire_Level")
+        if s ∉ existing_cols
+            ensure_column!(gen_in, s, default_vals[s])
+        end
+    end
+
     # Store DataFrame of generators/resources input data for use in model
     inputs_gen["dfGen"] = gen_in
 
