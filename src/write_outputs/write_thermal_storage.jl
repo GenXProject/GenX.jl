@@ -82,6 +82,7 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
 	dfGen = inputs["dfGen"]
 	dfTS = inputs["dfTS"]
 	T = inputs["T"]
+	rep_periods = inputs["REP_PERIOD"]
 
 
 	TSResources = dfTS[!,:Resource]
@@ -110,26 +111,24 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
 	CSV.write(joinpath(path,"TS_capacity.csv"), dfCoreCap)
 
 	### CORE POWER TIME SERIES ###
-	dfCorePwr = write_scaled_values(EP, inputs, :vCP, joinpath(path, "TSCorePwr.csv"), msf)
+	write_scaled_values(EP, inputs, :vCP, joinpath(path, "TSCorePwr.csv"), msf)
 
 	### THERMAL SOC TIME SERIES ###
-	dfTSOC = write_scaled_values(EP, inputs, :vTS, joinpath(path, "TS_SOC.csv"), msf)
+	write_scaled_values(EP, inputs, :vTS, joinpath(path, "TS_SOC.csv"), msf)
 
 	### RECIRCULATING POWER TIME SERIES ###
-	dfRecirc = write_scaled_values(EP, inputs, :eTotalRecircFus, joinpath(path, "TS_Recirc.csv"), msf)
+	write_scaled_values(EP, inputs, :eTotalRecircFus, joinpath(path, "TS_Recirc.csv"), msf)
 
 	### CORE STARTS, SHUTS, COMMITS, and MAINTENANCE TIMESERIES ###
-	dfFStart = write_core_behaviors(EP, inputs, :vFSTART, joinpath(path, "f_start.csv"))
-	dfFShut = write_core_behaviors(EP, inputs, :vFSHUT, joinpath(path, "f_shut.csv"))
-	dfFCommit = write_core_behaviors(EP, inputs, :vFCOMMIT, joinpath(path, "f_commit.csv"))
+	write_core_behaviors(EP, inputs, :vFSTART, joinpath(path, "f_start.csv"))
+	write_core_behaviors(EP, inputs, :vFSHUT, joinpath(path, "f_shut.csv"))
+	write_core_behaviors(EP, inputs, :vFCOMMIT, joinpath(path, "f_commit.csv"))
 
-	if setup["OperationWrapping"] == 0 && !isempty(get_maintenance(inputs))
-		dfMaint = write_core_behaviors(EP, inputs, :vFMDOWN, joinpath(path, "f_maint.csv"))
-		#dfMShut = write_core_behaviors(EP, inputs, :vFMSHUT, joinpath(path, "f_maintshut.csv"))
+	if rep_periods == 1 && !isempty(get_maintenance(inputs))
+		write_core_behaviors(EP, inputs, :vFMDOWN, joinpath(path, "f_maint.csv"))
+		write_core_behaviors(EP, inputs, :vFMSHUT, joinpath(path, "f_maintshut.csv"))
 	end
 
 	# Write dual values of certain constraints
 	write_thermal_storage_system_max_dual(path, inputs, setup, EP)
-
-	return dfCoreCap, dfCorePwr, dfTSOC, dfFStart, dfFShut, dfFCommit
 end
