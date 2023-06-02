@@ -71,7 +71,8 @@ end
 
 function split_LDS_and_nonLDS(df::DataFrame, inputs::Dict, setup::Dict)
 	TS = inputs["TS"]
-	if setup["OperationWrapping"] == 1
+	rep_periods = inputs["REP_PERIOD"]
+	if rep_periods > 1
 		TS_and_LDS = intersect(TS, df[df.LDS.==1,:R_ID])
 		TS_and_nonLDS = intersect(TS, df[df.LDS.!=1,:R_ID])
 	else
@@ -310,7 +311,7 @@ function fusion_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	FUS = get_fus(inputs)
 
 	MAINTENANCE = get_maintenance(inputs)
-	sanity_check_maintenance(MAINTENANCE, setup)
+	sanity_check_maintenance(MAINTENANCE, inputs)
 
 	fusion_max_cap_constraint!(EP, inputs, setup)
 
@@ -410,6 +411,17 @@ function fusion_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	EP[:ePowerBalance] += ePowerBalanceRecircFus
 end
 
+function get_maintenance_duration(inputs::Dict)
+	G = inputs["G"]
+
+	by_rid(rid, sym) = by_rid_df(rid, sym, inputs["dfTS"])
+
+	MAINTENANCE = get_maintenance(inputs)
+	maint_dur = zeros(Int, G)
+	maint_dur[MAINTENANCE] .= Int.(floor.(by_rid(MAINTENANCE, :Maintenance_Duration_Hours)))
+	return maint_dur
+end
+
 function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Fusion Core Maintenance Module")
@@ -433,9 +445,13 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	omega = inputs["omega"]
 
 	# UC variables for fusion core maintenance
+	maintenance_begin_cadence = 168
+	maintenance_begin_hours = 1:maintenance_begin_cadence:T
+	maint_dur = get_maintenance_duration(inputs)
+
 	@variables(EP, begin
 		vFMDOWN[y in FUS, t=1:T] >= 0  # core maintenance status
-		vFMSHUT[y in MAINTENANCE, t=1:T] >= 0  # core maintenance shutdown
+		vFMSHUT[y in MAINTENANCE, t=maintenance_begin_hours] >= 0  # core maintenance shutdown
 	end)
 
 	# No need to set integers for NONMAINTENANCE
@@ -450,22 +466,20 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	@constraints(EP, begin
 		[y in NONMAINTENANCE, t=1:T], vFMDOWN[y,t] == 0
 		[y in MAINTENANCE, t=1:T], vFMDOWN[y,t] <= EP[:vCCAP][y] / by_rid(y,:Cap_Size)
-		[y in MAINTENANCE, t=1:T], vFMSHUT[y,t] <= EP[:vCCAP][y] / by_rid(y,:Cap_Size)
+		[y in MAINTENANCE, t=maintenance_begin_hours], vFMSHUT[y,t] <= EP[:vCCAP][y] / by_rid(y,:Cap_Size)
 	end)
 
 	# Require plant to shut down during maintenance
 	@constraint(EP, [y in MAINTENANCE, t=1:T],
 		EP[:vCCAP][y] / by_rid(y,:Cap_Size) - EP[:vFCOMMIT][y,t] >= vFMDOWN[y,t])
 
-	maint_dur = zeros(Int, G)
-	maint_dur[MAINTENANCE] .= Int.(floor.(by_rid(MAINTENANCE, :Maintenance_Duration_Hours)))
 	@constraint(EP, [y in MAINTENANCE, t in 1:T],
-			EP[:vFMDOWN][y,t] == sum(EP[:vFMSHUT][y, hoursbefore(hours_per_subperiod, t, 0:(maint_dur[y]-1))]))
+				EP[:vFMDOWN][y,t] == sum(EP[:vFMSHUT][y, controlling_maintenance_start_hours(hours_per_subperiod, t, maint_dur[y], maintenance_begin_hours)]))
 
 	@constraint(EP, [y in YEARLY_MAINTENANCE],
-		sum(EP[:vFMSHUT][y,t]*omega[t] for t in 1:T) >= EP[:vCCAP][y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
+		sum(EP[:vFMSHUT][y,t]*omega[t] for t in maintenance_begin_hours) >= EP[:vCCAP][y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
 	@constraint(EP, [y in USAGE_BASED_MAINTENANCE],
-		sum(EP[:vFMSHUT][y,t]*omega[t] for t in 1:T) >= sum(EP[:vCP][y,t]*omega[t] for t in 1:T) / by_rid(y,:Full_Power_Hours_Until_Maintenance) / by_rid(y,:Cap_Size))
+		sum(EP[:vFMSHUT][y,t]*omega[t] for t in maintenance_begin_hours) >= sum(EP[:vCP][y,t]*omega[t] for t in 1:T) / by_rid(y,:Full_Power_Hours_Until_Maintenance) / by_rid(y,:Cap_Size))
 
 	# Passive recirculating power, depending on built capacity
 	@expression(EP, ePassiveRecircFus[y in FUS, t=1:T],
@@ -473,15 +487,27 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 
-function sanity_check_maintenance(MAINTENANCE::Vector{Int}, setup::Dict)
-	ow = setup["OperationWrapping"]
-	tdr = setup["TimeDomainReduction"]
+function sanity_check_maintenance(MAINTENANCE::Vector{Int}, inputs::Dict)
+	rep_periods = inputs["REP_PERIOD"]
 
 	is_maint_reqs = !isempty(MAINTENANCE)
-	if (ow > 0 || tdr > 0) && is_maint_reqs
+	if (rep_periods > 1) && is_maint_reqs
 		println("Resources ", MAINTENANCE, " have MAINT > 0,")
-		println("but also OperationWrapping (", ow, ") or TimeDomainReduction (", tdr, ").")
+		println("but also the number of representative periods (", rep_periods, ") is greater than 1." )
 		println("These are incompatible with a Maintenance requirement.")
 		error("Incompatible GenX settings and maintenance requirements.")
 	end
+end
+
+@doc raw"""
+	controlling_maintenance_start_hours(p::Int, t::Int, maintenance_duration::Int, maintenance_begin_hours::UnitRange{Int64})
+
+	p: hours_per_subperiod
+	t: the current hour
+	maintenance_duration: length of a maintenance period
+	maintenance_begin_hours: collection of hours in which maintenance is allowed to start
+"""
+function controlling_maintenance_start_hours(p::Int, t::Int, maintenance_duration::Int, maintenance_begin_hours)
+	controlled_hours = hoursbefore(p, t, 0:(maintenance_duration-1))
+	return intersect(controlled_hours, maintenance_begin_hours)
 end

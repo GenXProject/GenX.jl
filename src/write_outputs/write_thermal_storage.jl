@@ -125,7 +125,7 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
 
 	if setup["OperationWrapping"] == 0 && !isempty(get_maintenance(inputs))
 		dfMaint = write_core_behaviors(EP, inputs, :vFMDOWN, joinpath(path, "f_maint.csv"))
-		dfMShut = write_core_behaviors(EP, inputs, :vFMSHUT, joinpath(path, "f_maintshut.csv"))
+		#dfMShut = write_core_behaviors(EP, inputs, :vFMSHUT, joinpath(path, "f_maintshut.csv"))
 	end
 
 	# Write dual values of certain constraints
