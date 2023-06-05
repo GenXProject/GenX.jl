@@ -108,8 +108,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	end
 
 	if !isempty(inputs["TS"])
-		elapsed_time_thermal_storage = @elapsed write_thermal_storage(path,inputs,setup,EP)
-		println("Time elapsed for writing thermal storage is\n", elapsed_time_thermal_storage)
+		write_thermal_storage(path,inputs,setup,EP)
 	end
 
 	# Output additional variables related inter-period energy transfer via storage
@@ -175,8 +174,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		write_net_revenue(path, inputs, setup, EP,
 						  dfCap, dfESRRev, dfResRevenue, dfChargingcost,
 						  dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue)
-		println("Time elapsed for writing net revenue is")
-		println(elapsed_time_net_rev)
 	end
 	## Print confirmation
 	println("Wrote outputs to $path")
