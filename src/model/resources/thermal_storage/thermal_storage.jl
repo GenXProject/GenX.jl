@@ -491,7 +491,7 @@ function sanity_check_maintenance(MAINTENANCE::Vector{Int}, inputs::Dict)
 	rep_periods = inputs["REP_PERIOD"]
 
 	is_maint_reqs = !isempty(MAINTENANCE)
-	if (rep_periods > 1) && is_maint_reqs
+	if rep_periods > 1 && is_maint_reqs
 		println("Resources ", MAINTENANCE, " have MAINT > 0,")
 		println("but also the number of representative periods (", rep_periods, ") is greater than 1." )
 		println("These are incompatible with a Maintenance requirement.")
