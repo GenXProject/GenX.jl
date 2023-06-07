@@ -28,7 +28,7 @@ In addition, this function adds investment and fixed O\&M related costs related 
 \begin{aligned}
 & 	\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}}
 	\left( (\pi^{INVEST}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Omega_{y,z})
-	+ (\pi^{FOM}_{y,z} \times \overline{\Omega}^{size}_{y,z} \times  \Delta^{total}_{y,z})\right)
+	+ (\pi^{FOM}_{y,z} \times  \Delta^{total}_{y,z})\right)
 \end{aligned}
 ```
 """
