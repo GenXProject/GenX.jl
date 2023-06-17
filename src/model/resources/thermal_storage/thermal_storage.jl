@@ -245,9 +245,9 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 					sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:eTotalCap][y]) for y in TS))
 
 		@expression(EP, eCapResMarBalanceFusionAdjustment[res=1:ncap, t=1:T],
-					sum(dfGen[y,Symbol("CapRes_$res")] * (-by_rid(y, :Cap_Size)*EP[:vFSTART][y,t]*dfGen[y,:Eff_Down]*by_rid(y, :Start_Power)
-															- EP[:ePassiveRecircFus][y,t]
-															- EP[:eActiveRecircFus][y,t]) for y in FUS))
+					sum(dfGen[y,Symbol("CapRes_$res")] * (- EP[:eStartPowerFus][y,t]
+														  - EP[:ePassiveRecircFus][y,t]
+														  - EP[:eActiveRecircFus][y,t]) for y in FUS))
 
 		EP[:eCapResMarBalance] += eCapResMarBalanceThermalStorageAdjustment
 		EP[:eCapResMarBalance] += eCapResMarBalanceFusionAdjustment
@@ -399,6 +399,11 @@ function fusion_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	# Startup energy, taken from the grid every time the core starts up
 	@expression(EP, eStartEnergyFus[y in FUS, t=1:T],
 		by_rid(y,:Cap_Size) * vFSTART[y,t] * dfGen[y,:Eff_Down] * by_rid(y,:Start_Energy))
+
+	# Startup power, required margin on the grid when the core starts
+	@expression(EP, eStartPowerFus[y in FUS, t=1:T],
+		by_rid(y,:Cap_Size) * vFSTART[y,t] * dfGen[y,:Eff_Down] * by_rid(y,:Start_Power))
+
 	#Total recirculating power at each timestep
 	@expression(EP, eTotalRecircFus[y in FUS, t=1:T],
 		EP[:ePassiveRecircFus][y,t] + eActiveRecircFus[y,t] + eStartEnergyFus[y,t])
