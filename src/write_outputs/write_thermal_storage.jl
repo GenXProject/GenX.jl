@@ -18,16 +18,19 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 function write_core_behaviors(EP::Model, inputs::Dict, symbol::Symbol, filename::AbstractString)
 	dfTS = inputs["dfTS"]
-	T = inputs["T"]
+
+	jump_variable = EP[symbol]
+	time_index = jump_variable.axes[2]
+	T = length(time_index)
 
 	df = DataFrame(Resource = dfTS.Resource, Zone = dfTS.Zone)
 	THERMAL_STORAGE = dfTS.R_ID
-	event = value.(EP[symbol][THERMAL_STORAGE,:]).data
+	event = value.(jump_variable[THERMAL_STORAGE,:]).data
 	df.Sum = vec(sum(event, dims=2))
 
 	df = hcat(df, DataFrame(event, :auto))
-	auxNew_Names=[:Resource; :Zone; :Sum; [Symbol("t$t") for t in 1:T]]
-	rename!(df,auxNew_Names)
+	auxNew_Names=[:Resource; :Zone; :Sum; [Symbol("t$t") for t in time_index]]
+	rename!(df, auxNew_Names)
 	total = DataFrame(["Total" 0 sum(df[!,:Sum]) zeros(1,T)], :auto)
 	total[:, 4:T+3] .= sum(event, dims=1)
 	rename!(total,auxNew_Names)
