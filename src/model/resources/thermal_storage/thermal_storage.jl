@@ -380,9 +380,10 @@ function fusion_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	@constraint(EP, [y in MAX_UPTIME, t in 1:T],
 			vFCOMMIT[y,t] <= sum(vFSTART[y, hoursbefore(p, t, 0:(max_uptime[y]-1))]))
 
-	# Maintenance constraints are optional, and are only activated when OperationWrapping is off.
-	# This is to *prevent* these constraints when using TimeDomainReduction, since it would no longer
-	# make sense to have contiguous many-week-long periods which only happen once per year.
+	# Maintenance constraints are optional, and are only activated when there is
+	# exactly one representative period.
+	# This is to *prevent* these constraints when using multiple representative periods,
+	# since it would not make sense to have contiguous many-week-long periods which only happen once per year.
 	if !isempty(MAINTENANCE)
 		maintenance_constraints!(EP, inputs, setup)
 	else
