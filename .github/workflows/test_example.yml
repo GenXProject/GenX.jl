@@ -2,7 +2,7 @@ name: Test-example
 
 on:
   schedule:
-    - cron: 0 0 * * *
+    - cron: 21 4 * * * # Run at 12:21am US Eastern time
 
 jobs:
   test:
