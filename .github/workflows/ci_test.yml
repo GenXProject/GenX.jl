@@ -16,6 +16,8 @@ jobs:
         with:
           annotate: true
       - name: Test an example case
-        shell: julia --project=downstream {0}
+        # shell: julia --project=downstream {0}
         run: |
-          include("Example_Systems/SmallNewEngland/OneZone/Run.jl")
+          pwd
+          ls
+          julia --project=. Example_Systems/SmallNewEngland/OneZone/Run.jl
