@@ -1,0 +1,19 @@
+name: Test-example
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: "1.9"
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Test an example case
+        run: |
+          julia --project=. Example_Systems/SmallNewEngland/Simple_Test_Case/Run.jl
