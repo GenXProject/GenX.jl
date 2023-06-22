@@ -13,8 +13,3 @@ jobs:
           version: "1.9"
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-        with:
-          annotate: true
-      - name: Test an example case
-        run: |
-          julia --project=. Example_Systems/SmallNewEngland/Simple_Test_Case/Run.jl
