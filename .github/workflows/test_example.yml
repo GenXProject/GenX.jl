@@ -1,15 +1,20 @@
 name: Test-example
 
 on:
+  push:
   schedule:
     - cron: 21 4 * * * # Run at 12:21am US Eastern time
 
 jobs:
   test:
+    strategy:
+      matrix:
+        branch: ["main", "weekly_develop"]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
+        ref: ${{ matrix.branch }}
       - uses: julia-actions/setup-julia@v1
         with:
           version: "1.9"
