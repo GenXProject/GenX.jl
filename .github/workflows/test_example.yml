@@ -14,7 +14,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        ref: ${{ matrix.branch }}
+        with:
+          ref: ${{ matrix.branch }}
       - uses: julia-actions/setup-julia@v1
         with:
           version: "1.9"
