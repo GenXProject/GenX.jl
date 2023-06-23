@@ -78,9 +78,13 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
         mga(EP, case, mysetup, myinputs, outputs_path)
     end
 
-    if mysetup["MethodofMorris"] == 1
+    if mysetup["GlobalSensitivityAnalysis"]=="morris"
         println("Starting Global sensitivity analysis with Method of Morris")
-        morris(EP, inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        #morris(EP, inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        gsa_morris(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+    elseif mysetup["GlobalSensitivityAnalysis"]=="sobol"
+        println("Starting Global sensitivity analysis computing Sobol indices")
+        gsa_sobol(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
     end
 end
 
