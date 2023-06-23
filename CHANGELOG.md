@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sign error in the Maximum Capacity Requirement slack constraint term (#461)
 - Remove outdated HiGHS setting `simplex_dualise_strategy` (#489)
 - Fix bug in LDES outputs (#472)
+- Updated README with new instructions for running GenX through Julia REPL terminal (#492)
 - Fix factor of 0.5 when writing out transmission losses. (#480)
 
 ## [0.3.5] - 2023-05-18

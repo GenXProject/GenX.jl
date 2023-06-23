@@ -69,6 +69,8 @@ Interested users may also want to browse through [prior publications](https://en
 1. Download or clone the GenX repository on your machine.
 For this tutorial it will be assumed to be within your home directory: `/home/youruser/GenX`.
 ### Creating the Julia environment and installing dependencies
+You could either start from a default terminal or a Julia REPL terminal. 
+#### For a default terminal:
 2. Start a terminal and navigate into the `GenX` folder.
 3. Type `julia --project=.` to start an instance of the `julia` kernel with the `project` set to the current folder.
 The `.` indicates the current folder. On Windows the location of Julia can also be specified as e.g., 'C:\julia-1.6.0\bin\julia.exe --project=.'
@@ -97,6 +99,19 @@ type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia
 *Figure 2. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 6-8*
 
 After the script runs to completion, results will be written to a folder called “Results”, located in the same directory as `Run.jl`.
+
+#### For a Julia REPL terminal:
+2. Open your desired version of Julia
+3. In the Julia terminal, enter pkg manager mode by typing ]
+Activate the project by typing activate /path/to/GenX
+4. Type `instantiate` from the `(GenX) pkg` prompt.
+   On Windows there is an issue with the prepopulated MUMPS_seq_jll v5.5.1 that prevents compilation of the solvers. To avoid this issue type 'add MUMPS_seq_jll@5.4.1' after running instantiate.
+5. Type `st` to check that the dependecies have been installed. If there is no error, it has been successful.
+6. Type the back key to come back to the `julia>` prompt.
+7. Since we have already started Julia, we can run a case by executing the command `julia> include(“<path to your case>/Run.jl”)`. 
+
+For example, in order to run the OneZone case within the `Example_Systems/SmallNewEngland` folder,
+type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia>` prompt.
 
 
 ### Running a case
