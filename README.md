@@ -1,4 +1,3 @@
-# GenX
 # GenX 
 [![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)
 [![Coverage Status](https://coveralls.io/repos/github/GenXProject/GenX/badge.svg?branch=main)](https://coveralls.io/github/GenXProject/GenX?branch=main)
