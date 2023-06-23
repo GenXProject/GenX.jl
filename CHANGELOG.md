@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Order of slack policy constraint declarations (#464)
 - Sign error in the Maximum Capacity Requirement slack constraint term (#461)
 - Fix bug in LDES outputs (#472)
-- Gotten rid of (-0.5) factor in line 43 of write_power_balance.jl (#480)
+- Fix factor of 0.5 when writing out transmission losses. (#480)
 
 ## [0.3.5] - 2023-05-18
 
