@@ -139,9 +139,9 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFix
+		add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), eTotalCFix)
 	else
-		EP[:eObj] += eTotalCFix
+		add_to_expression!(EP[:eObj], eTotalCFix)
 	end
 
 	### Constratints ###
@@ -165,14 +165,28 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
 	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] >= dfGen[y, :Min_Cap_MW])
 
+
+	x = inputs["NumberOfMinCapReqs"]
+
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
-		EP[:eMinCapRes] += eMinCapResInvest
+		@expression(EP, eMinCapResInvest[mincap = 1:x], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
+		for i=1:x
+			add_to_expression!(EP[:eMinCapRes][i], eMinCapResInvest[i])
+		end
+
+		# EP[:eMinCapRes] += eMinCapResInvest
 	end
+	# issues with running this, claims it is difference of int64 compared to AffExpr
+	# add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceNse[t, z])
+
+	y = inputs["NumberOfMaxCapReqs"]
+
 
 	if setup["MaxCapReq"] == 1
 		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
-		EP[:eMaxCapRes] += eMaxCapResInvest
+		
+		for i=1:y
+			add_to_expression!(EP[:eMaxCapRes][i], eMaxCapResInvest[i])
+		end
 	end
-
 end

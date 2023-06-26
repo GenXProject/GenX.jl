@@ -39,12 +39,20 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
 	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
-	EP[:ePowerBalance] += ePowerBalanceDisp
+	for t=1:T
+		for z=1:Z
+			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceDisp[t, z])
+		end
+	end
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
 		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
-		EP[:eCapResMarBalance] += eCapResMarBalanceVRE
+		for t=1:T
+			for res=1:inputs["NCapacityReserveMargin"]
+				add_to_expression!(EP[:eCapResMarBalance][res, t], eCapResMarBalanceVRE[res, t])
+			end
+		end
 	end
 
 	### Constratints ###
@@ -74,7 +82,14 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
 		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
-	EP[:eGenerationByZone] += eGenerationByVRE
+	
+	for z=1:Z
+		for t=1:T
+			add_to_expression!(EP[:eGenerationByZone][z, t], eGenerationByVRE[z, t])
+		end
+	end
+
+	# EP[:eGenerationByZone] += eGenerationByVRE
 
 end
 

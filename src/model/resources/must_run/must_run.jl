@@ -32,12 +32,12 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceNdisp[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z, :R_ID])))
 
-	EP[:ePowerBalance] += ePowerBalanceNdisp
+	add_to_expression!(EP[:ePowerBalance], ePowerBalanceNdisp)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
 		@expression(EP, eCapResMarBalanceMustRun[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
-		EP[:eCapResMarBalance] += eCapResMarBalanceMustRun
+		add_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceMustRun)
 	end
 
 	### Constratints ###
@@ -47,6 +47,6 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eGenerationByMustRun[z=1:Z, t=1:T], # the unit is GW
 		sum(EP[:vP][y,t] for y in intersect(MUST_RUN, dfGen[dfGen[!,:Zone].==z, :R_ID]))
 	)
-	EP[:eGenerationByZone] += eGenerationByMustRun
+	add_to_expression!(EP[:eGenerationByZone], eGenerationByMustRun)
 
 end

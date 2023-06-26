@@ -88,31 +88,73 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
+	# @expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
+	temp = Matrix{AffExpr}(undef, T, Z)
+	for t=1:T
+		for z=1:Z
+			temp[t,z] = 0.0
+		end
+	end
+	# @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
+	EP[:ePowerBalance] = temp
 
 	# Initialize Objective Function Expression
-	@expression(EP, eObj, 0)
+	# @expression(EP, eObj, 0)
+	# createemptyexpression(EP, :eObj, 1)
+	temp = AffExpr(0.0)
+	EP[:eObj] = temp
+
 
 
 	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+	# @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+	createemptyexpression(EP, :eGenerationByZone, Z, T)
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+		temp = Matrix{AffExpr}(undef, inputs["NCapacityReserveMargin"], T)
+		for t=1:T
+			for x=1:inputs["NCapacityReserveMargin"]
+				temp[x, t] = 0.0
+			end
+		end
+		# @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
+		EP[:eCapResMarBalance] = temp
+
+		# @expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+		createemptyexpression(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
 	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+		createemptyexpression(EP, :eESR, inputs["nESR"])
+		# @expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
 	end
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+		createemptyexpression(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
+
+		# temp = Vector{AffExpr}(undef, inputs["NumberOfMinCapReqs"])
+		# for x=1:inputs["NumberOfMinCapReqs"]
+		# 	temp[x] = 0.0
+		# end
+		# # @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
+		# EP[:eMinCapRes] = temp
+	
+		# # @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
 	end
 
 	if setup["MaxCapReq"] == 1
-		@expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
+		createemptyexpression(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
+		# temp = Vector{AffExpr}(undef, inputs["NumberOfMaxCapReqs"])
+		# for x=1:inputs["NumberOfMaxCapReqs"]
+		# 	temp[x] = 0.0
+		# end
+		# # @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
+		# EP[:eMaxCapRes] = temp
+
+		# # @expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
 	end
+
 
 	# Infrastructure
 	discharge!(EP, inputs, setup)
@@ -222,4 +264,25 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
     	end
 
     return EP
+end
+
+
+
+
+function createemptyexpression(EP::Model, exprname::Symbol, dim1::Int64)
+	temp = Vector{AffExpr}(undef, dim1)
+	for x=1:dim1
+		temp[x] = 0.0
+	end
+	EP[exprname] = temp
+end
+
+function createemptyexpression(EP::Model, exprname::Symbol, dim1::Int64, dim2::Int64)
+	temp = Matrix{AffExpr}(undef, dim1, dim2)
+	for y=1:dim2
+		for x=1:dim1
+			temp[x, y] = 0.0
+		end
+	end
+	EP[exprname] = temp
 end

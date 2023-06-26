@@ -191,9 +191,9 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 			# OPEX multiplier to count multiple years between two model stages
 			# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 			# and we have already accounted for multiple years between stages for fixed costs.
-			EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCNetworkExp
+			add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), eTotalCNetworkExp)
 		else
-			EP[:eObj] += eTotalCNetworkExp
+			add_to_expression!(EP[:eObj], eTotalCNetworkExp)
 		end
 	end
 
@@ -206,8 +206,8 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
 		-eLosses_By_Zone[z,t])
 
-	EP[:ePowerBalance] += ePowerBalanceLossesByZone
-	EP[:ePowerBalance] += ePowerBalanceNetExportFlows
+	add_to_expression!(EP[:ePowerBalance], ePowerBalanceLossesByZone)
+	add_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
