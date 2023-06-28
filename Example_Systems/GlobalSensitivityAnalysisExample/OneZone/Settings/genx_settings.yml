@@ -1,4 +1,5 @@
 MacOrWindows: Windows  # Set to either "Mac" (also works for Linux) or "Windows" to ensure use of proper file directory separator "\" or "/
+OverwriteResults: 1
 PrintModel: 0 # Write the model formulation as an output; 0 = active; 1 = not active
 NetworkExpansion: 0 # Transmission network expansionl; 0 = not active; 1 = active systemwide
 Trans_Loss_Segments: 1 # Number of segments used in piecewise linear approximation of transmission losses; 1 = linear, >2 = piecewise quadratic
@@ -18,4 +19,4 @@ TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Load_
 ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value
 ModelingToGenerateAlternativeIterations: 3 #Number of MGA Iterations
-GlobalSensitivityAnalysis: "sobol" #Flag for selecting the Global Sensitivity Analysis tool: off, morris, sobol
+GlobalSensitivityAnalysis: "sobol" #Flag for selecting the Global Sensitivity Analysis tool: off, morris, sobol, sobol_dist

@@ -1,9 +1,9 @@
 Resource,Zone,Group,Parameter,Min_percentage,Max_percentage,p_steps,total_num_trajectory,num_trajectory,len_design_mat,sobol_samples
-natural_gas_combined_cycle,1,ng,Inv_Cost_per_MWyr,-5,5,10,2,2,15,30
-solar_pv,1,solar,Inv_Cost_per_MWyr,-10,10,20,,,,
-onshore_wind,1,wind,Inv_Cost_per_MWyr,-7,7,14,,,,
-battery,1,battery,Inv_Cost_per_MWyr,-20,20,40,,,,
-natural_gas_combined_cycle,1,ng,Fixed_OM_Cost_per_MWyr,-5,5,10,,,,
-solar_pv,1,solar,Fixed_OM_Cost_per_MWyr,-10,10,20,,,,
-onshore_wind,1,wind,Fixed_OM_Cost_per_MWyr,-7,7,14,,,,
-battery,1,battery,Fixed_OM_Cost_per_MWyr,-20,20,40,,,,
+natural_gas_combined_cycle,1,ng,Inv_Cost_per_MWyr,-5,5,100,2,2,15,30
+solar_pv,1,solar,Inv_Cost_per_MWyr,-10,10,100,,,,
+onshore_wind,1,wind,Inv_Cost_per_MWyr,-7,7,100,,,,
+battery,1,battery,Inv_Cost_per_MWyr,-20,20,100,,,,
+natural_gas_combined_cycle,1,ng,Fixed_OM_Cost_per_MWyr,-5,5,100,,,,
+solar_pv,1,solar,Fixed_OM_Cost_per_MWyr,-10,10,100,,,,
+onshore_wind,1,wind,Fixed_OM_Cost_per_MWyr,-7,7,100,,,,
+battery,1,battery,Fixed_OM_Cost_per_MWyr,-20,20,100,,,,

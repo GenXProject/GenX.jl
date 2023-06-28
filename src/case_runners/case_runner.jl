@@ -80,11 +80,18 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
 
     if mysetup["GlobalSensitivityAnalysis"]=="morris"
         println("Starting Global sensitivity analysis with Method of Morris")
-        #morris(EP, inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
-        gsa_morris(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
-    elseif mysetup["GlobalSensitivityAnalysis"]=="sobol"
+        # morris(EP, inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        elapsed_time = @elapsed gsa_morris(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        println("Time elapsed is $elapsed_time")
+    elseif mysetup["GlobalSensitivityAnalysis"]=="sobol" 
         println("Starting Global sensitivity analysis computing Sobol indices")
-        gsa_sobol(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        elapsed_time = @elapsed gsa_sobol(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        println("Time elapsed is $elapsed_time")
+    elseif mysetup["GlobalSensitivityAnalysis"]=="sobol_dist"
+        println("Starting Global sensitivity analysis computing Sobol indices in parallel")
+        elapsed_time = @elapsed gsa_sobol_dist(inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        println("Time elapsed is $elapsed_time")
+
     end
 end
 

@@ -192,7 +192,9 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
 
         EP = generate_model(setup, inputs, OPTIMIZER)
         #EP, solve_time = solve_model(EP, setup)
-        redirect_stdout((()->optimize!(EP)),open("/dev/null", "w"))
+        set_silent(EP)
+        optimize!(EP)
+        #redirect_stdout((()->optimize!(EP)),open("/dev/null", "w"))
         [objective_value(EP)]
     end
 

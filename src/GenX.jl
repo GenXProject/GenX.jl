@@ -34,6 +34,8 @@ using Distances
 using Combinatorics
 using GlobalSensitivity
 using QuasiMonteCarlo
+using Distributed
+using DistributedArrays
 
 using Random
 using RecursiveArrayTools
