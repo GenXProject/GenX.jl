@@ -189,12 +189,8 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 
 		# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 		## Multiply storage build up term from prior period with corresponding weight
-		@constraint(EP, cThermSoCBalLongDurationStorageInterior[y in TS_and_LDS, r in MODELED_PERIODS_INDEX[1:(end-1)]],
-						vTSOCw[y,r+1] == vTSOCw[y,r] + vdTSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
-
-		## Last period is linked to first period
-		@constraint(EP, cThermSoCBalLongDurationStorageEnd[y in TS_and_LDS, r in MODELED_PERIODS_INDEX[end]],
-						vTSOCw[y,1] == vTSOCw[y,r] + vdTSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+		@constraint(EP, cThermSoCBalLongDurationStorage[y in TS_and_LDS, r in MODELED_PERIODS_INDEX],
+						vTSOCw[y, mod1(r+1, NPeriods)] == vTSOCw[y,r] + vdTSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 		# Storage at beginning of each modeled period cannot exceed installed energy capacity
 		@constraint(EP, cThermSoCBalLongDurationStorageUpper[y in TS_and_LDS, r in MODELED_PERIODS_INDEX],
