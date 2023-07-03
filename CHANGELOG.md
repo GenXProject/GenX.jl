@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added ability for CPLEX handle the Pre_Solve key (#467).
 - run_timedomainreduction did not support multi-stage problems (#441).
 - Not having a changelog (#423).
 
