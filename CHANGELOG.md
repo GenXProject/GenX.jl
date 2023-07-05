@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sign error in the Maximum Capacity Requirement slack constraint term (#461)
 - Fix bug in LDES outputs (#472)
 
+### Changed
+
+- Eliminate 'Axis contains one element' warning (seen when LDS is used) by combining two constraints (#496).
+
 ## [0.3.5] - 2023-05-18
 
 ### Added
@@ -30,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Eliminate 'Axis contains one element' warning (seen when LDS is used) by combining two constraints (#496).
 - The columns `Rep_Periods`, `Timesteps_per_Rep_Period`, and `Sub_Weights` are now required in `Load_data.csv`
   for all cases (#426).
 

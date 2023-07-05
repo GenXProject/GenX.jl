@@ -23,19 +23,17 @@ We need additional variables and constraints to approximate energy exchange betw
 ![Modeling inter-period energy exchange via long-duration storage when using representative period temporal resolution to approximate annual grid operations](assets/LDES_approach.png)
 *Figure. Modeling inter-period energy exchange via long-duration storage when using representative period temporal resolution to approximate annual grid operations*
 
-The following two equations define the storage inventory at the beginning of each input period $n+1$ as the sum of storage inventory at begining of previous input period $n$ plus change in storage inventory for that period. The latter is approximated by the change in storage inventory in the corresponding representative period, identified per the mapping $f(n)$.  The second constraint relates the storage level of the last input period, $|N|$, with the storage level at the beginning of the first input period. Finally, if the input period is also a representative period, then a third constraint enforces that initial storage level estimated by the intra-period storage balance constraint should equal the initial storage level estimated from the inter-period storage balance constraints. Note that $|N|$ refers to the last modeled period.
+The following two equations define the storage inventory at the beginning of each input period $n+1$ as
+the sum of storage inventory at begining of previous input period $n$ plus change in storage inventory for that period.
+The latter is approximated by the change in storage inventory in the corresponding representative period,
+identified per the mapping $f(n)$.
+If the input period is also a representative period,
+then a second constraint enforces that initial storage level estimated by the intra-period storage balance constraint should equal the initial storage level estimated from the inter-period storage balance constraints.
 
 ```math
 \begin{aligned}
 & Q_{o,z,n+1} = Q_{o,z,n} + \Delta Q_{o,z,f(n)}
-\quad \forall  o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}\setminus\{|N|\}
-\end{aligned}
-```
-
-```math
-\begin{aligned}
-& Q_{o,z,1} = Q_{o,z,|N|} + \Delta Q_{o,z,f(|N|)}
-\quad \forall  o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n = |N|
+\quad \forall  o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
 \end{aligned}
 ```
 
