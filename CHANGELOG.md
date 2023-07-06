@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README with new instructions for running GenX through Julia REPL terminal (#492)
 - Fix factor of 0.5 when writing out transmission losses. (#480)
 
+### Changed
+
+- Eliminate 'Axis contains one element' warning (seen when LDS is used) by combining two constraints (#496).
+
 ## [0.3.5] - 2023-05-18
 
 ### Added
