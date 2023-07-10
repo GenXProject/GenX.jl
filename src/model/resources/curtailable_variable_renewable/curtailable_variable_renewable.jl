@@ -89,8 +89,6 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 		end
 	end
 
-	# EP[:eGenerationByZone] += eGenerationByVRE
-
 end
 
 @doc raw"""

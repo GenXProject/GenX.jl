@@ -88,71 +88,31 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	# @expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
-	temp = Matrix{AffExpr}(undef, T, Z)
-	for t=1:T
-		for z=1:Z
-			temp[t,z] = 0.0
-		end
-	end
-	# @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
-	EP[:ePowerBalance] = temp
+	createemptyexpression(EP, :ePowerBalance, T, Z)
 
 	# Initialize Objective Function Expression
-	# @expression(EP, eObj, 0)
-	# createemptyexpression(EP, :eObj, 1)
 	temp = AffExpr(0.0)
 	EP[:eObj] = temp
 
 
 
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	# @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
 	createemptyexpression(EP, :eGenerationByZone, Z, T)
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
-		temp = Matrix{AffExpr}(undef, inputs["NCapacityReserveMargin"], T)
-		for t=1:T
-			for x=1:inputs["NCapacityReserveMargin"]
-				temp[x, t] = 0.0
-			end
-		end
-		# @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
-		EP[:eCapResMarBalance] = temp
-
-		# @expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
 		createemptyexpression(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
 	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
 		createemptyexpression(EP, :eESR, inputs["nESR"])
-		# @expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
 	end
 
 	if setup["MinCapReq"] == 1
 		createemptyexpression(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
-
-		# temp = Vector{AffExpr}(undef, inputs["NumberOfMinCapReqs"])
-		# for x=1:inputs["NumberOfMinCapReqs"]
-		# 	temp[x] = 0.0
-		# end
-		# # @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
-		# EP[:eMinCapRes] = temp
-	
-		# # @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
 	end
 
 	if setup["MaxCapReq"] == 1
 		createemptyexpression(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
-		# temp = Vector{AffExpr}(undef, inputs["NumberOfMaxCapReqs"])
-		# for x=1:inputs["NumberOfMaxCapReqs"]
-		# 	temp[x] = 0.0
-		# end
-		# # @expression(EP, ePowerBalance[t=1:T, z=1:Z], temp[t, z])
-		# EP[:eMaxCapRes] = temp
-
-		# # @expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
 	end
 
 
@@ -200,7 +160,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
-	if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
 		hydro_inter_period_linkage!(EP, inputs)
 	end
 

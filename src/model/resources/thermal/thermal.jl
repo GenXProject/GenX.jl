@@ -28,19 +28,22 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	)
 
 
-	# for t=1:T
-	# 	for z=1:Z
-	# 		add_to_expression!(EP[:eGenerationByZone][t, z], eGenerationByThermAll[t, z])
-	# 	end
-	# end
+	for z=1:Z
+		for t=1:T
+			add_to_expression!(EP[:eGenerationByZone][z, t], eGenerationByThermAll[z, t])
+		end
+	end
 
-	EP[:eGenerationByZone] += eGenerationByThermAll
 
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
 		@expression(EP, eCapResMarBalanceThermal[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] for y in THERM_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceThermal
 		# add_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
+		for res=1:inputs["NCapacityReserveMargin"]
+			for t=1:T
+				add_to_expression!(EP[:eCapResMarBalance][res, t], eCapResMarBalanceThermal[res, t])
+			end
+		end
 
 	end
 #=

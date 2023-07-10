@@ -574,10 +574,6 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         	# Step 1) Load Inputs
         	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
-            # this prevents doubled time domain reduction in stages past
-            # the first, even if the first stage is okay.
-            prevent_doubled_timedomainreduction(inpath_sub)
-
         	inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
 
         	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])

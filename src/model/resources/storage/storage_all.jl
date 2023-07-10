@@ -9,6 +9,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
+	OperationWrapping = setup["OperationWrapping"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -16,7 +17,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	STOR_ALL = inputs["STOR_ALL"]
 	STOR_SHORT_DURATION = inputs["STOR_SHORT_DURATION"]
-	representative_periods = inputs["REP_PERIOD"]
 
 	START_SUBPERIODS = inputs["START_SUBPERIODS"]
 	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
@@ -44,7 +44,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	# Sum individual resource contributions to variable charging costs to get total variable charging costs
 	@expression(EP, eTotalCVarInT[t=1:T], sum(eCVar_in[y,t] for y in STOR_ALL))
 	@expression(EP, eTotalCVarIn, sum(eTotalCVarInT[t] for t in 1:T))
-	EP[:eObj] += eTotalCVarIn
+	add_to_expression!(EP[:eObj], eTotalCVarIn)
+
 
 	## Power Balance Expressions ##
 
@@ -58,7 +59,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceStor[t, z])
 		end
 	end
-	# EP[:ePowerBalance] += ePowerBalanceStor
 
 	### Constraints ###
 
@@ -66,7 +66,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Links state of charge in first time step with decisions in last time step of each subperiod
 	# We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
-	if representative_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+	if OperationWrapping ==1 && !isempty(inputs["STOR_LONG_DURATION"])
 		CONSTRAINTSET = STOR_SHORT_DURATION
 	else
 		CONSTRAINTSET = STOR_ALL

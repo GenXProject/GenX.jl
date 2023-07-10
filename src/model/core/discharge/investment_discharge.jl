@@ -174,17 +174,14 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 			add_to_expression!(EP[:eMinCapRes][i], eMinCapResInvest[i])
 		end
 
-		# EP[:eMinCapRes] += eMinCapResInvest
 	end
-	# issues with running this, claims it is difference of int64 compared to AffExpr
-	# add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceNse[t, z])
-
-	y = inputs["NumberOfMaxCapReqs"]
-
 
 	if setup["MaxCapReq"] == 1
 		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
 		
+		y = inputs["NumberOfMaxCapReqs"]
+
+
 		for i=1:y
 			add_to_expression!(EP[:eMaxCapRes][i], eMaxCapResInvest[i])
 		end

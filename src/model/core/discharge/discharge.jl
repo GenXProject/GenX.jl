@@ -35,7 +35,6 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))
 
 	# Add total variable discharging cost contribution to the objective function
-	# EP[:eObj] += eTotalCVarOut
 	add_to_expression!(EP[:eObj], eTotalCVarOut)
 
 	# ESR Policy
@@ -48,7 +47,6 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 		for i=1:inputs["nESR"]
 			add_to_expression!(EP[:eESR][i], eESRDischarge[i])
 		end
-		# EP[:eESR] += eESRDischarge
 	end
 
 end

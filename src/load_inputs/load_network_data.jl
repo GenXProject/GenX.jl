@@ -46,7 +46,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # Maximum reinforcement allowed in MW
         #NOTE: values <0 indicate no expansion possible
         inputs_nw["pMax_Line_Reinforcement"] = map(x->max(0, x), to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
-        add_to_expression!(inputs_nw["pTrans_Max_Possible"], inputs_nw["pMax_Line_Reinforcement"])
+        inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
     end
 
     # Multi-Stage

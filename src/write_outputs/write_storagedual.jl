@@ -25,7 +25,7 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dual_values[STOR_ALL, INTERIOR_SUBPERIODS] = (dual.(EP[:cSoCBalInterior][INTERIOR_SUBPERIODS, STOR_ALL]).data ./ inputs["omega"][INTERIOR_SUBPERIODS])'
 	dual_values[STOR_ALL_NONLDS, START_SUBPERIODS] = (dual.(EP[:cSoCBalStart][START_SUBPERIODS, STOR_ALL_NONLDS]).data ./ inputs["omega"][START_SUBPERIODS])'
 	if !isempty(STOR_ALL_LDS)
-		if inputs["REP_PERIOD"] > 1
+		if setup["OperationWrapping"] == 1
 			dual_values[STOR_ALL_LDS, START_SUBPERIODS] = (dual.(EP[:cSoCBalLongDurationStorageStart][1:REP_PERIOD, STOR_ALL_LDS]).data ./ inputs["omega"][START_SUBPERIODS])'
 		else
 			dual_values[STOR_ALL_LDS, START_SUBPERIODS] = (dual.(EP[:cSoCBalStart][START_SUBPERIODS, STOR_ALL_LDS]).data ./ inputs["omega"][START_SUBPERIODS])'

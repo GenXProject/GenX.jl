@@ -60,7 +60,12 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceThermNoCommit[t=1:T, z=1:Z],
 		sum(EP[:vP][y,t] for y in intersect(THERM_NO_COMMIT, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
-	EP[:ePowerBalance] += ePowerBalanceThermNoCommit
+	for t=1:T
+		for z=1:Z
+			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceThermNoCommit[t, z])
+		end
+	end
+
 
 	### Constraints ###
 
