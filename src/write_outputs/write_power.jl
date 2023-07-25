@@ -19,7 +19,6 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfPower,auxNew_Names)
-
 	total = DataFrame(["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 	total[:, 4:T+3] .= sum(power, dims = 1)
 

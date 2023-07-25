@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
     hoursbefore(p::Int, t::Int, b::Int)
 
@@ -56,4 +72,27 @@ function hoursafter(p::Int, t::Int, a::UnitRange{Int})::Vector{Int}
     period = div(t - 1, p)
     return period * p .+ mod1.(t .+ a, p)
 
+end
+
+@doc raw"""
+    is_nonzero(df::DataFrame, col::Symbol)::BitVector
+
+This function checks if a column in a dataframe is all zeros.
+"""
+function is_nonzero(df::DataFrame, col::Symbol)::BitVector
+	convert(BitVector, df[!, col] .> 0)::BitVector
+end
+
+@doc raw"""
+    by_rid_df(df::DataFrame, col::Symbol)::BitVector
+
+This function
+"""
+function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
+	return df[df.R_ID .== rid, sym][]
+end
+
+function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
+	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
+	return df[indices, sym]
 end
