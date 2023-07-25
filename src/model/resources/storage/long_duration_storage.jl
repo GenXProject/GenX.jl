@@ -56,11 +56,11 @@ Finally, the next constraint enforces that the initial storage level for each in
 If the capacity reserve margin constraint is enabled, a similar set of constraints is used to track the evolution of the energy held in reserve across representative periods. The main linking constraint is as follows:
 ```math
 \begin{aligned}
-& c^{socinreserve}_{o,z,(m-1)\times \tau^{period}+1 } =\left(1-\eta_{o,z}^{loss}\right)\times \left(c^{socinreserve}_{o,z,m\times \tau^{period}} -\Delta Q_{o,z,m}\right) +  \\
-& \frac{1}{\eta_{o,z}^{discharge}}c^{discharge}_{o,z,(m-1)\times \tau^{period}+1} - \eta_{o,z}^{charge}c^{charge}_{o,z,(m-1)\times \tau^{period}+1} \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}
+& \Gamma^{CRM}_{o,z,(m-1)\times \tau^{period}+1 } =\left(1-\eta_{o,z}^{loss}\right)\times \left(\Gamma^{CRM}_{o,z,m\times \tau^{period}} -\Delta Q_{o,z,m}\right) +  \\
+& \frac{1}{\eta_{o,z}^{discharge}}\Theta^{CRM}_{o,z,(m-1)\times \tau^{period}+1} - \eta_{o,z}^{charge}\Pi^{CRM}_{o,z,(m-1)\times \tau^{period}+1} \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}
 \end{aligned}
 ```
-All other constraints are identical to those used to track the actual state of charge, except with the new variables $c^{socw}_{o,z,n}$ and $c^{dsoc}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively.
+All other constraints are identical to those used to track the actual state of charge, except with the new variables $Q^{CRM}_{o,z,n}$ and $\Delta Q^{CRM}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively.
 """
 function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 

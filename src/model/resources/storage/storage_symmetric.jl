@@ -28,7 +28,7 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 			[y in STOR_SYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] + EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
 
 			# Max simultaneous charge and discharge cannot be greater than capacity
-			[y in STOR_SYMMETRIC, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t]<= EP[:eTotalCap][y]
+			[y in STOR_SYMMETRIC, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
 		end)
 	end
 
@@ -60,7 +60,7 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
 		@constraints(EP, begin
 			# Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
-			[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_charge][y,t]  <= EP[:eTotalCap][y]
+			[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
 
 			# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
 			[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t]+EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
