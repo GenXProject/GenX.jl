@@ -18,6 +18,16 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
+	VRE_STOR = inputs["VRE_STOR"]
+	dfVRE_STOR = inputs["dfVRE_STOR"]
+	if !isempty(VRE_STOR)
+		VRE_STOR_STOR = inputs["VS_STOR"]
+		DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
+		AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]
+		DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
+		AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
+		dfVRE_STOR = inputs["dfVRE_STOR"]
+	end
 	dfResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
 	annual_sum = zeros(G)
 	for i in 1:inputs["NCapacityReserveMargin"]
@@ -26,12 +36,20 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		tempresrev[THERM_ALL] = dfGen[THERM_ALL, sym] .* (value.(EP[:eTotalCap][THERM_ALL])) * sum(dual.(EP[:cCapacityResMargin][i, :]))
 		tempresrev[VRE] = dfGen[VRE, sym] .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * (dual.(EP[:cCapacityResMargin][i, :])))
 		tempresrev[MUST_RUN] = dfGen[MUST_RUN, sym] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * (dual.(EP[:cCapacityResMargin][i, :])))
-		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* (value.(EP[:vP][HYDRO_RES, :]) * (dual.(EP[:cCapacityResMargin][i, :])))
 		if !isempty(STOR_ALL)
 			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPRES_discharge][STOR_ALL, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
 		if !isempty(FLEX)
 			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
+		end
+		if !isempty(VRE_STOR)
+			sym_vs = Symbol("CapResVreStor_$i")
+			tempresrev[VRE_STOR] = dfVRE_STOR[!, sym_vs] .* ((value.(EP[:vP][VRE_STOR, :])) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[VRE_STOR_STOR] .-= dfVRE_STOR[((dfVRE_STOR.STOR_DC_DISCHARGE.!=0) .| (dfVRE_STOR.STOR_DC_CHARGE.!=0) .| (dfVRE_STOR.STOR_AC_DISCHARGE.!=0) .|(dfVRE_STOR.STOR_AC_CHARGE.!=0)), sym_vs] .* (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR, :]).data * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[DC_DISCHARGE] .+= dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :]).data .* dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0), :EtaInverter]) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[AC_DISCHARGE] .+= dfVRE_STOR[(dfVRE_STOR.STOR_AC_DISCHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[DC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./ dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), :EtaInverter]) * (dual.(EP[:cCapacityResMargin][i, :])))
+			tempresrev[AC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_AC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
 		if setup["ParameterScale"] == 1
 			tempresrev *= ModelScalingFactor^2

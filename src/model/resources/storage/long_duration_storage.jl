@@ -1,5 +1,5 @@
 @doc raw"""
-	long_duration_storage!(EP::Model, inputs::Dict)
+	long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
 

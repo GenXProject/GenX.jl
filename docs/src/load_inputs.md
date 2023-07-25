@@ -64,6 +64,12 @@ Modules = [GenX]
 Pages = ["load_period_map.jl"]
 ```
 
+## Variability of the Solar PV and Wind Components' Outputs (for Co-located Storage Resources)
+```@autodocs
+Modules = [GenX]
+Pages = ["load_vre_stor_variability.jl"]
+```
+
 # Functions for developers
 
 ## Standardized loading of dataframes from CSV files

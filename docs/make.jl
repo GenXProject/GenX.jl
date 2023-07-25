@@ -43,6 +43,7 @@ pages = OrderedDict(
                 "Storage Asymmetric" => "storage_asymmetric.md",
                 "Storage Symmetric" => "storage_symmetric.md"
             ],
+            "Co-located VRE and Storage" => "vre_stor.md",
             "Thermal" => [
                 "Thermal" => "thermal.md",
                 "Thermal Commit" => "thermal_commit.md",

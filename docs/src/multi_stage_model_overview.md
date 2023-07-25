@@ -19,13 +19,36 @@ Instead of one set of input files, there is one directory of input files that ne
 
 |                              |                                                                   **Generators_data.csv**                                                                  |
 |:------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Min\_Retired\_Cap\_MW        | Minimum capacity in MW that must retire in this planning stage.                                                                                            |
-| Min\_Retired\_Energy\_Cap\_MW | Minimum energy capacity in MW that must retire in this planning stage.                                                                                     |
+| Min\_Retired\_Cap\_MW        | Minimum capacity in MW that must retire in this planning stage. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                           |
+| Min\_Retired\_Energy\_Cap\_MW | Minimum energy capacity in MW that must retire in this planning stage. Note that for the co-located VRE-STOR module, this value represents the storage component.                                                                                    |
 | Min\_Retired\_Charge\_Cap\_MW | Minimum charge capacity in MW that must retire in this planning stage.                                                                                     |
 | Lifetime                     | The operational lifespan in years of this technology after which it must be retired.                                                                       |
-| Capital\_Recovery\_Period      | The technology-specific period in years over which initial capital costs must be recovered.                                                                |
-| WACC                         | The technology-specific weighted average cost of capital.                                                                                                  |
+| Capital\_Recovery\_Period      | The technology-specific period in years over which initial capital costs must be recovered. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                               |
+| WACC                         | The technology-specific weighted average cost of capital. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                                 |
 
+|                              |                                                                   **Vre_and_stor_data.csv (if activated)**                                                                  |
+|:------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
+|Min\_Retired\_Cap\_Inverter\_MW  |Minimum inverter capacity in MW AC that must retire in this plannig stage. |
+|Min\_Retired\_Cap\_Solar\_MW  |Minimum solar PV capacity in MW DC that must retire in this plannig stage. |
+|Min\_Retired\_Cap\_Wind\_MW  |Minimum wind capacity in MW AC that must retire in this plannig stage. |
+|Min\_Retired\_Cap\_Discharge_DC\_MW  |Minimum storage DC discharge capacity that must retire in this planning stage with `STOR_DC_DISCHARGE = 2`. |
+|Min\_Retired\_Cap\_Charge_DC\_MW  |Minimum storage DC charge capacity that must retire in this planning stage with `STOR_DC_CHARGE = 2`. |
+|Min\_Retired\_Cap\_Discharge_AC\_MW  |Minimum storage AC discharge capacity that must retire in this planning stage with `STOR_AC_DISCHARGE = 2`. |
+|Min\_Retired\_Cap\_Charge_AC\_MW  |Minimum storage AC charge capacity that must retire in this planning stage with `STOR_AC_CHARGE = 2`. |
+|Capital\_Recovery\_Period_DC  |The technology-specific period in years over which initial capital costs for the inverter component must be recovered.|
+|Capital\_Recovery\_Period_Solar  |The technology-specific period in years over which initial capital costs for the solar PV component must be recovered.|
+|Capital\_Recovery\_Period_Wind  |The technology-specific period in years over which initial capital costs for the wind component must be recovered.|
+|Capital\_Recovery\_Period_Discharge_DC  |The technology-specific period in years over which initial capital costs for the storage DC discharge component must be recovered when `STOR_DC_DISCHARGE = 2  `. |
+|Capital\_Recovery\_Period_Charge_DC  |The technology-specific period in years over which initial capital costs for the storage DC charge component must be recovered when `STOR_DC_CHARGE = 2  `.|
+|Capital\_Recovery\_Period_Discharge_AC  |The technology-specific period in years over which initial capital costs for the storage AC discharge component must be recovered when `STOR_AC_DISCHARGE = 2  `.|
+|Capital\_Recovery\_Period_Charge_AC  |The technology-specific period in years over which initial capital costs for the storage AC charge component must be recovered when `STOR_DC_CHARGE = 2  `.|
+| WACC\_DC | The line-specific weighted average cost of capital for the inverter component. |
+| WACC\_Solar | The line-specific weighted average cost of capital for the solar PV component. |
+| WACC\_Wind | The line-specific weighted average cost of capital for the wind component. |
+| WACC\_Discharge\_DC | The line-specific weighted average cost of capital for the discharging DC storage component with `STOR_DC_DISCHARGE = 2`. |
+| WACC\_Charge\_DC | The line-specific weighted average cost of capital for the charging DC storage component with `STOR_DC_CHARGE = 2`. |
+| WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
+| WACC\_Charge\_AC | The line-specific weighted average cost of capital for the charging AC storage component with `STOR_AC_CHARGE = 2`. |
 
 |                           |                                                                       **Network.csv**                                                                      |
 |:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|

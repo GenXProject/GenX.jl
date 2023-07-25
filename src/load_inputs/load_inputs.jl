@@ -62,6 +62,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		load_co2_cap!(setup, path, inputs)
 	end
 
+	if !isempty(inputs["VRE_STOR"])
+		load_vre_stor_variability!(setup, path, inputs)
+	end
+
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(inputs) && is_period_map_exist(setup, path, inputs)
 		load_period_map!(setup, path, inputs)
@@ -76,7 +80,12 @@ function is_period_map_necessary(inputs::Dict)
 	multiple_rep_periods = inputs["REP_PERIOD"] > 1
 	has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
 	has_hydro_lds = !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
-    multiple_rep_periods && (has_stor_lds || has_hydro_lds)
+	if !isempty(inputs["VRE_STOR"])
+		has_vre_stor_lds = !isempty(inputs["VS_LDS"])
+	else
+		has_vre_stor_lds = false
+	end
+    multiple_rep_periods && (has_stor_lds || has_hydro_lds || has_vre_stor_lds)
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
