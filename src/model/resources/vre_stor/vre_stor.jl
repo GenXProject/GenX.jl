@@ -1308,18 +1308,14 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
 
     # Constraint 2: Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     # Multiply storage build up term from prior period with corresponding weight
-    @constraint(EP, cVreStorSoCBalLongDurationStorageInterior[y in VS_LDS, r in MODELED_PERIODS_INDEX[1:(end-1)]],
-        EP[:vSOCw_VRE_STOR][y,r+1] == EP[:vSOCw_VRE_STOR][y,r] + EP[:vdSOC_VRE_STOR][y,dfPeriodMap[r,:Rep_Period_Index]])
+    @constraint(EP, cVreStorSoCBalLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
+        EP[:vSOCw_VRE_STOR][y,mod1(r+1, NPeriods)] == EP[:vSOCw_VRE_STOR][y,r] + EP[:vdSOC_VRE_STOR][y,dfPeriodMap[r,:Rep_Period_Index]])
 
-    # Constraint 3: Last period is linked to first period
-    @constraint(EP, cVreStorSoCBalLongDurationStorageEnd[y in VS_LDS, r in MODELED_PERIODS_INDEX[end]],
-        EP[:vSOCw_VRE_STOR][y,1] == EP[:vSOCw_VRE_STOR][y,r] + EP[:vdSOC_VRE_STOR][y,dfPeriodMap[r,:Rep_Period_Index]])
-
-    # Constraint 4: Storage at beginning of each modeled period cannot exceed installed energy capacity
+    # Constraint 3: Storage at beginning of each modeled period cannot exceed installed energy capacity
     @constraint(EP, cVreStorSoCBalLongDurationStorageUpper[y in VS_LDS, r in MODELED_PERIODS_INDEX],
         EP[:vSOCw_VRE_STOR][y,r] <= EP[:eTotalCap_STOR][y])
 
-    # Constraint 5: Initial storage level for representative periods must also adhere to sub-period storage inventory balance
+    # Constraint 4: Initial storage level for representative periods must also adhere to sub-period storage inventory balance
     # Initial storage = Final storage - change in storage inventory across representative period
     @constraint(EP, cVreStorSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
         EP[:vSOCw_VRE_STOR][y,r] == EP[:vS_VRE_STOR][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] 
@@ -2090,19 +2086,15 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 
         # Constraint 2: Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
         # Multiply storage build up term from prior period with corresponding weight
-        @constraint(EP, cVreStorVSoCBalLongDurationStorageInterior[y in VS_LDS, r in MODELED_PERIODS_INDEX[1:(end-1)]],
-            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r+1] == vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r] + vCAPCONTRSTOR_VdSOC_VRE_STOR[y,dfPeriodMap[r,:Rep_Period_Index]])
+        @constraint(EP, cVreStorVSoCBalLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
+            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,mod1(r+1, NPeriods)] == vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r] + vCAPCONTRSTOR_VdSOC_VRE_STOR[y,dfPeriodMap[r,:Rep_Period_Index]])
 
-        ## Constraint 3: Last period is linked to first period
-        @constraint(EP, cVreSTorVSoCBalLongDurationStorageEnd[y in VS_LDS, r in MODELED_PERIODS_INDEX[end]],
-            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,1] == vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r] + vCAPCONTRSTOR_VdSOC_VRE_STOR[y,dfPeriodMap[r,:Rep_Period_Index]])
-
-        # Constraint 4: Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
+        # Constraint 3: Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
         # Initial storage = Final storage - change in storage inventory across representative period
         @constraint(EP, cVreStorVSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
             vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r] == EP[:vCAPRES_VS_VRE_STOR][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vCAPCONTRSTOR_VdSOC_VRE_STOR[y,dfPeriodMap[r,:Rep_Period_Index]])
 
-        # Constraint 5: Energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
+        # Constraint 4: Energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
         @constraint(EP, cSOCMinCapResLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX], EP[:vSOCw_VRE_STOR][y,r] >= vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r])
     end
 end
