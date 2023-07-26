@@ -240,11 +240,11 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	# Regulation requirements as a percentage of load and scheduled variable renewable energy production in each hour
 	# Reg up and down requirements are symmetric
 	@expression(EP, eRegReq[t=1:T], inputs["pReg_Req_Load"]*sum(inputs["pD"][t,z] for z=1:Z) +
-		inputs["pReg_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"], REG)))
+		inputs["pReg_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"])))
 	# Operating reserve up / contingency reserve requirements as ˚a percentage of load and scheduled variable renewable energy production in each hour
 	# and the largest single contingency (generator or transmission line outage)
 	@expression(EP, eRsvReq[t=1:T], inputs["pRsv_Req_Load"]*sum(inputs["pD"][t,z] for z=1:Z) +
-				inputs["pRsv_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"], RSV)))
+				inputs["pRsv_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"])))
 
 	# N-1 contingency requirement is considered only if Unit Commitment is being modeled
 	if UCommit >= 1 && (inputs["pDynamic_Contingency"] >= 1 || inputs["pStatic_Contingency"] > 0)
