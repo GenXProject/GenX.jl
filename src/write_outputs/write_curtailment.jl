@@ -21,10 +21,10 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         SOLAR_WIND = intersect(inputs["VS_SOLAR"],inputs["VS_WIND"])
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 		if !isempty(SOLAR)
-			curtailment[SOLAR, :] = scale_factor * (value.(EP[:eTotalCap_SOLAR])[SOLAR] .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :]).data) .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter]
+			curtailment[SOLAR, :] = scale_factor * (value.(EP[:eTotalCap_SOLAR][SOLAR]).data .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :]).data) .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0), :EtaInverter]
 		end
 		if !isempty(WIND)
-			curtailment[WIND, :] = scale_factor * (value.(EP[:eTotalCap_WIND][WIND]) .* inputs["pP_Max_Wind"][WIND, :] .- value.(EP[:vP_WIND][WIND, :]).data)
+			curtailment[WIND, :] = scale_factor * (value.(EP[:eTotalCap_WIND][WIND]).data .* inputs["pP_Max_Wind"][WIND, :] .- value.(EP[:vP_WIND][WIND, :]).data)
 		end
 		if !isempty(SOLAR_WIND)
 			curtailment[SOLAR_WIND, :] = scale_factor * ((value.(EP[:eTotalCap_SOLAR])[SOLAR_WIND].data 
