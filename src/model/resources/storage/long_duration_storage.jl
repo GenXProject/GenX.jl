@@ -142,12 +142,8 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 		# Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 		## Multiply storage build up term from prior period with corresponding weight
-		@constraint(EP, cVSoCBalLongDurationStorageInterior[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX[1:(end-1)]],
-						vCAPRES_socw[y,r+1] == vCAPRES_socw[y,r] + vCAPRES_dsoc[y,dfPeriodMap[r,:Rep_Period_Index]])
-
-		## Last period is linked to first period
-		@constraint(EP, cVSoCBalLongDurationStorageEnd[y in STOR_LONG_DURATION, r in [MODELED_PERIODS_INDEX[end]]],
-						vCAPRES_socw[y,1] == vCAPRES_socw[y,r] + vCAPRES_dsoc[y,dfPeriodMap[r,:Rep_Period_Index]])
+		@constraint(EP, cVSoCBalLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+						vCAPRES_socw[y,mod1(r+1, NPeriods)] == vCAPRES_socw[y,r] + vCAPRES_dsoc[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 		# Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
 		# Initial storage = Final storage - change in storage inventory across representative period
