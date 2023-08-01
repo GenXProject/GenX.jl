@@ -1,24 +1,81 @@
 @doc raw"""
 	configure_cplex(solver_settings_path::String)
 
-Reads user-specified solver settings from cplex\_settings.yml in the directory specified by the string solver\_settings\_path.
+Reads user-specified solver settings from `cplex_settings.yml` in the directory specified by the string `solver_settings_path`.
 
-Returns a MathOptInterface OptimizerWithAttributes CPLEX optimizer instance to be used in the GenX.generate_model() method.
+Returns a MathOptInterface OptimizerWithAttributes CPLEX optimizer instance.
 
-The CPLEX optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
+The optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
- - CPX\_PARAM\_EPRHS = 1e-6 (Constraint (primal) feasibility tolerances. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/EpRHS.html)
- - CPX\_PARAM\_EPOPT = 1e-4 (Dual feasibility tolerances. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/EpOpt.html)
- - CPX\_PARAM\_AGGFILL = 10 (Allowed fill during presolve aggregation. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/AggFill.html)
- - CPX\_PARAM\_PREDUAL = 0 (Decides whether presolve should pass the primal or dual linear programming problem to the LP optimization algorithm. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/PreDual.html)
- - CPX\_PARAM\_TILIM = 1e+75	(Limits total time solver. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/TiLim.html)
- - CPX\_PARAM\_EPGAP = 1e-4	(Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/EpGap.html)
- - CPX\_PARAM\_LPMETHOD = 0 (Algorithm used to solve continuous models (including MIP root relaxation). See https://www.ibm.com/support/knowledgecenter/de/SSSA5P_12.7.0/ilog.odms.cplex.help/CPLEX/Parameters/topics/LPMETHOD.html)
- - CPX\_PARAM\_BAREPCOMP = 1e-8 (Barrier convergence tolerance (determines when barrier terminates). See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/BarEpComp.html)
- - CPX\_PARAM\_NUMERICALEMPHASIS = 0 (Numerical precision emphasis. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/NumericalEmphasis.html)
- - CPX\_PARAM\_BAROBJRNG = 1e+75 (Sets the maximum absolute value of the objective function. See https://www.ibm.com/support/knowledgecenter/en/SSSA5P_12.5.1/ilog.odms.cplex.help/CPLEX/Parameters/topics/BarObjRng.html)
- - CPX\_PARAM\_SOLUTIONTYPE = 2 (Solution type for LP or QP. See https://www.ibm.com/support/knowledgecenter/hr/SSSA5P_12.8.0/ilog.odms.cplex.help/CPLEX/Parameters/topics/SolutionType.html)
+* `Feasib_Tol`,
 
+  sets [CPX\_PARAM\_EPRHS](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-solution-type-lp-qp).
+  Control the primal feasibility tolerance.
+  Default is `1e-6`.
+
+* `Optimal_Tol`,
+
+   sets [`CPX_PARAM_EPOPT`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-optimality-tolerance).
+   Control the optimality tolerance.
+   Default is `1e-4`.
+
+* `AggFill`,
+
+   sets [`CPX_PARAM_AGGFILL`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-preprocessing-aggregator-fill).
+   Control the allowed fill during presolve aggregation.
+   Default is `10`.
+
+* `PreDual`,
+
+  sets [`CPX_PARAM_PREDUAL`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-presolve-dual-setting).
+  Decides whether presolve should pass the primal or dual linear programming problem to the LP optimization algorithm.
+  Default is `0`.
+
+* `TimeLimit`,
+
+  sets [`CPX_PARAM_TILIM`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-optimizer-time-limit-in-seconds).
+  Limits total solver time.
+  Default is `1e+75`.
+
+* `MIPGap`,
+
+  sets [`CPX_PARAM_EPGAP`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-relative-mip-gap-tolerance)
+  Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise).
+  Default is `1e-3`.
+
+* `Method`,
+
+  sets [`CPX_PARAM_LPMETHOD`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=optimizers-using-parallel-in-component-libraries).
+  Algorithm used to solve continuous models (including MIP root relaxation)
+  Default is `0`.
+
+* `BarConvTol`,
+
+  sets [`CPX_PARAM_BAREPCOMP`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-convergence-tolerance-lp-qp-problems).
+  Barrier convergence tolerance (determines when barrier terminates).
+  Default is `1e-8`.
+
+* `NumericFocus`,
+
+  sets [`CPX_PARAM_NUMERICALEMPHASIS`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-numerical-precision-emphasis).
+  Numerical precision emphasis.
+  Default is `0`.
+
+* `BarObjRng`,
+
+  sets [`CPX_PARAM_BAROBJRNG`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-barrier-objective-range).
+  The maximum absolute value of the objective function.
+  Default is `1e+75`.
+
+* `SolutionType`,
+
+  sets [`CPX_PARAM_SOLUTIONTYPE`](https://www.ibm.com/docs/en/cofz/12.9.0?topic=parameters-solution-type-lp-qp).
+  Solution type for LP or QP.
+  Default is `2`.
+
+The optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
+
+Any other attributes in the settings file (which typically start with `CPX_PARAM_`) will also be passed to the solver.
 """
 function configure_cplex(solver_settings_path::String)
 
@@ -49,6 +106,7 @@ function configure_cplex(solver_settings_path::String)
          "TimeLimit" => "CPX_PARAM_TILIM",
          "MIPGap" => "CPX_PARAM_EPGAP",
          "Method" => "CPX_PARAM_LPMETHOD",
+         "Pre_Solve" => "CPX_PARAM_PREIND", # https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-presolve-switch
          "BarConvTol" => "CPX_PARAM_BAREPCOMP",
          "NumericFocus" => "CPX_PARAM_NUMERICALEMPHASIS",
          "BarObjRng" => "CPX_PARAM_BAROBJRNG",
