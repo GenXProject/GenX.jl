@@ -26,7 +26,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		end
 	end
 
-	capacity_constraint_dual = fill(NaN, size(inputs["RESOURCES"]))
+	capacity_constraint_dual = zeros(size(inputs["RESOURCES"]))
 	for y in dfGen[dfGen.Max_Cap_MW.>0, :R_ID]
 		capacity_constraint_dual[y] = dual.(EP[:cMaxCap][y])
 	end
@@ -91,7 +91,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 			Resource = "Total", Zone = "n/a",
 			StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 			NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
-			CapacityConstraintDual = NaN,
+			CapacityConstraintDual = "n/a",
 			StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),
 			NewEnergyCap = sum(dfCap[!,:NewEnergyCap]), EndEnergyCap = sum(dfCap[!,:EndEnergyCap]),
 			StartChargeCap = sum(dfCap[!,:StartChargeCap]), RetChargeCap = sum(dfCap[!,:RetChargeCap]),

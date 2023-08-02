@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Add output for dual of capacity constraint (#473)
+
 ## [0.3.6] - 2023-08-01
 
 ### Fixed
@@ -22,9 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Eliminate 'Axis contains one element' warning (seen when LDS is used) by combining two constraints (#496).
-
-### Added
-- Add output for dual of capacity constraint (#473)
 
 ## [0.3.5] - 2023-05-18
 
