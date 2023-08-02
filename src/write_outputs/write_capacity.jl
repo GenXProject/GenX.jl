@@ -27,8 +27,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	end
 
 	capacity_constraint_dual = zeros(size(inputs["RESOURCES"]))
-	for y in dfGen[dfGen.Max_Cap_MW.>0, :R_ID]
-		capacity_constraint_dual[y] = dual.(EP[:cMaxCap][y])
+	if :Max_Cap_MW in propertynames(dfGen)
+		for y in dfGen[dfGen.Max_Cap_MW.>0, :R_ID]
+			capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
+		end
 	end
 
 	capcharge = zeros(size(inputs["RESOURCES"]))
