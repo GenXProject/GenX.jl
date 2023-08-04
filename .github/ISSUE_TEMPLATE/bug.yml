@@ -31,7 +31,7 @@ body:
       description: Please copy and paste any relevant error messages output. This will be automatically formatted into code, so no need for backticks. (optional)
       render: shell
   - type: textarea
-    id: Additional context
+    id: additional-context
     attributes:
       label: Additional context
       description: Anything else that would help us understand or fix this (optional)
