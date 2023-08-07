@@ -2,35 +2,36 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
+Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file).
+Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameters affect the formulation of the model constraints and objective function.
+Computational performance related parameters affect the accuracy of the solution.
+Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses.
+Note that all settings parameters are case sensitive.
 
 ###### Table 1a: Summary of the Model settings parameters
 ---
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
 |**Model structure related**||
-|OperationWrapping | Select temporal resolution for operations constraints.|
-||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
-||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
-||0 = Use full input data as provided.|
-|TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
+|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results there.|
+||0 = Use the data in the main case folder; do not perform clustering.|
+|TimeDomainReductionFolder | Name of the folder where time domain reduced input data is stored.|
 |UCommit | Select technical resolution of of modeling thermal generators.|
 ||0 = no unit commitment.|
 ||1 = unit commitment with integer clustering.|
 ||2 = unit commitment with linearized clustering.|
 |NetworkExpansion | Flag for activating or deactivating inter-regional transmission expansion.|
 ||1 = active|
-||0 = modeling single zone or for multi-zone problems, inter regional transmission expansion is not allowed.|
+||0 = modeling single zone or for multi-zone problems in which inter regional transmission expansion is not allowed.|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
-||1 = linear|
-||>=2 = piece-wise quadratic|
+||1: linear|
+||>=2: piece-wise quadratic|
 |Reserves | Flag for modeling operating reserves .|
-||0 = no operating reserves |
-||1 regulation (primary) and spinning (secondary) reserves |
+||0 = No operating reserves considered. |
+||1 = Consider regulation (primary) and spinning (secondary) reserves. |
 |StorageLosses | Flag to account for storage related losses.|
-||0 = VRE and CO2 constraint DO NOT account for energy lost. |
-||1 = constraint DO account for energy lost. |
+||0 = VRE and CO2 constraints DO NOT account for energy lost. |
+||1 = constraints account for energy lost. |
 |**Policy related**|
 |EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
 || Default = 0 (No RPS or CES constraints).|
@@ -50,28 +51,31 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 || 1 = if one or more maximum technology capacity constraints are specified|
 || 0 = otherwise|
 |**Solution strategy and outputs**||
-|Solver | Solver name is not case sensitive (CPLEX, cplex, Gurobi, gurobi, Clp, clp). |
+|Solver | Specifies the solver name (This is not case sensitive i.e. CPLEX/cplex, Gurobi/gurobi, Clp/clp indicate the same solvers, respectively). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
-|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. |
+|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
-|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|WriteShadowPrices | Get the optimal values of dual variables of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
-
 |MethodofMorris | Method of Morris algorithm |
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
-|**Miscellaneous**|
+|**Miscellaneous**||
 |PrintModel | Flag for printing the model equations as .lp file.|
-||1= including the model equation as an output|
-||0 for the model equation not being included as an output|
+||1 = including the model equation as an output|
+||0 = the model equation won't be included as an output|
 
-Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`), which should be located in the current working directory (or to specify an alternative location, edit the `solver_settings_path` variable in your Run.jl file). Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. Note that appropriate solver settings are specific to each solver.
+Additionally, Solver related settings parameters are specified in the appropriate .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`),
+which should be located in the current working directory.
+Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the `src/configure_solver/` directory.
+To overwrite default settings, you can specify the below Solver specific settings.
+Settings are specific to each solver.
 
 ###### Table 1b: Summary of the Solver settings parameters
 ---
@@ -82,6 +86,7 @@ Additionally, Solver related settings parameters are specified in the appropriat
 || CPLEX: CPX\_PARAM\_LPMETHOD - Default = 0; See [link](https://www.ibm.com/docs/en/icos/20.1.0?topic=parameters-algorithm-continuous-linear-problems) for more specifications.|
 || Gurobi: Method - Default = -1; See [link](https://www.gurobi.com/documentation/8.1/refman/method.html) for more specifications.|
 || clp: SolveType - Default = 5; See [link](https://www.coin-or.org/Doxygen/Clp/classClpSolve.html) for more specifications.|
+|| HiGHS: Method - Default = "choose"; See [link](https://ergo-code.github.io/HiGHS/dev/options/definitions/)
 |BarConvTol | Convergence tolerance for barrier algorithm.|
 || CPLEX: CPX\_PARAM\_BAREPCOMP - Default = 1e-8; See [link](https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-convergence-tolerance-lp-qp-problems) for more specifications.|
 || Gurobi: BarConvTol - Default = 1e-8; See [link](https://www.gurobi.com/documentation/8.1/refman/barconvtol.html)link for more specifications.|
@@ -243,11 +248,9 @@ This file includes parameters to characterize model temporal resolution to appro
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
 |Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
-|**Settings-specific Columns**|
-|**OperationWrapping = 1**|
-|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations.|
-|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps).|
-|Sub\_Weights |Number of annual time steps (e.g. hours) represented by a given representative period. Length of this column is equal to the number of representative periods. Sum of the elements of this column should be equal to the total number of time steps in a model time horizon, defined in parameterWeightTotal (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
+|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations. This is always a single entry. For a full-year model, this is `1`.|
+|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps). This is always a single entry: all representative periods have the same length. For a full-year model, this entry is equal to the number of time steps.|
+|Sub\_Weights |Number of annual time steps (e.g. hours) represented by each timestep in a representative period. The length of this column is equal to the number of representative periods. The sum of the elements should be equal to the total number of time steps in a model time horizon (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
 
 
 
@@ -383,11 +386,10 @@ This file contains cost and performance parameters for various generators and ot
 
 Modeling grid operations for each hour of the year can be computationally expensive for models with many zones and resources. Time-domain reduction is often employed in capacity expansion models as a way to balance model spatial and temporal resolution as well as representation of dispatch, while ensuring reasonable computational times. GenX allows the option of performing time-domain reduction on the user supplied time-series input data to produce a representative time series at the desired level of temporal resolution. The below table summarizes the list of parameters to be specified by the user to perform the time domain reduction implemented in GenX. These parameters are passed to GenX via the YAML file `time_domain_reduction_settings.yml`.
 
-###### Table 7: Structure of the Load\_data.csv file
+###### Table 7: Structure of the time_domain_reduction.yml file
 ---
-|**Column Name** | **Description**|
+|**Key** | **Description**|
 | :------------ | :-----------|
-|**TimeDomainReduction = 1**||
 |Timesteps\_per\_period | The number of timesteps (e.g., hours) in each representative period (i.e. 168 for weeks, 24 for days, 72 for three-day periods, etc).|
 |UseExtremePeriods | 1 = Include outliers (by performance or load/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to load profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most load across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
 ||0 = Do not include extreme periods.|

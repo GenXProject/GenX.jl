@@ -1,4 +1,3 @@
-# GenX
 # GenX 
 [![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)
 [![Coverage Status](https://coveralls.io/repos/github/GenXProject/GenX/badge.svg?branch=main)](https://coveralls.io/github/GenXProject/GenX?branch=main)
@@ -42,7 +41,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX currently exists in version 0.3.4 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
+GenX currently exists in version 0.3.6 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
 There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
@@ -70,6 +69,8 @@ Interested users may also want to browse through [prior publications](https://en
 1. Download or clone the GenX repository on your machine.
 For this tutorial it will be assumed to be within your home directory: `/home/youruser/GenX`.
 ### Creating the Julia environment and installing dependencies
+You could either start from a default terminal or a Julia REPL terminal. 
+#### For a default terminal:
 2. Start a terminal and navigate into the `GenX` folder.
 3. Type `julia --project=.` to start an instance of the `julia` kernel with the `project` set to the current folder.
 The `.` indicates the current folder. On Windows the location of Julia can also be specified as e.g., 'C:\julia-1.6.0\bin\julia.exe --project=.'
@@ -98,6 +99,19 @@ type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia
 *Figure 2. Creating the Julia environment and installing dependencies from Project.toml file from inside the GenX folder: Steps 6-8*
 
 After the script runs to completion, results will be written to a folder called “Results”, located in the same directory as `Run.jl`.
+
+#### For a Julia REPL terminal:
+2. Open your desired version of Julia
+3. In the Julia terminal, enter pkg manager mode by typing ]
+Activate the project by typing activate /path/to/GenX
+4. Type `instantiate` from the `(GenX) pkg` prompt.
+   On Windows there is an issue with the prepopulated MUMPS_seq_jll v5.5.1 that prevents compilation of the solvers. To avoid this issue type 'add MUMPS_seq_jll@5.4.1' after running instantiate.
+5. Type `st` to check that the dependecies have been installed. If there is no error, it has been successful.
+6. Type the back key to come back to the `julia>` prompt.
+7. Since we have already started Julia, we can run a case by executing the command `julia> include(“<path to your case>/Run.jl”)`. 
+
+For example, in order to run the OneZone case within the `Example_Systems/SmallNewEngland` folder,
+type `include("Example_Systems/SmallNewEngland/OneZone/Run.jl")` from the `julia>` prompt.
 
 
 ### Running a case

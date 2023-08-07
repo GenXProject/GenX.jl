@@ -93,7 +93,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCTotal += eCVarFlex_in
 		end
 
-		if setup["UCommit"] >= 1
+		if setup["UCommit"] >= 1 && !isempty(COMMIT_ZONE)
 			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:]))
 			tempCStart += eCStart
 			tempCTotal += eCStart

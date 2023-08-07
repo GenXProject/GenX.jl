@@ -12,7 +12,7 @@ Function for the entry-point for writing the different output files. From here, 
 """
 function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
-	if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
+	if setup["OverwriteResults"] == 1
 		# Overwrite existing results if dir exists
 		# This is the default behaviour when there is no flag, to avoid breaking existing code
 		if !(isdir(path))
@@ -108,7 +108,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 
 	# Output additional variables related inter-period energy transfer via storage
-	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_LONG_DURATION"])
+	representative_periods = inputs["REP_PERIOD"]
+	if representative_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
 		elapsed_time_lds_init = @elapsed write_opwrap_lds_stor_init(path, inputs, setup, EP)
 		println("Time elapsed for writing lds init is")
 		println(elapsed_time_lds_init)
