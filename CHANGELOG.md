@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add output for dual of capacity constraint (#473)
+- Add PR template (#516)
 
 ## [0.3.6] - 2023-08-01
 
