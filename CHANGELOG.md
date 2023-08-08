@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add output for dual of capacity constraint (#473)
 - Add PR template (#516)
+- Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
