@@ -90,4 +90,11 @@ let
     e = check_resource(multiple_bad_resources)
     @test length(e) > 3
 
+    function test_validate_bad(resources)
+        disable_logging(Logging.Error)
+        @test_throws ErrorException GenX.validate_resources(resources)
+    end
+
+    test_validate_bad(multiple_bad_resources)
+
 end

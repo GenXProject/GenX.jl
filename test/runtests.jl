@@ -1,4 +1,5 @@
 using GenX
+using Logging
 using Test
 
 @testset "Simple operation" begin
