@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add output for dual of capacity constraint (#473)
 - Add PR template (#516)
 
+### Fixed
+- Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
+  Previously these plants had no resource flag set, and so they did not contribute to the power balance.
+  As these plants are now useful, the objective in these cases is slightly lower.
+
 ## [0.3.6] - 2023-08-01
 
 ### Fixed
