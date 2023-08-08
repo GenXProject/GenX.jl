@@ -55,7 +55,7 @@ function check_longdurationstorage_applicability(r::GenXResource)
     statuses = check_for_flag_set.(applicable_resources)
 
     if count(statuses) == 0
-        e = string("Resource ", resource_name(d), " has :LDS = ", lds_value, ".\n",
+        e = string("Resource ", resource_name(r), " has :LDS = ", lds_value, ".\n",
                    "This setting is valid only for resources where the type is one of $applicable_resources.")
         push!(error_strings, e)
     end
