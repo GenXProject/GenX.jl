@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+## [0.3.6] - 2023-08-01
+
+### Fixed
+
+- Order of slack policy constraint declarations (#464)
+- Sign error in the Maximum Capacity Requirement slack constraint term (#461)
+- Remove outdated HiGHS setting `simplex_dualise_strategy` (#489)
+- Fix bug in LDES outputs (#472)
+- Updated README with new instructions for running GenX through Julia REPL terminal (#492)
+- Fix factor of 0.5 when writing out transmission losses. (#480)
+- Fix summation error when a set of hours is empty (in thermal_commit.jl).
+
+### Changed
+
+- Eliminate 'Axis contains one element' warning (seen when LDS is used) by combining two constraints (#496).
+
 ## [0.3.5] - 2023-05-18
 
 ### Added
@@ -17,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Added ability for CPLEX handle the Pre_Solve key (#467).
 - run_timedomainreduction did not support multi-stage problems (#441).
 - Not having a changelog (#423).
 

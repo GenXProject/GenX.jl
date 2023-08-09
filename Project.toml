@@ -1,7 +1,7 @@
 name = "GenX"
 uuid = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
 authors = ["Jesse Jenkins", "Nestor Sepulveda", "Dharik Mallapragada", "Aaron Schwartz", "Neha Patankar", "Qingyu Xu", "Jack Morris", "Sambuddha Chakrabarti"]
-version = "0.3.5"
+version = "0.3.6"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -13,6 +13,7 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

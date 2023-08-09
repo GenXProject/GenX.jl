@@ -32,7 +32,6 @@ function time_domain_reduced_files_exist(tdrpath)
 end
 
 function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
-    inputs_path = case
     settings_path = get_settings_path(case)
 
     ### Cluster time series inputs if necessary and if specified by the user
@@ -41,7 +40,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
     if mysetup["TimeDomainReduction"] == 1
         if !time_domain_reduced_files_exist(TDRpath)
             println("Clustering Time Series Data (Grouped)...")
-            cluster_inputs(inputs_path, settings_path, mysetup)
+            cluster_inputs(case, settings_path, mysetup)
         else
             println("Time Series Data Already Clustered.")
         end
@@ -80,7 +79,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
 
     if mysetup["MethodofMorris"] == 1
         println("Starting Global sensitivity analysis with Method of Morris")
-        morris(EP, inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        morris(EP, case, mysetup, myinputs, outputs_path, OPTIMIZER)
     end
 end
 
