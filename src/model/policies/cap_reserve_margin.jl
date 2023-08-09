@@ -5,9 +5,8 @@ Instead of modeling capacity reserve margin requirement (a.k.a. capacity market 
 	constraint for subsets of zones, $z \in \mathcal{Z}^{CRM}_{p}$, and each subset stands for a locational deliverability area (LDA) or a reserve 
 	sharing group.  For thermal resources, the available capacity is the total capacity in the LDA derated by the outage rate, $\epsilon_{y,z,p}^{CRM}$. 
 	For variable renewable energy ($y \in \mathcal{VRE}$), the available capacity is the maximum discharge potential in time step $t$ derated by 
-	the derating factor. For standalone storage and co-located VRE and storage resources ($y \in \mathcal{O} \cup \mathcal{VS}$) the available capacity is the net injection into the transmission network plus the net 
-	virtual injection corresponding to charge held in reserve, derated by the derating factor. For information on how each component contributes to the capacity 
-    reserve margin formulation for co-located VRE and storage resources, see ```vre_stor_capres!()```. For flexibile demand resources ($y \in \mathcal{DF}$), 
+	the derating factor. For storage resources ($y \in \mathcal{O}$) the available capacity is the net injection into the transmission network plus the net 
+	virtual injection corresponding to charge held in reserve, derated by the derating factor. For flexibile demand resources ($y \in \mathcal{DF}$), 
 	the available capacity is the net injection into the transmission network in time step $t$ derated by the derating factor, also stored in the parameter, 
 	$\epsilon_{y,z,p}^{CRM}$. If the imported capacity is eligible to provide capacity to the CRM constraint, the inbound powerflow on all lines $\mathcal{L}_{p}^{in}$ 
 	in time step $t$ will be derated to form the available capacity from outside of the LDA. The reverse is true as well: the outbound derated powerflow 
@@ -22,12 +21,6 @@ Instead of modeling capacity reserve margin requirement (a.k.a. capacity market 
 \begin{aligned}
 	& \sum_{z  \in \mathcal{Z}^{CRM}_{p}} \Big( \sum_{y \in \mathcal{H}} \epsilon_{y,z,p}^{CRM} \times \Delta^{\text{total}}_{y,z} + \sum_{y \in \mathcal{VRE}} \epsilon_{y,z,p}^{CRM} \times \rho^{max}_{y,z,t} \\
 	& + \sum_{y \in \mathcal{O}} \epsilon_{y,z,p}^{CRM} \times \left(\Theta_{y,z,t} + \Theta^{CRM}_{o,z,t} - \Pi^{CRM}_{o,z,t} - \Pi_{y,z,t} \right) + \sum_{y \in \mathcal{DF}} \epsilon_{y,z,p}^{CRM} \times \left(\Pi_{y,z,t} - \Theta_{y,z,t} \right) \\
-	& + \sum_{y \in \mathcal{VS}^{pv}} (\epsilon_{y,z,p}^{CRM} \times \eta^{inverter}_{y,z} \times \rho^{max,pv}_{y,z,t} \times \Delta^{total,pv}_{y,z}) \\
-	& + \sum_{y \in \mathcal{VS}^{wind}} (\epsilon_{y,z,p}^{CRM} \times \rho^{max,wind}_{y,z,t} \times \Delta^{total,wind}_{y,z}) \\
-    & + \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,dis}} (\epsilon_{y,z,p}^{CRM} \times \eta^{inverter}_{y,z} \times (\Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t})) \\
-    & + \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,dis}} (\epsilon_{y,z,p}^{CRM} \times (\Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t})) \\
-    & - \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,cha}} (\epsilon_{y,z,p}^{CRM} \times \frac{\Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t}}{\eta^{inverter}_{y,z}}) \\
-    & - \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,cha}} (\epsilon_{y,z,p}^{CRM} \times (\Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t})) \\
 	& + \sum_{l \in \mathcal{L}_{p}^{in}} \epsilon_{y,z,p}^{CRM} \times \Phi_{l,t} -  \sum_{l \in \mathcal{L}_{p}^{out}} \epsilon_{y,z,p}^{CRM} \times \Phi_{l,t}
    	+  \sum_{s \geq 2} \Lambda_{s,t,z}  \Big) \\
    	& \geq \sum_{z  \in \mathcal{Z}^{CRM}_{p}} \left( \left(1 + RM_{z,p}^{CRM} \right) \times D_{z,t} \right)  \hspace{1 cm}  \forall t \in \mathcal{T}, \forall p\in \mathcal{P}^{CRM}
