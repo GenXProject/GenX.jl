@@ -88,7 +88,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	createemptyexpression(EP, :ePowerBalance, T, Z)
+	createemptyexpression!(EP, :ePowerBalance, T, Z)
 
 	# Initialize Objective Function Expression
 	temp = AffExpr(0.0)
@@ -96,23 +96,23 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 
 
-	createemptyexpression(EP, :eGenerationByZone, Z, T)
+	createemptyexpression!(EP, :eGenerationByZone, Z, T)
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
-		createemptyexpression(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
+		createemptyexpression!(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
 	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
-		createemptyexpression(EP, :eESR, inputs["nESR"])
+		createemptyexpression!(EP, :eESR, inputs["nESR"])
 	end
 
 	if setup["MinCapReq"] == 1
-		createemptyexpression(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
+		createemptyexpression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
 	end
 
 	if setup["MaxCapReq"] == 1
-		createemptyexpression(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
+		createemptyexpression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
 	end
 
 
@@ -160,7 +160,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
-	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+	if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
 		hydro_inter_period_linkage!(EP, inputs)
 	end
 
@@ -229,24 +229,24 @@ end
 
 
 
-function createemptyexpression(EP::Model, exprname::Symbol, dim1::Int64)
+function createemptyexpression!(EP::Model, exprname::Symbol, dim1::Int64)
 	temp = zeros(AffExpr, dim1)
 
 	EP[exprname] = temp
 end
 
-function createemptyexpression(EP::Model, exprname::Symbol, dim1::Int64, dim2::Int64)
+function createemptyexpression!(EP::Model, exprname::Symbol, dim1::Int64, dim2::Int64)
 	temp = zeros(AffExpr, dim1, dim2)
 
 	EP[exprname] = temp
 end
 
-function createemptyexpression(EP::Model, exprname::Symbol, dims::NTuple{N, Int64}) where N
+function createemptyexpression!(EP::Model, exprname::Symbol, dims::NTuple{N, Int64}) where N
 	EP[exprname] = zeros(AffExpr, dims)
 end
 
 
-function createemptyexpression(EP::Model, exprname::Symbol, dims::Vector{Int64})
+function createemptyexpression!(EP::Model, exprname::Symbol, dims::Vector{Int64})
 	# The version using tuples is faster
 
 	EP[exprname] = zeros(AffExpr, dims...)
