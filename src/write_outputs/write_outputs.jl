@@ -12,7 +12,7 @@ Function for the entry-point for writing the different output files. From here, 
 """
 function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
-	if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
+	if setup["OverwriteResults"] == 1
 		# Overwrite existing results if dir exists
 		# This is the default behaviour when there is no flag, to avoid breaking existing code
 		if !(isdir(path))

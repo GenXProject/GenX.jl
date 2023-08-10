@@ -28,28 +28,20 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	Z = inputs["Z"]   # Number of zones
 
 	inputs["omega"] = zeros(Float64, T) # weights associated with operational sub-period in the model - sum of weight = 8760
-	inputs["REP_PERIOD"] = 1   # Number of periods initialized
-	inputs["H"] = T   # Number of sub-periods within each period
+    # Weights for each period - assumed same weights for each sub-period within a period
+    inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
 
-	if setup["OperationWrapping"]==0 # Modeling full year chronologically at hourly resolution
-		# Simple scaling factor for number of subperiods
-		inputs["omega"] .= 1 #changes all rows of inputs["omega"] from 0.0 to 1.0
-	elseif setup["OperationWrapping"]==1
-		# Weights for each period - assumed same weights for each sub-period within a period
-		inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
+    # Total number of periods and subperiods
+    inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
+    inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
 
-		# Total number of periods and subperiods
-		inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
-		inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
-
-		# Creating sub-period weights from weekly weights
-		for w in 1:inputs["REP_PERIOD"]
-			for h in 1:inputs["H"]
-				t = inputs["H"]*(w-1)+h
-				inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
-			end
-		end
-	end
+    # Creating sub-period weights from weekly weights
+    for w in 1:inputs["REP_PERIOD"]
+        for h in 1:inputs["H"]
+            t = inputs["H"]*(w-1)+h
+            inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
+        end
+    end
 
 	# Create time set steps indicies
 	inputs["hours_per_subperiod"] = div.(T,inputs["REP_PERIOD"]) # total number of hours per subperiod
@@ -142,3 +134,30 @@ function validatetimebasis(inputs::Dict)
         end
     end
 end
+
+
+@doc raw"""
+    prevent_doubled_timedomainreduction(path::AbstractString)
+
+This function prevents TimeDomainReduction from running on a case which
+already has more than one Representative Period or has more than one Sub_Weight specified.
+"""
+function prevent_doubled_timedomainreduction(path::AbstractString)
+
+    filename = "Load_data.csv"
+    load_in = load_dataframe(joinpath(path, filename))
+    as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
+    representative_periods = convert(Int16, as_vector(:Rep_Periods)[1])
+    sub_weights = as_vector(:Sub_Weights)
+    num_sub_weights = length(sub_weights)
+    if representative_periods != 1 || num_sub_weights > 1
+        error("""Critical error in time series construction:
+              Time domain reduction (clustering) is being called for,
+              on data which may already be clustered. In demand_data.csv [or load_data.csv],
+              the number of representative periods (:Rep_Period) is ($representative_periods)
+              and the number of subperiod weight entries (:Sub_Weights) is ($num_sub_weights).
+              Each of these must be 1: only a single period can have TimeDomainReduction applied.""")
+    end
+
+end
+
