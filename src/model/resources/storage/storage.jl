@@ -149,8 +149,8 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 		# add_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
 
 
-		for res=1:inputs["NCapacityReserveMargin"]
-			for t=1:T
+		for t=1:T
+			for res=1:inputs["NCapacityReserveMargin"]
 				add_to_expression!(EP[:eCapResMarBalance][res, t], eCapResMarBalanceStor[res, t])
 			end
 		end

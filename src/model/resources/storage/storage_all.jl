@@ -54,8 +54,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 		sum(EP[:vP][y,t]-EP[:vCHARGE][y,t] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)))
 
 	
-	for t=1:T
-		for z=1:Z
+	for z=1:Z
+		for t=1:T
 			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceStor[t, z])
 		end
 	end

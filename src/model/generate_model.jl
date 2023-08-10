@@ -225,29 +225,3 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
     return EP
 end
-
-
-
-
-function createemptyexpression!(EP::Model, exprname::Symbol, dim1::Int64)
-	temp = zeros(AffExpr, dim1)
-
-	EP[exprname] = temp
-end
-
-function createemptyexpression!(EP::Model, exprname::Symbol, dim1::Int64, dim2::Int64)
-	temp = zeros(AffExpr, dim1, dim2)
-
-	EP[exprname] = temp
-end
-
-function createemptyexpression!(EP::Model, exprname::Symbol, dims::NTuple{N, Int64}) where N
-	EP[exprname] = zeros(AffExpr, dims)
-end
-
-
-function createemptyexpression!(EP::Model, exprname::Symbol, dims::Vector{Int64})
-	# The version using tuples is faster
-
-	EP[exprname] = zeros(AffExpr, dims...)
-end

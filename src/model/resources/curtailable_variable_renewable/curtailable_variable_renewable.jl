@@ -39,8 +39,8 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
 	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
-	for t=1:T
-		for z=1:Z
+	for z=1:Z
+		for t=1:T
 			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceDisp[t, z])
 		end
 	end
