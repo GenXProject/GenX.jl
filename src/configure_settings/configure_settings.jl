@@ -42,10 +42,6 @@ function validate_settings!(settings::Dict{Any,Any})
     # Check for any settings combinations that are not allowed.
     # If we find any then make a response and issue a note to the user.
 
-    ###### HARD-CODED COMBINATIONS OF SETTING COMBINATIONS WHICH CAUSE PROBLEMS ######
-
-    # If OperationWrapping = 1, then TimeDomainReduction must be 1.
-    # Will be fixed by removing OperationWrapping in future versions.
     if "OperationWrapping" in keys(settings)
         @warn """The behavior of the TimeDomainReduction and OperationWrapping
         settings have changed recently. OperationWrapping has been removed,
