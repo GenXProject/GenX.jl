@@ -139,7 +139,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), eTotalCFix)
+		add_to_expression!(EP[:eObj], 1/inputs["OPEXMULT"], eTotalCFix)
 	else
 		add_to_expression!(EP[:eObj], eTotalCFix)
 	end
@@ -166,11 +166,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] >= dfGen[y, :Min_Cap_MW])
 
 
-	x = inputs["NumberOfMinCapReqs"]
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:x], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
-		for i=1:x
+		num_mincapreqs = inputs["NumberOfMinCapReqs"]
+
+		@expression(EP, eMinCapResInvest[mincap = 1:num_mincapreqs], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
+		for i=1:num_mincapreqs
 			add_to_expression!(EP[:eMinCapRes][i], eMinCapResInvest[i])
 		end
 
@@ -179,10 +180,10 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if setup["MaxCapReq"] == 1
 		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
 		
-		y = inputs["NumberOfMaxCapReqs"]
+		num_maxcapreqs = inputs["NumberOfMaxCapReqs"]
 
 
-		for i=1:y
+		for i=1:num_maxcapreqs
 			add_to_expression!(EP[:eMaxCapRes][i], eMaxCapResInvest[i])
 		end
 	end
