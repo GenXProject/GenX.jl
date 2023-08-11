@@ -44,13 +44,14 @@ Note that the generator-side rate-based constraint can be used to represent a fe
 """
 function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 
-	println("C02 Policies Module")
+	println("CO2 Policies Module")
 
 	dfGen = inputs["dfGen"]
 	SEG = inputs["SEG"]  # Number of lines
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
+	THERM_ALL = inputs["THERM_ALL"]
 
 	### Variable ###
 	# if input files are present, add CO2 cap slack variables
@@ -93,6 +94,16 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) -
 			vCO2Cap_slack[cap] <=
 			sum(inputs["dfMaxCO2Rate"][z,cap] * inputs["omega"][t] * EP[:eGenerationByZone][z,t] for t=1:T, z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
+		)
+
+	## Generation + Rate-based at the resource level: Emissions constraint in terms of rate (tons/MWh)
+	elseif (setup["CO2Cap"]==4)
+		@constraint(EP, cCO2Emissions_resource[y in THERM_ALL, t = 1:T], 
+            EP[:eEmissionsByPlant][y, t] <= EP[:vP][y, t] * dfGen[y, :CO2_emis_limit_ton_per_MWh]
+		)
+		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
+			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) -
+			vCO2Cap_slack[cap] >= 0
 		)
 	end 
 

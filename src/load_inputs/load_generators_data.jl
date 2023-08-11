@@ -64,7 +64,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	if !("RETRO" in names(gen_in))
 		gen_in[!, "RETRO"] = zero(gen_in[!, "R_ID"])
 	end
-		
+
 	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
 
 	# Set of thermal generator resources
@@ -132,7 +132,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 		inputs_gen["RETROFIT_INV_CAP_COSTS"] = [ [ inv_cap[i][y] for i in 1:max_retro_sources if inv_cap[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (capacity $/MWyr) of each retrofit by source
 	end
-
+	println("looks good from here!")
     # See documentation for descriptions of each column
     # Generally, these scalings converts energy and power units from MW to GW
     # and $/MW to $M/GW. Both are done by dividing the values by 1000.
