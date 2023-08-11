@@ -206,19 +206,14 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
 		-eLosses_By_Zone[z,t])
 
-	for z=1:Z
-		for t=1:T
-			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceLossesByZone[t, z])
-			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceNetExportFlows[t, z])
-		end
-	end
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceLossesByZone)
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
 		if Z > 1 
 			@expression(EP, eCapResMarBalanceTrans[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L))
-			add_to_expression!(EP[:eCapResMarBalance], -eCapResMarBalanceTrans)
-
+			add_similar_to_expression!(EP[:eCapResMarBalance], -eCapResMarBalanceTrans)
 		end
 	end
 
@@ -336,11 +331,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     if EnergyShareRequirement >= 1 && IncludeLossesInESR ==1
         @expression(EP, eESRTran[ESR=1:inputs["nESR"]],
                     sum(inputs["dfESR"][z,ESR]*sum(inputs["omega"][t]*EP[:eLosses_By_Zone][z,t] for t in 1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-		for i=1:inputs["nESR"]
-			add_to_expression!(EP[:eESR][i], -eESRTran[i])
-		end
-
-
+		add_similar_to_expression!(EP[:eESR], -eESRTran)
 	end
-
 end

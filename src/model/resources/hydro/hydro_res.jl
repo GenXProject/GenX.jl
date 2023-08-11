@@ -95,14 +95,14 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Power Balance Expressions ##
 	@expression(EP, ePowerBalanceHydroRes[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
-
-	add_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroRes)
+		sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[(dfGen[!,:Zone].==z),:R_ID]))
+	)
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroRes)
 
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
 		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:vP][y,t]  for y in HYDRO_RES))
-		add_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
+		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
 	end
 
 	### Constratints ###
@@ -144,7 +144,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
 		sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
-	add_to_expression!(EP[:eGenerationByZone], eGenerationByHydroRes)
+	add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByHydroRes)
 
 end
 

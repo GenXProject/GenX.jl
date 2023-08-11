@@ -21,7 +21,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	# if input files are present, add capacity reserve margin slack variables
 	if haskey(inputs, "dfCapRes_slack")
 		@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
-		add_to_expression!(EP[:eCapResMarBalance], vCapResSlack)
+		add_similar_to_expression!(EP[:eCapResMarBalance], vCapResSlack)
 
 		@expression(EP, eCapResSlack_Year[res=1:NCRM], sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
 		@expression(EP, eCCapResSlack[res=1:NCRM], inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])

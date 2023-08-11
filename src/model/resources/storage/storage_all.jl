@@ -51,14 +51,9 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Term to represent net dispatch from storage in any period
 	@expression(EP, ePowerBalanceStor[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t]-EP[:vCHARGE][y,t] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)))
-
-	
-	for z=1:Z
-		for t=1:T
-			add_to_expression!(EP[:ePowerBalance][t, z], ePowerBalanceStor[t, z])
-		end
-	end
+		sum(EP[:vP][y,t]-EP[:vCHARGE][y,t] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
+	)
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
 	### Constraints ###
 
