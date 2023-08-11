@@ -51,3 +51,75 @@ function add_similar_to_expression!(expr1::Array{AffExpr, dims}, expr2::Array{Af
     end
     return nothing
 end
+
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::Array{GenericAffExpr{C,T}, dims}) where {C,T,dims}
+    # Check that both expr1 and expr2 have the same dimensions
+    if size(expr1) != size(expr2)
+        error("Both expressions must have the same dimensions")
+    end
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2[i])
+    end
+    return nothing
+end
+
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::Array{AbstractJuMPScalar, dims}) where {C,T,dims}
+    # Check that both expr1 and expr2 have the same dimensions
+    if size(expr1) != size(expr2)
+        error("Both expressions must have the same dimensions")
+    end
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2[i])
+    end
+    return nothing
+end
+
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::Array{VariableRef, dims}) where {C,T,dims}
+    # Check that both expr1 and expr2 have the same dimensions
+    if size(expr1) != size(expr2)
+        error("Both expressions must have the same dimensions")
+    end
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2[i])
+    end
+    return nothing
+end
+
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::Array{GenericVariableRef{T}, dims}) where {C,T,dims}
+    # Check that both expr1 and expr2 have the same dimensions
+    if size(expr1) != size(expr2)
+        error("Both expressions must have the same dimensions")
+    end
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2[i])
+    end
+    return nothing
+end
+
+function add_term_to_expression!(expr1::Array{AffExpr, dims}, expr2::AffExpr) where dims
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2)
+    end
+    return nothing
+end
+
+function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::AbstractJuMPScalar) where {C,T,dims}
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2)
+    end
+    return nothing
+end
+
+function add_term_to_expression!(expr1::Array{AffExpr, dims}, expr2::VariableRef) where dims
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2)
+    end
+    return nothing
+end
+
+function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::GenericVariableRef{T}) where {C,T,dims}
+    for i::Int64 in eachindex(IndexLinear(), expr1)::Base.OneTo{Int64}
+        add_to_expression!(expr1[i], expr2)
+    end
+    return nothing
+end
