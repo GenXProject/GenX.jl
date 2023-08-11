@@ -3,7 +3,7 @@
 ##
 ## description: Writes results to multiple .csv output files in path directory
 ##
-## returns: n/a
+## returns: path directory
 ################################################################################
 @doc raw"""
 	write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
@@ -16,12 +16,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		# Overwrite existing results if dir exists
 		# This is the default behaviour when there is no flag, to avoid breaking existing code
 		if !(isdir(path))
-		mkdir(path)
+		mkpath(path)
 		end
 	else
 		# Find closest unused ouput directory name and create it
 		path = choose_output_dir(path)
-		mkdir(path)
+		mkpath(path)
 	end
 
 	# https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
@@ -175,5 +175,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	end
 	## Print confirmation
 	println("Wrote outputs to $path")
+
+	return path
 
 end # END output()

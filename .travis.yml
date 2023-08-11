@@ -6,16 +6,13 @@ julia:
   - 1.6
   - 1.7
   - 1.8
-  #- 1.9
-  - nightly
-coveralls: true
+  - 1.9
 branches:
   only:
     - main
     - gh-pages
 os:
   - linux
-  #- osx
 arch:
   - x64
 cache:
@@ -23,8 +20,6 @@ cache:
     - ~/.julia/artifacts
 jobs:
   fast_finish: true
-  allow_failures:
-   # - julia: nightly
   include:
     - stage: Documentation
       julia: 1.6
@@ -39,17 +34,3 @@ jobs:
           doctest(GenX)
           include("docs/make.jl")'
       after_success: skip
-after_success:
-  - |
-    julia -e '
-      using Pkg
-      Pkg.add("Coverage")
-      using Coverage
-      Codecov.submit(process_folder())'
-  - |
-    julia -e '
-      using Pkg
-      Pkg.add("Coverage")
-      using Coverage
-      Coveralls.submit(process_folder())'
-#install: travis_wait 30 mvn install
