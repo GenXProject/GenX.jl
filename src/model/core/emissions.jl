@@ -5,7 +5,7 @@ This function creates expression to add the CO2 emissions by plants in each zone
 """
 function emissions!(EP::Model, inputs::Dict)
 
-	println("Emissions Module (for CO2 Policy modularization")
+	println("Emissions Module (for CO2 Policy modularization)")
 
 	dfGen = inputs["dfGen"]
 
