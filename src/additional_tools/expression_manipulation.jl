@@ -1,29 +1,33 @@
 function createemptyexpression!(EP::Model, exprname::Symbol, dim1::Int64)
-    EP[exprname] = Vector{AffExpr}(undef, dim1)
-    for i=1:dim1
-        EP[exprname][i] = AffExpr(0.0)
+    temp = Vector{AffExpr}(undef, dim1)
+    for i=1:dim1::Int64
+        temp[i] = AffExpr(0.0)
     end
+    EP[exprname] = temp
 end
 
 function createemptyexpression!(EP::Model, exprname::Symbol, dim1::Int64, dim2::Int64)
-    EP[exprname] = Matrix{AffExpr}(undef, (dim1, dim2))
+    temp = Matrix{AffExpr}(undef, (dim1, dim2))
     for j=1:dim2
         for i=1:dim1
-            EP[exprname][i,j] = AffExpr(0.0)
+            temp[i,j] = AffExpr(0.0)
         end
     end
+    EP[exprname] = temp
 end
 
 function createemptyexpression!(EP::Model, exprname::Symbol, dims::NTuple{N, Int64}) where N
-    EP[exprname] = Array{AffExpr}(undef, dims)
-    fill_with_zeros!(EP[exprname])
+    temp = Array{AffExpr}(undef, dims)
+    fill_with_zeros!(temp)
+    EP[exprname] = temp
     return nothing
 end
 
 function createemptyexpression!(EP::Model, exprname::Symbol, dims::Vector{Int64})
     # The version using tuples is slightly less memory
-    EP[exprname] = Array{AffExpr}(undef, dims...)
-    fill_with_zeros!(EP[exprname])
+    temp = Array{AffExpr}(undef, dims...)
+    fill_with_zeros!(temp)
+    EP[exprname] = temp
     return nothing
 end
 
