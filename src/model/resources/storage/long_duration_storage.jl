@@ -75,7 +75,6 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 	REP_PERIOD = inputs["REP_PERIOD"]     # Number of representative periods
 
 	STOR_LONG_DURATION = inputs["STOR_LONG_DURATION"]
-	START_SUBPERIODS = inputs["START_SUBPERIODS"]
 
 	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
