@@ -12,6 +12,7 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 
@@ -21,10 +22,15 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Storage discharge and charge power (and reserve contribution) related constraints for symmetric storage resources:
 	if Reserves == 1
-		storage_asymmetric_reserves!(EP, inputs)
+		storage_asymmetric_reserves!(EP, inputs, setup)
 	else
-		# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
-		@constraint(EP, [y in STOR_ASYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] + EP[:vCAPRES_charge][y,t] <= EP[:eTotalCapCharge][y])
+		if CapacityReserveMargin > 0
+			# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
+			@constraint(EP, [y in STOR_ASYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] + EP[:vCAPRES_charge][y,t] <= EP[:eTotalCapCharge][y])
+		else
+			# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
+			@constraint(EP, [y in STOR_ASYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] <= EP[:eTotalCapCharge][y])
+		end
 	end
 
 end
@@ -34,10 +40,11 @@ end
 
 Sets up variables and constraints specific to storage resources with asymmetric charge and discharge capacities when reserves are modeled. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-function storage_asymmetric_reserves!(EP::Model, inputs::Dict)
+function storage_asymmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
 
@@ -45,13 +52,25 @@ function storage_asymmetric_reserves!(EP::Model, inputs::Dict)
 	STOR_ASYM_NO_REG = setdiff(STOR_ASYMMETRIC, STOR_ASYM_REG) # Set of asymmetric storage resources without REG reserves
 
 	if !isempty(STOR_ASYM_REG)
-		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-		# Maximum charging rate plus contribution to regulation down must be less than charge power rating
-		@constraint(EP, [y in STOR_ASYM_REG, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCapCharge][y])
+		if CapacityReserveMargin > 0
+			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
+			# Maximum charging rate plus contribution to regulation down must be less than charge power rating
+			@constraint(EP, [y in STOR_ASYM_REG, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCapCharge][y])
+		else
+			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
+			# Maximum charging rate plus contribution to regulation down must be less than charge power rating
+			@constraint(EP, [y in STOR_ASYM_REG, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]<= EP[:eTotalCapCharge][y])
+		end
 	else
-		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-		# Maximum charging rate plus contribution to regulation down must be less than charge power rating
-		@constraint(EP, [y in STOR_ASYM_NO_REG, t in 1:T], EP[:vCHARGE][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCapCharge][y])
+		if CapacityReserveMargin > 0
+			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
+			# Maximum charging rate plus contribution to regulation down must be less than charge power rating
+			@constraint(EP, [y in STOR_ASYM_NO_REG, t in 1:T], EP[:vCHARGE][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCapCharge][y])
+		else
+			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
+			# Maximum charging rate plus contribution to regulation down must be less than charge power rating
+			@constraint(EP, [y in STOR_ASYM_NO_REG, t in 1:T], EP[:vCHARGE][y,t]<= EP[:eTotalCapCharge][y])
+		end
 	end
 
 end

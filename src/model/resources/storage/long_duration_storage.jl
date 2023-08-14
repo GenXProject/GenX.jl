@@ -95,13 +95,14 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 	# Build up inventory can be positive or negative
 	@variable(EP, vdSOC[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
 
-			
-	# State of charge held in reserve for storage at beginning of each modeled period n
-	@variable(EP, vCAPRES_socw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX] >= 0)
+	if CapacityReserveMargin > 0
+		# State of charge held in reserve for storage at beginning of each modeled period n
+		@variable(EP, vCAPRES_socw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX] >= 0)
 
-	# Build up in storage inventory held in reserve over each representative period w
-	# Build up inventory can be positive or negative
-	@variable(EP, vCAPRES_dsoc[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
+		# Build up in storage inventory held in reserve over each representative period w
+		# Build up inventory can be positive or negative
+		@variable(EP, vCAPRES_dsoc[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
+	end
 
 	### Constraints ###
 
@@ -151,11 +152,5 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 		# energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
 		@constraint(EP, cSOCMinCapResLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX], vSOCw[y,r] >= vCAPRES_socw[y,r])
-	else
-		# Set values for all capacity reserve margin variables to 0
-		@constraints(EP, begin
-		[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX], EP[:vCAPRES_socw][y,n] == 0
-		[y in STOR_LONG_DURATION, w=1:REP_PERIOD], EP[:vCAPRES_dsoc][y,w] == 0
-		end)
 	end
 end
