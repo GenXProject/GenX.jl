@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
+
+
 ## [0.3.6] - 2023-08-01
 
 ### Fixed
