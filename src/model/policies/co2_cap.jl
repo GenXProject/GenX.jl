@@ -98,7 +98,7 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Generation + Rate-based at the resource level: Emissions constraint in terms of rate (tons/MWh)
 	elseif (setup["CO2Cap"]==4)
-		@constraint(EP, cCO2Emissions_resource[y in THERM_ALL, t = 1:T], 
+		@constraint(EP, cCO2Emissions_resource[y in intersect(dfGen[dfGen.CO2_emis_limit_ton_per_MWh.>=0,:R_ID], THERM_ALL), t = 1:T], 
             EP[:eEmissionsByPlant][y, t] <= EP[:vP][y, t] * dfGen[y, :CO2_emis_limit_ton_per_MWh]
 		)
 		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
