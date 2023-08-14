@@ -67,7 +67,7 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 	println("Long Duration Storage Module")
 
 	dfGen = inputs["dfGen"]
-	capacity_reserve_margin = setup["CapacityReserveMargin"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -128,7 +128,7 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 					vSOCw[y,r] == EP[:vS][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 	# Capacity Reserve Margin policy
-	if capacity_reserve_margin == 1
+	if CapacityReserveMargin > 0
 		# LDES Constraints for storage held in reserve
 
 		# Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position

@@ -9,7 +9,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
-	capacity_reserve_margin = setup["CapacityReserveMargin"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -121,7 +121,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	)
 
 	# Capacity Reserve Margin policy
-	if capacity_reserve_margin == 1
+	if CapacityReserveMargin > 0
 		# Constraints governing energy held in reserve when storage makes virtual capacity reserve margin contributions:
 
 		# Links energy held in reserve in first time step with decisions in last time step of each subperiod
@@ -150,9 +150,6 @@ function storage_all_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
-
-	START_SUBPERIODS = inputs["START_SUBPERIODS"]
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 	p = inputs["hours_per_subperiod"]
 
 	STOR_ALL = inputs["STOR_ALL"]
