@@ -1,0 +1,17 @@
+name: General question
+description: Ask a question about GenX
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: textarea
+    id: desciption
+    attributes:
+      label: Question
+      description: What would you like to know?
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any other details. (optional)

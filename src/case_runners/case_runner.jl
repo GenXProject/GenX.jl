@@ -69,7 +69,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
     # Run MGA if the MGA flag is set to 1 else only save the least cost solution
     println("Writing Output")
     outputs_path = get_default_output_folder(case)
-    elapsed_time = @elapsed write_outputs(EP, outputs_path, mysetup, myinputs)
+    elapsed_time = @elapsed outputs_path = write_outputs(EP, outputs_path, mysetup, myinputs)
     println("Time elapsed for writing is")
     println(elapsed_time)
     if mysetup["ModelingToGenerateAlternatives"] == 1

@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Add output for dual of capacity constraint (#473)
+- Add PR template (#516)
+- Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).
+
+### Fixed
+- Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
+  Previously these plants had no resource flag set, and so they did not contribute to the power balance.
+  As these plants are now useful, the objective in these cases is slightly lower.
+  
 ### Changed
-
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
-
 
 ## [0.3.6] - 2023-08-01
 

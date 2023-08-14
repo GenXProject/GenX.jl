@@ -560,6 +560,7 @@ Reports optimal values of investment variables (except StartCap, which is an inp
 | RetCap |Retired power capacity of each resource type in each zone |MW |
 | NewCap |Installed capacity of each resource type in each zone |MW|
 | EndCap| Total power capacity of each resource type in each zone |MW |
+| CapacityConstraintDual |Shadow price of the capacity limit set by Max_Cap_MW for each resource type in each zone. Values are multiplied by -1 so that the output is >=0. |$/MW |
 | StartEnergyCap |Initial energy capacity of each resource type in each zone; this is an input and applies only to storage tech.| MWh |
 | RetEnergyCap |Retired energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
 | NewEnergyCap| Installed energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
