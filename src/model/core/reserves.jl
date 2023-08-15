@@ -248,8 +248,11 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	## Total system reserve constraints
 	# Regulation requirements as a percentage of load and scheduled variable renewable energy production in each hour
 	# Note: frequencty regulation up and down requirements are symmetric and all resources contributing to regulation are assumed to contribute equal capacity to both up and down directions
-	@constraint(EP, cReg[t=1:T], sum(vREG[y,t] for y in REG) >= EP[:eRegReq][t])
-
-	@constraint(EP, cRsvReq[t=1:T], sum(vRSV[y,t] for y in RSV) + vUNMET_RSV[t] >= EP[:eRsvReq][t])
+	if !isempty(REG)
+		@constraint(EP, cReg[t=1:T], sum(vREG[y,t] for y in REG) >= EP[:eRegReq][t])
+	end
+	if !isempty(RSV)
+		@constraint(EP, cRsvReq[t=1:T], sum(vRSV[y,t] for y in RSV) + vUNMET_RSV[t] >= EP[:eRsvReq][t])
+	end
 
 end
