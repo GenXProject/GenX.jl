@@ -10,10 +10,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 
-	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
+	
+	dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cHydrogenRevenue"])
 	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-	dfCost[!,Symbol("Total")] = [value(EP[:eObj]), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0] 
+	dfCost[!,Symbol("Total")] = [value(EP[:eObj]), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, (!isempty(inputs["ELECTROLYZER"]) ? -1*value(EP[:eTotalHydrogenValue]) : 0.0)] 
 
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
@@ -60,12 +61,14 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCVar = 0.0
 		tempCStart = 0.0
 		tempCNSE = 0.0
+		tempHydrogenValue = 0.0
 
 		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
 		STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
 		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
 		COMMIT_ZONE = intersect(inputs["COMMIT"], Y_ZONE)
+		ELECTROLYZERS_ZONE = intersect(inputs["ELECTROLYZER"], Y_ZONE)
 
 		eCFix = sum(value.(EP[:eCFix][Y_ZONE]))
 		tempCFix += eCFix
@@ -79,7 +82,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCVar += eCVar_in
 			eCFixEnergy = sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
 			tempCFix += eCFixEnergy
-
 			tempCTotal += eCVar_in + eCFixEnergy
 		end
 		if !isempty(STOR_ASYMMETRIC_ZONE)
@@ -99,6 +101,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCTotal += eCStart
 		end
 
+		if !isempty(ELECTROLYZERS_ZONE) 
+			tempHydrogenValue = -1*sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE,:]))
+			tempCTotal += tempHydrogenValue
+	   end
+		
+
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
@@ -108,8 +116,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCVar *= ModelScalingFactor^2
 			tempCNSE *= ModelScalingFactor^2
 			tempCStart *= ModelScalingFactor^2
+			tempHydrogenValue *= ModelScalingFactor^2
 		end
-		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
+		dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-", tempHydrogenValue]
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
 end

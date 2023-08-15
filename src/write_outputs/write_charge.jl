@@ -9,6 +9,8 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	T = inputs["T"]     # Number of time steps (hours)
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
+	ELECTROLYZER = inputs["ELECTROLYZER"]
+
 	# Power withdrawn to charge each resource in each time step
 	dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	charge = zeros(G,T)
@@ -19,6 +21,9 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	end
 	if !isempty(FLEX)
 	    charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * scale_factor
+	end
+	if !isempty(ELECTROLYZER)
+	    charge[ELECTROLYZER, :] = value.(EP[:vUSE][ELECTROLYZER, :]) * scale_factor
 	end
 
 	dfCharge.AnnualSum .= charge * inputs["omega"]

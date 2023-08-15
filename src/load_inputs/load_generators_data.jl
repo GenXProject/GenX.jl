@@ -55,6 +55,13 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Set of controllable variable renewable resources
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
+	# Set of hydrogen electolyzer resources
+	inputs_gen["ELECTROLYZER"] = gen_in[gen_in.ELECTROLYZER.>=1,:R_ID]
+#	if !isempty(inputs_gen["ELECTROLYZER"])
+#		gen_in[!,:Hydrogen_Tonne_Per_MWh] = zeros(Float64, G)
+#		gen_in[inputs_gen["ELECTROLYZER"], :Hydrogen_Tonne_Per_MWh] .= 1/gen_in[inputs_gen["ELECTROLYZER"], :Hydrogen_MWh_Per_Tonne] 
+#	end
+
 	# Set of retrofit resources
 	if !("RETRO" in names(gen_in))
 		gen_in[!, "RETRO"] = zero(gen_in[!, "R_ID"])
@@ -164,6 +171,8 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
                        :Min_Retired_Energy_Cap_MW,     # to GW
 
                        :Start_Cost_per_MW,             # to $M/GW
+
+					   :Hydrogen_MWh_Per_Tonne,	   	   # to GWh/t
                       ]
 
     for column in columns_to_scale
@@ -172,7 +181,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
         end
     end
 
-# Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
 	if setup["UCommit"]>=1
 		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
 		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])
@@ -203,10 +211,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 			# No need to re-scale C_Start since Cap_size, fuel_costs and start_cost are scaled When Setup[ParameterScale] =1 - Dharik
 			gen_in[g,:CO2_per_Start]  = gen_in[g,:Cap_Size]*(fuel_CO2[fuel_type[g]]*start_fuel[g])
 			gen_in[g,:CO2_per_Start] *= scale_factor
-			# Setup[ParameterScale] =1, gen_in[g,:Cap_Size] is GW, fuel_CO2[fuel_type[g]] is ktons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is Mton, to get kton, change we need to multiply 1000
-			# Setup[ParameterScale] =0, gen_in[g,:Cap_Size] is MW, fuel_CO2[fuel_type[g]] is tons/MMBTU, start_fuel is MMBTU/MW,
-			#   thus the overall is MTons/GW, and thus gen_in[g,:CO2_per_Start] is ton
 		end
 	end
 	println(filename * " Successfully Read!")
