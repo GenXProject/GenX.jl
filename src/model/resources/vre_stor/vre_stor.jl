@@ -269,7 +269,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Capacity Reserve Margin Requirement
-    if CapacityReserveMargin == 1
+    if CapacityReserveMargin > 0
         vre_stor_capres!(EP, inputs, setup)
     end
 
@@ -1071,6 +1071,37 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         + sum(eCVar_Charge_AC[y,t] for y in AC_CHARGE, t=1:T)
         + sum(eCVar_Discharge_AC[y,t] for y in AC_CHARGE, t=1:T))
     EP[:eObj] += eTotalCVarStor
+
+    # Add variable costs of virtual discharge if modeling capacity reserve margin
+    if CapacityReserveMargin > 0
+		#Variable costs of DC "virtual charging" for technologies "y" during hour "t" in zone "z"
+		@expression(EP, eCVar_Charge_DC_virtual[y in DC_CHARGE,t=1:T],
+            inputs["omega"][t]*by_rid(y,:Var_OM_Cost_per_MWh_Charge_DC)*vCAPRES_DC_CHARGE[y,t]/by_rid(y,:EtaInverter))
+		@expression(EP, eTotalCVar_Charge_DC_T_virtual[t=1:T], sum(eCVar_Charge_DC_virtual[y,t] for y in DC_CHARGE))
+		@expression(EP, eTotalCVar_Charge_DC_virtual, sum(eTotalCVar_Charge_DC_T_virtual[t] for t in 1:T))
+		EP[:eObj] += eTotalCVar_Charge_DC_virtual
+
+		#Variable costs of DC "virtual discharging" for technologies "y" during hour "t" in zone "z"
+		@expression(EP, eCVar_Discharge_DC_virtual[y in DC_DISCHARGE,t=1:T],
+            inputs["omega"][t]*by_rid(y,:Var_OM_Cost_per_MWh_Discharge_DC)*by_rid(y,:EtaInverter)*vCAPRES_DC_DISCHARGE[y,t])
+		@expression(EP, eTotalCVar_Discharge_DC_T_virtual[t=1:T], sum(eCVar_Discharge_DC_virtual[y,t] for y in DC_DISCHARGE))
+		@expression(EP, eTotalCVar_Discharge_DC_virtual, sum(eTotalCVar_Discharge_DC_T_virtual[t] for t in 1:T))
+		EP[:eObj] += eTotalCVar_Discharge_DC_virtual
+
+        #Variable costs of AC "virtual charging" for technologies "y" during hour "t" in zone "z"
+		@expression(EP, eCVar_Charge_AC_virtual[y in AC_CHARGE,t=1:T],
+            inputs["omega"][t]*by_rid(y,:Var_OM_Cost_per_MWh_Charge_AC)*vCAPRES_AC_CHARGE[y,t])
+        @expression(EP, eTotalCVar_Charge_AC_T_virtual[t=1:T], sum(eCVar_Charge_AC_virtual[y,t] for y in AC_CHARGE))
+        @expression(EP, eTotalCVar_Charge_AC_virtual, sum(eTotalCVar_Charge_AC_T_virtual[t] for t in 1:T))
+        EP[:eObj] += eTotalCVar_Charge_AC_virtual
+
+        #Variable costs of AC "virtual discharging" for technologies "y" during hour "t" in zone "z"
+        @expression(EP, eCVar_Discharge_AC_virtual[y in AC_DISCHARGE,t=1:T],
+            inputs["omega"][t]*by_rid(y,:Var_OM_Cost_per_MWh_Discharge_AC)*vCAPRES_AC_DISCHARGE[y,t])
+        @expression(EP, eTotalCVar_Discharge_AC_T_virtual[t=1:T], sum(eCVar_Discharge_AC_virtual[y,t] for y in AC_DISCHARGE))
+        @expression(EP, eTotalCVar_Discharge_AC_virtual, sum(eTotalCVar_Discharge_AC_T_virtual[t] for t in 1:T))
+        EP[:eObj] += eTotalCVar_Discharge_AC_virtual
+	end
 
     # 3. Inverter & Power Balance, SoC Expressions
 
@@ -2410,7 +2441,7 @@ function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
         end
     end
 
-    if CapacityReserveMargin == 1
+    if CapacityReserveMargin > 0
         for t=1:T
             for y in DC_DISCHARGE
                 eDischargeMax[y,t] += EP[:vCAPRES_DC_DISCHARGE][y,t]/by_rid(y,:Eff_Down_DC)
