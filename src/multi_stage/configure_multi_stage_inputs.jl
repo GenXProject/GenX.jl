@@ -74,7 +74,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	# Parameter inputs when multi-year discounting is activated
 	cur_stage = settings_d["CurStage"]
 	stage_len = settings_d["StageLengths"][cur_stage]
-	wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+	wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
 	myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
 	# Define OPEXMULT here, include in inputs_dict[t] for use in dual_dynamic_programming.jl, transmission_multi_stage.jl, and investment_multi_stage.jl
@@ -93,6 +93,26 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr]
 		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr]
 		inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] = OPEXMULT.*inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr]
+
+		# Conduct 1. and 2. for any co-located VRE-STOR resources
+		if !isempty(inputs_d["VRE_STOR"])
+			dfVRE_STOR = inputs_d["dfVRE_STOR"]
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Inverter_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_DC],dfVRE_STOR[!,:WACC_DC])
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Solar_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Solar],dfVRE_STOR[!,:WACC_Solar])
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Wind_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Wind],dfVRE_STOR[!,:WACC_Wind])
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Discharge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_DC],dfVRE_STOR[!,:WACC_Discharge_DC])
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Charge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_DC],dfVRE_STOR[!,:WACC_Charge_DC])
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Discharge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_AC],dfVRE_STOR[!,:WACC_Discharge_AC])
+			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Charge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_AC],dfVRE_STOR[!,:WACC_Charge_AC])
+
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Inverter_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Inverter_Cost_per_MWyr]
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Solar_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Solar_Cost_per_MWyr]
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Wind_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Wind_Cost_per_MWyr]
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_DC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_DC_per_MWyr]
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_DC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_DC_per_MWyr]
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_AC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_AC_per_MWyr]
+			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_AC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_AC_per_MWyr]
+		end
 	end
 
     # Set of all resources eligible for capacity retirements
@@ -101,6 +121,17 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	inputs_d["RET_CAP_ENERGY"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["STOR_ALL"])
 	# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
 	inputs_d["RET_CAP_CHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["STOR_ASYMMETRIC"])
+	# Set of all co-located resources' components eligible for capacity retirements
+	if !isempty(inputs_d["VRE_STOR"])
+		inputs_d["RET_CAP_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_DC"])
+		inputs_d["RET_CAP_SOLAR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_SOLAR"])
+		inputs_d["RET_CAP_WIND"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_WIND"])
+		inputs_d["RET_CAP_STOR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_STOR"])
+		inputs_d["RET_CAP_DISCHARGE_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_DC_DISCHARGE"])
+		inputs_d["RET_CAP_CHARGE_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_DC_CHARGE"])
+		inputs_d["RET_CAP_DISCHARGE_AC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_AC_DISCHARGE"])
+		inputs_d["RET_CAP_CHARGE_AC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_AC_CHARGE"])
+	end
 
 	# Transmission
 	if NetworkExpansion == 1 && inputs_d["Z"] > 1

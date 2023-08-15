@@ -160,8 +160,9 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |CO2\_cap.csv |Specify regional CO2 emission limits.|
 |Capacity\_reserve\_margin.csv |Specify regional capacity reserve margin requirements.|
 |Minimum\_capacity\_requirement.csv |Specify regional minimum technology capacity deployment requirements.|
-
-
+|Vre\_and\_stor\_data.csv |Specify cost and performance data for co-located VRE and storage resources.|
+|Vre\_and\_stor\_solar\_variability.csv |Specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).|
+|Vre\_and\_stor\_wind\_variability.csv |Specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).|
 
 ### 2.1 Mandatory input data
 
@@ -260,7 +261,7 @@ This file contains the time-series of capacity factors / availability of each re
 
 • first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
-• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` file in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` must be unique. Note that for Hydro reservoir resources (i.e. `HYDRO = 1` in the `Generators_data.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor.
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` file in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` must be unique. Note that for Hydro reservoir resources (i.e. `HYDRO = 1` in the `Generators_data.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
 #### 2.1.5 Generators\_data.csv
 
@@ -301,41 +302,44 @@ This file contains cost and performance parameters for various generators and ot
 |HYDRO | {0, 1}, Flag to indicate membership in set of reservoir hydro resources.|
 ||HYDRO = 0: Not part of set (default) |
 ||HYDRO = 1: Hydropower with reservoir modeling, including inflows, spillage, ramp rate limits and minimum operating level and efficiency loss associated with discharging. Reservoir capacity can be represented as a ratio or energy to power. This type of plant cannot charge from grid.|
-|LDS | {0, 1}, Flag to indicate the resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage)|
+|LDS | {0, 1}, Flag to indicate the resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage). Note that for co-located VRE-STOR resources, this flag must be 0 (LDS_VRE_STOR flag exists in VRE-STOR dataframe). |
 ||LDS = 0: Not part of set (default) |
 ||LDS = 1: Long duration storage resources|
+|VRE_STOR | {0, 1}, Flag to indicate membership in set of co-located variable renewable energy resources (onshore wind and utility-scale solar PV) and storage resources (either short- or long-duration energy storage with symmetric or asymmetric charging or discharging capabilities).|
+||VRE_STOR = 0: Not part of set (default) |
+||VRE_STOR = 1: Co-located VRE and storage (VRE-STOR) resources. |
 |**Existing technology capacity**|
-|Existing\_Cap\_MW |The existing capacity of a power plant in MW.|
-|Existing\_Cap\_MWh |The existing capacity of storage in MWh where `STOR = 1` or `STOR = 2`.|
+|Existing\_Cap\_MW |The existing capacity of a power plant in MW. Note that for co-located VRE-STOR resources, this capacity represents the existing AC grid connection capacity in MW. |
+|Existing\_Cap\_MWh |The existing capacity of storage in MWh where `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this capacity represents the existing capacity of storage in MWh. |
 |Existing\_Charge\_Cap\_MW |The existing charging capacity for resources where `STOR = 2`.|
 |**Capacity/Energy requirements**|
-|Max\_Cap\_MW |-1 (default) – no limit on maximum discharge capacity of the resource. If non-negative, represents maximum allowed discharge capacity (in MW) of the resource.|
-|Max\_Cap\_MWh |-1 (default) – no limit on maximum energy capacity of the resource. If non-negative, represents maximum allowed energy capacity (in MWh) of the resource with `STOR = 1` or `STOR = 2`.|
+|Max\_Cap\_MW |-1 (default) – no limit on maximum discharge capacity of the resource. If non-negative, represents maximum allowed discharge capacity (in MW) of the resource. Note that for co-located VRE-STOR resources, this capacity represents the maximum AC grid connection capacity in MW. |
+|Max\_Cap\_MWh |-1 (default) – no limit on maximum energy capacity of the resource. If non-negative, represents maximum allowed energy capacity (in MWh) of the resource with `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this capacity represents the maximum capacity of storage in MWh. |
 |Max\_Charge\_Cap\_MW |-1 (default) – no limit on maximum charge capacity of the resource. If non-negative, represents maximum allowed charge capacity (in MW) of the resource with `STOR = 2`.|
-|Min\_Cap\_MW |-1 (default) – no limit on minimum discharge capacity of the resource. If non-negative, represents minimum allowed discharge capacity (in MW) of the resource.|
-|Min\_Cap\_MWh| -1 (default) – no limit on minimum energy capacity of the resource. If non-negative, represents minimum allowed energy capacity (in MWh) of the resource with `STOR = 1` or `STOR = 2`.|
+|Min\_Cap\_MW |-1 (default) – no limit on minimum discharge capacity of the resource. If non-negative, represents minimum allowed discharge capacity (in MW) of the resource. Note that for co-located VRE-STOR resources, this capacity represents the minimum AC grid connection capacity in MW. |
+|Min\_Cap\_MWh| -1 (default) – no limit on minimum energy capacity of the resource. If non-negative, represents minimum allowed energy capacity (in MWh) of the resource with `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this capacity represents the minimum capacity of storage in MWh. |
 |Min\_Charge\_Cap\_MW |-1 (default) – no limit on minimum charge capacity of the resource. If non-negative, represents minimum allowed charge capacity (in MW) of the resource with `STOR = 2`.|
 |**Cost parameters**|
-|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of a technology ($/MW/year). |
-|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for a storage technology ($/MW/year), applicable to either `STOR = 1` or `STOR = 2`. |
+|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this annualized capacity investment cost pertains to the grid connection.|
+|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for a storage technology ($/MW/year), applicable to either `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this annualized investment cost of the energy capacity pertains to the co-located storage resource.|
 |Inv\_Cost\_Charge\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR = 2` ($/MW/year). |
-|Fixed\_OM\_Cost\_per\_MWy | Fixed operations and maintenance cost of a technology ($/MW/year). |
-|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology ($/MWh/year). |
+|Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost pertains to the grid connection.|
+|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology ($/MWh/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost of the energy component pertains to the co-located storage resource. |
 |Fixed\_OM\_Cost\_charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `STOR = 2`. |
-|Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). |
-|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `STOR = 2`, or variable operations and maintenance costs associated with flexible demand deferral with `FLEX = 1`. Otherwise 0 ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). Note that for co-located VRE-STOR resources, these costs apply to the AC generation sent to the grid from the entire site. |
+|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `STOR = 2`, or variable operations and maintenance costs associated with flexible demand deferral with `FLEX = 1`. Otherwise 0 ($/MWh). Note that for co-located VRE-STOR resources, these costs must be 0 (specific variable operations and maintenance costs exist in VRE-STOR dataframe). |
 |**Technical performance parameters**|
 |Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator or MMBtu of fuel consumed per MWh of electricity generated for export (net of on-site house loads). The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
 |Fuel  |Fuel needed for a generator. The names should match with the ones in the `Fuels_data.csv`. |
-|Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs.|
+|Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs. Note that for co-located VRE-STOR resources, this value applies to the storage component of each resource.|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`. Applies to thermal plants, and reservoir hydro resource (`HYDRO = 1`).|
 |Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity. Applies to thermal plants, and reservoir hydro resource (`HYDRO = 1`).|
 |Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity. Applies to thermal plants, and reservoir hydro resource (`HYDRO = 1`).|
-|Eff\_Up  |[0,1], Efficiency of charging storage – applies to storage technologies (all STOR types). |
-|Eff\_Down  |[0,1], Efficiency of discharging storage – applies to storage technologies (all STOR types). |
+|Eff\_Up  |[0,1], Efficiency of charging storage – applies to storage technologies (all STOR types except co-located storage resources).|
+|Eff\_Down  |[0,1], Efficiency of discharging storage – applies to storage technologies (all STOR types except co-located storage resources). |
 |Hydro\_Energy\_to\_Power\_Ratio  |The rated number of hours of reservoir hydro storage at peak discharge power output. Applies to `HYDRO = 1` (hours). |
-|Min\_Duration  |Specifies the minimum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
-|Max\_Duration  |Specifies the maximum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). |
+|Min\_Duration  |Specifies the minimum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). Note that for co-located VRE-STOR resources, this value does not apply. |
+|Max\_Duration  |Specifies the maximum ratio of installed energy to discharged power capacity that can be installed. Applies to STOR types 1 and 2 (hours). Note that for co-located VRE-STOR resources, this value does not apply. |
 |Max\_Flexible\_Demand\_Delay  |Maximum number of hours that demand can be deferred or delayed. Applies to resources with FLEX type 1 (hours). |
 |Max\_Flexible\_Demand\_Advance  |Maximum number of hours that demand can be scheduled in advance of the original schedule. Applies to resources with FLEX type 1 (hours). |
 |Flexible\_Demand\_Energy\_Eff  |[0,1], Energy efficiency associated with time shifting demand. Represents energy losses due to time shifting (or 'snap back' effect of higher consumption due to delay in use) that may apply to some forms of flexible demand. Applies to resources with FLEX type 1 (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
@@ -343,11 +347,10 @@ This file contains cost and performance parameters for various generators and ot
 |region | Name of the model region|
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
 |**MultiStage == 1**|
-|Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs.  |
-|Lifetime  |Lifetime (in years) used for determining endogenous retirements of newly built capacity.  |
-|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. |
-|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing discharge capacity. |
-|Min\_Retired\_Energy\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. |
+|Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs. Note that for co-located VRE-STOR resources, this value pertains to the grid connection (other capital recovery periods for different components of the resource can be found in the VRE-STOR dataframe). |
+|Lifetime  |Lifetime (in years) used for determining endogenous retirements of newly built capacity.  Note that the same lifetime is used for each component of a co-located VRE-STOR resource. |
+|Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. Note that for co-located VRE-STOR resources, this value pertains to the grid connection (other minimum required discharge capacity retirements for different components of the resource can be found in the VRE-STOR dataframe). |
+|Min\_Retired\_Energy\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. Note that for co-located VRE-STOR resources, this value pertains to the storage component (other minimum required capacity retirements for different components of the resource can be found in the VRE-STOR dataframe).|
 |Min\_Retired\_Charge\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing charge capacity. |
 ###### Table 6: Settings-specific columns in the Generators\_data.csv file
 ---
@@ -364,20 +367,20 @@ This file contains cost and performance parameters for various generators and ot
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 |**EnergyShareRequirement > 0**||
-|ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint.|
+|ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint. Note that this flag must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 ||1- included|
 ||0- excluded|
 |**CapacityReserveMargin > 0**||
-|CapRes\_* |[0,1], Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
+|CapRes\_* |[0,1], Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor). Note that this fraction must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**ModelingToGenerateAlternatives = 1**||
 |MGA |Eligibility of the technology for Modeling To Generate Alternative (MGA) run. |
 ||1 = Technology is available for the MGA run.|
 ||0 = Technology is unavailable for the MGA run (e.g. storage technologies).|
-|Resource\_Type |For the MGA run, we categorize all the resources in a few resource types. We then find maximally different generation portfolio based on these resource types. For example, existing solar and new solar resources could be represented by a resource type names `Solar`. Categorization of resources into resource types is user dependent.|
+|Resource\_Type |For the MGA run, we categorize all the resources in a few resource types. We then find maximally different generation portfolio based on these resource types. For example, existing solar and new solar resources could be represented by a resource type names `Solar`. Categorization of resources into resource types is user dependent. Note that this fraction must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**MinCapReq = 1**|
-|MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`.|
+|MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**MaxCapReq = 1**|
-|MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.|
+|MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 
 
 ### 2.2 Optional inputs files
@@ -539,6 +542,198 @@ Notes:
 7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
 8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
 9. Upper and lower bounds should be specified for all the resources included in the `Generators_data.csv` file. If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
+
+#### 2.2.9 Vre\_and\_stor\_data.csv
+
+This file contains additional cost and performance parameters for specifically co-located VRE and storage resources included in the model formulation. Each co-located VRE and storage generator must be explicitly listed in the `Generators_data.csv` and have the matching unique **Resource** name and **R\_ID** in both the `Generators_data.csv` and the `Vre_and_stor_data.csv`. This file supplements the `Generators_data.csv` by specifically adding VRE-STOR data and flags that are unique to how this module functions. Some cost and performance parameters for each co-located resource will be read in from the `Generators_data.csv` (as indicated above in the explanation of inputs from `Generators_data.csv` and from Table 15) and the rest of the specific inputs will be noted here for each resource. Each co-located VRE and storage resource can be easily configured to contain either a co-located VRE-storage resource, standalone VRE resource (either wind, solar PV, or both), or standalone storage resource.
+
+###### Table 15: Additional & modified columns for co-located VRE-STOR resources in the Generators\_data.csv file (already noted above but explicitly defined here)
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|**Added Columns**|
+|VRE_STOR | {0, 1}, Flag to indicate membership in set of co-located variable renewable energy resources (onshore wind and utility-scale solar PV) and storage resources (either short- or long-duration energy storage with symmetric or asymmetric charging or discharging capabilities).|
+||VRE_STOR = 0: Not part of set (default) |
+||VRE_STOR = 1: Co-located VRE and storage (VRE-STOR) resources. |
+|**Modified Columns**|
+|Existing\_Cap\_MW |The existing capacity of a power plant in MW. Note that for co-located VRE-STOR resources, this capacity represents the existing AC grid connection capacity in MW. |
+|Existing\_Cap\_MWh |The existing capacity of storage in MWh where `VRE_STOR = 1`. Note that for co-located VRE-STOR resources, this capacity represents the existing capacity of storage in MWh. |
+|Max\_Cap\_MW |-1 (default) – no limit on maximum discharge capacity of the resource. If non-negative, represents maximum allowed discharge capacity (in MW) of the resource. Note that for co-located VRE-STOR resources, this capacity represents the maximum AC grid connection capacity in MW. |
+|Max\_Cap\_MWh |-1 (default) – no limit on maximum energy capacity of the resource. If non-negative, represents maximum allowed energy capacity (in MWh) of the resource with or `VRE_STOR = 1`. Note that for co-located VRE-STOR resources, this capacity represents the maximum capacity of storage in MWh. |
+|Min\_Cap\_MW |-1 (default) – no limit on minimum discharge capacity of the resource. If non-negative, represents minimum allowed discharge capacity (in MW) of the resource. Note that for co-located VRE-STOR resources, this capacity represents the minimum AC grid connection capacity in MW. |
+|Min\_Cap\_MWh| -1 (default) – no limit on minimum energy capacity of the resource. If non-negative, represents minimum allowed energy capacity (in MWh) of the resource with `STOR = 1` or `STOR = 2` or `VRE_STOR = 1`. Note that for co-located VRE-STOR resources, this capacity represents the minimum capacity of storage in MWh. |
+|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this annualized capacity investment cost pertains to the grid connection.|
+|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for a storage technology ($/MW/year), applicable to either `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this annualized investment cost of the energy capacity pertains to the co-located storage resource.|
+|Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost pertains to the grid connection.|
+|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology ($/MWh/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost of the energy component pertains to the co-located storage resource. |
+|Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs. Note that for co-located VRE-STOR resources, this value applies to the storage component of each resource.|
+|Reg\_Cost | **(If Reserves = 1)** Cost of providing regulation reserves ($/MW per time step/hour).|
+|Rsv\_Cost | **(If Reserves = 1)** Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
+|Reg\_Max | **(If Reserves = 1)** [0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
+|Rsv\_Max | **(If Reserves = 1)** [0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
+|Capital\_Recovery\_Period  | **(If MultiStage == 1)** Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs. Note that for co-located VRE-STOR resources, this value pertains to the grid connection (other capital recovery periods for different components of the resource can be found in the VRE-STOR dataframe). |
+|Lifetime  | **(If MultiStage == 1)** Lifetime (in years) used for determining endogenous retirements of newly built capacity.  Note that the same lifetime is used for each component of a co-located VRE-STOR resource. |
+|Min\_Retired\_Cap\_MW  | **(If MultiStage == 1)** Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. Note that for co-located VRE-STOR resources, this value pertains to the grid connection (other minimum required discharge capacity retirements for different components of the resource can be found in the VRE-STOR dataframe). |
+|Min\_Retired\_Energy\_Cap\_MW  | **(If MultiStage == 1)** Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. Note that for co-located VRE-STOR resources, this value pertains to the storage component (other minimum required capacity retirements for different components of the resource can be found in the VRE-STOR dataframe).|
+|**Columns that Must Be Set to Zero**|
+|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `STOR = 2`, or variable operations and maintenance costs associated with flexible demand deferral with `FLEX = 1`. Otherwise 0 ($/MWh). Note that for co-located VRE-STOR resources, these costs must be 0 (specific variable operations and maintenance costs exist in VRE-STOR dataframe). |
+|ESR\_*| **(If EnergyShareRequirement > 0)** Flag to indicate which resources are considered for the Energy Share Requirement constraint. Note that this flag must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
+|CapRes\_* | **(If CapacityReserveMargin > 0)** [0,1], Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor). Note that this fraction must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
+|MinCapTag\_*| **(If MinCapReq = 1)** Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
+|MaxCapTag\_*| **(If MaxCapReq = 1)** Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
+|LDS | {0, 1}, Flag to indicate the resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage). Note that for co-located VRE-STOR resources, this flag must be 0 (LDS_VRE_STOR flag exists in VRE-STOR dataframe). |
+||LDS = 0: Not part of set (default) |
+||LDS = 1: Long duration storage resources|
+
+###### Table 16: Mandatory columns in the Vre\_and\_stor\_data.csv file
+
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource | This column contains **unique** names of the co-located VRE and storage resources available to the model and must match the `Generators_data.csv`. |
+|Zone | Integer representing zone number where the resource is located. |
+|R\_ID | Each resource receives a **unique** number ID, which is explicitly defined in the `Generators_data.csv` or implicitly defined in the GenX model after all of the data has been loaded. The R\_ID of each co-located resource must match the R\_ID either explicitly or implicitly defined in the `Generators_data.csv`.|
+|**Technology type flags**|
+|SOLAR | {0, 1}, Flag to indicate membership in the set of co-located VRE-storage resources with a solar PV component.|
+||SOLAR = 0: Not part of set (default) |
+||SOLAR = 1: If the co-located VRE-storage resource can produce solar PV energy. ||
+|WIND | {0, 1}, Flag to indicate membership in the set of co-located VRE-storage resources with a wind component.|
+||WIND = 0: Not part of set (default) |
+||WIND = 1: If the co-located VRE-storage resource can produce wind energy. ||
+|STOR_DC_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharge behind the meter and through the inverter (DC).|
+||STOR_DC_DISCHARGE = 0: Not part of set (default) |
+||STOR_DC_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_DC_DISCHARGE = 1, STOR_DC_CHARGE = 1.|
+||STOR_DC_DISCHARGE = 2: If the co-located VRE-storage resource has asymmetric discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|STOR_DC_CHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that charge through the inverter (DC).|
+||STOR_DC_CHARGE = 0: Not part of set (default) |
+||STOR_DC_CHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_DC_CHARGE = 1, STOR_DC_DISCHARGE = 1.|
+||STOR_DC_CHARGE = 2: If the co-located VRE-storage resource has asymmetric charge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|STOR_AC_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharges AC.|
+||STOR_AC_DISCHARGE = 0: Not part of set (default) |
+||STOR_AC_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_AC_DISCHARGE = 1, STOR_AC_CHARGE = 1.|
+||STOR_AC_DISCHARGE = 2: If the co-located VRE-storage resource has asymmetric discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|STOR_AC_CHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that charge AC.|
+||STOR_AC_CHARGE = 0: Not part of set (default) |
+||STOR_AC_CHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_AC_CHARGE = 1, STOR_AC_DISCHARGE = 1.|
+||STOR_AC_CHARGE = 2: If the co-located VRE-storage resource has asymmetric charge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|LDS_VRE_STOR | {0, 1}, Flag to indicate the co-located VRE-storage resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage). |
+||LDS_VRE_STOR = 0: Not part of set (default) |
+||LDS_VRE_STOR = 1: Long duration storage resources|
+|**Existing technology capacity**|
+|Existing\_Cap\_Inverter\_MW |The existing capacity of co-located VRE-STOR resource's inverter in MW (AC). |
+|Existing\_Cap\_Solar\_MW |The existing capacity of co-located VRE-STOR resource's solar PV in MW (DC). |
+|Existing\_Cap\_Wind\_MW |The existing capacity of co-located VRE-STOR resource's wind in MW (AC). |
+|Existing\_Cap\_Discharge\_DC\_MW |The existing discharge capacity of co-located VRE-STOR resource's storage component in MW (DC). Note that this only applies to resources where `STOR_DC_DISCHARGE = 2`. |
+|Existing\_Cap\_Charge\_DC\_MW |The existing charge capacity of co-located VRE-STOR resource's storage component in MW (DC). Note that this only applies to resources where `STOR_DC_CHARGE = 2`. |
+|Existing\_Cap\_Discharge\_AC\_MW |The existing discharge capacity of co-located VRE-STOR resource's storage component in MW (AC). Note that this only applies to resources where `STOR_AC_DISCHARGE = 2`. |
+|Existing\_Cap\_Charge\_AC\_MW |The existing charge capacity of co-located VRE-STOR resource's storage component in MW (AC). Note that this only applies to resources where `STOR_DC_CHARGE = 2`. |
+|**Capacity/Energy requirements**|
+|Max\_Cap\_Inverter\_MW |-1 (default) – no limit on maximum inverter capacity of the resource. If non-negative, represents maximum allowed inverter capacity (in MW AC) of the resource. |
+|Max\_Cap\_Solar\_MW |-1 (default) – no limit on maximum solar PV capacity of the resource. If non-negative, represents maximum allowed solar PV capacity (in MW DC) of the resource. |
+|Max\_Cap\_Wind\_MW |-1 (default) – no limit on maximum wind capacity of the resource. If non-negative, represents maximum allowed wind capacity (in MW AC) of the resource. |
+|Max\_Cap\_Discharge\_DC\_MW |-1 (default) – no limit on maximum DC discharge capacity of the resource. If non-negative, represents maximum allowed DC discharge capacity (in MW DC) of the resource with `STOR_DC_DISCHARGE = 2`.|
+|Max\_Cap\_Charge\_DC\_MW |-1 (default) – no limit on maximum DC charge capacity of the resource. If non-negative, represents maximum allowed DC charge capacity (in MW DC) of the resource with `STOR_DC_CHARGE = 2`.|
+|Max\_Cap\_Discharge\_AC\_MW |-1 (default) – no limit on maximum AC discharge capacity of the resource. If non-negative, represents maximum allowed AC discharge capacity (in MW AC) of the resource with `STOR_AC_DISCHARGE = 2`.|
+|Max\_Cap\_Charge\_AC\_MW |-1 (default) – no limit on maximum AC charge capacity of the resource. If non-negative, represents maximum allowed AC charge capacity (in MW AC) of the resource with `STOR_AC_CHARGE = 2`.|
+|Min\_Cap\_Inverter\_MW |-1 (default) – no limit on minimum inverter capacity of the resource. If non-negative, represents minimum allowed inverter capacity (in MW AC) of the resource. |
+|Min\_Cap\_Solar\_MW |-1 (default) – no limit on minimum solar PV capacity of the resource. If non-negative, represents minimum allowed solar PV capacity (in MW DC) of the resource. |
+|Min\_Cap\_Wind\_MW |-1 (default) – no limit on minimum wind capacity of the resource. If non-negative, represents minimum allowed wind capacity (in MW AC) of the resource. |
+|Min\_Cap\_Discharge\_DC\_MW |-1 (default) – no limit on minimum DC discharge capacity of the resource. If non-negative, represents minimum allowed DC discharge capacity (in MW DC) of the resource with `STOR_DC_DISCHARGE = 2`.|
+|Min\_Cap\_Charge\_DC\_MW |-1 (default) – no limit on minimum DC charge capacity of the resource. If non-negative, represents minimum allowed DC charge capacity (in MW DC) of the resource with `STOR_DC_CHARGE = 2`.|
+|Min\_Cap\_Discharge\_AC\_MW |-1 (default) – no limit on minimum AC discharge capacity of the resource. If non-negative, represents minimum allowed AC discharge capacity (in MW AC) of the resource with `STOR_AC_DISCHARGE = 2`.|
+|Min\_Cap\_Charge\_AC\_MW |-1 (default) – no limit on minimum AC charge capacity of the resource. If non-negative, represents minimum allowed AC charge capacity (in MW AC) of the resource with `STOR_AC_CHARGE = 2`.|
+|**Cost parameters**|
+|Inv\_Cost\_Inverter\_per\_MWyr | Annualized capacity investment cost of the inverter component ($/MW-AC/year). |
+|Inv\_Cost\_Solar\_per\_MWyr | Annualized capacity investment cost of the solar PV component ($/MW-DC/year). |
+|Inv\_Cost\_Wind\_per\_MWyr | Annualized capacity investment cost of the wind component ($/MW-AC/year). |
+|Inv\_Cost\_Discharge\_DC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_DC_DISCHARGE = 2` ($/MW-DC/year). |
+|Inv\_Cost\_Charge\_DC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_DC_CHARGE = 2` ($/MW-DC/year). |
+|Inv\_Cost\_Discharge\_AC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MW-AC/year). |
+|Inv\_Cost\_Charge\_AC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year). |
+|Fixed\_OM\_Inverter\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the inverter component ($/MW-AC/year).|
+|Fixed\_OM\_Solar\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the solar PV component ($/MW-DC/year).|
+|Fixed\_OM\_Wind\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the wind component ($/MW-AC/year).|
+|Fixed\_OM\_Cost\_Discharge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` ($/MW-DC/year).|
+|Fixed\_OM\_Cost\_Charge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` ($/MW-DC/year).|
+|Fixed\_OM\_Cost\_Discharge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MW-AC/year).|
+|Fixed\_OM\_Cost\_Charge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year).|
+|Var\_OM\_Cost\_per\_MWh\_Solar | Variable operations and maintenance cost of the solar PV component (multiplied by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Wind | Variable operations and maintenance cost of the wind component ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` (multiplied by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` (divided by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Charge_AC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MWh). |
+|**Technical performance parameters**|
+|EtaInverter |[0,1], Inverter efficiency representing losses from converting DC to AC power and vice versa for each technology |
+|Inverter_Ratio_Solar  |-1 (default) - no required ratio between solar PV capacity built to inverter capacity built. If non-negative, represents the ratio of solar PV capacity built to inverter capacity built.|
+|Inverter_Ratio_Wind  |-1 (default) - no required ratio between wind capacity built to grid connection capacity built. If non-negative, represents the ratio of wind capacity built to grid connection capacity built.|
+|Power\_to\_Energy\_AC  |The power to energy conversion for the storage component for AC discharging/charging of symmetric storage resources.|
+|Power\_to\_Energy\_DC  |The power to energy conversion for the storage component for DC discharging/charging of symmetric storage resources.|
+|Eff\_Up\_DC  |[0,1], Efficiency of DC charging storage – applies to storage technologies (all STOR types). |
+|Eff\_Down\_DC  |[0,1], Efficiency of DC discharging storage – applies to storage technologies (all STOR types). |
+|Eff\_Up\_AC  |[0,1], Efficiency of AC charging storage – applies to storage technologies (all STOR types). |
+|Eff\_Down\_AC  |[0,1], Efficiency of AC discharging storage – applies to storage technologies (all STOR types). |
+|**Required for writing outputs**|
+|region | Name of the model region|
+|cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
+|technology | Non-unique name of resource (e.g. solar PV, wind) to classify each resource for post-processing purposes.  |
+|**MultiStage == 1**|
+|Capital\_Recovery\_Period_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the inverter component. |
+|Capital\_Recovery\_Period_Solar  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the solar PV component. |
+|Capital\_Recovery\_Period_Wind  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the wind component. |
+|Capital\_Recovery\_Period_Discharge_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the discharge DC component when `STOR_DC_DISCHARGE = 2  `. |
+|Capital\_Recovery\_Period_Charge_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the charge DC component when `STOR_DC_CHARGE = 2  `. |
+|Capital\_Recovery\_Period_Discharge_AC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the discharge AC component when `STOR_AC_DISCHARGE = 2  `. |
+|Capital\_Recovery\_Period_Charge_AC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the charge AC component when `STOR_AC_CHARGE = 2  `. |
+|Min\_Retired\_Cap\_Inverter\_MW  |Minimum required inverter capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Solar\_MW  |Minimum required solar capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Wind\_MW  |Minimum required wind capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Discharge_DC\_MW  |Minimum required discharge capacity retirements in the current model period for storage resources with `STOR_DC_DISCHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Charge_DC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_DC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Discharge_AC\_MW  |Minimum required discharge capacity retirements in the current model period for storage resources with `STOR_AC_DISCHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Charge_AC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_AC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
+| WACC\_DC | The line-specific weighted average cost of capital for the inverter component. |
+| WACC\_Solar | The line-specific weighted average cost of capital for the solar PV component. |
+| WACC\_Wind | The line-specific weighted average cost of capital for the wind component. |
+| WACC\_Discharge\_DC | The line-specific weighted average cost of capital for the discharging DC storage component with `STOR_DC_DISCHARGE = 2`. |
+| WACC\_Charge\_DC | The line-specific weighted average cost of capital for the charging DC storage component with `STOR_DC_CHARGE = 2`. |
+| WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
+| WACC\_Charge\_AC | The line-specific weighted average cost of capital for the charging AC storage component with `STOR_AC_CHARGE = 2`. |
+
+###### Table 17: Settings-specific columns in the Vre\_stor\_data.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|**EnergyShareRequirement > 0**||
+|ESRVreStor\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint. |
+||1- included|
+||0- excluded|
+|**CapacityReserveMargin > 0**||
+|CapResVreStor\_* |[0,1], Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor). |
+|**MinCapReq = 1**|
+|MinCapTagSolar\_*| Eligibility of resources with a solar PV component (multiplied by the inverter efficiency for AC terms) to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. |
+|MinCapTagWind\_*| Eligibility of resources with a wind component to participate in Minimum Technology Carveout constraint (AC terms). \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. |
+|MinCapTagStor\_*| Eligibility of resources with a storage component to participate in Minimum Technology Carveout constraint (discharge capacity in AC terms). \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`.|
+|**MaxCapReq = 1**|
+|MaxCapTagSolar\_*| Eligibility of resources with a solar PV component (multiplied by the inverter efficiency for AC terms) to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. |
+|MaxCapTagWind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms). \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. |
+|MaxCapTagStor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms). \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.|
+
+#### 2.2.10 Vre\_and\_stor\_solar\_variability.csv
+
+This file contains the time-series of capacity factors / availability of the solar PV component (DC capacity factors) of each co-located resource included in the `Vre_and_stor_data.csv` file for each time step (e.g. hour) modeled.
+
+• first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
+
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` and `Vre_and_stor_data.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` and `Vre_and_stor_data.csv` must be unique. 
+
+#### 2.2.11 Vre\_and\_stor\_wind\_variability.csv
+
+This file contains the time-series of capacity factors / availability of the wind component (AC capacity factors) of each co-located resource included in the `Vre_and_stor_data.csv` file for each time step (e.g. hour) modeled.
+
+• first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
+
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` and `Vre_and_stor_data.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` and `Vre_and_stor_data.csv` must be unique. 
 
 
 ## 3 Outputs
@@ -722,3 +917,73 @@ This file includes the renewable/clean credit revenue earned by each generator l
 #### 3.2.8 SubsidyRevenue.csv
 
 This file includes subsidy revenue earned if a generator specified Min\_Cap is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is $.
+
+#### 3.2.9 vre_stor_capacity.csv
+
+Reports optimal values of investment variables (except StartCap, which is an input) for co-located VRE and storage resources
+
+###### Table 14: Structure of the vre_stor_capacity.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| StartCapSolar |Initial solar PV capacity of each resource type in each zone; this is an input |MW DC|
+| RetCapSolar |Retired solar PV capacity of each resource type in each zone |MW DC|
+| NewCapSolar |Installed solar PV capacity of each resource type in each zone |MW DC|
+| EndCapSolar| Total solar PV capacity of each resource type in each zone |MW DC|
+| StartCapWind |Initial wind capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapWind |Retired wind capacity of each resource type in each zone |MW AC|
+| NewCapWind |Installed wind capacity of each resource type in each zone |MW AC|
+| EndCapWind| Total wind capacity of each resource type in each zone |MW AC|
+| StartCapDC |Initial inverter capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapDC |Retired inverter capacity of each resource type in each zone |MW AC|
+| NewCapDC |Installed inverter capacity of each resource type in each zone |MW AC|
+| EndCapDC| Total inverter capacity of each resource type in each zone |MW AC|
+| StartCapGrid |Initial grid connection capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapGrid |Retired grid connection capacity of each resource type in each zone |MW AC|
+| NewCapGrid |Installed grid connection capacity of each resource type in each zone |MW AC|
+| EndCapGrid| Total gri connection capacity of each resource type in each zone |MW AC|
+| StartEnergyCap |Initial energy capacity of each resource type in each zone; this is an input and applies only to storage tech.| MWh |
+| RetEnergyCap |Retired energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
+| NewEnergyCap| Installed energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
+| EndEnergyCap |Total installed energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
+| StartChargeACCap| Initial charging AC power capacity of `STOR_AC_CHARGE = 2` resource type in each zone; this is an input |MW AC|
+| RetChargeACCap |Retired charging AC power capacity of `STOR_AC_CHARGE = 2` resource type in each zone |MW AC|
+| NewChargeACCap |Installed charging AC capacity of each resource type in each zone |MW AC|
+| EndChargeAC Cap |Total charging power AC capacity of each resource type in each zone |MW AC|
+| StartChargeDCCap| Initial charging DC power capacity of `STOR_DC_CHARGE = 2` resource type in each zone; this is an input |MW DC|
+| RetChargeDCCap |Retired charging DC power capacity of `STOR_DC_CHARGE = 2` resource type in each zone |MW DC|
+| NewChargeDCCap |Installed charging DC capacity of each resource type in each zone |MW DC|
+| EndChargeDC Cap |Total charging power DC capacity of each resource type in each zone |MW DC|
+| StartDischargeACCap| Initial discharging AC power capacity of `STOR_AC_DISCHARGE = 2` resource type in each zone; this is an input |MW AC|
+| RetDischargeACCap |Retired discharging AC power capacity of `STOR_AC_DISCHARGE = 2` resource type in each zone |MW AC|
+| NewDischargeACCap |Installed discharging AC capacity of each resource type in each zone |MW AC|
+| EndDischargeAC Cap |Total discharging power AC capacity of each resource type in each zone |MW AC|
+| StartDischargeDCCap| Initial discharging DC power capacity of `STOR_DC_DISCHARGE = 2` resource type in each zone; this is an input |MW DC|
+| RetDischargeDCCap |Retired discharging DC power capacity of `STOR_DC_DISCHARGE = 2` resource type in each zone |MW DC|
+| NewDischargeDCCap |Installed discharging DC capacity of each resource type in each zone |MW DC|
+| EndDischargeDC Cap |Total discharging power DC capacity of each resource type in each zone |MW DC|
+
+#### 3.2.10 vre_stor_dc_charge.csv
+
+Reports DC charging by each co-located VRE and storage resource (could include grid or BTM charging) in each model time step.
+
+#### 3.2.11 vre_stor_ac_charge.csv
+
+Reports AC charging by each co-located VRE and storage resource (could include grid or BTM charging) in each model time step.
+
+#### 3.2.12 vre_stor_dc_discharge.csv
+
+Reports storage DC discharging by each co-located VRE and storage resource in each model time step.
+
+#### 3.2.13 vre_stor_ac_discharge.csv
+
+Reports storage AC discharging charging by each co-located VRE and storage resource in each model time step.
+
+
+#### 3.2.14 vre_stor_solar_power.csv
+
+Reports solar PV generation in AC terms by each co-located VRE and storage resource in each model time step.
+
+#### 3.2.15 vre_stor_wind_power.csv
+
+Reports wind generation in AC terms by each co-located VRE and storage resource in each model time step.
