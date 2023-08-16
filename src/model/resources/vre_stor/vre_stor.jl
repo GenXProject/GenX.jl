@@ -897,8 +897,8 @@ The next set of constraints only apply to symmetric storage resources (all $y \i
     \mu_{y,z}^{ac,stor}$. Without any capacity reserve margin constraints or operating reserves, the symmetric AC and DC storage resources are constrained as:
 ```math
 \begin{aligned}
-	&  \frac{\Theta^{dc}_{y,z,t}}{\eta^{discharge,dc}_{y,z}} + \eta^{charge,dc}_{y,z} \times \Pi^{dc}_{y,z,t} \leq \mu^{dc,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,dc}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \frac{\Theta^{ac}_{y,z,t}}{\eta^{discharge,ac}_{y,z}} + \eta^{charge,ac}_{y,z} \times \Pi^{ac}_{y,z,t} \leq \mu^{ac,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,ac}, z \in \mathcal{Z}, t \in \mathcal{T}
+	&  \Theta^{dc}_{y,z,t} + \Pi^{dc}_{y,z,t} \leq \mu^{dc,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,dc}, z \in \mathcal{Z}, t \in \mathcal{T} \\
+    &  \Theta^{ac}_{y,z,t} + \Pi^{ac}_{y,z,t} \leq \mu^{ac,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,ac}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 
@@ -906,10 +906,10 @@ Symmetric storage resources with only capacity reserve margin constraints follow
     and charging that occurs and limits the simultaneously charging, discharging, virtual charging, and virtual discharging of the battery resource: 
 ```math
 \begin{aligned}
-    &  \frac{\Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t}}{\eta^{discharge,dc}_{y,z}} + \eta^{charge,dc}_{y,z} \times (\Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t}) \\
-    &    \leq \mu^{dc,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,dc}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \frac{\Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t}}{\eta^{discharge,ac}_{y,z}} + \eta^{charge,ac}_{y,z} \times (\Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t}) \\
-    &    \leq \mu^{ac,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,ac}, z \in \mathcal{Z}, t \in \mathcal{T}
+    &  \Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t} + \Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t} \\
+    &  \leq \mu^{dc,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,dc}, z \in \mathcal{Z}, t \in \mathcal{T} \\
+    &  \Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t} + \Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t} \\
+    &   \leq \mu^{ac,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,ac}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 
@@ -919,9 +919,9 @@ Symmetric storage resources only subject to operating reserves have additional v
     components.
 ```math
 \begin{aligned}
-    &  \frac{\Theta^{dc}_{y,z,t} + f^{dc,dis}_{y,z,t} + r^{dc,dis}_{y,z,t}}{\eta^{discharge,dc}_{y,z}} + \eta^{charge,dc}_{y,z} \times (\Pi^{dc}_{y,z,t} + f^{dc,cha}_{y,z,t}) \\
+    &  \Theta^{dc}_{y,z,t} + f^{dc,dis}_{y,z,t} + r^{dc,dis}_{y,z,t} + \Pi^{dc}_{y,z,t} + f^{dc,cha}_{y,z,t} \\
     &    \leq \mu^{dc,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,dc}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \frac{\Theta^{ac}_{y,z,t} + f^{ac,dis}_{y,z,t} + r^{ac,dis}_{y,z,t}}{\eta^{discharge,ac}_{y,z}} + \eta^{charge,ac}_{y,z} \times (\Pi^{ac}_{y,z,t} + f^{ac,cha}_{y,z,t}) \\
+    &  \Theta^{ac}_{y,z,t} + f^{ac,dis}_{y,z,t} + r^{ac,dis}_{y,z,t} + \Pi^{ac}_{y,z,t} + f^{ac,cha}_{y,z,t} \\
     &    \leq \mu^{ac,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,ac}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
@@ -929,9 +929,9 @@ Symmetric storage resources only subject to operating reserves have additional v
 For symmetric storage resources with both capacity reserve margin and operating reserves, DC and AC resources are subject to the following constraints:
 ```math
 \begin{aligned}
-    &  \frac{\Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t} + f^{dc,dis}_{y,z,t} + r^{dc,dis}_{y,z,t}}{\eta^{discharge,dc}_{y,z}} + \eta^{charge,dc}_{y,z} \times (\Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t} + f^{dc,cha}_{y,z,t}) \\
+    &  \Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t} + f^{dc,dis}_{y,z,t} + r^{dc,dis}_{y,z,t} + \Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t} + f^{dc,cha}_{y,z,t} \\
     &    \leq \mu^{dc,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,dc}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \frac{\Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t} + f^{ac,dis}_{y,z,t} + r^{ac,dis}_{y,z,t}}{\eta^{discharge,ac}_{y,z}} + \eta^{charge,ac}_{y,z} \times (\Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t} + f^{ac,cha}_{y,z,t}) \\
+    &  \Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t} + f^{ac,dis}_{y,z,t} + r^{ac,dis}_{y,z,t} + \Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t} + f^{ac,cha}_{y,z,t} \\
     &    \leq \mu^{ac,stor}_{y,z} \times \Delta^{total,energy}_{y,z} \quad \forall y \in \mathcal{VS}^{sym,ac}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
