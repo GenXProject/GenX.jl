@@ -55,14 +55,14 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Set of controllable variable renewable resources
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
-	# Set of hydrogen electolyzer resources
-	inputs_gen["ELECTROLYZER"] = gen_in[gen_in.ELECTROLYZER.>=1,:R_ID]
-#	if !isempty(inputs_gen["ELECTROLYZER"])
-#		gen_in[!,:Hydrogen_Tonne_Per_MWh] = zeros(Float64, G)
-#		gen_in[inputs_gen["ELECTROLYZER"], :Hydrogen_Tonne_Per_MWh] .= 1/gen_in[inputs_gen["ELECTROLYZER"], :Hydrogen_MWh_Per_Tonne] 
-#	end
+	# Set of hydrogen electolyzer resources (optional set):
+	if ("ELECTROLYZER" in names(gen_in))
+		inputs_gen["ELECTROLYZER"] = gen_in[gen_in.ELECTROLYZER.>=1,:R_ID]
+	else
+		inputs_gen["ELECTROLYZER"] = Vector()
+	end
 
-	# Set of retrofit resources
+	# Set of retrofit resources (optional set)
 	if !("RETRO" in names(gen_in))
 		gen_in[!, "RETRO"] = zero(gen_in[!, "R_ID"])
 	end

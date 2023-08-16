@@ -12,11 +12,19 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	## Power balance for each zone
 	# dfPowerBalance = Array{Any}
+	if (isempty(ELECTROLYZER))
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
 	    "Demand_Response", "Nonserved_Energy",
 	    "Transmission_NetExport", "Transmission_Losses",
-	    "Demand", "Electrolyzer_Consumption"]
+	    "Demand"]
+	else
+		Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
+			"Flexible_Demand_Defer", "Flexible_Demand_Stasify",
+			"Demand_Response", "Nonserved_Energy",
+			"Transmission_NetExport", "Transmission_Losses",
+			"Demand", "Electrolyzer_Consumption"]
+	end
 	L = length(Com_list)
 	dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = L), AnnualSum = zeros(L * Z))
 	# rowoffset = 3
@@ -45,7 +53,9 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		    powerbalance[(z-1)*L+9, :] = -(value.(EP[:eLosses_By_Zone][z, :]))
 		end
 		powerbalance[(z-1)*L+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
-		powerbalance[(z-1)*L+11, :] = (-1) * sum(value.(EP[:vUSE][ELECTROLYZER, :].data), dims = 1)
+		if (!isempty(ELECTROLYZER))
+			powerbalance[(z-1)*L+11, :] = (-1) * sum(value.(EP[:vUSE][ELECTROLYZER, :].data), dims = 1)
+		end
 	end
 	if setup["ParameterScale"] == 1
 		powerbalance *= ModelScalingFactor

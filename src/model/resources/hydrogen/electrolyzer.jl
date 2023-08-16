@@ -5,9 +5,9 @@ This function defines the expressions and constraints for operation of hydrogen 
 
 **Expressions**
 
-Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Theta_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Resource Standard policy balance (if applicable), `eESR`.
+Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Pi_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Resource Standard policy balance (if applicable), `eESR`.
 
-Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Theta_{y,t} / \eta^{hydrogen}_y \times \$^{hydrogen}_y$, is subtracted from the objective function, where $\eta^{hydrogen}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\$^{hydrogen}_y$ is the price of hydrogen per metric tonne for electrolyzer $y$.
+Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{hydrogen}_y \times \$^{hydrogen}_y$, is subtracted from the objective function, where $\eta^{hydrogen}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\$^{hydrogen}_y$ is the price of hydrogen per metric tonne for electrolyzer $y$.
 
 **Ramping limits**
 
@@ -15,13 +15,13 @@ Electrolyzers adhere to the following ramping limits on hourly changes in power 
 
 ```math
 \begin{aligned}
-	\Theta_{y,t-1} - \Theta_{y,t} \leq \kappa_{y}^{down} \Delta^{\text{total}}_{y}, \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
+	\Pi_{y,t-1} - \Pi_{y,t} \leq \kappa_{y}^{down} \Delta^{\text{total}}_{y}, \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
 
 ```math
 \begin{aligned}
-	\Theta_{y,t} - \Theta_{y,t-1} \leq \kappa_{y}^{up} \Delta^{\text{total}}_{y} \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
+	\Pi_{y,t} - \Pi_{y,t-1} \leq \kappa_{y}^{up} \Delta^{\text{total}}_{y} \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
 (See Constraints 1-2 in the code)
@@ -34,14 +34,14 @@ Electrolyzers are bound by the following limits on maximum and minimum power out
 
 ```math
 \begin{aligned}
-	\Theta_{y,t} \geq \rho^{min}_{y} \times \Delta^{total}_{y}
+	\Pi_{y,t} \geq \rho^{min}_{y} \times \Delta^{total}_{y}
 	\hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
 
 ```math
 \begin{aligned}
-	\Theta_{y,t} \leq \rho^{max}_{y,t} \times \Delta^{total}_{y}
+	\Theta_{y,t} \leq \rho^{max}_{y,t} \times \Pi_^{total}_{y}
 	\hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
@@ -53,7 +53,7 @@ The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ 
 
 ```math
 \begin{aligned}
-	\sum_{t \in T} (\omega_{t} \times \Theta_{y,t} / \eta^{hydrogen}_y) \geq \mathcal{Min kt}_y \times 10^3 
+	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{hydrogen}_y) \geq \mathcal{Min kt}_y \times 10^3 
 	\hspace{1cm} \forall y \in \mathcal{EL}
 \end{aligned}
 ```
@@ -67,7 +67,7 @@ This constraint requires generation from qualified resources ($y \in \mathcal{Qu
 
 ```math
 \begin{aligned}
-	\sum_{y \in \{z \cap \mathcal{Qualified}\}} \Theta_{y,t} \geq \sum_{y \in \{z \cap \mathcal{EL}\}} \Theta_{y,t} + \sum_{y \in \{z \cap \mathcal{Qualified} \cap \mathcal{STOR}\}}  \Pi_{y,t}
+	\sum_{y \in \{z \cap \mathcal{Qualified}\}} \Theta_{y,t} \geq \sum_{y \in \{z \cap \mathcal{EL}\}} \Pi_{y,t} + \sum_{y \in \{z \cap \mathcal{Qualified} \cap \mathcal{STOR}\}}  \Pi_{y,t}
 	\hspace{1cm} \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}, 
 \end{aligned}
 ```
