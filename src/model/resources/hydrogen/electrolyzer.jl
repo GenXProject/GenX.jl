@@ -5,7 +5,7 @@ This function defines the expressions and constraints for operation of hydrogen 
 
 **Expressions**
 
-Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Pi_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Resource Standard policy balance (if applicable), `eESR`.
+Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Pi_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Share Requirement policy balance (if applicable), `eESR`.
 
 Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{electrolyzer}_y \times \$^{hydrogen}_y$, is subtracted from the objective function, where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\$^{hydrogen}_y$ is the price of hydrogen per metric tonne for electrolyzer $y$.
 
@@ -96,13 +96,13 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Variables ###
 
 	# Electrical energy consumed by electrolyzer resource "y" at hour "t"
-	@variable(EP, vUSE[y=ELECTROLYZERS,t=1:T] >=0);
+	@variable(EP, vUSE[y=ELECTROLYZERS, t in 1:T] >=0);
 
 	### Expressions ###
 
 	## Power Balance Expressions ##
 
-	@expression(EP, ePowerBalanceElectrolyzers[t=1:T, z=1:Z],
+	@expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
 	sum(EP[:vUSE][y,t] for y in intersect(ELECTROLYZERS, dfGen[dfGen[!,:Zone].==z,:R_ID])))
 
 	# Electrolyzers consume electricity so their vUSE is subtracted from power balance
@@ -128,10 +128,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	else
 		@constraints(EP, begin
 			# Minimum stable power generated per technology "y" at hour "t" Min_Power
-			[y in ELECTROLYZERS, t=1:T], EP[:vUSE][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
+			[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 
 			# Maximum power generated per technology "y" at hour "t"
-			[y in ELECTROLYZERS, t=1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
+			[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
 		end)
 
 	end
@@ -154,26 +154,26 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization)
 	HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELECTROLYZER.==1])
 	QUALIFIED_SUPPLY = dfGen.R_ID[dfGen.Qualified_Hydrogen_Supply.==1]
-	@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t=1:T],
+	@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
 		sum(EP[:vP][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY, STORAGE))
 	)
 
 
-	### Energy Resource Standard Policy ###
-	# Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Resource Standard balance to increase demand for clean resources if desired
+	### Energy Share Requirement Policy ###
+	# Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Share Requirement balance to increase demand for clean resources if desired
 	# Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
 	# a share of electrolyzer demand equal to dfGen[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eElectrolyzerESR[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID]), t=1:T))
+		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID]), t in 1:T))
 		EP[:eESR] -= eElectrolyzerESR
 	end
 
 	### Objective Function ###
 	# Subtract hydrogen revenue from objective function
 	scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
-	@expression(EP, eHydrogenValue[y=ELECTROLYZERS,t=1:T], (inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] * dfGen[y,:Hydrogen_Price_Per_Tonne] / scale_factor))
-	@expression(EP, eTotalHydrogenValueT[t=1:T], sum(eHydrogenValue[y,t] for y in ELECTROLYZERS))
-	@expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t=1:T))
+	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], (inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] * dfGen[y,:Hydrogen_Price_Per_Tonne] / scale_factor))
+	@expression(EP, eTotalHydrogenValueT[t in 1:T], sum(eHydrogenValue[y,t] for y in ELECTROLYZERS))
+	@expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
 	EP[:eObj] -= eTotalHydrogenValue
 
 end
