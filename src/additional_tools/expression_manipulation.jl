@@ -45,7 +45,7 @@ function fill_with_const!(arr::Array{AffExpr, dims}, con::Float64) where dims
     return nothing
 end
 
-function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, expr2::Array{GenericAffExpr{C,T}, dim2}) where {C,T,dim1,dim2}
+function _add_similar_to_expression!(expr1::Array{C, dim1}, expr2::Array{T, dim2}) where {C,T,dim1,dim2}
     # This is defined for Arrays of different dimensions
     # despite the fact it will definitely throw an error
     # because the error will tell the user / developer
@@ -57,46 +57,43 @@ function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, exp
     return nothing
 end
 
-function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, expr2::Array{AbstractJuMPScalar, dim2}) where {C,T,dim1,dim2}
-    check_sizes_match(expr1, expr2)
-    for i in eachindex(IndexLinear(), expr1)
-        add_to_expression!(expr1[i], expr2[i])
-    end
-    return nothing
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, expr2::Array{GenericAffExpr{C,T}, dim2}) where {C,T,dim1,dim2}
+    _add_similar_to_expression!(expr1, expr2)
 end
 
 function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, expr2::Array{GenericVariableRef{C}, dim2}) where {C,T,dim1,dim2}
-    # Check that both expr1 and expr2 have the same dimensions
-    check_sizes_match(expr1, expr2)
+    _add_similar_to_expression!(expr1, expr2)
+end
+
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, expr2::Array{AbstractJuMPScalar, dim2}) where {C,T,dim1,dim2}
+    _add_similar_to_expression!(expr1, expr2)
+end
+
+function _add_term_to_expression!(expr1::Array{C, dims}, expr2::T) where {C,T,dims}
     for i in eachindex(IndexLinear(), expr1)
-        add_to_expression!(expr1[i], expr2[i])
+        add_to_expression!(expr1[i], expr2)
     end
     return nothing
+end
+
+function add_term_to_expression!(expr1::Array{AffExpr, dims}, expr2::Float64) where dims
+    _add_term_to_expression!(expr1, expr2)
 end
 
 function add_term_to_expression!(expr1::Array{AffExpr, dims}, expr2::VariableRef) where dims
-    for i in eachindex(IndexLinear(), expr1)
-        add_to_expression!(expr1[i], expr2)
-    end
-    return nothing
+    _add_term_to_expression!(expr1, expr2)
 end
 
 function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::GenericVariableRef{C}) where {C,T,dims}
-    for i in eachindex(IndexLinear(), expr1)
-        add_to_expression!(expr1[i], expr2)
-    end
-    return nothing
+    _add_term_to_expression!(expr1, expr2)
 end
 
 function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::AbstractJuMPScalar) where {C,T,dims}
-    for i in eachindex(IndexLinear(), expr1)
-        add_to_expression!(expr1[i], expr2)
-    end
-    return nothing
+    _add_term_to_expression!(expr1, expr2)
 end
 
 # After testing, this appears to be just as fast as a method for Array{GenericAffExpr{C,T}, dims} or Array{AffExpr, dims}
-function check_sizes_match(expr1::Array{T, dim1}, expr2::Array{C, dim2}) where {T,C,dim1, dim2}
+function check_sizes_match(expr1::Array{C, dim1}, expr2::Array{T, dim2}) where {C,T,dim1, dim2}
     if size(expr1) != size(expr2)
         error("
             Both expressions must have the same dimensions

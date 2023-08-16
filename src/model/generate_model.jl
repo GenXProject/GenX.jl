@@ -91,12 +91,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	createemptyexpression!(EP, :ePowerBalance, T, Z)
 
 	# Initialize Objective Function Expression
-	temp = AffExpr(0.0)
-	EP[:eObj] = temp
-
-
+	EP[:eObj] = AffExpr(0.0)
 
 	createemptyexpression!(EP, :eGenerationByZone, Z, T)
+	
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
 		createemptyexpression!(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
@@ -114,7 +112,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	if setup["MaxCapReq"] == 1
 		createemptyexpression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
 	end
-
 
 	# Infrastructure
 	discharge!(EP, inputs, setup)
