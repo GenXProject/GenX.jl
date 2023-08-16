@@ -137,8 +137,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	end
 
 	### Minimum hydrogen production constraint (if any) (Constraint #5)
+	kt_to_t = 10^3
 	@constraint(EP,
-		cHydrogenMin[y in ELECTROLYZERS], sum(inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] for t=1:T) >= dfGen[y,:Electrolyzer_Min_kt]*10^3
+		cHydrogenMin[y in ELECTROLYZERS],
+		sum(inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] for t=1:T) >= dfGen[y,:Electrolyzer_Min_kt] * kt_to_t
 	)
 
 	### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
