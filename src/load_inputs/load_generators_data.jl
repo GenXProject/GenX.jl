@@ -56,7 +56,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
 	# Set of hydrogen electolyzer resources (optional set):
-	if ("ELECTROLYZER" in names(gen_in))
+	if "ELECTROLYZER" in names(gen_in)
 		inputs_gen["ELECTROLYZER"] = gen_in[gen_in.ELECTROLYZER.>=1,:R_ID]
 	else
 		inputs_gen["ELECTROLYZER"] = Vector()
