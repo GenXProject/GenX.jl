@@ -76,11 +76,11 @@ function _add_term_to_expression!(expr1::Array{C, dims}, expr2::T) where {C,T,di
     return nothing
 end
 
-function add_term_to_expression!(expr1::Array{AffExpr, dims}, expr2::Float64) where dims
+function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::Float64) where {C,T,dims}
     _add_term_to_expression!(expr1, expr2)
 end
 
-function add_term_to_expression!(expr1::Array{AffExpr, dims}, expr2::VariableRef) where dims
+function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2::GenericAffExpr{C,T}) where {C,T,dims}
     _add_term_to_expression!(expr1, expr2)
 end
 
