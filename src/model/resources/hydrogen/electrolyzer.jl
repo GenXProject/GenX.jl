@@ -1,13 +1,13 @@
 @doc raw"""
 	electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
-This function defines the expressions and constraints for operation of hydrogen electrolyzers ($y \in \mathcal{EL} \subset \mathcal{G}$).
+This function defines the expressions and constraints for operation of hydrogen electrolyzers ($y \in \mathcal{EL} \subseteq \mathcal{G}$).
 
 **Expressions**
 
 Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Pi_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Resource Standard policy balance (if applicable), `eESR`.
 
-Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{hydrogen}_y \times \$^{hydrogen}_y$, is subtracted from the objective function, where $\eta^{hydrogen}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\$^{hydrogen}_y$ is the price of hydrogen per metric tonne for electrolyzer $y$.
+Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{electrolyzer}_y \times \$^{hydrogen}_y$, is subtracted from the objective function, where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\$^{hydrogen}_y$ is the price of hydrogen per metric tonne for electrolyzer $y$.
 
 **Ramping limits**
 
@@ -53,12 +53,12 @@ The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ 
 
 ```math
 \begin{aligned}
-	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{hydrogen}_y) \geq \mathcal{Min kt}_y \times 10^3 
+	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{electrolyzer}_y) \geq \mathcal{Min kt}_y \times 10^3 
 	\hspace{1cm} \forall y \in \mathcal{EL}
 \end{aligned}
 ```
 
-where $\eta^{hydrogen}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min kt}_y$ is the minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes. 
+where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min kt}_y$ is the minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes. 
 (See constraint 5 in the code)
 
 **Hourly clean supply matching constraint**
