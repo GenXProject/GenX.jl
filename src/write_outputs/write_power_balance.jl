@@ -12,18 +12,13 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	## Power balance for each zone
 	# dfPowerBalance = Array{Any}
-	if (isempty(ELECTROLYZER))
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
 	    "Demand_Response", "Nonserved_Energy",
 	    "Transmission_NetExport", "Transmission_Losses",
 	    "Demand"]
-	else
-		Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
-			"Flexible_Demand_Defer", "Flexible_Demand_Stasify",
-			"Demand_Response", "Nonserved_Energy",
-			"Transmission_NetExport", "Transmission_Losses",
-			"Demand", "Electrolyzer_Consumption"]
+	if !isempty(ELECTROLYZER)
+			push!(Com_list, "Electrolyzer_Consumption")
 	end
 	L = length(Com_list)
 	dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = L), AnnualSum = zeros(L * Z))
