@@ -216,12 +216,12 @@ end
 
 
 @doc raw"""
-	check_vre_stor_validity(df::DataFrame)
+	check_vre_stor_validity(df::DataFrame, setup::Dict)
 
 Function for checking that no other technology flags have been activated and specific data inputs
 	have been zeroed for the co-located VRE-STOR module
 """
-function check_vre_stor_validity(df::DataFrame)
+function check_vre_stor_validity(df::DataFrame, setup::Dict)
 	# Determine if any VRE-STOR resources exist
 	vre_stor = is_nonzero(df, :VRE_STOR)
 	r_id = df[:, :R_ID]
@@ -241,14 +241,19 @@ function check_vre_stor_validity(df::DataFrame)
 	end
 
 	# Confirm that any other flags/inputs are not activated (all other flags should be activated in the vre_stor_data.csv)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :STOR)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :THERM)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :FLEX)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :HYDRO)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :VRE)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :MUST_RUN)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :LDS)
 	check_any_nonzero_with_vre_stor!(error_strings, df, :Var_OM_Cost_per_MWh_In)
+	if setup["EnergyShareRequirement"]==1
+		nESR = count(occursin.("ESR_", names(df)))
+		for i in 1:nESR
+			check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("ESR_",i)))
+		end
+	end
+	if setup["CapacityReserveMargin"]==1
+		nCapRes = count(occursin.("CapRes_", names(df)))
+		for i in 1:nCapRes
+			check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("CapRes_",i)))
+		end
+	end
 
 	return error_strings
 end
@@ -346,7 +351,7 @@ function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict
 	if !isempty(inputs_gen["VRE_STOR"])
 
 		# Check input data format
-		vre_stor_errors = check_vre_stor_validity(gen_in)
+		vre_stor_errors = check_vre_stor_validity(gen_in, setup)
 		append!(error_strings, vre_stor_errors)
 
 		vre_stor_in = DataFrame(CSV.File(joinpath(path,"Vre_and_stor_data.csv"), header=true), copycols=true)
