@@ -59,20 +59,19 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCNSE, sum(eTotalCNSET[t] for t in 1:T))
 
 	# Add total cost contribution of non-served energy/curtailed demand to the objective function
-	EP[:eObj] += eTotalCNSE
+	add_to_expression!(EP[:eObj], eTotalCNSE)
 
 	## Power Balance Expressions ##
-	@expression(EP, ePowerBalanceNse[t=1:T, z=1:Z],
-	sum(vNSE[s,t,z] for s=1:SEG))
+	@expression(EP, ePowerBalanceNse[t=1:T, z=1:Z], sum(vNSE[s,t,z] for s=1:SEG))
 
 	# Add non-served energy/curtailed demand contribution to power balance expression
-	EP[:ePowerBalance] += ePowerBalanceNse
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNse)
 
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
 		if SEG >=2
 			@expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:vNSE][s,t,z] for s in 2:SEG, z in findall(x->x!=0,inputs["dfCapRes"][:,res])))
-			EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+			add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceNSE)
 		end
 	end
 

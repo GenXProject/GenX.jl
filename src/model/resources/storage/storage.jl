@@ -133,7 +133,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
-    p = inputs["hours_per_subperiod"]
+	p = inputs["hours_per_subperiod"]
     rep_periods = inputs["REP_PERIOD"]
 
 	Reserves = setup["Reserves"]
@@ -165,14 +165,14 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	if EnergyShareRequirement >= 1
 		if IncludeLossesInESR == 1
 			@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-			EP[:eESR] -= eESRStor
+			add_similar_to_expression!(EP[:eESR], -eESRStor)
 		end
 	end
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
 		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] + EP[:vCAPRES_discharge][y,t] - EP[:vCHARGE][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceStor
+		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
 	end
 
 end

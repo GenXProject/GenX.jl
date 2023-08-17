@@ -88,30 +88,29 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
+	createemptyexpression!(EP, :ePowerBalance, T, Z)
 
 	# Initialize Objective Function Expression
-	@expression(EP, eObj, 0)
+	EP[:eObj] = AffExpr(0.0)
 
-
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+	createemptyexpression!(EP, :eGenerationByZone, Z, T)
+	
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+		createemptyexpression!(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
 	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+		createemptyexpression!(EP, :eESR, inputs["nESR"])
 	end
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+		createemptyexpression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
 	end
 
 	if setup["MaxCapReq"] == 1
-		@expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
+		createemptyexpression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
 	end
 
 	# Infrastructure

@@ -191,9 +191,9 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 			# OPEX multiplier to count multiple years between two model stages
 			# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 			# and we have already accounted for multiple years between stages for fixed costs.
-			EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCNetworkExp
+			add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), eTotalCNetworkExp)
 		else
-			EP[:eObj] += eTotalCNetworkExp
+			add_to_expression!(EP[:eObj], eTotalCNetworkExp)
 		end
 	end
 
@@ -206,14 +206,14 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
 		-eLosses_By_Zone[z,t])
 
-	EP[:ePowerBalance] += ePowerBalanceLossesByZone
-	EP[:ePowerBalance] += ePowerBalanceNetExportFlows
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceLossesByZone)
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
 		if Z > 1 
 			@expression(EP, eCapResMarBalanceTrans[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(inputs["dfTransCapRes_excl"][l,res] * inputs["dfDerateTransCapRes"][l,res]* EP[:vFLOW][l,t] for l in 1:L))
-			EP[:eCapResMarBalance] -= eCapResMarBalanceTrans
+			add_similar_to_expression!(EP[:eCapResMarBalance], -eCapResMarBalanceTrans)
 		end
 	end
 
@@ -331,7 +331,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     if EnergyShareRequirement >= 1 && IncludeLossesInESR ==1
         @expression(EP, eESRTran[ESR=1:inputs["nESR"]],
                     sum(inputs["dfESR"][z,ESR]*sum(inputs["omega"][t]*EP[:eLosses_By_Zone][z,t] for t in 1:T) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-        EP[:eESR] -= eESRTran
+		add_similar_to_expression!(EP[:eESR], -eESRTran)
 	end
-
 end

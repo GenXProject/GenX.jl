@@ -18,12 +18,12 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	# if input files are present, add energy share requirement slack variables
 	if haskey(inputs, "dfESR_slack")
 		@variable(EP, vESR_slack[ESR=1:inputs["nESR"]]>=0)
-		EP[:eESR] += vESR_slack
+		add_similar_to_expression!(EP[:eESR], vESR_slack)
 
 		@expression(EP, eCESRSlack[ESR=1:inputs["nESR"]], inputs["dfESR_slack"][ESR,:PriceCap] * EP[:vESR_slack][ESR])
 		@expression(EP, eCTotalESRSlack, sum(EP[:eCESRSlack][ESR] for ESR = 1:inputs["nESR"]))
 
-		EP[:eObj] += eCTotalESRSlack
+		add_to_expression!(EP[:eObj], eCTotalESRSlack)
 	end
 	
 	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint

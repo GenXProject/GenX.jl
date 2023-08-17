@@ -56,7 +56,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	# Sum individual resource contributions to variable charging costs to get total variable charging costs
 	@expression(EP, eTotalCVarInT[t=1:T], sum(eCVar_in[y,t] for y in STOR_ALL))
 	@expression(EP, eTotalCVarIn, sum(eTotalCVarInT[t] for t in 1:T))
-	EP[:eObj] += eTotalCVarIn
+	add_to_expression!(EP[:eObj], eTotalCVarIn)
+
 
 	if CapacityReserveMargin > 0
 		#Variable costs of "virtual charging" for technologies "y" during hour "t" in zone "z"
@@ -76,9 +77,9 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Term to represent net dispatch from storage in any period
 	@expression(EP, ePowerBalanceStor[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t]-EP[:vCHARGE][y,t] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)))
-
-	EP[:ePowerBalance] += ePowerBalanceStor
+		sum(EP[:vP][y,t]-EP[:vCHARGE][y,t] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL))
+	)
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
 	### Constraints ###
 

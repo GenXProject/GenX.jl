@@ -31,7 +31,7 @@ https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-git
 - [ ] CHANGELOG.md has been updated (if this is a 'notable' change).
 - [ ] I consent to the release of this PR's code under the GNU General Public license.
 
-### How this can be tested
+## How this can be tested
 
 <!--
 If applicable: What cases should we try before/after? Will this alter any outputs, or is it a strictly internal change?
@@ -52,7 +52,7 @@ If applicable: What cases should we try before/after? Will this alter any output
 
 -->
 
-### Post-approval checklist for GenX core developers
+## Post-approval checklist for GenX core developers
 After the PR is approved
 
 - [ ] Check that the latest changes on the target branch are incorporated, either via merge or rebase

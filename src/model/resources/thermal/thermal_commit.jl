@@ -155,9 +155,9 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Power Balance Expressions ##
 	@expression(EP, ePowerBalanceThermCommit[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t] for y in intersect(THERM_COMMIT, dfGen[dfGen[!,:Zone].==z,:R_ID])))
-
-	EP[:ePowerBalance] += ePowerBalanceThermCommit
+		sum(EP[:vP][y,t] for y in intersect(THERM_COMMIT, dfGen[dfGen[!,:Zone].==z,:R_ID]))
+	)
+	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermCommit)
 
 	### Constraints ###
 
