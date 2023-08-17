@@ -69,6 +69,10 @@ function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, exp
     _add_similar_to_expression!(expr1, expr2)
 end
 
+function add_similar_to_expression!(expr1::Array{GenericAffExpr{C,T}, dim1}, expr2::Array{Float64, dim2}) where {C,T,dim1,dim2}
+    _add_similar_to_expression!(expr1, expr2)
+end
+
 function _add_term_to_expression!(expr1::Array{C, dims}, expr2::T) where {C,T,dims}
     for i in eachindex(IndexLinear(), expr1)
         add_to_expression!(expr1[i], expr2)
