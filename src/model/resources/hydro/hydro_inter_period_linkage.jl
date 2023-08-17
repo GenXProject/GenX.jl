@@ -86,12 +86,8 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
-	@constraint(EP, cSoCBalLongDurationStorageInterior_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX[1:(end-1)]],
-					vSOC_HYDROw[y,r+1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
-
-	## Last period is linked to first period
-	@constraint(EP, cSoCBalLongDurationStorageEnd_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX[end]],
-					vSOC_HYDROw[y,1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
+	@constraint(EP, cSoCBalLongDurationStorage_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+					vSOC_HYDROw[y, mod1(r+1, NPeriods)] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 	# Storage at beginning of each modeled period cannot exceed installed energy capacity
 	@constraint(EP, cSoCBalLongDurationStorageUpper_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
