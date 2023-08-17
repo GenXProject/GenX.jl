@@ -1,5 +1,5 @@
 This example requires an experimental feature which is *deactivated* because it is under development.
-To reactivate the feature, comment the relevant line in load_generators_data!.
+To reactivate the feature, comment out the relevant line in load_generators_data!.
 
 Multi-Stage Retrofit Example
 ----------------------------
