@@ -104,9 +104,9 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 		# OPEX multiplier scales fixed costs to account for multiple years between two model stages
 		# We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
 		# and we have already accounted for multiple years between stages for fixed costs.
-		EP[:eObj] += (1/inputs["OPEXMULT"])*eTotalCFixCharge
+		add_to_expression!(EP[:eObj], (1/inputs["OPEXMULT"]), eTotalCFixCharge)
 	else
-		EP[:eObj] += eTotalCFixCharge
+		add_to_expression!(EP[:eObj], eTotalCFixCharge)
 	end
 
 	### Constratints ###

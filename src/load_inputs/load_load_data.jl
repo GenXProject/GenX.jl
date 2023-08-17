@@ -160,5 +160,3 @@ function prevent_doubled_timedomainreduction(path::AbstractString)
     end
 
 end
-
-

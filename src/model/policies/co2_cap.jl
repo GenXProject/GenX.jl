@@ -62,7 +62,7 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 		@expression(EP, eCTotalCO2CapSlack, 
 		sum(EP[:eCCO2Cap_slack][cap] for cap = 1:inputs["NCO2Cap"]))
 		
-		EP[:eObj] += eCTotalCO2CapSlack
+		add_to_expression!(EP[:eObj], eCTotalCO2CapSlack)
 	else 
 		@variable(EP, vCO2Cap_slack[cap = 1:inputs["NCO2Cap"]]==0)
 	end

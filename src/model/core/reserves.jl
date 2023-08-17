@@ -241,7 +241,7 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCRsvPen, sum(eCRsvPen[t] for t=1:T) +
 		sum(dfGen[y,:Reg_Cost]*vRSV[y,t] for y in RSV, t=1:T) +
 		sum(dfGen[y,:Rsv_Cost]*vREG[y,t] for y in REG, t=1:T) )
-	EP[:eObj] += eTotalCRsvPen
+	add_to_expression!(EP[:eObj], eTotalCRsvPen)
 
 	### Constraints ###
 
