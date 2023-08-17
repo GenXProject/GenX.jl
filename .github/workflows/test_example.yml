@@ -9,16 +9,18 @@ jobs:
   test:
     strategy:
       matrix:
-        branch: ["main", "weekly_develop"]
+        branch: ["main", "develop"]
+        version: ["1.8", "1.9"]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
         with:
           ref: ${{ matrix.branch }}
-      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/cache@v1.2.2
+      - uses: julia-actions/setup-julia@latest
         with:
-          version: "1.9"
+          version: ${{ matrix.version }}
       - uses: julia-actions/julia-buildpkg@v1
       - name: Test an example case
         run: |
