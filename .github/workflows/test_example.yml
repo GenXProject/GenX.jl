@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: gschivley/GenX
           ref: ${{ matrix.branch }}
       - uses: julia-actions/cache@v1.2.2
       - uses: julia-actions/setup-julia@latest
