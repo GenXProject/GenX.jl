@@ -1,5 +1,3 @@
-using GenX
-using Test
 using JuMP
 using HiGHS
 

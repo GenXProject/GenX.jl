@@ -92,11 +92,32 @@ function add_term_to_expression!(expr1::Array{GenericAffExpr{C,T}, dims}, expr2:
     _add_term_to_expression!(expr1, expr2)
 end
 
-# After testing, this appears to be just as fast as a method for Array{GenericAffExpr{C,T}, dims} or Array{AffExpr, dims}
 function check_sizes_match(expr1::Array{C, dim1}, expr2::Array{T, dim2}) where {C,T,dim1, dim2}
+    # After testing, this appears to be just as fast as a method for Array{GenericAffExpr{C,T}, dims} or Array{AffExpr, dims}
     if size(expr1) != size(expr2)
         error("
             Both expressions must have the same dimensions
             Attempted to add each term of $(size(expr1))-sized expression to $(size(expr2))-sized expression")
     end
+end
+
+function _sum_expression(expr::AbstractArray{C, dims}) where {C,dims}
+    # This appears to work just as well as a separate method for Array{AffExpr, dims}
+    total = AffExpr(0.0)
+    for i in eachindex(expr)
+        add_to_expression!(total, expr[i])
+    end
+    return total
+end
+
+function sum_expression(expr::AbstractArray{GenericAffExpr{C,T}, dims}) where {C,T,dims}
+    return _sum_expression(expr)
+end
+
+function sum_expression(expr::AbstractArray{GenericVariableRef{C}, dims}) where {C,dims}
+    return _sum_expression(expr)
+end
+
+function sum_expression(expr::AbstractArray{AbstractJuMPScalar, dims}) where {dims}
+    return _sum_expression(expr)
 end
