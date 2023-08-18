@@ -47,7 +47,7 @@ function parse_data(myinputs)
     RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
     ZONES = myinputs["R_ZONES"]
 
-    # DEMAND - Load_data.csv
+    # DEMAND - Demand_data.csv
     demand_profiles = [ myinputs["pD"][:,l] for l in 1:size(myinputs["pD"],2) ]
     demand_col_names = [DEMAND_COLUMN_PREFIX*string(l) for l in 1:size(demand_profiles)[1]]
     demand_zones = [l for l in 1:size(demand_profiles)[1]]
@@ -114,7 +114,7 @@ function parse_multi_stage_data(inputs_dict)
     total_length = sum(stage_lengths)
     relative_lengths = stage_lengths/total_length
 
-    # LOAD - Load_data.csv
+    # DEMAND - Demand_data.csv
     stage_demand_profiles = [ inputs_dict[t]["pD"][:,l] for t in 1:length(keys(inputs_dict)), l in 1:size(inputs_dict[1]["pD"],2) ]
     vector_lps = [stage_demand_profiles[:,l] for l in 1:size(inputs_dict[1]["pD"],2)]
     demand_profiles = [reduce(vcat,vector_lps[l]) for l in 1:size(inputs_dict[1]["pD"],2)]
@@ -471,7 +471,7 @@ Use kmeans or kmedoids to cluster raw demand profiles and resource capacity fact
 into representative periods. Use Extreme Periods to capture noteworthy periods or
 periods with notably poor fits.
 
-In Load_data.csv, include the following:
+In Demand_data.csv, include the following:
 
  - Timesteps\_per\_Rep\_Period - Typically 168 timesteps (e.g., hours) per period, this designates the length
      of each representative period.
@@ -851,7 +851,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
     # Rescale weights to total user-specified number of hours
     W = scale_weights(W, WeightTotal, v)
 
-    # Order representative periods chronologically for Load_data outputs
+    # Order representative periods chronologically for Demand_data outputs
     #   SORT A W M in conjunction, chronologically by M, before handling them elsewhere to be consistent
     #   A points to an index of M. We need it to point to a new index of sorted M. Hence, AssignMap.
     old_M = M
@@ -973,8 +973,8 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
                 end
 
                 # Save output data to stage-specific locations
-                ### TDR_Results/Load_data_clustered.csv
-                demand_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", "Load_data.csv"))
+                ### TDR_Results/Demand_data_clustered.csv
+                demand_in = get_demand_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per"))
                 demand_in[!,:Sub_Weights] = demand_in[!,:Sub_Weights] * 1.
                 demand_in[1:length(Stage_Weights[per]),:Sub_Weights] .= Stage_Weights[per]
                 demand_in[!,:Rep_Periods][1] = length(Stage_Weights[per])
@@ -1058,7 +1058,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
             mkpath(joinpath(inpath,"Inputs",input_stage_directory, TimeDomainReductionFolder))
 
             ### TDR_Results/Demand_data.csv
-            demand_in = load_dataframe(joinpath(inpath, "Inputs", input_stage_directory, "Load_data.csv"))
+            demand_in = get_demand_dataframe(joinpath(inpath, "Inputs", input_stage_directory))
             demand_in[!,:Sub_Weights] = demand_in[!,:Sub_Weights] * 1.
             demand_in[1:length(W),:Sub_Weights] .= W
             demand_in[!,:Rep_Periods][1] = length(W)
@@ -1143,7 +1143,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
         ### TDR_Results/Demand_data.csv
-        demand_in = load_dataframe(joinpath(inpath, "Load_data.csv"))
+        demand_in = get_demand_dataframe(inpath)
         demand_in[!,:Sub_Weights] = demand_in[!,:Sub_Weights] * 1.
         demand_in[1:length(W),:Sub_Weights] .= W
         demand_in[!,:Rep_Periods][1] = length(W)
