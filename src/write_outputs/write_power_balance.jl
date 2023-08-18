@@ -11,7 +11,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	FLEX = inputs["FLEX"]
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	## Power balance for each zone
-	# dfPowerBalance = Array{Any}
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
 	    "Demand_Response", "Nonserved_Energy",
@@ -22,7 +21,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	end
 	L = length(Com_list)
 	dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = L), AnnualSum = zeros(L * Z))
-	# rowoffset = 3
 	powerbalance = zeros(Z * L, T) # following the same style of power/charge/storage/nse
 	for z in 1:Z
 		POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
@@ -30,8 +28,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
 		    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
 		    powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1)
-		    # You cannot do the following because vCHARGE is not one-based. use [CartesianIndex(1:length(STOR_ALL_ZONE))]
-		    #powerbalance[(z-1)*L+3, :] = (-1) * sum(value.(EP[:vCHARGE])[STOR_ALL_ZONE, :], dims = 1)
 		    powerbalance[(z-1)*L+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1)
 		end
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))

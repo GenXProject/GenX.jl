@@ -23,7 +23,7 @@ UCommit: 2
 # Minimum qualifying renewables penetration
 # 0 = not active
 # 1 = active systemwide
-EnergyShareRequirement: 1
+EnergyShareRequirement: 0
 
 # Number of capacity reserve margin constraints
 # 0 = not active
@@ -56,6 +56,16 @@ StorageLosses: 1
 # 0 = not active
 # 1 = active systemwide
 # NetworkExpansion: 1
+
+# Hydrogen electrolyzer hourly supply matching required?
+# 0 = constraint ot active
+# 1 = constraint active for all electrolyzer resources
+#HydrogenHourylMatching: 1
+
+# Hydrogen demand included in Energy Share Requirements?
+# 0 = no
+# 1 = yes
+HydrogenHourylMatching: 1
 
 ## Solver settings
 # ----------------

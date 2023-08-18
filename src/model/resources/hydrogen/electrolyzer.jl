@@ -63,7 +63,7 @@ where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megaw
 
 **Hourly clean supply matching constraint**
 
-This constraint requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in `Generators_data.csv`) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
+This optional constraint (enabled by setting `HydrogenHourylMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in `Generators_data.csv`) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
 
 ```math
 \begin{aligned}
@@ -145,15 +145,17 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 		[y in ELECTROLYZERS, t in 1:T], EP[:vP][y,t] == 0
 	end)
 
-	### Hourly Hydrogen Matching Constraint (Constraint #6) ###
+	### Hydrogen Hourly Supply Matching Constraint (Constraint #6) ###
 	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in Generators_data.csv)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
-	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization)
-	HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELECTROLYZER.==1])
-	QUALIFIED_SUPPLY = dfGen.R_ID[dfGen.Qualified_Hydrogen_Supply.==1]
-	@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
-		sum(EP[:vP][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY, STORAGE))
-	)
+	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
+	if setup["HydrogenHourylMatching"] == 1
+		HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELECTROLYZER.==1])
+		QUALIFIED_SUPPLY = dfGen.R_ID[dfGen.Qualified_Hydrogen_Supply.==1]
+		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
+			sum(EP[:vP][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY, STORAGE))
+		)
+	end
 
 
 	### Energy Share Requirement Policy ###

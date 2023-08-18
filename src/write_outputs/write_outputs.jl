@@ -169,7 +169,9 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP) == 1
 			dfHydrogenPrice = write_hydrogen_prices(path, inputs, setup, EP)
-			dfHourlyMatchingPrices = write_hourly_matching_prices(path, inputs, setup, EP)
+			if setup["HydrogenHourylMatching"] == 1
+				dfHourlyMatchingPrices = write_hourly_matching_prices(path, inputs, setup, EP)
+			end
 		end
 
 
