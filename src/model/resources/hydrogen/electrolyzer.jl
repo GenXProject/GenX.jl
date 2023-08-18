@@ -63,7 +63,7 @@ where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megaw
 
 **Hourly clean supply matching constraint**
 
-This optional constraint (enabled by setting `HydrogenHourylMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in `Generators_data.csv`) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
+This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in `Generators_data.csv`) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
 
 ```math
 \begin{aligned}
@@ -149,7 +149,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in Generators_data.csv)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
-	if setup["HydrogenHourylMatching"] == 1
+	if setup["HydrogenHourlyMatching"] == 1
 		HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELECTROLYZER.==1])
 		QUALIFIED_SUPPLY = dfGen.R_ID[dfGen.Qualified_Hydrogen_Supply.==1]
 		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
