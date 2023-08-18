@@ -8,6 +8,9 @@ end
 Checks that a file exists in a directory under (at least) one of a list of 'aliases'.
 """
 function file_exists(dir, basenames::Vector{String})::Bool
+    if !isdir(dir)
+        return false
+    end
     best_basename = popfirst!(basenames)
     best_path = joinpath(dir, best_basename)
     if isfile(best_path)
@@ -126,6 +129,27 @@ function load_dataframe_from_file(path)
     CSV.read(path, DataFrame, header=1)
 end
 
+function find_matrix_columns_in_dataframe(df::DataFrame,
+        columnprefix::AbstractString;
+        prefixseparator='_')
+    all_columns = names(df)
+
+    # 2 is the length of the '_' connector plus one for indexing
+    get_integer_part(c) = tryparse(Int, c[length(columnprefix)+2:end])
+
+    # if prefix is "ESR", the column name should be like "ESR_1"
+    function is_of_this_column_type(c)
+        startswith(c, columnprefix) &&
+        length(c) >= length(columnprefix) + 2 &&
+        c[length(columnprefix) + 1] == prefixseparator &&
+        !isnothing(get_integer_part(c))
+    end
+
+    columns = filter(is_of_this_column_type, all_columns)
+    columnnumbers = sort!(get_integer_part.(columns))
+    return columnnumbers
+end
+
 @doc raw"""
     extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractString)
 
@@ -140,22 +164,8 @@ ESR_1, other_thing, ESR_3, ESR_2,
   0.4,           2,   0.6,   0.5,
 ```
 """
-function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractString)
-    all_columns = names(df)
-
-    # 2 is the length of the '_' connector plus one for indexing
-    get_integer_part(c) = tryparse(Int, c[length(columnprefix)+2:end])
-
-    # if prefix is "ESR", the column name should be like "ESR_1"
-    function is_of_this_column_type(c)
-        startswith(c, columnprefix) &&
-        length(c) >= length(columnprefix) + 2 &&
-        c[length(columnprefix) + 1] == '_' &&
-        !isnothing(get_integer_part(c))
-    end
-
-    columns = filter(is_of_this_column_type, all_columns)
-    columnnumbers = sort!(get_integer_part.(columns))
+function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractString; prefixseparator='_')
+    columnnumbers = find_matrix_columns_in_dataframe(df, columnprefix, prefixseparator)
 
     if length(columnnumbers) == 0
         msg = """an input dataframe with columns $all_columns was searched for
@@ -171,6 +181,7 @@ function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractStri
         error(msg)
     end
 
-    sorted_columns = columnprefix .* '_' .* string.(columnnumbers)
+    sorted_columns = columnprefix .* prefixseparator .* string.(columnnumbers)
     Matrix(dropmissing(df[:, sorted_columns]))
 end
+

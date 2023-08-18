@@ -4,7 +4,24 @@ function get_demand_dataframe(path)
     return load_dataframe(path, [filename, deprecated_synonym])
 end
 
-DEMAND_COLUMN_PREFIX = "Load_MW_z"
+DEMAND_COLUMN_PREFIX = "Demand_MW_z"
+DEMAND_COLUMN_PREFIX_DEPRECATED = "Load_MW_z"
+
+function extract_demand_data_matrix(df)
+    column_numbers_found = find_matrix_columns_in_dataframe(df,
+                                                  DEMAND_COLUMN_PREFIX[1:end-1],
+                                                  prefixseparator='z')
+    if length(column_numbers_found) > 0
+        return extract_matrix_from_dataframe(df,
+                                             DEMAND_COLUMN_PREFIX[1:end-1],
+                                             prefixseparator='z')
+    end
+
+    @warn "$DEMAND_COLUMN_PREFIX_DEPRECATED"*
+          "is deprecated as a column name; prefer $DEMAND_COLUMN_PREFIX"
+    extract_matrix_from_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED[1:end-1],
+                                      prefixseparator='z')
+end
 
 @doc raw"""
 	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
@@ -59,12 +76,12 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 	# Demand in MW for each zone
 	#println(names(demand_in))
-	start = findall(s -> s == DEMAND_COLUMN_PREFIX*"1", names(demand_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
+	#start = findall(s -> s == DEMAND_COLUMN_PREFIX*"1", names(demand_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     # Max value of non-served energy
     inputs["Voll"] = as_vector(:Voll) / scale_factor # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
     # Demand in MW
-    inputs["pD"] =Matrix(demand_in[1:T, start:start+Z-1]) / scale_factor  # convert to GW
+    inputs["pD"] = extract_demand_data_matrix(demand_in) / scale_factor
 
 	# Cost of non-served energy/demand curtailment
     # Cost of each segment reported as a fraction of value of non-served energy - scaled implicitly
@@ -72,7 +89,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
     # Maximum hourly demand curtailable as % of the max demand (for each segment)
     inputs["pMax_D_Curtail"] = as_vector(:Max_Demand_Curtailment)
 
-	println(filename * " Successfully Read!")
+    println("Demand (load) data Successfully Read!")
 end
 
 # ensure that the length of demand data exactly matches
