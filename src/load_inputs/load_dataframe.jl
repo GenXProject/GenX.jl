@@ -165,7 +165,10 @@ ESR_1, other_thing, ESR_3, ESR_2,
 ```
 """
 function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractString; prefixseparator='_')
-    columnnumbers = find_matrix_columns_in_dataframe(df, columnprefix, prefixseparator)
+    all_columns = names(df)
+    columnnumbers = find_matrix_columns_in_dataframe(df,
+                                                     columnprefix,
+                                                     prefixseparator=prefixseparator)
 
     if length(columnnumbers) == 0
         msg = """an input dataframe with columns $all_columns was searched for

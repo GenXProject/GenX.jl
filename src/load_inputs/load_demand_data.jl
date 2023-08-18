@@ -1,27 +1,21 @@
 function get_demand_dataframe(path)
     filename = "Demand_data.csv"
     deprecated_synonym = "Load_data.csv"
-    return load_dataframe(path, [filename, deprecated_synonym])
+    df = load_dataframe(path, [filename, deprecated_synonym])
+    # update column names
+    old_columns = find_matrix_columns_in_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED[1:end-1],
+                                     prefixseparator='z')
+    old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED*string(i) for i in old_columns)
+    if length(old_column_symbols) > 0
+        @info "$DEMAND_COLUMN_PREFIX_DEPRECATED is deprecated. Use $DEMAND_COLUMN_PREFIX."
+        new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX*string(i) for i in old_columns)
+        rename!(df, Dict(old_column_symbols .=> new_column_symbols))
+    end
+    return df
 end
 
 DEMAND_COLUMN_PREFIX = "Demand_MW_z"
 DEMAND_COLUMN_PREFIX_DEPRECATED = "Load_MW_z"
-
-function extract_demand_data_matrix(df)
-    column_numbers_found = find_matrix_columns_in_dataframe(df,
-                                                  DEMAND_COLUMN_PREFIX[1:end-1],
-                                                  prefixseparator='z')
-    if length(column_numbers_found) > 0
-        return extract_matrix_from_dataframe(df,
-                                             DEMAND_COLUMN_PREFIX[1:end-1],
-                                             prefixseparator='z')
-    end
-
-    @warn "$DEMAND_COLUMN_PREFIX_DEPRECATED"*
-          "is deprecated as a column name; prefer $DEMAND_COLUMN_PREFIX"
-    extract_matrix_from_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED[1:end-1],
-                                      prefixseparator='z')
-end
 
 @doc raw"""
 	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
@@ -75,13 +69,13 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	inputs["INTERIOR_SUBPERIODS"] = setdiff(1:T, inputs["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
 
 	# Demand in MW for each zone
-	#println(names(demand_in))
-	#start = findall(s -> s == DEMAND_COLUMN_PREFIX*"1", names(demand_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     # Max value of non-served energy
     inputs["Voll"] = as_vector(:Voll) / scale_factor # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
     # Demand in MW
-    inputs["pD"] = extract_demand_data_matrix(demand_in) / scale_factor
+    inputs["pD"] = extract_matrix_from_dataframe(demand_in,
+                                                 DEMAND_COLUMN_PREFIX[1:end-1],
+                                                 prefixseparator='z') / scale_factor
 
 	# Cost of non-served energy/demand curtailment
     # Cost of each segment reported as a fraction of value of non-served energy - scaled implicitly
