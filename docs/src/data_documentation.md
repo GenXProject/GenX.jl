@@ -234,7 +234,7 @@ Note that in either case, positive flows indicate flow from origin to destinatio
 negative flows indicate flow from destination to origin zone.
 
 
-#### 2.1.3 Load\_data.csv
+#### 2.1.3 Demand\_data.csv (Load\_data.csv)
 
 This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding. Note that GenX is designed to model hourly time steps. With some care and effort, finer (e.g. 15 minute) or courser (e.g. 2 hour) time steps can be modeled so long as all time-related parameters are scaled appropriately (e.g. time period weights, heat rates, ramp rates and minimum up and down times for generators, variable costs, etc).
 
@@ -406,7 +406,7 @@ Modeling grid operations for each hour of the year can be computationally expens
 |Threshold |Iterative period addition will end if the period farthest from its representative period (as measured using Euclidean distance) is within this percentage of the total possible error (for normalization) or 95% of the total possible error (± 2 σ for standardization). E.g., for a threshold of 0.01, each period must be within 1% of the spread of possible error before the clustering iterations will terminate (or until the maximum is reached).|
 |IterateMethod | Either ‘cluster' (Default) or ‘extreme', whether to increment the number of clusters to the kmeans/kmedoids method or to set aside the worst-fitting periods as a new extreme periods.|
 |nReps |Default 200, the number of kmeans/kmedoids repetitions at the same setting.|
-|LoadWeight| Default 1, a multiplier on demand columns to optionally prioritize better fits for demand profiles over resource capacity factor or fuel price profiles.|
+|DemandWeight| Default 1, a multiplier on demand columns to optionally prioritize better fits for demand profiles over resource capacity factor or fuel price profiles.|
 |WeightTotal |Default 8760, the sum to which the relative weights of representative periods will be scaled.|
 |ClusterFuelPrices| Either 1 or 0, whether or not to use the fuel price time series in `Fuels_data.csv` in the clustering process. If 'no', this function will still write `Fuels_data.csv` in the TimeDomainReductionFolder with reshaped fuel prices based on the number and size of the representative periods but will not use the fuel price time series for selection of representative periods.|
 
