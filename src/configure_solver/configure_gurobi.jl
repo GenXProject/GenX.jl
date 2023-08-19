@@ -20,7 +20,7 @@ The Gurobi optimizer instance is configured with the following default parameter
  - NumericFocus = 0 (Numerical precision emphasis. See https://www.gurobi.com/documentation/8.1/refman/numericfocus.html)
 
 """
-function configure_gurobi(solver_settings_path::String)
+function configure_gurobi(solver_settings_path::String, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
 
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)
@@ -49,5 +49,5 @@ function configure_gurobi(solver_settings_path::String)
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
-	return optimizer_with_attributes(Gurobi.Optimizer, attributes...)
+	return optimizer_with_attributes(optimizer, attributes...)
 end

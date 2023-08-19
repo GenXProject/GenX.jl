@@ -32,6 +32,7 @@ using Dates
 using Clustering
 using Distances
 using Combinatorics
+using MathOptInterface
 
 using Random
 using RecursiveArrayTools

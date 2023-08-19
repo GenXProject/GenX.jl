@@ -11,7 +11,7 @@ The SCIP optimizer instance is configured with the following default parameters 
  - limitsgap = 0.05
 
 """
-function configure_scip(solver_settings_path::String)
+function configure_scip(solver_settings_path::String, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
 
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)
@@ -28,5 +28,5 @@ function configure_scip(solver_settings_path::String)
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
-	return optimizer_with_attributes(SCIP.Optimizer, attributes...)
+	return optimizer_with_attributes(optimizer, attributes...)
 end
