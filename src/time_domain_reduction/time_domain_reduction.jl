@@ -49,7 +49,7 @@ function parse_data(myinputs)
 
     # DEMAND - Demand_data.csv
     demand_profiles = [ myinputs["pD"][:,l] for l in 1:size(myinputs["pD"],2) ]
-    demand_col_names = [DEMAND_COLUMN_PREFIX*string(l) for l in 1:size(demand_profiles)[1]]
+    demand_col_names = [DEMAND_COLUMN_PREFIX()*string(l) for l in 1:size(demand_profiles)[1]]
     demand_zones = [l for l in 1:size(demand_profiles)[1]]
     col_to_zone_map = Dict(demand_col_names .=> 1:length(demand_col_names))
 
@@ -118,7 +118,7 @@ function parse_multi_stage_data(inputs_dict)
     stage_demand_profiles = [ inputs_dict[t]["pD"][:,l] for t in 1:length(keys(inputs_dict)), l in 1:size(inputs_dict[1]["pD"],2) ]
     vector_lps = [stage_demand_profiles[:,l] for l in 1:size(inputs_dict[1]["pD"],2)]
     demand_profiles = [reduce(vcat,vector_lps[l]) for l in 1:size(inputs_dict[1]["pD"],2)]
-    demand_col_names = [DEMAND_COLUMN_PREFIX*string(l) for l in 1:size(demand_profiles)[1]]
+    demand_col_names = [DEMAND_COLUMN_PREFIX()*string(l) for l in 1:size(demand_profiles)[1]]
     demand_zones = [l for l in 1:size(demand_profiles)[1]]
     col_to_zone_map = Dict(demand_col_names .=> 1:length(demand_col_names))
 

@@ -3,19 +3,19 @@ function get_demand_dataframe(path)
     deprecated_synonym = "Load_data.csv"
     df = load_dataframe(path, [filename, deprecated_synonym])
     # update column names
-    old_columns = find_matrix_columns_in_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED[1:end-1],
+    old_columns = find_matrix_columns_in_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED()[1:end-1],
                                      prefixseparator='z')
-    old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED*string(i) for i in old_columns)
+    old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED()*string(i) for i in old_columns)
     if length(old_column_symbols) > 0
-        @info "$DEMAND_COLUMN_PREFIX_DEPRECATED is deprecated. Use $DEMAND_COLUMN_PREFIX."
-        new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX*string(i) for i in old_columns)
+        @info "$DEMAND_COLUMN_PREFIX_DEPRECATED() is deprecated. Use $DEMAND_COLUMN_PREFIX()."
+        new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX()*string(i) for i in old_columns)
         rename!(df, Dict(old_column_symbols .=> new_column_symbols))
     end
     return df
 end
 
-DEMAND_COLUMN_PREFIX = "Demand_MW_z"
-DEMAND_COLUMN_PREFIX_DEPRECATED = "Load_MW_z"
+DEMAND_COLUMN_PREFIX() = "Demand_MW_z"
+DEMAND_COLUMN_PREFIX_DEPRECATED() = "Load_MW_z"
 
 @doc raw"""
 	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
@@ -74,7 +74,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
     inputs["Voll"] = as_vector(:Voll) / scale_factor # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
     # Demand in MW
     inputs["pD"] = extract_matrix_from_dataframe(demand_in,
-                                                 DEMAND_COLUMN_PREFIX[1:end-1],
+                                                 DEMAND_COLUMN_PREFIX()[1:end-1],
                                                  prefixseparator='z') / scale_factor
 
 	# Cost of non-served energy/demand curtailment
