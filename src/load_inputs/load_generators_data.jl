@@ -13,7 +13,8 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	default_vals["Heat_Rate2_MMBTU_per_MWh"] = 0.0;
 	default_vals["Fuel2"] = "None";
 	default_vals["Min_Cofire_Level"] = 0.0;
-    for s in ("Heat_Rate2_MMBTU_per_MWh","Fuel2","Min_Cofire_Level")
+	default_vals["Max_Cofire_Level"] = 0.0;
+    for s in ("Heat_Rate2_MMBTU_per_MWh","Fuel2","Min_Cofire_Level","Max_Cofire_Level")
         if s ∉ existing_cols
             ensure_column!(gen_in, s, default_vals[s])
         end
@@ -28,7 +29,19 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
     # Add Resource IDs after reading to prevent user errors
     gen_in[!,:R_ID] = 1:G
+	
+	# Set of resources that have the dual fuel option
+	inputs_gen["THERM_DUAL"] = gen_in[gen_in.Fuel2.!="None",:R_ID]
+	inputs_gen["THERM_SING"] = gen_in[gen_in.Fuel2.=="None",:R_ID]
 
+	# print error message if heat rate 2 is greater than 0 and fuel 2 does not exist ("None")
+	if !isempty(inputs_gen["THERM_SING"])
+		for y in inputs_gen["THERM_SING"]
+			if gen_in[y, :Heat_Rate2_MMBTU_per_MWh] > 0 
+				error("Heat rate for fuel 2 must be zero when fuel 2 does not exist ('None')")
+			end
+		end
+	end
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	## Defining sets of generation and storage resources
 

@@ -28,6 +28,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     THERM_COMMIT = inputs["THERM_COMMIT"]
 	THERM_NO_COMMIT = inputs["THERM_NO_COMMIT"]
 	THERM_ALL = inputs["THERM_ALL"]
+    THERM_DUAL = inputs["THERM_DUAL"]
 
     FUEL = length(inputs["fuels"])
     # create variable for fuel consumption for output
@@ -134,11 +135,14 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP, cFuelSwap[y=1:G, t = 1:T], eFuelSwapping[y,t] == 0)
 
-    if !isempty(THERM_ALL)
+    if !isempty(THERM_DUAL)
         # Add constraints on heat input from fuel 2 (EPA cofiring requirements)
-	    # fuel2/heat rate >= min_cofire_level * total power
-        @constraint(EP, MinCofire[y in THERM_ALL, t = 1:T], 
+	    # fuel2/heat rate >= min_cofire_level * total power 
+        # fuel2/heat rate <= max_cofire_level * total power without retrofit
+        @constraint(EP, cMinCofire[y in THERM_DUAL, t = 1:T], 
             EP[:vFuel2][y, t] >= EP[:vP][y, t] * dfGen[y, :Min_Cofire_Level] * dfGen[y, :Heat_Rate2_MMBTU_per_MWh])
+        @constraint(EP, cMaxCofire[y in THERM_DUAL, t = 1:T], 
+            EP[:vFuel2][y, t] <= EP[:vP][y, t] * dfGen[y, :Max_Cofire_Level] * dfGen[y, :Heat_Rate2_MMBTU_per_MWh])
     end
 
     if !isempty(THERM_COMMIT)
