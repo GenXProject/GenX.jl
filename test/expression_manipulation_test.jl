@@ -14,14 +14,14 @@ let
     GenX.fill_with_const!(small_const_expr, 6.0)
     @test small_const_expr == AffExpr.([6.0 6.0; 6.0 6.0; 6.0 6.0])
 
-    # Test createemptyexpression! with fill_with_const!
+    # Test create_empty_expression! with fill_with_const!
     large_dims = (2,10,20)
-    GenX.createemptyexpression!(EP, :large_expr, large_dims)
+    GenX.create_empty_expression!(EP, :large_expr, large_dims)
     @test all(EP[:large_expr] .== 0.0)
 
-    # Test createemptyexpression! with fill_with_const!
+    # Test create_empty_expression! with fill_with_const!
     large_dims_vector = collect(large_dims)
-    GenX.createemptyexpression!(EP, :large_const_expr, large_dims)
+    GenX.create_empty_expression!(EP, :large_const_expr, large_dims)
     GenX.fill_with_const!(EP[:large_const_expr], 6.0)
     @test all(EP[:large_const_expr] .== 6.0)
 
@@ -33,7 +33,7 @@ let
     @test all(EP[:large_expr][:] .== 18.0)
 
     # Test add_similar_to_expression! returns an error if the dimensions don't match
-    GenX.createemptyexpression!(EP, :small_expr, (2,3))
+    GenX.create_empty_expression!(EP, :small_expr, (2,3))
     @test_throws ErrorException GenX.add_similar_to_expression!(EP[:large_expr], EP[:small_expr])
 
     # Test we can add variables to an expression using add_similar_to_expression!
@@ -64,8 +64,8 @@ end
 
 # function test_performance(expr_dims)
 #     EP = Model(HiGHS.Optimizer)
-#     GenX.createemptyexpression!(EP, :e, expr_dims)
-#     GenX.createemptyexpression!(EP, :r, expr_dims)
+#     GenX.create_empty_expression!(EP, :e, expr_dims)
+#     GenX.create_empty_expression!(EP, :r, expr_dims)
 #     GenX.fill_with_const!(EP[:r], 6.0)
 #     @code_warntype GenX._add_similar_to_expression!(EP[:e], EP[:r])
 #     @code_warntype GenX.add_similar_to_expression!(EP[:e], EP[:r])

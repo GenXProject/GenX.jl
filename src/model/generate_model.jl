@@ -88,29 +88,29 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	createemptyexpression!(EP, :ePowerBalance, T, Z)
+	create_empty_expression!(EP, :ePowerBalance, (T, Z))
 
 	# Initialize Objective Function Expression
 	EP[:eObj] = AffExpr(0.0)
 
-	createemptyexpression!(EP, :eGenerationByZone, Z, T)
+	create_empty_expression!(EP, :eGenerationByZone, (Z, T))
 	
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
-		createemptyexpression!(EP, :eCapResMarBalance, inputs["NCapacityReserveMargin"], T)
+		create_empty_expression!(EP, :eCapResMarBalance, (inputs["NCapacityReserveMargin"], T))
 	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
-		createemptyexpression!(EP, :eESR, inputs["nESR"])
+		create_empty_expression!(EP, :eESR, inputs["nESR"])
 	end
 
 	if setup["MinCapReq"] == 1
-		createemptyexpression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
+		create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
 	end
 
 	if setup["MaxCapReq"] == 1
-		createemptyexpression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
+		create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
 	end
 
 	# Infrastructure
