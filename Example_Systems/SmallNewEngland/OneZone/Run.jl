@@ -1,5 +1,3 @@
-using GenX, Gurobi, MathOptInterface
+using GenX
 
-optimizer=Gurobi.Optimizer
-
-run_genx_case!(dirname(@__FILE__),optimizer)
+run_genx_case!(dirname(@__FILE__))
