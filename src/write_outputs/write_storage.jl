@@ -11,11 +11,7 @@ function write_storage(path::AbstractString, inputs::Dict,setup::Dict, EP::Model
 	HYDRO_RES = inputs["HYDRO_RES"]
 	FLEX = inputs["FLEX"]
 	VRE_STOR = inputs["VRE_STOR"]
-	if !isempty(VRE_STOR)
-		VS_STOR = inputs["VS_STOR"]
-	else
-		VS_STOR = []
-	end
+	VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
 	
 	# Storage level (state of charge) of each resource in each time step
 	dfStorage = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])

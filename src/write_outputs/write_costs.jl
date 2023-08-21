@@ -10,12 +10,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE_STOR = inputs["VRE_STOR"]
-
+	
+	cost_list = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"]
 	if !isempty(VRE_STOR)
-		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cGridConnection"])
-	else
-		dfCost = DataFrame(Costs = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"])
+		push!(cost_list, "cGridConnection")
 	end
+	dfCost = DataFrame(Costs = cost_list)
 
 	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0) 
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
@@ -161,17 +161,16 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 				eCVar_VRE_STOR += sum(value.(EP[:eCVarOutWind][WIND_ZONE_VRE_STOR, :]))
 			end
 			if !isempty(STOR_ALL_ZONE_VRE_STOR)
-				if !isempty(DC_CHARGE_ALL_ZONE_VRE_STOR)
-					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Charge_DC][DC_CHARGE_ALL_ZONE_VRE_STOR, :]))
-				end
-				if !isempty(DC_DISCHARGE_ALL_ZONE_VRE_STOR)
-					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Discharge_DC][DC_DISCHARGE_ALL_ZONE_VRE_STOR, :]))
-				end
-				if !isempty(AC_DISCHARGE_ALL_ZONE_VRE_STOR)
-					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Discharge_AC][AC_DISCHARGE_ALL_ZONE_VRE_STOR, :]))
-				end
-				if !isempty(AC_CHARGE_ALL_ZONE_VRE_STOR)
-					eCVar_VRE_STOR += sum(value.(EP[:eCVar_Charge_AC][AC_CHARGE_ALL_ZONE_VRE_STOR, :]))
+				vom_map = Dict(
+					DC_CHARGE_ALL_ZONE_VRE_STOR => :eCVar_Charge_DC,
+					DC_DISCHARGE_ALL_ZONE_VRE_STOR => :eCVar_Discharge_DC,
+					AC_DISCHARGE_ALL_ZONE_VRE_STOR => :eCVar_Discharge_AC,
+					AC_CHARGE_ALL_ZONE_VRE_STOR => :eCVar_Charge_AC
+				)
+				for (set, symbol) in vom_map
+					if !isempty(set)
+						eCVar_VRE_STOR += sum(value.(EP[symbol][set, :]))
+					end
 				end
 			end
 			tempCVar += eCVar_VRE_STOR
@@ -196,11 +195,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCNSE *= ModelScalingFactor^2
 			tempCStart *= ModelScalingFactor^2
 		end
+		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
 		if !isempty(VRE_STOR)
-			dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-", "-"]
-		else
-			dfCost[!,Symbol("Zone$z")] = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
+			push!(temp_cost_list, "-")
 		end
+		dfCost[!,Symbol("Zone$z")] = temp_cost_list
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
 end

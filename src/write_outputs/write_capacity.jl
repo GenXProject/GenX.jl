@@ -56,7 +56,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_ENERGY"]
 			retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
 		end
-		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[!,:Existing_Cap_MWh][i]
+		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[i,:Existing_Cap_MWh]
 	end
 	if !isempty(inputs["VRE_STOR"])
 		for i in inputs["VS_STOR"]
@@ -66,7 +66,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 			if i in inputs["RET_CAP_STOR"]
 				retcapenergy[i] = value(EP[:vRETCAPENERGY_VS][i])
 			end
-			existingcapenergy[i] = dfGen[!,:Existing_Cap_MWh][i] # multistage functionality doesn't exist yet for VRE-storage resources
+			existingcapenergy[i] = dfGen[i,:Existing_Cap_MWh] # multistage functionality doesn't exist yet for VRE-storage resources
 		end
 	end
 
