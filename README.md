@@ -160,7 +160,7 @@ julia> <press close-bracket ] to access the package manager>
 ```
 
 3. Set the appropriate solver in the `genx_settings.yml` file of your case
-4. In the `Run.jl` file for your case, add `using Gurobi` or `using CPLEX` to the dependencies at the top, and specify the optimizer object as the second argument to `run_genx_case!`. Below is an example of a `Run.jl` file for a case with Gurobi as an optimizer:
+4. In the `Run.jl` file for your case, add `using Gurobi` or `using CPLEX` to the dependencies at the top, and specify the optimizer object as the second argument to `run_genx_case!`. Below is an example `Run.jl` file for a case using the Gurobi optimizer:
 
 ```
 using GenX, Gurobi
@@ -170,7 +170,7 @@ optimizer = Gurobi.Optimizer
 run_genx_case!(dirname(@__FILE__),optimizer)
 ```
 
-Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi/CPLEX license on your host machine, you will receive an error message and Run.jl will not run to completion.
+A full example case with Gurobi as an optimizer is given in `Example_Systems/SmallNewEngland/OneZone_Gurobi`. Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi/CPLEX license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
 
 ## Running Modeling to Generate Alternatives with GenX
