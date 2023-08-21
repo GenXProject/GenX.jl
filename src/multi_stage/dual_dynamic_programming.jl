@@ -82,6 +82,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
     # Step a.i) Initialize cost-to-go function for t = 1:num_stages
     for t in 1:num_stages
+	settings_d["CurStage"] = t;
         models_d[t] = initialize_cost_to_go(settings_d, models_d[t], inputs_d[t])
     end
 
