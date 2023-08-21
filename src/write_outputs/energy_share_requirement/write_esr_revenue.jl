@@ -18,23 +18,25 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	end
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
 	for i in 1:inputs["nESR"]
-		dfESRRev =  hcat(dfESRRev, dfPower[1:G,:AnnualSum] .* dfGen[!,Symbol("ESR_$i")] * dfESR[i,:ESR_Price])
+		esr_col = Symbol("ESR_$i")
+		dfESRRev =  hcat(dfESRRev, dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col] * dfESR[i,:ESR_Price])
 		# dfpower is in MWh already, price is in $/MWh already, no need to scale
 		# if setup["ParameterScale"] == 1
 		# 	#dfESRRev[!,:x1] = dfESRRev[!,:x1] * (1e+3) # MillionUS$ to US$
 		# 	dfESRRev[!,:x1] = dfESRRev[!,:x1] * ModelScalingFactor # MillionUS$ to US$  # Is this right? -Jack 4/29/2021
 		# end
-		rename!(dfESRRev, Dict(:x1 => Symbol("ESR_$i")))
+		rename!(dfESRRev, Dict(:x1 => esr_col))
 		if !isempty(VRE_STOR)
+			esr_vrestor_col = Symbol("ESRVreStor_$i")
 			if !isempty(SOLAR_ONLY)
-				dfESRRev[SOLAR, Symbol("ESR_$i")] = (value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0)), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0)),Symbol("ESRVreStor_$i")] * dfESR[i,:ESR_Price]
+				dfESRRev[SOLAR, esr_col] = (value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0)), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0)),esr_vrestor_col] * dfESR[i,:ESR_Price]
 			end
 			if !isempty(WIND_ONLY)
-				dfESRRev[WIND, Symbol("ESR_$i")] = (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.==0)),Symbol("ESRVreStor_$i")] * dfESR[i,:ESR_Price]
+				dfESRRev[WIND, esr_col] = (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.==0)),esr_vrestor_col] * dfESR[i,:ESR_Price]
 			end
 			if !isempty(SOLAR_WIND)
-				dfESRRev[SOLAR_WIND, Symbol("ESR_$i")] = (((value.(EP[:vP_WIND][SOLAR_WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)),Symbol("ESRVreStor_$i")] * dfESR[i,:ESR_Price])
-					+ (value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)),Symbol("ESRVreStor_$i")] * dfESR[i,:ESR_Price])
+				dfESRRev[SOLAR_WIND, esr_col] = (((value.(EP[:vP_WIND][SOLAR_WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)),esr_vrestor_col] * dfESR[i,:ESR_Price])
+					+ (value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)),esr_vrestor_col] * dfESR[i,:ESR_Price])
 			end
 		end
 	end
