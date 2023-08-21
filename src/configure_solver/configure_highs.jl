@@ -331,7 +331,7 @@ The HiGHS optimizer instance is configured with the following default parameters
 	
 
 """
-function configure_highs(solver_settings_path::String, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
+function configure_highs(solver_settings_path::String, optimizer::Any)
 
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)

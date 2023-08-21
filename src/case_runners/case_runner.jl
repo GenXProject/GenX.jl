@@ -13,7 +13,7 @@ end
 @doc raw"""Run the GenX in the given folder
 case - folder for the case
 """
-function run_genx_case!(case::AbstractString, optimizer::T=HiGHS.Optimizer) where {T<:MathOptInterface.AbstractOptimizer}
+function run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
     genx_settings = get_settings_path(case, "genx_settings.yml") #Settings YAML file path
     mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
@@ -31,7 +31,7 @@ function time_domain_reduced_files_exist(tdrpath)
     return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 
-function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
+function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
 
     ### Cluster time series inputs if necessary and if specified by the user
@@ -84,7 +84,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::T
 end
 
 
-function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
+function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml") # Multi stage settings YAML file path
     mysetup["MultiStageSettingsDict"] = YAML.load(open(multistage_settings))

@@ -9,7 +9,7 @@ Currently supported solvers include: "Gurobi", "CPLEX", "Clp", "Cbc", or "SCIP"
 The "solver\_settings\_path" argument is a string which specifies the path to the directory that contains the settings YAML file for the specified solver.
 
 """
-function configure_solver(solver::String, solver_settings_path::String, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
+function configure_solver(solver::String, solver_settings_path::String, optimizer::Any)
 
     solver = lowercase(solver)
 

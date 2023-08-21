@@ -20,7 +20,7 @@ The Clp optimizer instance is configured with the following default parameters i
  - Perturbation = 100 (switch on perturbation (50), automatic (100), don't try perturbing (102))
 
 """
-function configure_clp(solver_settings_path::String, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
+function configure_clp(solver_settings_path::String, optimizer::Any)
 
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)

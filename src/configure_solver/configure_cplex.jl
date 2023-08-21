@@ -77,7 +77,7 @@ The optimizer instance is configured with the following default parameters if a 
 
 Any other attributes in the settings file (which typically start with `CPX_PARAM_`) will also be passed to the solver.
 """
-function configure_cplex(solver_settings_path::String, optimizer::T) where {T<:MathOptInterface.AbstractOptimizer}
+function configure_cplex(solver_settings_path::String, optimizer::Any)
 
     solver_settings = YAML.load(open(solver_settings_path))
     solver_settings = convert(Dict{String, Any}, solver_settings)
