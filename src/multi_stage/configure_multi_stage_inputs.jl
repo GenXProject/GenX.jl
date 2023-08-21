@@ -97,21 +97,21 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		# Conduct 1. and 2. for any co-located VRE-STOR resources
 		if !isempty(inputs_d["VRE_STOR"])
 			dfVRE_STOR = inputs_d["dfVRE_STOR"]
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Inverter_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_DC],dfVRE_STOR[!,:WACC_DC])
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Solar_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Solar],dfVRE_STOR[!,:WACC_Solar])
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Wind_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Wind],dfVRE_STOR[!,:WACC_Wind])
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Discharge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_DC],dfVRE_STOR[!,:WACC_Discharge_DC])
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Charge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_DC],dfVRE_STOR[!,:WACC_Charge_DC])
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Discharge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_AC],dfVRE_STOR[!,:WACC_Discharge_AC])
-			inputs_d["dfVRE_STOR"][!,:Inv_Cost_Charge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_AC],dfVRE_STOR[!,:WACC_Charge_AC])
+			dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_DC],dfVRE_STOR[!,:WACC_DC])
+			dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Solar],dfVRE_STOR[!,:WACC_Solar])
+			dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Wind],dfVRE_STOR[!,:WACC_Wind])
+			dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_DC],dfVRE_STOR[!,:WACC_Discharge_DC])
+			dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_DC],dfVRE_STOR[!,:WACC_Charge_DC])
+			dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_AC],dfVRE_STOR[!,:WACC_Discharge_AC])
+			dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_AC],dfVRE_STOR[!,:WACC_Charge_AC])
 
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Inverter_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Inverter_Cost_per_MWyr]
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Solar_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Solar_Cost_per_MWyr]
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Wind_Cost_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Wind_Cost_per_MWyr]
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_DC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_DC_per_MWyr]
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_DC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_DC_per_MWyr]
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_AC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Discharge_AC_per_MWyr]
-			inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_AC_per_MWyr] = OPEXMULT.*inputs_d["dfVRE_STOR"][!,:Fixed_OM_Cost_Charge_AC_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_DC_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_DC_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Cost_Charge_DC_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Cost_Charge_DC_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_AC_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_AC_per_MWyr]
+			dfVRE_STOR[!,:Fixed_OM_Cost_Charge_AC_per_MWyr] = OPEXMULT.*dfVRE_STOR[!,:Fixed_OM_Cost_Charge_AC_per_MWyr]
 		end
 	end
 
