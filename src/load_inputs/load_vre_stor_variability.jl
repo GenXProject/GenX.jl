@@ -38,21 +38,17 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::D
 
 	all_resources = inputs["RESOURCES"]
 
-	existing_variability = names(vre_stor_solar)
-    for r in all_resources
-        if r ∉ existing_variability
-            @info "assuming availability of 0.0 for resource $r."
-            ensure_column!(vre_stor_solar, r, 0.0)
-        end
-    end
+	function ensure_column_zeros!(vre_stor_df, all_resources)
+		existing_variability = names(vre_stor_df)
+		for r in all_resources
+			if r ∉ existing_variability
+				ensure_column!(vre_stor_df, r, 0.0)
+			end
+		end
+	end
 
-	existing_variability = names(vre_stor_wind)
-    for r in all_resources
-        if r ∉ existing_variability
-            @info "assuming availability of 0.0 for resource $r."
-            ensure_column!(vre_stor_wind, r, 0.0)
-        end
-    end
+	ensure_column_zeros!(vre_stor_solar, all_resources)
+	ensure_column_zeros!(vre_stor_wind, all_resources)
 
 	# Reorder DataFrame to R_ID order (order provided in Vre_and_stor_data.csv)
 	select!(vre_stor_solar, [:Time_Index; Symbol.(all_resources) ])
