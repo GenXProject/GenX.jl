@@ -210,7 +210,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		end
 	end
 
-	load_vre_stor_data!(setup, path, inputs_gen, gen_in)
+	load_vre_stor_data!(inputs_gen, setup, path)
 	println(filename * " Successfully Read!")
 end
 
@@ -337,21 +337,21 @@ function split_storage_resources!(df::DataFrame, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-	load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+	load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
 
 Function for reading input parameters related to co-located VRE-storage resources
 """
-function load_vre_stor_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
 	
 	error_strings = String[]
 	dfGen = inputs_gen["dfGen"]
-	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(gen_in) ? gen_in[gen_in.VRE_STOR.==1,:R_ID] : Int[]
+	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(dfGen) ? dfGen[dfGen.VRE_STOR.==1,:R_ID] : Int[]
 
 	# Check if VRE-STOR resources exist
 	if !isempty(inputs_gen["VRE_STOR"])
 
 		# Check input data format
-		vre_stor_errors = check_vre_stor_validity(gen_in, setup)
+		vre_stor_errors = check_vre_stor_validity(dfGen, setup)
 		append!(error_strings, vre_stor_errors)
 
 		vre_stor_in = DataFrame(CSV.File(joinpath(path,"Vre_and_stor_data.csv"), header=true), copycols=true)
