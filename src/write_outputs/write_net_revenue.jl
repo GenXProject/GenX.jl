@@ -77,7 +77,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Add fuel cost to the dataframe
-	dfNetRevenue.Fuel_cost = (inputs["C_Fuel_per_MWh"] .* value.(EP[:vP])) * inputs["omega"]
+	dfNetRevenue.Fuel_cost .= value.(EP[:eTotalCFuelOut]) 
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fuel_cost *= ModelScalingFactor^2 # converting Million US$ to US$
 	end
