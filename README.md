@@ -148,21 +148,29 @@ If your needs are more complex, it is possible to use a customized run script in
 If you want to use the commercial solvers Gurobi or CPLEX:
 
 1. Make sure you have a valid license and the actual solvers for either of Gurobi or CPLEX installed on your machine
-2. Add Gurobi or CPLEX to the Julia Project.
+2. Add Gurobi or CPLEX to your Julia installation
 
 ```
-> julia --project=/home/youruser/GenX
+> julia
 
 julia> <press close-bracket ] to access the package manager>
-(GenX) pkg> add Gurobi
+(@v1.9) pkg> add Gurobi
 -or-
-(GenX) pkg> add CPLEX
+(@v1.9) pkg> add CPLEX
 ```
 
-3. At the beginning of the `GenX/src/GenX.jl` file, uncomment `using Gurobi` and/or `using CPLEX`.
-4. Set the appropriate solver in the `genx_settings.yml` file of your case
+3. Set the appropriate solver in the `genx_settings.yml` file of your case
+4. In the `Run.jl` file for your case, add `using Gurobi` or `using CPLEX` to the dependencies at the top, and specify the optimizer object as the second argument to `run_genx_case!`. Below is an example of a `Run.jl` file for a case with Gurobi as an optimizer:
 
-Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.
+```
+using GenX, Gurobi
+
+optimizer = Gurobi.Optimizer
+
+run_genx_case!(dirname(@__FILE__),optimizer)
+```
+
+Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi/CPLEX license on your host machine, you will receive an error message and Run.jl will not run to completion.
 
 
 ## Running Modeling to Generate Alternatives with GenX
