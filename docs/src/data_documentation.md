@@ -259,7 +259,7 @@ This file includes parameters to characterize model temporal resolution to appro
 
 This file contains the time-series of capacity factors / availability of each resource included in the `Generators_data.csv` file for each time step (e.g. hour) modeled.
 
-• first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
+• First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
 • Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` file in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` must be unique. Note that for Hydro reservoir resources (i.e. `HYDRO = 1` in the `Generators_data.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
@@ -545,7 +545,11 @@ Notes:
 
 #### 2.2.9 Vre\_and\_stor\_data.csv
 
-This file contains additional cost and performance parameters for specifically co-located VRE and storage resources included in the model formulation. Each co-located VRE and storage generator must be explicitly listed in the `Generators_data.csv` and have the matching unique **Resource** name and **R\_ID** in both the `Generators_data.csv` and the `Vre_and_stor_data.csv`. This file supplements the `Generators_data.csv` by specifically adding VRE-STOR data and flags that are unique to how this module functions. Some cost and performance parameters for each co-located resource will be read in from the `Generators_data.csv` (as indicated above in the explanation of inputs from `Generators_data.csv` and from Table 15) and the rest of the specific inputs will be noted here for each resource. Each co-located VRE and storage resource can be easily configured to contain either a co-located VRE-storage resource, standalone VRE resource (either wind, solar PV, or both), or standalone storage resource.
+This file contains additional cost and performance parameters for specifically co-located VRE and storage resources included in the model formulation.
+Each co-located VRE and storage generator must be explicitly listed in the `Generators_data.csv` and have the matching unique **Resource** name and **R\_ID** in both the `Generators_data.csv` and the `Vre_and_stor_data.csv`.
+This file supplements the `Generators_data.csv` by specifically adding VRE-STOR data and flags that are unique to how this module functions.
+Some cost and performance parameters for each co-located resource will be read in from the `Generators_data.csv` (as indicated above in the explanation of inputs from `Generators_data.csv` and from Table 15) and the rest of the specific inputs will be noted here for each resource.
+Each co-located VRE and storage resource can be easily configured to contain either a co-located VRE-storage resource, standalone VRE resource (either wind, solar PV, or both), or standalone storage resource.
 
 ###### Table 15: Additional & modified columns for co-located VRE-STOR resources in the Generators\_data.csv file (already noted above but explicitly defined here)
 ---
@@ -731,7 +735,7 @@ This file contains the time-series of capacity factors / availability of the sol
 
 This file contains the time-series of capacity factors / availability of the wind component (AC capacity factors) of each co-located resource included in the `Vre_and_stor_data.csv` file for each time step (e.g. hour) modeled.
 
-• first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
+• First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
 • Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` and `Vre_and_stor_data.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` and `Vre_and_stor_data.csv` must be unique. 
 
