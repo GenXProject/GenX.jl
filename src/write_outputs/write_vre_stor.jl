@@ -81,7 +81,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	
 	j = 1
 	for i in VRE_STOR
-		existingcapgrid[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAP][i]) : dfGen[!,:Existing_Cap_MW][i]
+		existingcapgrid[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAP][i]) : dfGen[i,:Existing_Cap_MW]
 		if i in inputs["NEW_CAP"]
 			capgrid[j] = value(EP[:vCAP][i])
 		end
@@ -90,7 +90,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		end
 
 		if i in SOLAR
-			existingcapsolar[j] = MultiStage == 1 ? value(EP[:vEXISTINGSOLARCAP][i]) : dfVRE_STOR[!,:Existing_Cap_Solar_MW][j]
+			existingcapsolar[j] = MultiStage == 1 ? value(EP[:vEXISTINGSOLARCAP][i]) : dfVRE_STOR[j,:Existing_Cap_Solar_MW]
 			if i in inputs["NEW_CAP_SOLAR"]
 				capsolar[j] = value(EP[:vSOLARCAP][i])
 			end
@@ -100,7 +100,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		end
 
 		if i in WIND
-			existingcapwind[j] = MultiStage == 1 ? value(EP[:vEXISTINGWINDCAP][i]) : dfVRE_STOR[!,:Existing_Cap_Wind_MW][j]
+			existingcapwind[j] = MultiStage == 1 ? value(EP[:vEXISTINGWINDCAP][i]) : dfVRE_STOR[j,:Existing_Cap_Wind_MW]
 			if i in inputs["NEW_CAP_WIND"]
 				capwind[j] = value(EP[:vWINDCAP][i])
 			end
@@ -110,7 +110,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		end
 
 		if i in DC
-			existingcapdc[j] = MultiStage == 1 ? value(EP[:vEXISTINGDCCAP][i]) : dfVRE_STOR[!,:Existing_Cap_Inverter_MW][j]
+			existingcapdc[j] = MultiStage == 1 ? value(EP[:vEXISTINGDCCAP][i]) : dfVRE_STOR[j,:Existing_Cap_Inverter_MW]
 			if i in inputs["NEW_CAP_DC"]
 				capdc[j] = value(EP[:vDCCAP][i])
 			end
@@ -120,7 +120,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		end
 
 		if i in STOR
-			existingcapenergy[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY_VS][i]) : dfGen[!,:Existing_Cap_MWh][i]
+			existingcapenergy[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY_VS][i]) : dfGen[i,:Existing_Cap_MWh]
 			if i in inputs["NEW_CAP_STOR"]
 				capenergy[j] = value(EP[:vCAPENERGY_VS][i])
 			end
@@ -135,7 +135,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 				if i in inputs["RET_CAP_CHARGE_DC"]
 					retcapchargedc[j] = value(EP[:vRETCAPCHARGE_DC][i])
 				end
-				existingcapchargedc[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGEDC][i]) : dfVRE_STOR[!,:Existing_Cap_Charge_DC_MW][j]
+				existingcapchargedc[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGEDC][i]) : dfVRE_STOR[j,:Existing_Cap_Charge_DC_MW]
 			end
 			if i in inputs["VS_ASYM_AC_CHARGE"]
 				if i in inputs["NEW_CAP_CHARGE_AC"]
@@ -144,7 +144,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 				if i in inputs["RET_CAP_CHARGE_AC"]
 					retcapchargeac[j] = value(EP[:vRETCAPCHARGE_AC][i])
 				end
-				existingcapchargeac[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGEAC][i]) : dfVRE_STOR[!,:Existing_Cap_Charge_AC_MW][j]
+				existingcapchargeac[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGEAC][i]) : dfVRE_STOR[j,:Existing_Cap_Charge_AC_MW]
 			end
 			if i in inputs["VS_ASYM_DC_DISCHARGE"]
 				if i in inputs["NEW_CAP_DISCHARGE_DC"]
@@ -153,7 +153,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 				if i in inputs["RET_CAP_DISCHARGE_DC"]
 					retcapdischargedc[j] = value(EP[:vRETCAPDISCHARGE_DC][i])
 				end
-				existingcapdischargedc[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPDISCHARGEDC][i]) : dfVRE_STOR[!,:Existing_Cap_Discharge_DC_MW][j]
+				existingcapdischargedc[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPDISCHARGEDC][i]) : dfVRE_STOR[j,:Existing_Cap_Discharge_DC_MW]
 			end
 			if i in inputs["VS_ASYM_AC_DISCHARGE"]
 				if i in inputs["NEW_CAP_DISCHARGE_AC"]
@@ -162,7 +162,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 				if i in inputs["RET_CAP_DISCHARGE_AC"]
 					retcapdischargeac[j] = value(EP[:vRETCAPDISCHARGE_AC][i])
 				end
-				existingcapdischargeac[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPDISCHARGEAC][i]) : dfVRE_STOR[!,:Existing_Cap_Discharge_AC_MW][j]
+				existingcapdischargeac[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPDISCHARGEAC][i]) : dfVRE_STOR[j,:Existing_Cap_Discharge_AC_MW]
 			end
 		end
 		j += 1
