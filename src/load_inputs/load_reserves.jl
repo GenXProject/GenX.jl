@@ -8,13 +8,13 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
     res_in = load_dataframe(joinpath(path, filename))
 
     function load_field_with_deprecated_symbol(df::DataFrame, columns::Vector{Symbol})
-        best = first(columns)
+        best = popfirst!(columns)
         firstrow = 1
         all_columns = Symbol.(names(df))
         if best in all_columns
             return float(df[firstrow, best])
         end
-        for col in columns[2:end]
+        for col in columns
             if col in all_columns
                 @info "The column name $col in file $filename is deprecated; prefer $best"
                 return float(df[firstrow, col])
