@@ -39,7 +39,7 @@ Note that all settings parameters are case sensitive.
 |CO2Cap | Flag for specifying the type of CO2 emission limit constraint.|
 || 0 = no CO2 emission limit|
 || 1 = mass-based emission limit constraint|
-|| 2 = load + rate-based emission limit constraint|
+|| 2 = demand + rate-based emission limit constraint|
 || 3 = generation + rate-based emission limit constraint|
 |CapacityReserveMargin | Flag for Capacity Reserve Margin constraints. |
 || Default = 0 (No Capacity Reserve Margin constraints)|
@@ -155,7 +155,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |Generators\_variability.csv |Specify time-series of capacity factor/availability for each resource.|
 |Generators\_data.csv |Specify cost and performance data for generation, storage and demand flexibility resources.|
 |**Settings-specific Files**||
-|Reserves.csv |Specify operational reserve requirements as a function of load and renewables generation and penalty for not meeting these requirements.|
+|Reserves.csv |Specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.|
 |Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.|
 |CO2\_cap.csv |Specify regional CO2 emission limits.|
 |Capacity\_reserve\_margin.csv |Specify regional capacity reserve margin requirements.|
@@ -248,7 +248,7 @@ This file includes parameters to characterize model temporal resolution to appro
 |Cost\_of\_Demand\_Curtailment\_per\_MW |Cost of non-served energy/demand curtailment (for each segment), reported as a fraction of value of lost demand. If *Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length equal to the length of Demand\_Segment.|
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
-|Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
+|Demand\_MW\_z* |Demand profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
 |Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations. This is always a single entry. For a full-year model, this is `1`.|
 |Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps). This is always a single entry: all representative periods have the same length. For a full-year model, this entry is equal to the number of time steps.|
 |Sub\_Weights |Number of annual time steps (e.g. hours) represented by each timestep in a representative period. The length of this column is equal to the number of representative periods. The sum of the elements should be equal to the total number of time steps in a model time horizon (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
@@ -394,9 +394,9 @@ Modeling grid operations for each hour of the year can be computationally expens
 |**Key** | **Description**|
 | :------------ | :-----------|
 |Timesteps\_per\_period | The number of timesteps (e.g., hours) in each representative period (i.e. 168 for weeks, 24 for days, 72 for three-day periods, etc).|
-|UseExtremePeriods | 1 = Include outliers (by performance or demand/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to demand profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most demand across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
+|UseExtremePeriods | 1 = Include outliers (by performance or demand/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to demand profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most demand across the whole system to be included among the extreme periods. They would select Demand, System, Absolute, and Max.|
 ||0 = Do not include extreme periods.|
-|ExtremePeriods | If UseExtremePeriods = 1, use this dictionary to select which types of extreme periods to use. Select by profile type (Load, PV, or Wind), geography (Zone or System), grouping by timestep or by period (Absolute or Integral), and statistic (Maximum or Minimum).|
+|ExtremePeriods | If UseExtremePeriods = 1, use this dictionary to select which types of extreme periods to use. Select by profile type (Demand, PV, or Wind), geography (Zone or System), grouping by timestep or by period (Absolute or Integral), and statistic (Maximum or Minimum).|
 |ClusterMethod |Either `kmeans` or `kmedoids`, the method used to cluster periods and determine each time step's representative period.|
 |ScalingMethod |Either ‘N' or ‘S', the decision to normalize ([0,1]) or standardize (mean 0, variance 1) the input data prior to clustering.|
 |MinPeriods |The minimum number of representative periods used to represent the input data. If using UseExtremePeriods, this must be greater or equal to the number of selected extreme periods. If `IterativelyAddPeriods` is off, this will be the total number of representative periods.|
@@ -420,9 +420,9 @@ This file includes parameter inputs needed to model time-dependent procurement o
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Reg\_Req\_Percent\_Load |[0,1], Regulation requirement as a percent of time-dependent load; here load is the total across all model zones.|
+|Reg\_Req\_Percent\_Demand |[0,1], Regulation requirement as a percent of time-dependent demand; here demand is the total across all model zones.|
 |Reg\_Req\_Percent\_VRE |[0,1], Regulation requirement as a percent of time-dependent wind and solar generation (summed across all model zones).|
-|Rsv\_Req\_Percent\_Load [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent load (which is summed across all zones).|
+|Rsv\_Req\_Percent\_Demand [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent demand (which is summed across all zones).|
 |Rsv\_Req\_Percent\_VRE |[0,1], Spinning up or contingency reserve requirement as a percent of time-dependent wind and solar generation (which is summed across all zones).|
 |Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement ($/MW per time step).|
 |Dynamic\_Contingency |Flags to include capacity (generation or transmission) contingency to be added to the spinning reserve requirement.|
@@ -820,7 +820,7 @@ Reports dual variable of maximum non-served energy constraint (shadow price of r
 
 #### 3.1.7 prices.csv
 
-Reports marginal electricity price for each model zone and time step. Marginal electricity price is equal to the dual variable of the load balance constraint. If GenX is configured as a mixed integer linear program, then this output is only generated if `WriteShadowPrices` flag is activated. If configured as a linear program (i.e. linearized unit commitment or economic dispatch) then output automatically available.
+Reports marginal electricity price for each model zone and time step. Marginal electricity price is equal to the dual variable of the power balance constraint. If GenX is configured as a mixed integer linear program, then this output is only generated if `WriteShadowPrices` flag is activated. If configured as a linear program (i.e. linearized unit commitment or economic dispatch) then output automatically available.
 
 
 #### 3.1.8 status.csv
