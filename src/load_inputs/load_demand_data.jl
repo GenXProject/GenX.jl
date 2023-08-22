@@ -7,7 +7,9 @@ function get_demand_dataframe(path)
                                      prefixseparator='z')
     old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED()*string(i) for i in old_columns)
     if length(old_column_symbols) > 0
-        @info "$DEMAND_COLUMN_PREFIX_DEPRECATED() is deprecated. Use $DEMAND_COLUMN_PREFIX()."
+        pref_prefix = DEMAND_COLUMN_PREFIX()
+        dep_prefix = DEMAND_COLUMN_PREFIX_DEPRECATED()
+        @info "$dep_prefix is deprecated. Use $pref_prefix."
         new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX()*string(i) for i in old_columns)
         rename!(df, Dict(old_column_symbols .=> new_column_symbols))
     end
