@@ -46,14 +46,14 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{P}^{ESR} \subseteq \mathcal{P}$ | Energy Share Requirement type policies |
 |$\mathcal{P}^{CO_2} \subseteq \mathcal{P}$ | CO$_2$ emission cap policies|
 |$\mathcal{P}^{CO_2}_{mass} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, mass-based |
-|$\mathcal{P}^{CO_2}_{load} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, load emission-rate based |   
+|$\mathcal{P}^{CO_2}_{demand} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, demand and emission-rate based |   
 |$\mathcal{P}^{CO_2}_{gen} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, generation emission-rate based |
 |$\mathcal{P}^{CRM} \subseteq \mathcal{P}$ | Capacity reserve margin (CRM) type policy constraints |
 |$\mathcal{P}^{MinTech} \subseteq \mathcal{P}$ | Minimum Capacity Carve-out type policy constraint |
 |$\mathcal{Z}^{ESR}_{p} \subseteq \mathcal{Z}$ | set of zones eligible for ESR policy constraint $p \in \mathcal{P}^{ESR}$ |
 |$\mathcal{Z}^{CRM}_{p} \subseteq \mathcal{Z}$ | set of zones that form the locational deliverable area for capacity reserve margin policy constraint $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{Z}^{CO_2}_{p,mass} \subseteq \mathcal{Z}$ | set of zones are under the emission cap mass-based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{mass}$ |
-|$\mathcal{Z}^{CO_2}_{p,load} \subseteq \mathcal{Z}$ | set of zones are under the emission cap load emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{load}$ |
+|$\mathcal{Z}^{CO_2}_{p,demand} \subseteq \mathcal{Z}$ | set of zones are under the emission cap demand-and-emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{demand}$ |
 |$\mathcal{Z}^{CO_2}_{p,gen} \subseteq \mathcal{Z}$ | set of zones are under the emission cap generation emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO2,gen}$ |
 |$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines entering Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{L}_p^{out} \subseteq \mathcal{L}$ | The subset of transmission lines leaving Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
@@ -218,9 +218,9 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\upsilon^{reg}_{y,z}$ | Maximum fraction of capacity that a resource $y$ in zone $z$ can contribute to frequency regulation reserve requirements|
 |$\upsilon^{rsv}_{y,z}$ | Maximum fraction of capacity that a resource $y$ in zone $z$ can contribute to upward operating (spinning) reserve requirements|
 |$\pi^{Unmet}_{rsv}$ | Cost of unmet spinning reserves in [\$/MW]|
-|$\epsilon^{load}_{reg}$ | Frequency regulation reserve requirement as a fraction of forecasted demand in each time step |
+|$\epsilon^{demand}_{reg}$ | Frequency regulation reserve requirement as a fraction of forecasted demand in each time step |
 |$\epsilon^{vre}_{reg}$ | Frequency regulation reserve requirement as a fraction of variable renewable energy generation in each time step |
-|$\epsilon^{load}_{rsv}$ | Operating (spinning) reserve requirement as a fraction of forecasted demand in each time step |
+|$\epsilon^{demand}_{rsv}$ | Operating (spinning) reserve requirement as a fraction of forecasted demand in each time step |
 |$\epsilon^{vre}_{rsv}$ | Operating (spinning) reserve requirement as a fraction of forecasted variable renewable energy generation in each time step |
 |$\epsilon_{y,z}^{CO_2}$ | CO$_2$ emissions per unit energy produced by technology $y$ in zone $z$ [metric tons/MWh]|
 |$\epsilon_{y,z,p}^{MinTech}$ | Equals to 1 if a generator of technology $y$ in zone $z$ is eligible for minimum capacity carveout policy $p \in \mathcal{P}^{MinTech}$, otherwise 0|
@@ -229,7 +229,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\epsilon_{y,z,p}^{CRM}$ | Capacity derating factor of technology $y$ in zone $z$ for capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ [fraction]|
 |$RM_{z,p}^{CRM}$ | Reserve margin of zone $z$ of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ [fraction]|
 |$\epsilon_{z,p,mass}^{CO_2}$ | Emission budget of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{mass}$ [ million of metric tonnes]|
-|$\epsilon_{z,p,load}^{CO_2}$ | Maximum carbon intensity of the load of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{load}$ [metric tonnes/MWh]|
+|$\epsilon_{z,p,demand}^{CO_2}$ | Maximum carbon intensity of the demand of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{demand}$ [metric tonnes/MWh]|
 |$\epsilon_{z,p,gen}^{CO_2}$ | Maximum emission rate of the generation of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{gen}$ [metric tonnes/MWh]|
 |$\rho_{y,z}^{min}$ | Minimum stable power output per unit of installed capacity for technology $y$ in zone $z$ [%]|
 |$\rho_{y,z,t}^{max}$ | Maximum available generation per unit of installed capacity during time step t for technology y in zone z [%]|
