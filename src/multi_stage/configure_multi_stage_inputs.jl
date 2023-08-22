@@ -92,7 +92,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
 		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .*= OPEXMULT
 		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] .*= OPEXMULT
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_charge_per_MWyr] .*= OPEXMULT
+		inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr] .*= OPEXMULT
 
 		# Conduct 1. and 2. for any co-located VRE-STOR resources
 		if !isempty(inputs_d["VRE_STOR"])
