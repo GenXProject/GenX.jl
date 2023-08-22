@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generally, 'demand' is now used where (electrical) 'load' was used previously (#397).
 - `Load_data.csv` is being renamed to `Demand_data.csv`.
 - `Load_MW_z*` columns in that file are renamed to `Demand_MW_z*`.
-- `Reg_Req_Percent_Load` and `Rsv_Req_Percent_Load` are renamed to `..._Demand`.
+- In `Reserves.csv`, `Reg_Req_Percent_Load` and `Rsv_Req_Percent_Load` are renamed to `..._Demand`.
 - The `Load` key in the `time_domain_reduction_settings.yml` file is renamed to `Demand`.
 
 ### Deprecated
