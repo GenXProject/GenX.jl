@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Previously these plants had no resource flag set, and so they did not contribute to the power balance.
   As these plants are now useful, the objective in these cases is slightly lower.
 - Assign correct investment cost per stage in objective function initialization for multi-stage runs (#530)
+- Fix Fixed_OM_Cost_Charge_per_MWyr to align with example cases (#533)
   
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
