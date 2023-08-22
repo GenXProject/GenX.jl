@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
   Previously these plants had no resource flag set, and so they did not contribute to the power balance.
   As these plants are now useful, the objective in these cases is slightly lower.
-- Bug Fix for correct tracking of current investment stage by SDDP (#530)
+- Assign correct investment cost per stage in objective function initialization for multi-stage runs (#530)
   
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
