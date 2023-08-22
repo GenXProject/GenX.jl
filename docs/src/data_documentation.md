@@ -325,7 +325,7 @@ This file contains cost and performance parameters for various generators and ot
 |Inv\_Cost\_Charge\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR = 2` ($/MW/year). |
 |Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost pertains to the grid connection.|
 |Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology ($/MWh/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost of the energy component pertains to the co-located storage resource. |
-|Fixed\_OM\_Cost\_charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `STOR = 2`. |
+|Fixed\_OM\_Cost\_Charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `STOR = 2`. |
 |Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). Note that for co-located VRE-STOR resources, these costs apply to the AC generation sent to the grid from the entire site. |
 |Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `STOR = 2`, or variable operations and maintenance costs associated with flexible demand deferral with `FLEX = 1`. Otherwise 0 ($/MWh). Note that for co-located VRE-STOR resources, these costs must be 0 (specific variable operations and maintenance costs exist in VRE-STOR dataframe). |
 |**Technical performance parameters**|
