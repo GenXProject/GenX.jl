@@ -12,7 +12,7 @@ resource_name(r::GenXResource) = r[:Resource]
 Make sure that a resource is not more than one of a set of mutually-exclusive models
 """
 function check_resource_type_flags(r::GenXResource)
-    exclusive_flags = [:THERM, :MUST_RUN, :STOR, :FLEX, :HYDRO, :VRE]
+    exclusive_flags = [:THERM, :MUST_RUN, :STOR, :FLEX, :HYDRO, :VRE, :VRE_STOR]
     not_set = resource_attribute_not_set()
     check_for_flag_set(el) = get(r, el, not_set) > 0
 

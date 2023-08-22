@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add ability of storage to contribute to capacity reserves (#475)
+- Add Co-located VRE+Storage Module (#523)
 - Add output for dual of capacity constraint (#473)
 - Add PR template (#516)
 - Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).

@@ -514,6 +514,11 @@ In Load_data.csv, include the following:
      of all model stages together. Else if 0, [still in development] the model will time domain reduce only
      the first stage and will apply the periods of each other model stage to this set
      of representative periods by closest Eucliden distance.
+
+For co-located VRE-STOR resources, all capacity factors must be in the Generators_variability.csv file in addition
+to separate Vre_and_stor_solar_variability.csv and Vre_and_stor_wind_variability.csv files. The co-located solar PV
+and wind profiles for co-located resources will be separated into different CSV files to be read by loading the inputs 
+after the clustering of the inputs has occurred. 
 """
 function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
     if v println(now()) end
@@ -947,6 +952,8 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
             Stage_Weights = Dict()
             Stage_PeriodMaps = Dict()
             Stage_Outfiles = Dict()
+            SolarVar_Outfile = joinpath(TimeDomainReductionFolder, "Vre_and_stor_solar_variability.csv")
+            WindVar_Outfile = joinpath(TimeDomainReductionFolder, "Vre_and_stor_wind_variability.csv")
             for per in 1:NumStages                      # Iterate over multi-stages
                 mkpath(joinpath(inpath,"Inputs","Inputs_p$per", TimeDomainReductionFolder))
                 # Stage-specific weights and mappings
@@ -962,6 +969,10 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
                 Stage_Outfiles[per]["Fuel"] = joinpath("Inputs_p$per", Fuel_Outfile)
                 Stage_Outfiles[per]["PMap"] = joinpath("Inputs_p$per", PMap_Outfile)
                 Stage_Outfiles[per]["YAML"] = joinpath("Inputs_p$per", YAML_Outfile)
+                if !isempty(inputs_dict[per]["VRE_STOR"])
+                    Stage_Outfiles[per]["GSolar"] = joinpath("Inputs_p$per", SolarVar_Outfile)
+                    Stage_Outfiles[per]["GWind"] = joinpath("Inputs_p$per", WindVar_Outfile)
+                end
 
                 # Save output data to stage-specific locations
                 ### TDR_Results/Load_data_clustered.csv
@@ -995,6 +1006,32 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
                 NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
                 if v println("Writing resource file...") end
                 CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["GVar"]), GVOutputData, header=NewGVColNames)
+
+                if !isempty(inputs_dict[per]["VRE_STOR"])
+                    gen_var = load_dataframe(joinpath(inpath, "Inputs", Stage_Outfiles[per]["GVar"]))
+    
+                    # Find which indexes have solar PV/wind names
+                    RESOURCE_ZONES_VRE_STOR = NewGVColNames
+                    solar_col_names = []
+                    wind_col_names = []
+                    for r in 1:length(RESOURCE_ZONES_VRE_STOR)
+                        if occursin("PV", RESOURCE_ZONES_VRE_STOR[r]) || occursin("pv", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Pv", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) || occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) || occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                            push!(solar_col_names,r)
+                        end
+                        if occursin("Wind", RESOURCE_ZONES_VRE_STOR[r]) || occursin("WIND", RESOURCE_ZONES_VRE_STOR[r]) || occursin("wind", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                            push!(wind_col_names, r)
+                        end
+                    end
+    
+                    # Index into dataframe and output them
+                    solar_var = gen_var[!, solar_col_names]
+                    solar_var[!, :Time_Index] = 1:size(solar_var,1)
+                    wind_var = gen_var[!, wind_col_names]
+                    wind_var[!, :Time_Index] = 1:size(wind_var,1)
+    
+                    CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["GSolar"]), solar_var)
+                    CSV.write(joinpath(inpath, "Inputs", Stage_Outfiles[per]["GWind"]), wind_var)
+                end
 
                 ### TDR_Results/Fuels_data.csv
                 fuel_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"))
@@ -1055,6 +1092,35 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
             if v println("Writing resource file...") end
             CSV.write(joinpath(inpath,"Inputs",input_stage_directory,GVar_Outfile), GVOutputData, header=NewGVColNames)
 
+            # Break up VRE-storage components if needed
+            if !isempty(myinputs["VRE_STOR"])
+                gen_var = load_dataframe(joinpath(inpath,"Inputs",input_stage_directory,GVar_Outfile))
+
+                # Find which indexes have solar PV/wind names
+                RESOURCE_ZONES_VRE_STOR = NewGVColNames
+                solar_col_names = []
+                wind_col_names = []
+                for r in 1:length(RESOURCE_ZONES_VRE_STOR)
+                    if occursin("PV", RESOURCE_ZONES_VRE_STOR[r]) || occursin("pv", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Pv", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) || occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) || occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                        push!(solar_col_names,r)
+                    end
+                    if occursin("Wind", RESOURCE_ZONES_VRE_STOR[r]) || occursin("WIND", RESOURCE_ZONES_VRE_STOR[r]) || occursin("wind", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                        push!(wind_col_names, r)
+                    end
+                end
+
+                # Index into dataframe and output them
+                solar_var = gen_var[!, solar_col_names]
+                solar_var[!, :Time_Index] = 1:size(solar_var,1)
+                wind_var = gen_var[!, wind_col_names]
+                wind_var[!, :Time_Index] = 1:size(wind_var,1)
+
+                SolarVar_Outfile = joinpath(TimeDomainReductionFolder, "Vre_and_stor_solar_variability.csv")
+                WindVar_Outfile = joinpath(TimeDomainReductionFolder, "Vre_and_stor_wind_variability.csv")
+                CSV.write(joinpath(inpath,"Inputs",input_stage_directory,SolarVar_Outfile), solar_var)
+                CSV.write(joinpath(inpath,"Inputs",input_stage_directory, WindVar_Outfile), wind_var)
+            end
+
             ### TDR_Results/Fuels_data.csv
 
             fuel_in = load_dataframe(joinpath(inpath,"Inputs",input_stage_directory,"Fuels_data.csv"))
@@ -1110,6 +1176,35 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
         NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
         if v println("Writing resource file...") end
         CSV.write(joinpath(inpath, GVar_Outfile), GVOutputData, header=NewGVColNames)
+
+        # Break up VRE-storage components if needed
+        if !isempty(myinputs["VRE_STOR"])
+            gen_var = load_dataframe(joinpath(inpath,GVar_Outfile))
+
+            # Find which indexes have solar PV/wind names
+            RESOURCE_ZONES_VRE_STOR = NewGVColNames
+            solar_col_names = []
+            wind_col_names = []
+            for r in 1:length(RESOURCE_ZONES_VRE_STOR)
+                if occursin("PV", RESOURCE_ZONES_VRE_STOR[r]) || occursin("pv", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Pv", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) || occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) || occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                    push!(solar_col_names,r)
+                end
+                if occursin("Wind", RESOURCE_ZONES_VRE_STOR[r]) || occursin("WIND", RESOURCE_ZONES_VRE_STOR[r]) || occursin("wind", RESOURCE_ZONES_VRE_STOR[r]) || occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                    push!(wind_col_names, r)
+                end
+            end
+
+            # Index into dataframe and output them
+            solar_var = gen_var[!, solar_col_names]
+            solar_var[!, :Time_Index] = 1:size(solar_var,1)
+            wind_var = gen_var[!, wind_col_names]
+            wind_var[!, :Time_Index] = 1:size(wind_var,1)
+
+            SolarVar_Outfile = joinpath(TimeDomainReductionFolder, "Vre_and_stor_solar_variability.csv")
+            WindVar_Outfile = joinpath(TimeDomainReductionFolder, "Vre_and_stor_wind_variability.csv")
+            CSV.write(joinpath(inpath, SolarVar_Outfile), solar_var)
+            CSV.write(joinpath(inpath, WindVar_Outfile), wind_var)
+        end
 
         ### TDR_Results/Fuels_data.csv
 

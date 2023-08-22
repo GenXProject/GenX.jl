@@ -7,6 +7,12 @@ The minimum capacity requirement constraint allows for modeling minimum deployme
 \end{aligned}
 ```
 Note that $\epsilon_{y,z,p}^{MinCapReq}$ is the eligiblity of a generator of technology $y$ in zone $z$ of requirement $p$ and will be equal to $1$ for eligible generators and will be zero for ineligible resources. The dual value of each minimum capacity constraint can be interpreted as the required payment (e.g. subsidy) per MW per year required to ensure adequate revenue for the qualifying resources.
+
+Also note that co-located VRE and storage resources, there are three different components 
+	that minimum capacity requirements can be created for. The capacity of solar PV (in AC terms 
+	since the capacity is multiplied by the inverter efficiency), the capacity of wind, and the discharge 
+	capacity of storage (power to energy ratio times the energy capacity) can all have minimum capacity 
+	requirements.
 """
 function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
