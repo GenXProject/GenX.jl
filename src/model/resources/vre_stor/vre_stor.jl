@@ -145,8 +145,8 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Note: The subtraction of the charging component can be found in STOR function
 	@expression(EP, ePowerBalance_VRE_STOR[t=1:T, z=1:Z], JuMP.AffExpr())
     for t=1:T, z=1:Z
-        if !isempty(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID])
-            ePowerBalance_VRE_STOR[t,z] += sum(EP[:vP][y,t] for y=dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID])
+        if !isempty(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID])
+            ePowerBalance_VRE_STOR[t,z] += sum(EP[:vP][y,t] for y=dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID])
         end
     end
 
@@ -193,7 +193,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         if IncludeLossesInESR == 1
             @expression(EP, eESRVREStorLosses[ESR=1:inputs["nESR"]], 
                 sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS_VRE_STOR][y] 
-                for y=intersect(STOR, dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID])) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+                for y=intersect(STOR, dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID])) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
             EP[:eESR] -= eESRVREStorLosses
         end
     end
@@ -201,34 +201,34 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Minimum Capacity Requirement
     if MinCapReq == 1
         @expression(EP, eMinCapResSolar[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-            sum(by_rid(y,:EtaInverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagSolar_$mincap")].== 1),:][!,:R_ID])))
+            sum(by_rid(y,:EtaInverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagSolar_$mincap")].== 1),:R_ID])))
 		EP[:eMinCapRes] += eMinCapResSolar
 
         @expression(EP, eMinCapResWind[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagWind_$mincap")].== 1),:][!,:R_ID])))
+            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagWind_$mincap")].== 1),:R_ID])))
 		EP[:eMinCapRes] += eMinCapResWind
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
             @expression(EP, eMinCapResACDis[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMinCapRes] += eMinCapResACDis
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
             @expression(EP, eMinCapResDCDis[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMinCapRes] += eMinCapResDCDis
         end
 
         if !isempty(inputs["VS_SYM_AC"])
             @expression(EP, eMinCapResACStor[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(by_rid(y,:Power_to_Energy_AC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(by_rid(y,:Power_to_Energy_AC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMinCapRes] += eMinCapResACStor
         end
 
         if !isempty(inputs["VS_SYM_DC"])
             @expression(EP, eMinCapResDCStor[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(by_rid(y,:Power_to_Energy_DC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(by_rid(y,:Power_to_Energy_DC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MinCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMinCapRes] += eMinCapResDCStor
         end
     end
@@ -236,34 +236,34 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum Capacity Requirement
     if MaxCapReq == 1
         @expression(EP, eMaxCapResSolar[mincap = 1:inputs["NumberOfMaxCapReqs"]], 
-            sum(by_rid(y,:EtaInverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagSolar_$mincap")].== 1),:][!,:R_ID])))
+            sum(by_rid(y,:EtaInverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagSolar_$mincap")].== 1),:R_ID])))
 		EP[:eMaxCapRes] += eMaxCapResSolar
 
         @expression(EP, eMaxCapResWind[mincap = 1:inputs["NumberOfMaxCapReqs"]], 
-            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagWind_$mincap")].== 1),:][!,:R_ID])))
+            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagWind_$mincap")].== 1),:R_ID])))
 		EP[:eMaxCapRes] += eMaxCapResWind
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
             @expression(EP, eMaxCapResACDis[mincap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMaxCapRes] += eMaxCapResACDis
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
             @expression(EP, eMaxCapResDCDis[mincap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMaxCapRes] += eMaxCapResDCDis
         end
 
         if !isempty(inputs["VS_SYM_AC"])
             @expression(EP, eMaxCapResACStor[mincap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(by_rid(y,:Power_to_Energy_AC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(by_rid(y,:Power_to_Energy_AC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMaxCapRes] += eMaxCapResACStor
         end
 
         if !isempty(inputs["VS_SYM_DC"])
             @expression(EP, eMaxCapResDCStor[mincap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(by_rid(y,:Power_to_Energy_DC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:][!,:R_ID])))
+                sum(by_rid(y,:Power_to_Energy_DC)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], dfVRE_STOR[(dfVRE_STOR[!,Symbol("MaxCapTagStor_$mincap")].== 1),:R_ID])))
 		    EP[:eMaxCapRes] += eMaxCapResDCStor
         end
     end
@@ -1156,8 +1156,8 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     for z in 1:Z, t=1:T
-        if !isempty(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID])
-            EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y,t] for y=intersect(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID],STOR))
+        if !isempty(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID])
+            EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y,t] for y=intersect(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID],STOR))
         end
     end
 
@@ -1165,7 +1165,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # From CO2 Policy module
 	@expression(EP, eELOSSByZone_VRE_STOR[z=1:Z],
-        sum(EP[:eELOSS_VRE_STOR][y] for y in intersect(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:][!,:R_ID],STOR)))
+        sum(EP[:eELOSS_VRE_STOR][y] for y in intersect(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID],STOR)))
     if !isempty(inputs["STOR_ALL"])
         EP[:eELOSSByZone] += eELOSSByZone_VRE_STOR
     else
