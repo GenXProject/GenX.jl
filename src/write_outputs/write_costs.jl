@@ -12,7 +12,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	VRE_STOR = inputs["VRE_STOR"]
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	
-	cost_list = ["cTotal", "cFix", "cVar", "cFuel" ,"cNSE", "cStart", "cStartFuel", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"]
+	cost_list = ["cTotal", "cFix", "cVar", "cFuel" ,"cNSE", "cStart", "cStartFuel", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cCO2"]
 	if !isempty(VRE_STOR)
 		push!(cost_list, "cGridConnection")
 	end
@@ -79,6 +79,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[!,2][9] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
 
+	if any(x -> x != 0, dfGen.CO2_Capture_Rate)
+		dfCost[11,2] += value(EP[:eTotaleCCO2Sequestration])
+	end
+
 	if setup["ParameterScale"] == 1
 		dfCost[5,2] *= ModelScalingFactor^2
 		dfCost[6,2] *= ModelScalingFactor^2
@@ -86,6 +90,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[8,2] *= ModelScalingFactor^2
 		dfCost[9,2] *= ModelScalingFactor^2
 		dfCost[10,2] *= ModelScalingFactor^2
+		dfCost[11,2] *= ModelScalingFactor^2
 	end
 
 	for z in 1:Z
@@ -97,6 +102,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCStartFuel = 0.0
 		tempCNSE = 0.0
 		tempHydrogenValue = 0.0
+		tempCCO2 = 0.0
 
 		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
@@ -217,6 +223,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
+		if any(x -> x != 0, dfGen.CO2_Capture_Rate)
+			tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][Y_ZONE,:]))
+			tempCTotal += tempCCO2		
+		end
+
 		if setup["ParameterScale"] == 1
 			tempCTotal *= ModelScalingFactor^2
 			tempCFix *= ModelScalingFactor^2
@@ -226,8 +237,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCStart *= ModelScalingFactor^2
 			tempHydrogenValue *= ModelScalingFactor^2
 			tempCStartFuel *= ModelScalingFactor^2
+			tempCCO2 *= ModelScalingFactor^2
 		end
-		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCFuel,tempCNSE, tempCStart,tempCStartFuel, "-", "-", "-"]
+		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCFuel,tempCNSE, tempCStart,tempCStartFuel, "-", "-", "-", tempCCO2]
 		if !isempty(VRE_STOR)
 			push!(temp_cost_list, "-")
 		end

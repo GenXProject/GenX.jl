@@ -64,10 +64,10 @@ function co2!(EP::Model, inputs::Dict)
     # if all the CO2 capture rates from generator data are zeros, the CO2 emissions from thermal generators are determined by fuel consumptiono times CO2 content per MMBTU 
     if all(x -> x == 0, dfGen.CO2_Capture_Rate)
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T], 
-            ((1-dfGen.Biomass[y]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]]))
+            ((1-dfGen[!, :Biomass][y]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]]))
     else 
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            ((1-dfGen.Biomass[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
+            (1-dfGen[!, :Biomass][y] - dfGen[!, :CO2_Capture_Rate][y]) * 
             ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
                 inputs["fuel_CO2"][dfGen[y,:Fuel]]))
         
@@ -78,7 +78,7 @@ function co2!(EP::Model, inputs::Dict)
                 inputs["fuel_CO2"][dfGen[y,:Fuel]]))
 
         
-        #************************************* not sure why do we need those expressions.
+        #************************************* 
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] 
                 for t in 1:T))
