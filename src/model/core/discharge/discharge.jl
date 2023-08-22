@@ -27,11 +27,8 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Objective Function Expressions ##
 
-	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M plus fuel cost
-	# remove the fuel cost in discharge.jl and account fuel costs in fuel.jl
+	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M, the fuel costs will be determined in fuel.jl
 	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]*vP[y,t])))
-	#@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]+inputs["C_Fuel_per_MWh"][y,t])*vP[y,t]))
-	#@expression(EP, eCVar_out[y=1:G,t=1:T], (round(inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]+inputs["C_Fuel_per_MWh"][y,t]), digits=RD)*vP[y,t]))
 	# Sum individual resource contributions to variable discharging costs to get total variable discharging costs
 	@expression(EP, eTotalCVarOutT[t=1:T], sum(eCVar_out[y,t] for y in 1:G))
 	@expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))

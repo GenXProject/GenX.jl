@@ -15,8 +15,35 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-    fuel!(EP::Model, inputs::Dict, setup::Dict)
-    this module calculate the fuel consumption and the fuel cost
+
+
+fuel!(EP::Model, inputs::Dict, setup::Dict)
+
+This function creates expression to account for total fuel consumption (e.g., coal, natural gas, hydrogen, etc). It also has the capability to model the piece-wise fuel consumption in part load (if data is available)
+
+\*\* Expressions \*\*
+
+The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Hear\_Rate_y$). 
+
+The total fuel consumption for a plant $y$ at time $t$, denoted by $ePlantFuel_{y,t}$, is determined by adding up the fuel consumed for power generation ($vFuel_{y,t}$) as well as startup fuel ($eStartFuel_{y,t}$). 
+
+The fuel costs for a plant $y$ at time $t$, denoted by $eCFuel\_out_{y,t}$, is determined by total fuel consumption ($ePlantFuel_{y,t}$) multiplied by the fuel costs (\$/MMBTU)
+
+From above formulations, thermal generators are expected to have the same fuel consumption per generating 1 MWh electricity, regardless of the operating mode. However, thermal generators tend to have decreased efficiency when operating at part load, leading to higher fuel consumption per generating the same amount of electricity. To have more precise representation of fuel consumption at part load, the piecewise-linear fitting of heat input can be introduced. 
+
+```math
+\begin{aligned}
+vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
+\hspace{1cm} \forall y \in G, \forall t \in T, \forall x \in X
+\end{aligned}
+```
+
+Where $h_{y,x}$ represents incremental heat rate of a thermal generator $y$ in segment $x$ [MMBTU/MWh] and $f_{y,x}$ represents intercept of fuel consumption of a thermal generator $y$ in segment $x$ [MMBUT], and $U_{y,t}$ represents the commit status of a thermal generator $y$ at time $t$. We include at most three segements to represent the piecewise heat consumption. 
+
+Since fuel consumption has a positive value, the optimization will optimize the fuel consumption by enforcing the inequity to equal to the highest piecewise segment. When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept to be zero such that the fuel consumption is zero when thermal units are offline.
+
+
+
 """
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
@@ -43,15 +70,17 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         end)
     @expression(EP, ePlantFuel[y in 1:G, t = 1:T], 
         (EP[:vFuel][y, t] + EP[:eStartFuel][y, t]))
+    #*************************************************
     @expression(EP, ePlantFuelConsumptionYear[y in 1:G], 
         sum(inputs["omega"][t] * EP[:ePlantFuel][y, t] for t in 1:T))
+    #*************************************************
     @expression(EP, eFuelConsumption[f in 1:FUEL, t in 1:T],
         sum(EP[:ePlantFuel][y, t] 
             for y in dfGen[dfGen[!,:Fuel] .== string(inputs["fuels"][f]) ,:R_ID]))
     @expression(EP, eFuelConsumptionYear[f in 1:FUEL],
         sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
-    # fuel_cost is in $/MMBTU (k$/MMBTU or M$/kMMBTU if scaled)
-    # vFuel is MMBTU (or kMMBTU if scaled)
+    # fuel_cost is in $/MMBTU (M$/billion BTU if scaled)
+    # vFuel is MMBTU (or billion BTU if scaled)
     # therefore eCFuel_out is $ or Million$)
     @expression(EP, eCFuel_out[y = 1:G, t = 1:T], 
         (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:ePlantFuel][y, t]))

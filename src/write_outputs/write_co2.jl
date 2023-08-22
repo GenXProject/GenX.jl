@@ -26,27 +26,6 @@ function write_co2(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    # CO2 emissions by zone
-
-    dfEmissions = DataFrame(Zone=1:Z, AnnualSum=zeros(Float64, Z))
-
-    emissions_zone = zeros(Z, T)
-    emissions_zone = value.(EP[:eEmissionsByZone])
-    if setup["ParameterScale"] == 1
-        emissions_zone *= ModelScalingFactor
-    end
-    dfEmissions.AnnualSum .= emissions_zone * inputs["omega"]
-    dfEmissions = hcat(dfEmissions, DataFrame(emissions_zone, :auto))
-
-    auxNew_Names = [Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t = 1:T]]
-    rename!(dfEmissions, auxNew_Names)
-
-    total = DataFrame(["Total" sum(dfEmissions[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-    total[!, 3:T+2] .= sum(emissions_zone, dims=1)
-    dfEmissions = vcat(dfEmissions, total)
-    # Qingyu, the emissions.csv in write_emission.jl seems to have more info than yours, so I will skip the emissions.csv but keep the rest of them
-    #CSV.write(joinpath(path, "emissions.csv"), dftranspose(dfEmissions, false), writeheader=false)
-
     # CO2 emissions by plant
     dfEmissions_plant = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
     emissions_plant = zeros(G, T)
@@ -66,7 +45,7 @@ function write_co2(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), writeheader=false)
     
     dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
-    if setup["CO2Capture"] == 1
+    if any(x -> x != 0, dfGen.CO2_Capture_Rate)
         # Captured CO2 emissions by plant
         emissions_captured_plant = zeros(G, T)
         emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]))
@@ -86,5 +65,5 @@ function write_co2(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         CSV.write(joinpath(path, "captured_emissions_plant.csv"), dftranspose(dfCapturedEmissions_plant, false), writeheader=false)
     end
 
-    return dfEmissions, dfEmissions_plant, dfCapturedEmissions_plant
+    return dfEmissions_plant, dfCapturedEmissions_plant
 end
