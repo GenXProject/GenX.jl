@@ -104,7 +104,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 			dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_DC],dfVRE_STOR[!,:WACC_Charge_DC])
 			dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_AC],dfVRE_STOR[!,:WACC_Discharge_AC])
 			dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_AC],dfVRE_STOR[!,:WACC_Charge_AC])
-			
+
 			dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr] .*= OPEXMULT
 			dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr] .*= OPEXMULT
 			dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr] .*= OPEXMULT
@@ -116,21 +116,22 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	end
 
     # Set of all resources eligible for capacity retirements
-	inputs_d["RET_CAP"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID])
+	can_retire_resources = dfGen[dfGen.New_Build.!=-1,:R_ID]
+	inputs_d["RET_CAP"] = intersect(can_retire_resources)
 	# Set of all storage resources eligible for energy capacity retirements
-	inputs_d["RET_CAP_ENERGY"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["STOR_ALL"])
+	inputs_d["RET_CAP_ENERGY"] = intersect(can_retire_resources, inputs_d["STOR_ALL"])
 	# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-	inputs_d["RET_CAP_CHARGE"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["STOR_ASYMMETRIC"])
+	inputs_d["RET_CAP_CHARGE"] = intersect(can_retire_resources, inputs_d["STOR_ASYMMETRIC"])
 	# Set of all co-located resources' components eligible for capacity retirements
 	if !isempty(inputs_d["VRE_STOR"])
-		inputs_d["RET_CAP_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_DC"])
-		inputs_d["RET_CAP_SOLAR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_SOLAR"])
-		inputs_d["RET_CAP_WIND"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_WIND"])
-		inputs_d["RET_CAP_STOR"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_STOR"])
-		inputs_d["RET_CAP_DISCHARGE_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_DC_DISCHARGE"])
-		inputs_d["RET_CAP_CHARGE_DC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_DC_CHARGE"])
-		inputs_d["RET_CAP_DISCHARGE_AC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_AC_DISCHARGE"])
-		inputs_d["RET_CAP_CHARGE_AC"] = intersect(dfGen[dfGen.New_Build.!=-1,:R_ID], inputs_d["VS_ASYM_AC_CHARGE"])
+		inputs_d["RET_CAP_DC"] = intersect(can_retire_resources, inputs_d["VS_DC"])
+		inputs_d["RET_CAP_SOLAR"] = intersect(can_retire_resources, inputs_d["VS_SOLAR"])
+		inputs_d["RET_CAP_WIND"] = intersect(can_retire_resources, inputs_d["VS_WIND"])
+		inputs_d["RET_CAP_STOR"] = intersect(can_retire_resources, inputs_d["VS_STOR"])
+		inputs_d["RET_CAP_DISCHARGE_DC"] = intersect(can_retire_resources, inputs_d["VS_ASYM_DC_DISCHARGE"])
+		inputs_d["RET_CAP_CHARGE_DC"] = intersect(can_retire_resources, inputs_d["VS_ASYM_DC_CHARGE"])
+		inputs_d["RET_CAP_DISCHARGE_AC"] = intersect(can_retire_resources, inputs_d["VS_ASYM_AC_DISCHARGE"])
+		inputs_d["RET_CAP_CHARGE_AC"] = intersect(can_retire_resources, inputs_d["VS_ASYM_AC_CHARGE"])
 	end
 
 	# Transmission

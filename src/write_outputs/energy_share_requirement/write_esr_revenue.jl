@@ -29,14 +29,31 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		if !isempty(VRE_STOR)
 			esr_vrestor_col = Symbol("ESRVreStor_$i")
 			if !isempty(SOLAR_ONLY)
-				dfESRRev[SOLAR, esr_col] = (value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0)), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0)),esr_vrestor_col] * dfESR[i,:ESR_Price]
+				solar_resources = ((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0))
+				dfESRRev[SOLAR, esr_col] = (
+					value.(EP[:vP_SOLAR][SOLAR, :]).data
+					.* dfVRE_STOR[solar_resources, :EtaInverter] * inputs["omega"]
+				) .* dfVRE_STOR[solar_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
 			end
 			if !isempty(WIND_ONLY)
-				dfESRRev[WIND, esr_col] = (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.==0)),esr_vrestor_col] * dfESR[i,:ESR_Price]
+				wind_resources = ((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.==0))
+				dfESRRev[WIND, esr_col] = (
+					value.(EP[:vP_WIND][WIND, :]).data
+					* inputs["omega"]
+				) .* dfVRE_STOR[wind_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
 			end
 			if !isempty(SOLAR_WIND)
-				dfESRRev[SOLAR_WIND, esr_col] = (((value.(EP[:vP_WIND][SOLAR_WIND, :]).data * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)),esr_vrestor_col] * dfESR[i,:ESR_Price])
-					+ (value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)), :EtaInverter] * inputs["omega"]) .* dfVRE_STOR[((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0)),esr_vrestor_col] * dfESR[i,:ESR_Price])
+				solar_and_wind_resources = ((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0))
+				dfESRRev[SOLAR_WIND, esr_col] = (
+					(
+						(value.(EP[:vP_WIND][SOLAR_WIND, :]).data * inputs["omega"])
+						.* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
+					) + (
+						value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data
+						.* dfVRE_STOR[solar_and_wind_resources, :EtaInverter]
+						* inputs["omega"]
+					) .* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
+				)
 			end
 		end
 	end

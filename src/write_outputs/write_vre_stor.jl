@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	write_vre_stor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
@@ -47,53 +31,53 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	STOR = inputs["VS_STOR"]
 	dfGen = inputs["dfGen"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
-
 	MultiStage = setup["MultiStage"]
+	size_vrestor_resources = size(inputs["RESOURCES_VRE_STOR"])
 
 	# Solar capacity
-	capsolar = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapsolar = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapsolar = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capsolar = zeros(size_vrestor_resources)
+	retcapsolar = zeros(size_vrestor_resources)
+	existingcapsolar = zeros(size_vrestor_resources)
 
 	# Wind capacity
-	capwind = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapwind = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapwind = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capwind = zeros(size_vrestor_resources)
+	retcapwind = zeros(size_vrestor_resources)
+	existingcapwind = zeros(size_vrestor_resources)
 
 	# Inverter capacity
-	capdc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapdc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapdc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capdc = zeros(size_vrestor_resources)
+	retcapdc = zeros(size_vrestor_resources)
+	existingcapdc = zeros(size_vrestor_resources)
 
 	# Grid connection capacity
-	capgrid = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapgrid = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapgrid = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capgrid = zeros(size_vrestor_resources)
+	retcapgrid = zeros(size_vrestor_resources)
+	existingcapgrid = zeros(size_vrestor_resources)
 
 	# Energy storage capacity
-	capenergy = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapenergy = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapenergy = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capenergy = zeros(size_vrestor_resources)
+	retcapenergy = zeros(size_vrestor_resources)
+	existingcapenergy = zeros(size_vrestor_resources)
 
 	# Charge storage capacity DC
-	capchargedc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapchargedc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapchargedc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capchargedc = zeros(size_vrestor_resources)
+	retcapchargedc = zeros(size_vrestor_resources)
+	existingcapchargedc = zeros(size_vrestor_resources)
 
 	# Charge storage capacity AC
-	capchargeac = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapchargeac = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapchargeac = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capchargeac = zeros(size_vrestor_resources)
+	retcapchargeac = zeros(size_vrestor_resources)
+	existingcapchargeac = zeros(size_vrestor_resources)
 
 	# Discharge storage capacity DC
-	capdischargedc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapdischargedc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapdischargedc = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capdischargedc = zeros(size_vrestor_resources)
+	retcapdischargedc = zeros(size_vrestor_resources)
+	existingcapdischargedc = zeros(size_vrestor_resources)
 
 	# Discharge storage capacity AC
-	capdischargeac = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	retcapdischargeac = zeros(size(inputs["RESOURCES_VRE_STOR"]))
-	existingcapdischargeac = zeros(size(inputs["RESOURCES_VRE_STOR"]))
+	capdischargeac = zeros(size_vrestor_resources)
+	retcapdischargeac = zeros(size_vrestor_resources)
+	existingcapdischargeac = zeros(size_vrestor_resources)
 	
 	j = 1
 	for i in VRE_STOR
@@ -225,50 +209,45 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	)
 
 	if setup["ParameterScale"] ==1
-		dfCap.StartCapSolar = dfCap.StartCapSolar * ModelScalingFactor
-		dfCap.RetCapSolar = dfCap.RetCapSolar * ModelScalingFactor
-		dfCap.NewCapSolar = dfCap.NewCapSolar * ModelScalingFactor
-		dfCap.EndCapSolar = dfCap.EndCapSolar * ModelScalingFactor
-
-		dfCap.StartCapWind = dfCap.StartCapWind * ModelScalingFactor
-		dfCap.RetCapWind = dfCap.RetCapWind * ModelScalingFactor
-		dfCap.NewCapWind = dfCap.NewCapWind * ModelScalingFactor
-		dfCap.EndCapWind = dfCap.EndCapWind * ModelScalingFactor
-
-		dfCap.StartCapDC = dfCap.StartCapDC * ModelScalingFactor
-		dfCap.RetCapDC = dfCap.RetCapDC * ModelScalingFactor
-		dfCap.NewCapDC = dfCap.NewCapDC * ModelScalingFactor
-		dfCap.EndCapDC = dfCap.EndCapDC * ModelScalingFactor
-
-		dfCap.StartCapGrid = dfCap.StartCapGrid * ModelScalingFactor
-		dfCap.RetCapGrid = dfCap.RetCapGrid * ModelScalingFactor
-		dfCap.NewCapGrid = dfCap.NewCapGrid * ModelScalingFactor
-		dfCap.EndCapGrid = dfCap.EndCapGrid * ModelScalingFactor
-
-		dfCap.StartEnergyCap = dfCap.StartEnergyCap * ModelScalingFactor
-		dfCap.RetEnergyCap = dfCap.RetEnergyCap * ModelScalingFactor
-		dfCap.NewEnergyCap = dfCap.NewEnergyCap * ModelScalingFactor
-		dfCap.EndEnergyCap = dfCap.EndEnergyCap * ModelScalingFactor
-
-		dfCap.StartChargeACCap = dfCap.StartChargeACCap * ModelScalingFactor
-		dfCap.RetChargeACCap = dfCap.RetChargeACCap * ModelScalingFactor
-		dfCap.NewChargeACCap = dfCap.NewChargeACCap * ModelScalingFactor
-		dfCap.EndChargeACCap = dfCap.EndChargeACCap * ModelScalingFactor
-
-		dfCap.StartChargeDCCap = dfCap.StartChargeDCCap * ModelScalingFactor
-		dfCap.RetChargeDCCap = dfCap.RetChargeDCCap * ModelScalingFactor
-		dfCap.NewChargeDCCap = dfCap.NewChargeDCCap * ModelScalingFactor
-		dfCap.EndChargeDCCap = dfCap.EndChargeDCCap * ModelScalingFactor
-
-		dfCap.StartDischargeDCCap = dfCap.StartDischargeDCCap * ModelScalingFactor
-		dfCap.RetDischargeDCCap = dfCap.RetDischargeDCCap * ModelScalingFactor
-		dfCap.NewDischargeDCCap = dfCap.NewDischargeDCCap * ModelScalingFactor
-		dfCap.EndDischargeDCCap = dfCap.EndDischargeDCCap * ModelScalingFactor
-
-		dfCap.StartDischargeACCap = dfCap.StartDischargeACCap * ModelScalingFactor
-		dfCap.RetDischargeACCap = dfCap.RetDischargeACCap * ModelScalingFactor
-		dfCap.NewDischargeACCap = dfCap.NewDischargeACCap * ModelScalingFactor
-		dfCap.EndDischargeACCap = dfCap.EndDischargeACCap * ModelScalingFactor
+		columns_to_scale = [
+			:StartCapSolar,
+			:RetCapSolar,
+			:NewCapSolar,
+			:EndCapSolar,
+			:StartCapWind,
+			:RetCapWind,
+			:NewCapWind,
+			:EndCapWind,
+			:StartCapDC,
+			:RetCapDC,
+			:NewCapDC,
+			:EndCapDC,
+			:StartCapGrid,
+			:RetCapGrid,
+			:NewCapGrid,
+			:EndCapGrid,
+			:StartEnergyCap,
+			:RetEnergyCap,
+			:NewEnergyCap,
+			:EndEnergyCap,
+			:StartChargeACCap,
+			:RetChargeACCap,
+			:NewChargeACCap,
+			:EndChargeACCap,
+			:StartChargeDCCap,
+			:RetChargeDCCap,
+			:NewChargeDCCap,
+			:EndChargeDCCap,
+			:StartDischargeDCCap,
+			:RetDischargeDCCap,
+			:NewDischargeDCCap,
+			:EndDischargeDCCap,
+			:StartDischargeACCap,
+			:RetDischargeACCap,
+			:NewDischargeACCap,
+			:EndDischargeACCap,
+		]
+		dfCap[!, columns_to_scale] .*= ModelScalingFactor
 	end
 
 	total = DataFrame(

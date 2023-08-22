@@ -5,11 +5,7 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	VRE_STOR = inputs["VRE_STOR"]
-	if !isempty(VRE_STOR)
-		VS_STOR = inputs["VS_STOR"]
-	else
-		VS_STOR = []
-	end
+	VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
 	dfChargingcost = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], AnnualSum = Array{Float64}(undef, G),)
 	chargecost = zeros(G, T)
 	if !isempty(STOR_ALL)
