@@ -38,7 +38,7 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 
 	# Fuel consumption by each resource per time step
 	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"])
-	tempts = value.(EP[:ePlantFuel])
+	tempts = value.(EP[:vFuel] + EP[:eStartFuel])
     if setup["ParameterScale"] == 1
         tempts *= ModelScalingFactor # kMMBTU to MMBTU
     end

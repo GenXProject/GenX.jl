@@ -25,9 +25,7 @@ This function creates expression to account for total fuel consumption (e.g., co
 
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Hear\_Rate_y$). 
 
-The total fuel consumption for a plant $y$ at time $t$, denoted by $ePlantFuel_{y,t}$, is determined by adding up the fuel consumed for power generation ($vFuel_{y,t}$) as well as startup fuel ($eStartFuel_{y,t}$). 
-
-The fuel costs for a plant $y$ at time $t$, denoted by $eCFuel\_out_{y,t}$, is determined by total fuel consumption ($ePlantFuel_{y,t}$) multiplied by the fuel costs (\$/MMBTU)
+The fuel costs for power generation and start fuel for a plant $y$ at time $t$, denoted by $eCFuelOut_{y,t}$ and $eFuelStart_{y,t}$, respectively, are determined by fuel consumption ($vFuel_{y,t}$ and $eStartFuel_{y,t}$) multiplied by the fuel costs (\$/MMBTU)
 
 From above formulations, thermal generators are expected to have the same fuel consumption per generating 1 MWh electricity, regardless of the operating mode. However, thermal generators tend to have decreased efficiency when operating at part load, leading to higher fuel consumption per generating the same amount of electricity. To have more precise representation of fuel consumption at part load, the piecewise-linear fitting of heat input can be introduced. 
 
@@ -68,32 +66,50 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         else
             1*EP[:vZERO]
         end)
-    @expression(EP, ePlantFuel[y in 1:G, t = 1:T], 
-        (EP[:vFuel][y, t] + EP[:eStartFuel][y, t]))
-    #*************************************************
-    @expression(EP, ePlantFuelConsumptionYear[y in 1:G], 
-        sum(inputs["omega"][t] * EP[:ePlantFuel][y, t] for t in 1:T))
-    #*************************************************
-    @expression(EP, eFuelConsumption[f in 1:FUEL, t in 1:T],
-        sum(EP[:ePlantFuel][y, t] 
-            for y in dfGen[dfGen[!,:Fuel] .== string(inputs["fuels"][f]) ,:R_ID]))
-    @expression(EP, eFuelConsumptionYear[f in 1:FUEL],
-        sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
+
     # fuel_cost is in $/MMBTU (M$/billion BTU if scaled)
     # vFuel is MMBTU (or billion BTU if scaled)
-    # therefore eCFuel_out is $ or Million$)
-    @expression(EP, eCFuel_out[y = 1:G, t = 1:T], 
-        (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:ePlantFuel][y, t]))
-    # plant level total fuel cost for output
+    # therefore eCFuel_start or eCFuel_out is $ or Million$)
+    # separately track the start up fuel and fuel consumption for power generation
+    # start up cost
+    @expression(EP, eCFuelStart[y = 1:G, t = 1:T], 
+        (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:eStartFuel][y, t]))
+    # plant level start-up fuel cost for output
+    @expression(EP, ePlantCFuelStart[y = 1:G], 
+        sum(inputs["omega"][t] * EP[:eCFuelStart][y, t] for t in 1:T))
+    # zonal level total fuel cost for output
+    @expression(EP, eZonalCFuelStart[z = 1:Z], EP[:vZERO] + 
+        sum(EP[:ePlantCFuelStart][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+
+    #  fuel cost 
+    @expression(EP, eCFuelOut[y = 1:G, t = 1:T], 
+        (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:vFuel][y, t]))
+    # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelOut[y = 1:G], 
-        sum(inputs["omega"][t] * EP[:eCFuel_out][y, t] for t in 1:T))
+        sum(inputs["omega"][t] * EP[:eCFuelOut][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelOut[z = 1:Z], EP[:vZERO] + 
         sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+
+
     # system level total fuel cost for output
     @expression(EP, eTotalCFuelOut, sum(eZonalCFuelOut[z] for z in 1:Z))
-    add_to_expression!(EP[:eObj], EP[:eTotalCFuelOut])
+    @expression(EP, eTotalCFuelStart, sum(eZonalCFuelStart[z] for z in 1:Z))
 
+
+    add_to_expression!(EP[:eObj], EP[:eTotalCFuelOut] + EP[:eTotalCFuelStart])
+
+
+
+    #fuel consumption (MMBTU)
+    @expression(EP, eFuelConsumption[f in 1:FUEL, t in 1:T],
+        sum(EP[:vFuel][y, t] + EP[:eStartFuel][y,t]
+            for y in dfGen[dfGen[!,:Fuel] .== string(inputs["fuels"][f]) ,:R_ID]))
+                
+    @expression(EP, eFuelConsumptionYear[f in 1:FUEL],
+        sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
+
+    
     ### Constraint ###
     @constraint(EP, FuelCalculation[y in setdiff(ALLGEN, THERM_COMMIT), t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
