@@ -1,4 +1,4 @@
-function filenotfoundconstant()
+function filenotfoundconstant()::String
     "FILENOTFOUND"
 end
 
@@ -80,7 +80,7 @@ function throw_filenotfound_error(dir, base)
     error(err_str)
 end
 
-function look_for_file_with_alternate_case(dir, base)
+function look_for_file_with_alternate_case(dir, base)::String
     lower_base = lowercase(base)
 
     files_in_dir = readdir(dir)
@@ -124,14 +124,14 @@ function check_for_duplicate_keys(path::AbstractString)
     end
 end
 
-function load_dataframe_from_file(path)
+function load_dataframe_from_file(path)::DataFrame
     check_for_duplicate_keys(path)
     CSV.read(path, DataFrame, header=1)
 end
 
 function find_matrix_columns_in_dataframe(df::DataFrame,
         columnprefix::AbstractString;
-        prefixseparator='_')
+        prefixseparator='_')::Vector{Int}
     all_columns = names(df)
 
     # 2 is the length of the '_' connector plus one for indexing
