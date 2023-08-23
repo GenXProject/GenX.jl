@@ -30,18 +30,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     # Add Resource IDs after reading to prevent user errors
     gen_in[!,:R_ID] = 1:G
 	
-	# Set of resources that have the dual fuel option
-	inputs_gen["THERM_DUAL"] = gen_in[gen_in.Fuel2.!="None",:R_ID]
-	inputs_gen["THERM_SING"] = gen_in[gen_in.Fuel2.=="None",:R_ID]
-
-	# print error message if heat rate 2 is greater than 0 and fuel 2 does not exist ("None")
-	if !isempty(inputs_gen["THERM_SING"])
-		for y in inputs_gen["THERM_SING"]
-			if gen_in[y, :Heat_Rate2_MMBTU_per_MWh] > 0 
-				error("Heat rate for fuel 2 must be zero when fuel 2 does not exist ('None')")
-			end
-		end
-	end
+	
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	## Defining sets of generation and storage resources
 
@@ -79,6 +68,14 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	end
 		
 	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
+
+	# Set of multi-fuel resources
+	if !("MULTI_FUELS" in names(gen_in))
+		gen_in[!, "MULTI_FUELS"] = zero(gen_in[!, "R_ID"])
+	end
+		
+	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
+	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
 
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1
@@ -197,20 +194,15 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
 	end
 
+
 	# Fuel used by each resource, with possibility of dual fuel
 
-	fuel_type1 = gen_in[!,:Fuel]
-	fuel_type2 = gen_in[!,:Fuel2]
+	# fuel_type = gen_in[!,:Fuel]
+	# fuel_type2 = gen_in[!,:Fuel2]
 
-	# Fuel cost in $ per MMBTU
-	inputs_gen["C_Fuel_per_mmBtu"] = zeros(Float64, G, inputs_gen["T"])
-	inputs_gen["C_Fuel2_per_mmBtu"] = zeros(Float64, G, inputs_gen["T"])
 
 	for g in 1:G
 		# NOTE: When Setup[ParameterScale] =1, fuel costs are scaled in fuels_data.csv, so no if condition needed to scale C_Fuel_per_MWh
-
-		inputs_gen["C_Fuel_per_mmBtu"][g,:] = fuel_costs[fuel_type1[g]]
-		inputs_gen["C_Fuel2_per_mmBtu"][g,:] = fuel_costs[fuel_type2[g]]
 
 		if g in inputs_gen["COMMIT"]
 			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup. The cost of start_fuel si accounted for in fuel.jl
@@ -219,5 +211,40 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 			
 		end
 	end
+
+	# Multi Fuels Information
+
+	if !isempty(inputs_gen["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
+
+		inputs_gen["NUM_FUELS"] = gen_in[!,:Num_Fuels]   # Number of fuels that this resource can use
+		max_fuels = maximum(inputs_gen["NUM_FUELS"])
+		fuel_cols = [ Symbol(string("Fuel",i)) for i in 1:max_fuels ]
+		heat_rate_cols = [ Symbol(string("Heat_Rate",i, "_MMBTU_per_MWh")) for i in 1:max_fuels ]
+		max_cofire_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level")) for i in 1:max_fuels ]
+		min_cofire_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level")) for i in 1:max_fuels ]
+		fuel_types = [ gen_in[!,f] for f in fuel_cols ]
+		heat_rates = [ gen_in[!,f] for f in heat_rate_cols ]
+		max_cofire = [ gen_in[!,f] for f in max_cofire_cols ]
+		min_cofire = [ gen_in[!,f] for f in min_cofire_cols ]
+		inputs_gen["HEAT_RATES"] = heat_rates
+		inputs_gen["MAX_COFIRE"] = max_cofire
+		inputs_gen["MIN_COFIRE"] = min_cofire
+		inputs_gen["FUEL_TYPES"] = fuel_types
+		inputs_gen["FUEL_COLS"] = fuel_cols
+		inputs_gen["MAX_NUM_FUELS"] = max_fuels
+
+		# check whether non-zero heat rates are used for resources that only use a single fuel
+		for i in 1:max_fuels
+			for hr in heat_rates[i][inputs_gen["SINGLE_FUEL"]]
+				if  hr > 0 
+					error("Heat rates for multi fuels must be zero when only one fuel is used")
+				end
+			end
+		end
+
+
+
+	end
+	
 	println(filename * " Successfully Read!")
 end

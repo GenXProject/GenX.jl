@@ -1,0 +1,151 @@
+#####
+#
+#  TIME DOMAIN REDUCTION SETTINGS
+#
+#  Set parameters here that organize how your full timeseries
+#   data will be divided into representative period clusters.
+#   Ensure that time_domain_reduction is set to 1 in GenX_settings.yml
+#   before running. Run within GenX or use PreCluster.jl to test and
+#   examine representative period output before proceeding.
+#   Specify your data input directory as inpath within Run_test.jl
+#   or PreCluster.jl.
+#
+#####
+
+  #   - TimestepsPerRepPeriod
+  #   Typically 168 timesteps (e.g., hours) per period, this designates
+  #   the length of each representative period.
+TimestepsPerRepPeriod: 168
+
+  #   - ClusterMethod
+  #   Either 'kmeans' or 'kmedoids', this designates the method used to cluster
+  #   periods and determine each point's representative period.
+ClusterMethod: 'kmeans'
+
+  #   - ScalingMethod
+  #   Either 'N' or 'S', this designates directs the module to normalize ([0,1])
+  #   or standardize (mean 0, variance 1) the input data.
+ScalingMethod: "S"
+
+  #   - MaxPeriods
+  #   The maximum number of periods - both clustered periods and extreme periods -
+  #   that may be used to represent the input data. If IterativelyAddPeriods is on and the
+  #   error threshold is never met, this will be the total number of periods.
+MaxPeriods: 11
+
+  #   - MinPeriods
+  #   The minimum number of periods used to represent the input data. If using
+  #   UseExtremePeriods, this must be at least the number of extreme periods requests. If
+  #   IterativelyAddPeriods if off, this will be the total number of periods.
+MinPeriods: 8
+
+  #   - IterativelyAddPeriods
+  #   Either 'yes' or 'no', this designates whether or not to add periods
+  #   until the error threshold between input data and represented data is met or the maximum
+  #   number of periods is reached.
+IterativelyAddPeriods: 1
+
+  #   - IterateMethod
+  #   Either 'cluster' or 'extreme', this designates whether to add clusters to
+  #   the kmeans/kmedoids method or to set aside the worst-fitting periods as a new extreme periods.
+  #   The default option is 'cluster'.
+IterateMethod: "cluster"
+
+  #   - Threshold
+  #   Iterative period addition will end if the period farthest (Euclidean Distance)
+  #   from its representative period is within this percentage of the total possible error (for normalization)
+  #   or ~95% of the total possible error (for standardization). E.g., for a threshold of 0.01,
+  #   every period must be within 1% of the spread of possible error before the clustering
+  #   iterations will terminate (or until the max number of periods is reached).
+Threshold: 0.05
+
+  #   - nReps
+  #   The number of times to repeat each kmeans/kmedoids clustering at the same setting.
+nReps: 100
+
+  #   - LoadWeight
+  #   Default 1, this is an optional multiplier on load columns in order to prioritize
+  #   better fits for load profiles over resource capacity factor profiles.
+LoadWeight: 1
+
+  #   - WeightTotal
+  #   Default 8760, the sum to which the relative weights of representative periods will be scaled.
+WeightTotal: 8760
+
+  #   - ClusterFuelPrices
+  #   Either 1 (yes) or 0 (no), this indicates whether or not to use the fuel price
+  #   time series in Fuels_data.csv in the clustering process. If 0, this function will still write
+  #   Fuels_data_clustered.csv with reshaped fuel prices based on the number and size of the
+  #   representative weeks, assuming a constant time series of fuel prices with length equal to the
+  #   number of timesteps in the raw input data.
+ClusterFuelPrices: 1
+
+  #   - UseExtremePeriods
+  #   Either 'yes' or 'no', this designates whether or not to include
+  #   outliers (by performance or load/resource extreme) as their own representative periods.
+  #   This setting automatically includes the periods with maximum load, minimum solar cf and
+  #   minimum wind cf as extreme periods.
+UseExtremePeriods: 1
+
+  #   - MultiStageConcatenate
+  #   (Only considered if MultiStage = 1 in genx_settings.yml)
+  #   If 1, this designates that the model should time domain reduce the input data
+  #   of all model stages together. Else if 0, the model will time domain reduce each
+  #   stage separately
+MultiStageConcatenate: 0
+
+# STILL IN DEVELOPMENT - Currently just uses integral max load, integral min PV and wind.
+#   - ExtremePeriods
+#   Use this to define which periods to be included among the final representative periods
+#   as "Extreme Periods".
+#   Select by profile type: load ("Load"), solar PV capacity factors ("PV"), and wind capacity factors ("Wind").
+#   Select whether to examine these profiles by zone ("Zone") or across the whole system ("System").
+#   Select whether to look for absolute max/min at the timestep level ("Absolute")
+#      or max/min sum across the period ("Integral").
+#   Select whether you want the maximum ("Max") or minimum ("Min") (of the prior type) for each profile type.
+ExtremePeriods:
+   Load:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+      System:
+         Absolute:
+            Max: 1
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+   PV:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 1
+      System:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+   Wind:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 1
+      System:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
