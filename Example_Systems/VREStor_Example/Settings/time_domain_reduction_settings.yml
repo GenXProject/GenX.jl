@@ -48,7 +48,7 @@ ExtremePeriods:
 UseExtremePeriods: 1
 MinPeriods: 5
 MaxPeriods: 5
-LoadWeight: 1
+DemandWeight: 1
 ClusterFuelPrices: 0
 nReps: 100
 Threshold: 0.05
