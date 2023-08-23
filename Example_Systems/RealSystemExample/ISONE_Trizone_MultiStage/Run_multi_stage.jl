@@ -30,7 +30,7 @@ tdr_settings = joinpath(settings_path, "time_domain_reduction_settings.yml") # M
 TDRSettingsDict = YAML.load(open(tdr_settings))
 TDRpath = joinpath(inpath, "Inputs", "Inputs_p1", mysetup["TimeDomainReductionFolder"])
 if mysetup["TimeDomainReduction"] == 1
-    if (!isfile(TDRpath*"/Load_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
+    if (!isfile(TDRpath*"/Demand_data.csv")) || (!isfile(TDRpath*"/Generators_variability.csv")) || (!isfile(TDRpath*"/Fuels_data.csv"))
         if (mysetup["MultiStage"] == 1) && (TDRSettingsDict["MultiStageConcatenate"] == 0)
 			println("Clustering Time Series Data (Individually)...")
 			for stage_id in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
