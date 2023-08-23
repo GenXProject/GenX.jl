@@ -104,7 +104,7 @@ MultiStageConcatenate: 0
 #      or max/min sum across the period ("Integral").
 #   Select whether you want the maximum ("Max") or minimum ("Min") (of the prior type) for each profile type.
 ExtremePeriods:
-   Load:
+   Demand:
       Zone:
          Absolute:
             Max: 0

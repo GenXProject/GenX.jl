@@ -15,7 +15,7 @@ ExtremePeriods:
       Integral:
         Min: 0
         Max: 0
-  Load:
+  Demand:
     System:
       Absolute:
         Min: 0
