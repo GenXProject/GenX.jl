@@ -28,7 +28,7 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 		Fuel = dfGen[!, :Fuel], 
 		Zone = dfGen[!,:Zone], 
 		AnnualSum = zeros(G))
-	tempannualsum = value.(EP[:ePlantCFuelOut])
+	tempannualsum = value.(EP[:ePlantCFuelOut]) + value.(EP[:ePlantCFuelStart])
     if setup["ParameterScale"] == 1
         tempannualsum *= ModelScalingFactor # kMMBTU to MMBTU
     end
