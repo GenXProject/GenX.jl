@@ -23,7 +23,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-
+	
+	cFuel = value.(EP[:eTotalCFuelOut])
+	
 	if !isempty(VRE_STOR) 
 		cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) + (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
 		cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
@@ -31,9 +33,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ? value(EP[:eTotalCFixCharge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ? value(EP[:eTotalCFixCharge_AC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_AC]) : 0.0)) 
 			cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
 		end
-		total_cost = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
+		total_cost =[objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
-		total_cost = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
+		total_cost = [objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 	end
 
 	if !isempty(ELECTROLYZER)
@@ -84,7 +86,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 
 	if setup["ParameterScale"] == 1
-		dfCost[5,2] *= ModelScalingFactor^2
 		dfCost[6,2] *= ModelScalingFactor^2
 		dfCost[7,2] *= ModelScalingFactor^2
 		dfCost[8,2] *= ModelScalingFactor^2
