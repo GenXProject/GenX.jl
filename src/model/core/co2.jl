@@ -18,32 +18,34 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 co2!(EP::Model, inputs::Dict)
 
-This function creates expression to account for $CO_2$ emissions and captured and sequestrated $CO_2$ from thermal generators. It also has the capability to model the negative CO2 emissions from bioenergy with carbon capture and storage. This module will displace the emissions module. 
+This function creates expression to account for CO2 emissions and captured and sequestrated CO2 from thermal generators. It also has the capability to model the negative CO2 emissions from bioenergy with carbon capture and storage. This module will displace the emissions module.
 
-** Expressions **
+***** Expressions *****
 
-For thermal generators that use fuels that contain $CO_2$ content (e.g., coal, natural gas, and biomass), the $CO_2$ emissions are a function of fuel consumption, CO2 capture rate, and whether the feedstock is biomass. Biomass (e.g., wastes or agriculture resides) derived energy is typically considered to be carbon-neutral because the carbon in the biomass is originated from the atmosphere. When bioenergy is coupled with carbon capture and storage (CCS), it creates negative emissions.
+For thermal generators that use fuels that contain CO2 content (e.g., coal, natural gas, and biomass), the CO2 emissions are a function of fuel consumption, CO2 capture rate, and whether the feedstock is biomass. Biomass (e.g., wastes or agriculture resides) derived energy is typically considered to be carbon-neutral because the carbon in the biomass is originated from the atmosphere. When bioenergy is coupled with carbon capture and storage (CCS), it creates negative emissions.
 
-Here we create a column called Biomass in the Generator data file (1 or 0), which determines if a generator $g$ uses biomass or not. The CO2 emissions from a generator should be zero without CCS and negative with CCS.
+Here we create a column called Biomass in the Generator data file (1 or 0), which determines if a generator $y$ uses biomass or not. The CO2 emissions from a generator should be zero without CCS and negative with CCS.
 
-The CO2 emissions from the generator $g$ at time $t$, denoted by $eEmissionsByPlant_{g,t}$, is determined by total fuel consumption (MMBTU, including startup fuel) multiplied by the $CO_2$ content of the fuel (t CO2/MMBTU), then times (1 - Biomass - CO2 capture rate).  In short, the CO2 emissions depend on total CO2 content from fuel consumption, the CO2 capture rate, and whether the generators use biomass.
-
-```math
-\begin{aligned}
-$eEmissionsByPlant_{g,t}$ = (1-$Biomass_y$- $CO2CaptureRate_y$) * ($vFuel_{y,t}$ + $eStartFuel_{y,t}$) * $CO2_{content}$  
-\hspace{1cm} \forall g \in \matchal{G}, \forall t \in \matchal{T}, $Biomass_y$ \in {{0,1}}
-\end{aligned}
-```
-Where $Biomass_y$ represents a binary variable that determines if the generator $y$ uses biomass (Biomass = 1) or not (Biomass = 0), $CO2CaptureRate_y$ represents a fraction (between 0 - 1) for $CO_2$ capture rate. 
-
-In addition to CO2 emissions, for generators with non-zero CO2 capture rate, we also determine the amount of CO2 being captured and sequestrated. The CO2 emissions from the generator $g$ at time $t$, denoted by $eEmissionsCaptureByPlant_{g,t}$, is determined by total fuel consumption (MMBTU, including startup fuel) multiplied by the $CO_2$ content of the fuel (t CO2/MMBTU), then times  CO2 capture rate.
+The CO2 emissions from the generator $y$ at time $t$, denoted by $eEmissionsByPlant_{y,t}$, is determined by total fuel consumption (MMBTU, including startup fuel) multiplied by the CO2 content of the fuel (t CO2/MMBTU), then times (1 - Biomass - CO2 capture rate). In short, the CO2 emissions depend on total CO2 content from fuel consumption, the CO2 capture rate, and whether the generators use biomass.
 
 ```math
 \begin{aligned}
-$eEmissionsCaptureByPlant_{g,t}$ = $CO2CaptureRate_y$ * ($vFuel_{y,t}$ + $eStartFuel_{y,t}$) * $CO2_{content}$  
-\hspace{1cm} \forall g \in \matchal{G}, \forall t \in \matchal{T}
+eEmissionsByPlant_{g,t} = (1-Biomass_y-  CO2\_Capture\_Rate_y) * (vFuel_{y,t} + eStartFuel_{y,t}) * CO2_{content}  
+\hspace{1cm} \forall y \in G, \forall t \in T, Biomass_y \in {{0,1}}
 \end{aligned}
 ```
+
+Where $Biomass_y$ represents a binary variable that determines if the generator $y$ uses biomass (Biomass = 1) or not (Biomass = 0), $CO2\_Capture\_Rate_y$ represents a fraction (between 0 - 1) for CO2 capture rate.
+
+In addition to CO2 emissions, for generators with non-zero CO2 capture rate, we also determine the amount of CO2 being captured and sequestrated. The CO2 emissions from the generator $y$ at time $t$, denoted by $eEmissionsCaptureByPlant_{g,t}$, is determined by total fuel consumption (MMBTU, including startup fuel) multiplied by the $CO_2$ content of the fuel (t CO2/MMBTU), then times CO2 capture rate.
+
+```math
+\begin{aligned}
+eEmissionsCaptureByPlant_{g,t} = CO2\_Capture\_Rate_y * (vFuel_{y,t} + eStartFuel_{y,t}) * CO2_{content}
+\hspace{1cm} \forall y \in G, \forall t \in T
+\end{aligned}
+```
+
 
 
 """
