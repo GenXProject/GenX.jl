@@ -58,7 +58,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{Z}^{CO_2}_{p,gen} \subseteq \mathcal{Z}$ | set of zones are under the emission cap generation emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO2,gen}$ |
 |$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines entering Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{L}_p^{out} \subseteq \mathcal{L}$ | The subset of transmission lines leaving Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
-!$\mathcal{Qualified} \subseteq \mathcal{G}$ | where $\mathcal{Qualified}$ is the subset of generation and storage resources eligible to supply electrolyzers within the same zone (optional set) |
+|$\mathcal{Qualified} \subseteq \mathcal{G}$ | where $\mathcal{Qualified}$ is the subset of generation and storage resources eligible to supply electrolyzers within the same zone (optional set) |
 ---
 
 
