@@ -2,6 +2,8 @@
 	electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
 This function defines the expressions and constraints for operation of hydrogen electrolyzers ($y \in \mathcal{EL} \subseteq \mathcal{G}$).
+	This is a basic implementation of hydrogen electrolyzers that allows the specification of an hourly clean supply constraint.
+	For a richer formulation, please see the DOLPHYN code at https://github.com/macroenergy/DOLPHYN.
 
 **Expressions**
 

@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- Add hydrogen electrolyzer model (#525).
+- Feature electrolysis basic (#525)
+  Adds hydrogen electrolyzer model which enables the addition of hydrogen electrolyzer
+  loads along with optional clean supply constraints.
 - Add output for dual of capacity constraint (#473)
 - Add PR template (#516)
 - Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).
