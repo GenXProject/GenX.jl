@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Feature electrolysis basic (#525)
   Adds hydrogen electrolyzer model which enables the addition of hydrogen electrolyzer
-  loads along with optional clean supply constraints.
+  demands along with optional clean supply constraints.
 - Add ability of storage to contribute to capacity reserves (#475)
 - Add Co-located VRE+Storage Module (#523)
 - Add output for dual of capacity constraint (#473)
