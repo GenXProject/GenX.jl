@@ -33,7 +33,7 @@ EnergyShareRequirement: 0
 # CO2 emissions cap
 # 0 = not active (no CO2 emission limit)
 # 1 = mass-based emission limit constraint
-# 2 = load + rate-based emission limit constraint
+# 2 = demand + rate-based emission limit constraint
 # 3 = generation + rate-based emission limit constraint
 # CO2Cap: 0
 
@@ -73,7 +73,7 @@ HydrogenHourlyMatching: 1
 # Available solvers: Gurobi, CPLEX, Clps
 # Solver: HiGHS
 
-# Internally scale load, capacity and power variables in GW rather than MW.
+# Internally scale demand, capacity and power variables in GW rather than MW.
 # 0 = not active
 # 1 = active systemwide
 ParameterScale: 1
