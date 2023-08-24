@@ -59,14 +59,14 @@ hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per 
 
 ## Power Balance Expressions ##
 @expression(EP, ePowerBalanceDemandFlex[t=1:T, z=1:Z],
-    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
-
-EP[:ePowerBalance] += ePowerBalanceDemandFlex
+    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:R_ID]))
+)
+add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceDemandFlex)
 
 # Capacity Reserves Margin policy
 if setup["CapacityReserveMargin"] > 0
     @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-    EP[:eCapResMarBalance] += eCapResMarBalanceFlex
+    add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceFlex)
 end
 
 ## Objective Function Expressions ##
@@ -77,7 +77,7 @@ end
 # Sum individual resource contributions to variable charging costs to get total variable charging costs
 @expression(EP, eTotalCVarFlexInT[t=1:T], sum(eCVarFlex_in[y,t] for y in FLEX))
 @expression(EP, eTotalCVarFlexIn, sum(eTotalCVarFlexInT[t] for t in 1:T))
-EP[:eObj] += eTotalCVarFlexIn
+add_to_expression!(EP[:eObj], eTotalCVarFlexIn)
 
 ### Constraints ###
 

@@ -1,5 +1,9 @@
+This example requires an experimental feature which is *deactivated* because it is under development.
+To reactivate the feature, comment out the relevant line in load_generators_data!.
+
 Multi-Stage Retrofit Example
 ----------------------------
+
 Description: One zone, few technologies, retrofit options include CCS, H2, SMR, and TES.
 
 All changes necessary in the inputs in enable retrofit modeling are located in Generators_data.csv.

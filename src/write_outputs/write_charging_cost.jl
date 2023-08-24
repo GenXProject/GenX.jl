@@ -5,7 +5,9 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	ELECTROLYZER = inputs["ELECTROLYZER"]
-
+	VRE_STOR = inputs["VRE_STOR"]
+	VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+	
 	dfChargingcost = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], AnnualSum = Array{Float64}(undef, G),)
 	chargecost = zeros(G, T)
 	if !isempty(STOR_ALL)
@@ -16,6 +18,9 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 	end
 	if !isempty(ELECTROLYZER)
 		chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[ELECTROLYZER, :Zone], :]
+	end
+	if !isempty(VS_STOR)
+		chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[VS_STOR, :Zone], :]
 	end
 	if setup["ParameterScale"] == 1
 	    chargecost *= ModelScalingFactor^2

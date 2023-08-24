@@ -10,6 +10,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	ELECTROLYZER = inputs["ELECTROLYZER"]
+	VRE_STOR = inputs["VRE_STOR"]
 	## Power balance for each zone
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
@@ -29,6 +30,11 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
 		    powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1)
 		    powerbalance[(z-1)*L+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1)
+		end
+		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], VRE_STOR))
+			VS_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], inputs["VS_STOR"])
+			powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
+			powerbalance[(z-1)*L+3, :] = (-1) * sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims=1) 
 		end
 		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
 		    FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)

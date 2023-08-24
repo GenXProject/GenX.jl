@@ -35,6 +35,9 @@ The header of the file `Load_data.csv` in the main case folder will typically lo
 
 For an example that uses this method, see `Example_Systems/RealSystemExample/ISONE_Singlezone`.
 
+Note that for co-located VRE and storage resources, if GenX performs the time domain reduction clustering, all variable renewable energy variabilities must be in the `Generators_variability.csv` in addition to these files existing in the inputs folder because GenX will separate the wind and solar PV capacity factors after the clustering has been completed into `Vre_and_stor_solar_variability.csv` and `Vre_and_stor_wind_variability.csv`.
+However, if a user brings their own clustered data, these three files must be separated by the user (and no co-located VRE variabilities should be found in `Generators_variability.csv`).
+
 ### Method 2: Bring your own clustered data
 The second method is to use an external program to generate the reduced ('clustered') time series data.
 For instance, [PowerGenome](https://github.com/PowerGenome/PowerGenome) has a capability to construct GenX cases with clustered time series data.

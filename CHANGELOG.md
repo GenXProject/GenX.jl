@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feature electrolysis basic (#525)
   Adds hydrogen electrolyzer model which enables the addition of hydrogen electrolyzer
   loads along with optional clean supply constraints.
+- Add ability of storage to contribute to capacity reserves (#475)
+- Add Co-located VRE+Storage Module (#523)
 - Add output for dual of capacity constraint (#473)
 - Add PR template (#516)
 - Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).
@@ -19,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
   Previously these plants had no resource flag set, and so they did not contribute to the power balance.
   As these plants are now useful, the objective in these cases is slightly lower.
+- Assign correct investment cost per stage in objective function initialization for multi-stage runs (#530)
+- Fix name of Fixed_OM_Cost_Charge_per_MWyr when reading from Generators_data in multistage code. (#533)
+  Previously there was a typo in this in the multistage code that led to a silent bug, which affects outputs,
+  for anyone running non-myopic multistage GenX with asymmetric storage.
+  
+### Changed
+- Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
 
 ## [0.3.6] - 2023-08-01
 
