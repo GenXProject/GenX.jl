@@ -63,10 +63,10 @@ Threshold: 0.05
   #   The number of times to repeat each kmeans/kmedoids clustering at the same setting.
 nReps: 100
 
-  #   - LoadWeight
-  #   Default 1, this is an optional multiplier on load columns in order to prioritize
-  #   better fits for load profiles over resource capacity factor profiles.
-LoadWeight: 1
+  #   - DemandWeight
+  #   Default 1, this is an optional multiplier on demand columns in order to prioritize
+  #   better fits for demand profiles over resource capacity factor profiles.
+DemandWeight: 1
 
   #   - WeightTotal
   #   Default 8760, the sum to which the relative weights of representative periods will be scaled.
@@ -89,21 +89,21 @@ MultiStageConcatenate: 0
 
   #   - UseExtremePeriods
   #   Either 1 (yes) or 0 (no), this designates whether or not to include
-  #   outliers (by performance or load/resource extreme) as their own representative periods.
-  #   This setting automatically includes the periods with maximum load, minimum solar cf and
+  #   outliers (by performance or demand/resource extreme) as their own representative periods.
+  #   This setting automatically includes the periods with maximum demand, minimum solar cf and
   #   minimum wind cf as extreme periods.
 UseExtremePeriods: 1
 
 #   - ExtremePeriods
 #   Use this to define which periods to be included among the final representative periods
 #   as "Extreme Periods".
-#   Select by profile type: load ("Load"), solar PV capacity factors ("PV"), and wind capacity factors ("Wind").
+#   Select by profile type: demand ("Demand"), solar PV capacity factors ("PV"), and wind capacity factors ("Wind").
 #   Select whether to examine these profiles by zone ("Zone") or across the whole system ("System").
 #   Select whether to look for absolute max/min at the timestep level ("Absolute")
 #      or max/min sum across the period ("Integral").
 #   Select whether you want the maximum ("Max") or minimum ("Min") (of the prior type) for each profile type.
 ExtremePeriods:
-   Load:
+   Demand:
       Zone:
          Absolute:
             Max: 0
