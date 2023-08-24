@@ -205,8 +205,28 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	
     # Scale CO2_Capture_Cost_per_Metric_Ton for CCS units 
 	inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton = ("CO2_Capture_Cost_per_Metric_Ton" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton : zeros(Int, nrow(inputs_gen["dfGen"]))
-	
 	inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton = inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton/scale_factor
+
+    # Scale Intercept of fuel consumption of segments
+	# Users should at least provide Incremental_Heat_Rate_Segment1 and Intercept_Fuel_Consumption_Segment1 
+	# if Users didn't provide data for but turn on piecewiseheatrate, we will set the Incremental_Heat_Rate_Segment to be the same as conventional heat rate, and set intetcepts of fuel consumption to zero
+	if setup["UCommit"] > 0
+        if setup["PieceWiseHeatRate"] == 1
+			inputs_gen["dfGen"].Incremental_Heat_Rate_Segment1 = ("Incremental_Heat_Rate_Segment1" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Incremental_Heat_Rate_Segment1 : inputs_gen["dfGen"].Heat_Rate_MMBTU_per_MWh
+			inputs_gen["dfGen"].Incremental_Heat_Rate_Segment2 = ("Incremental_Heat_Rate_Segment2" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Incremental_Heat_Rate_Segment2 : zeros(Int, nrow(inputs_gen["dfGen"]))
+			inputs_gen["dfGen"].Incremental_Heat_Rate_Segment3 = ("Incremental_Heat_Rate_Segment3" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Incremental_Heat_Rate_Segment3 : zeros(Int, nrow(inputs_gen["dfGen"]))
+
+			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1 = ("Intercept_Fuel_Consumption_Segment1" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1 : zeros(Int, nrow(inputs_gen["dfGen"]))
+			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2 = ("Intercept_Fuel_Consumption_Segment2" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2 : zeros(Int, nrow(inputs_gen["dfGen"]))
+			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3 = ("Intercept_Fuel_Consumption_Segment3" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3 : zeros(Int, nrow(inputs_gen["dfGen"]))
+            # no need to scale incremental heat rate, but the intercept of fuel consumption in each segment needs to be scaled.
+			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1 = inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1/scale_factor
+			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2 = inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2/scale_factor
+			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3 = inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3/scale_factor
+		end
+	end
+
+
 
 	println(filename * " Successfully Read!")
 end

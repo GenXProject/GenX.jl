@@ -28,7 +28,7 @@ The fuel consumption for power generation $vFuel_{y,t}$ is determined by power g
 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, is determined by fuel consumption ($vFuel_{y,t}$ and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
 
-From above formulations, thermal generators are expected to have the same fuel consumption per generating 1 MWh electricity, regardless of the operating mode. However, thermal generators tend to have decreased efficiency when operating at part load, leading to higher fuel consumption per generating the same amount of electricity. To have more precise representation of fuel consumption at part load, the piecewise-linear fitting of heat input can be introduced. 
+From above formulations, thermal generators are expected to have the same fuel consumption per generating 1 MWh electricity, regardless of minimum load or full load. However, thermal generators tend to have decreased efficiency when operating at part load, leading to higher fuel consumption per generating the same amount of electricity. To have more precise representation of fuel consumption at part load, the piecewise-linear fitting of heat input can be introduced. 
 
 ```math
 \begin{aligned}
@@ -36,10 +36,13 @@ vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
 \hspace{1cm} \forall y \in G, \forall t \in T, \forall x \in X
 \end{aligned}
 ```
-Where $h_{y,x}$ represents incremental heat rate of a thermal generator $y$ in segment $x$ [MMBTU/MWh] and $f_{y,x}$ represents intercept of fuel consumption of a thermal generator $y$ in segment $x$ [MMBUT], and $U_{y,t}$ represents the commit status of a thermal generator $y$ at time $t$. We include at most three segements to represent the piecewise heat consumption. 
+Where $h_{y,x}$ represents incremental heat rate of a thermal generator $y$ in segment $x$ [MMBTU/MWh] and $f_{y,x}$ represents intercept of fuel consumption of a thermal generator $y$ in segment $x$ [MMBUT], and $U_{y,t}$ represents the commit status of a thermal generator $y$ at time $t$. We include at most three segments to represent the piecewise heat consumption. 
 
 Since fuel consumption has a positive value, the optimization will optimize the fuel consumption by enforcing the inequity to equal to the highest piecewise segment. When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept to be zero such that the fuel consumption is zero when thermal units are offline.
 
+In order to run piecewise fuel consumption module, the unit commitment must be turned on, and users should provide Incremental_Heat_Rate_Segmenti and Intercept_Fuel_Consumption_Segmenti for at least one segment. 
+
+If users only want to model piecewise heat rate for some of thermal generators, then set the Incremental_Heat_Rate_Segment1 for thoese plants to be the same as conventional heat rate, and then set Incremental_Heat_Rate_Segment2/3 and Intercept_Fuel_Consumption_Segment1/2/3 to be zero.
 """
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
@@ -113,15 +116,15 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(THERM_COMMIT)
         if setup["PieceWiseHeatRate"] == 1
             # Piecewise heat rate UC
-            @constraint(EP, First_segement[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope1][y] + 
-                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept1][y]))
-            @constraint(EP, Second_segement[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope2][y] + 
-                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept2][y]))
-            @constraint(EP, Third_segement[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Slope3][y] + 
-                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept3][y]))
+            @constraint(EP, First_segment[y in THERM_COMMIT, t = 1:T],
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Incremental_Heat_Rate_Segment1][y] + 
+                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment1][y]))
+            @constraint(EP, Second_segment[y in THERM_COMMIT, t = 1:T],
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Incremental_Heat_Rate_Segment2][y] + 
+                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment2][y]))
+            @constraint(EP, Third_segment[y in THERM_COMMIT, t = 1:T],
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Incremental_Heat_Rate_Segment3][y] + 
+                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment3][y]))
         else
             @constraint(EP, FuelCalculationCommit[y in THERM_COMMIT, t = 1:T],
                 EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
