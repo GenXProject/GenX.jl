@@ -178,6 +178,13 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfMaxCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
 		end
 
+		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP) == 1
+			dfHydrogenPrice = write_hydrogen_prices(path, inputs, setup, EP)
+			if setup["HydrogenHourlyMatching"] == 1
+				dfHourlyMatchingPrices = write_hourly_matching_prices(path, inputs, setup, EP)
+			end
+		end
+
 
 		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor)
 	  	println("Time elapsed for writing net revenue is")

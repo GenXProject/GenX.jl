@@ -156,6 +156,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		hydro_res!(EP, inputs, setup)
 	end
 
+	if !isempty(inputs["ELECTROLYZER"])
+		electrolyzer!(EP, inputs, setup)
+	end
+
 	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
 	if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
 		hydro_inter_period_linkage!(EP, inputs)

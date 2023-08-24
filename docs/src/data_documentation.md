@@ -302,6 +302,9 @@ This file contains cost and performance parameters for various generators and ot
 |HYDRO | {0, 1}, Flag to indicate membership in set of reservoir hydro resources.|
 ||HYDRO = 0: Not part of set (default) |
 ||HYDRO = 1: Hydropower with reservoir modeling, including inflows, spillage, ramp rate limits and minimum operating level and efficiency loss associated with discharging. Reservoir capacity can be represented as a ratio or energy to power. This type of plant cannot charge from grid.|
+|ELECTROLYZER | {0, 1}, Flag to indicate membership in set of electrolysis resources (optional input column).|
+||ELECTROLYZER = 0: Not part of set (default) |
+||ELECTROLYZER = 1: Electrolyzer resources.|
 |LDS | {0, 1}, Flag to indicate the resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage). Note that for co-located VRE-STOR resources, this flag must be 0 (LDS_VRE_STOR flag exists in VRE-STOR dataframe). |
 ||LDS = 0: Not part of set (default) |
 ||LDS = 1: Long duration storage resources|
@@ -381,7 +384,11 @@ This file contains cost and performance parameters for various generators and ot
 |MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**MaxCapReq = 1**|
 |MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
-
+|**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
+|Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
+|Electrolyzer_Min_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
+|Hydrogen_Price_Per_Tonne| Price (or value) of hydrogen per metric tonne ($/t)|
+|Qualified_Hydrogen_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
 
 ### 2.2 Optional inputs files
 

@@ -49,6 +49,7 @@ pages = OrderedDict(
                 "Thermal Commit" => "thermal_commit.md",
                 "Thermal No Commit" => "thermal_no_commit.md"
             ],
+            "Hydrogen Electrolyzers" => "electrolyzers.md",
         ],
         "Multi_stage" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",

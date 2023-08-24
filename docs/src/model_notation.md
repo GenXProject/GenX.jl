@@ -41,6 +41,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{W}^{cap} \subseteq \mathcal{W}$ | where $\mathcal{W}^{cap}$ is a subset of set of $ \mathcal{W}$ and represents resources with known reservoir capacity|
 |$\mathcal{MR} \subseteq \mathcal{G}$ | where $\mathcal{MR}$ set of must-run resources|
 |$\mathcal{DF} \subseteq \mathcal{G}$ | where $\mathcal{DF}$ set of flexible demand resources|
+|$\mathcal{ELECTROLYZER} \subseteq \mathcal{G}$ | where $\mathcal{ELECTROLYZER}$ set of electrolyzer resources (optional set)|
 |$\mathcal{G}_p^{ESR} \subseteq \mathcal{G}$ | where $\mathcal{G}_p^{ESR}$ is a subset of $\mathcal{G}$ that is eligible for Energy Share Requirement (ESR) policy constraint $p$|
 |$p \in \mathcal{P}$ | where $p$ denotes a instance in the policy set $\mathcal{P}$|
 |$\mathcal{P}^{ESR} \subseteq \mathcal{P}$ | Energy Share Requirement type policies |
@@ -57,6 +58,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{Z}^{CO_2}_{p,gen} \subseteq \mathcal{Z}$ | set of zones are under the emission cap generation emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO2,gen}$ |
 |$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines entering Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{L}_p^{out} \subseteq \mathcal{L}$ | The subset of transmission lines leaving Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
+|$\mathcal{Qualified} \subseteq \mathcal{G}$ | where $\mathcal{Qualified}$ is the subset of generation and storage resources eligible to supply electrolyzers within the same zone (optional set) |
 ---
 
 
@@ -260,4 +262,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\eta_{y,z}^{dflex}$ | energy losses associated with shifting the flexible demand [%]|
 |$\mu_{p,z}^{\mathcal{ESR}}$ | share of total demand in each model zone $z \in \mathcal{ESR}^{p}$  that must be served by qualifying renewable energy resources $y \in \mathcal{G}^{ESR}_{p}$|
 |$f(n)$ | Mapping each modeled period $n \in \mathcal{N}$ to corresponding representative period $w \in \mathcal{W}$|
+|$\eta_{y}^{electrolyzer}$ | Efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced [MWh/t] (optional parameter)|
+|$\$^{hydrogen}_y}$ | Price of hydrogen per metric tonne for electrolyzer $y$ [\$/t] (optional parameter)|
+|$\mathcal{Min kt}_y$ | Minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes [kt] (optional parameter)|
 ---

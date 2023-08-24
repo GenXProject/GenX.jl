@@ -55,7 +55,14 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Set of controllable variable renewable resources
 	inputs_gen["VRE"] = gen_in[gen_in.VRE.>=1,:R_ID]
 
-	# Set of retrofit resources
+	# Set of hydrogen electolyzer resources (optional set):
+	if "ELECTROLYZER" in names(gen_in)
+		inputs_gen["ELECTROLYZER"] = gen_in[gen_in.ELECTROLYZER.>=1,:R_ID]
+	else
+		inputs_gen["ELECTROLYZER"] = Vector()
+	end
+
+	# Set of retrofit resources (optional set)
 	if !("RETRO" in names(gen_in))
 		gen_in[!, "RETRO"] = zero(gen_in[!, "R_ID"])
 	end
@@ -168,6 +175,8 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
                        :Min_Retired_Energy_Cap_MW,     # to GW
 
                        :Start_Cost_per_MW,             # to $M/GW
+
+					   :Hydrogen_MWh_Per_Tonne,	   	   # to GWh/t
                       ]
 
     for column in columns_to_scale
@@ -176,7 +185,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
         end
     end
 
-# Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled
 	if setup["UCommit"]>=1
 		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
 		start_fuel = convert(Array{Float64}, gen_in[!,:Start_Fuel_MMBTU_per_MW])

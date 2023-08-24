@@ -10,15 +10,20 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE_STOR = inputs["VRE_STOR"]
+	ELECTROLYZER = inputs["ELECTROLYZER"]
 	
 	cost_list = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"]
 	if !isempty(VRE_STOR)
 		push!(cost_list, "cGridConnection")
 	end
+	if !isempty(ELECTROLYZER)
+		push!(cost_list, "cHydrogenRevenue")
+	end
 	dfCost = DataFrame(Costs = cost_list)
 
-	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0) 
+	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
+
 	if !isempty(VRE_STOR) 
 		cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) + (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
 		cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
@@ -26,10 +31,16 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ? value(EP[:eTotalCFixCharge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ? value(EP[:eTotalCFixCharge_AC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_AC]) : 0.0)) 
 			cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
 		end
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
+		total_cost = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
-		dfCost[!,Symbol("Total")] = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
+		total_cost = [objective_value(EP), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0]
 	end
+
+	if !isempty(ELECTROLYZER)
+		push!(total_cost,(!isempty(inputs["ELECTROLYZER"]) ? -1*value(EP[:eTotalHydrogenValue]) : 0.0))
+	end
+
+	dfCost[!,Symbol("Total")] = total_cost
 
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
@@ -80,12 +91,14 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCVar = 0.0
 		tempCStart = 0.0
 		tempCNSE = 0.0
+		tempHydrogenValue = 0.0
 
 		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
 		STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
 		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
 		COMMIT_ZONE = intersect(inputs["COMMIT"], Y_ZONE)
+		ELECTROLYZERS_ZONE = intersect(inputs["ELECTROLYZER"], Y_ZONE)
 
 		eCFix = sum(value.(EP[:eCFix][Y_ZONE]))
 		tempCFix += eCFix
@@ -99,7 +112,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCVar += eCVar_in
 			eCFixEnergy = sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
 			tempCFix += eCFixEnergy
-
 			tempCTotal += eCVar_in + eCFixEnergy
 		end
 		if !isempty(STOR_ASYMMETRIC_ZONE)
@@ -185,6 +197,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCTotal += eCStart
 		end
 
+		if !isempty(ELECTROLYZERS_ZONE) 
+			tempHydrogenValue = -1*sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE,:]))
+			tempCTotal += tempHydrogenValue
+	   end
+		
+
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
@@ -194,11 +212,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCVar *= ModelScalingFactor^2
 			tempCNSE *= ModelScalingFactor^2
 			tempCStart *= ModelScalingFactor^2
+			tempHydrogenValue *= ModelScalingFactor^2
 		end
+
 		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
 		if !isempty(VRE_STOR)
 			push!(temp_cost_list, "-")
 		end
+		if !isempty(ELECTROLYZERS_ZONE)
+			push!(temp_cost_list,tempHydrogenValue)
+		end
+
 		dfCost[!,Symbol("Zone$z")] = temp_cost_list
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
