@@ -10,6 +10,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE_STOR = inputs["VRE_STOR"]
+	ELECTROLYZER = inputs["ELECTROLYZER"]
 	
 	cost_list = ["cTotal", "cFix", "cVar", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty"]
 	if !isempty(VRE_STOR)
@@ -213,7 +214,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCStart *= ModelScalingFactor^2
 			tempHydrogenValue *= ModelScalingFactor^2
 		end
-		
+
 		temp_cost_list = [tempCTotal, tempCFix, tempCVar, tempCNSE, tempCStart, "-", "-", "-"]
 		if !isempty(VRE_STOR)
 			push!(temp_cost_list, "-")
