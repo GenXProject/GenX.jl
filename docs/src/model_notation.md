@@ -7,7 +7,7 @@
 |$t \in \mathcal{T}$ | where $t$ denotes an time step and $\mathcal{T}$ is the set of time steps over which grid operations are modeled|
 |$\mathcal{T}^{interior} \subseteq \mathcal{T}^{}$ | where $\mathcal{T}^{interior}$ is the set of interior timesteps in the data series|
 |$\mathcal{T}^{start} \subseteq \mathcal{T}$ |  where $\mathcal{T}^{start}$ is the set of initial timesteps in the data series. $\mathcal{T}^{start}={1}$ when representing entire year as a single contiguous period; $\mathcal{T}^{start}=\{\left(m-1\right) \times \tau^{period}+1 \| m \in \mathcal{M}\}$, which corresponds to the first time step of each representative period $m \in \mathcal{M}$|
-|$n \in \mathcal{N}$ | where $n$ corresponds to a contiguous time period and $\mathcal{N}$ corresponds to the set of contiguous periods of length $\tau^{period}$ that make up the input time series (e.g. load, variable renewable energy availability) to the model|
+|$n \in \mathcal{N}$ | where $n$ corresponds to a contiguous time period and $\mathcal{N}$ corresponds to the set of contiguous periods of length $\tau^{period}$ that make up the input time series (e.g. demand, variable renewable energy availability) to the model|
 |$\mathcal{N}^{rep} \subseteq \mathcal{N}$ | where $\mathcal{N}^{rep}$ corresponds to the set of representative time periods that are selected from the set of contiguous periods, $\mathcal{M}$|
 |$m \in \mathcal{M}$ | where $m$ corresponds to a representative time period and $\mathcal{M}$ corresponds to the set of representative time periods indexed as per their chronological ocurrence in the set of contiguous periods spanning the input time series data, i.e. $\mathcal{N}$|
 $z \in \mathcal{Z}$ | where $z$ denotes a zone and $\mathcal{Z}$ is the set of zones in the network|
@@ -47,14 +47,14 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mathcal{P}^{ESR} \subseteq \mathcal{P}$ | Energy Share Requirement type policies |
 |$\mathcal{P}^{CO_2} \subseteq \mathcal{P}$ | CO$_2$ emission cap policies|
 |$\mathcal{P}^{CO_2}_{mass} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, mass-based |
-|$\mathcal{P}^{CO_2}_{load} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, load emission-rate based |   
+|$\mathcal{P}^{CO_2}_{demand} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, demand and emission-rate based |   
 |$\mathcal{P}^{CO_2}_{gen} \subseteq \mathcal{P}^{CO_2}$ | CO$_2$ emissions limit policy constraints, generation emission-rate based |
 |$\mathcal{P}^{CRM} \subseteq \mathcal{P}$ | Capacity reserve margin (CRM) type policy constraints |
 |$\mathcal{P}^{MinTech} \subseteq \mathcal{P}$ | Minimum Capacity Carve-out type policy constraint |
 |$\mathcal{Z}^{ESR}_{p} \subseteq \mathcal{Z}$ | set of zones eligible for ESR policy constraint $p \in \mathcal{P}^{ESR}$ |
 |$\mathcal{Z}^{CRM}_{p} \subseteq \mathcal{Z}$ | set of zones that form the locational deliverable area for capacity reserve margin policy constraint $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{Z}^{CO_2}_{p,mass} \subseteq \mathcal{Z}$ | set of zones are under the emission cap mass-based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{mass}$ |
-|$\mathcal{Z}^{CO_2}_{p,load} \subseteq \mathcal{Z}$ | set of zones are under the emission cap load emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{load}$ |
+|$\mathcal{Z}^{CO_2}_{p,demand} \subseteq \mathcal{Z}$ | set of zones are under the emission cap demand-and-emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO_2}_{demand}$ |
 |$\mathcal{Z}^{CO_2}_{p,gen} \subseteq \mathcal{Z}$ | set of zones are under the emission cap generation emission-rate based cap-and-trade policy constraint $p \in \mathcal{P}^{CO2,gen}$ |
 |$\mathcal{L}_p^{in} \subseteq \mathcal{L}$ | The subset of transmission lines entering Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
 |$\mathcal{L}_p^{out} \subseteq \mathcal{L}$ | The subset of transmission lines leaving Locational Deliverability Area of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ |
@@ -220,9 +220,9 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\upsilon^{reg}_{y,z}$ | Maximum fraction of capacity that a resource $y$ in zone $z$ can contribute to frequency regulation reserve requirements|
 |$\upsilon^{rsv}_{y,z}$ | Maximum fraction of capacity that a resource $y$ in zone $z$ can contribute to upward operating (spinning) reserve requirements|
 |$\pi^{Unmet}_{rsv}$ | Cost of unmet spinning reserves in [\$/MW]|
-|$\epsilon^{load}_{reg}$ | Frequency regulation reserve requirement as a fraction of forecasted demand in each time step |
+|$\epsilon^{demand}_{reg}$ | Frequency regulation reserve requirement as a fraction of forecasted demand in each time step |
 |$\epsilon^{vre}_{reg}$ | Frequency regulation reserve requirement as a fraction of variable renewable energy generation in each time step |
-|$\epsilon^{load}_{rsv}$ | Operating (spinning) reserve requirement as a fraction of forecasted demand in each time step |
+|$\epsilon^{demand}_{rsv}$ | Operating (spinning) reserve requirement as a fraction of forecasted demand in each time step |
 |$\epsilon^{vre}_{rsv}$ | Operating (spinning) reserve requirement as a fraction of forecasted variable renewable energy generation in each time step |
 |$\epsilon_{y,z}^{CO_2}$ | CO$_2$ emissions per unit energy produced by technology $y$ in zone $z$ [metric tons/MWh]|
 |$\epsilon_{y,z,p}^{MinTech}$ | Equals to 1 if a generator of technology $y$ in zone $z$ is eligible for minimum capacity carveout policy $p \in \mathcal{P}^{MinTech}$, otherwise 0|
@@ -231,7 +231,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\epsilon_{y,z,p}^{CRM}$ | Capacity derating factor of technology $y$ in zone $z$ for capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ [fraction]|
 |$RM_{z,p}^{CRM}$ | Reserve margin of zone $z$ of capacity reserve margin policy $p \in \mathcal{P}^{CRM}$ [fraction]|
 |$\epsilon_{z,p,mass}^{CO_2}$ | Emission budget of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{mass}$ [ million of metric tonnes]|
-|$\epsilon_{z,p,load}^{CO_2}$ | Maximum carbon intensity of the load of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{load}$ [metric tonnes/MWh]|
+|$\epsilon_{z,p,demand}^{CO_2}$ | Maximum carbon intensity of the demand of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{demand}$ [metric tonnes/MWh]|
 |$\epsilon_{z,p,gen}^{CO_2}$ | Maximum emission rate of the generation of zone $z$ under the emission cap $p \in \mathcal{P}^{CO_2}_{gen}$ [metric tonnes/MWh]|
 |$\rho_{y,z}^{min}$ | Minimum stable power output per unit of installed capacity for technology $y$ in zone $z$ [%]|
 |$\rho_{y,z,t}^{max}$ | Maximum available generation per unit of installed capacity during time step t for technology y in zone z [%]|
@@ -259,7 +259,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\tau_{y,z}^{down}$ | Minimum downtime or thermal generator type y in zone z before new restart [hours].|
 |$\tau_{y,z}^{advance}$ | maximum  time  by which flexible demand resource can  be  advanced [hours]  |
 |$\tau_{y,z}^{delay}$ | maximum  time  by which flexible demand resource can  be  delayed [hours]  |
-|$\eta_{y,z}^{dflex}$ | energy losses associated with shifting the flexible load [%]|
+|$\eta_{y,z}^{dflex}$ | energy losses associated with shifting the flexible demand [%]|
 |$\mu_{p,z}^{\mathcal{ESR}}$ | share of total demand in each model zone $z \in \mathcal{ESR}^{p}$  that must be served by qualifying renewable energy resources $y \in \mathcal{G}^{ESR}_{p}$|
 |$f(n)$ | Mapping each modeled period $n \in \mathcal{N}$ to corresponding representative period $w \in \mathcal{W}$|
 |$\eta_{y}^{electrolyzer}$ | Efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced [MWh/t] (optional parameter)|

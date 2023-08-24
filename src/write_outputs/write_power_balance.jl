@@ -2,7 +2,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	SEG = inputs["SEG"] # Number of load curtailment segments
+	SEG = inputs["SEG"] # Number of demand curtailment segments
 	THERM_ALL = inputs["THERM_ALL"]
 	VRE = inputs["VRE"]
 	MUST_RUN = inputs["MUST_RUN"]
@@ -11,7 +11,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	FLEX = inputs["FLEX"]
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	VRE_STOR = inputs["VRE_STOR"]
-	## Power balance for each zone
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
 	    "Demand_Response", "Nonserved_Energy",

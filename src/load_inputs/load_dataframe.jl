@@ -1,3 +1,33 @@
+function filenotfoundconstant()::String
+    "FILENOTFOUND"
+end
+
+@doc raw"""
+    file_exists(dir::AbstractString, basenames::Vector{String})::Bool
+
+Checks that a file exists in a directory under (at least) one of a list of 'aliases'.
+"""
+function file_exists(dir, basenames::Vector{String})::Bool
+    if !isdir(dir)
+        return false
+    end
+    best_basename = popfirst!(basenames)
+    best_path = joinpath(dir, best_basename)
+    if isfile(best_path)
+        return true
+    end
+
+    FILENOTFOUND = filenotfoundconstant()
+
+    for base in basenames
+        target = look_for_file_with_alternate_case(dir, base)
+        if target != FILENOTFOUND
+            return true
+        end
+    end
+    false
+end
+
 @doc raw"""
     load_dataframe(path::AbstractString)
 
@@ -5,18 +35,52 @@ Attempts to load a dataframe from a csv file with the given path.
 If it's not found immediately, it will look for files with a different case (lower/upper)
 in the file's basename.
 """
-function load_dataframe(path::AbstractString)
-    if isfile(path)
-        return load_dataframe_from_file(path)
-    end
-
-    # not immediately found
+function load_dataframe(path::AbstractString)::DataFrame
     dir, base = dirname(path), basename(path)
-    target = look_for_file_with_alternate_case(dir, base)
-    load_dataframe_from_file(joinpath(dir, target))
+    load_dataframe(dir, [base])
 end
 
-function look_for_file_with_alternate_case(dir, base)
+@doc raw"""
+    load_dataframe(dir::AbstractString, base::AbstractString)
+
+Attempts to load a dataframe from a csv file with the given directory and file name.
+If not found immediately, look for files with a different case (lower/upper)
+in the file's basename.
+"""
+function load_dataframe(dir::AbstractString, base::AbstractString)::DataFrame
+    load_dataframe(dir, [base])
+end
+
+function load_dataframe(dir::AbstractString, basenames::Vector{String})::DataFrame
+    best_basename = popfirst!(basenames)
+    best_path = joinpath(dir, best_basename)
+    if isfile(best_path)
+        return load_dataframe_from_file(best_path)
+    end
+
+    FILENOTFOUND = filenotfoundconstant()
+
+    for base in basenames
+        target = look_for_file_with_alternate_case(dir, base)
+        # admonish
+        if target != FILENOTFOUND
+            @info """The filename '$target' is deprecated. '$best_basename' is preferred."""
+            return load_dataframe_from_file(joinpath(dir, target))
+        end
+    end
+
+    throw_filenotfound_error(dir, best_basename)
+end
+
+function throw_filenotfound_error(dir, base)
+    files_in_dir = readdir(dir)
+    err_str = """File $base was not found in the directory, "$dir".
+                 Try checking the spelling.
+                 The files in the directory are $files_in_dir."""
+    error(err_str)
+end
+
+function look_for_file_with_alternate_case(dir, base)::String
     lower_base = lowercase(base)
 
     files_in_dir = readdir(dir)
@@ -28,15 +92,8 @@ function look_for_file_with_alternate_case(dir, base)
               This must be corrected.""")
     end
 
-    FILE_NOT_FOUND = "FILENOTFOUND"
-    target = get(mapping, lower_base, FILE_NOT_FOUND)
-    if target == FILE_NOT_FOUND
-        err_str = """File $base was not found in the directory, "$dir".
-                     Try checking the spelling.
-                     The files in the directory are $files_in_dir"""
-        error(err_str)
-    end
-
+    FILENOTFOUND = filenotfoundconstant()
+    target = get(mapping, lower_base, FILENOTFOUND)
 
     return target
 end
@@ -67,9 +124,30 @@ function check_for_duplicate_keys(path::AbstractString)
     end
 end
 
-function load_dataframe_from_file(path)
+function load_dataframe_from_file(path)::DataFrame
     check_for_duplicate_keys(path)
     CSV.read(path, DataFrame, header=1)
+end
+
+function find_matrix_columns_in_dataframe(df::DataFrame,
+        columnprefix::AbstractString;
+        prefixseparator='_')::Vector{Int}
+    all_columns = names(df)
+
+    # 2 is the length of the '_' connector plus one for indexing
+    get_integer_part(c) = tryparse(Int, c[length(columnprefix)+2:end])
+
+    # if prefix is "ESR", the column name should be like "ESR_1"
+    function is_of_this_column_type(c)
+        startswith(c, columnprefix) &&
+        length(c) >= length(columnprefix) + 2 &&
+        c[length(columnprefix) + 1] == prefixseparator &&
+        !isnothing(get_integer_part(c))
+    end
+
+    columns = filter(is_of_this_column_type, all_columns)
+    columnnumbers = sort!(get_integer_part.(columns))
+    return columnnumbers
 end
 
 @doc raw"""
@@ -86,22 +164,11 @@ ESR_1, other_thing, ESR_3, ESR_2,
   0.4,           2,   0.6,   0.5,
 ```
 """
-function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractString)
+function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractString; prefixseparator='_')
     all_columns = names(df)
-
-    # 2 is the length of the '_' connector plus one for indexing
-    get_integer_part(c) = tryparse(Int, c[length(columnprefix)+2:end])
-
-    # if prefix is "ESR", the column name should be like "ESR_1"
-    function is_of_this_column_type(c)
-        startswith(c, columnprefix) &&
-        length(c) >= length(columnprefix) + 2 &&
-        c[length(columnprefix) + 1] == '_' &&
-        !isnothing(get_integer_part(c))
-    end
-
-    columns = filter(is_of_this_column_type, all_columns)
-    columnnumbers = sort!(get_integer_part.(columns))
+    columnnumbers = find_matrix_columns_in_dataframe(df,
+                                                     columnprefix,
+                                                     prefixseparator=prefixseparator)
 
     if length(columnnumbers) == 0
         msg = """an input dataframe with columns $all_columns was searched for
@@ -117,6 +184,7 @@ function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractStri
         error(msg)
     end
 
-    sorted_columns = columnprefix .* '_' .* string.(columnnumbers)
+    sorted_columns = columnprefix .* prefixseparator .* string.(columnnumbers)
     Matrix(dropmissing(df[:, sorted_columns]))
 end
+

@@ -170,18 +170,17 @@ Total requirements for frequency regulation (aka primary reserves) in each time 
 
 ```math
 \begin{aligned}
-	& \sum_{y \in Y, z \in Z} f_{y,t,z} \geq \epsilon^{load}_{reg} \times \sum_{z \in Z} \mathcal{D}_{z,t} + \epsilon^{vre}_{reg} \times (\sum_{z \in Z} \rho^{max}_{y,z,t} \times \Delta^{\text{total}}_{y,z} \\
-	& + \sum_{z \in Z} \rho^{max,pv}_{y,z,t} \times \Delta^{\text{total,pv}}_{y,z} + \sum_{z \in Z} \rho^{max,wind}_{y,z,t} \times \Delta^{\text{total,wind}}_{y,z}) \quad \forall t \in T
+& \sum_{y \in Y, z \in Z} f_{y,t,z} \geq \epsilon^{demand}_{reg} \times \sum_{z \in Z} \mathcal{D}_{z,t} + \epsilon^{vre}_{reg} \times (\sum_{z \in Z} \rho^{max}_{y,z,t} \times \Delta^{\text{total}}_{y,z} \\
+& + \sum_{z \in Z} \rho^{max,pv}_{y,z,t} \times \Delta^{\text{total,pv}}_{y,z} + \sum_{z \in Z} \rho^{max,wind}_{y,z,t} \times \Delta^{\text{total,wind}}_{y,z}) \quad \forall t \in T
 \end{aligned}
 ```
-where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility); 
+where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility);
 $\rho^{max}_{y,z,t}$ is the forecasted capacity factor for standalone variable renewable resources $y \in VRE$ and zone $z$ in time step $t$;
 $\rho^{max,pv}_{y,z,t}$ is the forecasted capacity factor for co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$ in time step $t$;
 $\rho^{max,wind}_{y,z,t}$ is the forecasted capacity factor for co-located wind resources $y \in \mathcal{VS}^{pv}$ and zone $z$ in time step $t$;
-$\Delta^{\text{total}}_{y,z}$ is the total installed capacity of standalone variable renewable resources $y \in VRE$ and zone $z$; 
-$\Delta^{\text{total,pv}}_{y,z}$ is the total installed capacity of co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$; 
-$\Delta^{\text{total,wind}}_{y,z}$ is the total installed capacity of co-located wind resources $y \in \mathcal{VS}^{wind}$ and zone $z$; 
-and $\epsilon^{load}_{reg}$ and $\epsilon^{vre}_{reg}$ are parameters specifying the required frequency regulation as a fraction of forecasted demand and variable renewable generation.
+$\Delta^{\text{total,pv}}_{y,z}$ is the total installed capacity of co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$;
+$\Delta^{\text{total,wind}}_{y,z}$ is the total installed capacity of co-located wind resources $y \in \mathcal{VS}^{wind}$ and zone $z$;
+and $\epsilon^{demand}_{reg}$ and $\epsilon^{vre}_{reg}$ are parameters specifying the required frequency regulation as a fraction of forecasted demand and variable renewable generation.
 
 **Operating reserve requirements**
 
@@ -189,18 +188,19 @@ Total requirements for operating reserves in the upward direction (aka spinning 
 
 ```math
 \begin{aligned}
-	& \sum_{y \in Y, z \in Z} r_{y,z,t} + r^{unmet}_{t} \geq \epsilon^{load}_{rsv} \times \sum_{z \in Z} \mathcal{D}_{z,t} + \epsilon^{vre}_{rsv} \times (\sum_{z \in Z} \rho^{max}_{y,z,t} \times \Delta^{\text{total}}_{y,z} \\
+	& \sum_{y \in Y, z \in Z} r_{y,z,t} + r^{unmet}_{t} \geq \epsilon^{demand}_{rsv} \times \sum_{z \in Z} \mathcal{D}_{z,t} + \epsilon^{vre}_{rsv} \times (\sum_{z \in Z} \rho^{max}_{y,z,t} \times \Delta^{\text{total}}_{y,z} \\
 	& + \sum_{z \in Z} \rho^{max,pv}_{y,z,t} \times \Delta^{\text{total,pv}}_{y,z} + \sum_{z \in Z} \rho^{max,wind}_{y,z,t} \times \Delta^{\text{total,wind}}_{y,z}) + Contingency \quad \forall t \in T
 \end{aligned}
 ```
 
-where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility); $\rho^{max}_{y,z,t}$ is the forecasted capacity factor for standalone variable renewable resources $y \in VRE$ and zone $z$ in time step $t$; 
-$\rho^{max,pv}_{y,z,t}$ is the forecasted capacity factor for co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$ in time step $t$; 
+where $\mathcal{D}_{z,t}$ is the forecasted electricity demand in zone $z$ at time $t$ (before any demand flexibility);
+$\rho^{max}_{y,z,t}$ is the forecasted capacity factor for standalone variable renewable resources $y \in VRE$ and zone $z$ in time step $t$;
+$\rho^{max,pv}_{y,z,t}$ is the forecasted capacity factor for co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$ in time step $t$;
 $\rho^{max,wind}_{y,z,t}$ is the forecasted capacity factor for co-located wind resources $y \in \mathcal{VS}^{wind}$ and zone $z$ in time step $t$;
-$\Delta^{\text{total}}_{y,z}$ is the total installed capacity of standalone variable renewable resources $y \in VRE$ and zone $z$; 
-$\Delta^{\text{total,pv}}_{y,z}$ is the total installed capacity of co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$; 
-$\Delta^{\text{total,wind}}_{y,z}$ is the total installed capacity of co-located wind resources $y \in \mathcal{VS}^{wind}$ and zone $z$; 
-and $\epsilon^{load}_{rsv}$ and $\epsilon^{vre}_{rsv}$ are parameters specifying the required contingency reserves as a fraction of forecasted demand and variable renewable generation. $Contingency$ is an expression defined in the reserves\_contingency() function meant to represent the largest `N-1` contingency (unplanned generator outage) that the system operator must carry operating reserves to cover and depends on how the user wishes to specify contingency requirements.
+$\Delta^{\text{total}}_{y,z}$ is the total installed capacity of standalone variable renewable resources $y \in VRE$ and zone $z$;
+$\Delta^{\text{total,pv}}_{y,z}$ is the total installed capacity of co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$;
+$\Delta^{\text{total,wind}}_{y,z}$ is the total installed capacity of co-located wind resources $y \in \mathcal{VS}^{wind}$ and zone $z$;
+and $\epsilon^{demand}_{rsv}$ and $\epsilon^{vre}_{rsv}$ are parameters specifying the required contingency reserves as a fraction of forecasted demand and variable renewable generation. $Contingency$ is an expression defined in the reserves\_contingency() function meant to represent the largest `N-1` contingency (unplanned generator outage) that the system operator must carry operating reserves to cover and depends on how the user wishes to specify contingency requirements.
 """
 function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -237,13 +237,13 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 	### Expressions ###
 	## Total system reserve expressions
-	# Regulation requirements as a percentage of load and scheduled variable renewable energy production in each hour
+	# Regulation requirements as a percentage of demand and scheduled variable renewable energy production in each hour
 	# Reg up and down requirements are symmetric
-	@expression(EP, eRegReq[t=1:T], inputs["pReg_Req_Load"]*sum(inputs["pD"][t,z] for z=1:Z) +
+	@expression(EP, eRegReq[t=1:T], inputs["pReg_Req_Demand"]*sum(inputs["pD"][t,z] for z=1:Z) +
 		inputs["pReg_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"])))
-	# Operating reserve up / contingency reserve requirements as ˚a percentage of load and scheduled variable renewable energy production in each hour
+	# Operating reserve up / contingency reserve requirements as ˚a percentage of demand and scheduled variable renewable energy production in each hour
 	# and the largest single contingency (generator or transmission line outage)
-	@expression(EP, eRsvReq[t=1:T], inputs["pRsv_Req_Load"]*sum(inputs["pD"][t,z] for z=1:Z) +
+	@expression(EP, eRsvReq[t=1:T], inputs["pRsv_Req_Demand"]*sum(inputs["pD"][t,z] for z=1:Z) +
 				inputs["pRsv_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"])))
 
 	# N-1 contingency requirement is considered only if Unit Commitment is being modeled
@@ -263,7 +263,7 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	### Constraints ###
 
 	## Total system reserve constraints
-	# Regulation requirements as a percentage of load and scheduled variable renewable energy production in each hour
+	# Regulation requirements as a percentage of demand and scheduled variable renewable energy production in each hour
 	# Note: frequencty regulation up and down requirements are symmetric and all resources contributing to regulation are assumed to contribute equal capacity to both up and down directions
 	if !isempty(REG)
 		@constraint(EP, cReg[t=1:T], sum(vREG[y,t] for y in REG) >= EP[:eRegReq][t])

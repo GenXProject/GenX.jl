@@ -22,10 +22,10 @@ Modules = [GenX]
 Pages = ["load_generators_variability.jl"]
 ```
 
-## Load Data
+## Demand Data
 ```@autodocs
 Modules = [GenX]
-Pages = ["load_load_data.jl"]
+Pages = ["load_demand_data.jl"]
 ```
 
 ## Transmission Network

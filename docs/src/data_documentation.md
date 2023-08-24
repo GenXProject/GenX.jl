@@ -39,7 +39,7 @@ Note that all settings parameters are case sensitive.
 |CO2Cap | Flag for specifying the type of CO2 emission limit constraint.|
 || 0 = no CO2 emission limit|
 || 1 = mass-based emission limit constraint|
-|| 2 = load + rate-based emission limit constraint|
+|| 2 = demand + rate-based emission limit constraint|
 || 3 = generation + rate-based emission limit constraint|
 |CapacityReserveMargin | Flag for Capacity Reserve Margin constraints. |
 || Default = 0 (No Capacity Reserve Margin constraints)|
@@ -52,7 +52,7 @@ Note that all settings parameters are case sensitive.
 || 0 = otherwise|
 |**Solution strategy and outputs**||
 |Solver | Specifies the solver name (This is not case sensitive i.e. CPLEX/cplex, Gurobi/gurobi, Clp/clp indicate the same solvers, respectively). |
-|ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
+|ParameterScale | Flag to turn on parameter scaling wherein demand, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
 |ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
@@ -151,11 +151,11 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 |**Mandatory Files**||
 |Fuels\_data.csv |Specify fuel type, CO2 emissions intensity, and time-series of fuel prices. |
 |Network.csv |Specify network topology, transmission fixed costs, capacity and loss parameters.|
-|Load\_data.csv |Specify time-series of load profiles for each model zone, weights for each time step, load shedding costs, and optional time domain reduction parameters.|
+|Demand\_data.csv |Specify time-series of demand profiles for each model zone, weights for each time step, demand shedding costs, and optional time domain reduction parameters.|
 |Generators\_variability.csv |Specify time-series of capacity factor/availability for each resource.|
 |Generators\_data.csv |Specify cost and performance data for generation, storage and demand flexibility resources.|
 |**Settings-specific Files**||
-|Reserves.csv |Specify operational reserve requirements as a function of load and renewables generation and penalty for not meeting these requirements.|
+|Reserves.csv |Specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.|
 |Energy\_share\_requirement.csv |Specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.|
 |CO2\_cap.csv |Specify regional CO2 emission limits.|
 |Capacity\_reserve\_margin.csv |Specify regional capacity reserve margin requirements.|
@@ -234,21 +234,21 @@ Note that in either case, positive flows indicate flow from origin to destinatio
 negative flows indicate flow from destination to origin zone.
 
 
-#### 2.1.3 Load\_data.csv
+#### 2.1.3 Demand\_data.csv (Load\_data.csv)
 
 This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding. Note that GenX is designed to model hourly time steps. With some care and effort, finer (e.g. 15 minute) or courser (e.g. 2 hour) time steps can be modeled so long as all time-related parameters are scaled appropriately (e.g. time period weights, heat rates, ramp rates and minimum up and down times for generators, variable costs, etc).
 
-###### Table 4: Structure of the Load\_data.csv file
+###### Table 4: Structure of the Demand\_data.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**Mandatory Columns**|
-|Voll |Value of lost load in $/MWh.|
-|Demand\_Segment |Number of demand curtailment/lost load segments with different cost and capacity of curtailable demand for each segment. User-specified demand segments. Integer values starting with 1 in the first row. Additional segements added in subsequent rows.|
-|Cost\_of\_Demand\_Curtailment\_per\_MW |Cost of non-served energy/demand curtailment (for each segment), reported as a fraction of value of lost load. If *Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length equal to the length of Demand\_Segment.|
+|Voll |Value of lost load (also referred to as non-served energy) in $/MWh.|
+|Demand\_Segment |Number of demand curtailment/unserved demand segments with different cost and capacity of curtailable demand for each segment. User-specified demand segments. Integer values starting with 1 in the first row. Additional segements added in subsequent rows.|
+|Cost\_of\_Demand\_Curtailment\_per\_MW |Cost of non-served energy/demand curtailment (for each segment), reported as a fraction of value of the lost load (non-served demand). If *Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length equal to the length of Demand\_Segment.|
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
-|Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
+|Demand\_MW\_z* |Demand profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
 |Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations. This is always a single entry. For a full-year model, this is `1`.|
 |Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps). This is always a single entry: all representative periods have the same length. For a full-year model, this entry is equal to the number of time steps.|
 |Sub\_Weights |Number of annual time steps (e.g. hours) represented by each timestep in a representative period. The length of this column is equal to the number of representative periods. The sum of the elements should be equal to the total number of time steps in a model time horizon (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
@@ -271,7 +271,7 @@ This file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand/loads.|
+|Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand.|
 |Zone | Integer representing zone number where the resource is located. |
 |**Technology type flags**|
 |New\_Build | {-1, 0, 1}, Flag for resource (storage, generation) eligibility for capacity expansion.|
@@ -296,7 +296,7 @@ This file contains cost and performance parameters for various generators and ot
 ||STOR = 0: Not part of set (default) |
 ||STOR = 1: Discharging power capacity and energy capacity are the investment decision variables; symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage).|
 ||STOR = 2: Discharging, charging power capacity and energy capacity are investment variables; asymmetric charge and discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
-|FLEX | {0, 1}, Flag to indicate membership in set of flexible demand-side resources (e.g. scheduleable or time shiftable loads such as automated EV charging, smart thermostat systems, irrigating pumping loads etc).|
+|FLEX | {0, 1}, Flag to indicate membership in set of flexible demand-side resources (e.g. scheduleable or time shiftable demand such as automated EV charging, smart thermostat systems, irrigation pumping demand etc).|
 ||FLEX = 0: Not part of set (default) |
 ||FLEX = 1: Flexible demand resource.|
 |HYDRO | {0, 1}, Flag to indicate membership in set of reservoir hydro resources.|
@@ -332,7 +332,7 @@ This file contains cost and performance parameters for various generators and ot
 |Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). Note that for co-located VRE-STOR resources, these costs apply to the AC generation sent to the grid from the entire site. |
 |Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `STOR = 2`, or variable operations and maintenance costs associated with flexible demand deferral with `FLEX = 1`. Otherwise 0 ($/MWh). Note that for co-located VRE-STOR resources, these costs must be 0 (specific variable operations and maintenance costs exist in VRE-STOR dataframe). |
 |**Technical performance parameters**|
-|Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator or MMBtu of fuel consumed per MWh of electricity generated for export (net of on-site house loads). The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
+|Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator or MMBtu of fuel consumed per MWh of electricity generated for export (net of on-site consumption). The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
 |Fuel  |Fuel needed for a generator. The names should match with the ones in the `Fuels_data.csv`. |
 |Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs. Note that for co-located VRE-STOR resources, this value applies to the storage component of each resource.|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`. Applies to thermal plants, and reservoir hydro resource (`HYDRO = 1`).|
@@ -401,9 +401,9 @@ Modeling grid operations for each hour of the year can be computationally expens
 |**Key** | **Description**|
 | :------------ | :-----------|
 |Timesteps\_per\_period | The number of timesteps (e.g., hours) in each representative period (i.e. 168 for weeks, 24 for days, 72 for three-day periods, etc).|
-|UseExtremePeriods | 1 = Include outliers (by performance or load/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to load profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most load across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
+|UseExtremePeriods | 1 = Include outliers (by performance or demand/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to demand profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most demand across the whole system to be included among the extreme periods. They would select Demand, System, Absolute, and Max.|
 ||0 = Do not include extreme periods.|
-|ExtremePeriods | If UseExtremePeriods = 1, use this dictionary to select which types of extreme periods to use. Select by profile type (Load, PV, or Wind), geography (Zone or System), grouping by timestep or by period (Absolute or Integral), and statistic (Maximum or Minimum).|
+|ExtremePeriods | If UseExtremePeriods = 1, use this dictionary to select which types of extreme periods to use. Select by profile type (Demand, PV, or Wind), geography (Zone or System), grouping by timestep or by period (Absolute or Integral), and statistic (Maximum or Minimum).|
 |ClusterMethod |Either `kmeans` or `kmedoids`, the method used to cluster periods and determine each time step's representative period.|
 |ScalingMethod |Either ‘N' or ‘S', the decision to normalize ([0,1]) or standardize (mean 0, variance 1) the input data prior to clustering.|
 |MinPeriods |The minimum number of representative periods used to represent the input data. If using UseExtremePeriods, this must be greater or equal to the number of selected extreme periods. If `IterativelyAddPeriods` is off, this will be the total number of representative periods.|
@@ -413,7 +413,7 @@ Modeling grid operations for each hour of the year can be computationally expens
 |Threshold |Iterative period addition will end if the period farthest from its representative period (as measured using Euclidean distance) is within this percentage of the total possible error (for normalization) or 95% of the total possible error (± 2 σ for standardization). E.g., for a threshold of 0.01, each period must be within 1% of the spread of possible error before the clustering iterations will terminate (or until the maximum is reached).|
 |IterateMethod | Either ‘cluster' (Default) or ‘extreme', whether to increment the number of clusters to the kmeans/kmedoids method or to set aside the worst-fitting periods as a new extreme periods.|
 |nReps |Default 200, the number of kmeans/kmedoids repetitions at the same setting.|
-|LoadWeight| Default 1, a multiplier on load columns to optionally prioritize better fits for load profiles over resource capacity factor or fuel price profiles.|
+|DemandWeight| Default 1, a multiplier on demand columns to optionally prioritize better fits for demand profiles over resource capacity factor or fuel price profiles.|
 |WeightTotal |Default 8760, the sum to which the relative weights of representative periods will be scaled.|
 |ClusterFuelPrices| Either 1 or 0, whether or not to use the fuel price time series in `Fuels_data.csv` in the clustering process. If 'no', this function will still write `Fuels_data.csv` in the TimeDomainReductionFolder with reshaped fuel prices based on the number and size of the representative periods but will not use the fuel price time series for selection of representative periods.|
 
@@ -427,9 +427,9 @@ This file includes parameter inputs needed to model time-dependent procurement o
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Reg\_Req\_Percent\_Load |[0,1], Regulation requirement as a percent of time-dependent load; here load is the total across all model zones.|
+|Reg\_Req\_Percent\_Demand |[0,1], Regulation requirement as a percent of time-dependent demand; here demand is the total across all model zones.|
 |Reg\_Req\_Percent\_VRE |[0,1], Regulation requirement as a percent of time-dependent wind and solar generation (summed across all model zones).|
-|Rsv\_Req\_Percent\_Load [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent load (which is summed across all zones).|
+|Rsv\_Req\_Percent\_Demand [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent demand (which is summed across all zones).|
 |Rsv\_Req\_Percent\_VRE |[0,1], Spinning up or contingency reserve requirement as a percent of time-dependent wind and solar generation (which is summed across all zones).|
 |Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement ($/MW per time step).|
 |Dynamic\_Contingency |Flags to include capacity (generation or transmission) contingency to be added to the spinning reserve requirement.|
@@ -527,7 +527,7 @@ This file contains the settings parameters required to run the Method of Morris 
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand/loads.|
+|Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand.|
 |Zone | Integer representing zone number where the resource is located. |
 |Lower\_bound | Percentage lower deviation from the nominal value|
 |Upper\_bound| Percentage upper deviation from the nominal value|
@@ -827,7 +827,7 @@ Reports dual variable of maximum non-served energy constraint (shadow price of r
 
 #### 3.1.7 prices.csv
 
-Reports marginal electricity price for each model zone and time step. Marginal electricity price is equal to the dual variable of the load balance constraint. If GenX is configured as a mixed integer linear program, then this output is only generated if `WriteShadowPrices` flag is activated. If configured as a linear program (i.e. linearized unit commitment or economic dispatch) then output automatically available.
+Reports marginal electricity price for each model zone and time step. Marginal electricity price is equal to the dual variable of the power balance constraint. If GenX is configured as a mixed integer linear program, then this output is only generated if `WriteShadowPrices` flag is activated. If configured as a linear program (i.e. linearized unit commitment or economic dispatch) then output automatically available.
 
 
 #### 3.1.8 status.csv
