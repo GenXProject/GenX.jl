@@ -2,7 +2,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	SEG = inputs["SEG"] # Number of load curtailment segments
+	SEG = inputs["SEG"] # Number of demand curtailment segments
 	THERM_ALL = inputs["THERM_ALL"]
 	VRE = inputs["VRE"]
 	MUST_RUN = inputs["MUST_RUN"]
@@ -10,15 +10,12 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	STOR_ALL = inputs["STOR_ALL"]
 	FLEX = inputs["FLEX"]
 	VRE_STOR = inputs["VRE_STOR"]
-	## Power balance for each zone
-	# dfPowerBalance = Array{Any}
 	Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
 	    "Demand_Response", "Nonserved_Energy",
 	    "Transmission_NetExport", "Transmission_Losses",
 	    "Demand"]
 	dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = 10), AnnualSum = zeros(10 * Z))
-	# rowoffset = 3
 	powerbalance = zeros(Z * 10, T) # following the same style of power/charge/storage/nse
 	for z in 1:Z
 		POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))

@@ -22,9 +22,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix name of Fixed_OM_Cost_Charge_per_MWyr when reading from Generators_data in multistage code. (#533)
   Previously there was a typo in this in the multistage code that led to a silent bug, which affects outputs,
   for anyone running non-myopic multistage GenX with asymmetric storage.
-  
+
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
+- Generally, 'demand' is now used where (electrical) 'load' was used previously (#397).
+- `Load_data.csv` is being renamed to `Demand_data.csv`.
+- `Load_MW_z*` columns in that file are renamed to `Demand_MW_z*`.
+- In `Reserves.csv`, `Reg_Req_Percent_Load` and `Rsv_Req_Percent_Load` are renamed to `..._Demand`.
+- `Load` and `LoadWeight` keys in the `time_domain_reduction_settings.yml` file are renamed to `Demand`, `DemandWeight`.
+
+### Deprecated
+- The above `load` keys, which generally refer to electrical demand, are being deprecated.
+  Users should update their case files.
+  For now this is done in a backward-compatible manner, and @info reminders are written to the log to prompt the user to update.
+  "Load" now typically refers only to the transferrence of data from files to memory,
+  except for a few places such as the common term "value of lost load" which refers to non-served demand (#397).
 
 ## [0.3.6] - 2023-08-01
 

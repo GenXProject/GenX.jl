@@ -1,9 +1,30 @@
-@doc raw"""
-	load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
+function get_demand_dataframe(path)
+    filename = "Demand_data.csv"
+    deprecated_synonym = "Load_data.csv"
+    df = load_dataframe(path, [filename, deprecated_synonym])
+    # update column names
+    old_columns = find_matrix_columns_in_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED()[1:end-1],
+                                     prefixseparator='z')
+    old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED()*string(i) for i in old_columns)
+    if length(old_column_symbols) > 0
+        pref_prefix = DEMAND_COLUMN_PREFIX()
+        dep_prefix = DEMAND_COLUMN_PREFIX_DEPRECATED()
+        @info "$dep_prefix is deprecated. Use $pref_prefix."
+        new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX()*string(i) for i in old_columns)
+        rename!(df, Dict(old_column_symbols .=> new_column_symbols))
+    end
+    return df
+end
 
-Read input parameters related to electricity load (demand)
+DEMAND_COLUMN_PREFIX() = "Demand_MW_z"
+DEMAND_COLUMN_PREFIX_DEPRECATED() = "Load_MW_z"
+
+@doc raw"""
+	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
+
+Read input parameters related to electricity demand (load)
 """
-function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
+function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 	# Load related inputs
 	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
@@ -12,10 +33,9 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	else
         my_dir = path
 	end
-    filename = "Load_data.csv"
-    load_in = load_dataframe(joinpath(my_dir, filename))
+    demand_in = get_demand_dataframe(my_dir)
 
-    as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
+    as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
 
 	# Number of time steps (periods)
     T = length(as_vector(:Time_Index))
@@ -51,13 +71,13 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	inputs["INTERIOR_SUBPERIODS"] = setdiff(1:T, inputs["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
 
 	# Demand in MW for each zone
-	#println(names(load_in))
-	start = findall(s -> s == "Load_MW_z1", names(load_in))[1] #gets the starting column number of all the columns, with header "Load_MW_z1"
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     # Max value of non-served energy
     inputs["Voll"] = as_vector(:Voll) / scale_factor # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
     # Demand in MW
-    inputs["pD"] =Matrix(load_in[1:T, start:start+Z-1]) / scale_factor  # convert to GW
+    inputs["pD"] = extract_matrix_from_dataframe(demand_in,
+                                                 DEMAND_COLUMN_PREFIX()[1:end-1],
+                                                 prefixseparator='z') / scale_factor
 
 	# Cost of non-served energy/demand curtailment
     # Cost of each segment reported as a fraction of value of non-served energy - scaled implicitly
@@ -65,10 +85,10 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
     # Maximum hourly demand curtailable as % of the max demand (for each segment)
     inputs["pMax_D_Curtail"] = as_vector(:Max_Demand_Curtailment)
 
-	println(filename * " Successfully Read!")
+    println("Demand (load) data Successfully Read!")
 end
 
-# ensure that the length of load data exactly matches
+# ensure that the length of demand data exactly matches
 # the number of subperiods times their length
 # and that the number of subperiods equals the list of provided weights
 function validatetimebasis(inputs::Dict)
@@ -135,7 +155,6 @@ function validatetimebasis(inputs::Dict)
     end
 end
 
-
 @doc raw"""
     prevent_doubled_timedomainreduction(path::AbstractString)
 
@@ -144,9 +163,8 @@ already has more than one Representative Period or has more than one Sub_Weight 
 """
 function prevent_doubled_timedomainreduction(path::AbstractString)
 
-    filename = "Load_data.csv"
-    load_in = load_dataframe(joinpath(path, filename))
-    as_vector(col::Symbol) = collect(skipmissing(load_in[!, col]))
+    demand_in = get_demand_dataframe(path)
+    as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
     representative_periods = convert(Int16, as_vector(:Rep_Periods)[1])
     sub_weights = as_vector(:Sub_Weights)
     num_sub_weights = length(sub_weights)

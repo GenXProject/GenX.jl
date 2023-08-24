@@ -25,10 +25,10 @@ function run_genx_case!(case::AbstractString)
 end
 
 function time_domain_reduced_files_exist(tdrpath)
-    tdr_load = isfile(joinpath(tdrpath,"Load_data.csv"))
-    tdr_genvar = isfile(joinpath(tdrpath,"Generators_variability.csv"))
-    tdr_fuels = isfile(joinpath(tdrpath,"Fuels_data.csv"))
-    return (tdr_load && tdr_genvar && tdr_fuels)
+    tdr_demand = file_exists(tdrpath, ["Demand_data.csv", "Load_data.csv"])
+    tdr_genvar = isfile(joinpath(tdrpath, "Generators_variability.csv"))
+    tdr_fuels = isfile(joinpath(tdrpath, "Fuels_data.csv"))
+    return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 
 function run_genx_case_simple!(case::AbstractString, mysetup::Dict)

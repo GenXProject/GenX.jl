@@ -7,7 +7,7 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	SEG = inputs["SEG"] # Number of load curtailment segments
+	SEG = inputs["SEG"] # Number of demand curtailment segments
 	# Non-served energy/demand curtailment by segment in each time step
 	dfNse = DataFrame(Segment = repeat(1:SEG, outer = Z), Zone = repeat(1:Z, inner = SEG), AnnualSum = zeros(SEG * Z))
 	nse = zeros(SEG * Z, T)
