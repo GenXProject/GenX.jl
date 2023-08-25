@@ -45,23 +45,24 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 
     dfPlantFuel.AnnualSum_Fuel_HeatInput = tempannualsum_Fuel_heat
 	dfPlantFuel.AnnualSum_Fuel_Cost = tempannualsum_Fuel_cost	
-
-	for i = 1:inputs["MAX_NUM_FUELS"]
-		tempannualsum_fuel_heat_multi = zeros(G);
-		tempannualsum_fuel_cost_multi = zeros(G)
-		for g in MULTI_FUELS
-			tempannualsum_fuel_heat_multi[g] = value.(EP[:ePlantFuelConsumptionYear_multi][g,i])
-			tempannualsum_fuel_cost_multi[g] = value.(EP[:ePlantCFuelOut_multi][g,i])
+	if !isempty(MULTI_FUELS)
+		for i = 1:inputs["MAX_NUM_FUELS"]
+			tempannualsum_fuel_heat_multi = zeros(G);
+			tempannualsum_fuel_cost_multi = zeros(G)
+			for g in MULTI_FUELS
+				tempannualsum_fuel_heat_multi[g] = value.(EP[:ePlantFuelConsumptionYear_multi][g,i])
+				tempannualsum_fuel_cost_multi[g] = value.(EP[:ePlantCFuelOut_multi][g,i])
+			end
+			if setup["ParameterScale"] == 1
+				tempannualsum_fuel_heat_multi *= ModelScalingFactor 
+				tempannualsum_fuel_cost_multi *= ModelScalingFactor * ModelScalingFactor
+			end
+			tempannualsum_fuel_heat_multi = round.(tempannualsum_fuel_heat_multi, digits = 2)
+			tempannualsum_fuel_cost_multi = round.(tempannualsum_fuel_cost_multi, digits = 2)
+			dfPlantFuel[!, inputs["FUEL_COLS"][i]] = dfGen[!, inputs["FUEL_COLS"][i]]
+			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput"))] = tempannualsum_fuel_heat_multi
+			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_Cost"))] = tempannualsum_fuel_cost_multi
 		end
-		if setup["ParameterScale"] == 1
-			tempannualsum_fuel_heat_multi *= ModelScalingFactor 
-			tempannualsum_fuel_cost_multi *= ModelScalingFactor * ModelScalingFactor
-		end
-		tempannualsum_fuel_heat_multi = round.(tempannualsum_fuel_heat_multi, digits = 2)
-		tempannualsum_fuel_cost_multi = round.(tempannualsum_fuel_cost_multi, digits = 2)
-		dfPlantFuel[!, inputs["FUEL_COLS"][i]] = dfGen[!, inputs["FUEL_COLS"][i]]
-		dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput"))] = tempannualsum_fuel_heat_multi
-		dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_Cost"))] = tempannualsum_fuel_cost_multi
 	end
 
     CSV.write(joinpath(path, "FuelConsumption_plant.csv"), dfPlantFuel)
