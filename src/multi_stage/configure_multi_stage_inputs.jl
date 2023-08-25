@@ -115,24 +115,24 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		end
 	end
 
-    retirable_resources = get_generators_which_can_be_retired(dfGen)
+    retirable = get_resources_which_can_be_retired(dfGen)
 
     # Set of all resources eligible for capacity retirements
-	inputs_d["RET_CAP"] = retirable_resources
+	inputs_d["RET_CAP"] = retirable
 	# Set of all storage resources eligible for energy capacity retirements
-	inputs_d["RET_CAP_ENERGY"] = intersect(retirable_resources, inputs_d["STOR_ALL"])
+	inputs_d["RET_CAP_ENERGY"] = intersect(retirable, inputs_d["STOR_ALL"])
 	# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-	inputs_d["RET_CAP_CHARGE"] = intersect(retirable_resources, inputs_d["STOR_ASYMMETRIC"])
+	inputs_d["RET_CAP_CHARGE"] = intersect(retirable, inputs_d["STOR_ASYMMETRIC"])
 	# Set of all co-located resources' components eligible for capacity retirements
 	if !isempty(inputs_d["VRE_STOR"])
-		inputs_d["RET_CAP_DC"] = intersect(retirable_resources, inputs_d["VS_DC"])
-		inputs_d["RET_CAP_SOLAR"] = intersect(retirable_resources, inputs_d["VS_SOLAR"])
-		inputs_d["RET_CAP_WIND"] = intersect(retirable_resources, inputs_d["VS_WIND"])
-		inputs_d["RET_CAP_STOR"] = intersect(retirable_resources, inputs_d["VS_STOR"])
-		inputs_d["RET_CAP_DISCHARGE_DC"] = intersect(retirable_resources, inputs_d["VS_ASYM_DC_DISCHARGE"])
-		inputs_d["RET_CAP_CHARGE_DC"] = intersect(retirable_resources, inputs_d["VS_ASYM_DC_CHARGE"])
-		inputs_d["RET_CAP_DISCHARGE_AC"] = intersect(retirable_resources, inputs_d["VS_ASYM_AC_DISCHARGE"])
-		inputs_d["RET_CAP_CHARGE_AC"] = intersect(retirable_resources, inputs_d["VS_ASYM_AC_CHARGE"])
+		inputs_d["RET_CAP_DC"] = intersect(retirable, inputs_d["VS_DC"])
+		inputs_d["RET_CAP_SOLAR"] = intersect(retirable, inputs_d["VS_SOLAR"])
+		inputs_d["RET_CAP_WIND"] = intersect(retirable, inputs_d["VS_WIND"])
+		inputs_d["RET_CAP_STOR"] = intersect(retirable, inputs_d["VS_STOR"])
+		inputs_d["RET_CAP_DISCHARGE_DC"] = intersect(retirable, inputs_d["VS_ASYM_DC_DISCHARGE"])
+		inputs_d["RET_CAP_CHARGE_DC"] = intersect(retirable, inputs_d["VS_ASYM_DC_CHARGE"])
+		inputs_d["RET_CAP_DISCHARGE_AC"] = intersect(retirable, inputs_d["VS_ASYM_AC_DISCHARGE"])
+		inputs_d["RET_CAP_CHARGE_AC"] = intersect(retirable, inputs_d["VS_ASYM_AC_CHARGE"])
 	end
 
 	# Transmission
