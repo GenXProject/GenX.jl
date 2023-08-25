@@ -628,11 +628,15 @@ had New_Build=-1 should now have New_Build=0, Can_Retire=0."
     else
         # Backward compatibility.
         retirable = df[df.New_Build.!=-1, :R_ID]
-        if !isempty(retirable)
+        nonretirable = df[df.New_Build.==-1, :R_ID]
+        if !isempty(nonretirable)
             @info "The generators input file, 'New_Build' column, has some entries
-which are -1 (indicating the ability to be retired).  This input format is deprecated
-and may be removed in a future version. Instead, use a column 'Can_Retire'.
-Please see the documentation for allowed values in these columns."
+which are -1, indicating resources which cannot be built or retired.
+This input format is deprecated and may be removed in a future version.
+Instead, add a new column 'Can_Retire',
+where 0 means a resource cannot be retired and 1 means it can.
+As before, in New_Build, 0 means a resource cannot be built and 1 means it can.
+Please see the documentation for any additional details."
         end
     end
     return Set(retirable)
