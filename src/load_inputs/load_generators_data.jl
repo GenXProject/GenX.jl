@@ -620,14 +620,21 @@ end
 function get_resources_which_can_be_retired(df::DataFrame)::Set{Int64}
     if string(:Can_Retire) in names(df)
         retirable = df[df.Can_Retire.==1, :R_ID]
+
+        invalid_newbuild = df.New_Build.==-1
+        if any(invalid_newbuild)
+            @info "Deprecated '-1' entries in the 'New_Build' column.
+This previously indicated inability to build or to retire. Entries which previously
+had New_Build=-1 should now have New_Build=0, Can_Retire=0."
+        end
     else
         # Backward compatibility.
         retirable = df[df.New_Build.!=-1, :R_ID]
         if !isempty(retirable)
-            @warn "The generators input file, 'New_Build' column, has some entries
+            @info "The generators input file, 'New_Build' column, has some entries
 which are -1 (indicating the ability to be retired).  This input format is deprecated
 and may be removed in a future version. Instead, use a column 'Can_Retire',
-with entries of either 0 or 1."
+with entries of either 0 or 1. New_Build should be similarly restricted to {0,1}."
         end
     end
     return Set(retirable)
