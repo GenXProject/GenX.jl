@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw""" 
 
 co2!(EP::Model, inputs::Dict)
@@ -66,16 +50,16 @@ function co2!(EP::Model, inputs::Dict)
     # if all the CO2 capture rates from generator data are zeros, the CO2 emissions from thermal generators are determined by fuel consumptiono times CO2 content per MMBTU 
     if all(x -> x == 0, dfGen.CO2_Capture_Rate)
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T], 
-            ((1-dfGen[!, :Biomass][y]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]]))
+            ((1-dfGen[y, :Biomass]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]]))
     else 
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            (1-dfGen[!, :Biomass][y] - dfGen[!, :CO2_Capture_Rate][y]) * 
+            (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Rate]) * 
             ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
                 inputs["fuel_CO2"][dfGen[y,:Fuel]]))
         
         # CO2  captured from power plants in "Generator_data.csv"
         @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
-            (dfGen[!, :CO2_Capture_Rate][y]) * 
+            (dfGen[y, :CO2_Capture_Rate]) * 
             ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
                 inputs["fuel_CO2"][dfGen[y,:Fuel]]))
 

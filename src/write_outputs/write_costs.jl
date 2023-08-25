@@ -35,7 +35,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		end
 		total_cost =[objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
-		total_cost = [objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
+		total_cost = [objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 	end
 
 	if !isempty(ELECTROLYZER)

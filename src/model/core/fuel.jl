@@ -1,23 +1,5 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 @doc raw"""
-
-
-
 fuel!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates expression to account for total fuel consumption (e.g., coal, natural gas, hydrogen, etc). It also has the capability to model the piece-wise fuel consumption in part load (if data is available)
@@ -65,7 +47,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
             (dfGen[y,:Cap_Size] * EP[:vSTART][y, t] * 
                 dfGen[y,:Start_Fuel_MMBTU_per_MW])
         else
-            1*EP[:vZERO]
+            EP[:vZERO]
         end)
 
     # fuel_cost is in $/MMBTU (M$/billion BTU if scaled)
@@ -80,7 +62,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, ePlantCFuelStart[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelStart][y, t] for t in 1:T))
     # zonal level total fuel cost for output
-    @expression(EP, eZonalCFuelStart[z = 1:Z], EP[:vZERO] + 
+    @expression(EP, eZonalCFuelStart[z = 1:Z], 
         sum(EP[:ePlantCFuelStart][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
 
     # Fuel cost for power generation
@@ -90,7 +72,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, ePlantCFuelOut[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelOut][y, t] for t in 1:T))
     # zonal level total fuel cost for output
-    @expression(EP, eZonalCFuelOut[z = 1:Z], EP[:vZERO] + 
+    @expression(EP, eZonalCFuelOut[z = 1:Z], 
         sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
 
 
@@ -114,16 +96,16 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, FuelCalculation[y in setdiff(ALLGEN, THERM_COMMIT), t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
     if !isempty(THERM_COMMIT)
-        if setup["PieceWiseHeatRate"] == 1
+        if setup["PiecewiseHeatRate"] == 1
             # Piecewise heat rate UC
             @constraint(EP, First_segment[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Incremental_Heat_Rate_Segment1][y] + 
-                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment1][y]))
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[y, :Incremental_Heat_Rate_Segment1] + 
+                    EP[:vCOMMIT][y, t] * dfGen[y, :Intercept_Fuel_Consumption_Segment1]))
             @constraint(EP, Second_segment[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Incremental_Heat_Rate_Segment2][y] + 
-                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment2][y]))
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[y, :Incremental_Heat_Rate_Segment2] + 
+                    EP[:vCOMMIT][y, t] * dfGen[y, :Intercept_Fuel_Consumption_Segment2]))
             @constraint(EP, Third_segment[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[!, :Incremental_Heat_Rate_Segment3][y] + 
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[y, :Incremental_Heat_Rate_Segment3] + 
                     EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment3][y]))
         else
             @constraint(EP, FuelCalculationCommit[y in THERM_COMMIT, t = 1:T],

@@ -203,26 +203,26 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	load_vre_stor_data!(inputs_gen, setup, path)
 
 	
+    # write zeros if col names are not in the gen_in dataframe
+	missing_cols = ["Incremental_Heat_Rate_Segment2", "Incremental_Heat_Rate_Segment3", "Intercept_Fuel_Consumption_Segment1","Intercept_Fuel_Consumption_Segment2", "Intercept_Fuel_Consumption_Segment3",
+	"Biomass", "CO2_Capture_Rate", "CO2_Capture_Cost_per_Metric_Ton"]
+	write_zeros_if_not_exist!(gen_in, missing_cols)
+
+
     # Scale CO2_Capture_Cost_per_Metric_Ton for CCS units 
-	inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton = ("CO2_Capture_Cost_per_Metric_Ton" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton : zeros(Int, nrow(inputs_gen["dfGen"]))
-	inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton = inputs_gen["dfGen"].CO2_Capture_Cost_per_Metric_Ton/scale_factor
+	gen_in.CO2_Capture_Cost_per_Metric_Ton /= scale_factor
 
     # Scale Intercept of fuel consumption of segments
 	# Users should at least provide Incremental_Heat_Rate_Segment1 and Intercept_Fuel_Consumption_Segment1 
-	# if Users didn't provide data for but turn on piecewiseheatrate, we will set the Incremental_Heat_Rate_Segment to be the same as conventional heat rate, and set intetcepts of fuel consumption to zero
+	# if Users didn't provide data for but turn on piecewiseheatrate, we will set the Incremental_Heat_Rate_Segment to be the same as conventional heat rate
 	if setup["UCommit"] > 0
-        if setup["PieceWiseHeatRate"] == 1
-			inputs_gen["dfGen"].Incremental_Heat_Rate_Segment1 = ("Incremental_Heat_Rate_Segment1" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Incremental_Heat_Rate_Segment1 : inputs_gen["dfGen"].Heat_Rate_MMBTU_per_MWh
-			inputs_gen["dfGen"].Incremental_Heat_Rate_Segment2 = ("Incremental_Heat_Rate_Segment2" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Incremental_Heat_Rate_Segment2 : zeros(Int, nrow(inputs_gen["dfGen"]))
-			inputs_gen["dfGen"].Incremental_Heat_Rate_Segment3 = ("Incremental_Heat_Rate_Segment3" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Incremental_Heat_Rate_Segment3 : zeros(Int, nrow(inputs_gen["dfGen"]))
+        if setup["PiecewiseHeatRate"] == 1
+			gen_in.Incremental_Heat_Rate_Segment1 = ("Incremental_Heat_Rate_Segment1" in names(gen_in)) ? gen_in.Incremental_Heat_Rate_Segment1 : gen_in.Heat_Rate_MMBTU_per_MWh
 
-			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1 = ("Intercept_Fuel_Consumption_Segment1" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1 : zeros(Int, nrow(inputs_gen["dfGen"]))
-			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2 = ("Intercept_Fuel_Consumption_Segment2" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2 : zeros(Int, nrow(inputs_gen["dfGen"]))
-			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3 = ("Intercept_Fuel_Consumption_Segment3" in names(inputs_gen["dfGen"])) ? inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3 : zeros(Int, nrow(inputs_gen["dfGen"]))
             # no need to scale incremental heat rate, but the intercept of fuel consumption in each segment needs to be scaled.
-			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1 = inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment1/scale_factor
-			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2 = inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment2/scale_factor
-			inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3 = inputs_gen["dfGen"].Intercept_Fuel_Consumption_Segment3/scale_factor
+			gen_in.Intercept_Fuel_Consumption_Segment1 /= scale_factor
+			gen_in.Intercept_Fuel_Consumption_Segment2 /= scale_factor
+			gen_in.Intercept_Fuel_Consumption_Segment3 /= scale_factor
 		end
 	end
 
@@ -507,3 +507,14 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 	end
 	summarize_errors(error_strings)
 end
+
+
+function write_zeros_if_not_exist!(dfGen::DataFrame, col_names:: Vector{String})
+	for col_name in col_names
+		if !(col_name in names(dfGen))
+			dfGen[!, col_name] = zeros(Int, nrow(dfGen))
+		end
+	end
+	return dfGen
+end
+
