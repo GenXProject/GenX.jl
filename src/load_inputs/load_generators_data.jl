@@ -622,7 +622,7 @@ function get_resources_which_can_be_retired(df::DataFrame)::Set{Int64}
         retirable = df[df.Can_Retire.==1, :R_ID]
     else
         # Backward compatibility.
-        retirable = df[df.New_Build.==-1, :R_ID]
+        retirable = df[df.New_Build.!=-1, :R_ID]
         if !isempty(retirable)
             @warn "The generators input file, 'New_Build' column, has some entries
 which are -1 (indicating the ability to be retired).  This input format is deprecated
