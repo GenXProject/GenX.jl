@@ -97,7 +97,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		inputs_gen["RSV"] = gen_in[(gen_in[!,:Rsv_Max].>0),:R_ID]
 	end
 
-    NEW_BUILD = gen_in[gen_in.New_Build.==1, :R_ID]
+	NEW_BUILD = gen_in[gen_in.New_Build.==1, :R_ID]
 	retirable_resources = get_resources_which_can_be_retired(gen_in)
 
 	# Set of all resources eligible for new capacity
@@ -623,7 +623,7 @@ function get_resources_which_can_be_retired(df::DataFrame)::Set{Int64}
 
         invalid_newbuild = df.New_Build.==-1
         if any(invalid_newbuild)
-            @info "Deprecated '-1' entries in the 'New_Build' column.
+            @warn "Deprecated '-1' entries in the 'New_Build' column.
 This previously indicated inability to build or to retire. Entries which previously
 had New_Build=-1 should now have New_Build=0, Can_Retire=0."
         end
@@ -633,8 +633,8 @@ had New_Build=-1 should now have New_Build=0, Can_Retire=0."
         if !isempty(retirable)
             @info "The generators input file, 'New_Build' column, has some entries
 which are -1 (indicating the ability to be retired).  This input format is deprecated
-and may be removed in a future version. Instead, use a column 'Can_Retire',
-with entries of either 0 or 1. New_Build should be similarly restricted to {0,1}."
+and may be removed in a future version. Instead, use a column 'Can_Retire'.
+Please see the documentation for allowed values in these columns."
         end
     end
     return Set(retirable)
