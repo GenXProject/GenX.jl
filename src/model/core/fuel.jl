@@ -17,6 +17,36 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 @doc raw"""
     fuel!(EP::Model, inputs::Dict, setup::Dict)
     this module calculate the fuel consumption and the fuel cost
+
+
+    To enable resources to use multiple fuels during both startup and normal operational processes, three additional variables were added: 
+    fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel consumption for single-fuel plants ($vStartFuel_{y,t}$); and startup fuel consumption for multi-fuel plants ($vMulStartFuel_{y,i,t}$). By making startup fuel consumption variables, the model can choose the startup fuel to meet the constraints.
+    
+    
+    For plants using multiple fuels:
+    
+    During startup, heat input from multiple startup fuels are equal to startup fuel requirements in plant $y$ at time $t$: $StartFuelMMBTUperMW$ times $Capsize$.
+    ```math
+    \begin{aligned}
+    \sum_{i \in \mathcal{I} } vMulStartFuels_{y, i, t}= CapSize_{y} \times StartFuelMMBTUperMW_{y} \times vSTART_{y,t}
+    \end{aligned}
+    ```
+    During normal operation, the sum of fuel consumptions from multiple fuels dividing by the correspnding heat rates, respectively, is equal to $vPower$ in plant $y$ at time $t$. 
+    ```math
+    \begin{aligned}
+     \sum_{i \in \mathcal{I} } \frac{vMulFuels_{y, i, t}} {HeatRate_{i,y} } = vPower_{y,t}
+    \end{aligned}
+    ```
+    There are also constraints on how much heat input each fuel can provide, which are specified by $MinCofire$ and $MaxCofire$.
+    ```math
+    \begin{aligned}
+    vMulFuels_{y, i, t} >= vPower_{y,t} \times MinCofire_{i}
+    \end{aligned}
+    
+    \begin{aligned}
+    vMulFuels_{y, i, t} <= vPower_{y,t} \times MaxCofire_{i}
+    \end{aligned}
+    ```
 """
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
