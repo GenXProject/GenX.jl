@@ -105,11 +105,11 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	new_cap_energy = Set{Int64}()
 	ret_cap_energy = Set{Int64}()
-	if !isempty(STOR_ALL)
+	if !isempty(inputs_gen["STOR_ALL"])
 		# Set of all storage resources eligible for new energy capacity
-		new_cap_energy = intersect(buildable, gen_in[gen_in.Max_Cap_MWh.!=0,:R_ID], STOR_ALL)
+		new_cap_energy = intersect(buildable, gen_in[gen_in.Max_Cap_MWh.!=0,:R_ID], inputs_gen["STOR_ALL"])
 		# Set of all storage resources eligible for energy capacity retirements
-		ret_cap_energy = intersect(retirable, gen_in[gen_in.Existing_Cap_MWh.>=0,:R_ID], STOR_ALL)
+		ret_cap_energy = intersect(retirable, gen_in[gen_in.Existing_Cap_MWh.>=0,:R_ID], inputs_gen["STOR_ALL"])
 	end
 	inputs_gen["NEW_CAP_ENERGY"] = new_cap_energy
 	inputs_gen["RET_CAP_ENERGY"] = ret_cap_energy
