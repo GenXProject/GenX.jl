@@ -30,11 +30,9 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Set of storage resources with symmetric charge/discharge capacity
 	inputs_gen["STOR_SYMMETRIC"] = gen_in[gen_in.STOR.==1,:R_ID]
 	# Set of storage resources with asymmetric (separte) charge/discharge capacity components
-	STOR_ASYMMETRIC = gen_in[gen_in.STOR.==2,:R_ID]
-	inputs_gen["STOR_ASYMMETRIC"] = STOR_ASYMMETRIC
+	inputs_gen["STOR_ASYMMETRIC"] = gen_in[gen_in.STOR.==2,:R_ID]
 	# Set of all storage resources
-	STOR_ALL = union(inputs_gen["STOR_SYMMETRIC"], STOR_ASYMMETRIC)
-	inputs_gen["STOR_ALL"] = STOR_ALL
+	inputs_gen["STOR_ALL"] = union(inputs_gen["STOR_SYMMETRIC"],inputs_gen["STOR_ASYMMETRIC"])
 
 	# Set of storage resources with long duration storage capabilitites
 	inputs_gen["STOR_HYDRO_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.HYDRO.==1),:R_ID]
