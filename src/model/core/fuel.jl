@@ -5,11 +5,15 @@ fuel!(EP::Model, inputs::Dict, setup::Dict)
 This function creates expression to account for total fuel consumption (e.g., coal, natural gas, hydrogen, etc). It also has the capability to model the piece-wise fuel consumption in part load (if data is available)
 
 ***** Expressions ******
+Users have two options to model the fuel consumption as a function of power generation: (1). Use a constant heat rate, regardless of the minimum load or maximum load; and (2). use the "PiecewiseFuelUsage" options to model the fuel consumption via piecewise linear approximation. By using that option, users could represent higher heat rate when generators are running at minimum load, and lower heatrate when generators are running at maximum load.
+
+(1). Constant heat rate. 
 
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Hear\_Rate_y$). 
 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, is determined by fuel consumption ($vFuel_{y,t}$ and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
 
+(2). Piecewise linear approximation
 From above formulations, thermal generators are expected to have the same fuel consumption per generating 1 MWh electricity, regardless of minimum load or full load. However, thermal generators tend to have decreased efficiency when operating at part load, leading to higher fuel consumption per generating the same amount of electricity. To have more precise representation of fuel consumption at part load, the piecewise-linear fitting of heat input can be introduced. 
 
 ```math
@@ -18,13 +22,11 @@ vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
 \hspace{1cm} \forall y \in G, \forall t \in T, \forall x \in X
 \end{aligned}
 ```
-Where $h_{y,x}$ represents incremental heat rate of a thermal generator $y$ in segment $x$ [MMBTU/MWh] and $f_{y,x}$ represents intercept of fuel consumption of a thermal generator $y$ in segment $x$ [MMBUT], and $U_{y,t}$ represents the commit status of a thermal generator $y$ at time $t$. We include at most three segments to represent the piecewise heat consumption. 
+Where $h_{y,x}$ represents slope a thermal generator $y$ in segment $x$ [MMBTU/MWh] and $f_{y,x}$ represents intercept (MMBTU) of a thermal generator $y$ in segment $x$ [MMBUT], and $U_{y,t}$ represents the commit status of a thermal generator $y$ at time $t$. In "Generators_data.csv", users need to specify the number of segments in a column called NUM_SEGMENTS, then provide corresponding Slopei and Intercepti based on the NUM_SEGMENTS (i = NUM_SEGMENTS).
 
-Since fuel consumption has a positive value, the optimization will optimize the fuel consumption by enforcing the inequity to equal to the highest piecewise segment. When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept to be zero such that the fuel consumption is zero when thermal units are offline.
+Since fuel consumption (and fuel costs) is postive, the optimization will optimize the fuel consumption by enforcing the inequity to equal to the highest piecewise segment. Only one segment is active at a time for any value of vP. When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept to be zero such that the fuel consumption is zero when thermal units are offline.
 
-In order to run piecewise fuel consumption module, the unit commitment must be turned on, and users should provide Incremental_Heat_Rate_Segmenti and Intercept_Fuel_Consumption_Segmenti for at least one segment. 
-
-If users only want to model piecewise heat rate for some of thermal generators, then set the Incremental_Heat_Rate_Segment1 for thoese plants to be the same as conventional heat rate, and then set Incremental_Heat_Rate_Segment2/3 and Intercept_Fuel_Consumption_Segment1/2/3 to be zero.
+In order to run piecewise fuel consumption module, the unit commitment must be turned on, and users should provide Slope and Intercept for at least one segment. 
 """
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
@@ -36,6 +38,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     THERM_COMMIT = inputs["THERM_COMMIT"]
     FUEL = length(inputs["fuels"])
     ALLGEN = collect(1:G)
+
     # create variable for fuel consumption for output
     @variable(EP, vFuel[y in 1:G, t = 1:T] >= 0)
     
@@ -52,9 +55,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     # fuel_cost is in $/MMBTU (M$/billion BTU if scaled)
     # vFuel and eStartFuel is MMBTU (or billion BTU if scaled)
-    # Therefore eCFuel_start or eCFuel_out is $ or Million$)
-    # Separately track the start up fuel and fuel consumption for power generation
-    
+    # eCFuel_start or eCFuel_out is $ or Million$
     # Start up fuel cost
     @expression(EP, eCFuelStart[y = 1:G, t = 1:T], 
         (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:eStartFuel][y, t]))
@@ -96,17 +97,17 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, FuelCalculation[y in setdiff(ALLGEN, THERM_COMMIT), t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
     if !isempty(THERM_COMMIT)
-        if setup["PiecewiseHeatRate"] == 1
-            # Piecewise heat rate UC
-            @constraint(EP, First_segment[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[y, :Incremental_Heat_Rate_Segment1] + 
-                    EP[:vCOMMIT][y, t] * dfGen[y, :Intercept_Fuel_Consumption_Segment1]))
-            @constraint(EP, Second_segment[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[y, :Incremental_Heat_Rate_Segment2] + 
-                    EP[:vCOMMIT][y, t] * dfGen[y, :Intercept_Fuel_Consumption_Segment2]))
-            @constraint(EP, Third_segment[y in THERM_COMMIT, t = 1:T],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] * dfGen[y, :Incremental_Heat_Rate_Segment3] + 
-                    EP[:vCOMMIT][y, t] * dfGen[!, :Intercept_Fuel_Consumption_Segment3][y]))
+        if setup["PiecewiseFuelUsage"] == 1
+            # Only apply piecewise fuel consumption to thermal generators with NUM_SEGMENTS > 0
+            THERM_COMMIT_PWFU = inputs["THERM_COMMIT_PWFU"]
+            for i in 1:inputs["MAX_NUM_SEGMENTS"]
+                @constraint(EP, [y in THERM_COMMIT_PWFU, t = 1:T],
+                EP[:vFuel][y, t] >= (EP[:vP][y, t] *  dfGen[y,  inputs["slope_cols"]][i] + 
+                    EP[:vCOMMIT][y, t] * dfGen[y,  inputs["intercept_cols"] ][i]))
+            end
+            @constraint(EP, [y in setdiff(THERM_COMMIT,THERM_COMMIT_PWFU), t = 1:T],
+                EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
+
         else
             @constraint(EP, FuelCalculationCommit[y in THERM_COMMIT, t = 1:T],
                 EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)

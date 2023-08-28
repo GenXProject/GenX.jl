@@ -190,12 +190,10 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		inputs_gen["C_Start"] = zeros(Float64, G, inputs_gen["T"])
 	end
 
-	# The fuel (including start up fuel) costs and CO2 emissions will be separately tracked in Fuel.jl and CO2.jl
-	# No need to determine C_Fuel_per_MWh and CO2_per_MWh, and C_Start
-	# Only scale the start up cost here
+	# scale the start costs 
 	for g in 1:G
 		if g in inputs_gen["COMMIT"]
-			# Start-up cost is sum of fixed cost per start plus cost of fuel consumed on startup.
+			# Start-up cost is sum of fixed cost per start startup.
 			inputs_gen["C_Start"][g,:] .= gen_in[g,:Cap_Size] * ( start_cost[g])
 		end
 	end
@@ -204,25 +202,30 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	
     # write zeros if col names are not in the gen_in dataframe
-	missing_cols = ["Incremental_Heat_Rate_Segment2", "Incremental_Heat_Rate_Segment3", "Intercept_Fuel_Consumption_Segment1","Intercept_Fuel_Consumption_Segment2", "Intercept_Fuel_Consumption_Segment3",
-	"Biomass", "CO2_Capture_Rate", "CO2_Capture_Cost_per_Metric_Ton"]
+	missing_cols = ["Biomass", "CO2_Capture_Rate", "CO2_Capture_Rate_Startup", "CO2_Capture_Cost_per_Metric_Ton"]
 	write_zeros_if_not_exist!(gen_in, missing_cols)
-
 
     # Scale CO2_Capture_Cost_per_Metric_Ton for CCS units 
 	gen_in.CO2_Capture_Cost_per_Metric_Ton /= scale_factor
 
-    # Scale Intercept of fuel consumption of segments
-	# Users should at least provide Incremental_Heat_Rate_Segment1 and Intercept_Fuel_Consumption_Segment1 
-	# if Users didn't provide data for but turn on piecewiseheatrate, we will set the Incremental_Heat_Rate_Segment to be the same as conventional heat rate
+    # Piecewise fuel usage module
+	# Users should specify how many segements are used to build piecewise fuel comsumption.
+	# Users should at least provide Slope1 and Intercept1 if they want to use piecewise fuel usage
 	if setup["UCommit"] > 0
-        if setup["PiecewiseHeatRate"] == 1
-			gen_in.Incremental_Heat_Rate_Segment1 = ("Incremental_Heat_Rate_Segment1" in names(gen_in)) ? gen_in.Incremental_Heat_Rate_Segment1 : gen_in.Heat_Rate_MMBTU_per_MWh
-
-            # no need to scale incremental heat rate, but the intercept of fuel consumption in each segment needs to be scaled.
-			gen_in.Intercept_Fuel_Consumption_Segment1 /= scale_factor
-			gen_in.Intercept_Fuel_Consumption_Segment2 /= scale_factor
-			gen_in.Intercept_Fuel_Consumption_Segment3 /= scale_factor
+        if setup["PiecewiseFuelUsage"] == 1
+			num_segments = maximum(gen_in[!,:NUM_SEGMENTS])
+			inputs_gen["MAX_NUM_SEGMENTS"] = num_segments
+			# thermal generators (commit) that have NUM_SEGMENTS >= 1 are able to use piecewise fuel usage optional
+			inputs_gen["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.NUM_SEGMENTS .> 0,:R_ID])
+			# create col names based on maximum num of segments
+			slope_cols =  [ Symbol(string("Slope", i)) for i in 1:num_segments]
+			intercept_cols =  [ Symbol(string("Intercept", i)) for i in 1:num_segments]
+            # no need to scale slope, but the intercept of fuel usage in each segment needs to be scaled (MMBTU -> Billion BTU).
+			for i in 1:num_segments
+				gen_in[!, intercept_cols[i]] /= scale_factor
+			end
+			inputs_gen["slope_cols"] = slope_cols
+			inputs_gen["intercept_cols"] = intercept_cols
 		end
 	end
 

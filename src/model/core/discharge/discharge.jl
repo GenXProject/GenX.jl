@@ -1,11 +1,11 @@
 @doc raw"""
 	discharge(EP::Model, inputs::Dict, setup::Dict)
 This module defines the power decision variable $\Theta_{y,t} \forall y \in \mathcal{G}, t \in \mathcal{T}$, representing energy injected into the grid by resource $y$ by at time period $t$.
-This module additionally defines contributions to the objective function from variable costs of generation (variable O&M plus fuel cost) from all resources $y \in \mathcal{G}$ over all time periods $t \in \mathcal{T}$:
+This module additionally defines contributions to the objective function from variable costs of generation (variable O&M) from all resources $y \in \mathcal{G}$ over all time periods $t \in \mathcal{T}$:
 ```math
 \begin{aligned}
 	Obj_{Var\_gen} =
-	\sum_{y \in \mathcal{G} } \sum_{t \in \mathcal{T}}\omega_{t}\times(\pi^{VOM}_{y} + \pi^{FUEL}_{y})\times \Theta_{y,t}
+	\sum_{y \in \mathcal{G} } \sum_{t \in \mathcal{T}}\omega_{t}\times(\pi^{VOM}_{y})\times \Theta_{y,t}
 \end{aligned}
 ```
 """
@@ -27,7 +27,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Objective Function Expressions ##
 
-	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M, the fuel costs will be determined in fuel.jl
+	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M
 	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]*vP[y,t])))
 	# Sum individual resource contributions to variable discharging costs to get total variable discharging costs
 	@expression(EP, eTotalCVarOutT[t=1:T], sum(eCVar_out[y,t] for y in 1:G))
