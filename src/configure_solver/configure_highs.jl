@@ -243,7 +243,7 @@ The HiGHS optimizer instance is configured with the following default parameters
 	
 	# Strategy for dualising before simplex
 	# [type: HighsInt, advanced: true, range: {-1, 1}, default: -1]
-	simplex_dualise_strategy: -1
+	# simplex_dualise_strategy: -1
 	
 	# Strategy for permuting before simplex
 	# [type: HighsInt, advanced: true, range: {-1, 1}, default: -1]
@@ -402,7 +402,7 @@ function configure_highs(solver_settings_path::String)
         "cost_scale_factor" => 0,
         "allowed_matrix_scale_factor" => 20,
         "allowed_cost_scale_factor" => 0,
-        "simplex_dualise_strategy" => -1,
+        # "simplex_dualise_strategy" => -1,
         "simplex_permute_strategy" => -1,
         "max_dual_simplex_cleanup_level" => 1,
         "max_dual_simplex_phase1_cleanup_level" => 2,
