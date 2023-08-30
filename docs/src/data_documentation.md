@@ -311,9 +311,6 @@ This file contains cost and performance parameters for various generators and ot
 |VRE_STOR | {0, 1}, Flag to indicate membership in set of co-located variable renewable energy resources (onshore wind and utility-scale solar PV) and storage resources (either short- or long-duration energy storage with symmetric or asymmetric charging or discharging capabilities).|
 ||VRE_STOR = 0: Not part of set (default) |
 ||VRE_STOR = 1: Co-located VRE and storage (VRE-STOR) resources. |
-|BIOMASS | {0, 1}, Flag to indicate if generator use biomass as feedstock (optional input column).|
-||BIOMASS = 0: Not part of set (default) |
-||BIOMASS = 1: Use biomass as fuel.|
 |**Existing technology capacity**|
 |Existing\_Cap\_MW |The existing capacity of a power plant in MW. Note that for co-located VRE-STOR resources, this capacity represents the existing AC grid connection capacity in MW. |
 |Existing\_Cap\_MWh |The existing capacity of storage in MWh where `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this capacity represents the existing capacity of storage in MWh. |
@@ -334,7 +331,6 @@ This file contains cost and performance parameters for various generators and ot
 |Fixed\_OM\_Cost\_Charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `STOR = 2`. |
 |Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). Note that for co-located VRE-STOR resources, these costs apply to the AC generation sent to the grid from the entire site. |
 |Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `STOR = 2`, or variable operations and maintenance costs associated with flexible demand deferral with `FLEX = 1`. Otherwise 0 ($/MWh). Note that for co-located VRE-STOR resources, these costs must be 0 (specific variable operations and maintenance costs exist in VRE-STOR dataframe). |
-|CCS\_Disposal\_Cost\_per\_Metric_Ton | Cost associated with CCS disposal ($/tCO2), including pipeline, injection and storage costs of CCS-equipped generators|
 |**Technical performance parameters**|
 |Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator or MMBtu of fuel consumed per MWh of electricity generated for export (net of on-site consumption). The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
 |Fuel  |Fuel needed for a generator. The names should match with the ones in the `Fuels_data.csv`. |
@@ -350,8 +346,6 @@ This file contains cost and performance parameters for various generators and ot
 |Max\_Flexible\_Demand\_Delay  |Maximum number of hours that demand can be deferred or delayed. Applies to resources with FLEX type 1 (hours). |
 |Max\_Flexible\_Demand\_Advance  |Maximum number of hours that demand can be scheduled in advance of the original schedule. Applies to resources with FLEX type 1 (hours). |
 |Flexible\_Demand\_Energy\_Eff  |[0,1], Energy efficiency associated with time shifting demand. Represents energy losses due to time shifting (or 'snap back' effect of higher consumption due to delay in use) that may apply to some forms of flexible demand. Applies to resources with FLEX type 1 (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
-|CO2\_Capture\_Rate  |[0,1], The CO2 capture rate of CCS equiped power plants at a steady state, this value should be 0 for generators without CCS |
-|CO2\_Capture\_Rate\_Startup  |[0,1], The CO2 capture rate of CCS equiped power plants at during the startup events, this value should be 0 for generators without CCS |
 |**Required for writing outputs**|
 |region | Name of the model region|
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
@@ -390,16 +384,22 @@ This file contains cost and performance parameters for various generators and ot
 |MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**MaxCapReq = 1**|
 |MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
+|**PiecewiseFuelUsage > 0**|
+|PWFU\_NUM\_SEGMENTS| The number of segments to construct piecewise-linear fuel usage approximation|
+|PWFU\_Slope\_*i| The slope (MMBTU/MWh) of i the segment for the piecewise-linear fuel usage approximation|
+|PWFU\_Intercept\_*i| The intercept (MMBTU) of of i the segment for the piecewise-linear fuel usage approximation|
 |**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
 |Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
 |Electrolyzer_Min_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
 |Hydrogen_Price_Per_Tonne| Price (or value) of hydrogen per metric tonne ($/t)|
 |Qualified_Hydrogen_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
-|**PiecewiseFuelUsage > 0**|
-|PWFU\_NUM\_SEGMENTS| The number of segements to construct piecewise linear fuel usage approximation|
-|PWFU\_Slope\_*i| The slope (MMBTU/MWh) of i the segement for the piecewise linear fuel usage approximation|
-|PWFU\_Intercept\_*i| The intercept (MMBTU) of of i the segement for the piecewise linear fuel usage approximation|
-
+|**CO2-related parameters required if any resources have nonzero CO2_Capture_Fraction**|
+|CO2\_Capture\_Fraction  |[0,1], The CO2 capture fraction of CCS equiped power plants at a steady state, this value should be 0 for generators without CCS |
+|CO2\_Capture\_Fraction\_Startup  |[0,1], The CO2 capture fraction of CCS equiped power plants at during the startup events, this value should be 0 for generators without CCS |
+|Biomass | {0, 1}, Flag to indicate if generator use biomass as feedstock (optional input column).|
+||Biomass = 0: Not part of set (default) |
+||Biomass = 1: Use biomass as fuel.|
+|CCS\_Disposal\_Cost\_per\_Metric_Ton | Cost associated with CCS disposal ($/tCO2), including pipeline, injection and storage costs of CCS-equipped generators|
 
 
 

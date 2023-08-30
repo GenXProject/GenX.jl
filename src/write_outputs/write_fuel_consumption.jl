@@ -13,13 +13,13 @@ end
 function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::Dict, EP::Model)
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]
-	FUEL = inputs["FUEL"]
+	HAS_FUEL = inputs["HAS_FUEL"]
 	# Fuel consumption cost by each resource, including start up fuel
-	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"][FUEL], 
-		Fuel = dfGen[!, :Fuel][FUEL], 
-		Zone = dfGen[!,:Zone][FUEL], 
-		AnnualSum = zeros(length(FUEL)))
-	tempannualsum = value.(EP[:ePlantCFuelOut][FUEL]) + value.(EP[:ePlantCFuelStart][FUEL])
+	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL], 
+		Fuel = dfGen[HAS_FUEL, :Fuel], 
+		Zone = dfGen[HAS_FUEL,:Zone], 
+		AnnualSum = zeros(length(HAS_FUEL)))
+	tempannualsum = value.(EP[:ePlantCFuelOut][HAS_FUEL]) + value.(EP[:ePlantCFuelStart][HAS_FUEL])
 
     if setup["ParameterScale"] == 1
         tempannualsum *= ModelScalingFactor^2 # 
@@ -31,10 +31,10 @@ end
 
 function write_fuel_consumption_ts(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
-	FUEL = inputs["FUEL"]
-    # Fuel consumption by each resource per time step, unit is MMBTU
-	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"][FUEL])
-	tempts = value.(EP[:vFuel] + EP[:eStartFuel])[FUEL,:]
+	HAS_FUEL = inputs["HAS_FUEL"]
+	# Fuel consumption by each resource per time step, unit is MMBTU
+	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL])
+	tempts = value.(EP[:vFuel] + EP[:eStartFuel])[HAS_FUEL,:]
     if setup["ParameterScale"] == 1
         tempts *= ModelScalingFactor # kMMBTU to MMBTU
     end

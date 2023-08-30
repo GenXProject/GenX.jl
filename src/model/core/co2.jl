@@ -7,33 +7,33 @@ from bioenergy with carbon capture and storage.
 
 ***** Expressions *****
 
-For thermal generators use fuels that contain CO2 content (e.g., coal, natural gas, and biomass), 
-the CO2 emissions are a function of fuel consumption, CO2 capture rate, and whether the feedstock 
-is biomass. 
-Biomass (e.g., wastes or agriculture resides) derived energy is typically considered to be 
-carbon-neutral because the carbon in the biomass is originated from the atmosphere. 
-When bioenergy is coupled with carbon capture and storage (CCS), it creates negative emissions.
-If users want to represet delicated biomass, then in Generators_data.csv, it requires a column
-name called "BIOMASS" (boolean, 1 or 0), which represents if a generator $y$ uses biomass or not.
-The CO2 emissions from a generator should be zero without CCS and negative with CCS.
-The CO2 emissions from the generator $y$ at time $t$ (commited), is determined by total fuel 
-consumption (MMBTU) multiplied by the CO2 content of the fuel (t CO2/MMBTU), 
-then times (1 - BIOMASS [0 or 1] - CO2 capture rate [a fraction, between 0 - 1]). 
-The CO2 capture rate during the steady-state and startup event could be differernt 
-(generally startup events have lower CO2 capture rates), so we use separated CO2 capture rates 
+For thermal generators which use fuels with CO2 as a combustion product 
+(e.g., coal, natural gas, and biomass), the net CO2 emission to the environment is a function 
+of fuel consumption, CO2 capture fraction, and whether the feedstock is biomass. 
+Biomass (e.g., wastes or agriculture residues) derived energy is typically considered to be 
+carbon-neutral because the carbon in the biomass originates from the atmosphere. 
+When bioenergy is coupled with carbon capture and storage (CCS), it yields negative emissions.
+If users want to represent delicated biomass, then in Generators_data.csv, it requires a column 
+called "Biomass" (boolean, 1 or 0), which represents if a generator $y$ uses biomass or not.
+The CO2 emissions from such a generator should be zero without CCS and negative with CCS.
+The CO2 emissions from the generator $y$ at time $t$, is determined by total fuel 
+consumption (MMBTU) multiplied by the CO2 content of the fuel (t CO2/MMBTU), and by 
+(1 - Biomass [0 or 1] - CO2 capture fraction [a fraction, between 0 - 1]). 
+The CO2 capture fraction could be differernt during the steady-state and startup event 
+(generally startup events have lower CO2 capture fraction), so we use distinct CO2 capture fraction 
 to determine the emissions. 
 In short, the CO2 emissions depend on total CO2 content from fuel consumption,
-the CO2 capture rate, and whether the generators use biomass.
+the CO2 capture fraction, and whether the generators use biomass.
 
 ```math
 \begin{aligned}
-eEmissionsByPlant_{g,t} = (1-BIOMASS_y-  CO2\_Capture\_Rate_y) * vFuel_{y,t}  * CO2_{content} + (1-BIOMASS_y-  CO2\_Capture\_Rate\_Startup_y) * eStartFuel_{y,t} * CO2_{content} 
+eEmissionsByPlant_{g,t} = (1-Biomass_y-  CO2\_Capture\_Fraction_y) * vFuel_{y,t}  * CO2_{content} + (1-Biomass_y-  CO2\_Capture\_Fraction\_Startup_y) * eStartFuel_{y,t} * CO2_{content} 
 \hspace{1cm} \forall y \in G, \forall t \in T, Biomass_y \in {{0,1}}
 \end{aligned}
 ```
 
 Where $Biomass_y$ represents a binary variable that determines if the generator $y$ 
-uses biomass (BIOMASS = 1) or not (BIOMASS = 0), $CO2\_Capture\_Rate_y$ represents a 
+uses biomass (Biomass = 1) or not (Biomass = 0), $CO2\_Capture\_Fraction_y$ represents a 
 fraction (between 0 - 1) for CO2 capture rate.
 In addition to CO2 emissions, for generators with non-zero CO2 capture rate, we also 
 determine the amount of CO2 being captured and sequestrated. The CO2 emissions from the 
@@ -43,7 +43,7 @@ then times CO2 capture rate.
 
 ```math
 \begin{aligned}
-eEmissionsCaptureByPlant_{g,t} = CO2\_Capture\_Rate_y * vFuel_{y,t}  * CO2_{content} +  CO2\_Capture\_Rate\_Startup_y *  eStartFuel_{y,t} * CO2_{content}
+eEmissionsCaptureByPlant_{g,t} = CO2\_Capture\_Fraction_y * vFuel_{y,t}  * CO2_{content} +  CO2\_Capture\_Fraction\_Startup_y *  eStartFuel_{y,t} * CO2_{content}
 \hspace{1cm} \forall y \in G, \forall t \in T
 \end{aligned}
 ```
@@ -58,25 +58,24 @@ function co2!(EP::Model, inputs::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
-    FUEL = inputs["FUEL"]
     ### Expressions ###
     # CO2 emissions from power plants in "Generators_data.csv"
-    # if all the CO2 capture rates from generator data are zeros, the CO2 emissions from thermal generators are determined by fuel consumptiono times CO2 content per MMBTU 
-    if all(dfGen.CO2_Capture_Rate .==0)
+    # if all the CO2 capture fraction from generator data are zeros, the CO2 emissions from thermal generators are determined by fuel consumptiono times CO2 content per MMBTU 
+    if all(dfGen.CO2_Capture_Fraction .==0)
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T], 
-            ((1-dfGen[y, :BIOMASS]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[dfGen[y,:Fuel]]))
+            ((1-dfGen[y, :Biomass]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[dfGen[y,:Fuel]]))
     else 
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
-        # The CO2_Capture_Rate refers to the CO2 capture rate of CCS equiped power plants at a steady state 
-        # The CO2_Capture_Rate_Startup refers to the CO2 capture rate of CCS equiped power plants during the startup event
+        # The CO2_Capture_Fraction refers to the CO2 capture rate of CCS equiped power plants at a steady state 
+        # The CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equiped power plants during the startup event
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            (1-dfGen[y, :BIOMASS] - dfGen[y, :CO2_Capture_Rate]) * EP[:vFuel][y, t]  * fuel_CO2[dfGen[y,:Fuel]]+
-            (1-dfGen[y, :BIOMASS] - dfGen[y, :CO2_Capture_Rate_Startup]) * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
+            (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vFuel][y, t]  * fuel_CO2[dfGen[y,:Fuel]]+
+            (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
         
         # CO2 captured from power plants in "Generators_data.csv"
         @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
-            dfGen[y, :CO2_Capture_Rate] * EP[:vFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]+
-            dfGen[y, :CO2_Capture_Rate_Startup] * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
+            dfGen[y, :CO2_Capture_Fraction] * EP[:vFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]+
+            dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
 
         
         #************************************* 

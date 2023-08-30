@@ -2,14 +2,14 @@
 @doc raw"""
     fuel!(EP::Model, inputs::Dict, setup::Dict)
 
-This function creates expression to account for total fuel consumption (e.g., coal, 
-natural gas, hydrogen, etc). It also has the capability to model the piece-wise fuel 
+This function creates expressions to account for total fuel consumption (e.g., coal, 
+natural gas, hydrogen, etc). It also has the capability to model the piecewise fuel 
 consumption in part load (if data is available)
 
 ***** Expressions ******
 Users have two options to model the fuel consumption as a function of power generation: 
 (1). Use a constant heat rate, regardless of the minimum load or maximum load; and 
-(2). use the "PiecewiseFuelUsage" options to model the fuel consumption via piecewise linear 
+(2). use the "PiecewiseFuelUsage" options to model the fuel consumption via piecewise-linear 
 approximation. 
 By using that option, users could represent higher heat rate when generators are running at 
 minimum load, and lower heatrate when generators are running at maximum load.
@@ -20,13 +20,12 @@ The fuel consumption for power generation $vFuel_{y,t}$ is determined by power g
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
 denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, is determined by fuel consumption ($vFuel_{y,t}$ 
 and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
-(2). Piecewise linear approximation
-In the first formulations, thermal generators are expected to have the same fuel consumption 
-per generating 1 MWh electricity,
-regardless of minimum load or full load. However, thermal generators tend to have decreased 
-efficiency when operating at part load, leading to higher fuel consumption per generating 
-the same amount of electricity. 
-To have more precise representation of fuel consumption at part load, 
+(2). Piecewise-linear approximation
+In the first formulation, thermal generators are expected to have the same fuel consumption 
+per MWh of electricity generated, whether they are operating at minimum load or full load. 
+However, thermal generators tend to have decreased efficiency when operating at part load, 
+leading to higher fuel consumption per amount of electricity generated. 
+To have a more precise representation of fuel consumption at part load, 
 the piecewise-linear fitting of heat input can be introduced. 
 
 ```math
@@ -36,21 +35,21 @@ vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
 \end{aligned}
 ```
 Where $h_{y,x}$ represents slope a thermal generator $y$ in segment $x$ [MMBTU/MWh],
-and $f_{y,x}$ represents intercept (MMBTU) of a thermal generator $y$ in segment $x$ [MMBUT],
-and $U_{y,t}$ represents the commit status of a thermal generator $y$ at time $t$.
+and $f_{y,x}$ represents intercept (MMBTU) of a thermal generator $y$ in segment $x$ [MMBTU],
+and $U_{y,t}$ represents the commitment status of a thermal generator $y$ at time $t$.
 In "Generators_data.csv", users need to specify the number of segments in a column called 
 PWFU_NUM_SEGMENTS, then provide corresponding Slopei and Intercepti based on the PWFU_NUM_SEGMENTS 
 (i = PWFU_NUM_SEGMENTS).
 
-Since fuel consumption (and fuel costs) is postive,
-the optimization will optimize the fuel consumption by enforcing the inequity to equal to 
-the highest piecewise segment.Only one segment is active at a time for any value of vP. 
+Since fuel consumption and fuel costs are postive,
+the optimization will optimize the fuel consumption by enforcing the inequality to equal to 
+the highest piecewise segment. Only one segment is active at a time for any value of vP. 
 When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
 In order to run piecewise fuel consumption module,
-the unit commitment must be turned on, and users should provide Slope and 
-Intercept for at least one segment. 
+the unit commitment must be turned on, and users should provide Slope_* and 
+Intercept_* for at least one segment. 
 """
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
@@ -59,9 +58,8 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     G = inputs["G"]     
-    FUEL = inputs["FUEL"]
+    HAS_FUEL = inputs["HAS_FUEL"]
     THERM_COMMIT = inputs["THERM_COMMIT"]
-    # exclude the "None" from fuels
     fuels = inputs["fuels"]
     NUM_FUEL = length(fuels)
 
@@ -121,7 +119,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     
     ### Constraint ###
     ### only apply constraint to generators with fuel type other than None
-    @constraint(EP, FuelCalculation[y in setdiff(FUEL, THERM_COMMIT), t = 1:T],
+    @constraint(EP, FuelCalculation[y in setdiff(HAS_FUEL, THERM_COMMIT), t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
 
     if !isempty(THERM_COMMIT)

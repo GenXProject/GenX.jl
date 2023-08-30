@@ -80,7 +80,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[!,2][8] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
 
-	if any(x -> x != 0, dfGen.CO2_Capture_Rate)
+	if any(dfGen.CO2_Capture_Fraction .!= 0)
 		dfCost[10,2] += value(EP[:eTotaleCCO2Sequestration])
 	end
 
@@ -218,7 +218,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
-		if any(dfGen.CO2_Capture_Rate .!=0)
+		if any(dfGen.CO2_Capture_Fraction .!=0)
 			tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][Y_ZONE,:]))
 			tempCTotal += tempCCO2		
 		end
