@@ -1,6 +1,8 @@
 # Real System Example: Three Zones
 
-**RealSystemExample/ISONE_Trizone** is  more detailed example system approximating the ISO New England region with three zones representing  Connecticut, and Maine and rest of ISO New England (MA, VT, NH, RI). They are total of 58 different resources modeled in the system. The temporal resolution of the model inputs is specified to be 480 hours or 20 days and the model requires GenX_settings parameter `OperationWrapping=1` to run without errors.
+**RealSystemExample/ISONE_Trizone** is  more detailed example system approximating the ISO New England region with three zones representing  Connecticut, and Maine and rest of ISO New England (MA, VT, NH, RI).
+They are total of 58 different resources modeled in the system.
+The temporal resolution of the model inputs is specified to be 480 hours or 20 days.
 
 To run the model, first navigate to the example directory at `GenX/Example_Systems/RealSystemExample/ISONE_Trizone`:
 

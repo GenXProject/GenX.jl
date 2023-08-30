@@ -31,6 +31,40 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
         start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
     end
 
+    if !isempty(inputs["VRE_STOR"])
+        if !isempty(inputs["VS_DC"])
+            start_cap_d[Symbol("eTotalCap_DC")] = Symbol("cExistingCapDC")
+        end
+
+        if !isempty(inputs["VS_SOLAR"])
+            start_cap_d[Symbol("eTotalCap_SOLAR")] = Symbol("cExistingCapSolar")
+        end
+
+        if !isempty(inputs["VS_WIND"])
+            start_cap_d[Symbol("eTotalCap_WIND")] = Symbol("cExistingCapWind")
+        end
+
+        if !isempty(inputs["VS_STOR"])
+            start_cap_d[Symbol("eTotalCap_STOR")] = Symbol("cExistingCapEnergy_VS")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
+            start_cap_d[Symbol("eTotalCapDischarge_DC")] = Symbol("cExistingCapDischargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_CHARGE"])
+            start_cap_d[Symbol("eTotalCapCharge_DC")] = Symbol("cExistingCapChargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
+            start_cap_d[Symbol("eTotalCapDischarge_AC")] = Symbol("cExistingCapDischargeAC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_CHARGE"])
+            start_cap_d[Symbol("eTotalCapCharge_AC")] = Symbol("cExistingCapChargeAC")
+        end
+    end
+
     # This dictionary contains the endogenous retirement constraint name as a key,
     # and a tuple consisting of the associated tracking array constraint and variable as the value
     cap_track_d = Dict([(Symbol("vCAPTRACK"), Symbol("cCapTrack"))])
@@ -41,6 +75,40 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
     if !isempty(inputs["STOR_ASYMMETRIC"])
         cap_track_d[Symbol("vCAPTRACKCHARGE")] = Symbol("cCapTrackCharge")
+    end
+
+    if !isempty(inputs["VRE_STOR"])
+        if !isempty(inputs["VS_DC"])
+            cap_track_d[Symbol("vCAPTRACKDC")] = Symbol("cCapTrackDC")
+        end
+
+        if !isempty(inputs["VS_SOLAR"])
+            cap_track_d[Symbol("vCAPTRACKSOLAR")] = Symbol("cCapTrackSolar")
+        end
+
+        if !isempty(inputs["VS_WIND"])
+            cap_track_d[Symbol("vCAPTRACKWIND")] = Symbol("cCapTrackWind")
+        end
+
+        if !isempty(inputs["VS_STOR"])
+            cap_track_d[Symbol("vCAPTRACKENERGY_VS")] = Symbol("cCapTrackEnergy_VS")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
+            cap_track_d[Symbol("vCAPTRACKDISCHARGEDC")] = Symbol("cCapTrackDischargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_CHARGE"])
+            cap_track_d[Symbol("vCAPTRACKCHARGEDC")] = Symbol("cCapTrackChargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
+            cap_track_d[Symbol("vCAPTRACKDISCHARGEAC")] = Symbol("cCapTrackDischargeAC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_CHARGE"])
+            cap_track_d[Symbol("vCAPTRACKCHARGEAC")] = Symbol("cCapTrackChargeAC")
+        end
     end
 
     return start_cap_d, cap_track_d
@@ -82,6 +150,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
     # Step a.i) Initialize cost-to-go function for t = 1:num_stages
     for t in 1:num_stages
+	settings_d["CurStage"] = t;
         models_d[t] = initialize_cost_to_go(settings_d, models_d[t], inputs_d[t])
     end
 

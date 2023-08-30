@@ -177,24 +177,24 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     
 
     ## check this with Filippo
-    @expression(EP,eFuelSwapping[y=1:G,t=1:T],
-        if y in THERM_ALL && setup["PieceWiseHeatRate"]!=1 && dfGen[y, :Heat_Rate_MMBTU_per_MWh]>0 && dfGen[y, :Heat_Rate2_MMBTU_per_MWh]==0
+    # @expression(EP,eFuelSwapping[y=1:G,t=1:T],
+    #     if y in THERM_ALL && setup["PieceWiseHeatRate"]!=1 && dfGen[y, :Heat_Rate_MMBTU_per_MWh]>0 && dfGen[y, :Heat_Rate2_MMBTU_per_MWh]==0
 
-            EP[:vFuel][y, t] - EP[:vP][y, t]*dfGen[y, :Heat_Rate_MMBTU_per_MWh]
+    #         EP[:vFuel][y, t] - EP[:vP][y, t]*dfGen[y, :Heat_Rate_MMBTU_per_MWh]
 
-        elseif y in THERM_ALL && setup["PieceWiseHeatRate"]!=1 && dfGen[y, :Heat_Rate_MMBTU_per_MWh]==0 && dfGen[y, :Heat_Rate2_MMBTU_per_MWh]>0
+    #     elseif y in THERM_ALL && setup["PieceWiseHeatRate"]!=1 && dfGen[y, :Heat_Rate_MMBTU_per_MWh]==0 && dfGen[y, :Heat_Rate2_MMBTU_per_MWh]>0
 
-            EP[:vFuel2][y, t] - EP[:vP][y, t]*dfGen[y, :Heat_Rate2_MMBTU_per_MWh]
+    #         EP[:vFuel2][y, t] - EP[:vP][y, t]*dfGen[y, :Heat_Rate2_MMBTU_per_MWh]
 
-        elseif y in THERM_ALL && setup["PieceWiseHeatRate"]!=1 && dfGen[y, :Heat_Rate_MMBTU_per_MWh]==0 && dfGen[y, :Heat_Rate2_MMBTU_per_MWh]==0
+    #     elseif y in THERM_ALL && setup["PieceWiseHeatRate"]!=1 && dfGen[y, :Heat_Rate_MMBTU_per_MWh]==0 && dfGen[y, :Heat_Rate2_MMBTU_per_MWh]==0
 
-            EP[:vFuel2][y, t] + EP[:vFuel][y, t]
+    #         EP[:vFuel2][y, t] + EP[:vFuel][y, t]
             
-        else
-            EP[:vZERO]
-        end
-    )
-    @constraint(EP, cFuelSwap[y=1:G, t = 1:T], eFuelSwapping[y,t] == 0)
+    #     else
+    #         EP[:vZERO]
+    #     end
+    # )
+    # @constraint(EP, cFuelSwap[y=1:G, t = 1:T], eFuelSwapping[y,t] == 0)
 
     ### Constraint ###   
     # power ouput

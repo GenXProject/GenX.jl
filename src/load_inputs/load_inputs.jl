@@ -24,7 +24,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 
 	# Read temporal-resolved load data, and clustering information if relevant
-	load_load_data!(setup, path, inputs)
+	load_demand_data!(setup, path, inputs)
 	# Read fuel cost data, including time-varying fuel costs
 	cost_fuel, CO2_fuel = load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
@@ -62,8 +62,12 @@ function load_inputs(setup::Dict,path::AbstractString)
 		load_co2_cap!(setup, path, inputs)
 	end
 
+	if !isempty(inputs["VRE_STOR"])
+		load_vre_stor_variability!(setup, path, inputs)
+	end
+
 	# Read in mapping of modeled periods to representative periods
-	if is_period_map_necessary(setup, path, inputs) && is_period_map_exist(setup, path, inputs)
+	if is_period_map_necessary(inputs) && is_period_map_exist(setup, path, inputs)
 		load_period_map!(setup, path, inputs)
 	end
 
@@ -72,11 +76,12 @@ function load_inputs(setup::Dict,path::AbstractString)
 	return inputs
 end
 
-function is_period_map_necessary(setup::Dict, path::AbstractString, inputs::Dict)
-	ow = setup["OperationWrapping"]==1
+function is_period_map_necessary(inputs::Dict)
+	multiple_rep_periods = inputs["REP_PERIOD"] > 1
 	has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
 	has_hydro_lds = !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
-    ow && (has_stor_lds || has_hydro_lds)
+	has_vre_stor_lds = !isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_LDS"])
+    multiple_rep_periods && (has_stor_lds || has_hydro_lds || has_vre_stor_lds)
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)

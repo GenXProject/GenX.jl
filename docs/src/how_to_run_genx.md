@@ -1,6 +1,6 @@
 # Requirements
 
-GenX currently exists in version 0.3.4 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
+GenX currently exists in version 0.3.6 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
 please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version).
@@ -137,25 +137,4 @@ julia> using GenX
 julia> run_genx_case!("/path/to/case")
 ```
 All output will be written in that case's folder, as usual.
-
-## Performing time domain reduction (TDR) separately from optimization
-_Added in 0.3.4_
-
-It may be useful to perform time domain reduction (TDR) (or "clustering") on a set of inputs before using them as part of full GenX optimization case.
-For example, a user might want to test various TDR settings and examine the resulting clustered inputs.
-This can now be performed using the `run_timedomainreduction!` function.
-
-```
-> julia --project=/home/youruser/GenX
-
-julia> using GenX
-julia> run_timedomainreduction!("/path/to/case")
-```
-
-This function will obey the settings in `path/to/case/Settings/time_domain_reduction_settings.yml`.
-It will output the resulting clustered time series files in the case.
-
-Running this function will *overwrite* these files in the case.
-(Note that when running a case normally, if these clustered files exist they will *not* be overwritten.)
-
 
