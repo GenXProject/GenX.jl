@@ -222,8 +222,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		end
 	end
 
-
-
 	println(filename * " Successfully Read!")
 end
 
@@ -509,11 +507,10 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 	gen_in = inputs["dfGen"]
 	pwfu_num_segments = maximum(gen_in[!,:PWFU_NUM_SEGMENTS])
 	inputs["PWFU_MAX_NUM_SEGMENTS"] = pwfu_num_segments
-	# thermal generators (commit) that have PWFU_NUM_SEGMENTS >= 1 are able to use piecewise fuel usage optional
 	inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.PWFU_NUM_SEGMENTS .> 0,:R_ID])
 	# create col names based on maximum num of segments
-	slope_cols =  [ Symbol(string("Slope_", i)) for i in 1:pwfu_num_segments]
-	intercept_cols =  [ Symbol(string("Intercept_", i)) for i in 1:pwfu_num_segments]
+	slope_cols =  [ Symbol(string("PWFU_Slope_", i)) for i in 1:pwfu_num_segments]
+	intercept_cols =  [ Symbol(string("PWFU_Intercept_", i)) for i in 1:pwfu_num_segments]
     # no need to scale slope, but the intercept of fuel usage in each segment needs to be scaled (MMBTU -> Billion BTU).
 	for i in 1:pwfu_num_segments
 		gen_in[!, intercept_cols[i]] /= scale_factor

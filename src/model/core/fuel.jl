@@ -3,30 +3,26 @@
     fuel!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates expressions to account for total fuel consumption (e.g., coal, 
-natural gas, hydrogen, etc). It also has the capability to model the piecewise fuel 
-consumption in part load (if data is available)
+natural gas, hydrogen, etc). It also has the capability to model heat rates that are
+a function of load via a piecewise linear approximation.
 
 ***** Expressions ******
 Users have two options to model the fuel consumption as a function of power generation: 
 (1). Use a constant heat rate, regardless of the minimum load or maximum load; and 
-(2). use the "PiecewiseFuelUsage" options to model the fuel consumption via piecewise-linear 
-approximation. 
-By using that option, users could represent higher heat rate when generators are running at 
-minimum load, and lower heatrate when generators are running at maximum load.
+(2). Use the "PiecewiseFuelUsage" setting to model the fuel consumption via a piecewise-linear 
+approximation. By using this option, users can represent the fact that most generators have a decreasing
+heat rate as a function of load.
 
 (1). Constant heat rate. 
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation 
 ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
-denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, is determined by fuel consumption ($vFuel_{y,t}$ 
+denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
 and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
 (2). Piecewise-linear approximation
-In the first formulation, thermal generators are expected to have the same fuel consumption 
-per MWh of electricity generated, whether they are operating at minimum load or full load. 
-However, thermal generators tend to have decreased efficiency when operating at part load, 
-leading to higher fuel consumption per amount of electricity generated. 
-To have a more precise representation of fuel consumption at part load, 
-the piecewise-linear fitting of heat input can be introduced. 
+With this formulation, the heat rate of generators becomes a function of load.
+In reality this relationship takes a nonlinear form, but we model it
+through a piecewise-linear approximation:
 
 ```math
 \begin{aligned}
@@ -34,16 +30,13 @@ vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
 \hspace{1cm} \forall y \in G, \forall t \in T, \forall x \in X
 \end{aligned}
 ```
-Where $h_{y,x}$ represents slope a thermal generator $y$ in segment $x$ [MMBTU/MWh],
-and $f_{y,x}$ represents intercept (MMBTU) of a thermal generator $y$ in segment $x$ [MMBTU],
-and $U_{y,t}$ represents the commitment status of a thermal generator $y$ at time $t$.
-In "Generators_data.csv", users need to specify the number of segments in a column called 
-PWFU_NUM_SEGMENTS, then provide corresponding Slopei and Intercepti based on the PWFU_NUM_SEGMENTS 
-(i = PWFU_NUM_SEGMENTS).
+Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ [MMBTU/MWh],
+ $f_{y,x}$ represents the heat rate intercept (MMBTU) for a generator $y$ in segment $x$ [MMBTU],
+and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
+are optional inputs to "Generators_data.csv".
 
-Since fuel consumption and fuel costs are postive,
-the optimization will optimize the fuel consumption by enforcing the inequality to equal to 
-the highest piecewise segment. Only one segment is active at a time for any value of vP. 
+Since fuel consumption and fuel costs are postive, the optimization will force the heat rate
+to be equal to the highest heat rate segment for any given value of vP.
 When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
