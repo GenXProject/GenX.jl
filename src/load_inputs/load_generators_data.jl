@@ -222,13 +222,19 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		heat_rate_cols = [ Symbol(string("Heat_Rate",i, "_MMBTU_per_MWh")) for i in 1:max_fuels ]
 		max_cofire_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level")) for i in 1:max_fuels ]
 		min_cofire_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level")) for i in 1:max_fuels ]
+		max_cofire_start_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level_Start")) for i in 1:max_fuels ]
+		min_cofire_start_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level_Start")) for i in 1:max_fuels ]
 		fuel_types = [ gen_in[!,f] for f in fuel_cols ]
 		heat_rates = [ gen_in[!,f] for f in heat_rate_cols ]
 		max_cofire = [ gen_in[!,f] for f in max_cofire_cols ]
 		min_cofire = [ gen_in[!,f] for f in min_cofire_cols ]
+		max_cofire_start = [ gen_in[!,f] for f in max_cofire_start_cols ]
+		min_cofire_start = [ gen_in[!,f] for f in min_cofire_start_cols ]
 		inputs_gen["HEAT_RATES"] = heat_rates
 		inputs_gen["MAX_COFIRE"] = max_cofire
 		inputs_gen["MIN_COFIRE"] = min_cofire
+		inputs_gen["MAX_COFIRE_START"] = max_cofire_start
+		inputs_gen["MIN_COFIRE_START"] = min_cofire_start
 		inputs_gen["FUEL_TYPES"] = fuel_types
 		inputs_gen["FUEL_COLS"] = fuel_cols
 		inputs_gen["MAX_NUM_FUELS"] = max_fuels
@@ -377,7 +383,6 @@ end
 Function for reading input parameters related to co-located VRE-storage resources
 """
 function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
-	println("function loadPvre_stor_data works!!!!!!")
 	error_strings = String[]
 	dfGen = inputs_gen["dfGen"]
 	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(dfGen) ? dfGen[dfGen.VRE_STOR.==1,:R_ID] : Int[]
