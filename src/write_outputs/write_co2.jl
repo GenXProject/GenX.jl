@@ -28,7 +28,7 @@ function write_co2(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), writeheader=false)
     
     dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
-    if any(x -> x != 0, dfGen.CO2_Capture_Rate)
+    if any(dfGen.CO2_Capture_Rate .!= 0)
         # Captured CO2 emissions by plant
         emissions_captured_plant = zeros(G, T)
         emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]))
