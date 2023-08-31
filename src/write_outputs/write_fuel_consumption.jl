@@ -30,56 +30,59 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 		Zone = dfGen[!,:Zone], 
 		Fuel = dfGen[!, :Fuel], 
 		AnnualSum_Fuel_HeatInput_Generation = zeros(G),
-		AnnualSum_Fuel_HeatInput_Startup = zeros(G),
+		AnnualSum_Fuel_HeatInput_Start = zeros(G),
 		AnnualSum_Fuel_HeatInput_Total = zeros(G),
 		AnnualSum_Fuel_Cost = zeros(G),
 		)
 		
 	tempannualsum_Fuel_heat_generation = value.(EP[:ePlantFuelConsumptionYear_generation]) 
-	tempannualsum_Fuel_heat_startup = value.(EP[:ePlantFuelConsumptionYear_startup]) 
+	tempannualsum_Fuel_heat_start = value.(EP[:ePlantFuelConsumptionYear_start]) 
 	tempannualsum_Fuel_heat_total = value.(EP[:ePlantFuelConsumptionYear])  
 	tempannualsum_Fuel_cost = value.(EP[:ePlantCFuelOut]) + value.(EP[:ePlantCFuelStart])
 
     if setup["ParameterScale"] == 1
         tempannualsum_Fuel_heat_generation *= ModelScalingFactor # kMMBTU to MMBTU
-		tempannualsum_Fuel_heat_startup *= ModelScalingFactor # kMMBTU to MMBTU
+		tempannualsum_Fuel_heat_start *= ModelScalingFactor # kMMBTU to MMBTU
 		tempannualsum_Fuel_heat_total *= ModelScalingFactor # kMMBTU to MMBTU
 		tempannualsum_Fuel_cost *= ModelScalingFactor * ModelScalingFactor # million $ to $ 
     end
     tempannualsum_Fuel_heat_generation = round.(tempannualsum_Fuel_heat_generation, digits = 2)
-	tempannualsum_Fuel_heat_startup = round.(tempannualsum_Fuel_heat_startup, digits = 2)
+	tempannualsum_Fuel_heat_start = round.(tempannualsum_Fuel_heat_start, digits = 2)
 	tempannualsum_Fuel_heat_total = round.(tempannualsum_Fuel_heat_total, digits = 2)
 	tempannualsum_Fuel_cost = round.(tempannualsum_Fuel_cost, digits = 2)
 
     dfPlantFuel.AnnualSum_Fuel_HeatInput_Generation = tempannualsum_Fuel_heat_generation
-	dfPlantFuel.AnnualSum_Fuel_HeatInput_Startup = tempannualsum_Fuel_heat_startup
+	dfPlantFuel.AnnualSum_Fuel_HeatInput_Start = tempannualsum_Fuel_heat_start
 	dfPlantFuel.AnnualSum_Fuel_HeatInput_Total = tempannualsum_Fuel_heat_total
 	dfPlantFuel.AnnualSum_Fuel_Cost = tempannualsum_Fuel_cost	
 	if !isempty(MULTI_FUELS)
+		dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"], 
+			Zone = dfGen[!,:Zone]
+		)
 		for i = 1:inputs["MAX_NUM_FUELS"]
 			tempannualsum_fuel_heat_multi_generation = zeros(G)
-			tempannualsum_fuel_heat_multi_startup = zeros(G)
+			tempannualsum_fuel_heat_multi_start = zeros(G)
 			tempannualsum_fuel_heat_multi_total = zeros(G)
 			tempannualsum_fuel_cost_multi = zeros(G)
 			for g in MULTI_FUELS
 				tempannualsum_fuel_heat_multi_generation[g] = value.(EP[:ePlantFuelConsumptionYear_multi_generation][g,i])
-				tempannualsum_fuel_heat_multi_startup[g] = value.(EP[:ePlantFuelConsumptionYear_multi_startup][g,i])
+				tempannualsum_fuel_heat_multi_start[g] = value.(EP[:ePlantFuelConsumptionYear_multi_start][g,i])
 				tempannualsum_fuel_heat_multi_total[g] = value.(EP[:ePlantFuelConsumptionYear_multi][g,i])
-				tempannualsum_fuel_cost_multi[g] = value.(EP[:ePlantCFuelOut_multi][g,i])
+				tempannualsum_fuel_cost_multi[g] = value.(EP[:ePlantCFuelOut_multi][g,i]) + value.(EP[:ePlantCFuelOut_multi_start][g,i])
 			end
 			if setup["ParameterScale"] == 1
 				tempannualsum_fuel_heat_multi_generation *= ModelScalingFactor 
-				tempannualsum_fuel_heat_multi_startup *= ModelScalingFactor 
+				tempannualsum_fuel_heat_multi_start *= ModelScalingFactor 
 				tempannualsum_fuel_heat_multi_total *= ModelScalingFactor 
 				tempannualsum_fuel_cost_multi *= ModelScalingFactor * ModelScalingFactor
 			end
 			tempannualsum_fuel_heat_multi_generation = round.(tempannualsum_fuel_heat_multi_generation, digits = 2)
-			tempannualsum_fuel_heat_multi_startup = round.(tempannualsum_fuel_heat_multi_startup, digits = 2)
+			tempannualsum_fuel_heat_multi_start = round.(tempannualsum_fuel_heat_multi_start, digits = 2)
 			tempannualsum_fuel_heat_multi_total = round.(tempannualsum_fuel_heat_multi_total, digits = 2)
 			tempannualsum_fuel_cost_multi = round.(tempannualsum_fuel_cost_multi, digits = 2)
 			dfPlantFuel[!, inputs["FUEL_COLS"][i]] = dfGen[!, inputs["FUEL_COLS"][i]]
 			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Generation"))] = tempannualsum_fuel_heat_multi_generation
-			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Startup"))] = tempannualsum_fuel_heat_multi_startup
+			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Start"))] = tempannualsum_fuel_heat_multi_start
 			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Total"))] = tempannualsum_fuel_heat_multi_total
 			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_Cost"))] = tempannualsum_fuel_cost_multi
 		end
@@ -87,7 +90,7 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 
     CSV.write(joinpath(path, "FuelConsumption_plant.csv"), dfPlantFuel)
 
-	# Fuel consumption by each resource per time step
+	# Fuel consumption by each resource per time step, including both generation and startup fuel consumption
 	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"])
 	tempts = value.(EP[:ePlantFuel]) ## fuel consumption at mmbtu
     if setup["ParameterScale"] == 1
