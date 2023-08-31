@@ -4,7 +4,7 @@
 
 This function creates expressions to account for total fuel consumption (e.g., coal, 
 natural gas, hydrogen, etc). It also has the capability to model heat rates that are
-a function of load via a piecewise linear approximation.
+a function of load via a piecewise-linear approximation.
 
 ***** Expressions ******
 Users have two options to model the fuel consumption as a function of power generation: 
@@ -35,8 +35,8 @@ Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ 
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
 are optional inputs to "Generators_data.csv".
 
-Since fuel consumption and fuel costs are postive, the optimization will force the heat rate
-to be equal to the highest heat rate segment for any given value of vP.
+Since fuel consumption and fuel costs are postive, the optimization will force the fuel usage
+to be equal to the highest fuel usage segment for any given value of vP.
 When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
