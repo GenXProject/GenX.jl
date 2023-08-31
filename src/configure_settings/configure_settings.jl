@@ -23,8 +23,7 @@ function default_settings()
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
-        "HydrogenHourlyMatching" => 0,
-        "PiecewiseFuelUsage" => 0
+        "HydrogenHourlyMatching" => 0
     )
 end
 

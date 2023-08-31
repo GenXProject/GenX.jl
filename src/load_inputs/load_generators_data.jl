@@ -213,13 +213,13 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# get R_ID when fuel is not None
 	inputs_gen["HAS_FUEL"] = gen_in[(gen_in[!,:Fuel] .!= "None"),:R_ID]
 
-	# Piecewise fuel usage module
-	# Users should specify how many segments are used to build piecewise fuel comsumption.
-	# Users should at least provide Slope_1 and Intercept_1 if they want to use piecewise fuel usage
+	# Piecewise fuel usage option
 	if setup["UCommit"] > 0
-        if setup["PiecewiseFuelUsage"] == 1
-			process_piecewisefuelusage!(inputs_gen, scale_factor)
-		end
+		# write zeros if PWFU_NUM_SEGMENTS do not exist in Generators_data.csv
+		ensure_column!(gen_in, "PWFU_NUM_SEGMENTS", 0)
+		# Users should specify how many segments (PWFU_NUM_SEGMENTS >0) are used to build piecewise fuel comsumption for a generator.
+		# Users should at least provide PWFU_Slope_1 and PWFU_Intercept_1 if PWFU_NUM_SEGMENTS > 0
+		process_piecewisefuelusage!(inputs_gen, scale_factor)
 	end
 
 	println(filename * " Successfully Read!")

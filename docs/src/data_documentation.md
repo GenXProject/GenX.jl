@@ -384,8 +384,8 @@ This file contains cost and performance parameters for various generators and ot
 |MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**MaxCapReq = 1**|
 |MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
-|**PiecewiseFuelUsage > 0**|
-|PWFU\_NUM\_SEGMENTS| The number of segments in the piecewise-linear fuel usage approximation|
+|**PiecewiseFuelUsage-related parameters required if any resources have nonzero PWFU_NUM_SEGMENTS**|
+|PWFU\_NUM\_SEGMENTS| The number of segments in the piecewise-linear fuel usage approximation. This value should be 0 if a generator only use a constant heat rate.|
 |PWFU\_Slope\_*i| The slope (MMBTU/MWh) of segment i for the piecewise-linear fuel usage approximation|
 |PWFU\_Intercept\_*i| The intercept (MMBTU) of segment i for the piecewise-linear fuel usage approximation|
 |**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
