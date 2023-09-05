@@ -130,6 +130,8 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
         inputs_dict[t] = load_inputs(mysetup, inpath_sub)
         inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
 
+        compute_cumulative_min_retirements!(inputs_dict,t)
+
         # Step 2) Generate model
         model_dict[t] = generate_model(mysetup, inputs_dict[t], OPTIMIZER)
     end
