@@ -120,15 +120,17 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         # Only apply piecewise fuel consumption to thermal generators in THERM_COMMIT_PWFU set
         THERM_COMMIT_PWFU = inputs["THERM_COMMIT_PWFU"]
         # segemnt for piecewise fuel usage
-        segs = 1:inputs["PWFU_Max_Num_Segments"]
-        slope_cols = inputs["slope_cols"]
-        intercept_cols = inputs["intercept_cols"]
-        segment_intercept(y, seg) = dfGen[y, intercept_cols[seg]]
-        segment_slope(y, seg) = dfGen[y, slope_cols[seg]]
-        # constraint for piecewise fuel consumption
-        @constraint(EP, PiecewiseFuelUsage[y in THERM_COMMIT_PWFU, t = 1:T, seg in segs],
-        EP[:vFuel][y, t] >= (EP[:vP][y, t] *  segment_slope(y, seg) + 
-        EP[:vCOMMIT][y, t] * segment_intercept(y, seg)))
+        if !isempty(THERM_COMMIT_PWFU)
+            segs = 1:inputs["PWFU_Max_Num_Segments"]
+            slope_cols = inputs["slope_cols"]
+            intercept_cols = inputs["intercept_cols"]
+            segment_intercept(y, seg) = dfGen[y, intercept_cols[seg]]
+            segment_slope(y, seg) = dfGen[y, slope_cols[seg]]
+            # constraint for piecewise fuel consumption
+            @constraint(EP, PiecewiseFuelUsage[y in THERM_COMMIT_PWFU, t = 1:T, seg in segs],
+            EP[:vFuel][y, t] >= (EP[:vP][y, t] *  segment_slope(y, seg) + 
+            EP[:vCOMMIT][y, t] * segment_intercept(y, seg)))
+        end
         # constraint for fuel consumption at a constant heat rate 
         @constraint(EP, FuelCalculationCommit[y in setdiff(THERM_COMMIT,THERM_COMMIT_PWFU), t = 1:T],
             EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
