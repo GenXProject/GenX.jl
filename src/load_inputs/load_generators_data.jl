@@ -215,10 +215,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	# Piecewise fuel usage option
 	if setup["UCommit"] > 0
-		# write zeros if PWFU_NUM_SEGMENTS do not exist in Generators_data.csv
-		ensure_column!(gen_in, "PWFU_NUM_SEGMENTS", 0)
-		# Users should specify how many segments (PWFU_NUM_SEGMENTS >0) are used to build piecewise fuel comsumption for a generator.
-		# Users should at least provide PWFU_Slope_1 and PWFU_Intercept_1 if PWFU_NUM_SEGMENTS > 0
 		process_piecewisefuelusage!(inputs_gen, scale_factor)
 	end
 
@@ -505,16 +501,42 @@ end
 
 function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 	gen_in = inputs["dfGen"]
-	pwfu_num_segments = maximum(gen_in[!,:PWFU_NUM_SEGMENTS])
-	inputs["PWFU_MAX_NUM_SEGMENTS"] = pwfu_num_segments
-	inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.PWFU_NUM_SEGMENTS .> 0,:R_ID])
-	# create col names based on maximum num of segments
-	slope_cols =  [ Symbol(string("PWFU_Slope_", i)) for i in 1:pwfu_num_segments]
-	intercept_cols =  [ Symbol(string("PWFU_Intercept_", i)) for i in 1:pwfu_num_segments]
-    # no need to scale slope, but the intercept of fuel usage in each segment needs to be scaled (MMBTU -> Billion BTU).
-	for i in 1:pwfu_num_segments
-		gen_in[!, intercept_cols[i]] /= scale_factor
+	inputs["PWFU_Max_Num_Segments"] = 0
+	inputs["THERM_COMMIT_PWFU"] = Int64[]
+
+	if any(occursin.(Ref("PWFU_"), names(gen_in)))
+		slope_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Slope")
+		intercept_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Intercept")
+		if size(slope_mat)[2] != size(intercept_mat)[2]
+			@error """ The number of slope and intercept used for piecewise fuel consumption must be equal
+			"""
+		end
+
+        # check if values for piecewise fuel consumption make sense. Negative slopes are not allowed as they will make the model non-convex
+        if any(slope_mat .< 0)
+			@error """ Slope used for piecewise fuel consumption cannot be negative
+			"""
+		end
+
+		# create OR matrix that identify nonzero slope and intercept
+		slope_check_zero = slope_mat .!= 0 
+        intercept_check_zero = intercept_mat .!=0
+		slope_or_intercept = slope_check_zero .| intercept_check_zero
+
+        # determine if a generator contains piecewise fuel usage segment
+		gen_in.PWFU_NUM_SEGMENTS .= any(slope_or_intercept .!=0, dims = 2)
+        # the maximum segment is equal to the maximum number of PWFU_Slope_* and PWFU_Intercept_* that user provide.
+		max_segments = maximum(size(slope_or_intercept)[2])
+		# create col names 
+		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Slope"),names(gen_in)))
+		intercept_cols =  Symbol.(filter(colname -> startswith(string(colname),"PWFU_Intercept"),names(gen_in)))
+    	# no need to scale slope, but the intercept of fuel usage in each segment needs to be scaled (MMBTU -> Billion BTU).
+		for i in 1:max_segments
+			gen_in[!, intercept_cols[i]] /= scale_factor
+		end
+		inputs["slope_cols"] = slope_cols
+		inputs["intercept_cols"] = intercept_cols
+		inputs["PWFU_Max_Num_Segments"] =max_segments
+		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.PWFU_NUM_SEGMENTS .> 0,:R_ID])
 	end
-	inputs["slope_cols"] = slope_cols
-	inputs["intercept_cols"] = intercept_cols
 end

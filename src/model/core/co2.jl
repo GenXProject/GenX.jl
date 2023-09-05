@@ -8,10 +8,11 @@ from bioenergy with carbon capture and storage.
 ***** Expressions *****
 
 For thermal generators which combust fuels (e.g., coal, natural gas, and biomass),
-the net CO2 emission to the environment is a function of fuel consumption, CO2 capture fraction, and whether the feedstock is biomass. 
-The combustion of biomass (e.g., from wastes or agriculture residues) is typically considered to be 
-carbon-neutral because the carbon in the biomass originates from the atmosphere. 
-When bioenergy is coupled with carbon capture and storage (CCS), it yields negative emissions.
+the net CO2 emission to the environment is a function of fuel consumption, CO2 capture fraction, 
+and whether the feedstock is biomass. Here we do not account for the biogenic CO2 from biomass 
+(e.g., from wastes or agriculture residues) because the carbon in the biomass originates from 
+the atmosphere. When bioenergy is coupled with carbon capture and storage (CCS), it yields 
+negative emissions.
 
 If a user wishes to represent a generator that combusts biomass, then in Generators_data.csv,
 the "Biomass" column (boolean, 1 or 0), which represents if a generator $y$ uses biomass or not, should be set to 1.
