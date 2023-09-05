@@ -10,8 +10,8 @@ a function of load via a piecewise-linear approximation.
 Users have two options to model the fuel consumption as a function of power generation: 
 (1). Use a constant heat rate, regardless of the minimum load or maximum load; and 
 (2). Use the PiecewiseFuelUsage-related parameters to model the fuel consumption via a 
-piecewise-linear approximation. By using this option, users can represent the fact that most 
-generators have a decreasing heat rate as a function of load.
+piecewise-linear approximation of the heat rate curves. By using this option, users can represent 
+the fact that most generators have a decreasing heat rate as a function of load.
 
 (1). Constant heat rate. 
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation 
@@ -41,7 +41,7 @@ When the power output is zero, the commitment variable $U_{g,t}$ will bring the 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
 In order to run piecewise fuel consumption module,
-the unit commitment must be turned on, and users should provide PWFU_Slope_* and 
+the unit commitment must be turned on (UC = 1 or 2), and users should provide PWFU_Slope_* and 
 PWFU_Intercept_* for at least one segment. 
 """
 

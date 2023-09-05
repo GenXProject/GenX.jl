@@ -1,6 +1,8 @@
 # PiecewiseFuel_CO2
 
-**PiecewiseFuel_CO2** is set of a simplified versions. It is condensed for easy and quick testing of CO2 and piecewise fuel usage related functions of the GenX. **PiecewiseFuel_CO2** is a 24 hr example containing only one zone. The model includes only natural gas ccs, wind, and biomass with ccs, all with fixed initial capacity. 
+**PiecewiseFuel_CO2** is a 24 hr example and contains only one zone. It is condensed for easy and quick testing of CO2, biomass, and piecewise fuel usage related functions of the GenX. This testing 
+system only includes natural gas ccs, wind, and biomass with ccs, all set at a fixed initial 
+capacity, and does not allow for building additional capacity."
 
 To run the model, first navigate to the example directory at `GenX/Example_Systems/PiecewiseFuel_CO2`:
 

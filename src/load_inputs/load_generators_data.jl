@@ -508,7 +508,7 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		slope_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Slope")
 		intercept_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Intercept")
 		if size(slope_mat)[2] != size(intercept_mat)[2]
-			@error """ The number of slope and intercept used for piecewise fuel consumption must be equal
+			@error """ The number of slope and intercept columns used for piecewise fuel consumption must be equal
 			"""
 		end
 
@@ -518,7 +518,7 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 			"""
 		end
 
-		# create OR matrix that identify nonzero slope and intercept
+		# identify nonzero slope and intercept for each generator, and the "or" matrix will return a set of generators that contain slope/intercept for at least one segment 
 		slope_check_zero = slope_mat .!= 0 
         intercept_check_zero = intercept_mat .!=0
 		slope_or_intercept = slope_check_zero .| intercept_check_zero
