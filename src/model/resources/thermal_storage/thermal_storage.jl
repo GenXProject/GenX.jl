@@ -15,11 +15,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
-	return df[df.R_ID .== rid, sym][]
+	f = df[df.R_ID .== rid, sym]
+	@info f
+	return f[]
 end
 
 function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
-	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
+	indices = [findall(==(y), df.R_ID)[] for y in rid]
+	@info indices
 	return df[indices, sym]
 end
 
@@ -121,7 +124,9 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 	@constraint(EP, cCPMax[y in TS, t=1:T], vCP[y,t] <= vCCAP[y]*inputs["pP_Max"][y,t])
 	# Total installed capacity is less than specified maximum limit
 	those_with_max_cap = dfTS[dfTS.Max_Cap_MW_th.>0, :R_ID]
-	@constraint(EP, cCCAPMax[y in those_with_max_cap], vCCAP[y] <= by_rid(y, :Max_Cap_MW_th))
+	if any(those_with_max_cap)
+		@constraint(EP, cCCAPMax[y in those_with_max_cap], vCCAP[y] <= by_rid(y, :Max_Cap_MW_th))
+	end
 
 	# Variable cost of core operation
 	# Variable cost at timestep t for thermal core y
@@ -214,10 +219,10 @@ function thermal_storage(EP::Model, inputs::Dict, setup::Dict)
 	# Fixed ratio of gross generator capacity to core equivalent gross electric power
 	@constraint(EP, cCPRatMax[y in dfTS[dfTS.Max_Generator_Core_Power_Ratio.>0,:R_ID]],
 				vCCAP[y] * dfGen[y,:Eff_Down] * by_rid(y,:Max_Generator_Core_Power_Ratio) >=
-				EP[:vCAP][y] * dfGen[y,:Cap_Size])
+				EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
 	@constraint(EP, cCPRatMin[y in dfTS[dfTS.Min_Generator_Core_Power_Ratio.>0,:R_ID]],
 				vCCAP[y] * dfGen[y,:Eff_Down] * by_rid(y,:Min_Generator_Core_Power_Ratio) <=
-				EP[:vCAP][y] * dfGen[y,:Cap_Size])
+				EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
 	# Limits on storage duration
 	@constraint(EP, cTSMinDur[y in TS], vTSCAP[y] >= dfGen[y,:Min_Duration] * vCCAP[y])
 	@constraint(EP, cTSMaxDur[y in TS], vTSCAP[y] <= dfGen[y,:Max_Duration] * vCCAP[y])
