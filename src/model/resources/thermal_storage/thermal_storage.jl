@@ -441,6 +441,7 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	MAINTENANCE = get_maintenance(inputs)
 	YEARLY_MAINTENANCE = get_yearly_maintenance(inputs)
 	USAGE_BASED_MAINTENANCE = get_usage_based_maintenance(inputs)
+	HAS_vFMDOWN = union(FUS, MAINTENANCE)
 
 	NONMAINTENANCE = get_nonmaintenance(inputs)
 
@@ -452,7 +453,7 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	maint_dur = get_maintenance_duration(inputs)
 
 	@variables(EP, begin
-		vFMDOWN[y in FUS, t=1:T] >= 0  # core maintenance status
+		vFMDOWN[y in HAS_vFMDOWN, t=1:T] >= 0  # core maintenance status
 		vFMSHUT[y in MAINTENANCE, t=maintenance_begin_hours] >= 0  # core maintenance shutdown
 	end)
 
