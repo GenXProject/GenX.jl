@@ -77,7 +77,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Add fuel cost to the dataframe
-	dfNetRevenue.Fuel_cost .= sum(value.(EP[:ePlantCFuelOut]), dims = 2)
+	dfNetRevenue.Fuel_cost = sum(value.(EP[:ePlantCFuelOut]), dims = 2)
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fuel_cost *= ModelScalingFactor^2 # converting Million US$ to US$
 	end
@@ -102,8 +102,9 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add start-up cost to the dataframe
 	dfNetRevenue.StartCost = zeros(nrow(dfNetRevenue))
 	if setup["UCommit"]>=1 && !isempty(COMMIT)
-		# if you don't use vec, dimension won't match
-		dfNetRevenue.StartCost[COMMIT] .= vec(sum(value.(EP[:eCStart][COMMIT, :]).data, dims = 2)) + value.(EP[:ePlantCFuelStart][COMMIT,:])
+		start_costs = vec(sum(value.(EP[:eCStart][COMMIT, :]).data, dims = 2))
+		start_fuel_costs = vec(value.(EP[:ePlantCFuelStart][COMMIT]))
+		dfNetRevenue.StartCost[COMMIT] .= start_costs + start_fuel_costs
  	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.StartCost *= ModelScalingFactor^2 # converting Million US$ to US$
