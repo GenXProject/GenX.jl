@@ -386,7 +386,7 @@ This file contains cost and performance parameters for various generators and ot
 |MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**PiecewiseFuelUsage-related parameters required if any resources have nonzero PWFU_Slope and PWFU_Intercept**|
 |PWFU\_Slope\_*i| The slope (MMBTU/MWh) of segment i for the piecewise-linear fuel usage approximation|
-|PWFU\_Intercept\_*i| The intercept (MMBTU) of segment i for the piecewise-linear fuel usage approximation. The slope and intercept parameters must be consistent Cap_Size of the plant.|
+|PWFU\_Intercept\_*i| The intercept (MMBTU) of segment i for the piecewise-linear fuel usage approximation. The slope and intercept parameters must be consistent with the Cap_Size of the plant.|
 |**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
 |Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
 |Electrolyzer_Min_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
