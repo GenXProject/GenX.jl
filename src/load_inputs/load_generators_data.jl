@@ -540,6 +540,6 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		inputs["slope_cols"] = slope_cols
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_Max_Num_Segments"] =max_segments
-		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU .> 0,:R_ID])
+		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU,:R_ID])
 	end
 end
