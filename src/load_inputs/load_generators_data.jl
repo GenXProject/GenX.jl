@@ -508,14 +508,17 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		slope_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Slope")
 		intercept_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Intercept")
 		if size(slope_mat)[2] != size(intercept_mat)[2]
-			@error """ The number of slope and intercept columns used for piecewise fuel consumption must be equal
+			@error """ The number of slope and intercept columns used for piecewise fuel consumption must be equal, we found $(size(slope_mat)[2]) of slope,
+			and $(size(intercept_mat)[2]) of intercept 
 			"""
+			error("Invalid inputs detected for piecewise fuel usage")
 		end
 
         # check if values for piecewise fuel consumption make sense. Negative slopes are not allowed as they will make the model non-convex
         if any(slope_mat .< 0)
 			@error """ Slope used for piecewise fuel consumption cannot be negative
 			"""
+			error("Invalid inputs detected for piecewise fuel usage")
 		end
 
 		# identify nonzero slope and intercept for each generator, and the "or" matrix will return a set of generators that contain slope/intercept for at least one segment 
@@ -524,9 +527,9 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		slope_or_intercept = slope_check_zero .| intercept_check_zero
 
         # determine if a generator contains piecewise fuel usage segment
-		gen_in.PWFU_NUM_SEGMENTS .= any(slope_or_intercept .!=0, dims = 2)
+		gen_in.HAS_PWFU = any(slope_or_intercept, dims = 2)[:]
         # the maximum segment is equal to the maximum number of PWFU_Slope_* and PWFU_Intercept_* that user provide.
-		max_segments = maximum(size(slope_or_intercept)[2])
+		max_segments = size(slope_or_intercept)[2]
 		# create col names 
 		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Slope"),names(gen_in)))
 		intercept_cols =  Symbol.(filter(colname -> startswith(string(colname),"PWFU_Intercept"),names(gen_in)))
@@ -537,6 +540,6 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		inputs["slope_cols"] = slope_cols
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_Max_Num_Segments"] =max_segments
-		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.PWFU_NUM_SEGMENTS .> 0,:R_ID])
+		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU .> 0,:R_ID])
 	end
 end

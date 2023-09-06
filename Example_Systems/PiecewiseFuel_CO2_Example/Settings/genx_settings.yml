@@ -62,11 +62,6 @@ CO2Cap: 1
 # 1 = constraint active for all electrolyzer resources
 #HydrogenHourlyMatching: 0
 
-# Hydrogen demand included in Energy Share Requirements?
-# 0 = no
-# 1 = yes
-#HydrogenHourlyMatching: 1
-
 ## Solver settings
 # ----------------
 

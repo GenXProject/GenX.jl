@@ -8,7 +8,7 @@ To run the model, first navigate to the example directory at `GenX/Example_Syste
 
 `cd("Example_Systems/PiecewiseFuel_CO2")`
    
-Next, ensure that your settings in `GenX_settings.yml` are correct. The default settings use the solver HiGHS (`Solver: HiGHS`). Other optional policies include minimum capacity requirements, a capacity reserve margin, and more. A mass-based carbon cap of 0 t CO<sub>2</sub> (net-zero) is specified in the `CO2_cap.csv` input file.
+Next, ensure that your settings in `GenX_settings.yml` are correct. The default settings use the solver HiGHS (`Solver: HiGHS`). A mass-based carbon cap of 0 t CO<sub>2</sub> (net-zero) is specified in the `CO2_cap.csv` input file.
 
 Once the settings are confirmed, run the model with the `Run.jl` script in the example directory:
 
