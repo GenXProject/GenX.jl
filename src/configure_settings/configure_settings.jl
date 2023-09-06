@@ -23,6 +23,7 @@ function default_settings()
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
         "HydrogenHourlyMatching" => 0
+        "DC_OPF" => 0,
     )
 end
 

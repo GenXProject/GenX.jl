@@ -66,6 +66,13 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     EP, solve_time = solve_model(EP, mysetup)
     myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 
+    # write model outputs
+    model_output_filename = case * "/model_output.lp"
+
+    open(model_output_filename, "w") do f
+        print(f, EP)
+    end
+
     # Run MGA if the MGA flag is set to 1 else only save the least cost solution
     println("Writing Output")
     outputs_path = get_default_output_folder(case)

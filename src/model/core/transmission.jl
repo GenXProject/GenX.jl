@@ -95,17 +95,17 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Transmission Module")
-
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	L = inputs["L"]     # Number of transmission lines
 
-	UCommit = setup["UCommit"]
-	NetworkExpansion = setup["NetworkExpansion"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
-	MultiStage = setup["MultiStage"]
+	UCommit 			   = setup["UCommit"]
+	NetworkExpansion 	   = setup["NetworkExpansion"]
+	CapacityReserveMargin  = setup["CapacityReserveMargin"]
+	MultiStage 		   	   = setup["MultiStage"]
 	EnergyShareRequirement = setup["EnergyShareRequirement"]
-	IncludeLossesInESR = setup["IncludeLossesInESR"]
+	IncludeLossesInESR 	   = setup["IncludeLossesInESR"]
+	DC_OPF 			       = setup["DC_OPF"]
 
 	## sets and indices for transmission losses and expansion
 	TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -123,6 +123,12 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Power flow on each transmission line "l" at hour "t"
 	@variable(EP, vFLOW[l=1:L,t=1:T]);
+
+	# DC-OPF variables
+	if DC_OPF == 1
+		# Voltage angle variables of each zone "z" at hour "t" 
+		@variable(EP, vANGLE[z=1:Z,t=1:T])
+	end
 
 	if NetworkExpansion == 1
 		# Transmission network capacity reinforcements per line
@@ -232,6 +238,20 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 		cMaxFlow_out[l=1:L, t=1:T], vFLOW[l,t] <= eAvail_Trans_Cap[l]
 		cMaxFlow_in[l=1:L, t=1:T], vFLOW[l,t] >= -eAvail_Trans_Cap[l]
 	end)
+
+	if DC_OPF == 1
+		## DC-OPF constraints
+		# Power flow
+		@constraint(EP, cPOWER_FLOW_OPF[l=1:L, t=1:T], vFLOW[l,t] == inputs["pDC_OPF_coeff"][l] * sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z))
+		
+		# Bus angle limits (except slack bus)
+		@constraints(EP, begin
+			cANGLE_ub[l=1:L, t=1:T], sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z) <= (pi/180)*inputs["LINE_Angle_Limit"][l]
+			cANGLE_lb[l=1:L, t=1:T], sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z) >= -(pi/180)*inputs["LINE_Angle_Limit"][l]
+		end)
+		# Slack Bus angle limit
+		@constraint(EP, cANGLE_SLACK[t=1:T], vANGLE[1,t]== 0)
+	end
 
 	# If network expansion is used:
 	if NetworkExpansion == 1
