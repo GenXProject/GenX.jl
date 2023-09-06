@@ -34,6 +34,12 @@ Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ 
  $f_{y,x}$ represents the heat rate intercept (MMBTU) for a generator $y$ in segment $x$ [MMBTU],
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
 are optional inputs to "Generators_data.csv".
+When a user provides slope and intercept, the standard heat rate (i.e., Heat_Rate_MMBTU_per_MWh) 
+will not be used.
+The user should determine the slope and intercept parameters based on the Cap_Size of the plant. 
+For example, when a plant is operating at the full load (i.e., power output equal to the Cap_Size),
+the fuel usage determined by the effective segment divided by Cap_Size should be equal to the 
+heat rate at full-load.
 
 Since fuel consumption and fuel costs are postive, the optimization will force the fuel usage
 to be equal to the highest fuel usage segment for any given value of vP.
