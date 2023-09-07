@@ -257,22 +257,22 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 end
 
 @doc raw"""
-	load_thermal_storage_data(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+	load_thermal_storage_data(setup::Dict, path::AbstractString, inputs::Dict, gen_in::DataFrame)
 
 Function for reading input parameters related to resources that combine thermal generation and storage.
 If there are no TS columns, TS is a vector of length 0 and dfTS is an empty Dataframe.
 """
-function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, gen_in::DataFrame)
+function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs::Dict, gen_in::DataFrame)
 	error_strings = String[]
 
-	inputs_gen["TS"] = "TS" in names(gen_in) ? gen_in[gen_in.TS.==1,:R_ID] : Int[]
+	inputs["TS"] = "TS" in names(gen_in) ? gen_in[gen_in.TS.==1,:R_ID] : Int[]
 
-	if !isempty(inputs_gen["TS"])
+	if !isempty(inputs["TS"])
 		thermal_storage_errors = check_thermal_storage_validity(gen_in)
 		append!(error_strings, thermal_storage_errors)
 
-		inputs_gen["TS_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.TS.==1),:R_ID]
-		inputs_gen["TS_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.TS.==1),:R_ID]
+		inputs["TS_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.TS.==1),:R_ID]
+		inputs["TS_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.TS.==1),:R_ID]
 
         filename = "Thermal_storage.csv"
         ts_in = load_dataframe(joinpath(path, filename))
@@ -292,10 +292,10 @@ function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs_ge
 				end
 			end
 		end
-		inputs_gen["dfTS"] = ts_in
+		inputs["dfTS"] = ts_in
 		println(filename * " Successfully Read!")
 	else
-		inputs_gen["dfTS"] = DataFrame()
+		inputs["dfTS"] = DataFrame()
 	end
 
 	summarize_errors(error_strings)
