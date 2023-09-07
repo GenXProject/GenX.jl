@@ -280,44 +280,46 @@ function load_thermal_storage_fuel_data!(inputs::Dict, setup::Dict)
 	THERM_COMMIT = inputs["THERM_COMMIT"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-	# for unit commitment decisions
-	if setup["UCommit"]>=1
-		# Convert to $ million/GW with objective function in millions
-		dfTS[!,:Start_Cost_per_MW] /= scale_factor
-
-
-		# Fuel consumed on start-up (million BTUs per MW per start) if unit commitment is modelled
-		start_fuel = convert(Array{Float64}, dfTS[!,:Start_Fuel_MMBTU_per_MW])
-		# Fixed cost per start-up ($ per MW per start) if unit commitment is modelled
-		start_cost = convert(Array{Float64}, dfTS[!,:Start_Cost_per_MW])
-		inputs["TS_C_Start"] = Dict()
-		dfTS[!,:CO2_per_Start] = zeros(Float64, TSG)
-	end
-
 	# Heat rate of all resources (million BTUs/MWh)
-	heat_rate = convert(Array{Float64}, dfTS[!,:Heat_Rate_MMBTU_per_MWh])
+	heat_rate = dfTS[!,:Heat_Rate_MMBTU_per_MWh]
 	# Fuel used by each resource
 	fuel_type = dfTS[!,:Fuel]
 	# fuel cost in $ per MWh and CO2 emissions in tons per MWh
 	inputs["TS_C_Fuel_per_MWh"] = Dict()
 	dfTS[!,:CO2_per_MWh] = zeros(Float64, TSG)
 
-	for gen_id in 1:TSG
-		#calculate fuel costs
-		inputs["TS_C_Fuel_per_MWh"][dfTS[gen_id, :R_ID]] = inputs["fuel_costs"][fuel_type[gen_id]] .* heat_rate[gen_id]
+	# for unit commitment decisions
+	if setup["UCommit"]>=1
+		# Convert to $ million/GW with objective function in millions
+		dfTS[!,:Start_Cost_per_MW] /= scale_factor
+
+		# Fuel consumed on start-up (million BTUs per MW per start)
+		start_fuel = dfTS[!,:Start_Fuel_MMBTU_per_MW]
+		# Fixed cost per start-up ($ per MW per start)
+		start_cost = dfTS[!,:Start_Cost_per_MW]
+		inputs["TS_C_Start"] = Dict()
+		dfTS[!,:CO2_per_Start] = zeros(Float64, TSG)
+	end
+
+
+	for row in 1:TSG
+		fuel = fuel_type[row]
+		rid = dfTS[row, :R_ID]
+		co2_per_mmbtu = inputs["fuel_CO2"][fuel]
+		cost_per_mmbtu = inputs["fuel_costs"][fuel]
+		inputs["TS_C_Fuel_per_MWh"][rid] = cost_per_mmbtu .* heat_rate[row]
 		#calculate fuel emissions
-		dfTS[gen_id, :CO2_per_MWh] = inputs["fuel_CO2"][fuel_type[gen_id]] .* heat_rate[gen_id]
-		dfTS[gen_id,:CO2_per_MWh] *= scale_factor
+		dfTS[row, :CO2_per_MWh] = co2_per_mmbtu .* heat_rate[row]
+		dfTS[row, :CO2_per_MWh] *= scale_factor
 
 
 		# add start up costs and emissions for committed thermal cores.
-		if dfTS[gen_id, :R_ID] in THERM_COMMIT
-			inputs["TS_C_Start"][dfTS[gen_id, :R_ID]] = dfTS[gen_id, :Cap_Size] .* (inputs["fuel_costs"][fuel_type[gen_id]] .* start_fuel[gen_id] .+ start_cost[gen_id])
+		if rid in THERM_COMMIT
+            cap_size = dfTS[row, :Cap_Size]
+			inputs["TS_C_Start"][rid] = cap_size .* (cost_per_mmbtu .* start_fuel[row] .+ start_cost[row])
 
-			dfTS[gen_id, :CO2_per_Start] = dfTS[gen_id, :Cap_Size] * (inputs["fuel_CO2"][fuel_type[gen_id]] * start_fuel[gen_id])
-
-			#scale appropriately
-			dfTS[gen_id, :CO2_per_Start] *= scale_factor
+			dfTS[row, :CO2_per_Start] = cap_size * (co2_per_mmbtu * start_fuel[row])
+			dfTS[row, :CO2_per_Start] *= scale_factor
 		end
 	end
 end
