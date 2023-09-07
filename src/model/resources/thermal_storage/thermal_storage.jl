@@ -627,7 +627,7 @@ end
 
 function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
-	println("Fusion Core Maintenance Module")
+	@info "Thermal+Storage Maintenance Module"
 
 	dfGen = inputs["dfGen"]
 
@@ -675,8 +675,9 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 	@constraint(EP, [y in MAINTENANCE, t=1:T],
 		EP[:vCCAP][y] / by_rid(y,:Cap_Size) - EP[:vFCOMMIT][y,t] >= vFMDOWN[y,t])
 
+    controlling_hours(t,y) = controlling_maintenance_start_hours(hours_per_subperiod, t, maint_dur[y], maintenance_begin_hours)
 	@constraint(EP, [y in MAINTENANCE, t in 1:T],
-				EP[:vFMDOWN][y,t] == sum(EP[:vFMSHUT][y, controlling_maintenance_start_hours(hours_per_subperiod, t, maint_dur[y], maintenance_begin_hours)]))
+                EP[:vFMDOWN][y,t] == sum(EP[:vFMSHUT][y, controlling_hours(t,y)]))
 
 	@constraint(EP, [y in MAINTENANCE],
 		sum(EP[:vFMSHUT][y,t]*omega[t] for t in maintenance_begin_hours) >= EP[:vCCAP][y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
