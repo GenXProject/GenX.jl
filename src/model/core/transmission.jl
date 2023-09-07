@@ -241,7 +241,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	if DC_OPF == 1
 		## DC-OPF constraints
-		# Power flow
+		# Power flow constraint
 		@constraint(EP, cPOWER_FLOW_OPF[l=1:L, t=1:T], vFLOW[l,t] == inputs["pDC_OPF_coeff"][l] * sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z))
 		
 		# Bus angle limits (except slack bus)
