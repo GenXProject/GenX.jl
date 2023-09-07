@@ -250,29 +250,30 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		end
 	end
 
-	load_thermal_storage_data!(setup, path, inputs_gen, gen_in)
+	load_thermal_storage_data!(setup, path, inputs_gen)
 	println("Generators_data.csv Successfully Read!")
 
 	return inputs_gen
 end
 
 @doc raw"""
-	load_thermal_storage_data(setup::Dict, path::AbstractString, inputs::Dict, gen_in::DataFrame)
+	load_thermal_storage_data(setup::Dict, path::AbstractString, inputs::Dict)
 
 Function for reading input parameters related to resources that combine thermal generation and storage.
 If there are no TS columns, TS is a vector of length 0 and dfTS is an empty Dataframe.
 """
-function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs::Dict, gen_in::DataFrame)
+function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs::Dict)
+    dfGen = inputs["dfGen"]
 	error_strings = String[]
 
-	inputs["TS"] = "TS" in names(gen_in) ? gen_in[gen_in.TS.==1,:R_ID] : Int[]
+	inputs["TS"] = "TS" in names(dfGen) ? dfGen[dfGen.TS.==1,:R_ID] : Int[]
 
 	if !isempty(inputs["TS"])
-		thermal_storage_errors = check_thermal_storage_validity(gen_in)
+		thermal_storage_errors = check_thermal_storage_validity(dfGen)
 		append!(error_strings, thermal_storage_errors)
 
-		inputs["TS_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.TS.==1),:R_ID]
-		inputs["TS_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.TS.==1),:R_ID]
+		inputs["TS_LONG_DURATION"] = dfGen[(dfGen.LDS.==1) .& (dfGen.TS.==1),:R_ID]
+		inputs["TS_SHORT_DURATION"] = dfGen[(dfGen.LDS.==0) .& (dfGen.TS.==1),:R_ID]
 
         filename = "Thermal_storage.csv"
         ts_in = load_dataframe(joinpath(path, filename))
@@ -299,4 +300,57 @@ function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs::D
 	end
 
 	summarize_errors(error_strings)
+	load_thermal_storage_fuel_data!(inputs, setup)
 end
+
+function load_thermal_storage_fuel_data!(inputs::Dict, setup::Dict)
+
+    dfTS = inputs["dfTS"]
+    TSG = nrow(dfTS)
+    THERM_COMMIT = inputs["THERM_COMMIT"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    # Heat rate of all resources (million BTUs/MWh)
+    heat_rate = dfTS[!,:Heat_Rate_MMBTU_per_MWh]
+    # Fuel used by each resource
+    fuel_type = dfTS[!,:Fuel]
+    # fuel cost in $ per MWh and CO2 emissions in tons per MWh
+    inputs["TS_C_Fuel_per_MWh"] = Dict()
+    dfTS[!,:CO2_per_MWh] = zeros(Float64, TSG)
+
+    # for unit commitment decisions
+    if setup["UCommit"]>=1
+        # Convert to $ million/GW with objective function in millions
+        dfTS[!,:Start_Cost_per_MW] /= scale_factor
+
+        # Fuel consumed on start-up (million BTUs per MW per start)
+        start_fuel = dfTS[!,:Start_Fuel_MMBTU_per_MW]
+        # Fixed cost per start-up ($ per MW per start)
+        start_cost = dfTS[!,:Start_Cost_per_MW]
+        inputs["TS_C_Start"] = Dict()
+        dfTS[!,:CO2_per_Start] = zeros(Float64, TSG)
+    end
+
+
+    for row in 1:TSG
+        fuel = fuel_type[row]
+        rid = dfTS[row, :R_ID]
+        co2_per_mmbtu = inputs["fuel_CO2"][fuel]
+        cost_per_mmbtu = inputs["fuel_costs"][fuel]
+        inputs["TS_C_Fuel_per_MWh"][rid] = cost_per_mmbtu .* heat_rate[row]
+        #calculate fuel emissions
+        dfTS[row, :CO2_per_MWh] = co2_per_mmbtu .* heat_rate[row]
+        dfTS[row, :CO2_per_MWh] *= scale_factor
+
+
+        # add start up costs and emissions for committed thermal cores.
+        if rid in THERM_COMMIT
+            cap_size = dfTS[row, :Cap_Size]
+            inputs["TS_C_Start"][rid] = cap_size .* (cost_per_mmbtu .* start_fuel[row] .+ start_cost[row])
+
+            dfTS[row, :CO2_per_Start] = cap_size * (co2_per_mmbtu * start_fuel[row])
+            dfTS[row, :CO2_per_Start] *= scale_factor
+        end
+    end
+end
+
