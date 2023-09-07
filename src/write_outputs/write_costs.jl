@@ -77,7 +77,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end	
 	
 	if !isempty(VRE_STOR)
-		dfCost[!,2][8] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
+		dfCost[!,2][11] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
 
 	if any(dfGen.CO2_Capture_Fraction .!= 0)
