@@ -274,7 +274,8 @@ function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs_ge
 		inputs_gen["TS_LONG_DURATION"] = gen_in[(gen_in.LDS.==1) .& (gen_in.TS.==1),:R_ID]
 		inputs_gen["TS_SHORT_DURATION"] = gen_in[(gen_in.LDS.==0) .& (gen_in.TS.==1),:R_ID]
 
-		ts_in = DataFrame(CSV.File(joinpath(path,"Thermal_storage.csv"), header=true), copycols=true)
+        filename = "Thermal_storage.csv"
+        ts_in = load_dataframe(joinpath(path, filename))
 
 		if setup["ParameterScale"] == 1
 			columns_to_scale = ["System_Max_Cap_MWe_net",
@@ -292,7 +293,7 @@ function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs_ge
 			end
 		end
 		inputs_gen["dfTS"] = ts_in
-		println("Thermal_storage.csv Successfully Read!")
+		println(filename * " Successfully Read!")
 	else
 		inputs_gen["dfTS"] = DataFrame()
 	end
