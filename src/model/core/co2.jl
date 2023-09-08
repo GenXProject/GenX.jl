@@ -78,19 +78,9 @@ function co2!(EP::Model, inputs::Dict)
             dfGen[y, :CO2_Capture_Fraction] * EP[:vFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]+
             dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
 
-        
-        #************************************* 
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] 
                 for t in 1:T))
-        @expression(EP, eEmissionsCaptureByZone[z=1:Z, t=1:T], 
-            sum(eEmissionsCaptureByPlant[y, t] 
-                for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
-        @expression(EP, eEmissionsCaptureByZoneYear[z=1:Z], 
-            sum(eEmissionsCaptureByPlantYear[y] 
-                for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
-        #*************************************
-    
         # add CO2 sequestration cost to objective function
         # when scale factor is on tCO2/MWh = > kt CO2/GWh
         @expression(EP, ePlantCCO2Sequestration[y=1:G], 
@@ -107,15 +97,9 @@ function co2!(EP::Model, inputs::Dict)
         add_to_expression!(EP[:eObj], EP[:eTotaleCCO2Sequestration])
     end
 
-    @expression(EP, eEmissionsByPlantYear[y = 1:G], 
-        sum(inputs["omega"][t] * eEmissionsByPlant[y, t] for t in 1:T))
-
+    # emissions by zone
     @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T], 
         sum(eEmissionsByPlant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
-
-    @expression(EP, eEmissionsByZoneYear[z = 1:Z], 
-        sum(inputs["omega"][t] * eEmissionsByZone[z, t] for t in 1:T))
-
     return EP
 
 end
