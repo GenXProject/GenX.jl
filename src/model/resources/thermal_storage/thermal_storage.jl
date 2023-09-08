@@ -67,9 +67,9 @@ function sanity_check_maintenance(MAINTENANCE::Vector{Int}, inputs::Dict)
 
     is_maint_reqs = !isempty(MAINTENANCE)
     if rep_periods > 1 && is_maint_reqs
-        println("Resources ", MAINTENANCE, " have MAINT > 0,")
-        println("but also the number of representative periods (", rep_periods, ") is greater than 1." )
-        println("These are incompatible with a Maintenance requirement.")
+        @error """Resources with R_ID $MAINTENANCE have MAINT > 0,
+        but the number of representative periods ($rep_periods) is greater than 1.
+        These are incompatible with a Maintenance requirement."""
         error("Incompatible GenX settings and maintenance requirements.")
     end
 end
@@ -306,11 +306,11 @@ function thermal_storage_quantity_constraints!(EP::Model, inputs::Dict)
 
     ### THERMAL CORE CONSTRAINTS ###
     # Core power output must be <= installed capacity, including hourly capacity factors
-    @constraint(EP, cCPMax[y in TS, t in T], vCP[t,y] <= vCCAP[y]*inputs["pP_Max"][y,t])
+    @constraint(EP, cCPMax[t in T, y in TS], vCP[t,y] <= vCCAP[y]*inputs["pP_Max"][y,t])
 
     ### THERMAL STORAGE CONSTRAINTS ###
     # Storage state of charge must be <= installed capacity
-    @constraint(EP, cTSMax[y in TS, t in T], vTS[t,y] <= vTSCAP[y])
+    @constraint(EP, cTSMax[t in T, y in TS], vTS[t,y] <= vTSCAP[y])
 
     # thermal state of charge balance for interior timesteps:
     # (previous SOC) - (discharge to turbines) - (turbine startup energy use) + (core power output) - (self discharge)
@@ -360,15 +360,15 @@ function thermal_storage_lds_constraints!(EP::Model, inputs::Dict)
     vCP = EP[:vCP] # inflow
     vTS = EP[:vTS] # state of charge
 
-    @variable(EP, vTSOCw[y in TS_and_LDS, n in MODELED_PERIODS_INDEX] >= 0)
+    @variable(EP, vTSOCw[n in MODELED_PERIODS_INDEX, y in TS_and_LDS] >= 0)
 
     # Build up in storage inventory over each representative period w
     # Build up inventory can be positive or negative
-    @variable(EP, vdTSOC[y in TS_and_LDS, w=1:REP_PERIOD])
+    @variable(EP, vdTSOC[w in 1:REP_PERIOD, y in TS_and_LDS])
     # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
-    @constraint(EP, cThermSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in TS_and_LDS], (
-            vTS[y,hours_per_subperiod * (w - 1) + 1] ==
-                       (1 - dfGen[y, :Self_Disch]) * (vTS[y, hours_per_subperiod * w] - vdTSOC[y,w])
+    @constraint(EP, cThermSoCBalLongDurationStorageStart[w in 1:REP_PERIOD, y in TS_and_LDS], (
+            vTS[hours_per_subperiod * (w - 1) + 1, y] ==
+                       (1 - dfGen[y, :Self_Disch]) * (vTS[hours_per_subperiod * w, y] - vdTSOC[w, y])
                      - (1 / dfGen[y, :Eff_Down] * vP[y, hours_per_subperiod * (w - 1) + 1])
                      - (1 / dfGen[y, :Eff_Down] * dfGen[y,:Start_Fuel_MMBTU_per_MW] * dfGen[y,:Cap_Size] * EP[:vSTART][y,hours_per_subperiod * (w - 1) + 1])
                  + (dfGen[y, :Eff_Up] * vCP[y,hours_per_subperiod * (w - 1) + 1])
@@ -376,17 +376,17 @@ function thermal_storage_lds_constraints!(EP::Model, inputs::Dict)
 
     # Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     ## Multiply storage build up term from prior period with corresponding weight
-    @constraint(EP, cThermSoCBalLongDurationStorage[y in TS_and_LDS, r in MODELED_PERIODS_INDEX],
-                    vTSOCw[y, mod1(r+1, nperiods)] == vTSOCw[y,r] + vdTSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+    @constraint(EP, cThermSoCBalLongDurationStorage[r in MODELED_PERIODS_INDEX, y in TS_and_LDS],
+                    vTSOCw[mod1(r+1, nperiods), y] == vTSOCw[r, y] + vdTSOC[dfPeriodMap[r,:Rep_Period_Index], y])
 
     # Storage at beginning of each modeled period cannot exceed installed energy capacity
-    @constraint(EP, cThermSoCBalLongDurationStorageUpper[y in TS_and_LDS, r in MODELED_PERIODS_INDEX],
-                    vTSOCw[y,r] <= vTSCAP[y])
+    @constraint(EP, cThermSoCBalLongDurationStorageUpper[r in MODELED_PERIODS_INDEX, y in TS_and_LDS],
+                    vTSOCw[r, y] <= vTSCAP[y])
 
     # Initial storage level for representative periods must also adhere to sub-period storage inventory balance
     # Initial storage = Final storage - change in storage inventory across representative period
-    @constraint(EP, cThermSoCBalLongDurationStorageSub[y in TS_and_LDS, r in REP_PERIODS_INDEX],
-                    vTSOCw[y,r] == vTS[y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdTSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+    @constraint(EP, cThermSoCBalLongDurationStorageSub[r in REP_PERIODS_INDEX, y in TS_and_LDS],
+                    vTSOCw[r, y] == vTS[hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index], y] - vdTSOC[dfPeriodMap[r,:Rep_Period_Index], y])
 end
 
 
