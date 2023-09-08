@@ -88,7 +88,7 @@ function prepare_core_commitments(EP::Model, inputs::Dict, SET::Vector{Int}, sym
     resources = String.(inputs["RESOURCES"][SET])
     jump_variable = EP[symbol]
     quantity = value.(jump_variable[:, SET]).data
-    quantity = transpose_if_necessary(resources, quantity, symbol)
+    # quantity = transpose_if_necessary(resources, quantity, symbol)
     df = DataFrame(quantity, resources)
     return df
 end
@@ -102,7 +102,7 @@ function prepare_scaled_values(EP::Model, inputs::Dict, SET::Vector{Int}, symbol
     resources = String.(inputs["RESOURCES"][SET])
     jump_variable = EP[symbol]
     quantity = value.(jump_variable[:, SET]).data * scale_factor
-    quantity = transpose_if_necessary(resources, quantity, symbol)
+    # quantity = transpose_if_necessary(resources, quantity, symbol)
     df = DataFrame(quantity, resources)
     return df
 end

@@ -300,6 +300,7 @@ function thermal_storage_quantity_constraints!(EP::Model, inputs::Dict)
     vCP = EP[:vCP]
     vCCAP = EP[:vCCAP]
     vTSCAP = EP[:vTSCAP]
+    vRHCAP = EP[:vRHCAP]
     vTS = EP[:vTS]
     vRH = EP[:vRH]
 
@@ -636,8 +637,8 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
     weights = inputs["omega"]
 
-    maintenance_begin_cadence = 168
-    maintenance_begin_hours = 1:maintenance_begin_cadence:T
+    maintenance_begin_cadence = setup["ThermalStorageMaintenanceStartCadence"]
+    maintenance_begin_hours = 1:maintenance_begin_cadence:T[end]
     maint_dur = get_maintenance_duration(inputs)
 
     # UC variables for fusion core maintenance
@@ -658,17 +659,21 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
     # Upper bounds on optional maintenance variables
     @constraints(EP, begin
-        [y in MAINTENANCE, t in T], vMDOWN[t,y] <= vCCAP[y] / by_rid(y,:Cap_Size)
-        [y in MAINTENANCE, t=maintenance_begin_hours], vMSHUT[t,y] <= vCCAP[y] / by_rid(y,:Cap_Size)
+        [t in T, y in MAINTENANCE], vMDOWN[t,y] <= vCCAP[y] / by_rid(y,:Cap_Size)
+        [t in maintenance_begin_hours, y in MAINTENANCE], vMSHUT[t,y] <= vCCAP[y] / by_rid(y,:Cap_Size)
     end)
+
 
     # Require plant to shut down during maintenance
     @constraint(EP, [t in T, y in MAINTENANCE],
         vCCAP[y] / by_rid(y,:Cap_Size) - vCCOMMIT[t,y] >= vMDOWN[t,y])
 
+    @debug "Here"
+
     controlling_hours(t,y) = controlling_maintenance_start_hours(hours_per_subperiod, t, maint_dur[y], maintenance_begin_hours)
     @constraint(EP, [t in T, y in MAINTENANCE],
-                vMDOWN[t,y] == sum(vMSHUT[y, controlling_hours(t,y)]))
+                vMDOWN[t,y] == sum(vMSHUT[controlling_hours(t,y), y]))
+
 
     @constraint(EP, [y in MAINTENANCE],
         sum(vMSHUT[t,y]*weights[t] for t in maintenance_begin_hours) >= vCCAP[y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
