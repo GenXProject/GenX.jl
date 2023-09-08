@@ -278,6 +278,22 @@ function load_thermal_storage_data!(setup::Dict, path::AbstractString, inputs::D
         filename = "Thermal_storage.csv"
         ts_in = load_dataframe(joinpath(path, filename))
 
+        ensure_column!(ts_in, :Fuel, "None")
+        for zerocolumn in [:Start_Cost_per_MW,
+                           :Start_Fuel_MMBTU_per_MW,
+                           :Heat_Rate_MMBTU_per_MWh,
+                           :Max_Starts,
+                           :Dwell_Time,
+                           :Recirc_Pass,
+                           :Recirc_Pass_Maintenance_Reduction,
+                           :Recirc_Act,
+                           :Start_Power,
+                           :Start_Energy,
+                           :Min_Power,
+                          ]
+            ensure_column!(ts_in, zerocolumn, 0)
+        end
+
 		if setup["ParameterScale"] == 1
 			columns_to_scale = ["System_Max_Cap_MWe_net",
 								"Nonfus_System_Max_Cap_MWe",

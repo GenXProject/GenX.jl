@@ -367,12 +367,12 @@ function thermal_storage_lds_constraints!(EP::Model, inputs::Dict)
     @variable(EP, vdTSOC[w in 1:REP_PERIOD, y in TS_and_LDS])
     # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
     @constraint(EP, cThermSoCBalLongDurationStorageStart[w in 1:REP_PERIOD, y in TS_and_LDS], (
-            vTS[hours_per_subperiod * (w - 1) + 1, y] ==
-                       (1 - dfGen[y, :Self_Disch]) * (vTS[hours_per_subperiod * w, y] - vdTSOC[w, y])
-                     - (1 / dfGen[y, :Eff_Down] * vP[y, hours_per_subperiod * (w - 1) + 1])
-                     - (1 / dfGen[y, :Eff_Down] * dfGen[y,:Start_Fuel_MMBTU_per_MW] * dfGen[y,:Cap_Size] * EP[:vSTART][y,hours_per_subperiod * (w - 1) + 1])
+        vTS[hours_per_subperiod * (w - 1) + 1, y] ==
+                   (1 - dfGen[y, :Self_Disch]) * (vTS[hours_per_subperiod * w, y] - vdTSOC[w, y])
+                 - (1 / dfGen[y, :Eff_Down] * vP[y, hours_per_subperiod * (w - 1) + 1])
+                 - (1 / dfGen[y, :Eff_Down] * dfGen[y,:Start_Fuel_MMBTU_per_MW] * dfGen[y,:Cap_Size] * EP[:vSTART][y,hours_per_subperiod * (w - 1) + 1])
                  + (dfGen[y, :Eff_Up] * vCP[y,hours_per_subperiod * (w - 1) + 1])
-                 ))
+             ))
 
     # Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     ## Multiply storage build up term from prior period with corresponding weight
@@ -386,7 +386,8 @@ function thermal_storage_lds_constraints!(EP::Model, inputs::Dict)
     # Initial storage level for representative periods must also adhere to sub-period storage inventory balance
     # Initial storage = Final storage - change in storage inventory across representative period
     @constraint(EP, cThermSoCBalLongDurationStorageSub[r in REP_PERIODS_INDEX, y in TS_and_LDS],
-                    vTSOCw[r, y] == vTS[hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index], y] - vdTSOC[dfPeriodMap[r,:Rep_Period_Index], y])
+                    vTSOCw[r, y] == vTS[hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index], y]
+                                    - vdTSOC[dfPeriodMap[r,:Rep_Period_Index], y])
 end
 
 
@@ -396,43 +397,43 @@ function thermal_storage_capacity_ratio_constraints!(EP::Model, inputs::Dict)
     vCCAP = EP[:vCCAP]
     by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
 
-    @constraint(EP, cCPRatMax[y in dfTS[dfTS.Max_Generator_Core_Power_Ratio.>=0,:R_ID]],
-                vCCAP[y] * dfGen[y,:Eff_Down] * by_rid(y,:Max_Generator_Core_Power_Ratio) >=
-                EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
-    @constraint(EP, cCPRatMin[y in dfTS[dfTS.Min_Generator_Core_Power_Ratio.>=0,:R_ID]],
-                vCCAP[y] * dfGen[y,:Eff_Down] * by_rid(y,:Min_Generator_Core_Power_Ratio) <=
-                EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
+    has_max_ratio = dfTS[dfTS.Max_Generator_Core_Power_Ratio.>=0, :R_ID]
+    max_ratio(y) = by_rid(y, :Max_Generator_Core_Power_Ratio)
+    @constraint(EP, cCPRatMax[y in has_max_ratio],
+        vCCAP[y] * dfGen[y,:Eff_Down] * max_ratio(y) >= EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
+
+    has_min_ratio = dfTS[dfTS.Min_Generator_Core_Power_Ratio.>=0, :R_ID]
+    min_ratio(y) = by_rid(y, :Min_Generator_Core_Power_Ratio)
+    @constraint(EP, cCPRatMin[y in has_min_ratio],
+        vCCAP[y] * dfGen[y,:Eff_Down] * min_ratio(y) <= EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
 end
 
 function thermal_storage_duration_constraints!(EP::Model, inputs::Dict)
     dfGen = inputs["dfGen"]
     TS = inputs["TS"]
+    vCCAP = EP[:vCCAP]
+    vTSCAP = EP[:vTSCAP]
     # Limits on storage duration
-    MIN_DURATION = intersect(TS, dfGen[dfGen.Min_Duration .>= 0, :R_ID])
-    MAX_DURATION = intersect(TS, dfGen[dfGen.Max_Duration .>= 0, :R_ID])
-    @constraint(EP, cTSMinDur[y in MIN_DURATION], EP[:vTSCAP][y] >= dfGen[y,:Min_Duration] * EP[:vCCAP][y])
-    @constraint(EP, cTSMaxDur[y in MAX_DURATION], EP[:vTSCAP][y] <= dfGen[y,:Max_Duration] * EP[:vCCAP][y])
+    MIN_DUR = intersect(TS, dfGen[dfGen.Min_Duration .>= 0, :R_ID])
+    MAX_DUR = intersect(TS, dfGen[dfGen.Max_Duration .>= 0, :R_ID])
+    @constraint(EP, cTSMinDur[y in MIN_DUR], vTSCAP[y] >= dfGen[y,:Min_Duration] * vCCAP[y])
+    @constraint(EP, cTSMaxDur[y in MAX_DUR], vTSCAP[y] <= dfGen[y,:Max_Duration] * vCCAP[y])
 end
 
 
 function conventional_thermal_core_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
-
     dfGen = inputs["dfGen"]
-
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    TS = inputs["TS"]
-
     dfTS = inputs["dfTS"]
-    by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
 
     # convert thermal capacities to electrical capacities
     CONV =  get_conventional_thermal_core(inputs)
-    @expression(EP, eCElectric[y in CONV], EP[:vCCAP][y] * by_rid_df(y, :Eff_Down, dfGen))
+    @expression(EP, eCElectric[y in CONV], EP[:vCCAP][y] * dfGen[y, :Eff_Down])
 
     #System-wide installed capacity is less than a specified maximum limit
     FIRST_ROW = 1
-    if "Nonfus_System_Max_Cap_MWe" in names(dfTS)
-        max_cap = dfTS[FIRST_ROW, :Nonfus_System_Max_Cap_MWe]
+    col = :Nonfus_System_Max_Cap_MWe
+    if string(col) in names(dfTS)
+        max_cap = dfTS[FIRST_ROW, col]
         if max_cap >= 0
             @constraint(EP, cNonfusSystemTot, sum(eCElectric[CONV]) <= max_cap)
         end
@@ -468,9 +469,12 @@ function fusion_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
     @expression(EP, eCAvgNetElectric[y in FUS], EP[:vCCAP][y] * net_el_factor[y])
 
     FIRST_ROW = 1
-    system_max_cap_mwe_net = dfTS[FIRST_ROW, :System_Max_Cap_MWe_net]
-    if system_max_cap_mwe_net >= 0
-        @constraint(EP, cCSystemTot, sum(eCAvgNetElectric[FUS]) <= system_max_cap_mwe_net)
+    col = :System_Max_Cap_MWe_net
+    if string(col) in names(dfTS)
+        max_cap = dfTS[FIRST_ROW, col]
+        if max_cap >= 0
+            @constraint(EP, cCSystemTot, sum(eCAvgNetElectric[FUS]) <= max_cap)
+        end
     end
 end
 
@@ -497,8 +501,8 @@ function conventional_thermal_core_constraints!(EP::Model, inputs::Dict, setup::
     vCSHUT = EP[:vCSHUT]
 
     cap_size(y) = by_rid(y, :Cap_Size)
-    ramp_up_frac(y) = by_rid(y, :Ramp_Up_Percentage)
-    ramp_dn_frac(y) = by_rid(y, :Ramp_Dn_Percentage)
+    ramp_up_frac(y) = by_rid(y, :Ramp_Up_Frac)
+    ramp_dn_frac(y) = by_rid(y, :Ramp_Dn_Frac)
     min_power(y) = by_rid(y, :Min_Power)
 
     # constraints for generators not subject to UC
@@ -678,9 +682,10 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, [y in MAINTENANCE],
         sum(vMSHUT[t,y]*weights[t] for t in maintenance_begin_hours) >= vCCAP[y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
 
+    frac_passive_to_reduce(y) = by_rid(y, :Recirc_Pass) * (1 - by_rid(y, :Recirc_Pass_Maintenance_Reduction))
     for y in intersect(FUS, MAINTENANCE), t in T
             add_to_expression!(EP[:ePassiveRecircFus][t,y],
-                               -by_rid(y,:Cap_Size) * vMDOWN[t,y] * dfGen[y,:Eff_Down] * by_rid(y,:Recirc_Pass))
+                               -by_rid(y,:Cap_Size) * vMDOWN[t,y] * dfGen[y,:Eff_Down] * frac_passive_to_reduce(y))
     end
 end
 

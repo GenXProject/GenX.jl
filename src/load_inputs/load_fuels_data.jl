@@ -46,6 +46,10 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     return fuel_costs, fuel_CO2
 end
 
+function ensure_column!(df, col::Symbol, fill_element)
+    ensure_column!(df, string(col), fill_element)
+end
+
 function ensure_column!(df::DataFrame, col::AbstractString, fill_element)
     if col ∉ names(df)
         df[!, col] = fill(fill_element, nrow(df))
