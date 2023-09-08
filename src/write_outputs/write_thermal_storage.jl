@@ -75,20 +75,10 @@ function write_core_capacities(EP::Model, inputs::Dict, filename::AbstractString
 
 end
 
-function transpose_if_necessary(header, matrix, symbol::Symbol)
-    msize = size(matrix)
-    if msize[1] == length(header)
-        @debug "Transposing output array of $symbol; consider reorienting it"
-        matrix = transpose(matrix)
-    end
-    return matrix
-end
-
 function prepare_core_commitments(EP::Model, inputs::Dict, SET::Vector{Int}, symbol::Symbol)
     resources = String.(inputs["RESOURCES"][SET])
     jump_variable = EP[symbol]
     quantity = value.(jump_variable[:, SET]).data
-    # quantity = transpose_if_necessary(resources, quantity, symbol)
     df = DataFrame(quantity, resources)
     return df
 end
@@ -102,7 +92,6 @@ function prepare_scaled_values(EP::Model, inputs::Dict, SET::Vector{Int}, symbol
     resources = String.(inputs["RESOURCES"][SET])
     jump_variable = EP[symbol]
     quantity = value.(jump_variable[:, SET]).data * scale_factor
-    # quantity = transpose_if_necessary(resources, quantity, symbol)
     df = DataFrame(quantity, resources)
     return df
 end
@@ -164,28 +153,37 @@ function write_thermal_storage_capacity_duals(EP::Model, inputs::Dict, setup::Di
         CSV.write(filename, dftranspose(df, false), writeheader=false)
     end
 end
-function write_thermal_storage_costs(EP::Model, filename::AbstractString, scale_factor)
+function write_thermal_storage_costs(EP::Model, inputs::Dict, filename::AbstractString, scale_factor)
+    CONV = get_conventional_thermal_core(inputs)
+    THERM_COMMIT = inputs["THERM_COMMIT"]
+    COMMIT = intersect(THERM_COMMIT, CONV)
 
-    start_core_costs = value.(EP[:eTotalCStartTS]) * scale_factor^2
     var_core_costs = value.(EP[:eTotalCVarCore]) * scale_factor^2
     fix_core_costs = value.(EP[:eTotalCFixedCore]) * scale_factor^2
     fix_TS_costs = value.(EP[:eTotalCFixedTS]) * scale_factor^2
     fix_RH_costs = value.(EP[:eTotalCFixedRH]) * scale_factor^2
-    total_costs = start_core_costs + var_core_costs + fix_core_costs + fix_TS_costs + fix_RH_costs
+    total_costs = var_core_costs + fix_core_costs + fix_TS_costs + fix_RH_costs
 
     df = DataFrame(
-        cTotalTS = total_costs,
-        cStartCore = start_core_costs,
         cVarCore = var_core_costs,
         cFixCore = fix_core_costs,
         cFixTS = fix_TS_costs,
         cFixRH = fix_RH_costs
     )
+
+    if !isempty(COMMIT)
+        start_core_costs = value.(EP[:eTotalCStartTS]) * scale_factor^2
+        df.cStartCore = [start_core_costs]
+        total_costs += start_core_costs
+    end
+
+    df.cTotalTS = [total_costs]
+
     write_simple_csv(filename, df)
 end
 
 @doc raw"""
-    write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
+    write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
 
 Function for writing the diferent capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
 """
@@ -246,6 +244,6 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
     write_thermal_storage_capacity_duals(EP, inputs, setup, joinpath(path, "TS_Capacity_Duals.csv"), scale_factor)
 
     #write costs
-    write_thermal_storage_costs(EP, joinpath(path, "TS_costs.csv"), scale_factor)
+    write_thermal_storage_costs(EP, inputs, joinpath(path, "TS_costs.csv"), scale_factor)
 
 end
