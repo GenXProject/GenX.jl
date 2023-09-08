@@ -400,12 +400,12 @@ function thermal_storage_capacity_ratio_constraints!(EP::Model, inputs::Dict)
     has_max_ratio = dfTS[dfTS.Max_Generator_Core_Power_Ratio.>=0, :R_ID]
     max_ratio(y) = by_rid(y, :Max_Generator_Core_Power_Ratio)
     @constraint(EP, cCPRatMax[y in has_max_ratio],
-        vCCAP[y] * dfGen[y,:Eff_Down] * max_ratio(y) >= EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
+        vCCAP[y] * dfGen[y,:Eff_Down] * max_ratio(y) >= EP[:eTotalCap][y])
 
     has_min_ratio = dfTS[dfTS.Min_Generator_Core_Power_Ratio.>=0, :R_ID]
     min_ratio(y) = by_rid(y, :Min_Generator_Core_Power_Ratio)
     @constraint(EP, cCPRatMin[y in has_min_ratio],
-        vCCAP[y] * dfGen[y,:Eff_Down] * min_ratio(y) <= EP[:eTotalCap][y] * dfGen[y,:Cap_Size])
+        vCCAP[y] * dfGen[y,:Eff_Down] * min_ratio(y) <= EP[:eTotalCap][y])
 end
 
 function thermal_storage_duration_constraints!(EP::Model, inputs::Dict)
@@ -744,7 +744,7 @@ end
 function total_fusion_power_balance_expressions!(EP::Model, inputs::Dict)
     T = 1:inputs["T"]     # Time steps
     Z = 1:inputs["Z"]     # Zones
-    dfTS = inputs["dfTS"]
+    dfGen = inputs["dfGen"]
     FUS = get_fus(inputs)
 
     #Total recirculating power at each timestep
@@ -752,7 +752,9 @@ function total_fusion_power_balance_expressions!(EP::Model, inputs::Dict)
                 EP[:ePassiveRecircFus][t,y] + EP[:eActiveRecircFus][t,y] + EP[:eStartEnergyFus][t,y])
 
     # Total recirculating power from fusion in each zone
-    FUS_IN_ZONE = [intersect(FUS, dfTS[dfTS.Zone .== z, :R_ID]) for z in Z]
+    gen_in_zone(z) = dfGen[dfGen.Zone .== z, :R_ID]
+
+    FUS_IN_ZONE = [intersect(FUS, gen_in_zone(z)) for z in Z]
     @expression(EP, ePowerBalanceRecircFus[t in T, z in Z],
         -sum(eTotalRecircFus[t,y] for y in FUS_IN_ZONE[z]))
 

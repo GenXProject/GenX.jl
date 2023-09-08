@@ -32,7 +32,9 @@ function write_core_capacities(EP::Model, inputs::Dict, filename::AbstractString
     dfGen = inputs["dfGen"]
     dfTS = inputs["dfTS"]
     T = inputs["T"]
+    TS = inputs["TS"]
     RH = get_resistive_heating(inputs)
+    zones_of_ts = [by_rid_df(rid, :Zone, dfGen) for rid in TS]
 
     # load capacity power
     TSResources = dfTS[!,:Resource]
@@ -59,7 +61,7 @@ function write_core_capacities(EP::Model, inputs::Dict, filename::AbstractString
     # create data frame
     dfCoreCap = DataFrame(
         Resource = TSResources,
-        Zone = dfTS[!,:Zone],
+        Zone = zones_of_ts,
         CorePowerCap = corecappower[:],
         TSEnergyCap = corecapenergy[:],
         RHPowerCap = rhcapacity[:]
