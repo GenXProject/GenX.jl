@@ -39,7 +39,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 			dfEmissions[i,:AnnualSum] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:]))*scale_factor
 		end
 
-		dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])*scale_factor, :auto))
+		dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone]).data*scale_factor, :auto))
 
 
 		if setup["CO2Cap"]>=1

@@ -14,6 +14,17 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+function write_simple_csv(filename::AbstractString, df::DataFrame)
+    CSV.write(filename, df)
+end
+
+function write_simple_csv(filename::AbstractString,
+                          header::Vector,
+                          matrix)
+    df = DataFrame(matrix, header)
+    write_simple_csv(filename, df)
+end
+
 
 function write_core_capacities(EP::Model, inputs::Dict, filename::AbstractString, scale_factor)
 
@@ -58,65 +69,53 @@ function write_core_capacities(EP::Model, inputs::Dict, filename::AbstractString
     dfCoreCap.CorePowerCap *= scale_factor
     dfCoreCap.TSEnergyCap *= scale_factor
     dfCoreCap.RHPowerCap *= scale_factor
-    CSV.write(filename, dfCoreCap)
+    write_simple_csv(filename, dfCoreCap)
 
     return dfCoreCap
 
 end
 
-function write_core_commitments(EP::Model, inputs::Dict, SET::Vector{Int},symbol::Symbol, filename::AbstractString)
-    dfTS = inputs["dfTS"]
+function transpose_if_necessary(header, matrix, symbol::Symbol)
+    msize = size(matrix)
+    if msize[1] == length(header)
+        @debug "Transposing output array of $symbol; consider reorienting it"
+        matrix = transpose(matrix)
+    end
+    return matrix
+end
 
+function prepare_core_commitments(EP::Model, inputs::Dict, SET::Vector{Int}, symbol::Symbol)
+    resources = String.(inputs["RESOURCES"][SET])
     jump_variable = EP[symbol]
-    time_index = jump_variable.axes[2]
-    T = length(time_index)
+    quantity = value.(jump_variable[:, SET]).data
+    quantity = transpose_if_necessary(resources, quantity, symbol)
+    df = DataFrame(quantity, resources)
+    return df
+end
 
-    resources = by_rid_df(SET, :Resource, dfTS)
-    zones = by_rid_df(SET, :Zone, dfTS)
+function write_core_commitments(EP, inputs, SET, symbol, filename::AbstractString)
+    df = prepare_core_commitments(EP, inputs, SET, symbol)
+    write_simple_csv(filename, df)
+end
 
-    df = DataFrame(Resource = resources, Zone = zones)
-    event = value.(jump_variable[SET,:]).data
-    df.Sum = vec(sum(event, dims=2))
-
-    df = hcat(df, DataFrame(event, :auto))
-    auxNew_Names=[:Resource; :Zone; :Sum; [Symbol("t$t") for t in time_index]]
-    rename!(df, auxNew_Names)
-    total = DataFrame(["Total" 0 sum(df[!,:Sum]) zeros(1,T)], :auto)
-    total[:, 4:T+3] .= sum(event, dims=1)
-    rename!(total,auxNew_Names)
-    df = vcat(df, total)
-
-    CSV.write(filename, dftranspose(df, false), writeheader=false)
+function prepare_scaled_values(EP::Model, inputs::Dict, SET::Vector{Int}, symbol::Symbol, scale_factor)
+    resources = String.(inputs["RESOURCES"][SET])
+    jump_variable = EP[symbol]
+    quantity = value.(jump_variable[:, SET]).data * scale_factor
+    quantity = transpose_if_necessary(resources, quantity, symbol)
+    df = DataFrame(quantity, resources)
     return df
 end
 
 function write_scaled_values(EP::Model, inputs::Dict, SET::Vector{Int}, symbol::Symbol, filename::AbstractString, scale_factor)
-    dfTS = inputs["dfTS"]
-    T = inputs["T"]
-
-    resources = by_rid_df(SET, :Resource, dfTS)
-    zones = by_rid_df(SET, :Zone, dfTS)
-
-    df = DataFrame(Resource = resources, Zone=zones)
-    quantity = value.(EP[symbol][SET, :]).data * scale_factor
-    df.AnnualSum = quantity * inputs["omega"]
-
-    df = hcat(df, DataFrame(quantity, :auto))
-    auxNew_Names=[:Resource; :Zone; :AnnualSum; [Symbol("t$t") for t in 1:T]]
-    rename!(df,auxNew_Names)
-    total = DataFrame(["Total" 0 sum(df.AnnualSum) zeros(1,T)], :auto)
-    total[:, 4:T+3] .= sum(quantity, dims=1)
-    rename!(total,auxNew_Names)
-    df = vcat(df, total)
-    CSV.write(filename, dftranspose(df, false), writeheader=false)
-
-    return df
+    df = prepare_scaled_values(EP::Model, inputs::Dict, SET::Vector{Int}, symbol::Symbol, scale_factor)
+    write_simple_csv(filename, df)
 end
 
 function write_thermal_storage_system_max_dual(EP::Model, inputs::Dict, setup::Dict, filename::AbstractString, scale_factor)
     dfTS = inputs["dfTS"]
     FUS = dfTS[dfTS.FUS .== 1, :R_ID]
-    NONFUS = get_nonfus(inputs)
+    CONV = get_conventional_thermal_core(inputs)
 
     #fusion limit
     if !isempty(FUS)
@@ -129,8 +128,8 @@ function write_thermal_storage_system_max_dual(EP::Model, inputs::Dict, setup::D
         end
     end
 
-    #non fusion limit
-    if !isempty(NONFUS)
+    #conventional thermal core limit
+    if !isempty(CONV)
         FIRST_ROW = 1
         if "Nonfus_System_Max_Cap_MWe" in names(dfTS)
             if dfTS[FIRST_ROW, :Nonfus_System_Max_Cap_MWe] >= 0
@@ -146,7 +145,7 @@ end
 function write_thermal_storage_capacity_duals(EP::Model, inputs::Dict, setup::Dict, filename::AbstractString, scale_factor)
     dfTS = inputs["dfTS"]
     TS = inputs["TS"]
-    NONFUS = get_nonfus(inputs)
+    NONFUS = get_conventional_thermal_core(inputs)
 
     if !isempty(NONFUS)
         HAS_MAX_LIMIT = dfTS[dfTS.Max_Cap_MW_th .>= 0, :R_ID]
@@ -165,8 +164,8 @@ function write_thermal_storage_capacity_duals(EP::Model, inputs::Dict, setup::Di
         CSV.write(filename, dftranspose(df, false), writeheader=false)
     end
 end
-function write_costs(EP::Model, filename::AbstractString, scale_factor)
-    
+function write_thermal_storage_costs(EP::Model, filename::AbstractString, scale_factor)
+
     start_core_costs = value.(EP[:eTotalCStartTS]) * scale_factor^2
     var_core_costs = value.(EP[:eTotalCVarCore]) * scale_factor^2
     fix_core_costs = value.(EP[:eTotalCFixedCore]) * scale_factor^2
@@ -182,8 +181,7 @@ function write_costs(EP::Model, filename::AbstractString, scale_factor)
         cFixTS = fix_TS_costs,
         cFixRH = fix_RH_costs
     )
-
-    CSV.write(filename, dftranspose(df, false), writeheader=false)
+    write_simple_csv(filename, df)
 end
 
 @doc raw"""
@@ -199,6 +197,7 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
     T = inputs["T"]
     rep_periods = inputs["REP_PERIOD"]
 
+    TS = inputs["TS"]
     TSResources = dfTS[!,:Resource]
     TSG = length(TSResources)
 
@@ -206,46 +205,40 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     ### WRITE CORE CAPACITY DECISIONS ###
-    dfCoreCap = write_core_capacities(EP, inputs, joinpath(path,"TS_capacity.csv"), scale_factor)
+    write_core_capacities(EP, inputs, joinpath(path,"TS_capacity.csv"), scale_factor)
 
     ### LOAD RELEVANT SETS ###
-    THERMAL_STORAGE = dfTS.R_ID
     RH = get_resistive_heating(inputs)
-    FUS = dfTS[dfTS.FUS .== 1, :R_ID]
-    NONFUS = dfTS[dfTS.FUS .== 0, :R_ID]
+    FUS = get_fus(inputs)
 
     ### CORE POWER TIME SERIES ###
-    dfCorePwr = write_scaled_values(EP, inputs, THERMAL_STORAGE, :vCP, joinpath(path, "TS_CorePwr.csv"), scale_factor)
+    write_scaled_values(EP, inputs, TS, :vCP, joinpath(path, "TS_CorePwr.csv"), scale_factor)
 
     ### THERMAL SOC TIME SERIES ###
-    dfTSOC = write_scaled_values(EP, inputs, THERMAL_STORAGE, :vTS, joinpath(path, "TS_SOC.csv"), scale_factor)
+    write_scaled_values(EP, inputs, TS, :vTS, joinpath(path, "TS_SOC.csv"), scale_factor)
 
-    ### RESISTIVE HEATING TIME SERIES ### 
+    ### RESISTIVE HEATING TIME SERIES ###
     if !isempty(RH)
-        dfRH = write_scaled_values(EP, inputs, RH, :vRH, joinpath(path, "TS_RH.csv"), scale_factor)
+        write_scaled_values(EP, inputs, RH, :vRH, joinpath(path, "TS_RH.csv"), scale_factor)
     end
 
-    ### FUSION SPECIFIC OUTPUTS ###
+    ### FUSION-SPECIFIC OUTPUTS ###
     if !isempty(FUS)
         ### RECIRCULATING POWER TIME SERIES ###
-        dfRecirc = write_scaled_values(EP, inputs, FUS, :eTotalRecircFus, joinpath(path, "TS_Recirc.csv"), scale_factor)
+        write_scaled_values(EP, inputs, FUS, :eTotalRecircFus, joinpath(path, "TS_fusion_recirc.csv"), scale_factor)
+    end
 
-        ### CORE STARTS, SHUTS, COMMITS, and MAINTENANCE TIMESERIES ###
-        dfFStart = write_core_commitments(EP, inputs, FUS, :vFSTART, joinpath(path, "TS_FUS_start.csv"))
-        dfFShut = write_core_commitments(EP, inputs, FUS, :vFSHUT, joinpath(path, "TS_FUS_shut.csv"))
-        dfFCommit = write_core_commitments(EP, inputs, FUS, :vFCOMMIT, joinpath(path, "TS_FUS_commit.csv"))
-
-        if rep_periods == 1 && !isempty(get_maintenance(inputs))
-            dfMaint = write_core_commitments(EP, inputs, FUS, :vFMDOWN, joinpath(path, "TS_FUS_maint.csv"))
-            dfMShut = write_core_commitments(EP, inputs, FUS, :vFMSHUT, joinpath(path, "TS_FUS_maintshut.csv"))
-        end
+    MAINT = get_maintenance(inputs)
+    if rep_periods == 1 && !isempty(MAINT)
+        write_core_commitments(EP, inputs, MAINT, :vMDOWN, joinpath(path, "TS_maint.csv"))
+        write_core_commitments(EP, inputs, MAINT, :vMSHUT, joinpath(path, "TS_maintshut.csv"))
     end
 
     ### NON FUS CORE STARTS, SHUTS, COMMITS ###
-    if (!isempty(NONFUS) && setup["UCommit"] > 0)
-        dfNStart = write_core_commitments(EP, inputs, NONFUS, :vCSTART, joinpath(path, "TS_NONFUS_start.csv"))
-        dfNShut = write_core_commitments(EP, inputs, NONFUS, :vCSHUT, joinpath(path, "TS_NONFUS_shut.csv"))
-        dfNCommit = write_core_commitments(EP, inputs, NONFUS, :vCCOMMIT, joinpath(path, "TS_NONFUS_commit.csv"))
+    if setup["UCommit"] > 0
+        write_core_commitments(EP, inputs, TS, :vCSTART, joinpath(path, "TS_start.csv"))
+        write_core_commitments(EP, inputs, TS, :vCSHUT, joinpath(path, "TS_shut.csv"))
+        write_core_commitments(EP, inputs, TS, :vCCOMMIT, joinpath(path, "TS_commit.csv"))
     end
 
     # Write dual values of certain constraints
@@ -253,6 +246,6 @@ function write_thermal_storage(path::AbstractString, inputs::Dict, setup::Dict, 
     write_thermal_storage_capacity_duals(EP, inputs, setup, joinpath(path, "TS_Capacity_Duals.csv"), scale_factor)
 
     #write costs
-    write_costs(EP, joinpath(path, "TS_costs.csv"), scale_factor)
+    write_thermal_storage_costs(EP, joinpath(path, "TS_costs.csv"), scale_factor)
 
 end
