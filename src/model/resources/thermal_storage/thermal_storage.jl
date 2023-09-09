@@ -714,7 +714,6 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
     by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
 
     vP = EP[:vP]
-    vMDOWN = EP[:vMDOWN]
 
     # @expression(EP, eCapResMarBalanceThermalStorageAdjustment[res in reserves, t in T],
     #             sum(capresfactor(res, y) * (vP[y,t] - EP[:eTotalCap][y]) for y in TS))
@@ -733,7 +732,7 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
     if !isempty(FUS_MAINT)
         avg_net_el_fus(y) = by_rid(y, :Average_Net_Electric_Factor) * by_rid(y, :Cap_Size)
         @expression(EP, eCapResMarBalanceFusionMaintAdj[res in reserves, t in T],
-                    -sum(capresfactor(res, y) * vMDOWN[t, y] * avg_net_el_fus(y) for y in FUS_MAINT))
+                    -sum(capresfactor(res, y) * EP[:vMDOWN][t, y] * avg_net_el_fus(y) for y in FUS_MAINT))
         EP[:eCapResMarBalance] += eCapResMarBalanceFusionMaintAdj
     end
 
@@ -741,7 +740,7 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
     if !isempty(CONV_MAINT)
         net_el_conv(y) = dfGen[y, :Eff_Down] * by_rid(y, :Cap_Size)
         @expression(EP, eCapResMarBalanceTSConvMaintAdj[res in reserves, t in T],
-                    -sum(capresfactor(res, y) * vMDOWN[t, y] * net_el_conv(y) for y in CONV_MAINT))
+                    -sum(capresfactor(res, y) * EP[:vMDOWN][t, y] * net_el_conv(y) for y in CONV_MAINT))
         EP[:eCapResMarBalance] += eCapResMarBalanceTSConvMaintAdj
     end
 
