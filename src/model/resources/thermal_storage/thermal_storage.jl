@@ -148,7 +148,7 @@ function thermal_storage!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     if setup["CapacityReserveMargin"] > 0
-        # thermal_storage_capacity_reserve_margin!(EP, inputs)
+        thermal_storage_capacity_reserve_margin!(EP, inputs)
     end
 
     thermal_core_emissions!(EP, inputs)
@@ -700,10 +700,10 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
 
     vP = EP[:vP]
 
-    @expression(EP, eCapResMarBalanceThermalStorageAdjustment[res in reserves, t in T],
-                sum(capresfactor(res, y) * (vP[y,t] - EP[:eTotalCap][y]) for y in TS))
+    # @expression(EP, eCapResMarBalanceThermalStorageAdjustment[res in reserves, t in T],
+    #             sum(capresfactor(res, y) * (vP[y,t] - EP[:eTotalCap][y]) for y in TS))
 
-    EP[:eCapResMarBalance] += eCapResMarBalanceThermalStorageAdjustment
+    # EP[:eCapResMarBalance] += eCapResMarBalanceThermalStorageAdjustment
 
     @expression(EP, eCapResMarBalanceFusionAdjustment[res in reserves, t in T],
                 sum(capresfactor(res, y) * (- EP[:eStartPowerFus][t,y]
