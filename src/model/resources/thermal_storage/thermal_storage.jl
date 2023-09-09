@@ -129,6 +129,7 @@ function thermal_storage!(EP::Model, inputs::Dict, setup::Dict)
     CONV = get_conventional_thermal_core(inputs)
 
     if !isempty(CONV)
+        conventional_thermal_core_effective_electric_power_expression!(EP, inputs)
         conventional_thermal_core_systemwide_max_cap_constraint!(EP, inputs)
         conventional_thermal_core_constraints!(EP, inputs, setup)
     end
@@ -137,6 +138,7 @@ function thermal_storage!(EP::Model, inputs::Dict, setup::Dict)
     FUS =  get_fus(inputs)
 
     if !isempty(FUS)
+        fusion_average_net_electric_power_expression!(EP, inputs)
         fusion_systemwide_max_cap_constraint!(EP, inputs)
         fusion_constraints!(EP, inputs, setup)
     end
@@ -420,14 +422,17 @@ function thermal_storage_duration_constraints!(EP::Model, inputs::Dict)
     @constraint(EP, cTSMaxDur[y in MAX_DUR], vTSCAP[y] <= dfGen[y,:Max_Duration] * vCCAP[y])
 end
 
-
-function conventional_thermal_core_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
+function conventional_thermal_core_effective_electric_power_expression!(EP::Model, inputs::Dict)
     dfGen = inputs["dfGen"]
-    dfTS = inputs["dfTS"]
 
     # convert thermal capacities to electrical capacities
     CONV =  get_conventional_thermal_core(inputs)
     @expression(EP, eCElectric[y in CONV], EP[:vCCAP][y] * dfGen[y, :Eff_Down])
+end
+
+
+function conventional_thermal_core_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
+    dfTS = inputs["dfTS"]
 
     #System-wide installed capacity is less than a specified maximum limit
     FIRST_ROW = 1
@@ -440,12 +445,10 @@ function conventional_thermal_core_systemwide_max_cap_constraint!(EP::Model, inp
     end
 end
 
-function fusion_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
-
+function fusion_average_net_electric_power_expression!(EP::Model, inputs::Dict)
     dfGen = inputs["dfGen"]
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    TS = inputs["TS"]
 
     dfTS = inputs["dfTS"]
     by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
@@ -466,7 +469,16 @@ function fusion_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
     net_th_frac[FUS] .= active_frac[FUS] .* (1 .- by_rid(FUS,:Recirc_Act)) .- by_rid(FUS,:Recirc_Pass) .- avg_start_power[FUS]
     net_el_factor[FUS] .= dfGen[FUS,:Eff_Down] .* net_th_frac[FUS]
 
+    dfTS.Average_Net_Electric_Factor = net_el_factor
+
     @expression(EP, eCAvgNetElectric[y in FUS], EP[:vCCAP][y] * net_el_factor[y])
+end
+
+function fusion_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
+    dfGen = inputs["dfGen"]
+    dfTS = inputs["dfTS"]
+
+    FUS =  get_fus(inputs)
 
     FIRST_ROW = 1
     col = :System_Max_Cap_MWe_net
@@ -691,12 +703,17 @@ end
 
 function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
     dfGen = inputs["dfGen"]
+    dfTS = inputs["dfTS"]
     T = 1:inputs["T"]
     reserves = 1:inputs["NCapacityReserveMargin"]
     capresfactor(res, y) = dfGen[y, Symbol("CapRes_$res")]
 
     TS = inputs["TS"]
     FUS = get_fus(inputs)
+    CONV = get_conventional_thermal_core(inputs)
+    MAINTENANCE = get_maintenance(inputs)
+
+    by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
 
     vP = EP[:vP]
 
@@ -711,6 +728,24 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
                                             - EP[:eActiveRecircFus][t,y]) for y in FUS))
 
     EP[:eCapResMarBalance] += eCapResMarBalanceFusionAdjustment
+
+    # remove plants from contributing while they are under maintenance
+    FUS_MAINT = intersect(FUS, MAINTENANCE)
+    if !isempty(FUS_MAINT)
+        avg_net_el_fus(y) = by_rid(y, :Average_Net_Electric_Factor) * by_rid(y, :Cap_Size)
+        @expression(EP, eCapResMarBalanceFusionMaintAdj[res in reserves, t in T],
+                    -sum(capresfactor(res, y) * vMSHUT[t, y] * avg_net_el_fus(y) for y in FUS_MAINT))
+        EP[:eCapResMarBalance] += eCapResMarBalanceFusionMaintAdj
+    end
+
+    CONV_MAINT = intersect(CONV, MAINTENANCE)
+    if !isempty(CONV_MAINT)
+        net_el_conv(y) = dfGen[y, :Eff_Down] * by_rid(y, :Cap_Size)
+        @expression(EP, eCapResMarBalanceTSConvMaintAdj[res in reserves, t in T],
+                    -sum(capresfactor(res, y) * vMSHUT[t, y] * net_el_conv(y) for y in CONV_MAINT))
+        EP[:eCapResMarBalance] += eCapResMarBalanceTSConvMaintAdj
+    end
+
 end
 
 function thermal_core_emissions!(EP::Model, inputs::Dict)
