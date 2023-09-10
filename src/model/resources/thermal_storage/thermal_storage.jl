@@ -469,7 +469,7 @@ function fusion_average_net_electric_power_expression!(EP::Model, inputs::Dict)
     net_th_frac[FUS] .= active_frac[FUS] .* (1 .- by_rid(FUS,:Recirc_Act)) .- by_rid(FUS,:Recirc_Pass) .- avg_start_power[FUS]
     net_el_factor[FUS] .= dfGen[FUS,:Eff_Down] .* net_th_frac[FUS]
 
-    dfTS.Average_Net_Electric_Factor = net_el_factor
+    dfGen.Average_Net_Electric_Factor = net_el_factor
 
     @expression(EP, eCAvgNetElectric[y in FUS], EP[:vCCAP][y] * net_el_factor[y])
 end
@@ -485,7 +485,7 @@ function fusion_systemwide_max_cap_constraint!(EP::Model, inputs::Dict)
     if string(col) in names(dfTS)
         max_cap = dfTS[FIRST_ROW, col]
         if max_cap >= 0
-            @constraint(EP, cCSystemTot, sum(eCAvgNetElectric[FUS]) <= max_cap)
+			@constraint(EP, cCSystemTot, sum(EP[:eCAvgNetElectric][FUS]) <= max_cap)
         end
     end
 end
@@ -730,7 +730,7 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
     # remove plants from contributing while they are under maintenance
     FUS_MAINT = intersect(FUS, MAINTENANCE)
     if !isempty(FUS_MAINT)
-        avg_net_el_fus(y) = by_rid(y, :Average_Net_Electric_Factor) * by_rid(y, :Cap_Size)
+        avg_net_el_fus(y) = dfGen[y, :Average_Net_Electric_Factor] * by_rid(y, :Cap_Size)
         @expression(EP, eCapResMarBalanceFusionMaintAdj[res in reserves, t in T],
                     -sum(capresfactor(res, y) * EP[:vMDOWN][t, y] * avg_net_el_fus(y) for y in FUS_MAINT))
         EP[:eCapResMarBalance] += eCapResMarBalanceFusionMaintAdj
