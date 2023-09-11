@@ -1,0 +1,27 @@
+name: Test-example
+
+on:
+  push:
+  schedule:
+    - cron: 21 4 * * * # Run at 12:21am US Eastern time
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        branch: ["main", "develop"]
+        version: ["1.8", "1.9"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.branch }}
+      - uses: julia-actions/cache@v1.2.2
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Test an example case
+        run: |
+          julia --project=. Example_Systems/SmallNewEngland/Simple_Test_Case/Run.jl

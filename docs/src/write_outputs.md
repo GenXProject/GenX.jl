@@ -28,6 +28,12 @@ Modules = [GenX]
 Pages = ["write_capacity.jl"]
 ```
 
+## Write Capacity Factors
+```@autodocs
+Modules = [GenX]
+Pages = ["write_capacityfactor.jl"]
+```
+
 ## Write Charge Values
 ```@autodocs
 Modules = [GenX]
@@ -38,6 +44,12 @@ Pages = ["write_charge.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_nse.jl"]
+```
+
+## Write Storage State of Charge
+```@autodocs
+Modules = [GenX]
+Pages = ["write_storage.jl"]
 ```
 
 ## Write Storage Dual
@@ -98,6 +110,13 @@ Pages = ["write_esr_revenue.jl"]
 Modules = [GenX]
 Pages = ["write_net_revenue.jl"]
 ```
+
+## Write Co-Located VRE and Storage files
+```@autodocs
+Modules = [GenX]
+Pages = ["write_vre_stor.jl"]
+```
+
 ## Write Settings files
 ```@autodocs
 Modules = [GenX]

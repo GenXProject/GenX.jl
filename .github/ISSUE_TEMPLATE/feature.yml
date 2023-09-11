@@ -1,0 +1,29 @@
+name: Feature Request
+description: Suggest a new feature to be incorporated
+title: "[Feature]: "
+labels: ["feature-request"]
+body:
+  - type: textarea
+    id: desciption
+    attributes:
+      label: Feature description
+      description: What new capability would you like to add?
+      placeholder: What you want to be able to do
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What will you able to do, or how this makes GenX better (optional)
+      placeholder: New studies of ...
+  - type: textarea
+    id: strategy
+    attributes:
+      label: Implementation strategy
+      description: How might this be incorporated? (optional)
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Any other details. (optional)

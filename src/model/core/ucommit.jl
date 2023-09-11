@@ -54,7 +54,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCStartT[t=1:T], sum(eCStart[y,t] for y in COMMIT))
 	@expression(EP, eTotalCStart, sum(eTotalCStartT[t] for t=1:T))
 
-	EP[:eObj] += eTotalCStart
+	add_to_expression!(EP[:eObj], eTotalCStart)
 
 	### Constratints ###
 	## Declaration of integer/binary variables

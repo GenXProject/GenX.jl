@@ -1,0 +1,4 @@
+Network_zones,Network_Lines,z1,z2,z3,Line_Max_Flow_MW,Line_Min_Flow_MW,transmission_path_name,Line_Reinforcement_Cost_per_MWyr,Line_Reinforcement_Cost_per_MW,Line_Loss_Percentage,Line_Max_Reinforcement_MW,DerateCapRes_1,CapRes_Excl_1,DerateCapRes_2,CapRes_Excl_2,DerateCapRes_3,CapRes_Excl_3
+z1,1.0,1.0,-1.0,0.0,820.0,820.0,EIC_to_TRE,45958.0,948772.0,0.0649,410.0,0.95,0.0,0.95,0.0,0.95,0.0
+z2,2.0,1.0,0.0,-1.0,1830.0,1830.0,EIC_to_WECC,71600.0,1478140.0,0.1001,915.0,0.95,0.0,0.95,0.0,0.95,0.0
+z3,,,,,,,,,,,,,,,,,

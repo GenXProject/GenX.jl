@@ -18,7 +18,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps
 	Z = inputs["Z"]     # Number of zones
-	THERM_COMMIT = inputs["THERM_COMMIT"]
+	
 	### Variables ###
 
 	# Energy injected into the grid by resource "y" at hour "t"
@@ -34,15 +34,16 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))
 
 	# Add total variable discharging cost contribution to the objective function
-	EP[:eObj] += eTotalCVarOut
+	add_to_expression!(EP[:eObj], eTotalCVarOut)
 
 	# ESR Policy
 	if setup["EnergyShareRequirement"] >= 1
 
-		@expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], sum(inputs["omega"][t]*dfGen[y,Symbol("ESR_$ESR")]*EP[:vP][y,t] for y=dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
-						- sum(inputs["dfESR"][z,ESR]*inputs["omega"][t]*inputs["pD"][t,z] for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-
-		EP[:eESR] += eESRDischarge
+		@expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], 
+			+ sum(inputs["omega"][t]*dfGen[y,Symbol("ESR_$ESR")]*EP[:vP][y,t] for y=dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
+			- sum(inputs["dfESR"][z,ESR]*inputs["omega"][t]*inputs["pD"][t,z] for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR]))
+		)
+		add_similar_to_expression!(EP[:eESR], eESRDischarge)
 	end
 
 end

@@ -22,10 +22,10 @@ Modules = [GenX]
 Pages = ["load_generators_variability.jl"]
 ```
 
-## Load Data
+## Demand Data
 ```@autodocs
 Modules = [GenX]
-Pages = ["load_load_data.jl"]
+Pages = ["load_demand_data.jl"]
 ```
 
 ## Transmission Network
@@ -62,6 +62,12 @@ Pages = ["load_energy_share_requirement.jl"]
 ```@autodocs
 Modules = [GenX]
 Pages = ["load_period_map.jl"]
+```
+
+## Variability of the Solar PV and Wind Components' Outputs (for Co-located Storage Resources)
+```@autodocs
+Modules = [GenX]
+Pages = ["load_vre_stor_variability.jl"]
 ```
 
 # Functions for developers

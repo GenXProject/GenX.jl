@@ -7,12 +7,33 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Reserves.csv"
     res_in = load_dataframe(joinpath(path, filename))
 
-	# Regulation requirement as a percent of hourly load; here load is the total across all model zones
-	inputs["pReg_Req_Load"] = float(res_in[1,:Reg_Req_Percent_Load])
+    function load_field_with_deprecated_symbol(df::DataFrame, columns::Vector{Symbol})
+        best = popfirst!(columns)
+        firstrow = 1
+        all_columns = Symbol.(names(df))
+        if best in all_columns
+            return float(df[firstrow, best])
+        end
+        for col in columns
+            if col in all_columns
+                @info "The column name $col in file $filename is deprecated; prefer $best"
+                return float(df[firstrow, col])
+            end
+        end
+        error("None of the columns $columns were found in the file $filename")
+    end
+
+	# Regulation requirement as a percent of hourly demand; here demand is the total across all model zones
+	inputs["pReg_Req_Demand"] = load_field_with_deprecated_symbol(res_in,
+                                                                  [:Reg_Req_Percent_Demand,
+                                                                   :Reg_Req_Percent_Load])
+
 	# Regulation requirement as a percent of hourly wind and solar generation (summed across all model zones)
 	inputs["pReg_Req_VRE"] = float(res_in[1,:Reg_Req_Percent_VRE])
-	# Spinning up reserve requirement as a percent of hourly load (which is summed across all zones)
-	inputs["pRsv_Req_Load"] = float(res_in[1,:Rsv_Req_Percent_Load])
+	# Spinning up reserve requirement as a percent of hourly demand (which is summed across all zones)
+	inputs["pRsv_Req_Demand"] = load_field_with_deprecated_symbol(res_in,
+                                                                  [:Rsv_Req_Percent_Demand,
+                                                                   :Rsv_Req_Percent_Load])
 	# Spinning up reserve requirement as a percent of hourly wind and solar generation (which is summed across all zones)
 	inputs["pRsv_Req_VRE"] = float(res_in[1,:Rsv_Req_Percent_VRE])
 

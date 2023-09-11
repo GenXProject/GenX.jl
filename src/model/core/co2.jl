@@ -23,44 +23,49 @@ function co2!(EP::Model, inputs::Dict, setup::Dict)
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
-    THERM_COMMIT = inputs["THERM_COMMIT"]
+    MULTI_FUELS = inputs["MULTI_FUELS"]
+    SINGLE_FUEL = inputs["SINGLE_FUEL"]
 
+    dfGen.Biomass = "Biomass" in names(dfGen) ? dfGen.Biomass : zeros(Int, nrow(dfGen))
+    dfGen.CO2_Capture_Rate = "CO2_Capture_Rate" in names(dfGen) ? dfGen.CO2_Capture_Rate : zeros(Int, nrow(dfGen))
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    dfGen.BECCS = "BECCS" in names(dfGen) ? dfGen.BECCS : zeros(Int, nrow(dfGen))
 
     ### Expressions ###
     # CO2 emissions from power plants in "Generator_data.csv"
-    if setup["CO2Capture"] == 0
-        @expression(EP, eEmissionsByPlant[y in 1:G, t = 1:T],
-            if y in THERM_COMMIT
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]]) + 
-                (EP[:vFuel2][y, t] * inputs["fuel_CO2"][dfGen[y,:Fuel2]])
+    # if all the CO2 capture rates from generator data are zeros, the CO2 emissions from thermal generators are determined by fuel consumptiono times CO2 content per MMBTU 
+    if all(x -> x == 0, dfGen.CO2_Capture_Rate)
+        @expression(EP, eEmissionsByPlant[y = 1:G, t = 1:T], 
+            if y in SINGLE_FUEL
+                (1-dfGen.Biomass[y]) *(EP[:vFuel][y, t] + EP[:vStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]] 
             else
-                (EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]]
+                sum(((1-dfGen.Biomass[y]) *(EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) * inputs["fuel_CO2"][dfGen[y,inputs["FUEL_COLS"][i]]]) for i = 1:inputs["MAX_NUM_FUELS"])
+            end)
+    else 
+        @expression(EP, eEmissionsByPlant[y = 1:G, t=1:T],
+            if y in SINGLE_FUEL
+                ((1-dfGen.Biomass[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
+                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
+                inputs["fuel_CO2"][dfGen[y,:Fuel]])
+            else
+                sum((((1-dfGen.Biomass[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
+                (EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) * 
+                inputs["fuel_CO2"][dfGen[y,inputs["FUEL_COLS"][i]]]) for i = 1:inputs["MAX_NUM_FUELS"])
             end)
 
-    else # setup["CO2Capture"] == 1
-        @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            if y in THERM_COMMIT
-                ((1-dfGen.BECCS[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]] + 
-                EP[:vFuel2][y, t] * inputs["fuel_CO2"][dfGen[y,:Fuel2]])
-            else
-                ((1-dfGen.BECCS[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]])
-            end)
         # CO2  captured from power plants in "Generator_data.csv"
-        @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
-            if y in THERM_COMMIT
+        @expression(EP, eEmissionsCaptureByPlant[y in SINGLE_FUEL, t=1:T],
+            if y in SINGLE_FUEL
                 (dfGen[!, :CO2_Capture_Rate][y]) * 
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]] + 
-                    EP[:vFuel2][y, t] * inputs["fuel_CO2"][dfGen[y,:Fuel2]])
+                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
+                inputs["fuel_CO2"][dfGen[y,:Fuel]])
             else
-                (dfGen[!, :CO2_Capture_Rate][y]) * 
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * inputs["fuel_CO2"][dfGen[y,:Fuel]])
+                sum((dfGen[!, :CO2_Capture_Rate][y] * 
+                (EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) * 
+                inputs["fuel_CO2"][dfGen[y,inputs["FUEL_COLS"][i]]]) for i = 1:inputs["MAX_NUM_FUELS"])
             end)
         
+        # annual captured emissions by plant
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] 
                 for t in 1:T))

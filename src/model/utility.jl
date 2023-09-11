@@ -57,3 +57,31 @@ function hoursafter(p::Int, t::Int, a::UnitRange{Int})::Vector{Int}
     return period * p .+ mod1.(t .+ a, p)
 
 end
+
+@doc raw"""
+    is_nonzero(df::DataFrame, col::Symbol)::BitVector
+
+This function checks if a column in a dataframe is all zeros.
+"""
+function is_nonzero(df::DataFrame, col::Symbol)::BitVector
+	convert(BitVector, df[!, col] .> 0)::BitVector
+end
+
+@doc raw"""
+    by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
+    
+    This function extracts the row of a DataFrame df for the resource given by the resource ID "rid".
+"""
+function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
+	return df[df.R_ID .== rid, sym][]
+end
+
+@doc raw"""
+    by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
+    
+    This function extracts the rows of a DataFrame df for the resources given by the vector of resource IDs "rid".
+"""
+function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
+	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
+	return df[indices, sym]
+end
