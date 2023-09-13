@@ -34,8 +34,9 @@ Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ 
  $f_{y,x}$ represents the heat rate intercept (MMBTU) for a generator $y$ in segment $x$ [MMBTU],
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
 are optional inputs to "Generators_data.csv".
-When a user provides slope and intercept, the standard heat rate (i.e., Heat_Rate_MMBTU_per_MWh) 
-will not be used.
+When Unit commitment is on, if a user provides slope and intercept, the standard heat rate 
+(i.e., Heat_Rate_MMBTU_per_MWh) will not be used. When unit commitment is off, the model will 
+always use the standard heat rate.
 The user should determine the slope and intercept parameters based on the Cap_Size of the plant. 
 For example, when a plant is operating at the full load (i.e., power output equal to the Cap_Size),
 the fuel usage determined by the effective segment divided by Cap_Size should be equal to the 
@@ -127,11 +128,12 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         THERM_COMMIT_PWFU = inputs["THERM_COMMIT_PWFU"]
         # segemnt for piecewise fuel usage
         if !isempty(THERM_COMMIT_PWFU)
-            segs = 1:inputs["PWFU_Max_Num_Segments"]
+            segs = 1:inputs["PWFU_Num_Segments"]
+            PWFU_data = inputs["PWFU_data"]
             slope_cols = inputs["slope_cols"]
             intercept_cols = inputs["intercept_cols"]
-            segment_intercept(y, seg) = dfGen[y, intercept_cols[seg]]
-            segment_slope(y, seg) = dfGen[y, slope_cols[seg]]
+            segment_intercept(y, seg) = PWFU_data[y, intercept_cols[seg]]
+            segment_slope(y, seg) = PWFU_data[y, slope_cols[seg]]
             # constraint for piecewise fuel consumption
             @constraint(EP, PiecewiseFuelUsage[y in THERM_COMMIT_PWFU, t = 1:T, seg in segs],
             EP[:vFuel][y, t] >= (EP[:vP][y, t] *  segment_slope(y, seg) + 

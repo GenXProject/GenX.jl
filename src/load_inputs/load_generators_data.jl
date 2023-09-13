@@ -501,45 +501,95 @@ end
 
 function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 	gen_in = inputs["dfGen"]
-	inputs["PWFU_Max_Num_Segments"] = 0
+	inputs["PWFU_Num_Segments"] = 0
 	inputs["THERM_COMMIT_PWFU"] = Int64[]
 
 	if any(occursin.(Ref("PWFU_"), names(gen_in)))
-		slope_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Slope")
-		intercept_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Intercept")
-		if size(slope_mat)[2] != size(intercept_mat)[2]
-			@error """ The number of slope and intercept columns used for piecewise fuel consumption must be equal, we found $(size(slope_mat)[2]) of slope,
-			and $(size(intercept_mat)[2]) of intercept 
+		heat_rate_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Heat_Rate_MMBTU_per_MWh")
+		load_point_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Load_Point_MW")
+		
+		# it's possible to construct piecewise fuel consumption with n of heat rate and n-1 of load point. 
+		# if a user feed n of heat rate and more than n of load point, throw a error message, and then use 
+		# n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
+		if size(heat_rate_mat)[2] < size(load_point_mat)[2]
+		 	@error """ The numbers of heatrate data are less than load points, we found $(size(heat_rate_mat)[2]) of heat rate,
+		 	and $(size(load_point_mat)[2]) of load points. We will just use the $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
+			load points to create piecewise fuel usage
+		 	"""
+		end
+
+        # check if values for piecewise fuel consumption make sense. Negative heat rate or load point are not allowed
+        if any(heat_rate_mat .< 0) .| any(load_point_mat .< 0)
+			@error """ Neither heat rate nor load point can be negative
+			"""
+			error("Invalid inputs detected for piecewise fuel usage")
+		end
+		# for non-zero values, heat rates and load point should follow an increasing trend 
+		if any([any(diff(filter(x->x!=0, row)) .< 0) for row in eachrow(heat_rate_mat)]) .| any([any(diff(filter(x->x!=0, row)) .< 0) for row in eachrow(load_point_mat)])
+			@error """ Heat rates and load point should follow an increasing trend
 			"""
 			error("Invalid inputs detected for piecewise fuel usage")
 		end
 
-        # check if values for piecewise fuel consumption make sense. Negative slopes are not allowed as they will make the model non-convex
-        if any(slope_mat .< 0)
-			@error """ Slope used for piecewise fuel consumption cannot be negative
-			"""
-			error("Invalid inputs detected for piecewise fuel usage")
+        # determine if a generator contains piecewise fuel usage segment based on non-zero heatrate
+		gen_in.HAS_PWFU = any(heat_rate_mat .!= 0 , dims = 2)[:]
+		num_segments =  size(heat_rate_mat)[2]
+
+		# translate the inital fuel usage, heat rate, and load points into intercept for each segment
+		fuel_usage = gen_in[!,"PWFU_Fuel_Usage_MMBTU_per_h"]
+		# construct a matrix for intercept
+		intercept_mat = zeros(size(heat_rate_mat))
+		# PWFU_Fuel_Usage_MMBTU_per_h is always the intercept of the first segment
+		intercept_mat[:,1] = fuel_usage
+
+		# create a function to compute intercept if we have more than one segment
+		function calculate_intercepts(slope, intercept_1, load_point)
+			m, n = size(slope)
+			# Initialize the intercepts matrix with zeros
+			intercepts = zeros(m, n)
+			# The first segment's intercepts should be intercept_1 vector
+			intercepts[:, 1] = intercept_1
+			# Calculate intercepts for the other segments using the load points (i.e., intersection points)
+			for j in 1:n-1
+				for i in 1:m
+					current_slope = slope[i, j+1]
+					previous_slope = slope[i, j]
+					# If the current slope is 0, then skip the calculation and return 0
+					if current_slope == 0
+						intercepts[i, j+1] = 0.0
+					else
+						# y = a*x + b; => b = y - ax
+						# Calculate y-coordinate of the intersection
+						y = previous_slope * load_point[i, j] + intercepts[i, j]	
+						# determine the new intercept
+						b = y - current_slope * load_point[i, j]
+						intercepts[i, j+1] = b
+					end
+				end
+			end	 
+			return intercepts
+		end
+		
+		if num_segments > 1
+			# determine the intercept for the rest of segment if num_segments > 1
+			intercept_mat = calculate_intercepts(heat_rate_mat, fuel_usage, load_point_mat)
 		end
 
-		# identify nonzero slope and intercept for each generator, and the "or" matrix will return a set of generators that contain slope/intercept for at least one segment 
-		slope_check_zero = slope_mat .!= 0 
-        intercept_check_zero = intercept_mat .!=0
-		slope_or_intercept = slope_check_zero .| intercept_check_zero
-
-        # determine if a generator contains piecewise fuel usage segment
-		gen_in.HAS_PWFU = any(slope_or_intercept, dims = 2)[:]
-        # the maximum segment is equal to the maximum number of PWFU_Slope_* and PWFU_Intercept_* that user provide.
-		max_segments = size(slope_or_intercept)[2]
-		# create col names 
-		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Slope"),names(gen_in)))
-		intercept_cols =  Symbol.(filter(colname -> startswith(string(colname),"PWFU_Intercept"),names(gen_in)))
-    	# no need to scale slope, but the intercept of fuel usage in each segment needs to be scaled (MMBTU -> Billion BTU).
-		for i in 1:max_segments
-			gen_in[!, intercept_cols[i]] /= scale_factor
+		# create a PWFU_data that contain processed intercept and slope (i.e., heat rate)
+		intercept_cols = [Symbol("PWFU_Intercept_", i) for i in 1:num_segments]
+		intercept_df = DataFrame(intercept_mat, Symbol.(intercept_cols))
+		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Heat_Rate_MMBTU_per_MWh"),names(gen_in)))
+		slope_df = DataFrame(heat_rate_mat, Symbol.(slope_cols))
+		PWFU_data = hcat(slope_df, intercept_df)
+		# no need to scale sclope, but intercept should be scaled when parameterscale is on (MMBTU -> billion BTU)
+		for i in 1:num_segments
+			PWFU_data[!, intercept_cols[i]] /= scale_factor
 		end
+
 		inputs["slope_cols"] = slope_cols
 		inputs["intercept_cols"] = intercept_cols
-		inputs["PWFU_Max_Num_Segments"] =max_segments
+		inputs["PWFU_data"] = PWFU_data
+		inputs["PWFU_Num_Segments"] =num_segments
 		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU,:R_ID])
 	end
 end
