@@ -45,7 +45,7 @@ function co2!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eEmissionsByPlant[y = 1:G, t=1:T],
             if y in SINGLE_FUEL
                 ((1-dfGen.Biomass[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
+                ((EP[:vFuel][y, t] + EP[:vStartFuel][y, t]) * 
                 inputs["fuel_CO2"][dfGen[y,:Fuel]])
             else
                 sum((((1-dfGen.Biomass[y]) - dfGen[!, :CO2_Capture_Rate][y]) * 
@@ -57,7 +57,7 @@ function co2!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eEmissionsCaptureByPlant[y in SINGLE_FUEL, t=1:T],
             if y in SINGLE_FUEL
                 (dfGen[!, :CO2_Capture_Rate][y]) * 
-                ((EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * 
+                ((EP[:vFuel][y, t] + EP[:vStartFuel][y, t]) * 
                 inputs["fuel_CO2"][dfGen[y,:Fuel]])
             else
                 sum((dfGen[!, :CO2_Capture_Rate][y] * 

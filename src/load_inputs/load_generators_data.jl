@@ -70,9 +70,9 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
     # Disable Retrofit while it's under development
-    if !(isempty(inputs_gen["RETRO"]))
-        error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in Generators_data.csv, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
-    end
+    # if !(isempty(inputs_gen["RETRO"]))
+    #     error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in Generators_data.csv, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
+    # end
 
 	# Set of multi-fuel resources
 	if !("MULTI_FUELS" in names(gen_in))
@@ -147,7 +147,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 		inputs_gen["RETROFIT_INV_CAP_COSTS"] = [ [ inv_cap[i][y] for i in 1:max_retro_sources if inv_cap[i][y] >= 0 ] for y in 1:G ]  # The set of investment costs (capacity $/MWyr) of each retrofit by source
 	end
-	println("looks good from here!")
     # See documentation for descriptions of each column
     # Generally, these scalings converts energy and power units from MW to GW
     # and $/MW to $M/GW. Both are done by dividing the values by 1000.

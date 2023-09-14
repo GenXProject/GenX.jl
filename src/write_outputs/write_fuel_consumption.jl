@@ -56,9 +56,10 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 	dfPlantFuel.AnnualSum_Fuel_HeatInput_Total = tempannualsum_Fuel_heat_total
 	dfPlantFuel.AnnualSum_Fuel_Cost = tempannualsum_Fuel_cost	
 	if !isempty(MULTI_FUELS)
-		dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"], 
-			Zone = dfGen[!,:Zone]
-		)
+		# dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"], 
+		# 	Zone = dfGen[!,:Zone]
+		# )
+		dfPlantFuel.Multi_Fuels = dfGen[!, :MULTI_FUELS]
 		for i = 1:inputs["MAX_NUM_FUELS"]
 			tempannualsum_fuel_heat_multi_generation = zeros(G)
 			tempannualsum_fuel_heat_multi_start = zeros(G)
