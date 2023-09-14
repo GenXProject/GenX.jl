@@ -513,20 +513,24 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		# n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
 		if size(heat_rate_mat)[2] < size(load_point_mat)[2]
 		 	@error """ The numbers of heatrate data are less than load points, we found $(size(heat_rate_mat)[2]) of heat rate,
-		 	and $(size(load_point_mat)[2]) of load points. We will just use the $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
-			load points to create piecewise fuel usage
+		 	and $(size(load_point_mat)[2]) of load points. We will just use $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
+			load point to create piecewise fuel usage
 		 	"""
 		end
 
         # check if values for piecewise fuel consumption make sense. Negative heat rate or load point are not allowed
-        if any(heat_rate_mat .< 0) .| any(load_point_mat .< 0)
+        if any(heat_rate_mat .< 0) | any(load_point_mat .< 0)
 			@error """ Neither heat rate nor load point can be negative
 			"""
 			error("Invalid inputs detected for piecewise fuel usage")
 		end
-		# for non-zero values, heat rates and load point should follow an increasing trend 
-		if any([any(diff(filter(x->x!=0, row)) .< 0) for row in eachrow(heat_rate_mat)]) .| any([any(diff(filter(x->x!=0, row)) .< 0) for row in eachrow(load_point_mat)])
-			@error """ Heat rates and load point should follow an increasing trend
+		# for non-zero values, heat rates and load points should follow an increasing trend 
+		if any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(heat_rate_mat)]) 
+			@error """ Heat rates should follow an increasing trend
+			"""
+			error("Invalid inputs detected for piecewise fuel usage")
+		elseif  any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(load_point_mat)])
+			@error """load points should follow an increasing trend
 			"""
 			error("Invalid inputs detected for piecewise fuel usage")
 		end
@@ -536,11 +540,11 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		num_segments =  size(heat_rate_mat)[2]
 
 		# translate the inital fuel usage, heat rate, and load points into intercept for each segment
-		fuel_usage = gen_in[!,"PWFU_Fuel_Usage_MMBTU_per_h"]
+		fuel_usage_zero_load = gen_in[!,"PWFU_Fuel_Usage_Zero_Load_MMBTU_per_h"]
 		# construct a matrix for intercept
 		intercept_mat = zeros(size(heat_rate_mat))
 		# PWFU_Fuel_Usage_MMBTU_per_h is always the intercept of the first segment
-		intercept_mat[:,1] = fuel_usage
+		intercept_mat[:,1] = fuel_usage_zero_load
 
 		# create a function to compute intercept if we have more than one segment
 		function calculate_intercepts(slope, intercept_1, load_point)
@@ -572,7 +576,7 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		
 		if num_segments > 1
 			# determine the intercept for the rest of segment if num_segments > 1
-			intercept_mat = calculate_intercepts(heat_rate_mat, fuel_usage, load_point_mat)
+			intercept_mat = calculate_intercepts(heat_rate_mat, fuel_usage_zero_load, load_point_mat)
 		end
 
 		# create a PWFU_data that contain processed intercept and slope (i.e., heat rate)
