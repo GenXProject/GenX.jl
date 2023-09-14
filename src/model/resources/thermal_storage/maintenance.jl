@@ -56,7 +56,6 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
     by_rid(rid, sym) = by_rid_df(rid, sym, inputs["dfTS"])
 
-    FUS = get_fus(inputs)
     MAINTENANCE = get_maintenance(inputs)
 
     weights = inputs["omega"]
