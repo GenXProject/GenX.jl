@@ -104,6 +104,10 @@ function thermal_storage!(EP::Model, inputs::Dict, setup::Dict)
         maintenance_constraints!(EP, inputs, setup)
     end
 
+    if !isempty(intersect(MAINTENANCE, FUS))
+        maintenance_fusion_modification!(EP, inputs)
+    end
+
     if setup["CapacityReserveMargin"] > 0
         thermal_storage_capacity_reserve_margin!(EP, inputs)
     end

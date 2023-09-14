@@ -99,6 +99,21 @@ function maintenance_constraints!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP, [y in MAINTENANCE],
         sum(vMSHUT[t,y]*weights[t] for t in maintenance_begin_hours) >= vCCAP[y] / by_rid(y,:Maintenance_Cadence_Years) / by_rid(y,:Cap_Size))
+end
+
+function maintenance_fusion_modification!(EP::Model, inputs::Dict)
+    @debug "Maintenance modifies fusion expressions"
+
+    dfGen = inputs["dfGen"]
+
+    T = 1:inputs["T"]     # Number of time steps (hours)
+
+    by_rid(rid, sym) = by_rid_df(rid, sym, inputs["dfTS"])
+
+    FUS = get_fus(inputs)
+    MAINTENANCE = get_maintenance(inputs)
+
+    vMDOWN = EP[:vMDOWN]
 
     frac_passive_to_reduce(y) = by_rid(y, :Recirc_Pass) * (1 - by_rid(y, :Recirc_Pass_Maintenance_Reduction))
     for y in intersect(FUS, MAINTENANCE), t in T
