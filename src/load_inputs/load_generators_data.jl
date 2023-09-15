@@ -508,32 +508,8 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		heat_rate_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Heat_Rate_MMBTU_per_MWh")
 		load_point_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Load_Point_MW")
 		
-		# it's possible to construct piecewise fuel consumption with n of heat rate and n-1 of load point. 
-		# if a user feed n of heat rate and more than n of load point, throw a error message, and then use 
-		# n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
-		if size(heat_rate_mat)[2] < size(load_point_mat)[2]
-		 	@error """ The numbers of heatrate data are less than load points, we found $(size(heat_rate_mat)[2]) of heat rate,
-		 	and $(size(load_point_mat)[2]) of load points. We will just use $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
-			load point to create piecewise fuel usage
-		 	"""
-		end
-
-        # check if values for piecewise fuel consumption make sense. Negative heat rate or load point are not allowed
-        if any(heat_rate_mat .< 0) | any(load_point_mat .< 0)
-			@error """ Neither heat rate nor load point can be negative
-			"""
-			error("Invalid inputs detected for piecewise fuel usage")
-		end
-		# for non-zero values, heat rates and load points should follow an increasing trend 
-		if any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(heat_rate_mat)]) 
-			@error """ Heat rates should follow an increasing trend
-			"""
-			error("Invalid inputs detected for piecewise fuel usage")
-		elseif  any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(load_point_mat)])
-			@error """load points should follow an increasing trend
-			"""
-			error("Invalid inputs detected for piecewise fuel usage")
-		end
+		# check data input 
+		validate_piecewisefuelusage!(heat_rate_mat, load_point_mat)
 
         # determine if a generator contains piecewise fuel usage segment based on non-zero heatrate
 		gen_in.HAS_PWFU = any(heat_rate_mat .!= 0 , dims = 2)[:]
@@ -586,14 +562,41 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		slope_df = DataFrame(heat_rate_mat, Symbol.(slope_cols))
 		PWFU_data = hcat(slope_df, intercept_df)
 		# no need to scale sclope, but intercept should be scaled when parameterscale is on (MMBTU -> billion BTU)
-		for i in 1:num_segments
-			PWFU_data[!, intercept_cols[i]] /= scale_factor
-		end
+		PWFU_data[!, intercept_cols] ./= scale_factor
 
 		inputs["slope_cols"] = slope_cols
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_data"] = PWFU_data
 		inputs["PWFU_Num_Segments"] =num_segments
 		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU,:R_ID])
+	end
+end
+
+function validate_piecewisefuelusage!(heat_rate_mat, load_point_mat)
+	# it's possible to construct piecewise fuel consumption with n of heat rate and n-1 of load point. 
+	# if a user feed n of heat rate and more than n of load point, throw a error message, and then use 
+	# n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
+	if size(heat_rate_mat)[2] < size(load_point_mat)[2]
+		@error """ The numbers of heatrate data are less than load points, we found $(size(heat_rate_mat)[2]) of heat rate,
+		and $(size(load_point_mat)[2]) of load points. We will just use $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
+		load point to create piecewise fuel usage
+		"""
+	end
+
+	# check if values for piecewise fuel consumption make sense. Negative heat rate or load point are not allowed
+	if any(heat_rate_mat .< 0) | any(load_point_mat .< 0)
+		@error """ Neither heat rate nor load point can be negative
+		"""
+		error("Invalid inputs detected for piecewise fuel usage")
+	end
+	# for non-zero values, heat rates and load points should follow an increasing trend 
+	if any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(heat_rate_mat)]) 
+		@error """ Heat rates should follow an increasing trend
+		"""
+		error("Invalid inputs detected for piecewise fuel usage")
+	elseif  any([any(diff(filter(!=(0), row)) .< 0) for row in eachrow(load_point_mat)])
+		@error """load points should follow an increasing trend
+		"""
+		error("Invalid inputs detected for piecewise fuel usage")
 	end
 end
