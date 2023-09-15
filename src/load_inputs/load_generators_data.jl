@@ -509,7 +509,7 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		load_point_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Load_Point_MW")
 		
 		# check data input 
-		validate_piecewisefuelusage!(heat_rate_mat, load_point_mat)
+		validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
 
         # determine if a generator contains piecewise fuel usage segment based on non-zero heatrate
 		gen_in.HAS_PWFU = any(heat_rate_mat .!= 0 , dims = 2)[:]
@@ -572,7 +572,7 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 	end
 end
 
-function validate_piecewisefuelusage!(heat_rate_mat, load_point_mat)
+function validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
 	# it's possible to construct piecewise fuel consumption with n of heat rate and n-1 of load point. 
 	# if a user feed n of heat rate and more than n of load point, throw a error message, and then use 
 	# n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
