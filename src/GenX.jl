@@ -52,7 +52,7 @@ using Cbc
 # To translate MW to GW, divide by ModelScalingFactor
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
-ModelScalingFactor = 1e+3
+const ModelScalingFactor = 1e+3
 
 # thanks, ChatGPT
 function include_all_in_folder(folder)
