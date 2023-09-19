@@ -124,10 +124,10 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 		@constraint(EP, cCO2Emissions_resource[y in intersect(dfGen[dfGen.CO2_emis_limit_ton_per_MWh.>=0,:R_ID], THERM_ALL), t = 1:T], 
             EP[:eEmissionsByPlant][y, t] <= EP[:vP][y, t] * dfGen[y, :CO2_emis_limit_ton_per_MWh]
 		)
-		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) -
-			vCO2Cap_slack[cap] >= 0
-		)
+		# @constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
+		# 	sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) -
+		# 	vCO2Cap_slack[cap] >= 0
+		# )
 	end 
 
 end

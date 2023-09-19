@@ -136,7 +136,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # multi fuels
     if !isempty(MULTI_FUELS)
         @expression(EP, eFuelConsumption_multi[f in 1:FUEL, t in 1:T],
-            sum((EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) #i: fuel id 
+            sum((EP[:ePlantFuel_multi][y, i, t]) #i: fuel id 
                 for i in 1:inputs["MAX_NUM_FUELS"], 
                     y in intersect(dfGen[dfGen[!,inputs["FUEL_COLS"][i]] .== string(inputs["fuels"][f]) ,:R_ID], MULTI_FUELS))
             )
@@ -144,7 +144,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
  
     @expression(EP, eFuelConsumption[f in 1:FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
-            eFuelConsumption_multi[f, t] #+ eFuelConsumption_single[f,t]
+            eFuelConsumption_multi[f, t] + eFuelConsumption_single[f,t]
         else
             eFuelConsumption_single[f,t]
         end)
@@ -197,7 +197,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         if y in SINGLE_FUEL
             inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:ePlantFuel_generation][y, t]
         else
-            sum(inputs["fuel_costs"][dfGen[y,inputs["FUEL_COLS"][i]]][t] * EP[:eCFuel_out_multi][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"] )
+            sum(EP[:eCFuel_out_multi][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"] )
         end)
 
     # annual plant level total fuel cost for output

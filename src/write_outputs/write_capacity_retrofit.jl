@@ -67,7 +67,7 @@ function write_capacity_retrofit(path::AbstractString, inputs::Dict, setup::Dict
 	for (i,j) in keys(EP[:vRETROFIT].data)
 		push!(RETROFIT_SOURCE, inputs["RESOURCES"][i])
 		push!(RETROFIT_DEST, inputs["RESOURCES"][j])
-		push!(RETROFIT_CAP, value(EP[:vRETROFIT].data[i,j]) * dfGen[!,:Cap_Size][i])
+		push!(RETROFIT_CAP, value(EP[:vRETROFIT].data[i,j]))
 		push!(ORIG_CAP, dfGen[!,:Existing_Cap_MW][i])
 		push!(RETRO_EFF, RETRO_EFFICIENCY[j][findfirst(item -> item == i, RETRO_SOURCE_IDS[j])])
 	end

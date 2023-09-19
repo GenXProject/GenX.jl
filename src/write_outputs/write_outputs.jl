@@ -176,7 +176,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 				dfResMar_slack = write_reserve_margin_slack(path, inputs, setup, EP)
 			end		  
 		end
-		if setup["CO2Cap"]>0 && has_duals(EP) == 1
+		if setup["CO2Cap"]>0 && has_duals(EP) == 1 && setup["CO2Cap"]<4
 			dfCO2Cap = write_co2_cap(path, inputs, setup, EP)
 		end
 		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
