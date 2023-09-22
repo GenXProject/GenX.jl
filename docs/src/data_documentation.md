@@ -384,11 +384,24 @@ This file contains cost and performance parameters for various generators and ot
 |MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
 |**MaxCapReq = 1**|
 |MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`. Note that this eligibility must be 0 for co-located VRE-STOR resources (policy inputs are read from the specific VRE-STOR dataframe).|
+|**PiecewiseFuelUsage-related parameters required if any resources have nonzero PWFU fuel usage, heat rates, and load points**|
+|PWFU\_Fuel\_Usage\_Zero\_Load\_MMBTU\_per\_h|The fuel usage (MMBTU/h) for the first PWFU segemnt (y-intercept) at zero load.|
+|PWFU\_Heat\_Rate\_MMBTU\_per\_MWh\_*i| The slope of fuel usage function of the segment i.|
+|PWFU\_Load\_Point\_MW\_*i| The end of segment i (MW).|
 |**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
 |Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
 |Electrolyzer_Min_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
 |Hydrogen_Price_Per_Tonne| Price (or value) of hydrogen per metric tonne ($/t)|
 |Qualified_Hydrogen_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
+|**CO2-related parameters required if any resources have nonzero CO2_Capture_Fraction**|
+|CO2\_Capture\_Fraction  |[0,1], The CO2 capture fraction of CCS-equipped power plants during steady state operation. This value should be 0 for generators without CCS. |
+|CO2\_Capture\_Fraction\_Startup  |[0,1], The CO2 capture fraction of CCS-equipped power plants during the startup events. This value should be 0 for generators without CCS |
+|Biomass | {0, 1}, Flag to indicate if generator uses biomass as feedstock (optional input column).|
+||Biomass = 0: Not part of set (default). |
+||Biomass = 1: Uses biomass as fuel.|
+|CCS\_Disposal\_Cost\_per\_Metric_Ton | Cost associated with CCS disposal ($/tCO2), including pipeline, injection and storage costs of CCS-equipped generators.|
+
+
 
 ### 2.2 Optional inputs files
 
