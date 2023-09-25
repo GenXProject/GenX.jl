@@ -161,8 +161,9 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         if y in SINGLE_FUEL
             (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:vStartFuel][y, t])
         else
-            sum(eCFuelOut_multi_start for i in 1:inputs["MAX_NUM_FUELS"])
+            sum(EP[:eCFuelOut_multi_start][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"])
         end)
+
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelStart[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelStart][y, t] for t in 1:T))
@@ -184,7 +185,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     @expression(EP, eCFuelOut[y = 1:G, t = 1:T], 
-        if y in SINGLE
+        if y in SINGLE_FUEL
             (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:vFuel][y, t])
         else
             sum(EP[:eCFuelOut_multi][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"])
@@ -216,7 +217,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y,t]
-            for y in intersect(resources_with_fuel(dfGen, fuels[f]))), SINGLE_FUEL)
+            for y in intersect(resources_with_fuel(dfGen, fuels[f]), SINGLE_FUEL)))
     
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
@@ -232,11 +233,11 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     ### Constraint ###
     ### only apply constraint to generators with fuel type other than None
 
-    @constraint(EP, cFuelCalculation_single[y in intersect(SINGLE_FUEL,setdiff(HAS_FUEL, THERM_COMMIT)), t = 1:T],
+    @constraint(EP, cFuelCalculation_single[y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, THERM_COMMIT)), t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
 
     if !isempty(MULTI_FUELS)
-        @constraint(EP, cFuelCalculation_multi[y in intersect(MULTI_FUELS,setdiff(HAS_FUEL, THERM_COMMIT)), t = 1:T],
+        @constraint(EP, cFuelCalculation_multi[y in intersect(MULTI_FUELS, setdiff(HAS_FUEL, THERM_COMMIT)), t = 1:T],
                 sum(EP[:vMulFuels][y, i, t]/inputs["HEAT_RATES"][i][y] for i in 1:inputs["MAX_NUM_FUELS"]) - EP[:vP][y, t] == 0 
             )
     end

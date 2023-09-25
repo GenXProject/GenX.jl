@@ -84,8 +84,8 @@ function co2!(EP::Model, inputs::Dict)
                 (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vFuel][y, t]  * fuel_CO2[dfGen[y,:Fuel]]+
                 (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:vStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]
             else
-                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vMulFuel][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])+
-                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:vMulStartFuel][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])
+                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])+
+                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])
             end)
 
         # CO2 captured from power plants in "Generators_data.csv"
@@ -94,8 +94,8 @@ function co2!(EP::Model, inputs::Dict)
                 dfGen[y, :CO2_Capture_Fraction] * EP[:vFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]+
                 dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]
             else
-                sum(dfGen[y, :CO2_Capture_Fraction] * EP[:vMulFuel][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])+
-                sum(dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:vMulStartFuel][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])
+                sum(dfGen[y, :CO2_Capture_Fraction] * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])+
+                sum(dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])
             end)
 
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 

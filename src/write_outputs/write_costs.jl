@@ -10,6 +10,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE_STOR = inputs["VRE_STOR"]
+
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	
 	cost_list = ["cTotal", "cFix", "cVar", "cFuel" ,"cNSE", "cStart",  "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cCO2"]
@@ -21,8 +22,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 	dfCost = DataFrame(Costs = cost_list)
 
-	cVar =  value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
-	cFuel = value.(EP[:eTotalCFuelOut])
+	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
 	
 	cFuel = value.(EP[:eTotalCFuelOut])
@@ -77,10 +77,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[9,2] += value(EP[:eTotalCMinCapSlack])
 	end	
 
-	if any(x -> x != 0, dfGen.CO2_Capture_Rate)
-		dfCost[10,2] += value(EP[:eTotaleCCO2Sequestration])
-	end
-
 	if !isempty(VRE_STOR)
 		dfCost[!,2][11] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
@@ -104,7 +100,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCFuel = 0.0
 		tempCStart = 0.0
 		tempCNSE = 0.0
-		tempCCO2 = 0.0
 		tempHydrogenValue = 0.0
 		tempCCO2 = 0.0
 
@@ -122,9 +117,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE,:]))
 		tempCTotal += tempCVar
 		
-		tempCFuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE,:]))
-		tempCTotal += tempCFuel
-
 		tempCFuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE,:]))
 		tempCTotal += tempCFuel
 
