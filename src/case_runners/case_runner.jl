@@ -22,6 +22,7 @@ function run_genx_case!(case::AbstractString)
     else
         run_genx_case_multistage!(case, mysetup)
     end
+    return
 end
 
 function time_domain_reduced_files_exist(tdrpath)
