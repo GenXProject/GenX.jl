@@ -13,17 +13,18 @@ function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
     num_stages = settings_d["NumStages"] # Total number of investment planning stages
     trans_capacities_d = Dict()
 
-    for p in 1:num_stages
+    for p = 1:num_stages
         inpath = joinpath(outpath, "Results_p$p")
         trans_capacities_d[p] = load_dataframe(joinpath(inpath, "network_expansion.csv"))
     end
 
     # Set first column of output DataFrame as line IDs
-    df_trans_cap = DataFrame(Line=trans_capacities_d[1][!, :Line])
+    df_trans_cap = DataFrame(Line = trans_capacities_d[1][!, :Line])
 
     # Store new transmission capacities for all stages
-    for p in 1:num_stages
-        df_trans_cap[!, Symbol("New_Trans_Capacity_p$p")] = trans_capacities_d[p][!, :New_Trans_Capacity]
+    for p = 1:num_stages
+        df_trans_cap[!, Symbol("New_Trans_Capacity_p$p")] =
+            trans_capacities_d[p][!, :New_Trans_Capacity]
     end
 
     CSV.write(joinpath(outpath, "network_expansion_multi_stage.csv"), df_trans_cap)

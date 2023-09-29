@@ -55,58 +55,80 @@ Finally, the next constraint enforces that the initial storage level for each in
 """
 function long_duration_storage!(EP::Model, inputs::Dict)
 
-	println("Long Duration Storage Module")
+    println("Long Duration Storage Module")
 
-	dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
-	REP_PERIOD = inputs["REP_PERIOD"]     # Number of representative periods
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    REP_PERIOD = inputs["REP_PERIOD"]     # Number of representative periods
 
-	STOR_LONG_DURATION = inputs["STOR_LONG_DURATION"]
-	START_SUBPERIODS = inputs["START_SUBPERIODS"]
+    STOR_LONG_DURATION = inputs["STOR_LONG_DURATION"]
+    START_SUBPERIODS = inputs["START_SUBPERIODS"]
 
-	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
+    hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
-	dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
-	NPeriods = size(inputs["Period_Map"])[1] # Number of modeled periods
+    dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
+    NPeriods = size(inputs["Period_Map"])[1] # Number of modeled periods
 
-	MODELED_PERIODS_INDEX = 1:NPeriods
-	REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!,:Rep_Period] .== MODELED_PERIODS_INDEX]
+    MODELED_PERIODS_INDEX = 1:NPeriods
+    REP_PERIODS_INDEX =
+        MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period].==MODELED_PERIODS_INDEX]
 
-	### Variables ###
+    ### Variables ###
 
-	# Variables to define inter-period energy transferred between modeled periods
+    # Variables to define inter-period energy transferred between modeled periods
 
-	# State of charge of storage at beginning of each modeled period n
-	@variable(EP, vSOCw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX] >= 0)
+    # State of charge of storage at beginning of each modeled period n
+    @variable(EP, vSOCw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX] >= 0)
 
-	# Build up in storage inventory over each representative period w
-	# Build up inventory can be positive or negative
-	@variable(EP, vdSOC[y in STOR_LONG_DURATION, w=1:REP_PERIOD])
+    # Build up in storage inventory over each representative period w
+    # Build up inventory can be positive or negative
+    @variable(EP, vdSOC[y in STOR_LONG_DURATION, w = 1:REP_PERIOD])
 
-	### Constraints ###
+    ### Constraints ###
 
-	# Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
-	# Modified initial state of storage for long-duration storage - initialize wth value carried over from last period
-	# Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
-	# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
-	@constraint(EP, cSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
-				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-dfGen[y,:Self_Disch])*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])-(1/dfGen[y,:Eff_Down]*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
+    # Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
+    # Modified initial state of storage for long-duration storage - initialize wth value carried over from last period
+    # Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
+    # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
+    @constraint(
+        EP,
+        cSoCBalLongDurationStorageStart[w = 1:REP_PERIOD, y in STOR_LONG_DURATION],
+        EP[:vS][y, hours_per_subperiod*(w-1)+1] ==
+        (1 - dfGen[y, :Self_Disch]) * (EP[:vS][y, hours_per_subperiod*w] - vdSOC[y, w]) -
+        (1 / dfGen[y, :Eff_Down] * EP[:vP][y, hours_per_subperiod*(w-1)+1]) +
+        (dfGen[y, :Eff_Up] * EP[:vCHARGE][y, hours_per_subperiod*(w-1)+1])
+    )
 
-	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
-	## Multiply storage build up term from prior period with corresponding weight
-	@constraint(EP, cSoCBalLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-					vSOCw[y, mod1(r+1, NPeriods)] == vSOCw[y,r] + vdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+    # Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
+    ## Multiply storage build up term from prior period with corresponding weight
+    @constraint(
+        EP,
+        cSoCBalLongDurationStorage[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+        vSOCw[y, mod1(r + 1, NPeriods)] ==
+        vSOCw[y, r] + vdSOC[y, dfPeriodMap[r, :Rep_Period_Index]]
+    )
 
-	# Storage at beginning of each modeled period cannot exceed installed energy capacity
-	@constraint(EP, cSoCBalLongDurationStorageUpper[y in STOR_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-					vSOCw[y,r] <= EP[:eTotalCapEnergy][y])
+    # Storage at beginning of each modeled period cannot exceed installed energy capacity
+    @constraint(
+        EP,
+        cSoCBalLongDurationStorageUpper[
+            y in STOR_LONG_DURATION,
+            r in MODELED_PERIODS_INDEX,
+        ],
+        vSOCw[y, r] <= EP[:eTotalCapEnergy][y]
+    )
 
-	# Initial storage level for representative periods must also adhere to sub-period storage inventory balance
-	# Initial storage = Final storage - change in storage inventory across representative period
-	@constraint(EP, cSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
-					vSOCw[y,r] == EP[:vS][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vdSOC[y,dfPeriodMap[r,:Rep_Period_Index]])
+    # Initial storage level for representative periods must also adhere to sub-period storage inventory balance
+    # Initial storage = Final storage - change in storage inventory across representative period
+    @constraint(
+        EP,
+        cSoCBalLongDurationStorageSub[y in STOR_LONG_DURATION, r in REP_PERIODS_INDEX],
+        vSOCw[y, r] ==
+        EP[:vS][y, hours_per_subperiod*dfPeriodMap[r, :Rep_Period_Index]] -
+        vdSOC[y, dfPeriodMap[r, :Rep_Period_Index]]
+    )
 
 end

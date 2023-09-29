@@ -16,18 +16,18 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     costs_d = Dict()
-    for p in 1:num_stages
+    for p = 1:num_stages
         cur_path = joinpath(outpath, "Results_p$p")
         costs_d[p] = load_dataframe(joinpath(cur_path, "costs.csv"))
     end
 
-    OPEXMULTS = [inputs_dict[j]["OPEXMULT"] for j in 1:num_stages] # Stage-wise OPEX multipliers to count multiple years between two model stages
+    OPEXMULTS = [inputs_dict[j]["OPEXMULT"] for j = 1:num_stages] # Stage-wise OPEX multipliers to count multiple years between two model stages
 
     # Set first column of DataFrame as resource names from the first stage
-    df_costs = DataFrame(Costs=costs_d[1][!, :Costs])
+    df_costs = DataFrame(Costs = costs_d[1][!, :Costs])
 
     # Store discounted total costs for each stage in a data frame
-    for p in 1:num_stages
+    for p = 1:num_stages
         if myopic
             DF = 1 # DF=1 because we do not apply discount factor in myopic case
         else
@@ -39,7 +39,8 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
     # For OPEX costs, apply additional discounting
     for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
         if cost in df_costs[!, :Costs]
-            df_costs[df_costs[!, :Costs].==cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!, :Costs].==cost, 2:end]
+            df_costs[df_costs[!, :Costs].==cost, 2:end] =
+                transpose(OPEXMULTS) .* df_costs[df_costs[!, :Costs].==cost, 2:end]
         end
     end
 

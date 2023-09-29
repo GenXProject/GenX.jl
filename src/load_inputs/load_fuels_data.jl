@@ -7,7 +7,7 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
     # Fuel related inputs - read in different files depending on if time domain reduction is activated or not
     data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
-    if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
+    if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(data_directory)
         my_dir = data_directory
     else
         my_dir = path
@@ -26,15 +26,15 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     fuels = names(fuels_in)[2:end]
     costs = Matrix(fuels_in[2:end, 2:end])
     CO2_content = fuels_in[1, 2:end] # tons CO2/MMBtu
-    fuel_costs = Dict{AbstractString, Array{Float64}}()
-    fuel_CO2 = Dict{AbstractString, Float64}()
+    fuel_costs = Dict{AbstractString,Array{Float64}}()
+    fuel_CO2 = Dict{AbstractString,Float64}()
 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     for i = 1:length(fuels)
-            fuel_costs[fuels[i]] = costs[:,i] / scale_factor
-            # fuel_CO2 is kton/MMBTU with scaling, or ton/MMBTU without scaling.
-            fuel_CO2[fuels[i]] = CO2_content[i] / scale_factor
+        fuel_costs[fuels[i]] = costs[:, i] / scale_factor
+        # fuel_CO2 is kton/MMBTU with scaling, or ton/MMBTU without scaling.
+        fuel_CO2[fuels[i]] = CO2_content[i] / scale_factor
     end
 
     inputs["fuels"] = fuels

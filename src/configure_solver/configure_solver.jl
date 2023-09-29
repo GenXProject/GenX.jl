@@ -13,16 +13,16 @@ function configure_solver(solver::String, solver_settings_path::String)
 
     solver = lowercase(solver)
 
-    path = joinpath(solver_settings_path, solver*"_settings.yml")
+    path = joinpath(solver_settings_path, solver * "_settings.yml")
 
     configure_functions = Dict(
-                               "highs" => configure_highs,
-                               "gurobi" => configure_gurobi,
-                               "cplex" => configure_cplex,
-                               "clp" => configure_clp,
-                               "cbc" => configure_cbc,
-                               "scip" => configure_scip,
-                              )
+        "highs" => configure_highs,
+        "gurobi" => configure_gurobi,
+        "cplex" => configure_cplex,
+        "clp" => configure_clp,
+        "cbc" => configure_cbc,
+        "scip" => configure_scip,
+    )
 
     return configure_functions[solver](path)
 end
@@ -41,7 +41,8 @@ function rename_keys(attributes::Dict, new_key_names::Dict)
         else
             new_key = new_key_names[old_key]
             if haskey(attributes, new_key)
-                @error "Colliding keys: '$old_key' needs to be renamed to '$new_key' but '$new_key' already exists in", attributes
+                @error "Colliding keys: '$old_key' needs to be renamed to '$new_key' but '$new_key' already exists in",
+                attributes
             end
         end
         updated_attributes[new_key] = value

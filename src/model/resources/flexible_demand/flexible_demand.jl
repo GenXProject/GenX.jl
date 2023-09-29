@@ -35,89 +35,125 @@ A similar constraints maximum time steps of demand advancement. This is done by 
 If $t$ is first time step of the year (or the first time step of the representative period), then the above two constraints are implemented to look back over the last n time steps, starting with the last time step of the year (or the last time step of the representative period). This time-wrapping implementation is similar to the time-wrapping implementations used for defining the storage balance constraints for hydropower reservoir resources and energy storage resources.
 """
 function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
-## Flexible demand resources available during all hours and can be either delayed or advanced (virtual storage-shiftable demand) - DR ==1
+    ## Flexible demand resources available during all hours and can be either delayed or advanced (virtual storage-shiftable demand) - DR ==1
 
-println("Flexible Demand Resources Module")
+    println("Flexible Demand Resources Module")
 
-dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-T = inputs["T"]     # Number of time steps (hours)
-Z = inputs["Z"]     # Number of zones
-FLEX = inputs["FLEX"] # Set of flexible demand resources
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    FLEX = inputs["FLEX"] # Set of flexible demand resources
 
-hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
+    hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
 
-### Variables ###
+    ### Variables ###
 
-# Variable tracking total advanced (negative) or deferred (positive) demand for demand flex resource y in period t
-@variable(EP, vS_FLEX[y in FLEX, t=1:T]);
+    # Variable tracking total advanced (negative) or deferred (positive) demand for demand flex resource y in period t
+    @variable(EP, vS_FLEX[y in FLEX, t = 1:T])
 
-# Variable tracking demand deferred by demand flex resource y in period t
-@variable(EP, vCHARGE_FLEX[y in FLEX, t=1:T] >= 0);
+    # Variable tracking demand deferred by demand flex resource y in period t
+    @variable(EP, vCHARGE_FLEX[y in FLEX, t = 1:T] >= 0)
 
-### Expressions ###
+    ### Expressions ###
 
-## Power Balance Expressions ##
-@expression(EP, ePowerBalanceDemandFlex[t=1:T, z=1:Z],
-    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:R_ID])))
+    ## Power Balance Expressions ##
+    @expression(
+        EP,
+        ePowerBalanceDemandFlex[t = 1:T, z = 1:Z],
+        sum(
+            -EP[:vP][y, t] + EP[:vCHARGE_FLEX][y, t] for
+            y in intersect(FLEX, dfGen[(dfGen[!, :Zone].==z), :R_ID])
+        )
+    )
 
-EP[:ePowerBalance] += ePowerBalanceDemandFlex
+    EP[:ePowerBalance] += ePowerBalanceDemandFlex
 
-# Capacity Reserves Margin policy
-if setup["CapacityReserveMargin"] > 0
-    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-    EP[:eCapResMarBalance] += eCapResMarBalanceFlex
-end
-
-## Objective Function Expressions ##
-
-# Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
-@expression(EP, eCVarFlex_in[y in FLEX,t=1:T], inputs["omega"][t]*dfGen[y,:Var_OM_Cost_per_MWh_In]*vCHARGE_FLEX[y,t])
-
-# Sum individual resource contributions to variable charging costs to get total variable charging costs
-@expression(EP, eTotalCVarFlexInT[t=1:T], sum(eCVarFlex_in[y,t] for y in FLEX))
-@expression(EP, eTotalCVarFlexIn, sum(eTotalCVarFlexInT[t] for t in 1:T))
-EP[:eObj] += eTotalCVarFlexIn
-
-### Constraints ###
-
-## Flexible demand is available only during specified hours with time delay or time advance (virtual storage-shiftable demand)
-for z in 1:Z
-    # NOTE: Flexible demand operates by zone since capacity is now related to zone demand
-    FLEX_Z = intersect(FLEX, dfGen[dfGen.Zone .== z, :R_ID])
-
-    @constraints(EP, begin
-        # State of "charge" constraint (equals previous state + charge - discharge)
-        # NOTE: no maximum energy "stored" or deferred for later hours
-        # NOTE: Flexible_Demand_Energy_Eff corresponds to energy loss due to time shifting
-        [y in FLEX_Z, t in 1:T], EP[:vS_FLEX][y,t] == EP[:vS_FLEX][y, hoursbefore(hours_per_subperiod, t, 1)] - dfGen[y, :Flexible_Demand_Energy_Eff] * EP[:vP][y,t] + EP[:vCHARGE_FLEX][y,t]
-
-        # Maximum charging rate
-        # NOTE: the maximum amount that can be shifted is given by hourly availability of the resource times the maximum capacity of the resource
-        [y in FLEX_Z, t=1:T], EP[:vCHARGE_FLEX][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
-        # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
-    end)
-
-
-    for y in FLEX_Z
-
-        # Require deferred demands to be satisfied within the specified time delay
-        max_flexible_demand_delay = Int(floor(dfGen[y,:Max_Flexible_Demand_Delay]))
-
-        # Require advanced demands to be satisfied within the specified time period
-        max_flexible_demand_advance = Int(floor(dfGen[y,:Max_Flexible_Demand_Advance]))
-
-        @constraint(EP, [t in 1:T],
-            # cFlexibleDemandDelay: Constraints looks forward over next n hours, where n = max_flexible_demand_delay
-            sum(EP[:vP][y,e] for e=hoursafter(hours_per_subperiod, t, 1:max_flexible_demand_delay)) >= EP[:vS_FLEX][y,t])
-
-        @constraint(EP, [t in 1:T],
-            # cFlexibleDemandAdvance: Constraint looks forward over next n hours, where n = max_flexible_demand_advance
-            sum(EP[:vCHARGE_FLEX][y,e] for e=hoursafter(hours_per_subperiod, t, 1:max_flexible_demand_advance)) >= -EP[:vS_FLEX][y,t])
-
+    # Capacity Reserves Margin policy
+    if setup["CapacityReserveMargin"] > 0
+        @expression(
+            EP,
+            eCapResMarBalanceFlex[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+            sum(
+                dfGen[y, Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t])
+                for y in FLEX
+            )
+        )
+        EP[:eCapResMarBalance] += eCapResMarBalanceFlex
     end
-end
 
-return EP
-end
+    ## Objective Function Expressions ##
 
+    # Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
+    @expression(
+        EP,
+        eCVarFlex_in[y in FLEX, t = 1:T],
+        inputs["omega"][t] * dfGen[y, :Var_OM_Cost_per_MWh_In] * vCHARGE_FLEX[y, t]
+    )
+
+    # Sum individual resource contributions to variable charging costs to get total variable charging costs
+    @expression(EP, eTotalCVarFlexInT[t = 1:T], sum(eCVarFlex_in[y, t] for y in FLEX))
+    @expression(EP, eTotalCVarFlexIn, sum(eTotalCVarFlexInT[t] for t = 1:T))
+    EP[:eObj] += eTotalCVarFlexIn
+
+    ### Constraints ###
+
+    ## Flexible demand is available only during specified hours with time delay or time advance (virtual storage-shiftable demand)
+    for z = 1:Z
+        # NOTE: Flexible demand operates by zone since capacity is now related to zone demand
+        FLEX_Z = intersect(FLEX, dfGen[dfGen.Zone.==z, :R_ID])
+
+        @constraints(
+            EP,
+            begin
+                # State of "charge" constraint (equals previous state + charge - discharge)
+                # NOTE: no maximum energy "stored" or deferred for later hours
+                # NOTE: Flexible_Demand_Energy_Eff corresponds to energy loss due to time shifting
+                [y in FLEX_Z, t in 1:T],
+                EP[:vS_FLEX][y, t] ==
+                EP[:vS_FLEX][y, hoursbefore(hours_per_subperiod, t, 1)] -
+                dfGen[y, :Flexible_Demand_Energy_Eff] * EP[:vP][y, t] +
+                EP[:vCHARGE_FLEX][y, t]
+
+                # Maximum charging rate
+                # NOTE: the maximum amount that can be shifted is given by hourly availability of the resource times the maximum capacity of the resource
+                [y in FLEX_Z, t = 1:T],
+                EP[:vCHARGE_FLEX][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
+                # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
+            end
+        )
+
+
+        for y in FLEX_Z
+
+            # Require deferred demands to be satisfied within the specified time delay
+            max_flexible_demand_delay = Int(floor(dfGen[y, :Max_Flexible_Demand_Delay]))
+
+            # Require advanced demands to be satisfied within the specified time period
+            max_flexible_demand_advance = Int(floor(dfGen[y, :Max_Flexible_Demand_Advance]))
+
+            @constraint(
+                EP,
+                [t in 1:T],
+                # cFlexibleDemandDelay: Constraints looks forward over next n hours, where n = max_flexible_demand_delay
+                sum(
+                    EP[:vP][y, e] for
+                    e in hoursafter(hours_per_subperiod, t, 1:max_flexible_demand_delay)
+                ) >= EP[:vS_FLEX][y, t]
+            )
+
+            @constraint(
+                EP,
+                [t in 1:T],
+                # cFlexibleDemandAdvance: Constraint looks forward over next n hours, where n = max_flexible_demand_advance
+                sum(
+                    EP[:vCHARGE_FLEX][y, e] for
+                    e in hoursafter(hours_per_subperiod, t, 1:max_flexible_demand_advance)
+                ) >= -EP[:vS_FLEX][y, t]
+            )
+
+        end
+    end
+
+    return EP
+end

@@ -24,8 +24,10 @@ function look_for_file_with_alternate_case(dir, base)
     mapping = Dict(zip(lower_files, files_in_dir))
 
     if length(mapping) != length(files_in_dir)
-        error("""Files in the directory may have names which differ only by upper/lowercase.
-              This must be corrected.""")
+        error(
+            """Files in the directory may have names which differ only by upper/lowercase.
+            This must be corrected.""",
+        )
     end
 
     FILE_NOT_FOUND = "FILENOTFOUND"
@@ -50,7 +52,7 @@ end
 
 function keep_duplicated_entries!(s, uniques)
     for u in uniques
-        deleteat!(s, first(findall(x->x==u, s)))
+        deleteat!(s, first(findall(x -> x == u, s)))
     end
     return s
 end
@@ -69,7 +71,7 @@ end
 
 function load_dataframe_from_file(path)
     check_for_duplicate_keys(path)
-    CSV.read(path, DataFrame, header=1)
+    CSV.read(path, DataFrame, header = 1)
 end
 
 @doc raw"""
@@ -95,9 +97,9 @@ function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractStri
     # if prefix is "ESR", the column name should be like "ESR_1"
     function is_of_this_column_type(c)
         startswith(c, columnprefix) &&
-        length(c) >= length(columnprefix) + 2 &&
-        c[length(columnprefix) + 1] == '_' &&
-        !isnothing(get_integer_part(c))
+            length(c) >= length(columnprefix) + 2 &&
+            c[length(columnprefix)+1] == '_' &&
+            !isnothing(get_integer_part(c))
     end
 
     columns = filter(is_of_this_column_type, all_columns)

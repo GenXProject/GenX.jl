@@ -99,51 +99,67 @@ The above reserve related constraints are established by ```storage_all_reserves
 """
 function storage!(EP::Model, inputs::Dict, setup::Dict)
 
-	println("Storage Resources Module")
-	dfGen = inputs["dfGen"]
-	T = inputs["T"]
-	STOR_ALL = inputs["STOR_ALL"]
+    println("Storage Resources Module")
+    dfGen = inputs["dfGen"]
+    T = inputs["T"]
+    STOR_ALL = inputs["STOR_ALL"]
 
     p = inputs["hours_per_subperiod"]
     rep_periods = inputs["REP_PERIOD"]
 
-	Reserves = setup["Reserves"]
-	EnergyShareRequirement = setup["EnergyShareRequirement"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
-	IncludeLossesInESR = setup["IncludeLossesInESR"]
-	MultiStage = setup["MultiStage"]
+    Reserves = setup["Reserves"]
+    EnergyShareRequirement = setup["EnergyShareRequirement"]
+    CapacityReserveMargin = setup["CapacityReserveMargin"]
+    IncludeLossesInESR = setup["IncludeLossesInESR"]
+    MultiStage = setup["MultiStage"]
 
-	if !isempty(STOR_ALL)
-		investment_energy!(EP, inputs, setup)
-		storage_all!(EP, inputs, setup)
+    if !isempty(STOR_ALL)
+        investment_energy!(EP, inputs, setup)
+        storage_all!(EP, inputs, setup)
 
-		# Include Long Duration Storage only when modeling representative periods and long-duration storage
-		if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
-			long_duration_storage!(EP, inputs)
-		end
-	end
+        # Include Long Duration Storage only when modeling representative periods and long-duration storage
+        if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+            long_duration_storage!(EP, inputs)
+        end
+    end
 
-	if !isempty(inputs["STOR_ASYMMETRIC"])
-		investment_charge!(EP, inputs, setup)
-		storage_asymmetric!(EP, inputs, setup)
-	end
+    if !isempty(inputs["STOR_ASYMMETRIC"])
+        investment_charge!(EP, inputs, setup)
+        storage_asymmetric!(EP, inputs, setup)
+    end
 
-	if !isempty(inputs["STOR_SYMMETRIC"])
-		storage_symmetric!(EP, inputs, setup)
-	end
+    if !isempty(inputs["STOR_SYMMETRIC"])
+        storage_symmetric!(EP, inputs, setup)
+    end
 
-	# ESR Lossses
-	if EnergyShareRequirement >= 1
-		if IncludeLossesInESR == 1
-			@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-			EP[:eESR] -= eESRStor
-		end
-	end
+    # ESR Lossses
+    if EnergyShareRequirement >= 1
+        if IncludeLossesInESR == 1
+            @expression(
+                EP,
+                eESRStor[ESR = 1:inputs["nESR"]],
+                sum(
+                    inputs["dfESR"][z, ESR] * sum(
+                        EP[:eELOSS][y] for
+                        y in intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
+                    ) for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])
+                )
+            )
+            EP[:eESR] -= eESRStor
+        end
+    end
 
-	# Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
-		EP[:eCapResMarBalance] += eCapResMarBalanceStor
-	end
+    # Capacity Reserves Margin policy
+    if CapacityReserveMargin > 0
+        @expression(
+            EP,
+            eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+            sum(
+                dfGen[y, Symbol("CapRes_$res")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for
+                y in STOR_ALL
+            )
+        )
+        EP[:eCapResMarBalance] += eCapResMarBalanceStor
+    end
 
 end

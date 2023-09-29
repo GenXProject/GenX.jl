@@ -40,25 +40,28 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
     inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"]
 
-    if setup["NetworkExpansion"]==1
+    if setup["NetworkExpansion"] == 1
         # Read between zone network reinforcement costs per peak MW of capacity added
-        inputs_nw["pC_Line_Reinforcement"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) / scale_factor # convert to million $/GW/yr with objective function in millions
+        inputs_nw["pC_Line_Reinforcement"] =
+            to_floats(:Line_Reinforcement_Cost_per_MWyr) / scale_factor # convert to million $/GW/yr with objective function in millions
         # Maximum reinforcement allowed in MW
         #NOTE: values <0 indicate no expansion possible
-        inputs_nw["pMax_Line_Reinforcement"] = map(x->max(0, x), to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
+        inputs_nw["pMax_Line_Reinforcement"] =
+            map(x -> max(0, x), to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
     end
 
     # Multi-Stage
     if setup["MultiStage"] == 1
         # Weighted Average Cost of Capital for Transmission Expansion
-        if setup["NetworkExpansion"]>=1
-            inputs_nw["transmission_WACC"]= to_floats(:WACC)
-            inputs_nw["Capital_Recovery_Period_Trans"]= to_floats(:Capital_Recovery_Period)
+        if setup["NetworkExpansion"] >= 1
+            inputs_nw["transmission_WACC"] = to_floats(:WACC)
+            inputs_nw["Capital_Recovery_Period_Trans"] = to_floats(:Capital_Recovery_Period)
         end
 
         # Max Flow Possible on Each Line
-        inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) / scale_factor # Convert to GW
+        inputs_nw["pLine_Max_Flow_Possible_MW"] =
+            to_floats(:Line_Max_Flow_Possible_MW) / scale_factor # Convert to GW
     end
 
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)
@@ -67,17 +70,18 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["pTrans_Loss_Coef"] = inputs_nw["pPercent_Loss"]
     elseif setup["Trans_Loss_Segments"] >= 2
         # If zones are connected, loss coefficient is R/V^2 where R is resistance in Ohms and V is voltage in Volts
-        inputs_nw["pTrans_Loss_Coef"] = (inputs_nw["Ohms"]/10^6)/(inputs_nw["kV"]/10^3)^2 * scale_factor # 1/GW ***
+        inputs_nw["pTrans_Loss_Coef"] =
+            (inputs_nw["Ohms"] / 10^6) / (inputs_nw["kV"] / 10^3)^2 * scale_factor # 1/GW ***
     end
 
     ## Sets and indices for transmission losses and expansion
     inputs_nw["TRANS_LOSS_SEGS"] = setup["Trans_Loss_Segments"] # Number of segments used in piecewise linear approximations quadratic loss functions
-    inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"].!=0) # Lines for which loss coefficients apply (are non-zero);
+    inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"] .!= 0) # Lines for which loss coefficients apply (are non-zero);
 
     if setup["NetworkExpansion"] == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
-        inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].>=0)
-        inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].<0)
+        inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .>= 0)
+        inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .< 0)
     end
 
     println(filename * " Successfully Read!")
@@ -100,7 +104,7 @@ function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
     mat = zeros(L, Z)
     start_zones = collect(skipmissing(network_var[!, start_col]))
     end_zones = collect(skipmissing(network_var[!, end_col]))
-    for l in 1:L
+    for l = 1:L
         mat[l, start_zones[l]] = 1
         mat[l, end_zones[l]] = -1
     end
@@ -131,8 +135,8 @@ function load_network_map(network_var::DataFrame, Z, L)
     list_columns = ["Origin_Zone", "Destination_Zone"]
     has_network_list = all([c in columns for c in list_columns])
 
-    zones_as_strings = ["z" * string(i) for i in 1:Z]
-    has_network_matrix =  all([c in columns for c in zones_as_strings])
+    zones_as_strings = ["z" * string(i) for i = 1:Z]
+    has_network_matrix = all([c in columns for c in zones_as_strings])
 
     instructions = """The transmission network should be specified in the form of a matrix
            (with columns z1, z2, ... zN) or in the form of lists (with Start_Node, End_Node),

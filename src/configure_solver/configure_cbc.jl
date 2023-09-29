@@ -18,25 +18,25 @@ The Cbc optimizer instance is configured with the following default parameters i
 """
 function configure_cbc(solver_settings_path::String)
 
-	solver_settings = YAML.load(open(solver_settings_path))
-	solver_settings = convert(Dict{String, Any}, solver_settings)
+    solver_settings = YAML.load(open(solver_settings_path))
+    solver_settings = convert(Dict{String,Any}, solver_settings)
 
-    default_settings = Dict("TimeLimit" => 1e-6,
-                            "logLevel" => 1e-6,
-                            "maxSolutions" => -1,
-                            "maxNodes" => -1,
-                            "allowableGap" => -1,
-                            "ratioGap" => Inf,
-                            "threads" => 1,
-                           )
+    default_settings = Dict(
+        "TimeLimit" => 1e-6,
+        "logLevel" => 1e-6,
+        "maxSolutions" => -1,
+        "maxNodes" => -1,
+        "allowableGap" => -1,
+        "ratioGap" => Inf,
+        "threads" => 1,
+    )
 
     attributes = merge(default_settings, solver_settings)
 
-    key_replacement = Dict("TimeLimit" => "seconds",
-                          )
+    key_replacement = Dict("TimeLimit" => "seconds")
 
     attributes = rename_keys(attributes, key_replacement)
 
-    attributes::Dict{String, Any}
-	return optimizer_with_attributes(Cbc.Optimizer, attributes...)
+    attributes::Dict{String,Any}
+    return optimizer_with_attributes(Cbc.Optimizer, attributes...)
 end

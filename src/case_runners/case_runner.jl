@@ -26,9 +26,9 @@ function run_genx_case!(case::AbstractString)
 end
 
 function time_domain_reduced_files_exist(tdrpath)
-    tdr_load = isfile(joinpath(tdrpath,"Load_data.csv"))
-    tdr_genvar = isfile(joinpath(tdrpath,"Generators_variability.csv"))
-    tdr_fuels = isfile(joinpath(tdrpath,"Fuels_data.csv"))
+    tdr_load = isfile(joinpath(tdrpath, "Load_data.csv"))
+    tdr_genvar = isfile(joinpath(tdrpath, "Generators_variability.csv"))
+    tdr_fuels = isfile(joinpath(tdrpath, "Fuels_data.csv"))
     return (tdr_load && tdr_genvar && tdr_fuels)
 end
 
@@ -99,9 +99,10 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
     if mysetup["TimeDomainReduction"] == 1
         prevent_doubled_timedomainreduction(first_stage_path)
         if !time_domain_reduced_files_exist(TDRpath)
-            if (mysetup["MultiStage"] == 1) && (TDRSettingsDict["MultiStageConcatenate"] == 0)
+            if (mysetup["MultiStage"] == 1) &&
+               (TDRSettingsDict["MultiStageConcatenate"] == 0)
                 println("Clustering Time Series Data (Individually)...")
-                for stage_id in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+                for stage_id = 1:mysetup["MultiStageSettingsDict"]["NumStages"]
                     cluster_inputs(case, settings_path, mysetup, stage_id)
                 end
             else
@@ -117,19 +118,23 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
     println("Configuring Solver")
     OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
 
-    model_dict=Dict()
-    inputs_dict=Dict()
+    model_dict = Dict()
+    inputs_dict = Dict()
 
-    for t in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+    for t = 1:mysetup["MultiStageSettingsDict"]["NumStages"]
 
         # Step 0) Set Model Year
         mysetup["MultiStageSettingsDict"]["CurStage"] = t
 
         # Step 1) Load Inputs
-        inpath_sub = joinpath(case, "Inputs", string("Inputs_p",t))
+        inpath_sub = joinpath(case, "Inputs", string("Inputs_p", t))
 
         inputs_dict[t] = load_inputs(mysetup, inpath_sub)
-        inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
+        inputs_dict[t] = configure_multi_stage_inputs(
+            inputs_dict[t],
+            mysetup["MultiStageSettingsDict"],
+            mysetup["NetworkExpansion"],
+        )
 
         # Step 2) Generate model
         model_dict[t] = generate_model(mysetup, inputs_dict[t], OPTIMIZER)
@@ -159,7 +164,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
         mkdir(outpath)
     end
 
-    for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+    for p = 1:mysetup["MultiStageSettingsDict"]["NumStages"]
         outpath_cur = joinpath(outpath, "Results_p$p")
         write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
     end
@@ -168,4 +173,3 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
 
     write_multi_stage_outputs(mystats_d, outpath, mysetup, inputs_dict)
 end
-

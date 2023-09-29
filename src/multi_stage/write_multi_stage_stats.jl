@@ -20,11 +20,13 @@ function write_multi_stage_stats(outpath::String, stats_d::Dict)
     realtive_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
 
     # Construct dataframe where first column is iteration number, second is iteration time
-    df_stats = DataFrame(Iteration_Number=iteration_count_a,
-        Seconds=times_a,
-        Upper_Bound=upper_bounds_a,
-        Lower_Bound=lower_bounds_a,
-        Relative_Gap=realtive_gap_a)
+    df_stats = DataFrame(
+        Iteration_Number = iteration_count_a,
+        Seconds = times_a,
+        Upper_Bound = upper_bounds_a,
+        Lower_Bound = lower_bounds_a,
+        Relative_Gap = realtive_gap_a,
+    )
 
     CSV.write(joinpath(outpath, "stats_multi_stage.csv"), df_stats)
 

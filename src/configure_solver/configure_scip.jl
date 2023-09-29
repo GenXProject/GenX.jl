@@ -13,20 +13,17 @@ The SCIP optimizer instance is configured with the following default parameters 
 """
 function configure_scip(solver_settings_path::String)
 
-	solver_settings = YAML.load(open(solver_settings_path))
-	solver_settings = convert(Dict{String, Any}, solver_settings)
+    solver_settings = YAML.load(open(solver_settings_path))
+    solver_settings = convert(Dict{String,Any}, solver_settings)
 
-    default_settings = Dict("Dispverblevel" => 0,
-                            "limitsgap" => 0.05,
-                           )
+    default_settings = Dict("Dispverblevel" => 0, "limitsgap" => 0.05)
     attributes = merge(default_settings, solver_settings)
 
-    key_replacement = Dict("Dispverblevel" => "display_verblevel",
-                           "limitsgap" => "limits_gap",
-                          )
+    key_replacement =
+        Dict("Dispverblevel" => "display_verblevel", "limitsgap" => "limits_gap")
 
     attributes = rename_keys(attributes, key_replacement)
 
-    attributes::Dict{String, Any}
-	return optimizer_with_attributes(SCIP.Optimizer, attributes...)
+    attributes::Dict{String,Any}
+    return optimizer_with_attributes(SCIP.Optimizer, attributes...)
 end

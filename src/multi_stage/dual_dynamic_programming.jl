@@ -81,7 +81,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     lower_bounds_a = [] # Array to store the lower bound of each iteration
 
     # Step a.i) Initialize cost-to-go function for t = 1:num_stages
-    for t in 1:num_stages
+    for t = 1:num_stages
         models_d[t] = initialize_cost_to_go(settings_d, models_d[t], inputs_d[t])
     end
 
@@ -137,14 +137,19 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
             inputs_d[t]["solve_time"] = solve_time_d[t]
         end
         ## Forward pass for t=2:num_stages
-        for t in 2:num_stages
+        for t = 2:num_stages
 
             println("***********")
             println(string("Forward Pass t = ", t))
             println("***********")
 
             # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-            models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
+            models_d[t] = fix_initial_investments(
+                models_d[t-1],
+                models_d[t],
+                start_cap_d,
+                inputs_d[t],
+            )
 
             # Step d.ii) Fix capacity tracking variables for endogenous retirements
             models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
@@ -172,8 +177,9 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
         # Step e) Calculate the new upper bound
         z_upper_temp = 0
-        for t in 1:num_stages
-            z_upper_temp = z_upper_temp + (objective_value(models_d[t]) - value(models_d[t][:vALPHA]))
+        for t = 1:num_stages
+            z_upper_temp =
+                z_upper_temp + (objective_value(models_d[t]) - value(models_d[t][:vALPHA]))
         end
 
         # If the upper bound decreased, set it as the new upper bound
@@ -184,7 +190,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
         append!(upper_bounds_a, z_upper) # Store current iteration upper bound
 
         # Step f) Backward pass for t = num_stages:2
-        for t in num_stages:-1:2
+        for t = num_stages:-1:2
 
             println("***********")
             println(string("Backward Pass t = ", t))
@@ -221,13 +227,14 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
     models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
     inputs_d[t]["solve_time"] = solve_time_d[t]
     ## Forward pass for t=2:num_stages
-    for t in 2:num_stages
+    for t = 2:num_stages
         println("***********")
         println(string("Final Forward Pass t = ", t))
         println("***********")
 
         # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-        models_d[t] = fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
+        models_d[t] =
+            fix_initial_investments(models_d[t-1], models_d[t], start_cap_d, inputs_d[t])
 
         # Step d.ii) Fix capacity tracking variables for endogenous retirements
         models_d[t] = fix_capacity_tracking(models_d[t-1], models_d[t], cap_track_d, t)
@@ -256,7 +263,12 @@ inputs:
   * outpath – String which represents the path to the Results directory.
   * settings\_d - Dictionary containing settings configured in the GenX settings genx\_settings.yml file as well as the multi-stage settings file multi\_stage\_settings.yml.
 """
-function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict, inputs_dict::Dict)
+function write_multi_stage_outputs(
+    stats_d::Dict,
+    outpath::String,
+    settings_d::Dict,
+    inputs_dict::Dict,
+)
 
     multi_stage_settings_d = settings_d["MultiStageSettingsDict"]
 
@@ -264,7 +276,7 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     write_multi_stage_capacities_charge(outpath, multi_stage_settings_d)
     write_multi_stage_capacities_energy(outpath, multi_stage_settings_d)
     if settings_d["NetworkExpansion"] == 1
-    	write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
+        write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
     end
     write_multi_stage_costs(outpath, multi_stage_settings_d, inputs_dict)
     write_multi_stage_stats(outpath, stats_d)
@@ -285,15 +297,20 @@ inputs:
 
 returns: JuMP model with updated linking constraints.
 """
-function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict, inputs_d::Dict)
-	
+function fix_initial_investments(
+    EP_prev::Model,
+    EP_cur::Model,
+    start_cap_d::Dict,
+    inputs_d::Dict,
+)
+
     RET_CAP = inputs_d["RET_CAP"] # Set of all resources subject to inter-stage capacity tracking
 
     # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-	    if y[1] in RET_CAP # extract resource integer index value from key
+            if y[1] in RET_CAP # extract resource integer index value from key
                 # Set the right hand side value of the linking initial capacity constraint in the current
                 # stage to the value of the available capacity variable solved for in the previous stages
                 set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
@@ -319,7 +336,12 @@ inputs:
 
 returns: JuMP model with updated linking constraints.
 """
-function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict, cur_stage::Int)
+function fix_capacity_tracking(
+    EP_prev::Model,
+    EP_cur::Model,
+    cap_track_d::Dict,
+    cur_stage::Int,
+)
 
     # cap_track_d dictionary contains the endogenous retirement tracking array variable name (v) as a key,
     # and the associated linking constraint name (c) as a value
@@ -335,7 +357,7 @@ function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict,
 
             # For all previous stages, set the right hand side value of the tracking constraint in the current
             # stage to the value of the tracking constraint observed in the previous stage
-            for p in 1:(cur_stage-1)
+            for p = 1:(cur_stage-1)
                 # Tracking newly buily capacity over all previous stages
                 JuMP.set_normalized_rhs(EP_cur[c][i, p], value(EP_prev[v][i, p]))
                 # Tracking retired capacity over all previous stages
@@ -433,7 +455,12 @@ inputs:
 
 returns: JuMP expression representing a sum of Benders cuts for linking capacity investment variables to be added to the cost-to-go function.
 """
-function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::Symbol, constr_name::Symbol)
+function generate_cut_component_track(
+    EP_cur::Model,
+    EP_next::Model,
+    var_name::Symbol,
+    constr_name::Symbol,
+)
 
     next_dual_value = Float64[]
     cur_inv_value = Float64[]
@@ -448,7 +475,8 @@ function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::S
         push!(cur_inv_var, EP_cur[var_name][y, p])
     end
 
-    eCutComponent = @expression(EP_cur, dot(next_dual_value, (cur_inv_value .- cur_inv_var)))
+    eCutComponent =
+        @expression(EP_cur, dot(next_dual_value, (cur_inv_value .- cur_inv_var)))
 
     return eCutComponent
 end
@@ -473,7 +501,12 @@ inputs:
 
 returns: JuMP expression representing a sum of Benders cuts for linking capacity investment variables to be added to the cost-to-go function.
 """
-function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
+function generate_cut_component_inv(
+    EP_cur::Model,
+    EP_next::Model,
+    expr_name::Symbol,
+    constr_name::Symbol,
+)
 
     next_dual_value = Float64[]
     cur_inv_value = Float64[]
@@ -486,7 +519,8 @@ function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Sy
         push!(cur_inv_var, EP_cur[expr_name][y])
     end
 
-    eCutComponent = @expression(EP_cur, dot(next_dual_value, (cur_inv_value .- cur_inv_var)))
+    eCutComponent =
+        @expression(EP_cur, dot(next_dual_value, (cur_inv_value .- cur_inv_var)))
 
     return eCutComponent
 end
