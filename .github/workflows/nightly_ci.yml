@@ -1,0 +1,35 @@
+name: NightlyCI
+
+on:
+  schedule:
+    - cron: 0 5 * * * # Run at 01:00 A.M. US Eastern time
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        branch: ["develop"]
+        version: 
+          - "1.8"
+          - '1' # latest stable 1.x Julia release
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v1
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Test Example_Systems
+        shell: julia --color=yes --project=. {0}
+        run: |
+          using Pkg
+          Pkg.instantiate()
+          include(joinpath(ENV["GITHUB_WORKSPACE"],"test","run_nightlytests.jl"))
+          
