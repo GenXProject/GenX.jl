@@ -218,7 +218,9 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 	)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
-
+    if !isempty(get_maintenance(dfGen))
+        maintenance_constraints_thermal!(EP, inputs, setup)
+    end
 end
 
 @doc raw"""
