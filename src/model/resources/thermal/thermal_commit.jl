@@ -338,3 +338,42 @@ function thermal_commit_reserves!(EP::Model, inputs::Dict)
 
 end
 
+
+function maintenance_constraints_thermal!(EP::Model, inputs::Dict, setup::Dict)
+
+    @info "Maintenance Module for Thermal plants"
+
+    ensure_maintenance_variable_records!(inputs)
+    dfGen = inputs["dfGen"]
+    by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
+
+    MAINT = get_maintenance(dfGen)
+    resource(y) = by_rid(y, :Resource)
+    suffix="THERM"
+    cap(y) = by_rid(y, :Cap_Size)
+    maint_dur(y) = Int(floor(by_rid(y, :Maintenance_Duration)))
+    maint_freq(y) = Int(floor(by_rid(y, :Maintenance_Frequency_Years)))
+    maint_begin_cadence(y) = Int(floor(by_rid(y, :Maintenance_Begin_Cadence)))
+
+    integer_operational_unit_committment = setup["UCommit"] == 1
+
+    vcommit = :vCOMMIT
+    ecap = :eTotalCap
+
+    sanity_check_maintenance(MAINT, inputs)
+
+    for y in MAINT
+        maintenance_constraints!(EP,
+                                inputs,
+                                resource(y),
+                                suffix,
+                                y,
+                                maint_begin_cadence(y),
+                                maint_dur(y),
+                                maint_freq(y),
+                                cap(y),
+                                vcommit,
+                                ecap,
+                                integer_operational_unit_committment)
+    end
+end
