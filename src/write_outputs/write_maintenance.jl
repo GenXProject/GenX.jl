@@ -23,6 +23,6 @@ end
     write_maintenance(path::AbstractString, inputs::Dict, EP::Model)
 """
 function write_maintenance(path::AbstractString, inputs::Dict, EP::Model)
-    downvars = get_maintenance_down_variables(inputs)
+    downvars = maintenance_down_variables(inputs)
     write_timeseries_variables(EP, downvars, joinpath(path, "maint_down.csv"))
 end

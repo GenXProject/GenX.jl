@@ -160,21 +160,47 @@ function maintenance_formulation!(
         EP,
         sum(vMSHUT[t] for t in maintenance_begin_hours) >= ecap[y] / cap / maint_freq_years
     )
+
+    return
 end
 
-function ensure_maintenance_variable_records!(inputs::Dict)
+@doc raw"""
+    ensure_maintenance_variable_records!(dict::Dict)
+
+    dict: a dictionary of model data
+
+    This should be called by each method that adds maintenance formulations,
+    to ensure that certain entries in the model data dict exist.
+"""
+function ensure_maintenance_variable_records!(dict::Dict)
     for var in (MAINTENANCE_DOWN_VARS, MAINTENANCE_SHUT_VARS)
-        if var ∉ keys(inputs)
-            inputs[var] = Set{Symbol}()
+        if var ∉ keys(dict)
+            dict[var] = Set{Symbol}()
         end
     end
 end
 
-function has_maintenance(inputs::Dict)::Bool
-    rep_periods = inputs["REP_PERIOD"]
-    MAINTENANCE_DOWN_VARS in keys(inputs) && rep_periods == 1
+@doc raw"""
+    has_maintenance(dict::Dict)
+
+    dict: a dictionary of model data
+
+    Checks whether the dictionary contains listings of maintenance-related variable names.
+    This is true only after `maintenance_formulation!` has been called.
+"""
+function has_maintenance(dict::Dict)::Bool
+    rep_periods = dict["REP_PERIOD"]
+    MAINTENANCE_DOWN_VARS in keys(dict) && rep_periods == 1
 end
 
-function get_maintenance_down_variables(inputs::Dict)::Set{Symbol}
-    inputs[MAINTENANCE_DOWN_VARS]
+@doc raw"""
+    maintenance_down_variables(dict::Dict)
+
+    dict: a dictionary of model data
+
+    get listings of maintenance-related variable names.
+    This is available only after `maintenance_formulation!` has been called.
+"""
+function maintenance_down_variables(dict::Dict)::Set{Symbol}
+    dict[MAINTENANCE_DOWN_VARS]
 end
