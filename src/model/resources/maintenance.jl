@@ -18,11 +18,23 @@ function resources_with_maintenance(df::DataFrame)::Vector{Int}
     end
 end
 
-function maintenance_down_name(resource_component::AbstractString)
+@doc raw"""
+    maintenance_down_name(resource_component::AbstractString)::String
+
+    JuMP variable name to control whether a resource-component is down for maintenance.
+    Here resource-component could be a whole resource or a component (for complex resources).
+"""
+function maintenance_down_name(resource_component::AbstractString)::String
     "vMDOWN_" * resource_component
 end
 
-function maintenance_shut_name(resource_component::AbstractString)
+@doc raw"""
+    maintenance_shut_name(resource_component::AbstractString)::String
+
+    JuMP variable name to control when a resource-components begins maintenance.
+    Here resource-component could be a whole resource or a component (for complex resources).
+"""
+function maintenance_shut_name(resource_component::AbstractString)::String
     "vMSHUT_" * resource_component
 end
 
