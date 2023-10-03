@@ -2,7 +2,16 @@ const MAINTENANCE_DOWN_VARS = "MaintenanceDownVariables"
 const MAINTENANCE_SHUT_VARS = "MaintenanceShutVariables"
 const HAS_MAINT = "HAS_MAINTENANCE"
 
-function get_maintenance(df::DataFrame)::Vector{Int}
+@doc raw"""
+    resources_with_maintenance(df::DataFrame)::Vector{Int}
+
+    Get a vector of the R_ID's of all resources listed in a dataframe
+    that have maintenance requirements. If there are none, return an empty vector.
+
+    This method takes a specific dataframe because compound resources may have their
+    data in multiple dataframes.
+"""
+function resources_with_maintenance(df::DataFrame)::Vector{Int}
     if "MAINT" in names(df)
         df[df.MAINT.>0, :R_ID]
     else
@@ -10,14 +19,12 @@ function get_maintenance(df::DataFrame)::Vector{Int}
     end
 end
 
-function maintenance_down_name(inputs::Dict, y::Int, suffix::AbstractString)
-    dfGen = inputs["dfGen"]
-    resource = dfGen[y, :Resource]
-    maintenance_down_name(resource, suffix)
+function maintenance_down_name(resource_component::AbstractString)
+    "vMDOWN_" * resource_component
 end
 
-function maintenance_down_name(resource::AbstractString, suffix::AbstractString)
-    "vMDOWN_" * resource * "_" * suffix
+function maintenance_shut_name(resource_component::AbstractString)
+    "vMSHUT_" * resource_component
 end
 
 function sanity_check_maintenance(MAINTENANCE::Vector{Int}, inputs::Dict)
@@ -53,8 +60,7 @@ end
 @doc raw"""
     maintenance_constraints!(EP::Model,
         inputs::Dict,
-        resource_name::AbstractString,
-        suffix::AbstractString,
+        resource_component::AbstractString,
         r_id::Int,
         maint_begin_cadence::Int,
         maint_dur::Int,
@@ -66,9 +72,10 @@ end
 
     EP: the JuMP model
     inputs: main data storage
-    resource_name: unique resource name
+    resource_component: unique resource name with optional component name
+       If the plant has more than one component, this could identify a specific part which
+       is undergoing maintenance.
     r_id: Resource ID (unique resource integer)
-    suffix: the part of the plant which has maintenance applied
     maint_begin_cadence:
         It may be too expensive (from an optimization perspective) to allow maintenance
         to begin at any time step during the simulation. Instead this integer describes
@@ -85,8 +92,7 @@ end
 function maintenance_constraints!(
     EP::Model,
     inputs::Dict,
-    resource_name::AbstractString,
-    suffix::AbstractString,
+    resource_component::AbstractString,
     r_id::Int,
     maint_begin_cadence::Int,
     maint_dur::Int,
@@ -97,12 +103,12 @@ function maintenance_constraints!(
     integer_operational_unit_committment::Bool,
 )
 
-    T = 1:inputs["T"]     # Number of time steps (hours)
+    T = 1:inputs["T"]
     hours_per_subperiod = inputs["hours_per_subperiod"]
 
     y = r_id
-    down_name = maintenance_down_name(resource_name, suffix)
-    shut_name = "vMSHUT_" * resource_name * "_" * suffix
+    down_name = maintenance_down_name(resource_component)
+    shut_name = maintenance_shut_name(resource_component)
     down = Symbol(down_name)
     shut = Symbol(shut_name)
 

@@ -218,7 +218,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 	)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
-    if !isempty(get_maintenance(dfGen))
+    if !isempty(resources_with_maintenance(dfGen))
         maintenance_constraints_thermal!(EP, inputs, setup)
     end
 end
@@ -347,9 +347,8 @@ function maintenance_constraints_thermal!(EP::Model, inputs::Dict, setup::Dict)
     dfGen = inputs["dfGen"]
     by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
 
-    MAINT = get_maintenance(dfGen)
-    resource(y) = by_rid(y, :Resource)
-    suffix="THERM"
+    MAINT = resources_with_maintenance(dfGen)
+    resource_component(y) = by_rid(y, :Resource)
     cap(y) = by_rid(y, :Cap_Size)
     maint_dur(y) = Int(floor(by_rid(y, :Maintenance_Duration)))
     maint_freq(y) = Int(floor(by_rid(y, :Maintenance_Frequency_Years)))
@@ -365,8 +364,7 @@ function maintenance_constraints_thermal!(EP::Model, inputs::Dict, setup::Dict)
     for y in MAINT
         maintenance_constraints!(EP,
                                 inputs,
-                                resource(y),
-                                suffix,
+                                resource_component(y),
                                 y,
                                 maint_begin_cadence(y),
                                 maint_dur(y),
