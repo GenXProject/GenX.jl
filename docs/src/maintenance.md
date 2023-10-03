@@ -13,7 +13,7 @@ GenX can model scheduled maintenance for only some types of plants:
 A plant requires a single contiguous period of $h \ge 1$ hours of maintenance, every $y \ge 1$ years.
 For each plant, the best time to start the maintenance period is determined by the optimizer.
 
-During maintenance, the plant cannot be "committed", and therefore
+During maintenance, the plant cannot be "commited", and therefore
 
 * uses no fuel,
 * produces no power,
@@ -28,7 +28,7 @@ GenX models a long-term equilibrium,
 and each problem generally represents a single full year.
 If a plant requires maintenance every $y$ years, we take the simplification that at least $1/y$ of the plants must undergo maintenance in the modeled year.
 
-See also "Interaction with integer unit committment" below.
+See also "Interaction with integer unit commitment" below.
 
 ### Reduction of number of possible start dates
 This module creates constraints which work across long periods, and consequently can be very expensive to solve.
@@ -36,7 +36,7 @@ In order to reduce the expense, the set of possible maintenance start dates can 
 Rather than have maintenance potentially start every hour, one can have possible start dates which are once per day, once per week, etc.
 (In reality, maintenance is likely scheduled months in advance, so optimizing down to the hour may not be realistic anyway.)
 
-## How to add scheduled maintenance requirements for a plant
+## How to use
 There are four columns which need to be added to the plant data, i.e. in `Generators_data.csv`:
 
 1. `MAINT` should be `1` for plants that require maintenance and `0` otherwise.
@@ -60,8 +60,8 @@ The maintenance module has these restrictions:
 It would not make sense to model a *month*-long maintenance period when the year is modeled as a series of representative *weeks*, for example.
 - Multi-stage has not yet been tested (but please let us know what happens if you test it!).
 
-### Interaction with integer unit committment
-If integer unit committment is on (`UCommit=1`), this module may not produce sensible results.
+### Interaction with integer unit commitment
+If integer unit commitment is on (`UCommit=1`), this module may not produce sensible results.
 This module works on the level of individual resources (i.e. a specific type of plant in a specific zone.).
 If there is only 1 unit of a given resource built in a zone, then it will undergo maintenance every year regardless of its `Maintenance_Frequency_Years`.
 
@@ -73,11 +73,19 @@ However, the plant would still be able to contribute to the Capacity Reserve Mar
 ## Outputs produced
 If at least one plant has `MAINT=1`, a file `maint_down.csv` will be written listing how many plants are down for maintenance in each timestep.
 
+## Notes on mathematical formulation
+The formulation of the maintenance state is very similar to the formulation of unit commitment.
+
+There is a variable called something like `vMSHUT` which is analogous to `vSTART` and controls the start of the maintenance period.
+There is another variable called something like `vMDOWN` analogous to `vCOMMIT` which controls the maintenance status in any hour.
+
+A constraint ensures that the value of `vMDOWN` in any hour is always more than the number of `vMSHUT`s in the previous `Maintenance_Duration` hours.
+
+Another constraint ensures that the number of plants committed (`vCOMMIT`) at any one time plus the number of plants under maintenance (`vMDOWN`) is less than the total number of plants.
+
 ## Developer note: adding maintenance to a resource
 The maintenance formulation is applied on a per-resource basis, by calling the function `maintenance_formulation!`.
 
 ```@docs
 GenX.maintenance_formulation!
 ```
-
-
