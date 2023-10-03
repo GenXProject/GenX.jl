@@ -89,3 +89,9 @@ The maintenance formulation is applied on a per-resource basis, by calling the f
 ```@docs
 GenX.maintenance_formulation!
 ```
+
+See `maintenance_formulation_thermal_commit!` for an example of how to apply it to a new resource.
+
+* The resource must have a `vCOMMIT`-like variable which is proportional to maximum the power output, etc at any given timestep.
+* The resource must have a `eTotalCap`-like quantity and a `Cap_Size`-like parameter; only the ratio of the two is used.
+
