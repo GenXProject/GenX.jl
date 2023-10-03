@@ -63,6 +63,39 @@ function check_longdurationstorage_applicability(r::GenXResource)
 end
 
 @doc raw"""
+	check_maintenance_applicability(r::GenXResource)
+
+Check whether the MAINT flag is set appropriately
+"""
+function check_maintenance_applicability(r::GenXResource)
+    applicable_resources = [:THERM]
+
+    not_set = resource_attribute_not_set()
+    value = get(r, :MAINT, not_set)
+
+    error_strings = String[]
+
+    if value == not_set
+        # not MAINT so the rest is not applicable
+        return error_strings
+    end
+
+    check_for_flag_set(el) = get(r, el, not_set) == 1
+    statuses = check_for_flag_set.(applicable_resources)
+
+    if count(statuses) == 0
+        e = string("Resource ", resource_name(r), " has :MAINT = ", value, ".\n",
+                   "This setting is valid only for resources where the type is \n",
+                   "one of $applicable_resources. \n",
+                   "Furthermore for THERM resources, it is valid only for \n",
+                   "those which have unit commitment (THERM==1)."
+                  )
+        push!(error_strings, e)
+    end
+    return error_strings
+end
+
+@doc raw"""
     check_resource(r::GenXResource)::Vector{String}
 
 Top-level function for validating the self-consistency of a GenX resource.
@@ -72,6 +105,7 @@ function check_resource(r::GenXResource)::Vector{String}
     e = String[]
     e = [e; check_resource_type_flags(r)]
     e = [e; check_longdurationstorage_applicability(r)]
+    e = [e; check_maintenance_applicability(r)]
     return e
 end
 
