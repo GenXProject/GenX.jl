@@ -106,8 +106,8 @@ function maintenance_constraints!(
     down = Symbol(down_name)
     shut = Symbol(shut_name)
 
-    union!(inputs["MaintenanceDownVariables"], (down,))
-    union!(inputs["MaintenanceShutVariables"], (shut,))
+    union!(inputs[MAINTENANCE_DOWN_VARS], (down,))
+    union!(inputs[MAINTENANCE_SHUT_VARS], (shut,))
 
     maintenance_begin_hours = 1:maint_begin_cadence:T[end]
 
