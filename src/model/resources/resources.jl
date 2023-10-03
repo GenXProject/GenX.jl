@@ -80,16 +80,20 @@ function check_maintenance_applicability(r::GenXResource)
         return error_strings
     end
 
-    check_for_flag_set(el) = get(r, el, not_set) == 1
+    check_for_flag_set(el) = get(r, el, not_set) > 0
     statuses = check_for_flag_set.(applicable_resources)
 
     if count(statuses) == 0
         e = string("Resource ", resource_name(r), " has :MAINT = ", value, ".\n",
                    "This setting is valid only for resources where the type is \n",
                    "one of $applicable_resources. \n",
-                   "Furthermore for THERM resources, it is valid only for \n",
-                   "those which have unit commitment (THERM==1)."
                   )
+        push!(error_strings, e)
+    end
+    if get(r, :THERM, not_set) == 2
+        e = string("Resource ", resource_name(r), " has :MAINT = ", value, ".\n",
+                   "This is valid only for resources with unit commitment (:THERM = 1);\n",
+                   "this has :THERM = 2.")
         push!(error_strings, e)
     end
     return error_strings
