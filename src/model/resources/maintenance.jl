@@ -1,6 +1,6 @@
 const MAINTENANCEDOWNVARS = "MaintenanceDownVariables"
 const MAINTENANCESHUTVARS = "MaintenanceShutVariables"
-const HASMAINT = "has_maiNTENANCE"
+const HASMAINT = "HAS_MAINTENANCE"
 
 function get_maintenance(df::DataFrame)::Vector{Int}
     if "MAINT" in names(df)
