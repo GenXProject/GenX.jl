@@ -27,12 +27,12 @@ function maintenance_shut_name(resource_component::AbstractString)
     "vMSHUT_" * resource_component
 end
 
-function sanity_check_maintenance(MAINTENANCE::Vector{Int}, inputs::Dict)
+function sanity_check_maintenance(MAINT::Vector{Int}, inputs::Dict)
     rep_periods = inputs["REP_PERIOD"]
 
-    is_maint_reqs = !isempty(MAINTENANCE)
+    is_maint_reqs = !isempty(MAINT)
     if rep_periods > 1 && is_maint_reqs
-        @error """Resources with R_ID $MAINTENANCE have MAINT > 0,
+        @error """Resources with R_ID $MAINT have MAINT > 0,
         but the number of representative periods ($rep_periods) is greater than 1.
         These are incompatible with a Maintenance requirement."""
         error("Incompatible GenX settings and maintenance requirements.")
