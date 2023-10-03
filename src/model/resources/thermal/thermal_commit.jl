@@ -219,7 +219,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
     if !isempty(resources_with_maintenance(dfGen))
-        maintenance_constraints_thermal!(EP, inputs, setup)
+        maintenance_formulation_thermal!(EP, inputs, setup)
     end
 end
 
@@ -339,7 +339,7 @@ function thermal_commit_reserves!(EP::Model, inputs::Dict)
 end
 
 
-function maintenance_constraints_thermal!(EP::Model, inputs::Dict, setup::Dict)
+function maintenance_formulation_thermal!(EP::Model, inputs::Dict, setup::Dict)
 
     @info "Maintenance Module for Thermal plants"
 
@@ -362,7 +362,7 @@ function maintenance_constraints_thermal!(EP::Model, inputs::Dict, setup::Dict)
     sanity_check_maintenance(MAINT, inputs)
 
     for y in MAINT
-        maintenance_constraints!(EP,
+        maintenance_formulation!(EP,
                                 inputs,
                                 resource_component(y),
                                 y,

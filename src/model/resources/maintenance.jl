@@ -1,6 +1,5 @@
 const MAINTENANCE_DOWN_VARS = "MaintenanceDownVariables"
 const MAINTENANCE_SHUT_VARS = "MaintenanceShutVariables"
-const HAS_MAINT = "HAS_MAINTENANCE"
 
 @doc raw"""
     resources_with_maintenance(df::DataFrame)::Vector{Int}
@@ -58,7 +57,7 @@ function controlling_maintenance_start_hours(
 end
 
 @doc raw"""
-    maintenance_constraints!(EP::Model,
+    maintenance_formulation!(EP::Model,
         inputs::Dict,
         resource_component::AbstractString,
         r_id::Int,
@@ -84,12 +83,15 @@ end
     maint_freq_years: 1 is maintenannce every year,
         2 is maintenance every other year, etc. Must be at least 1.
     cap: Plant electrical capacity.
-    vcommit: symbol of vCOMMIT-like variable.
-    ecap: symbol of eTotalCap-like variable.
+    vcommit: Symbol of vCOMMIT-like variable.
+    ecap: Symbol of eTotalCap-like variable.
     integer_operational_unit_committment: whether this plant has integer unit
         committment for operational variables.
+
+    Creates maintenance-tracking variables and adds their Symbols to two Sets in `inputs`.
+    Adds constraints which act on the vCOMMIT-like variable.
 """
-function maintenance_constraints!(
+function maintenance_formulation!(
     EP::Model,
     inputs::Dict,
     resource_component::AbstractString,
@@ -158,12 +160,9 @@ function maintenance_constraints!(
         EP,
         sum(vMSHUT[t] for t in maintenance_begin_hours) >= ecap[y] / cap / maint_freq_years
     )
-
-    return down, shut
 end
 
 function ensure_maintenance_variable_records!(inputs::Dict)
-    inputs[HAS_MAINT] = true
     for var in (MAINTENANCE_DOWN_VARS, MAINTENANCE_SHUT_VARS)
         if var ∉ keys(inputs)
             inputs[var] = Set{Symbol}()
@@ -173,7 +172,7 @@ end
 
 function has_maintenance(inputs::Dict)::Bool
     rep_periods = inputs["REP_PERIOD"]
-    HAS_MAINT in keys(inputs) && rep_periods == 1
+    MAINTENANCE_DOWN_VARS in keys(inputs) && rep_periods == 1
 end
 
 function get_maintenance_down_variables(inputs::Dict)::Set{Symbol}
