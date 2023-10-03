@@ -1017,3 +1017,8 @@ Reports solar PV generation in AC terms by each co-located VRE and storage resou
 #### 3.2.15 vre_stor_wind_power.csv
 
 Reports wind generation in AC terms by each co-located VRE and storage resource in each model time step.
+
+#### 3.2.16 maint_down.csv
+
+Only written if at least one plant has the scheduled maintenance formulation enabled.
+Reports the number of resource-components which are under maintenance during each model time step.
