@@ -72,3 +72,12 @@ However, the plant would still be able to contribute to the Capacity Reserve Mar
 
 ## Outputs produced
 If at least one plant has `MAINT=1`, a file `maint_down.csv` will be written listing how many plants are down for maintenance in each timestep.
+
+## Developer note: adding maintenance to a resource
+The maintenance formulation is applied on a per-resource basis, by calling the function `maintenance_formulation!`.
+
+```@docs
+GenX.maintenance_formulation!
+```
+
+
