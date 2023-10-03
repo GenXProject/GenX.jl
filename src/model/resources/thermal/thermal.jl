@@ -30,15 +30,15 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
-        reserves = inputs["NCapacityReserveMargin"]
-        capresfactor(y, res) = dfGen[y, Symbol("CapRes_$res")]
-        @expression(EP, eCapResMarBalanceThermal[res in 1:reserves, t in 1:T],
-                    sum(capresfactor(y, res) * EP[:eTotalCap][y] for y in THERM_ALL))
+        ncapres = inputs["NCapacityReserveMargin"]
+        capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
+        @expression(EP, eCapResMarBalanceThermal[capres in 1:ncapres, t in 1:T],
+                    sum(capresfactor(y, capres) * EP[:eTotalCap][y] for y in THERM_ALL))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
 
         MAINT = get_maintenance(dfGen)
         if !isempty(intersect(MAINT, THERM_COMMIT))
-            thermal_maintenance_capacity_reserve_margin_adj!(EP, inputs)
+            thermal_maintenance_capacity_reserve_margin_adjustment!(EP, inputs)
         end
 	end
 #=
@@ -50,18 +50,18 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	=# ##From main
 end
 
-function thermal_maintenance_capacity_reserve_margin_adj!(EP::Model,
-                                                          inputs::Dict)
+function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
+                                                                 inputs::Dict)
     dfGen = inputs["dfGen"]
     T = inputs["T"]     # Number of time steps (hours)
-    reserves = inputs["NCapacityReserveMargin"]
+    ncapres = inputs["NCapacityReserveMargin"]
     THERM_COMMIT = inputs["THERM_COMMIT"]
     MAINT = intersect(get_maintenance(dfGen), THERM_COMMIT)
 
-    capresfactor(y, res) = dfGen[y, Symbol("CapRes_$res")]
+    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
     cap_size(y) = dfGen[y, :Cap_Size]
     down_var(y) = EP[Symbol(maintenance_down_name(inputs, y, "THERM"))]
-    maint_adj = @expression(EP, [res in 1:reserves, t in 1:T],
-                    -sum(capresfactor(y, res) * down_var(y)[t] * cap_size(y) for y in MAINT))
+    maint_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
+                    -sum(capresfactor(y, capres) * down_var(y)[t] * cap_size(y) for y in MAINT))
     add_similar_to_expression!(EP[:eCapResMarBalance], maint_adj)
 end
