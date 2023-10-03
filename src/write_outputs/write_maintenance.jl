@@ -2,9 +2,7 @@ function write_simple_csv(filename::AbstractString, df::DataFrame)
     CSV.write(filename, df)
 end
 
-function write_simple_csv(filename::AbstractString,
-                          header::Vector,
-                          matrix)
+function write_simple_csv(filename::AbstractString, header::Vector, matrix)
     df = DataFrame(matrix, header)
     write_simple_csv(filename, df)
 end

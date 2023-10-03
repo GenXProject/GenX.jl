@@ -40,7 +40,12 @@ end
     maintenance_duration: length of a maintenance period
     maintenance_begin_hours: collection of hours in which maintenance is allowed to start
 """
-function controlling_maintenance_start_hours(p::Int, t::Int, maintenance_duration::Int, maintenance_begin_hours)
+function controlling_maintenance_start_hours(
+    p::Int,
+    t::Int,
+    maintenance_duration::Int,
+    maintenance_begin_hours,
+)
     controlled_hours = hoursbefore(p, t, 0:(maintenance_duration-1))
     return intersect(controlled_hours, maintenance_begin_hours)
 end
@@ -77,18 +82,20 @@ end
     integer_operational_unit_committment: whether this plant has integer unit
         committment for operational variables.
 """
-function maintenance_constraints!(EP::Model,
-        inputs::Dict,
-        resource_name::AbstractString,
-        suffix::AbstractString,
-        r_id::Int,
-        maint_begin_cadence::Int,
-        maint_dur::Int,
-        maint_freq_years::Int,
-        cap::Float64,
-        vcommit::Symbol,
-        ecap::Symbol,
-        integer_operational_unit_committment::Bool)
+function maintenance_constraints!(
+    EP::Model,
+    inputs::Dict,
+    resource_name::AbstractString,
+    suffix::AbstractString,
+    r_id::Int,
+    maint_begin_cadence::Int,
+    maint_dur::Int,
+    maint_freq_years::Int,
+    cap::Float64,
+    vcommit::Symbol,
+    ecap::Symbol,
+    integer_operational_unit_committment::Bool,
+)
 
     T = 1:inputs["T"]     # Number of time steps (hours)
     hours_per_subperiod = inputs["hours_per_subperiod"]
@@ -105,10 +112,14 @@ function maintenance_constraints!(EP::Model,
     maintenance_begin_hours = 1:maint_begin_cadence:T[end]
 
     # create variables
-    vMDOWN = EP[down] = @variable(EP, [t in T], base_name=down_name, lower_bound=0)
-    vMSHUT = EP[shut] = @variable(EP, [t in maintenance_begin_hours],
-                                      base_name=shut_name,
-                                      lower_bound=0)
+    vMDOWN = EP[down] = @variable(EP, [t in T], base_name = down_name, lower_bound = 0)
+    vMSHUT =
+        EP[shut] = @variable(
+            EP,
+            [t in maintenance_begin_hours],
+            base_name = shut_name,
+            lower_bound = 0
+        )
 
     if integer_operational_unit_committment
         set_integer.(vMDOWN)
@@ -125,18 +136,22 @@ function maintenance_constraints!(EP::Model,
     end)
 
     # Plant is non-committed during maintenance
-    @constraint(EP, [t in T], ecap[y] / cap - vcommit[y,t] >= vMDOWN[t])
+    @constraint(EP, [t in T], ecap[y] / cap - vcommit[y, t] >= vMDOWN[t])
 
-    controlling_hours(t) = controlling_maintenance_start_hours(hours_per_subperiod,
-                                                               t,
-                                                               maint_dur,
-                                                               maintenance_begin_hours)
+    controlling_hours(t) = controlling_maintenance_start_hours(
+        hours_per_subperiod,
+        t,
+        maint_dur,
+        maintenance_begin_hours,
+    )
     # Plant is down for the required number of hours
     @constraint(EP, [t in T], vMDOWN[t] == sum(vMSHUT[controlling_hours(t)]))
 
     # Plant require maintenance every (certain number of) year(s)
-    @constraint(EP, sum(vMSHUT[t] for t in maintenance_begin_hours) >=
-                ecap[y] / cap / maint_freq_years)
+    @constraint(
+        EP,
+        sum(vMSHUT[t] for t in maintenance_begin_hours) >= ecap[y] / cap / maint_freq_years
+    )
 
     return down, shut
 end
