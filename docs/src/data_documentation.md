@@ -355,6 +355,7 @@ This file contains cost and performance parameters for various generators and ot
 |Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. Note that for co-located VRE-STOR resources, this value pertains to the grid connection (other minimum required discharge capacity retirements for different components of the resource can be found in the VRE-STOR dataframe). |
 |Min\_Retired\_Energy\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. Note that for co-located VRE-STOR resources, this value pertains to the storage component (other minimum required capacity retirements for different components of the resource can be found in the VRE-STOR dataframe).|
 |Min\_Retired\_Charge\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing charge capacity. |
+
 ###### Table 6: Settings-specific columns in the Generators\_data.csv file
 ---
 |**Column Name** | **Description**|
@@ -388,6 +389,11 @@ This file contains cost and performance parameters for various generators and ot
 |PWFU\_Fuel\_Usage\_Zero\_Load\_MMBTU\_per\_h|The fuel usage (MMBTU/h) for the first PWFU segemnt (y-intercept) at zero load.|
 |PWFU\_Heat\_Rate\_MMBTU\_per\_MWh\_*i| The slope of fuel usage function of the segment i.|
 |PWFU\_Load\_Point\_MW\_*i| The end of segment i (MW).|
+|**Maintenance data**|
+|MAINT|[0,1], toggles scheduled maintenance formulation.|
+|Maintenance\_Duration| Duration of the maintenance period, in number of timesteps. Only used if `MAINT=1`.|
+|Maintenance\_Frequency\_Years| (Inverse) frequency of scheduled maintenance, in years. Only used if `MAINT=1`.|
+|Maintenance\_Begin\_Cadence| Cadence of timesteps in which scheduled maintenance can begin. Only used if `MAINT=1`.|
 |**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
 |Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
 |Electrolyzer_Min_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
