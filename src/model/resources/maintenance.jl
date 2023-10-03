@@ -79,7 +79,7 @@ end
         cap::Float64,
         vcommit::Symbol,
         ecap::Symbol,
-        integer_operational_unit_committment::Bool)
+        integer_operational_unit_commitment::Bool)
 
     EP: the JuMP model
     inputs: main data storage
@@ -97,8 +97,8 @@ end
     cap: Plant electrical capacity.
     vcommit: Symbol of vCOMMIT-like variable.
     ecap: Symbol of eTotalCap-like variable.
-    integer_operational_unit_committment: whether this plant has integer unit
-        committment for operational variables.
+    integer_operational_unit_commitment: whether this plant has integer unit
+        commitment for operational variables.
 
     Creates maintenance-tracking variables and adds their Symbols to two Sets in `inputs`.
     Adds constraints which act on the vCOMMIT-like variable.
@@ -114,7 +114,7 @@ function maintenance_formulation!(
     cap::Float64,
     vcommit::Symbol,
     ecap::Symbol,
-    integer_operational_unit_committment::Bool,
+    integer_operational_unit_commitment::Bool,
 )
 
     T = 1:inputs["T"]
@@ -141,7 +141,7 @@ function maintenance_formulation!(
             lower_bound = 0
         )
 
-    if integer_operational_unit_committment
+    if integer_operational_unit_commitment
         set_integer.(vMDOWN)
         set_integer.(vMSHUT)
     end
@@ -151,12 +151,11 @@ function maintenance_formulation!(
 
     # Maintenance variables are measured in # of plants
     @constraints(EP, begin
-        [t in T], vMDOWN[t] <= ecap[y] / cap
         [t in maintenance_begin_hours], vMSHUT[t] <= ecap[y] / cap
     end)
 
     # Plant is non-committed during maintenance
-    @constraint(EP, [t in T], ecap[y] / cap - vcommit[y, t] >= vMDOWN[t])
+    @constraint(EP, [t in T], vMDOWN[t] + vcommit[y, t] <= ecap[y] / cap)
 
     controlling_hours(t) = controlling_maintenance_start_hours(
         hours_per_subperiod,
