@@ -1,6 +1,6 @@
-const MAINTENANCEDOWNVARS = "MaintenanceDownVariables"
-const MAINTENANCESHUTVARS = "MaintenanceShutVariables"
-const HASMAINT = "HAS_MAINTENANCE"
+const MAINTENANCE_DOWN_VARS = "MaintenanceDownVariables"
+const MAINTENANCE_SHUT_VARS = "MaintenanceShutVariables"
+const HAS_MAINT = "HAS_MAINTENANCE"
 
 function get_maintenance(df::DataFrame)::Vector{Int}
     if "MAINT" in names(df)
@@ -143,8 +143,8 @@ function maintenance_constraints!(EP::Model,
 end
 
 function ensure_maintenance_variable_records!(inputs::Dict)
-    inputs[HASMAINT] = true
-    for var in (MAINTENANCEDOWNVARS, MAINTENANCESHUTVARS)
+    inputs[HAS_MAINT] = true
+    for var in (MAINTENANCE_DOWN_VARS, MAINTENANCE_SHUT_VARS)
         if var ∉ keys(inputs)
             inputs[var] = Set{Symbol}()
         end
@@ -153,9 +153,9 @@ end
 
 function has_maintenance(inputs::Dict)::Bool
     rep_periods = inputs["REP_PERIOD"]
-    HASMAINT in keys(inputs) && rep_periods == 1
+    HAS_MAINT in keys(inputs) && rep_periods == 1
 end
 
 function get_maintenance_down_variables(inputs::Dict)::Set{Symbol}
-    inputs[MAINTENANCEDOWNVARS]
+    inputs[MAINTENANCE_DOWN_VARS]
 end
