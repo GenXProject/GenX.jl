@@ -92,7 +92,6 @@ function maintenance_constraints!(EP::Model,
 
     T = 1:inputs["T"]     # Number of time steps (hours)
     hours_per_subperiod = inputs["hours_per_subperiod"]
-    weights = inputs["omega"]
 
     y = r_id
     down_name = maintenance_down_name(resource_name, suffix)
@@ -136,7 +135,7 @@ function maintenance_constraints!(EP::Model,
     @constraint(EP, [t in T], vMDOWN[t] == sum(vMSHUT[controlling_hours(t)]))
 
     # Plant frequire maintenance every (certain number of) year(s)
-    @constraint(EP, sum(vMSHUT[t]*weights[t] for t in maintenance_begin_hours) >=
+    @constraint(EP, sum(vMSHUT[t] for t in maintenance_begin_hours) >=
                 ecap[y] / cap / maint_freq_years)
 
     return down, shut
