@@ -58,9 +58,16 @@ The maintenance module has these restrictions:
 It would not make sense to model a *month*-long maintenance period when the year is modeled as a series of representative *weeks*, for example.
 
 ### Interaction with integer unit commitment
-If integer unit commitment is on (`UCommit=1`), this module may not produce sensible results.
-This module works on the level of individual resources (i.e. a specific type of plant in a specific zone.).
-If there is only 1 unit of a given resource built in a zone, then it will undergo maintenance every year regardless of its `Maintenance_Frequency_Years`.
+If integer unit commitment is on (`UCommit=1`) this module may not produce correct results; there may be more maintenance than the user wants.
+This is because the formulation specifies that the number of plants that go down for maintenance in the simulated year must be at least (the number of plants in the zone)/(the maintenance cycle length in years).
+As a reminder, the number of plants is `eTotalCap / Cap_Size`.
+
+If there were three 500 MW plants (total 1500 MW) in a zone, and they require maintenance every three years (`Maintenance_Frequency_Years=3`), 
+the formulation will work properly: one of the three plants will go under maintenance.
+
+But if there was only one 500 MW plant, and it requires maintenance every 3 years, the constraint will still make it do maintenance **every year**, because `ceil(1/3)` is `1`. The whole 500 MW plant will do maintenance. This is the unexpected behavior.
+
+However, if integer unit commitment was relaxed to "linearized" unit commitment (`UCommit=2`), the model will have only 500 MW / 3 = 166.6 MW worth of this plant do maintenance.
 
 ## Hint: pre-scheduling maintenance
 If you want to pre-schedule when maintenance occurs, you might not need this module.
