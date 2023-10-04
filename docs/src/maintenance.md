@@ -5,9 +5,7 @@ In the real world, some types of resources (notably, fission) require regular sc
 During this time, the plant produces no power.
 This module allows GenX to find the best time of year for plants to undergo maintenance.
 
-GenX can model scheduled maintenance for only some types of plants:
-
-* Thermal plants with Unit Commitment (THERM=1)
+Scheduled maintenance is implemented **only** for thermal plants with unit commitment (THERM=1).
 
 ## Description of the maintenance model
 A plant requires a single contiguous period of $h \ge 1$ hours of maintenance, every $y \ge 1$ years.
@@ -58,7 +56,6 @@ The maintenance module has these restrictions:
 - More than a single maintenance period per year (i.e. every three months) is not possible in the current formulation.
 - Only full-year cases can be run; there must be only one "representative period".
 It would not make sense to model a *month*-long maintenance period when the year is modeled as a series of representative *weeks*, for example.
-- Multi-stage has not yet been tested (but please let us know what happens if you test it!).
 
 ### Interaction with integer unit commitment
 If integer unit commitment is on (`UCommit=1`), this module may not produce sensible results.
