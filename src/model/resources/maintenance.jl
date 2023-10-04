@@ -166,7 +166,7 @@ function maintenance_formulation!(
     # Plant is down for the required number of hours
     @constraint(EP, [t in T], vMDOWN[t] == sum(vMSHUT[controlling_hours(t)]))
 
-    # Plant require maintenance every (certain number of) year(s)
+    # Plant requires maintenance every (certain number of) year(s)
     @constraint(
         EP,
         sum(vMSHUT[t] for t in maintenance_begin_hours) >= ecap[y] / cap / maint_freq_years
