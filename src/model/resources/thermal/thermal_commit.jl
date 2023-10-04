@@ -218,7 +218,9 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 	)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
-
+    if !isempty(resources_with_maintenance(dfGen))
+        maintenance_formulation_thermal_commit!(EP, inputs, setup)
+    end
 end
 
 @doc raw"""
@@ -336,3 +338,68 @@ function thermal_commit_reserves!(EP::Model, inputs::Dict)
 
 end
 
+@doc raw"""
+    maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
+
+    Creates maintenance variables and constraints for thermal-commit plants.
+"""
+function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
+
+    @info "Maintenance Module for Thermal plants"
+
+    ensure_maintenance_variable_records!(inputs)
+    dfGen = inputs["dfGen"]
+    by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
+
+    MAINT = resources_with_maintenance(dfGen)
+    resource_component(y) = by_rid(y, :Resource)
+    cap(y) = by_rid(y, :Cap_Size)
+    maint_dur(y) = Int(floor(by_rid(y, :Maintenance_Duration)))
+    maint_freq(y) = Int(floor(by_rid(y, :Maintenance_Cycle_Length_Years)))
+    maint_begin_cadence(y) = Int(floor(by_rid(y, :Maintenance_Begin_Cadence)))
+
+    integer_operational_unit_committment = setup["UCommit"] == 1
+
+    vcommit = :vCOMMIT
+    ecap = :eTotalCap
+
+    sanity_check_maintenance(MAINT, inputs)
+
+    for y in MAINT
+        maintenance_formulation!(EP,
+                                inputs,
+                                resource_component(y),
+                                y,
+                                maint_begin_cadence(y),
+                                maint_dur(y),
+                                maint_freq(y),
+                                cap(y),
+                                vcommit,
+                                ecap,
+                                integer_operational_unit_committment)
+    end
+end
+
+@doc raw"""
+    thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model, inputs::Dict)
+
+    Eliminates the contribution of a plant to the capacity reserve margin while it is down
+    for maintenance.
+"""
+function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
+                                                                 inputs::Dict)
+    dfGen = inputs["dfGen"]
+    T = inputs["T"]     # Number of time steps (hours)
+    ncapres = inputs["NCapacityReserveMargin"]
+    THERM_COMMIT = inputs["THERM_COMMIT"]
+    MAINT = resources_with_maintenance(dfGen)
+    applicable_resources = intersect(MAINT, THERM_COMMIT)
+
+    resource_component(y) = dfGen[y, :Resource]
+    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
+    cap_size(y) = dfGen[y, :Cap_Size]
+    down_var(y) = EP[Symbol(maintenance_down_name(resource_component(y)))]
+    maint_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
+                    -sum(capresfactor(y, capres) * down_var(y)[t] * cap_size(y) for y in applicable_resources))
+    add_similar_to_expression!(EP[:eCapResMarBalance], maint_adj)
+end

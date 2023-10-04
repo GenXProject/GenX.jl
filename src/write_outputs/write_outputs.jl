@@ -137,6 +137,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	println("Time elapsed for writing co2 is")
 	println(elapsed_time_emissions)
 
+    if has_maintenance(inputs)
+        write_maintenance(path, inputs, EP)
+    end
+
 	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
 	if setup["MultiStage"] == 0
 		dfPrice = DataFrame()
