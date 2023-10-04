@@ -39,7 +39,7 @@ There are four columns which need to be added to the plant data, i.e. in `Genera
 
 1. `MAINT` should be `1` for plants that require maintenance and `0` otherwise.
 2. `Maintenance_Duration` is the number of hours the maintenance period lasts.
-3. `Maintenance_Frequency_Years`. If `1`, maintenance every year, if `3` maintenance every 3 years, etc.
+3. `Maintenance_Cycle_Length_Years`. If `1`, maintenance every year, if `3` maintenance every 3 years, etc.
 4. `Maintenance_Begin_Cadence`. Spacing between hours in which maintenance can start.
 
 The last three fields must be integers which are greater than 0. 
@@ -62,7 +62,7 @@ If integer unit commitment is on (`UCommit=1`) this module may not produce corre
 This is because the formulation specifies that the number of plants that go down for maintenance in the simulated year must be at least (the number of plants in the zone)/(the maintenance cycle length in years).
 As a reminder, the number of plants is `eTotalCap / Cap_Size`.
 
-If there were three 500 MW plants (total 1500 MW) in a zone, and they require maintenance every three years (`Maintenance_Frequency_Years=3`), 
+If there were three 500 MW plants (total 1500 MW) in a zone, and they require maintenance every three years (`Maintenance_Cycle_Length_Years=3`), 
 the formulation will work properly: one of the three plants will go under maintenance.
 
 But if there was only one 500 MW plant, and it requires maintenance every 3 years, the constraint will still make it do maintenance **every year**, because `ceil(1/3)` is `1`. The whole 500 MW plant will do maintenance. This is the unexpected behavior.

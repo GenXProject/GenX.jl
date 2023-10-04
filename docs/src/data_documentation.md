@@ -392,7 +392,7 @@ This file contains cost and performance parameters for various generators and ot
 |**Maintenance data**|
 |MAINT|[0,1], toggles scheduled maintenance formulation.|
 |Maintenance\_Duration| (Positive integer, less than total length of simulation.) Duration of the maintenance period, in number of timesteps. Only used if `MAINT=1`.|
-|Maintenance\_Frequency\_Years| Length of scheduled maintenance cycle, in years. `1` is maintenance every year, `3` is every three years, etc. (Positive integer. Only used if `MAINT=1`.)|
+|Maintenance\_Cycle\_Length\_Years| Length of scheduled maintenance cycle, in years. `1` is maintenance every year, `3` is every three years, etc. (Positive integer. Only used if `MAINT=1`.)|
 |Maintenance\_Begin\_Cadence| Cadence of timesteps in which scheduled maintenance can begin. `1` means that a maintenance period can start in any timestep, `24` means it can start only in timesteps 1, 25, 49, etc. A larger number can decrease the simulation computational cost as it limits the optimizer's choices. (Positive integer, less than total length of simulation. Only used if `MAINT=1`.)|
 |**Electrolyzer related parameters required if the set ELECTROLYZER is not empty**|
 |Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
