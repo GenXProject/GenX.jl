@@ -1,0 +1,64 @@
+name: CI
+
+on: 
+  pull_request:
+  push:
+    branches: [main, develop]
+    tags: ['*']
+    
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name}}
+    runs-on: ${{ matrix.os }}
+    strategy: 
+      fail-fast: false
+      matrix:
+        version:
+          - "1.6"
+          - "1.7"
+          - "1.8" 
+          - '1' # latest stable 1.x Julia release (Linux)
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+        include: # additional tests [Julia-nightly]
+          - os: ubuntu-latest
+            version: 'nightly'
+            arch: x64
+            allow_failure: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create a new branch for test logs
+        run: |
+          if [[ ${{ matrix.version }} == '1' ]]; then
+            git config --local user.name lbonaldo
+            git config --local user.email "39280783+lbonaldo@users.noreply.github.com"
+            git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+            if [ -z "$(git ls-remote --heads origin ${GITHUB_REF#refs/heads/}-testlogs)" ] ; then   # if the branch doesn't exist
+              echo "Branch doesn't exist. Skip fetching."
+            else    # if a branch exists, fetch it
+              git fetch origin ${GITHUB_REF#refs/heads/}-testlogs 
+              git cherry-pick $(git log -n 1 origin/${GITHUB_REF#refs/heads/}-testlogs --pretty=format:"%H")
+            fi
+          fi
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v1
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - name: Commit logs and push to repo # only for 1.x versions
+        run: |
+          if [[ ${{ matrix.version }} == '1' ]]; then
+            git add -f test/Logs
+            git commit -m "Update test logs"
+            git push -f origin ${GITHUB_REF#refs/heads/}-testlogs
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          file: lcov.info

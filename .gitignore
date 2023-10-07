@@ -19,6 +19,8 @@ gurobi.log
 cplex.log
 Highs.log
 
+test/Logs
+
 /docs/build/
 
 # Microsoft office temporary files

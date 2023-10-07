@@ -207,5 +207,5 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
 
     CSV.write(joinpath(outpath, "morris.csv"), Morris_range)
-
+    return Morris_range
 end
