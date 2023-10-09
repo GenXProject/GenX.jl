@@ -1,13 +1,3 @@
-function summarize_errors(error_strings::Vector{String})
-	if !isempty(error_strings)
-		println(length(error_strings), " problem(s) in the configuration of the generators:")
-		for es in error_strings
-			println(es)
-		end
-		error("There were errors in the configuration of the generators.")
-	end
-end
-
 @doc raw"""
 	load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
 
