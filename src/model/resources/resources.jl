@@ -5,6 +5,7 @@ GenXResource = Dict{Symbol, Any}
 resource_attribute_not_set() = 0
 
 resource_name(r::GenXResource) = r[:Resource]
+zone_id(r::GenXResource) = r[:Zone]
 
 @doc raw"""
 	check_resource_type_flags(r::GenXResource)
@@ -145,4 +146,46 @@ end
 
 function dataframerow_to_dict(dfr::DataFrameRow)
     return Dict(pairs(dfr))
+end
+
+function in_zone(resource::GenXResource, zone::Int)::Bool
+    zone_id(resource) == zone
+end
+
+@doc raw"""
+    resources_in_zone(resources::Vector{GenXResource}, zone::Int)::Vector{GenXResources)
+
+Find resources in a zone.
+"""
+function resources_in_zone(resources::Vector{GenXResource}, zone::Int)::Vector{GenXResource}
+    return filter(r -> in_zone(r, zone), resources)
+end
+
+@doc raw"""
+    resources_in_zone_by_name(inputs::Dict, zone::Int)::Vector{String}
+
+Find names of resources in a zone.
+"""
+function resources_in_zone_by_name(inputs::Dict, zone::Int)::Vector{String}
+    resources_d = inputs["resources_d"]
+    return resource_name.(resources_in_zone(resources_d, zone))
+end
+
+@doc raw"""
+    resources_in_zone_by_rid(df::DataFrame, zone::Int)::Vector{Int}
+
+Find R_ID's of resources in a zone.
+"""
+function resources_in_zone_by_rid(df::DataFrame, zone::Int)::Vector{Int}
+    return df[df.Zone .== zone, :R_ID]
+end
+
+@doc raw"""
+    resources_in_zone_by_rid(inputs::Dict, zone::Int)::Vector{Int}
+
+Find R_ID's of resources in a zone.
+"""
+function resources_in_zone_by_rid(inputs::Dict, zone::Int)::Vector{Int}
+    df = inputs["dfGen"]
+    return resources_in_zone_by_rid(df, zone)
 end
