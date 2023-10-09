@@ -378,3 +378,54 @@ function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
     down_var = EP[Symbol(maintenance_down_name(resource_component))]
     return -capresfactor * down_var[t] * cap_size
 end
+
+@doc raw"""
+    fusion_formulation!(EP::Model, inputs::Dict)
+
+Apply fusion-core-specific constraints to the model.
+
+"""
+function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
+
+    @info "Fusion Module for Thermal-commit plants"
+
+    ensure_fusion_expression_records!(inputs)
+    dfGen = inputs["dfGen"]
+
+    by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
+
+    FUSION = resources_with_fusion(inputs)
+
+    core_cap_size(y) = by_rid(y, :Cap_Size)
+    dwell_time(y) = by_rid(y, :Dwell_Time)
+    max_starts(y) = by_rid(y, :Max_Starts)
+    max_pulse_length(y) = by_rid(y, :Max_Up_Time)
+    parasitic_passive(y) = by_rid(y, :Recirc_Pass)
+    parasitic_active(y) = by_rid(y, :Recirc_Act)
+    start_energy(y) = by_rid(y, :Start_Energy)
+    start_power(y) = by_rid(y, :Start_Power)
+    eff_down(y) = dfGen[y, :Eff_Down]
+
+    resource_name(y) = dfGen[y, :Resource]
+    resource_component(y) = resource_name(y) * ""
+
+    for y in FUSION
+        reactor = FusionReactorData(component_size=core_cap_size(y),
+                                    parasitic_passive_fraction=parasitic_passive(y),
+                                    parasitic_active_fraction=parasitic_active(y),
+                                    parasitic_start_energy=start_energy(y),
+                                    pulse_start_power_fraction=start_power(y),
+                                    eff_down=eff_down(y),
+                                    dwell_time = dwell_time(y),
+                                    max_pulse_length = max_pulse_length(y),
+                                    max_starts=max_starts(y))
+        fusion_formulation!(EP, inputs,
+                            resource_component(y),
+                            y,
+                            reactor,
+                            capacity=:eTotalCap,
+                            vp=:vP,
+                            vstart=:vSTART,
+                            vcommit=:vCOMMIT)
+    end
+end

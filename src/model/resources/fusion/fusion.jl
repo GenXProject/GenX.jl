@@ -49,35 +49,43 @@ function ensure_fusion_expression_records!(dict::Dict)
     end
 end
 
+# Base.@kwdef could be used if we enforce Julia >= 1.9
+# That would replace need for the keyword-argument constructor below
 struct FusionReactorData
-    parasitic_passive_recirculating_fraction::Float64
-    parasitic_active_recirculating_fraction::Float64
+    component_size::Float64
+    parasitic_passive_fraction::Float64
+    parasitic_active_fraction::Float64
     parasitic_start_energy_fraction::Float64
-    parasitic_pulse_start_power_fraction::Float64
+    pulse_start_power_fraction::Float64
     maintenance_remaining_parasitic_power_fraction::Float64
     eff_down::Float64
     dwell_time::Float64
     max_pulse_length::Int
+    max_starts::Int
 end
 
 FusionReactorData(;
-    parasitic_passive_recirculating_fraction = 0.0,
-    parasitic_active_recirculating_fraction = 0.0,
-    parasitic_start_energy_fraction = 0.0,
-    parasitic_pulse_start_power_fraction = 0.0,
-    maintenance_remaining_parasitic_power_fraction = 0.0,
-    eff_down = 1.0,
-    dwell_time = 0.0,
-    max_pulse_length = -1,
+    component_size::Float64 = 1.0,
+    parasitic_passive_fraction::Float64 = 0.0,
+    parasitic_active_fraction::Float64 = 0.0,
+    parasitic_start_energy_fraction::Float64 = 0.0,
+    pulse_start_power_fraction::Float64 = 0.0,
+    maintenance_remaining_parasitic_power_fraction::Float64 = 0.0,
+    eff_down::Float64 = 1.0,
+    dwell_time::Float64 = 0.0,
+    max_pulse_length::Int = -1,
+    max_starts::Int = -1,
 ) = FusionReactorData(
-    parasitic_passive_recirculating_fraction,
-    parasitic_active_recirculating_fraction,
+    component_size,
+    parasitic_passive_fraction,
+    parasitic_active_fraction,
     parasitic_start_energy_fraction,
-    parasitic_pulse_start_power_fraction,
+    pulse_start_power_fraction,
     maintenance_remaining_parasitic_power_fraction,
     eff_down,
     dwell_time,
     max_pulse_length,
+    max_starts,
 )
 
 @doc raw"""
@@ -107,155 +115,119 @@ function resources_with_fusion(inputs::Dict)::Vector{Int}
     resources_with_fusion(inputs["dfGen"])
 end
 
-function fusion_average_net_electric_power_factor!(fusiondata, eff_down)
-    dwell_time = fusiondata.dwell_time
-    max_up = fusiondata.max_up
-    parasitic_start_energy = fusiondata.parasitic_start_energy
-    parasitic_passive = fusiondata.parasitic_passive
-    parasitic_active = fusiondata.parasitic_active
-    pulse_start_power = fusiondata.parasitic_start_power
+function has_parasitic_power(r::FusionReactorData)
+    r.parasitic_start_energy > 0 || r.parasitic_passive_fraction > 0 || r.parasitic_active_fraction > 0
+end
+
+function has_finite_starts(r::FusionReactorData)
+    r.max_starts > 0
+end
+
+function has_pulse_start_power(r::FusionReactorData)
+    r.pulse_start_power_fraction > 0
+end
+
+function fusion_average_net_electric_power_factor!(reactor::FusionReactorData)
+    dwell_time = reactor.dwell_time
+    max_up = reactor.max_pulse_length
+    parasitic_start_energy = reactor.parasitic_start_energy_fraction
+    parasitic_passive = reactor.parasitic_passive_fraction
+    parasitic_active = reactor.parasitic_passive_fraction
+    η = reactor.eff_down
 
     active_frac = 1
     avg_start_power = 0
     if max_up > 0
         active_frac = 1 - dwell_time / max_up
-        avg_start_power = parasitic_start_energy / max_up
+        avg_start_energy = parasitic_start_energy / max_up
     end
-    net_th_frac = active_frac * (1 - parasitic_active) - parasitic_passive - avg_start_power
-    net_el_factor = eff_down * net_th_frac
+    net_th_frac = active_frac * (1 - parasitic_active) - parasitic_passive - parasitic_avg_start_energy
+    net_el_factor = η * net_th_frac
     return net_th_factor
 end
 
-function fusion_average_net_electric_power_expression!(EP::Model, inputs::Dict)
-    dfGen = inputs["dfGen"]
+# keeping this function for later
+# function fusion_average_net_electric_power_expression!(EP::Model, inputs::Dict)
+#     dfGen = inputs["dfGen"]
+#
+#     by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
+#
+#     FUSION = resources_with_fusion(inputs)
+#
+#     @expression(EP, eFusionAvgNetElectric[y in FUSION], EP[:eTotalCap][y] * net_el_factor[y])
+# end
 
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+function fusion_formulation!(EP,
+        inputs,
+        resource_component::AbstractString,
+        r_id::Int,
+        reactor::FusionReactorData;
+        capacity::Symbol,
+        vp::Symbol,
+        vstart::Symbol,
+        vcommit::Symbol)
 
-    dfTS = inputs["dfTS"]
-    by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
+    fusion_parasitic_power!(
+        EP,
+        inputs,
+        resource_component,
+        r_id,
+        reactor,
+        capacity,
+        vstart,
+        vcommit,
+    )
 
-    FUSION = resources_with_fusion(inputs)
-
-    #System-wide installed capacity is less than a specified maximum limit
-    has_max_up = dfTS[dfTS.Max_Up.>=0, :R_ID]
-    has_max_up = intersect(has_max_up, FUSION)
-
-    active_frac = ones(G)
-    avg_start_power = zeros(G)
-    net_th_frac = ones(G)
-    net_el_factor = zeros(G)
-
-    active_frac[has_max_up] .=
-        1 .- by_rid(has_max_up, :Dwell_Time) ./ by_rid(has_max_up, :Max_Up)
-    avg_start_power[has_max_up] .=
-        by_rid(has_max_up, :Start_Energy) ./ by_rid(has_max_up, :Max_Up)
-    net_th_frac[FUSION] .=
-        active_frac[FUSION] .* (1 .- by_rid(FUSION, :Recirc_Act)) .-
-        by_rid(FUSION, :Recirc_Pass) .- avg_start_power[FUSION]
-    net_el_factor[FUSION] .= dfGen[FUSION, :Eff_Down] .* net_th_frac[FUSION]
-
-    dfGen.Average_Net_Electric_Factor = net_el_factor
-
-    @expression(EP, eCAvgNetElectric[y in FUSION], EP[:vCCAP][y] * net_el_factor[y])
-end
-
-@doc raw"""
-    fusion_formulation!(EP::Model, inputs::Dict)
-
-Apply fusion-core-specific constraints to the model.
-
-"""
-function fusion_formulation!(EP::Model, inputs::Dict)
-
-    dfGen = inputs["dfGen"]
-    dfTS = inputs["dfTS"]
-
-    by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
-
-    FUSION = resources_with_fusion(inputs)
-    vCP = EP[:vCP]
-    vCCAP = EP[:vCCAP]
-    vCSTART = EP[:vCSTART]
-    vCCOMMIT = EP[:vCCOMMIT]
-    core_cap_size(y) = by_rid(y, :Cap_Size)
-    dwell_time(y) = by_rid(y, :Dwell_Time)
-    max_starts(y) = by_rid(y, :Max_Starts)
-    max_uptime(y) = by_rid(y, :Max_Up_Time)
-    recirc_passive(y) = by_rid(y, :Recirc_Pass)
-    recirc_active(y) = by_rid(y, :Recirc_Act)
-    start_energy(y) = by_rid(y, :Start_Energy)
-    start_power(y) = by_rid(y, :Start_Power)
-
-    eff_down(y) = dfGen[y, :Eff_Down]
-    resource_name(y) = dfGen[y, :Resource]
-
-    FINITE_STARTS = intersect(FUSION, dfTS[dfTS.Max_Starts.>=0, :R_ID])
-
-    resource_component(y) = resource_name(y) * "_ThermalCore"
-
-    for y in FINITE_STARTS
+    if has_finite_starts(reactor)
         maximum_starts_constraint!(
             EP,
             inputs,
             y,
-            max_starts(y),
-            core_cap_size(y),
-            :vCCAP,
-            :vCSTART,
+            reactor,
+            capacity,
+            vstart,
         )
     end
 
-    for y in FUSION
-        fusion_pulse_constraints!(
-            EP,
-            inputs,
-            resource_component(y),
-            y,
-            max_uptime(y),
-            dwell_time(y),
-            core_cap_size(y),
-            :vCP,
-            :vCSTART,
-            :vCCOMMIT,
-        )
-
-        fusion_parasitic_power!(
-            EP,
-            inputs,
-            resource_component(y),
-            y,
-            core_cap_size(y),
-            eff_down(y),
-            dwell_time(y),
-            start_energy(y),
-            start_power(y),
-            recirc_passive(y),
-            recirc_active(y),
-            :vCCAP,
-            :vCSTART,
-            :vCCOMMIT,
-        )
-    end
-end
-
-function total_fusion_power_balance_expressions!(EP::Model, inputs::Dict)
-    T = 1:inputs["T"]     # Time steps
-    Z = 1:inputs["Z"]     # Zones
-    dfGen = inputs["dfGen"]
-    FUSION = resources_with_fusion(inputs)
-
-    # Total recirculating power from fusion in each zone
-    gen_in_zone(z) = dfGen[dfGen.Zone.==z, :R_ID]
-
-    FUSION_IN_ZONE = [intersect(FUSION, gen_in_zone(z)) for z in Z]
-    @expression(
+    fusion_pulse_constraints!(
         EP,
-        ePowerBalanceRecircFus[t in T, z in Z],
-        -sum(eTotalRecircFus[t, y] for y in FUSION_IN_ZONE[z])
+        inputs,
+        resource_component,
+        y,
+        reactor,
+        vp,
+        vstart,
+        vcommit,
     )
 
-    add_similar_to_expression(EP[:ePowerBalance], ePowerBalanceRecircFus)
 end
+
+function total_fusion_parasitic_power_balance_adjustment!(EP::Model, inputs::Dict)
+     T = inputs["T"]     # Time steps
+     Z = inputs["Z"]     # Zones
+     dfGen = inputs["dfGen"]
+     FUSION = resources_with_fusion(inputs)
+     # Total recirculating power from fusion in each zone
+     gen_in_zone(z) = dfGen[dfGen.Zone.==z, :R_ID]
+     FUSION_IN_ZONE = [intersect(FUSION, gen_in_zone(z)) for z in Z]
+
+     function parasitic(t, y)
+         resource_component = dfGen[y, :Resource]
+         total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
+         EP[total_parasitic][t,y]
+     end
+
+     @expression(
+         EP,
+         ePowerBalanceRecircFus[t in 1:T, z in 1:Z],
+         -sum(parasitic(t, y) for y in FUSION_IN_ZONE[z])
+     )
+
+     add_similar_to_expression(EP[:ePowerBalance], ePowerBalanceRecircFus)
+end
+
+# capacity reserve margin adjustment for recirc, pulses
+# capacity reserve margin adjustment for fusion+maintenance
 
 @doc raw"""
     fusion_pulse_constraints!(EP::Model,
@@ -276,9 +248,7 @@ function fusion_pulse_constraints!(
     inputs::Dict,
     resource_component::AbstractString,
     r_id::Int,
-    max_uptime::Int,
-    dwell_time::Float64,
-    component_size::Float64,
+    reactor::FusionReactorData,
     vp::Symbol,
     vstart::Symbol,
     vcommit::Symbol,
@@ -288,25 +258,31 @@ function fusion_pulse_constraints!(
 
     y = r_id
 
+    component_size = reactor.component_size
+    dwell_time = reactor.dwell_time
+    max_pulse_length = reactor.max_pulse_length
+
     power = EP[vp]
     start = EP[vstart]
     commit = EP[vcommit]
 
     # Maximum thermal power generated by core y at hour y <= Max power of committed
     # core minus power lost from down time at startup
-    @constraint(
-        EP,
-        [t in T],
-        power[y, t] <= component_size * (commit[y, t] - dwell_time * start[y, t])
-    )
+    if dwell_time > 0
+        @constraint(
+            EP,
+            [t in T],
+            power[y, t] <= component_size * (commit[y, t] - dwell_time * start[y, t])
+        )
+    end
 
     # Core max uptime. If this parameter > 0,
     # the fusion core must be cycled at least every n hours.
     # Looks back over interior timesteps and ensures that a core cannot
     # be committed unless it has been started at some point in
     # the previous n timesteps
-    if max_uptime > 0
-        starts_in_previous_hours(t) = start[y, hoursbefore(p, t, 0:(max_uptime-1))]
+    if max_pulse_length > 0
+        starts_in_previous_hours(t) = start[y, hoursbefore(p, t, 0:(max_pulse_length - 1))]
         @constraint(EP, [t in T], commit[y, t] <= sum(starts_in_previous_hours(t)))
     end
 
@@ -325,8 +301,7 @@ function maximum_starts_constraint!(
     EP::Model,
     inputs::Dict,
     r_id::Int,
-    max_starts::Int,
-    component_size::Float64,
+    reactor::FusionReactorData,
     capacity::Symbol,
     vstart::Symbol,
 )
@@ -334,6 +309,8 @@ function maximum_starts_constraint!(
     T = 1:inputs["T"]
     ω = inputs["omega"]
     y = r_id
+    component_size = reactor.component_size
+    max_starts = reactor.max_starts
     start = EP[vstart]
     totalcap = EP[etotalcap]
 
@@ -348,19 +325,21 @@ function fusion_parasitic_power!(
     inputs::Dict,
     resource_component,
     r_id::Int,
-    component_size::Float64,
-    eff_down::Float64,
-    dwell_time::Float64,
-    parasitic_start_energy_factor::Float64,
-    pulse_start_power_factor::Float64,
-    parasitic_passive_factor::Float64,
-    parasitic_active_factor::Float64,
+    reactor::FusionReactorData,
     component_capacity::Symbol,
     vstart::Symbol,
     vcommit::Symbol,
 )
     T = inputs["T"]
     y = r_id
+
+    component_size = reactor.component_size
+    parasitic_passive_fraction = reactor.parasitic_passive_fraction
+    parasitic_active_fraction = reactor.parasitic_active_fraction
+    parasitic_start_energy_fraction = reactor.parasitic_start_energy_fraction
+    pulse_start_power_fraction = pulse_start_power_fraction
+    dwell_time = reactor.dwell_time
+    η = reactor.eff_down
 
     capacity = EP[component_capacity]
     start = EP[vstart]
@@ -375,7 +354,7 @@ function fusion_parasitic_power!(
     # Passive recirculating power, depending on built capacity
     ePassive =
         EP[passive] =
-            @expression(EP, [t in T], capacity[y] * eff_down * parasitic_passive_factor)
+            @expression(EP, [t in T], capacity[y] * η * parasitic_passive_fraction)
 
     # Active recirculating power, depending on committed capacity
     eActive =
@@ -383,8 +362,8 @@ function fusion_parasitic_power!(
             EP,
             [t in T],
             component_size *
-            eff_down *
-            parasitic_active_factor *
+            η *
+            parasitic_active_fraction *
             (commit[y, t] - start[y, t] * dwell_time)
         )
     # Startup energy, taken from the grid every time the core starts up
@@ -392,7 +371,7 @@ function fusion_parasitic_power!(
         EP[start_energy] = @expression(
             EP,
             [t in T],
-            component_size * start[y, t] * eff_down * parasitic_start_energy_factor
+            component_size * start[y, t] * η * parasitic_start_energy_fraction
         )
 
     EP[total_parasitic] =
@@ -403,7 +382,7 @@ function fusion_parasitic_power!(
     EP[pulse_start_power] = @expression(
         EP,
         [t in T],
-        component_size * start[y, t] * eff_down * parasitic_start_power_factor
+        component_size * start[y, t] * η * pulse_start_power_fraction
     )
     union!(inputs[FUSION_PULSE_START_POWER], (start_power,))
 
