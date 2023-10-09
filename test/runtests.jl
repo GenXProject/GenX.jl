@@ -53,3 +53,7 @@ end
         include("test_compute_conflicts.jl")
     end
 end
+
+@testset "VRE and storage" begin
+    include("VREStor.jl")
+end
