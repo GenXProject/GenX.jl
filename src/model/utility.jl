@@ -69,7 +69,7 @@ end
 
 @doc raw"""
     by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
-
+    
     This function extracts the row of a DataFrame df for the resource given by the resource ID "rid".
 """
 function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
@@ -78,7 +78,7 @@ end
 
 @doc raw"""
     by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
-
+    
     This function extracts the rows of a DataFrame df for the resources given by the vector of resource IDs "rid".
 """
 function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
