@@ -27,9 +27,12 @@ genx_setup = Dict(
 )
 
 # Run the case and get the objective value and tolerance
-obj_test, optimal_tol = redirect_stdout(devnull) do
+EP, _, _ = redirect_stdout(devnull) do
     solve_genx_model_testing(genx_setup, test_path)
 end
+
+obj_test = objective_value(EP)
+optimal_tol = get_attribute(EP, "dual_feasibility_tolerance")
 
 # Test the objective value
 test_result = @test obj_test ≈ obj_true atol=optimal_tol
@@ -37,5 +40,5 @@ test_result = @test obj_test ≈ obj_true atol=optimal_tol
 # Add the results to the test log
 write_testlog(test_path, obj_test, optimal_tol, test_result)
 
-end # module TestVREStor
+end # module TestPiecewiseFuelCO2
 
