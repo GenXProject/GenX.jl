@@ -35,7 +35,7 @@ genx_setup = Dict(
 
 # Run the case and get the objective value and tolerance
 EP, _, _ = redirect_stdout(devnull) do
-    solve_genx_model_testing(genx_setup, test_path)
+    run_genx_case_testing(test_path, genx_setup)
 end
 
 obj_test = objective_value(EP)

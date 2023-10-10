@@ -38,8 +38,9 @@ genx_setup = Dict(
 built = false
 try
     Morris_range = redirect_stdout(devnull) do
-        EP, inputs, OPTIMIZER = solve_genx_model_testing(genx_setup, test_path)
+        EP, inputs, OPTIMIZER = run_genx_case_testing(test_path, genx_setup)
         morris(EP, test_path, genx_setup, inputs, test_path, OPTIMIZER)
+        rm(joinpath(@__DIR__, test_path, "morris.csv"))
     end
     #TODO: test Morris range 
     built = true

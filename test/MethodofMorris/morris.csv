@@ -1,9 +1,0 @@
-Resource,Zone,ID,Lower_bound,Upper_bound,Parameter,Group,p_steps,total_num_trajectory,num_trajectory,len_design_mat,policy,mean,variance
-natural_gas_combined_cycle,1,1,-5,5,Inv_Cost_per_MWyr,ng,10,2,2,15,reference,21.937879835601557,0.0018372264857185873
-solar_pv,1,2,-10,10,Inv_Cost_per_MWyr,solar,20,,,,,6.950619665106801e-7,1.2786873552332835e-13
-onshore_wind,1,3,-7,7,Inv_Cost_per_MWyr,wind,14,,,,,1.0325339698889666,0.004783709421344645
-battery,1,4,-20,20,Inv_Cost_per_MWyr,battery,40,,,,,1.3130939475300067,0.00024155785497170665
-natural_gas_combined_cycle,1,1,-5,5,Fixed_OM_Cost_per_MWyr,ng,10,,,,,21.937879835601557,0.0018372264857185873
-solar_pv,1,2,-10,10,Fixed_OM_Cost_per_MWyr,solar,20,,,,,6.950619665106801e-7,1.2786873552332835e-13
-onshore_wind,1,3,-7,7,Fixed_OM_Cost_per_MWyr,wind,14,,,,,1.0325339698889666,0.004783709421344645
-battery,1,4,-20,20,Fixed_OM_Cost_per_MWyr,battery,40,,,,,1.3130939475300067,0.00024155785497170665
