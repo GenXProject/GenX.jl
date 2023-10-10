@@ -75,11 +75,11 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1
-		# Set of thermal resources eligible for unit commitment
+		# Set of thermal resources eligible for unit committment
 		inputs_gen["THERM_COMMIT"] = gen_in[gen_in.THERM.==1,:R_ID]
-		# Set of thermal resources not eligible for unit commitment
+		# Set of thermal resources not eligible for unit committment
 		inputs_gen["THERM_NO_COMMIT"] = gen_in[gen_in.THERM.==2,:R_ID]
-	else # When UCommit == 0, no thermal resources are eligible for unit commitment
+	else # When UCommit == 0, no thermal resources are eligible for unit committment
 		inputs_gen["THERM_COMMIT"] = Int64[]
 		inputs_gen["THERM_NO_COMMIT"] = union(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.THERM.==2,:R_ID])
 	end
@@ -240,6 +240,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	println(filename * " Successfully Read!")
 end
+
 
 @doc raw"""
 	check_vre_stor_validity(df::DataFrame, setup::Dict)
