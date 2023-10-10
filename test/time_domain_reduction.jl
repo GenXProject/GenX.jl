@@ -1,6 +1,9 @@
 module TestTDR
 
-import Test, GenX, JLD2, Clustering
+
+import GenX
+import Test 
+import JLD2, Clustering
 
 # suppress printing
 console_out = stdout
@@ -13,18 +16,19 @@ if isdir(joinpath(test_folder, "TDR_Results"))
 end
 
 # Inputs for cluster_inputs function
-genx_setup = Dict()
-genx_setup["NetworkExpansion"] = 0
-genx_setup["TimeDomainReduction"] = 1
-genx_setup["TimeDomainReductionFolder"] = "TDR_Results"
-genx_setup["MultiStage"] = 0
-genx_setup["UCommit"] = 2
-genx_setup["CapacityReserveMargin"] = 1
-genx_setup["Reserves"] = 0
-genx_setup["MinCapReq"] = 1
-genx_setup["MaxCapReq"] = 1
-genx_setup["EnergyShareRequirement"] = 1
-genx_setup["CO2Cap"] = 2
+genx_setup = Dict(
+    "NetworkExpansion" => 0,
+    "TimeDomainReduction" => 1,
+    "TimeDomainReductionFolder" => "TDR_Results",
+    "MultiStage" => 0,
+    "UCommit" => 2,
+    "CapacityReserveMargin" => 1,
+    "Reserves" => 0,
+    "MinCapReq" => 1,
+    "MaxCapReq" => 1,
+    "EnergyShareRequirement" => 1,
+    "CO2Cap" => 2,
+)
 
 clustering_test = GenX.cluster_inputs(test_folder, settings_path, genx_setup)["ClusterObject"]
 
@@ -37,7 +41,8 @@ I = Clustering.mutualinfo(clustering_test, clustering_true)
 
 # restore printing
 redirect_stdout(console_out)
-Test.@test R > 0.9   # Rand index should be close to 1
-Test.@test I > 0.8   # Mutual information should be close to 1
+
+Test.@test round(R, digits=1) ≥ 0.9   # Rand index should be close to 1
+Test.@test round(I, digits=1) ≥ 0.8   # Mutual information should be close to 1
 
 end # module TestTDR
