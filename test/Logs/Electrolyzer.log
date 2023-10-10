@@ -1,0 +1,4 @@
+2023-10-11 02:37:37 | 6946.981912630803 ± 0.0001 | Test Passed
+  Expression: ≈(obj_test, obj_true, atol = optimal_tol)
+   Evaluated: ≈(6946.981912630803, 6946.9819126; atol = 0.0001)
+2023-10-11 03:01:00 | 6946.981912630803 ± 0.0001 | Test Passed
