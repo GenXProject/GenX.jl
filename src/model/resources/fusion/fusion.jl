@@ -127,6 +127,7 @@ function has_pulse_start_power(r::FusionReactorData)
     r.pulse_start_power_fraction > 0
 end
 
+# keeping this for later
 function fusion_average_net_electric_power_factor!(reactor::FusionReactorData)
     dwell_time = reactor.dwell_time
     max_up = reactor.max_pulse_length
@@ -202,43 +203,18 @@ function fusion_formulation!(EP,
 
 end
 
-function total_fusion_parasitic_power_balance_adjustment!(EP::Model, inputs::Dict)
-     T = inputs["T"]     # Time steps
-     Z = inputs["Z"]     # Zones
-     dfGen = inputs["dfGen"]
-     FUSION = resources_with_fusion(inputs)
-     # Total recirculating power from fusion in each zone
-     gen_in_zone(z) = dfGen[dfGen.Zone.==z, :R_ID]
-     FUSION_IN_ZONE = [intersect(FUSION, gen_in_zone(z)) for z in Z]
-
-     function parasitic(t, y)
-         resource_component = dfGen[y, :Resource]
-         total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
-         EP[total_parasitic][t,y]
-     end
-
-     @expression(
-         EP,
-         ePowerBalanceRecircFus[t in 1:T, z in 1:Z],
-         -sum(parasitic(t, y) for y in FUSION_IN_ZONE[z])
-     )
-
-     add_similar_to_expression(EP[:ePowerBalance], ePowerBalanceRecircFus)
-end
-
 # capacity reserve margin adjustment for recirc, pulses
 # capacity reserve margin adjustment for fusion+maintenance
 
 @doc raw"""
     fusion_pulse_constraints!(EP::Model,
-        inputs::Dict,
-        r_id::Int,
-        max_uptime::Int,
-        dwell_time::Float64
-        cap_size::Float64,
-        vcommit::Symbol,
-        vstart::Symbol,
-        ecap::Symbol)
+                              inputs::Dict,
+                              resource_component::AbstractString,
+                              r_id::Int,
+                              reactor::FusionReactorData,
+                              vp::Symbol,
+                              vstart::Symbol,
+                              vcommit::Symbol)
 
     Creates maintenance-tracking variables and adds their Symbols to two Sets in `inputs`.
     Adds constraints which act on the vCOMMIT-like variable.
@@ -387,6 +363,46 @@ function fusion_parasitic_power!(
     union!(inputs[FUSION_PULSE_START_POWER], (start_power,))
 
 end
+
+function fusion_parasitic_power_balance_adjustment!(EP, inputs::Dict, df::DataFrame, component::AbstractString="")
+    T = 1:inputs["T"]
+    zones_for_resources = inputs["R_ZONES"]
+
+    FUSION = resources_with_fusion(df)
+    for y in FUSION
+        z = zones_for_resources[y]
+        resource_component = df[y, :Resource] * component
+        eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
+        for t in T
+            add_to_expression!(EP[:ePowerBalance][t, z], eTotalParasitic[t])
+        end
+    end
+end
+
+function total_fusion_parasitic_power_balance_adjustment!(EP::Model, inputs::Dict)
+     T = inputs["T"]     # Time steps
+     Z = inputs["Z"]     # Zones
+     dfGen = inputs["dfGen"]
+     FUSION = resources_with_fusion(inputs)
+     # Total recirculating power from fusion in each zone
+     gen_in_zone(z) = dfGen[dfGen.Zone.==z, :R_ID]
+     FUSION_IN_ZONE = [intersect(FUSION, gen_in_zone(z)) for z in Z]
+
+     function parasitic(t, y)
+         resource_component = dfGen[y, :Resource]
+         total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
+         EP[total_parasitic][t]
+     end
+
+     @expression(
+         EP,
+         ePowerBalanceRecircFus[t in 1:T, z in 1:Z],
+         -sum(parasitic(t, y) for y in FUSION_IN_ZONE[z])
+     )
+
+     add_similar_to_expression(EP[:ePowerBalance], ePowerBalanceRecircFus)
+end
+
 
 @doc raw"""
     has_fusion(dict::Dict)

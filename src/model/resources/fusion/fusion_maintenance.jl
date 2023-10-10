@@ -1,20 +1,36 @@
-function maintenance_fusion_modification!(EP::Model, inputs::Dict)
-    @debug "Maintenance modifies fusion expressions"
+# higher level function
+function fusion_maintenance_parasitic_power_adjustment!(EP, df::DataFrame)
+    @debug "Maintenance modifies fusion parasitic power"
 
-    dfGen = inputs["dfGen"]
+    by_rid(rid, sym) = by_rid_df(rid, sym, df)
 
-    T = 1:inputs["T"]     # Number of time steps (hours)
+    FUSION = resources_with_fusion(df)
+    MAINTENANCE = resources_with_maintenance(df)
 
-    by_rid(rid, sym) = by_rid_df(rid, sym, inputs["dfTS"])
+    for y in intersect(FUSION, MAINTENANCE)
+        resource_component(y) = df[y, :Resource]
+        reactor = FusionReactorData(parasitic_passive_fraction = by_rid(y, :Recirc_Pass),
+                                    eff_down = by_rid(y, :Eff_Down),
+                                    component_size = by_rid(y, :Cap_Size),
+                                    maintenance_remaining_parasitic_power_fraction = by_rid(y, :Recirc_Pass_Maintenance_Remaining))
 
-    FUSION = resources_with_fusion(inputs)
-    MAINTENANCE = get_maintenance(inputs)
-
-    vMDOWN = EP[:vMDOWN]
-
-    frac_passive_to_reduce(y) = by_rid(y, :Recirc_Pass) * (1 - by_rid(y, :Recirc_Pass_Maintenance_Reduction))
-    for y in intersect(FUSION, MAINTENANCE), t in T
-            add_to_expression!(EP[:ePassiveRecircFus][t,y],
-                               -by_rid(y,:Cap_Size) * vMDOWN[t,y] * dfGen[y,:Eff_Down] * frac_passive_to_reduce(y))
+        fusion_maintenance_parasitic_power_adjustment!(EP, resource_component, reactor)
     end
+end
+
+# lower level function
+function fusion_maintenance_parasitic_power_adjustment!(EP::Model, resource_component, reactor::FusionReactorData)
+    passive = reactor.parasitic_passive_fraction
+    reduction_factor = reactor.maintenance_remaining_parasitic_power_fraction
+    η = reactor.eff_down
+    cap_size = reactor.component_size
+
+    reduction = passive * (1 - reduction_factor)
+
+    eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
+    vMDOWN = EP[Symbol(maintenance_down_name(resource_component))]
+
+    eReduction = -reduction * η * cap_size * vMDOWN
+
+    add_similar_to_expression!(eTotalParasitic, eReduction)
 end

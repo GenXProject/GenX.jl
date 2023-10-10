@@ -217,9 +217,26 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 			EP[:eTotalCap][y]/dfGen[y,:Cap_Size]-EP[:vCOMMIT][y,t] >= sum(EP[:vSHUT][y, u] for u in hoursbefore(p, t, 0:(Down_Time[y] - 1)))
 	)
 
+    # Additional constraints on fusion; create total recirculating power expressions
+    FUSION = resources_with_fusion(dfGen)
+    if !isempty(FUSION)
+        fusion_formulation_thermal_commit!(EP, inputs)
+    end
+
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
-    if !isempty(resources_with_maintenance(dfGen))
+    MAINT = resources_with_maintenance(dfGen)
+    if !isempty(MAINT)
         maintenance_formulation_thermal_commit!(EP, inputs, setup)
+    end
+
+    if !isempty(intersect(FUSION, MAINT))
+        # modify parasitic power expressions
+        fusion_maintenance_parasitic_power_adjustment!(EP, dfGen)
+    end
+
+    if !isempty(FUSION)
+        # subtract parasitic power from power balance
+        fusion_parasitic_power_balance_adjustment!(EP, inputs, dfGen)
     end
 end
 
@@ -394,7 +411,7 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
 
     by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
 
-    FUSION = resources_with_fusion(inputs)
+    FUSION = resources_with_fusion(dfGen)
 
     core_cap_size(y) = by_rid(y, :Cap_Size)
     dwell_time(y) = by_rid(y, :Dwell_Time)
@@ -407,7 +424,7 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
     eff_down(y) = dfGen[y, :Eff_Down]
 
     resource_name(y) = dfGen[y, :Resource]
-    resource_component(y) = resource_name(y) * ""
+    resource_component(y) = resource_name(y)
 
     for y in FUSION
         reactor = FusionReactorData(component_size=core_cap_size(y),
@@ -429,3 +446,4 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
                             vcommit=:vCOMMIT)
     end
 end
+
