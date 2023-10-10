@@ -65,3 +65,7 @@ end
 @testset "Electrolyzer" begin
     include("electrolyzer.jl")
 end
+
+@testset "Method of Morris" begin
+    include("methodofmorris.jl")
+end
