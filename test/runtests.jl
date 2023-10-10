@@ -54,22 +54,23 @@ end
     end
 end
 
-@testset "PiecewiseFuel CO2" begin
-    include("PiecewiseFuel_CO2.jl")
-end 
+    @testset "PiecewiseFuel CO2" begin
+        include("test_piecewisefuel_CO2.jl")
+    end 
 
-@testset "VRE and storage" begin
-    include("VREStor.jl")
-end
+    @testset "VRE and storage" begin
+        include("test_VREStor.jl")
+    end
 
-@testset "Electrolyzer" begin
-    include("electrolyzer.jl")
-end
+    @testset "Electrolyzer" begin
+        include("test_electrolyzer.jl")
+    end
 
-@testset "Method of Morris" begin
-    include("methodofmorris.jl")
-end
+    @testset "Method of Morris" begin
+        include("test_methodofmorris.jl")
+    end
 
-@testset "Multi Stage" begin
-    include("multistage.jl")
+    @testset "Multi Stage" begin
+        include("test_multistage.jl")
+    end
 end
