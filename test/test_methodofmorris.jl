@@ -48,7 +48,11 @@ try
 catch BoundsError
 end
 
-test_result = Test.@test built broken = true
+@static if VERSION ≥ v"1.7"
+    test_result = Test.@test built broken = true
+else
+    test_result = built ? Test.Pass : Test.Fail
+end
 
 # Add the results to the test log
 write_testlog(test_path, "Build and Run", test_result)
