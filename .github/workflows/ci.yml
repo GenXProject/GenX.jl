@@ -37,9 +37,11 @@ jobs:
         run: |
           git config --local user.name lbonaldo
           git config --local user.email "bonaldo.luca12@gmail.com"
+          git checkout ${GITHUB_REF#refs/heads/}
+          git checkout -b test-logs
           git add -f test/Logs
           git commit -m "Test logs updated"
-          git push origin HEAD:${GITHUB_REF#refs/heads/}
+          git push origin ${GITHUB_REF#refs/heads/}-testlogs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: julia-actions/julia-processcoverage@v1
