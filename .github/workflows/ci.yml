@@ -35,13 +35,16 @@ jobs:
       - name: Commit logs and push to repo
         if: ${{ matrix.version }} == '1.9'
         run: |
-          git config --local user.name lbonaldo
-          git config --local user.email "bonaldo.luca12@gmail.com"
-          git checkout ${GITHUB_REF#refs/heads/}
-          git checkout -b test-logs
-          git add -f test/Logs
-          git commit -m "Test logs updated"
-          git push origin ${GITHUB_REF#refs/heads/}-testlogs
+          echo ${{ matrix.version }}
+          if [[ ${{ matrix.version }} == '1' ]]; then
+            git config --local user.name lbonaldo
+            git config --local user.email "bonaldo.luca12@gmail.com"
+            git checkout ${GITHUB_REF#refs/heads/}
+            git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+            git add -f test/Logs
+            git commit -m "Test logs updated"
+            git push origin ${GITHUB_REF#refs/heads/}-testlogs
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: julia-actions/julia-processcoverage@v1

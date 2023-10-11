@@ -48,7 +48,7 @@ try
 catch BoundsError
 end
 
-if VERSION ≥ VersionNumber(1, 7)
+@static if VERSION ≥ VersionNumber(1, 7)
     test_result = Test.@test built broken = true
 else
     test_result = built ? "Test Passed" : "Test Failed"
