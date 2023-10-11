@@ -8,7 +8,6 @@ test_path = "MethodofMorris"
 
 # Define test inputs
 genx_setup = Dict(
-    "MacOrWindows" => "Mac",
     "PrintModel" => 0,
     "NetworkExpansion" => 0,
     "Trans_Loss_Segments" => 1,
@@ -48,10 +47,10 @@ try
 catch BoundsError
 end
 
-@static if VERSION ≥ v"1.7"
+@static if VERSION ≥ VersionNumber(1, 7)
     test_result = Test.@test built broken = true
 else
-    test_result = built ? Test.Pass : Test.Fail
+    test_result = built ? "Test Passed" : "Test Failed"
 end
 
 # Add the results to the test log

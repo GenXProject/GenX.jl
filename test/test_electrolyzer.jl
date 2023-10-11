@@ -25,6 +25,9 @@ obj_test = objective_value(EP)
 optimal_tol_rel = get_attribute(EP, "ipm_optimality_tolerance")
 optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 
+# Round the objective value to the same number of digits as the tolerance
+obj_test = round_objfromtol!(obj_test, optimal_tol)
+
 # Test the objective value
 test_result = @test obj_test ≈ obj_true atol = optimal_tol
 
