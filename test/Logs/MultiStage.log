@@ -1,0 +1,2 @@
+2023-10-11 02:38:03 | 79734.8003171703 ± 1.0e-5, 41630.03494225143 ± 1.0e-5, 27855.20631474678 ± 1.0e-5 | Test Passed
+  Expression: all(obj_true .- optimal_tol .<= obj_test .<= obj_true .+ optimal_tol)
