@@ -25,13 +25,14 @@ jobs:
           - x64
     steps:
       - uses: actions/checkout@v3
-      - name: Create a new branch for test logs
+      - name: Create a new branch for test logs # only 1.x version pushes logs to repo
         run: |
           if [[ ${{ matrix.version }} == '1' ]]; then
             git config --local user.name lbonaldo
             git config --local user.email "bonaldo.luca12@gmail.com"
-            git pull origin ${GITHUB_REF#refs/heads/}-testlogs
-            git checkout ${GITHUB_REF#refs/heads/}-testlogs 2>/dev/null || git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+            git fetch origin ${GITHUB_REF#refs/heads/}-testlogs:${GITHUB_REF#refs/heads/}-testlogs
+            git checkout ${GITHUB_REF#refs/heads/}-testlogs
+            git rebase ${GITHUB_REF#refs/heads/}
           fi
       - uses: julia-actions/setup-julia@v1
         with:
@@ -40,7 +41,7 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-      - name: Commit logs and push to repo # only for 1.x versions
+      - name: Commit logs and push to repo # only 1.x version pushes logs to repo
         run: |
           if [[ ${{ matrix.version }} == '1' ]]; then
             git add -f test/Logs
