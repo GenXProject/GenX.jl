@@ -32,10 +32,8 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-      - name: Commit logs and push to repo
-        if: ${{ matrix.version }} == '1.9'
+      - name: Commit logs and push to repo # only for 1.x versions
         run: |
-          echo ${{ matrix.version }}
           if [[ ${{ matrix.version }} == '1' ]]; then
             git config --local user.name lbonaldo
             git config --local user.email "bonaldo.luca12@gmail.com"
