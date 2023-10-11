@@ -29,8 +29,15 @@ jobs:
         run: |
           if [[ ${{ matrix.version }} == '1' ]]; then
             git config --local user.name lbonaldo
-            git config --local user.email "bonaldo.luca12@gmail.com"
-            git checkout ${GITHUB_REF#refs/heads/}-testlogs 2>/dev/null || git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+            git config --local user.email "39280783+lbonaldo@users.noreply.github.com"
+            git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+            git ls-remote --exit-code --heads origin ${GITHUB_REF#refs/heads/}-testlogs
+            if [ "$?" == "2" ] ; then   # exit-code 2 if the branch doesn't exist
+              echo "Branch doesn't exist. Skip fetching."
+            else    # if a branch exists, fetch it
+              git fetch origin ${GITHUB_REF#refs/heads/}-testlogs 
+              git cherry-pick $(git log -n 1 origin/${GITHUB_REF#refs/heads/}-testlogs --pretty=format:"%H")
+            fi
           fi
       - uses: julia-actions/setup-julia@v1
         with:
@@ -43,8 +50,8 @@ jobs:
         run: |
           if [[ ${{ matrix.version }} == '1' ]]; then
             git add -f test/Logs
-            git commit -m "Test logs updated"
-            git push origin ${GITHUB_REF#refs/heads/}-testlogs
+            git commit -m "Update test logs"
+            git push -f origin ${GITHUB_REF#refs/heads/}-testlogs
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
