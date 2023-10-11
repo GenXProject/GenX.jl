@@ -30,8 +30,8 @@ jobs:
           if [[ ${{ matrix.version }} == '1' ]]; then
             git config --local user.name lbonaldo
             git config --local user.email "bonaldo.luca12@gmail.com"
-            git checkout ${GITHUB_REF#refs/heads/}-testlogs 2>/dev/null || git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
             git pull origin ${GITHUB_REF#refs/heads/}-testlogs
+            git checkout ${GITHUB_REF#refs/heads/}-testlogs 2>/dev/null || git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
           fi
       - uses: julia-actions/setup-julia@v1
         with:
