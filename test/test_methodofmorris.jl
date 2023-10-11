@@ -48,10 +48,10 @@ try
 catch BoundsError
 end
 
-@static if VERSION ≥ v"1.7"
+@static if VERSION ≥ VersionNumber(1, 7)
     test_result = Test.@test built broken = true
 else
-    test_result = built ? Test.Pass : Test.Fail
+    test_result = built ? "Test Passed" : "Test Failed"
 end
 
 # Add the results to the test log
