@@ -415,3 +415,59 @@ end
 function has_fusion(dict::Dict)::Bool
     FUSION_PARASITIC_POWER in keys(dict)
 end
+
+function fusion_thermal_commit_reserves!(EP::Model, inputs::Dict)
+
+	@info "Fusion Thermal Commit Reserves Module"
+
+	dfGen = inputs["dfGen"]
+
+	T = 1:inputs["T"]     # Number of time steps (hours)
+
+	THERM_COMMIT = inputs["THERM_COMMIT"]
+    REG = inputs["REG"]
+    RSV = inputs["RSV"]
+
+    pP_Max = inputs["pP_Max"]
+
+	THERM_COMMIT_REG = intersect(THERM_COMMIT, REG) # Set of thermal resources with regulation reserves
+	THERM_COMMIT_RSV = intersect(THERM_COMMIT, RSV) # Set of thermal resources with spinning reserves
+
+    vP = EP[:vP]
+    vREG = EP[:vREG]
+    vRSV = EP[:vRSV]
+    vCOMMIT = EP[:vCOMMIT]
+    cap_size(y) = dfGen[y, :Cap_Size]
+    reg_max(y) = dfGen[y, :Reg_Max]
+    rsv_max(y) = dfGen[y, :Rsv_Max]
+
+    max_lhs = @expression(EP, [y in THERM_COMMIT, t in T], vP[y, t])
+    max_rhs = @expression(EP, [y in THERM_COMMIT, t in T], pP_Max[y, t] * cap_size(y) * vCOMMIT[y, t])
+
+    min_stable_lhs = @expression(EP, [y in THERM_COMMIT, t in T], vP[y, t])
+    min_stable_rhs = @expression(EP, [y in THERM_COMMIT, t in T], min_power(y) * cap_size(y) * vCOMMIT[y, t])
+    for y in THERM_COMMIT_REG
+        for t in T
+            add_to_expression!(max_lhs[y, t], vREG[y, t])
+            add_to_expression!(min_stable_lhs[y, t], -vREG[y, t])
+        end
+    end
+    for y in THERM_COMMIT_RSV
+        for t in T
+            add_to_expression!(max_lhs[y, t], vRSV[y, t])
+        end
+    end
+    @constraints(EP, begin
+        # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
+        [y in THERM_COMMIT, t in T], min_stable_lhs[y, t] >= min_stable_rhs[y, t]
+        # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
+        [y in THERM_COMMIT, t in T], max_lhs[y, t] <= max_rhs[y, t]
+    end)
+
+    # Maximum regulation and reserve contributions
+    @constraints(EP, [y in THERM_COMMIT_REG, t in T],
+                 vREG[y, t] <= pP_Max[y, t] * reg_max(y) * cap_size(y) * vCOMMIT[y, t])
+    @constraints(EP, [y in THERM_COMMIT_RSV, t in T],
+                 vRSV[y, t] <= pP_Max[y, t] * rsv_max(y) * cap_size(y) * vCOMMIT[y, t])
+
+end
