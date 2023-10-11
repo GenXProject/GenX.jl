@@ -33,7 +33,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
       - name: Commit logs and push to repo
-        if: ${{ matrix.version }} == '1'
+        if: ${{ matrix.version }} == '1.9'
         run: |
           git config --local user.name lbonaldo
           git config --local user.email "bonaldo.luca12@gmail.com"
