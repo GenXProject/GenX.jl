@@ -182,48 +182,34 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 
-	T = inputs["T"]     # Number of time steps (hours)
+	T = 1:inputs["T"]     # Number of time steps (hours)
 
 	HYDRO_RES = inputs["HYDRO_RES"]
+    REG = inputs["REG"]
+    RSV = inputs["RSV"]
 
-	HYDRO_RES_REG_RSV = intersect(HYDRO_RES, inputs["REG"], inputs["RSV"]) # Set of reservoir hydro resources with both regulation and spinning reserves
+	HYDRO_RES_REG = intersect(HYDRO_RES, REG) # Set of reservoir hydro resources with regulation reserves
+	HYDRO_RES_RSV = intersect(HYDRO_RES, RSV) # Set of reservoir hydro resources with spinning reserves
 
-	HYDRO_RES_REG = intersect(HYDRO_RES, inputs["REG"]) # Set of reservoir hydro resources with regulation reserves
-	HYDRO_RES_RSV = intersect(HYDRO_RES, inputs["RSV"]) # Set of reservoir hydro resources with spinning reserves
+    vP = EP[:vP]
+    vREG = EP[:vREG]
+    vRSV = EP[:vRSV]
+    eTotalCap = EP[:eTotalCap]
 
-	HYDRO_RES_REG_ONLY = setdiff(HYDRO_RES_REG, HYDRO_RES_RSV) # Set of reservoir hydro resources only with regulation reserves
-	HYDRO_RES_RSV_ONLY = setdiff(HYDRO_RES_RSV, HYDRO_RES_REG) # Set of reservoir hydro resources only with spinning reserves
+    # NOTE the load-bearing 1 * to create AffExpr and not VariableRef
+    max_up_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in T], 1 * vP[y, t])
+    max_dn_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in T], 1 * vP[y, t])
 
-	if !isempty(HYDRO_RES_REG_RSV)
-		@constraints(EP, begin
-			# Maximum storage contribution to reserves is a specified fraction of installed capacity
-			cRegulation[y in HYDRO_RES_REG_RSV, t in 1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*EP[:eTotalCap][y]
-			cReserve[y in HYDRO_RES_REG_RSV, t in 1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*EP[:eTotalCap][y]
-			# Maximum discharging rate and contribution to reserves up must be less than power rating
-			cMaxReservesUp[y in HYDRO_RES_REG_RSV, t in 1:T], EP[:vP][y,t]+EP[:vREG][y,t]+EP[:vRSV][y,t] <= EP[:eTotalCap][y]
-			# Maximum discharging rate and contribution to regulation down must be greater than zero
-			cMaxReservesDown[y in HYDRO_RES_REG_RSV, t in 1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
-		end)
-	end
+    S = HYDRO_RES_REG
+    add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
+    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -vREG[S, :])
 
-	if !isempty(HYDRO_RES_REG_ONLY)
-		@constraints(EP, begin
-			# Maximum storage contribution to reserves is a specified fraction of installed capacity
-			cRegulation[y in HYDRO_RES_REG_ONLY, t in 1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*EP[:eTotalCap][y]
-			# Maximum discharging rate and contribution to reserves up must be less than power rating
-			cMaxReservesUp[y in HYDRO_RES_REG_ONLY, t in 1:T], EP[:vP][y,t]+EP[:vREG][y,t] <= EP[:eTotalCap][y]
-			# Maximum discharging rate and contribution to regulation down must be greater than zero
-			cMaxReservesDown[y in HYDRO_RES_REG_ONLY, t in 1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
-		end)
-	end
+    S = HYDRO_RES_RSV
+    add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])
 
-	if !isempty(HYDRO_RES_RSV_ONLY)
-		@constraints(EP, begin
-			# Maximum storage contribution to reserves is a specified fraction of installed capacity
-			cReserve[y in HYDRO_RES_RSV_ONLY, t in 1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*EP[:eTotalCap][y]
-			# Maximum discharging rate and contribution to reserves up must be less than power rating
-			cMaxReservesUp[y in HYDRO_RES_RSV_ONLY, t in 1:T], EP[:vP][y,t]+EP[:vRSV][y,t] <= EP[:eTotalCap][y]
-		end)
-	end
+    @constraint(EP, [y in HYDRO_RES, t in T], max_up_reserves_lhs[y, t] <= eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES, t in T], max_dn_reserves_lhs[y, t] >= 0)
 
+    @constraint(EP, [y in HYDRO_RES_REG, t in T], vREG[y, t] <= dfGen[y,:Reg_Max]*eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_RSV, t in T], vRSV[y, t] <= dfGen[y,:Rsv_Max]*eTotalCap[y])
 end
