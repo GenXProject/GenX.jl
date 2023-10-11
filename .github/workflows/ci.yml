@@ -39,6 +39,7 @@ jobs:
             git config --local user.email "bonaldo.luca12@gmail.com"
             git checkout ${GITHUB_REF#refs/heads/}
             git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+            git pull origin ${GITHUB_REF#refs/heads/}-testlogs
             git add -f test/Logs
             git commit -m "Test logs updated"
             git push origin ${GITHUB_REF#refs/heads/}-testlogs
