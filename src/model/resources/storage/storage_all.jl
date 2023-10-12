@@ -194,13 +194,21 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, [y in STOR_REG, t in 1:T], vREG[y, t] == vREG_charge[y, t] + vREG_discharge[y, t])
     @constraint(EP, [y in STOR_RSV, t in 1:T], vRSV[y, t] == vRSV_charge[y, t] + vRSV_discharge[y, t])
 
+    # Maximum charging rate plus contribution to reserves up must be greater than zero
+    # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
+    expr = @expression(EP, [y in STOR_ALL, t in 1:T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
+
+    S = STOR_REG
+    add_similar_to_expression!(expr[S, :], -vREG_charge[S, :])
+
+    S = STOR_RSV
+    add_similar_to_expression!(expr[S, :], -vRSV_charge[S, :])
+
+    @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t] >= 0)
+
 	if !isempty(STOR_REG_RSV)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
 		@constraints(EP, begin
-			# Maximum charging rate plus contribution to reserves up must be greater than zero
-			# Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-			[y in STOR_REG_RSV, t=1:T], EP[:vCHARGE][y,t]-EP[:vREG_charge][y,t]-EP[:vRSV_charge][y,t] >= 0
-
 			# Maximum discharging rate and contribution to reserves down must be greater than zero
 			# Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
 			[y in STOR_REG_RSV, t=1:T], EP[:vP][y,t]-EP[:vREG_discharge][y,t] >= 0
@@ -228,10 +236,6 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	if !isempty(STOR_REG_ONLY)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
 		@constraints(EP, begin
-			# Maximum charging rate plus contribution to reserves up must be greater than zero
-			# Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-			[y in STOR_REG_ONLY, t=1:T], EP[:vCHARGE][y,t]-EP[:vREG_charge][y,t] >= 0
-
 			# Maximum discharging rate and contribution to reserves down must be greater than zero
 			# Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
 			[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] - EP[:vREG_discharge][y,t] >= 0
@@ -258,12 +262,6 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	end
 	if !isempty(STOR_RSV_ONLY)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-		@constraints(EP, begin
-			# Maximum charging rate plus contribution to reserves up must be greater than zero
-			# Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-			[y in STOR_RSV_ONLY, t=1:T], EP[:vCHARGE][y,t]-EP[:vRSV_charge][y,t] >= 0
-		end)
-
 		# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
 		# this constraint is set in functions below for each storage type
 
