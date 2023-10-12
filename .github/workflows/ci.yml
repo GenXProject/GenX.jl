@@ -29,7 +29,7 @@ jobs:
         run: |
           if [[ ${{ matrix.version }} == '1' ]]; then
             git config --local user.name lbonaldo
-            git config --local user.email "bonaldo.luca12@gmail.com"
+            git config --local user.email "39280783+lbonaldo@users.noreply.github.com"
             git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
             git ls-remote --exit-code --heads origin ${GITHUB_REF#refs/heads/}-testlogs
             if [ "$?" == "2" ] ; then   # exit code 2 if the branch doesn't exist
