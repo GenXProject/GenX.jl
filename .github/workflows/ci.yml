@@ -33,6 +33,8 @@ jobs:
             git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
             if [[ $(git fetch origin ${GITHUB_REF#refs/heads/}-testlogs) ]]; then # if a branch exists, fetch it
               git cherry-pick $(git log -n 1 origin/${GITHUB_REF#refs/heads/}-testlogs --pretty=format:"%H")
+            else
+              echo "Skip fetching"
             fi
           fi
       - uses: julia-actions/setup-julia@v1
