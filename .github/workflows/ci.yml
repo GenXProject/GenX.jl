@@ -33,9 +33,9 @@ jobs:
             git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
             git ls-remote --exit-code --heads origin ${GITHUB_REF#refs/heads/}-testlogs
             if [ "$?" == "2" ] ; then   # exit-code 2 if the branch doesn't exist
-              echo "Branch doesn't exist. Skip fetching"
+              echo "Branch doesn't exist. Skip fetching."
             else    # if a branch exists, fetch it
-              git fetch origin ${GITHUB_REF#refs/heads/}-testlogs
+              git fetch origin ${GITHUB_REF#refs/heads/}-testlogs 
               git cherry-pick $(git log -n 1 origin/${GITHUB_REF#refs/heads/}-testlogs --pretty=format:"%H")
             fi
           fi
