@@ -223,12 +223,12 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 		if CapacityReserveMargin > 0
 			@constraints(EP, begin
 				[y in STOR_REG_RSV, t=1:T], EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_REG_RSV, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_REG_RSV, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		else
 			@constraints(EP, begin
 				[y in STOR_REG_RSV, t=1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_REG_RSV, t=1:T], (EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_REG_RSV, t=1:T], (EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		end
 
@@ -241,12 +241,12 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 		if CapacityReserveMargin > 0
 			@constraints(EP, begin
 				[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] + EP[:vCAPRES_discharge][y,t] + EP[:vREG_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_REG_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_REG_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vREG_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		else
 			@constraints(EP, begin
 				[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] + EP[:vREG_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_REG_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vREG_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_REG_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vREG_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		end
 
@@ -261,12 +261,12 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 		if CapacityReserveMargin > 0
 			@constraints(EP, begin
 				[y in STOR_RSV_ONLY, t=1:T], EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vRSV_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_RSV_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_RSV_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vRSV_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		else
 			@constraints(EP, begin
 				[y in STOR_RSV_ONLY, t=1:T], EP[:vP][y,t]+EP[:vRSV_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_RSV_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vRSV_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_RSV_ONLY, t=1:T], (EP[:vP][y,t]+EP[:vRSV_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		end
 	end
@@ -276,12 +276,12 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 		if CapacityReserveMargin > 0
 			@constraints(EP, begin
 				[y in STOR_NO_RES, t=1:T], EP[:vP][y,t]  + EP[:vCAPRES_discharge][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_NO_RES, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t])/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_NO_RES, t=1:T], (EP[:vP][y,t]+EP[:vCAPRES_discharge][y,t]) <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		else
 			@constraints(EP, begin
 				[y in STOR_NO_RES, t=1:T], EP[:vP][y,t] <= EP[:eTotalCap][y]
-				[y in STOR_NO_RES, t=1:T], EP[:vP][y,t]/dfGen[y,:Eff_Down] <= EP[:vS][y, hoursbefore(p,t,1)]
+                [y in STOR_NO_RES, t=1:T], EP[:vP][y,t] <= EP[:vS][y, hoursbefore(p,t,1)] * dfGen[y, :Eff_Down]
 			end)
 		end
 	end
