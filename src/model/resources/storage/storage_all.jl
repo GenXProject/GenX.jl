@@ -210,14 +210,14 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     # Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
     @constraint(EP, [y in STOR_REG, t in 1:T], vP[y, t] - vREG_discharge[y, t] >= 0)
 
+    # Maximum charging rate plus contribution to regulation down must be less than available storage capacity
+    @constraint(EP, [y in STOR_REG, t in 1:T], eff_up(y)*(vCHARGE[y, t]+vREG_charge[y, t]) <= eTotalCapEnergy[y]-vS[y, hoursbefore(p,t,1)])
+    # Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
+    # this constraint is set in functions below for each storage type
+
 	if !isempty(STOR_REG_RSV)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-		@constraints(EP, begin
-			# Maximum charging rate plus contribution to regulation down must be less than available storage capacity
-			[y in STOR_REG_RSV, t=1:T], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y, hoursbefore(p,t,1)]
-			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
-			# this constraint is set in functions below for each storage type
-		end)
+
 		# Maximum discharging rate and contribution to reserves up must be less than power rating OR available stored energy in prior period, whichever is less
 		# wrapping from end of sample period to start of sample period for energy capacity constraint
 		if CapacityReserveMargin > 0
@@ -235,12 +235,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	end
 	if !isempty(STOR_REG_ONLY)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-		@constraints(EP, begin
-			# Maximum charging rate plus contribution to regulation down must be less than available storage capacity
-			[y in STOR_REG_ONLY, t=1:T], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y, hoursbefore(p,t,1)]
-			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
-			# this constraint is set in functions below for each storage type
-		end)
+
 		# Maximum discharging rate and contribution to reserves up must be less than power rating OR available stored energy in prior period, whichever is less
 		# wrapping from end of sample period to start of sample period for energy capacity constraint
 		if CapacityReserveMargin > 0
