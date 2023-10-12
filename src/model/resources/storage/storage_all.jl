@@ -206,13 +206,13 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t] >= 0)
 
+    # Maximum discharging rate and contribution to reserves down must be greater than zero
+    # Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
+    @constraint(EP, [y in STOR_REG, t in 1:T], vP[y, t] - vREG_discharge[y, t] >= 0)
+
 	if !isempty(STOR_REG_RSV)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
 		@constraints(EP, begin
-			# Maximum discharging rate and contribution to reserves down must be greater than zero
-			# Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
-			[y in STOR_REG_RSV, t=1:T], EP[:vP][y,t]-EP[:vREG_discharge][y,t] >= 0
-
 			# Maximum charging rate plus contribution to regulation down must be less than available storage capacity
 			[y in STOR_REG_RSV, t=1:T], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y, hoursbefore(p,t,1)]
 			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
@@ -236,10 +236,6 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	if !isempty(STOR_REG_ONLY)
 		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
 		@constraints(EP, begin
-			# Maximum discharging rate and contribution to reserves down must be greater than zero
-			# Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
-			[y in STOR_REG_ONLY, t=1:T], EP[:vP][y,t] - EP[:vREG_discharge][y,t] >= 0
-
 			# Maximum charging rate plus contribution to regulation down must be less than available storage capacity
 			[y in STOR_REG_ONLY, t=1:T], dfGen[y,:Eff_Up]*(EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]) <= EP[:eTotalCapEnergy][y]-EP[:vS][y, hoursbefore(p,t,1)]
 			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
