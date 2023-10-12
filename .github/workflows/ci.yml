@@ -32,7 +32,7 @@ jobs:
             git config --local user.email "39280783+lbonaldo@users.noreply.github.com"
             git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
             git ls-remote --exit-code --heads origin ${GITHUB_REF#refs/heads/}-testlogs
-            if [ "$?" == "2" ] ; then   # exit code 2 if the branch doesn't exist
+            if [ "$?" == "2" ] ; then   # exit-code 2 if the branch doesn't exist
               echo "Branch doesn't exist. Skip fetching";
             else    # if a branch exists, fetch it
               git fetch origin ${GITHUB_REF#refs/heads/}-testlogs
