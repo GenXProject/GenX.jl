@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 6.9602085499e+03
+obj_true = 6960.20855
 test_path = "ThreeZones"
 
 # Define test inputs
@@ -42,6 +42,9 @@ end
 
 obj_test = objective_value(EP)
 optimal_tol = get_attribute(EP, "dual_feasibility_tolerance")
+
+# Round the objective value to the same number of digits as the tolerance
+obj_test = round_objfromtol!(obj_test, optimal_tol)
 
 # Test the objective value
 test_result = @test obj_test ≈ obj_true atol=optimal_tol

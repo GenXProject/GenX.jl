@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = [7.9734800317e+04, 4.1630034942e+04, 2.7855206315e+04]
+obj_true = [79734.80032, 41630.03494, 27855.20632]
 test_path = "MultiStage"
 
 # Define test inputs
@@ -50,6 +50,9 @@ end
 
 obj_test = objective_value.([EP[i] for i in 1:3])
 optimal_tol = get_attribute.([EP[i] for i in 1:3], "dual_feasibility_tolerance")
+
+# Round the objective value to the same number of digits as the tolerance
+obj_test = round_objfromtol!.(obj_test, optimal_tol)
 
 # Test the objective value
 test_result = @test all(obj_true .- optimal_tol .<= obj_test .<= obj_true .+ optimal_tol)

@@ -4,7 +4,7 @@ using Dates
 using Logging, LoggingExtras
 
 
-const TestResult = Union{Test.Result, String}
+const TestResult = Union{Test.Result,String}
 
 function run_genx_case_testing(test_path::AbstractString, genx_setup::Dict)
     @assert genx_setup["MultiStage"] ∈ [0, 1]
@@ -56,17 +56,17 @@ end
 
 function write_testlog(test_path::AbstractString, message::AbstractString, test_result::TestResult)
     # Save the results to a log file
-    # Format: datetime, objective value, tolerance, test result
+    # Format: datetime, message, test result
 
-    if !isdir(joinpath("Logs"))
-        mkdir(joinpath("Logs"))
+    if !isdir("Logs")
+        mkdir("Logs")
     end
 
     log_file_path = joinpath("Logs", "$(test_path).log")
 
     logger = FormatLogger(open(log_file_path, "a")) do io, args
         # Write only if the test passed or failed
-        println(io, split(args.message,"\n")[1])
+        println(io, split(args.message, "\n")[1])
     end
 
     with_logger(logger) do
@@ -76,12 +76,26 @@ function write_testlog(test_path::AbstractString, message::AbstractString, test_
 end
 
 function write_testlog(test_path::AbstractString, obj_test::Real, optimal_tol::Real, test_result::TestResult)
+    # Save the results to a log file
+    # Format: datetime, objective value ± tolerance, test result
     message = "$obj_test ± $optimal_tol"
     write_testlog(test_path, message, test_result)
 end
 
 function write_testlog(test_path::AbstractString, obj_test::Vector{<:Real}, optimal_tol::Vector{<:Real}, test_result::TestResult)
+    # Save the results to a log file
+    # Format: datetime, [objective value ± tolerance], test result
     @assert length(obj_test) == length(optimal_tol)
-    message = join(join.(zip(obj_test,optimal_tol), " ± "), ", ")
+    message = join(join.(zip(obj_test, optimal_tol), " ± "), ", ")
     write_testlog(test_path, message, test_result)
+end
+
+function get_exponent_sciform(number::Real)
+    # Get the exponent of a number in scientific notation
+    return number == 0.0 ? 0 : Int(floor(log10(abs(number))))
+end
+
+function round_objfromtol!(obj::Real, tol::Real)
+    # Round the objective value to the same number of digits as the tolerance
+    return round(obj, digits=(-1)*get_exponent_sciform(tol))
 end

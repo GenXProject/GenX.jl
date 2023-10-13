@@ -17,6 +17,10 @@ end
     include("expression_manipulation_test.jl")
 end
 
+@testset "Utilities" begin
+    include("test_utilities.jl")
+end
+
 # Test GenX modules
 @testset verbose=true "GenX modules" begin
     @testset "Three zones" begin
