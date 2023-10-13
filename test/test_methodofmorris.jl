@@ -8,7 +8,6 @@ test_path = "MethodofMorris"
 
 # Define test inputs
 genx_setup = Dict(
-    "MacOrWindows" => "Mac",
     "PrintModel" => 0,
     "NetworkExpansion" => 0,
     "Trans_Loss_Segments" => 1,
