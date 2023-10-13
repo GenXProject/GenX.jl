@@ -44,4 +44,4 @@ LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Logging", "LoggingExtras", "JLD2"]
+test = ["Test", "JLD2", "Logging", "LoggingExtras"]

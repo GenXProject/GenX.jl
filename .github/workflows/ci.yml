@@ -14,34 +14,38 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6"
+          - "1.6" # LTS (64-bit Linux)
           - "1.7"
           - "1.8" 
-          - '1' # latest stable 1.x Julia release (Linux)
+          - '1.9' # latest stable Julia release (Linux)
         os:
           - ubuntu-latest
         arch:
           - x64
-        include: # additional tests [Julia-nightly]
+        include: # additional tests [Julia-nightly] (Linux) 
           - os: ubuntu-latest
             version: 'nightly'
             arch: x64
             allow_failure: true
     steps:
       - uses: actions/checkout@v3
-      - name: Create a new branch for test logs
+      - name: Create a new branch and pull test logs from repo
         run: |
-          if [[ ${{ matrix.version }} == '1' ]]; then
-            git config --local user.name lbonaldo
-            git config --local user.email "39280783+lbonaldo@users.noreply.github.com"
-            git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
-            if [ -z "$(git ls-remote --heads origin ${GITHUB_REF#refs/heads/}-testlogs)" ] ; then   # if the branch doesn't exist
-              echo "Branch doesn't exist. Skip fetching."
-            else    # if a branch exists, fetch it
-              git fetch origin ${GITHUB_REF#refs/heads/}-testlogs 
-              git cherry-pick $(git log -n 1 origin/${GITHUB_REF#refs/heads/}-testlogs --pretty=format:"%H")
-            fi
+          git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
+          mkdir test/Logs; cd test/Logs
+          git config --global init.defaultBranch main
+          git init
+          git config --local user.name GenXProject
+          git config --local user.email "84470580+GenXProject@users.noreply.github.com"
+          git remote add testlog https://$LOG_TOKEN@github.com/GenXProject/GenX-testlog.git
+          git pull testlog main
+          if [ -d Logs_v${{ matrix.version }} ]; then
+            mv Logs_v${{ matrix.version }}/*.log .
+          else
+            mkdir Logs_v${{ matrix.version }}
           fi
+        env:
+          LOG_TOKEN: ${{ secrets.LOG_TOKEN }}
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
@@ -49,13 +53,14 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-      - name: Commit logs and push to repo # only for 1.x versions
+      - name: Commit logs and push back to repo
         run: |
-          if [[ ${{ matrix.version }} == '1' ]]; then
-            git add -f test/Logs
-            git commit -m "Update test logs"
-            git push -f origin ${GITHUB_REF#refs/heads/}-testlogs
-          fi
+          cd ${GITHUB_WORKSPACE}/test/Logs
+          mv *.log Logs_v${{ matrix.version }}
+          git add -f Logs_v${{ matrix.version }}
+          git commit -m "Update test logs for Julia v${{ matrix.version }}"
+          git pull --rebase testlog main # pull again to avoid conflicts from other versions
+          git push testlog main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: julia-actions/julia-processcoverage@v1
