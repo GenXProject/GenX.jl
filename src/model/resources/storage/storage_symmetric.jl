@@ -26,16 +26,12 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 		if CapacityReserveMargin > 0
 			@constraints(EP, begin
 				# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
-				[y in STOR_SYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] + EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-
 				# Max simultaneous charge and discharge cannot be greater than capacity
 				[y in STOR_SYMMETRIC, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
 			end)
 		else
 			@constraints(EP, begin
 				# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
-				[y in STOR_SYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] <= EP[:eTotalCap][y]
-
 				# Max simultaneous charge and discharge cannot be greater than capacity
 				[y in STOR_SYMMETRIC, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t] <= EP[:eTotalCap][y]
 			end)
@@ -70,13 +66,6 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
     eTotalCap = EP[:eTotalCap]
 
     # Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
-    expr = @expression(EP, [y in SYMMETRIC, t in T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
-    add_similar_to_expression!(expr[REG, :], vREG_charge[REG, :])
-    if CapacityReserveMargin
-        add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_charge[SYMMETRIC, :])
-    end
-    @constraint(EP, [y in SYMMETRIC, t in T], expr[y, t] <= eTotalCap[y])
-
     # Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
     expr = @expression(EP, [y in SYMMETRIC, t in T], vP[y, t] + vCHARGE[y, t])
     add_similar_to_expression!(expr[REG, :], vREG_charge[REG, :])
