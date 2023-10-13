@@ -205,7 +205,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     expr = @expression(EP, [y in STOR_ALL, t in T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
     add_similar_to_expression!(expr[STOR_REG, :], vREG_discharge[STOR_REG, :])
-    add_similar_to_expression!(expr[STOR_RSV, :], vRSTOR_RSVV_discharge[STOR_RSV, :])
+    add_similar_to_expression!(expr[STOR_RSV, :], vRSV_discharge[STOR_RSV, :])
     if CapacityReserveMargin > 0
         add_similar_to_expression!(expr[STOR_ALL, :], vCAPRES_discharge[STOR_ALL, :])
     end
