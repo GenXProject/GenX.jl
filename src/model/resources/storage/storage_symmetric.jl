@@ -10,7 +10,6 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
 
-	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
@@ -61,10 +60,7 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	RSV = intersect(SYMMETRIC, inputs["RSV"])
 
     vP = EP[:vP]
-    vS = EP[:vS]
     vCHARGE = EP[:vCHARGE]
-    vREG = EP[:vREG]
-    vRSV = EP[:vRSV]
     vREG_charge = EP[:vREG_charge]
     vRSV_charge = EP[:vRSV_charge]
     vREG_discharge = EP[:vREG_discharge]
