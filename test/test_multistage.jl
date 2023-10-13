@@ -40,6 +40,9 @@ optimal_tol_rel =
     )
 optimal_tol = optimal_tol_rel .* obj_test  # Convert to absolute tolerance
 
+# Round the objective value to the same number of digits as the tolerance
+obj_test = round_objfromtol!.(obj_test, optimal_tol)
+
 # Test the objective value
 test_result = @test all(obj_true .- optimal_tol .<= obj_test .<= obj_true .+ optimal_tol)
 
