@@ -190,10 +190,8 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum charging rate plus contribution to reserves up must be greater than zero
     # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
     expr = @expression(EP, [y in STOR_ALL, t in T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
-    S = STOR_REG
-    add_similar_to_expression!(expr[S, :], -vREG_charge[S, :])
-    S = STOR_RSV
-    add_similar_to_expression!(expr[S, :], -vRSV_charge[S, :])
+    add_similar_to_expression!(expr[STOR_REG, :], -vREG_charge[STOR_REG, :])
+    add_similar_to_expression!(expr[STOR_RSV, :], -vRSV_charge[STOR_RSV, :])
     @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] >= 0)
 
     # Maximum discharging rate and contribution to reserves down must be greater than zero
@@ -205,16 +203,13 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     # Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
     # this constraint is set in functions below for each storage type
 
-    # Maximum discharging rate and contribution to reserves up must be less than power rating
     expr = @expression(EP, [y in STOR_ALL, t in T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
-    S = STOR_REG
-    add_similar_to_expression!(expr[S, :], vREG_discharge[S, :])
-    S = STOR_RSV
-    add_similar_to_expression!(expr[S, :], vRSV_discharge[S, :])
+    add_similar_to_expression!(expr[STOR_REG, :], vREG_discharge[STOR_REG, :])
+    add_similar_to_expression!(expr[STOR_RSV, :], vRSTOR_RSVV_discharge[STOR_RSV, :])
     if CapacityReserveMargin > 0
-        S = STOR_ALL
-        add_similar_to_expression!(expr[S, :], vCAPRES_discharge[S, :])
+        add_similar_to_expression!(expr[STOR_ALL, :], vCAPRES_discharge[STOR_ALL, :])
     end
+    # Maximum discharging rate and contribution to reserves up must be less than power rating
     @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] <= eTotalCap[y])
     # Maximum discharging rate and contribution to reserves up must be less than available stored energy in prior period
     @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] <= vS[y, hoursbefore(p,t,1)] * eff_down(y))
