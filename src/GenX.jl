@@ -47,19 +47,19 @@ using Clustering
 using Distances
 using Combinatorics
 
-using OrdinaryDiffEq
+# using OrdinaryDiffEq
 using Random
 using RecursiveArrayTools
 using Statistics
 
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 
-#using CPLEX
+using CPLEX
 #using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
-using BenchmarkTools
+# using BenchmarkTools
 using HiGHS
 using Clp
 using Cbc

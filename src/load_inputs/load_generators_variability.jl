@@ -31,12 +31,20 @@ function load_generators_variability(setup::Dict, path::AbstractString, inputs_g
 	end
 
 	# Reorder DataFrame to R_ID order (order provided in Generators_data.csv)
-	select!(gen_var, [:Time_Index; Symbol.(inputs_genvar["VARIABILITY"])])
+	variability_names = inputs_genvar["VARIABILITY"]
+	existing_variability = names(gen_var)
+	temp = zeros(inputs_genvar["T"], inputs_genvar["G"])
+	for g = 1: inputs_genvar["G"]
+		r = variability_names[g]
+		location = findfirst(x -> x == r, existing_variability)
+		temp[:, g] = Vector{Float64}(gen_var[:, location])
+    end
+	# temp = select(gen_var, [:Time_Index; Symbol.(inputs_genvar["VARIABILITY"])])
 
 	# Maximum power output and variability of each energy resource
-	inputs_genvar["pP_Max"] = transpose(Matrix{Float64}(gen_var[1:inputs_genvar["T"],2:(inputs_genvar["G"]+1)]))
-
-	println("Generators_variability.csv Successfully Read!")
+	inputs_genvar["pP_Max"] = transpose(temp)
 
 	return inputs_genvar
+	println("Generators_variability.csv Successfully Read!")
+
 end
