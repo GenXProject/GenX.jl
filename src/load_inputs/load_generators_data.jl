@@ -99,6 +99,8 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     retirable = resources_which_can_be_retired(gen_in)
     if deprecated_newbuild_canretire_interface(gen_in)
         deprecated_newbuild_canretire_interface_warning()
+    else
+        validate_newbuild_entries(gen_in)
     end
 
 	# Set of all resources eligible for new capacity
@@ -622,12 +624,24 @@ function deprecated_newbuild_canretire_interface(df::DataFrame)::Bool
     return string(:Can_Retire) ∉ names(df)
 end
 
+function validate_newbuild_entries(df::DataFrame)
+    if any(df.New_Build .== -1)
+        @error "
+When using the updated New_build interface, only {0, 1} are valid.
+Entries which previously had New_Build = -1 should be updated to
+New_Build = 0, Can_Retire = 0."
+        error("Invalid New_Build inputs in resource data.")
+    end
+end
+
+
 function deprecated_newbuild_canretire_interface_warning()
-    @warn "The generators input file does not have a 'Can_Retire' column.
-While for now, New_Build entries of [1, 0, -1] are still supported,
+    @warn "
+The generators input file does not have a 'Can_Retire' column.
+While for now, New_Build entries of {1, 0, -1} are still supported,
 this format is being deprecated.
 Now and going forward, New_Build and Can_Retire should be separate columns,
-each with values [0, 1].
+each with values {0, 1}.
 Please see the documentation for additional details."
 end
 
