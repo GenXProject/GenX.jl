@@ -627,9 +627,12 @@ end
 function validate_newbuild_entries(df::DataFrame)
     if any(df.New_Build .== -1)
         @error "
-When using the updated New_build interface, only {0, 1} are valid.
-Entries which previously had New_Build = -1 should be updated to
-New_Build = 0, Can_Retire = 0."
+One or more resources has New_Build = -1, but the Can_Retire column is present,
+indicating that the updated interface should be used.
+When using the updated New_Build/Can_Retire interface, only {0, 1} are valid.
+Entries which previously had New_Build = -1
+(indicating resources which cannot be built nor retired)
+should be updated to New_Build = 0, Can_Retire = 0."
         error("Invalid New_Build inputs in resource data.")
     end
 end
