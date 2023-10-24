@@ -624,11 +624,11 @@ end
 
 function deprecated_newbuild_canretire_interface_warning()
     @warn "The generators input file does not have a 'Can_Retire' column.
-    While for now, New_Build entries of [1, 0, -1] are still supported,
-    this format is being deprecated.
-    Now and going forward, New_Build and Can_Retire should be separate columns,
-    each with values [0, 1].
-    Please see the documentation for additional details."
+While for now, New_Build entries of [1, 0, -1] are still supported,
+this format is being deprecated.
+Now and going forward, New_Build and Can_Retire should be separate columns,
+each with values [0, 1].
+Please see the documentation for additional details."
 end
 
 function resources_which_can_be_retired(df::DataFrame)::Set{Int64}
