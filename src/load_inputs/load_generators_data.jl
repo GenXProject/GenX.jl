@@ -95,8 +95,11 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		inputs_gen["RSV"] = gen_in[(gen_in[!,:Rsv_Max].>0),:R_ID]
 	end
 
-	buildable = gen_in[gen_in.New_Build.==1, :R_ID]
-	retirable = get_resources_which_can_be_retired(gen_in)
+    buildable = resources_which_can_be_built(gen_in)
+    retirable = resources_which_can_be_retired(gen_in)
+    if deprecated_newbuild_canretire_interface(gen_in)
+        deprecated_newbuild_canretire_interface_warning()
+    end
 
 	# Set of all resources eligible for new capacity
 	inputs_gen["NEW_CAP"] = intersect(buildable, gen_in[gen_in.Max_Cap_MW.!=0,:R_ID])
@@ -381,8 +384,8 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 		## Defining all sets
 
 		# New build and retirement resources
-		buildable = dfGen[dfGen.New_Build.==1,:R_ID]
-        retirable = get_resources_which_can_be_retired(dfGen)
+        buildable = resources_which_can_be_built(dfGen)
+        retirable = resources_which_can_be_retired(dfGen)
 
 		# Solar PV Resources
 		inputs_gen["VS_SOLAR"] = vre_stor_in[(vre_stor_in.SOLAR.!=0),:R_ID]
@@ -615,29 +618,29 @@ function validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
 	end
 end
 
-function get_resources_which_can_be_retired(df::DataFrame)::Set{Int64}
-    if string(:Can_Retire) in names(df)
-        retirable = df[df.Can_Retire.==1, :R_ID]
+function deprecated_newbuild_canretire_interface(df::DataFrame)::Bool
+    return string(:Can_Retire) ∉ names(df)
+end
 
-        invalid_newbuild = df.New_Build.==-1
-        if any(invalid_newbuild)
-            @warn "Deprecated '-1' entries in the 'New_Build' column.
-This previously indicated inability to build or to retire. Entries which previously
-had New_Build=-1 should now have New_Build=0, Can_Retire=0."
-        end
+function deprecated_newbuild_canretire_interface_warning()
+    @warn "The generators input file does not have a 'Can_Retire' column.
+    While for now, New_Build entries of [1, 0, -1] are still supported,
+    this format is being deprecated.
+    Now and going forward, New_Build and Can_Retire should be separate columns,
+    each with values [0, 1].
+    Please see the documentation for additional details."
+end
+
+function resources_which_can_be_retired(df::DataFrame)::Set{Int64}
+    if deprecated_newbuild_canretire_interface(df)
+        retirable = df.New_Build .!= -1
     else
-        # Backward compatibility.
-        retirable = df[df.New_Build.!=-1, :R_ID]
-        nonretirable = df[df.New_Build.==-1, :R_ID]
-        if !isempty(nonretirable)
-            @info "The generators input file, 'New_Build' column, has some entries
-which are -1, indicating resources which cannot be built or retired.
-This input format is deprecated and may be removed in a future version.
-Instead, add a new column 'Can_Retire',
-where 0 means a resource cannot be retired and 1 means it can.
-As before, in New_Build, 0 means a resource cannot be built and 1 means it can.
-Please see the documentation for any additional details."
-        end
+        retirable = df.Can_Retire .== 1
     end
-    return Set(retirable)
+    return Set(findall(retirable))
+end
+
+function resources_which_can_be_built(df::DataFrame)::Set{Int64}
+    buildable = df.New_Build .== 1
+    return Set(findall(buildable))
 end

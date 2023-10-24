@@ -115,7 +115,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		end
 	end
 
-    retirable = get_resources_which_can_be_retired(dfGen)
+    retirable = resources_which_can_be_retired(dfGen)
 
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = retirable
