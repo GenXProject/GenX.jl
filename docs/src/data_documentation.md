@@ -274,10 +274,12 @@ This file contains cost and performance parameters for various generators and ot
 |Resource | This column contains **unique** names of resources available to the model. Resources can include generators, storage, and flexible or time shiftable demand.|
 |Zone | Integer representing zone number where the resource is located. |
 |**Technology type flags**|
-|New\_Build | {-1, 0, 1}, Flag for resource (storage, generation) eligibility for capacity expansion.|
-||New\_Build = 1: eligible for capacity expansion and retirement. |
-||New\_Build = 0: not eligible for capacity expansion, eligible for retirement.|
-||New\_Build = -1: not eligible for capacity expansion or retirement.|
+|New\_Build | { 0, 1}, Flag for resource (storage, generation) eligibility for capacity expansion.|
+||New\_Build = 1: eligible for capacity expansion. |
+||New\_Build = 0: not eligible for capacity expansion.|
+|Can\_Retire | {0, 1}, Flag for resource (storage, generation) eligibility for retirement.|
+||Can\_Retire = 1: eligible for retirement. |
+||Can\_Retire = 0: not eligible for retirement.|
 |THERM | {0, 1, 2}, Flag to indicate membership in set of thermal resources (e.g. nuclear, combined heat and power, natural gas combined cycle, coal power plant)|
 ||THERM = 0: Not part of set (default) |
 ||THERM = 1: If the power plant relies on thermal energy input and subject unit commitment constraints/decisions if `UCommit >= 1` (e.g. cycling decisions/costs/constraints). |
