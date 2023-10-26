@@ -61,8 +61,6 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
     vRSV_charge = EP[:vRSV_charge]
     vREG_discharge = EP[:vREG_discharge]
     vRSV_discharge = EP[:vRSV_discharge]
-    vCAPRES_charge = EP[:vCAPRES_charge]
-    vCAPRES_discharge = EP[:vCAPRES_discharge]
     eTotalCap = EP[:eTotalCap]
 
     # Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
@@ -72,6 +70,8 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
     add_similar_to_expression!(expr[REG, :], vREG_discharge[REG, :])
     add_similar_to_expression!(expr[RSV, :], vRSV_discharge[RSV, :])
     if CapacityReserveMargin
+        vCAPRES_charge = EP[:vCAPRES_charge]
+        vCAPRES_discharge = EP[:vCAPRES_discharge]
         add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_charge[SYMMETRIC, :])
         add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_discharge[SYMMETRIC, :])
     end

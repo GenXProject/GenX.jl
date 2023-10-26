@@ -207,7 +207,8 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     add_similar_to_expression!(expr[STOR_REG, :], vREG_discharge[STOR_REG, :])
     add_similar_to_expression!(expr[STOR_RSV, :], vRSV_discharge[STOR_RSV, :])
     if CapacityReserveMargin > 0
-        add_similar_to_expression!(expr[STOR_ALL, :], EP[:vCAPRES_discharge][STOR_ALL, :])
+        vCAPRES_discharge = EP[:vCAPRES_discharge]
+        add_similar_to_expression!(expr[STOR_ALL, :], vCAPRES_discharge[STOR_ALL, :])
     end
     # Maximum discharging rate and contribution to reserves up must be less than power rating
     @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] <= eTotalCap[y])
