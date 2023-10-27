@@ -1166,11 +1166,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # From CO2 Policy module
 	@expression(EP, eELOSSByZone_VRE_STOR[z=1:Z],
         sum(EP[:eELOSS_VRE_STOR][y] for y in intersect(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID],STOR)))
-    if !isempty(inputs["STOR_ALL"])
-        EP[:eELOSSByZone] += eELOSSByZone_VRE_STOR
-    else
-        @expression(EP, eELOSSByZone[z=1:Z], eELOSSByZone_VRE_STOR[z])
-    end
+    add_similar_to_expression!(EP[:eELOSSByZone], eELOSSByZone_VRE_STOR)
 
     ### CONSTRAINTS ###
 

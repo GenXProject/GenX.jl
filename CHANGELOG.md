@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Previously there was a typo in this in the multistage code that led to a silent bug, which affects outputs,
   for anyone running non-myopic multistage GenX with asymmetric storage.
 - Fix computation of cumulative minimum capacity retirements in multistage GenX (#514)
+- Fix access of eELOSSByZone expr before initialization (#541)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).

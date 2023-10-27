@@ -128,10 +128,9 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 		end
 	end
 
-	#From CO2 Policy module
-	@expression(EP, eELOSSByZone[z=1:Z],
-		sum(EP[:eELOSS][y] for y in intersect(STOR_ALL, dfGen[dfGen[!,:Zone].==z,:R_ID]))
-	)
+	# From CO2 Policy module
+	expr = @expression(EP, [z=1:Z], sum(EP[:eELOSS][y] for y in intersect(STOR_ALL, dfGen[dfGen[!,:Zone].==z,:R_ID])))
+	add_similar_to_expression!(EP[:eELOSSByZone], expr)
 
 	# Capacity Reserve Margin policy
 	if CapacityReserveMargin > 0
