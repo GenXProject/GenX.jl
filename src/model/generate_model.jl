@@ -95,6 +95,9 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	create_empty_expression!(EP, :eGenerationByZone, (Z, T))
 	
+	# Energy losses related to technologies
+	create_empty_expression!(EP, :eELOSSByZone, Z)
+	
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
 		create_empty_expression!(EP, :eCapResMarBalance, (inputs["NCapacityReserveMargin"], T))
@@ -127,7 +130,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	fuel!(EP, inputs, setup)
 
 	co2!(EP, inputs) 
-
 
 	if setup["Reserves"] > 0
 		reserves!(EP, inputs, setup)
