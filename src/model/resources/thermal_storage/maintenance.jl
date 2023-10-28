@@ -114,9 +114,9 @@ function maintenance_fusion_modification!(EP::Model, inputs::Dict)
 
     vMDOWN = EP[:vMDOWN]
 
-    frac_passive_to_reduce(y) = by_rid(y, :Recirc_Pass) * (1 - by_rid(y, :Recirc_Pass_Maintenance_Reduction))
+    passive_to_reduce(y) = by_rid(y, :Recirc_Pass) * (1 - by_rid(y, :Recirc_Pass_Maintenance_Fraction))
     for y in intersect(FUS, MAINTENANCE), t in T
             add_to_expression!(EP[:ePassiveRecircFus][t,y],
-                               -by_rid(y,:Cap_Size) * vMDOWN[t,y] * dfGen[y,:Eff_Down] * frac_passive_to_reduce(y))
+                               -by_rid(y,:Cap_Size) * vMDOWN[t,y] * dfGen[y,:Eff_Down] * passive_to_reduce(y))
     end
 end
