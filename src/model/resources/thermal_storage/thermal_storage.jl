@@ -626,9 +626,9 @@ function thermal_storage_capacity_reserve_margin!(EP::Model, inputs::Dict)
     # remove plants from contributing while they are under maintenance
     FUS_MAINT = intersect(FUS, MAINTENANCE)
     if !isempty(FUS_MAINT)
-        avg_net_el_fus(y) = dfGen[y, :Average_Net_Electric_Factor] * by_rid(y, :Cap_Size)
+        net_el_conv(y) = dfGen[y, :Eff_Down] * by_rid(y, :Cap_Size)
         @expression(EP, eCapResMarBalanceFusionMaintAdj[res in reserves, t in T],
-                    -sum(capresfactor(res, y) * EP[:vMDOWN][t, y] * avg_net_el_fus(y) for y in FUS_MAINT))
+                    -sum(capresfactor(res, y) * EP[:vMDOWN][t, y] * net_el_conv(y) for y in FUS_MAINT))
         EP[:eCapResMarBalance] += eCapResMarBalanceFusionMaintAdj
     end
 
