@@ -1,0 +1,5 @@
+## Retrofit
+
+```@docs
+GenX.retrofit
+```
