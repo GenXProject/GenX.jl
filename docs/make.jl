@@ -1,8 +1,4 @@
-push!(LOAD_PATH,"../src/")
-#=cd("../")
-include(joinpath(pwd(), "package_activate.jl"))
-genx_path = joinpath(pwd(), "src")
-push!(LOAD_PATH, genx_path)=#
+push!(LOAD_PATH, "../src/")
 import DataStructures: OrderedDict
 using GenX
 using Documenter
@@ -13,18 +9,38 @@ push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
     "Welcome Page" => [
         "GenX: Introduction" => "index.md",
-        "Running GenX Cases" => "how_to_run_genx.md",
-        "Multi-Stage Capacity Expansion Planning with GenX" => "multi_stage_genx.md",
+        "Installation Guide" => "installation.md",
         "Limitation of GenX" => "limitations_genx.md",
         "Third Party Extensions" => "third_party_genx.md"
+    ],
+    "Getting Started" => [
+        "Running GenX" => "examples_casestudies.md",
+        "Commertial solvers" => "commercial_solvers.md",
+    ],
+    "User Guide" => [
+        "Overall workflow" => "workflow.md",
+        "Model Configuration" => "model_configuration.md",
+        "Solver Configuration" => "solver_configuration.md",
+        "Model Inputs" => "model_input.md",
+        "TDR Inputs" => "TDR_input.md",
+        "Running the TDR" => "running_TDR.md",
+        "MGA package" => "generate_alternatives.md",
+        "Multi-stage Model" => "multi_stage_input.md",
+        "Method of Morris Inputs" => "methodofmorris_input.md",
+        "Running the Model" => "running_model.md",
+        "Model Outputs" => "model_output.md",
     ],
     "Model Concept and Overview" => [
         "Model Introduction" => "model_introduction.md",
         "Notation" => "model_notation.md",
         "Objective Function" => "objective_function.md",
-        "Power Balance" => "power_balance.md"
+        "Power Balance" => "power_balance.md",
+        "Slack Variables for Policies" => "slack_variables_overview.md",
+        "Maintenance" => "maintenance_overview.md",
+        "Time Domain Reduction" => "TDR_overview.md",
+        "Multi-Stage Modeling" => "multi_stage_overview.md",
     ],
-    "Model Function Reference" => [
+    "Reference" => [
         "Core" => "core.md",
         "Resources" => [
             "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
@@ -50,49 +66,51 @@ pages = OrderedDict(
                 "Thermal No Commit" => "thermal_no_commit.md"
             ],
             "Hydrogen Electrolyzers" => "electrolyzers.md",
+            "Retrofit" => "retrofit.md",
+            "Resources API" => "resources.md",
             "Scheduled maintenance for various resources" => "maintenance.md",
             "Resource types" => "resource.md"
         ],
-        "Multi_stage" => [
-                "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
-                "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md",
-        ],
         "Policies" => "policies.md",
-        "Slack Variables for Policies" => "slack_variables_overview.md",
+        "Solver Configurations" => "solver_configuration_api.md",
+        "Inputs Functions" => "load_inputs.md",
+        "Utility Functions" => "utility_functions.md",
+        "TDR" => "TDR.md",
+        "Multi-stage" => [
+            "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
+            "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md",
+            "Endogenous Retirement" => "endogenous_retirement.md",
+        ],
+        "Public API" => "public_api.md",
+        "Solving the Model" => "solve_model.md",
+        "Outputs Functions" => "write_outputs.md",
+        "Modeling to Generate Alternatives" => "mga.md",
+        "Method of Morris" => "methodofmorris.md",
     ],
-    "Methods" => "methods.md",
-    "Solver Configurations" => "solver_configuration.md",
-    "Solving the Model" => "solve_model.md",
-    "Model Inputs/Outputs Documentation" => [
-        "Single-stage Model" => "data_documentation.md",
-        "Multi-stage Model" => "multi_stage_model_overview.md",
-    ],
-    "GenX Inputs Functions" => "load_inputs.md",
-    "GenX Outputs Functions" =>"write_outputs.md",
-    "Additional Features" => "additional_features.md",
     "Third Party Extensions" => "additional_third_party_extensions.md",
     "Developer Docs" => "developer_guide.md",
 )
 makedocs(;
     modules=[GenX],
     authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
-    #repo="https://github.com/sambuddhac/GenX.jl/blob/{commit}{path}#{line}",
     sitename="GenX",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://genxproject.github.io/GenX/stable",
+        canonical="https://github.com/lbonaldo/GenX/stable",
         assets=String[],
+        collapselevel=1
     ),
     pages=[p for p in pages]
+    # warnonly=true
 )
 
-deploydocs(;
-    repo="github.com/GenXProject/GenX.git",
-    target = "build",
-    branch = "gh-pages",
-    devbranch = "main",
-    devurl = "dev",
-    push_preview=true,
-    versions = ["stable" => "v^", "v#.#"],
-    forcepush = false,
-)
+# deploydocs(;
+#     repo="github.com/GenXProject/GenX.git",
+#     target = "build",
+#     branch = "gh-pages",
+#     devbranch = "main",
+#     devurl = "dev",
+#     push_preview=true,
+#     versions = ["stable" => "v^", "v#.#"],
+#     forcepush = false,
+# )

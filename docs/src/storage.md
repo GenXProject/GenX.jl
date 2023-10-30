@@ -1,5 +1,4 @@
 # Storage
-```@autodocs
-Modules = [GenX]
-Pages = ["storage.jl"]
+```@docs
+GenX.storage!
 ```

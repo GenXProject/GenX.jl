@@ -1,7 +1,7 @@
 # Functions for Writing the Different Results/Outputs to Separate Files
 ```@autodocs
 Modules = [GenX]
-Pages = ["write_outputs.jl"]
+Pages = ["write_outputs.jl", "choose_output_dir.jl", "dftranspose.jl"]
 ```
 
 ## Write Status
@@ -10,10 +10,20 @@ Modules = [GenX]
 Pages = ["write_status.jl"]
 ```
 
+## Write CO_2 Cap
+```@docs
+GenX.write_co2_cap
+```
+
 ## Write Costs
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_costs.jl"]
+```
+
+## Write Fuel Consumption
+```@docs
+GenX.write_fuel_consumption
 ```
 
 ## Write Emissions
@@ -118,13 +128,26 @@ Pages = ["write_net_revenue.jl"]
 ```
 
 ## Write Co-Located VRE and Storage files
-```@autodocs
-Modules = [GenX]
-Pages = ["write_vre_stor.jl"]
+```@docs
+GenX.write_vre_stor
+GenX.write_vre_stor_capacity
+GenX.write_vre_stor_charge
+GenX.write_vre_stor_discharge
 ```
 
-## Write Settings files
+## Write Multi-stage files
+```@docs
+GenX.write_multi_stage_costs
+GenX.write_multi_stage_stats
+GenX.write_multi_stage_settings
+GenX.write_multi_stage_network_expansion
+GenX.write_multi_stage_capacities_charge
+GenX.write_multi_stage_capacities_energy
+```
+
+## Write maintenance files
 ```@autodocs
 Modules = [GenX]
-Pages = ["write_settings.jl"]
+Pages = ["write_maintenance.jl"]
 ```
+
