@@ -1,4 +1,5 @@
-# Multi-stage modeling overview
+# Multi-stage setup
+
 This section describes the available features, inputs and model components related to formulating and solving multi-stage investment planning problems. Two different types of multi-stage problems can be setup:
 * Perfect foresight: A single multi-stage investment planning problem that simultaneously optimizes capacity and operations across all specified investment stages
 * Myopic: Sequential solution of single-stage investment planning for each investment stage, where capacity additions and retirements from the previous stages are used to determine initial (or existing) capacity at the beginning of the current stage. 
@@ -11,9 +12,9 @@ The table below summarizes the key differences in the two model setups.
 | Objective function cost basis              | Net present value | Annualized costs                     |
 | Price/dual variable information available? | No                | Yes                                  |
 
-## Additional inputs needed for multi-stage modeling (need to convert to tables)
+### Additional inputs needed for multi-stage modeling
 
-###  Input data files
+####  Input data files
 Instead of one set of input files, there is one directory of input files that needs to be provided for each planning period or stage (e.g., “Inputs/Inputs_p1/” for the first period “Inputs/Inputs_p2/” for the second period, etc.). Below we list the additional parameters that must be provided in the corresponding stage-specific input files to instantiate a multi-stage planning problem.
 
 
@@ -57,7 +58,7 @@ Instead of one set of input files, there is one directory of input files that ne
 | WACC                      | The line-specific weighted average cost of capital.                                                                                                  |
 
 
-### Settings Files
+#### Settings Files
 A separate settings.yml file includes a list of parameters to be specified to formulate the multi-stage planning model.
 
 |                      |                                                                    **multi\_stage\_settings.yml**                                                                    |

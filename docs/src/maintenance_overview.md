@@ -35,7 +35,7 @@ Rather than have maintenance potentially start every hour, one can have possible
 (In reality, maintenance is likely scheduled months in advance, so optimizing down to the hour may not be realistic anyway.)
 
 ## How to use
-There are four columns which need to be added to the plant data, i.e. in the resource `.csv` files:
+There are four columns which need to be added to the plant data, i.e. in `Generators_data.csv`:
 
 1. `MAINT` should be `1` for plants that require maintenance and `0` otherwise.
 2. `Maintenance_Duration` is the number of hours the maintenance period lasts.
@@ -88,15 +88,9 @@ A constraint ensures that the value of `vMDOWN` in any hour is always more than 
 Another constraint ensures that the number of plants committed (`vCOMMIT`) at any one time plus the number of plants under maintenance (`vMDOWN`) is less than the total number of plants.
 
 ## Developer note: adding maintenance to a resource
-The maintenance formulation is applied on a per-resource basis, by calling the function `maintenance_formulation!`.
+The maintenance formulation is applied on a per-resource basis, by calling the function [`GenX.maintenance_formulation!`](@ref). 
 
-```@docs
-GenX.maintenance_formulation!
-GenX.resources_with_maintenance
-GenX.maintenance_down_name
-GenX.maintenance_shut_name
-GenX.controlling_maintenance_start_hours
-GenX.ensure_maintenance_variable_records!
-GenX.has_maintenance
-GenX.maintenance_down_variables
-```
+See [`GenX.maintenance_formulation_thermal_commit!`](@ref) for an example of how to apply it to a new resource.
+
+* The resource must have a `vCOMMIT`-like variable which is proportional to maximum the power output, etc at any given timestep.
+* The resource must have a `eTotalCap`-like quantity and a `Cap_Size`-like parameter; only the ratio of the two is used.
