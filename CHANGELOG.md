@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Load` and `LoadWeight` keys in the `time_domain_reduction_settings.yml` file are renamed to `Demand`, `DemandWeight`.
 - The `New_Build` column in `Generators_data.csv` has been separated into two: `New_Build` and `Can_Retire` (#392).
   Values in each column are {0,1}.
-- Separate commercial JuMP solvers from the GenX package.
+- Separate proprietary JuMP solvers from the GenX package.
   This allows users of Gurobi or CPLEX to use them without modifying
   the source code of the GenX package directly. This is a key step in publishing
   GenX as a proper Julia package. This does require change to the Run.jl files,
