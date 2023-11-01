@@ -34,7 +34,7 @@ genx_setup = Dict(
 )
 
 # Run the case and check if the model was built
-built = false
+built_and_run = false
 try
     Morris_range = redirect_stdout(devnull) do
         EP, inputs, OPTIMIZER = run_genx_case_testing(test_path, genx_setup)
@@ -42,16 +42,13 @@ try
         rm(joinpath(@__DIR__, test_path, "morris.csv"))
     end
     #TODO: test Morris range 
-    built = true
+    global built_and_run = true
 
 catch BoundsError
 end
 
-@static if VERSION ≥ VersionNumber(1, 7)
-    test_result = Test.@test built broken = true
-else
-    test_result = built ? "Test Passed" : "Test Failed"
-end
+# Test if the 
+test_result = Test.@test built_and_run
 
 # Add the results to the test log
 write_testlog(test_path, "Build and Run", test_result)

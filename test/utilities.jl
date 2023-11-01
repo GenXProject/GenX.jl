@@ -95,7 +95,7 @@ function get_exponent_sciform(number::Real)
     return number == 0.0 ? 0 : Int(floor(log10(abs(number))))
 end
 
-function round_objfromtol!(obj::Real, tol::Real)
+function round_from_tol!(obj::Real, tol::Real)
     # Round the objective value to the same number of digits as the tolerance
-    return round(obj, digits=(-1)*get_exponent_sciform(tol))
+    return round(obj, digits=(-1) * get_exponent_sciform(tol))
 end
