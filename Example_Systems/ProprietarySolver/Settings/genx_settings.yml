@@ -62,11 +62,8 @@ MaxCapReq: 1
 # 1 = yes
 # HydrogenHourlyMatching: 0
 
-## Solver settings
+## Solution settings
 # ----------------
-
-# Available solvers: Gurobi, CPLEX, Clps
-Solver: Gurobi
 
 # Internally scale demand, capacity and power variables in GW rather than MW.
 # 0 = not active
