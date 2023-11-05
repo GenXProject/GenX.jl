@@ -51,7 +51,6 @@ Note that all settings parameters are case sensitive.
 || 1 = if one or more maximum technology capacity constraints are specified|
 || 0 = otherwise|
 |**Solution strategy and outputs**||
-|Solver | Specifies the solver name (This is not case sensitive i.e. CPLEX/cplex, Gurobi/gurobi, Clp/clp indicate the same solvers, respectively). |
 |ParameterScale | Flag to turn on parameter scaling wherein demand, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
