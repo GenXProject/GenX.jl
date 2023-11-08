@@ -46,6 +46,8 @@ function run_genx_case_multistage_testing(test_path::AbstractString, genx_setup:
         inputs_dict[t] = load_inputs(genx_setup, inpath_sub)
         inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t], genx_setup["MultiStageSettingsDict"], genx_setup["NetworkExpansion"])
 
+        compute_cumulative_min_retirements!(inputs_dict,t)
+
         # Step 2) Generate model
         model_dict[t] = generate_model(genx_setup, inputs_dict[t], OPTIMIZER)
     end
