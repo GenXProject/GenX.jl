@@ -16,7 +16,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 	if (setup["WriteShadowPrices"]==1 || setup["UCommit"]==0 || (setup["UCommit"]==2 && (setup["Reserves"]==0 || (setup["Reserves"]>0 && inputs["pDynamic_Contingency"]==0)))) # fully linear model
 		# CO2 emissions by zone
 
-		if (setup["CO2Cap"]>=1) && (setup["CO2Cap"]<4)
+		if setup["CO2Cap"]>=1
 			# Dual variable of CO2 constraint = shadow price of CO2
 			tempCO2Price = zeros(Z,inputs["NCO2Cap"])
 			if has_duals(EP) == 1
@@ -42,7 +42,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 		dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])*scale_factor, :auto))
 
 
-		if (setup["CO2Cap"]>=1) && (setup["CO2Cap"]<4)
+		if setup["CO2Cap"]>=1
 			auxNew_Names=[Symbol("Zone");[Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 			rename!(dfEmissions,auxNew_Names)
 			total = DataFrame(["Total" zeros(1,inputs["NCO2Cap"]) sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))], :auto)

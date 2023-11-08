@@ -137,7 +137,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
 	# Calculate emissions cost
 	dfNetRevenue.EmissionsCost = zeros(nrow(dfNetRevenue))
-	if setup["CO2Cap"] >=1 && setup["CO2Cap"] <4 && has_duals(EP) == 1
+	if setup["CO2Cap"] >=1 && has_duals(EP) == 1
 		for cap in 1:inputs["NCO2Cap"]
 			co2_cap_dual = dual(EP[:cCO2Emissions_systemwide][cap])
 			CO2ZONES = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])

@@ -19,7 +19,7 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL], 
 		Fuel = dfGen[HAS_FUEL, :Fuel], 
 		Zone = dfGen[HAS_FUEL,:Zone], 
-		AnnualSum = zeros(length(HAS_FUEL)))
+		AnnualSumCosts = zeros(length(HAS_FUEL)))
 	tempannualsum = value.(EP[:ePlantCFuelOut][HAS_FUEL]) + value.(EP[:ePlantCFuelStart][HAS_FUEL])
 
 	if !isempty(MULTI_FUELS)
@@ -53,7 +53,7 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
     if setup["ParameterScale"] == 1
         tempannualsum *= ModelScalingFactor^2 # 
     end
-    dfPlantFuel.AnnualSum .+= tempannualsum
+    dfPlantFuel.AnnualSumCosts .+= tempannualsum
     CSV.write(joinpath(path, "Fuel_cost_plant.csv"), dfPlantFuel)
 end
 
