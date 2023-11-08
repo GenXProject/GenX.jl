@@ -46,7 +46,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	println("Time elapsed for writing costs is")
 	println(elapsed_time_costs)
 	dfCap = write_capacity(path, inputs, setup, EP)
-	dfCapRetro = write_capacity_retrofit(path, inputs, setup, EP)
 	dfPower = write_power(path, inputs, setup, EP)
 	dfCharge = write_charge(path, inputs, setup, EP)
 	dfCapacityfactor = write_capacityfactor(path, inputs, setup, EP)

@@ -218,10 +218,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		maximum_capacity_requirement!(EP, inputs, setup)
 	end
 
-	if setup["CapacityFactor"] == 1
-		capacity_factor_requirement!(EP, inputs, setup)
-	end
-
 	## Define the objective function
 	@objective(EP,Min,EP[:eObj])
 
