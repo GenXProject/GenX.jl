@@ -50,6 +50,17 @@ end
 ###### ###### ###### ###### ###### ######
 # Create an expression from some indices of a 2D variable array
 ###### ###### ###### ###### ###### ######
+#
+function extract_time_series_to_expression(var::Matrix{VariableRef},
+                                           set::AbstractVector{Int})
+    TIME_DIM = 2
+    time_range = 1:size(var)[TIME_DIM]
+
+    aff_exprs_data = AffExpr.(0, var[set, :] .=> 1)
+    new_axes = (set, time_range)
+    expr = JuMP.Containers.DenseAxisArray(aff_exprs_data, new_axes...)
+    return expr
+end
 
 function extract_time_series_to_expression(var::JuMP.Containers.DenseAxisArray{VariableRef, 2, Tuple{X, Base.OneTo{Int64}}, Y},
                                            set::AbstractVector{Int}) where {X, Y}

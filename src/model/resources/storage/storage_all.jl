@@ -189,7 +189,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     # Maximum charging rate plus contribution to reserves up must be greater than zero
     # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-    expr = @expression(EP, [y in STOR_ALL, t in 1:T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
+    expr = extract_time_series_to_expression(vCHARGE, STOR_ALL)
     add_similar_to_expression!(expr[STOR_REG, :], -vREG_charge[STOR_REG, :])
     add_similar_to_expression!(expr[STOR_RSV, :], -vRSV_charge[STOR_RSV, :])
     @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t] >= 0)
@@ -203,7 +203,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     # Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
     # this constraint is set in functions below for each storage type
 
-    expr = @expression(EP, [y in STOR_ALL, t in 1:T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
+    expr = extract_time_series_to_expression(vP, STOR_ALL)
     add_similar_to_expression!(expr[STOR_REG, :], vREG_discharge[STOR_REG, :])
     add_similar_to_expression!(expr[STOR_RSV, :], vRSV_discharge[STOR_RSV, :])
     if CapacityReserveMargin > 0

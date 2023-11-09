@@ -52,7 +52,7 @@ function storage_asymmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
     vREG_charge = EP[:vREG_charge]
     eTotalCapCharge = EP[:eTotalCapCharge]
 
-    expr = @expression(EP, [y in STOR_ASYMMETRIC, t in 1:T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
+    expr = extract_time_series_to_expression(vCHARGE, STOR_ASYMMETRIC)
     add_similar_to_expression!(expr[STOR_ASYM_REG, :], vREG_charge[STOR_ASYM_REG, :])
     if CapacityReserveMargin
         vCAPRES_charge = EP[:vCAPRES_charge]

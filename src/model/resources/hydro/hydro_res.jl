@@ -196,9 +196,8 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
     vRSV = EP[:vRSV]
     eTotalCap = EP[:eTotalCap]
 
-    # NOTE the load-bearing 1 * to create AffExpr and not VariableRef
-    max_up_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in 1:T], 1 * vP[y, t])
-    max_dn_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in 1:T], 1 * vP[y, t])
+    max_up_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
+    max_dn_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
 
     S = HYDRO_RES_REG
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])

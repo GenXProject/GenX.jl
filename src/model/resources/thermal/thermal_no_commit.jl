@@ -160,12 +160,12 @@ function thermal_no_commit_reserves!(EP::Model, inputs::Dict)
     @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= max_power(y, t) * dfGen[y,:Rsv_Max] * eTotalCap[y])
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
-    expr = @expression(EP, [y in THERM_NO_COMMIT, t in 1:T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
+    expr = extract_time_series_to_expression(vP, THERM_NO_COMMIT)
     add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
     @constraint(EP, [y in THERM_NO_COMMIT, t in 1:T], expr[y, t] >= min_power(y) * eTotalCap[y])
 
     # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
-    expr = @expression(EP, [y in THERM_NO_COMMIT, t in 1:T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
+    expr = extract_time_series_to_expression(vP, THERM_NO_COMMIT)
     add_similar_to_expression!(expr[REG, :], vREG[REG, :])
     add_similar_to_expression!(expr[RSV, :], vRSV[RSV, :])
     @constraint(EP, [y in THERM_NO_COMMIT, t in 1:T], expr[y, t] <= max_power(y, t) * eTotalCap[y])
