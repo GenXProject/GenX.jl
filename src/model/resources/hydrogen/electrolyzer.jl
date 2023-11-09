@@ -77,7 +77,6 @@ This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `gen
 
 This constraint permits modeling of the 'three pillars' requirements for clean hydrogen supply of (1) new clean supply (if only new clean resources are designated as eligible), (2) that is deliverable to the electrolyzer (assuming co-location within the same modeled zone = deliverability), and (3) produced within the same hour as the electrolyzer consumes power (otherwise known as 'additionality/new supply', 'deliverability', and 'temporal matching requirements') See Ricks, Xu & Jenkins (2023), ''Minimizing emissions from grid-based hydrogen production in the United States'' *Environ. Res. Lett.* 18 014025 [doi:10.1088/1748-9326/acacb5](https://iopscience.iop.org/article/10.1088/1748-9326/acacb5/meta) for more.
 """
-
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	println("Electrolyzer Resources Module")
 
