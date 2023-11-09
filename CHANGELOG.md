@@ -43,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Load` and `LoadWeight` keys in the `time_domain_reduction_settings.yml` file are renamed to `Demand`, `DemandWeight`.
 - The `New_Build` column in `Generators_data.csv` has been separated into two: `New_Build` and `Can_Retire` (#392).
   Values in each column are {0,1}.
+- Separate proprietary JuMP solvers from the GenX package.
+  This allows users of Gurobi or CPLEX to use them without modifying
+  the source code of the GenX package directly. This is a key step in publishing
+  GenX as a proper Julia package. This does require change to the Run.jl files,
+  to specify the solver. (#531)
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
@@ -51,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Load" now typically refers only to the transferrence of data from files to memory,
   except for a few places such as the common term "value of lost load" which refers to non-served demand (#397).
 - `New_Build = -1` in `Generators_data.csv`: instead, use `New_Build = 0` and `Can_Retire = 0`.
+
 
 ## [0.3.6] - 2023-08-01
 

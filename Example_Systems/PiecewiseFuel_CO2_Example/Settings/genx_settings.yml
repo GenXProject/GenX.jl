@@ -60,13 +60,10 @@ CO2Cap: 1
 # Hydrogen electrolyzer hourly supply matching required?
 # 0 = constraint ot active
 # 1 = constraint active for all electrolyzer resources
-#HydrogenHourlyMatching: 0
+# HydrogenHourlyMatching: 0
 
-## Solver settings
+## Solution settings
 # ----------------
-
-# Available solvers: Gurobi, CPLEX, Clps
-#Solver: HiGHS
 
 # Internally scale demand, capacity and power variables in GW rather than MW.
 # 0 = not active
@@ -76,11 +73,11 @@ ParameterScale: 1
 # Time domain reduce (i.e. cluster) inputs based on demand, resource availability profiles, and fuel prices;
 # 0 = not active (use input data as provided)
 # 1 = active (cluster input data, or use data that has already been clustered)
-#TimeDomainReduction: 0
+# TimeDomainReduction: 0
 
 # Directory where results from time domain reduction will be saved.
 # If results already exist, these will be used without running time domain reduction script again.
-#TimeDomainReductionFolder: "TDR_Results"
+# TimeDomainReductionFolder: "TDR_Results"
 
 ## Output settings
 # ----------------

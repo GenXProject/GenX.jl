@@ -13,14 +13,14 @@ end
 @doc raw"""Run the GenX in the given folder
 case - folder for the case
 """
-function run_genx_case!(case::AbstractString)
+function run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
     genx_settings = get_settings_path(case, "genx_settings.yml") #Settings YAML file path
     mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
-        run_genx_case_simple!(case, mysetup)
+        run_genx_case_simple!(case, mysetup, optimizer)
     else
-        run_genx_case_multistage!(case, mysetup)
+        run_genx_case_multistage!(case, mysetup, optimizer)
     end
 end
 
@@ -31,7 +31,7 @@ function time_domain_reduced_files_exist(tdrpath)
     return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 
-function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
+function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
 
     ### Cluster time series inputs if necessary and if specified by the user
@@ -49,7 +49,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
+    OPTIMIZER = configure_solver(settings_path, optimizer)
 
     #### Running a case
 
@@ -84,7 +84,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict)
 end
 
 
-function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
+function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml") # Multi stage settings YAML file path
     mysetup["MultiStageSettingsDict"] = YAML.load(open(multistage_settings))
@@ -114,7 +114,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(mysetup["Solver"], settings_path)
+    OPTIMIZER = configure_solver(settings_path, optimizer)
 
     model_dict=Dict()
     inputs_dict=Dict()
