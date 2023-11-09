@@ -48,6 +48,21 @@ function fill_with_const!(arr::Array{GenericAffExpr{C,T}, dims}, con::Real) wher
 end
 
 ###### ###### ###### ###### ###### ######
+# Create an expression from some indices of a 2D variable array
+###### ###### ###### ###### ###### ######
+
+function extract_time_series_to_expression(var::JuMP.Containers.DenseAxisArray{VariableRef, 2, Tuple{X, Base.OneTo{Int64}}, Y},
+                                           set::AbstractVector{Int}) where {X, Y}
+    TIME_DIM = 2
+    time_range = var.axes[TIME_DIM]
+
+    aff_exprs = AffExpr.(0, var[set, :] .=> 1)
+    new_axes = (set, time_range)
+    expr = JuMP.Containers.DenseAxisArray(aff_exprs.data, new_axes...)
+    return expr
+end
+
+###### ###### ###### ###### ###### ######
 # Element-wise addition of one expression into another
 # Both arrays must have the same dimensions
 ###### ###### ###### ###### ###### ######
