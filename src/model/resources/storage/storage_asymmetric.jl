@@ -42,7 +42,7 @@ Sets up variables and constraints specific to storage resources with asymmetric 
 """
 function storage_asymmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
-	T = 1:inputs["T"]
+	T = inputs["T"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
@@ -52,11 +52,11 @@ function storage_asymmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
     vREG_charge = EP[:vREG_charge]
     eTotalCapCharge = EP[:eTotalCapCharge]
 
-    expr = @expression(EP, [y in STOR_ASYMMETRIC, t in T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
+    expr = @expression(EP, [y in STOR_ASYMMETRIC, t in 1:T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
     add_similar_to_expression!(expr[STOR_ASYM_REG, :], vREG_charge[STOR_ASYM_REG, :])
     if CapacityReserveMargin
         vCAPRES_charge = EP[:vCAPRES_charge]
         add_similar_to_expression!(expr[STOR_ASYMMETRIC, :], vCAPRES_charge[STOR_ASYMMETRIC, :])
     end
-    @constraint(EP, [y in STOR_ASYMMETRIC, t in T], expr[y, t] <= eTotalCapCharge[y])
+    @constraint(EP, [y in STOR_ASYMMETRIC, t in 1:T], expr[y, t] <= eTotalCapCharge[y])
 end

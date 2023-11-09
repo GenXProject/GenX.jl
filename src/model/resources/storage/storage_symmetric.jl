@@ -47,7 +47,7 @@ Sets up variables and constraints specific to storage resources with symmetric c
 """
 function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
-	T = 1:inputs["T"]
+	T = inputs["T"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
 
 	SYMMETRIC = inputs["STOR_SYMMETRIC"]
@@ -65,7 +65,7 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     # Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
     # Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-    expr = @expression(EP, [y in SYMMETRIC, t in T], vP[y, t] + vCHARGE[y, t])
+    expr = @expression(EP, [y in SYMMETRIC, t in 1:T], vP[y, t] + vCHARGE[y, t])
     add_similar_to_expression!(expr[REG, :], vREG_charge[REG, :])
     add_similar_to_expression!(expr[REG, :], vREG_discharge[REG, :])
     add_similar_to_expression!(expr[RSV, :], vRSV_discharge[RSV, :])
@@ -75,5 +75,5 @@ function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_charge[SYMMETRIC, :])
         add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_discharge[SYMMETRIC, :])
     end
-    @constraint(EP, [y in SYMMETRIC, t in T], expr[y, t] <= eTotalCap[y])
+    @constraint(EP, [y in SYMMETRIC, t in 1:T], expr[y, t] <= eTotalCap[y])
 end

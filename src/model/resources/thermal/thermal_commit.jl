@@ -271,7 +271,7 @@ function thermal_commit_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 
-	T = 1:inputs["T"]     # Number of time steps (hours)
+	T = inputs["T"]     # Number of time steps (hours)
 
 	THERM_COMMIT = inputs["THERM_COMMIT"]
 
@@ -287,19 +287,19 @@ function thermal_commit_reserves!(EP::Model, inputs::Dict)
     max_power(y,t) = inputs["pP_Max"][y,t]
 
     # Maximum regulation and reserve contributions
-    @constraint(EP, [y in REG, t in T], vREG[y, t] <= max_power(y, t) * dfGen[y,:Reg_Max] * commit(y, t))
-    @constraint(EP, [y in RSV, t in T], vRSV[y, t] <= max_power(y, t) * dfGen[y,:Rsv_Max] * commit(y, t))
+    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= max_power(y, t) * dfGen[y,:Reg_Max] * commit(y, t))
+    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= max_power(y, t) * dfGen[y,:Rsv_Max] * commit(y, t))
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
-    expr = @expression(EP, [y in THERM_COMMIT, t in T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
+    expr = @expression(EP, [y in THERM_COMMIT, t in 1:T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
     add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
-    @constraint(EP, [y in THERM_COMMIT, t in T], expr[y, t] >= min_power(y) * commit(y, t))
+    @constraint(EP, [y in THERM_COMMIT, t in 1:T], expr[y, t] >= min_power(y) * commit(y, t))
 
     # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
-    expr = @expression(EP, [y in THERM_COMMIT, t in T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
+    expr = @expression(EP, [y in THERM_COMMIT, t in 1:T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
     add_similar_to_expression!(expr[REG, :], vREG[REG, :])
     add_similar_to_expression!(expr[RSV, :], vRSV[RSV, :])
-    @constraint(EP, [y in THERM_COMMIT, t in T], expr[y, t] <= max_power(y, t) * commit(y, t))
+    @constraint(EP, [y in THERM_COMMIT, t in 1:T], expr[y, t] <= max_power(y, t) * commit(y, t))
 end
 
 @doc raw"""

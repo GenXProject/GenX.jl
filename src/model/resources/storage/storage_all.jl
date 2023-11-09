@@ -154,7 +154,7 @@ end
 function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
 	dfGen = inputs["dfGen"]
-	T = 1:inputs["T"]
+	T = inputs["T"]
 	p = inputs["hours_per_subperiod"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
@@ -180,30 +180,30 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     eff_down(y) = dfGen[y, :Eff_Down]
 
 	# Maximum storage contribution to reserves is a specified fraction of installed capacity
-    @constraint(EP, [y in STOR_REG, t in T], vREG[y, t] <= dfGen[y,:Reg_Max] * eTotalCap[y])
-    @constraint(EP, [y in STOR_RSV, t in T], vRSV[y, t] <= dfGen[y,:Rsv_Max] * eTotalCap[y])
+    @constraint(EP, [y in STOR_REG, t in 1:T], vREG[y, t] <= dfGen[y,:Reg_Max] * eTotalCap[y])
+    @constraint(EP, [y in STOR_RSV, t in 1:T], vRSV[y, t] <= dfGen[y,:Rsv_Max] * eTotalCap[y])
 
 	# Actual contribution to regulation and reserves is sum of auxilary variables for portions contributed during charging and discharging
-    @constraint(EP, [y in STOR_REG, t in T], vREG[y, t] == vREG_charge[y, t] + vREG_discharge[y, t])
-    @constraint(EP, [y in STOR_RSV, t in T], vRSV[y, t] == vRSV_charge[y, t] + vRSV_discharge[y, t])
+    @constraint(EP, [y in STOR_REG, t in 1:T], vREG[y, t] == vREG_charge[y, t] + vREG_discharge[y, t])
+    @constraint(EP, [y in STOR_RSV, t in 1:T], vRSV[y, t] == vRSV_charge[y, t] + vRSV_discharge[y, t])
 
     # Maximum charging rate plus contribution to reserves up must be greater than zero
     # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-    expr = @expression(EP, [y in STOR_ALL, t in T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
+    expr = @expression(EP, [y in STOR_ALL, t in 1:T], 1 * vCHARGE[y, t]) # NOTE load-bearing "1 *"
     add_similar_to_expression!(expr[STOR_REG, :], -vREG_charge[STOR_REG, :])
     add_similar_to_expression!(expr[STOR_RSV, :], -vRSV_charge[STOR_RSV, :])
-    @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] >= 0)
+    @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t] >= 0)
 
     # Maximum discharging rate and contribution to reserves down must be greater than zero
     # Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
-    @constraint(EP, [y in STOR_REG, t in T], vP[y, t] - vREG_discharge[y, t] >= 0)
+    @constraint(EP, [y in STOR_REG, t in 1:T], vP[y, t] - vREG_discharge[y, t] >= 0)
 
     # Maximum charging rate plus contribution to regulation down must be less than available storage capacity
-    @constraint(EP, [y in STOR_REG, t in T], eff_up(y)*(vCHARGE[y, t]+vREG_charge[y, t]) <= eTotalCapEnergy[y]-vS[y, hoursbefore(p,t,1)])
+    @constraint(EP, [y in STOR_REG, t in 1:T], eff_up(y)*(vCHARGE[y, t]+vREG_charge[y, t]) <= eTotalCapEnergy[y]-vS[y, hoursbefore(p,t,1)])
     # Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
     # this constraint is set in functions below for each storage type
 
-    expr = @expression(EP, [y in STOR_ALL, t in T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
+    expr = @expression(EP, [y in STOR_ALL, t in 1:T], 1 * vP[y, t]) # NOTE load-bearing "1 *"
     add_similar_to_expression!(expr[STOR_REG, :], vREG_discharge[STOR_REG, :])
     add_similar_to_expression!(expr[STOR_RSV, :], vRSV_discharge[STOR_RSV, :])
     if CapacityReserveMargin > 0
@@ -211,7 +211,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(expr[STOR_ALL, :], vCAPRES_discharge[STOR_ALL, :])
     end
     # Maximum discharging rate and contribution to reserves up must be less than power rating
-    @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] <= eTotalCap[y])
+    @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t] <= eTotalCap[y])
     # Maximum discharging rate and contribution to reserves up must be less than available stored energy in prior period
-    @constraint(EP, [y in STOR_ALL, t in T], expr[y, t] <= vS[y, hoursbefore(p,t,1)] * eff_down(y))
+    @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t] <= vS[y, hoursbefore(p,t,1)] * eff_down(y))
 end

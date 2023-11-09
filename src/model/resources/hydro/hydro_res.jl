@@ -182,7 +182,7 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
 
 	dfGen = inputs["dfGen"]
 
-	T = 1:inputs["T"]     # Number of time steps (hours)
+	T = inputs["T"]     # Number of time steps (hours)
 
 	HYDRO_RES = inputs["HYDRO_RES"]
     REG = inputs["REG"]
@@ -197,8 +197,8 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
     eTotalCap = EP[:eTotalCap]
 
     # NOTE the load-bearing 1 * to create AffExpr and not VariableRef
-    max_up_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in T], 1 * vP[y, t])
-    max_dn_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in T], 1 * vP[y, t])
+    max_up_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in 1:T], 1 * vP[y, t])
+    max_dn_reserves_lhs = @expression(EP, [y in HYDRO_RES, t in 1:T], 1 * vP[y, t])
 
     S = HYDRO_RES_REG
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
@@ -207,9 +207,9 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
     S = HYDRO_RES_RSV
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])
 
-    @constraint(EP, [y in HYDRO_RES, t in T], max_up_reserves_lhs[y, t] <= eTotalCap[y])
-    @constraint(EP, [y in HYDRO_RES, t in T], max_dn_reserves_lhs[y, t] >= 0)
+    @constraint(EP, [y in HYDRO_RES, t in 1:T], max_up_reserves_lhs[y, t] <= eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES, t in 1:T], max_dn_reserves_lhs[y, t] >= 0)
 
-    @constraint(EP, [y in HYDRO_RES_REG, t in T], vREG[y, t] <= dfGen[y,:Reg_Max]*eTotalCap[y])
-    @constraint(EP, [y in HYDRO_RES_RSV, t in T], vRSV[y, t] <= dfGen[y,:Rsv_Max]*eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_REG, t in 1:T], vREG[y, t] <= dfGen[y,:Reg_Max]*eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_RSV, t in 1:T], vRSV[y, t] <= dfGen[y,:Rsv_Max]*eTotalCap[y])
 end
