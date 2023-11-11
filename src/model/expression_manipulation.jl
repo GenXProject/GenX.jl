@@ -48,7 +48,8 @@ function fill_with_const!(arr::Array{GenericAffExpr{C,T}, dims}, con::Real) wher
 end
 
 ###### ###### ###### ###### ###### ######
-# Create an expression from some indices of a 2D variable array
+# Create an expression from some first-dimension indices of a 2D variable array,
+# where all of the 2nd-dimension indices are kept
 ###### ###### ###### ###### ###### ######
 #
 function extract_time_series_to_expression(var::Matrix{VariableRef},
