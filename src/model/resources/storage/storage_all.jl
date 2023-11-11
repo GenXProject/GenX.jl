@@ -156,7 +156,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
 	p = inputs["hours_per_subperiod"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"] > 1
 
 	STOR_ALL = inputs["STOR_ALL"]
 
