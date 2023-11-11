@@ -178,10 +178,12 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     eff_up(y) = dfGen[y, :Eff_Up]
     eff_down(y) = dfGen[y, :Eff_Down]
+    reg_max(y) = dfGen[y, :Reg_Max]
+    rsv_max(y) = dfGen[y, :Rsv_Max]
 
 	# Maximum storage contribution to reserves is a specified fraction of installed capacity
-    @constraint(EP, [y in STOR_REG, t in 1:T], vREG[y, t] <= dfGen[y,:Reg_Max] * eTotalCap[y])
-    @constraint(EP, [y in STOR_RSV, t in 1:T], vRSV[y, t] <= dfGen[y,:Rsv_Max] * eTotalCap[y])
+    @constraint(EP, [y in STOR_REG, t in 1:T], vREG[y, t] <= reg_max(y) * eTotalCap[y])
+    @constraint(EP, [y in STOR_RSV, t in 1:T], vRSV[y, t] <= rsv_max(y) * eTotalCap[y])
 
 	# Actual contribution to regulation and reserves is sum of auxilary variables for portions contributed during charging and discharging
     @constraint(EP, [y in STOR_REG, t in 1:T], vREG[y, t] == vREG_charge[y, t] + vREG_discharge[y, t])

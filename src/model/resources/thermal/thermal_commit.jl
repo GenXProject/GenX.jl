@@ -285,10 +285,12 @@ function thermal_commit_reserves!(EP::Model, inputs::Dict)
     commit(y,t) = dfGen[y, :Cap_Size] * EP[:vCOMMIT][y,t]
     min_power(y) = dfGen[y, :Min_Power]
     max_power(y,t) = inputs["pP_Max"][y,t]
+    reg_max(y) = dfGen[y, :Reg_Max]
+    rsv_max(y) = dfGen[y, :Rsv_Max]
 
     # Maximum regulation and reserve contributions
-    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= max_power(y, t) * dfGen[y,:Reg_Max] * commit(y, t))
-    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= max_power(y, t) * dfGen[y,:Rsv_Max] * commit(y, t))
+    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= max_power(y, t) * reg_max(y) * commit(y, t))
+    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= max_power(y, t) * rsv_max(y) * commit(y, t))
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
     expr = extract_time_series_to_expression(vP, THERM_COMMIT)

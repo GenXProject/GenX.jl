@@ -195,6 +195,8 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
     vREG = EP[:vREG]
     vRSV = EP[:vRSV]
     eTotalCap = EP[:eTotalCap]
+    reg_max(y) = dfGen[y, :Reg_Max]
+    rsv_max(y) = dfGen[y, :Rsv_Max]
 
     max_up_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
     max_dn_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
@@ -209,6 +211,6 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
     @constraint(EP, [y in HYDRO_RES, t in 1:T], max_up_reserves_lhs[y, t] <= eTotalCap[y])
     @constraint(EP, [y in HYDRO_RES, t in 1:T], max_dn_reserves_lhs[y, t] >= 0)
 
-    @constraint(EP, [y in HYDRO_RES_REG, t in 1:T], vREG[y, t] <= dfGen[y,:Reg_Max]*eTotalCap[y])
-    @constraint(EP, [y in HYDRO_RES_RSV, t in 1:T], vRSV[y, t] <= dfGen[y,:Rsv_Max]*eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_REG, t in 1:T], vREG[y, t] <= reg_max(y) * eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_RSV, t in 1:T], vRSV[y, t] <= rsv_max(y) * eTotalCap[y])
 end
