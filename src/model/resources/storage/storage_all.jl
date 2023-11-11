@@ -206,7 +206,7 @@ function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
     expr = extract_time_series_to_expression(vP, STOR_ALL)
     add_similar_to_expression!(expr[STOR_REG, :], vREG_discharge[STOR_REG, :])
     add_similar_to_expression!(expr[STOR_RSV, :], vRSV_discharge[STOR_RSV, :])
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin
         vCAPRES_discharge = EP[:vCAPRES_discharge]
         add_similar_to_expression!(expr[STOR_ALL, :], vCAPRES_discharge[STOR_ALL, :])
     end
