@@ -53,6 +53,27 @@ let
     @variable(EP, single_var >= 0)
     GenX.add_term_to_expression!(EP[:large_expr], single_var)
     @test EP[:large_expr][100] == test_var[100] + 22.0 + single_var
+
+    # Test extracting some rows from a 2D matrix variable
+    columns = 10
+    @variable(EP, var_matrix[row in 1:4, col in 1:columns])
+    rows_to_extract = [3, 4]
+    expr = GenX.extract_time_series_to_expression(var_matrix, rows_to_extract)
+    @test size(expr) == (length(rows_to_extract), columns)
+    @test expr isa JuMP.Containers.DenseAxisArray
+    @test expr.axes[1] == rows_to_extract
+    @test expr.axes[2] == 1:columns
+    unregister(EP, :var_matrix)
+
+    # Test extracting some rows from a 2D dense axis array variable
+    @variable(EP, var_denseaxisarray[row in [1, 3, 5, 11], col in 1:columns])
+    rows_to_extract = [3, 5]
+    expr = GenX.extract_time_series_to_expression(var_denseaxisarray, rows_to_extract)
+    @test size(expr) == (length(rows_to_extract), columns)
+    @test expr isa JuMP.Containers.DenseAxisArray
+    @test expr.axes[1] == rows_to_extract
+    @test expr.axes[2] == 1:columns
+    unregister(EP, :var_denseaxisarray)
 end
 
  ###### ###### ###### ###### ###### ###### ###### 
