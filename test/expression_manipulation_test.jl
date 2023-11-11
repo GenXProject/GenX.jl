@@ -61,6 +61,7 @@ let
     expr = GenX.extract_time_series_to_expression(var_matrix, rows_to_extract)
     @test size(expr) == (length(rows_to_extract), columns)
     @test expr isa JuMP.Containers.DenseAxisArray
+    @test eltype(expr.data) isa AffExpr
     @test expr.axes[1] == rows_to_extract
     @test expr.axes[2] == 1:columns
     unregister(EP, :var_matrix)
