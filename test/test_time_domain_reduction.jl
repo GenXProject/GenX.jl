@@ -2,24 +2,28 @@ module TestTDR
 
 
 import GenX
-import Test 
+import Test
 import JLD2, Clustering
+
+include(joinpath(@__DIR__, "utilities.jl"))
 
 # suppress printing
 console_out = stdout
 redirect_stdout(devnull)
 
 test_folder = settings_path = "TDR"
+TDR_Results_test = joinpath(test_folder, "TDR_Results_test")
+TDR_Results_true = joinpath(test_folder, "TDR_Results_true")
 
-if isdir(joinpath(test_folder, "TDR_Results"))
-    rm(joinpath(test_folder, "TDR_Results"), recursive=true)
+if isdir(TDR_Results_test)
+    rm(TDR_Results_test, recursive = true)
 end
 
 # Inputs for cluster_inputs function
 genx_setup = Dict(
     "NetworkExpansion" => 0,
     "TimeDomainReduction" => 1,
-    "TimeDomainReductionFolder" => "TDR_Results",
+    "TimeDomainReductionFolder" => "TDR_Results_test",
     "MultiStage" => 0,
     "UCommit" => 2,
     "CapacityReserveMargin" => 1,
@@ -30,19 +34,27 @@ genx_setup = Dict(
     "CO2Cap" => 2,
 )
 
-clustering_test = GenX.cluster_inputs(test_folder, settings_path, genx_setup)["ClusterObject"]
+clustering_test =
+    GenX.cluster_inputs(test_folder, settings_path, genx_setup, random = false)["ClusterObject"]
 
 # Load true clustering
-clustering_true = JLD2.load(joinpath(test_folder,"clusters_true.jld2"))["ClusterObject"]
+clustering_true = JLD2.load(joinpath(test_folder, "clusters_true.jld2"))["ClusterObject"]
 
 # Clustering validation
-R = Clustering.randindex(clustering_test, clustering_true)[2]
+R = Clustering.randindex(clustering_test, clustering_true)
 I = Clustering.mutualinfo(clustering_test, clustering_true)
 
 # restore printing
 redirect_stdout(console_out)
 
-Test.@test round(R, digits=1) ≥ 0.9   # Rand index should be close to 1
-Test.@test round(I, digits=1) ≥ 0.7   # Mutual information should be close to 1
+# test clusters
+Test.@test round(R[1], digits = 1) == 1   # Adjusted Rand index should be equal to 1
+Test.@test round(R[2], digits = 1) == 1   # Rand index should be equal to 1
+Test.@test round(I, digits = 1) == 1      # Mutual information should be equal to 1
+
+# test if output files are correct
+Test.@testset for file in filter(endswith(".csv"), readdir(TDR_Results_true))
+    Test.@test cmp_csv(joinpath(TDR_Results_test, file), joinpath(TDR_Results_true, file))
+end
 
 end # module TestTDR

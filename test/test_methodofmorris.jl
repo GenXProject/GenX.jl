@@ -33,24 +33,16 @@ genx_setup = Dict(
     "IncludeLossesInESR" => 0,
 )
 
-# Run the case and check if the model was built
-built_and_run = false
-try
-    Morris_range = redirect_stdout(devnull) do
-        EP, inputs, OPTIMIZER = run_genx_case_testing(test_path, genx_setup)
-        morris(EP, test_path, genx_setup, inputs, test_path, OPTIMIZER)
-        rm(joinpath(@__DIR__, test_path, "morris.csv"))
-    end
-    #TODO: test Morris range 
-    global built_and_run = true
-
-catch BoundsError
+# Run the case and the Method of Morris
+Morris_range = redirect_stdout(devnull) do
+    EP, inputs, OPTIMIZER = run_genx_case_testing(test_path, genx_setup)
+    morris(EP, test_path, genx_setup, inputs, test_path, OPTIMIZER, random = false)
 end
 
-# Test if the 
-test_result = Test.@test built_and_run
-
-# Add the results to the test log
-write_testlog(test_path, "Build and Run", test_result)
+# Test if output files are correct
+test_result = Test.@test cmp_csv(
+    joinpath(test_path, "morris.csv"),
+    joinpath(test_path, "morris_true.csv"),
+)
 
 end # module TestMethodOfMorris

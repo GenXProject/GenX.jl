@@ -47,8 +47,12 @@ genx_setup = Dict(
 EP, _, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
-obj_test = objective_value.(EP[i] for i in 1:multistage_setup["NumStages"])
-optimal_tol_rel = get_attribute.((EP[i] for i in 1:multistage_setup["NumStages"]), "ipm_optimality_tolerance")
+obj_test = objective_value.(EP[i] for i = 1:multistage_setup["NumStages"])
+optimal_tol_rel =
+    get_attribute.(
+        (EP[i] for i = 1:multistage_setup["NumStages"]),
+        "ipm_optimality_tolerance",
+    )
 optimal_tol = optimal_tol_rel .* obj_test  # Convert to absolute tolerance
 
 # Test the objective value

@@ -50,4 +50,3 @@ optimal_tol = round_from_tol!(optimal_tol, optimal_tol)
 write_testlog(test_path, obj_test, optimal_tol, test_result)
 
 end # module TestVREStor
-

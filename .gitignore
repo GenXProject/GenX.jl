@@ -44,3 +44,7 @@ Example_Systems/SmallNewEngland/ThreeZones_full/*
 
 Example_Systems/SmallNewEngland/ThreeZones_MultiStage/Inputs/*
 test_get_retirement_period.jl
+
+# Test files
+test/TDR/TDR_Results_test
+test/MethodofMorris/morris.csv
