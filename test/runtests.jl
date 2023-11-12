@@ -40,7 +40,7 @@ end
     end
 
     @testset "Method of Morris" begin
-        include("test_methodofmorris.jl")
+        VERSION ≥ v"1.7" && include("test_methodofmorris.jl")
     end
 
     @testset "Multi Stage" begin
