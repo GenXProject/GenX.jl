@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the source code of the GenX package directly. This is a key step in publishing
   GenX as a proper Julia package. This does require change to the Run.jl files,
   to specify the solver. (#531)
+- In the examples, change Reg_Max and Rsv_Max of any MUST_RUN generators to 0.
+  This mitigates but does not fully fix (#576).
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
