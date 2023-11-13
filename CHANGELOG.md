@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add PR template (#516)
 - Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).
 - Maintenance formulation for thermal-commit plants (#556).
+- Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
+  piecewise_fuel+CO2, TDR, and Method of Morris (#563).
+
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
