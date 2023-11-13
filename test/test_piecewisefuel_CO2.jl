@@ -8,12 +8,9 @@ test_path = "PiecewiseFuel_CO2"
 
 # Define test inputs
 genx_setup = Dict(
-    "Trans_Loss_Segments" => 1,
     "UCommit" => 2,
     "CO2Cap" => 1,
     "ParameterScale" => 1,
-    "WriteShadowPrices" => 1,
-    "Solver" => "HiGHS",
     "TimeDomainReduction" => 0,
     "TimeDomainReductionFolder" => "TDR_Results",
     "Reserves" => 0,

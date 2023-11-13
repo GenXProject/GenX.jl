@@ -19,7 +19,6 @@ genx_setup = Dict(
     "TimeDomainReduction" => 0,
     "TimeDomainReductionFolder" => "TDR_Results",
     "WriteShadowPrices" => 1,
-    "Solver" => "HiGHS",
     "EnableJuMPStringNames" => false,
     "Reserves" => 0,
     "CapacityReserveMargin" => 0,
