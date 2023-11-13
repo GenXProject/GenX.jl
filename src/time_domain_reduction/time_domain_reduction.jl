@@ -18,6 +18,9 @@ using Distances
 using CSV
 using GenX
 
+
+const SEED = 1234
+
 @doc raw"""
     rmse_score(y_true, y_pred)
 
@@ -202,7 +205,7 @@ function get_worst_period_idx(R)
 end
 
 @doc raw"""
-    cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters)
+    cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false, random=true)
 
 Get representative periods using cluster centers from kmeans or kmedoids.
 
@@ -212,12 +215,13 @@ https://juliastats.org/Clustering.jl/dev/kmeans.html
 K-Medoids:
  https://juliastats.org/Clustering.jl/stable/kmedoids.html
 """
-function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false)
+function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false, random=true)
     if ClusterMethod == "kmeans"
         DistMatrix = pairwise(Euclidean(), Matrix(ClusteringInputDF), dims=2)
         R = kmeans(Matrix(ClusteringInputDF), NClusters, init=:kmcen)
 
         for i in 1:nIters
+            if !random; Random.seed!(SEED);  end
             R_i = kmeans(Matrix(ClusteringInputDF), NClusters)
 
             if R_i.totalcost < R.totalcost
@@ -243,6 +247,7 @@ function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false)
         R = kmedoids(DistMatrix, NClusters, init=:kmcen)
 
         for i in 1:nIters
+            if !random; Random.seed!(SEED);  end
             R_i = kmedoids(DistMatrix, NClusters)
             if R_i.totalcost < R.totalcost
                 R = R_i
@@ -257,7 +262,7 @@ function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false)
         M = R.medoids # get the cluster centers - M for Medoids
     else
         println("INVALID ClusterMethod. Select kmeans or kmedoids. Running kmeans instead.")
-        return cluster("kmeans", ClusteringInputDF, NClusters, nIters)
+        return cluster("kmeans", ClusteringInputDF, NClusters, nIters, v, random)
     end
     return [R, A, W, M, DistMatrix]
 end
@@ -485,7 +490,7 @@ end
 
 
 @doc raw"""
-    cluster_inputs(inpath, settings_path, v=false, norm_plot=false, silh_plot=false, res_plots=false, indiv_plots=false, pair_plots=false)
+    cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; random=true)
 
 Use kmeans or kmedoids to cluster raw demand profiles and resource capacity factor profiles
 into representative periods. Use Extreme Periods to capture noteworthy periods or
@@ -538,7 +543,7 @@ to separate Vre_and_stor_solar_variability.csv and Vre_and_stor_wind_variability
 and wind profiles for co-located resources will be separated into different CSV files to be read by loading the inputs 
 after the clustering of the inputs has occurred. 
 """
-function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
+function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; random=true)
     if v println(now()) end
 
     ##### Step 0: Load in settings and data
@@ -781,7 +786,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
     cluster_results = []
 
     # Cluster once regardless of iteration decisions
-    push!(cluster_results, cluster(ClusterMethod, ClusteringInputDF, NClusters, nReps, v))
+    push!(cluster_results, cluster(ClusterMethod, ClusteringInputDF, NClusters, nReps, v, random))
 
     # Iteratively add worst periods as extreme periods OR increment number of clusters k
     #    until threshold is met or maximum periods are added (If chosen in inputs)
@@ -790,7 +795,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
             if IterateMethod == "cluster"
                 if v println("Adding a new Cluster! ") end
                 NClusters += 1
-                push!(cluster_results, cluster(ClusterMethod, ClusteringInputDF, NClusters, nReps, v))
+                push!(cluster_results, cluster(ClusterMethod, ClusteringInputDF, NClusters, nReps, v, random))
             elseif (IterateMethod == "extreme") & (UseExtremePeriods == 1)
                 if v println("Adding a new Extreme Period! ") end
                 worst_period_idx = get_worst_period_idx(last(cluster_results)[1])
@@ -798,7 +803,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false)
                 select!(ClusteringInputDF, Not(worst_period_idx))
                 push!(ExtremeWksList, parse(Int, removed_period))
                 if v println(worst_period_idx, " (", removed_period, ") ", ExtremeWksList) end
-                push!(cluster_results, cluster(ClusterMethod, ClusteringInputDF, NClusters, nReps, v))
+                push!(cluster_results, cluster(ClusterMethod, ClusteringInputDF, NClusters, nReps, v, random))
             elseif IterateMethod == "extreme"
                 println("INVALID IterateMethod ", IterateMethod, " because UseExtremePeriods is off. Set to 1 if you wish to add extreme periods.")
                 break

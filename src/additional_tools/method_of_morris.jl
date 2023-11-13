@@ -1,3 +1,6 @@
+const SEED = 1234
+
+
 @doc raw"""
 	morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
@@ -14,6 +17,7 @@ struct MorrisResult{T1,T2}
     variances::T1
     elementary_effects::T2
 end
+
 function generate_design_matrix(p_range, p_steps, rng;len_design_mat,groups)
     ps = [range(p_range[i][1], stop=p_range[i][2], length=p_steps[i]) for i in 1:length(p_range)]
     indices = [rand(rng, 1:i) for i in p_steps]
@@ -74,8 +78,9 @@ function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajector
     reduce(hcat,matrices)
 end
 
-function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector,len_design_mat,groups)
+function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector, len_design_mat, groups, random)
     rng = Random.default_rng()
+    if !random; Random.seed!(SEED);  end
     design_matrices_original = sample_matrices(p_range, p_steps, rng;num_trajectory,
                                         total_num_trajectory,len_design_mat,groups)
     println(design_matrices_original)
@@ -158,7 +163,7 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
     end
     MorrisResult(reduce(hcat, means),reduce(hcat, means_star),reduce(hcat, variances),effects)
 end
-function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
+function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER; random=true)
 
     # Reading the input parameters
     Morris_range = load_dataframe(joinpath(path, "Method_of_morris_range.csv"))
@@ -197,7 +202,7 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     end
 
     # Perform the method of morris analysis
-    m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups)
+    m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups,random)
     println(m.means)
     println(DataFrame(m.means', :auto))
     #save the mean effect of each uncertain variable on the objective fucntion
@@ -207,5 +212,5 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
 
     CSV.write(joinpath(outpath, "morris.csv"), Morris_range)
-
+    return Morris_range
 end

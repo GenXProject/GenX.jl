@@ -38,8 +38,10 @@ YAML = "0.4.7"
 julia = "1"
 
 [extras]
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "Logging"]
+test = ["Test", "JLD2", "Logging", "LoggingExtras"]

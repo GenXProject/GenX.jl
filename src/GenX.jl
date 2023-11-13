@@ -18,6 +18,7 @@ export choose_output_dir
 export run_ddp
 export configure_multi_stage_inputs
 export load_inputs_multi_stage
+export compute_cumulative_min_retirements!
 export write_multi_stage_outputs
 export run_genx_case!
 export run_timedomainreduction!
