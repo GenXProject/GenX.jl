@@ -1,6 +1,66 @@
 using JuMP
 using HiGHS
 
+function setup_sum_model()
+    EP = Model(HiGHS.Optimizer)
+    @variable(EP, x[i=1:100,j=1:4:200]>=0)
+    @variable(EP, y[i=1:100,j=1:50]>=0)
+    @expression(EP, eX[i=1:100,j=1:4:200], 2.0*x[i,j]+i+10.0*j)
+    @expression(EP, eY[i=1:100,j=1:50], 3.0*y[i,j]+2*i+j)
+    @expression(EP, eZ[i=1:100,j=1:50], 2.0*x[i,(j-1)*4+1] + 4.0*y[i,j])
+    return EP
+end
+
+function sum_disjoint_var()
+    EP = setup_sum_model()
+    try
+        GenX.sum_expression(EP[:x])
+    catch
+        return false
+    end
+    return true
+end
+
+function sum_dense_var()
+    EP = setup_sum_model()
+    try
+        GenX.sum_expression(EP[:y])
+    catch
+        return false
+    end
+    return true
+end
+
+function sum_disjoint_expr()
+    EP = setup_sum_model()
+    try
+        GenX.sum_expression(EP[:eX])
+    catch
+        return false
+    end
+    return true
+end
+
+function sum_dense_expr()
+    EP = setup_sum_model()
+    try
+        GenX.sum_expression(EP[:eY])
+    catch
+        return false
+    end
+    return true
+end
+
+function sum_combo_expr()
+    EP = setup_sum_model()
+    try
+        GenX.sum_expression(EP[:eZ])
+    catch
+        return false
+    end
+    return true
+end
+
 let 
     EP = Model(HiGHS.Optimizer)
 
@@ -53,6 +113,13 @@ let
     @variable(EP, single_var >= 0)
     GenX.add_term_to_expression!(EP[:large_expr], single_var)
     @test EP[:large_expr][100] == test_var[100] + 22.0 + single_var
+
+    # Test sum_expression
+    @test sum_dense_var() == true
+    @test sum_disjoint_var() == true
+    @test sum_dense_expr() == true
+    @test sum_disjoint_expr() == true
+    @test sum_combo_expr() == true
 end
 
  ###### ###### ###### ###### ###### ###### ###### 
