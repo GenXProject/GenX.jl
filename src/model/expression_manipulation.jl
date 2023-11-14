@@ -150,6 +150,26 @@ function add_term_to_expression!(expr1::AbstractArray{GenericAffExpr{C,T}, dims}
     return nothing
 end
 
+# Version for single element
+function add_term_to_expression!(expr1::GenericVariableRef{C}, expr2::V) where {C,V}
+    add_to_expression!(1 * expr1, expr2)
+    return nothing
+end
+
+@doc raw"""
+    add_term_to_expression!(expr1::AbstractArray{GenericVariableRef{C}, dims}, expr2::V) where {C,V,dims}
+
+Version of add_term_to_expression() for variables.
+Expressions containing only variables are automatically converted to variables by default.
+This uses a dummy coefficient to convert the variables to expressions.
+"""
+function add_term_to_expression!(expr1::AbstractArray{GenericVariableRef{C}, dims}, expr2::V) where {C,V,dims}
+    for i in eachindex(expr1)
+        add_to_expression!(1 * expr1[i], expr2)
+    end
+    return nothing
+end
+
 ###### ###### ###### ###### ###### ######
 # Check that two arrays have the same dimensions
 ###### ###### ###### ###### ###### ######

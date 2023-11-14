@@ -61,6 +61,26 @@ function sum_combo_expr()
     return true
 end
 
+function add_term_disjoint_var()
+    EP = setup_sum_model()
+    try
+        GenX.add_term_to_expression!(EP[:x], 6.0)
+    catch
+        return false
+    end
+    return true
+end
+
+function add_term_dense_var()
+    EP = setup_sum_model()
+    try
+        GenX.add_term_to_expression!(EP[:y], 6.0)
+    catch
+        return false
+    end
+    return true
+end
+
 let 
     EP = Model(HiGHS.Optimizer)
 
@@ -120,6 +140,10 @@ let
     @test sum_dense_expr() == true
     @test sum_disjoint_expr() == true
     @test sum_combo_expr() == true
+
+    # Test add_term_to_expression! on variables
+    @test add_term_dense_var() == true
+    @test add_term_disjoint_var() == true
 end
 
  ###### ###### ###### ###### ###### ###### ###### 
