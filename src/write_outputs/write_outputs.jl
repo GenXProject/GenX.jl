@@ -139,6 +139,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     if has_maintenance(inputs)
         write_maintenance(path, inputs, EP)
     end
+	
+	#Write angles when DC_OPF is activated
+	if setup["DC_OPF"] == 1
+		println("Writing zone angles")
+		dfAngles = write_angles(path, inputs, setup, EP)
+	end
 
 	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
 	if setup["MultiStage"] == 0
