@@ -259,17 +259,29 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 		sum(dfGen[y,:Reg_Cost]*vRSV[y,t] for y in RSV, t=1:T) +
 		sum(dfGen[y,:Rsv_Cost]*vREG[y,t] for y in REG, t=1:T) )
 	add_to_expression!(EP[:eObj], eTotalCRsvPen)
+end
 
-	### Constraints ###
+function reserves_constraints!(EP, inputs)
+    T = inputs["T"]     # Number of time steps (hours)
 
-	## Total system reserve constraints
-	# Regulation requirements as a percentage of demand and scheduled variable renewable energy production in each hour
-	# Note: frequencty regulation up and down requirements are symmetric and all resources contributing to regulation are assumed to contribute equal capacity to both up and down directions
-	if !isempty(REG)
-		@constraint(EP, cReg[t=1:T], sum(vREG[y,t] for y in REG) >= EP[:eRegReq][t])
-	end
-	if !isempty(RSV)
-		@constraint(EP, cRsvReq[t=1:T], sum(vRSV[y,t] for y in RSV) + vUNMET_RSV[t] >= EP[:eRsvReq][t])
-	end
+    REG = inputs["REG"]
+    RSV = inputs["RSV"]
+    vREG = EP[:vREG]
+    vRSV = EP[:vRSV]
+    vUNMET_RSV = EP[:vUNMET_RSV]
+    eRegulationRequirement = EP[:eRegReq]
+    eReserveRequirement = EP[:eRsvReq]
 
+    ## Total system reserve constraints
+    # Regulation requirements as a percentage of demand and scheduled
+    # variable renewable energy production in each hour.
+    # Note: frequency regulation up and down requirements are symmetric and all resources
+    # contributing to regulation are assumed to contribute equal capacity to both up
+    # and down directions
+    if !isempty(REG)
+        @constraint(EP, cReg[t=1:T], sum(vREG[y,t] for y in REG) >= eRegulationRequirement[t])
+    end
+    if !isempty(RSV)
+        @constraint(EP, cRsvReq[t=1:T], sum(vRSV[y,t] for y in RSV) + vUNMET_RSV[t] >= eReserveRequirement[t])
+    end
 end
