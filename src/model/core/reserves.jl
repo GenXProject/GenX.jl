@@ -223,7 +223,7 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
     pP_Max(y, t) = inputs["pP_Max"][y, t]
 
     systemwide_hourly_demand = sum(pDemand, dims=2)
-    must_run_vre_generation(t) = sum(pP_Max(y, t) * EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"]))
+    must_run_vre_generation(t) = sum(pP_Max(y, t) * EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"]); init=0)
 
 	### Variables ###
 
