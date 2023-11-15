@@ -217,6 +217,13 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 	REG = inputs["REG"]
 	RSV = inputs["RSV"]
+    STOR_ALL = inputs["STOR_ALL"]
+
+    pDemand = inputs["pD"]
+    pP_Max(y, t) = inputs["pP_Max"][y, t]
+
+    systemwide_hourly_demand = sum(pDemand, dims=2)
+    must_run_vre_generation(t) = sum(pP_Max(y, t) * EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"]))
 
 	### Variables ###
 
@@ -228,10 +235,10 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Storage techs have two pairs of auxilary variables to reflect contributions to regulation and reserves
 	# when charging and discharging (primary variable becomes equal to sum of these auxilary variables)
-	@variable(EP, vREG_discharge[y in intersect(inputs["STOR_ALL"], REG), t=1:T] >= 0) # Contribution to regulation (primary reserves) (mirrored variable used for storage devices)
-	@variable(EP, vRSV_discharge[y in intersect(inputs["STOR_ALL"], RSV), t=1:T] >= 0) # Contribution to operating reserves (secondary reserves) (mirrored variable used for storage devices)
-	@variable(EP, vREG_charge[y in intersect(inputs["STOR_ALL"], REG), t=1:T] >= 0) # Contribution to regulation (primary reserves) (mirrored variable used for storage devices)
-	@variable(EP, vRSV_charge[y in intersect(inputs["STOR_ALL"], RSV), t=1:T] >= 0) # Contribution to operating reserves (secondary reserves) (mirrored variable used for storage devices)
+	@variable(EP, vREG_discharge[y in intersect(STOR_ALL, REG), t=1:T] >= 0) # Contribution to regulation (primary reserves) (mirrored variable used for storage devices)
+	@variable(EP, vRSV_discharge[y in intersect(STOR_ALL, RSV), t=1:T] >= 0) # Contribution to operating reserves (secondary reserves) (mirrored variable used for storage devices)
+	@variable(EP, vREG_charge[y in intersect(STOR_ALL, REG), t=1:T] >= 0) # Contribution to regulation (primary reserves) (mirrored variable used for storage devices)
+	@variable(EP, vRSV_charge[y in intersect(STOR_ALL, RSV), t=1:T] >= 0) # Contribution to operating reserves (secondary reserves) (mirrored variable used for storage devices)
 
 	@variable(EP, vUNMET_RSV[t=1:T] >= 0) # Unmet operating reserves penalty/cost
 
@@ -239,16 +246,16 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	## Total system reserve expressions
 	# Regulation requirements as a percentage of demand and scheduled variable renewable energy production in each hour
 	# Reg up and down requirements are symmetric
-	@expression(EP, eRegReq[t=1:T], inputs["pReg_Req_Demand"]*sum(inputs["pD"][t,z] for z=1:Z) +
-		inputs["pReg_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"])))
+    @expression(EP, eRegReq[t=1:T], inputs["pReg_Req_Demand"] * systemwide_hourly_demand[t] +
+                inputs["pReg_Req_VRE"] * must_run_vre_generation(t))
 	# Operating reserve up / contingency reserve requirements as ˚a percentage of demand and scheduled variable renewable energy production in each hour
 	# and the largest single contingency (generator or transmission line outage)
-	@expression(EP, eRsvReq[t=1:T], inputs["pRsv_Req_Demand"]*sum(inputs["pD"][t,z] for z=1:Z) +
-				inputs["pRsv_Req_VRE"]*sum(inputs["pP_Max"][y,t]*EP[:eTotalCap][y] for y in intersect(inputs["VRE"], inputs["MUST_RUN"])))
+    @expression(EP, eRsvReq[t=1:T], inputs["pRsv_Req_Demand"] * systemwide_hourly_demand[t] +
+                inputs["pRsv_Req_VRE"] * must_run_vre_generation(t))
 
 	# N-1 contingency requirement is considered only if Unit Commitment is being modeled
 	if UCommit >= 1 && (inputs["pDynamic_Contingency"] >= 1 || inputs["pStatic_Contingency"] > 0)
-		EP[:eRsvReq] = EP[:eRsvReq] + EP[:eContingencyReq]
+        add_to_expression!(EP[:eRsvReq], EP[:eContingencyReq])
 	end
 
 	## Objective Function Expressions ##
