@@ -82,13 +82,15 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     ## Inputs for the DC-OPF 
     if setup["DC_OPF"] == 1
+        scale_kilo_to_mega = 10^3
+        scale_to_mega = 10^6
         println("Reading DC-OPF values...")
         # Transmission line voltage (in kV)
         inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
         # Transmission line impedance (in Ohms)
         inputs_nw["Impedance_Ohms"] = to_floats(:Line_Impedance_ohms)    
         inputs_nw["LINE_Angle_Limit"] = to_floats(:Angle_Limit_Deg)
-        inputs_nw["pDC_OPF_coeff"] = ((inputs_nw["kV"]/10^3).*(inputs_nw["kV"]/10^3))./(inputs_nw["Impedance_Ohms"]/10^6) * scale_factor # 1/GW ***
+        inputs_nw["pDC_OPF_coeff"] = ((inputs_nw["kV"]/scale_kilo_to_mega).*(inputs_nw["kV"]/scale_kilo_to_mega))./(inputs_nw["Impedance_Ohms"]/scale_to_mega) * scale_factor # 1/GW ***
     end
 
     println(filename * " Successfully Read!")
