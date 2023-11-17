@@ -17,14 +17,14 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
 
 	# Reorder DataFrame to R_ID order (order provided in Generators_data.csv)
 	variability_names = inputs["VARIABILITY"]
-	existing_variability <- names(gen_var)
+	existing_variability = names(gen_var)
 	temp = zeros(inputs["T"], inputs["G"])
 	for g = 1: inputs["G"]
 		r = variability_names[g]
 		if r ∉ existing_variability
 			ensure_column!(gen_var, r, 1.0)
 		end
-		existing_variability <- names(gen_var)
+		existing_variability = names(gen_var)
 		location = findfirst(x -> x == r, existing_variability)
 		temp[:, g] = Vector{Float64}(gen_var[:, location])
     end
