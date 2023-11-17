@@ -71,7 +71,7 @@ function co2_load_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::Dict)
     if Z > 1
         # The default without the key "PolicyTransmissionLossCoverage" is not to include transmission loss in the policy
         if (setup["PolicyTransmissionLossCoverage"] == 1)
-            @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfCO2Cap_LoadRate"][z, Symbol("CO_2_Max_LoadRate_$cap")] * (1/2) * EP[:eTransLossByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Cap_Zone_$cap")])))
+            @expression(EP, eCO2Emissions_loadrate_RHS_TLOSS[cap=1:inputs["NCO2LoadRateCap"]], sum(inputs["dfCO2Cap_LoadRate"][z, Symbol("CO_2_Max_LoadRate_$cap")] * EP[:eTransLossByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2Cap_LoadRate"][:, Symbol("CO_2_Cap_Zone_$cap")])))
             add_to_expression!.(EP[:eCO2Emissions_loadrate_RHS], EP[:eCO2Emissions_loadrate_RHS_TLOSS])
         end
     end

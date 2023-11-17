@@ -21,7 +21,7 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     STOR_ALL = inputs["STOR_ALL"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
 
-    @expression(EP, eESR[ESR=1:inputs["nESR"]], EP[:ZERO])
+    @expression(EP, eESR[ESR=1:inputs["nESR"]], 1*EP[:vZERO])
 
     if haskey(inputs,"dfESR_slack")
         @variable(EP, vESR_slack[ESR=1:inputs["nESR"]]>=0)
@@ -37,13 +37,13 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     add_to_expression!.(EP[:eESR], EP[:eESRDischarge])
 
     # Total Demand of Energy 
-    @expression(EP, eESRDemand[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,Symbol("ESR_$ESR")] * inputs["omega"][t] * (inputs["pD"][t,z] - EP[:eZonalNSE][t,z]) for t=1:T, z=1:Z))
+    @expression(EP, eESRDemand[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR] * inputs["omega"][t] * (inputs["pD"][t,z] - EP[:eZonalNSE][t,z]) for t=1:T, z=1:Z))
     add_to_expression!.(EP[:eESR], -1, EP[:eESRDemand])
 
     # Considering storage losses
     if !isempty(STOR_ALL)
         if (IncludeLossesInESR == 1)
-            @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,Symbol("ESR_$ESR")] * EP[:eStorageLossByZone][z] for z = 1:Z))
+            @expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR] * EP[:eStorageLossByZone][z] for z = 1:Z))
             add_to_expression!.(EP[:eESR], -1, EP[:eESRStor])
         end
     end
@@ -51,7 +51,7 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     # Considering transmission losses
     if Z > 1
         if (IncludeLossesInESR == 1)
-            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,Symbol("ESR_$ESR")] * EP[:eTransLossByZoneYear][z] for z = 1:Z))
+            @expression(EP, eESRTLoss[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR] * EP[:eTransLossByZoneYear][z] for z = 1:Z))
             add_to_expression!.(EP[:eESR], -1, EP[:eESRTLoss])
         end
     end

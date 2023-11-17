@@ -24,7 +24,7 @@ function write_esr_payment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     dfESRPayment = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
 	for i in 1:inputs["nESR"]
 	    tempesrpayment = zeros(Z)
-	    tempesrpayment = (transpose(inputs["pD"] - value.(EP[:eZonalNSE])) * inputs["omega"]) .* inputs["dfESR"][:,Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
+	    tempesrpayment = (transpose(inputs["pD"] - value.(EP[:eZonalNSE])) * inputs["omega"]) .* inputs["dfESR"][:,i] .* dual.(EP[:cESRShare][i])
 	    if setup["ParameterScale"] == 1
 	        tempesrpayment *= (ModelScalingFactor^2)
 	    end

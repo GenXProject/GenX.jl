@@ -24,7 +24,7 @@ function write_esr_storagelosspayment(path::AbstractString, inputs::Dict, setup:
     dfESRStoragelosspayment = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     for i in 1:inputs["nESR"]
 	    tempesrpayment = zeros(Z)
-	    tempesrpayment = (value.(EP[:eStorageLossByZone])) .* inputs["dfESR"][:,Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
+	    tempesrpayment = (value.(EP[:eStorageLossByZone])) .* inputs["dfESR"][:,i] .* dual.(EP[:cESRShare][i])
 	    if setup["ParameterScale"] == 1
 	        tempesrpayment *= (ModelScalingFactor^2)
 	    end

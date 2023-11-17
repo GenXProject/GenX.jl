@@ -24,7 +24,7 @@ function write_esr_transmissionlosspayment(path::AbstractString, inputs::Dict, s
     dfESRtransmissionlosspayment = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
     for i in 1:inputs["nESR"]
 	    tempesrpayment = zeros(Z)
-	    tempesrpayment = ((1/2) .* value.(EP[:eTransLossByZoneYear])) .* inputs["dfESR"][:,Symbol("ESR_$i")] .* dual.(EP[:cESRShare][i])
+	    tempesrpayment = (value.(EP[:eTransLossByZoneYear])) .* inputs["dfESR"][:,i] .* dual.(EP[:cESRShare][i])
 	    if setup["ParameterScale"] == 1
 	        tempesrpayment *= (ModelScalingFactor^2)
 	    end
