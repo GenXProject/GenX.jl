@@ -37,18 +37,18 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
     
     for w in 1:inputs["REP_PERIOD"]
 		# Total number of periods and subperiods
-		inputs_load["REP_PERIOD"] = convert(Int16, collect(skipmissing(load_in[!,:Rep_Periods]))[1])
-		inputs_load["H"] = convert(Int64, collect(skipmissing(load_in[!,:Timesteps_per_Rep_Period]))[1])
+		inputs["REP_PERIOD"] = convert(Int16, collect(skipmissing(load_in[!,:Rep_Periods]))[1])
+		inputs["H"] = convert(Int64, collect(skipmissing(load_in[!,:Timesteps_per_Rep_Period]))[1])
 
 		# Creating sub-period weights from weekly weights
-		for w in 1:inputs_load["REP_PERIOD"]
-			for h in 1:inputs_load["H"]
-				t = inputs_load["H"]*(w-1)+h
-				inputs_load["omega"][t] = inputs_load["Weights"][w]/inputs_load["H"]
+		for w in 1:inputs["REP_PERIOD"]
+			for h in 1:inputs["H"]
+				t = inputs["H"]*(w-1)+h
+				inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
 			end
 		end
-		n_totalhour = sum(inputs_load["omega"])
-		inputs_load["omega"] .*= (8760/n_totalhour)
+		n_totalhour = sum(inputs["omega"])
+		inputs["omega"] .*= (8760/n_totalhour)
 	end
 
 	# Create time set steps indicies
