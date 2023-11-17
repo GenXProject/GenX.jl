@@ -1,25 +1,10 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 module GenX
 
 #export package_activate
 export configure_settings
 export configure_solver
 export load_inputs
+export load_dataframe
 export generate_model
 export solve_model
 export write_outputs
@@ -35,6 +20,7 @@ export configure_multi_stage_inputs
 export load_inputs_multi_stage
 export write_multi_stage_outputs
 export run_genx_case!
+export run_timedomainreduction!
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
@@ -47,7 +33,6 @@ using Clustering
 using Distances
 using Combinatorics
 
-# using OrdinaryDiffEq
 using Random
 using RecursiveArrayTools
 using Statistics
@@ -59,7 +44,6 @@ using CPLEX
 #using CPLEX
 #using MOI
 #using SCIP
-# using BenchmarkTools
 using HiGHS
 using Clp
 using Cbc
@@ -71,186 +55,31 @@ using Cbc
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 ModelScalingFactor = 1e+3
 
-# Case runner
-include("case_runners/case_runner.jl")
+# thanks, ChatGPT
+function include_all_in_folder(folder)
+    base_path = joinpath(@__DIR__, folder)
+    for (root, dirs, files) in Base.Filesystem.walkdir(base_path)
+        for file in files
+            if endswith(file, ".jl")
+                include(joinpath(root, file))
+            end
+        end
+    end
+end
 
-# Configure settings
-include("configure_settings/configure_settings.jl")
-
-# Configure optimizer instance
-include("configure_solver/configure_highs.jl")
-include("configure_solver/configure_gurobi.jl")
-include("configure_solver/configure_scip.jl")
-include("configure_solver/configure_cplex.jl")
-include("configure_solver/configure_clp.jl")
-include("configure_solver/configure_cbc.jl")
-include("configure_solver/configure_solver.jl")
-
-# Load input data
-include("load_inputs/load_generators_data.jl")
-include("load_inputs/load_generators_variability.jl")
-include("load_inputs/load_network_data.jl")
-include("load_inputs/load_reserves.jl")
-include("load_inputs/load_cap_reserve_margin.jl")
-include("load_inputs/load_energy_share_requirement.jl")
-include("load_inputs/load_co2_cap.jl")
-include("load_inputs/load_co2_cap_loadrate.jl")
-include("load_inputs/load_co2_cap_genrate.jl")
-include("load_inputs/load_co2_tax.jl")
-include("load_inputs/load_co2_credit.jl")
-include("load_inputs/load_period_map.jl")
-include("load_inputs/load_minimum_capacity_requirement.jl")
-include("load_inputs/load_maximum_capacity_limit.jl")
-include("load_inputs/load_maximum_investment_limit.jl")
-include("load_inputs/load_load_data.jl")
-include("load_inputs/load_fuels_data.jl")
-include("load_inputs/load_twentyfourseven.jl")
-include("load_inputs/load_energy_credit.jl")
-include("load_inputs/load_investment_credit.jl")
-include("load_inputs/load_inputs.jl")
+include_all_in_folder("case_runners")
+include_all_in_folder("configure_settings")
+include_all_in_folder("configure_solver")
+include_all_in_folder("load_inputs")
+include_all_in_folder("model")
+include_all_in_folder("write_outputs")
 
 include("time_domain_reduction/time_domain_reduction.jl")
-
-#Core GenX Features
-include("model/core/discharge/discharge.jl")
-include("model/core/discharge/investment_discharge.jl")
-
-include("model/core/non_served_energy.jl")
-include("model/core/ucommit.jl")
-# include("model/core/emissions.jl")
-include("model/core/co2.jl")
-include("model/core/fuel.jl")
-include("model/core/reserves.jl")
-
-include("model/core/transmission.jl")
-
-include("model/resources/curtailable_variable_renewable/curtailable_variable_renewable.jl")
-
-include("model/resources/flexible_demand/flexible_demand.jl")
-
-include("model/resources/hydro/hydro_res.jl")
-include("model/resources/hydro/hydro_inter_period_linkage.jl")
-
-include("model/resources/must_run/must_run.jl")
-
-include("model/resources/storage/storage.jl")
-include("model/resources/storage/investment_energy.jl")
-include("model/resources/storage/storage_all.jl")
-include("model/resources/storage/long_duration_storage.jl")
-include("model/resources/storage/investment_charge.jl")
-include("model/resources/storage/storage_asymmetric.jl")
-include("model/resources/storage/storage_symmetric.jl")
-
-include("model/resources/thermal/thermal.jl")
-include("model/resources/thermal/thermal_commit.jl")
-include("model/resources/thermal/thermal_no_commit.jl")
-# include("model/resources/thermal/piecewiseheatrate.jl")
-
-include("model/resources/retrofits/retrofits.jl")
-
-include("model/policies/co2_cap.jl")
-include("model/policies/co2_load_emission_rate_cap.jl")
-include("model/policies/co2_generation_emission_rate_cap.jl")
-include("model/policies/co2_tax.jl")
-include("model/policies/co2_credit.jl")
-include("model/policies/energy_share_requirement.jl")
-include("model/policies/cap_reserve_margin.jl")
-include("model/policies/minimum_capacity_requirement.jl")
-include("model/policies/maximum_capacity_limit.jl")
-include("model/policies/twentyfourseven.jl")
-include("model/policies/energy_credit.jl")
-include("model/policies/investment_credit.jl")
-include("model/policies/maximum_investment_limit.jl")
-
-include("model/generate_model.jl")
-include("model/solve_model.jl")
-
-include("write_outputs/dftranspose.jl")
-include("write_outputs/write_capacity.jl")
-include("write_outputs/write_capacityfactor.jl")
-include("write_outputs/write_charge.jl")
-include("write_outputs/write_charging_cost.jl")
-include("write_outputs/write_costs.jl")
-include("write_outputs/write_curtailment.jl")
-# include("write_outputs/write_emissions.jl")
-include("write_outputs/write_co2.jl")
-include("write_outputs/write_co2_cap.jl")
-include("write_outputs/write_co2_generation_emission_rate_cap.jl")
-include("write_outputs/write_co2_load_emission_rate_cap.jl")
-include("write_outputs/write_co2_tax.jl")
-include("write_outputs/write_co2_taxcredit.jl")
-include("write_outputs/write_energy_revenue.jl")
-include("write_outputs/write_energy_payment.jl")
-include("write_outputs/write_net_revenue.jl")
-include("write_outputs/write_nse.jl")
-include("write_outputs/write_zonalnse.jl")
-include("write_outputs/write_power.jl")
-include("write_outputs/write_power_balance.jl")
-include("write_outputs/write_price.jl")
-include("write_outputs/write_reliability.jl")
-include("write_outputs/write_status.jl")
-include("write_outputs/write_storage.jl")
-include("write_outputs/write_storagedual.jl")
-include("write_outputs/write_storagelosses.jl")
-include("write_outputs/write_zonal_storagelosses.jl")
-include("write_outputs/write_zonalenergyconsumption.jl")
-include("write_outputs/write_subsidy_revenue.jl")
-include("write_outputs/write_regional_subsidy_revenue.jl")
-include("write_outputs/write_mincap_penalty.jl")
-include("write_outputs/write_maxcap_penalty.jl")
-include("write_outputs/write_maxinv_penalty.jl")
-include("write_outputs/write_time_weights.jl")
-include("write_outputs/choose_output_dir.jl")
-# fuel consumption, 531 FC
-include("write_outputs/write_fuel_consumption.jl")
-
-include("write_outputs/write_twentyfourseven.jl")
-include("write_outputs/write_energy_credit.jl")
-include("write_outputs/write_investment_credit.jl")
-include("write_outputs/capacity_reserve_margin/write_capacity_value.jl")
-include("write_outputs/capacity_reserve_margin/write_reserve_margin_revenue.jl")
-# include("write_outputs/capacity_reserve_margin/write_reserve_margin_w.jl")
-include("write_outputs/capacity_reserve_margin/write_reserve_margin.jl")
-include("write_outputs/capacity_reserve_margin/write_reserve_margin_demand_response_saving.jl")
-include("write_outputs/capacity_reserve_margin/write_reserve_margin_payment.jl")
-include("write_outputs/capacity_reserve_margin/write_reserve_margin_transmission_revenue.jl")
-include("write_outputs/capacity_reserve_margin/write_reserve_margin_slack.jl")
-
-include("write_outputs/energy_share_requirement/write_esr_prices.jl")
-include("write_outputs/energy_share_requirement/write_esr_revenue.jl")
-include("write_outputs/energy_share_requirement/write_esr_payment.jl")
-include("write_outputs/energy_share_requirement/write_esr_storageloss_payment.jl")
-include("write_outputs/energy_share_requirement/write_esr_transmissionloss_payment.jl")
-
-include("write_outputs/long_duration_storage/write_opwrap_lds_dstor.jl")
-include("write_outputs/long_duration_storage/write_opwrap_lds_stor_init.jl")
-
-include("write_outputs/reserves/write_reg.jl")
-include("write_outputs/reserves/write_rsv.jl")
-
-include("write_outputs/transmission/write_nw_expansion.jl")
-include("write_outputs/transmission/write_transmission_flows.jl")
-include("write_outputs/transmission/write_transmission_losses.jl")
-include("write_outputs/transmission/write_zonaltransmission_loss.jl")
-include("write_outputs/transmission/write_transmission_losscost.jl")
-include("write_outputs/transmission/write_congestion_revenue.jl")
-
-include("write_outputs/ucommit/write_commit.jl")
-include("write_outputs/ucommit/write_shutdown.jl")
-include("write_outputs/ucommit/write_start.jl")
-
-
-include("write_outputs/write_outputs.jl")
+include("time_domain_reduction/precluster.jl")
 
 #Just for unit testing; Under active development
 include("simple_operation.jl")
 
-# Multi Stage files
-include("multi_stage/dual_dynamic_programming.jl")
-include("multi_stage/configure_multi_stage_inputs.jl")
-include("multi_stage/endogenous_retirement.jl")
-include("multi_stage//write_settings.jl")
-
-include("additional_tools/modeling_to_generate_alternatives.jl")
-include("additional_tools/method_of_morris.jl")
+include_all_in_folder("multi_stage")
+include_all_in_folder("additional_tools")
 end

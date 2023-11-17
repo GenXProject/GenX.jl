@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
@@ -25,9 +9,8 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	L = inputs["L"]     # Number of transmission lines
-	W = inputs["REP_PERIOD"]     # Number of subperiods
-    SEG = inputs["SEG"] # Number of load curtailment segments
+
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
 
 	if (setup["WriteShadowPrices"]==1 || setup["UCommit"]==0 || (setup["UCommit"]==2 && (setup["Reserves"]==0 || (setup["Reserves"]>0 && inputs["pDynamic_Contingency"]==0)))) # fully linear model
@@ -38,12 +21,10 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 			tempCO2Price = zeros(Z,inputs["NCO2Cap"])
 			if has_duals(EP) == 1
 				for cap in 1:inputs["NCO2Cap"]
-					for z in findall(x->x==1, inputs["dfCO2Cap"][:,Symbol("CO_2_Cap_Zone_$cap")])
-						tempCO2Price[z,cap] = dual.(EP[:cCO2Emissions_systemwide])[cap]
+					for z in findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
+						tempCO2Price[z,cap] = (-1) * dual.(EP[:cCO2Emissions_systemwide])[cap]
 						# when scaled, The objective function is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
-						if setup["ParameterScale"] ==1
-							tempCO2Price[z,cap] = tempCO2Price[z,cap]* ModelScalingFactor
-						end
+						tempCO2Price[z,cap] *= scale_factor
 					end
 				end
 			end
@@ -55,18 +36,10 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 		end
 
 		for i in 1:Z
-			if setup["ParameterScale"]==1
-				dfEmissions[i,:AnnualSum] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:]))*ModelScalingFactor
-			else
-				dfEmissions[i,:AnnualSum] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:]))/ModelScalingFactor
-			end
+			dfEmissions[i,:AnnualSum] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:]))*scale_factor
 		end
 
-		if setup["ParameterScale"]==1
-			dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])*ModelScalingFactor, :auto))
-		else
-			dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])/ModelScalingFactor, :auto))
-		end
+		dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])*scale_factor, :auto))
 
 
 		if setup["CO2Cap"]>=1
@@ -76,8 +49,6 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 			for t in 1:T
 				total[:,t+inputs["NCO2Cap"]+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
 			end
-			rename!(total,auxNew_Names)
-			dfEmissions = vcat(dfEmissions, total)
 		else
 			auxNew_Names=[Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
 			rename!(dfEmissions,auxNew_Names)
@@ -85,9 +56,9 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 			for t in 1:T
 				total[:,t+2] .= sum(dfEmissions[:,Symbol("t$t")][1:Z])
 			end
-			rename!(total,auxNew_Names)
-			dfEmissions = vcat(dfEmissions, total)
 		end
+        rename!(total,auxNew_Names)
+        dfEmissions = vcat(dfEmissions, total)
 
 
 ## Aaron - Combined elseif setup["Dual_MIP"]==1 block with the first block since they were identical. Why do we have this third case? What is different about it?
@@ -95,17 +66,9 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 		# CO2 emissions by zone
 		dfEmissions = hcat(DataFrame(Zone = 1:Z), DataFrame(AnnualSum = Array{Float64}(undef, Z)))
 		for i in 1:Z
-			if setup["ParameterScale"]==1
-				dfEmissions[!,:AnnualSum][i] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:])) *ModelScalingFactor
-			else
-				dfEmissions[!,:AnnualSum][i] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:]))/ModelScalingFactor
-			end
+			dfEmissions[i,:AnnualSum] = sum(inputs["omega"].*value.(EP[:eEmissionsByZone][i,:])) * scale_factor
 		end
-		if setup["ParameterScale"]==1
-			dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])*ModelScalingFactor, :auto))
-		else
-			dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone])/ModelScalingFactor, :auto))
-		end
+		dfEmissions = hcat(dfEmissions, DataFrame(value.(EP[:eEmissionsByZone]) * scale_factor, :auto))
 		auxNew_Names=[Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 		rename!(dfEmissions,auxNew_Names)
 		total = DataFrame(["Total" sum(dfEmissions[!,:AnnualSum]) fill(0.0, (1,T))], :auto)

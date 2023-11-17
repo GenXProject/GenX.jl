@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	storage!(EP::Model, inputs::Dict, setup::Dict)
 A wide range of energy storage devices (all $o \in \mathcal{O}$) can be modeled in GenX, using one of two generic storage formulations: (1) storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), such as Lithium-ion batteries and most other electrochemical storage devices that use the same components for both charge and discharge; and (2) storage technologies that employ distinct and potentially asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), such as most thermal storage technologies or hydrogen electrolysis/storage/fuel cell or combustion turbine systems.
@@ -60,8 +44,13 @@ The following two constraints track the state of charge of the storage resources
 	&  \Gamma_{o,z,t} =\Gamma_{o,z,t+\tau^{period}-1} - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,t} + \eta_{o,z}^{charge}\Pi_{o,z,t} - \eta_{o,z}^{loss}\Gamma_{o,z,t+\tau^{period}-1}  \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```
-When modeling the entire year as a single chronological period with total number of time steps of $\tau^{period}$, storage inventory in the first time step is linked to storage inventory at the last time step of the period representing the year. Alternatively, when modeling the entire year with multiple representative periods, this constraint relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of $\tau^{period}$ time steps. In this implementation, energy exchange between representative periods is not permitted. When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year. If ```OperationWrapping=1``` and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
-The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{o,z}$. Finally, the maximum discharge rate for storage resources, $\Pi_{o,z,t}$, is constrained to be less than the discharge power capacity, $\Omega_{o,z,t}$ or the state of charge at the end of the last period, $\Gamma_{o,z,t-1}$, whichever is lessor.
+When modeling the entire year as a single chronological period with total number of time steps of $\tau^{period}$, storage inventory in the first time step is linked to storage inventory at the last time step of the period representing the year.
+Alternatively, when modeling the entire year with multiple representative periods, this constraint relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of $\tau^{period}$ time steps.
+In this implementation, energy exchange between representative periods is not permitted.
+When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year.
+If there is more than one representative period and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls ```long_duration_storage()``` in ```long_duration_storage.jl``` to enable this feature.
+The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{o,z}$.
+Finally, the maximum discharge rate for storage resources, $\Pi_{o,z,t}$, is constrained to be less than the discharge power capacity, $\Omega_{o,z,t}$ or the state of charge at the end of the last period, $\Gamma_{o,z,t-1}$, whichever is less.
 ```math
 \begin{aligned}
 	&  \Gamma_{o,z,t} \leq \Delta^{total, energy}_{o,z} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}\\
@@ -93,10 +82,10 @@ When charging, reducing the charge rate is contributing to upwards reserve and f
 	&  \Theta_{o,z,t} - f^{discharge}_{o,z,t} \geq 0 & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-Additionally, when reserves are modeled, the maximum charge rate and contribution to regulation while charging can be no greater than the available energy storage capacity, or the difference between the total energy storage capacity, $\Delta^{total, energy}_{o,z}$, and the state of charge at the end of the previous time period, $\Gamma_{o,z,t-1}$. Note that for storage to contribute to reserves down while charging, the storage device must be capable of increasing the charge rate (which increase net load).
+Additionally, when reserves are modeled, the maximum charge rate and contribution to regulation while charging can be no greater than the available energy storage capacity, or the difference between the total energy storage capacity, $\Delta^{total, energy}_{o,z}$, and the state of charge at the end of the previous time period, $\Gamma_{o,z,t-1}$, while accounting for charging losses $\eta_{o,z}^{charge}$. Note that for storage to contribute to reserves down while charging, the storage device must be capable of increasing the charge rate (which increase net load).
 ```math
 \begin{aligned}
-	&  \Pi_{o,z,t} + f^{charge}_{o,z,t} \leq \Delta^{energy, total}_{o,z} - \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
+	&  \eta_{o,z}^{charge} \times (\Pi_{o,z,t} + f^{charge}_{o,z,t}) \leq \Delta^{energy, total}_{o,z} - \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 Finally, the constraints on maximum discharge rate are replaced by the following, to account for capacity contributed to regulation and reserves:
@@ -115,8 +104,10 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
+    p = inputs["hours_per_subperiod"]
+    rep_periods = inputs["REP_PERIOD"]
+
 	Reserves = setup["Reserves"]
-	OperationWrapping = setup["OperationWrapping"]
 	MultiStage = setup["MultiStage"]
 
 	if !isempty(STOR_ALL)
@@ -124,7 +115,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 		storage_all!(EP, inputs, setup)
 
 		# Include Long Duration Storage only when modeling representative periods and long-duration storage
-		if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
+		if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
 			long_duration_storage!(EP, inputs)
 		end
 	end

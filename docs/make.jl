@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 push!(LOAD_PATH,"../src/")
 #=cd("../")
 include(joinpath(pwd(), "package_activate.jl"))
@@ -63,31 +47,26 @@ pages = OrderedDict(
                 "Thermal" => "thermal.md",
                 "Thermal Commit" => "thermal_commit.md",
                 "Thermal No Commit" => "thermal_no_commit.md"
-            ]
+            ],
         ],
         "Multi_stage" => [
-            "Overview" => "multi_stage_model_overview.md",
-            "Load inputs for multi-stage modeling" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
-                #"Load inputs" => "load_inputs_multi_stage.md",
-                "Load generators data" => "load_generators_data_multi_stage.md",
-                "Load network data" => "load_network_data_multi_stage.md",
-            ],
-            "Model multi stage" => [
-                "Investment multi stage" => "investment_multi_stage.md",
-                "Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md"
-                ],
+                "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md",
         ],
-        "Policies" => "policies.md"
+        "Policies" => "policies.md",
+        "Slack Variables for Policies" => "slack_variables_overview.md",
     ],
     "Methods" => "methods.md",
     "Solver Configurations" => "solver_configuration.md",
     "Solving the Model" => "solve_model.md",
-    "Additional Features" => "additional_features.md",
-    "Third Party Extensions" => "additional_third_party_extensions.md",
-    "Model Inputs/Outputs Documentation" => "data_documentation.md",
+    "Model Inputs/Outputs Documentation" => [
+        "Single-stage Model" => "data_documentation.md",
+        "Multi-stage Model" => "multi_stage_model_overview.md",
+    ],
     "GenX Inputs Functions" => "load_inputs.md",
     "GenX Outputs Functions" =>"write_outputs.md",
+    "Additional Features" => "additional_features.md",
+    "Third Party Extensions" => "additional_third_party_extensions.md",
     #"Unit Testing (Under Development)" => "unit_testing.md"
 )
 makedocs(;

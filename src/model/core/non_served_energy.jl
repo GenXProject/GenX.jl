@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
     non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
 This function defines the non-served energy/curtailed demand decision variable $\Lambda_{s,t,z} \forall s \in \mathcal{S}, \forall t \in \mathcal{T}, z \in \mathcal{Z}$, representing the total amount of demand curtailed in demand segment $s$ at time period $t$ in zone $z$. The first segment of non-served energy, $s=1$, is used to denote the cost of involuntary demand curtailment (e.g. emergency load shedding or rolling blackouts), specified as the value of $n_{1}^{slope}$. Additional segments, $s \geq 2$ can be used to specify a segment-wise approximation of a price elastic demand curve, or segments of price-responsive curtailable loads (aka demand response). Each segment denotes a price/cost at which the segment of demand is willing to curtail consumption, $n_{s}^{slope}$, representing the marginal willingness to pay for electricity of this segment of demand (or opportunity cost incurred when demand is not served) and a maximum quantity of demand in this segment, $n_{s}^{size}$, specified as a share of demand in each zone in each time step, $D_{t,z}.$ Note that the current implementation assumes demand segments are an equal share of hourly load in all zones.

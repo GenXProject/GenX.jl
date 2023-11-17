@@ -2,35 +2,36 @@
 
 ## 1 Model setup parameters
 
-Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file). Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameter affects the formulation of the model constraint and objective functions. Computational performance related parameters affect the accuracy of the solution. Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses. Note that all settings parameters are case sensitive.
+Model settings parameters are specified in a `genx_settings.yml` file which should be located in the current working directory (or to specify an alternative location, edit the `settings_path` variable in your `Run.jl` file).
+Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. Model structure related settings parameters affect the formulation of the model constraints and objective function.
+Computational performance related parameters affect the accuracy of the solution.
+Policy related parameters specify the policy type and policy goal. Network related parameters specify settings related to transmission network expansion and losses.
+Note that all settings parameters are case sensitive.
 
 ###### Table 1a: Summary of the Model settings parameters
 ---
 |**Settings Parameter** | **Description**|
 | :------------ | :-----------|
 |**Model structure related**||
-|OperationWrapping | Select temporal resolution for operations constraints.|
-||0 = Models intra-annual operations as a single contiguous period. Inter-temporal constraint are defined based on linking first time step with the last time step of the year.|
-||1 = Models intra-annual operations using multiple representative periods. Inter-temporal constraints are defined based on linking first time step with the last time step of each representative period.|
-|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter TimeDomainReduction Folder. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results in the folder with this name. These reduced inputs are based on full input data provided by user in `Load_data.csv`, `Generators_variability.csv`, and `Fuels_data.csv`.|
-||0 = Use full input data as provided.|
-|TimeDomainReductionFolder | Name of the folder where time domain reduced input data is accessed and stored.|
+|TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results there.|
+||0 = Use the data in the main case folder; do not perform clustering.|
+|TimeDomainReductionFolder | Name of the folder where time domain reduced input data is stored.|
 |UCommit | Select technical resolution of of modeling thermal generators.|
 ||0 = no unit commitment.|
 ||1 = unit commitment with integer clustering.|
 ||2 = unit commitment with linearized clustering.|
 |NetworkExpansion | Flag for activating or deactivating inter-regional transmission expansion.|
 ||1 = active|
-||0 = modeling single zone or for multi-zone problems, inter regional transmission expansion is not allowed.|
+||0 = modeling single zone or for multi-zone problems in which inter regional transmission expansion is not allowed.|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
-||1 = linear|
-||>=2 = piece-wise quadratic|
+||1: linear|
+||>=2: piece-wise quadratic|
 |Reserves | Flag for modeling operating reserves .|
-||0 = no operating reserves |
-||1 regulation (primary) and spinning (secondary) reserves |
+||0 = No operating reserves considered. |
+||1 = Consider regulation (primary) and spinning (secondary) reserves. |
 |StorageLosses | Flag to account for storage related losses.|
-||0 = VRE and CO2 constraint DO NOT account for energy lost. |
-||1 = constraint DO account for energy lost. |
+||0 = VRE and CO2 constraints DO NOT account for energy lost. |
+||1 = constraints account for energy lost. |
 |**Policy related**|
 |EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
 || Default = 0 (No RPS or CES constraints).|
@@ -46,29 +47,35 @@ Model settings parameters are specified in a `genx_settings.yml` file which shou
 |MinCapReq | Minimum technology carve out requirement constraints.|
 || 1 = if one or more minimum technology capacity constraints are specified|
 || 0 = otherwise|
+|MaxCapReq | Maximum system-wide technology capacity limit constraints.|
+|| 1 = if one or more maximum technology capacity constraints are specified|
+|| 0 = otherwise|
 |**Solution strategy and outputs**||
-|Solver | Solver name is not case sensitive (CPLEX, cplex, Gurobi, gurobi, Clp, clp). |
+|Solver | Specifies the solver name (This is not case sensitive i.e. CPLEX/cplex, Gurobi/gurobi, Clp/clp indicate the same solvers, respectively). |
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
-|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. |
+|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
-|WriteShadowPrices | Get dual of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
+|WriteShadowPrices | Get the optimal values of dual variables of various model related constraints, including to estimate electricity prices, stored value of energy and the marginal CO2 prices.|
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
-
 |MethodofMorris | Method of Morris algorithm |
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
-|**Miscellaneous**|
+|**Miscellaneous**||
 |PrintModel | Flag for printing the model equations as .lp file.|
-||1= including the model equation as an output|
-||0 for the model equation not being included as an output|
+||1 = including the model equation as an output|
+||0 = the model equation won't be included as an output|
 
-Additionally, Solver related settings parameters are specified in the appropriate solver settings .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`), which should be located in the current working directory (or to specify an alternative location, edit the `solver_settings_path` variable in your Run.jl file). Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the /src/configure_solver/ directory. To overwrite default settings, you can specify the below Solver specific settings. Note that appropriate solver settings are specific to each solver.
+Additionally, Solver related settings parameters are specified in the appropriate .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`),
+which should be located in the current working directory.
+Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the `src/configure_solver/` directory.
+To overwrite default settings, you can specify the below Solver specific settings.
+Settings are specific to each solver.
 
 ###### Table 1b: Summary of the Solver settings parameters
 ---
@@ -79,6 +86,7 @@ Additionally, Solver related settings parameters are specified in the appropriat
 || CPLEX: CPX\_PARAM\_LPMETHOD - Default = 0; See [link](https://www.ibm.com/docs/en/icos/20.1.0?topic=parameters-algorithm-continuous-linear-problems) for more specifications.|
 || Gurobi: Method - Default = -1; See [link](https://www.gurobi.com/documentation/8.1/refman/method.html) for more specifications.|
 || clp: SolveType - Default = 5; See [link](https://www.coin-or.org/Doxygen/Clp/classClpSolve.html) for more specifications.|
+|| HiGHS: Method - Default = "choose"; See [link](https://ergo-code.github.io/HiGHS/dev/options/definitions/)
 |BarConvTol | Convergence tolerance for barrier algorithm.|
 || CPLEX: CPX\_PARAM\_BAREPCOMP - Default = 1e-8; See [link](https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-convergence-tolerance-lp-qp-problems) for more specifications.|
 || Gurobi: BarConvTol - Default = 1e-8; See [link](https://www.gurobi.com/documentation/8.1/refman/barconvtol.html)link for more specifications.|
@@ -179,8 +187,8 @@ This input file contains input parameters related to: 1) definition of model zon
 | :------------ | :-----------|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
-|Network\_Lines | Numerical index for each network line/|
-| z* (Network map) | Next n columns, one per zone, with column header in format of z* where * is the number of the zone. L rows, one for each network line (or interregional path), with a 1 in the column corresponding to the 'origin' zone and a -1 in the column corresponding to the 'destination' zone for each line. No more than one column may be marked as origin and one as destination for each line, or the model will not function correctly. Note that positive flows indicate flow from origin to destination zone; negative flows indicate flow from destination to origin zone.|
+|Network\_Lines | Numerical index for each network line. The length of this column is counted but the actual values are not used.|
+| z* (Network map) **OR** Origin_Zone, Destination_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
@@ -200,6 +208,31 @@ This input file contains input parameters related to: 1) definition of model zon
 |Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for network transmission line expansion.  |
 |Line\_Max\_Flow\_Possible\_MW  |Maximum possible line flow in the current model period. Overrides Line\_Max\_Reinforcement\_MW, which is not used when performing multi-stage modeling.  |
 
+There are two interfaces implemented for specifying the network topology itself: a matrix interface and a list interface.
+Only one choice is permitted in a given file.
+
+The list interface consists of a column for the lines origin zone and one for the line's destination zone.
+Here is a snippet of the Network.csv file for a map with three zones and two lines:
+```
+Network_Lines, Origin_Zone, Destination_Zone,
+            1,           1,                2,
+            2,           1,                3,
+```
+
+The matrix interface requires N columns labeled `z1, z2, z3 ... zN`,
+and L rows, one for each network line (or interregional path), with a `1` in the column corresponding to the 'origin' zone 
+and a `-1` in the column corresponding to the 'destination' zone for each line.
+Here is the same network map implemented as a matrix:
+```
+Network_Lines, z1, z2, z3,
+            1,  1, -1,  0,
+            2,  1,  0, -1,
+```
+
+Note that in either case, positive flows indicate flow from origin to destination zone;
+negative flows indicate flow from destination to origin zone.
+
+
 #### 2.1.3 Load\_data.csv
 
 This file includes parameters to characterize model temporal resolution to approximate annual grid operations, electricity demand for each time step for each zone, and cost of load shedding. Note that GenX is designed to model hourly time steps. With some care and effort, finer (e.g. 15 minute) or courser (e.g. 2 hour) time steps can be modeled so long as all time-related parameters are scaled appropriately (e.g. time period weights, heat rates, ramp rates and minimum up and down times for generators, variable costs, etc).
@@ -215,11 +248,9 @@ This file includes parameters to characterize model temporal resolution to appro
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
 |Load\_MW\_z* |Load profile of a zone z* in MW; if multiple zones, this parameter will be a matrix with columns equal to number of zones (each column named appropriate zone number appended to parameter) and rows equal to number of time periods of grid operations being modeled.|
-|**Settings-specific Columns**|
-|**OperationWrapping = 1**|
-|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations.|
-|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps).|
-|Sub\_Weights |Number of annual time steps (e.g. hours) represented by a given representative period. Length of this column is equal to the number of representative periods. Sum of the elements of this column should be equal to the total number of time steps in a model time horizon, defined in parameterWeightTotal (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
+|Rep\_Periods |Number of representative periods (e.g. weeks, days) that are modeled to approximate annual grid operations. This is always a single entry. For a full-year model, this is `1`.|
+|Timesteps\_per\_Rep\_Period |Number of timesteps per representative period (e.g. 168 if period is set as a week using hour-long time steps). This is always a single entry: all representative periods have the same length. For a full-year model, this entry is equal to the number of time steps.|
+|Sub\_Weights |Number of annual time steps (e.g. hours) represented by each timestep in a representative period. The length of this column is equal to the number of representative periods. The sum of the elements should be equal to the total number of time steps in a model time horizon (e.g. 8760 hours if modeling 365 days or 8736 if modeling 52 weeks).|
 
 
 
@@ -345,7 +376,8 @@ This file contains cost and performance parameters for various generators and ot
 |Resource\_Type |For the MGA run, we categorize all the resources in a few resource types. We then find maximally different generation portfolio based on these resource types. For example, existing solar and new solar resources could be represented by a resource type names `Solar`. Categorization of resources into resource types is user dependent.|
 |**MinCapReq = 1**|
 |MinCapTag\_*| Eligibility of resources to participate in Minimum Technology Carveout constraint. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`.|
-
+|**MaxCapReq = 1**|
+|MaxCapTag\_*| Eligibility of resources to participate in Maximum Technology Carveout constraint. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.|
 
 
 ### 2.2 Optional inputs files
@@ -354,11 +386,10 @@ This file contains cost and performance parameters for various generators and ot
 
 Modeling grid operations for each hour of the year can be computationally expensive for models with many zones and resources. Time-domain reduction is often employed in capacity expansion models as a way to balance model spatial and temporal resolution as well as representation of dispatch, while ensuring reasonable computational times. GenX allows the option of performing time-domain reduction on the user supplied time-series input data to produce a representative time series at the desired level of temporal resolution. The below table summarizes the list of parameters to be specified by the user to perform the time domain reduction implemented in GenX. These parameters are passed to GenX via the YAML file `time_domain_reduction_settings.yml`.
 
-###### Table 7: Structure of the Load\_data.csv file
+###### Table 7: Structure of the time_domain_reduction.yml file
 ---
-|**Column Name** | **Description**|
+|**Key** | **Description**|
 | :------------ | :-----------|
-|**TimeDomainReduction = 1**||
 |Timesteps\_per\_period | The number of timesteps (e.g., hours) in each representative period (i.e. 168 for weeks, 24 for days, 72 for three-day periods, etc).|
 |UseExtremePeriods | 1 = Include outliers (by performance or load/resource extreme) as their own representative extreme periods. This setting automatically includes periods based on criteria outlined in the dictionary `ExtremePeriods`. Extreme periods can be selected based on following criteria applied to load profiles or solar and wind capacity factors profiles, at either the zonal or system level. A) absolute (timestep with min/max value) statistic (minimum, maximum) and B) integral (period with min/max summed value) statistic (minimum, maximum). For example, the user could want the hour with the most load across the whole system to be included among the extreme periods. They would select Load, System, Absolute, and Max.|
 ||0 = Do not include extreme periods.|
@@ -424,9 +455,9 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 | :------------ | :-----------|
 |Region\_description |Region name|
 |Network\_zones| zone number represented as z*|
-|CO\_2\_Cap\_Zone* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
-|CO\_2\_Max\_tons\_MWh* |Emission limit in terms of rate|
-|CO\_2\_Max\_Mtons* |Emission limit in absolute values, in Million of tons |
+|CO\_2\_Cap\_Zone_* |If a zone is eligible for the emission limit constraint, then this column is set to 1, else 0.|
+|CO\_2\_Max\_tons\_MWh_* |Emission limit in terms of rate|
+|CO\_2\_Max\_Mtons_* |Emission limit in absolute values, in Million of tons |
 | | where in the above inputs, * represents the number of the emission limit constraints. For example, if the model has 2 emission limit constraints applied separately for 2 zones, the above CSV file will have 2 columns for specifying emission limit in terms on rate: CO\_2\_Max\_tons\_MWh\_1 and CO\_2\_Max\_tons\_MWh\_2.|
 
 
@@ -462,11 +493,27 @@ This file contains the minimum capacity carve-out requirement to be imposed (e.g
 
 Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
 
-#### 2.2.7 Method\_of\_morris\_range.csv
+#### 2.2.7 Maximum\_capacity\_requirement.csv
+
+This contains the maximum capacity limits to be imposed (e.g. limits on total deployment of solar, wind, or batteries in the system as a whole or in certain collections of zones).
+It is required if the `MaxCapReq` flag has a non-zero value in `genx_settings.yml`.
+
+###### Table 13: Structure of the Maximum\_capacity\_requirement.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|MaxCapReqConstraint |Index of the maximum capacity limit.|
+|Constraint\_Description |Names of maximum capacity limit; not to be read by model, but used as a helpful notation to the model user. |
+|Max\_MW | maximum capacity limit [MW]|
+
+
+Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
+
+#### 2.2.8 Method\_of\_morris\_range.csv
 
 This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
 
-###### Table 12: Structure of the Method\_of\_morris\_range.csv file
+###### Table 14: Structure of the Method\_of\_morris\_range.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -505,7 +552,7 @@ The table below summarizes the units of each output variable reported as part of
 
 Reports optimal values of investment variables (except StartCap, which is an input)
 
-###### Table 14: Structure of the capacity.csv file
+###### Table 15: Structure of the capacity.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -528,7 +575,7 @@ Reports optimal values of investment variables (except StartCap, which is an inp
 
 Reports optimal objective function value and contribution of each term by zone.
 
-###### Table 15: Structure of the costs.csv file
+###### Table 16: Structure of the costs.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -548,7 +595,7 @@ Reports optimal objective function value and contribution of each term by zone.
 
 Reports CO2 emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
 
-###### Table 16: Structure of emission prices in the emissions.csv file
+###### Table 17: Structure of emission prices in the emissions.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -580,7 +627,7 @@ Reports marginal electricity price for each model zone and time step. Marginal e
 
 Reports computational performance of the model and objective function related information.
 
-###### Table 17: Structure of the status.csv file
+###### Table 18: Structure of the status.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -596,7 +643,7 @@ Reports computational performance of the model and objective function related in
 
 This file summarizes the cost, revenue and profit for each generation technology for each region.
 
-###### Table 18: Stucture of the NetRevenue.csv file
+###### Table 19: Stucture of the NetRevenue.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|

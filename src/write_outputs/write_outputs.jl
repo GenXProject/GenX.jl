@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 ################################################################################
 ## function output
 ##
@@ -28,7 +12,7 @@ Function for the entry-point for writing the different output files. From here, 
 """
 function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
-	if !haskey(setup, "OverwriteResults") || setup["OverwriteResults"] == 1
+	if setup["OverwriteResults"] == 1
 		# Overwrite existing results if dir exists
 		# This is the default behaviour when there is no flag, to avoid breaking existing code
 		if !(isdir(path))
@@ -136,7 +120,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 
 	# Output additional variables related inter-period energy transfer via storage
-	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_LONG_DURATION"])
+	representative_periods = inputs["REP_PERIOD"]
+	if representative_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
 		elapsed_time_lds_init = @elapsed write_opwrap_lds_stor_init(path, inputs, setup, EP)
 		println("Time elapsed for writing lds init is")
 		println(elapsed_time_lds_init)
@@ -233,30 +218,33 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			elapsed_time_cap_value = @elapsed write_capacity_value(path, inputs, setup, EP)
 			println("Time elapsed for writing capacity value is")
 			println(elapsed_time_cap_value)
+			if haskey(inputs, "dfCapRes_slack")
+				dfResMar_slack = write_reserve_margin_slack(path, inputs, setup, EP)
+			end	
 		end
 		
-		# Carbon Emission Credit Market -- Mase-based
-        dfCO2MassCapCost = DataFrame()
-        dfCO2MassCapRev = DataFrame()
-        dfCO2Price = DataFrame()
-        if setup["CO2Cap"] == 1 && has_duals(EP) == 1
-            dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, inputs, setup, EP)
-        end
+		# # Carbon Emission Credit Market -- Mase-based
+        # dfCO2MassCapCost = DataFrame()
+        # dfCO2MassCapRev = DataFrame()
+        # dfCO2Price = DataFrame()
+        # if setup["CO2Cap"] == 1 && has_duals(EP) == 1
+        #     dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, inputs, setup, EP)
+        # end
 
-		# Carbon Emission Credit Market -- Generation Emission Rate Based
-        dfCO2GenRateCapCost = DataFrame()
-        dfCO2GenRatePrice = DataFrame()
-        if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
-            dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, inputs, setup, EP)
-        end
+		# # Carbon Emission Credit Market -- Generation Emission Rate Based
+        # dfCO2GenRateCapCost = DataFrame()
+        # dfCO2GenRatePrice = DataFrame()
+        # if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
+        #     dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, inputs, setup, EP)
+        # end
 
-		# Carbon Emission Credit Market -- Load Emission Rate Based
-        dfCO2LoadRateCapCost = DataFrame()
-        dfCO2LoadRateCapRev = DataFrame()
-        dfCO2LoadRatePrice = DataFrame()
-        if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
-            dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, inputs, setup, EP)
-        end
+		# # Carbon Emission Credit Market -- Load Emission Rate Based
+        # dfCO2LoadRateCapCost = DataFrame()
+        # dfCO2LoadRateCapRev = DataFrame()
+        # dfCO2LoadRatePrice = DataFrame()
+        # if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
+        #     dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, inputs, setup, EP)
+        # end
 
         # Carbon Tax
         dfCO2TaxCost = DataFrame()
@@ -274,6 +262,18 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		
 		if setup["TFS"] == 1
 			write_twentyfourseven(path, inputs, setup, EP)
+		end
+
+		if setup["CO2Cap"]>0 && has_duals(EP) == 1
+			dfCO2Cap = write_co2_cap(path, inputs, setup, EP)
+		end
+
+		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
+			dfMinCapReq = write_minimum_capacity_requirement(path, inputs, setup, EP)
+		end
+
+		if setup["MaxCapReq"] == 1 && has_duals(EP) == 1
+			dfMaxCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
 		end
 
 		if setup["EnergyCredit"] == 1

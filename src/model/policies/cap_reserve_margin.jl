@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 Instead of modeling capacity reserve margin requirement (a.k.a. capacity market or resource adequacy requirement) using an annual constraint, 
@@ -83,19 +67,32 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
 	println("Capacity Reserve Margin Policies Module")
+	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], EP[:vZERO])
+
 	### Variable
-	@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
+	if haskey(inputs, "dfCapRes_slack")
+		@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
+		add_to_expression!.(EP[:eCapResMarBalance],EP[:vCapResSlack])	
+		# add penalty to the objective function
+		@expression(EP, eCapResSlack_Year[res=1:NCRM], 
+			sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
+		@expression(EP, eCCapResSlack[res=1:NCRM], 
+			inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])
+		@expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res = 1:NCRM))
+		add_to_expression!(EP[:eObj], EP[:eCTotalCapResSlack])
+	end	
+
 	@variable(EP, vCapContribution[y = 1:G, t = 1:T])
 	if Z > 1
 		@variable(EP, vCapContributionTrans[l = 1:L, t = 1:T])
 	end
 	### Expression
 	# Initialize Capacity Reserve Margin Expression
-	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], 1*EP[:vCapResSlack][res,t])
 	@expression(EP, eCapContributionGenAll[res=1:NCRM, t = 1:T],
 		sum(dfGen[y, Symbol("CapRes_$res")] * EP[:vCapContribution][y, t] for y in 1:G)
 	)
 	add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapContributionGenAll])
+	
 	if Z > 1
 		@expression(EP, eCapContributionTransAll[res=1:NCRM, t = 1:T],
 			sum(inputs["dfCapRes_network"][l, Symbol("DerateCapRes_$res")] * 
@@ -104,13 +101,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 		)
 		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapContributionTransAll])
 	end
-	# add penalty to the objective function
-	@expression(EP, eCapResSlack_Year[res=1:NCRM], 
-		sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
-	@expression(EP, eCCapResSlack[res=1:NCRM], 
-		inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])
-	@expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res = 1:NCRM))
-	add_to_expression!(EP[:eObj], EP[:eCTotalCapResSlack])
+
 
 	# Hydro with Res
 	if !isempty(HYDRO_RES)
