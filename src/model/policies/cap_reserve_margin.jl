@@ -67,7 +67,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
 	println("Capacity Reserve Margin Policies Module")
-	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], EP[:vZERO])
+	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], 1*EP[:vZERO])
 
 	### Variable
 	if haskey(inputs, "dfCapRes_slack")
