@@ -182,18 +182,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfSubRevenue = write_subsidy_revenue(path, inputs, setup, EP)
 		end
 		
-		# Regional technology mandate subsidy
-		dfRegSubRevenue = DataFrame()
-		if setup["MinCapReq"] == 1
-			write_mincap_penalty(path, inputs, setup, EP)
-		end
-		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
-            dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
-        end
-		# Max Capacity limit
-		if setup["MaxCapReq"] == 1
-			write_maxcap_penalty(path, inputs, setup, EP)
-		end
 		# Max Capacity limit
 		if setup["MaxInvReq"] == 1
 			write_maxinv_penalty(path, inputs, setup, EP)
@@ -267,9 +255,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		if setup["CO2Cap"]>0 && has_duals(EP) == 1
 			dfCO2Cap = write_co2_cap(path, inputs, setup, EP)
 		end
-
+		
+		dfRegSubRevenue = DataFrame()
 		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
 			dfMinCapReq = write_minimum_capacity_requirement(path, inputs, setup, EP)
+			dfRegSubRevenue = write_regional_subsidy_revenue(path, inputs, setup, EP)
 		end
 
 		if setup["MaxCapReq"] == 1 && has_duals(EP) == 1

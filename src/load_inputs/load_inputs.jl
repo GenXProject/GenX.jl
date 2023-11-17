@@ -47,11 +47,11 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 
 	if setup["MinCapReq"] == 1
-		inputs = load_minimum_capacity_requirement!(setup, path, inputs)
+		load_minimum_capacity_requirement!(setup, path, inputs)
 	end
 
 	if setup["MaxCapReq"] == 1
-		inputs = load_maximum_capacity_limit!(setup, path, inputs)
+		load_maximum_capacity_requirement!(setup, path, inputs)
 	end
 
 	if setup["MaxInvReq"] == 1

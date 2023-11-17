@@ -75,11 +75,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 
 	if setup["MinCapReq"] == 1
-		dfCost[10,2] += value(EP[:eTotalCMinCap_slack])
+		dfCost[10,2] += value(EP[:eTotalCMinCapSlack])
 	end
 
 	if setup["MaxCapReq"] == 1
-		dfCost[10,2] += value(EP[:eTotalCMaxCap_slack])
+		dfCost[10,2] += value(EP[:eTotalCMaxCapSlack])
 	end
 
 	if setup["MaxInvReq"] == 1

@@ -14,18 +14,20 @@ function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
 	NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
 	G = inputs["G"]
 	dfGen = inputs["dfGen"]
-	# if input files are present, add minimum capacity requirement slack variables
 	
 	@expression(EP, eMinCapRes[mincap = 1:NumberOfMinCapReqs], 1*EP[:vZERO])
 
+	# if input files are present, add minimum capacity requirement slack variables
 	if haskey(inputs, "MinCapPriceCap")
 		@variable(EP, vMinCap_slack[mincap = 1:NumberOfMinCapReqs]>=0)
-		EP[:eMinCapRes] += vMinCap_slack
+		# EP[:eMinCapRes] += vMinCap_slack
+		add_to_expression!.(EP[:eMinCapRes], EP[:vMinCap_slack])
 
 		@expression(EP, eCMinCap_slack[mincap = 1:NumberOfMinCapReqs], inputs["MinCapPriceCap"][mincap] * EP[:vMinCap_slack][mincap])
 		@expression(EP, eTotalCMinCapSlack, sum(EP[:eCMinCap_slack][mincap] for mincap = 1:NumberOfMinCapReqs))
 		
-		EP[:eObj] += eTotalCMinCapSlack
+		# EP[:eObj] += eTotalCMinCapSlack
+		add_to_expression!(EP[:eObj], EP[:eTotalCMinCapSlack])
 	end
 	
 	@expression(EP, eMinCapResInvest[mincap = 1:NumberOfMinCapReqs], sum(dfGen[y, Symbol("MinCapTag_$mincap")] * EP[:eTotalCap][y] for y in 1:G))
