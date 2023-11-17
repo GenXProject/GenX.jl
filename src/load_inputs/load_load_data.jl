@@ -34,7 +34,8 @@ function load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
     # Total number of periods and subperiods
     inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
     inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
-
+    
+    for w in 1:inputs["REP_PERIOD"]
 		# Total number of periods and subperiods
 		inputs_load["REP_PERIOD"] = convert(Int16, collect(skipmissing(load_in[!,:Rep_Periods]))[1])
 		inputs_load["H"] = convert(Int64, collect(skipmissing(load_in[!,:Timesteps_per_Rep_Period]))[1])
