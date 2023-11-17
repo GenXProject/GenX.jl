@@ -61,10 +61,9 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	SEG = inputs["SEG"]
 	Z = inputs["Z"]
 	L = inputs["L"]
-	OperationWrapping = setup["OperationWrapping"]
 	START_SUBPERIODS = inputs["START_SUBPERIODS"]
 	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
+	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
 	println("Capacity Reserve Margin Policies Module")
 	@expression(EP, eCapResMarBalance[res=1:NCRM, t=1:T], 1*EP[:vZERO])
@@ -95,8 +94,8 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	
 	if Z > 1
 		@expression(EP, eCapContributionTransAll[res=1:NCRM, t = 1:T],
-			sum(inputs["dfCapRes_network"][l, Symbol("DerateCapRes_$res")] * 
-				inputs["dfCapRes_network"][l, Symbol("CapRes_Excl_$res")] * 
+			sum(inputs["dfDerateTransCapRes"][l, res] * 
+				inputs["dfTransCapRes_excl"][l, res] * 
 				vCapContributionTrans[l, t] for l in 1:L)
 		)
 		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapContributionTransAll])
@@ -131,21 +130,10 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	if !isempty(STOR_ALL)
 		@constraint(EP, cCapContriSTORCap[y in STOR_ALL, t = 1:T], 
 			EP[:vCapContribution][y, t] <= (EP[:eTotalCap][y]))
-		if OperationWrapping ==1
-			@constraint(EP, cCapContriSTORSoC_Start[y in STOR_ALL, t in START_SUBPERIODS],
-				EP[:vCapContribution][y, t] <= (EP[:vS][y, t + hours_per_subperiod - 1] * 
-				dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement])
-			)
-			@constraint(EP, cCapContriSTORSoC_Interior[y in STOR_ALL, t in INTERIOR_SUBPERIODS],
-				EP[:vCapContribution][y, t] <= (EP[:vS][y, t - 1]* 
-				dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement])
-			)
-		else
-			@constraint(EP, cCapContriSTORSoC[y in STOR_ALL, t = 2:T], 
-			EP[:vCapContribution][y, t] <= (EP[:vS][y, t-1]* 
-			dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement])
-			)
-		end
+
+		@constraint(EP, cCapContriSTORSoC[y in STOR_ALL, t = 1:T], 
+			EP[:vCapContribution][y, t] <= (EP[:vS][y, hoursbefore(p,t,1)]* 
+			dfGen[y, :Eff_Down]/ dfGen[y, :CapRes_duration_requirement]))
 	end
 
 	# Flexible demand
@@ -159,7 +147,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	if SEG >= 2
 		@expression(EP, eCapResMarBalanceNSE[res=1:NCRM, t=1:T], 
 			sum(EP[:eDemandResponse][t, z] 
-			for z in findall(x -> x != 0, inputs["dfCapRes"][:, Symbol("CapRes_$res")])))
+			for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
 		add_to_expression!.(EP[:eCapResMarBalance], EP[:eCapResMarBalanceNSE])
 	end
 
@@ -171,7 +159,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 	end
 
 	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
-				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,Symbol("CapRes_$res")]) 
-					for z=findall(x -> x != 0,inputs["dfCapRes"][:,Symbol("CapRes_$res")])))
+				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res]) 
+					for z=findall(x -> x != 0,inputs["dfCapRes"][:,res])))
 
 end

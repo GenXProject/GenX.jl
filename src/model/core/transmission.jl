@@ -102,7 +102,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	UCommit = setup["UCommit"]
 	NetworkExpansion = setup["NetworkExpansion"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
 
 	## sets and indices for transmission losses and expansion

@@ -21,8 +21,8 @@ function write_reserve_margin_payment(path::AbstractString, inputs::Dict, setup:
     Z = inputs["Z"]     # Number of zonests
     dfResPayment = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     for i in 1:inputs["NCapacityReserveMargin"]
-        oneplusreservemargin = (inputs["dfCapRes"][:, Symbol("CapRes_$i")] .+ 1)
-        oneplusreservemargin[findall(x -> x == 0, inputs["dfCapRes"][:, Symbol("CapRes_$i")])] .= 0
+        oneplusreservemargin = (inputs["dfCapRes"][:, i] .+ 1)
+        oneplusreservemargin[findall(x -> x == 0, inputs["dfCapRes"][:, i])] .= 0
         reservemarginpayment = (transpose(inputs["pD"]) .* oneplusreservemargin) * dual.(EP[:cCapacityResMargin][i, :])
         if setup["ParameterScale"] == 1
             reservemarginpayment *= (ModelScalingFactor^2)
