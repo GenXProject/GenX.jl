@@ -165,12 +165,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfESRRev = write_esr_revenue(path, inputs, setup, EP)
 			dfESRPayment = write_esr_payment(path, inputs, setup, EP)
 			if !isempty(inputs["STOR_ALL"])
-                if setup["StorageLosses"] == 1
+                if setup["IncludeLossesInESR"] == 1
                     dfESRStoragelossPayment = write_esr_storagelosspayment(path, inputs, setup, EP)
                 end
             end
 			if inputs["Z"] > 1
-                if setup["PolicyTransmissionLossCoverage"] == 1
+                if setup["IncludeLossesInESR"] == 1
                     dfESRtransmissionlosspayment = write_esr_transmissionlosspayment(path, inputs, setup, EP)
                 end
             end
@@ -224,24 +224,24 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 		
 		# # Carbon Emission Credit Market -- Mase-based
-        # dfCO2MassCapCost = DataFrame()
-        # dfCO2MassCapRev = DataFrame()
-        # dfCO2Price = DataFrame()
+        dfCO2MassCapCost = DataFrame()
+        dfCO2MassCapRev = DataFrame()
+        dfCO2Price = DataFrame()
         # if setup["CO2Cap"] == 1 && has_duals(EP) == 1
         #     dfCO2Price, dfCO2MassCapRev, dfCO2MassCapCost = write_co2_cap_price_revenue(path, inputs, setup, EP)
         # end
 
 		# # Carbon Emission Credit Market -- Generation Emission Rate Based
-        # dfCO2GenRateCapCost = DataFrame()
-        # dfCO2GenRatePrice = DataFrame()
+        dfCO2GenRateCapCost = DataFrame()
+        dfCO2GenRatePrice = DataFrame()
         # if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
         #     dfCO2GenRatePrice, dfCO2GenRateCapCost = write_co2_generation_emission_rate_cap_price_revenue(path, inputs, setup, EP)
         # end
 
 		# # Carbon Emission Credit Market -- Load Emission Rate Based
-        # dfCO2LoadRateCapCost = DataFrame()
-        # dfCO2LoadRateCapRev = DataFrame()
-        # dfCO2LoadRatePrice = DataFrame()
+        dfCO2LoadRateCapCost = DataFrame()
+        dfCO2LoadRateCapRev = DataFrame()
+        dfCO2LoadRatePrice = DataFrame()
         # if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
         #     dfCO2LoadRatePrice, dfCO2LoadRateCapRev, dfCO2LoadRateCapCost = write_co2_load_emission_rate_cap_price_revenue(path, inputs, setup, EP)
         # end

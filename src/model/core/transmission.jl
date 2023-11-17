@@ -104,8 +104,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	NetworkExpansion = setup["NetworkExpansion"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
-	EnergyShareRequirement = setup["EnergyShareRequirement"]
-	IncludeLossesInESR = setup["IncludeLossesInESR"]
 
 	## sets and indices for transmission losses and expansion
 	TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2

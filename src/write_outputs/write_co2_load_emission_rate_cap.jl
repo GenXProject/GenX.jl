@@ -51,7 +51,7 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     Transmissionloss = DataFrame(Transmissionloss_MWh = zeros(Z))
     if Z > 1
         if (setup["PolicyTransmissionLossCoverage"] == 1)
-            Transmissionloss.Transmissionloss_MWh .= 0.5 * value.(EP[:eTransLossByZoneYear])
+            Transmissionloss.Transmissionloss_MWh .=  value.(EP[:eTransLossByZoneYear])
         end
     end
     dfCO2LoadRateCapRev = DataFrame(Zone=1:Z, AnnualSum=zeros(Z))
