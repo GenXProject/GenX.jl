@@ -10,7 +10,6 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
 
-	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
@@ -27,16 +26,12 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
 		if CapacityReserveMargin > 0
 			@constraints(EP, begin
 				# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
-				[y in STOR_SYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] + EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-
 				# Max simultaneous charge and discharge cannot be greater than capacity
 				[y in STOR_SYMMETRIC, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
 			end)
 		else
 			@constraints(EP, begin
 				# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
-				[y in STOR_SYMMETRIC, t in 1:T], EP[:vCHARGE][y,t] <= EP[:eTotalCap][y]
-
 				# Max simultaneous charge and discharge cannot be greater than capacity
 				[y in STOR_SYMMETRIC, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t] <= EP[:eTotalCap][y]
 			end)
@@ -52,106 +47,33 @@ Sets up variables and constraints specific to storage resources with symmetric c
 """
 function storage_symmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
-	dfGen = inputs["dfGen"]
 	T = inputs["T"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
+	CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
 
-	STOR_SYMMETRIC = inputs["STOR_SYMMETRIC"]
+	SYMMETRIC = inputs["STOR_SYMMETRIC"]
 
-	STOR_SYM_REG_RSV = intersect(STOR_SYMMETRIC, inputs["REG"], inputs["RSV"]) # Set of symmetric storage resources with both REG and RSV reserves
+	REG = intersect(SYMMETRIC, inputs["REG"])
+	RSV = intersect(SYMMETRIC, inputs["RSV"])
 
-	STOR_SYM_REG = intersect(STOR_SYMMETRIC, inputs["REG"]) # Set of symmetric storage resources with REG reserves
-	STOR_SYM_RSV = intersect(STOR_SYMMETRIC, inputs["RSV"]) # Set of symmetric storage resources with RSV reserves
+    vP = EP[:vP]
+    vCHARGE = EP[:vCHARGE]
+    vREG_charge = EP[:vREG_charge]
+    vRSV_charge = EP[:vRSV_charge]
+    vREG_discharge = EP[:vREG_discharge]
+    vRSV_discharge = EP[:vRSV_discharge]
+    eTotalCap = EP[:eTotalCap]
 
-	STOR_SYM_NO_RES = setdiff(STOR_SYMMETRIC, STOR_SYM_REG, STOR_SYM_RSV) # Set of symmetric storage resources with no reserves
-
-	STOR_SYM_REG_ONLY = setdiff(STOR_SYM_REG, STOR_SYM_RSV) # Set of symmetric storage resources only with REG reserves
-	STOR_SYM_RSV_ONLY = setdiff(STOR_SYM_RSV, STOR_SYM_REG) # Set of symmetric storage resources only with RSV reserves
-
-	if !isempty(STOR_SYM_REG_RSV)
-		if CapacityReserveMargin > 0
-			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-			@constraints(EP, begin
-				# Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
-				[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-				[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t]+EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-			end)
-		else
-			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-			@constraints(EP, begin
-				# Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
-				[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]<= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-				[y in STOR_SYM_REG_RSV, t in 1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vRSV_discharge][y,t]+EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]<= EP[:eTotalCap][y]
-			end)
-		end
-	end
-
-	if !isempty(STOR_SYM_REG_ONLY)
-		if CapacityReserveMargin > 0
-			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-			@constraints(EP, begin
-				# Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
-				[y in STOR_SYM_REG_ONLY, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-				[y in STOR_SYM_REG_ONLY, t in 1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-			end)
-		else
-			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-			@constraints(EP, begin
-				# Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
-				[y in STOR_SYM_REG_ONLY, t in 1:T], EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]<= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-				[y in STOR_SYM_REG_ONLY, t in 1:T], EP[:vP][y,t]+EP[:vREG_discharge][y,t]+EP[:vCHARGE][y,t]+EP[:vREG_charge][y,t]<= EP[:eTotalCap][y]
-			end)
-		end
-	end
-
-	if !isempty(STOR_SYM_RSV_ONLY)
-		if CapacityReserveMargin > 0
-			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-			@constraints(EP, begin
-				# Maximum charging rate must be less than symmetric power rating
-				[y in STOR_SYM_RSV_ONLY, t in 1:T], EP[:vCHARGE][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-				[y in STOR_SYM_RSV_ONLY, t in 1:T], EP[:vP][y,t]+EP[:vRSV_discharge][y,t]+EP[:vCHARGE][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-			end)
-		else
-			# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-			@constraints(EP, begin
-				# Maximum charging rate must be less than symmetric power rating
-				[y in STOR_SYM_RSV_ONLY, t in 1:T], EP[:vCHARGE][y,t]<= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
-				[y in STOR_SYM_RSV_ONLY, t in 1:T], EP[:vP][y,t]+EP[:vRSV_discharge][y,t]+EP[:vCHARGE][y,t]<= EP[:eTotalCap][y]
-			end)
-		end
-	end
-
-	if !isempty(STOR_SYM_NO_RES)
-		if CapacityReserveMargin > 0
-			@constraints(EP, begin
-				# Maximum charging rate must be less than symmetric power rating
-				[y in STOR_SYM_NO_RES, t in 1:T], EP[:vCHARGE][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge cannot be greater than capacity
-				[y in STOR_SYM_NO_RES, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t]+EP[:vCAPRES_discharge][y,t]+EP[:vCAPRES_charge][y,t] <= EP[:eTotalCap][y]
-			end)
-		else
-			@constraints(EP, begin
-				# Maximum charging rate must be less than symmetric power rating
-				[y in STOR_SYM_NO_RES, t in 1:T], EP[:vCHARGE][y,t]<= EP[:eTotalCap][y]
-
-				# Max simultaneous charge and discharge cannot be greater than capacity
-				[y in STOR_SYM_NO_RES, t in 1:T], EP[:vP][y,t]+EP[:vCHARGE][y,t]<= EP[:eTotalCap][y]
-			end)
-		end
-	end
-
+    # Maximum charging rate plus contribution to regulation down must be less than symmetric power rating
+    # Max simultaneous charge and discharge rates cannot be greater than symmetric charge/discharge capacity
+    expr = @expression(EP, [y in SYMMETRIC, t in 1:T], vP[y, t] + vCHARGE[y, t])
+    add_similar_to_expression!(expr[REG, :], vREG_charge[REG, :])
+    add_similar_to_expression!(expr[REG, :], vREG_discharge[REG, :])
+    add_similar_to_expression!(expr[RSV, :], vRSV_discharge[RSV, :])
+    if CapacityReserveMargin
+        vCAPRES_charge = EP[:vCAPRES_charge]
+        vCAPRES_discharge = EP[:vCAPRES_discharge]
+        add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_charge[SYMMETRIC, :])
+        add_similar_to_expression!(expr[SYMMETRIC, :], vCAPRES_discharge[SYMMETRIC, :])
+    end
+    @constraint(EP, [y in SYMMETRIC, t in 1:T], expr[y, t] <= eTotalCap[y])
 end
