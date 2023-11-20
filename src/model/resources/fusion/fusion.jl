@@ -53,7 +53,7 @@ end
     to ensure that certain entries in the model data dict exist.
 """
 function ensure_fusion_expression_records!(dict::Dict)
-    for var in (FUSION_PARASITIC_POWER)
+    for var in (FUSION_PARASITIC_POWER, FUSION_PULSE_START_POWER)
         if var ∉ keys(dict)
             dict[var] = Set{Symbol}()
         end
@@ -182,7 +182,9 @@ end
 
 function fusion_pulse_variables!(EP::Model,
         inputs::Dict,
+        integer_operational_unit_commitment::Bool,
         resource_component::AbstractString,
+        r_id::Int,
         reactor::FusionReactorData,
         capacity::Symbol,
         )
@@ -199,7 +201,7 @@ function fusion_pulse_variables!(EP::Model,
     union!(inputs[FUSION_PULSE_START], (start,))
     union!(inputs[FUSION_PULSE_UNDERWAY], (underway,))
 
-    ecap = EP[capacity]
+    ecap = EP[capacity][r_id]
 
     vPulseStart = EP[start] = @variable(EP, [t in 1:T], base_name = start_name, lower_bound = 0)
     vPulseUnderway = EP[underway] = @variable(EP, [t in 1:T], base_name = underway_name, lower_bound = 0)
@@ -212,8 +214,8 @@ function fusion_pulse_variables!(EP::Model,
     component_size = reactor.component_size
 
     # Pulse variables are measured in # of plants
-    @constraint(EP, [t in 1:T], vPulseStart[t] * component_size <= ecap[y])
-    @constraint(EP, [t in 1:T], vPulseUnderway[t] * component_size <= ecap[y])
+    @constraint(EP, [t in 1:T], vPulseStart[t] * component_size <= ecap)
+    @constraint(EP, [t in 1:T], vPulseUnderway[t] * component_size <= ecap)
 
     # Core max uptime. If this parameter > 0,
     # the fusion core must be cycled at least every n hours.
@@ -255,8 +257,8 @@ function fusion_pulse_status_linking_constraints!(
     vPulseUnderway = get_from_model(fusion_pulse_underway_name)
 
     # pulses cannot start unless the plant is committed
-    @constraint(EP, [t in 1:T], vPulseStart[y, t] <= commit[y, t])
-    @constraint(EP, [t in 1:T], vPulseUnderway[y, t] <= commit[y, t])
+    @constraint(EP, [t in 1:T], vPulseStart[t] <= commit[y, t])
+    @constraint(EP, [t in 1:T], vPulseUnderway[t] <= commit[y, t])
 end
 
 @doc raw"""
@@ -288,7 +290,6 @@ function fusion_pulse_thermal_power_generation_constraint!(
     dwell_time = reactor.dwell_time
 
     power = EP[vp]
-    commit = EP[vcommit]
 
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
     vPulseStart = component_size * get_from_model(fusion_pulse_start_name)
@@ -319,7 +320,7 @@ function fusion_parasitic_power!(
     parasitic_passive_fraction = reactor.parasitic_passive_fraction
     parasitic_active_fraction = reactor.parasitic_active_fraction
     parasitic_start_energy_fraction = reactor.parasitic_start_energy_fraction
-    pulse_start_power_fraction = pulse_start_power_fraction
+    pulse_start_power_fraction = reactor.pulse_start_power_fraction
     dwell_time = reactor.dwell_time
     η = reactor.eff_down
 
@@ -360,7 +361,7 @@ function fusion_parasitic_power!(
         [t in 1:T],
         pulsestart[t] * η * pulse_start_power_fraction
     )
-    union!(inputs[FUSION_PULSE_START_POWER], (start_power,))
+    union!(inputs[FUSION_PULSE_START_POWER], (pulse_start_power,))
 end
 
 function fusion_total_parasitic_power!(
@@ -381,7 +382,7 @@ function fusion_total_parasitic_power!(
     total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
 
     EP[total_parasitic] =
-        @expression(EP, [t in 1:T], ePassive[t] + eActive[t] + eStart[t])
+        @expression(EP, [t in 1:T], ePassive[t] + eActive[t] + eStartEnergy[t])
 
     union!(inputs[FUSION_PARASITIC_POWER], (total_parasitic,))
 end
@@ -395,7 +396,7 @@ function fusion_adjust_power_balance!(EP, inputs::Dict, df::DataFrame, component
     for y in FUSION
         z = zones_for_resources[y]
         resource_component = df[y, :Resource] * component
-        fusion_total_parasitic_power(EP, inputs, resource_component, y)
+        fusion_total_parasitic_power!(EP, inputs, resource_component, y)
         eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
         add_similar_to_expression!(ePowerBalance[:, z], eTotalParasitic)
     end
@@ -428,20 +429,23 @@ function fusion_capacity_reserve_margin_adjustment!(EP::Model,
     resource_component(y) = dfGen[y, :Resource]
 
     for y in applicable_resources
-        _fusion_capacity_reserve_margin_adjustment!(EP, inputs, resource_component(y))
+        _fusion_capacity_reserve_margin_adjustment!(EP, inputs, resource_component(y), y)
     end
 end
 
 function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
     inputs::Dict,
     resource_component,
+    r_id::Int
     )
 
     T = inputs["T"]
     dfGen = inputs["dfGen"]
     ncapres = inputs["NCapacityReserveMargin"]
 
-    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
+    y = r_id
+
+    capresfactor(capres) = dfGen[y, Symbol("CapRes_$capres")]
 
     eCapResMarBalance = EP[:eCapResMarBalance]
 
@@ -452,7 +456,7 @@ function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
     eStartPower = get_from_model(fusion_pulse_start_power_name)
 
     fusion_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
-                            -capresfactor(y, capres) * (eActive[t] + eStartPower[t]) - ePassive[t]
+                            -capresfactor(capres) * (eActive[t] + eStartPower[t]) - ePassive[t]
                        )
     add_similar_to_expression!(eCapResMarBalance, fusion_adj)
 end

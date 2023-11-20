@@ -220,7 +220,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Additional constraints on fusion; create total recirculating power expressions
     FUSION = resources_with_fusion(dfGen)
     if !isempty(FUSION)
-        fusion_formulation_thermal_commit!(EP, inputs)
+        fusion_formulation_thermal_commit!(EP, inputs, setup)
     end
 
     MAINT = resources_with_maintenance(dfGen)
@@ -401,9 +401,11 @@ end
 Apply fusion-core-specific constraints to the model.
 
 """
-function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
+function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
     @info "Fusion Module for Thermal-commit plants"
+
+    integer_operational_unit_commitment = setup["UCommit"] == 1
 
     ensure_fusion_pulse_variable_records!(inputs)
     ensure_fusion_expression_records!(inputs)
@@ -430,16 +432,16 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
         reactor = FusionReactorData(component_size=core_cap_size(y),
                                     parasitic_passive_fraction=parasitic_passive(y),
                                     parasitic_active_fraction=parasitic_active(y),
-                                    parasitic_start_energy=start_energy(y),
+                                    parasitic_start_energy_fraction=start_energy(y),
                                     pulse_start_power_fraction=start_power(y),
                                     eff_down=1.0,
                                     dwell_time = dwell_time(y),
                                     max_pulse_length = max_pulse_length(y),
                                     max_starts=max_starts(y))
-        fusion_pulse_variables!(EP, inputs, name, reactor, capacity=:eTotalCap)
-        fusion_pulse_status_linking_constraints(EP, inputs, name, y, reactor, vcommit=:vCOMMIT)
-        fusion_pulse_thermal_power_generation_constraint!(EP, inputs, name, y, reactor, vp=:vP)
-        fusion_parasitic_power!(EP, inputs, name, y, reactor, component_capacity)
+        fusion_pulse_variables!(EP, inputs, integer_operational_unit_commitment, name, y, reactor, :eTotalCap)
+        fusion_pulse_status_linking_constraints!(EP, inputs, name, y, reactor, :vCOMMIT)
+        fusion_pulse_thermal_power_generation_constraint!(EP, inputs, name, y, reactor, :vP)
+        fusion_parasitic_power!(EP, inputs, name, y, reactor, :eTotalCap)
     end
 end
 
