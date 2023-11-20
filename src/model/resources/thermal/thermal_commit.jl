@@ -413,14 +413,14 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
 
     FUSION = resources_with_fusion(dfGen)
 
-    core_cap_size(y) = by_rid(y, :Cap_Size)
-    dwell_time(y) = by_rid(y, :Dwell_Time)
+    core_cap_size(y) = Float64(by_rid(y, :Cap_Size))
+    dwell_time(y) = Float64(by_rid(y, :Dwell_Time))
     max_starts(y) = by_rid(y, :Max_Starts)
     max_pulse_length(y) = by_rid(y, :Max_Up_Time)
-    parasitic_passive(y) = by_rid(y, :Parasitic_Passive)
-    parasitic_active(y) = by_rid(y, :Parasitic_Active)
-    start_energy(y) = by_rid(y, :Parasitic_Start_Energy)
-    start_power(y) = by_rid(y, :Parasitic_Start_Power)
+    parasitic_passive(y) =Float64( by_rid(y, :Parasitic_Passive))
+    parasitic_active(y) = Float64(by_rid(y, :Parasitic_Active))
+    start_energy(y) = Float64(by_rid(y, :Parasitic_Start_Energy))
+    start_power(y) = Float64(by_rid(y, :Parasitic_Start_Power))
 
     resource_name(y) = dfGen[y, :Resource]
     resource_component(y) = resource_name(y)
