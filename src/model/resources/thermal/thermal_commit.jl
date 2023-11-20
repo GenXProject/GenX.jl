@@ -223,7 +223,6 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
         fusion_formulation_thermal_commit!(EP, inputs)
     end
 
-	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
     MAINT = resources_with_maintenance(dfGen)
     if !isempty(MAINT)
         maintenance_formulation_thermal_commit!(EP, inputs, setup)
@@ -231,12 +230,12 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
     if !isempty(intersect(FUSION, MAINT))
         # modify parasitic power expressions
-        fusion_maintenance_parasitic_power_adjustment!(EP, dfGen)
+        fusion_maintenance_adjust_parasitic_power!(EP, dfGen)
     end
 
     if !isempty(FUSION)
         # subtract parasitic power from power balance
-        fusion_parasitic_power_balance_adjustment!(EP, inputs, dfGen)
+        fusion_adjust_power_balance!(EP, inputs, dfGen)
     end
 end
 
@@ -406,6 +405,7 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
 
     @info "Fusion Module for Thermal-commit plants"
 
+    ensure_fusion_pulse_variable_records!(inputs)
     ensure_fusion_expression_records!(inputs)
     dfGen = inputs["dfGen"]
 
@@ -417,33 +417,29 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict)
     dwell_time(y) = by_rid(y, :Dwell_Time)
     max_starts(y) = by_rid(y, :Max_Starts)
     max_pulse_length(y) = by_rid(y, :Max_Up_Time)
-    parasitic_passive(y) = by_rid(y, :Recirc_Pass)
-    parasitic_active(y) = by_rid(y, :Recirc_Act)
-    start_energy(y) = by_rid(y, :Start_Energy)
-    start_power(y) = by_rid(y, :Start_Power)
-    eff_down(y) = dfGen[y, :Eff_Down]
+    parasitic_passive(y) = by_rid(y, :Parasitic_Passive)
+    parasitic_active(y) = by_rid(y, :Parasitic_Active)
+    start_energy(y) = by_rid(y, :Parasitic_Start_Energy)
+    start_power(y) = by_rid(y, :Parasitic_Start_Power)
 
     resource_name(y) = dfGen[y, :Resource]
     resource_component(y) = resource_name(y)
 
     for y in FUSION
+        name = resource_component(y)
         reactor = FusionReactorData(component_size=core_cap_size(y),
                                     parasitic_passive_fraction=parasitic_passive(y),
                                     parasitic_active_fraction=parasitic_active(y),
                                     parasitic_start_energy=start_energy(y),
                                     pulse_start_power_fraction=start_power(y),
-                                    eff_down=eff_down(y),
+                                    eff_down=1.0,
                                     dwell_time = dwell_time(y),
                                     max_pulse_length = max_pulse_length(y),
                                     max_starts=max_starts(y))
-        fusion_formulation!(EP, inputs,
-                            resource_component(y),
-                            y,
-                            reactor,
-                            capacity=:eTotalCap,
-                            vp=:vP,
-                            vstart=:vSTART,
-                            vcommit=:vCOMMIT)
+        fusion_pulse_variables!(EP, inputs, name, reactor, capacity=:eTotalCap)
+        fusion_pulse_status_linking_constraints(EP, inputs, name, y, reactor, vcommit=:vCOMMIT)
+        fusion_pulse_thermal_power_generation_constraint!(EP, inputs, name, y, reactor, vp=:vP)
+        fusion_parasitic_power!(EP, inputs, name, y, reactor, component_capacity)
     end
 end
 

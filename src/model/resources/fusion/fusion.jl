@@ -1,5 +1,16 @@
+const FUSION_PULSE_START = "FusionPulseStartVariables"
+const FUSION_PULSE_UNDERWAY = "FusionPulseUnderwayVariables"
+
 const FUSION_PARASITIC_POWER = "FusionParasiticPowerExpressions"
 const FUSION_PULSE_START_POWER = "FusionPulseStartPowerExpressions"
+
+function fusion_pulse_start_name(resource_component::AbstractString)::String
+    "vFusionPulseStart_" * resource_component
+end
+
+function fusion_pulse_underway_name(resource_component::AbstractString)::String
+    "vFusionPulseUnderway_" * resource_component
+end
 
 function fusion_parasitic_active_name(resource_component::AbstractString)::String
     "eFusionParasiticActive_" * resource_component
@@ -14,7 +25,7 @@ function fusion_parasitic_start_energy_name(resource_component::AbstractString):
 end
 
 function fusion_pulse_start_power_name(resource_component::AbstractString)::String
-    "eFusionPulseStartPower_" * resource_component
+    "eFusionParasiticPulseStartPower_" * resource_component
 end
 
 function fusion_parasitic_total_name(resource_component::AbstractString)::String
@@ -123,6 +134,10 @@ function has_finite_starts(r::FusionReactorData)
     r.max_starts > 0
 end
 
+function has_max_pulse_length(r::FusionReactorData)
+    r.max_pulse_length > 0
+end
+
 function has_pulse_start_power(r::FusionReactorData)
     r.pulse_start_power_fraction > 0
 end
@@ -147,153 +162,147 @@ function fusion_average_net_electric_power_factor!(reactor::FusionReactorData)
     return net_th_factor
 end
 
-# keeping this function for later
-# function fusion_average_net_electric_power_expression!(EP::Model, inputs::Dict)
-#     dfGen = inputs["dfGen"]
-#
-#     by_rid(rid, sym) = by_rid_df(rid, sym, dfTS)
-#
-#     FUSION = resources_with_fusion(inputs)
-#
-#     @expression(EP, eFusionAvgNetElectric[y in FUSION], EP[:eTotalCap][y] * net_el_factor[y])
-# end
-
-function fusion_formulation!(EP,
-        inputs,
-        resource_component::AbstractString,
-        r_id::Int,
-        reactor::FusionReactorData;
-        capacity::Symbol,
-        vp::Symbol,
-        vstart::Symbol,
-        vcommit::Symbol)
-
-    fusion_parasitic_power!(
-        EP,
-        inputs,
-        resource_component,
-        r_id,
-        reactor,
-        capacity,
-        vstart,
-        vcommit,
-    )
-
-    if has_finite_starts(reactor)
-        maximum_starts_constraint!(
-            EP,
-            inputs,
-            y,
-            reactor,
-            capacity,
-            vstart,
-        )
-    end
-
-    fusion_pulse_constraints!(
-        EP,
-        inputs,
-        resource_component,
-        y,
-        reactor,
-        vp,
-        vstart,
-        vcommit,
-    )
-
-end
-
 # capacity reserve margin adjustment for recirc, pulses
 # capacity reserve margin adjustment for fusion+maintenance
-
 @doc raw"""
-    fusion_pulse_constraints!(EP::Model,
-                              inputs::Dict,
-                              resource_component::AbstractString,
-                              r_id::Int,
-                              reactor::FusionReactorData,
-                              vp::Symbol,
-                              vstart::Symbol,
-                              vcommit::Symbol)
+    ensure_fusion_pulse_variable_records!(dict::Dict)
 
-    Creates maintenance-tracking variables and adds their Symbols to two Sets in `inputs`.
-    Adds constraints which act on the vCOMMIT-like variable.
+    dict: a dictionary of model data
+
+    This should be called by each method that adds fusion formulations,
+    to ensure that certain entries in the model data dict exist.
 """
-function fusion_pulse_constraints!(
-    EP::Model,
-    inputs::Dict,
-    resource_component::AbstractString,
-    r_id::Int,
-    reactor::FusionReactorData,
-    vp::Symbol,
-    vstart::Symbol,
-    vcommit::Symbol,
-)
-    T = 1:inputs["T"]
+function ensure_fusion_pulse_variable_records!(dict::Dict)
+    for var in (FUSION_PULSE_START, FUSION_PULSE_UNDERWAY)
+        if var ∉ keys(dict)
+            dict[var] = Set{Symbol}()
+        end
+    end
+end
+
+function fusion_pulse_variables!(EP::Model,
+        inputs::Dict,
+        resource_component::AbstractString,
+        reactor::FusionReactorData,
+        capacity::Symbol,
+        )
+
+    T = inputs["T"]
+    ω = inputs["omega"]
     p = inputs["hours_per_subperiod"]
 
-    y = r_id
+    start_name = fusion_pulse_start_name(resource_component)
+    underway_name = fusion_pulse_underway_name(resource_component)
+    start = Symbol(start_name)
+    underway = Symbol(underway_name)
+
+    union!(inputs[FUSION_PULSE_START], (start,))
+    union!(inputs[FUSION_PULSE_UNDERWAY], (underway,))
+
+    ecap = EP[capacity]
+
+    vPulseStart = EP[start] = @variable(EP, [t in 1:T], base_name = start_name, lower_bound = 0)
+    vPulseUnderway = EP[underway] = @variable(EP, [t in 1:T], base_name = underway_name, lower_bound = 0)
+
+    if integer_operational_unit_commitment
+        set_integer.(vPulseStart)
+        set_integer.(vPulseUnderway)
+    end
 
     component_size = reactor.component_size
-    dwell_time = reactor.dwell_time
-    max_pulse_length = reactor.max_pulse_length
 
-    power = EP[vp]
-    start = EP[vstart]
-    commit = EP[vcommit]
-
-    # Maximum thermal power generated by core y at hour y <= Max power of committed
-    # core minus power lost from down time at startup
-    if dwell_time > 0
-        @constraint(
-            EP,
-            [t in T],
-            power[y, t] <= component_size * (commit[y, t] - dwell_time * start[y, t])
-        )
-    end
+    # Pulse variables are measured in # of plants
+    @constraint(EP, [t in 1:T], vPulseStart[t] * component_size <= ecap[y])
+    @constraint(EP, [t in 1:T], vPulseUnderway[t] * component_size <= ecap[y])
 
     # Core max uptime. If this parameter > 0,
     # the fusion core must be cycled at least every n hours.
     # Looks back over interior timesteps and ensures that a core cannot
     # be committed unless it has been started at some point in
     # the previous n timesteps
-    if max_pulse_length > 0
-        starts_in_previous_hours(t) = start[y, hoursbefore(p, t, 0:(max_pulse_length - 1))]
-        @constraint(EP, [t in T], commit[y, t] <= sum(starts_in_previous_hours(t)))
+    if has_max_pulse_length(reactor)
+        max_pulse_length = reactor.max_pulse_length
+        starts_in_previous_hours(t) = vPulseStart[hoursbefore(p, t, 0:(max_pulse_length - 1))]
+        @constraint(EP, [t in 1:T], vPulseUnderway[t] <= sum(starts_in_previous_hours(t)))
     end
 
+    if has_finite_starts(reactor)
+        max_starts = reactor.max_starts
+        @constraint(
+            EP,
+            sum(vPulseStart[t] * ω[t] for t in 1:T) * component_size <= max_starts * ecap[y]
+        )
+    end
+end
+
+function fusion_pulse_status_linking_constraints!(
+    EP::Model,
+    inputs::Dict,
+    resource_component::AbstractString,
+    r_id::Int,
+    reactor::FusionReactorData,
+    vcommit::Symbol,
+)
+    T = inputs["T"]
+
+    y = r_id
+
+    commit = EP[vcommit] # measured in number of components
+
+    get_from_model(f::Function) = EP[Symbol(f(resource_component))]
+
+    vPulseStart = get_from_model(fusion_pulse_start_name)
+    vPulseUnderway = get_from_model(fusion_pulse_underway_name)
+
+    # pulses cannot start unless the plant is committed
+    @constraint(EP, [t in 1:T], vPulseStart[y, t] <= commit[y, t])
+    @constraint(EP, [t in 1:T], vPulseUnderway[y, t] <= commit[y, t])
 end
 
 @doc raw"""
-    maximum_starts_constraint!(EP::Model,
-        inputs::Dict,
-        r_id::Int,
-        max_starts::Int,
-        component_size::Float64,
-        vstart::Symbol,
-        etotalcap::Symbol)
+    fusion_pulse_thermal_power_generation_constraint!(EP::Model,
+                              inputs::Dict,
+                              resource_component::AbstractString,
+                              r_id::Int,
+                              reactor::FusionReactorData,
+                              vp::Symbol,
+                              vcommit::Symbol)
+
+    Creates maintenance-tracking variables and adds their Symbols to two Sets in `inputs`.
+    Adds constraints which act on the vCOMMIT-like variable.
 """
-function maximum_starts_constraint!(
+function fusion_pulse_thermal_power_generation_constraint!(
     EP::Model,
     inputs::Dict,
+    resource_component::AbstractString,
     r_id::Int,
     reactor::FusionReactorData,
-    capacity::Symbol,
-    vstart::Symbol,
+    vp::Symbol,
 )
+    T = inputs["T"]
+    p = inputs["hours_per_subperiod"]
 
-    T = 1:inputs["T"]
-    ω = inputs["omega"]
     y = r_id
-    component_size = reactor.component_size
-    max_starts = reactor.max_starts
-    start = EP[vstart]
-    totalcap = EP[etotalcap]
 
-    @constraint(
-        EP,
-        sum(start[y, t] * ω[t] for t in T) <= max_starts * totalcap[y] / component_size
-    )
+    component_size = reactor.component_size
+    dwell_time = reactor.dwell_time
+
+    power = EP[vp]
+    commit = EP[vcommit]
+
+    get_from_model(f::Function) = EP[Symbol(f(resource_component))]
+    vPulseStart = component_size * get_from_model(fusion_pulse_start_name)
+    vPulseUnderway = component_size * get_from_model(fusion_pulse_underway_name)
+
+    # Maximum thermal power generated by core y at hour y <= Max power of committed
+    # core minus power lost from down time at startup
+    if dwell_time > 0
+        @constraint(
+            EP,
+            [t in 1:T],
+            power[y, t] <= vPulseUnderway[t] - dwell_time * vPulseStart[t]
+        )
+    end
 end
 
 function fusion_parasitic_power!(
@@ -303,11 +312,8 @@ function fusion_parasitic_power!(
     r_id::Int,
     reactor::FusionReactorData,
     component_capacity::Symbol,
-    vstart::Symbol,
-    vcommit::Symbol,
 )
     T = inputs["T"]
-    y = r_id
 
     component_size = reactor.component_size
     parasitic_passive_fraction = reactor.parasitic_passive_fraction
@@ -317,92 +323,83 @@ function fusion_parasitic_power!(
     dwell_time = reactor.dwell_time
     η = reactor.eff_down
 
-    capacity = EP[component_capacity]
-    start = EP[vstart]
-    commit = EP[vcommit]
+    get_from_model(f::Function) = EP[Symbol(f(resource_component))]
+
+    pulsestart = component_size * get_from_model(fusion_pulse_start_name)
+    underway = component_size * get_from_model(fusion_pulse_underway_name)
+
+    capacity = EP[component_capacity][r_id]
 
     passive = Symbol(fusion_parasitic_passive_name(resource_component))
     active = Symbol(fusion_parasitic_active_name(resource_component))
     start_energy = Symbol(fusion_parasitic_start_energy_name(resource_component))
-    total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
     pulse_start_power = Symbol(fusion_pulse_start_power_name(resource_component))
 
     # Passive recirculating power, depending on built capacity
-    ePassive =
-        EP[passive] =
-            @expression(EP, [t in T], capacity[y] * η * parasitic_passive_fraction)
+    EP[passive] =
+            @expression(EP, [t in 1:T], capacity * η * parasitic_passive_fraction)
 
-    # Active recirculating power, depending on committed capacity
-    eActive =
-        EP[active] = @expression(
-            EP,
-            [t in T],
-            component_size *
-            η *
-            parasitic_active_fraction *
-            (commit[y, t] - start[y, t] * dwell_time)
-        )
+    # Active recirculating power, depending on whether a pulse is underway
+    EP[active] = @expression(
+        EP,
+        [t in 1:T],
+        η *
+        parasitic_active_fraction *
+        (underway[t] - pulsestart[t] * dwell_time)
+    )
     # Startup energy, taken from the grid every time the core starts up
-    eStartEnergy =
-        EP[start_energy] = @expression(
-            EP,
-            [t in T],
-            component_size * start[y, t] * η * parasitic_start_energy_fraction
-        )
-
-    EP[total_parasitic] =
-        @expression(EP, [t in T], ePassiveRecirc[t] + eActive[t] + eStartEnergy[t])
-    union!(inputs[FUSION_PARASITIC_POWER], (total_parasitic,))
+    EP[start_energy] = @expression(
+        EP,
+        [t in 1:T],
+        pulsestart[t] * η * parasitic_start_energy_fraction
+    )
 
     # Startup power, required margin on the grid when the core starts
     EP[pulse_start_power] = @expression(
         EP,
-        [t in T],
-        component_size * start[y, t] * η * pulse_start_power_fraction
+        [t in 1:T],
+        pulsestart[t] * η * pulse_start_power_fraction
     )
     union!(inputs[FUSION_PULSE_START_POWER], (start_power,))
-
 end
 
-function fusion_parasitic_power_balance_adjustment!(EP, inputs::Dict, df::DataFrame, component::AbstractString="")
-    T = 1:inputs["T"]
+function fusion_total_parasitic_power!(
+    EP::Model,
+    inputs::Dict,
+    resource_component,
+    r_id::Int,
+    )
+
+    T = inputs["T"]
+
+    get_from_model(f::Function) = EP[Symbol(f(resource_component))]
+
+    ePassive = get_from_model(fusion_parasitic_passive_name)
+    eActive = get_from_model(fusion_parasitic_active_name)
+    eStartEnergy = get_from_model(fusion_parasitic_start_energy_name)
+
+    total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
+
+    EP[total_parasitic] =
+        @expression(EP, [t in 1:T], ePassive[t] + eActive[t] + eStart[t])
+
+    union!(inputs[FUSION_PARASITIC_POWER], (total_parasitic,))
+end
+
+function fusion_adjust_power_balance!(EP, inputs::Dict, df::DataFrame, component::AbstractString="")
+    T = inputs["T"]
     zones_for_resources = inputs["R_ZONES"]
+    ePowerBalance = EP[:ePowerBalance]
 
     FUSION = resources_with_fusion(df)
     for y in FUSION
         z = zones_for_resources[y]
         resource_component = df[y, :Resource] * component
+        fusion_total_parasitic_power(EP, inputs, resource_component, y)
         eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
-        for t in T
-            add_to_expression!(EP[:ePowerBalance][t, z], eTotalParasitic[t])
-        end
+        add_similar_to_expression!(ePowerBalance[:, z], eTotalParasitic)
     end
 end
-
-function total_fusion_parasitic_power_balance_adjustment!(EP::Model, inputs::Dict)
-     T = inputs["T"]     # Time steps
-     Z = inputs["Z"]     # Zones
-     dfGen = inputs["dfGen"]
-     FUSION = resources_with_fusion(inputs)
-     # Total recirculating power from fusion in each zone
-     gen_in_zone(z) = dfGen[dfGen.Zone.==z, :R_ID]
-     FUSION_IN_ZONE = [intersect(FUSION, gen_in_zone(z)) for z in Z]
-
-     function parasitic(t, y)
-         resource_component = dfGen[y, :Resource]
-         total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
-         EP[total_parasitic][t]
-     end
-
-     @expression(
-         EP,
-         ePowerBalanceRecircFus[t in 1:T, z in 1:Z],
-         -sum(parasitic(t, y) for y in FUSION_IN_ZONE[z])
-     )
-
-     add_similar_to_expression(EP[:ePowerBalance], ePowerBalanceRecircFus)
-end
-
 
 @doc raw"""
     has_fusion(dict::Dict)
@@ -416,118 +413,46 @@ function has_fusion(dict::Dict)::Bool
     FUSION_PARASITIC_POWER in keys(dict)
 end
 
-# function thermal_commit_reserves!(EP::Model, inputs::Dict)
-#
-# 	@info "Thermal Commit Reserves Module"
-#
-# 	dfGen = inputs["dfGen"]
-#
-# 	T = 1:inputs["T"]     # Number of time steps (hours)
-#
-# 	THERM_COMMIT = inputs["THERM_COMMIT"]
-#     REG = inputs["REG"]
-#     RSV = inputs["RSV"]
-#
-#     pP_Max = inputs["pP_Max"]
-#
-# 	THERM_COMMIT_REG = intersect(THERM_COMMIT, REG) # Set of thermal resources with regulation reserves
-# 	THERM_COMMIT_RSV = intersect(THERM_COMMIT, RSV) # Set of thermal resources with spinning reserves
-#
-#     vP = EP[:vP]
-#     vREG = EP[:vREG]
-#     vRSV = EP[:vRSV]
-#     vCOMMIT = EP[:vCOMMIT]
-#     cap_size(y) = dfGen[y, :Cap_Size]
-#     reg_max(y) = dfGen[y, :Reg_Max]
-#     rsv_max(y) = dfGen[y, :Rsv_Max]
-#
-#     max_lhs = @expression(EP, [y in THERM_COMMIT, t in T], vP[y, t])
-#     max_rhs = @expression(EP, [y in THERM_COMMIT, t in T], pP_Max[y, t] * cap_size(y) * vCOMMIT[y, t])
-#
-#     min_stable_lhs = @expression(EP, [y in THERM_COMMIT, t in T], vP[y, t])
-#     min_stable_rhs = @expression(EP, [y in THERM_COMMIT, t in T], min_power(y) * cap_size(y) * vCOMMIT[y, t])
-#
-#     S = THERM_COMMIT_REG
-#     add_similar_to_expression!(max_lhs[S, :], vREG[S, :])
-#     add_similar_to_expression!(min_stable_lhs[S, :], -vREG[S, :])
-#
-#     S = THERM_COMMIT_RSV
-#     add_similar_to_expression!(max_lhs[S, :], vRSV[S, :])
-#
-#     @constraints(EP, begin
-#         # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
-#         [y in THERM_COMMIT, t in T], min_stable_lhs[y, t] >= min_stable_rhs[y, t]
-#         # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
-#         [y in THERM_COMMIT, t in T], max_lhs[y, t] <= max_rhs[y, t]
-#     end)
-#
-#     # Maximum regulation and reserve contributions
-#     @constraints(EP, [y in THERM_COMMIT_REG, t in T],
-#                  vREG[y, t] <= pP_Max[y, t] * reg_max(y) * cap_size(y) * vCOMMIT[y, t])
-#     @constraints(EP, [y in THERM_COMMIT_RSV, t in T],
-#                  vRSV[y, t] <= pP_Max[y, t] * rsv_max(y) * cap_size(y) * vCOMMIT[y, t])
-#
-# end
-#
-function fusion_thermal_commit_reserves!(EP::Model, inputs::Dict)
+@doc raw"""
+    fusion_capacity_reserve_margin_adjustment!(EP::Model, inputs::Dict)
 
-	@info "Fusion thermal Commit Reserves Module"
+    Subtracts parasitic power from the capacity reserve margin.
+"""
+function fusion_capacity_reserve_margin_adjustment!(EP::Model,
+                                                    inputs::Dict)
+    dfGen = inputs["dfGen"]
+    THERM_COMMIT = inputs["THERM_COMMIT"]
+    FUSION = resources_with_fusion(dfGen)
+    applicable_resources = intersect(FUSION, THERM_COMMIT)
 
-	dfGen = inputs["dfGen"]
+    resource_component(y) = dfGen[y, :Resource]
 
-	T = 1:inputs["T"]     # Number of time steps (hours)
+    for y in applicable_resources
+        _fusion_capacity_reserve_margin_adjustment!(EP, inputs, resource_component(y))
+    end
+end
 
-	THERM_COMMIT = inputs["THERM_COMMIT"]
-    REG = inputs["REG"]
-    RSV = inputs["RSV"]
+function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
+    inputs::Dict,
+    resource_component,
+    )
 
-    pP_Max = inputs["pP_Max"]
+    T = inputs["T"]
+    dfGen = inputs["dfGen"]
+    ncapres = inputs["NCapacityReserveMargin"]
 
-	THERM_COMMIT_REG = intersect(THERM_COMMIT, REG) # Resources with regulation reserves
-	THERM_COMMIT_RSV = intersect(THERM_COMMIT, RSV) # Resources with spinning reserves
+    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
 
-    vP = EP[:vP]
-    vREG = EP[:vREG]
-    vRSV = EP[:vRSV]
-    vSTART = EP[:vSTART]
-    vCOMMIT = EP[:vCOMMIT]
-    cap_size(y) = dfGen[y, :Cap_Size]
-    reg_max(y) = dfGen[y, :Reg_Max]
-    rsv_max(y) = dfGen[y, :Rsv_Max]
+    eCapResMarBalance = EP[:eCapResMarBalance]
 
-    dwell_time(y) = dfGen[y, :Dwell_Time]
+    get_from_model(f::Function) = EP[Symbol(f(resource_component))]
 
-    max_lhs = @expression(EP, [y in THERM_COMMIT, t in T], vP[y, t])
-    max_rhs = @expression(EP, [y in THERM_COMMIT, t in T],
-                          pP_Max[y, t] * cap_size(y) * vCOMMIT[y, t])
+    ePassive = get_from_model(fusion_parasitic_passive_name)
+    eActive = get_from_model(fusion_parasitic_active_name)
+    eStartPower = get_from_model(fusion_pulse_start_power_name)
 
-    min_stable_lhs = @expression(EP, [y in THERM_COMMIT, t in T], vP[y, t])
-    min_stable_rhs = @expression(EP, [y in THERM_COMMIT, t in T],
-                                 min_power(y) * cap_size(y) * vCOMMIT[y, t])
-
-    S = THERM_COMMIT_REG
-    add_similar_to_expression!(max_lhs[S, :], vREG[S, :])
-    add_similar_to_expression!(min_stable_lhs[S, :], -vREG[S, :])
-
-    S = FUSION
-    lost_production_dwell_fusion = @expression(EP, [y in S, t in T],
-                                               -pP_Max[y, t] * cap_size(y) * dwell_time(y) * vSTART[y, t])
-    add_similar_to_expression!(max_rhs[S, :], lost_production_dwell_fusion[S, :])
-
-    S = THERM_COMMIT_RSV
-    add_similar_to_expression!(max_lhs[S, :], vRSV[S, :])
-
-    @constraints(EP, begin
-        # Minimum stable power generated and contribution to regulation must be > min power
-        [y in THERM_COMMIT, t in T], min_stable_lhs[y, t] >= min_stable_rhs[y, t]
-        # Maximum power generated and contribution to regulation and reserves up must be < max power
-        [y in THERM_COMMIT, t in T], max_lhs[y, t] <= max_rhs[y, t]
-    end)
-
-    # Maximum regulation and reserve contributions
-    @constraints(EP, [y in THERM_COMMIT_REG, t in T],
-                 vREG[y, t] <= pP_Max[y, t] * reg_max(y) * cap_size(y) * vCOMMIT[y, t])
-    @constraints(EP, [y in THERM_COMMIT_RSV, t in T],
-                 vRSV[y, t] <= pP_Max[y, t] * rsv_max(y) * cap_size(y) * vCOMMIT[y, t])
-
+    fusion_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
+                            -capresfactor(y, capres) * (eActive[t] + eStartPower[t]) - ePassive[t]
+                       )
+    add_similar_to_expression!(eCapResMarBalance, fusion_adj)
 end

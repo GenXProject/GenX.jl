@@ -40,6 +40,11 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
         if !isempty(intersect(MAINT, THERM_COMMIT))
             thermal_maintenance_capacity_reserve_margin_adjustment!(EP, inputs)
         end
+
+        FUSION = resources_with_fusion(dfGen)
+        if !isempty(intersect(FUSION, THERM_COMMIT))
+            fusion_capacity_reserve_margin_adjustment!(EP, inputs)
+        end
 	end
 #=
 	##CO2 Polcy Module Thermal Generation by zone
