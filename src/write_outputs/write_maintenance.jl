@@ -7,10 +7,12 @@ function write_simple_csv(filename::AbstractString, header::Vector, matrix)
     write_simple_csv(filename, df)
 end
 
-function prepare_timeseries_variables(EP::Model, set::Set{Symbol}, scale::Float64=1.0)
-    # function to extract data from DenseAxisArray
-    data(var) = scale * value.(EP[var]).data
+# function to extract data from DenseAxisArray
+extract_data(var::JuMP.Containers.DenseAxisArray)::AbstractArray = var.data
+extract_data(var::AbstractArray)::AbstractArray = var
 
+function prepare_timeseries_variables(EP::Model, set::Set{Symbol}, scale::Float64=1.0)
+    data(var) = scale * value.(extract_data(EP[var]))
     return DataFrame(set .=> data.(set))
 end
 
