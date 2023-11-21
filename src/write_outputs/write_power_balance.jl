@@ -15,28 +15,30 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	    "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
 	    "Demand_Response", "Nonserved_Energy",
 	    "Transmission_NetExport", "Transmission_Losses",
-	    "Demand"]
-	if !isempty(ELECTROLYZER)
-			push!(Com_list, "Electrolyzer_Consumption")
-	end
+	    "Demand", "Electrolyzer_Consumption", "Fusion_parasitic_power"]
 	L = length(Com_list)
 	dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = L), AnnualSum = zeros(L * Z))
 	powerbalance = zeros(Z * L, T) # following the same style of power/charge/storage/nse
 	for z in 1:Z
-		POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
-		powerbalance[(z-1)*L+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
-		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
-		    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
+        RESOURCES_IN_ZONE = findall(dfGen.Zone .== z)
+
+		POWER_ZONE = intersect(RESOURCES_IN_ZONE, union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
+        if !isempty(POWER_ZONE)
+            powerbalance[(z-1)*L+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
+        end
+
+        STOR_ALL_ZONE = intersect(RESOURCES_IN_ZONE, STOR_ALL)
+		if !isempty(STOR_ALL_ZONE)
 		    powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1)
 		    powerbalance[(z-1)*L+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1)
 		end
-		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], VRE_STOR))
-			VS_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], inputs["VS_STOR"])
+		if !isempty(intersect(RESOURCES_IN_ZONE, VRE_STOR))
+			VS_ALL_ZONE = intersect(RESOURCES_IN_ZONE, inputs["VS_STOR"])
 			powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
 			powerbalance[(z-1)*L+3, :] = (-1) * sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims=1) 
 		end
-		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
-		    FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)
+        FLEX_ZONE = intersect(RESOURCES_IN_ZONE, FLEX)
+		if !isempty(FLEX_ZONE)
 		    powerbalance[(z-1)*L+4, :] = sum((value.(EP[:vCHARGE_FLEX][FLEX_ZONE, :]).data), dims = 1)
 		    powerbalance[(z-1)*L+5, :] = (-1) * sum(value.(EP[:vP][FLEX_ZONE, :]), dims = 1)
 		end
@@ -49,10 +51,15 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		    powerbalance[(z-1)*L+9, :] = -(value.(EP[:eLosses_By_Zone][z, :]))
 		end
 		powerbalance[(z-1)*L+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
-		if !isempty(ELECTROLYZER)
-		    ELECTROLYZER_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], ELECTROLYZER)
+        ELECTROLYZER_ZONE = intersect(RESOURCES_IN_ZONE, ELECTROLYZER)
+		if !isempty(ELECTROLYZER_ZONE)
 			powerbalance[(z-1)*L+11, :] = (-1) * sum(value.(EP[:vUSE][ELECTROLYZER_ZONE, :].data), dims = 1)
 		end
+        FUSION_ZONE = intersect(RESOURCES_IN_ZONE, resources_with_fusion(inputs))
+        if !isempty(FUSION_ZONE)
+            powerbalance[(z-1)*L+12, :] = -fusion_total_parasitic_power_unscaled(EP, inputs, z)
+        end
+
 	end
 	if setup["ParameterScale"] == 1
 		powerbalance *= ModelScalingFactor
