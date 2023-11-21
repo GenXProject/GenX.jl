@@ -21,8 +21,7 @@ end
 function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
     inputs::Dict,
     resource_component,
-    r_id::Int
-    )
+    r_id::Int)
 
     T = inputs["T"]
     dfGen = inputs["dfGen"]
@@ -74,7 +73,7 @@ function fusion_crm(capresfactor::Float64,
                      start_power::AffExpr,
                      vMDOWN::VariableRef)
     return fusion_crm(capresfactor, eTotalCap, passive_power, active_power, start_power) +
-           _maintenance_crm_adjustmnet(capresfactor, cap_size, maintenance_down)
+           _maintenance_crm_adjustment(capresfactor, cap_size, maintenance_down)
 end
 
 @doc raw"""
@@ -115,7 +114,7 @@ end
     cap_size: Power per plant.
     vMDOWN: Variable for number of plants under maintenance.
 """
-function _maintenance_crm_adjustmnet(capresfactor::Float64,
+function _maintenance_crm_adjustment(capresfactor::Float64,
                                      cap_size::Float64,
                                      maintenance_down::VariableRef)
     return - capresfactor * cap_size * maintenance_down

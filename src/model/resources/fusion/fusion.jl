@@ -45,6 +45,18 @@ function fusion_parasitic_power_expressions(dict::Dict)::Set{Symbol}
 end
 
 @doc raw"""
+    fusion_pulse_start_expressions(dict::Dict)
+
+    dict: a dictionary of model data
+
+    get listings of pulse start expressions
+    This is available only after `fusion_formulation!` has been called.
+"""
+function fusion_pulse_start_expressions(dict::Dict)::Set{Symbol}
+    dict[FUSION_PULSE_START]
+end
+
+@doc raw"""
     ensure_fusion_expression_records!(dict::Dict)
 
     dict: a dictionary of model data
@@ -162,8 +174,6 @@ function fusion_average_net_electric_power_factor!(reactor::FusionReactorData)
     return net_th_factor
 end
 
-# capacity reserve margin adjustment for recirc, pulses
-# capacity reserve margin adjustment for fusion+maintenance
 @doc raw"""
     ensure_fusion_pulse_variable_records!(dict::Dict)
 
@@ -279,7 +289,7 @@ function fusion_pulse_thermal_power_generation_constraint!(
     resource_component::AbstractString,
     r_id::Int,
     reactor::FusionReactorData,
-    vp::Symbol,
+    power_like::AbstractArray,
 )
     T = inputs["T"]
     p = inputs["hours_per_subperiod"]
@@ -288,8 +298,6 @@ function fusion_pulse_thermal_power_generation_constraint!(
 
     component_size = reactor.component_size
     dwell_time = reactor.dwell_time
-
-    power = EP[vp]
 
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
     vPulseStart = component_size * get_from_model(fusion_pulse_start_name)
@@ -301,7 +309,7 @@ function fusion_pulse_thermal_power_generation_constraint!(
         @constraint(
             EP,
             [t in 1:T],
-            power[y, t] <= vPulseUnderway[t] - dwell_time * vPulseStart[t]
+            power_like[y, t] <= vPulseUnderway[t] - dwell_time * vPulseStart[t]
         )
     end
 end
@@ -398,7 +406,7 @@ function fusion_adjust_power_balance!(EP, inputs::Dict, df::DataFrame, component
         resource_component = df[y, :Resource] * component
         fusion_total_parasitic_power!(EP, inputs, resource_component, y)
         eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
-        add_similar_to_expression!(ePowerBalance[:, z], eTotalParasitic)
+        add_similar_to_expression!(ePowerBalance[:, z], -eTotalParasitic)
     end
 end
 

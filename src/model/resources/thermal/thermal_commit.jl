@@ -427,6 +427,18 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict
     resource_name(y) = dfGen[y, :Resource]
     resource_component(y) = resource_name(y)
 
+    power_like = EP[:vP]
+    if setup["Reserves"] == 1
+        REG = intersect(FUSION, inputs["REG"]) # Set of thermal resources with regulation reserves
+        RSV = intersect(FUSION, inputs["RSV"]) # Set of thermal resources with spinning reserves
+
+        vREG = EP[:vREG]
+        vRSV = EP[:vRSV]
+        power_like = extract_time_series_to_expression(power_like, FUSION)
+        add_similar_to_expression!(power_like[REG, :], vREG[REG, :])
+        add_similar_to_expression!(power_like[RSV, :], vRSV[RSV, :])
+    end
+
     for y in FUSION
         name = resource_component(y)
         reactor = FusionReactorData(component_size=core_cap_size(y),
@@ -440,7 +452,7 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict
                                     max_starts=max_starts(y))
         fusion_pulse_variables!(EP, inputs, integer_operational_unit_commitment, name, y, reactor, :eTotalCap)
         fusion_pulse_status_linking_constraints!(EP, inputs, name, y, reactor, :vCOMMIT)
-        fusion_pulse_thermal_power_generation_constraint!(EP, inputs, name, y, reactor, :vP)
+        fusion_pulse_thermal_power_generation_constraint!(EP, inputs, name, y, reactor, power_like)
         fusion_parasitic_power!(EP, inputs, name, y, reactor, :eTotalCap)
     end
 end
