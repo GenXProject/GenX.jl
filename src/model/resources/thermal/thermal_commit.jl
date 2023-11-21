@@ -454,6 +454,8 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict
         fusion_pulse_status_linking_constraints!(EP, inputs, name, y, reactor, :vCOMMIT)
         fusion_pulse_thermal_power_generation_constraint!(EP, inputs, name, y, reactor, power_like)
         fusion_parasitic_power!(EP, inputs, name, y, reactor, :eTotalCap)
+
+        add_fusion_component_to_zone_listing(inputs, y, name)
     end
 end
 

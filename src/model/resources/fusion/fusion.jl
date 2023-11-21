@@ -4,6 +4,8 @@ const FUSION_PULSE_UNDERWAY = "FusionPulseUnderwayVariables"
 const FUSION_PARASITIC_POWER = "FusionParasiticPowerExpressions"
 const FUSION_PULSE_START_POWER = "FusionPulseStartPowerExpressions"
 
+const FUSION_COMPONENT_ZONE = "FusionComponentZones"
+
 function fusion_pulse_start_name(resource_component::AbstractString)::String
     "vFusionPulseStart_" * resource_component
 end
@@ -45,6 +47,32 @@ function fusion_parasitic_power_expressions(dict::Dict)::Set{Symbol}
 end
 
 @doc raw"""
+    fusion_parasitic_power_expressions(inputs::Dict, zone::Int)
+
+    inputs: model inputs
+
+    get listings of parasitic power expressions in a zone.
+    This is available only after `fusion_formulation!` has been called.
+"""
+function fusion_parasitic_power_expressions(inputs::Dict, zone::Int)::Set{Symbol}
+    fusion_in_zone = inputs[FUSION_COMPONENT_ZONE][zone]
+    exprs = Symbol.(fusion_parasitic_total_name.(fusion_in_zone))
+    return Set(exprs)
+end
+
+@doc raw"""
+    fusion_parasitic_power_expressions(dict::Dict, zone::Int)
+
+    dict: a dictionary of model data
+
+    get listings of parasitic power expressions.
+    This is available only after `fusion_formulation!` has been called.
+"""
+function fusion_parasitic_power_expressions(dict::Dict, zone::Int)::Set{Symbol}
+    dict[FUSION_COMPONENT_ZONE]
+end
+
+@doc raw"""
     fusion_pulse_start_expressions(dict::Dict)
 
     dict: a dictionary of model data
@@ -70,7 +98,23 @@ function ensure_fusion_expression_records!(dict::Dict)
             dict[var] = Set{Symbol}()
         end
     end
+    var = FUSION_COMPONENT_ZONE
+    if var ∉ keys(dict)
+        dict[var] = Dict{Int, Set{AbstractString}}()
+    end
 end
+
+function add_fusion_component_to_zone_listing(inputs::Dict, r_id::Int, resource_component::AbstractString)
+    zone = inputs["R_ZONES"][r_id]
+    d = inputs[FUSION_COMPONENT_ZONE]
+    new_set = Set([resource_component])
+    if zone in keys(d)
+        union!(d[zone], new_set)
+    else
+        d[zone] = new_set
+    end
+end
+
 
 # Base.@kwdef could be used if we enforce Julia >= 1.9
 # That would replace need for the keyword-argument constructor below
