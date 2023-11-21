@@ -119,6 +119,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
     if has_fusion(inputs)
         write_fusion_parasitic_power(path, inputs, setup, EP)
+        write_fusion_pulse_starts(path, inputs, setup, EP)
     end
 
 	# Output additional variables related inter-period energy transfer via storage
