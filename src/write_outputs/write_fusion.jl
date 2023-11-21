@@ -1,13 +1,23 @@
 @doc raw"""
     prepare_fusion_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::DataFrame
 
-Prepare a dataframe of total fusion parasitic power, with values in MW.
+Prepare a dataframe of total parasitic power for each fusion component, with values in MW.
 """
 function prepare_fusion_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::DataFrame
     parasitic_expressions = fusion_parasitic_power_expressions(inputs)
     scale = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
     df = prepare_timeseries_variables(EP, parasitic_expressions, scale)
     return df
+end
+
+@doc raw"""
+    prepare_fusion_total_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::DataFrame
+
+Prepare a vector of total fusion parasitic power, with values in MW.
+"""
+function prepare_fusion_total_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::DataFrame
+    df = prepare_fusion_parasitic_power(EP, inputs, setup)
+    return sum(eachcol(df))
 end
 
 @doc raw"""
