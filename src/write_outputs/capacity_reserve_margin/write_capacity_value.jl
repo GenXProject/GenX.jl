@@ -10,7 +10,8 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	MUST_RUN = inputs["MUST_RUN"]
 	VRE_STOR = inputs["VRE_STOR"]
 
-    minimum_plant_size = 1 # megawatt
+    minimum_plant_size = 1 # MW
+    minimum_crm_price = 1 # $/MW
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     eTotalCap = value.(EP[:eTotalCap])
     large_plants = findall(>=(minimum_plant_size), eTotalCap * scale_factor)
@@ -33,6 +34,8 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		AC_CHARGE_EX = intersect(inputs["VS_STOR_AC_CHARGE"], VRE_STOR_EX)
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
+
+    crm_derating(i, y)::Float64 = dfGen[y, Symbol("CapRes_$i")]
 	
 	totalcap = repeat(eTotalCap, 1, T)
 	dfCapValue = DataFrame()
@@ -41,9 +44,9 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		capvalue = zeros(G, T)
 		riskyhour = zeros(G, T)
 		cap_derate = zeros(G, T)
-		riskyhour_position = findall(>=(1), capacity_reserve_margin_price(EP, inputs, setup, i))
+		riskyhour_position = findall(>=(minimum_crm_price), capacity_reserve_margin_price(EP, inputs, setup, i))
 		riskyhour[:, riskyhour_position] = ones(Int, G, length(riskyhour_position))
-		cap_derate[large_plants, :] = repeat(dfGen[large_plants, Symbol("CapRes_$i")], 1, T)
+        cap_derate[large_plants, :] = repeat(crm_derating(i, large_plants), 1, T)
 
 		capvalue[THERM_ALL_EX, :] = cap_derate[THERM_ALL_EX, :] .* riskyhour[THERM_ALL_EX, :]
 		capvalue[VRE_EX, :] = cap_derate[VRE_EX, :] .* (inputs["pP_Max"][VRE_EX, :]) .* riskyhour[VRE_EX, :]
@@ -92,5 +95,5 @@ be calculated only if `WriteShadowPrices` is activated.
 function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, capres_zone::Int)::Matrix{Float64}
     ω = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    return dual.(EP[:cCapacityResMargin][i, :]) ./ ω * scale_factor
+    return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω * scale_factor
 end
