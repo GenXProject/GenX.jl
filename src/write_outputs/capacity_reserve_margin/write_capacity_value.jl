@@ -89,8 +89,7 @@ When solving a linear program (i.e. linearized unit commitment or economic dispa
 this output is always available; when solving a mixed integer linear program, this can
 be calculated only if `WriteShadowPrices` is activated.
 
-    Returns a vector.
-    Values have units of $/MW
+    Returns a vector, with units of $/MW
 """
 function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, capres_zone::Int)::Matrix{Float64}
     ω = inputs["omega"]
