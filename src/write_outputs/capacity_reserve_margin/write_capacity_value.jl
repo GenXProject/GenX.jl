@@ -35,7 +35,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
 
-    crm_derating(i, y)::Float64 = dfGen[y, Symbol("CapRes_$i")]
+    crm_derating(i, y::Vector{Int})::Vector{Float64} = dfGen[y, Symbol("CapRes_$i")]
 	
 	totalcap = repeat(eTotalCap, 1, T)
 	dfCapValue = DataFrame()
@@ -92,7 +92,7 @@ be calculated only if `WriteShadowPrices` is activated.
 
     Returns a vector, with units of $/MW
 """
-function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, capres_zone::Int)::Matrix{Float64}
+function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, capres_zone::Int)::Vector{Float64}
     ω = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω * scale_factor
