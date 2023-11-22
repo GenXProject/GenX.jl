@@ -2,8 +2,6 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	SEG = inputs["SEG"]  # Number of lines
-	L = inputs["L"] # Number of lines
 	THERM_ALL = inputs["THERM_ALL"]
 	VRE = inputs["VRE"]
 	HYDRO_RES = inputs["HYDRO_RES"]
