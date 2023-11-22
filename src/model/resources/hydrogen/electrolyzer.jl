@@ -122,18 +122,16 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	end)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
-	if setup["Reserves"] == 1
-		## Electrolyzers currently do not contribute to operating reserves. Could allow them to contribute as a curtailable demand in future.
-	else
-		@constraints(EP, begin
-			# Minimum stable power generated per technology "y" at hour "t" Min_Power
-			[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
+    # Electrolyzers currently do not contribute to operating reserves, so there is not
+    # special case (for Reserves == 1) here.
+    # Could allow them to contribute as a curtailable demand in future.
+    @constraints(EP, begin
+        # Minimum stable power generated per technology "y" at hour "t" Min_Power
+        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 
-			# Maximum power generated per technology "y" at hour "t"
-			[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
-		end)
-
-	end
+        # Maximum power generated per technology "y" at hour "t"
+        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
+    end)
 
 	### Minimum hydrogen production constraint (if any) (Constraint #5)
 	kt_to_t = 10^3
