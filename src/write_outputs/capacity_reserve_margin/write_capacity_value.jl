@@ -9,20 +9,20 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
 	VRE_STOR = inputs["VRE_STOR"]
+
     minimum_plant_size = 1 # megawatt
-	if setup["ParameterScale"] == 1
-		existingplant_position = findall(x -> x >= 1, (value.(EP[:eTotalCap])) * ModelScalingFactor)
-	else
-		existingplant_position = findall(x -> x >= 1, (value.(EP[:eTotalCap])))
-	end
-	THERM_ALL_EX = intersect(THERM_ALL, existingplant_position)
-	VRE_EX = intersect(VRE, existingplant_position)
-	HYDRO_RES_EX = intersect(HYDRO_RES, existingplant_position)
-	STOR_ALL_EX = intersect(STOR_ALL, existingplant_position)
-	FLEX_EX = intersect(FLEX, existingplant_position)
-	MUST_RUN_EX = intersect(MUST_RUN, existingplant_position)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    eTotalCap = value.(EP[:eTotalCap])
+    large_plants = findall(>=(minimum_plant_size), eTotalCap * scale_factor)
+
+	THERM_ALL_EX = intersect(THERM_ALL, large_plants)
+	VRE_EX = intersect(VRE, large_plants)
+	HYDRO_RES_EX = intersect(HYDRO_RES, large_plants)
+	STOR_ALL_EX = intersect(STOR_ALL, large_plants)
+	FLEX_EX = intersect(FLEX, large_plants)
+	MUST_RUN_EX = intersect(MUST_RUN, large_plants)
 	# Will only be activated if grid connection capacity exists (because may build standalone storage/VRE, which will only be telling by grid connection capacity)
-	VRE_STOR_EX = intersect(VRE_STOR, existingplant_position)
+	VRE_STOR_EX = intersect(VRE_STOR, large_plants)
 	if !isempty(VRE_STOR_EX)
 		DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
 		DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
@@ -34,7 +34,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
 	
-	totalcap = repeat((value.(EP[:eTotalCap])), 1, T)
+	totalcap = repeat(eTotalCap, 1, T)
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
 		temp_dfCapValue = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Reserve = fill(Symbol("CapRes_$i"), G))
@@ -43,7 +43,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		cap_derate = zeros(G, T)
 		riskyhour_position = findall(>=(1), capacity_reserve_margin_price(EP, inputs, setup, i))
 		riskyhour[:, riskyhour_position] = ones(Int, G, length(riskyhour_position))
-		cap_derate[existingplant_position, :] = repeat(dfGen[existingplant_position, Symbol("CapRes_$i")], 1, T)
+		cap_derate[large_plants, :] = repeat(dfGen[large_plants, Symbol("CapRes_$i")], 1, T)
 
 		capvalue[THERM_ALL_EX, :] = cap_derate[THERM_ALL_EX, :] .* riskyhour[THERM_ALL_EX, :]
 		capvalue[VRE_EX, :] = cap_derate[VRE_EX, :] .* (inputs["pP_Max"][VRE_EX, :]) .* riskyhour[VRE_EX, :]
