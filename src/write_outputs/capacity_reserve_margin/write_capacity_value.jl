@@ -74,7 +74,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		rename!(temp_dfCapValue, auxNew_Names)
 		append!(dfCapValue, temp_dfCapValue)
 	end
-	CSV.write(joinpath(path, "CapacityValue.csv"), dfCapValue)
+	write_simple_csv(joinpath(path, "CapacityValue.csv"), dfCapValue)
 end
 
 @doc raw"""
