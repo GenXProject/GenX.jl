@@ -49,7 +49,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		riskyhour = findall(>=(minimum_crm_price), capacity_reserve_margin_price(EP, inputs, setup, i))
 		is_risky[:, riskyhour] = ones(Int, G, length(riskyhour))
 
-        power(y) = value.(EP[:vP][riskyhour, y])'
+        power(y) = value.(EP[:vP][y, riskyhour])'
 
         cap_derate[large_plants, :] = repeat(crm_derating(i, large_plants), 1, T)
 
@@ -57,18 +57,23 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 
         capvalue_new[riskyhour, VRE_EX] .= crm_derating(i, VRE_EX) .* max_power(riskyhour, VRE_EX)
 
-        capvalue_new[riskyhour, MUST_RUN_EX] = crm_derating(i, MUST_RUN_EX) .* max_power(riskyhour, VRE_EX)
+        capvalue_new[riskyhour, MUST_RUN_EX] .= crm_derating(i, MUST_RUN_EX) .* max_power(riskyhour, MUST_RUN_EX)
 
-        capvalue_new[riskyhour, HYDRO_RES_EX] = crm_derating(i, HYDRO_RES_EX) .* power(HYDRO_RES_EX) ./ eTotalCap[HYDRO_RES_EX]'
-
-        capvalue .+= collect(transpose(capvalue_new))
+        capvalue_new[riskyhour, HYDRO_RES_EX] .= crm_derating(i, HYDRO_RES_EX) .* power(HYDRO_RES_EX) ./ eTotalCap[HYDRO_RES_EX]'
 
 		if !isempty(STOR_ALL_EX)
-			capvalue[STOR_ALL_EX, :] = cap_derate[STOR_ALL_EX, :] .* ((value.(EP[:vP][STOR_ALL_EX, :]) - value.(EP[:vCHARGE][STOR_ALL_EX, :]).data  + value.(EP[:vCAPRES_discharge][STOR_ALL_EX, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL_EX, :]).data)) .* is_risky[STOR_ALL_EX, :] ./ totalcap[STOR_ALL_EX, :]
+            charge = value.(EP[:vCHARGE][STOR_ALL_EX, riskyhour]).data'
+            capres_discharge = value.(EP[:vCAPRES_discharge][STOR_ALL_EX, riskyhour]).data'
+            capres_charge = value.(EP[:vCAPRES_charge][STOR_ALL_EX, riskyhour]).data'
+
+            capvalue_new[riskyhour, STOR_ALL_EX] .= crm_derating(i, STOR_ALL_EX) .* (power(STOR_ALL_EX) - charge + capres_discharge - capres_charge) /. eTotalCap[STOR_ALL_EX]'
 		end
+
 		if !isempty(FLEX_EX)
-			capvalue[FLEX_EX, :] = cap_derate[FLEX_EX, :] .* ((value.(EP[:vCHARGE_FLEX][FLEX_EX, :]).data - value.(EP[:vP][FLEX_EX, :]))) .* is_risky[FLEX_EX, :] ./ totalcap[FLEX_EX, :]
+            charge = value.(EP[:vCHARGE_FLEX][FLEX_EX, riskyhour]).data'
+            capvalue_new[riskyhour, FLEX_EX] = crm_derating(i, FLEX_EX) .* (charge - power(FLEX_EX)) ./ eTotalCap[FLEX_EX]
 		end
+        capvalue .+= collect(transpose(capvalue_new))
 		if !isempty(VRE_STOR_EX)
 			capvalue_dc_discharge = zeros(G, T)
 			capvalue_dc_discharge[DC_DISCHARGE, :] = value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :].data) .* dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0), :EtaInverter]
