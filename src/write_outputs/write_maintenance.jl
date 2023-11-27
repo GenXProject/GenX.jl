@@ -7,9 +7,9 @@ function write_simple_csv(filename::AbstractString, header::Vector, matrix)
     write_simple_csv(filename, df)
 end
 
-function prepare_timeseries_variables(EP::Model, set::Set{Symbol})
+function prepare_timeseries_variables(EP::Model, set::Set{Symbol}, scale::Float64=1.0)
     # function to extract data from DenseAxisArray
-    data(var) = value.(EP[var]).data
+    data(var) = scale * value.(EP[var]).data
 
     return DataFrame(set .=> data.(set))
 end

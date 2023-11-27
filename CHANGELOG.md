@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add PR template (#516)
 - Validation ensures that resource flags (THERM, HYDRO, LDS etc) are self-consistent (#513).
 - Maintenance formulation for thermal-commit plants (#556).
+- Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
+  piecewise_fuel+CO2, and TDR (#563 and #578).
+
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
@@ -43,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Load` and `LoadWeight` keys in the `time_domain_reduction_settings.yml` file are renamed to `Demand`, `DemandWeight`.
 - The `New_Build` column in `Generators_data.csv` has been separated into two: `New_Build` and `Can_Retire` (#392).
   Values in each column are {0,1}.
+- Separate proprietary JuMP solvers from the GenX package.
+  This allows users of Gurobi or CPLEX to use them without modifying
+  the source code of the GenX package directly. This is a key step in publishing
+  GenX as a proper Julia package. This does require change to the Run.jl files,
+  to specify the solver. (#531)
+- In the examples, change Reg_Max and Rsv_Max of any MUST_RUN generators to 0.
+  This mitigates but does not fully fix (#576).
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.

@@ -47,24 +47,24 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceVRE)
 	end
 
-	### Constratints ###
-	# For resource for which we are modeling hourly power output
-	for y in VRE_POWER_OUT
-		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
-		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
+	### Constraints ###
+    if Reserves == 1
+        # Constraints on power output and contribution to regulation and reserves
+        curtailable_variable_renewable_reserves!(EP, inputs)
+        remove_reserves_for_binned_vre_resources!(EP, inputs)
+    else
+        # For resource for which we are modeling hourly power output
+        for y in VRE_POWER_OUT
+            # Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
+            # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
+            VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
 
-		# Constraints on contribution to regulation and reserves
-		if Reserves == 1
-			curtailable_variable_renewable_reserves!(EP, inputs)
-		else
-			# Maximum power generated per hour by renewable generators must be less than
-			# sum of product of hourly capacity factor for each bin times its the bin installed capacity
-			# Note: inequality constraint allows curtailment of output below maximum level.
-			@constraint(EP, [t=1:T], EP[:vP][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS))
-		end
-
-	end
+            # Maximum power generated per hour by renewable generators must be less than
+            # sum of product of hourly capacity factor for each bin times its the bin installed capacity
+            # Note: inequality constraint allows curtailment of output below maximum level.
+            @constraint(EP, [t=1:T], EP[:vP][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS))
+        end
+    end
 
 	# Set power variables for all bins that are not being modeled for hourly output to be zero
 	for y in VRE_NO_POWER_OUT
@@ -102,60 +102,53 @@ The amount of frequency regulation and operating reserves procured in each time 
 ```
 """
 function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
-
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]
 
-	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], inputs["VRE"])
+    VRE = inputs["VRE"]
+	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
+    REG = intersect(VRE_POWER_OUT, inputs["REG"])
+    RSV = intersect(VRE_POWER_OUT, inputs["RSV"])
 
-	for y in VRE_POWER_OUT
-		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
-		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
+    eTotalCap = EP[:eTotalCap]
+    vP = EP[:vP]
+    vREG = EP[:vREG]
+    vRSV = EP[:vRSV]
+    hourly_capacity_factor(y, t) = inputs["pP_Max"][y, t]
+    reg_max(y) = dfGen[y, :Reg_Max]
+    rsv_max(y) = dfGen[y, :Rsv_Max]
 
-		if y in inputs["REG"] && y in inputs["RSV"] # Resource eligible for regulation and spinning reserves
-			@constraints(EP, begin
-				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
-				[t=1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+    hourly_capacity(y, t) = hourly_capacity_factor(y, t) * eTotalCap[y]
+    resources_in_bin(y) = UnitRange(y, y + dfGen[y, :Num_VRE_Bins] - 1)
+    hourly_bin_capacity(y, t) = sum(hourly_capacity(yy, t) for yy in resources_in_bin(y))
 
-				# Power generated and regulation reserve contributions down per hour must be greater than zero
-				[t=1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
+    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= reg_max(y) * hourly_bin_capacity(y, t))
+    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= rsv_max(y) * hourly_bin_capacity(y, t))
 
-				# Power generated and reserve contributions up per hour by renewable generators must be less than
-				# hourly capacity factor. Note: inequality constraint allows curtailment of output below maximum level.
-				[t=1:T], EP[:vP][y,t]+EP[:vREG][y,t]+EP[:vRSV][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
-			end)
-		elseif y in inputs["REG"] # Resource only eligible for regulation reserves
-			@constraints(EP, begin
-				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vREG][y,t] <= dfGen[y,:Reg_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+    expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
+    add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
+    @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t] >= 0)
 
-				# Power generated and regulation reserve contributions down per hour must be greater than zero
-				[t=1:T], EP[:vP][y,t]-EP[:vREG][y,t] >= 0
+    expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
+    add_similar_to_expression!(expr[REG, :], +vREG[REG, :])
+    add_similar_to_expression!(expr[RSV, :], +vRSV[RSV, :])
+    @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t] <= hourly_bin_capacity(y, t))
+end
 
-				# Power generated and reserve contributions up per hour by renewable generators must be less than
-				# hourly capacity factor. Note: inequality constraint allows curtailment of output below maximum level.
-				[t=1:T], EP[:vP][y,t]+EP[:vREG][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
-			end)
+function remove_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
+    dfGen = inputs["dfGen"]
 
-		elseif y in inputs["RSV"] # Resource only eligible for spinning reserves - only available in up, no down spinning reserves
+    VRE = inputs["VRE"]
+    VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
+    REG = inputs["REG"]
+    RSV = inputs["RSV"]
 
-			@constraints(EP, begin
-				# For VRE, reserve contributions must be less than the specified percentage of the capacity factor for the hour
-				[t=1:T], EP[:vRSV][y,t] <= dfGen[y,:Rsv_Max]*sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
+    VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
-				# Power generated and reserve contributions up per hour by renewable generators must be less than
-				# hourly capacity factor. Note: inequality constraint allows curtailment of output below maximum level.
-				[t=1:T], EP[:vP][y,t]+EP[:vRSV][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS)
-			end)
-		else # Resource not eligible for reserves
-			# Maximum power generated per hour by renewable generators must be less than
-			# sum of product of hourly capacity factor for each bin times its the bin installed capacity
-			# Note: inequality constraint allows curtailment of output below maximum level.
-			@constraint(EP, [t=1:T], EP[:vP][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS))
-		end
+    for y in intersect(VRE_NO_POWER_OUT, REG)
+		fix.(EP[:vREG][y,:], 0.0, force=true)
 	end
-
-
+    for y in intersect(VRE_NO_POWER_OUT, RSV)
+		fix.(EP[:vRSV][y,:], 0.0, force=true)
+	end
 end

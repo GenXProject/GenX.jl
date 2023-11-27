@@ -18,6 +18,7 @@ export choose_output_dir
 export run_ddp
 export configure_multi_stage_inputs
 export load_inputs_multi_stage
+export compute_cumulative_min_retirements!
 export write_multi_stage_outputs
 export run_genx_case!
 export run_timedomainreduction!
@@ -32,10 +33,10 @@ using Dates
 using Clustering
 using Distances
 using Combinatorics
-
 using Random
 using RecursiveArrayTools
 using Statistics
+<<<<<<< HEAD
 # using SparseArrays
 # Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
 #using CPLEX
@@ -43,9 +44,9 @@ using Gurobi
 #using CPLEX
 #using MOI
 #using SCIP
+=======
+>>>>>>> origin/develop
 using HiGHS
-using Clp
-using Cbc
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)

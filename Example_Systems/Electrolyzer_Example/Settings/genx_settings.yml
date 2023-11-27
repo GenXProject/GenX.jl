@@ -62,11 +62,8 @@ StorageLosses: 1
 # 1 = yes
 HydrogenHourlyMatching: 1
 
-## Solver settings
-# ----------------
-
-# Available solvers: Gurobi, CPLEX, Clps
-# Solver: HiGHS
+## Solution settings
+# ------------------
 
 # Internally scale demand, capacity and power variables in GW rather than MW.
 # 0 = not active

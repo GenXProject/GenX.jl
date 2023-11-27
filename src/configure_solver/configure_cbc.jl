@@ -16,7 +16,7 @@ The Cbc optimizer instance is configured with the following default parameters i
  - threads = 1
 
 """
-function configure_cbc(solver_settings_path::String)
+function configure_cbc(solver_settings_path::String, optimizer::Any)
 
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)
@@ -38,5 +38,5 @@ function configure_cbc(solver_settings_path::String)
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
-	return optimizer_with_attributes(Cbc.Optimizer, attributes...)
+	return optimizer_with_attributes(optimizer, attributes...)
 end

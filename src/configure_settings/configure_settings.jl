@@ -11,7 +11,6 @@ function default_settings()
         "StorageLosses" => 1,
         "MinCapReq" => 0,
         "MaxCapReq" => 0,
-        "Solver" => "HiGHS",
         "ParameterScale" => 0,
         "WriteShadowPrices" => 0,
         "UCommit" => 0,
