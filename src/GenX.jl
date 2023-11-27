@@ -36,16 +36,6 @@ using Combinatorics
 using Random
 using RecursiveArrayTools
 using Statistics
-<<<<<<< HEAD
-# using SparseArrays
-# Uncomment if Gurobi or CPLEX active license and installations are there and the user intends to use either of them
-#using CPLEX
-using Gurobi
-#using CPLEX
-#using MOI
-#using SCIP
-=======
->>>>>>> origin/develop
 using HiGHS
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
