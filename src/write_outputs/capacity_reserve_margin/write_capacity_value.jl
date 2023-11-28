@@ -37,7 +37,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 
     crm_derate(i, y::Vector{Int}) = dfGen[y, Symbol("CapRes_$i")]'
     max_power(t::Vector{Int}, y::Vector{Int}) = inputs["pP_Max"][y, t]'
-    total_cap(resources::Vector{Int}) = eTotalCap[resources]'
+    total_cap(y::Vector{Int}) = eTotalCap[y]'
 
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
