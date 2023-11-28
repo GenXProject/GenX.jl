@@ -23,6 +23,10 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	# Energy injected into the grid by resource "y" at hour "t"
 	@variable(EP, vP[y=1:G,t=1:T] >=0);
 
+	### Expressions ###
+
+	## Objective Function Expressions ##
+
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M
 	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]*vP[y,t])))
 	# Sum individual resource contributions to variable discharging costs to get total variable discharging costs

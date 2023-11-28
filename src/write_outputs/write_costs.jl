@@ -75,7 +75,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	if haskey(inputs, "MinCapPriceCap")
 		dfCost[9,2] += value(EP[:eTotalCMinCapSlack])
 	end	
-
+	
 	if !isempty(VRE_STOR)
 		dfCost[!,2][11] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
@@ -115,7 +115,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 		tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE,:]))
 		tempCTotal += tempCVar
-		
+
 		tempCFuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE,:]))
 		tempCTotal += tempCFuel
 
@@ -240,7 +240,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		if !isempty(ELECTROLYZERS_ZONE)
 			push!(temp_cost_list,tempHydrogenValue)
 		end
-		
+
 		dfCost[!,Symbol("Zone$z")] = temp_cost_list
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)
