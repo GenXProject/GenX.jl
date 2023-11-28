@@ -46,7 +46,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
         minimum_crm_price = 1 # $/MW
         riskyhour = findall(>=(minimum_crm_price), capacity_reserve_margin_price(EP, inputs, setup, i))
 
-        power(y) = value.(EP[:vP][y, riskyhour])'
+        power(y::Vector{Int}) = value.(EP[:vP][y, riskyhour])'
 
         capvalue[riskyhour, THERM_ALL_EX] = crm_derate(i, THERM_ALL_EX)
 
