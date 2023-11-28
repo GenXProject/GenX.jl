@@ -312,7 +312,6 @@ This file contains cost and performance parameters for various generators and ot
 |VRE_STOR | {0, 1}, Flag to indicate membership in set of co-located variable renewable energy resources (onshore wind and utility-scale solar PV) and storage resources (either short- or long-duration energy storage with symmetric or asymmetric charging or discharging capabilities).|
 ||VRE_STOR = 0: Not part of set (default) |
 ||VRE_STOR = 1: Co-located VRE and storage (VRE-STOR) resources. |
-
 |**Existing technology capacity**|
 |Existing\_Cap\_MW |The existing capacity of a power plant in MW. Note that for co-located VRE-STOR resources, this capacity represents the existing AC grid connection capacity in MW. |
 |Existing\_Cap\_MWh |The existing capacity of storage in MWh where `STOR = 1` or `STOR = 2`. Note that for co-located VRE-STOR resources, this capacity represents the existing capacity of storage in MWh. |

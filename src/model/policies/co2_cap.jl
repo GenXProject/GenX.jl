@@ -74,7 +74,6 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	THERM_ALL = inputs["THERM_ALL"]
 
 	### Variable ###
 	# if input files are present, add CO2 cap slack variables
