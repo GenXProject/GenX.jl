@@ -10,7 +10,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE_STOR = inputs["VRE_STOR"]
-
 	ELECTROLYZER = inputs["ELECTROLYZER"]
 	
 	cost_list = ["cTotal", "cFix", "cVar", "cFuel" ,"cNSE", "cStart",  "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cCO2"]
@@ -22,7 +21,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	end
 	dfCost = DataFrame(Costs = cost_list)
 
-	cVar = value(EP[:eTotalCVarOut]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
+	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
 	
 	cFuel = value.(EP[:eTotalCFuelOut])
@@ -241,6 +240,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		if !isempty(ELECTROLYZERS_ZONE)
 			push!(temp_cost_list,tempHydrogenValue)
 		end
+		
 		dfCost[!,Symbol("Zone$z")] = temp_cost_list
 	end
 	CSV.write(joinpath(path, "costs.csv"), dfCost)

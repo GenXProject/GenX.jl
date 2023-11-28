@@ -18,11 +18,10 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps
 	Z = inputs["Z"]     # Number of zones
-	
 	### Variables ###
 
 	# Energy injected into the grid by resource "y" at hour "t"
-	@variable(EP, vP[y=1:G,t=1:T] >=0);  # MW
+	@variable(EP, vP[y=1:G,t=1:T] >=0);
 
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M
 	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]*vP[y,t])))

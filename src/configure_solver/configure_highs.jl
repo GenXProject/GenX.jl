@@ -398,7 +398,6 @@ function configure_highs(solver_settings_path::String, optimizer::Any)
         "cost_scale_factor" => 0,
         "allowed_matrix_scale_factor" => 20,
         "allowed_cost_scale_factor" => 0,
-        # "simplex_dualise_strategy" => -1,
         "simplex_permute_strategy" => -1,
         "max_dual_simplex_cleanup_level" => 1,
         "max_dual_simplex_phase1_cleanup_level" => 2,
