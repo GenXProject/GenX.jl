@@ -8,7 +8,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     filename = "Generators_data.csv"
     gen_in = load_dataframe(joinpath(path, filename))
 
-
     # Store DataFrame of generators/resources input data for use in model
     inputs_gen["dfGen"] = gen_in
 
@@ -78,9 +77,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	if "MULTI_FUELS" ∉ names(gen_in)
 		gen_in[!, "MULTI_FUELS"] = zero(gen_in[!, "R_ID"])
 	end
-		
-	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
-	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
 
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1
@@ -226,10 +222,40 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		end
 	end
 
-	# Multi Fuels Information
+	load_vre_stor_data!(inputs_gen, setup, path)
+	load_multi_fuels_data!(inputs_gen, setup, path)
+	
+	# write zeros if col names are not in the gen_in dataframe
+	required_cols_for_co2 = ["Biomass", "CO2_Capture_Fraction", "CO2_Capture_Fraction_Startup", "CCS_Disposal_Cost_per_Metric_Ton"]
+	for col in required_cols_for_co2
+		ensure_column!(gen_in, col, 0)
+	end
+	
+	# Scale CCS_Disposal_Cost_per_Metric_Ton for CCS units 
+	gen_in.CCS_Disposal_Cost_per_Metric_Ton /= scale_factor
+
+	# get R_ID when fuel is not None
+	inputs_gen["HAS_FUEL"] = gen_in[(gen_in[!,:Fuel] .!= "None"),:R_ID]
+
+	# Piecewise fuel usage option
+	if setup["UCommit"] > 0
+		process_piecewisefuelusage!(inputs_gen, scale_factor)
+	end
+
+	println(filename * " Successfully Read!")
+end
+
+@doc raw"""
+	load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
+
+Function for reading input parameters related to multi fuels
+"""
+function load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
+	gen_in = inputs_gen["dfGen"]
+	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
+	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
 
 	if !isempty(inputs_gen["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
-
 		inputs_gen["NUM_FUELS"] = gen_in[!,:Num_Fuels]   # Number of fuels that this resource can use
 		max_fuels = maximum(inputs_gen["NUM_FUELS"])
 		fuel_cols = [ Symbol(string("Fuel",i)) for i in 1:max_fuels ]
@@ -261,32 +287,8 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 				end
 			end
 		end
-
-
-
 	end
-	load_vre_stor_data!(inputs_gen, setup, path)
-
-	
-	# write zeros if col names are not in the gen_in dataframe
-	required_cols_for_co2 = ["Biomass", "CO2_Capture_Fraction", "CO2_Capture_Fraction_Startup", "CCS_Disposal_Cost_per_Metric_Ton"]
-	for col in required_cols_for_co2
-		ensure_column!(gen_in, col, 0)
-	end
-	
-	# Scale CCS_Disposal_Cost_per_Metric_Ton for CCS units 
-	gen_in.CCS_Disposal_Cost_per_Metric_Ton /= scale_factor
-
-	# get R_ID when fuel is not None
-	inputs_gen["HAS_FUEL"] = gen_in[(gen_in[!,:Fuel] .!= "None"),:R_ID]
-
-	# Piecewise fuel usage option
-	if setup["UCommit"] > 0
-		process_piecewisefuelusage!(inputs_gen, scale_factor)
-	end
-
-	println(filename * " Successfully Read!")
-end
+end	
 
 
 @doc raw"""
