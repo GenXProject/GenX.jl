@@ -2,8 +2,6 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	SEG = inputs["SEG"]  # Number of lines
-	L = inputs["L"] # Number of lines
 	THERM_ALL = inputs["THERM_ALL"]
 	VRE = inputs["VRE"]
 	HYDRO_RES = inputs["HYDRO_RES"]
@@ -11,19 +9,21 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
 	VRE_STOR = inputs["VRE_STOR"]
-	if setup["ParameterScale"] == 1
-		existingplant_position = findall(x -> x >= 1, (value.(EP[:eTotalCap])) * ModelScalingFactor)
-	else
-		existingplant_position = findall(x -> x >= 1, (value.(EP[:eTotalCap])))
-	end
-	THERM_ALL_EX = intersect(THERM_ALL, existingplant_position)
-	VRE_EX = intersect(VRE, existingplant_position)
-	HYDRO_RES_EX = intersect(HYDRO_RES, existingplant_position)
-	STOR_ALL_EX = intersect(STOR_ALL, existingplant_position)
-	FLEX_EX = intersect(FLEX, existingplant_position)
-	MUST_RUN_EX = intersect(MUST_RUN, existingplant_position)
+
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    eTotalCap = value.(EP[:eTotalCap])
+
+    minimum_plant_size = 1 # MW
+    large_plants = findall(>=(minimum_plant_size), eTotalCap * scale_factor)
+
+	THERM_ALL_EX = intersect(THERM_ALL, large_plants)
+	VRE_EX = intersect(VRE, large_plants)
+	HYDRO_RES_EX = intersect(HYDRO_RES, large_plants)
+	STOR_ALL_EX = intersect(STOR_ALL, large_plants)
+	FLEX_EX = intersect(FLEX, large_plants)
+	MUST_RUN_EX = intersect(MUST_RUN, large_plants)
 	# Will only be activated if grid connection capacity exists (because may build standalone storage/VRE, which will only be telling by grid connection capacity)
-	VRE_STOR_EX = intersect(VRE_STOR, existingplant_position)
+	VRE_STOR_EX = intersect(VRE_STOR, large_plants)
 	if !isempty(VRE_STOR_EX)
 		DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
 		DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
@@ -34,48 +34,90 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		AC_CHARGE_EX = intersect(inputs["VS_STOR_AC_CHARGE"], VRE_STOR_EX)
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
-	
-	totalcap = repeat((value.(EP[:eTotalCap])), 1, T)
+
+    crm_derate(i, y::Vector{Int}) = dfGen[y, Symbol("CapRes_$i")]'
+    max_power(t::Vector{Int}, y::Vector{Int}) = inputs["pP_Max"][y, t]'
+    total_cap(y::Vector{Int}) = eTotalCap[y]'
+
 	dfCapValue = DataFrame()
 	for i in 1:inputs["NCapacityReserveMargin"]
-		temp_dfCapValue = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Reserve = fill(Symbol("CapRes_$i"), G))
-		temp_capvalue = zeros(G, T)
-		temp_riskyhour = zeros(G, T)
-		temp_cap_derate = zeros(G, T)
-		if setup["ParameterScale"] == 1
-			riskyhour_position = findall(x -> x >= 1, ((dual.(EP[:cCapacityResMargin][i, :])) ./ inputs["omega"] * ModelScalingFactor))
-		else
-			riskyhour_position = findall(x -> x >= 1, ((dual.(EP[:cCapacityResMargin][i, :])) ./ inputs["omega"]))
-		end
-		temp_riskyhour[:, riskyhour_position] = ones(Int, G, length(riskyhour_position))
-		temp_cap_derate[existingplant_position, :] = repeat(dfGen[existingplant_position, Symbol("CapRes_$i")], 1, T)
+        capvalue = zeros(T, G)
 
-		temp_capvalue[THERM_ALL_EX, :] = temp_cap_derate[THERM_ALL_EX, :] .* temp_riskyhour[THERM_ALL_EX, :]
-		temp_capvalue[VRE_EX, :] = temp_cap_derate[VRE_EX, :] .* (inputs["pP_Max"][VRE_EX, :]) .* temp_riskyhour[VRE_EX, :]
-		temp_capvalue[MUST_RUN_EX, :] = temp_cap_derate[MUST_RUN_EX, :] .* (inputs["pP_Max"][MUST_RUN_EX, :]) .* temp_riskyhour[MUST_RUN_EX, :]
-		temp_capvalue[HYDRO_RES_EX, :] = temp_cap_derate[HYDRO_RES_EX, :] .* (value.(EP[:vP][HYDRO_RES_EX, :])) .* temp_riskyhour[HYDRO_RES_EX, :] ./ totalcap[HYDRO_RES_EX, :]
+        minimum_crm_price = 1 # $/MW
+        riskyhour = findall(>=(minimum_crm_price), capacity_reserve_margin_price(EP, inputs, setup, i))
+
+        power(y::Vector{Int}) = value.(EP[:vP][y, riskyhour])'
+
+        capvalue[riskyhour, THERM_ALL_EX] = crm_derate(i, THERM_ALL_EX)
+
+        capvalue[riskyhour, VRE_EX] = crm_derate(i, VRE_EX) .* max_power(riskyhour, VRE_EX)
+
+        capvalue[riskyhour, MUST_RUN_EX] = crm_derate(i, MUST_RUN_EX) .* max_power(riskyhour, MUST_RUN_EX)
+
+        capvalue[riskyhour, HYDRO_RES_EX] = crm_derate(i, HYDRO_RES_EX) .* power(HYDRO_RES_EX) ./ total_cap(HYDRO_RES_EX)
+
 		if !isempty(STOR_ALL_EX)
-			temp_capvalue[STOR_ALL_EX, :] = temp_cap_derate[STOR_ALL_EX, :] .* ((value.(EP[:vP][STOR_ALL_EX, :]) - value.(EP[:vCHARGE][STOR_ALL_EX, :]).data  + value.(EP[:vCAPRES_discharge][STOR_ALL_EX, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL_EX, :]).data)) .* temp_riskyhour[STOR_ALL_EX, :] ./ totalcap[STOR_ALL_EX, :]
+            charge = value.(EP[:vCHARGE][STOR_ALL_EX, riskyhour].data)'
+            capres_discharge = value.(EP[:vCAPRES_discharge][STOR_ALL_EX, riskyhour].data)'
+            capres_charge = value.(EP[:vCAPRES_charge][STOR_ALL_EX, riskyhour].data)'
+
+            capvalue[riskyhour, STOR_ALL_EX] = crm_derate(i, STOR_ALL_EX) .* (power(STOR_ALL_EX) - charge + capres_discharge - capres_charge) ./ total_cap(STOR_ALL_EX)
 		end
+
 		if !isempty(FLEX_EX)
-			temp_capvalue[FLEX_EX, :] = temp_cap_derate[FLEX_EX, :] .* ((value.(EP[:vCHARGE_FLEX][FLEX_EX, :]).data - value.(EP[:vP][FLEX_EX, :]))) .* temp_riskyhour[FLEX_EX, :] ./ totalcap[FLEX_EX, :]
+            charge = value.(EP[:vCHARGE_FLEX][FLEX_EX, riskyhour].data)'
+            capvalue[riskyhour, FLEX_EX] = crm_derate(i, FLEX_EX) .* (charge - power(FLEX_EX)) ./ total_cap(FLEX_EX)
 		end
 		if !isempty(VRE_STOR_EX)
-			temp_capvalue_dc_discharge = zeros(G, T)
-			temp_capvalue_dc_discharge[DC_DISCHARGE, :] = value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :].data) .* dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0), :EtaInverter]
-			temp_capvalue_dc_charge = zeros(G, T)
-			temp_capvalue_dc_charge[DC_CHARGE, :] = value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :].data) ./ dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), :EtaInverter]
-			temp_capvalue[VRE_STOR_EX, :] = temp_cap_derate[VRE_STOR_EX, :] .* (value.(EP[:vP][VRE_STOR_EX, :])) .* temp_riskyhour[VRE_STOR_EX, :] ./ totalcap[VRE_STOR_EX, :]
-			temp_capvalue[VRE_STOR_STOR_EX, :] .-= temp_cap_derate[VRE_STOR_STOR_EX, :] .* (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR_EX, :].data)) .* temp_riskyhour[VRE_STOR_STOR_EX, :] ./ totalcap[VRE_STOR_STOR_EX, :]
-			temp_capvalue[DC_DISCHARGE_EX, :] .+= temp_cap_derate[DC_DISCHARGE_EX, :] .* temp_capvalue_dc_discharge[DC_DISCHARGE_EX, :] .* temp_riskyhour[DC_DISCHARGE_EX, :] ./ totalcap[DC_DISCHARGE_EX, :]
-			temp_capvalue[AC_DISCHARGE_EX, :] .+= temp_cap_derate[AC_DISCHARGE_EX, :] .* (value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE_EX, :]).data) .* temp_riskyhour[AC_DISCHARGE_EX, :] ./ totalcap[AC_DISCHARGE_EX, :]
-			temp_capvalue[DC_CHARGE_EX, :] .-= temp_cap_derate[DC_CHARGE_EX, :] .* temp_capvalue_dc_charge[DC_CHARGE_EX, :] .* temp_riskyhour[DC_CHARGE_EX, :] ./ totalcap[DC_CHARGE_EX, :]
-			temp_capvalue[AC_CHARGE_EX, :] .-= temp_cap_derate[AC_CHARGE_EX, :] .* (value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE_EX, :]).data) .* temp_riskyhour[AC_CHARGE_EX, :] ./ totalcap[AC_CHARGE_EX, :]
+            capres_dc_discharge = value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, riskyhour].data)'
+            discharge_eff = dfVRE_STOR[dfVRE_STOR.STOR_DC_DISCHARGE .!= 0, :EtaInverter]'
+            capvalue_dc_discharge = zeros(T, G)
+            capvalue_dc_discharge[riskyhour, DC_DISCHARGE] = capres_dc_discharge .* discharge_eff
+
+            capres_dc_charge = value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, riskyhour].data)'
+            charge_eff = dfVRE_STOR[dfVRE_STOR.STOR_DC_CHARGE .!= 0, :EtaInverter]'
+            capvalue_dc_charge = zeros(T, G)
+            capvalue_dc_charge[riskyhour, DC_CHARGE] = capres_dc_charge ./ charge_eff
+
+            capvalue[riskyhour, VRE_STOR_EX] = crm_derate(i, VRE_STOR_EX) .* power(VRE_STOR_EX) ./ total_cap(VRE_STOR_EX)
+
+            charge_vre_stor = value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR_EX, riskyhour].data)'
+            capvalue[riskyhour, VRE_STOR_STOR_EX] -= crm_derate(i, VRE_STOR_STOR_EX) .* charge_vre_stor ./ total_cap(VRE_STOR_STOR_EX)
+
+            capvalue[riskyhour, DC_DISCHARGE_EX] += crm_derate(i, DC_DISCHARGE_EX) .* capvalue_dc_discharge[riskyhour, DC_DISCHARGE_EX] ./ total_cap(DC_DISCHARGE_EX)
+            capres_ac_discharge = value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE_EX, riskyhour].data)'
+            capvalue[riskyhour, AC_DISCHARGE_EX] += crm_derate(i, AC_DISCHARGE_EX) .* capres_ac_discharge ./ total_cap(AC_DISCHARGE_EX)
+
+            capvalue[riskyhour, DC_CHARGE_EX] -= crm_derate(i, DC_CHARGE_EX) .* capvalue_dc_charge[riskyhour, DC_CHARGE_EX] ./ total_cap(DC_CHARGE_EX)
+            capres_ac_charge = value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE_EX, riskyhour].data)'
+            capvalue[riskyhour, AC_CHARGE_EX] -= crm_derate(i, AC_CHARGE_EX) .* capres_ac_charge ./ total_cap(AC_CHARGE_EX)
 		end
-		temp_dfCapValue = hcat(temp_dfCapValue, DataFrame(temp_capvalue, :auto))
+        capvalue = collect(transpose(capvalue))
+		temp_dfCapValue = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Reserve = fill(Symbol("CapRes_$i"), G))
+		temp_dfCapValue = hcat(temp_dfCapValue, DataFrame(capvalue, :auto))
 		auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("Reserve"); [Symbol("t$t") for t in 1:T]]
 		rename!(temp_dfCapValue, auxNew_Names)
 		append!(dfCapValue, temp_dfCapValue)
 	end
-	CSV.write(joinpath(path, "CapacityValue.csv"), dfCapValue)
+    write_simple_csv(joinpath(path, "CapacityValue.csv"), dfCapValue)
+end
+
+@doc raw"""
+    capacity_reserve_margin_price(EP::Model,
+                                  inputs::Dict,
+                                  setup::Dict,
+                                  capres_zone::Int)::Vector{Float64}
+
+Marginal electricity price for each model zone and time step.
+This is equal to the dual variable of the power balance constraint.
+When solving a linear program (i.e. linearized unit commitment or economic dispatch)
+this output is always available; when solving a mixed integer linear program, this can
+be calculated only if `WriteShadowPrices` is activated.
+
+    Returns a vector, with units of $/MW
+"""
+function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, capres_zone::Int)::Vector{Float64}
+    ω = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω * scale_factor
 end
