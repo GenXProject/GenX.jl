@@ -121,3 +121,23 @@ function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, cap
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω * scale_factor
 end
+
+function thermal_plant_effective_capacity(EP::Model, inputs::Dict, r_id::Int, capres_zone::Int)::Vector{Float}
+	y = r_id
+	T = inputs["T"]
+	dfGen = inputs["dfGen"]
+    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
+	eTotalCap = value.(EP[:eTotalCap][y])
+
+	effective_capacity = capresfactor(y, capres_zone) * eTotalCap * ones(T)
+
+	if has_maintenance(inputs)
+		resource_component(y) = dfGen[y, :Resource]
+		cap_size = dfGen[y, :Cap_Size]
+		down_var(y) = EP[Symbol(maintenance_down_name(resource_component(y)))]
+		vDOWN = value.(down_var(y))
+		effective_capacity -= capresfactor(y, capres) * vDOWN * cap_size
+	end
+
+	return effective_capacity
+end
