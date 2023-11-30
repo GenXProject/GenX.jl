@@ -9,6 +9,7 @@ Function for reporting the capacity revenue earned by each generator listed in t
     As a reminder, GenX models the capacity reserve margin (aka capacity market) at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
 function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -31,9 +32,10 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	dfResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
 	annual_sum = zeros(G)
 	for i in 1:inputs["NCapacityReserveMargin"]
+		weighted_price = capacity_reserve_margin_price(EP, inputs, setup, i) .* inputs["omega"] / scale_factor
 		sym = Symbol("CapRes_$i")
 		tempresrev = zeros(G)
-		tempresrev[THERM_ALL] = dfGen[THERM_ALL, sym] .* (value.(EP[:eTotalCap][THERM_ALL])) * sum(dual.(EP[:cCapacityResMargin][i, :]))
+		tempresrev[THERM_ALL] = thermal_plant_effective_capacity(EP, inputs, THERM_ALL, i)' * weighted_price
 		tempresrev[VRE] = dfGen[VRE, sym] .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * (dual.(EP[:cCapacityResMargin][i, :])))
 		tempresrev[MUST_RUN] = dfGen[MUST_RUN, sym] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * (dual.(EP[:cCapacityResMargin][i, :])))
 		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* (value.(EP[:vP][HYDRO_RES, :]) * (dual.(EP[:cCapacityResMargin][i, :])))
@@ -52,9 +54,7 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 			tempresrev[DC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./ dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), :EtaInverter]) * (dual.(EP[:cCapacityResMargin][i, :])))
 			tempresrev[AC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_AC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * (dual.(EP[:cCapacityResMargin][i, :])))
 		end
-		if setup["ParameterScale"] == 1
-			tempresrev *= ModelScalingFactor^2
-		end
+		tempresrev *= scale_factor^2
 		annual_sum .+= tempresrev
 		dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [sym]))
 	end
