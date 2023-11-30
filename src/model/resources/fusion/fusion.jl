@@ -61,18 +61,6 @@ function fusion_parasitic_power_expressions(inputs::Dict, zone::Int)::Set{Symbol
 end
 
 @doc raw"""
-    fusion_parasitic_power_expressions(dict::Dict, zone::Int)
-
-    dict: a dictionary of model data
-
-    get listings of parasitic power expressions.
-    This is available only after `fusion_formulation!` has been called.
-"""
-function fusion_parasitic_power_expressions(dict::Dict, zone::Int)::Set{Symbol}
-    dict[FUSION_COMPONENT_ZONE]
-end
-
-@doc raw"""
     fusion_pulse_start_expressions(dict::Dict)
 
     dict: a dictionary of model data
