@@ -37,7 +37,6 @@ Prepare a vector of total fusion parasitic power in a zone, with values in MW.
 function fusion_total_parasitic_power_unscaled(EP::Model, inputs::Dict, zone::Int)::Vector{Float64}
     parasitic_expressions = fusion_parasitic_power_expressions(inputs, zone)
     df = prepare_timeseries_variables(EP, parasitic_expressions)
-    @info df
     return sum(eachcol(df))
 end
 
