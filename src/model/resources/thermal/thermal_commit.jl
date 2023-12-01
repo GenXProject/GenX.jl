@@ -361,11 +361,20 @@ function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
     MAINT = resources_with_maintenance(dfGen)
     applicable_resources = intersect(MAINT, THERM_COMMIT)
 
-    resource_component(y) = dfGen[y, :Resource]
-    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
-    cap_size(y) = dfGen[y, :Cap_Size]
-    down_var(y) = EP[Symbol(maintenance_down_name(resource_component(y)))]
     maint_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
-                    -sum(capresfactor(y, capres) * down_var(y)[t] * cap_size(y) for y in applicable_resources))
+							sum(thermal_maintenance_capacity_reserve_margin_adjustment(EP, inputs, y, capres, t) for y in applicable_resources))
     add_similar_to_expression!(EP[:eCapResMarBalance], maint_adj)
+end
+
+function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
+                                                                 inputs::Dict,
+																 y::Int,
+																 capres::Int,
+																 t)
+    dfGen = inputs["dfGen"]
+    resource_component = dfGen[y, :Resource]
+    capresfactor = dfGen[y, Symbol("CapRes_$capres")]
+    cap_size = dfGen[y, :Cap_Size]
+    down_var = EP[Symbol(maintenance_down_name(resource_component))]
+    return -capresfactor * down_var[t] * cap_size
 end

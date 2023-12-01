@@ -46,13 +46,9 @@ function thermal_plant_effective_capacity(
     effective_capacity = fill(capresfactor(y, capres_zone) * eTotalCap, length(timesteps))
 
     if has_maintenance(inputs) && y in resources_with_maintenance(dfGen)
-        resource_component = dfGen[y, :Resource]
-        cap_size = dfGen[y, :Cap_Size]
-        down_var = EP[Symbol(maintenance_down_name(resource_component))]
-        vDOWN = value.(down_var[timesteps])
-        effective_capacity =
-            effective_capacity .- capresfactor(y, capres_zone) * vDOWN * cap_size
-    end
+		adjustment = thermal_maintenance_capacity_reserve_margin_adjustment(EP, inputs, y, capres_zone, timesteps)
+		effective_capacity = effective_capacity .+ value.(adjustment)
+	end
 
     return effective_capacity
 end
