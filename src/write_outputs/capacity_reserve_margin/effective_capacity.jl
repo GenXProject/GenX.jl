@@ -40,10 +40,10 @@ function thermal_plant_effective_capacity(
 )::Vector{Float64}
     y = r_id
     dfGen = inputs["dfGen"]
-    capresfactor(y, capres) = dfGen[y, Symbol("CapRes_$capres")]
+    capresfactor = dfGen[y, Symbol("CapRes_$capres_zone")]
     eTotalCap = value.(EP[:eTotalCap][y])
 
-    effective_capacity = fill(capresfactor(y, capres_zone) * eTotalCap, length(timesteps))
+    effective_capacity = fill(capresfactor * eTotalCap, length(timesteps))
 
     if has_maintenance(inputs) && y in resources_with_maintenance(dfGen)
 		adjustment = thermal_maintenance_capacity_reserve_margin_adjustment(EP, inputs, y, capres_zone, timesteps)
