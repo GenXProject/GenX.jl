@@ -48,7 +48,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 
         power(y::Vector{Int}) = value.(EP[:vP][y, riskyhour])'
 
-        capvalue[riskyhour, THERM_ALL_EX] .= crm_derate(i, THERM_ALL_EX)
+		capvalue[riskyhour, THERM_ALL_EX] = thermal_plant_effective_capacity(EP, inputs, THERM_ALL_EX, i, riskyhour) ./ total_cap(THERM_ALL_EX)
 
         capvalue[riskyhour, VRE_EX] = crm_derate(i, VRE_EX) .* max_power(riskyhour, VRE_EX)
 
@@ -121,3 +121,4 @@ function capacity_reserve_margin_price(EP::Model, inputs::Dict, setup::Dict, cap
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω * scale_factor
 end
+
