@@ -89,15 +89,9 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     HAS_FUEL = inputs["HAS_FUEL"]
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
-    max_fuels = inputs["MAX_NUM_FUELS"]
-    fuel_cols = inputs["FUEL_COLS"]
+    
     fuels = inputs["fuels"]
     fuel_costs = inputs["fuel_costs"]
-    heat_rates = inputs["HEAT_RATES"]
-    min_cofire = inputs["MIN_COFIRE"]
-    max_cofire = inputs["MAX_COFIRE"]
-    min_cofire_start =inputs["MIN_COFIRE_START"]
-    max_cofire_start =inputs["MAX_COFIRE_START"]
     omega = inputs["omega"]
 
     NUM_FUEL = length(fuels)
@@ -110,6 +104,13 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # for resources that use multi fuels
     # vMulFuels[y, f, t]: y - resource ID; f - fuel ID; t: time
     if !isempty(MULTI_FUELS)
+        max_fuels = inputs["MAX_NUM_FUELS"]
+        fuel_cols = inputs["FUEL_COLS"]
+        heat_rates = inputs["HEAT_RATES"]
+        min_cofire = inputs["MIN_COFIRE"]
+        max_cofire = inputs["MAX_COFIRE"]
+        min_cofire_start =inputs["MIN_COFIRE_START"]
+        max_cofire_start =inputs["MAX_COFIRE_START"]
         @variable(EP, vMulFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0) 
         @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0)  
     end 

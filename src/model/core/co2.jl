@@ -61,9 +61,12 @@ function co2!(EP::Model, inputs::Dict)
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
-    fuel_cols = inputs["FUEL_COLS"]
-    max_fuels = inputs["MAX_NUM_FUELS"]
     omega = inputs["omega"]
+    if !isempty(MULTI_FUELS)
+        max_fuels = inputs["MAX_NUM_FUELS"]
+        fuel_cols = inputs["FUEL_COLS"]
+    end 
+
     ### Expressions ###
     # CO2 emissions from power plants in "Generators_data.csv"
     # If all the CO2 capture fractions from Generators_data are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
