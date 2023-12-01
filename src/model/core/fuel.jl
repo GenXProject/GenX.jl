@@ -89,7 +89,17 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     HAS_FUEL = inputs["HAS_FUEL"]
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
+    max_fuels = inputs["MAX_NUM_FUELS"]
+    fuel_cols = inputs["FUEL_COLS"]
     fuels = inputs["fuels"]
+    fuel_costs = inputs["fuel_costs"]
+    heat_rates = inputs["HEAT_RATES"]
+    min_cofire = inputs["MIN_COFIRE"]
+    max_cofire = inputs["MAX_COFIRE"]
+    min_cofire_start =inputs["MIN_COFIRE_START"]
+    max_cofire_start =inputs["MAX_COFIRE_START"]
+    omega = inputs["omega"]
+
     NUM_FUEL = length(fuels)
     
     # create variable for fuel consumption for output
@@ -100,8 +110,8 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # for resources that use multi fuels
     # vMulFuels[y, f, t]: y - resource ID; f - fuel ID; t: time
     if !isempty(MULTI_FUELS)
-        @variable(EP, vMulFuels[y in MULTI_FUELS, i = 1:inputs["MAX_NUM_FUELS"], t = 1:T] >= 0) 
-        @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:inputs["MAX_NUM_FUELS"], t = 1:T] >= 0)  
+        @variable(EP, vMulFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0) 
+        @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0)  
     end 
 
     
@@ -121,23 +131,23 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         if y in SINGLE_FUEL   # for single fuel plants
             EP[:vFuel][y, t]
         else # for multi fuel plants
-            sum(EP[:vMulFuels][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"]) 
+            sum(EP[:vMulFuels][y, i, t] for i in 1:max_fuels) 
         end)
     @expression(EP, ePlantFuel_start[y in 1:G, t = 1:T],
         if y in SINGLE_FUEL   # for single fuel plants
             EP[:vStartFuel][y, t]
         else # for multi fuel plants
-            sum(EP[:vMulStartFuels][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"]) 
+            sum(EP[:vMulStartFuels][y, i, t] for i in 1:max_fuels) 
         end)
 
     # for multi-fuel resources
     # annual fuel consumption by plant and fuel type
     if !isempty(MULTI_FUELS)
-        @expression(EP, ePlantFuelConsumptionYear_multi_generation[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"]], 
-            sum(inputs["omega"][t] * EP[:vMulFuels][y, i, t] for t in 1:T))
-        @expression(EP, ePlantFuelConsumptionYear_multi_start[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"]], 
-            sum(inputs["omega"][t] * EP[:vMulStartFuels][y, i, t] for t in 1:T))
-        @expression(EP, ePlantFuelConsumptionYear_multi[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"]], 
+        @expression(EP, ePlantFuelConsumptionYear_multi_generation[y in MULTI_FUELS, i in 1:max_fuels], 
+            sum(omega[t] * EP[:vMulFuels][y, i, t] for t in 1:T))
+        @expression(EP, ePlantFuelConsumptionYear_multi_start[y in MULTI_FUELS, i in 1:max_fuels], 
+            sum(omega[t] * EP[:vMulStartFuels][y, i, t] for t in 1:T))
+        @expression(EP, ePlantFuelConsumptionYear_multi[y in MULTI_FUELS, i in 1:max_fuels], 
             EP[:ePlantFuelConsumptionYear_multi_generation][y, i] + EP[:ePlantFuelConsumptionYear_multi_start][y, i])
     end
     # fuel_cost is in $/MMBTU (M$/billion BTU if scaled)
@@ -148,25 +158,25 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # for multi-fuel resources
     if !isempty(MULTI_FUELS)
         # time-series fuel consumption costs by plant and fuel type during startup
-        @expression(EP, eCFuelOut_multi_start[y in MULTI_FUELS , i in 1:inputs["MAX_NUM_FUELS"], t = 1:T], 
-            inputs["fuel_costs"][dfGen[y,inputs["FUEL_COLS"][i]]][t] * EP[:vMulStartFuels][y, i, t]
+        @expression(EP, eCFuelOut_multi_start[y in MULTI_FUELS , i in 1:max_fuels, t = 1:T], 
+            fuel_costs[dfGen[y,fuel_cols[i]]][t] * EP[:vMulStartFuels][y, i, t]
             )
         # annual plant level fuel cost by fuel type during generation
-        @expression(EP, ePlantCFuelOut_multi_start[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"]], 
-            sum(inputs["omega"][t] * EP[:eCFuelOut_multi_start][y, i, t] for t in 1:T))
+        @expression(EP, ePlantCFuelOut_multi_start[y in MULTI_FUELS, i in 1:max_fuels], 
+            sum(omega[t] * EP[:eCFuelOut_multi_start][y, i, t] for t in 1:T))
 
     end
 
     @expression(EP, eCFuelStart[y = 1:G, t = 1:T], 
         if y in SINGLE_FUEL
-            (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:vStartFuel][y, t])
+            (fuel_costs[dfGen[y,:Fuel]][t] * EP[:vStartFuel][y, t])
         else
-            sum(EP[:eCFuelOut_multi_start][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"])
+            sum(EP[:eCFuelOut_multi_start][y, i, t] for i in 1:max_fuels)
         end)
 
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelStart[y = 1:G], 
-        sum(inputs["omega"][t] * EP[:eCFuelStart][y, t] for t in 1:T))
+        sum(omega[t] * EP[:eCFuelStart][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelStart[z = 1:Z], 
         sum(EP[:ePlantCFuelStart][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
@@ -175,24 +185,24 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # for multi-fuel resources
     if !isempty(MULTI_FUELS)
         # time-series fuel consumption costs by plant and fuel type during generation
-        @expression(EP, eCFuelOut_multi[y in MULTI_FUELS , i in 1:inputs["MAX_NUM_FUELS"], t = 1:T], 
-            inputs["fuel_costs"][dfGen[y,inputs["FUEL_COLS"][i]]][t] * EP[:vMulFuels][y,i,t]
+        @expression(EP, eCFuelOut_multi[y in MULTI_FUELS , i in 1:max_fuels, t = 1:T], 
+        fuel_costs[dfGen[y,fuel_cols[i]]][t] * EP[:vMulFuels][y,i,t]
             )
         # annual plant level fuel cost by fuel type during generation
-        @expression(EP, ePlantCFuelOut_multi[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"]], 
-            sum(inputs["omega"][t] * EP[:eCFuelOut_multi][y, i, t] for t in 1:T))
+        @expression(EP, ePlantCFuelOut_multi[y in MULTI_FUELS, i in 1:max_fuels], 
+            sum(omega[t] * EP[:eCFuelOut_multi][y, i, t] for t in 1:T))
 
     end
 
     @expression(EP, eCFuelOut[y = 1:G, t = 1:T], 
         if y in SINGLE_FUEL
-            (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:vFuel][y, t])
+            (fuel_costs[dfGen[y,:Fuel]][t] * EP[:vFuel][y, t])
         else
-            sum(EP[:eCFuelOut_multi][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"])
+            sum(EP[:eCFuelOut_multi][y, i, t] for i in 1:max_fuels)
         end)
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelOut[y = 1:G], 
-        sum(inputs["omega"][t] * EP[:eCFuelOut][y, t] for t in 1:T))
+        sum(omega[t] * EP[:eCFuelOut][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelOut[z = 1:Z], 
         sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
@@ -210,8 +220,8 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(MULTI_FUELS)
         @expression(EP, eFuelConsumption_multi[f in 1:NUM_FUEL, t in 1:T],
             sum((EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) #i: fuel id 
-                for i in 1:inputs["MAX_NUM_FUELS"], 
-                    y in intersect(dfGen[dfGen[!,inputs["FUEL_COLS"][i]] .== string(inputs["fuels"][f]) ,:R_ID], MULTI_FUELS))
+                for i in 1:max_fuels, 
+                    y in intersect(dfGen[dfGen[!,fuel_cols[i]] .== string(fuels[f]) ,:R_ID], MULTI_FUELS))
             )
     end
 
@@ -227,7 +237,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     @expression(EP, eFuelConsumptionYear[f in 1:NUM_FUEL],
-        sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
+        sum(omega[t] * EP[:eFuelConsumption][f, t] for t in 1:T))
 
     
     ### Constraint ###
@@ -238,7 +248,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     if !isempty(MULTI_FUELS)
         @constraint(EP, cFuelCalculation_multi[y in intersect(MULTI_FUELS, setdiff(HAS_FUEL, THERM_COMMIT)), t = 1:T],
-                sum(EP[:vMulFuels][y, i, t]/inputs["HEAT_RATES"][i][y] for i in 1:inputs["MAX_NUM_FUELS"]) - EP[:vP][y, t] == 0 
+                sum(EP[:vMulFuels][y, i, t]/heat_rates[i][y] for i in 1:max_fuels) - EP[:vP][y, t] == 0 
             )
     end
 
@@ -269,7 +279,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
             EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
         if !isempty(MULTI_FUELS)
             @constraint(EP, FuelCalculationCommit_multi[y in intersect(setdiff(THERM_COMMIT,THERM_COMMIT_PWFU), MULTI_FUELS), t = 1:T],
-                sum(EP[:vMulFuels][y, i, t]/inputs["HEAT_RATES"][i][y] for i in 1:inputs["MAX_NUM_FUELS"]) - EP[:vP][y, t] .== 0 
+                sum(EP[:vMulFuels][y, i, t]/heat_rates[i][y] for i in 1:max_fuels) - EP[:vP][y, t] .== 0 
             )
         end
     end
@@ -280,7 +290,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         )
     if !isempty(MULTI_FUELS)
         @constraint(EP, cStartFuel_multi[y in intersect(THERM_COMMIT, MULTI_FUELS), t = 1:T],
-            sum(EP[:vMulStartFuels][y, i, t] for i in 1:inputs["MAX_NUM_FUELS"]) - (dfGen[y,:Cap_Size] * EP[:vSTART][y, t] * dfGen[y,:Start_Fuel_MMBTU_per_MW]) .== 0
+            sum(EP[:vMulStartFuels][y, i, t] for i in 1:max_fuels) - (dfGen[y,:Cap_Size] * EP[:vSTART][y, t] * dfGen[y,:Start_Fuel_MMBTU_per_MW]) .== 0
             )
     end
 
@@ -290,18 +300,18 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # fuel2/heat rate <= max_cofire_level * total power without retrofit
     if !isempty(MULTI_FUELS)    
         # during power generation
-        @constraint(EP, cMinCofire[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"], t = 1:T], 
-            EP[:vMulFuels][y, i, t] >= inputs["MIN_COFIRE"][i][y] * EP[:ePlantFuel_generation][y,t]
+        @constraint(EP, cMinCofire[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
+            EP[:vMulFuels][y, i, t] >= min_cofire[i][y] * EP[:ePlantFuel_generation][y,t]
             )
-        @constraint(EP, cMaxCofire[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"], t = 1:T], 
-            EP[:vMulFuels][y, i, t] <= inputs["MAX_COFIRE"][i][y] * EP[:ePlantFuel_generation][y,t]
+        @constraint(EP, cMaxCofire[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
+            EP[:vMulFuels][y, i, t] <= max_cofire[i][y] * EP[:ePlantFuel_generation][y,t]
             )
         # startup
-        @constraint(EP, cMinCofireStart[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"], t = 1:T], 
-            EP[:vMulStartFuels][y, i, t] >= inputs["MIN_COFIRE_START"][i][y] * EP[:ePlantFuel_start][y,t]
+        @constraint(EP, cMinCofireStart[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
+            EP[:vMulStartFuels][y, i, t] >= min_cofire_start[i][y] * EP[:ePlantFuel_start][y,t]
             )
-        @constraint(EP, cMaxCofireStart[y in MULTI_FUELS, i in 1:inputs["MAX_NUM_FUELS"], t = 1:T], 
-            EP[:vMulStartFuels][y, i, t] <= inputs["MAX_COFIRE_START"][i][y] * EP[:ePlantFuel_start][y,t]
+        @constraint(EP, cMaxCofireStart[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
+            EP[:vMulStartFuels][y, i, t] <= max_cofire_start[i][y] * EP[:ePlantFuel_start][y,t]
             )
 
     end

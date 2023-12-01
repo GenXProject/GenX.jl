@@ -8,6 +8,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     filename = "Generators_data.csv"
     gen_in = load_dataframe(joinpath(path, filename))
 
+
     # Store DataFrame of generators/resources input data for use in model
     inputs_gen["dfGen"] = gen_in
 
@@ -22,7 +23,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
     # Add Resource IDs after reading to prevent user errors
     gen_in[!,:R_ID] = 1:G
-	
 	
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	## Defining sets of generation and storage resources
@@ -418,6 +418,7 @@ end
 Function for reading input parameters related to co-located VRE-storage resources
 """
 function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
+
 	error_strings = String[]
 	dfGen = inputs_gen["dfGen"]
 	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(dfGen) ? dfGen[dfGen.VRE_STOR.==1,:R_ID] : Int[]

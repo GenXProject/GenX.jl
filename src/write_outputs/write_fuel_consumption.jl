@@ -15,6 +15,9 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 	G = inputs["G"]
 	HAS_FUEL = inputs["HAS_FUEL"]
 	MULTI_FUELS = inputs["MULTI_FUELS"]
+	fuel_cols = inputs["FUEL_COLS"]
+    max_fuels = inputs["MAX_NUM_FUELS"]
+
 	# Fuel consumption cost by each resource, including start up fuel
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL], 
 		Fuel = dfGen[HAS_FUEL, :Fuel], 
@@ -24,7 +27,7 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 
 	if !isempty(MULTI_FUELS)
 		dfPlantFuel.Multi_Fuels = dfGen[HAS_FUEL, :MULTI_FUELS]
-		for i = 1:inputs["MAX_NUM_FUELS"]
+		for i = 1:max_fuels
 			tempannualsum_fuel_heat_multi_generation = zeros(length(HAS_FUEL))
 			tempannualsum_fuel_heat_multi_start = zeros(length(HAS_FUEL))
 			tempannualsum_fuel_heat_multi_total = zeros(length(HAS_FUEL))
@@ -42,11 +45,11 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 				tempannualsum_fuel_cost_multi *= ModelScalingFactor^2 
 			end
 
-			dfPlantFuel[!, inputs["FUEL_COLS"][i]] = dfGen[HAS_FUEL, inputs["FUEL_COLS"][i]]
-			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Generation"))] = tempannualsum_fuel_heat_multi_generation
-			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Start"))] = tempannualsum_fuel_heat_multi_start
-			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_HeatInput_Total"))] = tempannualsum_fuel_heat_multi_total
-			dfPlantFuel[!, Symbol(string(inputs["FUEL_COLS"][i],"_AnnualSum_Fuel_Cost"))] = tempannualsum_fuel_cost_multi
+			dfPlantFuel[!, fuel_cols[i]] = dfGen[HAS_FUEL, fuel_cols[i]]
+			dfPlantFuel[!, Symbol(string(fuel_cols[i],"_AnnualSum_Fuel_HeatInput_Generation"))] = tempannualsum_fuel_heat_multi_generation
+			dfPlantFuel[!, Symbol(string(fuel_cols[i],"_AnnualSum_Fuel_HeatInput_Start"))] = tempannualsum_fuel_heat_multi_start
+			dfPlantFuel[!, Symbol(string(fuel_cols[i],"_AnnualSum_Fuel_HeatInput_Total"))] = tempannualsum_fuel_heat_multi_total
+			dfPlantFuel[!, Symbol(string(fuel_cols[i],"_AnnualSum_Fuel_Cost"))] = tempannualsum_fuel_cost_multi
 		end
 	end
 	

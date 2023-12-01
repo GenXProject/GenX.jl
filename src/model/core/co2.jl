@@ -60,8 +60,10 @@ function co2!(EP::Model, inputs::Dict)
     Z = inputs["Z"]     # Number of zones
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
-    
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
+    fuel_cols = inputs["FUEL_COLS"]
+    max_fuels = inputs["MAX_NUM_FUELS"]
+    omega = inputs["omega"]
     ### Expressions ###
     # CO2 emissions from power plants in "Generators_data.csv"
     # If all the CO2 capture fractions from Generators_data are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
@@ -71,7 +73,7 @@ function co2!(EP::Model, inputs::Dict)
             if y in SINGLE_FUEL
                 ((1-dfGen[y, :Biomass]) *(EP[:vFuel][y, t] + EP[:vStartFuel][y, t]) * fuel_CO2[dfGen[y,:Fuel]])
             else
-                sum(((1-dfGen[y, :Biomass]) *(EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) * fuel_CO2[dfGen[y,inputs["FUEL_COLS"][i]]]) for i = 1:inputs["MAX_NUM_FUELS"])
+                sum(((1-dfGen[y, :Biomass]) *(EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) * fuel_CO2[dfGen[y,fuel_cols[i]]]) for i = 1:max_fuels)
             end)
     else 
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
@@ -84,8 +86,8 @@ function co2!(EP::Model, inputs::Dict)
                 (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vFuel][y, t]  * fuel_CO2[dfGen[y,:Fuel]]+
                 (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:vStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]
             else
-                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])+
-                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])
+                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, fuel_cols[i]]] for i = 1:max_fuels)+
+                sum((1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, fuel_cols[i]]] for i = 1:max_fuels)
             end)
 
         # CO2 captured from power plants in "Generators_data.csv"
@@ -94,17 +96,17 @@ function co2!(EP::Model, inputs::Dict)
                 dfGen[y, :CO2_Capture_Fraction] * EP[:vFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]+
                 dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]
             else
-                sum(dfGen[y, :CO2_Capture_Fraction] * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])+
-                sum(dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, inputs["FUEL_COLS"][i]]] for i = 1:inputs["MAX_NUM_FUELS"])
+                sum(dfGen[y, :CO2_Capture_Fraction] * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, fuel_cols[i]]] for i = 1:max_fuels)+
+                sum(dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, fuel_cols[i]]] for i = 1:max_fuels)
             end)
 
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 
-            sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] 
+            sum(omega[t] * eEmissionsCaptureByPlant[y, t] 
                 for t in 1:T))
         # add CO2 sequestration cost to objective function
         # when scale factor is on tCO2/MWh = > kt CO2/GWh
         @expression(EP, ePlantCCO2Sequestration[y=1:G], 
-            sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] * 
+            sum(omega[t] * eEmissionsCaptureByPlant[y, t] * 
                 dfGen[y, :CCS_Disposal_Cost_per_Metric_Ton] for t in 1:T))
     
         @expression(EP, eZonalCCO2Sequestration[z=1:Z], 
