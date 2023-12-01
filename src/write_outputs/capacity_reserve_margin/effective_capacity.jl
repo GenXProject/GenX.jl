@@ -50,5 +50,11 @@ function thermal_plant_effective_capacity(
 		effective_capacity = effective_capacity .+ value.(adjustment)
 	end
 
+	if has_fusion(inputs) && y in resources_with_fusion(dfGen)
+		resource_component = dfGen[y, :Resource]
+		adjustment = thermal_fusion_capacity_reserve_margin_adjustment(EP, inputs, resource_component, y, capres_zone, timesteps)
+		effective_capacity = effective_capacity .+ value.(adjustment)
+	end
+
     return effective_capacity
 end

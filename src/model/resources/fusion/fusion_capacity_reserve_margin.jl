@@ -17,21 +17,37 @@ function fusion_capacity_reserve_margin_adjustment!(EP::Model,
     end
 end
 
-# inner-loop function
+# inner-loop function: loops over Capacity Reserve Margin zones, for one resource
+# and actually adjusts the eCapResMarBalance expression
 function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
     inputs::Dict,
     resource_component,
-    r_id::Int)
+    y::Int)
 
     T = inputs["T"]
-    dfGen = inputs["dfGen"]
+	timesteps = collect(1:T)
     ncapres = inputs["NCapacityReserveMargin"]
 
-    y = r_id
-
-    capresfactor(capres) = dfGen[y, Symbol("CapRes_$capres")]
-
     eCapResMarBalance = EP[:eCapResMarBalance]
+
+	for capres_zone in 1:ncapres
+		adjustment = fusion_capacity_reserve_margin_adjustment(EP, inputs, resource_component, y, capres_zone, timesteps)
+		add_similar_to_expression!(eCapResMarBalance[capres_zone, :], adjustment)
+	end
+	return
+end
+
+# Get the amount for one resource component in one CRM zone
+function fusion_capacity_reserve_margin_adjustment(EP::Model,
+    inputs::Dict,
+	resource_component::AbstractString,
+    y::Int,
+    capres_zone::Int,
+	timesteps::Vector{Int})
+
+    dfGen = inputs["dfGen"]
+
+	capresfactor = dfGen[y, Symbol("CapRes_" * string(capres_zone))]
 
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
 
@@ -39,87 +55,16 @@ function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
     eActive = get_from_model(fusion_parasitic_active_name)
     eStartPower = get_from_model(fusion_pulse_start_power_name)
 
-    fusion_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
-                            _fusion_crm_adjustment(capresfactor(capres), ePassive[t], eActive[t], eStartPower[t])
-                       )
-    add_similar_to_expression!(eCapResMarBalance, fusion_adj)
+    fusion_adj = _fusion_crm_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
+	return fusion_adj
 end
 
-@doc raw"""
-    fusion_crm(capresfactor::Float64,
-               eTotalCap::AffExpr,
-               cap_size::Float64,
-               passive_power::AffExpr,
-               active_power::AffExpr,
-               start_power::AffExpr,
-               vMDOWN::VariableRef)
 
-    Capacity reserve margin contributions for a whole plant, with maintenance.
-
-    capresfactor: Factor associated with the reliability of a plant's ability to produce power.
-       Must logically be between 0 to 1.
-    eTotalCap: Capacity of the plants of this type in a zone.
-    cap_size: Power per plant.
-    passive_power: Expression for parasitic passive recirculating power.
-    active_power: Expression for parasitic active recirculating power.
-    start_power: Expression for parasitic pulse start (peak) power.
-    vMDOWN: Variable for number of plants under maintenance.
-"""
-function fusion_crm(capresfactor::Float64,
-                     eTotalCap::AffExpr,
-                     cap_size::Float64,
-                     passive_power::AffExpr,
-                     active_power::AffExpr,
-                     start_power::AffExpr,
-                     vMDOWN::VariableRef)
-    return fusion_crm(capresfactor, eTotalCap, passive_power, active_power, start_power) +
-           _maintenance_crm_adjustment(capresfactor, cap_size, maintenance_down)
-end
-
-@doc raw"""
-    fusion_crm(capresfactor::Float64,
-               eTotalCap::AffExpr,
-               passive_power::AffExpr,
-               active_power::AffExpr,
-               start_power::AffExpr)
-
-    Capacity reserve margin contributions for a fusion plant.
-
-    capresfactor: Factor associated with the reliability of a plant's ability to produce power.
-       Must logically be between 0 to 1.
-    eTotalCap: Capacity of the plants of this type in a zone.
-    passive_power: Expression for parasitic passive recirculating power.
-    active_power: Expression for parasitic active recirculating power.
-    start_power: Expression for parasitic pulse start (peak) power.
-"""
-function fusion_crm(capresfactor::Float64,
-                     eTotalCap::AffExpr,
-                     passive_power::AffExpr,
-                     active_power::AffExpr,
-                     start_power::AffExpr)
-    return capresfactor * eTotalCap +
-           _fusion_crm_adjustment(capresfactor, passive_power, active_power, start_power)
-end
-
-@doc raw"""
-    _maintenance_crm_adjustment(capresfactor::Float64,
-                                cap_size::Float64,
-                                vMDOWN::VariableRef)
-
-    Term to account for plants down due to scheduled maintenance.
-    (`capresfactor` is needed so that this cancels out eTotalCap in the basic CRM expression.)
-
-    capresfactor: Factor associated with the reliability of a plant's ability to produce power.
-       Must logically be between 0 to 1.
-    cap_size: Power per plant.
-    vMDOWN: Variable for number of plants under maintenance.
-"""
-function _maintenance_crm_adjustment(capresfactor::Float64,
-                                     cap_size::Float64,
-                                     maintenance_down::VariableRef)
-    return - capresfactor * cap_size * maintenance_down
-end
-
+# alias for better parallelism in effective_capacity.jl
+thermal_fusion_capacity_reserve_margin_adjustment(a,b,c,d,e,f) = fusion_capacity_reserve_margin_adjustment(a,b,c,d,e,f)
+#################################
+# Where the math actually happens
+#################################
 @doc raw"""
     _fusion_crm_adjustment(capresfactor::Float64,
                passive_power::AffExpr,
@@ -140,7 +85,6 @@ end
 function _fusion_crm_adjustment(capresfactor::Float64,
                                  passive_power::AffExpr,
                                  active_power::AffExpr,
-                                 start_power::AffExpr)
+                                 start_power::AffExpr)::AffExpr
     return -capresfactor * (active_power + start_power) - passive_power
 end
-
