@@ -90,19 +90,19 @@ end
 
 Loads the network map from a list-style interface
 ```
-..., Network_Lines, Origin_Zone, Destination_Zone, ...
-                 1,           1,                2,
-                 2,           1,                3,
+..., Network_Lines, Start_Node, End_Node, ...
+                 1,           1,       2,
+                 2,           1,       3,
 ```
 """
 function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
     start_col, end_col = list_columns
     mat = zeros(L, Z)
-    start_zones = collect(skipmissing(network_var[!, start_col]))
-    end_zones = collect(skipmissing(network_var[!, end_col]))
+    start_nodes = collect(skipmissing(network_var[!, start_col]))
+    end_nodes = collect(skipmissing(network_var[!, end_col]))
     for l in 1:L
-        mat[l, start_zones[l]] = 1
-        mat[l, end_zones[l]] = -1
+        mat[l, start_nodes[l]] = 1
+        mat[l, end_nodes[l]] = -1
     end
     mat
 end
@@ -128,7 +128,7 @@ end
 function load_network_map(network_var::DataFrame, Z, L)
     columns = names(network_var)
 
-    list_columns = ["Origin_Zone", "Destination_Zone"]
+    list_columns = ["Start_Node", "End_Node"]
     has_network_list = all([c in columns for c in list_columns])
 
     zones_as_strings = ["z" * string(i) for i in 1:Z]
@@ -145,6 +145,8 @@ function load_network_map(network_var::DataFrame, Z, L)
     elseif has_network_list
         load_network_map_from_list(network_var, Z, L, list_columns)
     elseif has_network_matrix
+		@warn """Loading the network map in a matrix format is deprecated as of v0.4
+		and will be removed in v0.5."""
         load_network_map_from_matrix(network_var, Z, L)
     end
 end
