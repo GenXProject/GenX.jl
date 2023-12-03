@@ -151,7 +151,7 @@ function load_network_map(network_var::DataFrame, Z, L)
 end
 
 function network_map_matrix_format_deprecation_warning()
-		@warn """Loading the network map in a matrix format is deprecated as of v0.4
+		@warn """Specifying the network map as a matrix is deprecated as of v0.4
 and will be removed in v0.5. Instead, use the more compact list-style format.
 
 ..., Network_Lines, Start_Node, End_Node, ...
