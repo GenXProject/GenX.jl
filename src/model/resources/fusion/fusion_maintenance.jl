@@ -8,11 +8,11 @@ function fusion_maintenance_adjust_parasitic_power!(EP, df::DataFrame)
     MAINTENANCE = resources_with_maintenance(df)
 
     for y in intersect(FUSION, MAINTENANCE)
-        resource_component(y) = df[y, :Resource]
-        reactor = FusionReactorData(parasitic_passive_fraction = by_rid(y, :Recirc_Pass),
+        resource_component = df[y, :Resource]
+        reactor = FusionReactorData(parasitic_passive_fraction = by_rid(y, :Parasitic_Passive),
                                     eff_down = 1.0,
                                     component_size = by_rid(y, :Cap_Size),
-                                    maintenance_remaining_parasitic_power_fraction = by_rid(y, :Recirc_Pass_Maintenance_Remaining))
+									maintenance_remaining_parasitic_power_fraction = float(by_rid(y, :Parasitic_Passive_Maintenance_Remaining)))
 
         _fusion_maintenance_parasitic_power_adjustment!(EP, resource_component, reactor)
     end

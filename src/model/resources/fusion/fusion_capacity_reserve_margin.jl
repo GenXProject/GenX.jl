@@ -61,7 +61,8 @@ end
 
 
 # alias for better parallelism in effective_capacity.jl
-thermal_fusion_capacity_reserve_margin_adjustment(a,b,c,d,e,f) = fusion_capacity_reserve_margin_adjustment(a,b,c,d,e,f)
+thermal_fusion_capacity_reserve_margin_adjustment = fusion_capacity_reserve_margin_adjustment
+
 #################################
 # Where the math actually happens
 #################################
