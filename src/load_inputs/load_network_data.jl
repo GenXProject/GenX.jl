@@ -121,6 +121,7 @@ starting node of the line and the zone with entry -1 is the ending node of the l
 """
 function load_network_map_from_matrix(network_var::DataFrame, Z, L)
     # Topology of the network source-sink matrix
+	network_map_matrix_format_deprecation_warning()
     col = findall(s -> s == "z1", names(network_var))[1]
     mat = Matrix{Float64}(network_var[1:L, col:col+Z-1])
 end
@@ -145,8 +146,17 @@ function load_network_map(network_var::DataFrame, Z, L)
     elseif has_network_list
         load_network_map_from_list(network_var, Z, L, list_columns)
     elseif has_network_matrix
-		@warn """Loading the network map in a matrix format is deprecated as of v0.4
-		and will be removed in v0.5."""
         load_network_map_from_matrix(network_var, Z, L)
     end
+end
+
+function network_map_matrix_format_deprecation_warning()
+		@warn """Loading the network map in a matrix format is deprecated as of v0.4
+and will be removed in v0.5. Instead, use the more compact list-style format.
+
+..., Network_Lines, Start_Node, End_Node, ...
+                 1,          1,        2,
+                 2,          1,        3,
+                 3,          2,        3,
+""" maxlog=1
 end
