@@ -187,7 +187,7 @@ function has_pulse_start_power(r::FusionReactorData)
 end
 
 # keeping this for later
-function fusion_average_net_electric_power_factor!(reactor::FusionReactorData)
+function fusion_average_net_electric_power_factor(reactor::FusionReactorData)
     dwell_time = reactor.dwell_time
     max_up = reactor.max_pulse_length
     parasitic_start_energy = reactor.parasitic_start_energy_fraction
