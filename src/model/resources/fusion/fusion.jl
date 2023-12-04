@@ -1,3 +1,7 @@
+#################################################################
+# Names for keys in an inputs (or future outputs) dictionary
+#################################################################
+
 const FUSION_PULSE_START = "FusionPulseStartVariables"
 const FUSION_PULSE_UNDERWAY = "FusionPulseUnderwayVariables"
 
@@ -5,6 +9,10 @@ const FUSION_PARASITIC_POWER = "FusionParasiticPowerExpressions"
 const FUSION_PULSE_START_POWER = "FusionPulseStartPowerExpressions"
 
 const FUSION_COMPONENT_ZONE = "FusionComponentZones"
+
+#####################################################################
+# Individual fusion reactor component variable and expressions names
+#####################################################################
 
 function fusion_pulse_start_name(resource_component::AbstractString)::String
     "vFusionPulseStart_" * resource_component
@@ -34,13 +42,53 @@ function fusion_parasitic_total_name(resource_component::AbstractString)::String
     "eFusionParasiticTotal_" * resource_component
 end
 
+#############################################################################
+# Set and get these variables, expressions from the inputs (or outputs) dict
+#############################################################################
+
+@doc raw"""
+    ensure_fusion_expression_records!(dict::Dict)
+
+    dict: a dictionary of model data
+
+    This should be called by each method that adds fusion formulations,
+    to ensure that certain entries in the model data dict exist.
+"""
+function ensure_fusion_expression_records!(dict::Dict)
+    for var in (FUSION_PARASITIC_POWER, FUSION_PULSE_START_POWER)
+        if var ∉ keys(dict)
+            dict[var] = Set{Symbol}()
+        end
+    end
+    var = FUSION_COMPONENT_ZONE
+    if var ∉ keys(dict)
+        dict[var] = Dict{Int, Set{AbstractString}}()
+    end
+end
+
+@doc raw"""
+    ensure_fusion_pulse_variable_records!(dict::Dict)
+
+    dict: a dictionary of model data
+
+    This should be called by each method that adds fusion formulations,
+    to ensure that certain entries in the model data dict exist.
+"""
+function ensure_fusion_pulse_variable_records!(dict::Dict)
+    for var in (FUSION_PULSE_START, FUSION_PULSE_UNDERWAY)
+        if var ∉ keys(dict)
+            dict[var] = Set{Symbol}()
+        end
+    end
+end
+
 @doc raw"""
     fusion_parasitic_power_expressions(dict::Dict)
 
     dict: a dictionary of model data
 
     get listings of parasitic power expressions.
-    This is available only after `fusion_formulation!` has been called.
+    This is available only after `fusion_formulation_thermal_commit!` has been called.
 """
 function fusion_parasitic_power_expressions(dict::Dict)::Set{Symbol}
     dict[FUSION_PARASITIC_POWER]
@@ -72,25 +120,6 @@ function fusion_pulse_start_expressions(dict::Dict)::Set{Symbol}
     dict[FUSION_PULSE_START]
 end
 
-@doc raw"""
-    ensure_fusion_expression_records!(dict::Dict)
-
-    dict: a dictionary of model data
-
-    This should be called by each method that adds fusion formulations,
-    to ensure that certain entries in the model data dict exist.
-"""
-function ensure_fusion_expression_records!(dict::Dict)
-    for var in (FUSION_PARASITIC_POWER, FUSION_PULSE_START_POWER)
-        if var ∉ keys(dict)
-            dict[var] = Set{Symbol}()
-        end
-    end
-    var = FUSION_COMPONENT_ZONE
-    if var ∉ keys(dict)
-        dict[var] = Dict{Int, Set{AbstractString}}()
-    end
-end
 
 function add_fusion_component_to_zone_listing(inputs::Dict, r_id::Int, resource_component::AbstractString)
     zone = inputs["R_ZONES"][r_id]
@@ -103,6 +132,52 @@ function add_fusion_component_to_zone_listing(inputs::Dict, r_id::Int, resource_
     end
 end
 
+@doc raw"""
+    has_fusion(dict::Dict)
+
+    dict: a dictionary of model data
+
+    Checks whether the dictionary contains listings of fusion-related expressions.
+    This is true only after `fusion_formulation!` has been called.
+"""
+function has_fusion(dict::Dict)::Bool
+    FUSION_PARASITIC_POWER in keys(dict)
+end
+
+################################################
+# Get ID's of resources with a fusion component
+################################################
+
+@doc raw"""
+    resources_with_fusion(df::DataFrame)::Vector{Int}
+
+    Get a vector of the R_ID's of all fusion resources listed in a dataframe.
+    If there are none, return an empty vector.
+
+    This method takes a specific dataframe because compound resources may have their
+    data in multiple dataframes.
+"""
+function resources_with_fusion(df::DataFrame)::Vector{Int}
+    if "FUSION" in names(df)
+        df[df.FUSION.>0, :R_ID]
+    else
+        Vector{Int}[]
+    end
+end
+
+@doc raw"""
+    resources_with_fusion(inputs::Dict)::Vector{Int}
+
+    Get a vector of the R_ID's of all resources listed in a dataframe
+    that have fusion. If there are none, return an empty vector.
+"""
+function resources_with_fusion(inputs::Dict)::Vector{Int}
+    resources_with_fusion(inputs["dfGen"])
+end
+
+#######################################
+# Define a data structure for a reactor
+#######################################
 
 # Base.@kwdef could be used if we enforce Julia >= 1.9
 # That would replace need for the keyword-argument constructor below
@@ -143,32 +218,9 @@ FusionReactorData(;
     max_starts,
 )
 
-@doc raw"""
-    resources_with_fusion(df::DataFrame)::Vector{Int}
-
-    Get a vector of the R_ID's of all fusion resources listed in a dataframe.
-    If there are none, return an empty vector.
-
-    This method takes a specific dataframe because compound resources may have their
-    data in multiple dataframes.
-"""
-function resources_with_fusion(df::DataFrame)::Vector{Int}
-    if "FUSION" in names(df)
-        df[df.FUSION.>0, :R_ID]
-    else
-        Vector{Int}[]
-    end
-end
-
-@doc raw"""
-    resources_with_fusion(inputs::Dict)::Vector{Int}
-
-    Get a vector of the R_ID's of all resources listed in a dataframe
-    that have fusion. If there are none, return an empty vector.
-"""
-function resources_with_fusion(inputs::Dict)::Vector{Int}
-    resources_with_fusion(inputs["dfGen"])
-end
+#######################################
+# Compute reactor properties
+#######################################
 
 function has_parasitic_power(r::FusionReactorData)
     r.parasitic_start_energy > 0 || r.parasitic_passive_fraction > 0 || r.parasitic_active_fraction > 0
@@ -186,7 +238,6 @@ function has_pulse_start_power(r::FusionReactorData)
     r.pulse_start_power_fraction > 0
 end
 
-# keeping this for later
 function fusion_average_net_electric_power_factor(reactor::FusionReactorData)
     dwell_time = reactor.dwell_time
     max_up = reactor.max_pulse_length
@@ -206,21 +257,10 @@ function fusion_average_net_electric_power_factor(reactor::FusionReactorData)
     return net_th_factor
 end
 
-@doc raw"""
-    ensure_fusion_pulse_variable_records!(dict::Dict)
-
-    dict: a dictionary of model data
-
-    This should be called by each method that adds fusion formulations,
-    to ensure that certain entries in the model data dict exist.
-"""
-function ensure_fusion_pulse_variable_records!(dict::Dict)
-    for var in (FUSION_PULSE_START, FUSION_PULSE_UNDERWAY)
-        if var ∉ keys(dict)
-            dict[var] = Set{Symbol}()
-        end
-    end
-end
+############################################################################
+# Add variables, expressions, constraints for individual fusion components
+# to the model
+############################################################################
 
 function fusion_pulse_variables!(EP::Model,
         inputs::Dict,
@@ -438,17 +478,5 @@ function fusion_adjust_power_balance!(EP, inputs::Dict, df::DataFrame, component
         eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
         add_similar_to_expression!(ePowerBalance[:, z], -eTotalParasitic)
     end
-end
-
-@doc raw"""
-    has_fusion(dict::Dict)
-
-    dict: a dictionary of model data
-
-    Checks whether the dictionary contains listings of fusion-related expressions.
-    This is true only after `fusion_formulation!` has been called.
-"""
-function has_fusion(dict::Dict)::Bool
-    FUSION_PARASITIC_POWER in keys(dict)
 end
 
