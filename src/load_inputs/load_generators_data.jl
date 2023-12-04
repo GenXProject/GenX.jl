@@ -645,7 +645,7 @@ While for now, New_Build entries of {1, 0, -1} are still supported,
 this format is being deprecated.
 Now and going forward, New_Build and Can_Retire should be separate columns,
 each with values {0, 1}.
-Please see the documentation for additional details."
+Please see the documentation for additional details." maxlog=1
 end
 
 function resources_which_can_be_retired(df::DataFrame)::Set{Int64}
