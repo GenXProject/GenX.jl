@@ -46,6 +46,13 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
             fusion_capacity_reserve_margin_adjustment!(EP, inputs)
         end
 	end
+
+	if setup["EnergyShareRequirement"] > 0
+        FUSION = resources_with_fusion(dfGen)
+        if !isempty(intersect(FUSION, THERM_COMMIT))
+            fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
+        end
+	end
 #=
 	##CO2 Polcy Module Thermal Generation by zone
 	@expression(EP, eGenerationByThermAll[z=1:Z, t=1:T], # the unit is GW
