@@ -90,9 +90,9 @@ end
 
 Loads the network map from a list-style interface
 ```
-..., Network_Lines, Origin_Zone, Destination_Zone, ...
-                 1,           1,                2,
-                 2,           1,                3,
+..., Network_Lines, Start_Zone, End_Zone, ...
+                 1,           1,       2,
+                 2,           1,       3,
 ```
 """
 function load_network_map_from_list(network_var::DataFrame, Z, L, list_columns)
@@ -117,10 +117,11 @@ Loads the network map from a matrix-style interface
                  2,  1,  0, -1,
 ```
 This is equivalent to the list-style interface where the zone zN with entry +1 is the
-starting node of the line and the zone with entry -1 is the ending node of the line.
+starting zone of the line and the zone with entry -1 is the ending zone of the line.
 """
 function load_network_map_from_matrix(network_var::DataFrame, Z, L)
     # Topology of the network source-sink matrix
+	network_map_matrix_format_deprecation_warning()
     col = findall(s -> s == "z1", names(network_var))[1]
     mat = Matrix{Float64}(network_var[1:L, col:col+Z-1])
 end
@@ -128,14 +129,14 @@ end
 function load_network_map(network_var::DataFrame, Z, L)
     columns = names(network_var)
 
-    list_columns = ["Origin_Zone", "Destination_Zone"]
+    list_columns = ["Start_Zone", "End_Zone"]
     has_network_list = all([c in columns for c in list_columns])
 
     zones_as_strings = ["z" * string(i) for i in 1:Z]
     has_network_matrix =  all([c in columns for c in zones_as_strings])
 
     instructions = """The transmission network should be specified in the form of a matrix
-           (with columns z1, z2, ... zN) or in the form of lists (with Start_Node, End_Node),
+           (with columns z1, z2, ... zN) or in the form of lists (with Start_Zone, End_Zone),
            but not both. See the documentation for examples."""
 
     if has_network_list && has_network_matrix
@@ -147,4 +148,15 @@ function load_network_map(network_var::DataFrame, Z, L)
     elseif has_network_matrix
         load_network_map_from_matrix(network_var, Z, L)
     end
+end
+
+function network_map_matrix_format_deprecation_warning()
+		@warn """Specifying the network map as a matrix is deprecated as of v0.4
+and will be removed in v0.5. Instead, use the more compact list-style format.
+
+..., Network_Lines, Start_Zone, End_Zone, ...
+                 1,          1,        2,
+                 2,          1,        3,
+                 3,          2,        3,
+""" maxlog=1
 end

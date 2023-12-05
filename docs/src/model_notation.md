@@ -238,7 +238,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\rho_{y,z,t}^{max,pv}$ | Maximum available generation per unit of installed capacity for the solar PV component of a co-located VRE and storage resource during time step t for technology y in zone z [%]|
 |$\rho_{y,z,t}^{max,wind}$ | Maximum available generation per unit of installed capacity for the wind component of a co-located VRE and storage resource during time step t for technology y in zone z [%]|
 |$VREIndex_{y,z}$ | Resource bin index for VRE technology $y$ in zone $z$. $VREIndex_{y,z}=1$ for the first bin, and $VREIndex_{y,z}=0$ for remaining bins. Only defined for $y\in \mathcal{VRE}$ |
-|$\varphi^{map}_{l,z}$ | Topology of the network, for line l: $\varphi^{map}_{l,z}=1$ for zone $z$ of origin, - 1 for zone $z$ of destination, 0 otherwise. |
+|$\varphi^{map}_{l,z}$ | Topology of the network, for line l: $\varphi^{map}_{l,z}=1$ for start zone $z$, - 1 for end zone $z$, 0 otherwise. |
 |$\eta_{y,z}^{loss}$ | Self discharge rate per time step per unit of installed capacity for storage technology $y$ in zone $z$ [%]|
 |$\eta_{y,z}^{charge}$ | Single-trip efficiency of storage charging/demand deferral for technology $y$ in zone $z$ [%]|
 |$\eta_{y,z}^{discharge}$ | Single-trip efficiency of storage (and hydro reservoir) discharging/demand satisfaction for technology $y$ in zone $z$ [%]|
