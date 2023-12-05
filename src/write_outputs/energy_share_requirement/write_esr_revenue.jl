@@ -23,8 +23,8 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	for i in 1:nESR
 		esr_col = Symbol("ESR_$i")
 		price = dfESR[i, :ESR_Price]
-		annual_net_generation = dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col]
-		revenue = annual_net_generation * price
+		derated_annual_net_generation = dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col]
+		revenue = derated_annual_net_generation * price
 		dfESRRev[!, esr_col] =  revenue
 
 		if !isempty(VRE_STOR)
@@ -58,7 +58,7 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 			end
 		end
 	end
-	dfESRRev.AnnualSum = sum(eachcol(dfESRRev[:, 6:nESR + 5]))
+	dfESRRev.Total = sum(eachcol(dfESRRev[:, 6:nESR + 5]))
 	CSV.write(joinpath(path, "ESR_Revenue.csv"), dfESRRev)
 	return dfESRRev
 end
