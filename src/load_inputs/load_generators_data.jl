@@ -75,7 +75,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 	# Set of multi-fuel resources
 	if "MULTI_FUELS" ∉ names(gen_in)
-		gen_in[!, "MULTI_FUELS"] = zero(gen_in[!, "R_ID"])
+		gen_in[!, "MULTI_FUELS"] = zeros(G)
 	end
 
 	# Set of thermal generator resources
@@ -223,7 +223,14 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	end
 
 	load_vre_stor_data!(inputs_gen, setup, path)
-	load_multi_fuels_data!(inputs_gen, setup, path)
+
+	# Single-fuel resources
+	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
+	# Multi-fuel resources
+	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
+	if !isempty(inputs_gen["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
+		load_multi_fuels_data!(inputs_gen, setup, path)
+	end
 	
 	# write zeros if col names are not in the gen_in dataframe
 	required_cols_for_co2 = ["Biomass", "CO2_Capture_Fraction", "CO2_Capture_Fraction_Startup", "CCS_Disposal_Cost_per_Metric_Ton"]
@@ -252,44 +259,39 @@ Function for reading input parameters related to multi fuels
 """
 function load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
 	gen_in = inputs_gen["dfGen"]
-	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
-	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
 
-	if !isempty(inputs_gen["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
-		inputs_gen["NUM_FUELS"] = gen_in[!,:Num_Fuels]   # Number of fuels that this resource can use
-		max_fuels = maximum(inputs_gen["NUM_FUELS"])
-		fuel_cols = [ Symbol(string("Fuel",i)) for i in 1:max_fuels ]
-		heat_rate_cols = [ Symbol(string("Heat_Rate",i, "_MMBTU_per_MWh")) for i in 1:max_fuels ]
-		max_cofire_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level")) for i in 1:max_fuels ]
-		min_cofire_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level")) for i in 1:max_fuels ]
-		max_cofire_start_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level_Start")) for i in 1:max_fuels ]
-		min_cofire_start_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level_Start")) for i in 1:max_fuels ]
-		fuel_types = [ gen_in[!,f] for f in fuel_cols ]
-		heat_rates = [ gen_in[!,f] for f in heat_rate_cols ]
-		max_cofire = [ gen_in[!,f] for f in max_cofire_cols ]
-		min_cofire = [ gen_in[!,f] for f in min_cofire_cols ]
-		max_cofire_start = [ gen_in[!,f] for f in max_cofire_start_cols ]
-		min_cofire_start = [ gen_in[!,f] for f in min_cofire_start_cols ]
-		inputs_gen["HEAT_RATES"] = heat_rates
-		inputs_gen["MAX_COFIRE"] = max_cofire
-		inputs_gen["MIN_COFIRE"] = min_cofire
-		inputs_gen["MAX_COFIRE_START"] = max_cofire_start
-		inputs_gen["MIN_COFIRE_START"] = min_cofire_start
-		inputs_gen["FUEL_TYPES"] = fuel_types
-		inputs_gen["FUEL_COLS"] = fuel_cols
-		inputs_gen["MAX_NUM_FUELS"] = max_fuels
+	inputs_gen["NUM_FUELS"] = gen_in[!,:Num_Fuels]   # Number of fuels that this resource can use
+	max_fuels = maximum(inputs_gen["NUM_FUELS"])
+	fuel_cols = [ Symbol(string("Fuel",i)) for i in 1:max_fuels ]
+	heat_rate_cols = [ Symbol(string("Heat_Rate",i, "_MMBTU_per_MWh")) for i in 1:max_fuels ]
+	max_cofire_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level")) for i in 1:max_fuels ]
+	min_cofire_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level")) for i in 1:max_fuels ]
+	max_cofire_start_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level_Start")) for i in 1:max_fuels ]
+	min_cofire_start_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level_Start")) for i in 1:max_fuels ]
+	fuel_types = [ gen_in[!,f] for f in fuel_cols ]
+	heat_rates = [ gen_in[!,f] for f in heat_rate_cols ]
+	max_cofire = [ gen_in[!,f] for f in max_cofire_cols ]
+	min_cofire = [ gen_in[!,f] for f in min_cofire_cols ]
+	max_cofire_start = [ gen_in[!,f] for f in max_cofire_start_cols ]
+	min_cofire_start = [ gen_in[!,f] for f in min_cofire_start_cols ]
+	inputs_gen["HEAT_RATES"] = heat_rates
+	inputs_gen["MAX_COFIRE"] = max_cofire
+	inputs_gen["MIN_COFIRE"] = min_cofire
+	inputs_gen["MAX_COFIRE_START"] = max_cofire_start
+	inputs_gen["MIN_COFIRE_START"] = min_cofire_start
+	inputs_gen["FUEL_TYPES"] = fuel_types
+	inputs_gen["FUEL_COLS"] = fuel_cols
+	inputs_gen["MAX_NUM_FUELS"] = max_fuels
 
-		# check whether non-zero heat rates are used for resources that only use a single fuel
-		for i in 1:max_fuels
-			for hr in heat_rates[i][inputs_gen["SINGLE_FUEL"]]
-				if  hr > 0 
-					error("Heat rates for multi fuels must be zero when only one fuel is used")
-				end
+	# check whether non-zero heat rates are used for resources that only use a single fuel
+	for i in 1:max_fuels
+		for hr in heat_rates[i][inputs_gen["SINGLE_FUEL"]]
+			if  hr > 0 
+				error("Heat rates for multi fuels must be zero when only one fuel is used")
 			end
 		end
 	end
-end	
-
+end
 
 @doc raw"""
 	check_vre_stor_validity(df::DataFrame, setup::Dict)

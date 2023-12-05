@@ -115,7 +115,6 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0)  
     end 
 
-    
     ### Expressions ####
     # Fuel consumed on start-up (MMBTU or kMMBTU (scaled)) 
     # if unit commitment is modelled
