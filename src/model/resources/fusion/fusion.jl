@@ -449,8 +449,6 @@ function fusion_total_parasitic_power!(
     r_id::Int,
     )
 
-    T = inputs["T"]
-
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
 
     ePassive = get_from_model(fusion_parasitic_passive_name)
@@ -459,14 +457,12 @@ function fusion_total_parasitic_power!(
 
     total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
 
-    EP[total_parasitic] =
-        @expression(EP, [t in 1:T], ePassive[t] + eActive[t] + eStartEnergy[t])
+    EP[total_parasitic] = ePassive + eActive + eStartEnergy
 
     union!(inputs[FUSION_PARASITIC_POWER], (total_parasitic,))
 end
 
 function fusion_adjust_power_balance!(EP, inputs::Dict, df::DataFrame, component::AbstractString="")
-    T = inputs["T"]
     zones_for_resources = inputs["R_ZONES"]
     ePowerBalance = EP[:ePowerBalance]
 
