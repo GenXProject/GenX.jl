@@ -42,4 +42,8 @@ end
     @testset "Multi Stage" begin
         include("test_multistage.jl")
     end
+
+    @testset "Multi Fuels" begin
+        include("test_multifuels.jl")
+    end
 end
