@@ -1,3 +1,9 @@
+#################################
+#
+#    Capacity Reserve Margin
+#
+#################################
+
 @doc raw"""
     fusion_capacity_reserve_margin_adjustment!(EP::Model, inputs::Dict)
 
@@ -88,4 +94,47 @@ function _fusion_crm_adjustment(capresfactor::Float64,
                                  active_power::AffExpr,
                                  start_power::AffExpr)::AffExpr
     return -capresfactor * (active_power + start_power) - passive_power
+end
+
+#################################
+#
+#    Energy Share Requirement
+#
+#################################
+
+function fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
+	eESR = EP[:eESR]
+	nESR = inputs["nESR"]
+	weights = inputs["omega"]
+	dfGen = inputs["dfGen"]
+	FUSION = resources_with_fusion(dfGen)
+
+	for y in FUSION, p in 1:nESR
+		esr_derating = dfGen[y, Symbol("ESR_" * string(p))]
+		if esr_derating > 0
+			resource_component = dfGen[y, :Resource]
+			adjustment = fusion_parasitic_power_adjustment_to_esr(EP, inputs, resource_component, esr_derating)
+			add_similar_to_expression!(eESR[p], adjustment)
+		end
+	end
+end
+
+# Where the math happens
+function fusion_parasitic_power_adjustment_to_esr(EP, inputs, resource_component, esr_derating::Float64)
+	annual_parasitic = fusion_annual_parasitic_power(EP, inputs, resource_component)
+	return -esr_derating * annual_parasitic
+end
+
+# for outputs
+function thermal_fusion_parasitic_power_adjustment_to_esr(EP::Model, inputs::Dict, setup::Dict, esr_col::Symbol)
+	dfGen = inputs["dfGen"]
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+	esr_derating = dfGen[FUSION, esr_column]
+	resource_component = dfGen[FUSION, :Resource]
+
+	FUSION = resources_with_fusion(dfGen)
+
+	expr = fusion_parasitic_power_adjustment_to_esr.(Ref(EP), Ref(inputs), resource_component, esr_derating)
+	return scale_factor * value.(expr)
 end

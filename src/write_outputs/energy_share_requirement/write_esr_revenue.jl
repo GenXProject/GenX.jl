@@ -26,10 +26,9 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		esr_col = Symbol("ESR_$i")
 		price = dfESR[i, :ESR_Price]
 		derated_annual_net_generation = dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col]
-		#derated_annual_net_generation[FUSION] .+= value.(fusion_parasitic_power_adjustment_to_esr.(Ref(EP), Ref(inputs), dfGen[FUSION, :Resource], dfGen[FUSION, esr_col]))
+		derated_annual_net_generation[FUSION] .+= thermal_fusion_annual_parasitic_power(EP, inputs, setup) .* dfGen[FUSION, esr_col]
 		revenue = derated_annual_net_generation * price
 		dfESRRev[!, esr_col] =  revenue
-
 		if !isempty(VRE_STOR)
 			esr_vrestor_col = Symbol("ESRVreStor_$i")
 			if !isempty(SOLAR_ONLY)
