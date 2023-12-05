@@ -184,32 +184,8 @@ function check_fusion_applicability(r::GenXResource)
         push!(error_strings, e)
     end
 
-    error_strings = [error_strings; check_fusion_no_esr(r)]
-
     return error_strings
 end
-
-# Prevent use of fusion with ESR_* ≠ 0. (Other resources can have ESR ≠ 0.0)
-function check_fusion_no_esr(r::GenXResource)::Vector{String}
-    esr_keys = "ESR_" .* string.(find_indexed_keys(r, "ESR"))
-    error_strings = String[]
-    if isempty(esr_keys)
-        return error_strings
-    end
-
-    esr_values = convert.(Float64, extract_sequential_keys(r, "ESR"))
-    if esr_values != zero(esr_values)
-        name = resource_name(r)
-        e = string("Fusion resource ", name, "has Energy Share Requirement attributes \n",
-                   esr_keys, " of ", esr_values, ".\n",
-                   "At least one of these is nonzero.\n",
-                   "Fusion is not compatible with ESR at this time.")
-        push!(error_strings, e)
-    end
-
-    return error_strings
-end
-
 
 @doc raw"""
     check_resource(r::GenXResource)::Vector{String}

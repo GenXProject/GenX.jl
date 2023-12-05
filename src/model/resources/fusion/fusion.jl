@@ -476,7 +476,8 @@ function fusion_adjust_power_balance!(EP, inputs::Dict, df::DataFrame, component
     end
 end
 
-function fusion_parasitic_power_adjust_energy_share_requirement(EP, inputs)
+function fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
+	@info "Adjusting fusion ESR"
 	eESR = EP[:eESR]
 	nESR = inputs["nESR"]
 	weights = inputs["omega"]
@@ -487,7 +488,7 @@ function fusion_parasitic_power_adjust_energy_share_requirement(EP, inputs)
 		esr_derating = dfGen[y, Symbol("ESR_" * string(p))]
 		if esr_derating > 0
 			resource_component = dfGen[y, :Resource]
-			eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(FUSION))]
+			eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
 			annual_parasitic = esr_derating * weights' * eTotalParasitic
 			add_similar_to_expression!(eESR[p], -annual_parasitic)
 		end
