@@ -119,19 +119,3 @@ function fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
 	end
 end
 
-#################################
-#
-#    For various outputs
-#
-#################################
-
-function thermal_fusion_annual_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
-	dfGen = inputs["dfGen"]
-	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	FUSION = resources_with_fusion(dfGen)
-
-	resource_component = dfGen[FUSION, :Resource]
-
-	expr = fusion_annual_parasitic_power.(Ref(EP), Ref(inputs), resource_component)
-	return scale_factor * value.(expr)
-end

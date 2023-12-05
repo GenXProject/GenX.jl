@@ -486,3 +486,14 @@ function fusion_annual_parasitic_power(EP, inputs, resource_component::AbstractS
 	annual_parasitic = weight' * eTotalParasitic
 	return annual_parasitic
 end
+
+function thermal_fusion_annual_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
+	dfGen = inputs["dfGen"]
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	FUSION = resources_with_fusion(dfGen)
+
+	resource_component = dfGen[FUSION, :Resource]
+
+	expr = fusion_annual_parasitic_power.(Ref(EP), Ref(inputs), resource_component)
+	return scale_factor * value.(expr)
+end
