@@ -126,14 +126,14 @@ function fusion_parasitic_power_adjustment_to_esr(EP, inputs, resource_component
 end
 
 # for outputs
-function thermal_fusion_parasitic_power_adjustment_to_esr(EP::Model, inputs::Dict, setup::Dict, esr_col::Symbol)
+function thermal_fusion_parasitic_power_adjustment_to_esr(EP::Model, inputs::Dict, setup::Dict, esr_column::Symbol)
 	dfGen = inputs["dfGen"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	FUSION = resources_with_fusion(dfGen)
 
 	esr_derating = dfGen[FUSION, esr_column]
 	resource_component = dfGen[FUSION, :Resource]
 
-	FUSION = resources_with_fusion(dfGen)
 
 	expr = fusion_parasitic_power_adjustment_to_esr.(Ref(EP), Ref(inputs), resource_component, esr_derating)
 	return scale_factor * value.(expr)
