@@ -7,6 +7,8 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	dfGen = inputs["dfGen"]
 	dfESRRev = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
 	G = inputs["G"]
+	nESR = inputs["nESR"]
+	weight = inputs["omega"]
 	VRE_STOR = inputs["VRE_STOR"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 	if !isempty(VRE_STOR)
@@ -16,48 +18,48 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		WIND_ONLY = setdiff(WIND, SOLAR)
 		SOLAR_WIND = intersect(SOLAR, WIND)
 	end
+
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
-	for i in 1:inputs["nESR"]
+	for i in 1:nESR
 		esr_col = Symbol("ESR_$i")
-		dfESRRev =  hcat(dfESRRev, dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col] * dfESR[i,:ESR_Price])
-		# dfpower is in MWh already, price is in $/MWh already, no need to scale
-		# if setup["ParameterScale"] == 1
-		# 	#dfESRRev[!,:x1] = dfESRRev[!,:x1] * (1e+3) # MillionUS$ to US$
-		# 	dfESRRev[!,:x1] = dfESRRev[!,:x1] * ModelScalingFactor # MillionUS$ to US$  # Is this right? -Jack 4/29/2021
-		# end
-		rename!(dfESRRev, Dict(:x1 => esr_col))
+		price = dfESR[i, :ESR_Price]
+		derated_annual_net_generation = dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col]
+		revenue = derated_annual_net_generation * price
+		dfESRRev[!, esr_col] =  revenue
+
 		if !isempty(VRE_STOR)
 			esr_vrestor_col = Symbol("ESRVreStor_$i")
 			if !isempty(SOLAR_ONLY)
 				solar_resources = ((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0))
 				dfESRRev[SOLAR, esr_col] = (
 					value.(EP[:vP_SOLAR][SOLAR, :]).data
-					.* dfVRE_STOR[solar_resources, :EtaInverter] * inputs["omega"]
-				) .* dfVRE_STOR[solar_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
+					.* dfVRE_STOR[solar_resources, :EtaInverter] * weight
+				) .* dfVRE_STOR[solar_resources,esr_vrestor_col] * price
 			end
 			if !isempty(WIND_ONLY)
 				wind_resources = ((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.==0))
 				dfESRRev[WIND, esr_col] = (
 					value.(EP[:vP_WIND][WIND, :]).data
-					* inputs["omega"]
-				) .* dfVRE_STOR[wind_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
+					* weight
+				) .* dfVRE_STOR[wind_resources,esr_vrestor_col] * price
 			end
 			if !isempty(SOLAR_WIND)
 				solar_and_wind_resources = ((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0))
 				dfESRRev[SOLAR_WIND, esr_col] = (
 					(
-						(value.(EP[:vP_WIND][SOLAR_WIND, :]).data * inputs["omega"])
-						.* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
+						(value.(EP[:vP_WIND][SOLAR_WIND, :]).data * weight)
+						.* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * price
 					) + (
 						value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data
 						.* dfVRE_STOR[solar_and_wind_resources, :EtaInverter]
-						* inputs["omega"]
-					) .* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * dfESR[i,:ESR_Price]
+						* weight
+					) .* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * price
 				)
 			end
 		end
 	end
-	dfESRRev.AnnualSum = sum(eachcol(dfESRRev[:,6:inputs["nESR"]+5]))
+	dfESRRev.Total = sum(eachcol(dfESRRev[:, 6:nESR + 5]))
 	CSV.write(joinpath(path, "ESR_Revenue.csv"), dfESRRev)
 	return dfESRRev
 end
+

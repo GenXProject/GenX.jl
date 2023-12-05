@@ -132,7 +132,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add RPS/CES revenue to the dataframe
 	dfNetRevenue.ESRRevenue = zeros(nrow(dfNetRevenue))
  	if setup["EnergyShareRequirement"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
- 		dfNetRevenue.ESRRevenue = dfESRRev[1:G,:AnnualSum]
+ 		dfNetRevenue.ESRRevenue = dfESRRev[1:G,:Total]
  	end
 
 	# Calculate emissions cost
