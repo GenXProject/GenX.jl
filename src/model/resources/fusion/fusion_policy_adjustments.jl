@@ -113,28 +113,25 @@ function fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
 		esr_derating = dfGen[y, Symbol("ESR_" * string(p))]
 		if esr_derating > 0
 			resource_component = dfGen[y, :Resource]
-			adjustment = fusion_parasitic_power_adjustment_to_esr(EP, inputs, resource_component, esr_derating)
+			adjustment = -esr_derating * fusion_annual_parasitic_power(EP, inputs, resource_component)
 			add_similar_to_expression!(eESR[p], adjustment)
 		end
 	end
 end
 
-# Where the math happens
-function fusion_parasitic_power_adjustment_to_esr(EP, inputs, resource_component, esr_derating::Float64)
-	annual_parasitic = fusion_annual_parasitic_power(EP, inputs, resource_component)
-	return -esr_derating * annual_parasitic
-end
+#################################
+#
+#    For various outputs
+#
+#################################
 
-# for outputs
-function thermal_fusion_parasitic_power_adjustment_to_esr(EP::Model, inputs::Dict, setup::Dict, esr_column::Symbol)
+function thermal_fusion_annual_parasitic_power(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
 	dfGen = inputs["dfGen"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	FUSION = resources_with_fusion(dfGen)
 
-	esr_derating = dfGen[FUSION, esr_column]
 	resource_component = dfGen[FUSION, :Resource]
 
-
-	expr = fusion_parasitic_power_adjustment_to_esr.(Ref(EP), Ref(inputs), resource_component, esr_derating)
+	expr = fusion_annual_parasitic_power.(Ref(EP), Ref(inputs), resource_component)
 	return scale_factor * value.(expr)
 end

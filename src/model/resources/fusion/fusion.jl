@@ -481,8 +481,8 @@ end
 ########################
 
 function fusion_annual_parasitic_power(EP, inputs, resource_component::AbstractString)::AffExpr
-	weights = inputs["omega"]
+	weight = inputs["omega"]
 	eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
-	annual_parasitic = weights' * eTotalParasitic
+	annual_parasitic = weight' * eTotalParasitic
 	return annual_parasitic
 end
