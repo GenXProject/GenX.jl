@@ -380,8 +380,19 @@ function fusion_pulse_thermal_power_generation_constraint!(
     @constraint(
         EP,
         [t in 1:T],
-        power_like[y, t] <= ePulseUnderway[t] - dwell_time * ePulseStart[t]
+		power_like[y, t] <= ePulseUnderway[t] - _fusion_dwell_avoided_operation(dwell_time, ePulseStart[t])
     )
+end
+
+@doc raw"""
+    _fusion_dwell_avoided_operation(dwell_time::Float64,
+                                    ePulseStart::AffExpr)
+
+	dwell_time in fractions of a timestep
+	ePulseStart is the number of MW starting. Typically component_size * vPulseStart
+"""
+function _fusion_dwell_avoided_operation(dwell_time::Float64, ePulseStart::AffExpr)
+	return dwell_time * ePulseStart
 end
 
 function fusion_parasitic_power!(

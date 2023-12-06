@@ -31,29 +31,30 @@ function _fusion_capacity_reserve_margin_adjustment!(EP::Model,
     y::Int)
 
     T = inputs["T"]
-	timesteps = collect(1:T)
+    timesteps = collect(1:T)
     ncapres = inputs["NCapacityReserveMargin"]
 
     eCapResMarBalance = EP[:eCapResMarBalance]
 
-	for capres_zone in 1:ncapres
-		adjustment = fusion_capacity_reserve_margin_adjustment(EP, inputs, resource_component, y, capres_zone, timesteps)
-		add_similar_to_expression!(eCapResMarBalance[capres_zone, :], adjustment)
-	end
-	return
+    for capres_zone in 1:ncapres
+        adjustment = fusion_capacity_reserve_margin_adjustment(EP, inputs, resource_component, y, capres_zone, timesteps)
+        add_similar_to_expression!(eCapResMarBalance[capres_zone, :], adjustment)
+    end
+    return
 end
 
 # Get the amount for one resource component in one CRM zone
 function fusion_capacity_reserve_margin_adjustment(EP::Model,
     inputs::Dict,
-	resource_component::AbstractString,
+    resource_component::AbstractString,
     y::Int,
     capres_zone::Int,
-	timesteps::Vector{Int})
+    timesteps::Vector{Int})
 
     dfGen = inputs["dfGen"]
+    by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
 
-	capresfactor = dfGen[y, Symbol("CapRes_" * string(capres_zone))]
+    capresfactor = dfGen[y, Symbol("CapRes_" * string(capres_zone))]
 
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
 
@@ -61,8 +62,13 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     eActive = get_from_model(fusion_parasitic_active_name)
     eStartPower = get_from_model(fusion_pulse_start_power_name)
 
-    fusion_adj = _fusion_crm_parasitic_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
-	return fusion_adj
+    dwell_time = Float64(by_rid(y, :Dwell_Time))
+    component_size = by_rid(y, :Cap_Size)
+    ePulseStart = component_size * get_from_model(fusion_pulse_start_name)
+
+    parasitic_adj = _fusion_crm_parasitic_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
+    dwell_adj = - capresfactor * _fusion_dwell_avoided_operation.(dwell_time, ePulseStart[timesteps])
+    return parasitic_adj + dwell_adj
 end
 
 
@@ -103,19 +109,19 @@ end
 #################################
 
 function fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
-	eESR = EP[:eESR]
-	nESR = inputs["nESR"]
-	weights = inputs["omega"]
-	dfGen = inputs["dfGen"]
-	FUSION = resources_with_fusion(dfGen)
+    eESR = EP[:eESR]
+    nESR = inputs["nESR"]
+    weights = inputs["omega"]
+    dfGen = inputs["dfGen"]
+    FUSION = resources_with_fusion(dfGen)
 
-	for y in FUSION, p in 1:nESR
-		esr_derating = dfGen[y, Symbol("ESR_" * string(p))]
-		if esr_derating > 0
-			resource_component = dfGen[y, :Resource]
-			adjustment = -esr_derating * fusion_annual_parasitic_power(EP, inputs, resource_component)
-			add_similar_to_expression!(eESR[p], adjustment)
-		end
-	end
+    for y in FUSION, p in 1:nESR
+        esr_derating = dfGen[y, Symbol("ESR_" * string(p))]
+        if esr_derating > 0
+            resource_component = dfGen[y, :Resource]
+            adjustment = -esr_derating * fusion_annual_parasitic_power(EP, inputs, resource_component)
+            add_similar_to_expression!(eESR[p], adjustment)
+        end
+    end
 end
 
