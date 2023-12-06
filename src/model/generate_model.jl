@@ -135,8 +135,12 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		reserves!(EP, inputs, setup)
 	end
 
-	if Z > 1
+	if Z > 1 && setup["DC_OPF"] == 0
 		transmission!(EP, inputs, setup)
+	end
+
+	if Z > 1 && setup["DC_OPF"] != 0
+		dc_opf_transmission!(EP, inputs, setup)
 	end
 
 	# Technologies
