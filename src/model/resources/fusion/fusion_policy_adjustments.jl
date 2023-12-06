@@ -61,7 +61,7 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     eActive = get_from_model(fusion_parasitic_active_name)
     eStartPower = get_from_model(fusion_pulse_start_power_name)
 
-    fusion_adj = _fusion_crm_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
+    fusion_adj = _fusion_crm_parasitic_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
 	return fusion_adj
 end
 
@@ -73,7 +73,7 @@ thermal_fusion_capacity_reserve_margin_adjustment = fusion_capacity_reserve_marg
 # Where the math actually happens
 #################################
 @doc raw"""
-    _fusion_crm_adjustment(capresfactor::Float64,
+    _fusion_crm_parasitic_adjustment(capresfactor::Float64,
                passive_power::AffExpr,
                active_power::AffExpr,
                start_power::AffExpr)
@@ -89,7 +89,7 @@ thermal_fusion_capacity_reserve_margin_adjustment = fusion_capacity_reserve_marg
     active_power: Expression for parasitic active recirculating power.
     start_power: Expression for parasitic pulse start (peak) power.
 """
-function _fusion_crm_adjustment(capresfactor::Float64,
+function _fusion_crm_parasitic_adjustment(capresfactor::Float64,
                                  passive_power::AffExpr,
                                  active_power::AffExpr,
                                  start_power::AffExpr)::AffExpr
