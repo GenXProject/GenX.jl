@@ -51,10 +51,13 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     capres_zone::Int,
     timesteps::Vector{Int})
 
+    eTotalCap = EP[:eTotalCap][y]
+    vP = EP[:vP][y, timesteps]
+
     dfGen = inputs["dfGen"]
     by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
 
-    capresfactor = dfGen[y, Symbol("CapRes_" * string(capres_zone))]
+    capresfactor = by_rid(y, Symbol("CapRes_" * string(capres_zone)))
 
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
 
@@ -66,9 +69,18 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     component_size = by_rid(y, :Cap_Size)
     ePulseStart = component_size * get_from_model(fusion_pulse_start_name)
 
+    capacity_to_power_adj = capresfactor * (vP - eTotalCap)
     parasitic_adj = _fusion_crm_parasitic_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
     dwell_adj = - capresfactor * _fusion_dwell_avoided_operation.(dwell_time, ePulseStart[timesteps])
-    return parasitic_adj + dwell_adj
+
+    total_adj = capacity_to_power_adj + parasitic_adj + dwell_adj
+
+    if y in resources_with_maintenance(dfGen)
+        maint_adj = thermal_maintenance_and_fusion_capacity_reserve_margin_adjustment(EP, inputs, y, capres_zone, timesteps)
+        add_similar_to_expression!(total_adj, maint_adj)
+    end
+
+    return total_adj
 end
 
 

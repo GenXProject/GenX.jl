@@ -194,29 +194,40 @@ struct FusionReactorData
     max_starts::Int
 end
 
-FusionReactorData(;
-    component_size::Float64 = 1.0,
-    parasitic_passive_fraction::Float64 = 0.0,
-    parasitic_active_fraction::Float64 = 0.0,
-    parasitic_start_energy_fraction::Float64 = 0.0,
-    pulse_start_power_fraction::Float64 = 0.0,
-    maintenance_remaining_parasitic_power_fraction::Float64 = 0.0,
-    eff_down::Float64 = 1.0,
-    dwell_time::Float64 = 0.0,
-    max_pulse_length::Int = -1,
-    max_starts::Int = -1,
-) = FusionReactorData(
-    component_size,
-    parasitic_passive_fraction,
-    parasitic_active_fraction,
-    parasitic_start_energy_fraction,
-    pulse_start_power_fraction,
-    maintenance_remaining_parasitic_power_fraction,
-    eff_down,
-    dwell_time,
-    max_pulse_length,
-    max_starts,
-)
+function get_value_with_default(df::DataFrame, row_index::Int, col_name::Symbol, default_value)
+    if hasproperty(df, col_name)
+        return df[row_index, col_name]
+    else
+        return default_value
+    end
+end
+
+function FusionReactorData(df::DataFrame, y::Int)
+    get_value_with_default(col_name::Symbol, default_value) =
+        get_value_with_default(df, y, col_name, default_value)
+
+    core_cap_size = Float64(get_value_with_default(:Cap_Size, 1))
+    dwell_time = Float64(get_value_with_default(:Dwell_Time, 0.0))
+    max_starts = get_value_with_default(:Max_Starts, -1)
+    max_pulse_length = get_value_with_default(:Max_Up_Time, -1)
+    parasitic_passive =Float64(get_value_with_default(:Parasitic_Passive, 0))
+    parasitic_active = Float64(get_value_with_default(y, :Parasitic_Active, 0))
+    start_energy = Float64(get_value_with_default(:Parasitic_Start_Energy, 0))
+    start_power = Float64(get_value_with_default(:Parasitic_Start_Power, 0))
+
+    parasitic_maint = Float64(get_value_with_default(:Parasitic_Passive_Maintenance_Remaining, 0))
+
+    reactor = FusionReactorData(component_size=core_cap_size,
+                                parasitic_passive_fraction=parasitic_passive,
+                                parasitic_active_fraction=parasitic_active,
+                                parasitic_start_energy_fraction=start_energy,
+                                pulse_start_power_fraction=start_power,
+                                eff_down=1.0,
+                                dwell_time = dwell_time,
+                                max_pulse_length = max_pulse_length,
+                                max_starts=max_starts,
+                                maintenance_remaining_parasitic_power_fraction=parasitic_maint)
+end
 
 #######################################
 # Compute reactor properties
