@@ -51,29 +51,27 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     capres_zone::Int,
     timesteps::Vector{Int})
 
-    eTotalCap = EP[:eTotalCap][y]
-    vP = EP[:vP][y, timesteps]
-
     dfGen = inputs["dfGen"]
+    eTotalCap = EP[:eTotalCap][y]
     by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
 
     capresfactor = by_rid(y, Symbol("CapRes_" * string(capres_zone)))
+    dwell_time = Float64(by_rid(y, :Dwell_Time))
+    component_size = by_rid(y, :Cap_Size)
 
     get_from_model(f::Function) = EP[Symbol(f(resource_component))]
 
     ePassive = get_from_model(fusion_parasitic_passive_name)
     eActive = get_from_model(fusion_parasitic_active_name)
     eStartPower = get_from_model(fusion_pulse_start_power_name)
-
-    dwell_time = Float64(by_rid(y, :Dwell_Time))
-    component_size = by_rid(y, :Cap_Size)
     ePulseStart = component_size * get_from_model(fusion_pulse_start_name)
+    ePulseUnderway = component_size * get_from_model(fusion_pulse_underway_name)
 
-    capacity_to_power_adj = capresfactor * (vP - eTotalCap)
+    capacity_to_underway_adj = capresfactor * (ePulseUnderway[timesteps] .- eTotalCap)
     parasitic_adj = _fusion_crm_parasitic_adjustment.(capresfactor, ePassive[timesteps], eActive[timesteps], eStartPower[timesteps])
     dwell_adj = - capresfactor * _fusion_dwell_avoided_operation.(dwell_time, ePulseStart[timesteps])
 
-    total_adj = capacity_to_power_adj + parasitic_adj + dwell_adj
+    total_adj = capacity_to_underway_adj + parasitic_adj + dwell_adj
 
     if y in resources_with_maintenance(dfGen)
         maint_adj = thermal_maintenance_and_fusion_capacity_reserve_margin_adjustment(EP, inputs, y, capres_zone, timesteps)

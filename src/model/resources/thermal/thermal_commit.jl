@@ -395,11 +395,6 @@ function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
     return -capresfactor * down_var[t] * cap_size
 end
 
-# Cancel out the dependence on down_var, since CRM is proportional to vP for fusion
-function thermal_maintenance_and_fusion_capacity_reserve_margin_adjustment(EP, inputs, y, capres, t)
-    return - thermal_maintenance_capacity_reserve_margin_adjustment(EP, inputs, y, capres, t)
-end
-
 @doc raw"""
     fusion_formulation!(EP::Model, inputs::Dict)
 
@@ -443,5 +438,10 @@ function fusion_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict
 
         add_fusion_component_to_zone_listing(inputs, y, name)
     end
+end
+
+# Cancel out the dependence on down_var, since CRM is proportional to vP for fusion
+function thermal_maintenance_and_fusion_capacity_reserve_margin_adjustment(EP, inputs, y, capres, t)
+    return - thermal_maintenance_capacity_reserve_margin_adjustment(EP, inputs, y, capres, t)
 end
 

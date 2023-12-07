@@ -7,7 +7,7 @@ function fusion_maintenance_adjust_parasitic_power!(EP, df::DataFrame)
 
     for y in intersect(FUSION, MAINTENANCE)
         resource_component = df[y, :Resource]
-        reactor = FusionReactorData(dfGen, y)
+        reactor = FusionReactorData(df, y)
         _fusion_maintenance_parasitic_power_adjustment!(EP, resource_component, reactor)
     end
 end
