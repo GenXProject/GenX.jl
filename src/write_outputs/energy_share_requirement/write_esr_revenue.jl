@@ -19,7 +19,7 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		SOLAR_WIND = intersect(SOLAR, WIND)
 	end
 
-	FUSION = resources_with_fusion(inputs["dfGen"])
+	FUSION = resources_with_fusion(dfGen)
 
 	by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
 	for i in 1:nESR
