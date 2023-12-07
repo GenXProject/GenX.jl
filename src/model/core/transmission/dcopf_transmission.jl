@@ -1,5 +1,27 @@
 @doc raw"""
 	function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
+The addtional constraints imposed upon the line flows in the case of DC-OPF are as follows:
+For the definition of the line flows, in terms of the voltage phase angles:
+```math
+\begin{aligned}
+        & \Phi_{l,t}=\mathcal{B}_{l} \times (\sum_{z\in \mathcal{Z}}{(\varphi^{map}_{l,z} \times \theta_{z,t})}) \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+\end{aligned}
+```
+For imposing the constraint of maximum allowed voltage phase angle difference across lines:
+```math
+\begin{aligned}
+        & \sum_{z\in \mathcal{Z}}{(\varphi^{map}_{l,z} \times \theta_{z,t})} \leq \frac{\pi}{180} \Theta^{max}_{l} \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+	& \sum_{z\in \mathcal{Z}}{(\varphi^{map}_{l,z} \times \theta_{z,t})} \geq -\frac{\pi}{180} \Theta^{max}_{l} \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+\end{aligned}
+```
+For ensuring the slack-bus, voltage phase angle is set as the reference we enforce the constraint
+
+```math
+\begin{aligned}
+        & \theta_{1,t})} = 0 \forall t  \in \mathcal{T}\\
+\end{aligned}
+```
+
 """
 function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
