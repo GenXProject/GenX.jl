@@ -194,15 +194,44 @@ struct FusionReactorData
     max_starts::Int
 end
 
-function get_value_with_default(df::DataFrame, row_index::Int, col_name::Symbol, default_value)
-    if hasproperty(df, col_name)
-        return df[row_index, col_name]
+# useful because the matching of arguments can be verified
+FusionReactorData(;
+    component_size::Float64,
+    parasitic_passive_fraction::Float64,
+    parasitic_active_fraction::Float64,
+    parasitic_start_energy_fraction::Float64,
+    pulse_start_power_fraction::Float64,
+    maintenance_remaining_parasitic_power_fraction::Float64,
+    eff_down::Float64,
+    dwell_time::Float64,
+    max_pulse_length::Int,
+    max_starts::Int,
+) = FusionReactorData(
+    component_size,
+    parasitic_passive_fraction,
+    parasitic_active_fraction,
+    parasitic_start_energy_fraction,
+    pulse_start_power_fraction,
+    maintenance_remaining_parasitic_power_fraction,
+    eff_down,
+    dwell_time,
+    max_pulse_length,
+    max_starts,
+)
+
+function get_value_with_default(dfr::DataFrameRow, col_name::Symbol, default_value)
+    if hasproperty(dfr, col_name)
+        return dfr[col_name]
     else
         return default_value
     end
 end
 
-function FusionReactorData(df::DataFrame, y::Int)
+function FusionReactorData(df::DataFrame, y::Int)::FusionReactorData
+    FusionReactorData(df[y, :])
+end
+
+function FusionReactorData(dfr::DataFrameRow)::FusionReactorData
     get_value_with_default(col_name::Symbol, default_value) =
         get_value_with_default(df, y, col_name, default_value)
 
@@ -223,8 +252,8 @@ function FusionReactorData(df::DataFrame, y::Int)
                                 parasitic_start_energy_fraction=start_energy,
                                 pulse_start_power_fraction=start_power,
                                 eff_down=1.0,
-                                dwell_time = dwell_time,
-                                max_pulse_length = max_pulse_length,
+                                dwell_time=dwell_time,
+                                max_pulse_length=max_pulse_length,
                                 max_starts=max_starts,
                                 maintenance_remaining_parasitic_power_fraction=parasitic_maint)
 end
