@@ -3,9 +3,6 @@ function write_maximum_capacity_requirement(path::AbstractString, inputs::Dict, 
     dfMaxCapPrice = DataFrame(Constraint = [Symbol("MaxCapReq_$maxcap") for maxcap = 1:NumberOfMaxCapReqs],
                                 Price=-dual.(EP[:cZoneMaxCapReq]))
 
-    # Generally the scale_factor is used to convert
-    # GW (in the model) back to MW (for output)
-    # and likewise for $M to $.
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     dfMaxCapPrice.Price *= scale_factor
