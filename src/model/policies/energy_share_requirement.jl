@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 This function establishes constraints that can be flexibily applied to define alternative forms of policies that require generation of a minimum quantity of megawatt-hours from a set of qualifying resources, such as renewable portfolio standard (RPS) or clean electricity standard (CES) policies prevalent in different jurisdictions.
@@ -32,14 +48,11 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 		@variable(EP, vESR_slack[ESR=1:inputs["nESR"]]>=0)
 		add_similar_to_expression!(EP[:eESR], vESR_slack)
 
-		@expression(EP, eCESRSlack[ESR=1:inputs["nESR"]], inputs["dfESR_slack"][ESR,:PriceCap] * EP[:vESR_slack][ESR])
-		@expression(EP, eCTotalESRSlack, sum(EP[:eCESRSlack][ESR] for ESR = 1:inputs["nESR"]))
+	T = inputs["T"]     # Number of time steps (hours)
 
 		add_to_expression!(EP[:eObj], eCTotalESRSlack)
 	end
 	
 	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
-	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
-
-
+	@constraint(EP, cESRShare[ESR=1:inputs["nESR"], t=1:T], EP[:eESR][ESR,t] >= 0)
 end

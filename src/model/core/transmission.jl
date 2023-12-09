@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	function transmission!(EP::Model, inputs::Dict, setup::Dict)
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
@@ -104,8 +120,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	NetworkExpansion = setup["NetworkExpansion"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	MultiStage = setup["MultiStage"]
-	EnergyShareRequirement = setup["EnergyShareRequirement"]
-	IncludeLossesInESR = setup["IncludeLossesInESR"]
 
 	## sets and indices for transmission losses and expansion
 	TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -180,7 +194,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     	@expression(EP, eNet_Export_Flows[z=1:Z,t=1:T], sum(inputs["pNet_Map"][l,z] * vFLOW[l,t] for l=1:L))
 
 	# Losses from power flows into or out of zone "z" in MW
-    	@expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * (1/2) *vTLOSS[l,t] for l in LOSS_LINES))
+    	@expression(EP, eLosses_By_Zone[z=1:Z,t=1:T], sum(abs(inputs["pNet_Map"][l,z]) * vTLOSS[l,t] for l in LOSS_LINES))
 
 	## Objective Function Expressions ##
 
@@ -204,7 +218,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, ePowerBalanceNetExportFlows[t=1:T, z=1:Z],
 		-eNet_Export_Flows[z,t])
 	@expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
-		-eLosses_By_Zone[z,t])
+		-(1/2)*eLosses_By_Zone[z,t])
 
 	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceLossesByZone)
 	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)

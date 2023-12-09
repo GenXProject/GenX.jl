@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
 
@@ -26,16 +42,29 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		end
 	end
 
-	capacity_constraint_dual = zeros(size(inputs["RESOURCES"]))
-	if :Max_Cap_MW in propertynames(dfGen)
-		for y in dfGen[dfGen.Max_Cap_MW.>0, :R_ID]
-			capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
+	retrocapdischarge = zeros(size(inputs["RESOURCES"]))
+	for i in inputs["RETRO_CAP"]
+		if i in inputs["COMMIT"]
+			retrocapdischarge[i] = first(value.(EP[:vRETROCAP][i]))*dfGen[!,:Cap_Size][i]
+		else
+			retrocapdischarge[i] = first(value.(EP[:vRETROCAP][i]))
+		end
+	end
+
+	retrocreatdischarge = zeros(size(inputs["RESOURCES"]))
+	for i in inputs["RETRO"]
+		if i in inputs["COMMIT"]
+			retrocreatdischarge[i] = first(value.(EP[:vRETROCREATCAP][i]))*dfGen[!,:Cap_Size][i]
+		else
+			retrocreatdischarge[i] = first(value.(EP[:vRETROCREATCAP][i]))
 		end
 	end
 
 	capcharge = zeros(size(inputs["RESOURCES"]))
 	retcapcharge = zeros(size(inputs["RESOURCES"]))
+	retrocapcharge = zeros(size(inputs["RESOURCES"]))
 	existingcapcharge = zeros(size(inputs["RESOURCES"]))
+
 	for i in inputs["STOR_ASYMMETRIC"]
 		if i in inputs["NEW_CAP_CHARGE"]
 			capcharge[i] = value(EP[:vCAPCHARGE][i])
@@ -43,12 +72,17 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_CHARGE"]
 			retcapcharge[i] = value(EP[:vRETCAPCHARGE][i])
 		end
+		if i in inputs["RETRO_CAP_CHARGE"]
+			retrocapcharge[i] = value(EP[:vRETROCAPCHARGE][i])
+		end
 		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : dfGen[!,:Existing_Charge_Cap_MW][i]
 	end
 
 	capenergy = zeros(size(inputs["RESOURCES"]))
 	retcapenergy = zeros(size(inputs["RESOURCES"]))
+	retrocapenergy = zeros(size(inputs["RESOURCES"]))
 	existingcapenergy = zeros(size(inputs["RESOURCES"]))
+
 	for i in inputs["STOR_ALL"]
 		if i in inputs["NEW_CAP_ENERGY"]
 			capenergy[i] = value(EP[:vCAPENERGY][i])
@@ -56,7 +90,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_ENERGY"]
 			retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
 		end
-		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[i,:Existing_Cap_MWh]
+		if i in inputs["RETRO_CAP_ENERGY"]
+			retrocapenergy[i] = value(EP[:vRETROCAPENERGY][i])
+		end
+		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[!,:Existing_Cap_MWh][i]
 	end
 	if !isempty(inputs["VRE_STOR"])
 		for i in inputs["VS_STOR"]
@@ -71,44 +108,55 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	end
 
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone],
+		Resource = inputs["RESOURCES"], 
+		Resource_type = inputs["RESOURCE_TYPE"], 
+		Zone = dfGen[!,:Zone],
+		Cluster = dfGen[!,:cluster],
 		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!,:Existing_Cap_MW],
 		RetCap = retcapdischarge[:],
-		NewCap = capdischarge[:],
+		RetroCap = retrocapdischarge[:], #### Need to change later
+		NewCap = capdischarge[:] + retrocreatdischarge[:],
 		EndCap = value.(EP[:eTotalCap]),
 		CapacityConstraintDual = capacity_constraint_dual[:],
 		StartEnergyCap = existingcapenergy[:],
 		RetEnergyCap = retcapenergy[:],
+		RetroEnergyCap = retrocapenergy[:], #### Need to change later
 		NewEnergyCap = capenergy[:],
-		EndEnergyCap = existingcapenergy[:] - retcapenergy[:] + capenergy[:],
+		EndEnergyCap = existingcapenergy[:] - retcapenergy[:] + capenergy[:] + retrocapenergy[:],
 		StartChargeCap = existingcapcharge[:],
 		RetChargeCap = retcapcharge[:],
+		RetroChargeCap = retrocapcharge[:], #### Need to change later
 		NewChargeCap = capcharge[:],
-		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:]
+		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:] + retrocapcharge[:]
 	)
 	if setup["ParameterScale"] ==1
 		dfCap.StartCap = dfCap.StartCap * ModelScalingFactor
 		dfCap.RetCap = dfCap.RetCap * ModelScalingFactor
+		dfCap.RetroCap = dfCap.RetroCap * ModelScalingFactor
 		dfCap.NewCap = dfCap.NewCap * ModelScalingFactor
 		dfCap.EndCap = dfCap.EndCap * ModelScalingFactor
 		dfCap.CapacityConstraintDual = dfCap.CapacityConstraintDual * ModelScalingFactor
 		dfCap.StartEnergyCap = dfCap.StartEnergyCap * ModelScalingFactor
 		dfCap.RetEnergyCap = dfCap.RetEnergyCap * ModelScalingFactor
+		dfCap.RetroEnergyCap = dfCap.RetroEnergyCap * ModelScalingFactor
 		dfCap.NewEnergyCap = dfCap.NewEnergyCap * ModelScalingFactor
 		dfCap.EndEnergyCap = dfCap.EndEnergyCap * ModelScalingFactor
 		dfCap.StartChargeCap = dfCap.StartChargeCap * ModelScalingFactor
 		dfCap.RetChargeCap = dfCap.RetChargeCap * ModelScalingFactor
+		dfCap.RetroChargeCap = dfCap.RetroChargeCap * ModelScalingFactor
 		dfCap.NewChargeCap = dfCap.NewChargeCap * ModelScalingFactor
 		dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
 	end
 	total = DataFrame(
-			Resource = "Total", Zone = "n/a",
+			Resource = "Total", Resource_type = "Total", Zone = "n/a", Cluster = "n/a",
 			StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 			NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
-			CapacityConstraintDual = "n/a",
+			RetroCap = sum(dfCap[!,:RetroCap]),
 			StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),
+			RetroEnergyCap = sum(dfCap[!,:RetroEnergyCap]),
 			NewEnergyCap = sum(dfCap[!,:NewEnergyCap]), EndEnergyCap = sum(dfCap[!,:EndEnergyCap]),
 			StartChargeCap = sum(dfCap[!,:StartChargeCap]), RetChargeCap = sum(dfCap[!,:RetChargeCap]),
+			RetroChargeCap = sum(dfCap[!,:RetroChargeCap]),
 			NewChargeCap = sum(dfCap[!,:NewChargeCap]), EndChargeCap = sum(dfCap[!,:EndChargeCap])
 		)
 
