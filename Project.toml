@@ -1,9 +1,12 @@
 name = "GenX"
 uuid = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
 authors = ["Jesse Jenkins", "Nestor Sepulveda", "Dharik Mallapragada", "Aaron Schwartz", "Neha Patankar", "Qingyu Xu", "Jack Morris", "Sambuddha Chakrabarti"]
-version = "0.3.6"
+version = "0.3.3"
 
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+#CPLEX = "a076750e-1247-5638-91d2-ce28b192dca0"
+Gurobi = "2e9cd046-0924-5485-92f1-d5272153d98b"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
@@ -17,11 +20,13 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
+SCIP = "82193955-e24f-5292-bf16-6f2c5261a85f"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+BenchmarkTools = "1.3.1"
 CSV = "0.10.4"
 Clustering = "0.14.2, 0.15"
 Combinatorics = "1.0.2"
@@ -32,10 +37,12 @@ HiGHS = "1.1.4"
 JuMP = "1.1.1"
 MathOptInterface = "1.6.1"
 RecursiveArrayTools = "2.31.2"
+SCIP = "0.11.3"
 Statistics = "1.4.0"
-StatsBase = "0.33.21, 0.34"
+StatsBase = "0.33.21"
 YAML = "0.4.7"
 julia = "1"
+Gurobi ="0.11.3"
 
 [extras]
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"

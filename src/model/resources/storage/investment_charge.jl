@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	investment_charge!(EP::Model, inputs::Dict)
 
@@ -47,8 +63,9 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
 
-	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
-	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
+	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity.
+	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements.
+	RETRO_CAP_CHARGE = inputs["RETRO_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retrofitting.
 
 	### Variables ###
 
@@ -59,6 +76,9 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Retired charge capacity of resource "y" from existing capacity
 	@variable(EP, vRETCAPCHARGE[y in RET_CAP_CHARGE] >= 0)
+
+	# Retrofited charge capacity of resource "y" from existing capacity
+	@variable(EP, vRETROCAPCHARGE[y in RETRO_CAP_CHARGE] >= 0)
 
 	if MultiStage == 1
 		@variable(EP, vEXISTINGCAPCHARGE[y in STOR_ASYMMETRIC] >= 0);
@@ -80,7 +100,11 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 		elseif (y in setdiff(RET_CAP_CHARGE, NEW_CAP_CHARGE))
 			eExistingCapCharge[y] - EP[:vRETCAPCHARGE][y]
 		else
-			eExistingCapCharge[y] + EP[:vZERO]
+			if y in RETRO_CAP_CHARGE
+				eExistingCapCharge[y] + EP[:vRETROCAPCHARGE][y]
+			else
+				eExistingCapCharge[y] + EP[:vZERO]
+			end
 		end
 	)
 
@@ -92,7 +116,11 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 		if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
 			dfGen[y,:Inv_Cost_Charge_per_MWyr]*vCAPCHARGE[y] + dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
 		else
-			dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
+			if y in RETRO_CAP_CHARGE
+				dfGen[y,:Inv_Cost_Charge_per_MWyr]*vRETROCAPCHARGE[y] + dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
+			else
+				dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
+			end
 		end
 	)
 

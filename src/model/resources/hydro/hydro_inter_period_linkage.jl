@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
@@ -86,8 +102,12 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
-	@constraint(EP, cSoCBalLongDurationStorage_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-					vSOC_HYDROw[y, mod1(r+1, NPeriods)] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
+	@constraint(EP, cSoCBalLongDurationStorageInterior_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX[1:(end-1)]],
+					vSOC_HYDROw[y,r+1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
+
+	## Last period is linked to first period
+	@constraint(EP, cSoCBalLongDurationStorageEnd_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX[end]],
+					vSOC_HYDROw[y,1] == vSOC_HYDROw[y,r] + vdSOC_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]])
 
 	# Storage at beginning of each modeled period cannot exceed installed energy capacity
 	@constraint(EP, cSoCBalLongDurationStorageUpper_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
