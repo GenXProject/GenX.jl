@@ -15,6 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
+	load_load_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 Read input parameters related to electricity load (demand)
 """

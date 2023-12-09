@@ -1,3 +1,19 @@
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 @doc raw"""
 	storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -17,7 +33,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	STOR_ALL = inputs["STOR_ALL"]
 	STOR_SHORT_DURATION = inputs["STOR_SHORT_DURATION"]
-	representative_periods = inputs["REP_PERIOD"]
 
 	START_SUBPERIODS = inputs["START_SUBPERIODS"]
 	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
@@ -45,8 +60,9 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	### Expressions ###
 
-	# Energy losses related to technologies (increase in effective demand)
+	# Energy losses related to technologies (increase in effective demand, changed by Yifu)
 	@expression(EP, eELOSS[y in STOR_ALL], sum(inputs["omega"][t]*EP[:vCHARGE][y,t] for t in 1:T) - sum(inputs["omega"][t]*EP[:vP][y,t] for t in 1:T))
+	#@expression(EP, eELOSS[y in STOR_ALL, t=1:T], inputs["omega"][t]*EP[:vCHARGE][y,t] - inputs["omega"][t]*EP[:vP][y,t])
 
 	## Objective Function Expressions ##
 
@@ -87,16 +103,23 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Links state of charge in first time step with decisions in last time step of each subperiod
 	# We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
-	if representative_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
-		CONSTRAINTSET = STOR_SHORT_DURATION
+	
+	if OperationWrapping ==1 && !isempty(inputs["STOR_LONG_DURATION"])
+		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_SHORT_DURATION], EP[:vS][y,t] ==
+			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[y,:Eff_Down]*EP[:vP][y,t])
+			+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,t])-(dfGen[y,:Self_Disch]*EP[:vS][y,t+hours_per_subperiod-1]))
 	else
-		CONSTRAINTSET = STOR_ALL
+		@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in STOR_ALL], EP[:vS][y,t] ==
+			EP[:vS][y,t+hours_per_subperiod-1]-(1/dfGen[y,:Eff_Down]*EP[:vP][y,t])
+			+(dfGen[y,:Eff_Up]*EP[:vCHARGE][y,t])-(dfGen[y,:Self_Disch]*EP[:vS][y,t+hours_per_subperiod-1]))
 	end
-	@constraint(EP, cSoCBalStart[t in START_SUBPERIODS, y in CONSTRAINTSET], EP[:vS][y,t] ==
-		EP[:vS][y,t+hours_per_subperiod-1] - (1/dfGen[y,:Eff_Down] * EP[:vP][y,t])
-		+ (dfGen[y,:Eff_Up]*EP[:vCHARGE][y,t]) - (dfGen[y,:Self_Disch] * EP[:vS][y,t+hours_per_subperiod-1]))
+	
 
 	@constraints(EP, begin
+
+		# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
+		[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= dfGen[y,:Min_Duration] * EP[:eTotalCap][y]
+		[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= dfGen[y,:Max_Duration] * EP[:eTotalCap][y]
 
 		# Maximum energy stored must be less than energy capacity
 		[y in STOR_ALL, t in 1:T], EP[:vS][y,t] <= EP[:eTotalCapEnergy][y]

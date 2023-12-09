@@ -14,25 +14,29 @@ in LICENSE.txt.  Users uncompressing this from an archive may not have
 received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+@doc raw"""
+	emissions(EP::Model, inputs::Dict)
+
+This function creates expression to add the CO2 emissions by plants in each zone, which is subsequently added to the total emissions
+"""
+function emissions!(EP::Model, inputs::Dict)
+
+	println("Emissions Module (for CO2 Policy modularization")
+
 	dfGen = inputs["dfGen"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	REG = inputs["REG"]
+	Z = inputs["Z"]     # Number of zones
 
-	# Regulation contributions for each resource in each time step
-	dfReg = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])
-	reg = zeros(G,T)
-	reg[REG, :] = value.(EP[:vREG][REG, :])
-	dfReg.AnnualSum = reg * inputs["omega"]
-	dfReg = hcat(dfReg, DataFrame(reg, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfReg,auxNew_Names)
+	@expression(EP, eEmissionsByPlant[y=1:G,t=1:T],
 
-	total = DataFrame(["Total" 0 sum(dfReg.AnnualSum) fill(0.0, (1,T))], :auto)
-	total[!, 4:T+3] .= sum(reg, dims = 1)
-	rename!(total,auxNew_Names)
-	dfReg = vcat(dfReg, total)
-	CSV.write(joinpath(path, "reg.csv"), dftranspose(dfReg, false), writeheader=false)
+		if y in inputs["COMMIT"]
+			dfGen[y,:CO2_per_MWh]*EP[:vP][y,t]+dfGen[y,:CO2_per_Start]*EP[:vSTART][y,t]
+		else
+			dfGen[y,:CO2_per_MWh]*EP[:vP][y,t]
+		end
+	)
+	@expression(EP, eEmissionsByZone[z=1:Z, t=1:T], sum(eEmissionsByPlant[y,t] for y in dfGen[(dfGen[!,:Zone].==z),:R_ID]))
+
 end
