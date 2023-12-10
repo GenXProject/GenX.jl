@@ -75,7 +75,7 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
 
     if y in resources_with_maintenance(dfGen)
         maint_adj = thermal_maintenance_and_fusion_capacity_reserve_margin_adjustment(EP, inputs, y, capres_zone, timesteps)
-        add_similar_to_expression!(total_adj, maint_adj)
+        add_to_expression!.(total_adj, maint_adj)
     end
 
     return total_adj
