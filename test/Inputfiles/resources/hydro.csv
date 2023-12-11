@@ -1,0 +1,4 @@
+resource,zone,hydro_energy_to_power_ratio,min_power,ramp_up_percentage,ramp_dn_percentage,mga,resource_type,must_run,LDS,existing_cap_mw,cap_size,new_build,can_retire,min_cap_mw,max_cap_mw,inv_cost_per_mwyr,fixed_om_cost_per_mwyr,var_om_cost_per_mwh,heat_rate_mmbtu_per_mwh,fuel,reg_cost,rsv_cost,reg_max,rsv_max,region,cluster
+NENGREST_conventional_hydroelectric_1,1,1,0.117,0.083,0.083,1,conventional_hydroelectric,0,1,662.983,11.24,0,0,0,0,0,46475,0,9.12,None,0,0,0.006916667,0.013833333,NENGREST,1
+NENG_CT_conventional_hydroelectric_1,2,1,0.18,0.083,0.083,1,conventional_hydroelectric,0,1,67.7,13.54,0,0,0,0,0,46475,0,9.12,None,0,0,0.006916667,0.013833333,NENG_CT,1
+NENG_ME_conventional_hydroelectric_1,3,1,0.402,0.083,0.083,1,conventional_hydroelectric,0,1,327.81,7.8,0,0,0,0,0,46475,0,9.12,None,0,0,0.006916667,0.013833333,NENG_ME,1
