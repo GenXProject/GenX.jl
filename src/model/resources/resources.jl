@@ -36,7 +36,8 @@ end
 
 Base.pairs(r::AbstractResource) = pairs(parent(r))
 
-function Base.show(io::IO, r::AbstractResource) 
+function Base.show(io::IO, r::AbstractResource)
+
     for (k,v) in pairs(r)
         println(io, "$k: $v")
     end
@@ -48,42 +49,119 @@ const GenXResource = Dict{Symbol, Any}
 # interface with generators_data.csv
 # acts as a global variable
 resource_attribute_not_set() = 0
+const default = 0
 
 # interface for all resources
 resource_name(r::GenXResource) = r[:Resource]
 resource_name(r::AbstractResource)::String = r.resource
 
+resource_id(r::AbstractResource)::Int = r.id
+# resources_id(condition::BitVector)::Vector{Int} = findall(condition)
+
+resource_type(r::AbstractResource)::String = r.resource_type
+
 zone_id(r::GenXResource) = r[:Zone]
 zone_id(r::AbstractResource) = r.zone
 
-start_cost_per_mw(r::AbstractResource)::Float64 = r.start_cost_per_mw
-
+# TODO: some of these are not required (use get() instead)
+max_capacity_mw(r::AbstractResource)::Float64 = r.max_cap_mw
+min_capacity_mw(r::AbstractResource)::Float64 = r.min_cap_mw
 cap_size(r::AbstractResource)::Float64 = r.cap_size
+existing_capacity_mw(r::AbstractResource)::Float64 = r.existing_cap_mw
+
+# costs
+start_cost_per_mw(r::AbstractResource)::Float64 = r.start_cost_per_mw
+reg_cost(r::AbstractResource)::Float64 = get(r, :reg_cost, default)
+reg_max(r::AbstractResource)::Float64 = get(r, :reg_max, default)
+rsv_cost(r::AbstractResource)::Float64 = get(r, :rsv_cost, default)
+rsv_max(r::AbstractResource)::Float64 = get(r, :rsv_max, default)
+
+# fuel
+fuel(r::AbstractResource)::String = get(r, :fuel, "None")
+start_fuel_mmbtu_per_mw(r::AbstractResource)::Float64 = r.start_fuel_mmbtu_per_mw
+heat_rate_mmbtu_per_mwh(r::AbstractResource)::Float64 = r.heat_rate_mmbtu_per_mwh
+co2_capture_fraction(r::AbstractResource)::Float64 = r.co2_capture_fraction
+co2_capture_fraction_startup(r::AbstractResource)::Float64 = r.co2_capture_fraction_startup
+ccs_disposal_cost_per_metric_ton(r::AbstractResource)::Float64 = r.ccs_disposal_cost_per_metric_ton
+biomass(r::AbstractResource) = get(r, :biomass, default)
+
+# Reservoir hydro and storage
+efficiency_up(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_up, default)
+efficiency_down(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_down, default)
+
+# Ramp up and down
+const TCOMMIT = Union{ELECTROLYZER, HYDRO, THERM}
+min_power(r::TCOMMIT)::Float64 = r.min_power
+ramp_up_percentage(r::TCOMMIT)::Float64 = r.ramp_up_percentage
+ramp_down_percentage(r::TCOMMIT)::Float64 = r.ramp_dn_percentage
+
+# Retirement
+lifetime(r::AbstractResource)::Float64 = get(r, :lifetime, default) #TODO: check default
+cum_min_retired_cap_mw(r::AbstractResource)::Float64 = get(r, :cum_min_retired_cap_mw, default) #TODO: check default
+cum_min_retired_energy_cap_mwh(r::AbstractResource)::Float64 = get(r, :cum_min_retired_energy_cap_mwh, default) #TODO: check default
+cum_min_retired_charge_cap_mw(r::AbstractResource)::Float64 = get(r, :cum_min_retired_cap_inverter_mw, default) #TODO: check default
+
+# write_outputs
+region(r::AbstractResource)::String = r.region
+cluster(r::AbstractResource)::Int = r.cluster
 
 function is_buildable(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :new_build, resource_attribute_not_set()) == 1, rs)
+    return findall(r -> get(r, :new_build, default) == 1, rs)
 end
 
 function is_retirable(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :can_retire, resource_attribute_not_set()) == 1, rs)
+    return findall(r -> get(r, :can_retire, default) == 1, rs)
 end
 
 # TODO: default values for resource attributes
 function has_max_capacity_mw(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :max_cap_mw, resource_attribute_not_set()) != 0, rs)
+    return findall(r -> get(r, :max_cap_mw, default) != 0, rs)
 end
 
+function has_positive_max_capacity_mw(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :max_cap_mw, default) > 0, rs)
+end
+
+function has_positive_min_capacity_mw(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :min_cap_mw, default) > 0, rs)
+end
 
 function has_existing_capacity_mw(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :existing_cap_mw, resource_attribute_not_set()) != 0, rs)
+    return findall(r -> get(r, :existing_cap_mw, default) != 0, rs)
 end
 
 function has_fuel(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :fuel, resource_attribute_not_set()) != "None", rs)
+    return findall(r -> get(r, :fuel, "None") != "None", rs)
 end
+
+# VRE and STOR
+const VRE_STOR = Union{VRE, STOR}
+inv_cost_per_mwyr(r::VRE_STOR)::Float64 = r.inv_cost_per_mwyr
+fixed_om_cost_per_mwyr(r::VRE_STOR)::Float64 = r.fixed_om_cost_per_mwyr
 
 # STOR interface
 storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,STOR), rs)
+
+self_discharge(r::STOR)::Float64 = r.self_disch
+
+min_duration(r::STOR)::Float64 = r.min_duration
+max_duration(r::STOR)::Float64 = r.max_duration
+
+existing_capacity_mwh(r::STOR)::Float64 = r.existing_cap_mwh
+max_capacity_mwh(r::STOR)::Float64 = r.max_cap_mwh
+min_capacity_mwh(r::STOR)::Float64 = r.min_cap_mwh
+var_om_cost_per_mwh(r::STOR)::Float64 = r.var_om_cost_per_mwh
+
+fixed_om_cost_per_mwhyr(r::STOR)::Float64 = r.fixed_om_cost_per_mwhyr
+inv_cost_per_mwhyr(r::STOR)::Float64 = r.inv_cost_per_mwhyr
+
+existing_charge_capacity_mw(r::STOR)::Float64 = r.existing_charge_cap_mw
+fixed_om_cost_charge_per_mwyr(r::STOR)::Float64 = r.fixed_om_cost_charge_per_mwyr
+inv_cost_charge_per_mwyr(r::STOR)::Float64 = r.inv_cost_charge_per_mwyr
+max_charge_capacity_mw(r::STOR)::Float64 = r.max_charge_cap_mw
+min_charge_capacity_mw(r::STOR)::Float64 = r.min_charge_cap_mw
+
+var_om_cost_per_mwh_in(r::STOR)::Float64 = get(r, :var_om_cost_per_mwh_in, default)
 
 function symmetric_storage(rs::Vector{T}) where T <: AbstractResource
     return findall(r -> isa(r,STOR) && r.type == 1, rs)
@@ -94,43 +172,62 @@ function asymmetric_storage(rs::Vector{T}) where T <: AbstractResource
 end
 
 function is_LDS(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :LDS, resource_attribute_not_set()) > 0, rs)
+    return findall(r -> get(r, :LDS, default) > 0, rs)
 end
 
 function is_SDS(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :LDS, resource_attribute_not_set()) == 0, rs)
+    return findall(r -> get(r, :LDS, default) == 0, rs)
 end
 
 function has_max_capacity_mwh(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :max_cap_mwh, resource_attribute_not_set()) != 0, rs)
+    return findall(r -> get(r, :max_cap_mwh, default) != 0, rs)
+end
+
+function has_positive_max_capacity_mwh(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :max_cap_mwh, default) > 0, rs)
+end
+
+function has_positive_min_capacity_mwh(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :min_cap_mwh, default) > 0, rs)
 end
 
 function has_existing_capacity_mwh(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :existing_cap_mwh, resource_attribute_not_set()) >= 0, rs)
+    return findall(r -> get(r, :existing_cap_mwh, default) >= 0, rs)
 end
 
 function has_max_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :max_charge_cap_mw, resource_attribute_not_set()) != 0, rs)
+    return findall(r -> get(r, :max_charge_cap_mw, default) != 0, rs)
+end
+
+function has_positive_max_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :max_charge_cap_mw, default) > 0, rs)
+end
+
+function has_positive_min_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :min_charge_cap_mw, default) > 0, rs)
 end
 
 function has_existing_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :existing_charge_cap_mw, resource_attribute_not_set()) >= 0, rs)
+    return findall(r -> get(r, :existing_charge_cap_mw, default) >= 0, rs)
 end
 
 # HYDRO interface
 hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,HYDRO), rs)
+hydro_energy_to_power_ratio(r::HYDRO)::Float64 = r.hydro_energy_to_power_ratio
 function has_hydro_energy_to_power_ratio(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :hydro_energy_to_power_ratio, resource_attribute_not_set()) > 0, rs)
+    return findall(r -> get(r, :hydro_energy_to_power_ratio, default) > 0, rs)
 end
 
 # Retrofit
 function has_retrofit(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :retro, resource_attribute_not_set()) > 0, rs)
+    return findall(r -> get(r, :retro, default) > 0, rs)
 end
 
 ## THERM interface
 thermal(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,THERM), rs)
 # Unit commitment
+up_time(r::THERM)::Float64 = get(r, :up_time, default)
+down_time(r::THERM)::Float64 = get(r, :down_time, default)
 function has_unit_commitment(rs::Vector{T}) where T <: AbstractResource
     return findall(r -> isa(r,THERM) && r.type == 1, rs)
 end
@@ -141,23 +238,42 @@ end
 
 # Reserves
 function has_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :reg_max, resource_attribute_not_set()) > 0, rs)
+    return findall(r -> get(r, :reg_max, default) > 0, rs)
 end
 
 function has_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> get(r, :rsv_max, resource_attribute_not_set()) > 0, rs)
+    return findall(r -> get(r, :rsv_max, default) > 0, rs)
+end
+
+# Maintenance
+function resources_with_maintenance(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :maint, default) > 0, rs)
 end
 
 # VRE interface
 vre(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE), rs)
+num_vre_bins(r::VRE)::Int = get(r, :num_vre_bins, default)
+function has_positive_num_vre_bins(rs::Vector{T}) where T <: AbstractResource
+    return findall(r -> get(r, :num_vre_bins, default) >= 1, rs)
+end
 
 # Electrolyzer interface
 electrolyzer(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,ELECTROLYZER), rs)
+electrolyzer_min_kt(r::ELECTROLYZER)::Float64 = r.electrolyzer_min_kt
+hydrogen_mwh_per_tonne(r::ELECTROLYZER)::Float64 = r.hydrogen_mwh_per_tonne
+hydrogen_price_per_tonne(r::ELECTROLYZER)::Float64 = r.hydrogen_price_per_tonne
+qualified_hydrogen_supply(r::ELECTROLYZER)::Float64 = r.qualified_hydrogen_supply
 
 # Flex interface
 flex_demand(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,FLEX), rs)
+var_om_cost_per_mwh_in(r::FLEX)::Float64 = r.var_om_cost_per_mwh_in
+flexible_demand_energy_eff(r::FLEX)::Float64 = r.flexible_demand_energy_eff
+max_flexible_demand_delay(r::FLEX)::Float64 = r.max_flexible_demand_delay
+max_flexible_demand_advance(r::FLEX)::Float64 = r.max_flexible_demand_advance
+flexible_demand_energy_eff(r::FLEX)::Float64 = r.flexible_demand_energy_eff
 
-
+# MGA
+resources_with_mga(rs::Vector{T}) where T <: AbstractResource = rs[findall(r -> get(r, :mga, default) == 1, rs)]
 
 @doc raw"""
 	check_resource_type_flags(r::GenXResource)
@@ -385,6 +501,10 @@ function dataframerow_to_tuple(dfr::DataFrameRow)
     return NamedTuple(pairs(dfr))
 end
 
+function add_id_to_resources(df::DataFrame)::
+
+    
+
 
 ## Utility functions for working with resources
 
@@ -426,4 +546,8 @@ Find R_ID's of resources in a zone.
 function resources_in_zone_by_rid(inputs::Dict, zone::Int)::Vector{Int}
     df = inputs["dfGen"]
     return resources_in_zone_by_rid(df, zone)
+end
+
+function resources_in_zone_by_rid(rs::Vector{AbstractResource}, zone::Int)::Vector{Int}
+    return resource_id.(rs[zone_id.(rs) .== zone])
 end

@@ -10,7 +10,12 @@ Function for reporting the capacity revenue earned by each generator listed in t
 """
 function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+
+	regions = region.(resources)
+	clusters = cluster.(resources)
+	zones = zone_id.(resources)
+
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	THERM_ALL = inputs["THERM_ALL"]
@@ -29,7 +34,7 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
-	dfResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
+	dfResRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters)
 	annual_sum = zeros(G)
 	for i in 1:inputs["NCapacityReserveMargin"]
 		weighted_price = capacity_reserve_margin_price(EP, inputs, setup, i) .* inputs["omega"]

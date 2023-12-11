@@ -42,7 +42,14 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Charge Investment Module")
 
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+
+	max_charge_capacity_mw(y) = max_charge_capacity_mw(resources[y])
+	min_charge_capacity_mw(y) = min_charge_capacity_mw(resources[y])
+	existing_charge_capacity_mw(y) = existing_charge_capacity_mw(resources[y])
+	fixed_om_cost_charge_per_mwyr(y) = fixed_om_cost_charge_per_mwyr(resources[y])
+	inv_cost_charge_per_mwyr(y) = inv_cost_charge_per_mwyr(resources[y])
+
 	MultiStage = setup["MultiStage"]
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
@@ -69,7 +76,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], vEXISTINGCAPCHARGE[y])
 	else
-		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], dfGen[y,:Existing_Charge_Cap_MW])
+		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], existing_charge_capacity_mw(y))
 	end
 
 	@expression(EP, eTotalCapCharge[y in STOR_ASYMMETRIC],
@@ -90,9 +97,9 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 	# If resource is not eligible for new charge capacity, fixed costs are only O&M costs
 	@expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
 		if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
-			dfGen[y,:Inv_Cost_Charge_per_MWyr]*vCAPCHARGE[y] + dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
+			inv_cost_charge_per_mwyr(y)*vCAPCHARGE[y] + fixed_om_cost_charge_per_mwyr(y)*eTotalCapCharge[y]
 		else
-			dfGen[y,:Fixed_OM_Cost_Charge_per_MWyr]*eTotalCapCharge[y]
+			fixed_om_cost_charge_per_mwyr(y)*eTotalCapCharge[y]
 		end
 	)
 
@@ -113,7 +120,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	if MultiStage == 1
 		# Existing capacity variable is equal to existing capacity specified in the input file
-		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == dfGen[y,:Existing_Charge_Cap_MW])
+		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == existing_charge_capacity_mw)
 	end
 
 	## Constraints on retirements and capacity additions
@@ -124,11 +131,11 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Constraint on maximum charge capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-    @constraint(EP, cMaxCapCharge[y in intersect(dfGen[dfGen.Max_Charge_Cap_MW.>0,:R_ID], STOR_ASYMMETRIC)], eTotalCapCharge[y] <= dfGen[y,:Max_Charge_Cap_MW])
+    @constraint(EP, cMaxCapCharge[y in intersect(resource_id.(has_positive_max_capacity_mw(resources)), STOR_ASYMMETRIC)], eTotalCapCharge[y] <= max_charge_capacity_mw(y))
 
 	# Constraint on minimum charge capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-    @constraint(EP, cMinCapCharge[y in intersect(dfGen[dfGen.Min_Charge_Cap_MW.>0,:R_ID], STOR_ASYMMETRIC)], eTotalCapCharge[y] >= dfGen[y,:Min_Charge_Cap_MW])
+    @constraint(EP, cMinCapCharge[y in intersect(resource_id.(has_positive_min_charge_capacity_mw(resources)), STOR_ASYMMETRIC)], eTotalCapCharge[y] >= min_charge_capacity_mw(y))
 
 
 end

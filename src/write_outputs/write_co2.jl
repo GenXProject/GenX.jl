@@ -11,13 +11,13 @@ end
 
 
 function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+    resources = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
     # CO2 emissions by plant
-    dfEmissions_plant = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
+    dfEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(resources), AnnualSum=zeros(G))
     emissions_plant = value.(EP[:eEmissionsByPlant])
     if setup["ParameterScale"] == 1
         emissions_plant *= ModelScalingFactor
@@ -35,12 +35,12 @@ function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Di
 end
 
 function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+    resources = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
+    dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(resources), AnnualSum=zeros(G))
     if any(dfGen.CO2_Capture_Fraction .!= 0)
         # Captured CO2 emissions by plant
         emissions_captured_plant = zeros(G, T)

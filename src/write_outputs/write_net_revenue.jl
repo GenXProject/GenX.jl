@@ -4,7 +4,7 @@
 Function for writing net revenue of different generation technologies.
 """
 function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame, dfOpRegRevenue::DataFrame, dfOpRsvRevenue::DataFrame)
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
 	G = inputs["G"]     			# Number of generators
@@ -31,7 +31,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Create a NetRevenue dataframe
- 	dfNetRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCES"], zone = dfGen[!,:Zone], Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
+ 	dfNetRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCE_NAMES"], zone = zone_id.(resources), Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
 
 	# Add investment cost to the dataframe
 	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:G,:NewCap]

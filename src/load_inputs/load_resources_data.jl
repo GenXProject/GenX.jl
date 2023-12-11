@@ -62,7 +62,7 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
 end
 
 function required_columns_for_co2()
-    return ["Biomass", "CO2_Capture_Fraction", "CO2_Capture_Fraction_Startup", "CCS_Disposal_Cost_per_Metric_Ton"]
+    return ["biomass", "co2_capture_fraction", "co2_capture_fraction_startup", "ccs_disposal_cost_per_metric_ton"]
 end
 
 function ensure_columns!(df::DataFrame)
@@ -73,13 +73,21 @@ function ensure_columns!(df::DataFrame)
 	end
 end
 
-function _get_resources_array(path::AbstractString, Resource, scale_factor::Float64=1.0)
+function _get_resource_df(path::AbstractString, scale_factor::Float64=1.0)
     # load dataframe with data of a given resource
     resource_in = load_dataframe(path)
     # scale data if necessary
     scale_resources_data!(resource_in, scale_factor)
     # ensure columns
     ensure_columns!(resource_in)
+
+    println("co2_capture_fraction" ∈ names(resource_in))
+
+    # return dataframe
+    return resource_in
+end
+
+function _get_resource_array(resource_in::DataFrame, Resource)
     # convert dataframe to array of resources of correct type
     resources::Vector{Resource} = Resource.(dataframerow_to_tuple.(eachrow(resource_in)))
     # return resources
@@ -87,7 +95,7 @@ function _get_resources_array(path::AbstractString, Resource, scale_factor::Floa
 end
 
 function _get_all_resources(resources_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
-    # resources_offset = 0
+    resource_id_offset = 0
     resources = Vector(undef, length(resources_info))
     # loop over available types and get all resources
     # for (i,(filename, resource_type, key)) in enumerate(values(resources_info))
@@ -95,23 +103,32 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
         # path to resources data
         path = joinpath(resources_folder, filename)
         # load resources data of a given type
-        resources_same_type = _get_resources_array(path, resource_type, scale_factor)
-        # add resources of a given type to array of resources
-        resources[i] = resources_same_type
-        @info filename * " Successfully Read."
+        resource_in = _get_resource_df(path, scale_factor)
         # get indices of resources for later use
-        # resources_indices = _get_resources_indices(resources_same_type, resources_offset)
+        resources_indices = _get_resource_indices(resource_in, resource_id_offset)
+        # add indices to dataframe
+        _add_indices_to_resource_df!(resource_in, resources_indices)
+        # add resources of a given type to array of resources
+        resources_same_type = _get_resource_array(resource_in, resource_type)
+        resources[i] = resources_same_type
+        # update id offset for next type of resources
+        resource_id_offset += length(resources_same_type)
+        # print log
+        @info filename * " Successfully Read."
         # add indices to input_data
         # input_data[key] = resources_indices
-        # update offset
-        # resources_offset += length(resources_same_type)
     end
     return reduce(vcat, resources)
 end
 
-function _get_resources_indices(resource::Vector{<:AbstractResource}, offset::Int64)
+function _add_indices_to_resource_df!(df::DataFrame, indices::AbstractVector)
+    df[!, :id] = indices
+    return nothing
+end
+
+function _get_resource_indices(resources_in::DataFrame, offset::Int64)
     # return array of indices of resources
-    range = (1,length(resource)) .+ offset
+    range = (1,nrow(resources_in)) .+ offset
     return UnitRange{Int64}(range...)
 end
 
@@ -266,19 +283,19 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
 	input_data["RET_CAP_CHARGE"] = ret_cap_charge
 
     # Names of resources
-    input_data["RESOURCES"] = resource_name.(resources)
+    input_data["RESOURCE_NAMES"] = resource_name.(resources)
 
     # Zones resources are located in
     zones = zone_id.(resources)
     
     # Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
     input_data["R_ZONES"] = zones
-    input_data["RESOURCE_ZONES"] = input_data["RESOURCES"] .* "_z" .* string.(zones)
+    input_data["RESOURCE_ZONES"] = input_data["RESOURCE_NAMES"] .* "_z" .* string.(zones)
 
     # Fuel
     input_data["HAS_FUEL"] = has_fuel(resources)
 
-    input_data["resources"] = resources
+    input_data["RESOURCES"] = resources
     return nothing
 end
 

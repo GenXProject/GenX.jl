@@ -1,5 +1,5 @@
 function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	THERM_ALL = inputs["THERM_ALL"]

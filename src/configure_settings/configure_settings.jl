@@ -25,6 +25,8 @@ function default_settings()
         "HydrogenHourlyMatching" => 0,
         "EnableJuMPStringNames" => false,
         "ComputeConflicts" => 0
+        "HydrogenHourlyMatching" => 0,
+        "ResourcesPath" => "resources"
     )
 end
 

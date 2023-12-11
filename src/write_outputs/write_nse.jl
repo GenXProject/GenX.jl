@@ -4,7 +4,7 @@
 Function for reporting non-served energy for every model zone, time step and cost-segment.
 """
 function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	SEG = inputs["SEG"] # Number of demand curtailment segments

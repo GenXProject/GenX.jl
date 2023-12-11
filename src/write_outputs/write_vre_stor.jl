@@ -29,7 +29,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	WIND = inputs["VS_WIND"]
 	DC = inputs["VS_DC"]
 	STOR = inputs["VS_STOR"]
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 	MultiStage = setup["MultiStage"]
 	size_vrestor_resources = size(inputs["RESOURCES_VRE_STOR"])

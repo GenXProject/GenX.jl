@@ -13,11 +13,12 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Discharge Module")
 
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	var_om_cost_per_mwh(y) = var_om_cost_per_mwh(resources[y])
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps
-	Z = inputs["Z"]     # Number of zones
+
 	### Variables ###
 
 	# Energy injected into the grid by resource "y" at hour "t"
@@ -28,7 +29,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	## Objective Function Expressions ##
 
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M
-	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(dfGen[y,:Var_OM_Cost_per_MWh]*vP[y,t])))
+	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(var_om_cost_per_mwh(y)*vP[y,t])))
 	# Sum individual resource contributions to variable discharging costs to get total variable discharging costs
 	@expression(EP, eTotalCVarOutT[t=1:T], sum(eCVar_out[y,t] for y in 1:G))
 	@expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))

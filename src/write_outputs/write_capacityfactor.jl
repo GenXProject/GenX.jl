@@ -5,7 +5,7 @@ Function for writing the capacity factor of different resources. For co-located 
     value is calculated if the site has either or both a solar PV or wind resource.
 """
 function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+    resources = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     THERM_ALL = inputs["THERM_ALL"]
@@ -15,7 +15,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
 
-    dfCapacityfactor = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
+    dfCapacityfactor = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(resources), AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * scale_factor
     dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * scale_factor

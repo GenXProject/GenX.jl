@@ -1,12 +1,12 @@
 function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	REG = inputs["REG"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	# Regulation contributions for each resource in each time step
-	dfReg = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone])
+	dfReg = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources))
 	reg = zeros(G,T)
 	reg[REG, :] = value.(EP[:vREG][REG, :])
 	dfReg.AnnualSum = (reg*scale_factor) * inputs["omega"]

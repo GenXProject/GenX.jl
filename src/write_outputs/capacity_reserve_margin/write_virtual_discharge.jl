@@ -5,12 +5,12 @@ Function for writing the "virtual" discharge of each storage technology. Virtual
 	allow storage resources to contribute to the capacity reserve margin without actually discharging.
 """
 function write_virtual_discharge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	STOR_ALL = inputs["STOR_ALL"]
 
-	dfVirtualDischarge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+	dfVirtualDischarge = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources), AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	virtual_discharge = zeros(G,T)
 
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1

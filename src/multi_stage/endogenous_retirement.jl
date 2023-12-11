@@ -122,7 +122,10 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 
 	println("Endogenous Retirement (Discharge) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	cap_size(y) = cap_size(resources[y])
+	lifetime(y) = lifetime(resources[y])
+	cum_min_retired_cap_mw(y) = cum_min_retired_cap_mw(resources[y])
 
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
@@ -148,12 +151,12 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrack[y in RET_CAP], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrack[y in RET_CAP], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrack[y in RET_CAP], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrack[y in RET_CAP],
 		if y in COMMIT
-			dfGen[y,:Cum_Min_Retired_Cap_MW]/dfGen[y,:Cap_Size] 
+			cum_min_retired_cap_mw(y)/cap_size(y)
 		else
-			dfGen[y,:Cum_Min_Retired_Cap_MW]
+			cum_min_retired_cap_mw(y)
 		end
 	)
 
@@ -177,7 +180,8 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 
 	println("Endogenous Retirement (Charge) Module")
 
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	cum_min_retired_charge_cap_mw(y) = cum_min_retired_charge_cap_mw(resources[y])
 
 	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
 	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
@@ -202,8 +206,8 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackCharge[y in RET_CAP_CHARGE], dfGen[y,:Cum_Min_Retired_Charge_Cap_MW])
+	@expression(EP, eNewCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
+	@expression(EP, eMinRetCapTrackCharge[y in RET_CAP_CHARGE], cum_min_retired_charge_cap_mw(y))
 
 	### Constratints ###
 
@@ -225,7 +229,9 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 
 	println("Endogenous Retirement (Energy) Module")
 
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	lifetime(y) = lifetime(resources[y])
+	cum_min_retired_energy_cap_mw(y) = cum_min_retired_energy_cap_mw(resources[y])
 
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
 	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
@@ -250,8 +256,8 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackEnergy[y in RET_CAP_ENERGY], dfGen[y,:Cum_Min_Retired_Energy_Cap_MW])
+	@expression(EP, eNewCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
+	@expression(EP, eMinRetCapTrackEnergy[y in RET_CAP_ENERGY], cum_min_retired_energy_cap_mw(y))
 
 	### Constratints ###
 
@@ -272,7 +278,8 @@ function endogenous_retirement_vre_stor_dc!(EP::Model, inputs::Dict, num_stages:
 
 	println("Endogenous Retirement (VRE-Storage DC) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	lifetime(y) = lifetime(resources[y])
 
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 
@@ -299,7 +306,7 @@ function endogenous_retirement_vre_stor_dc!(EP::Model, inputs::Dict, num_stages:
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackDC[y in RET_CAP_DC], sum(EP[:vRETCAPTRACKDC][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackDC[y in RET_CAP_DC], sum(EP[:vCAPTRACKDC][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackDC[y in RET_CAP_DC], sum(EP[:vCAPTRACKDC][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackDC[y in RET_CAP_DC], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Inverter_MW])
 
 	### Constraints ###
@@ -321,7 +328,9 @@ function endogenous_retirement_vre_stor_solar!(EP::Model, inputs::Dict, num_stag
 
 	println("Endogenous Retirement (VRE-Storage Solar) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	lifetime(y) = lifetime(resources[y])
+
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 
 	NEW_CAP_SOLAR = inputs["NEW_CAP_SOLAR"] # Set of all resources eligible for new capacity
@@ -347,7 +356,7 @@ function endogenous_retirement_vre_stor_solar!(EP::Model, inputs::Dict, num_stag
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackSolar[y in RET_CAP_SOLAR], sum(EP[:vRETCAPTRACKSOLAR][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackSolar[y in RET_CAP_SOLAR], sum(EP[:vCAPTRACKSOLAR][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackSolar[y in RET_CAP_SOLAR], sum(EP[:vCAPTRACKSOLAR][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackSolar[y in RET_CAP_SOLAR], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Solar_MW])
 
 	### Constraints ###
@@ -369,7 +378,9 @@ function endogenous_retirement_vre_stor_wind!(EP::Model, inputs::Dict, num_stage
 
 	println("Endogenous Retirement (VRE-Storage Wind) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	lifetime(y) = lifetime(resources[y])
+
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 
 	NEW_CAP_WIND = inputs["NEW_CAP_WIND"] # Set of all resources eligible for new capacity
@@ -395,7 +406,7 @@ function endogenous_retirement_vre_stor_wind!(EP::Model, inputs::Dict, num_stage
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackWind[y in RET_CAP_WIND], sum(EP[:vRETCAPTRACKWIND][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackWind[y in RET_CAP_WIND], sum(EP[:vCAPTRACKWIND][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackWind[y in RET_CAP_WIND], sum(EP[:vCAPTRACKWIND][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackWind[y in RET_CAP_WIND], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Wind_MW])
 
 	### Constraints ###
@@ -417,7 +428,9 @@ function endogenous_retirement_vre_stor_stor!(EP::Model, inputs::Dict, num_stage
 
 	println("Endogenous Retirement (VRE-Storage Storage) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+	lifetime(y) = lifetime(resources[y])
+	cum_min_retired_energy_cap_mw(y) = cum_min_retired_energy_cap_mw(resources[y])
 
 	NEW_CAP_STOR = inputs["NEW_CAP_STOR"] # Set of all resources eligible for new capacity
 	RET_CAP_STOR = inputs["RET_CAP_STOR"] # Set of all resources eligible for capacity retirements
@@ -442,8 +455,8 @@ function endogenous_retirement_vre_stor_stor!(EP::Model, inputs::Dict, num_stage
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackEnergy_VS[y in RET_CAP_STOR], sum(EP[:vRETCAPTRACKENERGY_VS][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackEnergy_VS[y in RET_CAP_STOR], sum(EP[:vCAPTRACKENERGY_VS][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackEnergy_VS[y in RET_CAP_STOR], dfGen[y,:Cum_Min_Retired_Energy_Cap_MW])
+	@expression(EP, eNewCapTrackEnergy_VS[y in RET_CAP_STOR], sum(EP[:vCAPTRACKENERGY_VS][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
+	@expression(EP, eMinRetCapTrackEnergy_VS[y in RET_CAP_STOR], cum_min_retired_energy_cap_mw(y))
 
 	### Constratints ###
 
@@ -464,7 +477,7 @@ function endogenous_retirement_vre_stor_discharge_dc!(EP::Model, inputs::Dict, n
 
 	println("Endogenous Retirement (VRE-Storage Discharge DC) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 
@@ -491,7 +504,7 @@ function endogenous_retirement_vre_stor_discharge_dc!(EP::Model, inputs::Dict, n
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackDischargeDC[y in RET_CAP_DISCHARGE_DC], sum(EP[:vRETCAPTRACKDISCHARGEDC][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackDischargeDC[y in RET_CAP_DISCHARGE_DC], sum(EP[:vCAPTRACKDISCHARGEDC][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackDischargeDC[y in RET_CAP_DISCHARGE_DC], sum(EP[:vCAPTRACKDISCHARGEDC][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackDischargeDC[y in RET_CAP_DISCHARGE_DC], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Discharge_DC_MW])
 
 	### Constraints ###
@@ -513,7 +526,7 @@ function endogenous_retirement_vre_stor_charge_dc!(EP::Model, inputs::Dict, num_
 
 	println("Endogenous Retirement (VRE-Storage Charge DC) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 	NEW_CAP_CHARGE_DC = inputs["NEW_CAP_CHARGE_DC"] # Set of all resources eligible for new capacity
 	RET_CAP_CHARGE_DC = inputs["RET_CAP_CHARGE_DC"] # Set of all resources eligible for capacity retirements
@@ -538,7 +551,7 @@ function endogenous_retirement_vre_stor_charge_dc!(EP::Model, inputs::Dict, num_
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackChargeDC[y in RET_CAP_CHARGE_DC], sum(EP[:vRETCAPTRACKCHARGEDC][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackChargeDC[y in RET_CAP_CHARGE_DC], sum(EP[:vCAPTRACKCHARGEDC][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackChargeDC[y in RET_CAP_CHARGE_DC], sum(EP[:vCAPTRACKCHARGEDC][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackChargeDC[y in RET_CAP_CHARGE_DC], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Charge_DC_MW])
 
 	### Constraints ###
@@ -560,7 +573,7 @@ function endogenous_retirement_vre_stor_discharge_ac!(EP::Model, inputs::Dict, n
 
 	println("Endogenous Retirement (VRE-Storage Discharge AC) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 	NEW_CAP_DISCHARGE_AC = inputs["NEW_CAP_DISCHARGE_AC"] # Set of all resources eligible for new capacity
 	RET_CAP_DISCHARGE_AC = inputs["RET_CAP_DISCHARGE_AC"] # Set of all resources eligible for capacity retirements
@@ -585,7 +598,7 @@ function endogenous_retirement_vre_stor_discharge_ac!(EP::Model, inputs::Dict, n
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackDischargeAC[y in RET_CAP_DISCHARGE_AC], sum(EP[:vRETCAPTRACKDISCHARGEAC][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackDischargeAC[y in RET_CAP_DISCHARGE_AC], sum(EP[:vCAPTRACKDISCHARGEAC][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackDischargeAC[y in RET_CAP_DISCHARGE_AC], sum(EP[:vCAPTRACKDISCHARGEAC][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackDischargeAC[y in RET_CAP_DISCHARGE_AC], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Discharge_AC_MW])
 
 	### Constraints ###
@@ -607,7 +620,7 @@ function endogenous_retirement_vre_stor_charge_ac!(EP::Model, inputs::Dict, num_
 
 	println("Endogenous Retirement (VRE-Storage Charge AC) Module")
 	
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 	NEW_CAP_CHARGE_AC = inputs["NEW_CAP_CHARGE_AC"] # Set of all resources eligible for new capacity
 	RET_CAP_CHARGE_AC = inputs["RET_CAP_CHARGE_AC"] # Set of all resources eligible for capacity retirements
@@ -632,7 +645,7 @@ function endogenous_retirement_vre_stor_charge_ac!(EP::Model, inputs::Dict, num_
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackChargeAC[y in RET_CAP_CHARGE_AC], sum(EP[:vRETCAPTRACKCHARGEAC][y,p] for p=1:cur_stage))
-	@expression(EP, eNewCapTrackChargeAC[y in RET_CAP_CHARGE_AC], sum(EP[:vCAPTRACKCHARGEAC][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
+	@expression(EP, eNewCapTrackChargeAC[y in RET_CAP_CHARGE_AC], sum(EP[:vCAPTRACKCHARGEAC][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(y), stage_lens)))
 	@expression(EP, eMinRetCapTrackChargeAC[y in RET_CAP_CHARGE_AC], dfVRE_STOR[y,:Cum_Min_Retired_Cap_Charge_AC_MW])
 
 	### Constraints ###

@@ -76,6 +76,11 @@ function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
 	return df[df.R_ID .== rid, sym][]
 end
 
+function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{AbstractResource})
+    r = rs[findfirst(resource_id.(rs) .== rid)]
+    return getproperty(r,sym)
+end
+
 @doc raw"""
     by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
     

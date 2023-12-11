@@ -45,7 +45,16 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Investment Module")
 
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
+
+	min_duration(y) = min_duration(resources[y])
+	max_duration(y) = max_duration(resources[y])
+	max_capacity_mwh(y) = max_capacity_mwh(resources[y])
+	min_capacity_mwh(y) = min_capacity_mwh(resources[y])
+	existing_capacity_mwh(y) = existing_capacity_mwh(resources[y])
+	fixed_om_cost_per_mwhyr(y) = fixed_om_cost_per_mwhyr(resources[y])
+	inv_cost_per_mwhyr(y) = inv_cost_per_mwhyr(resources[y])
+
 	MultiStage = setup["MultiStage"]
 
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
@@ -71,7 +80,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCapEnergy[y in STOR_ALL], vEXISTINGCAPENERGY[y])
 	else
-		@expression(EP, eExistingCapEnergy[y in STOR_ALL], dfGen[y,:Existing_Cap_MWh])
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], existing_capacity_mwh(y))
 	end
 
 	@expression(EP, eTotalCapEnergy[y in STOR_ALL],
@@ -92,9 +101,9 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	# If resource is not eligible for new energy capacity, fixed costs are only O&M costs
 	@expression(EP, eCFixEnergy[y in STOR_ALL],
 		if y in NEW_CAP_ENERGY # Resources eligible for new capacity
-			dfGen[y,:Inv_Cost_per_MWhyr]*vCAPENERGY[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
+			inv_cost_per_mwhyr(y)*vCAPENERGY[y] + fixed_om_cost_per_mwhyr(y)*eTotalCapEnergy[y]
 		else
-			dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
+			fixed_om_cost_per_mwhyr(y)*eTotalCapEnergy[y]
 		end
 	)
 
@@ -114,7 +123,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	### Constraints ###
 
 	if MultiStage == 1
-		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == dfGen[y,:Existing_Cap_MWh])
+		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == existing_capacity_mwh(y))
 	end
 	
 	## Constraints on retirements and capacity additions
@@ -124,14 +133,14 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapEnergy[y in intersect(dfGen[dfGen.Max_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] <= dfGen[y,:Max_Cap_MWh])
+	@constraint(EP, cMaxCapEnergy[y in intersect(has_positive_max_capacity_mwh(resources), STOR_ALL)], eTotalCapEnergy[y] <= max_capacity_mwh(y))
 
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapEnergy[y in intersect(dfGen[dfGen.Min_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] >= dfGen[y,:Min_Cap_MWh])
+	@constraint(EP, cMinCapEnergy[y in intersect(has_positive_min_capacity_mwh(resources), STOR_ALL)], eTotalCapEnergy[y] >= min_capacity_mwh(y))
 
 	# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
-	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= dfGen[y,:Min_Duration] * EP[:eTotalCap][y])
-	@constraint(EP, cMaxCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= dfGen[y,:Max_Duration] * EP[:eTotalCap][y])
+	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= min_duration(y) * EP[:eTotalCap][y])
+	@constraint(EP, cMaxCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= max_duration(y) * EP[:eTotalCap][y])
 
 end

@@ -3,7 +3,7 @@
 
 Function for reading input parameters related to electricity generators (plus storage and flexible demand resources)
 """
-function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict, fuel_costs::Dict, fuel_CO2::Dict)
+function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Dict)
 
     filename = "Generators_data.csv"
     gen_in = load_dataframe(joinpath(path, filename))
@@ -132,12 +132,12 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	inputs_gen["RET_CAP_CHARGE"] = ret_cap_charge
 
 	# Names of resources
-	inputs_gen["RESOURCES"] = gen_in[!,:Resource]
+	inputs_gen["RESOURCE_NAMES"] = gen_in[!,:Resource]
 	# Zones resources are located in
 	zones = gen_in[!,:Zone]
 	# Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
 	inputs_gen["R_ZONES"] = zones
-	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCES"] .* "_z" .* string.(zones)
+	inputs_gen["RESOURCE_ZONES"] = inputs_gen["RESOURCE_NAMES"] .* "_z" .* string.(zones)
 
 	# Retrofit Information
 	if !isempty(inputs_gen["RETRO"]) # If there are any retrofit technologies in consideration, read relevant data
@@ -150,7 +150,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 
 		sources = [ gen_in[!,c] for c in source_cols ]
 		inputs_gen["RETROFIT_SOURCES"] = [ [ sources[i][y] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ]  # The origin technologies that can be retrofitted into this new technology
-		inputs_gen["RETROFIT_SOURCE_IDS"] = [ [ findall(x->x==sources[i][y],inputs_gen["RESOURCES"])[1] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ] # The R_IDs of these origin technologies
+		inputs_gen["RETROFIT_SOURCE_IDS"] = [ [ findall(x->x==sources[i][y],inputs_gen["RESOURCE_NAMES"])[1] for i in 1:max_retro_sources if sources[i][y] != "None" ] for y in 1:G ] # The R_IDs of these origin technologies
 
 		efficiencies = [ gen_in[!,c] for c in efficiency_cols ]
 		inputs_gen["RETROFIT_EFFICIENCIES"] = [ [ efficiencies[i][y] for i in 1:max_retro_sources if efficiencies[i][y] != 0 ] for y in 1:G ]  # The efficiencies of each retrofit by source (ratio of outgoing to incoming nameplate capacity)

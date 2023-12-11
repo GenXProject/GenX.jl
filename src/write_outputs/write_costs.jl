@@ -5,7 +5,7 @@ Function for writing the costs pertaining to the objective function (fixed, vari
 """
 function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Cost results
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	SEG = inputs["SEG"]  # Number of lines
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
@@ -102,7 +102,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempHydrogenValue = 0.0
 		tempCCO2 = 0.0
 
-		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
+		Y_ZONE = resources_in_zone_by_rid(resources,z)
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
 		STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
 		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)

@@ -131,7 +131,7 @@ The above reserve related constraints are established by ```storage_all_reserves
 function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Resources Module")
-	dfGen = inputs["dfGen"]
+	resources = inputs["RESOURCES"]
 	T = inputs["T"]
 	STOR_ALL = inputs["STOR_ALL"]
 
@@ -166,7 +166,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	# ESR Lossses
 	if EnergyShareRequirement >= 1
 		if IncludeLossesInESR == 1
-			@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS][y] for y in intersect(dfGen[dfGen.Zone.==z,:R_ID],STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+			@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS][y] for y in intersect(resources_in_zone_by_rid(resources,z),STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
 			add_similar_to_expression!(EP[:eESR], -eESRStor)
 		end
 	end

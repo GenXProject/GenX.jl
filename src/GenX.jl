@@ -60,8 +60,8 @@ end
 include_all_in_folder("case_runners")
 include_all_in_folder("configure_settings")
 include_all_in_folder("configure_solver")
-include_all_in_folder("load_inputs")
 include_all_in_folder("model")
+include_all_in_folder("load_inputs")
 include_all_in_folder("write_outputs")
 
 include("time_domain_reduction/time_domain_reduction.jl")
