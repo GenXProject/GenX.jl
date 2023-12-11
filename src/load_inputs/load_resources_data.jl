@@ -6,6 +6,7 @@ function _get_resource_info()
         storage = (filename="storage.csv", type=STOR), #key="STOR_ALL"),
         flex_demand  = (filename="flex_demand.csv", type=FLEX), #key="FLEX"),
         electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER), #key="ELECTROLYZER")
+        must_run = (filename="must_run.csv", type=MUST_RUN) #key="MUST_RUN")
     )
     return resources
 end
@@ -80,9 +81,6 @@ function _get_resource_df(path::AbstractString, scale_factor::Float64=1.0)
     scale_resources_data!(resource_in, scale_factor)
     # ensure columns
     ensure_columns!(resource_in)
-
-    println("co2_capture_fraction" ∈ names(resource_in))
-
     # return dataframe
     return resource_in
 end
@@ -115,8 +113,6 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
         resource_id_offset += length(resources_same_type)
         # print log
         @info filename * " Successfully Read."
-        # add indices to input_data
-        # input_data[key] = resources_indices
     end
     return reduce(vcat, resources)
 end
@@ -135,11 +131,13 @@ end
 function load_resources_data!(setup::Dict, case_path::AbstractString, input_data::Dict)
     if isfile(joinpath(case_path, "Generators_data.csv"))
         Base.depwarn(
-            "The `Generators_data.csv` file will be deprecated in a future release. " *
+            "The `Generators_data.csv` file was deprecated in release v0.4. " *
             "Please use the new interface for generators creation, and see the documentation for additional details.",
             :load_resources_data!, force=true)
-        load_generators_data!(setup, case_path, input_data)
-        translate_generators_data!(setup, input_data)
+        @info "Exiting GenX..."
+        exit(-1)
+        # load_generators_data!(setup, case_path, input_data)
+        # translate_generators_data!(setup, input_data)
     else
         # Scale factor for energy and currency units
         scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
@@ -206,13 +204,14 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
 
     ## TODO: MUST_RUN
     # Set of must-run plants - could be behind-the-meter PV, hydro run-of-river, must-run fossil or thermal plants
-    # input_data["MUST_RUN"] = must_run(resources)
+    input_data["MUST_RUN"] = must_run(resources)
 
     ## ELECTROLYZER
     # Set of hydrogen electolyzer resources:
     input_data["ELECTROLYZER"] = electrolyzer(resources)
 
     ## Retrofit ## TODO: ask how to add it
+    input_data["RETRO"] = []
 
     ## Reserves
     if setup["Reserves"] >= 1
@@ -238,6 +237,8 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
             input_data["C_Start"][g,:] .= start_up_cost
         end
         # Piecewise fuel usage option
+        input_data["PWFU_Num_Segments"] = 0
+        input_data["THERM_COMMIT_PWFU"] = Int64[]
         # process_piecewisefuelusage!(input_data, scale_factor)
     else
         # Set of thermal resources with unit commitment
@@ -250,6 +251,7 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
 
     ## Co-located resources
     # VRE and storage
+    input_data["VRE_STOR"] = []
     # load_vre_stor_data!(input_data, setup, path)
 
     buildable = is_buildable(resources)

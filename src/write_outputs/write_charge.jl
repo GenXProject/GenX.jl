@@ -4,7 +4,9 @@
 Function for writing the charging energy values of the different storage technologies.
 """
 function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
+
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	STOR_ALL = inputs["STOR_ALL"]
@@ -14,7 +16,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
 	
 	# Power withdrawn to charge each resource in each time step
-	dfCharge = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources), AnnualSum = Array{Union{Missing,Float64}}(undef, G))
+	dfCharge = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones, AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	charge = zeros(G,T)
 
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1

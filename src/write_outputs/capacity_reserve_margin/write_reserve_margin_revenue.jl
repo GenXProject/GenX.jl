@@ -10,11 +10,12 @@ Function for reporting the capacity revenue earned by each generator listed in t
 """
 function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	resources = inputs["RESOURCES"]
+	
+	res =  inputs["RESOURCES"]
+	regions = region.(res)
+	clusters = cluster.(res)
+	zones = zone_id.(res)
 
-	regions = region.(resources)
-	clusters = cluster.(resources)
-	zones = zone_id.(resources)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)

@@ -4,16 +4,21 @@
 Function for reporting subsidy revenue earned if a generator specified `Min_Cap` is provided in the input file, or if a generator is subject to a Minimum Capacity Requirement constraint. The unit is \$.
 """
 function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	regions = region.(res)
+	clusters = cluster.(res)
+	zones = zone_id.(res)
+	rid = resource_id.(res)
+	
 	G = inputs["G"]
 
-	dfSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources), Cluster = dfGen[!, :cluster], R_ID=dfGen[!, :R_ID], SubsidyRevenue = zeros(G))
-	MIN_CAP = dfGen[(dfGen[!, :Min_Cap_MW].>0), :R_ID]
+	dfSubRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, R_ID=rid, SubsidyRevenue = zeros(G))
+	MIN_CAP = has_positive_min_capacity_mw(res)
 	if !isempty(inputs["VRE_STOR"])
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 		MIN_CAP_SOLAR = dfVRE_STOR[(dfVRE_STOR[!, :Min_Cap_Solar_MW].>0), :R_ID]
 		MIN_CAP_WIND = dfVRE_STOR[(dfVRE_STOR[!, :Min_Cap_Wind_MW].>0), :R_ID]
-		MIN_CAP_STOR = dfGen[(dfGen[!, :Min_Cap_MWh].>0), :R_ID]
+		MIN_CAP_STOR = has_positive_min_capacity_mwh(res)
 		if !isempty(MIN_CAP_SOLAR)
 			dfSubRevenue.SubsidyRevenue[MIN_CAP_SOLAR] .+= (value.(EP[:eTotalCap_SOLAR])[MIN_CAP_SOLAR]) .* (dual.(EP[:cMinCap_Solar][MIN_CAP_SOLAR])).data
 		end
@@ -26,7 +31,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 	end
 	dfSubRevenue.SubsidyRevenue[MIN_CAP] .= (value.(EP[:eTotalCap])[MIN_CAP]) .* (dual.(EP[:cMinCap][MIN_CAP])).data
 	### calculating tech specific subsidy revenue
-	dfRegSubRevenue = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources), Cluster = dfGen[!, :cluster], R_ID=dfGen[!, :R_ID], SubsidyRevenue = zeros(G))
+	dfRegSubRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, R_ID=rid, SubsidyRevenue = zeros(G))
 	if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
 			MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID]

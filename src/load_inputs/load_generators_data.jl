@@ -15,7 +15,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
     # initial screen that resources are valid
     resources = dataframerow_to_dict.(eachrow(gen_in))
     validate_resources(resources)
-    inputs_gen["resources_d"] = resources
+    inputs_gen["RESOURCES"] = resources
 
     # Number of resources (generators, storage, DR, and DERs)
     G = nrow(gen_in)
@@ -521,8 +521,6 @@ end
 
 function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 	gen_in = inputs["dfGen"]
-	inputs["PWFU_Num_Segments"] = 0
-	inputs["THERM_COMMIT_PWFU"] = Int64[]
 
 	if any(occursin.(Ref("PWFU_"), names(gen_in)))
 		heat_rate_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Heat_Rate_MMBTU_per_MWh")

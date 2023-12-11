@@ -4,9 +4,13 @@
 Function for writing net revenue of different generation technologies.
 """
 function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame, dfOpRegRevenue::DataFrame, dfOpRsvRevenue::DataFrame)
-	resources = inputs["RESOURCES"]
-	T = inputs["T"]     			# Number of time steps (hours)
-	Z = inputs["Z"]     			# Number of zones
+
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
+	regions = region.(res)
+	clusters = cluster.(res)
+	rid = resource_id.(res)
+
 	G = inputs["G"]     			# Number of generators
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
@@ -31,13 +35,12 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Create a NetRevenue dataframe
- 	dfNetRevenue = DataFrame(region = dfGen[!,:region], Resource = inputs["RESOURCE_NAMES"], zone = zone_id.(resources), Cluster = dfGen[!,:cluster], R_ID = dfGen[!,:R_ID])
+ 	dfNetRevenue = DataFrame(region = regions, Resource = inputs["RESOURCE_NAMES"], zone = zones, Cluster = clusters, R_ID = rid)
 
 	# Add investment cost to the dataframe
-	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:G,:NewCap]
-	dfNetRevenue.Inv_cost_MWh = dfGen[!,:Inv_Cost_per_MWhyr] .* dfCap[1:G,:NewEnergyCap]
-	dfNetRevenue.Inv_cost_charge_MW = dfGen[!,:Inv_Cost_Charge_per_MWyr] .* dfCap[1:G,:NewChargeCap]
-
+	dfNetRevenue.Inv_cost_MW = inv_cost_per_mwyr.(res) .* dfCap[1:G,:NewCap]
+	dfNetRevenue.Inv_cost_MWh = inv_cost_per_mwhyr.(res) .* dfCap[1:G,:NewEnergyCap]
+	dfNetRevenue.Inv_cost_charge_MW = inv_cost_charge_per_mwyr.(res) .* dfCap[1:G,:NewChargeCap]
 	if !isempty(VRE_STOR)
 		# Doesn't include charge capacities
 		if !isempty(SOLAR)
@@ -57,11 +60,11 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# Add operations and maintenance cost to the dataframe
-	dfNetRevenue.Fixed_OM_cost_MW = dfGen[!,:Fixed_OM_Cost_per_MWyr] .* dfCap[1:G,:EndCap]
- 	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
-    dfNetRevenue.Fixed_OM_cost_charge_MW = dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr] .* dfCap[1:G, :EndChargeCap]
+	dfNetRevenue.Fixed_OM_cost_MW = fixed_om_cost_per_mwyr.(res) .* dfCap[1:G,:EndCap]
+ 	dfNetRevenue.Fixed_OM_cost_MWh = fixed_om_cost_per_mwhyr.(res) .* dfCap[1:G,:EndEnergyCap]
+	dfNetRevenue.Fixed_OM_cost_charge_MW = fixed_om_cost_charge_per_mwyr.(res) .* dfCap[1:G, :EndChargeCap]
 
- 	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
+ 	dfNetRevenue.Var_OM_cost_out = var_om_cost_per_mwh.(res) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
 		if !isempty(SOLAR)
 			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapSolar]
@@ -97,7 +100,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add storage cost to the dataframe
 	dfNetRevenue.Var_OM_cost_in = zeros(nrow(dfNetRevenue))
 	if !isempty(STOR_ALL)
-		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = dfGen[STOR_ALL,:Var_OM_Cost_per_MWh_In] .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
+		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = var_om_cost_per_mwh_in.(resource.STOR) .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
  	end
 	if !isempty(VRE_STOR)
 		if !isempty(DC_CHARGE)
@@ -161,7 +164,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		for cap in 1:inputs["NCO2Cap"]
 			co2_cap_dual = dual(EP[:cCO2Emissions_systemwide][cap])
 			CO2ZONES = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
-			GEN_IN_ZONE = dfGen[[y in CO2ZONES for y in dfGen[:, :Zone]], :R_ID]
+			GEN_IN_ZONE = resource_id.(res[y in CO2ZONES for y in zone_id.(res)])
 			if setup["CO2Cap"]==1 || setup["CO2Cap"]==2 # Mass-based or Demand + Rate-based
 				# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
 				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
@@ -169,7 +172,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 			elseif setup["CO2Cap"]==3 # Generation + Rate-based
 				SET_WITH_MAXCO2RATE = union(inputs["THERM_ALL"],inputs["VRE"], inputs["VRE"],inputs["MUST_RUN"],inputs["HYDRO_RES"])
 				Y = intersect(GEN_IN_ZONE, SET_WITH_MAXCO2RATE)
-				temp_vec = (value.(EP[:eEmissionsByPlant][Y,:]) - (value.(EP[:vP][Y,:]) .* inputs["dfMaxCO2Rate"][dfGen[Y, :Zone], cap])) * inputs["omega"]
+				temp_vec = (value.(EP[:eEmissionsByPlant][Y,:]) - (value.(EP[:vP][Y,:]) .* inputs["dfMaxCO2Rate"][zone_id.(res[Y]), cap])) * inputs["omega"]
 				dfNetRevenue.EmissionsCost[Y] += - co2_cap_dual * temp_vec
 			end
 		end

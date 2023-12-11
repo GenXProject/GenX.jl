@@ -37,14 +37,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	println("Investment Discharge Module")
 	MultiStage = setup["MultiStage"]
 
-	resources = inputs["RESOURCES"]
-	cap_size(y) = cap_size(resources[y])
-	existing_capacity_mw(y) = existing_capacity_mw(resources[y])
-	max_capacity_mw(y) = max_capacity_mw(resources[y])
-	min_capacity_mw(y) = min_capacity_mw(resources[y])
-	inv_cost_per_mwyr(y) = inv_cost_per_mwyr(resources[y])
-	fixed_om_cost_per_mwyr(y) = fixed_om_cost_per_mwyr(resources[y])
-
+	res =  inputs["RESOURCES"]
 
 	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
 
@@ -87,7 +80,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCap[y in 1:G], vEXISTINGCAP[y])
 	else
-		@expression(EP, eExistingCap[y in 1:G], existing_capacity_mw(y))
+		@expression(EP, eExistingCap[y in 1:G], existing_capacity_mw(res[y]))
 	end
 
 	# Cap_Size is set to 1 for all variables when unit UCommit == 0
@@ -95,19 +88,19 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCap[y in 1:G],
 		if y in intersect(NEW_CAP, RET_CAP) # Resources eligible for new capacity and retirements
 			if y in COMMIT
-				eExistingCap[y] + cap_size(y)*(EP[:vCAP][y] - EP[:vRETCAP][y])
+				eExistingCap[y] + cap_size(res[y])*(EP[:vCAP][y] - EP[:vRETCAP][y])
 			else
 				eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y]
 			end
 		elseif y in setdiff(NEW_CAP, RET_CAP) # Resources eligible for only new capacity
 			if y in COMMIT
-				eExistingCap[y] + cap_size(y)*EP[:vCAP][y]
+				eExistingCap[y] + cap_size(res[y])*EP[:vCAP][y]
 			else
 				eExistingCap[y] + EP[:vCAP][y]
 			end
 		elseif y in setdiff(RET_CAP, NEW_CAP) # Resources eligible for only capacity retirements
 			if y in COMMIT
-				eExistingCap[y] - cap_size(y)*EP[:vRETCAP][y]
+				eExistingCap[y] - cap_size(res[y])*EP[:vRETCAP][y]
 			else
 				eExistingCap[y] - EP[:vRETCAP][y]
 			end
@@ -123,18 +116,18 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eCFix[y in 1:G],
 		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
 			if y in COMMIT
-				inv_cost_per_mwyr(y)*cap_size(y)*vCAP[y] + fixed_om_cost_per_mwyr(y)*eTotalCap[y]
+				inv_cost_per_mwyr(res[y])*cap_size(res[y])*vCAP[y] + fixed_om_cost_per_mwyr(res[y])*eTotalCap[y]
 			else
-				inv_cost_per_mwyr(y)*vCAP[y] + fixed_om_cost_per_mwyr(y)*eTotalCap[y]
+				inv_cost_per_mwyr(res[y])*vCAP[y] + fixed_om_cost_per_mwyr(res[y])*eTotalCap[y]
 			end
 		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
 			if y in COMMIT
-				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*cap_size(y)*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + fixed_om_cost_per_mwyr(y)*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*cap_size(res[y])*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + fixed_om_cost_per_mwyr(res[y])*eTotalCap[y]
 			else
-				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + fixed_om_cost_per_mwyr(y)*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + fixed_om_cost_per_mwyr(res[y])*eTotalCap[y]
 			end
 		else
-			fixed_om_cost_per_mwyr(y)*eTotalCap[y]
+			fixed_om_cost_per_mwyr(res[y])*eTotalCap[y]
 		end
 	)
 
@@ -155,24 +148,24 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	if MultiStage == 1
 	    # Existing capacity variable is equal to existing capacity specified in the input file
-		@constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == existing_capacity_mw(y))
+		@constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == existing_capacity_mw(res[y]))
 	end
 
 	## Constraints on retirements and capacity additions
 	# Cannot retire more capacity than existing capacity
 	@constraint(EP, cMaxRetNoCommit[y in setdiff(RET_CAP,COMMIT)], vRETCAP[y] <= eExistingCap[y])
-	@constraint(EP, cMaxRetCommit[y in intersect(RET_CAP,COMMIT)], cap_size(y)*vRETCAP[y] <= eExistingCap[y])
+	@constraint(EP, cMaxRetCommit[y in intersect(RET_CAP,COMMIT)], cap_size(res[y])*vRETCAP[y] <= eExistingCap[y])
 
 	## Constraints on new built capacity
 	# Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-	MAX_CAP = has_positive_max_capacity_mw(resources)
-	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_capacity_mw(y))
+	MAX_CAP = has_positive_max_capacity_mw(res)
+	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_capacity_mw(res[y]))
 
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-	MIN_CAP = has_positive_min_capacity_mw(resources)
-	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_capacity_mw(y))
+	MIN_CAP = has_positive_min_capacity_mw(res)
+	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_capacity_mw(res[y]))
 
 
 

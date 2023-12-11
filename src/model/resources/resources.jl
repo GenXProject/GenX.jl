@@ -1,6 +1,3 @@
-abstract type AbstractResource end
-
-const resources_type = (:ELECTROLYZER, :FLEX, :HYDRO, :STOR, :THERM, :VRE)
 for r in resources_type
     let nt = Symbol("nt"), r = r
         @eval begin
@@ -37,7 +34,6 @@ end
 Base.pairs(r::AbstractResource) = pairs(parent(r))
 
 function Base.show(io::IO, r::AbstractResource)
-
     for (k,v) in pairs(r)
         println(io, "$k: $v")
     end
@@ -76,6 +72,10 @@ reg_max(r::AbstractResource)::Float64 = get(r, :reg_max, default)
 rsv_cost(r::AbstractResource)::Float64 = get(r, :rsv_cost, default)
 rsv_max(r::AbstractResource)::Float64 = get(r, :rsv_max, default)
 
+var_om_cost_per_mwh(r::AbstractResource)::Float64 = get(r, :var_om_cost_per_mwh, default)
+inv_cost_per_mwyr(r::AbstractResource)::Float64 = r.inv_cost_per_mwyr
+fixed_om_cost_per_mwyr(r::AbstractResource)::Float64 = r.fixed_om_cost_per_mwyr
+
 # fuel
 fuel(r::AbstractResource)::String = get(r, :fuel, "None")
 start_fuel_mmbtu_per_mw(r::AbstractResource)::Float64 = r.start_fuel_mmbtu_per_mw
@@ -86,8 +86,8 @@ ccs_disposal_cost_per_metric_ton(r::AbstractResource)::Float64 = r.ccs_disposal_
 biomass(r::AbstractResource) = get(r, :biomass, default)
 
 # Reservoir hydro and storage
-efficiency_up(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_up, default)
-efficiency_down(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_down, default)
+efficiency_up(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_up, 1.0)
+efficiency_down(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_down, 1.0)
 
 # Ramp up and down
 const TCOMMIT = Union{ELECTROLYZER, HYDRO, THERM}
@@ -134,11 +134,6 @@ function has_fuel(rs::Vector{T}) where T <: AbstractResource
     return findall(r -> get(r, :fuel, "None") != "None", rs)
 end
 
-# VRE and STOR
-const VRE_STOR = Union{VRE, STOR}
-inv_cost_per_mwyr(r::VRE_STOR)::Float64 = r.inv_cost_per_mwyr
-fixed_om_cost_per_mwyr(r::VRE_STOR)::Float64 = r.fixed_om_cost_per_mwyr
-
 # STOR interface
 storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,STOR), rs)
 
@@ -150,13 +145,12 @@ max_duration(r::STOR)::Float64 = r.max_duration
 existing_capacity_mwh(r::STOR)::Float64 = r.existing_cap_mwh
 max_capacity_mwh(r::STOR)::Float64 = r.max_cap_mwh
 min_capacity_mwh(r::STOR)::Float64 = r.min_cap_mwh
-var_om_cost_per_mwh(r::STOR)::Float64 = r.var_om_cost_per_mwh
 
 fixed_om_cost_per_mwhyr(r::STOR)::Float64 = r.fixed_om_cost_per_mwhyr
 inv_cost_per_mwhyr(r::STOR)::Float64 = r.inv_cost_per_mwhyr
 
-existing_charge_capacity_mw(r::STOR)::Float64 = r.existing_charge_cap_mw
-fixed_om_cost_charge_per_mwyr(r::STOR)::Float64 = r.fixed_om_cost_charge_per_mwyr
+existing_charge_capacity_mw(r::STOR)::Float64 = get(r, :existing_charge_cap_mw, default)
+fixed_om_cost_charge_per_mwyr(r::STOR)::Float64 = get(r, :fixed_om_cost_charge_per_mwyr, default)
 inv_cost_charge_per_mwyr(r::STOR)::Float64 = r.inv_cost_charge_per_mwyr
 max_charge_capacity_mw(r::STOR)::Float64 = r.max_charge_cap_mw
 min_charge_capacity_mw(r::STOR)::Float64 = r.min_charge_cap_mw
@@ -270,7 +264,9 @@ var_om_cost_per_mwh_in(r::FLEX)::Float64 = r.var_om_cost_per_mwh_in
 flexible_demand_energy_eff(r::FLEX)::Float64 = r.flexible_demand_energy_eff
 max_flexible_demand_delay(r::FLEX)::Float64 = r.max_flexible_demand_delay
 max_flexible_demand_advance(r::FLEX)::Float64 = r.max_flexible_demand_advance
-flexible_demand_energy_eff(r::FLEX)::Float64 = r.flexible_demand_energy_eff
+
+# MUST_RUN interface
+must_run(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,MUST_RUN), rs)
 
 # MGA
 resources_with_mga(rs::Vector{T}) where T <: AbstractResource = rs[findall(r -> get(r, :mga, default) == 1, rs)]

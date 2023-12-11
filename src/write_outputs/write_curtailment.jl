@@ -5,11 +5,11 @@ Function for writing the curtailment values of the different variable renewable 
 	co-located).
 """
 function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	VRE = inputs["VRE"]
-	dfCurtailment = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources), AnnualSum = zeros(G))
+	dfCurtailment = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(res), AnnualSum = zeros(G))
 	curtailment = zeros(G, T)
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	curtailment[VRE, :] = scale_factor * (value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .- value.(EP[:vP][VRE, :]))

@@ -45,6 +45,11 @@ using HiGHS
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 const ModelScalingFactor = 1e+3
 
+# abstract type for all resources
+abstract type AbstractResource end
+# Name of the type of resources available in the model
+const resources_type = (:ELECTROLYZER, :FLEX, :HYDRO, :STOR, :THERM, :VRE, :MUST_RUN)
+
 # thanks, ChatGPT
 function include_all_in_folder(folder)
     base_path = joinpath(@__DIR__, folder)
@@ -60,8 +65,8 @@ end
 include_all_in_folder("case_runners")
 include_all_in_folder("configure_settings")
 include_all_in_folder("configure_solver")
-include_all_in_folder("model")
 include_all_in_folder("load_inputs")
+include_all_in_folder("model")
 include_all_in_folder("write_outputs")
 
 include("time_domain_reduction/time_domain_reduction.jl")
@@ -72,4 +77,5 @@ include("simple_operation.jl")
 
 include_all_in_folder("multi_stage")
 include_all_in_folder("additional_tools")
+
 end

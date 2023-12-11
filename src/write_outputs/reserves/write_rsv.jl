@@ -1,11 +1,12 @@
 function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	RSV = inputs["RSV"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	dfRsv = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources))
+	dfRsv = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	rsv = zeros(G,T)
 	unmet_vec = zeros(T)
 	rsv[RSV, :] = value.(EP[:vRSV][RSV, :]) * scale_factor

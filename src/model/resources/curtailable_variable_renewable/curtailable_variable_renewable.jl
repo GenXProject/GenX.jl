@@ -18,8 +18,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Default value of Num_VRE_Bins ==1
 	println("Dispatchable Resources Module")
 
-	resources = inputs["RESOURCES"]
-	num_vre_bins(y) = num_vre_bins(resources[y])
+	res =  inputs["RESOURCES"]
 
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
@@ -30,7 +29,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 
 	VRE = inputs["VRE"]
 
-	VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(resources)) 
+	VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(res)) 
 	VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
 	### Expressions ###
@@ -38,7 +37,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t] for y in intersect(VRE, resources_in_zone_by_rid(resources,z)))
+		sum(EP[:vP][y,t] for y in intersect(VRE, resources_in_zone_by_rid(res,z)))
 	)
 	add_similar_to_expression!(EP[:ePowerBalance], EP[:ePowerBalanceDisp])
 
@@ -58,7 +57,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
         for y in VRE_POWER_OUT
             # Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
             # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-            VRE_BINS = intersect(resource_id.(resources[1:G .>= y]), resource_id.(resources[1:G .<= y+num_vre_bins(y)-1]))
+            VRE_BINS = intersect(resource_id.(res[1:G .>= y]), resource_id.(res[1:G .<= y+num_vre_bins(res[y])-1]))
 
             # Maximum power generated per hour by renewable generators must be less than
             # sum of product of hourly capacity factor for each bin times its the bin installed capacity
@@ -73,7 +72,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	end
 	##CO2 Polcy Module VRE Generation by zone
 	@expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
-		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], resources_in_zone_by_rid(resources,z)))
+		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], resources_in_zone_by_rid(res,z)))
 	)
 	add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByVRE)
 
@@ -103,11 +102,11 @@ The amount of frequency regulation and operating reserves procured in each time 
 ```
 """
 function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 	T = inputs["T"]
 
     VRE = inputs["VRE"]
-	VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(resources)) 
+	VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(res)) 
     REG = intersect(VRE_POWER_OUT, inputs["REG"])
     RSV = intersect(VRE_POWER_OUT, inputs["RSV"])
 
@@ -116,16 +115,13 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
     vREG = EP[:vREG]
     vRSV = EP[:vRSV]
     hourly_capacity_factor(y, t) = inputs["pP_Max"][y, t]
-    reg_max(y) = reg_max(resources[y])
-    rsv_max(y) = rsv_max(resources[y])
-	num_vre_bins(y) = num_vre_bins(resources[y])
 
     hourly_capacity(y, t) = hourly_capacity_factor(y, t) * eTotalCap[y]
-    resources_in_bin(y) = UnitRange(y, y + num_vre_bins(y) - 1)
+    resources_in_bin(y) = UnitRange(y, y + num_vre_bins(res[y]) - 1)
     hourly_bin_capacity(y, t) = sum(hourly_capacity(yy, t) for yy in resources_in_bin(y))
 
-    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= reg_max(y) * hourly_bin_capacity(y, t))
-    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= rsv_max(y) * hourly_bin_capacity(y, t))
+    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= reg_max(res[y]) * hourly_bin_capacity(y, t))
+    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= rsv_max(res[y]) * hourly_bin_capacity(y, t))
 
     expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
     add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
@@ -138,10 +134,10 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
 end
 
 function remove_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
-    resources = inputs["RESOURCES"]
+    res =  inputs["RESOURCES"]
 
     VRE = inputs["VRE"]
-    VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(resources)) 
+    VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(res)) 
     REG = inputs["REG"]
     RSV = inputs["RSV"]
 

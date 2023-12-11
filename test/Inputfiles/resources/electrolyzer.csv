@@ -1,2 +1,2 @@
-resource,zone,must_run,hydrogen_mwh_per_tonne,electrolyzer_min_kt,hydrogen_price_per_tonne,qualified_hydrogen_supply,new_build,can_retire,existing_cap_mw,max_cap_mw,min_cap_mw,inv_cost_per_mwyr,fixed_om_cost_per_mwyr,heat_rate_mmbtu_per_mwh,fuel,region,cluster,resource_type
-electrolyzer,1,0,55,1000,1000,0,1,1,0,-1,-1,125000,15000,0,None,NE,0,hydrogen_electrolyzer
+resource,zone,hydrogen_mwh_per_tonne,electrolyzer_min_kt,hydrogen_price_per_tonne,qualified_hydrogen_supply,new_build,can_retire,existing_cap_mw,max_cap_mw,min_cap_mw,inv_cost_per_mwyr,fixed_om_cost_per_mwyr,heat_rate_mmbtu_per_mwh,fuel,min_power,ramp_up_percentage,ramp_dn_percentage,region,cluster,resource_type
+electrolyzer,1,55,1000,1000,0,1,1,0,-1,-1,125000,15000,0,None,0,1,1,NE,0,hydrogen_electrolyzer

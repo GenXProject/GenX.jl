@@ -66,10 +66,7 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Long Duration Storage Module")
 
-	resources = inputs["RESOURCES"]
-	self_discharge(y) = self_discharge(resources[y])
-	efficiency_up(y) = efficiency_up(resources[y])
-	efficiency_down(y) = efficiency_down(resources[y])
+	res =  inputs["RESOURCES"]
 
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
@@ -112,8 +109,8 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 	# Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
 	# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
 	@constraint(EP, cSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
-				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-self_discharge(y))*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])
-					-(1/efficiency_down(y)*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(efficiency_up(y)*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
+				    EP[:vS][y,hours_per_subperiod*(w-1)+1] == (1-self_discharge(res[y]))*(EP[:vS][y,hours_per_subperiod*w]-vdSOC[y,w])
+					-(1/efficiency_down(res[y])*EP[:vP][y,hours_per_subperiod*(w-1)+1])+(efficiency_up(res[y])*EP[:vCHARGE][y,hours_per_subperiod*(w-1)+1]))
 
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
@@ -138,8 +135,8 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 		# Alternative to cVSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
 		# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
 		@constraint(EP, cVSoCBalLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_LONG_DURATION],
-						EP[:vCAPRES_socinreserve][y,hours_per_subperiod*(w-1)+1] == (1-self_discharge(y))*(EP[:vCAPRES_socinreserve][y,hours_per_subperiod*w]-vCAPRES_dsoc[y,w])
-						+(1/efficiency_down(y)*EP[:vCAPRES_discharge][y,hours_per_subperiod*(w-1)+1])-(efficiency_up(y)*EP[:vCAPRES_charge][y,hours_per_subperiod*(w-1)+1]))
+						EP[:vCAPRES_socinreserve][y,hours_per_subperiod*(w-1)+1] == (1-self_discharge(res[y]))*(EP[:vCAPRES_socinreserve][y,hours_per_subperiod*w]-vCAPRES_dsoc[y,w])
+						+(1/efficiency_down(res[y])*EP[:vCAPRES_discharge][y,hours_per_subperiod*(w-1)+1])-(efficiency_up(res[y])*EP[:vCAPRES_charge][y,hours_per_subperiod*(w-1)+1]))
 
 		# Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 		## Multiply storage build up term from prior period with corresponding weight

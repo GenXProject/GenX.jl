@@ -29,7 +29,6 @@ function load_inputs(setup::Dict,path::AbstractString)
 	load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
 	load_resources_data!(setup, path, inputs)
-	return inputs
 	# Read in generator/resource availability profiles
 	load_generators_variability!(setup, path, inputs)
 

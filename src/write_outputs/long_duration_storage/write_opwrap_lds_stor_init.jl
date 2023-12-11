@@ -1,11 +1,13 @@
 function write_opwrap_lds_stor_init(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Extract data frames from input dictionary
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
+
 	G = inputs["G"]
 
 	# Initial level of storage in each modeled period
 	NPeriods = size(inputs["Period_Map"])[1]
-	dfStorageInit = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources))
+	dfStorageInit = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	socw = zeros(G,NPeriods)
 	for i in 1:G
 		if i in inputs["STOR_LONG_DURATION"]

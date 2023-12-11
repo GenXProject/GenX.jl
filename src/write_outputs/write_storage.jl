@@ -4,7 +4,9 @@
 Function for writing the capacities of different storage technologies, including hydro reservoir, flexible storage tech etc.
 """
 function write_storage(path::AbstractString, inputs::Dict,setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
+
 	T = inputs["T"]     # Number of time steps (hours)
 	G = inputs["G"]
 	STOR_ALL = inputs["STOR_ALL"]
@@ -14,7 +16,7 @@ function write_storage(path::AbstractString, inputs::Dict,setup::Dict, EP::Model
 	VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
 	
 	# Storage level (state of charge) of each resource in each time step
-	dfStorage = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources))
+	dfStorage = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	storagevcapvalue = zeros(G,T)
 
 	if !isempty(inputs["STOR_ALL"])

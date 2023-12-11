@@ -1,10 +1,12 @@
 function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
+	
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	COMMIT = inputs["COMMIT"]
 	# Startup state for each resource in each time step
-	dfStart = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources))
+	dfStart = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	start = zeros(G,T)
 	start[COMMIT, :] = value.(EP[:vSTART][COMMIT, :])
 	dfStart.AnnualSum = start * inputs["omega"]

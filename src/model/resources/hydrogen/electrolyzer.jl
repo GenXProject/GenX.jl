@@ -81,16 +81,7 @@ This constraint permits modeling of the 'three pillars' requirements for clean h
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	println("Electrolyzer Resources Module")
 
-	resources = inputs["RESOURCES"]
-
-	electrolyzer_min_kt(y) = electrolyzer_min_kt(resources[y])
-	hydrogen_mwh_per_tonne(y) = hydrogen_mwh_per_tonne(resources[y])
-	hydrogen_price_per_tonne(y) = hydrogen_price_per_tonne(resources[y])
-	qualified_hydrogen_supply(y) = qualified_hydrogen_supply(resources[y])
-
-	min_power(y) = min_power(resources[y])
-	ramp_up_percentage(y) = ramp_up_percentage(resources[y])
-	ramp_down_percentage(y) = ramp_down_percentage(resources[y])
+	res =  inputs["RESOURCES"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -110,7 +101,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
-	sum(EP[:vUSE][y,t] for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(resources,z))))
+	sum(EP[:vUSE][y,t] for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(res,z))))
 
 	# Electrolyzers consume electricity so their vUSE is subtracted from power balance
 	EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
@@ -123,10 +114,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Maximum ramp up and down between consecutive hours (Constraints #1-2)
 	@constraints(EP, begin
 		## Maximum ramp up between consecutive hours
-        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] - EP[:vUSE][y, hoursbefore(p,t,1)] <= ramp_up_percentage(y)*EP[:eTotalCap][y]
+        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] - EP[:vUSE][y, hoursbefore(p,t,1)] <= ramp_up_percentage(res[y])*EP[:eTotalCap][y]
 
 		## Maximum ramp down between consecutive hours
-		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y, hoursbefore(p,t,1)] - EP[:vUSE][y,t] <= ramp_down_percentage(y)*EP[:eTotalCap][y]
+		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y, hoursbefore(p,t,1)] - EP[:vUSE][y,t] <= ramp_down_percentage(res[y])*EP[:eTotalCap][y]
 	end)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
@@ -135,7 +126,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # Could allow them to contribute as a curtailable demand in future.
     @constraints(EP, begin
 		# Minimum stable power generated per technology "y" at hour "t" Min_Power
-		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= min_power(y)*EP[:eTotalCap][y]
+		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= min_power(res[y])*EP[:eTotalCap][y]
 
         # Maximum power generated per technology "y" at hour "t"
         [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
@@ -145,7 +136,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	kt_to_t = 10^3
 	@constraint(EP,
 		cHydrogenMin[y in ELECTROLYZERS],
-		sum(inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(y) for t=1:T) >= electrolyzer_min_kt(y) * kt_to_t
+		sum(inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(res[y]) for t=1:T) >= electrolyzer_min_kt(res[y]) * kt_to_t
 	)
 
 	### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
@@ -158,10 +149,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
 	if setup["HydrogenHourlyMatching"] == 1
-		HYDROGEN_ZONES = unique(zone_id.(resources.ELECTROLYZER))
-		QUALIFIED_SUPPLY = resources_with_qualified_hydrogen_supply(resources)
+		HYDROGEN_ZONES = unique(zone_id.(res.ELECTROLYZER))
+		QUALIFIED_SUPPLY = resources_with_qualified_hydrogen_supply(res)
 		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
-			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(resources,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(resources,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(resources,z), QUALIFIED_SUPPLY, STORAGE))
+			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(res,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(res,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(res,z), QUALIFIED_SUPPLY, STORAGE))
 		)
 	end
 
@@ -178,7 +169,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Objective Function ###
 	# Subtract hydrogen revenue from objective function
 	scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
-	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], (inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(y) * hydrogen_price_per_tonne(y) / scale_factor))
+	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], (inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(res[y]) * hydrogen_price_per_tonne(res[y]) / scale_factor))
 	@expression(EP, eTotalHydrogenValueT[t in 1:T], sum(eHydrogenValue[y,t] for y in ELECTROLYZERS))
 	@expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
 	EP[:eObj] -= eTotalHydrogenValue

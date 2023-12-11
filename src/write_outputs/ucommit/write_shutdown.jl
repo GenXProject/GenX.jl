@@ -1,11 +1,13 @@
 function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
+	zones = zone_id.(res)
+
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	# Operational decision variable states
 	COMMIT = inputs["COMMIT"]
 	# Shutdown state for each resource in each time step
-	dfShutdown = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(resources))
+	dfShutdown = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	shut = zeros(G,T)
 	shut[COMMIT, :] = value.(EP[:vSHUT][COMMIT, :])
 	dfShutdown.AnnualSum = shut * inputs["omega"]

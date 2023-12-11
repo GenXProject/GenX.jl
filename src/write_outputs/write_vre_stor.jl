@@ -24,12 +24,13 @@ end
 Function for writing the vre-storage capacities.
 """
 function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	res =  inputs["RESOURCES"]
+
 	VRE_STOR = inputs["VRE_STOR"]
 	SOLAR = inputs["VS_SOLAR"]
 	WIND = inputs["VS_WIND"]
 	DC = inputs["VS_DC"]
 	STOR = inputs["VS_STOR"]
-	resources = inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 	MultiStage = setup["MultiStage"]
 	size_vrestor_resources = size(inputs["RESOURCES_VRE_STOR"])
@@ -81,7 +82,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	
 	j = 1
 	for i in VRE_STOR
-		existingcapgrid[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAP][i]) : dfGen[i,:Existing_Cap_MW]
+		existingcapgrid[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAP][i]) : existing_capacity_mw(res[i])
 		if i in inputs["NEW_CAP"]
 			capgrid[j] = value(EP[:vCAP][i])
 		end
@@ -120,7 +121,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		end
 
 		if i in STOR
-			existingcapenergy[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY_VS][i]) : dfGen[i,:Existing_Cap_MWh]
+			existingcapenergy[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY_VS][i]) : existing_capacity_mwh([i])
 			if i in inputs["NEW_CAP_STOR"]
 				capenergy[j] = value(EP[:vCAPENERGY_VS][i])
 			end

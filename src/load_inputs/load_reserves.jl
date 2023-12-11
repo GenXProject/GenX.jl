@@ -7,7 +7,7 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
     filename = "Reserves.csv"
     res_in = load_dataframe(joinpath(path, filename))
 
-	resources = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
     function load_field_with_deprecated_symbol(df::DataFrame, columns::Vector{Symbol})
         best = popfirst!(columns)
@@ -52,11 +52,11 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
 		if inputs["pDynamic_Contingency"] > 0
 			inputs["pContingency_BigM"] = zeros(Float64, inputs["G"])
 			for y in inputs["COMMIT"]
-				inputs["pContingency_BigM"][y] = max_capacity_mw(resources[y])
+				inputs["pContingency_BigM"][y] = max_capacity_mw(res[y])
 				# When Max_Cap_MW == -1, there is no limit on capacity size
 				if inputs["pContingency_BigM"][y] < 0
 					# NOTE: this effectively acts as a maximum cluster size when not otherwise specified, adjust accordingly
-					inputs["pContingency_BigM"][y] = 5000 * cap_size(resources[y])
+					inputs["pContingency_BigM"][y] = 5000 * cap_size(res[y])
 				end
 			end
 		end
