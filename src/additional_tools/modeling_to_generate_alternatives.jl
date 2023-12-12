@@ -33,7 +33,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 	zones = unique(inputs["R_ZONES"])
 
 	# Create a set of unique technology types
-	resources_with_mga = has_mga_on(res)
+	resources_with_mga = resources_with_mga(res)
 	TechTypes = unique(resource_type.(resources_with_mga))
 
 	# Read slack parameter representing desired increase in budget from the least cost solution
