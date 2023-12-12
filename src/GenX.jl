@@ -47,8 +47,6 @@ const ModelScalingFactor = 1e+3
 
 # abstract type for all resources
 abstract type AbstractResource end
-# Name of the type of resources available in the model
-const resources_type = (:ELECTROLYZER, :FLEX, :HYDRO, :STOR, :THERM, :VRE, :MUST_RUN)
 
 # thanks, ChatGPT
 function include_all_in_folder(folder)

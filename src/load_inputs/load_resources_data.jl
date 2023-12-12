@@ -85,6 +85,21 @@ function _get_resource_df(path::AbstractString, scale_factor::Float64=1.0)
     return resource_in
 end
 
+function _get_resource_indices(resources_in::DataFrame, offset::Int64)
+    # return array of indices of resources
+    range = (1,nrow(resources_in)) .+ offset
+    return UnitRange{Int64}(range...)
+end
+
+function _add_indices_to_resource_df!(df::DataFrame, indices::AbstractVector)
+    df[!, :id] = indices
+    return nothing
+end
+
+function dataframerow_to_tuple(dfr::DataFrameRow)
+    return NamedTuple(pairs(dfr))
+end
+
 function _get_resource_array(resource_in::DataFrame, Resource)
     # convert dataframe to array of resources of correct type
     resources::Vector{Resource} = Resource.(dataframerow_to_tuple.(eachrow(resource_in)))
@@ -115,43 +130,6 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
         @info filename * " Successfully Read."
     end
     return reduce(vcat, resources)
-end
-
-function _add_indices_to_resource_df!(df::DataFrame, indices::AbstractVector)
-    df[!, :id] = indices
-    return nothing
-end
-
-function _get_resource_indices(resources_in::DataFrame, offset::Int64)
-    # return array of indices of resources
-    range = (1,nrow(resources_in)) .+ offset
-    return UnitRange{Int64}(range...)
-end
-
-function load_resources_data!(setup::Dict, case_path::AbstractString, input_data::Dict)
-    if isfile(joinpath(case_path, "Generators_data.csv"))
-        Base.depwarn(
-            "The `Generators_data.csv` file was deprecated in release v0.4. " *
-            "Please use the new interface for generators creation, and see the documentation for additional details.",
-            :load_resources_data!, force=true)
-        @info "Exiting GenX..."
-        exit(-1)
-        # load_generators_data!(setup, case_path, input_data)
-        # translate_generators_data!(setup, input_data)
-    else
-        # Scale factor for energy and currency units
-        scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-
-        # get path to resources data
-        resources_folder = setup["ResourcesPath"]
-        resources_folder = joinpath(case_path,resources_folder)
-
-        resources = load_scaled_resources_data(resources_folder, scale_factor)
-
-        add_resources_to_input_data!(setup, input_data, resources)
-
-        return nothing
-    end
 end
 
 function load_scaled_resources_data(resources_folder::AbstractString, scale_factor::Float64=1.0)
@@ -299,6 +277,34 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
 
     input_data["RESOURCES"] = resources
     return nothing
+end
+
+function load_resources_data!(setup::Dict, case_path::AbstractString, input_data::Dict)
+    if isfile(joinpath(case_path, "Generators_data.csv"))
+        Base.depwarn(
+            "The `Generators_data.csv` file was deprecated in release v0.4. " *
+            "Please use the new interface for generators creation, and see the documentation for additional details.",
+            :load_resources_data!, force=true)
+        @info "Exiting GenX..."
+        exit(-1)
+        # load_generators_data!(setup, case_path, input_data)
+        # translate_generators_data!(setup, input_data)
+    else
+        # Scale factor for energy and currency units
+        scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+        # get path to resources data
+        resources_folder = setup["ResourcesPath"]
+        resources_folder = joinpath(case_path,resources_folder)
+
+        # load resources data and scale it if necessary
+        resources = load_scaled_resources_data(resources_folder, scale_factor)
+
+        # add resources to input_data dict
+        add_resources_to_input_data!(setup, input_data, resources)
+
+        return nothing
+    end
 end
 
 function translate_generators_data!(setup::Dict, inputs_gen::Dict)
