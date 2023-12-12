@@ -11,6 +11,10 @@ function _get_resource_info()
     return resources
 end
 
+function policy_filenames()
+    return ["cap_res.csv", "esr.csv", "min_cap_tags.csv"]
+end
+
 function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
     # See documentation for descriptions of each column
     # Generally, these scalings converts energy and power units from MW to GW
@@ -85,6 +89,17 @@ function _get_resource_df(path::AbstractString, scale_factor::Float64=1.0)
     return resource_in
 end
 
+# function _add_policies_to_resource_df!(path::AbstractString, resource_in::DataFrame)
+#     policies_filenames = policy_filenames()
+#     # loop over policies filenames
+#     for filename in policies_filenames
+#         # load poli
+#         policy_in = load_dataframe(joinpath(path, filename))
+#             resource_in[!, filename] = policy_in[!, :value]
+#         end
+#     end
+#     # load policies data
+
 function _get_resource_indices(resources_in::DataFrame, offset::Int64)
     # return array of indices of resources
     range = (1,nrow(resources_in)) .+ offset
@@ -117,6 +132,8 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
         path = joinpath(resources_folder, filename)
         # load resources data of a given type
         resource_in = _get_resource_df(path, scale_factor)
+        # add policies-related attributes to resource dataframe
+        # _add_policies_to_resource_df!(path, resource_in)
         # get indices of resources for later use
         resources_indices = _get_resource_indices(resource_in, resource_id_offset)
         # add indices to dataframe
@@ -149,7 +166,7 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
     input_data["G"] = G
 
     # Number of time steps (periods)
-    𝑇 = input_data["T"]
+    T = input_data["T"]
     
     ## HYDRO
     # Set of all reservoir hydro resources
@@ -209,7 +226,7 @@ function add_resources_to_input_data!(setup::Dict, input_data::Dict, resources::
         # Set of thermal resources without unit commitment
         input_data["THERM_NO_COMMIT"] = no_unit_commitment(resources)
         # Start-up cost is sum of fixed cost per start startup
-		input_data["C_Start"] = zeros(Float64, G, 𝑇)
+		input_data["C_Start"] = zeros(Float64, G, T)
         for g in input_data["THERM_COMMIT"]
             start_up_cost = start_cost_per_mw(resources[g]) * cap_size(resources[g])
             input_data["C_Start"][g,:] .= start_up_cost
