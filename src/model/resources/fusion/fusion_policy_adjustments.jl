@@ -56,6 +56,9 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     by_rid(rid, sym) = by_rid_df(rid, sym, dfGen)
 
     capresfactor = by_rid(y, Symbol("CapRes_" * string(capres_zone)))
+    if capresfactor == 0.0
+        return AffExpr.(zero.(timesteps))
+    end
     dwell_time = Float64(by_rid(y, :Dwell_Time))
     component_size = by_rid(y, :Cap_Size)
 
