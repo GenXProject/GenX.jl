@@ -24,30 +24,43 @@ end
 
 function update_cumulative_min_ret!(inputs_d::Dict,t::Int,Resource_Set::String,dfGen_Name::String,RetCap::Symbol)
 
-	CumRetCap = Symbol("Cum_"*String(RetCap));
-
-	if !isempty(inputs_d[1][Resource_Set])
-		if t==1
-			inputs_d[t][dfGen_Name][!,CumRetCap] = inputs_d[t][dfGen_Name][!,RetCap];
-		else
-			inputs_d[t][dfGen_Name][!,CumRetCap] = inputs_d[t-1][dfGen_Name][!,CumRetCap] + inputs_d[t][dfGen_Name][!,RetCap];
+	# if api is defined, use it, otherwise access the data directly
+	if isdefined(Main, RetCap)
+		CumRetCap = Symbol("cum_"*String(RetCap))
+		ret_cap_api = getfield(Main, RetCap)
+		cum_ret_cap_api = getfield(Main, CumRetCap)
+		if !isempty(inputs_d[1][Resource_Set])
+			gen_t = inputs_d[t][dfGen_Name]
+			if t==1
+				cum_ret_cap_api.(gen_t) = ret_cap_api.(gen_t)
+			else
+				cum_ret_cap_api.(gen_t) = cum_ret_cap_api.(inputs_d[t-1][dfGen_Name]) + ret_cap_api.(gen_t)
+			end
+		end
+	else
+		CumRetCap = Symbol("Cum_"*String(RetCap));
+		if !isempty(inputs_d[1][Resource_Set])
+			if t==1
+				inputs_d[t][dfGen_Name][!,CumRetCap] = inputs_d[t][dfGen_Name][!,RetCap];
+			else
+				inputs_d[t][dfGen_Name][!,CumRetCap] = inputs_d[t-1][dfGen_Name][!,CumRetCap] + inputs_d[t][dfGen_Name][!,RetCap];
+			end
 		end
 	end
-
 end
 
 
 function compute_cumulative_min_retirements!(inputs_d::Dict,t::Int)
 
-	mytab =[("G","dfGen",:Min_Retired_Cap_MW),
-	("STOR_ALL","dfGen",:Min_Retired_Energy_Cap_MW),
-	("STOR_ASYMMETRIC","dfGen",:Min_Retired_Charge_Cap_MW)];
+	mytab =[("G","RESOURCES", :min_retired_cap_mw),
+	("STOR_ALL","RESOURCES", :min_retired_energy_cap_mw),
+	("STOR_ASYMMETRIC","RESOURCES", :min_retired_charge_cap_mw)];
 
 	if !isempty(inputs_d[1]["VRE_STOR"])
 		append!(mytab,[("VS_DC","dfVRE_STOR",:Min_Retired_Cap_Inverter_MW),
 				("VS_SOLAR","dfVRE_STOR",:Min_Retired_Cap_Solar_MW),
 				("VS_WIND","dfVRE_STOR",:Min_Retired_Cap_Wind_MW),
-				("VS_STOR","dfGen",:Min_Retired_Energy_Cap_MW),
+				("VS_STOR","RESOURCES", :min_retired_energy_cap_mw),
 				("VS_ASYM_DC_DISCHARGE","dfVRE_STOR",:Min_Retired_Cap_Discharge_DC_MW),
 				("VS_ASYM_DC_CHARGE","dfVRE_STOR",:Min_Retired_Cap_Charge_DC_MW),
 				("VS_ASYM_AC_DISCHARGE","dfVRE_STOR",:Min_Retired_Cap_Discharge_AC_MW),

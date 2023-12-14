@@ -69,7 +69,7 @@ returns: dictionary containing updated model inputs, to be used in the generate\
 """
 function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
-    dfGen = inputs_d["dfGen"]
+    gen = inputs_d["RESOURCES"]
 
 	# Parameter inputs when multi-year discounting is activated
 	cur_stage = settings_d["CurStage"]
@@ -84,15 +84,15 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
 		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		gen.inv_cost_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwyr.(gen), capital_recovery_period.(gen), wacc.(gen))
+		gen.inv_cost_per_mwhyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwhyr.(gen), capital_recovery_period.(gen), wacc.(gen))	#TODO: check this, might throw error for non storage resources
+		gen.inv_cost_charge_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_per_mwyr.(gen), capital_recovery_period.(gen), wacc.(gen))
 
 		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .*= OPEXMULT
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] .*= OPEXMULT
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr] .*= OPEXMULT
+		gen.fixed_om_cost_per_mwyr .*= OPEXMULT
+		gen.fixed_om_cost_per_mwhyr .*= OPEXMULT
+		gen.fixed_om_cost_charge_per_mwyr .*= OPEXMULT
 
 		# Conduct 1. and 2. for any co-located VRE-STOR resources
 		if !isempty(inputs_d["VRE_STOR"])
@@ -115,7 +115,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		end
 	end
 
-    retirable = resources_which_can_be_retired(dfGen)
+    retirable = is_retirable(gen)
 
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = retirable
