@@ -192,6 +192,7 @@ struct FusionReactorData
     dwell_time::Float64
     max_pulse_length::Int
     max_starts::Int
+    max_fpy_per_year::Float64
 end
 
 # useful because the matching of arguments can be verified
@@ -206,6 +207,7 @@ FusionReactorData(;
     dwell_time::Float64,
     max_pulse_length::Int,
     max_starts::Int,
+    max_fpy_per_year::Float64,
 ) = FusionReactorData(
     component_size,
     parasitic_passive_fraction,
@@ -217,6 +219,7 @@ FusionReactorData(;
     dwell_time,
     max_pulse_length,
     max_starts,
+    max_fpy_per_year,
 )
 
 #######################################
@@ -250,6 +253,8 @@ function FusionReactorData(dfr::DataFrameRow)::FusionReactorData
 
     parasitic_maint = Float64(get_with_default(:Parasitic_Passive_Maintenance_Remaining, 0))
 
+    max_fpy_per_year = Float64(get_with_default(:Max_FPY_per_year, -1))
+
     reactor = FusionReactorData(component_size=core_cap_size,
                                 parasitic_passive_fraction=parasitic_passive,
                                 parasitic_active_fraction=parasitic_active,
@@ -259,7 +264,8 @@ function FusionReactorData(dfr::DataFrameRow)::FusionReactorData
                                 dwell_time=dwell_time,
                                 max_pulse_length=max_pulse_length,
                                 max_starts=max_starts,
-                                maintenance_remaining_parasitic_power_fraction=parasitic_maint)
+                                maintenance_remaining_parasitic_power_fraction=parasitic_maint,
+                                max_fpy_per_year=max_fpy_per_year)
 end
 
 #######################################
@@ -280,6 +286,10 @@ end
 
 function has_pulse_start_power(r::FusionReactorData)
     r.pulse_start_power_fraction > 0
+end
+
+function has_max_annual_power_output(r::FusionReactorData)
+    r.max_fpy_per_year > 0
 end
 
 function fusion_average_net_electric_power_factor(reactor::FusionReactorData)
@@ -426,6 +436,27 @@ function fusion_pulse_thermal_power_generation_constraint!(
         [t in 1:T],
 		power_like[y, t] <= ePulseUnderway[t] - _fusion_dwell_avoided_operation(dwell_time, ePulseStart[t])
     )
+end
+
+function fusion_max_fpy_per_year_constraint!(
+        EP::Model,
+        inputs::Dict,
+        r_id::Int,
+        reactor::FusionReactorData,
+        component_capacity::Symbol,
+        power_like::AbstractArray,
+    )
+    T = inputs["T"]
+    y = r_id
+
+    capacity = EP[component_capacity][r_id]
+    max_fpy_per_year = reactor.max_fpy_per_year
+    if max_fpy_per_year > 0 && max_fpy_per_year < 1
+        @constraint(EP, sum(power_like[y, :]) / T <= max_fpy_per_year * capacity)
+    end
+    if max_fpy_per_year >= 1
+        @info "Max FPY per year fusion constraint automatically met; not creating."
+    end
 end
 
 @doc raw"""
