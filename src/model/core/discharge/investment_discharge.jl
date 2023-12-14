@@ -176,4 +176,9 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
 		add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
 	end
+
+    if may_have_pairwise_capacity_links(dfGen)
+        link_capacities!(EP, dfGen)
+    end
+
 end
