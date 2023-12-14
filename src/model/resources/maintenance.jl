@@ -215,3 +215,20 @@ end
 function maintenance_down_variables(dict::Dict)::Set{Symbol}
     dict[MAINTENANCE_DOWN_VARS]
 end
+
+####
+# for for simulating resources with odd maintenance schedules.
+# i.e. replace a whole component over 5 years, but do nothing for 3 years and then
+# replace ½ the thing in two different years.
+# This would mean 2 of the 'maintenance' and 3 of the 'nomaintenance'.
+# id_1=id_maintenance,   scale_1=2.
+# id_2=id_nomaintenance, scale_1=3.
+# cap_maint * 3 = cap_nomaint * 2
+#
+# This also works for plants where they need maintenance every year:
+# cap_maint * 0 = cap_nomain * 5  →  0 == cap_nomain
+####
+function maintenance_capacity_link(EP::Model, id_1, id_2, scale_1, scale_2)
+    cap = EP[:eTotalCap]
+    @constraint(EP, cap[id_1] * scale_2 == cap[id_2] * scale_1)
+end
