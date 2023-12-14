@@ -1,4 +1,4 @@
-﻿resource,min_cap_tag_1,min_cap_tag_2,min_cap_tag_3
+﻿Resource,Min_Cap_1,Min_Cap_2,Min_Cap_3
 NENGREST_offshore_wind_turbine_1,1,1,0
 NENGREST_onshore_wind_turbine_1,1,0,0
 NENGREST_solar_photovoltaic_1,0,0,1
