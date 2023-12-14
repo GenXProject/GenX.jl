@@ -71,7 +71,7 @@ function reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Reserves Contingency Module")
 
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 	UCommit = setup["UCommit"]
@@ -116,7 +116,7 @@ function reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 	# Dynamic contingency related constraints
 		# option 1: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest installed generator
 	if UCommit == 1 && pDynamic_Contingency == 1
-		@constraint(EP, cContingency[y in COMMIT], vLARGEST_CONTINGENCY >= cap_size(res[y])*vCONTINGENCY_AUX[y] )
+		@constraint(EP, cContingency[y in COMMIT], vLARGEST_CONTINGENCY >= cap_size(gen[y])*vCONTINGENCY_AUX[y] )
 		# Ensure vCONTINGENCY_AUX = 0 if total capacity = 0
 		@constraint(EP, cContAux1[y in COMMIT], vCONTINGENCY_AUX[y] <= EP[:eTotalCap][y])
 		# Ensure vCONTINGENCY_AUX = 1 if total capacity > 0
@@ -124,7 +124,7 @@ function reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
 		# option 2: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest commited generator in each hour
 	elseif UCommit == 1 && pDynamic_Contingency == 2
-		@constraint(EP, cContingency[y in COMMIT, t=1:T], vLARGEST_CONTINGENCY[t] >= cap_size(res[y])*vCONTINGENCY_AUX[y,t] )
+		@constraint(EP, cContingency[y in COMMIT, t=1:T], vLARGEST_CONTINGENCY[t] >= cap_size(gen[y])*vCONTINGENCY_AUX[y,t] )
 		# Ensure vCONTINGENCY_AUX = 0 if vCOMMIT = 0
 		@constraint(EP, cContAux[y in COMMIT, t=1:T], vCONTINGENCY_AUX[y,t] <= EP[:vCOMMIT][y,t])
 		# Ensure vCONTINGENCY_AUX = 1 if vCOMMIT > 0
@@ -207,7 +207,7 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Reserves Core Module")
 
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 	
 	UCommit = setup["UCommit"]
 
@@ -262,8 +262,8 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	# TODO: check these expressions
 	@expression(EP, eCRsvPen[t=1:T], inputs["omega"][t]*inputs["pC_Rsv_Penalty"]*vUNMET_RSV[t])
 	@expression(EP, eTotalCRsvPen, sum(eCRsvPen[t] for t=1:T) +
-		sum(reg_cost(res[y])*vRSV[y,t] for y in RSV, t=1:T) +
-		sum(rsv_cost(res[y])*vREG[y,t] for y in REG, t=1:T) )
+		sum(reg_cost(gen[y])*vRSV[y,t] for y in RSV, t=1:T) +
+		sum(rsv_cost(gen[y])*vREG[y,t] for y in REG, t=1:T) )
 	add_to_expression!(EP[:eObj], eTotalCRsvPen)
 end
 

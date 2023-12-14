@@ -4,8 +4,8 @@
 Function for writing the capacities of different storage technologies, including hydro reservoir, flexible storage tech etc.
 """
 function write_storage(path::AbstractString, inputs::Dict,setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
-	zones = zone_id.(res)
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
 
 	T = inputs["T"]     # Number of time steps (hours)
 	G = inputs["G"]

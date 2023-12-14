@@ -45,7 +45,7 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
 	println("Long Duration Storage Module for Hydro Reservoir")
 
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	REP_PERIOD = inputs["REP_PERIOD"]     # Number of representative periods
 
@@ -77,7 +77,7 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 	# Alternative to cSoCBalStart constraint which is included when not modeling operations wrapping and long duration storage
 	# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
 	@constraint(EP, cHydroReservoirLongDurationStorageStart[w=1:REP_PERIOD, y in STOR_HYDRO_LONG_DURATION],
-				    EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1] == (EP[:vS_HYDRO][y,hours_per_subperiod*w]-vdSOC_HYDRO[y,w])-(1/efficiency_down(res[y])*EP[:vP][y,hours_per_subperiod*(w-1)+1])-EP[:vSPILL][y,hours_per_subperiod*(w-1)+1]+inputs["pP_Max"][y,hours_per_subperiod*(w-1)+1]*EP[:eTotalCap][y])
+				    EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1] == (EP[:vS_HYDRO][y,hours_per_subperiod*w]-vdSOC_HYDRO[y,w])-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(w-1)+1])-EP[:vSPILL][y,hours_per_subperiod*(w-1)+1]+inputs["pP_Max"][y,hours_per_subperiod*(w-1)+1]*EP[:eTotalCap][y])
 	# Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
 	## Multiply storage build up term from prior period with corresponding weight
 	@constraint(EP, cHydroReservoirLongDurationStorage[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
@@ -85,7 +85,7 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
 	# Storage at beginning of each modeled period cannot exceed installed energy capacity
 	@constraint(EP, cHydroReservoirLongDurationStorageUpper[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-					vSOC_HYDROw[y,r] <= hydro_energy_to_power_ratio(res[y])*EP[:eTotalCap][y])
+					vSOC_HYDROw[y,r] <= hydro_energy_to_power_ratio(gen[y])*EP[:eTotalCap][y])
 
 	# Initial storage level for representative periods must also adhere to sub-period storage inventory balance
 	# Initial storage = Final storage - change in storage inventory across representative period

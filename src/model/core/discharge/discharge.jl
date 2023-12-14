@@ -13,7 +13,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Discharge Module")
 
-	res = inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps
@@ -28,7 +28,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	## Objective Function Expressions ##
 
 	# Variable costs of "generation" for resource "y" during hour "t" = variable O&M
-	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(var_om_cost_per_mwh(res[y])*vP[y,t])))
+	@expression(EP, eCVar_out[y=1:G,t=1:T], (inputs["omega"][t]*(var_om_cost_per_mwh(gen[y])*vP[y,t])))
 	# Sum individual resource contributions to variable discharging costs to get total variable discharging costs
 	@expression(EP, eTotalCVarOutT[t=1:T], sum(eCVar_out[y,t] for y in 1:G))
 	@expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))
@@ -40,7 +40,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if setup["EnergyShareRequirement"] >= 1
 
 		@expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], 
-			+ sum(inputs["omega"][t] * esr(res[y],tag=ESR) * EP[:vP][y,t] for y=has_esr(res,tag=ESR), t=1:T)
+			+ sum(inputs["omega"][t] * esr(gen[y],tag=ESR) * EP[:vP][y,t] for y=has_esr(gen,tag=ESR), t=1:T)
 			- sum(inputs["dfESR"][z,ESR]*inputs["omega"][t]*inputs["pD"][t,z] for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR]))
 		)
 		add_similar_to_expression!(EP[:eESR], eESRDischarge)

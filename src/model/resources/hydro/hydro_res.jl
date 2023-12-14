@@ -193,7 +193,7 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
 
 	println("Hydro Reservoir Reserves Module")
 
-	res =  inputs["RESOURCES"]
+	gen =  inputs["RESOURCES"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 
@@ -222,6 +222,6 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
     @constraint(EP, [y in HYDRO_RES, t in 1:T], max_up_reserves_lhs[y, t] <= eTotalCap[y])
     @constraint(EP, [y in HYDRO_RES, t in 1:T], max_dn_reserves_lhs[y, t] >= 0)
 
-    @constraint(EP, [y in HYDRO_RES_REG, t in 1:T], vREG[y, t] <= reg_max(res[y]) * eTotalCap[y])
-    @constraint(EP, [y in HYDRO_RES_RSV, t in 1:T], vRSV[y, t] <= rsv_max(res[y]) * eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_REG, t in 1:T], vREG[y, t] <= reg_max(gen[y]) * eTotalCap[y])
+    @constraint(EP, [y in HYDRO_RES_RSV, t in 1:T], vRSV[y, t] <= rsv_max(gen[y]) * eTotalCap[y])
 end

@@ -54,7 +54,7 @@ function co2!(EP::Model, inputs::Dict)
 
     println("CO2 Module")
 
-    res =  inputs["RESOURCES"]
+    gen =  inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -63,21 +63,21 @@ function co2!(EP::Model, inputs::Dict)
     ### Expressions ###
     # CO2 emissions from power plants in "Generators_data.csv"
     # If all the CO2 capture fractions from Generators_data are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
-    if all(co2_capture_fraction.(res) .==0)
+    if all(co2_capture_fraction.(gen) .==0)
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T], 
-            ((1-biomass(res[y])) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[fuel(res[y])]))
+            ((1-biomass(gen[y])) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[fuel(gen[y])]))
     else 
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
         # CO2_Capture_Fraction refers to the CO2 capture rate of CCS equiped power plants at a steady state 
         # CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equiped power plants during startup events
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            (1-biomass(res[y]) - co2_capture_fraction(res[y])) * EP[:vFuel][y, t]  * fuel_CO2[fuel(res[y])]+
-            (1-biomass(res[y]) - co2_capture_fraction_startup(res[y])) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(res[y])])
+            (1-biomass(gen[y]) - co2_capture_fraction(gen[y])) * EP[:vFuel][y, t]  * fuel_CO2[fuel(gen[y])]+
+            (1-biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])])
         
         # CO2 captured from power plants in "Generators_data.csv"
         @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
-            co2_capture_fraction(res[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(res[y])]+
-            co2_capture_fraction_startup(res[y]) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(res[y])])
+            co2_capture_fraction(gen[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(gen[y])]+
+            co2_capture_fraction_startup(gen[y]) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])])
 
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] 
@@ -86,10 +86,10 @@ function co2!(EP::Model, inputs::Dict)
         # when scale factor is on tCO2/MWh = > kt CO2/GWh
         @expression(EP, ePlantCCO2Sequestration[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] * 
-                ccs_disposal_cost_per_metric_ton(res[y]) for t in 1:T))
+                ccs_disposal_cost_per_metric_ton(gen[y]) for t in 1:T))
     
         @expression(EP, eZonalCCO2Sequestration[z=1:Z], 
-            sum(ePlantCCO2Sequestration[y] for y in resources_in_zone_by_rid(res,z)))
+            sum(ePlantCCO2Sequestration[y] for y in resources_in_zone_by_rid(gen,z)))
     
         @expression(EP, eTotaleCCO2Sequestration, 
             sum(eZonalCCO2Sequestration[z] for z in 1:Z))
@@ -99,7 +99,7 @@ function co2!(EP::Model, inputs::Dict)
 
     # emissions by zone
     @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T], 
-        sum(eEmissionsByPlant[y, t] for y in resources_in_zone_by_rid(res,z)))
+        sum(eEmissionsByPlant[y, t] for y in resources_in_zone_by_rid(gen,z)))
     return EP
 
 end

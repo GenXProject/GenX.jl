@@ -11,13 +11,13 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 end
 
 function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	HAS_FUEL = inputs["HAS_FUEL"]
 	# Fuel consumption cost by each resource, including start up fuel
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCE_NAMES"][HAS_FUEL], 
-		Fuel = fuel.(res[HAS_FUEL]), 
-		Zone = zone_id.(res[HAS_FUEL]), 
+		Fuel = fuel.(gen[HAS_FUEL]), 
+		Zone = zone_id.(gen[HAS_FUEL]), 
 		AnnualSum = zeros(length(HAS_FUEL)))
 	tempannualsum = value.(EP[:ePlantCFuelOut][HAS_FUEL]) + value.(EP[:ePlantCFuelStart][HAS_FUEL])
 

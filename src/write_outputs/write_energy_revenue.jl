@@ -4,10 +4,10 @@
 Function for writing energy revenue from the different generation technologies.
 """
 function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
-	regions = region.(res)
-	clusters = cluster.(res)
-	zones = zone_id.(res)
+	gen = inputs["RESOURCES"]
+	regions = region.(gen)
+	clusters = cluster.(gen)
+	zones = zone_id.(gen)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -16,9 +16,9 @@ function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, E
 	dfEnergyRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, AnnualSum = Array{Float64}(undef, G),)
 	energyrevenue = zeros(G, T)
     price = locational_marginal_price(EP, inputs, setup)
-    energyrevenue[NONFLEX, :] = value.(EP[:vP][NONFLEX, :]) .* transpose(price)[zone_id.(res[NONFLEX]), :]
+    energyrevenue[NONFLEX, :] = value.(EP[:vP][NONFLEX, :]) .* transpose(price)[zone_id.(gen[NONFLEX]), :]
 	if !isempty(FLEX)
-		energyrevenue[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data .* transpose(price)[zone_id.(res[FLEX]), :]
+		energyrevenue[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data .* transpose(price)[zone_id.(gen[FLEX]), :]
 	end
 	if setup["ParameterScale"] == 1
 		energyrevenue *= ModelScalingFactor

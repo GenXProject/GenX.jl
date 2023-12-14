@@ -5,7 +5,6 @@ Function for reporting time-dependent CO$_2$ emissions by zone.
 
 """
 function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
 	
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones

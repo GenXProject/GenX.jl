@@ -27,13 +27,13 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 	Least_System_Cost = objective_value(EP)
 
 	# Read sets
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zonests
 	zones = unique(inputs["R_ZONES"])
 
 	# Create a set of unique technology types
-	resources_with_mga = resources_with_mga(res)
+	resources_with_mga = resources_with_mga(gen)
 	TechTypes = unique(resource_type.(resources_with_mga))
 
 	# Read slack parameter representing desired increase in budget from the least cost solution
@@ -52,8 +52,8 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 
 	# Constraint to compute total generation in each zone from a given Technology Type
 	function resource_in_zone_with_TechType(tt::Int64, z::Int64)
-		condition::BitVector = (resource_type.(res) .== TechTypes[tt]) .& (zone_id.(res) .== z)
-		return resource_id.(res[condition])
+		condition::BitVector = (resource_type.(gen) .== TechTypes[tt]) .& (zone_id.(gen) .== z)
+		return resource_id.(gen[condition])
 	end
 	@constraint(EP,cGeneration[tt = 1:length(TechTypes), z = 1:Z], vSumvP[tt,z] == sum(EP[:vP][y,t] * inputs["omega"][t] for y in resource_in_zone_with_TechType(tt,z), t in 1:T))
 

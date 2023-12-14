@@ -45,7 +45,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Investment Module")
 
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	MultiStage = setup["MultiStage"]
 
@@ -72,7 +72,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCapEnergy[y in STOR_ALL], vEXISTINGCAPENERGY[y])
 	else
-		@expression(EP, eExistingCapEnergy[y in STOR_ALL], existing_capacity_mwh(res[y]))
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], existing_capacity_mwh(gen[y]))
 	end
 
 	@expression(EP, eTotalCapEnergy[y in STOR_ALL],
@@ -93,9 +93,9 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	# If resource is not eligible for new energy capacity, fixed costs are only O&M costs
 	@expression(EP, eCFixEnergy[y in STOR_ALL],
 		if y in NEW_CAP_ENERGY # Resources eligible for new capacity
-			inv_cost_per_mwhyr(res[y])*vCAPENERGY[y] + fixed_om_cost_per_mwhyr(res[y])*eTotalCapEnergy[y]
+			inv_cost_per_mwhyr(gen[y])*vCAPENERGY[y] + fixed_om_cost_per_mwhyr(gen[y])*eTotalCapEnergy[y]
 		else
-			fixed_om_cost_per_mwhyr(res[y])*eTotalCapEnergy[y]
+			fixed_om_cost_per_mwhyr(gen[y])*eTotalCapEnergy[y]
 		end
 	)
 
@@ -115,7 +115,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	### Constraints ###
 
 	if MultiStage == 1
-		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == existing_capacity_mwh(res[y]))
+		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == existing_capacity_mwh(gen[y]))
 	end
 	
 	## Constraints on retirements and capacity additions
@@ -125,14 +125,14 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapEnergy[y in intersect(has_positive_max_capacity_mwh(res), STOR_ALL)], eTotalCapEnergy[y] <= max_capacity_mwh(res[y]))
+	@constraint(EP, cMaxCapEnergy[y in intersect(has_positive_max_capacity_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] <= max_capacity_mwh(gen[y]))
 
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapEnergy[y in intersect(has_positive_min_capacity_mwh(res), STOR_ALL)], eTotalCapEnergy[y] >= min_capacity_mwh(res[y]))
+	@constraint(EP, cMinCapEnergy[y in intersect(has_positive_min_capacity_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] >= min_capacity_mwh(gen[y]))
 
 	# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
-	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= min_duration(res[y]) * EP[:eTotalCap][y])
-	@constraint(EP, cMaxCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= max_duration(res[y]) * EP[:eTotalCap][y])
+	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= min_duration(gen[y]) * EP[:eTotalCap][y])
+	@constraint(EP, cMaxCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= max_duration(gen[y]) * EP[:eTotalCap][y])
 
 end

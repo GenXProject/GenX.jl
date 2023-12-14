@@ -24,7 +24,7 @@ end
 Function for writing the vre-storage capacities.
 """
 function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	VRE_STOR = inputs["VRE_STOR"]
 	SOLAR = inputs["VS_SOLAR"]
@@ -82,7 +82,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	
 	j = 1
 	for i in VRE_STOR
-		existingcapgrid[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAP][i]) : existing_capacity_mw(res[i])
+		existingcapgrid[j] = MultiStage == 1 ? value(EP[:vEXISTINGCAP][i]) : existing_capacity_mw(gen[i])
 		if i in inputs["NEW_CAP"]
 			capgrid[j] = value(EP[:vCAP][i])
 		end

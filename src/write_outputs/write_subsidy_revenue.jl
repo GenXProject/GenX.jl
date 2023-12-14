@@ -4,21 +4,21 @@
 Function for reporting subsidy revenue earned if a generator specified `Min_Cap` is provided in the input file, or if a generator is subject to a Minimum Capacity Requirement constraint. The unit is \$.
 """
 function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
-	regions = region.(res)
-	clusters = cluster.(res)
-	zones = zone_id.(res)
-	rid = resource_id.(res)
+	gen = inputs["RESOURCES"]
+	regions = region.(gen)
+	clusters = cluster.(gen)
+	zones = zone_id.(gen)
+	rid = resource_id.(gen)
 	
 	G = inputs["G"]
 
 	dfSubRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, R_ID=rid, SubsidyRevenue = zeros(G))
-	MIN_CAP = has_positive_min_capacity_mw(res)
+	MIN_CAP = has_positive_min_capacity_mw(gen)
 	if !isempty(inputs["VRE_STOR"])
 		dfVRE_STOR = inputs["dfVRE_STOR"]
 		MIN_CAP_SOLAR = dfVRE_STOR[(dfVRE_STOR[!, :Min_Cap_Solar_MW].>0), :R_ID]
 		MIN_CAP_WIND = dfVRE_STOR[(dfVRE_STOR[!, :Min_Cap_Wind_MW].>0), :R_ID]
-		MIN_CAP_STOR = has_positive_min_capacity_mwh(res)
+		MIN_CAP_STOR = has_positive_min_capacity_mwh(gen)
 		if !isempty(MIN_CAP_SOLAR)
 			dfSubRevenue.SubsidyRevenue[MIN_CAP_SOLAR] .+= (value.(EP[:eTotalCap_SOLAR])[MIN_CAP_SOLAR]) .* (dual.(EP[:cMinCap_Solar][MIN_CAP_SOLAR])).data
 		end
@@ -34,7 +34,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 	dfRegSubRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, R_ID=rid, SubsidyRevenue = zeros(G))
 	if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
-			MIN_CAP_GEN = has_min_cap(res, tag=mincap)
+			MIN_CAP_GEN = has_min_cap(gen, tag=mincap)
 			dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .= dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] + (value.(EP[:eTotalCap][MIN_CAP_GEN])) * (dual.(EP[:cZoneMinCapReq][mincap]))
 			if !isempty(inputs["VRE_STOR"])
 				mincap_solar_sym = Symbol("MinCapTagSolar_$mincap")

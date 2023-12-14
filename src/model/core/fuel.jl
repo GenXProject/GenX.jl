@@ -54,7 +54,7 @@ PWFU_Intercept_* for at least one segment.
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
     println("Fuel Module")
-    res =  inputs["RESOURCES"]
+    gen =  inputs["RESOURCES"]
 
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -72,8 +72,8 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # if unit commitment is modelled
     @expression(EP, eStartFuel[y in 1:G, t = 1:T],
         if y in THERM_COMMIT
-            (cap_size(res[y]) * EP[:vSTART][y, t] * 
-                start_fuel_mmbtu_per_mw(res[y]))
+            (cap_size(gen[y]) * EP[:vSTART][y, t] * 
+                start_fuel_mmbtu_per_mw(gen[y]))
         else
             0
         end)
@@ -83,23 +83,23 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # eCFuel_start or eCFuel_out is $ or Million$
     # Start up fuel cost
     @expression(EP, eCFuelStart[y = 1:G, t = 1:T], 
-        (inputs["fuel_costs"][fuel(res[y])][t] * EP[:eStartFuel][y, t]))
+        (inputs["fuel_costs"][fuel(gen[y])][t] * EP[:eStartFuel][y, t]))
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelStart[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelStart][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelStart[z = 1:Z], 
-        sum(EP[:ePlantCFuelStart][y] for y in resources_in_zone_by_rid(res,z)))
+        sum(EP[:ePlantCFuelStart][y] for y in resources_in_zone_by_rid(gen,z)))
 
     # Fuel cost for power generation
     @expression(EP, eCFuelOut[y = 1:G, t = 1:T], 
-        (inputs["fuel_costs"][fuel(res[y])][t] * EP[:vFuel][y, t]))
+        (inputs["fuel_costs"][fuel(gen[y])][t] * EP[:vFuel][y, t]))
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelOut[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelOut][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelOut[z = 1:Z], 
-        sum(EP[:ePlantCFuelOut][y] for y in resources_in_zone_by_rid(res,z)))
+        sum(EP[:ePlantCFuelOut][y] for y in resources_in_zone_by_rid(gen,z)))
 
 
     # system level total fuel cost for output
@@ -112,7 +112,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     #fuel consumption (MMBTU or Billion BTU)
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y,t]
-            for y in resources_with_fuel(res, fuels[f])))
+            for y in resources_with_fuel(gen, fuels[f])))
                 
     @expression(EP, eFuelConsumptionYear[f in 1:NUM_FUEL],
         sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
@@ -121,7 +121,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     ### Constraint ###
     ### only apply constraint to generators with fuel type other than None
     @constraint(EP, FuelCalculation[y in setdiff(HAS_FUEL, THERM_COMMIT), t = 1:T],
-        EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(res[y]) == 0)
+        EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y]) == 0)
 
     if !isempty(THERM_COMMIT)        
         # Only apply piecewise fuel consumption to thermal generators in THERM_COMMIT_PWFU set
@@ -141,7 +141,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         end
         # constraint for fuel consumption at a constant heat rate 
         @constraint(EP, FuelCalculationCommit[y in setdiff(THERM_COMMIT,THERM_COMMIT_PWFU), t = 1:T],
-            EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(res[y]) == 0)
+            EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y]) == 0)
     end
 
     return EP

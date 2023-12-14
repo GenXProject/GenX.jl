@@ -1,6 +1,6 @@
 function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
-	zones = zone_id.(res)
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)

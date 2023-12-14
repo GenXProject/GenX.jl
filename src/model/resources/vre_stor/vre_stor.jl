@@ -101,7 +101,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     ### LOAD DATA ###
 
     # Load generators dataframe, sets, and time periods
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	T = inputs["T"]                                                 # Number of time steps (hours)
 	Z = inputs["Z"]                                                 # Number of zones
@@ -134,9 +134,9 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Separate grid costs
     @expression(EP, eCGrid[y in VRE_STOR],
         if y in NEW_CAP # Resources eligible for new capacity
-            inv_cost_per_mwyr(res[y])*EP[:vCAP][y] + fixed_om_cost_per_mwyr(res[y])*EP[:eTotalCap][y]
+            inv_cost_per_mwyr(gen[y])*EP[:vCAP][y] + fixed_om_cost_per_mwyr(gen[y])*EP[:eTotalCap][y]
         else
-            fixed_om_cost_per_mwyr(res[y])*EP[:eTotalCap][y]
+            fixed_om_cost_per_mwyr(gen[y])*EP[:eTotalCap][y]
         end
     )
     @expression(EP, eTotalCGrid, sum(eCGrid[y] for y in VRE_STOR))
@@ -961,7 +961,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]    
     Z = inputs["Z"]
 
-    res =  inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
 
     STOR = inputs["VS_STOR"]
     dfVRE_STOR = inputs["dfVRE_STOR"]
@@ -1020,7 +1020,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     if MultiStage == 1
 		@expression(EP, eExistingCapEnergy_VS[y in STOR], vEXISTINGCAPENERGY_VS[y])
 	else
-		@expression(EP, eExistingCapEnergy_VS[y in STOR], existing_cap_mwh(res[y]))
+		@expression(EP, eExistingCapEnergy_VS[y in STOR], existing_cap_mwh(gen[y]))
 	end
 
     # 1. Total storage energy capacity
@@ -1041,9 +1041,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Fixed costs for storage resources (if resource is not eligible for new energy capacity, fixed costs are only O&M costs)
 	@expression(EP, eCFixEnergy_VS[y in STOR],
         if y in NEW_CAP_STOR # Resources eligible for new capacity
-            inv_cost_per_mwhyr(res[y])*vCAPENERGY_VS[y] + fixed_om_cost_per_mwhyr(res[y])*eTotalCap_STOR[y]
+            inv_cost_per_mwhyr(gen[y])*vCAPENERGY_VS[y] + fixed_om_cost_per_mwhyr(gen[y])*eTotalCap_STOR[y]
         else
-            fixed_om_cost_per_mwhyr(res[y])*eTotalCap_STOR[y]
+            fixed_om_cost_per_mwhyr(gen[y])*eTotalCap_STOR[y]
         end
     )
     @expression(EP, eTotalCFixStor, sum(eCFixEnergy_VS[y] for y in STOR))
@@ -1085,9 +1085,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # SoC expressions
     @expression(EP, eSoCBalStart_VRE_STOR[y in CONSTRAINTSET, t in START_SUBPERIODS],
-        vS_VRE_STOR[y,t+hours_per_subperiod-1] - self_discharge(res[y])*vS_VRE_STOR[y,t+hours_per_subperiod-1])
+        vS_VRE_STOR[y,t+hours_per_subperiod-1] - self_discharge(gen[y])*vS_VRE_STOR[y,t+hours_per_subperiod-1])
     @expression(EP, eSoCBalInterior_VRE_STOR[y in STOR, t in INTERIOR_SUBPERIODS],
-        vS_VRE_STOR[y,t-1] - self_discharge(res[y])*vS_VRE_STOR[y,t-1])
+        vS_VRE_STOR[y,t-1] - self_discharge(gen[y])*vS_VRE_STOR[y,t-1])
     # Expression for energy losses related to technologies (increase in effective demand)
     @expression(EP, eELOSS_VRE_STOR[y in STOR], JuMP.AffExpr())
 
@@ -1174,7 +1174,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
     if MultiStage == 1
-		@constraint(EP, cExistingCapEnergy_VS[y in STOR], EP[:vEXISTINGCAPENERGY_VS][y] == existing_capacity_mwh(res[y]))
+		@constraint(EP, cExistingCapEnergy_VS[y in STOR], EP[:vEXISTINGCAPENERGY_VS][y] == existing_capacity_mwh(gen[y]))
 	end
 
     # Constraints 1: Retirements and capacity additions
@@ -1182,12 +1182,12 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cMaxRet_Stor[y=RET_CAP_STOR], vRETCAPENERGY_VS[y] <= eExistingCapEnergy_VS[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Stor[y in intersect(has_positive_max_capacity_mwh(res), STOR)], 
-        eTotalCap_STOR[y] <= max_capacity_mwh(res[y]))
+    @constraint(EP, cMaxCap_Stor[y in intersect(has_positive_max_capacity_mwh(gen), STOR)], 
+        eTotalCap_STOR[y] <= max_capacity_mwh(gen[y]))
     # Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Stor[y in intersect(has_positive_min_capacity_mwh(res), STOR)], 
-        eTotalCap_STOR[y] >= min_capacity_mwh(res[y]))
+    @constraint(EP, cMinCap_Stor[y in intersect(has_positive_min_capacity_mwh(gen), STOR)], 
+        eTotalCap_STOR[y] >= min_capacity_mwh(gen[y]))
 
     # Constraint 2: SOC Maximum
     @constraint(EP, cSOCMax[y in STOR, t=1:T], vS_VRE_STOR[y,t] <= eTotalCap_STOR[y])
@@ -1252,7 +1252,7 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
     ### LOAD DATA ###
 
     VS_LDS = inputs["VS_LDS"]
-    res =  inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
     dfVRE_STOR = inputs["dfVRE_STOR"]
 
     REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
@@ -1278,7 +1278,7 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
 
     # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
     @expression(EP, eVreStorSoCBalLongDurationStorageStart[y in VS_LDS, w=1:REP_PERIOD], 
-        (1-self_discharge(res[y])) * (EP[:vS_VRE_STOR][y,hours_per_subperiod*w]-EP[:vdSOC_VRE_STOR][y,w]))
+        (1-self_discharge(gen[y])) * (EP[:vS_VRE_STOR][y,hours_per_subperiod*w]-EP[:vdSOC_VRE_STOR][y,w]))
     
     DC_DISCHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_DC_DISCHARGE"], VS_LDS)
     DC_CHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_DC_CHARGE"], VS_LDS)
@@ -1875,7 +1875,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     ### LOAD DATA ###
 
     T = inputs["T"]
-    res =  inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
     dfVRE_STOR = inputs["dfVRE_STOR"]
     STOR = inputs["VS_STOR"]
     DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
@@ -1932,10 +1932,10 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     # Virtual State of Charge Expressions
     @expression(EP, eVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS],
         EP[:vCAPRES_VS_VRE_STOR][y,t+hours_per_subperiod-1]
-        - self_discharge(res[y])*EP[:vCAPRES_VS_VRE_STOR][y,t+hours_per_subperiod-1])
+        - self_discharge(gen[y])*EP[:vCAPRES_VS_VRE_STOR][y,t+hours_per_subperiod-1])
     @expression(EP, eVreStorVSoCBalInterior[y in STOR, t in INTERIOR_SUBPERIODS],
         EP[:vCAPRES_VS_VRE_STOR][y,t-1] 
-        - self_discharge(res[y])*EP[:vCAPRES_VS_VRE_STOR][y,t-1])
+        - self_discharge(gen[y])*EP[:vCAPRES_VS_VRE_STOR][y,t-1])
 
     DC_DISCHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, DC_DISCHARGE)
     DC_CHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, DC_CHARGE)
@@ -2087,7 +2087,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
         ### EXPRESSIONS ###
 
         @expression(EP, eVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w=1:REP_PERIOD],
-            (1-self_discharge(res[y]))*(EP[:vCAPRES_VS_VRE_STOR][y,hours_per_subperiod*w]-vCAPCONTRSTOR_VdSOC_VRE_STOR[y,w]))
+            (1-self_discharge(gen[y]))*(EP[:vCAPRES_VS_VRE_STOR][y,hours_per_subperiod*w]-vCAPCONTRSTOR_VdSOC_VRE_STOR[y,w]))
         
         DC_DISCHARGE_CONSTRAINTSET = intersect(DC_DISCHARGE, VS_LDS)
         DC_CHARGE_CONSTRAINTSET = intersect(DC_CHARGE, VS_LDS)
@@ -2219,7 +2219,7 @@ function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     ### LOAD DATA & CREATE SETS ###
 
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	T = inputs["T"]
     VRE_STOR = inputs["VRE_STOR"]
@@ -2457,8 +2457,8 @@ function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(VRE_STOR_REG_RSV)
         @constraints(EP, begin
             # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
-            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vREG][y,t] <= reg_max(res[y])*EP[:eTotalCap][y]
-            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vRSV][y,t] <= rsv_max(res[y])*EP[:eTotalCap][y]
+            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vREG][y,t] <= reg_max(gen[y])*EP[:eTotalCap][y]
+            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vRSV][y,t] <= rsv_max(gen[y])*EP[:eTotalCap][y]
 
             # Actual contribution to regulation and reserves is sum of auxilary variables
             [y in VRE_STOR_REG_RSV, t=1:T], EP[:vREG][y,t] == eVreStorRegOnlyBalance[y,t]
@@ -2468,7 +2468,7 @@ function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(VRE_STOR_REG_ONLY)
         @constraints(EP, begin
             # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
-            [y in VRE_STOR_REG_ONLY, t=1:T], EP[:vREG][y,t] <= reg_max(res[y])*EP[:eTotalCap][y]
+            [y in VRE_STOR_REG_ONLY, t=1:T], EP[:vREG][y,t] <= reg_max(gen[y])*EP[:eTotalCap][y]
 
             # Actual contribution to regulation is sum of auxilary variables
             [y in VRE_STOR_REG_ONLY, t=1:T], EP[:vREG][y,t] == eVreStorRegOnlyBalance[y,t]
@@ -2477,7 +2477,7 @@ function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(VRE_STOR_RSV_ONLY)
         @constraints(EP, begin
             # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
-            [y in VRE_STOR_RSV_ONLY, t=1:T], EP[:vRSV][y,t] <= rsv_max(res[y])*EP[:eTotalCap][y]
+            [y in VRE_STOR_RSV_ONLY, t=1:T], EP[:vRSV][y,t] <= rsv_max(gen[y])*EP[:eTotalCap][y]
 
             # Actual contribution to reserves is sum of auxilary variables
             [y in VRE_STOR_RSV_ONLY, t=1:T], EP[:vRSV][y,t] == eVreStorRsvOnlyBalance[y,t]

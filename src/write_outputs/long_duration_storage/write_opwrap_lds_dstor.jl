@@ -1,7 +1,7 @@
 function write_opwrap_lds_dstor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Extract data frames from input dictionary
-	res =  inputs["RESOURCES"]
-	zones = zone_id.(res)
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
 
 	W = inputs["REP_PERIOD"]     # Number of subperiods
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)

@@ -1,9 +1,9 @@
 function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	res =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
-	regions = region.(res)
-	clusters = cluster.(res)
-	zones = zone_id.(res)
+	regions = region.(gen)
+	clusters = cluster.(gen)
+	zones = zone_id.(gen)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -18,16 +18,16 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 	dfChargingcost = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, AnnualSum = Array{Float64}(undef, G),)
 	chargecost = zeros(G, T)
 	if !isempty(STOR_ALL)
-	    chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(price)[zone_id.(res.STOR), :]
+	    chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(price)[zone_id.(gen.STOR), :]
 	end
 	if !isempty(FLEX)
-	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .* transpose(price)[zone_id.(res.FLEX), :]
+	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .* transpose(price)[zone_id.(gen.FLEX), :]
 	end
 	if !isempty(ELECTROLYZER)
-		chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .* transpose(price)[zone_id.(res.ELECTROLYZER), :]
+		chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .* transpose(price)[zone_id.(gen.ELECTROLYZER), :]
 	end
 	if !isempty(VS_STOR)
-		chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .* transpose(price)[zone_id.(res[VS_STOR]), :]
+		chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .* transpose(price)[zone_id.(gen[VS_STOR]), :]
 	end
 	if setup["ParameterScale"] == 1
 	    chargecost *= ModelScalingFactor
