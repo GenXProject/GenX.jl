@@ -245,10 +245,8 @@ function may_have_pairwise_capacity_links(df::DataFrame)
     return string(paired_resource) in columns && string(proportion) in columns
 end
 
-function link_capacities!(EP::Model, df::DataFrame)
+function find_paired_resources(df::DataFrame)
     paired_resource = :Paired_Resource
-    proportion = :Resource_Pair_Proportion
-    has_linked_capacities = findall(df[!, paired_resource] .!= "None")
     resource_name(y) = df[y, :Resource]
 
     function find_id_of_linked(y)::Int
@@ -259,28 +257,46 @@ function link_capacities!(EP::Model, df::DataFrame)
 
         outbound = findall(df.Resource .== paired_resource_name)
         if length(outbound) == 0
-            error("Resource name $paired_resource_name linked by $y not found.")
+            error("Resource name $paired_resource_name linked by $y in $paired_resource not found.")
         end
 
         inbound = findall(df[!, paired_resource] .== resource_name(y))
         if length(inbound) == 0
-            error("Resources must be linked in pairs; $y has nothing linking back to it.")
+            error("Resources must be linked in pairs via $paired_resource; $y has nothing linking back to it.")
         end
         if length(inbound) > 1
-            error("Only two resources can link together. $inbound all link to $y.")
+            error("Only two resources can link together via $paired_resource. $inbound all link to $y.")
         end
-        return inbound[1]
+        linked = inbound[1]
+        if y == linked
+            error("A resource cannot link to itself via $paired_resource. $y is doing this.")
+        end
+        return linked
     end
 
-    for id_a in has_linked_capacities
+    pairs = Pair{Int,Int}[]
+    has_link = findall(df[!, paired_resource] .!= "None")
+    for id_a in has_link
         id_b = find_id_of_linked(id_a)
         if id_a != find_id_of_linked(id_b)
-            error("Resources $id_a and $id_b must link to each other, via field $paired_resource.")
+            error("Resources $id_a and $id_b must link to each other, via $paired_resource.")
         end
         if id_a < id_b # no need to create the constraint twice.
-            proportion_a = df[id_a, proportion]
-            proportion_b = df[id_b, proportion]
-            capacity_proportional_link!(EP, id_a, id_b, proportion_a, proportion_b)
+            push!(pairs, Pair(id_a, id_b))
         end
+    end
+    return pairs
+end
+
+function link_capacities!(EP::Model, df::DataFrame)
+    proportion = :Resource_Pair_Proportion
+
+    pairs = find_paired_resources(df)
+    for p in pairs
+        id_a = p.first
+        id_b = p.second
+        proportion_a = df[id_a, proportion]
+        proportion_b = df[id_b, proportion]
+        capacity_proportional_link!(EP, id_a, id_b, proportion_a, proportion_b)
     end
 end
