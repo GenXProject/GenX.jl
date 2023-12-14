@@ -459,6 +459,27 @@ function fusion_max_fpy_per_year_constraint!(
     end
 end
 
+function fusion_max_fpy_per_year_constraint!(
+        EP::Model,
+        inputs::Dict,
+        r_id::Vector{Int},
+        reactor::FusionReactorData,
+        component_capacity::Symbol,
+        power_like::AbstractArray,
+    )
+    T = inputs["T"]
+    y = r_id
+
+    capacity = sum(EP[component_capacity][r_id])
+    max_fpy_per_year = reactor.max_fpy_per_year
+    if max_fpy_per_year > 0 && max_fpy_per_year < 1
+        @constraint(EP, sum(power_like[y, :]) / T <= max_fpy_per_year * capacity)
+    end
+    if max_fpy_per_year >= 1
+        @info "Max FPY per year fusion constraint automatically met; not creating."
+    end
+end
+
 @doc raw"""
     _fusion_dwell_avoided_operation(dwell_time::Float64,
                                     ePulseStart::AffExpr)
