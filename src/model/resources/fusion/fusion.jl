@@ -448,6 +448,7 @@ function fusion_max_fpy_per_year_constraint!(
     )
     T = inputs["T"]
     y = r_id
+    @info "Applying FPY constraint for $r_id"
 
     capacity = sum(EP[component_capacity][r_id])
     max_fpy_per_year = reactor.max_fpy_per_year

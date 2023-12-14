@@ -232,16 +232,10 @@ end
 # This also works for plants where they need maintenance every year:
 # cap_maint * 0 = cap_nomain * 5  →  0 == cap_nomain
 ####
-function capacity_proportional_link!(EP::Model, id_a, id_b, proportion_a, proportion_b)
-    @info "Linking capacities $id_a and $id_b in $proportion_a : $proportion_b"
-    cap = EP[:eTotalCap]
-    @constraint(EP, cap[id_a] * proportion_b == cap[id_b] * proportion_a)
-end
-
 function may_have_pairwise_capacity_links(df::DataFrame)
     columns = names(df)
     paired_resource = :Paired_Resource
-    proportion = :Resource_Pair_Proportion
+    proportion = :Paired_Resource_Proportion
     return string(paired_resource) in columns && string(proportion) in columns
 end
 
@@ -272,7 +266,7 @@ function find_paired_resources(df::DataFrame)
         return linked
     end
 
-    pairs = Pair{Int,Int}[]
+    _pairs = Pair{Int,Int}[]
     has_link = findall(df[!, paired_resource] .!= "None")
     for id_a in has_link
         id_b = find_id_of_linked(id_a)
@@ -280,17 +274,23 @@ function find_paired_resources(df::DataFrame)
             error("Resources $id_a and $id_b must link to each other, via $paired_resource.")
         end
         if id_a < id_b # no need to create the constraint twice.
-            push!(pairs, Pair(id_a, id_b))
+            push!(_pairs, Pair(id_a, id_b))
         end
     end
-    return pairs
+    return _pairs
+end
+
+function capacity_proportional_link!(EP::Model, id_a, id_b, proportion_a, proportion_b)
+    @info "Linking capacities $id_a and $id_b in $proportion_a : $proportion_b"
+    cap = EP[:eTotalCap]
+    @constraint(EP, cap[id_a] * proportion_b == cap[id_b] * proportion_a)
 end
 
 function link_capacities!(EP::Model, df::DataFrame)
-    proportion = :Resource_Pair_Proportion
+    proportion = :Paired_Resource_Proportion
 
-    pairs = find_paired_resources(df)
-    for p in pairs
+    _pairs = find_paired_resources(df)
+    for p in _pairs
         id_a = p.first
         id_b = p.second
         proportion_a = df[id_a, proportion]
