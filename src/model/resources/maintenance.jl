@@ -251,9 +251,6 @@ function find_paired_resources(df::DataFrame)
 
     function find_id_of_linked(y)::Int
         paired_resource_name = df[y, paired_resource]
-        if paired_resource_name == "None"
-            error("Resource $y is not paired with any other")
-        end
 
         outbound = findall(df.Resource .== paired_resource_name)
         if length(outbound) == 0
@@ -267,6 +264,7 @@ function find_paired_resources(df::DataFrame)
         if length(inbound) > 1
             error("Only two resources can link together via $paired_resource. $inbound all link to $y.")
         end
+
         linked = inbound[1]
         if y == linked
             error("A resource cannot link to itself via $paired_resource. $y is doing this.")
