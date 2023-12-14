@@ -40,7 +40,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if setup["EnergyShareRequirement"] >= 1
 
 		@expression(EP, eESRDischarge[ESR=1:inputs["nESR"]], 
-			+ sum(inputs["omega"][t]*dfGen[y,Symbol("ESR_$ESR")]*EP[:vP][y,t] for y=dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID], t=1:T)
+			+ sum(inputs["omega"][t] * esr(res[y],tag=ESR) * EP[:vP][y,t] for y=has_esr(res,tag=ESR), t=1:T)
 			- sum(inputs["dfESR"][z,ESR]*inputs["omega"][t]*inputs["pD"][t,z] for t=1:T, z=findall(x->x>0,inputs["dfESR"][:,ESR]))
 		)
 		add_similar_to_expression!(EP[:eESR], eESRDischarge)

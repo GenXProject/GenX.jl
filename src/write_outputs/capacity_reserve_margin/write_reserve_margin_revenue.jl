@@ -39,17 +39,16 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	annual_sum = zeros(G)
 	for i in 1:inputs["NCapacityReserveMargin"]
 		weighted_price = capacity_reserve_margin_price(EP, inputs, setup, i) .* inputs["omega"]
-		sym = Symbol("CapRes_$i")
 		tempresrev = zeros(G)
 		tempresrev[THERM_ALL] = thermal_plant_effective_capacity(EP, inputs, THERM_ALL, i)' * weighted_price
-		tempresrev[VRE] = dfGen[VRE, sym] .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * weighted_price)
-		tempresrev[MUST_RUN] = dfGen[MUST_RUN, sym] .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * weighted_price)
-		tempresrev[HYDRO_RES] = dfGen[HYDRO_RES, sym] .* (value.(EP[:vP][HYDRO_RES, :]) * weighted_price)
+		tempresrev[VRE] = derated_capacity.(gen.VRE, tag=i) .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * weighted_price)
+		tempresrev[MUST_RUN] = derated_capacity.(gen.MUST_RUN, tag=i) .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * weighted_price)
+		tempresrev[HYDRO_RES] = derated_capacity.(gen.HYDRO, tag=i) .* (value.(EP[:vP][HYDRO_RES, :]) * weighted_price)
 		if !isempty(STOR_ALL)
-			tempresrev[STOR_ALL] = dfGen[STOR_ALL, sym] .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPRES_discharge][STOR_ALL, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL, :]).data) * weighted_price)
+			tempresrev[STOR_ALL] = derated_capacity.(gen.STOR, tag=i) .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPRES_discharge][STOR_ALL, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL, :]).data) * weighted_price)
 		end
 		if !isempty(FLEX)
-			tempresrev[FLEX] = dfGen[FLEX, sym] .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * weighted_price)
+			tempresrev[FLEX] = derated_capacity.(gen.FLEX, tag=i) .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * weighted_price)
 		end
 		if !isempty(VRE_STOR)
 			sym_vs = Symbol("CapResVreStor_$i")

@@ -4,11 +4,11 @@
 Function for reporting the renewable/clean credit revenue earned by each generator listed in the input file. GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. Each row corresponds to a generator, and each column starting from the 6th to the second last is the total revenue earned from each RPS constraint. The revenue is calculated as the total annual generation (if elgible for the corresponding constraint) multiplied by the RPS/CES price. The last column is the total revenue received from all constraint. The unit is \$.
 """
 function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPower::DataFrame, dfESR::DataFrame, EP::Model)
-	res =  inputs["RESOURCES"]
-	regions = region.(res)
-	clusters = cluster.(res)
-	zones = zone_id.(res)
-	rid = resource_id.(res)
+	gen =  inputs["RESOURCES"]
+	regions = region.(gen)
+	clusters = cluster.(gen)
+	zones = zone_id.(gen)
+	rid = resource_id.(gen)
 
 	dfESRRev = DataFrame(region = regions, Resource = inputs["RESOURCE_NAMES"], zone = zones, Cluster = clusters, R_ID = rid)
 	G = inputs["G"]
@@ -28,7 +28,7 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	for i in 1:nESR
 		esr_col = Symbol("ESR_$i")
 		price = dfESR[i, :ESR_Price]
-		derated_annual_net_generation = dfPower[1:G,:AnnualSum] .* dfGen[!,esr_col]
+		derated_annual_net_generation = dfPower[1:G,:AnnualSum] .* esr.(gen, tag=i)
 		revenue = derated_annual_net_generation * price
 		dfESRRev[!, esr_col] =  revenue
 

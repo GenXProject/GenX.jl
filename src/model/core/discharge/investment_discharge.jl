@@ -167,15 +167,13 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	MIN_CAP = has_positive_min_capacity_mw(res)
 	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_capacity_mw(res[y]))
 
-
-
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
+		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in has_min_cap(res, tag=mincap)))
 		add_similar_to_expression!(EP[:eMinCapRes], eMinCapResInvest)
 	end
 
 	if setup["MaxCapReq"] == 1
-		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
+		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in has_max_cap(res, tag=maxcap)))
 		add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
 	end
 end

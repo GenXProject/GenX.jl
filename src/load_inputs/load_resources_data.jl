@@ -1,19 +1,25 @@
 function _get_resource_info()        
     resources = (
-        hydro   = (filename="hydro.csv", type=HYDRO), #key="HYDRO_RES"),
-        thermal = (filename="thermal.csv", type=THERM), #key="THERM_ALL"),
-        vre     = (filename="vre.csv", type=VRE), #key="VRE"),
-        storage = (filename="storage.csv", type=STOR), #key="STOR_ALL"),
-        flex_demand  = (filename="flex_demand.csv", type=FLEX), #key="FLEX"),
-        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER), #key="ELECTROLYZER")
-        must_run = (filename="must_run.csv", type=MUST_RUN) #key="MUST_RUN")
+        hydro   = (filename="hydro.csv", type=HYDRO),
+        thermal = (filename="thermal.csv", type=THERM),
+        vre     = (filename="vre.csv", type=VRE),
+        storage = (filename="storage.csv", type=STOR),
+        flex_demand  = (filename="flex_demand.csv", type=FLEX),
+        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER),
+        must_run = (filename="must_run.csv", type=MUST_RUN)
     )
     return resources
 end
 
-function policy_filenames()
-    return ["cap_res.csv", "esr.csv", "min_cap_tags.csv"]
+function _get_policy_info()
+    policies = (
+        cap_res = (filename="cap_res.csv", column_name="derated_capacity"),
+        esr = (filename="esr.csv", column_name="esr"),
+        min_cap_tags = (filename="min_cap.csv", column_name="min_cap")
+    )
+    return policies
 end
+
 
 function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
     # See documentation for descriptions of each column
@@ -83,22 +89,63 @@ function _get_resource_df(path::AbstractString, scale_factor::Float64=1.0)
     resource_in = load_dataframe(path)
     # scale data if necessary
     scale_resources_data!(resource_in, scale_factor)
+    # rename columns lowercase
+    rename!(resource_in, lowercase.(names(resource_in)))
     # ensure columns
     ensure_columns!(resource_in)
     # return dataframe
     return resource_in
 end
 
-# function _add_policies_to_resource_df!(path::AbstractString, resource_in::DataFrame)
-#     policies_filenames = policy_filenames()
-#     # loop over policies filenames
-#     for filename in policies_filenames
-#         # load poli
-#         policy_in = load_dataframe(joinpath(path, filename))
-#             resource_in[!, filename] = policy_in[!, :value]
-#         end
-#     end
-#     # load policies data
+function _add_policy_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: Union{Real, Vector{<:Real}} 
+    # loop over policy attributes
+    for (sym, value) in zip(new_symbols, new_values)
+        # add policy attribute to resource if value is not zero
+        value ≠ 0 && setproperty!(resource, sym, value)
+    end
+    return nothing
+end    
+
+function _add_policies_to_resources!(path::AbstractString, resources::Vector{<:AbstractResource})
+    # get filename and column-name for each type of policy
+    resources_info = _get_policy_info()
+    # loop over policy files
+    for (filename, column_name) in values(resources_info)
+        # load policy file
+        policy_in = load_dataframe(joinpath(path, filename))
+        # rename columns lowercase to ensure consistency with resources
+        rename!(policy_in, lowercase.(names(policy_in)))
+        # check if policy file has any attributes
+        validate_policy_dataframe!(policy_in, filename)
+        # extract attributes of policy 
+        new_sym = Symbol.(filter(x -> x ≠ "resource", names(policy_in)))
+        # extract values of policy attributes
+        policy_attr_values = extract_matrix_from_dataframe(policy_in, column_name)
+        # add policy to resources
+        for i in 1:nrow(policy_in)
+            resource_name = policy_in[i, :resource]
+            resource = resource_by_name(resources, resource_name)
+            new_values = policy_attr_values[i,:]
+            _add_policy_to_resource!(resource, new_sym, new_values)
+        end     
+    end
+    return nothing
+end
+
+function validate_policy_dataframe!(policy_in::DataFrame, filename::AbstractString)
+    cols = names(policy_in)
+    n_cols = length(cols)
+    # check if policy file has any attributes
+    if n_cols == 1
+        msg = "No policy attributes found in policy file: " * filename
+        error(msg)
+    end
+    # if the single column attribute does not have a tag number, add a tag number of 1
+    if n_cols == 2 && cols[2][end-2] != "_1"
+        rename!(policy_in, Symbol.(cols[2]) => Symbol.(cols[2], "_1"))
+    end
+    return nothing
+end
 
 function _get_resource_indices(resources_in::DataFrame, offset::Int64)
     # return array of indices of resources
@@ -111,13 +158,13 @@ function _add_indices_to_resource_df!(df::DataFrame, indices::AbstractVector)
     return nothing
 end
 
-function dataframerow_to_tuple(dfr::DataFrameRow)
-    return NamedTuple(pairs(dfr))
-end
+# function dataframerow_to_tuple(dfr::DataFrameRow)
+#     return NamedTuple(pairs(dfr))
+# end
 
 function _get_resource_array(resource_in::DataFrame, Resource)
     # convert dataframe to array of resources of correct type
-    resources::Vector{Resource} = Resource.(dataframerow_to_tuple.(eachrow(resource_in)))
+    resources::Vector{Resource} = Resource.(dataframerow_to_dict.(eachrow(resource_in)))
     # return resources
     return resources
 end
@@ -126,14 +173,11 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
     resource_id_offset = 0
     resources = Vector(undef, length(resources_info))
     # loop over available types and get all resources
-    # for (i,(filename, resource_type, key)) in enumerate(values(resources_info))
     for (i,(filename, resource_type)) in enumerate(values(resources_info))
         # path to resources data
         path = joinpath(resources_folder, filename)
         # load resources data of a given type
         resource_in = _get_resource_df(path, scale_factor)
-        # add policies-related attributes to resource dataframe
-        # _add_policies_to_resource_df!(path, resource_in)
         # get indices of resources for later use
         resources_indices = _get_resource_indices(resource_in, resource_id_offset)
         # add indices to dataframe
@@ -311,11 +355,16 @@ function load_resources_data!(setup::Dict, case_path::AbstractString, input_data
         scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
         # get path to resources data
-        resources_folder = setup["ResourcesPath"]
+        resources_folder = setup["ResourcePath"]
         resources_folder = joinpath(case_path,resources_folder)
 
         # load resources data and scale it if necessary
         resources = load_scaled_resources_data(resources_folder, scale_factor)
+
+        # add policies-related attributes to resource dataframe
+        policy_folder = setup["PolicyPath"]
+        policy_folder = joinpath(case_path, policy_folder)
+        _add_policies_to_resources!(policy_folder, resources)
 
         # add resources to input_data dict
         add_resources_to_input_data!(setup, input_data, resources)

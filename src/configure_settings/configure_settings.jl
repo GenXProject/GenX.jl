@@ -26,7 +26,8 @@ function default_settings()
         "EnableJuMPStringNames" => false,
         "ComputeConflicts" => 0
         "HydrogenHourlyMatching" => 0,
-        "ResourcesPath" => "resources"
+        "ResourcePath" => "resources",
+        "PolicyPath" => "policies",
     )
 end
 

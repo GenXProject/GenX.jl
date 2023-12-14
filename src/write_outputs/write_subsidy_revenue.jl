@@ -34,7 +34,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 	dfRegSubRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, R_ID=rid, SubsidyRevenue = zeros(G))
 	if (setup["MinCapReq"] >= 1)
 		for mincap in 1:inputs["NumberOfMinCapReqs"] # This key only exists if MinCapReq >= 1, so we can't get it at the top outside of this condition.
-			MIN_CAP_GEN = dfGen[(dfGen[!, Symbol("MinCapTag_$mincap")].==1), :R_ID]
+			MIN_CAP_GEN = has_min_cap(res, tag=mincap)
 			dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .= dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] + (value.(EP[:eTotalCap][MIN_CAP_GEN])) * (dual.(EP[:cZoneMinCapReq][mincap]))
 			if !isempty(inputs["VRE_STOR"])
 				mincap_solar_sym = Symbol("MinCapTagSolar_$mincap")

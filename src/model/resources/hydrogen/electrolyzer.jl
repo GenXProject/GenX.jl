@@ -162,7 +162,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
 	# a share of electrolyzer demand equal to dfGen[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, dfGen[findall(x->x>0,dfGen[!,Symbol("ESR_$ESR")]),:R_ID]), t in 1:T))
+		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, has_esr(res,tag=ESR)), t in 1:T))
 		EP[:eESR] -= eElectrolyzerESR
 	end
 
