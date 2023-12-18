@@ -249,10 +249,10 @@ end
 Function for checking that no other technology flags have been activated and specific data inputs
 	have been zeroed for the co-located VRE-STOR module
 """
-function check_vre_stor_validity(df::DataFrame, setup::Dict)
+function check_vre_stor_validity(setup::Dict, gen::Vector{AbstractResource})
 	# Determine if any VRE-STOR resources exist
-	vre_stor = is_nonzero(df, :VRE_STOR)
-	r_id = df[:, :R_ID]
+	vre_stor_exist = !isempty(GenX.vre_stor(gen))
+	r_id = resource_id(gen)
 
 	error_strings = String[]
 
@@ -260,28 +260,29 @@ function check_vre_stor_validity(df::DataFrame, setup::Dict)
 		string("Generators ", data, ", marked as VRE-STOR, have ", col, " ≠ 0. ", col, " must be 0.")
 	end
 
-	function check_any_nonzero_with_vre_stor!(error_strings::Vector{String}, df::DataFrame, col::Symbol)
-		check = vre_stor .& is_nonzero(df, col)
+	function check_any_nonzero_with_vre_stor!(error_strings::Vector{String}, gen::Vector{AbstractResource}, col::Symbol)
+		check = vre_stor_exist .& is_nonzero(gen, col)
 		if any(check)
 			e = error_feedback(r_id[check], col)
 			push!(error_strings, e)
 		end
 	end
 
+	# TODO: check it when VRE_STOR is ready
 	# Confirm that any other flags/inputs are not activated (all other flags should be activated in the vre_stor_data.csv)
-	check_any_nonzero_with_vre_stor!(error_strings, df, :Var_OM_Cost_per_MWh_In)
-	if setup["EnergyShareRequirement"]==1
-		nESR = count(occursin.("ESR_", names(df)))
-		for i in 1:nESR
-			check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("ESR_",i)))
-		end
-	end
-	if setup["CapacityReserveMargin"]==1
-		nCapRes = count(occursin.("CapRes_", names(df)))
-		for i in 1:nCapRes
-			check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("CapRes_",i)))
-		end
-	end
+	# check_any_nonzero_with_vre_stor!(error_strings, res, :var_om_cost_per_mwh_in)
+	# if setup["EnergyShareRequirement"]==1
+	# 	nESR = count(occursin.("ESR_", names(df)))
+	# 	for i in 1:nESR
+	# 		check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("ESR_",i)))
+	# 	end
+	# end
+	# if setup["CapacityReserveMargin"]==1
+	# 	nCapRes = count(occursin.("CapRes_", names(df)))
+	# 	for i in 1:nCapRes
+	# 		check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("CapRes_",i)))
+	# 	end
+	# end
 
 	return error_strings
 end
@@ -372,8 +373,8 @@ Function for reading input parameters related to co-located VRE-storage resource
 function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
 	
 	error_strings = String[]
-	dfGen = inputs_gen["dfGen"]
-	inputs_gen["VRE_STOR"] = "VRE_STOR" in names(dfGen) ? dfGen[dfGen.VRE_STOR.==1,:R_ID] : Int[]
+	res = inputs_gen["RESOURCES"]
+	inputs_gen["VRE_STOR"] = vre_stor(res)
 
 	# Check if VRE-STOR resources exist
 	if !isempty(inputs_gen["VRE_STOR"])
@@ -519,22 +520,39 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 	summarize_errors(error_strings)
 end
 
-function process_piecewisefuelusage!(inputs::Dict, scale_factor)
-	gen_in = inputs["dfGen"]
+function process_piecewisefuelusage!(inputs::Dict, path::AbstractString, gen::Vector{<:AbstractResource}, scale_factor)
+	filename = "piecewisefuel_usage_data.csv"
+	filepath = joinpath(path, filename)
+	
+	if isfile(filepath)
+		piecewisefuel_in = load_dataframe(filepath)
 
-	if any(occursin.(Ref("PWFU_"), names(gen_in)))
-		heat_rate_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Heat_Rate_MMBTU_per_MWh")
-		load_point_mat = extract_matrix_from_dataframe(gen_in, "PWFU_Load_Point_MW")
+		# get the resource names from the dataframe
+		resource_with_pwfu = resource_ids(piecewisefuel_in)
+		# get all the resource names
+		resource_without_pwfu = setdiff(resource_name.(gen), resource_with_pwfu)
+		# fill dataframe with zeros for resources without piecewise fuel usage
+		for resource in resource_without_pwfu
+			new_row = (resource, zeros(ncol(piecewisefuel_in)-1)...)	# first column is resource name
+			push!(piecewisefuel_in, new_row)
+		end
+
+		# sort dataframe by resource names and return the sorted names
+		resource_in_df = sort_dataframe_by_resource_names!(piecewisefuel_in, gen)
+		
+		heat_rate_mat = extract_matrix_from_dataframe(piecewisefuel_in, "PWFU_Heat_Rate_MMBTU_per_MWh")
+		load_point_mat = extract_matrix_from_dataframe(piecewisefuel_in, "PWFU_Load_Point_MW")
 		
 		# check data input 
 		validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
 
         # determine if a generator contains piecewise fuel usage segment based on non-zero heatrate
-		gen_in.HAS_PWFU = any(heat_rate_mat .!= 0 , dims = 2)[:]
+		nonzero_rows = any(heat_rate_mat .!= 0 , dims = 2)[:]
+		HAS_PWFU = resource_id.(resources_by_names(gen, resource_in_df))[nonzero_rows]
 		num_segments =  size(heat_rate_mat)[2]
 
 		# translate the inital fuel usage, heat rate, and load points into intercept for each segment
-		fuel_usage_zero_load = gen_in[!,"PWFU_Fuel_Usage_Zero_Load_MMBTU_per_h"]
+		fuel_usage_zero_load = piecewisefuel_in[!,"PWFU_Fuel_Usage_Zero_Load_MMBTU_per_h"]
 		# construct a matrix for intercept
 		intercept_mat = zeros(size(heat_rate_mat))
 		# PWFU_Fuel_Usage_MMBTU_per_h is always the intercept of the first segment
@@ -576,7 +594,7 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		# create a PWFU_data that contain processed intercept and slope (i.e., heat rate)
 		intercept_cols = [Symbol("PWFU_Intercept_", i) for i in 1:num_segments]
 		intercept_df = DataFrame(intercept_mat, Symbol.(intercept_cols))
-		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Heat_Rate_MMBTU_per_MWh"),names(gen_in)))
+		slope_cols = Symbol.(filter(colname -> startswith(string(colname),"PWFU_Heat_Rate_MMBTU_per_MWh"),names(piecewisefuel_in)))
 		slope_df = DataFrame(heat_rate_mat, Symbol.(slope_cols))
 		PWFU_data = hcat(slope_df, intercept_df)
 		# no need to scale sclope, but intercept should be scaled when parameterscale is on (MMBTU -> billion BTU)
@@ -585,9 +603,10 @@ function process_piecewisefuelusage!(inputs::Dict, scale_factor)
 		inputs["slope_cols"] = slope_cols
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_data"] = PWFU_data
-		inputs["PWFU_Num_Segments"] =num_segments
-		inputs["THERM_COMMIT_PWFU"] = intersect(gen_in[gen_in.THERM.==1,:R_ID], gen_in[gen_in.HAS_PWFU,:R_ID])
+		inputs["PWFU_Num_Segments"] = num_segments
+		inputs["THERM_COMMIT_PWFU"] = intersect(thermal(gen), resource_id.(gen[HAS_PWFU]))
 	end
+	return nothing
 end
 
 function validate_piecewisefuelusage(heat_rate_mat, load_point_mat)

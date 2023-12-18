@@ -386,6 +386,10 @@ function resource_by_name(rs::Vector{AbstractResource}, name::String)
     return rs[findfirst(r -> resource_name(r) == name, rs)]
 end
 
+function resources_by_names(rs::Vector{AbstractResource}, names::Vector{String})
+    return rs[findall(r -> resource_name(r) ∈ names, rs)]
+end
+
 @doc raw"""
 	check_resource_type_flags(r::GenXResource)
 
