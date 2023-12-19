@@ -87,13 +87,13 @@ function ensure_columns!(df::DataFrame)
 	end
 end
 
-function _get_resource_df(path::AbstractString, scale_factor::Float64=1.0)
+function _get_resource_df(path::AbstractString, scale_factor::Float64)
     # load dataframe with data of a given resource
     resource_in = load_dataframe(path)
-    # scale data if necessary
-    scale_resources_data!(resource_in, scale_factor)
     # rename columns lowercase
     rename!(resource_in, lowercase.(names(resource_in)))
+    # scale data if necessary
+    scale_resources_data!(resource_in, scale_factor)
     # ensure columns
     ensure_columns!(resource_in)
     # return dataframe
@@ -124,24 +124,27 @@ end
 
 function _get_all_resources(resources_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
     resource_id_offset = 0
-    resources = Vector(undef, length(resources_info))
+    resources = []
     # loop over available types and get all resources
     for (i,(filename, resource_type)) in enumerate(values(resources_info))
         # path to resources data
         path = joinpath(resources_folder, filename)
-        # load resources data of a given type
-        resource_in = _get_resource_df(path, scale_factor)
-        # get indices of resources for later use
-        resources_indices = _get_resource_indices(resource_in, resource_id_offset)
-        # add indices to dataframe
-        _add_indices_to_resource_df!(resource_in, resources_indices)
-        # add resources of a given type to array of resources
-        resources_same_type = _get_resource_array(resource_in, resource_type)
-        resources[i] = resources_same_type
-        # update id offset for next type of resources
-        resource_id_offset += length(resources_same_type)
-        # print log
-        @info filename * " Successfully Read."
+        # if file exists, load resources
+        if isfile(path)
+            # load resources data of a given type
+            resource_in = _get_resource_df(path, scale_factor)
+            # get indices of resources for later use
+            resources_indices = _get_resource_indices(resource_in, resource_id_offset)
+            # add indices to dataframe
+            _add_indices_to_resource_df!(resource_in, resources_indices)
+            # add resources of a given type to array of resources
+            resources_same_type = _get_resource_array(resource_in, resource_type)
+            push!(resources, resources_same_type)
+            # update id offset for next type of resources
+            resource_id_offset += length(resources_same_type)
+            # print log
+            @info filename * " Successfully Read."
+        end
     end
     return reduce(vcat, resources)
 end
@@ -390,8 +393,7 @@ function load_resources_data!(setup::Dict, case_path::AbstractString, input_data
             "The `Generators_data.csv` file was deprecated in release v0.4. " *
             "Please use the new interface for generators creation, and see the documentation for additional details.",
             :load_resources_data!, force=true)
-        @info "Exiting GenX..."
-        exit(-1)
+        error("Exiting GenX...")
         # load_generators_data!(setup, case_path, input_data)
         # translate_generators_data!(setup, input_data)
     else

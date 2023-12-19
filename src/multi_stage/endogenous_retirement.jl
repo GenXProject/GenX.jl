@@ -32,9 +32,9 @@ function update_cumulative_min_ret!(inputs_d::Dict,t::Int,Resource_Set::String,d
 		if !isempty(inputs_d[1][Resource_Set])
 			gen_t = inputs_d[t][dfGen_Name]
 			if t==1
-				cum_ret_cap_api.(gen_t) = ret_cap_api.(gen_t)
+				gen_t.cum_ret_cap_api = ret_cap_api.(gen_t)
 			else
-				cum_ret_cap_api.(gen_t) = cum_ret_cap_api.(inputs_d[t-1][dfGen_Name]) + ret_cap_api.(gen_t)
+				gen_t.cum_ret_cap_api = cum_ret_cap_api.(inputs_d[t-1][dfGen_Name]) + ret_cap_api.(gen_t)
 			end
 		end
 	else
@@ -135,7 +135,7 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 
 	println("Endogenous Retirement (Discharge) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
@@ -190,7 +190,7 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 
 	println("Endogenous Retirement (Charge) Module")
 
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
 	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
@@ -238,7 +238,7 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 
 	println("Endogenous Retirement (Energy) Module")
 
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
 	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
@@ -285,7 +285,7 @@ function endogenous_retirement_vre_stor_dc!(EP::Model, inputs::Dict, num_stages:
 
 	println("Endogenous Retirement (VRE-Storage DC) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 
@@ -334,7 +334,7 @@ function endogenous_retirement_vre_stor_solar!(EP::Model, inputs::Dict, num_stag
 
 	println("Endogenous Retirement (VRE-Storage Solar) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 
@@ -383,7 +383,7 @@ function endogenous_retirement_vre_stor_wind!(EP::Model, inputs::Dict, num_stage
 
 	println("Endogenous Retirement (VRE-Storage Wind) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 
@@ -432,7 +432,7 @@ function endogenous_retirement_vre_stor_stor!(EP::Model, inputs::Dict, num_stage
 
 	println("Endogenous Retirement (VRE-Storage Storage) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	NEW_CAP_STOR = inputs["NEW_CAP_STOR"] # Set of all resources eligible for new capacity
 	RET_CAP_STOR = inputs["RET_CAP_STOR"] # Set of all resources eligible for capacity retirements
@@ -479,7 +479,7 @@ function endogenous_retirement_vre_stor_discharge_dc!(EP::Model, inputs::Dict, n
 
 	println("Endogenous Retirement (VRE-Storage Discharge DC) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 
@@ -528,7 +528,7 @@ function endogenous_retirement_vre_stor_charge_dc!(EP::Model, inputs::Dict, num_
 
 	println("Endogenous Retirement (VRE-Storage Charge DC) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 	NEW_CAP_CHARGE_DC = inputs["NEW_CAP_CHARGE_DC"] # Set of all resources eligible for new capacity
 	RET_CAP_CHARGE_DC = inputs["RET_CAP_CHARGE_DC"] # Set of all resources eligible for capacity retirements
@@ -575,7 +575,7 @@ function endogenous_retirement_vre_stor_discharge_ac!(EP::Model, inputs::Dict, n
 
 	println("Endogenous Retirement (VRE-Storage Discharge AC) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"];
 	NEW_CAP_DISCHARGE_AC = inputs["NEW_CAP_DISCHARGE_AC"] # Set of all resources eligible for new capacity
 	RET_CAP_DISCHARGE_AC = inputs["RET_CAP_DISCHARGE_AC"] # Set of all resources eligible for capacity retirements
@@ -622,7 +622,7 @@ function endogenous_retirement_vre_stor_charge_ac!(EP::Model, inputs::Dict, num_
 
 	println("Endogenous Retirement (VRE-Storage Charge AC) Module")
 	
-	gen = inputs["RESOURCES"]
+	res =  inputs["RESOURCES"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
 	NEW_CAP_CHARGE_AC = inputs["NEW_CAP_CHARGE_AC"] # Set of all resources eligible for new capacity
 	RET_CAP_CHARGE_AC = inputs["RET_CAP_CHARGE_AC"] # Set of all resources eligible for capacity retirements

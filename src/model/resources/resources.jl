@@ -86,18 +86,20 @@ zone_id(rs::Vector{T}) where T <: AbstractResource = rs.zone
 # TODO: some of these are not required (use get() instead)
 max_capacity_mw(r::AbstractResource) = r.max_cap_mw
 min_capacity_mw(r::AbstractResource) = r.min_cap_mw
-cap_size(r::AbstractResource) = r.cap_size
 existing_capacity_mw(r::AbstractResource) = r.existing_cap_mw
+cap_size(r::AbstractResource) = get(r, :cap_size, default)
+
+qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supply, default)
 
 # costs
-start_cost_per_mw(r::AbstractResource) = r.start_cost_per_mw
 reg_cost(r::AbstractResource) = get(r, :reg_cost, default)
-reg_max(r::AbstractResource) = get(r, :reg_max, default)
+reg_max(r::AbstractResource)::Float64 = get(r, :reg_max, default)
 rsv_cost(r::AbstractResource) = get(r, :rsv_cost, default)
 rsv_max(r::AbstractResource) = get(r, :rsv_max, default)
-var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default)
 inv_cost_per_mwyr(r::AbstractResource) = r.inv_cost_per_mwyr
 fixed_om_cost_per_mwyr(r::AbstractResource) = r.fixed_om_cost_per_mwyr
+var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default)
+start_cost_per_mw(r::AbstractResource) = get(r, :start_cost_per_mw, default)
 
 # fuel
 fuel(r::AbstractResource) = get(r, :fuel, "None")
@@ -114,9 +116,9 @@ efficiency_down(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_down, 1.0)
 
 # Ramp up and down
 const TCOMMIT = Union{ELECTROLYZER, HYDRO, THERM}
-min_power(r::TCOMMIT) = r.min_power
-ramp_up_percentage(r::TCOMMIT) = r.ramp_up_percentage
-ramp_down_percentage(r::TCOMMIT) = r.ramp_dn_percentage
+min_power(r::TCOMMIT) = get(r, :min_power, default)
+ramp_up_percentage(r::TCOMMIT) = get(r, :ramp_up_percentage, 1.0)
+ramp_down_percentage(r::TCOMMIT) = get(r, :ramp_down_percentage, 1.0)
 
 # Retrofit
 function has_retrofit(rs::Vector{T}) where T <: AbstractResource
@@ -215,6 +217,11 @@ function has_existing_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResou
     return findall(r -> get(r, :existing_charge_cap_mw, default) >= 0, rs)
 end
 
+function has_qualified_hydrogen_supply(rs::Vector{T}) where T <: AbstractResource
+    condition::BitVector = qualified_hydrogen_supply.(rs) .== 1
+    return resource_id.(rs[condition])
+end
+
 ## policies
 # energy share requirement
 function has_esr(rs::Vector{T}; tag::Int64=1) where T <: AbstractResource
@@ -269,23 +276,23 @@ inv_cost_per_mwhyr(r::STOR) = r.inv_cost_per_mwhyr
 existing_charge_capacity_mw(r::STOR) = get(r, :existing_charge_cap_mw, default)
 fixed_om_cost_charge_per_mwyr(r::STOR) = get(r, :fixed_om_cost_charge_per_mwyr, default)
 inv_cost_charge_per_mwyr(r::STOR) = r.inv_cost_charge_per_mwyr
-max_charge_capacity_mw(r::STOR) = r.max_charge_cap_mw
-min_charge_capacity_mw(r::STOR) = r.min_charge_cap_mw
+max_charge_capacity_mw(r::STOR) = get(r, :max_charge_cap_mw, -1)
+min_charge_capacity_mw(r::STOR) = get(r, :min_charge_cap_mw, default)
 
 var_om_cost_per_mwh_in(r::STOR) = get(r, :var_om_cost_per_mwh_in, default)
 
 function symmetric_storage(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> isa(r,STOR) && r.type == 1, rs)
+    return findall(r -> isa(r,STOR) && r.model == 1, rs)
 end
 
 function asymmetric_storage(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> isa(r,STOR) && r.type == 2, rs)
+    return findall(r -> isa(r,STOR) && r.model == 2, rs)
 end
 
 
 # HYDRO interface
 hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,HYDRO), rs)
-hydro_energy_to_power_ratio(r::HYDRO) = r.hydro_energy_to_power_ratio
+hydro_energy_to_power_ratio(r::HYDRO) = get(r, :hydro_energy_to_power_ratio, default)
 
 function has_hydro_energy_to_power_ratio(rs::Vector{T}) where T <: AbstractResource
     return findall(r -> get(r, :hydro_energy_to_power_ratio, default) > 0, rs)
@@ -298,11 +305,11 @@ thermal(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,THERM), 
 up_time(r::THERM) = get(r, :up_time, default)
 down_time(r::THERM) = get(r, :down_time, default)
 function has_unit_commitment(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> isa(r,THERM) && r.type == 1, rs)
+    return findall(r -> isa(r,THERM) && r.model == 1, rs)
 end
 # Without unit commitment
 function no_unit_commitment(rs::Vector{T}) where T <: AbstractResource
-    return findall(r -> isa(r,THERM) && r.type == 2, rs)
+    return findall(r -> isa(r,THERM) && r.model == 2, rs)
 end
 
 
@@ -319,7 +326,6 @@ electrolyzer(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,ELE
 electrolyzer_min_kt(r::ELECTROLYZER) = r.electrolyzer_min_kt
 hydrogen_mwh_per_tonne(r::ELECTROLYZER) = r.hydrogen_mwh_per_tonne
 hydrogen_price_per_tonne(r::ELECTROLYZER) = r.hydrogen_price_per_tonne
-qualified_hydrogen_supply(r::ELECTROLYZER) = r.qualified_hydrogen_supply
 
 
 # FLEX interface
@@ -382,7 +388,7 @@ function resources_in_zone_by_rid(rs::Vector{AbstractResource}, zone::Int)
     return resource_id.(rs[zone_id.(rs) .== zone])
 end
 
-function resource_by_name(rs::Vector{AbstractResource}, name::String)
+function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
     return rs[findfirst(r -> resource_name(r) == name, rs)]
 end
 

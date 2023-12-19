@@ -1,0 +1,2 @@
+Resource,Zone,Num_VRE_Bins,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Cap_Size,Resource_Type,region,cluster
+onshore_wind,1,1,0,1,15000,-1,0,0,0,0,100,onshore_wind_turbine,NE,1

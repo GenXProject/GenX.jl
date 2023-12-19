@@ -188,7 +188,7 @@ function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractStri
     Matrix(dropmissing(df[:, sorted_columns]))
 end
 
-function sort_dataframe_by_resource_names!(df::DataFrame, gen::Vector{<:AbstractResource})
+function sort_dataframe_by_resource_names!(df::DataFrame, gen::Vector{<:AbstractResource})::Vector{String}
     # get all resource names
     resource_names = resource_name.(gen)
     # get resources in dataframe

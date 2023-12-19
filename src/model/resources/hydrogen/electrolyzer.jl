@@ -150,7 +150,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
 	if setup["HydrogenHourlyMatching"] == 1
 		HYDROGEN_ZONES = unique(zone_id.(gen.ELECTROLYZER))
-		QUALIFIED_SUPPLY = resources_with_qualified_hydrogen_supply(gen)
+		QUALIFIED_SUPPLY = has_qualified_hydrogen_supply(gen)
 		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
 			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, STORAGE))
 		)
@@ -176,9 +176,4 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
 end
 
-function resources_with_qualified_hydrogen_supply(rs::Vector{AbstractResource})
-	electrolyzers = rs.ELECTROLYZER
-    condition::BitVector = qualified_hydrogen_supply.(electrolyzers) .== 1
-    return resource_id.(electrolyzers[condition])
-end
 
