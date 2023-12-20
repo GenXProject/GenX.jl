@@ -17,6 +17,10 @@ end
     include("expression_manipulation_test.jl")
 end
 
+@testset "Resource loading" begin
+    include("test_load_resource_data.jl")
+end
+
 # Test GenX modules
 @testset verbose = true "GenX modules" begin
     @testset "Three zones" begin

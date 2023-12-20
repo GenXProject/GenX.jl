@@ -605,6 +605,8 @@ function process_piecewisefuelusage!(inputs::Dict, path::AbstractString, gen::Ve
 		inputs["PWFU_data"] = PWFU_data
 		inputs["PWFU_Num_Segments"] = num_segments
 		inputs["THERM_COMMIT_PWFU"] = intersect(thermal(gen), resource_id.(gen[HAS_PWFU]))
+
+		@info "Piecewise fuel usage data successfully read!"
 	end
 	return nothing
 end

@@ -7,7 +7,7 @@ optimizer = HiGHS.Optimizer
 # optimizer = Gurobi.Optimizer
 
 # case = "Example_Systems/Electrolyzer_Example"
-case = "test/Inputfiles"
+case = "test/LoadResourceData"
 
 genx_settings = GenX.get_settings_path(case, "genx_settings.yml") 
 setup = configure_settings(genx_settings)

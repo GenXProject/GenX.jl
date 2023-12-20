@@ -5,8 +5,8 @@ function _get_resource_info()
         vre     = (filename="vre.csv", type=VRE),
         storage = (filename="storage.csv", type=STOR),
         flex_demand  = (filename="flex_demand.csv", type=FLEX),
-        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER),
-        must_run = (filename="must_run.csv", type=MUST_RUN)
+        must_run = (filename="must_run.csv", type=MUST_RUN),
+        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER)
     )
     return resources
 end
@@ -151,7 +151,7 @@ end
 
 function load_scaled_resources_data(setup::Dict, case_path::AbstractString)
 # Scale factor for energy and currency units
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
     # get path to resources data
     resources_folder = setup["ResourcePath"]
     resources_folder = joinpath(case_path,resources_folder)
