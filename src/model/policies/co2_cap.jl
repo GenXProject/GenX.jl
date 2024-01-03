@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -118,8 +102,10 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 
     ## (fulfilled) demand + Rate-based: Emissions constraint in terms of rate (tons/MWh)
 	elseif setup["CO2Cap"] == 2 ##This part moved to non_served_energy.jl
+
 		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
+			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) -
+			vCO2Cap_slack[cap] <=
 			sum(inputs["dfMaxCO2Rate"][z,cap] * sum(inputs["omega"][t] * (inputs["pD"][t,z] - sum(EP[:vNSE][s,t,z] for s in 1:SEG)) for t=1:T) for z = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])) +
 			sum(inputs["dfMaxCO2Rate"][z,cap] * setup["StorageLosses"] *  EP[:eELOSSByZone][z] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
 		)
@@ -127,7 +113,8 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 	## Generation + Rate-based: Emissions constraint in terms of rate (tons/MWh)
 	elseif (setup["CO2Cap"]==3)
 		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
+			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) -
+			vCO2Cap_slack[cap] <=
 			sum(inputs["dfMaxCO2Rate"][z,cap] * inputs["omega"][t] * EP[:eGenerationByZone][z,t] for t=1:T, z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
 		)
 	end

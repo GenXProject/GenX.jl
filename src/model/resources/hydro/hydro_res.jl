@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 This module defines the operational constraints for reservoir hydropower plants.
@@ -32,13 +16,13 @@ Note: in future updates, an option to model hydro resources with large reservoir
 The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$).
 ```math
 \begin{aligned}
-&\Theta_{y,z,t} - \Theta_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
+&\Theta_{y,z,t} + f_{y,z,t} + r_{y,z,t} - \Theta_{y,z,t-1} - f_{y,z,t-1} \leq \kappa^{up}_{y,z} \times \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 ```math
 \begin{aligned}
-&\Theta_{y,z,t-1} - \Theta_{y,z,t} \leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
+&\Theta_{y,z,t-1} + f_{y,z,t-1}  + r_{y,z,t-1} - \Theta_{y,z,t} - f_{y,z,t}\leq \kappa^{down}_{y,z} \Delta^{total}_{y,z}
 \hspace{2 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
@@ -81,12 +65,23 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 
-	hours_per_subperiod = inputs["hours_per_subperiod"] 	# total number of hours per subperiod
-	START_SUBPERIODS = inputs["START_SUBPERIODS"]	# set of indexes for all time periods that start a subperiod (e.g. sample day/week)
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"] # set of indexes for all time periods that do not start a
+	p = inputs["hours_per_subperiod"] 	# total number of hours per subperiod
 
 	HYDRO_RES = inputs["HYDRO_RES"]	# Set of all reservoir hydro resources, used for common constraints
 	HYDRO_RES_KNOWN_CAP = inputs["HYDRO_RES_KNOWN_CAP"] # Reservoir hydro resources modeled with unknown reservoir energy capacity
+
+    # These variables are used in the ramp-up and ramp-down expressions
+    reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
+    regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
+
+    if setup["Reserves"] > 0
+        HYDRO_RES_REG = intersect(HYDRO_RES, inputs["REG"]) # Set of reservoir hydro resources with regulation reserves
+        HYDRO_RES_RSV = intersect(HYDRO_RES, inputs["RSV"]) # Set of reservoir hydro resources with spinning reserves
+        regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T],
+                           y ∈ HYDRO_RES_REG ? EP[:vREG][y,t] - EP[:vREG][y, hoursbefore(p, t, 1)] : 0)
+        reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T],
+                           y ∈ HYDRO_RES_RSV ? EP[:vRSV][y,t] : 0)
+    end
 
 	### Variables ###
 
@@ -118,20 +113,14 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 		# Energy stored in reservoir at end of each other hour is equal to energy at end of prior hour less generation and spill and + inflows in the current hour
 		# The ["pP_Max"][y,t] term here refers to inflows as a fraction of peak discharge power capacity.
 		# DEV NOTE: Last inputs["pP_Max"][y,t] term above is inflows; currently part of capacity factors inputs in Generators_variability.csv but should be moved to its own Hydro_inflows.csv input in future.
-		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y,t-1] - (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] +inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
 
-		# Constraints for reservoir hydro with time wrapping from end of sample period to start
-		cHydroReservoirWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y,t+hours_per_subperiod-1]
-				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] +  inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+		# Constraints for reservoir hydro
+		cHydroReservoir[y in HYDRO_RES, t in 1:T], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y, hoursbefore(p,t,1)]
+				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
-		# Maximum ramp up and down between consecutive hours
-		cRampUpInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
-		cRampDownInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
-
-		# Maximum ramp up and down between consecutive hours, wrapping from end of sample period to start of sample period
-		cRampUpWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t] - EP[:vP][y,t+hours_per_subperiod-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
-		cRampDownWrapStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t+hours_per_subperiod-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
-
+		# Maximum ramp up and down
+        cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + regulation_term[y,t] + reserves_term[y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
+        cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
 		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= dfGen[y,:Min_Power]*EP[:eTotalCap][y]
 		# DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
@@ -140,10 +129,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 		# DEV NOTE: We do not currently account for hydro power plant outages - leave it for later to figure out if we should.
 		# DEV NOTE (CONTD): If we defin pPMax as hourly availability of the plant and define inflows as a separate parameter, then notation will be consistent with its use for other resources
 		cHydroMaxPower[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] <= EP[:eTotalCap][y]
-		cHydroMaxOutflowInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vP][y,t] <= EP[:vS_HYDRO][y,t-1]
-
-		# Maximum discharging rate must be less than available stored energy at start of hour, whichever is less, wrapping from end of sample period to start of sample period
-		cHydroMaxOutflowStart[y in HYDRO_RES, t in START_SUBPERIODS], EP[:vP][y,t] <= EP[:vS_HYDRO][y,t+hours_per_subperiod-1]
+		cHydroMaxOutflow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] <= EP[:vS_HYDRO][y, hoursbefore(p,t,1)]
 	end)
 
 	### Constraints to limit maximum energy in storage based on known limits on reservoir energy capacity (only for HYDRO_RES_KNOWN_CAP)
@@ -156,7 +142,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	end
 	##CO2 Polcy Module Hydro Res Generation by zone
 	@expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
-		sum(EP[:vP][y,t] for y in intersect(inputs["HYDRO_RES"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
+		sum(EP[:vP][y,t] for y in intersect(HYDRO_RES, dfGen[dfGen[!,:Zone].==z,:R_ID]))
 	)
 	add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByHydroRes)
 

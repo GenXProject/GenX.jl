@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	investment_energy!(EP::Model, inputs::Dict)
 
@@ -67,7 +51,6 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
 	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
-	RETRO_CAP_ENERGY = inputs["RETRO_CAP_ENERGY"] # Set of asymmetric storage resources eligible for charge capacity retrofitting.
 
 	### Variables ###
 
@@ -78,9 +61,6 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Retired energy capacity of resource "y" from existing capacity
 	@variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY] >= 0)
-
-	# Retrofited energy capacity of resource "y" from existing capacity
-	@variable(EP, vRETROCAPENERGY[y in RETRO_CAP_ENERGY] >= 0)
 
 	if MultiStage == 1
 		@variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL] >= 0);
@@ -102,11 +82,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 		elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
 			eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
 		else
-			if y in RETRO_CAP_ENERGY
-				eExistingCapEnergy[y] + EP[:vRETROCAPENERGY][y]
-			else
-				eExistingCapEnergy[y] + EP[:vZERO]
-			end
+			eExistingCapEnergy[y] + EP[:vZERO]
 		end
 	)
 
@@ -118,11 +94,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 		if y in NEW_CAP_ENERGY # Resources eligible for new capacity
 			dfGen[y,:Inv_Cost_per_MWhyr]*vCAPENERGY[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
 		else
-			if y in RETRO_CAP_ENERGY
-				dfGen[y,:Inv_Cost_per_MWhyr]*vRETROCAPENERGY[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
-			else
-				dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
-			end
+			dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
 		end
 	)
 
@@ -157,5 +129,9 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
 	@constraint(EP, cMinCapEnergy[y in intersect(dfGen[dfGen.Min_Cap_MWh.>0,:R_ID], STOR_ALL)], eTotalCapEnergy[y] >= dfGen[y,:Min_Cap_MWh])
+
+	# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
+	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= dfGen[y,:Min_Duration] * EP[:eTotalCap][y])
+	@constraint(EP, cMaxCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] <= dfGen[y,:Max_Duration] * EP[:eTotalCap][y])
 
 end

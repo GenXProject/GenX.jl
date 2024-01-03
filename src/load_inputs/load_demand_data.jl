@@ -48,28 +48,20 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 	Z = inputs["Z"]   # Number of zones
 
 	inputs["omega"] = zeros(Float64, T) # weights associated with operational sub-period in the model - sum of weight = 8760
-	inputs["REP_PERIOD"] = 1   # Number of periods initialized
-	inputs["H"] = 1   # Number of sub-periods within each period
+    # Weights for each period - assumed same weights for each sub-period within a period
+    inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
 
-	if setup["OperationWrapping"]==0 # Modeling full year chronologically at hourly resolution
-		# Simple scaling factor for number of subperiods
-		inputs["omega"] .= 1 #changes all rows of inputs["omega"] from 0.0 to 1.0
-	elseif setup["OperationWrapping"]==1
-		# Weights for each period - assumed same weights for each sub-period within a period
-		inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
+    # Total number of periods and subperiods
+    inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
+    inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
 
-		# Total number of periods and subperiods
-		inputs["REP_PERIOD"] = convert(Int16, as_vector(:Rep_Periods)[1])
-		inputs["H"] = convert(Int64, as_vector(:Timesteps_per_Rep_Period)[1])
-
-		# Creating sub-period weights from weekly weights
-		for w in 1:inputs["REP_PERIOD"]
-			for h in 1:inputs["H"]
-				t = inputs["H"]*(w-1)+h
-				inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
-			end
-		end
-	end
+    # Creating sub-period weights from weekly weights
+    for w in 1:inputs["REP_PERIOD"]
+        for h in 1:inputs["H"]
+            t = inputs["H"]*(w-1)+h
+            inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
+        end
+    end
 
 	# Create time set steps indicies
 	inputs["hours_per_subperiod"] = div.(T,inputs["REP_PERIOD"]) # total number of hours per subperiod

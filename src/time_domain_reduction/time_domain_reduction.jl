@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 # Store the paths of the current working directory, GenX, and Settings YAML file
 if isfile("PreCluster.jl")
     genx_path = cd(pwd, "../..") # pwd() grandparent <-- TDR called from PreCluster.jl
@@ -32,6 +16,7 @@ using StatsBase
 using Clustering
 using Distances
 using CSV
+using GenX
 
 
 const SEED = 1234
@@ -618,6 +603,10 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         	# Step 1) Load Inputs
         	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
 
+            # this prevents doubled time domain reduction in stages past
+            # the first, even if the first stage is okay.
+            prevent_doubled_timedomainreduction(inpath_sub)
+
         	inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
 
         	inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],mysetup["MultiStageSettingsDict"],mysetup["NetworkExpansion"])
@@ -1069,7 +1058,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
                 end
 
                 ### TDR_Results/Fuels_data.csv
-                fuel_in = DataFrame(CSV.File(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"), header=true), copycols=true)
+                fuel_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"))
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1158,7 +1147,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
             ### TDR_Results/Fuels_data.csv
 
-            fuel_in = DataFrame(CSV.File(joinpath(inpath,"Inputs",input_stage_directory,"Fuels_data.csv"), header=true), copycols=true)
+            fuel_in = load_dataframe(joinpath(inpath,"Inputs",input_stage_directory,"Fuels_data.csv"))
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1243,7 +1232,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
         ### TDR_Results/Fuels_data.csv
 
-        fuel_in = DataFrame(CSV.File(joinpath(inpath, "Fuels_data.csv"), header=true), copycols=true)
+        fuel_in = load_dataframe(joinpath(inpath, "Fuels_data.csv"))
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
         NewFuelOutput = vcat(SepFirstRow, FPOutputData)

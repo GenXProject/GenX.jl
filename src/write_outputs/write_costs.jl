@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
@@ -39,7 +23,26 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	cVar = value(EP[:eTotalCVarOut])+ (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) + (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
 	cFix = value(EP[:eTotalCFix]) + (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) + (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-	dfCost[!,Symbol("Total")] = [value(EP[:eObj]), cFix, cVar, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0] 
+	
+	cFuel = value.(EP[:eTotalCFuelOut])
+	
+	if !isempty(VRE_STOR) 
+		cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) + (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
+		cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) + (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
+		if !isempty(inputs["VS_STOR"])
+			cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ? value(EP[:eTotalCFixCharge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ? value(EP[:eTotalCFixCharge_AC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_AC]) : 0.0)) 
+			cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
+		end
+		total_cost =[objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+	else
+		total_cost = [objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
+	end
+
+	if !isempty(ELECTROLYZER)
+		push!(total_cost,(!isempty(inputs["ELECTROLYZER"]) ? -1*value(EP[:eTotalHydrogenValue]) : 0.0))
+	end
+
+	dfCost[!,Symbol("Total")] = total_cost
 
 	if setup["ParameterScale"] == 1
 		dfCost.Total *= ModelScalingFactor^2
@@ -201,7 +204,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		end
 
 		if setup["UCommit"] >= 1 && !isempty(COMMIT_ZONE)
-			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:]))
+			eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE,:])) + sum(value.(EP[:ePlantCFuelStart][COMMIT_ZONE,:]))
 			tempCStart += eCStart
 			tempCTotal += eCStart
 		end
