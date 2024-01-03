@@ -1,32 +1,23 @@
-function default_settings()
-    Dict{Any,Any}(
-        "PrintModel" => 0,
-        "OverwriteResults" => 0,
-        "NetworkExpansion" => 0,
-        "Trans_Loss_Segments" => 1,
-        "Reserves" => 0,
-        "EnergyShareRequirement" => 0,
-        "CapacityReserveMargin" => 0,
-        "CO2Cap" => 0,
-        "StorageLosses" => 1,
-        "VirtualChargeDischargeCost" => 1,  # $/MWh
-        "MinCapReq" => 0,
-        "MaxCapReq" => 0,
-        "Solver" => "HiGHS",
-        "ParameterScale" => 0,
-        "WriteShadowPrices" => 0,
-        "UCommit" => 0,
-        "TimeDomainReduction" => 0,
-        "TimeDomainReductionFolder" => "TDR_Results",
-        "ModelingToGenerateAlternatives" => 0,
-        "ModelingtoGenerateAlternativeSlack" => 0.1,
-        "MultiStage" => 0,
-        "MethodofMorris" => 0,
-        "IncludeLossesInESR" => 0,
-        "HydrogenHourlyMatching" => 0,
-        "EnableJuMPStringNames" => false,
-        "ComputeConflicts" => 0
-    )
+"""
+GenX: An Configurable Capacity Expansion Model
+Copyright (C) 2021,  Massachusetts Institute of Technology
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+A complete copy of the GNU General Public License v2 (GPLv2) is available
+in LICENSE.txt.  Users uncompressing this from an archive may not have
+received this license file.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+function set_default_if_absent!(settings::Dict, key::String, defaultval)
+    if !haskey(settings, key)
+        settings[key] = defaultval
+    end
 end
 
 function configure_settings(settings_path::String)
@@ -75,34 +66,4 @@ function configure_settings(settings_path::String)
 
 
 return settings
-end
-
-function validate_settings!(settings::Dict{Any,Any})
-    # Check for any settings combinations that are not allowed.
-    # If we find any then make a response and issue a note to the user.
-
-    if "OperationWrapping" in keys(settings)
-        @warn """The behavior of the TimeDomainReduction and OperationWrapping
-        settings have changed recently. OperationWrapping has been removed,
-        and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
-        Please see the Methods page in the documentation."""
-    end
-
-end
-
-function validate_settings!(settings::Dict{Any,Any})
-    # Check for any settings combinations that are not allowed.
-    # If we find any then make a response and issue a note to the user.
-
-    if "OperationWrapping" in keys(settings)
-        @warn """The behavior of the TimeDomainReduction and OperationWrapping
-        settings have changed recently. OperationWrapping has been removed,
-        and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
-        Please see the Methods page in the documentation."""
-    end
-
-    if settings["EnableJuMPStringNames"]==0 && settings["ComputeConflicts"]==1
-        settings["EnableJuMPStringNames"]=1;
-    end
-
 end
