@@ -50,6 +50,15 @@ function Base.setproperty!(rs::Vector{AbstractResource}, sym::Symbol, value::Vec
     return rs
 end
 
+function Base.setindex!(rs::Vector{AbstractResource}, value::Vector, sym::Symbol)
+    # if sym is a field of the resource then set that field for all resources
+    @assert length(rs) == length(value)
+    for (r,v) in zip(rs, value)
+        setproperty!(r, sym, v)
+    end
+    return rs
+end
+
 # Define pairs for resource types
 Base.pairs(r::AbstractResource) = pairs(parent(r))
 
@@ -123,9 +132,9 @@ start_cost_per_mw(r::AbstractResource) = get(r, :start_cost_per_mw, default)
 fuel(r::AbstractResource) = get(r, :fuel, "None")
 start_fuel_mmbtu_per_mw(r::AbstractResource) = r.start_fuel_mmbtu_per_mw
 heat_rate_mmbtu_per_mwh(r::AbstractResource) = r.heat_rate_mmbtu_per_mwh
-co2_capture_fraction(r::AbstractResource) = r.co2_capture_fraction
-co2_capture_fraction_startup(r::AbstractResource) = r.co2_capture_fraction_startup
-ccs_disposal_cost_per_metric_ton(r::AbstractResource) = r.ccs_disposal_cost_per_metric_ton
+co2_capture_fraction(r::AbstractResource) = get(r, :co2_capture_fraction, default)
+co2_capture_fraction_startup(r::AbstractResource) = get(r, :co2_capture_fraction_startup, default)
+ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cost_per_metric_ton, default)
 biomass(r::AbstractResource) = get(r, :biomass, default)
 
 # Reservoir hydro and storage
@@ -145,14 +154,14 @@ end
 
 # Retirement
 lifetime(r::AbstractResource) = r.lifetime
+capital_recovery_period(r::AbstractResource) = r.capital_recovery_period
+tech_wacc(r::AbstractResource) = get(r, :wacc, default)
 min_retired_cap_mw(r::AbstractResource) = get(r, :min_retired_cap_mw, default)
 min_retired_energy_cap_mw(r::AbstractResource) = get(r, :min_retired_energy_cap_mw, default)
-min_retired_charge_cap_mw(r::AbstractResource) = get(r, :min_retired_cap_inverter_mw, default)
-cum_min_retired_cap_mw(r::AbstractResource) = get(r, :cum_min_retired_cap_mw, default)
-cum_min_retired_energy_cap_mw(r::AbstractResource) = get(r, :cum_min_retired_energy_cap_mw, default)
-cum_min_retired_charge_cap_mw(r::AbstractResource) = get(r, :cum_min_retired_cap_inverter_mw, default)
-capital_recovery_period(r::AbstractResource) = r.capital_recovery_period
-wacc(r::AbstractResource) = r.wacc
+min_retired_charge_cap_mw(r::AbstractResource) = get(r, :min_retired_charge_cap_mw, default)
+cum_min_retired_cap_mw(r::AbstractResource) = r.cum_min_retired_cap_mw
+cum_min_retired_energy_cap_mw(r::AbstractResource) = r.cum_min_retired_energy_cap_mw
+cum_min_retired_charge_cap_mw(r::AbstractResource) = r.cum_min_retired_charge_cap_mw
 
 # MGA
 has_mga_on(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :mga, default) == 1, rs)
@@ -392,7 +401,10 @@ function resources_in_zone_by_rid(rs::Vector{AbstractResource}, zone::Int)
 end
 
 function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
-    return rs[findfirst(r -> resource_name(r) == name, rs)]
+    r_id = findfirst(r -> resource_name(r) == name, rs)
+    # check that the resource exists
+    isnothing(r_id) && error("Resource $name not found in resource data. \nHint: Make sure that the resource names in input files match the ones in the \"resource\" folder.\n")
+    return rs[r_id]
 end
 
 function resources_by_names(rs::Vector{AbstractResource}, names::Vector{String})

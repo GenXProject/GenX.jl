@@ -72,20 +72,20 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
     return nothing
 end
 
-function required_columns_for_co2()
-    return ("biomass", 
-            "co2_capture_fraction", 
-            "co2_capture_fraction_startup", 
-            "ccs_disposal_cost_per_metric_ton")
-end
+# function required_columns_for_co2()
+#     return ("biomass", 
+#             "co2_capture_fraction", 
+#             "co2_capture_fraction_startup", 
+#             "ccs_disposal_cost_per_metric_ton")
+# end
 
-function ensure_columns!(df::DataFrame)
-    # write zeros if col names are not in the gen_in dataframe
-    required_cols = [required_columns_for_co2()...,]
-    for col in required_cols
-		ensure_column!(df, col, 0)
-	end
-end
+# function ensure_columns!(df::DataFrame)
+#     # write zeros if col names are not in the gen_in dataframe
+#     required_cols = [required_columns_for_co2()...,]
+#     for col in required_cols
+# 		ensure_column!(df, col, 0)
+# 	end
+# end
 
 function _get_resource_df(path::AbstractString, scale_factor::Float64)
     # load dataframe with data of a given resource
@@ -94,8 +94,6 @@ function _get_resource_df(path::AbstractString, scale_factor::Float64)
     rename!(resource_in, lowercase.(names(resource_in)))
     # scale data if necessary
     scale_resources_data!(resource_in, scale_factor)
-    # ensure columns
-    ensure_columns!(resource_in)
     # return dataframe
     return resource_in
 end
@@ -126,7 +124,7 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
     resource_id_offset = 0
     resources = []
     # loop over available types and get all resources
-    for (i,(filename, resource_type)) in enumerate(values(resources_info))
+    for (filename, resource_type) in values(resources_info)
         # path to resources data
         path = joinpath(resources_folder, filename)
         # if file exists, load resources
@@ -146,6 +144,8 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
             @info filename * " Successfully Read."
         end
     end
+    # check if any resources were loaded
+    isempty(resources) && error("No resources data found. Check data path or configuration file \"genx_settings.yml\" inside Settings.")
     return reduce(vcat, resources)
 end
 
@@ -198,6 +198,24 @@ function add_policy_to_resources!(path::AbstractString, filename::AbstractString
     validate_policy_dataframe!(filename, column_name, policy_in)
     # add policy attributes to resources
     _add_df_to_resources!(resources, policy_in)
+    return nothing
+end
+
+function add_modules_to_resources!(setup::Dict, case_path::AbstractString, resources::Vector{<:AbstractResource})
+    modules = Vector{DataFrame}()
+
+    ## Load all modules and add them to the list of modules to add to resources
+    # Add multistage if multistage is activated
+    if setup["MultiStage"] == 1
+        multistage_in = load_multistage_dataframe(case_path)
+        push!(modules, multistage_in)
+        @info "Multistage data successfully read."
+    end
+    
+    
+    ## Loop over modules and add attributes to resources
+    add_module_to_resources!.(Ref(resources), modules)
+
     return nothing
 end
 
@@ -402,6 +420,9 @@ function load_resources_data!(setup::Dict, case_path::AbstractString, input_data
 
         # add policies-related attributes to resource dataframe
         add_policies_to_resources!(setup, case_path, resources)
+
+        # add module-related attributes to resource dataframe
+        add_modules_to_resources!(setup, case_path, resources)
         
         # add resources to input_data dict
         add_resources_to_input_data!(setup, case_path, input_data, resources)

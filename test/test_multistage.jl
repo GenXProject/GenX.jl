@@ -25,6 +25,8 @@ genx_setup = Dict(
     "UCommit" => 2,
     "MultiStage" => 1,
     "MultiStageSettingsDict" => multistage_setup,
+    "ResourcePath" => "resources",
+    "PolicyPath" => "policies",
 )
 
 # Run the case and get the objective value and tolerance

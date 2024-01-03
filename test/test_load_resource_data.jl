@@ -9,6 +9,7 @@ setup = Dict(
     "ParameterScale" => 1,
     "Reserves" => 1,
     "UCommit" => 2,
+    "MultiStage" => 1,
     "ResourcePath" => "resources",
     "PolicyPath" => "policies",
 )
@@ -88,6 +89,15 @@ function test_add_policies_to_resources(gen, dfGen)
     @test GenX.min_cap.(gen, tag=2) == dfGen.mincaptag_2
     @test GenX.min_cap.(gen, tag=3) == dfGen.mincaptag_3
     @test GenX.derated_capacity.(gen, tag=1) == dfGen.capres_1
+end
+
+function test_add_modules_to_resources(gen, dfGen)
+    @test GenX.tech_wacc.(gen) == dfGen.wacc
+    @test GenX.capital_recovery_period.(gen) == dfGen.capital_recovery_period
+    @test GenX.lifetime.(gen) == dfGen.lifetime
+    @test GenX.min_retired_cap_mw.(gen) == dfGen.min_retired_cap_mw
+    @test GenX.min_retired_energy_cap_mw.(gen) == dfGen.min_retired_energy_cap_mw
+    @test GenX.min_retired_charge_cap_mw.(gen) == dfGen.min_retired_charge_cap_mw
 end
 
 function test_inputs_keys(inputs, inputs_true)
@@ -217,6 +227,12 @@ function test_load_resources_data()
     GenX.add_policies_to_resources!(setup, test_path, gen)
     @testset "Policy attributes" begin
         test_add_policies_to_resources(gen, dfGen)
+    end
+
+    # Test modules are correctly added to the resource structs
+    GenX.add_modules_to_resources!(setup, test_path, gen)
+    @testset "Module attributes" begin
+        test_add_modules_to_resources(gen, dfGen)
     end
 
     # Test that the inputs keys are correctly setß
