@@ -36,6 +36,7 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	# Set indices for internal use
 	G = inputs_gen["G"]   # Number of resources (generators, storage, DR, and DERs)
 
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	## Defining sets of generation and storage resources
 
 	# Set of storage resources with symmetric charge/discharge capacity
@@ -79,9 +80,9 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	end
 	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
     # Disable Retrofit while it's under development
-    if !(isempty(inputs_gen["RETRO"]))
-        error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in Generators_data.csv, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
-    end
+    # if !(isempty(inputs_gen["RETRO"]))
+    #     error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in Generators_data.csv, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
+    # end
 
 	# Set of thermal generator resources
 	if setup["UCommit"]>=1

@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
@@ -32,22 +16,10 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	# Power withdrawn to charge each resource in each time step
 	dfCharge = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone], AnnualSum = Array{Union{Missing,Float64}}(undef, G))
 	charge = zeros(G,T)
-	if setup["ParameterScale"] == 1
-	    if !isempty(inputs["STOR_ALL"])
-	        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]) * ModelScalingFactor
-	    end
-	    if !isempty(inputs["FLEX"])
-	        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * ModelScalingFactor
-	    end
-	    dfCharge.AnnualSum .= charge * inputs["omega"]
-	else
-	    if !isempty(inputs["STOR_ALL"])
-	        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
-	    end
-	    if !isempty(inputs["FLEX"])
-	        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :])
-	    end
-	    dfCharge.AnnualSum .= charge * inputs["omega"]
+
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	if !isempty(STOR_ALL)
+	    charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]) * scale_factor
 	end
 	if !isempty(FLEX)
 	    charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * scale_factor

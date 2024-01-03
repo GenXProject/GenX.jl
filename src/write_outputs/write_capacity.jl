@@ -95,18 +95,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		end
 		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[!,:Existing_Cap_MWh][i]
 	end
-	if !isempty(inputs["VRE_STOR"])
-		for i in inputs["VS_STOR"]
-			if i in inputs["NEW_CAP_STOR"]
-				capenergy[i] = value(EP[:vCAPENERGY_VS][i])
-			end
-			if i in inputs["RET_CAP_STOR"]
-				retcapenergy[i] = value(EP[:vRETCAPENERGY_VS][i])
-			end
-			existingcapenergy[i] = dfGen[i,:Existing_Cap_MWh] # multistage functionality doesn't exist yet for VRE-storage resources
-		end
-	end
-
 	dfCap = DataFrame(
 		Resource = inputs["RESOURCES"], 
 		Resource_type = inputs["RESOURCE_TYPE"], 
@@ -117,7 +105,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		RetroCap = retrocapdischarge[:], #### Need to change later
 		NewCap = capdischarge[:] + retrocreatdischarge[:],
 		EndCap = value.(EP[:eTotalCap]),
-		CapacityConstraintDual = capacity_constraint_dual[:],
 		StartEnergyCap = existingcapenergy[:],
 		RetEnergyCap = retcapenergy[:],
 		RetroEnergyCap = retrocapenergy[:], #### Need to change later
@@ -135,7 +122,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		dfCap.RetroCap = dfCap.RetroCap * ModelScalingFactor
 		dfCap.NewCap = dfCap.NewCap * ModelScalingFactor
 		dfCap.EndCap = dfCap.EndCap * ModelScalingFactor
-		dfCap.CapacityConstraintDual = dfCap.CapacityConstraintDual * ModelScalingFactor
 		dfCap.StartEnergyCap = dfCap.StartEnergyCap * ModelScalingFactor
 		dfCap.RetEnergyCap = dfCap.RetEnergyCap * ModelScalingFactor
 		dfCap.RetroEnergyCap = dfCap.RetroEnergyCap * ModelScalingFactor
