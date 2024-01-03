@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -35,6 +19,7 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
 
 	### Constraints ###
+
 	# Storage discharge and charge power (and reserve contribution) related constraints for symmetric storage resources:
 	if Reserves == 1
 		storage_asymmetric_reserves!(EP, inputs, setup)
@@ -61,35 +46,17 @@ function storage_asymmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
 	CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
 
 	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
-	RETRO_CREAT = inputs["RETRO"] # Set of all resources being created
-
-	hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
-	START_SUBPERIODS = inputs["START_SUBPERIODS"]
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-
-	STOR_ASYM_RETRO = intersect(STOR_ASYMMETRIC, RETRO_CREAT) # Set of asymmetric storage resources 
 	STOR_ASYM_REG = intersect(STOR_ASYMMETRIC, inputs["REG"]) # Set of asymmetric storage resources with REG reserves
 
     vCHARGE = EP[:vCHARGE]
     vREG_charge = EP[:vREG_charge]
     eTotalCapCharge = EP[:eTotalCapCharge]
 
-	if !isempty(STOR_ASYM_RETRO)
-		@constraints(EP, begin
-		# Storage units charging can charge faster to provide reserves down and charge slower to provide reserves up
-		# Maximum charging rate plus contribution to regulation down must be less than charge power rating
-		#[y in STOR_ASYM_RETRO, t in START_SUBPERIODS], EP[:vP][y,t]-EP[:vP][y,(t+hours_per_subperiod-1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
-
-		# Interior Hours
-		[y in STOR_ASYM_RETRO, t in INTERIOR_SUBPERIODS], EP[:vP][y,t]-EP[:vP][y,t-1] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
-
-		## Maximum ramp down between consecutive hours
-		# Start Hours: Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
-		#[y in STOR_ASYM_RETRO, t in START_SUBPERIODS], EP[:vP][y,(t+hours_per_subperiod-1)] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
-
-		# Interior Hours
-		[y in STOR_ASYM_RETRO, t in INTERIOR_SUBPERIODS], EP[:vP][y,t-1] - EP[:vP][y,t] <= dfGen[y,:Ramp_Dn_Percentage]*EP[:eTotalCap][y]
-		end)
-	end
-
+    expr = extract_time_series_to_expression(vCHARGE, STOR_ASYMMETRIC)
+    add_similar_to_expression!(expr[STOR_ASYM_REG, :], vREG_charge[STOR_ASYM_REG, :])
+    if CapacityReserveMargin
+        vCAPRES_charge = EP[:vCAPRES_charge]
+        add_similar_to_expression!(expr[STOR_ASYMMETRIC, :], vCAPRES_charge[STOR_ASYMMETRIC, :])
+    end
+    @constraint(EP, [y in STOR_ASYMMETRIC, t in 1:T], expr[y, t] <= eTotalCapCharge[y])
 end
