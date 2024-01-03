@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 function get_settings_path(case::AbstractString)
     return joinpath(case, "Settings")
 end
@@ -54,9 +38,10 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
 
     if mysetup["TimeDomainReduction"] == 1
+        prevent_doubled_timedomainreduction(case)
         if !time_domain_reduced_files_exist(TDRpath)
             println("Clustering Time Series Data (Grouped)...")
-            cluster_inputs(inputs_path, settings_path, mysetup)
+            cluster_inputs(case, settings_path, mysetup)
         else
             println("Time Series Data Already Clustered.")
         end
@@ -73,7 +58,9 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     myinputs = load_inputs(mysetup, case)
 
     println("Generating the Optimization Model")
-    EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    println("Time elapsed for model building is")
+    println(time_elapsed)
 
     println("Solving Model")
     EP, solve_time = solve_model(EP, mysetup)
@@ -92,7 +79,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     if mysetup["MethodofMorris"] == 1
         println("Starting Global sensitivity analysis with Method of Morris")
-        morris(EP, inputs_path, mysetup, myinputs, outputs_path, OPTIMIZER)
+        morris(EP, case, mysetup, myinputs, outputs_path, OPTIMIZER)
     end
 end
 
@@ -105,8 +92,11 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     ### Cluster time series inputs if necessary and if specified by the user
     tdr_settings = get_settings_path(case, "time_domain_reduction_settings.yml") # Multi stage settings YAML file path
     TDRSettingsDict = YAML.load(open(tdr_settings))
-    TDRpath = joinpath(case, "Inputs", "Inputs_p1", mysetup["TimeDomainReductionFolder"])
+
+    first_stage_path = joinpath(case, "Inputs", "Inputs_p1")
+    TDRpath = joinpath(first_stage_path, mysetup["TimeDomainReductionFolder"])
     if mysetup["TimeDomainReduction"] == 1
+        prevent_doubled_timedomainreduction(first_stage_path)
         if !time_domain_reduced_files_exist(TDRpath)
             if (mysetup["MultiStage"] == 1) && (TDRSettingsDict["MultiStageConcatenate"] == 0)
                 println("Clustering Time Series Data (Individually)...")
@@ -158,7 +148,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
 
     outpath = get_default_output_folder(case)
 
-    if !haskey(mysetup, "OverwriteResults") || mysetup["OverwriteResults"] == 1
+    if mysetup["OverwriteResults"] == 1
         # Overwrite existing results if dir exists
         # This is the default behaviour when there is no flag, to avoid breaking existing code
         if !(isdir(outpath))
