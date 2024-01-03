@@ -1,4 +1,0 @@
-MinCapReqConstraint,ConstraintDescription,Min_MW,PriceCap
-1,MA_PV,5000,9999
-2,CT_Wind,10000,9999
-3,All_Batteries,6000,9999
