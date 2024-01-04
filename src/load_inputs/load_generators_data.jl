@@ -223,14 +223,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	end
 
 	load_vre_stor_data!(inputs_gen, setup, path)
-
-	# Single-fuel resources
-	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
-	# Multi-fuel resources
-	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
-	if !isempty(inputs_gen["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
-		load_multi_fuels_data!(inputs_gen, setup, path)
-	end
 	
 	# write zeros if col names are not in the gen_in dataframe
 	required_cols_for_co2 = ["Biomass", "CO2_Capture_Fraction", "CO2_Capture_Fraction_Startup", "CCS_Disposal_Cost_per_Metric_Ton"]
@@ -249,6 +241,14 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 		process_piecewisefuelusage!(inputs_gen, scale_factor)
 	end
 
+	# Single-fuel resources
+	inputs_gen["SINGLE_FUEL"] = gen_in[gen_in.MULTI_FUELS.!=1,:R_ID]
+	# Multi-fuel resources
+	inputs_gen["MULTI_FUELS"] = gen_in[gen_in.MULTI_FUELS.==1,:R_ID]
+	if !isempty(inputs_gen["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
+		load_multi_fuels_data!(inputs_gen, setup, path)
+	end
+	
 	println(filename * " Successfully Read!")
 end
 
@@ -292,13 +292,8 @@ function load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractStr
 		end
 	end
 	# do not allow the multi-fuel option when piece-wise heat rates are used
-	if setup["UCommit"] > 0
-		process_piecewisefuelusage!(inputs_gen, scale_factor)
-		THERM_COMMIT_PWFU = inputs_gen["THERM_COMMIT_PWFU"]
-    	# segemnt for piecewise fuel usage
-    	if !isempty(THERM_COMMIT_PWFU)
-			error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
-    	end
+    if haskey(inputs_gen, "THERM_COMMIT_PWFU") && !isempty(inputs_gen["THERM_COMMIT_PWFU"])
+		error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
 	end
 end
 
