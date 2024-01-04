@@ -258,20 +258,16 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         THERM_COMMIT_PWFU = inputs["THERM_COMMIT_PWFU"]
         # segemnt for piecewise fuel usage
         if !isempty(THERM_COMMIT_PWFU)
-            if isempty(MULTI_FUELS)
-                segs = 1:inputs["PWFU_Num_Segments"]
-                PWFU_data = inputs["PWFU_data"]
-                slope_cols = inputs["slope_cols"]
-                intercept_cols = inputs["intercept_cols"]
-                segment_intercept(y, seg) = PWFU_data[y, intercept_cols[seg]]
-                segment_slope(y, seg) = PWFU_data[y, slope_cols[seg]]
-                # constraint for piecewise fuel consumption
-                @constraint(EP, PiecewiseFuelUsage[y in THERM_COMMIT_PWFU, t = 1:T, seg in segs],
-                EP[:vFuel][y, t] >= (EP[:vP][y, t] *  segment_slope(y, seg) + 
-                EP[:vCOMMIT][y, t] * segment_intercept(y, seg)))
-            else
-                error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
-            end
+            segs = 1:inputs["PWFU_Num_Segments"]
+            PWFU_data = inputs["PWFU_data"]
+            slope_cols = inputs["slope_cols"]
+            intercept_cols = inputs["intercept_cols"]
+            segment_intercept(y, seg) = PWFU_data[y, intercept_cols[seg]]
+            segment_slope(y, seg) = PWFU_data[y, slope_cols[seg]]
+            # constraint for piecewise fuel consumption
+            @constraint(EP, PiecewiseFuelUsage[y in THERM_COMMIT_PWFU, t = 1:T, seg in segs],
+            EP[:vFuel][y, t] >= (EP[:vP][y, t] *  segment_slope(y, seg) + 
+            EP[:vCOMMIT][y, t] * segment_intercept(y, seg)))
         end
         
         # constraint for fuel consumption at a constant heat rate 

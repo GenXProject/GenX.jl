@@ -262,12 +262,12 @@ function load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractStr
 
 	inputs_gen["NUM_FUELS"] = gen_in[!,:Num_Fuels]   # Number of fuels that this resource can use
 	max_fuels = maximum(inputs_gen["NUM_FUELS"])
-	fuel_cols = [ Symbol(string("Fuel",i)) for i in 1:max_fuels ]
-	heat_rate_cols = [ Symbol(string("Heat_Rate",i, "_MMBTU_per_MWh")) for i in 1:max_fuels ]
-	max_cofire_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level")) for i in 1:max_fuels ]
-	min_cofire_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level")) for i in 1:max_fuels ]
-	max_cofire_start_cols = [ Symbol(string("Fuel",i, "_Max_Cofire_Level_Start")) for i in 1:max_fuels ]
-	min_cofire_start_cols = [ Symbol(string("Fuel",i, "_Min_Cofire_Level_Start")) for i in 1:max_fuels ]
+	fuel_cols = [ Symbol(string("Fuel",f)) for f in 1:max_fuels ]
+	heat_rate_cols = [ Symbol(string("Heat_Rate",f, "_MMBTU_per_MWh")) for f in 1:max_fuels ]
+	max_cofire_cols = [ Symbol(string("Fuel",f, "_Max_Cofire_Level")) for f in 1:max_fuels ]
+	min_cofire_cols = [ Symbol(string("Fuel",f, "_Min_Cofire_Level")) for f in 1:max_fuels ]
+	max_cofire_start_cols = [ Symbol(string("Fuel",f, "_Max_Cofire_Level_Start")) for f in 1:max_fuels ]
+	min_cofire_start_cols = [ Symbol(string("Fuel",f, "_Min_Cofire_Level_Start")) for f in 1:max_fuels ]
 	fuel_types = [ gen_in[!,f] for f in fuel_cols ]
 	heat_rates = [ gen_in[!,f] for f in heat_rate_cols ]
 	max_cofire = [ gen_in[!,f] for f in max_cofire_cols ]
@@ -284,13 +284,19 @@ function load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractStr
 	inputs_gen["MAX_NUM_FUELS"] = max_fuels
 
 	# check whether non-zero heat rates are used for resources that only use a single fuel
-	for i in 1:max_fuels
-		for hr in heat_rates[i][inputs_gen["SINGLE_FUEL"]]
+	for f in 1:max_fuels
+		for hr in heat_rates[f][inputs_gen["SINGLE_FUEL"]]
 			if  hr > 0 
 				error("Heat rates for multi fuels must be zero when only one fuel is used")
 			end
 		end
 	end
+	# do not allow the multi-fuel option when piece-wise heat rates are used
+	THERM_COMMIT_PWFU = inputs_gen["THERM_COMMIT_PWFU"]
+    # segemnt for piecewise fuel usage
+    if !isempty(THERM_COMMIT_PWFU)
+		error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
+    end
 end
 
 @doc raw"""
