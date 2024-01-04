@@ -294,12 +294,12 @@ function load_multi_fuels_data!(inputs_gen::Dict, setup::Dict, path::AbstractStr
 	# do not allow the multi-fuel option when piece-wise heat rates are used
 	if setup["UCommit"] > 0
 		process_piecewisefuelusage!(inputs_gen, scale_factor)
+		THERM_COMMIT_PWFU = inputs_gen["THERM_COMMIT_PWFU"]
+    	# segemnt for piecewise fuel usage
+    	if !isempty(THERM_COMMIT_PWFU)
+			error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
+    	end
 	end
-	THERM_COMMIT_PWFU = inputs_gen["THERM_COMMIT_PWFU"]
-    # segemnt for piecewise fuel usage
-    if !isempty(THERM_COMMIT_PWFU)
-		error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
-    end
 end
 
 @doc raw"""
