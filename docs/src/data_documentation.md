@@ -188,7 +188,7 @@ This input file contains input parameters related to: 1) definition of model zon
 |**Settings-specific Columns**|
 |**Multiple zone model**||
 |Network\_Lines | Numerical index for each network line. The length of this column is counted but the actual values are not used.|
-| z* (Network map) **OR** Origin_Zone, Destination_Zone | See below |
+| z* (Network map) **OR** Start_Zone, End_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
@@ -211,17 +211,17 @@ This input file contains input parameters related to: 1) definition of model zon
 There are two interfaces implemented for specifying the network topology itself: a matrix interface and a list interface.
 Only one choice is permitted in a given file.
 
-The list interface consists of a column for the lines origin zone and one for the line's destination zone.
+The list interface consists of a column for the lines start zone and one for the line's end zone.
 Here is a snippet of the Network.csv file for a map with three zones and two lines:
 ```
-Network_Lines, Origin_Zone, Destination_Zone,
-            1,           1,                2,
-            2,           1,                3,
+Network_Lines, Start_Zone, End_Zone,
+            1,          1,        2,
+            2,          1,        3,
 ```
 
 The matrix interface requires N columns labeled `z1, z2, z3 ... zN`,
-and L rows, one for each network line (or interregional path), with a `1` in the column corresponding to the 'origin' zone 
-and a `-1` in the column corresponding to the 'destination' zone for each line.
+and L rows, one for each network line (or interregional path), with a `1` in the column corresponding to the 'start' zone 
+and a `-1` in the column corresponding to the 'end' zone for each line.
 Here is the same network map implemented as a matrix:
 ```
 Network_Lines, z1, z2, z3,
@@ -229,8 +229,8 @@ Network_Lines, z1, z2, z3,
             2,  1,  0, -1,
 ```
 
-Note that in either case, positive flows indicate flow from origin to destination zone;
-negative flows indicate flow from destination to origin zone.
+Note that in either case, positive flows indicate flow from start to end zone;
+negative flows indicate flow from end to start zone.
 
 
 #### 2.1.3 Demand\_data.csv (Load\_data.csv)

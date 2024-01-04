@@ -46,7 +46,7 @@ function validate_settings!(settings::Dict{Any,Any})
         @warn """The behavior of the TimeDomainReduction and OperationWrapping
         settings have changed recently. OperationWrapping has been removed,
         and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
-        Please see the Methods page in the documentation."""
+        Please see the Methods page in the documentation.""" maxlog=1
     end
 
 end
