@@ -1,0 +1,14 @@
+# Clp Solver parameters https://github.com/jump-dev/Clp.jl
+# Common solver settings
+Feasib_Tol: 1e-7              # Primal/Dual feasibility tolerance
+TimeLimit: -1.0               # Terminate after this many seconds have passed. A negative value means no time limit
+Pre_Solve: 0                  # Set to 1 to disable presolve
+Method: 5                     # Solution method: dual simplex (0), primal simplex (1), sprint (2), barrier with crossover (3), barrier without crossover (4), automatic (5)
+
+#Clp-specific solver settings
+DualObjectiveLimit: 1e308     # When using dual simplex (where the objective is monotonically changing), terminate when the objective exceeds this limit
+MaximumIterations: 2147483647 # Terminate after performing this number of simplex iterations
+LogLevel: 1                   # Set to 1, 2, 3, or 4 for increasing output. Set to 0 to disable output
+InfeasibleReturn: 0           # Set to 1 to return as soon as the problem is found to be infeasible (by default, an infeasibility proof is computed as well)
+Scaling: 3                    # 0 -off, 1 equilibrium, 2 geometric, 3 auto, 4 dynamic(later)
+Perturbation: 100             # switch on perturbation (50), automatic (100), don't try perturbing (102)
