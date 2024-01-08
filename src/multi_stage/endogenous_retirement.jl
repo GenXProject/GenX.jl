@@ -124,8 +124,6 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	
 	dfGen = inputs["dfGen"]
 
-	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
-
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
@@ -181,8 +179,6 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 
 	dfGen = inputs["dfGen"]
 
-	STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
-
 	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
 	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
 
@@ -231,7 +227,6 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 
 	dfGen = inputs["dfGen"]
 
-	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
 	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
 
