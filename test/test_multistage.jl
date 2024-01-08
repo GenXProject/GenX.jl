@@ -94,7 +94,7 @@ function test_can_retire(EP::Dict,inputs::Dict)
     return a
 end
 
-test_path_new_build = joinpath(@__DIR__,"MultiStage\\New_Build");
+test_path_new_build = joinpath(@__DIR__,"MultiStage","New_Build");
 EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path_new_build, genx_setup);
 end
@@ -102,7 +102,7 @@ end
 new_build_test_result = @test test_new_build(EP,inputs)
 write_testlog(test_path_new_build,"Testing that the resource with New_Build = 0 did not expand capacity",new_build_test_result)
 
-test_path_can_retire = joinpath(@__DIR__,"MultiStage\\Can_Retire");
+test_path_can_retire = joinpath(@__DIR__,"MultiStage","Can_Retire");
 EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path_can_retire, genx_setup);
 end
