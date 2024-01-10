@@ -9,11 +9,7 @@ include("utilities.jl")
     include("simple_op_test.jl")
 end
 
-@testset "Resource validation" begin
-    include("resource_test.jl")
-end
-
-@testset "Expression manipulation" begin
+@testset "Expr manipulation" begin
     include("expression_manipulation_test.jl")
 end
 
@@ -27,15 +23,15 @@ end
         include("test_threezones.jl")
     end
 
-    @testset "Time domain reduction" begin
+    @testset "TDR" begin
         include("test_time_domain_reduction.jl")
     end
 
-    @testset "PiecewiseFuel CO2" begin
+    @testset "Piecewise Fuel" begin
         include("test_piecewisefuel_CO2.jl")
     end
 
-    @testset "VRE and storage" begin
+    @testset "VRE_STOR" begin
         include("test_VREStor.jl")
     end
 

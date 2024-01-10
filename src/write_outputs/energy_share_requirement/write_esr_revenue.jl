@@ -14,9 +14,11 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	G = inputs["G"]
 	nESR = inputs["nESR"]
 	weight = inputs["omega"]
-	VRE_STOR = inputs["VRE_STOR"]
-	dfVRE_STOR = inputs["dfVRE_STOR"]
+    # Load VRE-storage inputs
+	VRE_STOR = inputs["VRE_STOR"] 	                                # Set of VRE-STOR generators (indices)
+	
 	if !isempty(VRE_STOR)
+		gen_VRE_STOR = gen[VRE_STOR]                                    # Set of VRE-STOR generators (objects)
 		SOLAR = inputs["VS_SOLAR"]
 		WIND = inputs["VS_WIND"]
 		SOLAR_ONLY = setdiff(SOLAR, WIND)
@@ -24,7 +26,6 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		SOLAR_WIND = intersect(SOLAR, WIND)
 	end
 
-	by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
 	for i in 1:nESR
 		esr_col = Symbol("ESR_$i")
 		price = dfESR[i, :ESR_Price]
@@ -33,32 +34,31 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 		dfESRRev[!, esr_col] =  revenue
 
 		if !isempty(VRE_STOR)
-			esr_vrestor_col = Symbol("ESRVreStor_$i")
 			if !isempty(SOLAR_ONLY)
-				solar_resources = ((dfVRE_STOR.WIND.==0) .& (dfVRE_STOR.SOLAR.!=0))
+				solar_resources = ((gen_VRE_STOR.wind.==0) .& (gen_VRE_STOR.solar.!=0))
 				dfESRRev[SOLAR, esr_col] = (
 					value.(EP[:vP_SOLAR][SOLAR, :]).data
-					.* dfVRE_STOR[solar_resources, :EtaInverter] * weight
-				) .* dfVRE_STOR[solar_resources,esr_vrestor_col] * price
+					.* etainverter.(gen_VRE_STOR[solar_resources]) * weight
+				) .* esr_vrestor.(gen_VRE_STOR[solar_resources], tag=i) * price
 			end
 			if !isempty(WIND_ONLY)
-				wind_resources = ((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.==0))
+				wind_resources = ((gen_VRE_STOR.wind.!=0) .& (gen_VRE_STOR.solar.==0))
 				dfESRRev[WIND, esr_col] = (
 					value.(EP[:vP_WIND][WIND, :]).data
 					* weight
-				) .* dfVRE_STOR[wind_resources,esr_vrestor_col] * price
+				) .* esr_vrestor.(gen_VRE_STOR[wind_resources], tag=i) * price
 			end
 			if !isempty(SOLAR_WIND)
-				solar_and_wind_resources = ((dfVRE_STOR.WIND.!=0) .& (dfVRE_STOR.SOLAR.!=0))
+				solar_and_wind_resources = ((gen_VRE_STOR.wind.!=0) .& (gen_VRE_STOR.solar.!=0))
 				dfESRRev[SOLAR_WIND, esr_col] = (
 					(
 						(value.(EP[:vP_WIND][SOLAR_WIND, :]).data * weight)
-						.* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * price
+						.* esr_vrestor.(gen_VRE_STOR[solar_and_wind_resources], tag=i) * price
 					) + (
 						value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data
-						.* dfVRE_STOR[solar_and_wind_resources, :EtaInverter]
+						.* etainverter.(gen_VRE_STOR[solar_and_wind_resources])
 						* weight
-					) .* dfVRE_STOR[solar_and_wind_resources,esr_vrestor_col] * price
+					) .* esr_vrestor.(gen_VRE_STOR[solar_and_wind_resources], tag=i) * price
 				)
 			end
 		end

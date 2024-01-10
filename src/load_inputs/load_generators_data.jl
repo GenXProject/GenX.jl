@@ -242,51 +242,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	println(filename * " Successfully Read!")
 end
 
-
-@doc raw"""
-	check_vre_stor_validity(df::DataFrame, setup::Dict)
-
-Function for checking that no other technology flags have been activated and specific data inputs
-	have been zeroed for the co-located VRE-STOR module
-"""
-function check_vre_stor_validity(setup::Dict, gen::Vector{AbstractResource})
-	# Determine if any VRE-STOR resources exist
-	vre_stor_exist = !isempty(GenX.vre_stor(gen))
-	r_id = resource_id(gen)
-
-	error_strings = String[]
-
-	function error_feedback(data::Vector{Int}, col::Symbol)::String
-		string("Generators ", data, ", marked as VRE-STOR, have ", col, " ≠ 0. ", col, " must be 0.")
-	end
-
-	function check_any_nonzero_with_vre_stor!(error_strings::Vector{String}, gen::Vector{AbstractResource}, col::Symbol)
-		check = vre_stor_exist .& is_nonzero(gen, col)
-		if any(check)
-			e = error_feedback(r_id[check], col)
-			push!(error_strings, e)
-		end
-	end
-
-	# TODO: check it when VRE_STOR is ready
-	# Confirm that any other flags/inputs are not activated (all other flags should be activated in the vre_stor_data.csv)
-	# check_any_nonzero_with_vre_stor!(error_strings, res, :var_om_cost_per_mwh_in)
-	# if setup["EnergyShareRequirement"]==1
-	# 	nESR = count(occursin.("ESR_", names(df)))
-	# 	for i in 1:nESR
-	# 		check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("ESR_",i)))
-	# 	end
-	# end
-	# if setup["CapacityReserveMargin"]==1
-	# 	nCapRes = count(occursin.("CapRes_", names(df)))
-	# 	for i in 1:nCapRes
-	# 		check_any_nonzero_with_vre_stor!(error_strings, df, Symbol(string("CapRes_",i)))
-	# 	end
-	# end
-
-	return error_strings
-end
-
 @doc raw"""
 	summarize_errors(error_strings::Vector{String})
 
@@ -302,68 +257,6 @@ function summarize_errors(error_strings::Vector{String})
 	end
 end
 
-@doc raw"""
-    split_storage_resources!(df::DataFrame, inputs::Dict, setup::Dict)
-
-For co-located VRE-storage resources, this function returns the storage type 
-	(1. long-duration or short-duration storage, 2. symmetric or asymmetric storage)
-    for charging and discharging capacities
-"""
-function split_storage_resources!(df::DataFrame, inputs::Dict, setup::Dict)
-
-	# All Storage Resources
-	inputs["VS_STOR"] = union(df[df.STOR_DC_CHARGE.>=1,:R_ID], df[df.STOR_AC_CHARGE.>=1,:R_ID], 
-		df[df.STOR_DC_DISCHARGE.>=1,:R_ID], df[df.STOR_AC_DISCHARGE.>=1,:R_ID])
-	STOR = inputs["VS_STOR"]
-
-	# Storage DC Discharge Resources
-	inputs["VS_STOR_DC_DISCHARGE"] = df[(df.STOR_DC_DISCHARGE.>=1),:R_ID]
-	inputs["VS_SYM_DC_DISCHARGE"] = df[df.STOR_DC_DISCHARGE.==1,:R_ID]
-	inputs["VS_ASYM_DC_DISCHARGE"] = df[df.STOR_DC_DISCHARGE.==2,:R_ID]
-
-	# Storage DC Charge Resources
-	inputs["VS_STOR_DC_CHARGE"] = df[(df.STOR_DC_CHARGE.>=1),:R_ID]
-	inputs["VS_SYM_DC_CHARGE"] = df[df.STOR_DC_CHARGE.==1,:R_ID]
-    inputs["VS_ASYM_DC_CHARGE"] = df[df.STOR_DC_CHARGE.==2,:R_ID]
-
-	# Storage AC Discharge Resources
-	inputs["VS_STOR_AC_DISCHARGE"] = df[(df.STOR_AC_DISCHARGE.>=1),:R_ID]
-	inputs["VS_SYM_AC_DISCHARGE"] = df[df.STOR_AC_DISCHARGE.==1,:R_ID]
-	inputs["VS_ASYM_AC_DISCHARGE"] = df[df.STOR_AC_DISCHARGE.==2,:R_ID]
-
-	# Storage AC Charge Resources
-	inputs["VS_STOR_AC_CHARGE"] = df[(df.STOR_AC_CHARGE.>=1),:R_ID]
-	inputs["VS_SYM_AC_CHARGE"] = df[df.STOR_AC_CHARGE.==1,:R_ID]
-	inputs["VS_ASYM_AC_CHARGE"] = df[df.STOR_AC_CHARGE.==2,:R_ID]
-
-	# Storage LDS & Non-LDS Resources
-	inputs["VS_LDS"] = df[(df.LDS_VRE_STOR.!=0),:R_ID]
-	inputs["VS_nonLDS"] = setdiff(STOR, inputs["VS_LDS"])
-
-    # Symmetric and asymmetric storage resources
-	inputs["VS_ASYM"] = union(inputs["VS_ASYM_DC_CHARGE"], inputs["VS_ASYM_DC_DISCHARGE"], 
-		inputs["VS_ASYM_AC_DISCHARGE"], inputs["VS_ASYM_AC_CHARGE"])
-	inputs["VS_SYM_DC"] = intersect(inputs["VS_SYM_DC_CHARGE"], inputs["VS_SYM_DC_DISCHARGE"])
-    inputs["VS_SYM_AC"] = intersect(inputs["VS_SYM_AC_CHARGE"], inputs["VS_SYM_AC_DISCHARGE"])
-
-    # Send warnings for symmetric/asymmetric resources
-    if (!isempty(setdiff(inputs["VS_SYM_DC_DISCHARGE"], inputs["VS_SYM_DC_CHARGE"])) 
-		|| !isempty(setdiff(inputs["VS_SYM_DC_CHARGE"], inputs["VS_SYM_DC_DISCHARGE"])) 
-		|| !isempty(setdiff(inputs["VS_SYM_AC_DISCHARGE"], inputs["VS_SYM_AC_CHARGE"])) 
-		|| !isempty(setdiff(inputs["VS_SYM_AC_CHARGE"], inputs["VS_SYM_AC_DISCHARGE"])))
-        @warn("Symmetric capacities must both be DC or AC.")
-    end
-
-	# Send warnings for battery resources discharging
-	if !isempty(intersect(inputs["VS_STOR_DC_DISCHARGE"], inputs["VS_STOR_AC_DISCHARGE"]))
-		@warn("Both AC and DC discharging functionalities are turned on.")
-	end
-
-	# Send warnings for battery resources charging
-	if !isempty(intersect(inputs["VS_STOR_DC_CHARGE"], inputs["VS_STOR_AC_CHARGE"]))
-		@warn("Both AC and DC charging functionalities are turned on.")
-	end
-end
 
 @doc raw"""
 	load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)

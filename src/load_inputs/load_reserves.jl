@@ -52,7 +52,7 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
 		if inputs["pDynamic_Contingency"] > 0
 			inputs["pContingency_BigM"] = zeros(Float64, inputs["G"])
 			for y in inputs["COMMIT"]
-				inputs["pContingency_BigM"][y] = max_capacity_mw(gen[y])
+				inputs["pContingency_BigM"][y] = max_cap_mw(gen[y])
 				# When Max_Cap_MW == -1, there is no limit on capacity size
 				if inputs["pContingency_BigM"][y] < 0
 					# NOTE: this effectively acts as a maximum cluster size when not otherwise specified, adjust accordingly

@@ -34,7 +34,6 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		AC_DISCHARGE_EX = intersect(inputs["VS_STOR_AC_DISCHARGE"], VRE_STOR_EX)
 		DC_CHARGE_EX = intersect(DC_CHARGE, VRE_STOR_EX)
 		AC_CHARGE_EX = intersect(inputs["VS_STOR_AC_CHARGE"], VRE_STOR_EX)
-		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
 
     crm_derate(i, y::Vector{Int}) = derated_capacity(gen[y], tag=i)'
@@ -72,12 +71,12 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		end
 		if !isempty(VRE_STOR_EX)
             capres_dc_discharge = value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, riskyhour].data)'
-            discharge_eff = dfVRE_STOR[dfVRE_STOR.STOR_DC_DISCHARGE .!= 0, :EtaInverter]'
+            discharge_eff = etainverter.(gen[storage_dc_discharge(gen)])'
             capvalue_dc_discharge = zeros(T, G)
             capvalue_dc_discharge[riskyhour, DC_DISCHARGE] = capres_dc_discharge .* discharge_eff
 
             capres_dc_charge = value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, riskyhour].data)'
-            charge_eff = dfVRE_STOR[dfVRE_STOR.STOR_DC_CHARGE .!= 0, :EtaInverter]'
+            charge_eff = etainverter.(gen[storage_dc_charge(gen)])'
             capvalue_dc_charge = zeros(T, G)
             capvalue_dc_charge[riskyhour, DC_CHARGE] = capres_dc_charge ./ charge_eff
 

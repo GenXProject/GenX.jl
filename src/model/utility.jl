@@ -81,9 +81,10 @@ function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
 	return df[df.R_ID .== rid, sym][]
 end
 
-function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{AbstractResource})
+function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
     r = rs[findfirst(resource_id.(rs) .== rid)]
-    return getproperty(r,sym)
+    f = getfield(GenX, sym)   # get interface to field sym
+    return f(r)
 end
 
 @doc raw"""

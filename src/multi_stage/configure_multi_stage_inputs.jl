@@ -96,27 +96,28 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 
 		# Conduct 1. and 2. for any co-located VRE-STOR resources
 		if !isempty(inputs_d["VRE_STOR"])
-			dfVRE_STOR = inputs_d["dfVRE_STOR"]
-			dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_DC],dfVRE_STOR[!,:WACC_DC])
-			dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Solar],dfVRE_STOR[!,:WACC_Solar])
-			dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Wind],dfVRE_STOR[!,:WACC_Wind])
-			dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_DC],dfVRE_STOR[!,:WACC_Discharge_DC])
-			dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_DC],dfVRE_STOR[!,:WACC_Charge_DC])
-			dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_AC],dfVRE_STOR[!,:WACC_Discharge_AC])
-			dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_AC],dfVRE_STOR[!,:WACC_Charge_AC])
+			gen_VRE_STOR = gen.VRE_STOR
+			gen_VRE_STOR.inv_cost_inverter_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_inverter_per_mwyr.(gen_VRE_STOR), capital_recovery_period_dc.(gen_VRE_STOR), tech_wacc_dc.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_solar_per_mwyr = compute_overnight_capital_cost(settings_d,	inv_cost_solar_per_mwyr.(gen_VRE_STOR), capital_recovery_period_solar.(gen_VRE_STOR), tech_wacc_solar.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_wind_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_wind_per_mwyr.(gen_VRE_STOR), capital_recovery_period_wind.(gen_VRE_STOR), tech_wacc_wind.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_discharge_dc_per_mwyr.(gen_VRE_STOR), capital_recovery_period_discharge_dc.(gen_VRE_STOR), tech_wacc_discharge_dc.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_charge_dc_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_dc_per_mwyr.(gen_VRE_STOR), capital_recovery_period_charge_dc.(gen_VRE_STOR), tech_wacc_charge_dc.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_discharge_ac_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_discharge_ac_per_mwyr.(gen_VRE_STOR), capital_recovery_period_discharge_ac.(gen_VRE_STOR), tech_wacc_discharge_ac.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_charge_ac_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_ac_per_mwyr.(gen_VRE_STOR), capital_recovery_period_charge_ac.(gen_VRE_STOR), tech_wacc_charge_ac.(gen_VRE_STOR))
 
-			dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_DC_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Charge_DC_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_AC_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Charge_AC_per_MWyr] .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_inverter_cost_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_solar_cost_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_wind_cost_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_discharge_dc_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_charge_dc_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_discharge_ac_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_charge_ac_per_mwyr .*= OPEXMULT
 		end
 	end
 
     retirable = is_retirable(gen)
 
+	# TODO: ask Sam about this
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = retirable
 	# Set of all storage resources eligible for energy capacity retirements

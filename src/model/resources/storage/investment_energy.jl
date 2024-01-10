@@ -72,7 +72,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCapEnergy[y in STOR_ALL], vEXISTINGCAPENERGY[y])
 	else
-		@expression(EP, eExistingCapEnergy[y in STOR_ALL], existing_capacity_mwh(gen[y]))
+		@expression(EP, eExistingCapEnergy[y in STOR_ALL], existing_cap_mwh(gen[y]))
 	end
 
 	@expression(EP, eTotalCapEnergy[y in STOR_ALL],
@@ -115,7 +115,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	### Constraints ###
 
 	if MultiStage == 1
-		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == existing_capacity_mwh(gen[y]))
+		@constraint(EP, cExistingCapEnergy[y in STOR_ALL], EP[:vEXISTINGCAPENERGY][y] == existing_cap_mwh(gen[y]))
 	end
 	
 	## Constraints on retirements and capacity additions
@@ -125,11 +125,11 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapEnergy[y in intersect(has_positive_max_capacity_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] <= max_capacity_mwh(gen[y]))
+	@constraint(EP, cMaxCapEnergy[y in intersect(has_positive_max_cap_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] <= max_cap_mwh(gen[y]))
 
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapEnergy[y in intersect(has_positive_min_capacity_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] >= min_capacity_mwh(gen[y]))
+	@constraint(EP, cMinCapEnergy[y in intersect(has_positive_min_cap_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] >= min_cap_mwh(gen[y]))
 
 	# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
 	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= min_duration(gen[y]) * EP[:eTotalCap][y])

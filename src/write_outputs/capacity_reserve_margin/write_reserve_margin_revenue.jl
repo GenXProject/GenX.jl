@@ -26,14 +26,12 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 	FLEX = inputs["FLEX"]
 	MUST_RUN = inputs["MUST_RUN"]
 	VRE_STOR = inputs["VRE_STOR"]
-	dfVRE_STOR = inputs["dfVRE_STOR"]
 	if !isempty(VRE_STOR)
 		VRE_STOR_STOR = inputs["VS_STOR"]
 		DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
 		AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]
 		DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
 		AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
-		dfVRE_STOR = inputs["dfVRE_STOR"]
 	end
 	dfResRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters)
 	annual_sum = zeros(G)
@@ -51,13 +49,13 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 			tempresrev[FLEX] = derated_capacity.(gen.FLEX, tag=i) .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * weighted_price)
 		end
 		if !isempty(VRE_STOR)
-			sym_vs = Symbol("CapResVreStor_$i")
-			tempresrev[VRE_STOR] = dfVRE_STOR[!, sym_vs] .* ((value.(EP[:vP][VRE_STOR, :])) * weighted_price)
-			tempresrev[VRE_STOR_STOR] .-= dfVRE_STOR[((dfVRE_STOR.STOR_DC_DISCHARGE.!=0) .| (dfVRE_STOR.STOR_DC_CHARGE.!=0) .| (dfVRE_STOR.STOR_AC_DISCHARGE.!=0) .|(dfVRE_STOR.STOR_AC_CHARGE.!=0)), sym_vs] .* (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR, :]).data * weighted_price)
-			tempresrev[DC_DISCHARGE] .+= dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :]).data .* dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0), :EtaInverter]) * weighted_price)
-			tempresrev[AC_DISCHARGE] .+= dfVRE_STOR[(dfVRE_STOR.STOR_AC_DISCHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE, :]).data) * weighted_price)
-			tempresrev[DC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./ dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), :EtaInverter]) * weighted_price)
-			tempresrev[AC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_AC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * weighted_price)
+			gen_VRE_STOR = gen.VRE_STOR
+			tempresrev[VRE_STOR] = derated_capacity.(gen_VRE_STOR, tag=i) .* ((value.(EP[:vP][VRE_STOR, :])) * weighted_price)
+			tempresrev[VRE_STOR_STOR] .-= derated_capacity.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0) .| (gen_VRE_STOR.stor_dc_charge.!=0) .| (gen_VRE_STOR.stor_ac_discharge.!=0) .|(gen_VRE_STOR.stor_ac_charge.!=0)], tag=i) .* (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR, :]).data * weighted_price)
+			tempresrev[DC_DISCHARGE] .+= derated_capacity.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)], tag=i) .* ((value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)])) * weighted_price)
+			tempresrev[AC_DISCHARGE] .+= derated_capacity.(gen_VRE_STOR[(gen_VRE_STOR.stor_ac_discharge.!=0)], tag=i) .* ((value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE, :]).data) * weighted_price)
+			tempresrev[DC_CHARGE] .-= derated_capacity.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge.!=0)], tag=i) .* ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./ etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge.!=0)])) * weighted_price)
+			tempresrev[AC_CHARGE] .-= derated_capacity.(gen_VRE_STOR[(gen_VRE_STOR.stor_ac_charge.!=0)], tag=i) .* ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * weighted_price)
 		end
 		tempresrev *= scale_factor
 		annual_sum .+= tempresrev

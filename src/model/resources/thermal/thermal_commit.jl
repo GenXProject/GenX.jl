@@ -313,14 +313,14 @@ function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup:
     ensure_maintenance_variable_records!(inputs)
     gen = inputs["RESOURCES"]
 	
-    by_rid(rid, sym) = by_rid_df(rid, sym, gen)
+    by_rid(rid, sym) = by_rid_res(rid, sym, gen)
 
     MAINT = resources_with_maintenance(gen)
-    resource_component(y) = by_rid(y, :Resource)
+    resource_component(y) = by_rid(y, :resource_name)
     cap(y) = by_rid(y, :Cap_Size)
-    maint_dur(y) = Int(floor(by_rid(y, :Maintenance_Duration)))
-    maint_freq(y) = Int(floor(by_rid(y, :Maintenance_Cycle_Length_Years)))
-    maint_begin_cadence(y) = Int(floor(by_rid(y, :Maintenance_Begin_Cadence)))
+    maint_dur(y) = Int(floor(by_rid(y, :maintenance_duration)))
+    maint_freq(y) = Int(floor(by_rid(y, :maintenance_cycle_length_years)))
+    maint_begin_cadence(y) = Int(floor(by_rid(y, :maintenance_begin_cadence)))
 
     integer_operational_unit_committment = setup["UCommit"] == 1
 

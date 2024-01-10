@@ -21,8 +21,8 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	VRE_STOR = inputs["VRE_STOR"]
-	dfVRE_STOR = inputs["dfVRE_STOR"]
 	if !isempty(VRE_STOR)
+		gen_VRE_STOR = gen.VRE_STOR
 		VRE_STOR_LENGTH = size(inputs["VRE_STOR"])[1]
 		SOLAR = inputs["VS_SOLAR"]
 		WIND = inputs["VS_WIND"]
@@ -44,13 +44,13 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if !isempty(VRE_STOR)
 		# Doesn't include charge capacities
 		if !isempty(SOLAR)
-			dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapSolar]
+			dfNetRevenue.Inv_cost_MW[VRE_STOR] += inv_cost_solar_per_mwyr.(gen_VRE_STOR) .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapSolar]
 		end
 		if !isempty(DC)
-			dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapDC]
-		end
+			dfNetRevenue.Inv_cost_MW[VRE_STOR] += inv_cost_inverter_per_mwyr.(gen_VRE_STOR) .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapDC]
+		end	
 		if !isempty(WIND)
-			dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapWind]
+			dfNetRevenue.Inv_cost_MW[VRE_STOR] += inv_cost_wind_per_mwyr.(gen_VRE_STOR) .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapWind]
 		end
 	end
 	if setup["ParameterScale"] == 1
@@ -67,21 +67,21 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
  	dfNetRevenue.Var_OM_cost_out = var_om_cost_per_mwh.(gen) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
 		if !isempty(SOLAR)
-			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapSolar]
-			dfNetRevenue.Var_OM_cost_out[SOLAR] += dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0),:Var_OM_Cost_per_MWh_Solar] .* (value.(EP[:vP_SOLAR][SOLAR, :]).data .* dfVRE_STOR[(dfVRE_STOR.SOLAR.!=0),:EtaInverter] * inputs["omega"])
+			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += fixed_om_solar_cost_per_mwyr.(gen_VRE_STOR) .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapSolar]
+			dfNetRevenue.Var_OM_cost_out[SOLAR] += var_om_cost_per_mwh_solar.(gen_VRE_STOR[(gen_VRE_STOR.solar.!=0)]) .* (value.(EP[:vP_SOLAR][SOLAR, :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.solar.!=0)]) * inputs["omega"])
 		end
 		if !isempty(WIND)
-			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapWind]
-			dfNetRevenue.Var_OM_cost_out[WIND] += dfVRE_STOR[(dfVRE_STOR.WIND.!=0),:Var_OM_Cost_per_MWh_Wind] .* (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"])
-		end
+			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += fixed_om_wind_cost_per_mwyr.(gen_VRE_STOR) .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapWind]
+			dfNetRevenue.Var_OM_cost_out[WIND] += var_om_cost_per_mwh_wind.(gen_VRE_STOR[(gen_VRE_STOR.wind.!=0)]) .* (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"])
+		end	
 		if !isempty(DC)
-			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapDC]
-		end
+			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += fixed_om_inverter_cost_per_mwyr.(gen_VRE_STOR) .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapDC]
+		end	
 		if !isempty(DC_DISCHARGE)
-			dfNetRevenue.Var_OM_cost_out[DC_DISCHARGE] += dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0),:Var_OM_Cost_per_MWh_Discharge_DC] .* (value.(EP[:vP_DC_DISCHARGE][DC_DISCHARGE, :]).data .* dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0),:EtaInverter] * inputs["omega"])
+			dfNetRevenue.Var_OM_cost_out[DC_DISCHARGE] += var_om_cost_per_mwh_discharge_dc.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)]) .* (value.(EP[:vP_DC_DISCHARGE][DC_DISCHARGE, :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)]) * inputs["omega"])
 		end
 		if !isempty(AC_DISCHARGE)
-			dfNetRevenue.Var_OM_cost_out[AC_DISCHARGE] += dfVRE_STOR[(dfVRE_STOR.STOR_AC_DISCHARGE.!=0),:Var_OM_Cost_per_MWh_Discharge_AC] .* (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE, :]).data * inputs["omega"])
+			dfNetRevenue.Var_OM_cost_out[AC_DISCHARGE] += var_om_cost_per_mwh_discharge_ac.(gen_VRE_STOR[(gen_VRE_STOR.stor_ac_discharge.!=0)]) .* (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE, :]).data * inputs["omega"])
 		end
 	end
 	if setup["ParameterScale"] == 1
@@ -104,10 +104,10 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
  	end
 	if !isempty(VRE_STOR)
 		if !isempty(DC_CHARGE)
-			dfNetRevenue.Var_OM_cost_in[DC_CHARGE] += dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0),:Var_OM_Cost_per_MWh_Charge_DC] .* (value.(EP[:vP_DC_CHARGE][DC_CHARGE, :]).data ./ dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0),:EtaInverter] * inputs["omega"])
+			dfNetRevenue.Var_OM_cost_in[DC_CHARGE] += var_om_cost_per_mwh_charge_dc.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge.!=0)]) .* (value.(EP[:vP_DC_CHARGE][DC_CHARGE, :]).data ./ etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge.!=0)]) * inputs["omega"])
 		end
 		if !isempty(AC_CHARGE)
-			dfNetRevenue.Var_OM_cost_in[AC_CHARGE] += dfVRE_STOR[(dfVRE_STOR.STOR_AC_CHARGE.!=0),:Var_OM_Cost_per_MWh_Charge_AC] .* (value.(EP[:vP_AC_CHARGE][AC_CHARGE, :]).data * inputs["omega"])
+			dfNetRevenue.Var_OM_cost_in[AC_CHARGE] += var_om_cost_per_mwh_charge_ac.(gen_VRE_STOR[(gen_VRE_STOR.stor_ac_charge.!=0)]) .* (value.(EP[:vP_AC_CHARGE][AC_CHARGE, :]).data * inputs["omega"])
 		end
 	end
 

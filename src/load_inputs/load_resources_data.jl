@@ -6,7 +6,8 @@ function _get_resource_info()
         storage = (filename="storage.csv", type=STOR),
         flex_demand  = (filename="flex_demand.csv", type=FLEX),
         must_run = (filename="must_run.csv", type=MUST_RUN),
-        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER)
+        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER),
+        vre_stor = (filename="vre_stor.csv", type=VRE_STOR)
     )
     return resources
 end
@@ -64,36 +65,79 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
                         :hydrogen_mwh_per_tonne       	# to GWh/t
                         ]
 
+    scale_columns!(resource_in, columns_to_scale, scale_factor)
+end
+
+function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
+    columns_to_scale = [:existing_cap_inverter_mw,
+                        :existing_cap_solar_mw,
+                        :existing_cap_wind_mw,
+                        :existing_cap_charge_dc_mw,
+                        :existing_cap_charge_ac_mw,
+                        :existing_cap_discharge_dc_mw,
+                        :existing_cap_discharge_ac_mw,
+                        :min_cap_inverter_mw,
+                        :max_cap_inverter_mw,
+                        :min_cap_solar_mw,
+                        :max_cap_solar_mw,
+                        :min_cap_wind_mw,
+                        :max_cap_wind_mw,
+                        :min_cap_charge_ac_mw,
+                        :max_cap_charge_ac_mw,
+                        :min_cap_charge_dc_mw,
+                        :max_cap_charge_dc_mw,
+                        :min_cap_discharge_ac_mw,
+                        :max_cap_discharge_ac_mw,
+                        :min_cap_discharge_dc_mw,
+                        :max_cap_discharge_dc_mw,
+                        :inv_cost_inverter_per_mwyr,
+                        :fixed_om_inverter_cost_per_mwyr,
+                        :inv_cost_solar_per_mwyr,
+                        :fixed_om_solar_cost_per_mwyr,
+                        :inv_cost_wind_per_mwyr,
+                        :fixed_om_wind_cost_per_mwyr,
+                        :inv_cost_discharge_dc_per_mwyr,
+                        :fixed_om_cost_discharge_dc_per_mwyr,
+                        :inv_cost_charge_dc_per_mwyr,
+                        :fixed_om_cost_charge_dc_per_mwyr,
+                        :inv_cost_discharge_ac_per_mwyr,
+                        :fixed_om_cost_discharge_ac_per_mwyr,
+                        :inv_cost_charge_ac_per_mwyr,
+                        :fixed_om_cost_charge_ac_per_mwyr,
+                        :var_om_cost_per_mwh_solar,
+                        :var_om_cost_per_mwh_wind,
+                        :var_om_cost_per_mwh_charge_dc,
+                        :var_om_cost_per_mwh_discharge_dc,
+                        :var_om_cost_per_mwh_charge_ac,
+                        :var_om_cost_per_mwh_discharge_ac,
+                        :min_retired_cap_inverter_mw,
+                        :min_retired_cap_solar_mw,
+                        :min_retired_cap_wind_mw,
+                        :min_retired_cap_charge_dc_mw,
+                        :min_retired_cap_charge_ac_mw,
+                        :min_retired_cap_discharge_dc_mw,
+                        :min_retired_cap_discharge_ac_mw]
+    scale_columns!(vre_stor_in, columns_to_scale, scale_factor)
+end
+
+function scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
     for column in columns_to_scale
-        if string(column) in names(resource_in)
-            resource_in[!, column] /= scale_factor
+        if string(column) in names(df)
+            df[!, column] /= scale_factor
         end
     end
     return nothing
 end
 
-# function required_columns_for_co2()
-#     return ("biomass", 
-#             "co2_capture_fraction", 
-#             "co2_capture_fraction_startup", 
-#             "ccs_disposal_cost_per_metric_ton")
-# end
-
-# function ensure_columns!(df::DataFrame)
-#     # write zeros if col names are not in the gen_in dataframe
-#     required_cols = [required_columns_for_co2()...,]
-#     for col in required_cols
-# 		ensure_column!(df, col, 0)
-# 	end
-# end
-
-function _get_resource_df(path::AbstractString, scale_factor::Float64)
+function _get_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
     # load dataframe with data of a given resource
     resource_in = load_dataframe(path)
     # rename columns lowercase
     rename!(resource_in, lowercase.(names(resource_in)))
     # scale data if necessary
     scale_resources_data!(resource_in, scale_factor)
+    # scale vre_stor data if necessary
+    resource_type == VRE_STOR && scale_vre_stor_data!(resource_in, scale_factor)
     # return dataframe
     return resource_in
 end
@@ -130,7 +174,7 @@ function _get_all_resources(resources_folder::AbstractString, resources_info::Na
         # if file exists, load resources
         if isfile(path)
             # load resources data of a given type
-            resource_in = _get_resource_df(path, scale_factor)
+            resource_in = _get_resource_df(path, scale_factor, resource_type)
             # get indices of resources for later use
             resources_indices = _get_resource_indices(resource_in, resource_id_offset)
             # add indices to dataframe
@@ -159,7 +203,7 @@ function load_scaled_resources_data(setup::Dict, case_path::AbstractString)
     resources_info = _get_resource_info()
     # load each resource type, scale data and return array of resources
     resources = _get_all_resources(resources_folder, resources_info, scale_factor)
-    # validate input before returning
+    # validate input before returning resources
     validate_resources(resources)
     return resources
 end
@@ -236,17 +280,17 @@ function validate_policy_dataframe!(filename::AbstractString, column_name::Abstr
     if n_cols == 2 && cols[2][end-2] != "_1"
         rename!(policy_in, Symbol.(cols[2]) => Symbol.(cols[2], "_1"))
     end
-    # get policy column names
-    cols = lowercase.(names(policy_in))
-    tag_names = cols[startswith.(cols, column_name)]
-    # Check that all policy columns are of the form policyname_tagnum
-    # - any: at least one column matches policyname_tagnum
-    # - all: all matches are found in the policy file
-    if !all(any(occursin.(string(column_name, "_$tag_num"), tag_names)) for tag_num in 1:length(tag_names))
-        column_names = [string(column_name, "_$tag_num") for tag_num in 1:length(tag_names)]
-        msg = "Policy file $filename must have columns named $column_names, case insensitive."
-        error(msg)
-    end
+    # # get policy column names
+    # cols = lowercase.(names(policy_in))
+    # tag_names = cols[startswith.(cols, column_name)]
+    # # Check that all policy columns are of the form policyname_tagnum
+    # # - any: at least one column matches policyname_tagnum
+    # # - all: all matches are found in the policy file
+    # if !all(any(occursin.(string(column_name, "_$tag_num"), tag_names)) for tag_num in 1:length(tag_names))
+    #     column_names = [string(column_name, "_$tag_num") for tag_num in 1:length(tag_names)]
+    #     msg = "Policy file $filename must have columns named $column_names, case insensitive."
+    #     error(msg)
+    # end
     return nothing
 end
 
@@ -265,143 +309,273 @@ function _add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in:
     return nothing
 end
 
-function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, input_data::Dict, gen::Vector{<:AbstractResource})
+@doc raw"""
+    split_storage_resources!(gen::Vector{<:AbstractResource}, inputs::Dict)
+
+For co-located VRE-storage resources, this function returns the storage type 
+	(1. long-duration or short-duration storage, 2. symmetric or asymmetric storage)
+    for charging and discharging capacities
+"""
+function split_storage_resources!(gen::Vector{<:AbstractResource}, inputs::Dict)
+
+	# All Storage Resources
+	inputs["VS_STOR"] = union(storage_dc_charge(gen), storage_dc_discharge(gen),
+								storage_ac_charge(gen), storage_ac_discharge(gen))
+								
+	STOR = inputs["VS_STOR"]
+
+	# Storage DC Discharge Resources
+	inputs["VS_STOR_DC_DISCHARGE"] = storage_dc_discharge(gen)
+	inputs["VS_SYM_DC_DISCHARGE"] = storage_sym_dc_discharge(gen)
+	inputs["VS_ASYM_DC_DISCHARGE"] = storage_asym_dc_discharge(gen)
+
+	# Storage DC Charge Resources
+	inputs["VS_STOR_DC_CHARGE"] = storage_dc_charge(gen)
+	inputs["VS_SYM_DC_CHARGE"] = storage_sym_dc_charge(gen)
+    inputs["VS_ASYM_DC_CHARGE"] = storage_asym_dc_charge(gen)
+
+	# Storage AC Discharge Resources
+	inputs["VS_STOR_AC_DISCHARGE"] = storage_ac_discharge(gen)
+	inputs["VS_SYM_AC_DISCHARGE"] = storage_sym_ac_discharge(gen)
+	inputs["VS_ASYM_AC_DISCHARGE"] = storage_asym_ac_discharge(gen)
+
+	# Storage AC Charge Resources
+	inputs["VS_STOR_AC_CHARGE"] = storage_ac_charge(gen)
+	inputs["VS_SYM_AC_CHARGE"] = storage_sym_ac_charge(gen)
+	inputs["VS_ASYM_AC_CHARGE"] = storage_asym_ac_charge(gen)
+
+	# Storage LDS & Non-LDS Resources
+	inputs["VS_LDS"] = is_LDS_VRE_STOR(gen)
+	inputs["VS_nonLDS"] = setdiff(STOR, inputs["VS_LDS"])
+
+    # Symmetric and asymmetric storage resources
+	inputs["VS_ASYM"] = union(inputs["VS_ASYM_DC_CHARGE"], inputs["VS_ASYM_DC_DISCHARGE"], 
+		inputs["VS_ASYM_AC_DISCHARGE"], inputs["VS_ASYM_AC_CHARGE"])
+	inputs["VS_SYM_DC"] = intersect(inputs["VS_SYM_DC_CHARGE"], inputs["VS_SYM_DC_DISCHARGE"])
+    inputs["VS_SYM_AC"] = intersect(inputs["VS_SYM_AC_CHARGE"], inputs["VS_SYM_AC_DISCHARGE"])
+
+    # Send warnings for symmetric/asymmetric resources
+    if (!isempty(setdiff(inputs["VS_SYM_DC_DISCHARGE"], inputs["VS_SYM_DC_CHARGE"])) 
+		|| !isempty(setdiff(inputs["VS_SYM_DC_CHARGE"], inputs["VS_SYM_DC_DISCHARGE"])) 
+		|| !isempty(setdiff(inputs["VS_SYM_AC_DISCHARGE"], inputs["VS_SYM_AC_CHARGE"])) 
+		|| !isempty(setdiff(inputs["VS_SYM_AC_CHARGE"], inputs["VS_SYM_AC_DISCHARGE"])))
+        @warn("Symmetric capacities must both be DC or AC.")
+    end
+
+	# Send warnings for battery resources discharging
+	if !isempty(intersect(inputs["VS_STOR_DC_DISCHARGE"], inputs["VS_STOR_AC_DISCHARGE"]))
+		@warn("Both AC and DC discharging functionalities are turned on.")
+	end
+
+	# Send warnings for battery resources charging
+	if !isempty(intersect(inputs["VS_STOR_DC_CHARGE"], inputs["VS_STOR_AC_CHARGE"]))
+		@warn("Both AC and DC charging functionalities are turned on.")
+	end
+end
+
+function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, inputs::Dict, gen::Vector{<:AbstractResource})
     
     # Number of resources
     G = length(gen)
-    input_data["G"] = G
+    inputs["G"] = G
 
     # Scale factor
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     # Number of time steps (periods)
-    T = input_data["T"]
+    T = inputs["T"]
     
     ## HYDRO
     # Set of all reservoir hydro resources
-    input_data["HYDRO_RES"] = hydro(gen)
+    inputs["HYDRO_RES"] = hydro(gen)
     # Set of hydro resources modeled with known reservoir energy capacity
-    if !isempty(input_data["HYDRO_RES"])
-        input_data["HYDRO_RES_KNOWN_CAP"] = intersect(input_data["HYDRO_RES"], has_hydro_energy_to_power_ratio(gen))
+    if !isempty(inputs["HYDRO_RES"])
+        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], has_hydro_energy_to_power_ratio(gen))
     end
 
     ## STORAGE
     # Set of storage resources with symmetric charge/discharge capacity
-    input_data["STOR_SYMMETRIC"] = symmetric_storage(gen)
+    inputs["STOR_SYMMETRIC"] = symmetric_storage(gen)
     # Set of storage resources with asymmetric (separte) charge/discharge capacity components
-    input_data["STOR_ASYMMETRIC"] = asymmetric_storage(gen)
+    inputs["STOR_ASYMMETRIC"] = asymmetric_storage(gen)
     # Set of all storage resources
-    input_data["STOR_ALL"] = union(input_data["STOR_SYMMETRIC"],input_data["STOR_ASYMMETRIC"])
+    inputs["STOR_ALL"] = union(inputs["STOR_SYMMETRIC"],inputs["STOR_ASYMMETRIC"])
 
     # Set of storage resources with long duration storage capabilitites
-    input_data["STOR_HYDRO_LONG_DURATION"] = intersect(input_data["HYDRO_RES"], is_LDS(gen))
-    input_data["STOR_LONG_DURATION"] = intersect(input_data["STOR_ALL"], is_LDS(gen))	    
-    input_data["STOR_SHORT_DURATION"] = intersect(input_data["STOR_ALL"], is_SDS(gen))
+    inputs["STOR_HYDRO_LONG_DURATION"] = intersect(inputs["HYDRO_RES"], is_LDS(gen))
+    inputs["STOR_LONG_DURATION"] = intersect(inputs["STOR_ALL"], is_LDS(gen))	    
+    inputs["STOR_SHORT_DURATION"] = intersect(inputs["STOR_ALL"], is_SDS(gen))
 
     ## VRE
     # Set of controllable variable renewable resources
-    input_data["VRE"] = vre(gen)
+    inputs["VRE"] = vre(gen)
 
     ## FLEX
     # Set of flexible demand-side resources
-    input_data["FLEX"] = flex_demand(gen)
+    inputs["FLEX"] = flex_demand(gen)
 
     ## TODO: MUST_RUN
     # Set of must-run plants - could be behind-the-meter PV, hydro run-of-river, must-run fossil or thermal plants
-    input_data["MUST_RUN"] = must_run(gen)
+    inputs["MUST_RUN"] = must_run(gen)
 
     ## ELECTROLYZER
     # Set of hydrogen electolyzer resources:
-    input_data["ELECTROLYZER"] = electrolyzer(gen)
+    inputs["ELECTROLYZER"] = electrolyzer(gen)
 
     ## Retrofit ## TODO: ask how to add it
-    input_data["RETRO"] = []
+    inputs["RETRO"] = []
 
     ## Reserves
     if setup["Reserves"] >= 1
         # Set for resources with regulation reserve requirements
-        input_data["REG"] = has_regulation_reserve_requirements(gen)
+        inputs["REG"] = has_regulation_reserve_requirements(gen)
         # Set for resources with spinning reserve requirements
-        input_data["RSV"] = has_spinning_reserve_requirements(gen)
+        inputs["RSV"] = has_spinning_reserve_requirements(gen)
     end
 
     ## THERM
     # Set of all thermal resources
-    input_data["THERM_ALL"] = thermal(gen)
+    inputs["THERM_ALL"] = thermal(gen)
     # Unit commitment
     if setup["UCommit"] >= 1
         # Set of thermal resources with unit commitment
-        input_data["THERM_COMMIT"] = has_unit_commitment(gen)
+        inputs["THERM_COMMIT"] = has_unit_commitment(gen)
         # Set of thermal resources without unit commitment
-        input_data["THERM_NO_COMMIT"] = no_unit_commitment(gen)
+        inputs["THERM_NO_COMMIT"] = no_unit_commitment(gen)
         # Start-up cost is sum of fixed cost per start startup
-		input_data["C_Start"] = zeros(Float64, G, T)
-        for g in input_data["THERM_COMMIT"]
+		inputs["C_Start"] = zeros(Float64, G, T)
+        for g in inputs["THERM_COMMIT"]
             start_up_cost = start_cost_per_mw(gen[g]) * cap_size(gen[g])
-            input_data["C_Start"][g,:] .= start_up_cost
+            inputs["C_Start"][g,:] .= start_up_cost
         end
         # Piecewise fuel usage option
-        input_data["PWFU_Num_Segments"] = 0
-        input_data["THERM_COMMIT_PWFU"] = Int64[]
-        process_piecewisefuelusage!(input_data, case_path, gen, scale_factor)
+        inputs["PWFU_Num_Segments"] = 0
+        inputs["THERM_COMMIT_PWFU"] = Int64[]
+        process_piecewisefuelusage!(inputs, case_path, gen, scale_factor)
     else
         # Set of thermal resources with unit commitment
-        input_data["THERM_COMMIT"] = []
+        inputs["THERM_COMMIT"] = []
         # Set of thermal resources without unit commitment
-        input_data["THERM_NO_COMMIT"] = input_data["THERM_ALL"]
+        inputs["THERM_NO_COMMIT"] = inputs["THERM_ALL"]
     end
     # For now, the only resources eligible for UC are themal resources
-    input_data["COMMIT"] = input_data["THERM_COMMIT"]
-
-    ## Co-located resources
-    # VRE and storage
-    input_data["VRE_STOR"] = []
-    # load_vre_stor_data!(input_data, setup, path)
+    inputs["COMMIT"] = inputs["THERM_COMMIT"]
 
     buildable = is_buildable(gen)
     retirable = is_retirable(gen)
 
     # Set of all resources eligible for new capacity
-    input_data["NEW_CAP"] = intersect(buildable, has_max_capacity_mw(gen))
+    inputs["NEW_CAP"] = intersect(buildable, has_max_cap_mw(gen))
     # Set of all resources eligible for capacity retirements
-    input_data["RET_CAP"] = intersect(retirable, has_existing_capacity_mw(gen))
+    inputs["RET_CAP"] = intersect(retirable, has_existing_cap_mw(gen))
 
     new_cap_energy = Set{Int64}()
     ret_cap_energy = Set{Int64}()
-    if !isempty(input_data["STOR_ALL"])
+    if !isempty(inputs["STOR_ALL"])
         # Set of all storage resources eligible for new energy capacity
-        new_cap_energy = intersect(buildable, has_max_capacity_mwh(gen), input_data["STOR_ALL"])
+        new_cap_energy = intersect(buildable, has_max_cap_mwh(gen), inputs["STOR_ALL"])
         # Set of all storage resources eligible for energy capacity retirements
-        ret_cap_energy = intersect(retirable, has_existing_capacity_mwh(gen), input_data["STOR_ALL"])
+        ret_cap_energy = intersect(retirable, has_existing_cap_mwh(gen), inputs["STOR_ALL"])
     end
-    input_data["NEW_CAP_ENERGY"] = new_cap_energy
-    input_data["RET_CAP_ENERGY"] = ret_cap_energy
+    inputs["NEW_CAP_ENERGY"] = new_cap_energy
+    inputs["RET_CAP_ENERGY"] = ret_cap_energy
 
 	new_cap_charge = Set{Int64}()
 	ret_cap_charge = Set{Int64}()
-	if !isempty(input_data["STOR_ASYMMETRIC"])
+	if !isempty(inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
-        new_cap_charge = intersect(buildable, has_max_charge_capacity_mw(gen), input_data["STOR_ASYMMETRIC"])
+        new_cap_charge = intersect(buildable, has_max_charge_cap_mw(gen), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-        ret_cap_charge = intersect(buildable, has_existing_charge_capacity_mw(gen), input_data["STOR_ASYMMETRIC"])
+        ret_cap_charge = intersect(buildable, has_existing_charge_capacity_mw(gen), inputs["STOR_ASYMMETRIC"])
 	end
-	input_data["NEW_CAP_CHARGE"] = new_cap_charge
-	input_data["RET_CAP_CHARGE"] = ret_cap_charge
+	inputs["NEW_CAP_CHARGE"] = new_cap_charge
+	inputs["RET_CAP_CHARGE"] = ret_cap_charge
+
+    ## Co-located resources
+    # VRE and storage
+    inputs["VRE_STOR"] = vre_stor(gen)
+    # Check if VRE-STOR resources exist
+	if !isempty(inputs["VRE_STOR"])
+        # Solar PV Resources
+        inputs["VS_SOLAR"] = solar(gen)
+
+        # DC Resources
+        inputs["VS_DC"] = union(storage_dc_discharge(gen), storage_dc_charge(gen), solar(gen))
+
+        # Wind Resources
+        inputs["VS_WIND"] = wind(gen)
+
+        # Storage Resources
+        split_storage_resources!(gen, inputs)
+
+        gen_VRE_STOR = gen[inputs["VRE_STOR"]]
+        # Set of all VRE-STOR resources eligible for new solar capacity
+        inputs["NEW_CAP_SOLAR"] = intersect(buildable, solar(gen), has_max_cap_solar_mw(gen_VRE_STOR))
+        # Set of all VRE_STOR resources eligible for solar capacity retirements
+        inputs["RET_CAP_SOLAR"] = intersect(retirable,  solar(gen), has_nonneg_existing_cap_solar_mw(gen_VRE_STOR))
+        # Set of all VRE-STOR resources eligible for new wind capacity
+        inputs["NEW_CAP_WIND"] = intersect(buildable, wind(gen), has_max_cap_wind_mw(gen_VRE_STOR))
+        # Set of all VRE_STOR resources eligible for wind capacity retirements
+        inputs["RET_CAP_WIND"] = intersect(retirable, wind(gen), has_nonneg_existing_cap_wind_mw(gen_VRE_STOR))
+        # Set of all VRE-STOR resources eligible for new inverter capacity
+        inputs["NEW_CAP_DC"] = intersect(buildable, has_max_cap_inverter_mw(gen_VRE_STOR), inputs["VS_DC"])
+        # Set of all VRE_STOR resources eligible for inverter capacity retirements
+        inputs["RET_CAP_DC"] = intersect(retirable, has_nonneg_existing_cap_inverter_mw(gen_VRE_STOR), inputs["VS_DC"])
+        # Set of all storage resources eligible for new energy capacity
+        inputs["NEW_CAP_STOR"] = intersect(buildable, has_max_cap_mwh(gen_VRE_STOR), inputs["VS_STOR"])
+        # Set of all storage resources eligible for energy capacity retirements
+        inputs["RET_CAP_STOR"] = intersect(retirable, has_existing_cap_mwh(gen_VRE_STOR), inputs["VS_STOR"])
+        if !isempty(inputs["VS_ASYM"])
+            # Set of asymmetric charge DC storage resources eligible for new charge capacity
+            inputs["NEW_CAP_CHARGE_DC"] = intersect(buildable, has_max_cap_charge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_CHARGE"]) 
+            # Set of asymmetric charge DC storage resources eligible for charge capacity retirements
+            inputs["RET_CAP_CHARGE_DC"] = intersect(retirable, has_nonneg_existing_cap_charge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_CHARGE"])
+            # Set of asymmetric discharge DC storage resources eligible for new discharge capacity
+            inputs["NEW_CAP_DISCHARGE_DC"] = intersect(buildable, has_max_cap_discharge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_DISCHARGE"]) 
+            # Set of asymmetric discharge DC storage resources eligible for discharge capacity retirements
+            inputs["RET_CAP_DISCHARGE_DC"] = intersect(retirable, has_nonneg_existing_cap_discharge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_DISCHARGE"]) 
+            # Set of asymmetric charge AC storage resources eligible for new charge capacity
+            inputs["NEW_CAP_CHARGE_AC"] = intersect(buildable, has_max_cap_charge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_CHARGE"]) 
+            # Set of asymmetric charge AC storage resources eligible for charge capacity retirements
+            inputs["RET_CAP_CHARGE_AC"] = intersect(retirable, has_nonneg_existing_cap_charge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_CHARGE"]) 
+            # Set of asymmetric discharge AC storage resources eligible for new discharge capacity
+            inputs["NEW_CAP_DISCHARGE_AC"] = intersect(buildable, has_max_cap_discharge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_DISCHARGE"]) 
+            # Set of asymmetric discharge AC storage resources eligible for discharge capacity retirements
+            inputs["RET_CAP_DISCHARGE_AC"] = intersect(retirable, has_nonneg_existing_cap_discharge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_DISCHARGE"]) 
+        end 
+
+        # Names for systemwide resources
+        inputs["RESOURCES_VRE_STOR"] = resource_name(gen_VRE_STOR)
+
+        # Names for writing outputs
+        inputs["RESOURCES_SOLAR"] = resource_name(gen[inputs["VS_SOLAR"]])
+        inputs["RESOURCES_WIND"] = resource_name(gen[inputs["VS_WIND"]])
+        inputs["RESOURCES_DC_DISCHARGE"] = resource_name(gen[storage_dc_discharge(gen)])
+        inputs["RESOURCES_AC_DISCHARGE"] = resource_name(gen[storage_ac_discharge(gen)])
+        inputs["RESOURCES_DC_CHARGE"] = resource_name(gen[storage_dc_charge(gen)])
+        inputs["RESOURCES_AC_CHARGE"] = resource_name(gen[storage_ac_charge(gen)])
+        inputs["ZONES_SOLAR"] = zone_id(gen[inputs["VS_SOLAR"]])
+        inputs["ZONES_WIND"] = zone_id(gen[inputs["VS_WIND"]])
+        inputs["ZONES_DC_DISCHARGE"] = zone_id(gen[storage_dc_discharge(gen)])
+        inputs["ZONES_AC_DISCHARGE"] = zone_id(gen[storage_ac_discharge(gen)])
+        inputs["ZONES_DC_CHARGE"] = zone_id(gen[storage_dc_charge(gen)])
+        inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
+    end
 
     # Names of resources
-    input_data["RESOURCE_NAMES"] = resource_name.(gen)
+    inputs["RESOURCE_NAMES"] = resource_name(gen)
 
     # Zones resources are located in
-    zones = zone_id.(gen)
+    zones = zone_id(gen)
     
     # Resource identifiers by zone (just zones in resource order + resource and zone concatenated)
-    input_data["R_ZONES"] = zones
-    input_data["RESOURCE_ZONES"] = input_data["RESOURCE_NAMES"] .* "_z" .* string.(zones)
+    inputs["R_ZONES"] = zones
+    inputs["RESOURCE_ZONES"] = inputs["RESOURCE_NAMES"] .* "_z" .* string.(zones)
 
     # Fuel
-    input_data["HAS_FUEL"] = has_fuel(gen)
+    inputs["HAS_FUEL"] = has_fuel(gen)
 
-    input_data["RESOURCES"] = gen
+    inputs["RESOURCES"] = gen
     return nothing
 end
 
@@ -412,8 +586,6 @@ function load_resources_data!(setup::Dict, case_path::AbstractString, input_data
             "Please use the new interface for generators creation, and see the documentation for additional details.",
             :load_resources_data!, force=true)
         error("Exiting GenX...")
-        # load_generators_data!(setup, case_path, input_data)
-        # translate_generators_data!(setup, input_data)
     else
         # load resources data and scale it if necessary
         resources = load_scaled_resources_data(setup, case_path)
@@ -430,34 +602,3 @@ function load_resources_data!(setup::Dict, case_path::AbstractString, input_data
         return nothing
     end
 end
-
-function translate_generators_data!(setup::Dict, inputs_gen::Dict)
-end
-
-# function extract_matrix_from_resources(resources::Vector{<:AbstractResource}, columnprefix::AbstractString, prefixseparator='_')
-    
-#     for i in eachindex(resources)
-#     end
-
-#     all_columns = string.(keys(resource))
-#     columnnumbers = _find_matrix_columns(all_columns, columnprefix, prefixseparator)
-
-#     if length(columnnumbers) == 0
-#         msg = """an input dataframe with columns $all_columns was searched for
-#         numbered columns starting with $columnprefix, but nothing was found."""
-#         error(msg)
-#     end
-
-#     # check that the sequence of column numbers is 1..N
-#     if columnnumbers != collect(1:length(columnnumbers))
-#         msg = """the columns $columns in an input file must be numbered in
-#         a complete sequence from 1...N. It looks like some of the sequence is missing.
-#         This error could also occur if there are two columns with the same number."""
-#         error(msg)
-#     end
-
-#     sorted_columns = columnprefix .* prefixseparator .* string.(columnnumbers)
-# end
-
-
-

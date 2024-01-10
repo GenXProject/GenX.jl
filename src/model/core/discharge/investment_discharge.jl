@@ -80,7 +80,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCap[y in 1:G], vEXISTINGCAP[y])
 	else
-		@expression(EP, eExistingCap[y in 1:G], existing_capacity_mw(gen[y]))
+		@expression(EP, eExistingCap[y in 1:G], existing_cap_mw(gen[y]))
 	end
 
 	# Cap_Size is set to 1 for all variables when unit UCommit == 0
@@ -148,7 +148,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	if MultiStage == 1
 	    # Existing capacity variable is equal to existing capacity specified in the input file
-		@constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == existing_capacity_mw(gen[y]))
+		@constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == existing_cap_mw(gen[y]))
 	end
 
 	## Constraints on retirements and capacity additions
@@ -159,13 +159,13 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built capacity
 	# Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-	MAX_CAP = has_positive_max_capacity_mw(gen)
-	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_capacity_mw(gen[y]))
+	MAX_CAP = has_positive_max_cap_mw(gen)
+	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_cap_mw(gen[y]))
 
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-	MIN_CAP = has_positive_min_capacity_mw(gen)
-	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_capacity_mw(gen[y]))
+	MIN_CAP = has_positive_min_cap_mw(gen)
+	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_cap_mw(gen[y]))
 
 	if setup["MinCapReq"] == 1
 		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in has_min_cap(gen, tag=mincap)))

@@ -137,8 +137,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCTotal += eCVarFlex_in
 		end
 		if !isempty(VRE_STOR)
-			dfVRE_STOR = inputs["dfVRE_STOR"]
-			Y_ZONE_VRE_STOR = dfVRE_STOR[dfVRE_STOR[!,:Zone].==z,:R_ID]
+			gen_VRE_STOR = gen.VRE_STOR
+			Y_ZONE_VRE_STOR = resources_in_zone_by_rid(gen_VRE_STOR, z)
 
 			# Fixed Costs
 			eCFix_VRE_STOR = 0.0

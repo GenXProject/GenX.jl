@@ -24,7 +24,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         SOLAR = setdiff(inputs["VS_SOLAR"],inputs["VS_WIND"])
         WIND = setdiff(inputs["VS_WIND"],inputs["VS_SOLAR"])
         SOLAR_WIND = intersect(inputs["VS_SOLAR"],inputs["VS_WIND"])
-        dfVRE_STOR = inputs["dfVRE_STOR"]
+        gen_VRE_STOR = gen.VRE_STOR
         if !isempty(SOLAR)
             dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data * inputs["omega"] * scale_factor
             dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR]).data * scale_factor
@@ -35,8 +35,8 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         end
         if !isempty(SOLAR_WIND)
             dfCapacityfactor.AnnualSum[SOLAR_WIND] .= (value.(EP[:vP_WIND][SOLAR_WIND, :]).data 
-                + value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* dfVRE_STOR[((dfVRE_STOR.SOLAR.!=0) .& (dfVRE_STOR.WIND.!=0)), :EtaInverter]) * inputs["omega"] * scale_factor
-            dfCapacityfactor.Capacity[SOLAR_WIND] .= (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data + value.(EP[:eTotalCap_SOLAR][SOLAR_WIND]).data .* dfVRE_STOR[((dfVRE_STOR.SOLAR.!=0) .& (dfVRE_STOR.WIND.!=0)), :EtaInverter]) * scale_factor
+                + value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.wind.!=0) .& (gen_VRE_STOR.solar.!=0)])) * inputs["omega"] * scale_factor
+            dfCapacityfactor.Capacity[SOLAR_WIND] .= (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data + value.(EP[:eTotalCap_SOLAR][SOLAR_WIND]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.wind.!=0) .& (gen_VRE_STOR.solar.!=0)])) * scale_factor
         end
     end
 
