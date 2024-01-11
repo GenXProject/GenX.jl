@@ -8,7 +8,7 @@ Function for reporting the operating reserve prices and revenue earned by each g
     The last column is the total revenue received from all operating reserve constraints.
     As a reminder, GenX models the operating reserve at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_operating_reserve_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
   scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfGen = inputs["dfGen"]
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
@@ -31,8 +31,9 @@ function write_operating_reserve_price_revenue(path::AbstractString, inputs::Dic
 	end
 	dfOpResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
 	annual_sum = zeros(G)
-	for i in 1:inputs["NCapacityReserveMargin"]
-		weighted_price = capacity_reserve_margin_price(EP, inputs, setup, i) .* inputs["omega"]
+	for t in 1:T
+		weighted_reg_price = operating_regulation_price(EP, inputs, setup) .* inputs["omega"]
+		weighted_rsv_price = operating_reserve_price(EP, inputs, setup) .* inputs["omega"]
 		sym = Symbol("CapRes_$i")
 		tempresrev = zeros(G)
 		tempresrev[THERM_ALL] = thermal_plant_effective_capacity(EP, inputs, THERM_ALL, i)' * weighted_price
@@ -61,4 +62,16 @@ function write_operating_reserve_price_revenue(path::AbstractString, inputs::Dic
 	dfResRevenue.AnnualSum = annual_sum
 	CSV.write(joinpath(path, "ReserveMarginRevenue.csv"), dfResRevenue)
 	return dfResRevenue
+end
+
+function operating_regulation_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
+    ω = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    return dual.(EP[:cReg]) ./ ω * scale_factor
+end
+
+function operating_reserve_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
+    ω = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    return dual.(EP[:cRsvReq]) ./ ω * scale_factor
 end
