@@ -197,12 +197,11 @@ cum_min_retired_charge_cap_mw(r::AbstractResource) = r.cum_min_retired_charge_ca
 mga(r::AbstractResource) = get(r, :mga, default)
 has_mga_on(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
 
-
 # policies
 esr(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_$tag"), default)
 min_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_$tag"), default)
 max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), default)
-derated_capacity(r::AbstractResource; tag::Int64) = get(r, Symbol("derated_capacity_$tag"), default)
+eligible_cap_res(r::AbstractResource; tag::Int64) = get(r, Symbol("eligible_cap_res_$tag"), default)
 
 # write_outputs
 region(r::AbstractResource) = r.region
@@ -250,7 +249,7 @@ has_max_cap(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -
 
 ## Reserves
 # cap reserve margin
-has_cap_reserve_margin(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> derated_capacity(r,tag=tag) > 0, rs)
+has_cap_reserve_margin(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> eligible_cap_res(r,tag=tag) > 0, rs)
 has_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
 has_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
 

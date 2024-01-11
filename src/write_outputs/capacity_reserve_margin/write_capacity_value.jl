@@ -36,7 +36,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		AC_CHARGE_EX = intersect(inputs["VS_STOR_AC_CHARGE"], VRE_STOR_EX)
 	end
 
-    crm_derate(i, y::Vector{Int}) = derated_capacity(gen[y], tag=i)'
+    crm_derate(i, y::Vector{Int}) = eligible_cap_res(gen[y], tag=i)'
     max_power(t::Vector{Int}, y::Vector{Int}) = inputs["pP_Max"][y, t]'
     total_cap(y::Vector{Int}) = eTotalCap[y]'
 

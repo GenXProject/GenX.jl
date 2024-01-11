@@ -1,7 +1,4 @@
-function load_multistage_dataframe(path::AbstractString)
-    filename = "multistage_data.csv"
-    filepath = joinpath(path, filename)
-
+function load_multistage_dataframe(filepath::AbstractString)
     if !isfile(filepath)
         error("Multistage data file not found at $filepath")
     end

@@ -32,7 +32,7 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	if setup["CapacityReserveMargin"] > 0
         ncapres = inputs["NCapacityReserveMargin"]
         @expression(EP, eCapResMarBalanceThermal[capres in 1:ncapres, t in 1:T],
-                    sum(derated_capacity(gen[y], tag=capres) * EP[:eTotalCap][y] for y in THERM_ALL))
+                    sum(eligible_cap_res(gen[y], tag=capres) * EP[:eTotalCap][y] for y in THERM_ALL))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
 
         MAINT = resources_with_maintenance(gen)

@@ -108,7 +108,7 @@ function test_add_policies_to_resources(gen, dfGen)
     @test GenX.min_cap.(gen, tag=1) == dfGen.mincaptag_1
     @test GenX.min_cap.(gen, tag=2) == dfGen.mincaptag_2
     @test GenX.min_cap.(gen, tag=3) == dfGen.mincaptag_3
-    @test GenX.derated_capacity.(gen, tag=1) == dfGen.capres_1
+    @test GenX.eligible_cap_res.(gen, tag=1) == dfGen.capres_1
 end
 
 function test_add_modules_to_resources(gen, dfGen)
@@ -206,8 +206,7 @@ function test_load_resources_data()
         "Reserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 1,
-        "ResourcePath" => "resources",
-        "PolicyPath" => "policies",
+        "ResourcePath" => "Resources",
     )
     
     test_path = joinpath("LoadresourceData", "test_gen_non_colocated")
@@ -254,8 +253,7 @@ function test_load_VRE_STOR_data()
         "Reserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 0,
-        "ResourcePath" => "resources",
-        "PolicyPath" => "policies",
+        "ResourcePath" => "Resources",
     )
         
     test_path = joinpath("LoadresourceData","test_gen_vre_stor")
@@ -369,8 +367,8 @@ function test_load_VRE_STOR_data()
     @test GenX.esr_vrestor.(gen[rs], tag=2) == dfVRE_STOR.esr_vrestor_2
     @test GenX.min_cap_stor.(gen[rs], tag=1) == dfVRE_STOR.mincaptagstor_1
     @test GenX.min_cap_stor.(gen[rs], tag=2) == dfVRE_STOR.mincaptagstor_2
-    @test GenX.derated_capacity.(gen[rs], tag=1) == dfVRE_STOR.capresvrestor_1
-    @test GenX.derated_capacity.(gen[rs], tag=2) == dfVRE_STOR.capresvrestor_2
+    @test GenX.eligible_cap_res.(gen[rs], tag=1) == dfVRE_STOR.capresvrestor_1
+    @test GenX.eligible_cap_res.(gen[rs], tag=2) == dfVRE_STOR.capresvrestor_2
     @test GenX.max_cap_stor.(gen[rs], tag=1) == dfVRE_STOR.maxcaptagstor_1
     @test GenX.max_cap_stor.(gen[rs], tag=2) == dfVRE_STOR.maxcaptagstor_2
     @test GenX.min_cap_solar.(gen[rs], tag=1) == dfVRE_STOR.mincaptagsolar_1

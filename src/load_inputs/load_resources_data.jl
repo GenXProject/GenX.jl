@@ -1,23 +1,23 @@
 function _get_resource_info()
     resources = (
-        hydro   = (filename="hydro.csv", type=HYDRO),
-        thermal = (filename="thermal.csv", type=THERM),
-        vre     = (filename="vre.csv", type=VRE),
-        storage = (filename="storage.csv", type=STOR),
-        flex_demand  = (filename="flex_demand.csv", type=FLEX),
-        must_run = (filename="must_run.csv", type=MUST_RUN),
-        electrolyzer = (filename="electrolyzer.csv", type=ELECTROLYZER),
-        vre_stor = (filename="vre_stor.csv", type=VRE_STOR)
+        hydro   = (filename="Hydro.csv", type=HYDRO),
+        thermal = (filename="Thermal.csv", type=THERM),
+        vre     = (filename="Vre.csv", type=VRE),
+        storage = (filename="Storage.csv", type=STOR),
+        flex_demand  = (filename="Flex_demand.csv", type=FLEX),
+        must_run = (filename="Must_run.csv", type=MUST_RUN),
+        electrolyzer = (filename="Electrolyzer.csv", type=ELECTROLYZER),
+        vre_stor = (filename="Vre_stor.csv", type=VRE_STOR)
     )
     return resources
 end
 
 function _get_policyfile_info()
     policies = (
-        esr     = (filename="esr.csv", column_name="esr"),
-        cap_res = (filename="cap_res.csv", column_name="derated_capacity"),
-        min_cap_tags = (filename="min_cap.csv", column_name="min_cap"),
-        max_cap_tags = (filename="max_cap.csv", column_name="max_cap")
+        esr     = (filename="Res_energy_share_requirement.csv"),
+        cap_res = (filename="Res_capacity_reserve_margin.csv"),
+        min_cap_tags = (filename="Res_minimum_capacity_requirement.csv"),
+        max_cap_tags = (filename="Res_maximum_capacity_requirement.csv"),
     )
     return policies
 end
@@ -218,28 +218,28 @@ function _add_attributes_to_resource!(resource::AbstractResource, new_symbols::V
 end    
 
 function add_policies_to_resources!(setup::Dict, case_path::AbstractString, resources::Vector{<:AbstractResource})
-    policy_folder = setup["PolicyPath"]
+    policy_folder = setup["ResourcePath"]
     policy_folder = joinpath(case_path, policy_folder)
     # get filename and column-name for each type of policy
     resources_info = _get_policyfile_info()
     # loop over policy files
-    for (filename, column_name) in values(resources_info)
+    for filename in values(resources_info)
         # path to policy file
         path = joinpath(policy_folder, filename)
         # if file exists, add policy to resources
         if isfile(path) 
-            add_policy_to_resources!(path, filename, column_name, resources)
+            add_policy_to_resources!(path, filename, resources)
             # print log
             @info filename * " Successfully Read."
         end
     end
 end
 
-function add_policy_to_resources!(path::AbstractString, filename::AbstractString, column_name::AbstractString, resources::Vector{<:AbstractResource})
+function add_policy_to_resources!(path::AbstractString, filename::AbstractString, resources::Vector{<:AbstractResource})
     # load policy file
     policy_in = load_dataframe(path)
     # check if policy file has any attributes, validate clumn names 
-    validate_policy_dataframe!(filename, column_name, policy_in)
+    validate_policy_dataframe!(filename, policy_in)
     # add policy attributes to resources
     _add_df_to_resources!(resources, policy_in)
     return nothing
@@ -248,14 +248,17 @@ end
 function add_modules_to_resources!(setup::Dict, case_path::AbstractString, resources::Vector{<:AbstractResource})
     modules = Vector{DataFrame}()
 
+    module_folder = setup["ResourcePath"]
+    module_folder = joinpath(case_path, module_folder)
+
     ## Load all modules and add them to the list of modules to add to resources
     # Add multistage if multistage is activated
     if setup["MultiStage"] == 1
-        multistage_in = load_multistage_dataframe(case_path)
+        filename = joinpath(module_folder, "Res_multistage_data.csv")
+        multistage_in = load_multistage_dataframe(filename)
         push!(modules, multistage_in)
         @info "Multistage data successfully read."
     end
-    
     
     ## Loop over modules and add attributes to resources
     add_module_to_resources!.(Ref(resources), modules)
@@ -268,7 +271,7 @@ function add_module_to_resources!(resources::Vector{<:AbstractResource}, module_
     return nothing
 end
 
-function validate_policy_dataframe!(filename::AbstractString, column_name::AbstractString, policy_in::DataFrame)
+function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFrame)
     cols = names(policy_in)
     n_cols = length(cols)
     # check if policy file has any attributes
@@ -280,17 +283,23 @@ function validate_policy_dataframe!(filename::AbstractString, column_name::Abstr
     if n_cols == 2 && cols[2][end-2] != "_1"
         rename!(policy_in, Symbol.(cols[2]) => Symbol.(cols[2], "_1"))
     end
-    # # get policy column names
-    # cols = lowercase.(names(policy_in))
-    # tag_names = cols[startswith.(cols, column_name)]
-    # # Check that all policy columns are of the form policyname_tagnum
-    # # - any: at least one column matches policyname_tagnum
-    # # - all: all matches are found in the policy file
-    # if !all(any(occursin.(string(column_name, "_$tag_num"), tag_names)) for tag_num in 1:length(tag_names))
-    #     column_names = [string(column_name, "_$tag_num") for tag_num in 1:length(tag_names)]
-    #     msg = "Policy file $filename must have columns named $column_names, case insensitive."
-    #     error(msg)
-    # end
+    # get policy column names
+    cols = lowercase.(names(policy_in))
+    filter!(col -> col ≠ "resource",cols)
+    
+    accepted_cols = ["eligible_cap_res", "esr", "esr_vrestor",
+                        [string(cap, type) for cap in ["min_cap", "max_cap"] for type in ("", "_stor", "_solar", "_wind")]...]
+
+    # Check that all policy columns have accepter names
+    if !all(x -> replace(x, r"(_*|_*\d*)$" => "") in accepted_cols, cols)
+        msg = "The accepted policy columns are: " * join(accepted_cols, ", ")
+        msg *= "\nCheck policy file: " * filename
+        error(msg)
+    end
+    if !all(any([occursin(Regex("$(y)")*r"_\d", col) for y in accepted_cols]) for col in cols)
+        msg = "Columns in policy file $filename must have names with format \"[policy_name]_[tagnum]\", case insensitive. (e.g., ESR_1, Min_Cap_1, Max_Cap_2, etc.)."
+        error(msg)
+    end
     return nothing
 end
 
@@ -379,9 +388,6 @@ function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, in
     G = length(gen)
     inputs["G"] = G
 
-    # Scale factor
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-
     # Number of time steps (periods)
     T = inputs["T"]
     
@@ -451,7 +457,7 @@ function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, in
         # Piecewise fuel usage option
         inputs["PWFU_Num_Segments"] = 0
         inputs["THERM_COMMIT_PWFU"] = Int64[]
-        process_piecewisefuelusage!(inputs, case_path, gen, scale_factor)
+        process_piecewisefuelusage!(setup, case_path, gen, inputs)
     else
         # Set of thermal resources with unit commitment
         inputs["THERM_COMMIT"] = []

@@ -413,9 +413,10 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 	summarize_errors(error_strings)
 end
 
-function process_piecewisefuelusage!(inputs::Dict, path::AbstractString, gen::Vector{<:AbstractResource}, scale_factor)
-	filename = "piecewisefuel_usage_data.csv"
-	filepath = joinpath(path, filename)
+function process_piecewisefuelusage!(setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource}, inputs::Dict)
+	filename = "Res_piecewisefuel_usage.csv"
+	resource_folder = setup["ResourcePath"]
+	filepath = joinpath(case_path, resource_folder, filename)
 	
 	if isfile(filepath)
 		piecewisefuel_in = load_dataframe(filepath)
@@ -491,6 +492,7 @@ function process_piecewisefuelusage!(inputs::Dict, path::AbstractString, gen::Ve
 		slope_df = DataFrame(heat_rate_mat, Symbol.(slope_cols))
 		PWFU_data = hcat(slope_df, intercept_df)
 		# no need to scale sclope, but intercept should be scaled when parameterscale is on (MMBTU -> billion BTU)
+		scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 		PWFU_data[!, intercept_cols] ./= scale_factor
 
 		inputs["slope_cols"] = slope_cols

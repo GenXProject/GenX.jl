@@ -65,7 +65,7 @@ add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceDemandFlex)
 
 # Capacity Reserves Margin policy
 if setup["CapacityReserveMargin"] > 0
-    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derated_capacity(gen[y], tag=res) * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
+    @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(eligible_cap_res(gen[y], tag=res) * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
     add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceFlex)
 end
 

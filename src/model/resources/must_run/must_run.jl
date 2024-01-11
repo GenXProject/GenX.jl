@@ -36,7 +36,7 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceMustRun[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derated_capacity(gen[y], tag=res) * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
+		@expression(EP, eCapResMarBalanceMustRun[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(eligible_cap_res(gen[y], tag=res) * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in MUST_RUN))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceMustRun)
 	end
 

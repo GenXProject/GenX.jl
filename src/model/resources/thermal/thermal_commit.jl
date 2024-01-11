@@ -372,7 +372,7 @@ function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
 																 t)
     gen = inputs["RESOURCES"]
     resource_component = resource_name(gen[y])
-    capresfactor = derated_capacity(gen[y], tag=capres)
+    capresfactor = eligible_cap_res(gen[y], tag=capres)
     cap_size = cap_size(gen[y])
     down_var = EP[Symbol(maintenance_down_name(resource_component))]
     return -capresfactor * down_var[t] * cap_size

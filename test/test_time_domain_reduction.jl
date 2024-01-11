@@ -36,8 +36,7 @@ genx_setup = Dict(
     "MaxCapReq" => 1,
     "EnergyShareRequirement" => 1,
     "CO2Cap" => 2,
-    "ResourcePath" => "resources",
-    "PolicyPath" => "policies",
+    "ResourcePath" => "Resources",
 )
 
 settings = GenX.default_settings()
