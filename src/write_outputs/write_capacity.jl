@@ -56,7 +56,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_ENERGY"]
 			retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
 		end
-		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  existing_cap_mwh(gen[y])
+		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  existing_cap_mwh(gen[i])
 	end
 	if !isempty(inputs["VRE_STOR"])
 		for i in inputs["VS_STOR"]
@@ -66,13 +66,13 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 			if i in inputs["RET_CAP_STOR"]
 				retcapenergy[i] = value(EP[:vRETCAPENERGY_VS][i])
 			end
-			existingcapenergy[i] = existing_cap_mwh(gen[y]) # multistage functionality doesn't exist yet for VRE-storage resources
+			existingcapenergy[i] = existing_cap_mwh(gen[i]) # multistage functionality doesn't exist yet for VRE-storage resources
 		end
 	end
 
 	dfCap = DataFrame(
 		Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(gen),
-		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw(gen[y]),
+		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen),
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
 		EndCap = value.(EP[:eTotalCap]),

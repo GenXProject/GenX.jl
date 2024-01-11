@@ -164,7 +164,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		for cap in 1:inputs["NCO2Cap"]
 			co2_cap_dual = dual(EP[:cCO2Emissions_systemwide][cap])
 			CO2ZONES = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
-			GEN_IN_ZONE = resource_id.(gen[y in CO2ZONES for y in zone_id.(gen)])
+			GEN_IN_ZONE = resource_id.(gen[[y in CO2ZONES for y in zone_id.(gen)]])
 			if setup["CO2Cap"]==1 || setup["CO2Cap"]==2 # Mass-based or Demand + Rate-based
 				# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
 				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]

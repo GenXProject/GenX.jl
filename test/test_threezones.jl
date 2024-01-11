@@ -19,7 +19,7 @@ genx_setup = Dict(
 )
 
 # Run the case and get the objective value and tolerance
-EP, _, _ = redirect_stdout(devnull) do
+EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 obj_test = objective_value(EP)
@@ -33,5 +33,21 @@ test_result = @test obj_test ≈ obj_true atol = optimal_tol
 obj_test = round_from_tol!(obj_test, optimal_tol)
 optimal_tol = round_from_tol!(optimal_tol, optimal_tol)
 write_testlog(test_path, obj_test, optimal_tol, test_result)
+
+## Test if output files are written correctly
+# True results
+results_true = joinpath(test_path, "Results_true")
+solvetime_true = 0.8063879013061523
+inputs["solve_time"] = solvetime_true
+# Write true results
+results_test = joinpath(test_path, "Results_test")
+isdir(results_test) && rm(results_test, recursive = true)  # Remove test folder if it exists
+write_outputs(EP, results_test, genx_setup, inputs)
+# Compare true and test results
+for file in filter(endswith(".csv"), readdir(results_true))
+    print("Testing $file: ")
+    test_result = Test.@test cmp_csv(joinpath(results_test, file), joinpath(results_true, file))
+    println("$test_result")
+end
 
 end # module TestThreeZones

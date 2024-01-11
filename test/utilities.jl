@@ -178,11 +178,27 @@ function cmp_csv(csv1::AbstractString, csv2::AbstractString)
         throw(CSVFileNotFound(csv2))
     end
 
-    # Use unix-cmp on unix systems
-    Sys.isunix() && return success(`cmp --quiet $csv1 $csv2`)
-
     df1 = CSV.read(csv1, DataFrame)
     df2 = CSV.read(csv2, DataFrame)
 
-    return isequal(df1, df2)
+    # Sort the csv files
+    sort!(df1)
+    sort!(df2)
+
+    return isequal_df(df1, df2)
+end
+
+function isequal_df(df1::DataFrame, df2::DataFrame)
+    @assert length(names(df1)) == length(names(df2))
+    @assert Set(names(df1)) == Set(names(df2))
+    all([isequal_col(df1[!, col], df2[!, col]) for col in names(df1)])
+end
+
+function isequal_col(col1, col2)
+    if isequal(col1, col2)
+        return true
+    elseif eltype(col1) <: Float64 && isapprox(col1, col2)
+        return true
+    end
+    return false
 end
