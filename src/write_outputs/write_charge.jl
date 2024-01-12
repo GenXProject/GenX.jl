@@ -42,6 +42,6 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	total[:, 4:T+3] .= sum(charge, dims = 1)
 	rename!(total,auxNew_Names)
 	dfCharge = vcat(dfCharge, total)
-	CSV.write(joinpath(path, "charge.csv"), dftranspose(dfCharge, false), header=false)
+	CSV.write(joinpath(path, "charge.csv"), dftranspose(dfCharge, false), writeheader=false)
 	return dfCharge
 end

@@ -77,5 +77,5 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 		rename!(total,auxNew_Names)
 		dfEmissions = vcat(dfEmissions, total)
 	end
-	CSV.write(joinpath(path, "emissions.csv"), dftranspose(dfEmissions, false), header=false)
+	CSV.write(joinpath(path, "emissions.csv"), dftranspose(dfEmissions, false), writeheader=false)
 end

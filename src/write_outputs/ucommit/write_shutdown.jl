@@ -18,5 +18,5 @@ function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	total[:, 4:T+3] .= sum(shut, dims = 1)
 	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
-	CSV.write(joinpath(path, "shutdown.csv"), dftranspose(dfShutdown, false), header=false)
+	CSV.write(joinpath(path, "shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
 end

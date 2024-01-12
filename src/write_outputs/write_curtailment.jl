@@ -42,6 +42,6 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	total[:, 4:T+3] .= sum(curtailment, dims = 1)
 	rename!(total,auxNew_Names)
 	dfCurtailment = vcat(dfCurtailment, total)
-	CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), header=false)
+	CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), writeheader=false)
 	return dfCurtailment
 end

@@ -19,5 +19,5 @@ function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	total[!, 4:T+3] .= sum(reg, dims = 1)
 	rename!(total,auxNew_Names)
 	dfReg = vcat(dfReg, total)
-	CSV.write(joinpath(path, "reg.csv"), dftranspose(dfReg, false), header=false)
+	CSV.write(joinpath(path, "reg.csv"), dftranspose(dfReg, false), writeheader=false)
 end

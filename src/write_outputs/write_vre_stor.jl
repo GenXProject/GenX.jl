@@ -307,7 +307,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 		total[:, 4:T+3] .= sum(charge_dc, dims = 1)
 		rename!(total,auxNew_Names)
 		dfCharge_DC = vcat(dfCharge_DC, total)
-		CSV.write(joinpath(path,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), header=false)
+		CSV.write(joinpath(path,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), writeheader=false)
 	end
 
 	# AC charging of battery dataframe
@@ -323,7 +323,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 		total[:, 4:T+3] .= sum(charge_ac, dims = 1)
 		rename!(total,auxNew_Names)
 		dfCharge_AC = vcat(dfCharge_AC, total)
-		CSV.write(joinpath(path,"vre_stor_ac_charge.csv"), dftranspose(dfCharge_AC, false), header=false)
+		CSV.write(joinpath(path,"vre_stor_ac_charge.csv"), dftranspose(dfCharge_AC, false), writeheader=false)
 	end
 end
 
@@ -356,7 +356,7 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 		total[:, 4:T+3] .= sum(power_vre_stor, dims = 1)
 		rename!(total,auxNew_Names)
 		dfDischarge_DC = vcat(dfDischarge_DC, total)
-		CSV.write(joinpath(path, "vre_stor_dc_discharge.csv"), dftranspose(dfDischarge_DC, false), header=false)
+		CSV.write(joinpath(path, "vre_stor_dc_discharge.csv"), dftranspose(dfDischarge_DC, false), writeheader=false)
 	end
 
 	# AC discharging of battery dataframe
@@ -374,7 +374,7 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 		total[:, 4:T+3] .= sum(power_vre_stor, dims = 1)
 		rename!(total,auxNew_Names)
 		dfDischarge_AC = vcat(dfDischarge_AC, total)
-		CSV.write(joinpath(path, "vre_stor_ac_discharge.csv"), dftranspose(dfDischarge_AC, false), header=false)
+		CSV.write(joinpath(path, "vre_stor_ac_discharge.csv"), dftranspose(dfDischarge_AC, false), writeheader=false)
 	end
 
 	# Wind generation of co-located resource dataframe
@@ -392,7 +392,7 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 		total[:, 4:T+3] .= sum(vre_vre_stor, dims = 1)
 		rename!(total,auxNew_Names)
 		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
-		CSV.write(joinpath(path,"vre_stor_wind_power.csv"), dftranspose(dfVP_VRE_STOR, false), header=false)
+		CSV.write(joinpath(path,"vre_stor_wind_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
 	end
 
 	# Solar generation of co-located resource dataframe
@@ -410,6 +410,6 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 		total[:, 4:T+3] .= sum(vre_vre_stor, dims = 1)
 		rename!(total,auxNew_Names)
 		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
-		CSV.write(joinpath(path,"vre_stor_solar_power.csv"), dftranspose(dfVP_VRE_STOR, false), header=false)
+		CSV.write(joinpath(path,"vre_stor_solar_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
 	end
 end

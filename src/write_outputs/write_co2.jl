@@ -31,7 +31,7 @@ function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Di
     total = DataFrame(["Total" 0 sum(dfEmissions_plant[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:T+3] .= sum(emissions_plant, dims=1)
     dfEmissions_plant = vcat(dfEmissions_plant, total)
-    CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), header=false)
+    CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), writeheader=false)
 end
 
 function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
@@ -58,6 +58,6 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
         total[!, 4:T+3] .= sum(emissions_captured_plant, dims=1)
         dfCapturedEmissions_plant = vcat(dfCapturedEmissions_plant, total)
 
-        CSV.write(joinpath(path, "captured_emissions_plant.csv"), dftranspose(dfCapturedEmissions_plant, false), header=false)
+        CSV.write(joinpath(path, "captured_emissions_plant.csv"), dftranspose(dfCapturedEmissions_plant, false), writeheader=false)
     end
 end

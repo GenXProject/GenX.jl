@@ -29,6 +29,6 @@ function write_virtual_discharge(path::AbstractString, inputs::Dict, setup::Dict
 	total[:, 4:T+3] .= sum(virtual_discharge, dims = 1)
 	rename!(total,auxNew_Names)
 	dfVirtualDischarge = vcat(dfVirtualDischarge, total)
-	CSV.write(joinpath(path, "virtual_discharge.csv"), dftranspose(dfVirtualDischarge, false), header=false)
+	CSV.write(joinpath(path, "virtual_discharge.csv"), dftranspose(dfVirtualDischarge, false), writeheader=false)
 	return dfVirtualDischarge
 end
