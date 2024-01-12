@@ -18,5 +18,5 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	total[:, 4:T+3] .= sum(start, dims = 1)
 	rename!(total,auxNew_Names)
 	dfStart = vcat(dfStart, total)
-	CSV.write(joinpath(path, "start.csv"), dftranspose(dfStart, false), writeheader=false)
+	CSV.write(joinpath(path, "start.csv"), dftranspose(dfStart, false), header=false)
 end

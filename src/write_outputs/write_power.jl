@@ -27,6 +27,6 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	rename!(total,auxNew_Names)
 	dfPower = vcat(dfPower, total)
-	CSV.write(joinpath(path, "power.csv"), dftranspose(dfPower, false), writeheader=false)
+	CSV.write(joinpath(path, "power.csv"), dftranspose(dfPower, false), header=false)
 	return dfPower
 end

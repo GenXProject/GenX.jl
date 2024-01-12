@@ -54,7 +54,7 @@ function test_new_build(EP::Dict,inputs::Dict)
 
     for t in keys(EP)
         if t==1
-            a = value(EP[t][:eTotalCap][1]) <= inputs[1]["dfGen"][1,:Existing_Cap_MW][1]
+            a = value(EP[t][:eTotalCap][1]) <= GenX.existing_cap_mw(inputs[1]["RESOURCES"][1])[1]
         else
             a = value(EP[t][:eTotalCap][1]) <= value(EP[t-1][:eTotalCap][1])
         end
@@ -72,7 +72,7 @@ function test_can_retire(EP::Dict,inputs::Dict)
     
     for t in keys(EP)
         if t==1
-            a = value(EP[t][:eTotalCap][1]) >= inputs[1]["dfGen"][1,:Existing_Cap_MW][1]
+            a = value(EP[t][:eTotalCap][1]) >= GenX.existing_cap_mw(inputs[1]["RESOURCES"][1])[1]
         else
             a = value(EP[t][:eTotalCap][1]) >= value(EP[t-1][:eTotalCap][1])
         end
