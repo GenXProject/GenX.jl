@@ -39,7 +39,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 				gen_VRE_STOR = gen.VRE_STOR
 				HAS_MIN_CAP_STOR = resource_id.(gen_VRE_STOR[has_min_cap_stor(gen_VRE_STOR, tag=mincap)])
 				MIN_CAP_GEN_SOLAR = resource_id.(gen_VRE_STOR[has_min_cap_solar(gen_VRE_STOR, tag=mincap)])
-				MIN_CAP_GEN_WIND = resiurce_id.(gen_VRE_STOR[has_min_cap_wind(gen_VRE_STOR, tag=mincap)])
+				MIN_CAP_GEN_WIND = resource_id.(gen_VRE_STOR[has_min_cap_wind(gen_VRE_STOR, tag=mincap)])
 				MIN_CAP_GEN_ASYM_DC_DIS = intersect(inputs["VS_ASYM_DC_DISCHARGE"], HAS_MIN_CAP_STOR)
 				MIN_CAP_GEN_ASYM_AC_DIS = intersect(inputs["VS_ASYM_AC_DISCHARGE"], HAS_MIN_CAP_STOR)
 				MIN_CAP_GEN_SYM_DC = intersect(inputs["VS_SYM_DC"], HAS_MIN_CAP_STOR)

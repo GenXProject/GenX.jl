@@ -36,7 +36,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		AC_CHARGE_EX = intersect(inputs["VS_STOR_AC_CHARGE"], VRE_STOR_EX)
 	end
 
-    crm_derate(i, y::Vector{Int}) = eligible_cap_res(gen[y], tag=i)'
+    crm_derate(i, y::Vector{Int}) = eligible_cap_res.(gen[y], tag=i)'
     max_power(t::Vector{Int}, y::Vector{Int}) = inputs["pP_Max"][y, t]'
     total_cap(y::Vector{Int}) = eTotalCap[y]'
 
@@ -94,8 +94,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
             capvalue[riskyhour, AC_CHARGE_EX] -= crm_derate(i, AC_CHARGE_EX) .* capres_ac_charge ./ total_cap(AC_CHARGE_EX)
 		end
         capvalue = collect(transpose(capvalue))
-		temp_dfCapValue = DataFrame(Resource = inputs["RESOURCES"], Zone = zones, Reserve = fill(Symbol("CapRes_$i"), G))
-
+		temp_dfCapValue = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones, Reserve = fill(Symbol("CapRes_$i"), G))
 		temp_dfCapValue = hcat(temp_dfCapValue, DataFrame(capvalue, :auto))
 		auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("Reserve"); [Symbol("t$t") for t in 1:T]]
 		rename!(temp_dfCapValue, auxNew_Names)

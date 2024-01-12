@@ -34,20 +34,8 @@ obj_test = round_from_tol!(obj_test, optimal_tol)
 optimal_tol = round_from_tol!(optimal_tol, optimal_tol)
 write_testlog(test_path, obj_test, optimal_tol, test_result)
 
-## Test if output files are written correctly
-# True results
-results_true = joinpath(test_path, "Results_true")
-solvetime_true = 0.8063879013061523
-inputs["solve_time"] = solvetime_true
-# Write true results
-results_test = joinpath(test_path, "Results_test")
-isdir(results_test) && rm(results_test, recursive = true)  # Remove test folder if it exists
-write_outputs(EP, results_test, genx_setup, inputs)
-# Compare true and test results
-for file in filter(endswith(".csv"), readdir(results_true))
-    print("Testing $file: ")
-    test_result = Test.@test cmp_csv(joinpath(results_test, file), joinpath(results_true, file))
-    println("$test_result")
-end
+# Test if output files are written correctly
+solvetime_true = 0.8023929595947266
+test_write_output(test_path, genx_setup, EP, inputs, solvetime_true)
 
 end # module TestThreeZones

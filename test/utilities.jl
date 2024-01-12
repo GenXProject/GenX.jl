@@ -162,6 +162,25 @@ function get_exponent_sciform(number::Real)
     return number == 0.0 ? 0 : Int(floor(log10(abs(number))))
 end
 
+# Test if output files are written correctly
+function test_write_output(test_path::AbstractString, genx_setup::Dict, EP::JuMP.Model, inputs::Dict, solvetime_true::Float64)
+    # True results
+    results_true = joinpath(test_path, "Results_true")
+    inputs["solve_time"] = solvetime_true
+    
+    # Write test results
+    results_test = joinpath(test_path, "Results_test")
+    isdir(results_test) && rm(results_test, recursive = true)  # Remove test folder if it exists
+    EP, inputs, _ = redirect_stdout(devnull) do
+        write_outputs(EP, results_test, genx_setup, inputs)
+    end
+    
+    # Compare true and test results
+    for file in filter(endswith(".csv"), readdir(results_true))
+        Test.@test cmp_csv(joinpath(results_test, file), joinpath(results_true, file))
+    end
+end
+
 function round_from_tol!(obj::Real, tol::Real)
     # Round the objective value to the same number of digits as the tolerance
     return round(obj, digits = (-1) * get_exponent_sciform(tol))

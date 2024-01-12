@@ -169,7 +169,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		j += 1
 	end
 
-	technologies = technology.(gen_VRE_STOR)
+	technologies = resource_type.(gen_VRE_STOR)
 	clusters = cluster.(gen_VRE_STOR)
 	zones = zone_id.(gen_VRE_STOR)
 

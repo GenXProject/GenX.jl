@@ -618,3 +618,39 @@ end
 function dataframerow_to_dict(dfr::DataFrameRow)
     return Dict(pairs(dfr))
 end
+
+function summary(rs::Vector{<:AbstractResource})
+    rs_names = summar_map()
+    line_width = 55
+    println("\nSummary of resources loaded into the model:")
+    println(repeat("-", line_width))
+    println("\tResource type \t\tNumber of resources")
+    println(repeat("=", line_width))
+    for r_type in resources_type
+        num_rs = length(rs[nameof.(typeof.(rs)) .== r_type])
+        if num_rs > 0
+            println("\t", rs_names[r_type], "\t\t", num_rs)
+        end
+    end
+    println(repeat("=", line_width))
+    println("Total number of resources: ", length(rs))
+    println(repeat("-", line_width))
+end
+
+function summar_map()
+    names_map = Dict{Symbol,String}(
+        :ELECTROLYZER => "Electrolyzer",
+        :FLEX => "Flexible_demand",
+        :HYDRO => "Hydro",
+        :STOR => "Storage",
+        :THERM => "Thermal",
+        :VRE => "VRE",
+        :MUST_RUN => "Must-run",
+        :VRE_STOR => "VRE_and_storage",
+    )
+    max_length = maximum(length.(values(names_map)))
+    for (k,v) in names_map
+        names_map[k] = v * repeat(" ", max_length - length(v))
+    end
+    return names_map
+end

@@ -20,7 +20,7 @@ genx_setup = Dict(
 )
 
 # Run the case and get the objective value and tolerance
-EP, _, _ = redirect_stdout(devnull) do
+EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 obj_test = objective_value(EP)
@@ -34,5 +34,9 @@ test_result = @test obj_test ≈ obj_true atol = optimal_tol
 obj_test = round_from_tol!(obj_test, optimal_tol)
 optimal_tol = round_from_tol!(optimal_tol, optimal_tol)
 write_testlog(test_path, obj_test, optimal_tol, test_result)
+
+# Test if output files are written correctly
+solvetime_true = 2.558889150619507
+test_write_output(test_path, genx_setup, EP, inputs, solvetime_true)
 
 end # module TestVREStor

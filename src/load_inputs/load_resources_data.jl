@@ -605,6 +605,8 @@ function load_resources_data!(setup::Dict, case_path::AbstractString, input_data
         # add resources to input_data dict
         add_resources_to_input_data!(setup, case_path, input_data, resources)
 
+        # print summary of resources
+        summary(resources)
         return nothing
     end
 end
