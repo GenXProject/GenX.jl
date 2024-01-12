@@ -9,6 +9,7 @@ function default_settings()
         "CapacityReserveMargin" => 0,
         "CO2Cap" => 0,
         "StorageLosses" => 1,
+        "VirtualChargeDischargeCost" => 1e-10,
         "MinCapReq" => 0,
         "MaxCapReq" => 0,
         "ParameterScale" => 0,
