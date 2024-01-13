@@ -280,7 +280,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
         error(msg)
     end
     # if the single column attribute does not have a tag number, add a tag number of 1
-    if n_cols == 2 && cols[2][end-2] != "_1"
+    if n_cols == 2 && cols[2][end-1:end] != "_1"
         rename!(policy_in, Symbol.(cols[2]) => Symbol.(cols[2], "_1"))
     end
     # get policy column names

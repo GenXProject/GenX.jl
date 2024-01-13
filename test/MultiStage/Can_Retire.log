@@ -1,5 +1,0 @@
-2024-01-12 13:04:28 | Testing that the resource with Can_Retire = 0 did not expand capacity | Error During Test at /Users/lb9239/Documents/ZERO_lab/GenX/GenX/test/test_multistage.jl:110
-2024-01-12 13:08:39 | Testing that the resource with Can_Retire = 0 did not expand capacity | Test Passed
-2024-01-12 13:11:12 | Testing that the resource with Can_Retire = 0 did not expand capacity | Test Passed
-2024-01-12 13:13:13 | Testing that the resource with Can_Retire = 0 did not expand capacity | Test Passed
-2024-01-12 13:22:04 | Testing that the resource with Can_Retire = 0 did not expand capacity | Test Passed

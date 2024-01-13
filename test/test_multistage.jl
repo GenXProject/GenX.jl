@@ -5,7 +5,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = [79734.80032, 41630.03494, 27855.20631]
-test_path = joinpath(@__DIR__,"MultiStage");
+test_path = joinpath(@__DIR__, "MultiStage");
 
 # Define test inputs
 multistage_setup = Dict(

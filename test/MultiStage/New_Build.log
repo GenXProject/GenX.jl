@@ -1,5 +1,0 @@
-2024-01-12 13:04:27 | Testing that the resource with New_Build = 0 did not expand capacity | Error During Test at /Users/lb9239/Documents/ZERO_lab/GenX/GenX/test/test_multistage.jl:103
-2024-01-12 13:08:37 | Testing that the resource with New_Build = 0 did not expand capacity | Test Passed
-2024-01-12 13:11:11 | Testing that the resource with New_Build = 0 did not expand capacity | Test Passed
-2024-01-12 13:13:12 | Testing that the resource with New_Build = 0 did not expand capacity | Test Passed
-2024-01-12 13:22:02 | Testing that the resource with New_Build = 0 did not expand capacity | Test Passed
