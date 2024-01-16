@@ -15,8 +15,6 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 	G = inputs["G"]
 	HAS_FUEL = inputs["HAS_FUEL"]
 	MULTI_FUELS = inputs["MULTI_FUELS"]
-	fuel_cols = inputs["FUEL_COLS"]
-    max_fuels = inputs["MAX_NUM_FUELS"]
 
 	# Fuel consumption cost by each resource, including start up fuel
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL], 
@@ -26,6 +24,8 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 	tempannualsum = value.(EP[:ePlantCFuelOut][HAS_FUEL]) + value.(EP[:ePlantCFuelStart][HAS_FUEL])
 
 	if !isempty(MULTI_FUELS)
+		fuel_cols = inputs["FUEL_COLS"]
+		max_fuels = inputs["MAX_NUM_FUELS"]
 		dfPlantFuel.Multi_Fuels = dfGen[HAS_FUEL, :MULTI_FUELS]
 		for i = 1:max_fuels
 			tempannualsum_fuel_heat_multi_generation = zeros(length(HAS_FUEL))
@@ -64,7 +64,6 @@ end
 function write_fuel_consumption_ts(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	T = inputs["T"]     # Number of time steps (hours)
 	HAS_FUEL = inputs["HAS_FUEL"]
-	MULTI_FUELS = inputs["MULTI_FUELS"]
 
 	# Fuel consumption by each resource per time step, unit is MMBTU
 	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL])
