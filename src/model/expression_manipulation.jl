@@ -101,31 +101,6 @@ function add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C,T}, di
     return nothing
 end
 
-# Version for single element
-function add_similar_to_expression!(expr1::GenericVariableRef{C}, expr2::V) where {C,V}
-    add_to_expression!(expr1, expr2)
-    return nothing
-end
-
-@doc raw"""
-    add_similar_to_expression!(expr1::AbstractArray{GenericVariableRef{C}, dim1}, expr2::AbstractArray{V, dim2}) where {C,V,dim1,dim2}
-
-Version of add_similar_to_expression() for variables.
-Expressions containing only variables are automatically converted to variables by default.
-This uses a dummy coefficient to convert the variables to expressions.
-"""
-function add_similar_to_expression!(expr1::AbstractArray{GenericVariableRef{C}, dim1}, expr2::AbstractArray{V, dim2}) where {C,V,dim1,dim2}
-    # This is defined for Arrays of different dimensions
-    # despite the fact it will definitely throw an error
-    # because the error will tell the user / developer
-    # the dimensions of both arrays
-    check_sizes_match(expr1, expr2)
-    for i in eachindex(expr1)
-        add_to_expression!(1 * expr1[i], expr2[i])
-    end
-    return nothing
-end
-
 ###### ###### ###### ###### ###### ######
 # Element-wise addition of one term into an expression
 # Both arrays must have the same dimensions
@@ -146,26 +121,6 @@ This will work on JuMP DenseContainers which do not have linear indexing from 1:
 function add_term_to_expression!(expr1::AbstractArray{GenericAffExpr{C,T}, dims}, expr2::V) where {C,T,V,dims}
     for i in eachindex(expr1)
         add_to_expression!(expr1[i], expr2)
-    end
-    return nothing
-end
-
-# Version for single element
-function add_term_to_expression!(expr1::GenericVariableRef{C}, expr2::V) where {C,V}
-    add_to_expression!(1 * expr1, expr2)
-    return nothing
-end
-
-@doc raw"""
-    add_term_to_expression!(expr1::AbstractArray{GenericVariableRef{C}, dims}, expr2::V) where {C,V,dims}
-
-Version of add_term_to_expression() for variables.
-Expressions containing only variables are automatically converted to variables by default.
-This uses a dummy coefficient to convert the variables to expressions.
-"""
-function add_term_to_expression!(expr1::AbstractArray{GenericVariableRef{C}, dims}, expr2::V) where {C,V,dims}
-    for i in eachindex(expr1)
-        add_to_expression!(1 * expr1[i], expr2)
     end
     return nothing
 end
@@ -212,6 +167,7 @@ end
     sum_expression(expr::AbstractArray{C, dims}) where {C,dims} :: C
 
 Sum an array of expressions into a single expression and return the result.
+We're using errors from add_to_expression!() to check that the types are compatible.
 """
 function sum_expression(expr::AbstractArray{C, dims}) :: AffExpr where {C,dims}
     # check_addable_to_expr(C,C)
