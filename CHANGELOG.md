@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for anyone running non-myopic multistage GenX with asymmetric storage.
 - Fix computation of cumulative minimum capacity retirements in multistage GenX (#514)
 - Fix access of eELOSSByZone expr before initialization (#541)
+- Correctly write unmet reserves (in reg_dn.csv) (#575)
+- Correctly scale total reserves column (in reg_dn.csv) (#594)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
@@ -61,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Load" now typically refers only to the transferrence of data from files to memory,
   except for a few places such as the common term "value of lost load" which refers to non-served demand (#397).
 - `New_Build = -1` in `Generators_data.csv`: instead, use `New_Build = 0` and `Can_Retire = 0`.
+- The matrix-style input of the grid for Network.csv is deprecated in favor a column-style input.
+  Instead of columns z1, z2, ... with entries -1, 0, 1, use two columns: Start_Zone, End_Zone (#591).
 
 
 ## [0.3.6] - 2023-08-01

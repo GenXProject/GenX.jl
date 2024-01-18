@@ -49,8 +49,9 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		    powerbalance[(z-1)*L+9, :] = -(value.(EP[:eLosses_By_Zone][z, :]))
 		end
 		powerbalance[(z-1)*L+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
-		if (!isempty(ELECTROLYZER))
-			powerbalance[(z-1)*L+11, :] = (-1) * sum(value.(EP[:vUSE][ELECTROLYZER, :].data), dims = 1)
+		if !isempty(ELECTROLYZER)
+		    ELECTROLYZER_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], ELECTROLYZER)
+			powerbalance[(z-1)*L+11, :] = (-1) * sum(value.(EP[:vUSE][ELECTROLYZER_ZONE, :].data), dims = 1)
 		end
 	end
 	if setup["ParameterScale"] == 1

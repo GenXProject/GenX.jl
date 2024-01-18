@@ -30,6 +30,8 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add investment cost to the dataframe
 	dfNetRevenue.Inv_cost_MW = dfGen[!,:Inv_Cost_per_MWyr] .* dfCap[1:G,:NewCap]
 	dfNetRevenue.Inv_cost_MWh = dfGen[!,:Inv_Cost_per_MWhyr] .* dfCap[1:G,:NewEnergyCap]
+	dfNetRevenue.Inv_cost_charge_MW = dfGen[!,:Inv_Cost_Charge_per_MWyr] .* dfCap[1:G,:NewChargeCap]
+
 	if !isempty(VRE_STOR)
 		# Doesn't include charge capacities
 		if !isempty(SOLAR)
@@ -37,7 +39,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		end
 		if !isempty(DC)
 			dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapDC]
-		end	
+		end
 		if !isempty(WIND)
 			dfNetRevenue.Inv_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH,:NewCapWind]
 		end
@@ -45,11 +47,14 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
 		dfNetRevenue.Inv_cost_MW *= ModelScalingFactor # converting Million US$ to US$
+		dfNetRevenue.Inv_cost_charge_MW *= ModelScalingFactor # converting Million US$ to US$
 	end
 
 	# Add operations and maintenance cost to the dataframe
 	dfNetRevenue.Fixed_OM_cost_MW = dfGen[!,:Fixed_OM_Cost_per_MWyr] .* dfCap[1:G,:EndCap]
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
+    dfNetRevenue.Fixed_OM_cost_charge_MW = dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr] .* dfCap[1:G, :EndChargeCap]
+
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
 		if !isempty(SOLAR)
@@ -59,10 +64,10 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		if !isempty(WIND)
 			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapWind]
 			dfNetRevenue.Var_OM_cost_out[WIND] += dfVRE_STOR[(dfVRE_STOR.WIND.!=0),:Var_OM_Cost_per_MWh_Wind] .* (value.(EP[:vP_WIND][WIND, :]).data * inputs["omega"])
-		end	
+		end
 		if !isempty(DC)
 			dfNetRevenue.Fixed_OM_cost_MW[VRE_STOR] += dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr] .* dfVreStor[1:VRE_STOR_LENGTH, :EndCapDC]
-		end	
+		end
 		if !isempty(DC_DISCHARGE)
 			dfNetRevenue.Var_OM_cost_out[DC_DISCHARGE] += dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0),:Var_OM_Cost_per_MWh_Discharge_DC] .* (value.(EP[:vP_DC_DISCHARGE][DC_DISCHARGE, :]).data .* dfVRE_STOR[(dfVRE_STOR.STOR_DC_DISCHARGE.!=0),:EtaInverter] * inputs["omega"])
 		end
@@ -73,6 +78,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
 		dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
+		dfNetRevenue.Fixed_OM_cost_charge_MW *= ModelScalingFactor # converting Million US$ to US$
 		dfNetRevenue.Var_OM_cost_out *= ModelScalingFactor # converting Million US$ to US$
 	end
 
@@ -132,7 +138,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add RPS/CES revenue to the dataframe
 	dfNetRevenue.ESRRevenue = zeros(nrow(dfNetRevenue))
  	if setup["EnergyShareRequirement"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
- 		dfNetRevenue.ESRRevenue = dfESRRev[1:G,:AnnualSum]
+ 		dfNetRevenue.ESRRevenue = dfESRRev[1:G,:Total]
  	end
 
 	# Calculate emissions cost
@@ -142,11 +148,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 			co2_cap_dual = dual(EP[:cCO2Emissions_systemwide][cap])
 			CO2ZONES = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
 			GEN_IN_ZONE = dfGen[[y in CO2ZONES for y in dfGen[:, :Zone]], :R_ID]
-			if setup["CO2Cap"]==1 # Mass-based
-				# Cost = sum(sum(emissions of gen y * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
-				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
-				dfNetRevenue.EmissionsCost[GEN_IN_ZONE] += - co2_cap_dual * temp_vec
-			elseif setup["CO2Cap"]==2 # Demand + Rate-based
+			if setup["CO2Cap"]==1 || setup["CO2Cap"]==2 # Mass-based or Demand + Rate-based
 				# Cost = sum(sum(emissions for zone z * dual(CO2 constraint[cap]) for z in Z) for cap in setup["NCO2"])
 				temp_vec = value.(EP[:eEmissionsByPlant][GEN_IN_ZONE, :]) * inputs["omega"]
 				dfNetRevenue.EmissionsCost[GEN_IN_ZONE] += - co2_cap_dual * temp_vec
@@ -169,7 +171,18 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue .+ dfNetRevenue.SubsidyRevenue .+ dfNetRevenue.ReserveMarginRevenue .+ dfNetRevenue.ESRRevenue .+ dfNetRevenue.RegSubsidyRevenue
-	dfNetRevenue.Cost = dfNetRevenue.Inv_cost_MW .+ dfNetRevenue.Inv_cost_MWh .+ dfNetRevenue.Fixed_OM_cost_MW .+ dfNetRevenue.Fixed_OM_cost_MWh .+ dfNetRevenue.Var_OM_cost_out .+ dfNetRevenue.Var_OM_cost_in .+ dfNetRevenue.Fuel_cost .+ dfNetRevenue.Charge_cost .+ dfNetRevenue.EmissionsCost .+ dfNetRevenue.StartCost
+	dfNetRevenue.Cost = (dfNetRevenue.Inv_cost_MW
+                      .+ dfNetRevenue.Inv_cost_MWh
+                      .+ dfNetRevenue.Inv_cost_charge_MW
+                      .+ dfNetRevenue.Fixed_OM_cost_MW
+                      .+ dfNetRevenue.Fixed_OM_cost_MWh
+                      .+ dfNetRevenue.Fixed_OM_cost_charge_MW
+                      .+ dfNetRevenue.Var_OM_cost_out
+                      .+ dfNetRevenue.Var_OM_cost_in
+                      .+ dfNetRevenue.Fuel_cost
+                      .+ dfNetRevenue.Charge_cost
+                      .+ dfNetRevenue.EmissionsCost
+                      .+ dfNetRevenue.StartCost)
 	dfNetRevenue.Profit = dfNetRevenue.Revenue .- dfNetRevenue.Cost
 
 	CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)
