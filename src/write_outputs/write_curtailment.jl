@@ -19,7 +19,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         SOLAR = setdiff(inputs["VS_SOLAR"],inputs["VS_WIND"])
         WIND = setdiff(inputs["VS_WIND"],inputs["VS_SOLAR"])
         SOLAR_WIND = intersect(inputs["VS_SOLAR"],inputs["VS_WIND"])
-		gen_VRE_STOR = gen.VRE_STOR
+		gen_VRE_STOR = gen.VreStorage
 		if !isempty(SOLAR)
 			curtailment[SOLAR, :] = scale_factor * (value.(EP[:eTotalCap_SOLAR][SOLAR]).data .* inputs["pP_Max_Solar"][SOLAR, :] .- value.(EP[:vP_SOLAR][SOLAR, :]).data) .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.solar.!=0)])
 		end

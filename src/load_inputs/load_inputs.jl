@@ -28,7 +28,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	# Read fuel cost data, including time-varying fuel costs
 	load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
-	load_resources_data!(setup, path, inputs)
+	load_resources_data!(inputs, setup, path)
 	# Read in generator/resource availability profiles
 	load_generators_variability!(setup, path, inputs)
 

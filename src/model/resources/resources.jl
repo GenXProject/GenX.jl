@@ -1,8 +1,22 @@
-# Name of the type of resources available in the model
-const resources_type = (:ELECTROLYZER, :FLEX, :HYDRO, :STOR, :THERM, :VRE, :MUST_RUN, :VRE_STOR)
+"""
+    resource_types
 
-# Create resource types from the resources_type list
-for r in resources_type
+Name of the type of resources available in the model.
+
+Possible values:
+- :Electrolyzer
+- :FlexDemand
+- :Hydro
+- :Storage
+- :Thermal
+- :Vre
+- :MustRun
+- :VreStorage
+"""
+const resource_types = (:Electrolyzer, :FlexDemand, :Hydro, :Storage, :Thermal, :Vre, :MustRun, :VreStorage)
+
+# Create composite types (structs) for each resource type in resource_types
+for r in resource_types
     let dict = Symbol("dict"), r = r
         @eval begin
             struct $r{names<:Symbol, T<:Any} <: AbstractResource
@@ -13,26 +27,97 @@ for r in resources_type
     end
 end
 
-# Define dot syntax for accessing resource attributes
+"""
+    getproperty(r::AbstractResource, sym::Symbol)
+
+Allows to access the attributes of an `AbstractResource` object using dot syntax. It checks if the attribute exists in the object and returns its value, otherwise it throws an `ErrorException` indicating that the attribute does not exist.
+
+# Arguments:
+- `r::AbstractResource`: The resource object.
+- `sym::Symbol`: The symbol representing the attribute name.
+
+# Returns:
+- The value of the attribute if it exists in the parent object.
+
+Throws:
+- `ErrorException`: If the attribute does not exist in the parent object.
+
+"""
 function Base.getproperty(r::AbstractResource, sym::Symbol)
     haskey(parent(r), sym) && return parent(r)[sym]
     throw(ErrorException("type $(nameof(typeof(r))) has no attribute $(string(sym))"))
 end
+
+"""
+    setproperty!(r::AbstractResource, sym::Symbol, value)
+
+Allows to set the attributes of an `AbstractResource` object using dot syntax. It sets the value of the attribute in the parent object.
+
+# Arguments:
+- `r::AbstractResource`: The resource object.
+- `sym::Symbol`: The symbol representing the attribute name.
+- `value`: The value to set for the attribute.
+
+"""
 Base.setproperty!(r::AbstractResource, sym::Symbol, value) = setindex!(parent(r), value, sym)
 
-# Check if a resource has a given attribute
+"""
+    haskey(r::AbstractResource, sym::Symbol)
+
+Check if an `AbstractResource` object has a specific attribute. It returns a boolean value indicating whether the attribute exists in the parent object.
+
+# Arguments:
+- `r::AbstractResource`: The resource object.
+- `sym::Symbol`: The symbol representing the attribute name.
+
+# Returns:
+- `true` if the attribute exists in the parent object, `false` otherwise.
+
+"""
 Base.haskey(r::AbstractResource, sym::Symbol) = haskey(parent(r), sym)
 
-# Get a resource attribute or return a default value
+"""
+    get(r::AbstractResource, sym::Symbol, default)
+
+Retrieves the value of a specific attribute from an `AbstractResource` object. If the attribute exists, its value is returned; otherwise, the default value is returned.
+
+# Arguments:
+- `r::AbstractResource`: The resource object.
+- `sym::Symbol`: The symbol representing the attribute name.
+- `default`: The default value to return if the attribute does not exist.
+
+# Returns:
+- The value of the attribute if it exists in the parent object, `default` otherwise.
+
+"""
 function Base.get(r::AbstractResource, sym::Symbol, default) 
     return haskey(r, sym) ? getproperty(r,sym) : default
 end
 
-# Define dot syntax for accessing resource attributes for a vector of resources
-# This also allows to use resources.TYPE to get all resources of a given type
+"""
+getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
+
+Allows to access attributes of a vector of `AbstractResource` objects using dot syntax. If the `sym` is an element of the `resource_types` constant, it returns all resources of that type. Otherwise, it returns the value of the attribute for each resource in the vector.
+
+# Arguments:
+- `rs::Vector{<:AbstractResource}`: The vector of `AbstractResource` objects.
+- `sym::Symbol`: The symbol representing the attribute name or a type from `resource_types`.
+
+# Returns:
+- If `sym` is an element of the `resource_types` constant, it returns a vector containing all resources of that type.
+- If `sym` is an attribute name, it returns a vector containing the value of the attribute for each resource.
+
+## Examples
+```julia
+julia> vre_gen = gen.Vre;  # gen vector of resources
+julia> typeof(vre_gen)
+Vector{Vre} (alias for Array{Vre, 1})
+julia> vre_gen.zone
+```
+"""
 function Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
-    # if sym is Type then return all resources of that type
-    if sym ∈ resources_type 
+    # if sym is Type then return a vector resources of that type
+    if sym ∈ resource_types 
         res_type = eval(sym)
         return Vector{res_type}(rs[isa.(rs, res_type)])
     end
@@ -40,7 +125,20 @@ function Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
     return [getproperty(r, sym) for r in rs]
 end
 
-# Define dot syntax and []-operator for setting resource attributes for a vector of resources
+"""
+    setproperty!(rs::Vector{<:AbstractResource}, sym::Symbol, value::Vector)
+
+Set the attributes specified by `sym` to the corresponding values in `value` for a vector of resources.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `sym::Symbol`: The symbol representing the attribute to set.
+- `value::Vector`: The vector of values to set for the attribute.
+
+# Returns
+- `rs::Vector{<:AbstractResource}`: The updated vector of resources.
+
+"""
 function Base.setproperty!(rs::Vector{<:AbstractResource}, sym::Symbol, value::Vector)
     # if sym is a field of the resource then set that field for all resources
     @assert length(rs) == length(value)
@@ -50,6 +148,20 @@ function Base.setproperty!(rs::Vector{<:AbstractResource}, sym::Symbol, value::V
     return rs
 end
 
+"""
+    setindex!(rs::Vector{<:AbstractResource}, value::Vector, sym::Symbol)
+
+Define dot syntax for setting the attributes specified by `sym` to the corresponding values in `value` for a vector of resources.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `value::Vector`: The vector of values to set for the attribute.
+- `sym::Symbol`: The symbol representing the attribute to set.
+
+# Returns
+- `rs::Vector{<:AbstractResource}`: The updated vector of resources.
+
+"""
 function Base.setindex!(rs::Vector{<:AbstractResource}, value::Vector, sym::Symbol)
     # if sym is a field of the resource then set that field for all resources
     @assert length(rs) == length(value)
@@ -59,20 +171,88 @@ function Base.setindex!(rs::Vector{<:AbstractResource}, value::Vector, sym::Symb
     return rs
 end
 
-# Define pairs for resource types
+"""
+    pairs(r::AbstractResource)
+
+Return an iterator of key-value pairs with the attributes of a given resource.
+
+# Arguments
+- `r::AbstractResource`: The resource.
+
+# Returns
+- `Pairs`: An iterator of key-value pairs over the attributes.
+
+"""
 Base.pairs(r::AbstractResource) = pairs(parent(r))
 
-# Define how to print a resource
+"""
+    show(io::IO, r::AbstractResource)
+
+Print the attributes of the given resource.
+
+# Arguments
+- `io::IO`: The IO stream to print to.
+- `r::AbstractResource`: The resource.
+
+"""
 function Base.show(io::IO, r::AbstractResource)
     for (k,v) in pairs(r)
         println(io, "$k: $v")
     end
 end
 
-# This override the findall function to return the resource id instead of the vector index
+
+"""
+    findall(f::Function, rs::Vector{<:AbstractResource})
+
+Find all resources in the vector `rs` that satisfy the condition given by the function `f`.
+Return the resource id instead of the vector index.
+
+# Arguments
+- `f::Function`: The condition function.
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+
+# Returns
+- `Vector`: The vector of resource ids.
+
+## Examples
+```julia
+julia> findall(r -> max_cap_mwh(r) != 0, gen.Storage)
+3-element Vector{Int64}:
+ 48
+ 49
+ 50
+```
+"""
 Base.findall(f::Function, rs::Vector{<:AbstractResource}) = resource_id.(filter(r -> f(r), rs))
 
-# Define macro to create functions for accessing resource attributes
+"""
+    interface(name, default=default, type=AbstractResource)
+
+Define a function interface for accessing the attribute specified by `name` in a resource of type `type`.
+
+# Arguments
+- `name`: The name of the attribute.
+- `default`: The default value to return if the attribute is not found.
+- `type`: The type of the resource.
+
+# Returns
+- `Function`: The generated function.
+
+## Examples
+```julia
+julia> @interface max_cap_mw 0 Vre
+julia> max_cap_mw(gen.Vre[3])
+4.888236
+julia> max_cap_mw.(gen.Vre) # vectorized
+5-element Vector{Float64}:
+  0.0
+  0.0
+  4.888236
+ 20.835569
+  9.848441999999999
+```
+"""
 macro interface(name, default=default, type=AbstractResource)
     quote
         function $(esc(name))(r::$(esc(type)))
@@ -81,6 +261,30 @@ macro interface(name, default=default, type=AbstractResource)
     end
 end
 
+"""
+    has_positive(name, type=AbstractResource)
+
+Define a function for finding resources in a vector `rs` where the attribute specified by `name` is positive.
+
+# Arguments
+- `name`: The name of the attribute.
+- `type`: The type of the resource.
+
+# Returns
+- `Function`: The generated function.
+
+## Examples
+```julia
+julia> @has_positive max_cap_mw Vre
+julia> has_positive_max_cap_mw(gen.Vre)
+3-element Vector{Int64}:
+ 3 
+ 4
+ 5
+julia> max_cap_mw(gen[3])
+4.888236
+```
+"""
 macro has_positive(name, type=AbstractResource)
     f_name = Symbol("has_positive_$(name)")
     quote
@@ -90,6 +294,24 @@ macro has_positive(name, type=AbstractResource)
     end
 end
 
+"""
+    has_nonnegative(name, type=AbstractResource)
+
+Define a function for finding resources in a vector `rs` where the attribute specified by `name` is non-negative.
+
+# Arguments
+- `name`: The name of the attribute.
+- `type`: The type of the resource.
+
+# Returns
+- `Function`: The generated function.
+
+## Examples
+```julia
+julia> @has_nonnegative max_cap_mw Thermal
+julia> has_nonnegative_max_cap_mw(gen.Thermal)
+```
+"""
 macro has_nonnegative(name, type=AbstractResource)
     f_name = Symbol("has_nonneg_$(name)")
     quote
@@ -99,6 +321,31 @@ macro has_nonnegative(name, type=AbstractResource)
     end
 end
 
+"""
+    has_attribute(name, type=AbstractResource)
+
+Define a function for finding resources in a vector `rs` where the attribute specified by `name` is not equal to zero.
+
+# Arguments
+- `name`: The name of the attribute.
+- `type`: The type of the resource.
+
+# Returns
+- `Function`: The generated function.
+
+## Examples
+```julia
+julia> @has_attribute existing_cap_mw Thermal
+julia> has_existing_cap_mw(gen.Thermal)
+4-element Vector{Int64}:
+ 21
+ 22
+ 23
+ 24
+julia> existing_cap_mw(gen[21])
+7.0773
+```
+"""
 macro has_attribute(name, type=AbstractResource)
     f_name = Symbol("has_$(name)")
     quote
@@ -118,19 +365,20 @@ resource_name(rs::Vector{T}) where T <: AbstractResource = rs.resource
 
 resource_id(r::AbstractResource)::Int64 = r.id
 resource_id(rs::Vector{T}) where T <: AbstractResource = resource_id.(rs)
-resource_type(r::AbstractResource) = r.resource_type
+resource_type_mga(r::AbstractResource) = r.resource_type
 
 zone_id(r::AbstractResource) = r.zone
 zone_id(rs::Vector{T}) where T <: AbstractResource = rs.zone
 
-max_cap_mw(r::AbstractResource) = get(r, :max_cap_mw, -1)
-min_cap_mw(r::AbstractResource) = get(r, :min_cap_mw, -1)
+const default_minmax_cap = -1.
+max_cap_mw(r::AbstractResource) = get(r, :max_cap_mw, default_minmax_cap)
+min_cap_mw(r::AbstractResource) = get(r, :min_cap_mw, default_minmax_cap)
 
-max_cap_mwh(r::AbstractResource) = get(r, :max_cap_mwh, -1)
-min_cap_mwh(r::AbstractResource) = get(r, :min_cap_mwh, -1)
+max_cap_mwh(r::AbstractResource) = get(r, :max_cap_mwh, default_minmax_cap)
+min_cap_mwh(r::AbstractResource) = get(r, :min_cap_mwh, default_minmax_cap)
 
-max_charge_cap_mw(r::AbstractResource) = get(r, :max_charge_cap_mw, -1)
-min_charge_cap_mw(r::AbstractResource) = get(r, :min_charge_cap_mw, -1)
+max_charge_cap_mw(r::AbstractResource) = get(r, :max_charge_cap_mw, default_minmax_cap)
+min_charge_cap_mw(r::AbstractResource) = get(r, :min_charge_cap_mw, default_minmax_cap)
 
 existing_cap_mw(r::AbstractResource) = r.existing_cap_mw
 existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default)
@@ -168,22 +416,20 @@ ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cos
 biomass(r::AbstractResource) = get(r, :biomass, default)
 
 # Reservoir hydro and storage
-efficiency_up(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_up, 1.0)
-efficiency_down(r::T) where T <: Union{HYDRO,STOR} = get(r, :eff_down, 1.0)
+const default_percent = 1.0
+efficiency_up(r::T) where T <: Union{Hydro,Storage} = get(r, :eff_up, default_percent)
+efficiency_down(r::T) where T <: Union{Hydro,Storage} = get(r, :eff_down, default_percent)
 
 # Ramp up and down
-const TCOMMIT = Union{ELECTROLYZER, HYDRO, THERM}
-min_power(r::TCOMMIT) = get(r, :min_power, default)
-ramp_up_percentage(r::TCOMMIT) = get(r, :ramp_up_percentage, 1.0)
-ramp_down_percentage(r::TCOMMIT) = get(r, :ramp_dn_percentage, 1.0)
-
-# Retrofit
-has_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default) > 0, rs)
+const VarPower = Union{Electrolyzer, Hydro, Thermal}
+min_power(r::VarPower) = get(r, :min_power, default)
+ramp_up_percentage(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
+ramp_down_percentage(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)
 
 # Retirement
-lifetime(r::STOR) = get(r, :lifetime, 15)
+lifetime(r::Storage) = get(r, :lifetime, 15)
 lifetime(r::AbstractResource) = get(r, :lifetime, 30)
-capital_recovery_period(r::STOR) = get(r, :capital_recovery_period, 15)
+capital_recovery_period(r::Storage) = get(r, :capital_recovery_period, 15)
 capital_recovery_period(r::AbstractResource) = get(r, :capital_recovery_period, 30)
 tech_wacc(r::AbstractResource) = get(r, :wacc, default)
 min_retired_cap_mw(r::AbstractResource) = get(r, :min_retired_cap_mw, default)
@@ -195,7 +441,6 @@ cum_min_retired_charge_cap_mw(r::AbstractResource) = r.cum_min_retired_charge_ca
 
 # MGA
 mga(r::AbstractResource) = get(r, :mga, default)
-has_mga_on(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
 
 # policies
 esr(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_$tag"), default)
@@ -207,9 +452,23 @@ eligible_cap_res(r::AbstractResource; tag::Int64) = get(r, Symbol("eligible_cap_
 region(r::AbstractResource) = r.region
 cluster(r::AbstractResource) = r.cluster
 
-# Utility functions for working with resources
+# UTILITY FUNCTIONS for working with resources
+is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) > 0, rs)
+is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) == 0, rs)
+
+has_mga_on(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
+
+has_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default) > 0, rs)
+
+has_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
+
 is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default) == 1, rs)
 is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default) == 1, rs)
+
+# Unit commitment
+has_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
+# Without unit commitment
+no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 2, rs)
 
 has_max_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mw(r) != 0, rs)
 has_positive_max_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mw(r) > 0, rs)
@@ -217,127 +476,158 @@ has_positive_min_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -
 
 has_existing_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_cap_mw(r) >= 0, rs)
 
-has_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
-
-is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) > 0, rs)
-is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) == 0, rs)
-
 has_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) != 0, rs)
 has_positive_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) > 0, rs)
-has_nonneg_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) >= 0, rs)
 has_positive_min_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> min_cap_mwh(r) > 0, rs)
-has_existing_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_cap_mwh(r) >= 0, rs)
+has_nonnegative_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) >= 0, rs)
+
 has_max_charge_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_charge_cap_mw(r) != 0, rs)
 has_positive_max_charge_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_charge_cap_mw(r) > 0, rs)
 has_positive_min_charge_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> min_charge_cap_mw(r) > 0, rs)
+
+has_existing_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_cap_mwh(r) >= 0, rs)
 has_existing_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_charge_capacity_mw(r) >= 0, rs)
 
-function has_qualified_hydrogen_supply(rs::Vector{T}) where T <: AbstractResource
-    condition::BitVector = qualified_hydrogen_supply.(rs) .== 1
-    return resource_id.(rs[condition])
-end
+has_qualified_hydrogen_supply(rs::Vector{T}) where T <: AbstractResource = findall(r -> qualified_hydrogen_supply(r) == 1, rs)
 
-## policies
-# energy share requirement
+# policies
 has_esr(rs::Vector{T}; tag::Int64=1) where T <: AbstractResource = findall(r -> esr(r,tag=tag) > 0, rs)
-
-# min cap requirement
 has_min_cap(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> min_cap(r,tag=tag) > 0, rs)
-
-# max cap requirement
 has_max_cap(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap(r,tag=tag) > 0, rs)
 
-## Reserves
-# cap reserve margin
-has_cap_reserve_margin(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> eligible_cap_res(r,tag=tag) > 0, rs)
-has_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
-has_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
+# STORAGE interface
+"""
+    storage(rs::Vector{T}) where T <: AbstractResource
 
-# Maintenance
-resources_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default) > 0, rs)
-maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default)
-maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default)
-maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default)
+Returns the indices of all storage resources in the vector `rs`.
+"""
+storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Storage), rs)
 
-# STOR interface
-storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,STOR), rs)
-
-self_discharge(r::STOR) = r.self_disch
-
-min_duration(r::STOR) = r.min_duration
-max_duration(r::STOR) = r.max_duration
-
-var_om_cost_per_mwh_in(r::STOR) = get(r, :var_om_cost_per_mwh_in, default)
-
-symmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,STOR) && r.model == 1, rs)
-asymmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,STOR) && r.model == 2, rs)
-
+self_discharge(r::Storage) = r.self_disch
+min_duration(r::Storage) = r.min_duration
+max_duration(r::Storage) = r.max_duration
+var_om_cost_per_mwh_in(r::Storage) = get(r, :var_om_cost_per_mwh_in, default)
+symmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Storage) && r.model == 1, rs)
+asymmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Storage) && r.model == 2, rs)
 
 # HYDRO interface
-hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,HYDRO), rs)
+"""
+    hydro(rs::Vector{T}) where T <: AbstractResource
+
+Returns the indices of all hydro resources in the vector `rs`.
+"""
+hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Hydro), rs)
 has_hydro_energy_to_power_ratio(rs::Vector{T}) where T <: AbstractResource = findall(r -> hydro_energy_to_power_ratio(r) > 0, rs)
 
+# THERM interface
+"""
+    thermal(rs::Vector{T}) where T <: AbstractResource
 
-## THERM interface
-thermal(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,THERM), rs)
-# Unit commitment
-up_time(r::THERM) = get(r, :up_time, default)
-down_time(r::THERM) = get(r, :down_time, default)
-has_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,THERM) && r.model == 1, rs)
-# Without unit commitment
-no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,THERM) && r.model == 2, rs)
-
+Returns the indices of all thermal resources in the vector `rs`.
+"""
+thermal(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal), rs)
+up_time(r::Thermal) = get(r, :up_time, default)
+down_time(r::Thermal) = get(r, :down_time, default)
 
 # VRE interface
-vre(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE), rs)
+"""
+    vre(rs::Vector{T}) where T <: AbstractResource
+
+Returns the indices of all Vre resources in the vector `rs`.
+"""
+vre(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Vre), rs)
 has_positive_num_vre_bins(rs::Vector{T}) where T <: AbstractResource = findall(r -> num_vre_bins(r) >= 1, rs)
 
-
 # ELECTROLYZER interface
-electrolyzer(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,ELECTROLYZER), rs)
-electrolyzer_min_kt(r::ELECTROLYZER) = r.electrolyzer_min_kt
-hydrogen_mwh_per_tonne(r::ELECTROLYZER) = r.hydrogen_mwh_per_tonne
-hydrogen_price_per_tonne(r::ELECTROLYZER) = r.hydrogen_price_per_tonne
+"""
+    electrolyzer(rs::Vector{T}) where T <: AbstractResource
 
+Returns the indices of all electrolyzer resources in the vector `rs`.
+"""
+electrolyzer(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Electrolyzer), rs)
+electrolyzer_min_kt(r::Electrolyzer) = r.electrolyzer_min_kt
+hydrogen_mwh_per_tonne(r::Electrolyzer) = r.hydrogen_mwh_per_tonne
+hydrogen_price_per_tonne(r::Electrolyzer) = r.hydrogen_price_per_tonne
 
-# FLEX interface
-flex_demand(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,FLEX), rs)
-flexible_demand_energy_eff(r::FLEX) = r.flexible_demand_energy_eff
-max_flexible_demand_delay(r::FLEX) = r.max_flexible_demand_delay
-max_flexible_demand_advance(r::FLEX) = r.max_flexible_demand_advance
-var_om_cost_per_mwh_in(r::FLEX) = get(r, :var_om_cost_per_mwh_in, default)
+# FLEX_DEMAND interface
+"""
+    flex_demand(rs::Vector{T}) where T <: AbstractResource
 
+Returns the indices of all flexible demand resources in the vector `rs`.
+"""
+flex_demand(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,FlexDemand), rs)
+flexible_demand_energy_eff(r::FlexDemand) = r.flexible_demand_energy_eff
+max_flexible_demand_delay(r::FlexDemand) = r.max_flexible_demand_delay
+max_flexible_demand_advance(r::FlexDemand) = r.max_flexible_demand_advance
+var_om_cost_per_mwh_in(r::FlexDemand) = get(r, :var_om_cost_per_mwh_in, default)
 
 # MUST_RUN interface
-must_run(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,MUST_RUN), rs)
+"""
+    must_run(rs::Vector{T}) where T <: AbstractResource
 
+Returns the indices of all must-run resources in the vector `rs`.
+"""
+must_run(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,MustRun), rs)
 
-# VRE_STOR
-technology(r::VRE_STOR) = r.technology
-self_discharge(r::VRE_STOR) = r.self_disch
+# VRE_STOR interface
+"""
+    vre_stor(rs::Vector{T}) where T <: AbstractResource
 
-vre_stor(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR), rs)
-solar(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.solar != 0, rs)
-wind(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.wind != 0, rs)
+Returns the indices of all VRE_STOR resources in the vector `rs`.
+"""
+vre_stor(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage), rs)
+technology(r::VreStorage) = r.technology
+self_discharge(r::VreStorage) = r.self_disch
 
-storage_dc_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_dc_discharge >= 1, rs)
-storage_sym_dc_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_dc_discharge == 1, rs)
-storage_asym_dc_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_dc_discharge == 2, rs)
+"""
+    solar(rs::Vector{T}) where T <: AbstractResource
 
-storage_dc_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_dc_charge >= 1, rs)
-storage_sym_dc_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_dc_charge == 1, rs)
-storage_asym_dc_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_dc_charge == 2, rs)
+Returns the indices of all co-located solar resources in the vector `rs`.
+"""
+solar(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.solar != 0, rs)
 
-storage_ac_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_ac_discharge >= 1, rs)
-storage_sym_ac_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_ac_discharge == 1, rs)
-storage_asym_ac_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_ac_discharge == 2, rs)
+"""
+    wind(rs::Vector{T}) where T <: AbstractResource
 
-storage_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_ac_charge >= 1, rs)
-storage_sym_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_ac_charge == 1, rs)
-storage_asym_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VRE_STOR) && r.stor_ac_charge == 2, rs)
+Returns the indices of all co-located wind resources in the vector `rs`.
+"""
+wind(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.wind != 0, rs)
+
+"""
+    storage_dc_discharge(rs::Vector{T}) where T <: AbstractResource
+Returns the indices of all co-located storage resources in the vector `rs` that discharge DC.
+"""
+storage_dc_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_dc_discharge >= 1, rs)
+storage_sym_dc_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_dc_discharge == 1, rs)
+storage_asym_dc_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_dc_discharge == 2, rs)
+
+""" 
+    storage_dc_charge(rs::Vector{T}) where T <: AbstractResource
+    Returns the indices of all co-located storage resources in the vector `rs` that charge DC.
+"""
+storage_dc_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_dc_charge >= 1, rs)
+storage_sym_dc_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_dc_charge == 1, rs)
+storage_asym_dc_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_dc_charge == 2, rs)
+
+""" 
+    storage_ac_discharge(rs::Vector{T}) where T <: AbstractResource
+Returns the indices of all co-located storage resources in the vector `rs` that discharge AC.
+"""
+storage_ac_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_discharge >= 1, rs)
+storage_sym_ac_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_discharge == 1, rs)
+storage_asym_ac_discharge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_discharge == 2, rs)
+
+""" 
+    storage_ac_charge(rs::Vector{T}) where T <: AbstractResource
+Returns the indices of all co-located storage resources in the vector `rs` that charge AC.
+"""
+storage_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_charge >= 1, rs)
+storage_sym_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_charge == 1, rs)
+storage_asym_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_charge == 2, rs)
 
 is_LDS_VRE_STOR(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds_vre_stor, default) != 0, rs)
 
+# loop over the above attributes and define function interfaces for each one
 for attr in (:existing_cap_solar_mw, 
              :existing_cap_wind_mw,
              :existing_cap_inverter_mw,
@@ -401,10 +691,10 @@ for attr in (:etainverter,
              :eff_down_dc,
              :power_to_energy_ac,
              :power_to_energy_dc)
-    @eval @interface $attr default VRE_STOR
+    @eval @interface $attr default VreStorage
 end
 
-# MultiStage 
+# Multistage
 for attr in (:capital_recovery_period_dc,
              :capital_recovery_period_solar,
              :capital_recovery_period_wind,
@@ -419,7 +709,7 @@ for attr in (:capital_recovery_period_dc,
              :tech_wacc_discharge_dc,
              :tech_wacc_charge_ac,
              :tech_wacc_discharge_ac)
-    @eval @interface $attr default VRE_STOR
+    @eval @interface $attr default VreStorage
 end
 
 # Endogenous retirement
@@ -430,9 +720,9 @@ for attr in (:min_retired_cap_inverter_mw,
              :min_retired_cap_charge_dc_mw,
              :min_retired_cap_discharge_ac_mw,
              :min_retired_cap_charge_ac_mw,)
-    @eval @interface $attr default VRE_STOR
+    @eval @interface $attr default VreStorage
     cum_attr = Symbol("cum_"*String(attr))
-    @eval @interface $cum_attr default VRE_STOR
+    @eval @interface $cum_attr default VreStorage
 end
 
 ## policies
@@ -459,41 +749,42 @@ has_max_cap_solar(rs::Vector{T}; tag::Int64) where T <: AbstractResource = finda
 has_max_cap_wind(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap_wind(r,tag=tag) == 1, rs)
 has_max_cap_stor(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap_stor(r,tag=tag) == 1, rs)
 
+## Reserves
+# cap reserve margin
+has_cap_reserve_margin(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> eligible_cap_res(r,tag=tag) > 0, rs)
+has_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
+has_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
+
+# Maintenance
+resources_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default) > 0, rs)
+maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default)
+maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default)
+maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default)
 
 ## Utility functions for working with resources
 in_zone(r::AbstractResource, zone::Int) = zone_id(r) == zone
 resources_in_zone(rs::Vector{AbstractResource}, zone::Int) = filter(r -> in_zone(r, zone), rs)
 
 @doc raw"""
-    resources_in_zone_by_name(inputs::Dict, zone::Int)::Vector{String}
-Find names of resources in a zone.
-"""
-function resources_in_zone_by_name(inputs::Dict, zone::Int)
-    resources_d = inputs["resources_d"]
-    return resource_name.(resources_in_zone(resources_d, zone))
-end
-
-@doc raw"""
-    resources_in_zone_by_rid(df::DataFrame, zone::Int)::Vector{Int}
+    resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
 Find R_ID's of resources in a zone.
 """
-function resources_in_zone_by_rid(df::DataFrame, zone::Int)::Vector{Int}
-    return df[df.Zone .== zone, :R_ID]
-end
-
-@doc raw"""
-    resources_in_zone_by_rid(inputs::Dict, zone::Int)::Vector{Int}
-Find R_ID's of resources in a zone.
-"""
-function resources_in_zone_by_rid(inputs::Dict, zone::Int)::Vector{Int}
-    df = inputs["dfGen"]
-    return resources_in_zone_by_rid(df, zone)
-end
-
 function resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
     return resource_id.(rs[zone_id.(rs) .== zone])
 end
 
+"""
+    resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
+
+Find the resource with `name` in the vector `rs`.
+
+# Arguments
+- `rs`: A vector of resources.
+- `name`: The name of the resource.
+
+# Returns
+- `AbstractResource`: The resource with the name `name`.
+"""
 function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
     r_id = findfirst(r -> resource_name(r) == name, rs)
     # check that the resource exists
@@ -505,152 +796,4 @@ function resources_by_names(rs::Vector{AbstractResource}, names::Vector{String})
     return rs[findall(r -> resource_name(r) ∈ names, rs)]
 end
 
-@doc raw"""
-	check_mustrun_reserve_contribution(r::AbstractResource)
 
-Make sure that a MUST_RUN resource has Reg_Max and Rsv_Max set to 0 (since they cannot contribute to reserves).
-"""
-function check_mustrun_reserve_contribution(r::AbstractResource)
-    applicable_resources = MustRun
-    error_strings = String[]
-
-    if !isa(r, applicable_resources)
-        # not MUST_RUN so the rest is not applicable
-        return error_strings
-    end
-
-    reg_max_r = reg_max(r)
-    if reg_max_r != 0
-        e = string("Resource ", resource_name(r), " is of MUST_RUN type but :Reg_Max = ", reg_max_r, ".\n",
-                    "MUST_RUN units must have Reg_Max = 0 since they cannot contribute to reserves.")
-        push!(error_strings, e)
-    end
-    
-    rsv_max_r = rsv_max(r)
-    if rsv_max_r != 0
-        e = string("Resource ", resource_name(r), " is of MUST_RUN type but :Rsv_Max = ", rsv_max_r, ".\n",
-                   "MUST_RUN units must have Rsv_Max = 0 since they cannot contribute to reserves.")
-        push!(error_strings, e)
-    end
-    return error_strings
-end
-
-function check_LDS_applicability(r::AbstractResource)
-    applicable_resources = Union{STOR, HYDRO}
-    not_set = resource_attribute_not_set()
-    error_strings = String[]
-    lds_value = get(r, :LDS, not_set)
-    # LDS is available onlåy for Hydro and Storage
-    if !isa(r, applicable_resources) && lds_value > 0
-        e = string("Resource ", resource_name(r), " has :LDS = ", lds_value, ".\n",
-                   "This setting is valid only for resources where the type is one of $applicable_resources.")
-        push!(error_strings, e)
-    end
-    return error_strings
-end
-
-function check_maintenance_applicability(r::AbstractResource)
-    applicable_resources = THERM
-
-    not_set = resource_attribute_not_set()
-    maint_value = get(r, :MAINT, not_set)
-    
-    error_strings = String[]
-    
-    if maint_value == not_set
-        # not MAINT so the rest is not applicable
-        return error_strings
-    end
-
-    # MAINT is available only for Thermal
-    if !isa(r, applicable_resources) && maint_value > 0
-        e = string("Resource ", resource_name(r), " has :MAINT = ", maint_value, ".\n",
-                   "This setting is valid only for resources where the type is one of $applicable_resources.")
-        push!(error_strings, e)
-    end
-    if get(r, :THERM, not_set) == 2
-        e = string("Resource ", resource_name(r), " has :MAINT = ", maint_value, ".\n",
-                   "This is valid only for resources with unit commitment (:THERM = 1);\n",
-                   "this has :THERM = 2.")
-        push!(error_strings, e)
-    end
-    return error_strings
-end
-
-function check_resource(r::AbstractResource)::Vector{String}
-    e = String[]
-    e = [e; check_LDS_applicability(r)]
-    e = [e; check_maintenance_applicability(r)]    
-    e = [e; check_mustrun_reserve_contribution(r)]
-    return e
-end
-
-@doc raw"""
-    check_resource(resources::Vector{GenXResource})::Vector{String}
-
-Validate the consistency of a vector of GenX resources
-Reports any errors in a list of strings.
-"""
-function check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
-    e = String[]
-    for r in resources
-        e = [e; check_resource(r)]
-    end
-    return e
-end
-
-function announce_errors_and_halt(e::Vector{String})    
-    error_count = length(e)
-    for error_message in e
-        @error(error_message)
-    end
-    s = string(error_count, " problems were detected with the input data. Halting.")
-    error(s)
-end
-
-function validate_resources(resources::T) where T <: Vector{AbstractResource}
-    e = check_resource(resources)
-    if length(e) > 0
-        announce_errors_and_halt(e)
-    end
-end
-
-function dataframerow_to_dict(dfr::DataFrameRow)
-    return Dict(pairs(dfr))
-end
-
-function summary(rs::Vector{<:AbstractResource})
-    rs_names = summar_map()
-    line_width = 55
-    println("\nSummary of resources loaded into the model:")
-    println(repeat("-", line_width))
-    println("\tResource type \t\tNumber of resources")
-    println(repeat("=", line_width))
-    for r_type in resources_type
-        num_rs = length(rs[nameof.(typeof.(rs)) .== r_type])
-        if num_rs > 0
-            println("\t", rs_names[r_type], "\t\t", num_rs)
-        end
-    end
-    println(repeat("=", line_width))
-    println("Total number of resources: ", length(rs))
-    println(repeat("-", line_width))
-end
-
-function summar_map()
-    names_map = Dict{Symbol,String}(
-        :ELECTROLYZER => "Electrolyzer",
-        :FLEX => "Flexible_demand",
-        :HYDRO => "Hydro",
-        :STOR => "Storage",
-        :THERM => "Thermal",
-        :VRE => "VRE",
-        :MUST_RUN => "Must-run",
-        :VRE_STOR => "VRE_and_storage",
-    )
-    max_length = maximum(length.(values(names_map)))
-    for (k,v) in names_map
-        names_map[k] = v * repeat(" ", max_length - length(v))
-    end
-    return names_map
-end

@@ -149,7 +149,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
 	if setup["HydrogenHourlyMatching"] == 1
-		HYDROGEN_ZONES = unique(zone_id.(gen.ELECTROLYZER))
+		HYDROGEN_ZONES = unique(zone_id.(gen.Electrolyzer))
 		QUALIFIED_SUPPLY = has_qualified_hydrogen_supply(gen)
 		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
 			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, STORAGE))

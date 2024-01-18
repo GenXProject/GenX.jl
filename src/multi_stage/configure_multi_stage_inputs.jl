@@ -96,7 +96,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 
 		# Conduct 1. and 2. for any co-located VRE-STOR resources
 		if !isempty(inputs_d["VRE_STOR"])
-			gen_VRE_STOR = gen.VRE_STOR
+			gen_VRE_STOR = gen.VreStorage
 			gen_VRE_STOR.inv_cost_inverter_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_inverter_per_mwyr.(gen_VRE_STOR), capital_recovery_period_dc.(gen_VRE_STOR), tech_wacc_dc.(gen_VRE_STOR))
 			gen_VRE_STOR.inv_cost_solar_per_mwyr = compute_overnight_capital_cost(settings_d,	inv_cost_solar_per_mwyr.(gen_VRE_STOR), capital_recovery_period_solar.(gen_VRE_STOR), tech_wacc_solar.(gen_VRE_STOR))
 			gen_VRE_STOR.inv_cost_wind_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_wind_per_mwyr.(gen_VRE_STOR), capital_recovery_period_wind.(gen_VRE_STOR), tech_wacc_wind.(gen_VRE_STOR))

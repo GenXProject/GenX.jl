@@ -39,17 +39,17 @@ function write_reserve_margin_revenue(path::AbstractString, inputs::Dict, setup:
 		weighted_price = capacity_reserve_margin_price(EP, inputs, setup, i) .* inputs["omega"]
 		tempresrev = zeros(G)
 		tempresrev[THERM_ALL] = thermal_plant_effective_capacity(EP, inputs, THERM_ALL, i)' * weighted_price
-		tempresrev[VRE] = eligible_cap_res.(gen.VRE, tag=i) .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * weighted_price)
-		tempresrev[MUST_RUN] = eligible_cap_res.(gen.MUST_RUN, tag=i) .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * weighted_price)
-		tempresrev[HYDRO_RES] = eligible_cap_res.(gen.HYDRO, tag=i) .* (value.(EP[:vP][HYDRO_RES, :]) * weighted_price)
+		tempresrev[VRE] = eligible_cap_res.(gen.Vre, tag=i) .* (value.(EP[:eTotalCap][VRE])) .* (inputs["pP_Max"][VRE, :] * weighted_price)
+		tempresrev[MUST_RUN] = eligible_cap_res.(gen.MustRun, tag=i) .* (value.(EP[:eTotalCap][MUST_RUN])) .* (inputs["pP_Max"][MUST_RUN, :] * weighted_price)
+		tempresrev[HYDRO_RES] = eligible_cap_res.(gen.Hydro, tag=i) .* (value.(EP[:vP][HYDRO_RES, :]) * weighted_price)
 		if !isempty(STOR_ALL)
-			tempresrev[STOR_ALL] = eligible_cap_res.(gen.STOR, tag=i) .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPRES_discharge][STOR_ALL, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL, :]).data) * weighted_price)
+			tempresrev[STOR_ALL] = eligible_cap_res.(gen.Storage, tag=i) .* ((value.(EP[:vP][STOR_ALL, :]) - value.(EP[:vCHARGE][STOR_ALL, :]).data + value.(EP[:vCAPRES_discharge][STOR_ALL, :]).data - value.(EP[:vCAPRES_charge][STOR_ALL, :]).data) * weighted_price)
 		end
 		if !isempty(FLEX)
-			tempresrev[FLEX] = eligible_cap_res.(gen.FLEX, tag=i) .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * weighted_price)
+			tempresrev[FLEX] = eligible_cap_res.(gen.FlexDemand, tag=i) .* ((value.(EP[:vCHARGE_FLEX][FLEX, :]).data - value.(EP[:vP][FLEX, :])) * weighted_price)
 		end
 		if !isempty(VRE_STOR)
-			gen_VRE_STOR = gen.VRE_STOR
+			gen_VRE_STOR = gen.VreStorage
 			tempresrev[VRE_STOR] = eligible_cap_res.(gen_VRE_STOR, tag=i) .* ((value.(EP[:vP][VRE_STOR, :])) * weighted_price)
 			tempresrev[VRE_STOR_STOR] .-= eligible_cap_res.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0) .| (gen_VRE_STOR.stor_dc_charge.!=0) .| (gen_VRE_STOR.stor_ac_discharge.!=0) .|(gen_VRE_STOR.stor_ac_charge.!=0)], tag=i) .* (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR, :]).data * weighted_price)
 			tempresrev[DC_DISCHARGE] .+= eligible_cap_res.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)], tag=i) .* ((value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)])) * weighted_price)

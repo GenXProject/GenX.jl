@@ -1,31 +1,80 @@
+"""
+    _get_resource_info()
+
+Internal function to get resource information (filename and GenX type) for each type of resource available in GenX.
+
+# 
+    resource_info (NamedTuple): A tuple containing resource information.
+
+"""
 function _get_resource_info()
-    resources = (
-        hydro   = (filename="Hydro.csv", type=HYDRO),
-        thermal = (filename="Thermal.csv", type=THERM),
-        vre     = (filename="Vre.csv", type=VRE),
-        storage = (filename="Storage.csv", type=STOR),
-        flex_demand  = (filename="Flex_demand.csv", type=FLEX),
-        must_run = (filename="Must_run.csv", type=MUST_RUN),
-        electrolyzer = (filename="Electrolyzer.csv", type=ELECTROLYZER),
-        vre_stor = (filename="Vre_stor.csv", type=VRE_STOR)
+    resource_info = (
+        hydro   = (filename="Hydro.csv", type=Hydro),
+        thermal = (filename="Thermal.csv", type=Thermal),
+        vre     = (filename="Vre.csv", type=Vre),
+        storage = (filename="Storage.csv", type=Storage),
+        flex_demand  = (filename="Flex_demand.csv", type=FlexDemand),
+        must_run = (filename="Must_run.csv", type=MustRun),
+        electrolyzer = (filename="Electrolyzer.csv", type=Electrolyzer),
+        vre_stor = (filename="Vre_stor.csv", type=VreStorage)
     )
-    return resources
+    return resource_info
 end
 
+"""
+    _get_policyfile_info()
+
+Internal function to get policy file information.
+
+# 
+    policyfile_info (NamedTuple): A tuple containing policy file information.
+
+"""
 function _get_policyfile_info()
-    policies = (
+    policyfile_info = (
         esr     = (filename="Res_energy_share_requirement.csv"),
         cap_res = (filename="Res_capacity_reserve_margin.csv"),
         min_cap_tags = (filename="Res_minimum_capacity_requirement.csv"),
         max_cap_tags = (filename="Res_maximum_capacity_requirement.csv"),
     )
-    return policies
+    return policyfile_info
 end
 
+"""
+    _get_summar_map()
+
+Internal function to get a map of GenX resource type their corresponding names in the summary table.
+"""
+function _get_summary_map()
+    names_map = Dict{Symbol,String}(
+        :Electrolyzer => "Electrolyzer",
+        :FlexDemand => "Flexible_demand",
+        :Hydro => "Hydro",
+        :Storage => "Storage",
+        :Thermal => "Thermal",
+        :Vre => "Vre",
+        :MustRun => "Must_run",
+        :VreStorage => "VRE_and_storage",
+    )
+    max_length = maximum(length.(values(names_map)))
+    for (k,v) in names_map
+        names_map[k] = v * repeat(" ", max_length - length(v))
+    end
+    return names_map
+end
+
+"""
+    scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
+
+Scales resources attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
+See documentation for descriptions of each column being scaled.
+
+# Arguments
+- `resource_in` (DataFrame): A dataframe containing data for a specific resource.
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
+"""
 function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
-    # See documentation for descriptions of each column
-    # Generally, these scalings converts energy and power units from MW to GW
-    # and $/MW to $M/GW. Both are done by dividing the values by 1000.
     columns_to_scale = [:existing_charge_cap_mw,        # to GW
                         :existing_cap_mwh,              # to GWh
                         :existing_cap_mw,               # to GW
@@ -66,8 +115,20 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
                         ]
 
     scale_columns!(resource_in, columns_to_scale, scale_factor)
+    return nothing
 end
 
+"""
+    scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
+
+Scales vre_stor attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
+See documentation for descriptions of each column being scaled.
+
+# Arguments
+- `vre_stor_in` (DataFrame): A dataframe containing data for co-located VREs and storage.
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
+"""
 function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [:existing_cap_inverter_mw,
                         :existing_cap_solar_mw,
@@ -118,8 +179,20 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
                         :min_retired_cap_discharge_dc_mw,
                         :min_retired_cap_discharge_ac_mw]
     scale_columns!(vre_stor_in, columns_to_scale, scale_factor)
+    return nothing
 end
 
+"""
+    scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
+
+Scales in-place the columns in `columns_to_scale` of a dataframe `df` by a `scale_factor`.
+
+# Arguments
+- `df` (DataFrame): A dataframe containing data to scale.
+- `columns_to_scale` (Vector{Symbol}): A vector of column names to scale.
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
+"""
 function scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
     for column in columns_to_scale
         if string(column) in names(df)
@@ -129,148 +202,283 @@ function scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_f
     return nothing
 end
 
-function _get_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
-    # load dataframe with data of a given resource
+"""
+    load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
+
+Function to load and scale the dataframe of a given resource.
+
+
+    path (AbstractString): Path to the resource dataframe.
+    scale_factor (Float64): Scaling factor for the resource data.
+    resource_type (Type): GenX type of the resource.
+
+# 
+    resource_in (DataFrame): The loaded and scaled resource data.
+
+"""
+function load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
     resource_in = load_dataframe(path)
-    # rename columns lowercase
+    # rename columns lowercase for internal consistency
     rename!(resource_in, lowercase.(names(resource_in)))
-    # scale data if necessary
     scale_resources_data!(resource_in, scale_factor)
-    # scale vre_stor data if necessary
-    resource_type == VRE_STOR && scale_vre_stor_data!(resource_in, scale_factor)
-    # return dataframe
+    # scale vre_stor columns if necessary
+    resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor)
     return resource_in
 end
 
-function _get_resource_indices(resources_in::DataFrame, offset::Int64)
-    # return array of indices of resources
+"""
+    compute_resource_indices(resources_in::DataFrame, offset::Int64)
+
+Computes the indices for the resources loaded from a single dataframe by shifting the indices by an offset value. 
+
+# Arguments
+- `resources_in::DataFrame`: The input DataFrame containing the resources.
+- `offset::Int64`: The offset value to be added to the indices.
+
+# Returns
+- `UnitRange{Int64}`: An array of indices.
+
+"""
+function compure_resource_indices(resources_in::DataFrame, offset::Int64)
     range = (1,nrow(resources_in)) .+ offset
     return UnitRange{Int64}(range...)
 end
 
-function _add_indices_to_resource_df!(df::DataFrame, indices::AbstractVector)
+"""
+    add_id_to_resource_df!(df::DataFrame, indices::AbstractVector)
+
+Adds a new column 'id' to the DataFrame with the provided resource indices. The dataframe is modified in-place.
+
+# Arguments
+- `df::DataFrame`: The input DataFrame to which the indices are to be added.
+- `indices::AbstractVector`: The array of indices to be added as a new column.
+"""
+function add_id_to_resource_df!(df::DataFrame, indices::AbstractVector)
     df[!, :id] = indices
     return nothing
 end
 
-# function dataframerow_to_tuple(dfr::DataFrameRow)
-#     return NamedTuple(pairs(dfr))
-# end
+"""
+    dataframerow_to_dict(dfr::DataFrameRow)
 
-function _get_resource_array(resource_in::DataFrame, Resource)
+Converts a DataFrameRow to a Dict.
+
+# Arguments
+- `dfr::DataFrameRow`: The DataFrameRow to be converted.
+
+# Returns
+- `Dict`: Dictionary containing the DataFrameRow data.
+"""
+function dataframerow_to_dict(dfr::DataFrameRow)
+    return Dict(pairs(dfr))
+end
+
+"""
+    create_resources_sametype(resource_in::DataFrame, ResourceType)
+
+This function takes a DataFrame `resource_in` and a GenX `ResourceType` type, and converts the DataFrame to an array of AbstractResource of the specified type.
+
+# Arguments
+- `resource_in::DataFrame`: The input DataFrame containing the resources belonging to a specific type.
+- `ResourceType`: The GenX type of resources to be converted to.
+
+# Returns
+- `resources::Vector{ResourceType}`: An array of resources of the specified type.
+"""
+function create_resources_sametype(resource_in::DataFrame, ResourceType)
     # convert dataframe to array of resources of correct type
-    resources::Vector{Resource} = Resource.(dataframerow_to_dict.(eachrow(resource_in)))
-    # return resources
+    resources::Vector{ResourceType} = ResourceType.(dataframerow_to_dict.(eachrow(resource_in)))
     return resources
 end
 
-function _get_all_resources(resources_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
+"""
+    create_resource_array(resource_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
+
+Construct the array of resources from multiple files of different types located in the specified `resource_folder`. The `resources_info` NamedTuple contains the filename and GenX type for each type of resource available in GenX.
+
+# Arguments
+- `resource_folder::AbstractString`: The path to the folder containing the resource files.
+- `resources_info::NamedTuple`: A NamedTuple that maps a resource type to its filename and GenX type.
+- `scale_factor::Float64`: A scaling factor to adjust the attributes of the resources (default: 1.0).
+
+# Returns
+- `Vector{AbstractResource}`: An array of GenX resources.
+
+# Raises
+- `Error`: If no resources data is found. Check the data path or the configuration file "genx_settings.yml" inside Settings.
+
+"""
+function create_resource_array(resource_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
     resource_id_offset = 0
     resources = []
-    # loop over available types and get all resources
+    # loop over available types and load all resources in resource_folder
     for (filename, resource_type) in values(resources_info)
-        # path to resources data
-        path = joinpath(resources_folder, filename)
-        # if file exists, load resources
-        if isfile(path)
-            # load resources data of a given type
-            resource_in = _get_resource_df(path, scale_factor, resource_type)
-            # get indices of resources for later use
-            resources_indices = _get_resource_indices(resource_in, resource_id_offset)
-            # add indices to dataframe
-            _add_indices_to_resource_df!(resource_in, resources_indices)
-            # add resources of a given type to array of resources
-            resources_same_type = _get_resource_array(resource_in, resource_type)
+        df_path = joinpath(resource_folder, filename)
+        # if file exists, load resources of a single resource_type
+        if isfile(df_path)
+            resource_in = load_resource_df(df_path, scale_factor, resource_type)
+            # compute indices for resources of a given type and add them to dataframe
+            resources_indices = compure_resource_indices(resource_in, resource_id_offset)
+            add_id_to_resource_df!(resource_in, resources_indices)
+            resources_same_type = create_resources_sametype(resource_in, resource_type)
             push!(resources, resources_same_type)
             # update id offset for next type of resources
             resource_id_offset += length(resources_same_type)
-            # print log
             @info filename * " Successfully Read."
         end
     end
-    # check if any resources were loaded
     isempty(resources) && error("No resources data found. Check data path or configuration file \"genx_settings.yml\" inside Settings.")
     return reduce(vcat, resources)
 end
 
-function load_scaled_resources_data(setup::Dict, case_path::AbstractString)
-# Scale factor for energy and currency units
+@doc raw"""
+	check_mustrun_reserve_contribution(r::AbstractResource)
+
+Make sure that a MUST_RUN resource has Reg_Max and Rsv_Max set to 0 (since they cannot contribute to reserves).
+"""
+function check_mustrun_reserve_contribution(r::AbstractResource)
+    applicable_resources = MustRun
+    error_strings = String[]
+
+    if !isa(r, applicable_resources)
+        # not MUST_RUN so the rest is not applicable
+        return error_strings
+    end
+
+    reg_max_r = reg_max(r)
+    if reg_max_r != 0
+        e = string("Resource ", resource_name(r), " is of MUST_RUN type but :Reg_Max = ", reg_max_r, ".\n",
+                    "MUST_RUN units must have Reg_Max = 0 since they cannot contribute to reserves.")
+        push!(error_strings, e)
+    end
+    
+    rsv_max_r = rsv_max(r)
+    if rsv_max_r != 0
+        e = string("Resource ", resource_name(r), " is of MUST_RUN type but :Rsv_Max = ", rsv_max_r, ".\n",
+                   "MUST_RUN units must have Rsv_Max = 0 since they cannot contribute to reserves.")
+        push!(error_strings, e)
+    end
+    return error_strings
+end
+
+function check_LDS_applicability(r::AbstractResource)
+    applicable_resources = Union{Storage, Hydro}
+    not_set = resource_attribute_not_set()
+    error_strings = String[]
+    lds_value = get(r, :LDS, not_set)
+    # LDS is available onlåy for Hydro and Storage
+    if !isa(r, applicable_resources) && lds_value > 0
+        e = string("Resource ", resource_name(r), " has :LDS = ", lds_value, ".\n",
+                   "This setting is valid only for resources where the type is one of $applicable_resources.")
+        push!(error_strings, e)
+    end
+    return error_strings
+end
+
+function check_maintenance_applicability(r::AbstractResource)
+    applicable_resources = Thermal
+
+    not_set = resource_attribute_not_set()
+    maint_value = get(r, :MAINT, not_set)
+    
+    error_strings = String[]
+    
+    if maint_value == not_set
+        # not MAINT so the rest is not applicable
+        return error_strings
+    end
+
+    # MAINT is available only for Thermal
+    if !isa(r, applicable_resources) && maint_value > 0
+        e = string("Resource ", resource_name(r), " has :MAINT = ", maint_value, ".\n",
+                   "This setting is valid only for resources where the type is one of $applicable_resources.")
+        push!(error_strings, e)
+    end
+    if get(r, :model, not_set) == 2
+        e = string("Resource ", resource_name(r), " has :MAINT = ", maint_value, ".\n",
+                   "This is valid only for resources with unit commitment (:model = 1);\n",
+                   "this has :model = 2.")
+        push!(error_strings, e)
+    end
+    return error_strings
+end
+
+function check_resource(r::AbstractResource)::Vector{String}
+    e = String[]
+    e = [e; check_LDS_applicability(r)]
+    e = [e; check_maintenance_applicability(r)]    
+    e = [e; check_mustrun_reserve_contribution(r)]
+    return e
+end
+
+@doc raw"""
+check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
+
+Validate the consistency of a vector of GenX resources
+Reports any errors in a list of strings.
+"""
+function check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
+    e = String[]
+    for r in resources
+        e = [e; check_resource(r)]
+    end
+    return e
+end
+
+function announce_errors_and_halt(e::Vector{String})    
+    error_count = length(e)
+    for error_message in e
+        @error(error_message)
+    end
+    s = string(error_count, " problems were detected with the input data. Halting.")
+    error(s)
+end
+
+function validate_resources(resources::T) where T <: Vector{AbstractResource}
+    e = check_resource(resources)
+    if length(e) > 0
+        announce_errors_and_halt(e)
+    end
+end
+
+"""
+    create_resources(setup::Dict, case_path::AbstractString)
+
+Function that loads and scales resources data from folder specified in `setup["ResourcePath"] and returns an array of GenX resources.
+
+# Arguments
+- `setup (Dict)`: Dictionary containing GenX settings.
+- `case_path (AbstractString)`: The path to the case.
+
+# Returns
+- `resources (Vector{AbstractResource})`: An array of scaled resources.
+
+"""
+function create_resource_array(setup::Dict, case_path::AbstractString)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
-    # get path to resources data
+    
     resources_folder = setup["ResourcePath"]
     resources_folder = joinpath(case_path,resources_folder)
-    # get type, filename and resource-key for each type of resources
+    
+    # get filename and GenX type for each type of resources available in GenX
     resources_info = _get_resource_info()
+
     # load each resource type, scale data and return array of resources
-    resources = _get_all_resources(resources_folder, resources_info, scale_factor)
+    resources = create_resource_array(resources_folder, resources_info, scale_factor)
     # validate input before returning resources
     validate_resources(resources)
     return resources
 end
 
-function _add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
-    # loop over new attributes (new cols)
-    for (sym, value) in zip(new_symbols, new_values)
-        # add attribute to resource if value is not zero
-        value ≠ 0 && setproperty!(resource, sym, value)
-    end
-    return nothing
-end    
+"""
+    validate_policy_dataframe!(filename::AbstractString, policy_in::DataFrame)
 
-function add_policies_to_resources!(setup::Dict, case_path::AbstractString, resources::Vector{<:AbstractResource})
-    policy_folder = setup["ResourcePath"]
-    policy_folder = joinpath(case_path, policy_folder)
-    # get filename and column-name for each type of policy
-    resources_info = _get_policyfile_info()
-    # loop over policy files
-    for filename in values(resources_info)
-        # path to policy file
-        path = joinpath(policy_folder, filename)
-        # if file exists, add policy to resources
-        if isfile(path) 
-            add_policy_to_resources!(path, filename, resources)
-            # print log
-            @info filename * " Successfully Read."
-        end
-    end
-end
+Validate the policy dataframe by checking if it has any attributes and if the column names are valid. The dataframe is modified in-place.
 
-function add_policy_to_resources!(path::AbstractString, filename::AbstractString, resources::Vector{<:AbstractResource})
-    # load policy file
-    policy_in = load_dataframe(path)
-    # check if policy file has any attributes, validate clumn names 
-    validate_policy_dataframe!(filename, policy_in)
-    # add policy attributes to resources
-    _add_df_to_resources!(resources, policy_in)
-    return nothing
-end
-
-function add_modules_to_resources!(setup::Dict, case_path::AbstractString, resources::Vector{<:AbstractResource})
-    modules = Vector{DataFrame}()
-
-    module_folder = setup["ResourcePath"]
-    module_folder = joinpath(case_path, module_folder)
-
-    ## Load all modules and add them to the list of modules to add to resources
-    # Add multistage if multistage is activated
-    if setup["MultiStage"] == 1
-        filename = joinpath(module_folder, "Res_multistage_data.csv")
-        multistage_in = load_multistage_dataframe(filename)
-        push!(modules, multistage_in)
-        @info "Multistage data successfully read."
-    end
-    
-    ## Loop over modules and add attributes to resources
-    add_module_to_resources!.(Ref(resources), modules)
-
-    return nothing
-end
-
-function add_module_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
-    _add_df_to_resources!(resources, module_in)
-    return nothing
-end
-
+# Arguments
+- `filename::AbstractString`: The name of the policy file.
+- `policy_in::DataFrame`: The policy dataframe.
+"""
 function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFrame)
     cols = names(policy_in)
     n_cols = length(cols)
@@ -290,12 +498,13 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     accepted_cols = ["eligible_cap_res", "esr", "esr_vrestor",
                         [string(cap, type) for cap in ["min_cap", "max_cap"] for type in ("", "_stor", "_solar", "_wind")]...]
 
-    # Check that all policy columns have accepter names
+    # Check that all policy columns have names in accepted_cols
     if !all(x -> replace(x, r"(_*|_*\d*)$" => "") in accepted_cols, cols)
         msg = "The accepted policy columns are: " * join(accepted_cols, ", ")
         msg *= "\nCheck policy file: " * filename
         error(msg)
     end
+    # Check that all policy columns have names with format "[policy_name]_[tagnum]"
     if !all(any([occursin(Regex("$(y)")*r"_\d", col) for y in accepted_cols]) for col in cols)
         msg = "Columns in policy file $filename must have names with format \"[policy_name]_[tagnum]\", case insensitive. (e.g., ESR_1, Min_Cap_1, Max_Cap_2, etc.)."
         error(msg)
@@ -303,7 +512,36 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     return nothing
 end
 
-function _add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
+"""
+    add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
+
+Adds a set of new attributes (names and corresponding values) to a resource if their values are different from zero. The resource is modified in-place.
+
+# Arguments
+- `resource::AbstractResource`: The resource to add attributes to.
+- `new_symbols::Vector{Symbol}`: Vector of symbols containing the names of the new attributes.
+- `new_values::DataFrameRow`: DataFrameRow containing the values of the new attributes.
+
+"""
+function add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
+    # loop over new attributes
+    for (sym, value) in zip(new_symbols, new_values)
+        # add attribute to resource if value is not zero
+        value ≠ 0 && setproperty!(resource, sym, value)
+    end
+    return nothing
+end    
+
+"""
+    add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
+
+Adds the data contained in a `DataFrame` to a vector of resources. Each row in the `DataFrame` corresponds to a resource. If the name of the resource in the `DataFrame` matches a name of a resource in the model, all the columns of that DataFrameRow are added as new attributes to the corresponding resource. 
+
+# Arguments
+- `resources::Vector{<:AbstractResource}`: A vector of resources.
+- `module_in::DataFrame`: The dataframe to add.
+"""
+function add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
     # rename columns lowercase to ensure consistency with resources
     rename!(module_in, lowercase.(names(module_in)))
     # extract columns of module -> new resource attributes
@@ -313,19 +551,111 @@ function _add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in:
         resource_name = row[:resource]
         resource = resource_by_name(resources, resource_name)
         new_values = row[new_sym]
-        _add_attributes_to_resource!(resource, new_sym, new_values)
+        add_attributes_to_resource!(resource, new_sym, new_values)
     end
     return nothing
 end
 
+"""
+    add_policy_to_resources!(resources::Vector{<:AbstractResource}, path::AbstractString, filename::AbstractString)
+
+Loads a single policy file and adds the columns as new attributes to resources in the model if the resource name in the policy file matches a resource name in the model. The policy file is assumed to have a column named "resource" containing the resource names.
+
+# Arguments
+- `resources::Vector{<:AbstractResource}`: A vector of resources.
+- `path::AbstractString`: The path to the policy file.
+- `filename::AbstractString`: The name of the policy file.
+"""
+function add_policy_to_resources!(resources::Vector{<:AbstractResource}, path::AbstractString, filename::AbstractString)
+    policy_in = load_dataframe(path)
+    # check if policy file has any attributes, validate column names 
+    validate_policy_dataframe!(filename, policy_in)
+    # add policy columns to resources as new attributes
+    add_df_to_resources!(resources, policy_in)
+    return nothing
+end
+
+"""
+    add_policies_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
+
+Reads policy files and adds policies-related attributes to resources in the model.
+
+# Arguments
+- `resources::Vector{<:AbstractResource}`: Vector of resources in the model.
+- `setup (Dict)`: Dictionary containing GenX settings.
+- `case_path::AbstractString`: The path to the case.
+"""
+function add_policies_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
+    policy_folder = setup["ResourcePath"]
+    policy_folder = joinpath(case_path, policy_folder)
+    # get filename for each type of policy available in GenX
+    resources_info = _get_policyfile_info()
+    # loop over policy files
+    for filename in values(resources_info)
+        path = joinpath(policy_folder, filename)
+        # if file exists, add policy to resources
+        if isfile(path) 
+            add_policy_to_resources!(resources, path, filename)
+            @info filename * " Successfully Read."
+        end
+    end
+    return nothing
+end
+
+"""
+    add_module_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
+
+Reads module dataframe and adds columns as new attributes to the resources in the model if the resource name in the module file matches a resource name in the model. The module file is assumed to have a column named "resource" containing the resource names.
+
+# Arguments
+- `resources::Vector{<:AbstractResource}`: A vector of resources.
+- `module_in::DataFrame`: The dataframe with the columns to add to the resources.
+"""
+function add_module_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
+    # add module columns to resources as new attributes
+    add_df_to_resources!(resources, module_in)
+    return nothing
+end
+
+"""
+    add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
+
+Reads module dataframes, loops over files and adds columns as new attributes to the resources in the model.
+
+# Arguments
+- `resources::Vector{<:AbstractResource}`: A vector of resources.
+- `setup (Dict)`: A dictionary containing GenX settings.
+- `case_path::AbstractString`: The path to the case.
+"""
+function add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
+    modules = Vector{DataFrame}()
+
+    module_folder = setup["ResourcePath"]
+    module_folder = joinpath(case_path, module_folder)
+
+    ## Load all modules and add them to the list of modules to be added to resources
+    # Add multistage if multistage is activated
+    if setup["MultiStage"] == 1
+        filename = joinpath(module_folder, "Res_multistage_data.csv")
+        multistage_in = load_multistage_dataframe(filename)
+        push!(modules, multistage_in)
+        @info "Multistage data successfully read."
+    end
+    
+    ## Loop over modules and add attributes to resources
+    add_module_to_resources!.(Ref(resources), modules)
+
+    return nothing
+end
+
 @doc raw"""
-    split_storage_resources!(gen::Vector{<:AbstractResource}, inputs::Dict)
+    split_storage_resources!(inputs::Dict, gen::Vector{<:AbstractResource})
 
 For co-located VRE-storage resources, this function returns the storage type 
 	(1. long-duration or short-duration storage, 2. symmetric or asymmetric storage)
     for charging and discharging capacities
 """
-function split_storage_resources!(gen::Vector{<:AbstractResource}, inputs::Dict)
+function split_storage_resources!(inputs::Dict, gen::Vector{<:AbstractResource})
 
 	# All Storage Resources
 	inputs["VS_STOR"] = union(storage_dc_charge(gen), storage_dc_discharge(gen),
@@ -382,7 +712,19 @@ function split_storage_resources!(gen::Vector{<:AbstractResource}, inputs::Dict)
 	end
 end
 
-function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, inputs::Dict, gen::Vector{<:AbstractResource})
+"""
+    add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
+
+Adds resources to the `inputs` `Dict` with the key "RESOURCES" together with sevaral sets of resource indices that are used inside GenX to construct the optimization problem. The `inputs` `Dict` is modified in-place.
+
+# Arguments
+- `inputs (Dict)`: Dictionary to store the GenX input data.
+- `setup (Dict)`: Dictionary containing GenX settings.
+- `case_path (AbstractString)`: Path to the case.
+- `gen (Vector{<:AbstractResource})`: Array of GenX resources.
+
+"""
+function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
     
     # Number of resources
     G = length(gen)
@@ -409,6 +751,7 @@ function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, in
 
     # Set of storage resources with long duration storage capabilitites
     inputs["STOR_HYDRO_LONG_DURATION"] = intersect(inputs["HYDRO_RES"], is_LDS(gen))
+    inputs["STOR_HYDRO_SHORT_DURATION"] = intersect(inputs["HYDRO_RES"], is_SDS(gen))
     inputs["STOR_LONG_DURATION"] = intersect(inputs["STOR_ALL"], is_LDS(gen))	    
     inputs["STOR_SHORT_DURATION"] = intersect(inputs["STOR_ALL"], is_SDS(gen))
 
@@ -512,9 +855,9 @@ function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, in
         inputs["VS_WIND"] = wind(gen)
 
         # Storage Resources
-        split_storage_resources!(gen, inputs)
+        split_storage_resources!(inputs, gen)
 
-        gen_VRE_STOR = gen[inputs["VRE_STOR"]]
+        gen_VRE_STOR = gen.VreStorage
         # Set of all VRE-STOR resources eligible for new solar capacity
         inputs["NEW_CAP_SOLAR"] = intersect(buildable, solar(gen), has_max_cap_solar_mw(gen_VRE_STOR))
         # Set of all VRE_STOR resources eligible for solar capacity retirements
@@ -585,25 +928,65 @@ function add_resources_to_input_data!(setup::Dict, case_path::AbstractString, in
     return nothing
 end
 
-function load_resources_data!(setup::Dict, case_path::AbstractString, input_data::Dict)
+"""
+    summary(rs::Vector{<:AbstractResource})
+
+Prints a summary of the resources loaded into the model.
+
+# Arguments
+- `rs (Vector{<:AbstractResource})`: An array of GenX resources.
+"""
+function summary(rs::Vector{<:AbstractResource})
+    rs_summary_names = _get_summary_map()
+    line_width = 55
+    println("\nSummary of resources loaded into the model:")
+    println(repeat("-", line_width))
+    println("\tResource type \t\tNumber of resources")
+    println(repeat("=", line_width))
+    for r_type ∈ resource_types
+        num_rs = length(rs[nameof.(typeof.(rs)) .== r_type])
+        if num_rs > 0
+            r_type ∉ keys(rs_summary_names) && error("Resource type $r_type not found in summary map. Please add it to the map.")
+            println("\t", rs_summary_names[r_type], "\t\t", num_rs)
+        end
+    end
+    println(repeat("=", line_width))
+    println("Total number of resources: ", length(rs))
+    println(repeat("-", line_width))
+    return nothing
+end
+
+"""
+    load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractString)
+
+This function loads resources data from the `setup["ResourcePath"]` folder and create the GenX data structures and add them to the `inputs` `Dict`. 
+
+# Arguments
+- `inputs (Dict)`: A dictionary to store the input data.
+- `setup (Dict)`: A dictionary containing GenX settings.
+- `case_path (AbstractString)`: The path to the case.
+
+Raises:
+    DeprecationWarning: If the `Generators_data.csv` file is found, a deprecation warning is issued, together with an error message.
+"""
+function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractString)
     if isfile(joinpath(case_path, "Generators_data.csv"))
-        Base.depwarn(
-            "The `Generators_data.csv` file was deprecated in release v0.4. " *
-            "Please use the new interface for generators creation, and see the documentation for additional details.",
-            :load_resources_data!, force=true)
+        msg = "The `Generators_data.csv` file was deprecated in release v0.4. " *
+            "Please use the new interface for generators creation, and see the documentation for additional details."
+        Base.depwarn(msg, :load_resources_data!, force=true)
         error("Exiting GenX...")
     else
-        # load resources data and scale it if necessary
-        resources = load_scaled_resources_data(setup, case_path)
+        # create vector of resources from dataframes
+        resources = create_resource_array(setup, case_path)
 
-        # add policies-related attributes to resource dataframe
-        add_policies_to_resources!(setup, case_path, resources)
+        # read policy files and add policies-related attributes to resource dataframe
+        add_policies_to_resources!(resources, setup, case_path)
 
-        # add module-related attributes to resource dataframe
-        add_modules_to_resources!(setup, case_path, resources)
+        # read module files add module-related attributes to resource dataframe
+        add_modules_to_resources!(resources, setup, case_path)
         
-        # add resources to input_data dict
-        add_resources_to_input_data!(setup, case_path, input_data, resources)
+        # add resources information to inputs dict
+        add_resources_to_input_data!(inputs, setup, case_path, resources)
 
         # print summary of resources
         summary(resources)

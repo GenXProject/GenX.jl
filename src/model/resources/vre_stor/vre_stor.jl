@@ -108,7 +108,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Load VRE-storage inputs
 	VRE_STOR = inputs["VRE_STOR"] 	                                # Set of VRE-STOR generators (indices)
-    gen_VRE_STOR = gen.VRE_STOR                                     # Set of VRE-STOR generators (objects)
+    gen_VRE_STOR = gen.VreStorage                                     # Set of VRE-STOR generators (objects)
     SOLAR = inputs["VS_SOLAR"]                                      # Set of VRE-STOR generators with solar-component
     DC = inputs["VS_DC"]                                            # Set of VRE-STOR generators with inverter-component
     WIND = inputs["VS_WIND"]                                        # Set of VRE-STOR generators with wind-component
@@ -397,7 +397,7 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     NEW_CAP_DC = inputs["NEW_CAP_DC"]
     RET_CAP_DC = inputs["RET_CAP_DC"]
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
     
     MultiStage = setup["MultiStage"]
 
@@ -551,7 +551,7 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     ### LOAD DATA ###
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
 
     T = inputs["T"]
     SOLAR = inputs["VS_SOLAR"]
@@ -726,7 +726,7 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     ### LOAD DATA ###
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
 
     T = inputs["T"]
     WIND = inputs["VS_WIND"]
@@ -966,7 +966,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     Z = inputs["Z"]
 
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
 
     STOR = inputs["VS_STOR"]
     NEW_CAP_STOR = inputs["NEW_CAP_STOR"]
@@ -1186,7 +1186,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cMaxRet_Stor[y=RET_CAP_STOR], vRETCAPENERGY_VS[y] <= eExistingCapEnergy_VS[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Stor[y in intersect(has_nonneg_max_cap_mwh(gen), STOR)], 
+    @constraint(EP, cMaxCap_Stor[y in intersect(has_nonnegative_max_cap_mwh(gen), STOR)], 
         eTotalCap_STOR[y] <= max_cap_mwh(gen[y]))
     # Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
@@ -1257,7 +1257,7 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
 
     VS_LDS = inputs["VS_LDS"]
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
 
     REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
 	dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
@@ -1458,7 +1458,7 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     ### LOAD INPUTS ###
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen[inputs["VRE_STOR"]]
+    gen_VRE_STOR = gen.VreStorage
 
     T = inputs["T"]
     VS_ASYM_DC_CHARGE = inputs["VS_ASYM_DC_CHARGE"]
@@ -1881,7 +1881,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 
     T = inputs["T"]
     gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
     STOR = inputs["VS_STOR"]
     DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
     DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
@@ -2225,7 +2225,7 @@ function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
     ### LOAD DATA & CREATE SETS ###
 
 	gen = inputs["RESOURCES"]
-    gen_VRE_STOR = gen.VRE_STOR
+    gen_VRE_STOR = gen.VreStorage
 
 	T = inputs["T"]
     VRE_STOR = inputs["VRE_STOR"]

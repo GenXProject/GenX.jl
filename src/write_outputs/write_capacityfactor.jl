@@ -24,7 +24,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         SOLAR = setdiff(inputs["VS_SOLAR"],inputs["VS_WIND"])
         WIND = setdiff(inputs["VS_WIND"],inputs["VS_SOLAR"])
         SOLAR_WIND = intersect(inputs["VS_SOLAR"],inputs["VS_WIND"])
-        gen_VRE_STOR = gen.VRE_STOR
+        gen_VRE_STOR = gen.VreStorage
         if !isempty(SOLAR)
             dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data * inputs["omega"] * scale_factor
             dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR]).data * scale_factor

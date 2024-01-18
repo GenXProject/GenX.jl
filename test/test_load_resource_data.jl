@@ -64,7 +64,7 @@ function test_load_scaled_resources_data(gen, dfGen)
     # Test resource attributes
     @test GenX.resource_name.(gen) == dfGen.resource
     @test GenX.resource_id.(gen) == dfGen.r_id
-    @test GenX.resource_type.(gen) == dfGen.resource_type
+    @test GenX.resource_type_mga.(gen) == dfGen.resource_type
     @test GenX.zone_id.(gen) == dfGen.zone
 
     @test GenX.max_cap_mw.(gen) == dfGen.max_cap_mw
@@ -209,33 +209,33 @@ function test_load_resources_data()
         "ResourcePath" => "Resources",
     )
     
-    test_path = joinpath("LoadresourceData", "test_gen_non_colocated")
+    test_path = joinpath("LoadResourceData", "test_gen_non_colocated")
 
     # load dfGen and inputs_true to compare against
     input_true_filenames = InputsTrue("generators_data.csv", "inputs_after_loadgen.jld2")
     dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, setup)
 
     # Test resource data is loaded correctly
-    gen = GenX.load_scaled_resources_data(setup, test_path)
+    gen = GenX.create_resource_array(setup, test_path)
     @testset "Default fields" begin
         test_load_scaled_resources_data(gen, dfGen)
     end
 
     # Test policy fields are correctly added to the resource structs
-    GenX.add_policies_to_resources!(setup, test_path, gen)
+    GenX.add_policies_to_resources!(gen, setup, test_path)
     @testset "Policy attributes" begin
         test_add_policies_to_resources(gen, dfGen)
     end
 
     # Test modules are correctly added to the resource structs
-    GenX.add_modules_to_resources!(setup, test_path, gen)
+    GenX.add_modules_to_resources!(gen, setup, test_path)
     @testset "Module attributes" begin
         test_add_modules_to_resources(gen, dfGen)
     end
 
     # Test that the inputs keys are correctly set
     inputs = load(joinpath(test_path, "inputs_before_loadgen.jld2"))
-    GenX.add_resources_to_input_data!(setup, test_path, inputs, gen)
+    GenX.add_resources_to_input_data!(inputs, setup, test_path, gen)
     @testset "Inputs keys" begin
         test_inputs_keys(inputs, inputs_true)
     end
@@ -256,7 +256,7 @@ function test_load_VRE_STOR_data()
         "ResourcePath" => "Resources",
     )
         
-    test_path = joinpath("LoadresourceData","test_gen_vre_stor")
+    test_path = joinpath("LoadResourceData","test_gen_vre_stor")
     input_true_filenames = InputsTrue("generators_data.csv", "inputs_after_loadgen.jld2")
     dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, setup)
 
@@ -265,10 +265,10 @@ function test_load_VRE_STOR_data()
     scale_factor = setup["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.
     GenX.scale_vre_stor_data!(dfVRE_STOR, scale_factor)
 
-    gen = GenX.load_scaled_resources_data(setup, test_path)
-    GenX.add_policies_to_resources!(setup, test_path, gen)
+    gen = GenX.create_resource_array(setup, test_path)
+    GenX.add_policies_to_resources!(gen, setup, test_path)
     inputs = load(joinpath(test_path, "inputs_before_loadgen.jld2"))
-    GenX.add_resources_to_input_data!(setup, test_path, inputs, gen)
+    GenX.add_resources_to_input_data!(inputs, setup, test_path, gen)
 
     @test GenX.vre_stor(gen) == dfGen[dfGen.vre_stor .== 1, :r_id]
     sort!(dfVRE_STOR, :resource)

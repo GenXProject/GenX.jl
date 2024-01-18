@@ -36,7 +36,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
 			MIN_CAP_GEN = has_min_cap(gen, tag=mincap)
 			dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] .= dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN] + (value.(EP[:eTotalCap][MIN_CAP_GEN])) * (dual.(EP[:cZoneMinCapReq][mincap]))
 			if !isempty(inputs["VRE_STOR"])
-				gen_VRE_STOR = gen.VRE_STOR
+				gen_VRE_STOR = gen.VreStorage
 				HAS_MIN_CAP_STOR = resource_id.(gen_VRE_STOR[has_min_cap_stor(gen_VRE_STOR, tag=mincap)])
 				MIN_CAP_GEN_SOLAR = resource_id.(gen_VRE_STOR[has_min_cap_solar(gen_VRE_STOR, tag=mincap)])
 				MIN_CAP_GEN_WIND = resource_id.(gen_VRE_STOR[has_min_cap_wind(gen_VRE_STOR, tag=mincap)])

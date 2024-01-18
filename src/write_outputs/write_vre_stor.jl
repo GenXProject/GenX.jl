@@ -25,7 +25,7 @@ Function for writing the vre-storage capacities.
 """
 function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	gen = inputs["RESOURCES"]
-	gen_VRE_STOR = gen.VRE_STOR
+	gen_VRE_STOR = gen.VreStorage
 
 	VRE_STOR = inputs["VRE_STOR"]
 	SOLAR = inputs["VS_SOLAR"]
@@ -169,7 +169,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		j += 1
 	end
 
-	technologies = resource_type.(gen_VRE_STOR)
+	technologies = resource_type_mga.(gen_VRE_STOR)
 	clusters = cluster.(gen_VRE_STOR)
 	zones = zone_id.(gen_VRE_STOR)
 
@@ -289,7 +289,7 @@ Function for writing the vre-storage charging decision variables/expressions.
 """
 function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	gen = inputs["RESOURCES"]
-	gen_VRE_STOR = gen.VRE_STOR
+	gen_VRE_STOR = gen.VreStorage
 	T = inputs["T"]
     DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
     AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
@@ -334,7 +334,7 @@ Function for writing the vre-storage discharging decision variables/expressions.
 """
 function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	gen = inputs["RESOURCES"]
-	gen_VRE_STOR = gen.VRE_STOR
+	gen_VRE_STOR = gen.VreStorage
 	T = inputs["T"] 
 	DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
     AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]

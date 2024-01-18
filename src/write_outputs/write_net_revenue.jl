@@ -22,7 +22,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
 	VRE_STOR = inputs["VRE_STOR"]
 	if !isempty(VRE_STOR)
-		gen_VRE_STOR = gen.VRE_STOR
+		gen_VRE_STOR = gen.VreStorage
 		VRE_STOR_LENGTH = size(inputs["VRE_STOR"])[1]
 		SOLAR = inputs["VS_SOLAR"]
 		WIND = inputs["VS_WIND"]
@@ -100,7 +100,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add storage cost to the dataframe
 	dfNetRevenue.Var_OM_cost_in = zeros(nrow(dfNetRevenue))
 	if !isempty(STOR_ALL)
-		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = var_om_cost_per_mwh_in.(gen.STOR) .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
+		dfNetRevenue.Var_OM_cost_in[STOR_ALL] = var_om_cost_per_mwh_in.(gen.Storage) .* ((value.(EP[:vCHARGE][STOR_ALL,:]).data) * inputs["omega"])
  	end
 	if !isempty(VRE_STOR)
 		if !isempty(DC_CHARGE)
