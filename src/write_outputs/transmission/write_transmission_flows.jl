@@ -16,5 +16,5 @@ function write_transmission_flows(path::AbstractString, inputs::Dict, setup::Dic
 	total[:, 3:T+2] .= sum(flow, dims = 1)
 	rename!(total,auxNew_Names)
 	dfFlow = vcat(dfFlow, total)
-	CSV.write(joinpath(path, "flow.csv"), dftranspose(dfFlow, false), writeheader=false)
+	CSV.write(joinpath(path, "flow.csv"), dftranspose(dfFlow, false), header=false)
 end

@@ -177,6 +177,7 @@ function test_write_output(test_path::AbstractString, genx_setup::Dict, EP::JuMP
     
     # Compare true and test results
     for file in filter(endswith(".csv"), readdir(results_true))
+        println("Testing $file...")
         Test.@test cmp_csv(joinpath(results_test, file), joinpath(results_true, file))
     end
 end
@@ -204,16 +205,16 @@ function cmp_csv(csv1::AbstractString, csv2::AbstractString)
     sort!(df1)
     sort!(df2)
 
-    return isequal_df(df1, df2)
+    return isapprox_df(df1, df2)
 end
 
-function isequal_df(df1::DataFrame, df2::DataFrame)
+function isapprox_df(df1::DataFrame, df2::DataFrame)
     @assert length(names(df1)) == length(names(df2))
     @assert Set(names(df1)) == Set(names(df2))
-    all([isequal_col(df1[!, col], df2[!, col]) for col in names(df1)])
+    all([isapprox_col(df1[!, col], df2[!, col]) for col in names(df1)])
 end
 
-function isequal_col(col1, col2)
+function isapprox_col(col1, col2)
     if isequal(col1, col2)
         return true
     elseif eltype(col1) <: Float64 && isapprox(col1, col2)

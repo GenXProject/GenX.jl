@@ -160,7 +160,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Energy Share Requirement Policy ###
 	# Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Share Requirement balance to increase demand for clean resources if desired
 	# Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
-	# a share of electrolyzer demand equal to dfGen[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
+	# a share of electrolyzer demand equal to df[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
 	if setup["EnergyShareRequirement"] >= 1
 		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, has_esr(gen,tag=ESR)), t in 1:T))
 		EP[:eESR] -= eElectrolyzerESR
