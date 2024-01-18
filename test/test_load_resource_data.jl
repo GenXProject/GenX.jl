@@ -1,4 +1,4 @@
-module TestLoadresourceData
+module TestLoadResourceData
 
 using Test
 using GenX
