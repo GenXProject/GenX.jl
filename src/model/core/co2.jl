@@ -61,8 +61,7 @@ function co2!(EP::Model, inputs::Dict)
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
     CCS = inputs["CCS"]
-    println(CCS)
-    println(length(G), length(CCS))
+
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
     omega = inputs["omega"]
     if !isempty(MULTI_FUELS)
@@ -86,7 +85,7 @@ function co2!(EP::Model, inputs::Dict)
         # CO2_Capture_Fraction refers to the CO2 capture rate of CCS equiped power plants at a steady state 
         # CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equiped power plants during startup events
 
-        
+
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
             if y in SINGLE_FUEL
                 (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vFuel][y, t]  * fuel_CO2[dfGen[y,:Fuel]]+
@@ -105,8 +104,6 @@ function co2!(EP::Model, inputs::Dict)
                 sum(dfGen[y, :CO2_Capture_Fraction] * EP[:vMulFuels][y, i, t] * fuel_CO2[dfGen[y, fuel_cols[i]]] for i = 1:max_fuels)+
                 sum(dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:vMulStartFuels][y, i, t] * fuel_CO2[dfGen[y, fuel_cols[i]]] for i = 1:max_fuels)
             end)
-        
-        println(length(eEmissionsCaptureByPlant))
 
         @expression(EP, eEmissionsCaptureByPlantYear[y in CCS], 
             sum(omega[t] * eEmissionsCaptureByPlant[y, t] 
