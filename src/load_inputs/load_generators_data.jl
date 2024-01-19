@@ -66,12 +66,19 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	if !("RETRO" in names(gen_in))
 		gen_in[!, "RETRO"] = zero(gen_in[!, "R_ID"])
 	end
-
+	
 	inputs_gen["RETRO"] = gen_in[gen_in.RETRO.==1,:R_ID]
     # Disable Retrofit while it's under development
     if !(isempty(inputs_gen["RETRO"]))
         error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in Generators_data.csv, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
     end
+
+	# Set of CCS resources (optional set):
+	if "CO2_Capture_Fraction" in names(gen_in)
+		inputs_gen["CCS"] = gen_in[gen_in.CO2_Capture_Fraction.>0,:R_ID]
+	else
+		inputs_gen["CCS"] = Vector()
+	end
 
 	# Set of multi-fuel resources
 	if "MULTI_FUELS" ∉ names(gen_in)
