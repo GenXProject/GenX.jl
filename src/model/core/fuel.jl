@@ -111,6 +111,11 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         max_cofire = inputs["MAX_COFIRE"]
         min_cofire_start =inputs["MIN_COFIRE_START"]
         max_cofire_start =inputs["MAX_COFIRE_START"]
+        COFIRE_MAX = [dfGen[dfGen[!, Symbol(string("Fuel",i, "_Max_Cofire_Level"))].< 1, :][!, :R_ID] for i in 1:max_fuels]
+        COFIRE_MAX_START = [dfGen[dfGen[!, Symbol(string("Fuel",i, "_Max_Cofire_Level_Start"))].< 1, :][!, :R_ID] for i in 1:max_fuels]
+        COFIRE_MIN = [dfGen[dfGen[!, Symbol(string("Fuel",i, "_Min_Cofire_Level"))].> 0, :][!, :R_ID] for i in 1:max_fuels]
+        COFIRE_MIN_START = [dfGen[dfGen[!, Symbol(string("Fuel",i, "_Min_Cofire_Level_Start"))].> 0, :][!, :R_ID] for i in 1:max_fuels]
+        
         @variable(EP, vMulFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0) 
         @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0)  
     end 
@@ -295,21 +300,23 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # fuel2/heat rate >= min_cofire_level * total power 
     # fuel2/heat rate <= max_cofire_level * total power without retrofit
     if !isempty(MULTI_FUELS)    
-        # during power generation
-        @constraint(EP, cMinCofire[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
-            EP[:vMulFuels][y, i, t] >= min_cofire[i][y] * EP[:ePlantFuel_generation][y,t]
-            )
-        @constraint(EP, cMaxCofire[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
-            EP[:vMulFuels][y, i, t] <= max_cofire[i][y] * EP[:ePlantFuel_generation][y,t]
-            )
-        # startup
-        @constraint(EP, cMinCofireStart[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
-            EP[:vMulStartFuels][y, i, t] >= min_cofire_start[i][y] * EP[:ePlantFuel_start][y,t]
-            )
-        @constraint(EP, cMaxCofireStart[y in MULTI_FUELS, i in 1:max_fuels, t = 1:T], 
-            EP[:vMulStartFuels][y, i, t] <= max_cofire_start[i][y] * EP[:ePlantFuel_start][y,t]
-            )
-
+        for i in 1:max_fuels
+            # during power generation
+            # cofire constraints without the name due to the loop
+            @constraint(EP, [y in intersect(MULTI_FUELS, COFIRE_MIN[i]), t = 1:T], 
+                EP[:vMulFuels][y, i, t] >= min_cofire[i][y] * EP[:ePlantFuel_generation][y,t]
+                )
+            @constraint(EP, [y in intersect(MULTI_FUELS, COFIRE_MAX[i]), t = 1:T], 
+                EP[:vMulFuels][y, i, t] <= max_cofire[i][y] * EP[:ePlantFuel_generation][y,t]
+                )
+            # startup
+            @constraint(EP, [y in intersect(MULTI_FUELS, COFIRE_MIN_START[i]), t = 1:T], 
+                EP[:vMulStartFuels][y, i, t] >= min_cofire_start[i][y] * EP[:ePlantFuel_start][y,t]
+                )
+            @constraint(EP, [y in intersect(MULTI_FUELS, COFIRE_MAX_START[i]), t = 1:T], 
+                EP[:vMulStartFuels][y, i, t] <= max_cofire_start[i][y] * EP[:ePlantFuel_start][y,t]
+                )
+        end
     end
 
     return EP
