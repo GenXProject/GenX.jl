@@ -35,7 +35,7 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
                     sum(eligible_cap_res(gen[y], tag=capres) * EP[:eTotalCap][y] for y in THERM_ALL))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
 
-        MAINT = resources_with_maintenance(gen)
+        MAINT = ids_with_maintenance(gen)
         if !isempty(intersect(MAINT, THERM_COMMIT))
             thermal_maintenance_capacity_reserve_margin_adjustment!(EP, inputs)
         end

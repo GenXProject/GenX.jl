@@ -45,7 +45,7 @@ function thermal_plant_effective_capacity(
 
     effective_capacity = fill(capresfactor * eTotalCap, length(timesteps))
 
-    if has_maintenance(inputs) && y in resources_with_maintenance(gen)
+    if has_maintenance(inputs) && y in ids_with_maintenance(gen)
 		adjustment = thermal_maintenance_capacity_reserve_margin_adjustment(EP, inputs, y, capres_zone, timesteps)
 		effective_capacity = effective_capacity .+ value.(adjustment)
 	end

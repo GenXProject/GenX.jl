@@ -218,7 +218,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 	)
 
 	## END Constraints for thermal units subject to integer (discrete) unit commitment decisions
-    if !isempty(resources_with_maintenance(gen))
+    if !isempty(ids_with_maintenance(gen))
         maintenance_formulation_thermal_commit!(EP, inputs, setup)
     end
 end
@@ -315,7 +315,7 @@ function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup:
 	
     by_rid(rid, sym) = by_rid_res(rid, sym, gen)
 
-    MAINT = resources_with_maintenance(gen)
+    MAINT = ids_with_maintenance(gen)
     resource_component(y) = by_rid(y, :resource_name)
     cap(y) = by_rid(y, :Cap_Size)
     maint_dur(y) = Int(floor(by_rid(y, :maintenance_duration)))
@@ -357,7 +357,7 @@ function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
     T = inputs["T"]     # Number of time steps (hours)
     ncapres = inputs["NCapacityReserveMargin"]
     THERM_COMMIT = inputs["THERM_COMMIT"]
-    MAINT = resources_with_maintenance(gen)
+    MAINT = ids_with_maintenance(gen)
     applicable_resources = intersect(MAINT, THERM_COMMIT)
 
     maint_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],

@@ -159,21 +159,21 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built capacity
 	# Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-	MAX_CAP = has_positive_max_cap_mw(gen)
+	MAX_CAP = ids_with_positive(gen, max_cap_mw)
 	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_cap_mw(gen[y]))
 
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-	MIN_CAP = has_positive_min_cap_mw(gen)
+	MIN_CAP = ids_with_positive(gen, min_cap_mw)
 	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_cap_mw(gen[y]))
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in has_min_cap(gen, tag=mincap)))
+		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, min_cap, tag=mincap)))
 		add_similar_to_expression!(EP[:eMinCapRes], eMinCapResInvest)
 	end
 
 	if setup["MaxCapReq"] == 1
-		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in has_max_cap(gen, tag=maxcap)))
+		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, max_cap, tag=maxcap)))
 		add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
 	end
 end

@@ -150,7 +150,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
 	if setup["HydrogenHourlyMatching"] == 1
 		HYDROGEN_ZONES = unique(zone_id.(gen.Electrolyzer))
-		QUALIFIED_SUPPLY = has_qualified_hydrogen_supply(gen)
+		QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
 		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
 			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, STORAGE))
 		)
@@ -162,7 +162,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
 	# a share of electrolyzer demand equal to df[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, has_esr(gen,tag=ESR)), t in 1:T))
+		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, ids_with_policy(gen,esr,tag=ESR)), t in 1:T))
 		EP[:eESR] -= eElectrolyzerESR
 	end
 

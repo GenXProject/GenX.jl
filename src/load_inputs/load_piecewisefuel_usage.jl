@@ -1,7 +1,7 @@
 """
 	process_piecewisefuelusage!(setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource}, inputs::Dict)
 
-Reads piecewise fuel usage data from the file "Res_piecewisefuel_usage.csv" in the resource folder, create a PWFU_data that contain processed intercept and slope (i.e., heat rate) and add them to the inputs dictionary. 
+Reads piecewise fuel usage data from the file "Resource_piecewisefuel_usage.csv" in the resource folder, create a PWFU_data that contain processed intercept and slope (i.e., heat rate) and add them to the inputs dictionary. 
 
 # Arguments
 - `setup::Dict`: The dictionary containing the setup parameters
@@ -10,7 +10,7 @@ Reads piecewise fuel usage data from the file "Res_piecewisefuel_usage.csv" in t
 - `inputs::Dict`: The dictionary containing the input data
 """
 function process_piecewisefuelusage!(setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource}, inputs::Dict)
-	filename = "Res_piecewisefuel_usage.csv"
+	filename = "Resource_piecewisefuel_usage.csv"
 	resource_folder = setup["ResourcePath"]
 	filepath = joinpath(case_path, resource_folder, filename)
 	

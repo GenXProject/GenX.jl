@@ -32,10 +32,10 @@ Internal function to get policy file information.
 """
 function _get_policyfile_info()
     policyfile_info = (
-        esr     = (filename="Res_energy_share_requirement.csv"),
-        cap_res = (filename="Res_capacity_reserve_margin.csv"),
-        min_cap_tags = (filename="Res_minimum_capacity_requirement.csv"),
-        max_cap_tags = (filename="Res_maximum_capacity_requirement.csv"),
+        esr     = (filename="Resource_energy_share_requirement.csv"),
+        cap_res = (filename="Resource_capacity_reserve_margin.csv"),
+        min_cap_tags = (filename="Resource_minimum_capacity_requirement.csv"),
+        max_cap_tags = (filename="Resource_maximum_capacity_requirement.csv"),
     )
     return policyfile_info
 end
@@ -207,13 +207,13 @@ end
 
 Function to load and scale the dataframe of a given resource.
 
+# Arguments
+- `path::AbstractString`: Path to the resource dataframe.
+- `scale_factor::Float64`: Scaling factor for the resource data.
+- `resource_type::Type`: GenX type of the resource.
 
-    path (AbstractString): Path to the resource dataframe.
-    scale_factor (Float64): Scaling factor for the resource data.
-    resource_type (Type): GenX type of the resource.
-
-# 
-    resource_in (DataFrame): The loaded and scaled resource data.
+# Returns
+- `resource_in::DataFrame`: The loaded and scaled resource data.
 
 """
 function load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
@@ -636,7 +636,7 @@ function add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup:
     ## Load all modules and add them to the list of modules to be added to resources
     # Add multistage if multistage is activated
     if setup["MultiStage"] == 1
-        filename = joinpath(module_folder, "Res_multistage_data.csv")
+        filename = joinpath(module_folder, "Resource_multistage_data.csv")
         multistage_in = load_multistage_dataframe(filename)
         push!(modules, multistage_in)
         @info "Multistage data successfully read."
@@ -738,7 +738,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     inputs["HYDRO_RES"] = hydro(gen)
     # Set of hydro resources modeled with known reservoir energy capacity
     if !isempty(inputs["HYDRO_RES"])
-        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], has_hydro_energy_to_power_ratio(gen))
+        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], ids_with(gen, hydro_energy_to_power_ratio))
     end
 
     ## STORAGE
@@ -771,15 +771,19 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Set of hydrogen electolyzer resources:
     inputs["ELECTROLYZER"] = electrolyzer(gen)
 
-    ## Retrofit ## TODO: ask how to add it
-    inputs["RETRO"] = []
+    ## Retrofit 
+    inputs["RETRO"] = ids_with_retrofit(gen)
+    # Disable Retrofit while it's under development
+    if !(isempty(inputs["RETRO"]))
+        error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in any of the resource .csv files, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
+    end
 
     ## Reserves
     if setup["Reserves"] >= 1
         # Set for resources with regulation reserve requirements
-        inputs["REG"] = has_regulation_reserve_requirements(gen)
+        inputs["REG"] = ids_with_regulation_reserve_requirements(gen)
         # Set for resources with spinning reserve requirements
-        inputs["RSV"] = has_spinning_reserve_requirements(gen)
+        inputs["RSV"] = ids_with_spinning_reserve_requirements(gen)
     end
 
     ## THERM
@@ -788,7 +792,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Unit commitment
     if setup["UCommit"] >= 1
         # Set of thermal resources with unit commitment
-        inputs["THERM_COMMIT"] = has_unit_commitment(gen)
+        inputs["THERM_COMMIT"] = ids_with_unit_commitment(gen)
         # Set of thermal resources without unit commitment
         inputs["THERM_NO_COMMIT"] = no_unit_commitment(gen)
         # Start-up cost is sum of fixed cost per start startup
@@ -814,17 +818,17 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     retirable = is_retirable(gen)
 
     # Set of all resources eligible for new capacity
-    inputs["NEW_CAP"] = intersect(buildable, has_max_cap_mw(gen))
+    inputs["NEW_CAP"] = intersect(buildable, ids_with(gen, max_cap_mw))
     # Set of all resources eligible for capacity retirements
-    inputs["RET_CAP"] = intersect(retirable, has_existing_cap_mw(gen))
+    inputs["RET_CAP"] = intersect(retirable, ids_with_nonneg(gen, existing_cap_mw))
 
     new_cap_energy = Set{Int64}()
     ret_cap_energy = Set{Int64}()
     if !isempty(inputs["STOR_ALL"])
         # Set of all storage resources eligible for new energy capacity
-        new_cap_energy = intersect(buildable, has_max_cap_mwh(gen), inputs["STOR_ALL"])
+        new_cap_energy = intersect(buildable, ids_with(gen, max_cap_mwh), inputs["STOR_ALL"])
         # Set of all storage resources eligible for energy capacity retirements
-        ret_cap_energy = intersect(retirable, has_existing_cap_mwh(gen), inputs["STOR_ALL"])
+        ret_cap_energy = intersect(retirable, ids_with_nonneg(gen, existing_cap_mwh), inputs["STOR_ALL"])
     end
     inputs["NEW_CAP_ENERGY"] = new_cap_energy
     inputs["RET_CAP_ENERGY"] = ret_cap_energy
@@ -833,9 +837,9 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 	ret_cap_charge = Set{Int64}()
 	if !isempty(inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
-        new_cap_charge = intersect(buildable, has_max_charge_cap_mw(gen), inputs["STOR_ASYMMETRIC"])
+        new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-        ret_cap_charge = intersect(buildable, has_existing_charge_capacity_mw(gen), inputs["STOR_ASYMMETRIC"])
+        ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_capacity_mw), inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge
@@ -859,38 +863,38 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 
         gen_VRE_STOR = gen.VreStorage
         # Set of all VRE-STOR resources eligible for new solar capacity
-        inputs["NEW_CAP_SOLAR"] = intersect(buildable, solar(gen), has_max_cap_solar_mw(gen_VRE_STOR))
+        inputs["NEW_CAP_SOLAR"] = intersect(buildable, solar(gen), ids_with(gen_VRE_STOR, max_cap_solar_mw))
         # Set of all VRE_STOR resources eligible for solar capacity retirements
-        inputs["RET_CAP_SOLAR"] = intersect(retirable,  solar(gen), has_nonneg_existing_cap_solar_mw(gen_VRE_STOR))
+        inputs["RET_CAP_SOLAR"] = intersect(retirable,  solar(gen), ids_with_nonneg(gen_VRE_STOR, existing_cap_solar_mw))
         # Set of all VRE-STOR resources eligible for new wind capacity
-        inputs["NEW_CAP_WIND"] = intersect(buildable, wind(gen), has_max_cap_wind_mw(gen_VRE_STOR))
+        inputs["NEW_CAP_WIND"] = intersect(buildable, wind(gen), ids_with(gen_VRE_STOR, max_cap_wind_mw))
         # Set of all VRE_STOR resources eligible for wind capacity retirements
-        inputs["RET_CAP_WIND"] = intersect(retirable, wind(gen), has_nonneg_existing_cap_wind_mw(gen_VRE_STOR))
+        inputs["RET_CAP_WIND"] = intersect(retirable, wind(gen), ids_with_nonneg(gen_VRE_STOR, existing_cap_wind_mw))
         # Set of all VRE-STOR resources eligible for new inverter capacity
-        inputs["NEW_CAP_DC"] = intersect(buildable, has_max_cap_inverter_mw(gen_VRE_STOR), inputs["VS_DC"])
+        inputs["NEW_CAP_DC"] = intersect(buildable, ids_with(gen_VRE_STOR, max_cap_inverter_mw), inputs["VS_DC"])
         # Set of all VRE_STOR resources eligible for inverter capacity retirements
-        inputs["RET_CAP_DC"] = intersect(retirable, has_nonneg_existing_cap_inverter_mw(gen_VRE_STOR), inputs["VS_DC"])
+        inputs["RET_CAP_DC"] = intersect(retirable, ids_with_nonneg(gen_VRE_STOR, existing_cap_inverter_mw), inputs["VS_DC"])
         # Set of all storage resources eligible for new energy capacity
-        inputs["NEW_CAP_STOR"] = intersect(buildable, has_max_cap_mwh(gen_VRE_STOR), inputs["VS_STOR"])
+        inputs["NEW_CAP_STOR"] = intersect(buildable, ids_with(gen_VRE_STOR, max_cap_mwh), inputs["VS_STOR"])
         # Set of all storage resources eligible for energy capacity retirements
-        inputs["RET_CAP_STOR"] = intersect(retirable, has_existing_cap_mwh(gen_VRE_STOR), inputs["VS_STOR"])
+        inputs["RET_CAP_STOR"] = intersect(retirable, ids_with_nonneg(gen_VRE_STOR, existing_cap_mwh), inputs["VS_STOR"])
         if !isempty(inputs["VS_ASYM"])
             # Set of asymmetric charge DC storage resources eligible for new charge capacity
-            inputs["NEW_CAP_CHARGE_DC"] = intersect(buildable, has_max_cap_charge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_CHARGE"]) 
+            inputs["NEW_CAP_CHARGE_DC"] = intersect(buildable, ids_with(gen_VRE_STOR, max_cap_charge_dc_mw), inputs["VS_ASYM_DC_CHARGE"]) 
             # Set of asymmetric charge DC storage resources eligible for charge capacity retirements
-            inputs["RET_CAP_CHARGE_DC"] = intersect(retirable, has_nonneg_existing_cap_charge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_CHARGE"])
+            inputs["RET_CAP_CHARGE_DC"] = intersect(retirable, ids_with_nonneg(gen_VRE_STOR, existing_cap_charge_dc_mw), inputs["VS_ASYM_DC_CHARGE"])
             # Set of asymmetric discharge DC storage resources eligible for new discharge capacity
-            inputs["NEW_CAP_DISCHARGE_DC"] = intersect(buildable, has_max_cap_discharge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_DISCHARGE"]) 
+            inputs["NEW_CAP_DISCHARGE_DC"] = intersect(buildable, ids_with(gen_VRE_STOR, max_cap_discharge_dc_mw), inputs["VS_ASYM_DC_DISCHARGE"]) 
             # Set of asymmetric discharge DC storage resources eligible for discharge capacity retirements
-            inputs["RET_CAP_DISCHARGE_DC"] = intersect(retirable, has_nonneg_existing_cap_discharge_dc_mw(gen_VRE_STOR), inputs["VS_ASYM_DC_DISCHARGE"]) 
+            inputs["RET_CAP_DISCHARGE_DC"] = intersect(retirable, ids_with_nonneg(gen_VRE_STOR, existing_cap_discharge_dc_mw), inputs["VS_ASYM_DC_DISCHARGE"]) 
             # Set of asymmetric charge AC storage resources eligible for new charge capacity
-            inputs["NEW_CAP_CHARGE_AC"] = intersect(buildable, has_max_cap_charge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_CHARGE"]) 
+            inputs["NEW_CAP_CHARGE_AC"] = intersect(buildable, ids_with(gen_VRE_STOR, max_cap_charge_ac_mw), inputs["VS_ASYM_AC_CHARGE"]) 
             # Set of asymmetric charge AC storage resources eligible for charge capacity retirements
-            inputs["RET_CAP_CHARGE_AC"] = intersect(retirable, has_nonneg_existing_cap_charge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_CHARGE"]) 
+            inputs["RET_CAP_CHARGE_AC"] = intersect(retirable, ids_with_nonneg(gen_VRE_STOR, existing_cap_charge_ac_mw), inputs["VS_ASYM_AC_CHARGE"]) 
             # Set of asymmetric discharge AC storage resources eligible for new discharge capacity
-            inputs["NEW_CAP_DISCHARGE_AC"] = intersect(buildable, has_max_cap_discharge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_DISCHARGE"]) 
+            inputs["NEW_CAP_DISCHARGE_AC"] = intersect(buildable, ids_with(gen_VRE_STOR, max_cap_discharge_ac_mw), inputs["VS_ASYM_AC_DISCHARGE"]) 
             # Set of asymmetric discharge AC storage resources eligible for discharge capacity retirements
-            inputs["RET_CAP_DISCHARGE_AC"] = intersect(retirable, has_nonneg_existing_cap_discharge_ac_mw(gen_VRE_STOR), inputs["VS_ASYM_AC_DISCHARGE"]) 
+            inputs["RET_CAP_DISCHARGE_AC"] = intersect(retirable, ids_with_nonneg(gen_VRE_STOR, existing_cap_discharge_ac_mw), inputs["VS_ASYM_AC_DISCHARGE"]) 
         end 
 
         # Names for systemwide resources
@@ -922,7 +926,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     inputs["RESOURCE_ZONES"] = inputs["RESOURCE_NAMES"] .* "_z" .* string.(zones)
 
     # Fuel
-    inputs["HAS_FUEL"] = has_fuel(gen)
+    inputs["HAS_FUEL"] = ids_with_fuel(gen)
 
     inputs["RESOURCES"] = gen
     return nothing
@@ -990,6 +994,7 @@ function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractStri
 
         # print summary of resources
         summary(resources)
+
         return nothing
     end
 end

@@ -187,9 +187,9 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     if EnergyShareRequirement >= 1
         @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], 
             sum(inputs["omega"][t]*esr_vrestor(gen[y],tag=ESR)*EP[:vP_SOLAR][y,t]*by_rid(y,:etainverter) 
-            for y=intersect(SOLAR, has_esr_vrestor(gen,tag=ESR)), t=1:T)
+            for y=intersect(SOLAR, ids_with_policy(gen, esr_vrestor, tag=ESR)), t=1:T)
             + sum(inputs["omega"][t]*esr_vrestor(gen[y],tag=ESR)*EP[:vP_WIND][y,t] 
-            for y=intersect(WIND, has_esr_vrestor(gen,tag=ESR)), t=1:T))
+            for y=intersect(WIND, ids_with_policy(gen, esr_vrestor, tag=ESR)), t=1:T))
         EP[:eESR] += eESRVREStor
         if IncludeLossesInESR == 1
             @expression(EP, eESRVREStorLosses[ESR=1:inputs["nESR"]], 
@@ -202,34 +202,34 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Minimum Capacity Requirement
     if MinCapReq == 1
         @expression(EP, eMinCapResSolar[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-            sum(by_rid(y,:etainverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, has_min_cap_solar(gen_VRE_STOR, tag=mincap))))
+            sum(by_rid(y,:etainverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, ids_with_policy(gen_VRE_STOR, min_cap_solar, tag=mincap))))
 		EP[:eMinCapRes] += eMinCapResSolar
 
         @expression(EP, eMinCapResWind[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, has_min_cap_wind(gen_VRE_STOR, tag=mincap))))
+            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, ids_with_policy(gen_VRE_STOR, min_cap_wind, tag=mincap))))
 		EP[:eMinCapRes] += eMinCapResWind
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
             @expression(EP, eMinCapResACDis[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], has_min_cap_stor(gen_VRE_STOR, tag=mincap))))
+                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
 		    EP[:eMinCapRes] += eMinCapResACDis
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
             @expression(EP, eMinCapResDCDis[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], has_min_cap_stor(gen_VRE_STOR, tag=mincap))))
+                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
 		    EP[:eMinCapRes] += eMinCapResDCDis
         end
 
         if !isempty(inputs["VS_SYM_AC"])
             @expression(EP, eMinCapResACStor[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], has_min_cap_stor(gen_VRE_STOR, tag=mincap))))
+                sum(by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
 		    EP[:eMinCapRes] += eMinCapResACStor
         end
 
         if !isempty(inputs["VS_SYM_DC"])
             @expression(EP, eMinCapResDCStor[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], has_min_cap_stor(gen_VRE_STOR, tag=mincap))))
+                sum(by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
 		    EP[:eMinCapRes] += eMinCapResDCStor
         end
     end
@@ -237,34 +237,34 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum Capacity Requirement
     if MaxCapReq == 1
         @expression(EP, eMaxCapResSolar[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-            sum(by_rid(y,:etainverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, has_max_cap_solar(gen_VRE_STOR, tag=maxcap))))
+            sum(by_rid(y,:etainverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, ids_with_policy(gen_VRE_STOR, max_cap_solar, tag=maxcap))))
 		EP[:eMaxCapRes] += eMaxCapResSolar
 
         @expression(EP, eMaxCapResWind[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, has_max_cap_wind(gen_VRE_STOR, tag=maxcap))))
+            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, ids_with_policy(gen_VRE_STOR, max_cap_wind, tag=maxcap))))
 		EP[:eMaxCapRes] += eMaxCapResWind
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
             @expression(EP, eMaxCapResACDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], has_max_cap_stor(gen_VRE_STOR, tag=maxcap))))
+                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
 		    EP[:eMaxCapRes] += eMaxCapResACDis
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
             @expression(EP, eMaxCapResDCDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], has_max_cap_stor(gen_VRE_STOR, tag=maxcap))))
+                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
 		    EP[:eMaxCapRes] += eMaxCapResDCDis
         end
 
         if !isempty(inputs["VS_SYM_AC"])
             @expression(EP, eMaxCapResACStor[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], has_max_cap_stor(gen_VRE_STOR, tag=maxcap))))
+                sum(by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
 		    EP[:eMaxCapRes] += eMaxCapResACStor
         end
 
         if !isempty(inputs["VS_SYM_DC"])
             @expression(EP, eMaxCapResDCStor[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], has_max_cap_stor(gen_VRE_STOR, tag=maxcap))))
+                sum(by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
 		    EP[:eMaxCapRes] += eMaxCapResDCStor
         end
     end
@@ -472,11 +472,11 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cMaxRet_DC[y=RET_CAP_DC], vRETDCCAP[y] <= eExistingCapDC[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_DC[y in has_nonneg_max_cap_inverter_mw(gen_VRE_STOR)], 
+    @constraint(EP, cMaxCap_DC[y in ids_with_nonneg(gen_VRE_STOR, max_cap_inverter_mw)], 
         eTotalCap_DC[y] <= by_rid(y,:max_cap_inverter_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_DC[y in has_positive_min_cap_inverter_mw(gen_VRE_STOR)], 
+    @constraint(EP, cMinCap_DC[y in ids_with_positive(gen_VRE_STOR, min_cap_inverter_mw)], 
         eTotalCap_DC[y] >= by_rid(y,:min_cap_inverter_mw))
 
     # Constraint 2: Inverter Exports Maximum: see main module because capacity reserve margin/operating reserves may alter constraint
@@ -643,17 +643,17 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cMaxRet_Solar[y=RET_CAP_SOLAR], vRETSOLARCAP[y] <= eExistingCapSolar[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Solar[y in has_nonneg_max_cap_solar_mw(gen_VRE_STOR)], 
+    @constraint(EP, cMaxCap_Solar[y in ids_with_nonneg(gen_VRE_STOR, max_cap_solar_mw)], 
         eTotalCap_SOLAR[y] <= by_rid(y,:max_cap_solar_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Solar[y in has_positive_min_cap_solar_mw(gen_VRE_STOR)], 
+    @constraint(EP, cMinCap_Solar[y in ids_with_positive(gen_VRE_STOR, min_cap_solar_mw)], 
         eTotalCap_SOLAR[y] >= by_rid(y,:min_cap_solar_mw))
 
     # Constraint 2: PV Generation: see main module because operating reserves may alter constraint
 
     # Constraint 3: Inverter Ratio between solar capacity and grid
-    @constraint(EP, cInverterRatio_Solar[y in has_positive_inverter_ratio_solar(gen_VRE_STOR)], 
+    @constraint(EP, cInverterRatio_Solar[y in ids_with_positive(gen_VRE_STOR, inverter_ratio_solar)], 
         EP[:eTotalCap_SOLAR][y] == by_rid(y,:inverter_ratio_solar)*EP[:eTotalCap_DC][y])
 end
 
@@ -816,17 +816,17 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cMaxRet_Wind[y=RET_CAP_WIND], vRETWINDCAP[y] <= eExistingCapWind[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Wind[y in has_nonneg_max_cap_wind_mw(gen_VRE_STOR)], 
+    @constraint(EP, cMaxCap_Wind[y in ids_with_nonneg(gen_VRE_STOR, max_cap_wind_mw)], 
         eTotalCap_WIND[y] <= by_rid(y,:max_cap_wind_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Wind[y in has_positive_min_cap_wind_mw(gen_VRE_STOR)], 
+    @constraint(EP, cMinCap_Wind[y in ids_with_positive(gen_VRE_STOR, min_cap_wind_mw)], 
         eTotalCap_WIND[y] >= by_rid(y,:min_cap_wind_mw))
 
     # Constraint 2: Wind Generation: see main module because capacity reserve margin/operating reserves may alter constraint
 
     # Constraint 3: Inverter Ratio between wind capacity and grid
-    @constraint(EP, cInverterRatio_Wind[y in has_positive_inverter_ratio_wind(gen_VRE_STOR)], 
+    @constraint(EP, cInverterRatio_Wind[y in ids_with_positive(gen_VRE_STOR, inverter_ratio_wind)], 
         EP[:eTotalCap_WIND][y] == by_rid(y,:inverter_ratio_wind)*EP[:eTotalCap][y])
 end
 
@@ -1186,11 +1186,11 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cMaxRet_Stor[y=RET_CAP_STOR], vRETCAPENERGY_VS[y] <= eExistingCapEnergy_VS[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Stor[y in intersect(has_nonnegative_max_cap_mwh(gen), STOR)], 
+    @constraint(EP, cMaxCap_Stor[y in intersect(ids_with_nonneg(gen, max_cap_mwh), STOR)], 
         eTotalCap_STOR[y] <= max_cap_mwh(gen[y]))
     # Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Stor[y in intersect(has_positive_min_cap_mwh(gen), STOR)], 
+    @constraint(EP, cMinCap_Stor[y in intersect(ids_with_positive(gen, min_cap_mwh), STOR)], 
         eTotalCap_STOR[y] >= min_cap_mwh(gen[y]))
 
     # Constraint 2: SOC Maximum
@@ -1480,8 +1480,8 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 
     if !isempty(VS_ASYM_DC_DISCHARGE)
-        MAX_DC_DISCHARGE = intersect(has_nonneg_max_cap_discharge_dc_mw(gen_VRE_STOR), VS_ASYM_DC_DISCHARGE)
-        MIN_DC_DISCHARGE = intersect(has_positive_min_cap_discharge_dc_mw(gen_VRE_STOR), VS_ASYM_DC_DISCHARGE)
+        MAX_DC_DISCHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_discharge_dc_mw), VS_ASYM_DC_DISCHARGE)
+        MIN_DC_DISCHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_discharge_dc_mw), VS_ASYM_DC_DISCHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1560,8 +1560,8 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
     
     if !isempty(VS_ASYM_DC_CHARGE)
-        MAX_DC_CHARGE = intersect(has_nonneg_max_cap_charge_dc_mw(gen_VRE_STOR), VS_ASYM_DC_CHARGE)
-        MIN_DC_CHARGE = intersect(has_positive_min_cap_charge_dc_mw(gen_VRE_STOR), VS_ASYM_DC_CHARGE)
+        MAX_DC_CHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_charge_dc_mw), VS_ASYM_DC_CHARGE)
+        MIN_DC_CHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_charge_dc_mw), VS_ASYM_DC_CHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1640,8 +1640,8 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     if !isempty(VS_ASYM_AC_DISCHARGE)
-        MAX_AC_DISCHARGE = intersect(has_nonneg_max_cap_discharge_ac_mw(gen_VRE_STOR), VS_ASYM_AC_DISCHARGE)
-        MIN_AC_DISCHARGE = intersect(has_positive_min_cap_discharge_ac_mw(gen_VRE_STOR), VS_ASYM_AC_DISCHARGE)
+        MAX_AC_DISCHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_discharge_ac_mw), VS_ASYM_AC_DISCHARGE)
+        MIN_AC_DISCHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_discharge_ac_mw), VS_ASYM_AC_DISCHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1720,8 +1720,8 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     if !isempty(VS_ASYM_AC_CHARGE)
-        MAX_AC_CHARGE = intersect(has_nonneg_max_cap_charge_ac_mw(gen_VRE_STOR), VS_ASYM_AC_CHARGE)
-        MIN_AC_CHARGE = intersect(has_positivem_in_cap_charge_ac_mw(gen_VRE_STOR), VS_ASYM_AC_CHARGE)
+        MAX_AC_CHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_charge_ac_mw), VS_ASYM_AC_CHARGE)
+        MIN_AC_CHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_charge_ac_mw), VS_ASYM_AC_CHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin

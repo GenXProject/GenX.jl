@@ -125,11 +125,11 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on new built energy capacity
 	# Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMaxCapEnergy[y in intersect(has_positive_max_cap_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] <= max_cap_mwh(gen[y]))
+	@constraint(EP, cMaxCapEnergy[y in intersect(ids_with_positive(gen, max_cap_mwh), STOR_ALL)], eTotalCapEnergy[y] <= max_cap_mwh(gen[y]))
 
 	# Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
-	@constraint(EP, cMinCapEnergy[y in intersect(has_positive_min_cap_mwh(gen), STOR_ALL)], eTotalCapEnergy[y] >= min_cap_mwh(gen[y]))
+	@constraint(EP, cMinCapEnergy[y in intersect(ids_with_positive(gen, min_cap_mwh), STOR_ALL)], eTotalCapEnergy[y] >= min_cap_mwh(gen[y]))
 
 	# Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
 	@constraint(EP, cMinCapEnergyDuration[y in STOR_ALL], EP[:eTotalCapEnergy][y] >= min_duration(gen[y]) * EP[:eTotalCap][y])

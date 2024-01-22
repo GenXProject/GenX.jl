@@ -4,16 +4,23 @@
 Name of the type of resources available in the model.
 
 Possible values:
-- :Electrolyzer
-- :FlexDemand
-- :Hydro
-- :Storage
 - :Thermal
 - :Vre
+- :Hydro
+- :Storage
 - :MustRun
+- :FlexDemand
 - :VreStorage
+- :Electrolyzer
 """
-const resource_types = (:Electrolyzer, :FlexDemand, :Hydro, :Storage, :Thermal, :Vre, :MustRun, :VreStorage)
+const resource_types = (:Thermal,
+                        :Vre,
+                        :Hydro,
+                        :Storage,
+                        :MustRun,
+                        :FlexDemand,
+                        :VreStorage,
+                        :Electrolyzer)
 
 # Create composite types (structs) for each resource type in resource_types
 for r in resource_types
@@ -93,6 +100,21 @@ Retrieves the value of a specific attribute from an `AbstractResource` object. I
 function Base.get(r::AbstractResource, sym::Symbol, default) 
     return haskey(r, sym) ? getproperty(r,sym) : default
 end
+
+"""
+    has(r::AbstractResource, sym::Symbol)
+
+Check if an `AbstractResource` object has a specific attribute.
+
+# Arguments:
+- `r::AbstractResource`: The resource object.
+- `sym::Symbol`: The symbol representing the attribute name.
+
+# Returns:
+- `true` if the attribute exists in the object, `false` otherwise.
+
+"""
+has(r::AbstractResource, sym::Symbol) = haskey(r, sym)
 
 """
 getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
@@ -262,21 +284,20 @@ macro interface(name, default=default, type=AbstractResource)
 end
 
 """
-    has_positive(name, type=AbstractResource)
+    ids_with_positive(rs::Vector{T}, f::Function) where T <: AbstractResource
 
-Define a function for finding resources in a vector `rs` where the attribute specified by `name` is positive.
+Function for finding indices of resources in a vector `rs` where the attribute specified by `f` is positive.
 
 # Arguments
-- `name`: The name of the attribute.
-- `type`: The type of the resource.
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `f::Function`: The getter of the attribute.
 
 # Returns
-- `Function`: The generated function.
+- `ids (Vector{Int64})`: The vector of resource ids with positive attribute.
 
 ## Examples
 ```julia
-julia> @has_positive max_cap_mw Vre
-julia> has_positive_max_cap_mw(gen.Vre)
+julia> ids_with_positive(gen, max_cap_mw)
 3-element Vector{Int64}:
  3 
  4
@@ -285,58 +306,104 @@ julia> max_cap_mw(gen[3])
 4.888236
 ```
 """
-macro has_positive(name, type=AbstractResource)
-    f_name = Symbol("has_positive_$(name)")
-    quote
-        function $(esc(f_name))(rs::Vector{<:$(esc(type))})
-            return resource_id.(filter(r -> $(esc(name))(r) > 0, rs))
-        end
-    end
+function ids_with_positive(rs::Vector{T}, f::Function) where T <: AbstractResource
+    return findall(r -> f(r) > 0, rs)
 end
 
 """
-    has_nonnegative(name, type=AbstractResource)
+    ids_with_positive(rs::Vector{T}, name::Symbol) where T <: AbstractResource
 
-Define a function for finding resources in a vector `rs` where the attribute specified by `name` is non-negative.
+Function for finding indices of resources in a vector `rs` where the attribute specified by `name` is positive.
 
 # Arguments
-- `name`: The name of the attribute.
-- `type`: The type of the resource.
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `name::Symbol`: The name of the attribute.
 
 # Returns
-- `Function`: The generated function.
+- `Vector{Int64}`: The vector of resource ids with positive attribute.
 
 ## Examples
 ```julia
-julia> @has_nonnegative max_cap_mw Thermal
-julia> has_nonnegative_max_cap_mw(gen.Thermal)
+julia> ids_with_positive(gen, :max_cap_mw)
+3-element Vector{Int64}:
+ 3 
+ 4
+ 5
+julia> max_cap_mw(gen[3])
+4.888236
 ```
 """
-macro has_nonnegative(name, type=AbstractResource)
-    f_name = Symbol("has_nonneg_$(name)")
-    quote
-        function $(esc(f_name))(rs::Vector{<:$(esc(type))})
-            return resource_id.(filter(r -> $(esc(name))(r) >= 0, rs))
-        end
-    end
+function ids_with_positive(rs::Vector{T}, name::Symbol) where T <: AbstractResource
+    f = getfield(GenX, name)
+    return ids_with_positive(rs, f)
+end
+
+function ids_with_positive(rs::Vector{T}, name::AbstractString) where T <: AbstractResource
+    return ids_with_positive(rs, Symbol(lowercase(name)))
 end
 
 """
-    has_attribute(name, type=AbstractResource)
+    ids_with_nonneg(rs::Vector{T}, f::Function) where T <: AbstractResource
 
-Define a function for finding resources in a vector `rs` where the attribute specified by `name` is not equal to zero.
+Function for finding resources in a vector `rs` where the attribute specified by `f` is non-negative.
 
 # Arguments
-- `name`: The name of the attribute.
-- `type`: The type of the resource.
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `f::Function`: The getter of the attribute.
 
 # Returns
-- `Function`: The generated function.
+- `ids (Vector{Int64})`: The vector of resource ids with non-negative attribute.
 
 ## Examples
 ```julia
-julia> @has_attribute existing_cap_mw Thermal
-julia> has_existing_cap_mw(gen.Thermal)
+julia> ids_with_nonneg(gen, max_cap_mw)
+```
+"""
+function ids_with_nonneg(rs::Vector{T}, f::Function) where T <: AbstractResource
+    return findall(r -> f(r) >= 0, rs)
+end
+
+"""
+    ids_with_nonneg(rs::Vector{T}, f::Function) where T <: AbstractResource
+
+Function for finding resources in a vector `rs` where the attribute specified by `name` is non-negative.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `name::Symbol`: The name of the attribute.
+
+# Returns
+- `ids (Vector{Int64})`: The vector of resource ids with non-negative attribute.
+
+## Examples
+```julia
+julia> ids_with_nonneg(gen, max_cap_mw)
+```
+"""
+function ids_with_nonneg(rs::Vector{T}, name::Symbol) where T <: AbstractResource
+    f = getfield(GenX, name)
+    return ids_with_nonneg(rs, f)
+end
+
+function ids_with_nonneg(rs::Vector{T}, name::AbstractString) where T <: AbstractResource
+    return ids_with_nonneg(rs, Symbol(lowercase(name)))
+end
+
+"""
+    ids_with(rs::Vector{T}, f::Function) where T <: AbstractResource
+
+Function for finding resources in a vector `rs` where the attribute specified by `f` is not equal to zero.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `f::Function`: The getter of the attribute.
+
+# Returns
+- `ids (Vector{Int64})`: The vector of resource ids with non-zero attribute.
+
+## Examples
+```julia
+julia> ids_with(gen.Thermal, existing_cap_mw)
 4-element Vector{Int64}:
  21
  22
@@ -346,13 +413,80 @@ julia> existing_cap_mw(gen[21])
 7.0773
 ```
 """
-macro has_attribute(name, type=AbstractResource)
-    f_name = Symbol("has_$(name)")
-    quote
-        function $(esc(f_name))(rs::Vector{<:$(esc(type))})
-            return resource_id.(filter(r -> $(esc(name))(r) != 0, rs))
-        end
-    end
+function ids_with(rs::Vector{T}, f::Function) where T <: AbstractResource
+    return findall(r -> f(r) != 0, rs)
+end
+
+"""
+    ids_with(rs::Vector{T}, name::Symbol) where T <: AbstractResource
+
+Function for finding resources in a vector `rs` where the attribute specified by `name` is not equal to zero.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `name::Symbol`: The name of the attribute.
+
+# Returns
+- `ids (Vector{Int64})`: The vector of resource ids with non-zero attribute.
+
+## Examples
+```julia
+julia> ids_with(gen.Thermal, :existing_cap_mw)
+4-element Vector{Int64}:
+ 21
+ 22
+ 23
+ 24
+julia> existing_cap_mw(gen[21])
+7.0773
+```
+"""
+function ids_with(rs::Vector{T}, name::Symbol) where T <: AbstractResource
+    f = getfield(GenX, name)
+    return ids_with(rs, f)
+end
+
+function ids_with(rs::Vector{T}, name::AbstractString) where T <: AbstractResource
+    return ids_with(rs, Symbol(lowercase(name)))
+end
+
+"""
+    ids_with_policy(rs::Vector{T}, f::Function; tag::Int64) where T <: AbstractResource
+
+Function for finding resources in a vector `rs` where the policy specified by `f` with tag equal to `tag` is positive.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `f::Function`: The policy getter function.
+- `tag::Int64`: The tag of the policy.
+
+# Returns
+- `ids (Vector{Int64})`: The vector of resource ids with a positive value for policy `f` and tag `tag`.
+"""
+function ids_with_policy(rs::Vector{T}, f::Function; tag::Int64) where T <: AbstractResource
+    return findall(r -> f(r, tag=tag) > 0, rs)
+end
+
+"""
+ids_with_policy(rs::Vector{T}, name::Symbol; tag::Int64) where T <: AbstractResource
+
+Function for finding resources in a vector `rs` where the policy specified by `name` with tag equal to `tag` is positive.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `name::Symbol`: The name of the policy.
+- `tag::Int64`: The tag of the policy.
+
+# Returns
+- `ids (Vector{Int64})`: The vector of resource ids with a positive value for policy `name` and tag `tag`.
+"""
+function ids_with_policy(rs::Vector{T}, name::Symbol; tag::Int64) where T <: AbstractResource
+    f = getfield(GenX, name)
+    return ids_with_policy(rs, f, tag=tag)
+end
+
+function ids_with_policy(rs::Vector{T}, name::AbstractString; tag::Int64) where T <: AbstractResource
+    return ids_with_policy(rs, Symbol(lowercase(name)), tag=tag)
 end
 
 
@@ -456,44 +590,31 @@ cluster(r::AbstractResource) = r.cluster
 is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) > 0, rs)
 is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) == 0, rs)
 
-has_mga_on(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
+ids_with_mga(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
 
-has_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default) > 0, rs)
-
-has_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
+ids_with_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
 
 is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default) == 1, rs)
 is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default) == 1, rs)
 
+# Retrofit
+ids_with_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default) == 1, rs)
+
 # Unit commitment
-has_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
+ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
 # Without unit commitment
 no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 2, rs)
 
-has_max_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mw(r) != 0, rs)
-has_positive_max_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mw(r) > 0, rs)
-has_positive_min_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> min_cap_mw(r) > 0, rs)
+# Reserves
+# cap reserve margin
+ids_with_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
+ids_with_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
 
-has_existing_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_cap_mw(r) >= 0, rs)
-
-has_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) != 0, rs)
-has_positive_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) > 0, rs)
-has_positive_min_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> min_cap_mwh(r) > 0, rs)
-has_nonnegative_max_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_cap_mwh(r) >= 0, rs)
-
-has_max_charge_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_charge_cap_mw(r) != 0, rs)
-has_positive_max_charge_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> max_charge_cap_mw(r) > 0, rs)
-has_positive_min_charge_cap_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> min_charge_cap_mw(r) > 0, rs)
-
-has_existing_cap_mwh(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_cap_mwh(r) >= 0, rs)
-has_existing_charge_capacity_mw(rs::Vector{T}) where T <: AbstractResource = findall(r -> existing_charge_capacity_mw(r) >= 0, rs)
-
-has_qualified_hydrogen_supply(rs::Vector{T}) where T <: AbstractResource = findall(r -> qualified_hydrogen_supply(r) == 1, rs)
-
-# policies
-has_esr(rs::Vector{T}; tag::Int64=1) where T <: AbstractResource = findall(r -> esr(r,tag=tag) > 0, rs)
-has_min_cap(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> min_cap(r,tag=tag) > 0, rs)
-has_max_cap(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap(r,tag=tag) > 0, rs)
+# Maintenance
+ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default) > 0, rs)
+maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default)
+maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default)
+maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default)
 
 # STORAGE interface
 """
@@ -517,7 +638,6 @@ asymmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa
 Returns the indices of all hydro resources in the vector `rs`.
 """
 hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Hydro), rs)
-has_hydro_energy_to_power_ratio(rs::Vector{T}) where T <: AbstractResource = findall(r -> hydro_energy_to_power_ratio(r) > 0, rs)
 
 # THERM interface
 """
@@ -536,7 +656,6 @@ down_time(r::Thermal) = get(r, :down_time, default)
 Returns the indices of all Vre resources in the vector `rs`.
 """
 vre(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Vre), rs)
-has_positive_num_vre_bins(rs::Vector{T}) where T <: AbstractResource = findall(r -> num_vre_bins(r) >= 1, rs)
 
 # ELECTROLYZER interface
 """
@@ -636,7 +755,6 @@ for attr in (:existing_cap_solar_mw,
              :existing_cap_discharge_dc_mw,
              :existing_cap_discharge_ac_mw)
     @eval @interface $attr
-    @eval @has_nonnegative $attr
 end
 
 for attr in (:max_cap_solar_mw, 
@@ -647,8 +765,6 @@ for attr in (:max_cap_solar_mw,
              :max_cap_discharge_dc_mw, 
              :max_cap_discharge_ac_mw)
     @eval @interface $attr
-    @eval @has_attribute $attr
-    @eval @has_nonnegative $attr
 end
 
 for attr in (:min_cap_solar_mw, 
@@ -661,7 +777,6 @@ for attr in (:min_cap_solar_mw,
              :inverter_ratio_solar,
              :inverter_ratio_wind,)
     @eval @interface $attr
-    @eval @has_positive $attr
 end
 
 for attr in (:etainverter,
@@ -735,31 +850,6 @@ min_cap_solar(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_solar_$t
 max_cap_solar(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_solar_$tag"), default)
 min_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_wind_$tag"), default)
 max_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_wind_$tag"), default)
-
-# energy share requirement
-has_esr_vrestor(rs::Vector{T}; tag::Int64=1) where T <: AbstractResource = findall(r -> esr_vrestor(r,tag=tag) > 0, rs)
-
-# min cap requirement
-has_min_cap_solar(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> min_cap_solar(r,tag=tag) == 1, rs)
-has_min_cap_wind(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> min_cap_wind(r,tag=tag) == 1, rs)
-has_min_cap_stor(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> min_cap_stor(r,tag=tag) == 1, rs)
-
-# max cap requirement
-has_max_cap_solar(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap_solar(r,tag=tag) == 1, rs)
-has_max_cap_wind(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap_wind(r,tag=tag) == 1, rs)
-has_max_cap_stor(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> max_cap_stor(r,tag=tag) == 1, rs)
-
-## Reserves
-# cap reserve margin
-has_cap_reserve_margin(rs::Vector{T}; tag::Int64) where T <: AbstractResource = findall(r -> eligible_cap_res(r,tag=tag) > 0, rs)
-has_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
-has_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
-
-# Maintenance
-resources_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default) > 0, rs)
-maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default)
-maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default)
-maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default)
 
 ## Utility functions for working with resources
 in_zone(r::AbstractResource, zone::Int) = zone_id(r) == zone

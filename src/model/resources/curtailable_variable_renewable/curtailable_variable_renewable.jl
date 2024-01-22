@@ -29,7 +29,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 
 	VRE = inputs["VRE"]
 
-	VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(gen)) 
+	VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 
 	VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
 	### Expressions ###
@@ -106,7 +106,7 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
 	T = inputs["T"]
 
     VRE = inputs["VRE"]
-	VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(gen)) 
+	VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 
     REG = intersect(VRE_POWER_OUT, inputs["REG"])
     RSV = intersect(VRE_POWER_OUT, inputs["RSV"])
 
@@ -137,7 +137,7 @@ function remove_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
     gen =  inputs["RESOURCES"]
 
     VRE = inputs["VRE"]
-    VRE_POWER_OUT = intersect(VRE, has_positive_num_vre_bins(gen)) 
+    VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 
     REG = inputs["REG"]
     RSV = inputs["RSV"]
 

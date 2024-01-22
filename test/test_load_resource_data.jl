@@ -16,22 +16,16 @@ function test_macro_interface(attr::Symbol, gen, dfGen)
     @test f.(gen) == dfGen[!, attr]
 end
 
-function test_macro_has_attribute(attr::Symbol, gen, dfGen)
-    sym = Symbol("has_", attr)
-    f = getfield(GenX, sym)
-    @test f(gen) == dfGen[dfGen[!, attr] .!= 0, :r_id]
+function test_ids_with(attr::Symbol, gen, dfGen)
+    @test GenX.ids_with(gen,attr) == dfGen[dfGen[!, attr] .!= 0, :r_id]
 end
 
-function test_macro_has_nonnegative(attr::Symbol, gen, dfGen)
-    sym = Symbol("has_nonneg_", attr)
-    f = getfield(GenX, sym)
-    @test f(gen) == dfGen[dfGen[!, attr] .>= 0, :r_id]
+function test_ids_with_nonneg(attr::Symbol, gen, dfGen)
+    @test GenX.ids_with_nonneg(gen,attr) == dfGen[dfGen[!, attr] .>= 0, :r_id]
 end
 
-function test_macro_has_positive(attr::Symbol, gen, dfGen)
-    sym = Symbol("has_positive_", attr)
-    f = getfield(GenX, sym)
-    @test f(gen) == dfGen[dfGen[!, attr] .> 0, :r_id]
+function test_ids_with_positive(attr::Symbol, gen, dfGen)
+    @test GenX.ids_with_positive(gen,attr) == dfGen[dfGen[!, attr] .> 0, :r_id]
 end
 
 function prepare_inputs_true(test_path::AbstractString, in_filenames::InputsTrue, setup::Dict)
@@ -96,7 +90,7 @@ function test_load_scaled_resources_data(gen, dfGen)
     @test GenX.ccs_disposal_cost_per_metric_ton.(gen) == dfGen.ccs_disposal_cost_per_metric_ton
     @test GenX.biomass.(gen) == dfGen.biomass
 
-    @test GenX.has_mga_on(gen) == dfGen[dfGen.mga .== 1, :r_id]
+    @test GenX.ids_with_mga(gen) == dfGen[dfGen.mga .== 1, :r_id]
 
     @test GenX.region.(gen) == dfGen.region
     @test GenX.cluster.(gen) == dfGen.cluster
@@ -164,17 +158,16 @@ function test_inputs_keys(inputs, inputs_true)
 end
 
 function test_resource_specific_attributes(gen, dfGen, inputs)
-    # @test GenX.has_retrofit(gen) == dfGen[dfGen.retro .== 1, :r_id]   #TODO: fix this when retrofit is implemented
     @test GenX.is_buildable(gen) == dfGen[dfGen.new_build .== 1, :r_id]
     @test GenX.is_retirable(gen) == dfGen[dfGen.can_retire .== 1, :r_id]
     
-    rs = GenX.has_positive_max_cap_mwh(gen)
+    rs = GenX.ids_with_positive(gen, GenX.max_cap_mwh)
     @test rs == dfGen[dfGen.max_cap_mwh .> 0, :r_id]
     @test GenX.max_cap_mwh.(rs) == dfGen[dfGen.max_cap_mwh .> 0, :r_id]
-    rs = GenX.has_positive_max_charge_cap_mw(gen)
+    rs = GenX.ids_with_positive(gen, GenX.max_charge_cap_mw)
     @test rs == dfGen[dfGen.max_charge_cap_mw .> 0, :r_id]
     @test GenX.max_charge_cap_mw.(rs) == dfGen[dfGen.max_charge_cap_mw .> 0, :r_id]
-    rs = GenX.has_unit_commitment(gen)
+    rs = GenX.ids_with_unit_commitment(gen)
     @test rs == dfGen[dfGen.therm .== 1, :r_id]
     @test GenX.cap_size.(gen[rs]) == dfGen[dfGen.therm.==1,:cap_size]
     rs = setdiff(inputs["HAS_FUEL"], inputs["THERM_COMMIT"])
@@ -304,7 +297,7 @@ function test_load_VRE_STOR_data()
         :existing_cap_discharge_dc_mw,
         :existing_cap_discharge_ac_mw)
         test_macro_interface(attr, gen[rs], dfVRE_STOR)
-        test_macro_has_nonnegative(attr, gen[rs], dfVRE_STOR)
+        test_ids_with_nonneg(attr, gen[rs], dfVRE_STOR)
     end
 
     for attr in (:max_cap_solar_mw, 
@@ -315,8 +308,8 @@ function test_load_VRE_STOR_data()
             :max_cap_discharge_dc_mw, 
             :max_cap_discharge_ac_mw)
         test_macro_interface(attr, gen[rs], dfVRE_STOR)
-        test_macro_has_nonnegative(attr, gen[rs], dfVRE_STOR)
-        test_macro_has_attribute(attr, gen[rs], dfVRE_STOR)
+        test_ids_with_nonneg(attr, gen[rs], dfVRE_STOR)
+        test_ids_with(attr, gen[rs], dfVRE_STOR)
     end
 
     for attr in (:min_cap_solar_mw, 
@@ -329,7 +322,7 @@ function test_load_VRE_STOR_data()
             :inverter_ratio_solar,
             :inverter_ratio_wind,)
         test_macro_interface(attr, gen[rs], dfVRE_STOR)
-        test_macro_has_positive(attr, gen[rs], dfVRE_STOR)
+        test_ids_with_positive(attr, gen[rs], dfVRE_STOR)
     end
 
     for attr in (:etainverter,
@@ -376,12 +369,12 @@ function test_load_VRE_STOR_data()
     @test GenX.min_cap_wind.(gen[rs], tag=1) == dfVRE_STOR.mincaptagwind_1
     @test GenX.max_cap_wind.(gen[rs], tag=1) == dfVRE_STOR.maxcaptagwind_1
 
-    @test GenX.has_min_cap_solar(gen,tag=1) == dfVRE_STOR[dfVRE_STOR.mincaptagsolar_1 .== 1, :r_id]
-    @test GenX.has_min_cap_wind(gen,tag=1) == dfVRE_STOR[dfVRE_STOR.mincaptagwind_1 .== 1, :r_id]
-    @test GenX.has_min_cap_stor(gen,tag=1) == dfVRE_STOR[dfVRE_STOR.mincaptagstor_1 .== 1, :r_id]
-    @test GenX.has_max_cap_solar(gen,tag=1) == dfVRE_STOR[dfVRE_STOR.maxcaptagsolar_1 .== 1, :r_id]
-    @test GenX.has_max_cap_wind(gen,tag=1) == dfVRE_STOR[dfVRE_STOR.maxcaptagwind_1 .== 1, :r_id]
-    @test GenX.has_max_cap_stor(gen,tag=1) == dfVRE_STOR[dfVRE_STOR.maxcaptagstor_1 .== 1, :r_id]
+    @test GenX.ids_with_policy(gen, GenX.min_cap_solar, tag=1) == dfVRE_STOR[dfVRE_STOR.mincaptagsolar_1 .== 1, :r_id]
+    @test GenX.ids_with_policy(gen, GenX.min_cap_wind, tag=1) == dfVRE_STOR[dfVRE_STOR.mincaptagwind_1 .== 1, :r_id]
+    @test GenX.ids_with_policy(gen, GenX.min_cap_stor, tag=1) == dfVRE_STOR[dfVRE_STOR.mincaptagstor_1 .== 1, :r_id]
+    @test GenX.ids_with_policy(gen, GenX.max_cap_solar, tag=1) == dfVRE_STOR[dfVRE_STOR.maxcaptagsolar_1 .== 1, :r_id]
+    @test GenX.ids_with_policy(gen, GenX.max_cap_wind, tag=1) == dfVRE_STOR[dfVRE_STOR.maxcaptagwind_1 .== 1, :r_id]
+    @test GenX.ids_with_policy(gen, GenX.max_cap_stor, tag=1) == dfVRE_STOR[dfVRE_STOR.maxcaptagstor_1 .== 1, :r_id]
 
     # inputs keys
     @test inputs["VRE_STOR"] == dfGen[dfGen.vre_stor.==1,:r_id]

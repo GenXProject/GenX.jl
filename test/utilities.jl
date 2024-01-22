@@ -202,23 +202,75 @@ function cmp_csv(csv1::AbstractString, csv2::AbstractString)
     df2 = CSV.read(csv2, DataFrame)
 
     # Sort the csv files
-    sort!(df1)
-    sort!(df2)
+    cols = sort(names(df1))
+    cols ≠ sort(names(df2)) && error("Column names in $csv1 and $csv2 are different.")
+
+    vre_stor = load_dataframe(joinpath(@__DIR__, "VREStor", "Resources", "VRE_STOR.csv"))[!, :Resource]
+    
+    # remove VRE_STOR from the comparison since they are exported differently
+    if ("Resource" ∈ names(df1)) && (setdiff(df1[!, :Resource], vre_stor) ≠ [])
+        df1 = df1[setdiff(1:end, findall(x -> x ∈ vre_stor, df1[!, :Resource])), :]
+        df2 = df2[setdiff(1:end, findall(x -> x ∈ vre_stor, df2[!, :Resource])), :]
+    end
+    if ("Resource" ∈ names(df1)) && (setdiff(names(df1), vre_stor) ≠ [])
+        df1 = df1[!, setdiff(names(df1), vre_stor)]
+        df2 = df2[!, setdiff(names(df2), vre_stor)]
+    end
 
     return isapprox_df(df1, df2)
 end
 
+"""
+    isapprox_df(df1::DataFrame, df2::DataFrame)
+
+Compare two DataFrames. Return true if they are identical or approximately equal.
+
+# Arguments
+- `df1::DataFrame`: first DataFrame
+- `df2::DataFrame`: second DataFrame
+
+# Returns
+- `true` if the two DataFrames are identical or approximately equal
+- `false` otherwise
+"""
 function isapprox_df(df1::DataFrame, df2::DataFrame)
     @assert length(names(df1)) == length(names(df2))
     @assert Set(names(df1)) == Set(names(df2))
-    all([isapprox_col(df1[!, col], df2[!, col]) for col in names(df1)])
+    is_approx = true
+    for col in names(df1)
+        !isapprox_col(df1[!, col], df2[!, col]) && return false
+    end
+    return is_approx
 end
 
+"""
+    isapprox_col(col1, col2)
+
+Compare two columns of a DataFrame. Return true if they are identical or approximately equal.
+
+# Arguments
+- `col1::Vector`: first column
+- `col2::Vector`: second column
+
+# Returns
+- `true` if the two columns are identical or approximately equal
+- `false` otherwise
+"""
 function isapprox_col(col1, col2)
-    if isequal(col1, col2)
+    if isequal(col1, col2) || (eltype(col1) <: Float64 && isapprox(col1, col2))
         return true
-    elseif eltype(col1) <: Float64 && isapprox(col1, col2)
-        return true
+    elseif eltype(col1) <: AbstractString 
+        isapprox_col = true
+        for i in eachindex(col1)
+            if !isapprox_col 
+                break
+            elseif !isnothing(tryparse(Float64, col1[i])) && !isnothing(tryparse(Float64, col2[i]))
+                isapprox_col = isapprox_col && isapprox(parse(Float64, col1[i]), parse(Float64, col2[i]))
+            else
+                isapprox_col = isapprox_col && isequal(col1[i], col2[i])
+            end
+        end
+        return isapprox_col
     end
     return false
 end

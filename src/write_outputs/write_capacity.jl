@@ -29,7 +29,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	end
 
 	capacity_constraint_dual = zeros(size(inputs["RESOURCE_NAMES"]))
-	for y in has_positive_max_cap_mw(gen)
+	for y in ids_with_positive(gen, max_cap_mw)
 		capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
 	end
 
