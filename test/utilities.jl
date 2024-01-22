@@ -177,7 +177,6 @@ function test_write_output(test_path::AbstractString, genx_setup::Dict, EP::JuMP
     
     # Compare true and test results
     for file in filter(endswith(".csv"), readdir(results_true))
-        println("Testing $file...")
         Test.@test cmp_csv(joinpath(results_test, file), joinpath(results_true, file))
     end
 end
@@ -204,18 +203,6 @@ function cmp_csv(csv1::AbstractString, csv2::AbstractString)
     # Sort the csv files
     cols = sort(names(df1))
     cols ≠ sort(names(df2)) && error("Column names in $csv1 and $csv2 are different.")
-
-    vre_stor = load_dataframe(joinpath(@__DIR__, "VREStor", "Resources", "VRE_STOR.csv"))[!, :Resource]
-    
-    # remove VRE_STOR from the comparison since they are exported differently
-    if ("Resource" ∈ names(df1)) && (setdiff(df1[!, :Resource], vre_stor) ≠ [])
-        df1 = df1[setdiff(1:end, findall(x -> x ∈ vre_stor, df1[!, :Resource])), :]
-        df2 = df2[setdiff(1:end, findall(x -> x ∈ vre_stor, df2[!, :Resource])), :]
-    end
-    if ("Resource" ∈ names(df1)) && (setdiff(names(df1), vre_stor) ≠ [])
-        df1 = df1[!, setdiff(names(df1), vre_stor)]
-        df2 = df2[!, setdiff(names(df2), vre_stor)]
-    end
 
     return isapprox_df(df1, df2)
 end
