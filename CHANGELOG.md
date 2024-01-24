@@ -66,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In the examples, change Reg_Max and Rsv_Max of any MUST_RUN generators to 0.
   This mitigates but does not fully fix (#576).
 - Expressions of virtual charging and discharging costs in storage_all.jl and vre_stor.jl
+- The input file `Generators_data.csv` has been split into different files, one for each type of generator.
+  The new files are: `Thermal.csv`, `Hydro.csv`, `Vre.csv`, `Storage.csv`, `Flex_demand.csv`, `Must_run.csv`, 
+  `Electrolyzer.csv`, and `Vre_stor.csv`. The examples have been updated, and new tests have been added to 
+  check the new data format (#612).
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
