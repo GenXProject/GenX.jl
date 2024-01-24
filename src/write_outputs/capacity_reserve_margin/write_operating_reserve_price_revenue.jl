@@ -1,7 +1,7 @@
 @doc raw"""
 	write_operating_reserve_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
-Function for reporting the operating reserve prices and revenue earned by each generator listed in the input file.
+Function for reporting the operating reserve prices and revenue earned by generators listed in the input file.
     GenX will print this file only when operating reserve is modeled and the shadow price can be obtained form the solver.
     Each row corresponds to a generator, and each column starting from the 6th to the second last is the total revenue from each operating reserve constraint.
     The revenue is calculated as the operating reserve contribution of each time steps multiplied by the shadow price, and then the sum is taken over all modeled time steps.
@@ -55,20 +55,47 @@ function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, set
 			tempresrev[DC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./ dfVRE_STOR[(dfVRE_STOR.STOR_DC_CHARGE.!=0), :EtaInverter]) * weighted_price)
 			tempresrev[AC_CHARGE] .-= dfVRE_STOR[(dfVRE_STOR.STOR_AC_CHARGE.!=0), sym_vs] .* ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * weighted_price)
 		end
+		tempregrev *= scale_factor
 		tempresrev *= scale_factor
-		annual_sum .+= tempresrev
-		dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [sym]))
+		annual_reg_sum .+= tempregrev
+		annual_res_sum .+= tempresrev
+		dfOpRegRevenue = hcat(dfOpRegRevenue, DataFrame([tempregrev], [sym]))
+		dfOpResRevenue = hcat(dfOpResRevenue, DataFrame([tempresrev], [sym]))
 	end
-	dfResRevenue.AnnualSum = annual_sum
-	CSV.write(joinpath(path, "ReserveMarginRevenue.csv"), dfResRevenue)
-	return dfResRevenue
+	dfOpRegRevenue.AnnualSum = annual_reg_sum
+	dfOpResRevenue.AnnualSum = annual_res_sum
+	CSV.write(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
+	CSV.write(joinpath(path, "OperatingReserveRevenue.csv"), dfOpResRevenue)
+	return dfOpRegRevenue, dfOpResRevenue
 end
+
+@doc raw"""
+    operating_regulation_price(EP::Model,
+                                  inputs::Dict,
+                                  setup::Dict)::Vector{Float64}
+
+Operating regulation price for each time step.
+This is equal to the dual variable of the regulatin requirement constraint.
+
+    Returns a vector, with units of $/MW
+"""
 
 function operating_regulation_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
     ω = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     return dual.(EP[:cReg]) ./ ω * scale_factor
 end
+
+@doc raw"""
+    operating_reserve_price(EP::Model,
+                                  inputs::Dict,
+                                  setup::Dict)::Vector{Float64}
+
+Operating reserve price for each time step.
+This is equal to the dual variable of the reserve requirement constraint.
+
+    Returns a vector, with units of $/MW
+"""
 
 function operating_reserve_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
     ω = inputs["omega"]
