@@ -12,6 +12,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	STOR_ALL = inputs["STOR_ALL"]
 	VRE_STOR = inputs["VRE_STOR"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
+	CCS = inputs["CCS"]
 	if !isempty(VRE_STOR)
 		VRE_STOR_LENGTH = size(inputs["VRE_STOR"])[1]
 		SOLAR = inputs["VS_SOLAR"]
@@ -124,7 +125,8 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add CO2 releated sequestration cost or credit (e.g. 45 Q) to the dataframe
 	dfNetRevenue.CO2SequestrationCost = zeros(nrow(dfNetRevenue))
 	if any(dfGen.CO2_Capture_Fraction .!= 0)
-		dfNetRevenue.CO2SequestrationCost .= value.(EP[:ePlantCCO2Sequestration])
+		dfNetRevenue.CO2SequestrationCost = zeros(G)
+		dfNetRevenue[CCS, :CO2SequestrationCost] = value.(EP[:ePlantCCO2Sequestration]).data
  	end
 	if setup["ParameterScale"] == 1
 		dfNetRevenue.CO2SequestrationCost *= ModelScalingFactor^2 # converting Million US$ to US$
@@ -196,7 +198,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 					  .+ dfNetRevenue.Charge_cost 
 					  .+ dfNetRevenue.EmissionsCost 
 					  .+ dfNetRevenue.StartCost 
-					  .+dfNetRevenue.CO2SequestrationCost)
+					  .+ dfNetRevenue.CO2SequestrationCost)
 	dfNetRevenue.Profit = dfNetRevenue.Revenue .- dfNetRevenue.Cost
 
 	CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)

@@ -108,6 +108,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
 		COMMIT_ZONE = intersect(inputs["COMMIT"], Y_ZONE)
 		ELECTROLYZERS_ZONE = intersect(inputs["ELECTROLYZER"], Y_ZONE)
+		CCS_ZONE = intersect(inputs["CCS"], Y_ZONE)
 
 		eCFix = sum(value.(EP[:eCFix][Y_ZONE]))
 		tempCFix += eCFix
@@ -218,8 +219,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
-		if any(dfGen.CO2_Capture_Fraction .!=0)
-			tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][Y_ZONE,:]))
+		# if any(dfGen.CO2_Capture_Fraction .!=0)
+		if !isempty(CCS_ZONE) 
+			tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][CCS_ZONE]))
 			tempCTotal += tempCCO2		
 		end
 
