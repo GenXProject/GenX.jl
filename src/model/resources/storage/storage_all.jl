@@ -10,6 +10,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -60,13 +61,13 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	if CapacityReserveMargin > 0
 		#Variable costs of "virtual charging" for technologies "y" during hour "t" in zone "z"
-		@expression(EP, eCVar_in_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*setup["VirtualChargeDischargeCost"]*vCAPRES_charge[y,t])
+		@expression(EP, eCVar_in_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_charge[y,t])
 		@expression(EP, eTotalCVarInT_virtual[t=1:T], sum(eCVar_in_virtual[y,t] for y in STOR_ALL))
 		@expression(EP, eTotalCVarIn_virtual, sum(eTotalCVarInT_virtual[t] for t in 1:T))
 		EP[:eObj] += eTotalCVarIn_virtual
 
 		#Variable costs of "virtual discharging" for technologies "y" during hour "t" in zone "z"
-		@expression(EP, eCVar_out_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*setup["VirtualChargeDischargeCost"]*vCAPRES_discharge[y,t])
+		@expression(EP, eCVar_out_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_discharge[y,t])
 		@expression(EP, eTotalCVarOutT_virtual[t=1:T], sum(eCVar_out_virtual[y,t] for y in STOR_ALL))
 		@expression(EP, eTotalCVarOut_virtual, sum(eTotalCVarOutT_virtual[t] for t in 1:T))
 		EP[:eObj] += eTotalCVarOut_virtual
