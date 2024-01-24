@@ -23,6 +23,9 @@ export write_multi_stage_outputs
 export run_genx_case!
 export run_timedomainreduction!
 
+# GenX types
+export AbstractResource
+
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
 using CSV
@@ -45,7 +48,9 @@ using HiGHS
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 const ModelScalingFactor = 1e+3
 
-# abstract type for all resources
+"""
+An abstract type that should be subtyped for users creating GenX resources.
+"""
 abstract type AbstractResource end
 
 # thanks, ChatGPT

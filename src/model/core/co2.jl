@@ -13,7 +13,7 @@ fraction, and whether the feedstock is biomass. Biomass is a factor in this equa
 biomass generators are assumed to generate zero net CO2 emissions, or negative net CO2 emissions 
 in the case that the CO2 they emit is captured and sequestered underground.
 
-If a user wishes to represent a generator that combusts biomass, then in Generators_data.csv,
+If a user wishes to represent a generator that combusts biomass, then in the resource .csv files,
 the "Biomass" column (boolean, 1 or 0), which represents if a generator $y$ uses biomass or not, should be set to 1.
 The CO2 emissions from such a generator will be assumed to be zero without CCS and negative with CCS.
 
@@ -61,8 +61,8 @@ function co2!(EP::Model, inputs::Dict)
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
 
     ### Expressions ###
-    # CO2 emissions from power plants in "Generators_data.csv"
-    # If all the CO2 capture fractions from Generators_data are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
+    # CO2 emissions from power plants in "Thermal.csv"
+    # If all the CO2 capture fractions from Thermal.csv are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
     if all(co2_capture_fraction.(gen) .==0)
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T], 
             ((1-biomass(gen[y])) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[fuel(gen[y])]))
@@ -74,7 +74,7 @@ function co2!(EP::Model, inputs::Dict)
             (1-biomass(gen[y]) - co2_capture_fraction(gen[y])) * EP[:vFuel][y, t]  * fuel_CO2[fuel(gen[y])]+
             (1-biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])])
         
-        # CO2 captured from power plants in "Generators_data.csv"
+        # CO2 captured from power plants in "Thermal.csv"
         @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
             co2_capture_fraction(gen[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(gen[y])]+
             co2_capture_fraction_startup(gen[y]) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])])

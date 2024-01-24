@@ -65,7 +65,7 @@ where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megaw
 
 **Hourly clean supply matching constraint**
 
-This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in `Generators_data.csv`) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
+This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in the resource `.csv` files) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
 
 ```math
 \begin{aligned}
@@ -145,7 +145,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	end)
 
 	### Hydrogen Hourly Supply Matching Constraint (Constraint #6) ###
-	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in Generators_data.csv)
+	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
 	if setup["HydrogenHourlyMatching"] == 1

@@ -35,7 +35,7 @@ for r in resource_types
 end
 
 """
-    getproperty(r::AbstractResource, sym::Symbol)
+    Base.getproperty(r::AbstractResource, sym::Symbol)
 
 Allows to access the attributes of an `AbstractResource` object using dot syntax. It checks if the attribute exists in the object and returns its value, otherwise it throws an `ErrorException` indicating that the attribute does not exist.
 
@@ -116,8 +116,8 @@ Check if an `AbstractResource` object has a specific attribute.
 """
 has(r::AbstractResource, sym::Symbol) = haskey(r, sym)
 
-"""
-getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
+""" 
+    Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
 
 Allows to access attributes of a vector of `AbstractResource` objects using dot syntax. If the `sym` is an element of the `resource_types` constant, it returns all resources of that type. Otherwise, it returns the value of the attribute for each resource in the vector.
 
@@ -148,7 +148,7 @@ function Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
 end
 
 """
-    setproperty!(rs::Vector{<:AbstractResource}, sym::Symbol, value::Vector)
+    Base.setproperty!(rs::Vector{<:AbstractResource}, sym::Symbol, value::Vector)
 
 Set the attributes specified by `sym` to the corresponding values in `value` for a vector of resources.
 
@@ -171,7 +171,7 @@ function Base.setproperty!(rs::Vector{<:AbstractResource}, sym::Symbol, value::V
 end
 
 """
-    setindex!(rs::Vector{<:AbstractResource}, value::Vector, sym::Symbol)
+    Base.setindex!(rs::Vector{<:AbstractResource}, value::Vector, sym::Symbol)
 
 Define dot syntax for setting the attributes specified by `sym` to the corresponding values in `value` for a vector of resources.
 
@@ -249,7 +249,7 @@ julia> findall(r -> max_cap_mwh(r) != 0, gen.Storage)
 Base.findall(f::Function, rs::Vector{<:AbstractResource}) = resource_id.(filter(r -> f(r), rs))
 
 """
-    interface(name, default=default, type=AbstractResource)
+    interface(name, default=default_zero, type=AbstractResource)
 
 Define a function interface for accessing the attribute specified by `name` in a resource of type `type`.
 
@@ -275,7 +275,7 @@ julia> max_cap_mw.(gen.Vre) # vectorized
   9.848441999999999
 ```
 """
-macro interface(name, default=default, type=AbstractResource)
+macro interface(name, default=default_zero, type=AbstractResource)
     quote
         function $(esc(name))(r::$(esc(type)))
             return get(r, $(QuoteNode(name)), $(esc(default)))
@@ -390,16 +390,18 @@ function ids_with_nonneg(rs::Vector{T}, name::AbstractString) where T <: Abstrac
 end
 
 """
-    ids_with(rs::Vector{T}, f::Function) where T <: AbstractResource
+    ids_with(rs::Vector{T}, f::Function, default=default_zero) where T <: AbstractResource
 
-Function for finding resources in a vector `rs` where the attribute specified by `f` is not equal to zero.
+Function for finding resources in a vector `rs` where the attribute specified by `f` is not equal to `default`.
 
 # Arguments
 - `rs::Vector{<:AbstractResource}`: The vector of resources.
 - `f::Function`: The getter of the attribute.
+- `default`: The default value of the attribute.
+
 
 # Returns
-- `ids (Vector{Int64})`: The vector of resource ids with non-zero attribute.
+- `ids (Vector{Int64})`: The vector of resource ids with attribute not equal to `default`.
 
 ## Examples
 ```julia
@@ -413,21 +415,22 @@ julia> existing_cap_mw(gen[21])
 7.0773
 ```
 """
-function ids_with(rs::Vector{T}, f::Function) where T <: AbstractResource
-    return findall(r -> f(r) != 0, rs)
+function ids_with(rs::Vector{T}, f::Function, default=default_zero) where T <: AbstractResource
+    return findall(r -> f(r) != default, rs)
 end
 
 """
-    ids_with(rs::Vector{T}, name::Symbol) where T <: AbstractResource
+    ids_with(rs::Vector{T}, name::Symbol, default=default_zero) where T <: AbstractResource
 
-Function for finding resources in a vector `rs` where the attribute specified by `name` is not equal to zero.
+Function for finding resources in a vector `rs` where the attribute specified by `name` is not equal to the default value of the attribute.
 
 # Arguments
 - `rs::Vector{<:AbstractResource}`: The vector of resources.
 - `name::Symbol`: The name of the attribute.
+- `default`: The default value of the attribute.
 
 # Returns
-- `ids (Vector{Int64})`: The vector of resource ids with non-zero attribute.
+- `ids (Vector{Int64})`: The vector of resource ids with attribute not equal to `default`.
 
 ## Examples
 ```julia
@@ -441,13 +444,13 @@ julia> existing_cap_mw(gen[21])
 7.0773
 ```
 """
-function ids_with(rs::Vector{T}, name::Symbol) where T <: AbstractResource
+function ids_with(rs::Vector{T}, name::Symbol, default=default_zero) where T <: AbstractResource
     f = getfield(GenX, name)
-    return ids_with(rs, f)
+    return ids_with(rs, f, default)
 end
 
-function ids_with(rs::Vector{T}, name::AbstractString) where T <: AbstractResource
-    return ids_with(rs, Symbol(lowercase(name)))
+function ids_with(rs::Vector{T}, name::AbstractString, default=default_zero) where T <: AbstractResource
+    return ids_with(rs, Symbol(lowercase(name)), default)
 end
 
 """
@@ -491,7 +494,13 @@ end
 
 
 resource_attribute_not_set() = 0
-const default = 0   # default value for resource attributes
+
+"""
+    const default_zero = 0
+
+Default value for resource attributes.
+"""
+const default_zero = 0   # default value for resource attributes
 
 # INTERFACE FOR ALL RESOURCES
 resource_name(r::AbstractResource) = r.resource
@@ -515,39 +524,39 @@ max_charge_cap_mw(r::AbstractResource) = get(r, :max_charge_cap_mw, default_minm
 min_charge_cap_mw(r::AbstractResource) = get(r, :min_charge_cap_mw, default_minmax_cap)
 
 existing_cap_mw(r::AbstractResource) = r.existing_cap_mw
-existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default)
-existing_charge_capacity_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default)
+existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default_zero)
+existing_charge_capacity_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default_zero)
 
-cap_size(r::AbstractResource) = get(r, :cap_size, default)
+cap_size(r::AbstractResource) = get(r, :cap_size, default_zero)
 
-num_vre_bins(r::AbstractResource) = get(r, :num_vre_bins, default)
+num_vre_bins(r::AbstractResource) = get(r, :num_vre_bins, default_zero)
 
-hydro_energy_to_power_ratio(r::AbstractResource) = get(r, :hydro_energy_to_power_ratio, default)
+hydro_energy_to_power_ratio(r::AbstractResource) = get(r, :hydro_energy_to_power_ratio, default_zero)
 
-qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supply, default)
+qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supply, default_zero)
 
 # costs
-reg_cost(r::AbstractResource) = get(r, :reg_cost, default)
-reg_max(r::AbstractResource)::Float64 = get(r, :reg_max, default)
-rsv_cost(r::AbstractResource) = get(r, :rsv_cost, default)
-rsv_max(r::AbstractResource) = get(r, :rsv_max, default)
-inv_cost_per_mwyr(r::AbstractResource) = get(r, :inv_cost_per_mwyr, default)
-fixed_om_cost_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr, default)
-var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default)
-inv_cost_per_mwhyr(r::AbstractResource) = get(r, :inv_cost_per_mwhyr, default)
-fixed_om_cost_per_mwhyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwhyr, default)
-inv_cost_charge_per_mwyr(r::AbstractResource) = get(r, :inv_cost_charge_per_mwyr, default)
-fixed_om_cost_charge_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_charge_per_mwyr, default)
-start_cost_per_mw(r::AbstractResource) = get(r, :start_cost_per_mw, default)
+reg_cost(r::AbstractResource) = get(r, :reg_cost, default_zero)
+reg_max(r::AbstractResource)::Float64 = get(r, :reg_max, default_zero)
+rsv_cost(r::AbstractResource) = get(r, :rsv_cost, default_zero)
+rsv_max(r::AbstractResource) = get(r, :rsv_max, default_zero)
+inv_cost_per_mwyr(r::AbstractResource) = get(r, :inv_cost_per_mwyr, default_zero)
+fixed_om_cost_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr, default_zero)
+var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default_zero)
+inv_cost_per_mwhyr(r::AbstractResource) = get(r, :inv_cost_per_mwhyr, default_zero)
+fixed_om_cost_per_mwhyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwhyr, default_zero)
+inv_cost_charge_per_mwyr(r::AbstractResource) = get(r, :inv_cost_charge_per_mwyr, default_zero)
+fixed_om_cost_charge_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_charge_per_mwyr, default_zero)
+start_cost_per_mw(r::AbstractResource) = get(r, :start_cost_per_mw, default_zero)
 
 # fuel
 fuel(r::AbstractResource) = get(r, :fuel, "None")
 start_fuel_mmbtu_per_mw(r::AbstractResource) = r.start_fuel_mmbtu_per_mw
 heat_rate_mmbtu_per_mwh(r::AbstractResource) = r.heat_rate_mmbtu_per_mwh
-co2_capture_fraction(r::AbstractResource) = get(r, :co2_capture_fraction, default)
-co2_capture_fraction_startup(r::AbstractResource) = get(r, :co2_capture_fraction_startup, default)
-ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cost_per_metric_ton, default)
-biomass(r::AbstractResource) = get(r, :biomass, default)
+co2_capture_fraction(r::AbstractResource) = get(r, :co2_capture_fraction, default_zero)
+co2_capture_fraction_startup(r::AbstractResource) = get(r, :co2_capture_fraction_startup, default_zero)
+ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cost_per_metric_ton, default_zero)
+biomass(r::AbstractResource) = get(r, :biomass, default_zero)
 
 # Reservoir hydro and storage
 const default_percent = 1.0
@@ -556,7 +565,7 @@ efficiency_down(r::T) where T <: Union{Hydro,Storage} = get(r, :eff_down, defaul
 
 # Ramp up and down
 const VarPower = Union{Electrolyzer, Hydro, Thermal}
-min_power(r::VarPower) = get(r, :min_power, default)
+min_power(r::VarPower) = get(r, :min_power, default_zero)
 ramp_up_percentage(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
 ramp_down_percentage(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)
 
@@ -565,40 +574,40 @@ lifetime(r::Storage) = get(r, :lifetime, 15)
 lifetime(r::AbstractResource) = get(r, :lifetime, 30)
 capital_recovery_period(r::Storage) = get(r, :capital_recovery_period, 15)
 capital_recovery_period(r::AbstractResource) = get(r, :capital_recovery_period, 30)
-tech_wacc(r::AbstractResource) = get(r, :wacc, default)
-min_retired_cap_mw(r::AbstractResource) = get(r, :min_retired_cap_mw, default)
-min_retired_energy_cap_mw(r::AbstractResource) = get(r, :min_retired_energy_cap_mw, default)
-min_retired_charge_cap_mw(r::AbstractResource) = get(r, :min_retired_charge_cap_mw, default)
+tech_wacc(r::AbstractResource) = get(r, :wacc, default_zero)
+min_retired_cap_mw(r::AbstractResource) = get(r, :min_retired_cap_mw, default_zero)
+min_retired_energy_cap_mw(r::AbstractResource) = get(r, :min_retired_energy_cap_mw, default_zero)
+min_retired_charge_cap_mw(r::AbstractResource) = get(r, :min_retired_charge_cap_mw, default_zero)
 cum_min_retired_cap_mw(r::AbstractResource) = r.cum_min_retired_cap_mw
 cum_min_retired_energy_cap_mw(r::AbstractResource) = r.cum_min_retired_energy_cap_mw
 cum_min_retired_charge_cap_mw(r::AbstractResource) = r.cum_min_retired_charge_cap_mw
 
 # MGA
-mga(r::AbstractResource) = get(r, :mga, default)
+mga(r::AbstractResource) = get(r, :mga, default_zero)
 
 # policies
-esr(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_$tag"), default)
-min_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_$tag"), default)
-max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), default)
-eligible_cap_res(r::AbstractResource; tag::Int64) = get(r, Symbol("eligible_cap_res_$tag"), default)
+esr(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_$tag"), default_zero)
+min_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_$tag"), default_zero)
+max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), default_zero)
+eligible_cap_res(r::AbstractResource; tag::Int64) = get(r, Symbol("eligible_cap_res_$tag"), default_zero)
 
 # write_outputs
 region(r::AbstractResource) = r.region
 cluster(r::AbstractResource) = r.cluster
 
 # UTILITY FUNCTIONS for working with resources
-is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) > 0, rs)
-is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default) == 0, rs)
+is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default_zero) > 0, rs)
+is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default_zero) == 0, rs)
 
 ids_with_mga(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
 
 ids_with_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
 
-is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default) == 1, rs)
-is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default) == 1, rs)
+is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default_zero) == 1, rs)
+is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default_zero) == 1, rs)
 
 # Retrofit
-ids_with_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default) == 1, rs)
+ids_with_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default_zero) == 1, rs)
 
 # Unit commitment
 ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
@@ -611,10 +620,10 @@ ids_with_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResou
 ids_with_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
 
 # Maintenance
-ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default) > 0, rs)
-maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default)
-maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default)
-maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default)
+ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default_zero) > 0, rs)
+maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default_zero)
+maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default_zero)
+maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default_zero)
 
 # STORAGE interface
 """
@@ -627,7 +636,7 @@ storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Storage)
 self_discharge(r::Storage) = r.self_disch
 min_duration(r::Storage) = r.min_duration
 max_duration(r::Storage) = r.max_duration
-var_om_cost_per_mwh_in(r::Storage) = get(r, :var_om_cost_per_mwh_in, default)
+var_om_cost_per_mwh_in(r::Storage) = get(r, :var_om_cost_per_mwh_in, default_zero)
 symmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Storage) && r.model == 1, rs)
 asymmetric_storage(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Storage) && r.model == 2, rs)
 
@@ -646,8 +655,8 @@ hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Hydro), rs
 Returns the indices of all thermal resources in the vector `rs`.
 """
 thermal(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal), rs)
-up_time(r::Thermal) = get(r, :up_time, default)
-down_time(r::Thermal) = get(r, :down_time, default)
+up_time(r::Thermal) = get(r, :up_time, default_zero)
+down_time(r::Thermal) = get(r, :down_time, default_zero)
 
 # VRE interface
 """
@@ -678,7 +687,7 @@ flex_demand(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Flex
 flexible_demand_energy_eff(r::FlexDemand) = r.flexible_demand_energy_eff
 max_flexible_demand_delay(r::FlexDemand) = r.max_flexible_demand_delay
 max_flexible_demand_advance(r::FlexDemand) = r.max_flexible_demand_advance
-var_om_cost_per_mwh_in(r::FlexDemand) = get(r, :var_om_cost_per_mwh_in, default)
+var_om_cost_per_mwh_in(r::FlexDemand) = get(r, :var_om_cost_per_mwh_in, default_zero)
 
 # MUST_RUN interface
 """
@@ -744,7 +753,7 @@ storage_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(
 storage_sym_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_charge == 1, rs)
 storage_asym_ac_charge(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && r.stor_ac_charge == 2, rs)
 
-is_LDS_VRE_STOR(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds_vre_stor, default) != 0, rs)
+is_LDS_VRE_STOR(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds_vre_stor, default_zero) != 0, rs)
 
 # loop over the above attributes and define function interfaces for each one
 for attr in (:existing_cap_solar_mw, 
@@ -806,7 +815,7 @@ for attr in (:etainverter,
              :eff_down_dc,
              :power_to_energy_ac,
              :power_to_energy_dc)
-    @eval @interface $attr default VreStorage
+    @eval @interface $attr default_zero VreStorage
 end
 
 # Multistage
@@ -824,7 +833,7 @@ for attr in (:capital_recovery_period_dc,
              :tech_wacc_discharge_dc,
              :tech_wacc_charge_ac,
              :tech_wacc_discharge_ac)
-    @eval @interface $attr default VreStorage
+    @eval @interface $attr default_zero VreStorage
 end
 
 # Endogenous retirement
@@ -835,21 +844,21 @@ for attr in (:min_retired_cap_inverter_mw,
              :min_retired_cap_charge_dc_mw,
              :min_retired_cap_discharge_ac_mw,
              :min_retired_cap_charge_ac_mw,)
-    @eval @interface $attr default VreStorage
+    @eval @interface $attr default_zero VreStorage
     cum_attr = Symbol("cum_"*String(attr))
-    @eval @interface $cum_attr default VreStorage
+    @eval @interface $cum_attr default_zero VreStorage
 end
 
 ## policies
 # co-located storage
-esr_vrestor(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_vrestor_$tag"), default)
-min_cap_stor(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_stor_$tag"), default)
-max_cap_stor(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_stor_$tag"), default)
+esr_vrestor(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_vrestor_$tag"), default_zero)
+min_cap_stor(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_stor_$tag"), default_zero)
+max_cap_stor(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_stor_$tag"), default_zero)
 # vre part
-min_cap_solar(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_solar_$tag"), default)
-max_cap_solar(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_solar_$tag"), default)
-min_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_wind_$tag"), default)
-max_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_wind_$tag"), default)
+min_cap_solar(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_solar_$tag"), default_zero)
+max_cap_solar(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_solar_$tag"), default_zero)
+min_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_wind_$tag"), default_zero)
+max_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_wind_$tag"), default_zero)
 
 ## Utility functions for working with resources
 in_zone(r::AbstractResource, zone::Int) = zone_id(r) == zone

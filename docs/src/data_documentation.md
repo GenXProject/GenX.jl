@@ -169,7 +169,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 
 #### 2.1.1 Fuels\_data.csv
 
-• **First row:** names of all fuels used in the model instance which should match the labels used in `Fuel` column in the `Generators_data.csv` file. For renewable resources or other resources that do not consume a fuel, the name of the fuel is `None`.
+• **First row:** names of all fuels used in the model instance which should match the labels used in `Fuel` column in one of the resource `.csv` file in the `Resources` folder. For renewable resources or other resources that do not consume a fuel, the name of the fuel is `None`.
 
 • **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
 
@@ -300,6 +300,9 @@ Each file contains cost and performance parameters for various generators and ot
 |Qualified_Hydrogen_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
 
 ##### Table 5b: Settings-specific columns in all resource .csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
 |**ModelingToGenerateAlternatives = 1**||
 |MGA |Eligibility of the technology for Modeling To Generate Alternative (MGA) run. |
 ||1 = Technology is available for the MGA run.|
@@ -445,10 +448,10 @@ Each file contains cost and performance parameters for various generators and ot
 |Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 |Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 !!! note
-    Check `Qualified\_Hydrogen\_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
+    Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
-##### Table 11a: Additional columns in the VRE_STOR.csv file
 Each co-located VRE and storage resource can be easily configured to contain either a co-located VRE-storage resource, standalone VRE resource (either wind, solar PV, or both), or standalone storage resource.
+##### Table 11a: Additional columns in the VRE_STOR.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -570,8 +573,9 @@ The following table describes the columns in each of these four files.
 !!! warning
     The first column of each file must contain the resource name corresponding to a resource in one of the resource data files described above. Note that the order of resources in the policy files is not important.
 
-##### Table 12: Energy share requirement policy parameters
 This policy is applied when if `EnergyShareRequirement > 0` in the settings file. \* corresponds to the ith row of the file `Energy_share_requirement.csv`. 
+
+##### Table 12: Energy share requirement policy parameters
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -584,8 +588,9 @@ This policy is applied when if `EnergyShareRequirement > 0` in the settings file
 ||1- included|
 ||0- excluded|
 
-##### Table 13: Minimum capacity requirement policy parameters
 This policy is applied when if `MinCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. 
+
+##### Table 13: Minimum capacity requirement policy parameters
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -596,8 +601,9 @@ This policy is applied when if `MinCapReq = 1` in the settings file. \* correspo
 |Min_Cap_Wind\_*| Eligibility of resources with a wind component to participate in Minimum Technology Carveout constraint (AC terms).|
 |Min_Cap_Stor\_*| Eligibility of resources with a storage component to participate in Minimum Technology Carveout constraint (discharge capacity in AC terms).|
 
-##### Table 14: Maximum capacity requirement policy parameters
 This policy is applied when if `MaxCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.
+
+##### Table 14: Maximum capacity requirement policy parameters
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -608,8 +614,9 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 |Max_Cap_Wind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms).
 |Max_Cap_Stor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms).|
 
-##### Table 15: Capacity reserve margin policy parameters
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
+
+##### Table 15: Capacity reserve margin policy parameters
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -662,8 +669,9 @@ The following table describes the columns in each of these two files.
 | WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
 | WACC\_Charge\_AC | The line-specific weighted average cost of capital for the charging AC storage component with `STOR_AC_CHARGE = 2`. |
 
-##### Table 17: Piecewise fuel usage parameters
 This file contains PiecewiseFuelUsage-related parameters required if any resources have nonzero PWFU fuel usage, heat rates, and load points.
+
+##### Table 17: Piecewise fuel usage parameters
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -674,11 +682,11 @@ This file contains PiecewiseFuelUsage-related parameters required if any resourc
 
 #### 2.1.5 Generator\_variability.csv
 
-This file contains the time-series of capacity factors / availability of each resource included in the `Generators_data.csv` file for each time step (e.g. hour) modeled.
+This file contains the time-series of capacity factors / availability of each resource included in the resource `.csv` file in the `Resources` folder for each time step (e.g. hour) modeled.
 
 • First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
-• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` file in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` must be unique. Note that for Hydro reservoir resources (i.e. `HYDRO = 1` in the `Generators_data.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the resource `.csv` file in the `Resources` folder in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in the resource `.csv` file must be unique. Note that for Hydro reservoir resources (i.e. `Hydro.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
 |Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs. Note that for co-located VRE-STOR resources, this value applies to the storage component of each resource.|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`. Applies to thermal plants, and reservoir hydro resource (`HYDRO = 1`).|
@@ -746,7 +754,7 @@ This file includes parameter inputs needed to model time-dependent procurement o
 
 This file contains inputs specifying minimum energy share requirement policies, such as Renewable Portfolio Standard (RPS) or Clean Energy Standard (CES) policies. This file is needed if parameter EnergyShareRequirement has a non-zero value in the YAML file `genx_settings.yml`.
 
-Note: this file should use the same region name as specified in the `Generators_data.csv` file.
+Note: this file should use the same region name as specified in the the resource `.csv` file (inside the `Resource`).
 
 ###### Table 9: Structure of the Energy\_share\_requirement.csv file
 ---
@@ -779,7 +787,7 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 
 This file contains the regional capacity reserve margin requirements. This file is needed if parameter CapacityReserveMargin has a non-zero value in the YAML file `genx_settings.yml`.
 
-Note: this file should use the same region name as specified in the `Generators_data.csv` file
+Note: this file should use the same region name as specified in the resource `.csv` file (inside the `Resource`).
 
 ###### Table 11: Structure of the Capacity\_reserve\_margin.csv file
 ---
@@ -834,7 +842,7 @@ This file contains the settings parameters required to run the Method of Morris 
 |Zone | Integer representing zone number where the resource is located. |
 |Lower\_bound | Percentage lower deviation from the nominal value|
 |Upper\_bound| Percentage upper deviation from the nominal value|
-|Parameter| Column from the `Generators_data.csv` file containing uncertain parameters|
+|Parameter| Column from the resource `.csv` file (inside the `Resource`) containing uncertain parameters|
 |Group| Group the uncertain parameters that will be changed all at once while performing the sensitivity analysis. For example, if the fuel price of natural gas is uncertain, all generators consuming natural gas should be in the same group. Group name is user defined|
 |p_steps| Number of steps between upper and lower bound|
 |total\_num\_trajectory| Total number of trakectories through the design matrix|
@@ -851,7 +859,7 @@ Notes:
 6. num\_trajectory should be approximately equal to the total number of uncertain parameters
 7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
 8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
-9. Upper and lower bounds should be specified for all the resources included in the `Generators_data.csv` file. If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
+9. Upper and lower bounds should be specified for all the resources included in the resource `.csv` file (inside the `Resource`). If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
 
 
 
@@ -916,7 +924,7 @@ This file contains the time-series of capacity factors / availability of the sol
 
 • first column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
-• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` and `Vre_and_stor_data.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` and `Vre_and_stor_data.csv` must be unique. 
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Vre_stor.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in all the resource `.csv` files must be unique. 
 
 #### 2.2.11 Vre\_and\_stor\_wind\_variability.csv
 
@@ -924,7 +932,7 @@ This file contains the time-series of capacity factors / availability of the win
 
 • First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
-• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Generators_data.csv` and `Vre_and_stor_data.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in `Generators_data.csv` and `Vre_and_stor_data.csv` must be unique. 
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Vre_stor.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in all the resource `.csv` files must be unique. 
 
 
 ## 3 Outputs

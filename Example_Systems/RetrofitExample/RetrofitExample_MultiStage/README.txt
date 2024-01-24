@@ -6,7 +6,7 @@ Multi-Stage Retrofit Example
 
 Description: One zone, few technologies, retrofit options include CCS, H2, SMR, and TES.
 
-All changes necessary in the inputs in enable retrofit modeling are located in Generators_data.csv.
+All changes necessary in the inputs in enable retrofit modeling are located in the resource `.csv` files.
 
 New fields:
 
