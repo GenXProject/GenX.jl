@@ -15,7 +15,7 @@ genx_setup = Dict(
     "MaxCapReq" => 1,
     "CO2Cap" => 1,
     "StorageLosses" => 1,
-    "VirtualChargeDischargeCost" => 1e-10,
+    "VirtualChargeDischargeCost" => 1,
     "ParameterScale" => 1,
 )
 
