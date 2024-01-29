@@ -179,6 +179,14 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 				dfResMar_slack = write_reserve_margin_slack(path, inputs, setup, EP)
 			end		  
 		end
+
+		if setup["Reserves"]==1 && has_duals(EP) == 1
+			dfOpRegRevenue, dfOpResRevenue = write_operating_reserve_revenue(path, inputs, setup, EP)
+			elapsed_time_op_res_rev = @elapsed write_operating_reserve_revenue(path, inputs, setup, EP)
+		  	println("Time elapsed for writing oerating reserve price is")
+		  	println(elapsed_time_op_res_rev)
+		end
+
 		if setup["CO2Cap"]>0 && has_duals(EP) == 1
 			dfCO2Cap = write_co2_cap(path, inputs, setup, EP)
 		end
