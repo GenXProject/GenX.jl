@@ -32,14 +32,12 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	end
 
 	dfCharge.AnnualSum .= charge * inputs["omega"]
-	dfCharge = hcat(dfCharge, DataFrame(charge, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfCharge,auxNew_Names)
-	total = DataFrame(["Total" 0 sum(dfCharge[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
 
-	total[:, 4:T+3] .= sum(charge, dims = 1)
-	rename!(total,auxNew_Names)
-	dfCharge = vcat(dfCharge, total)
-	CSV.write(joinpath(path, "charge.csv"), dftranspose(dfCharge, false), writeheader=false)
-	return dfCharge
+	filepath = joinpath(path, "charge.csv")
+	if setup["WriteOutputs"] == "annual"
+		write_annual(filepath, dfCharge)
+	else 	# setup["WriteOutputs"] == "full"
+		write_fulltimeseries(filepath, charge, dfCharge)
+	end
+	return nothing
 end

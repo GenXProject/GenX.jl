@@ -15,16 +15,12 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		power *= ModelScalingFactor
 	end
 	dfPower.AnnualSum .= power * inputs["omega"]
-	dfPower = hcat(dfPower, DataFrame(power, :auto))
 
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfPower,auxNew_Names)
-
-	total = DataFrame(["Total" 0 sum(dfPower[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(power, dims = 1)
-
-	rename!(total,auxNew_Names)
-	dfPower = vcat(dfPower, total)
-	CSV.write(joinpath(path, "power.csv"), dftranspose(dfPower, false), writeheader=false)
+	filepath = joinpath(path, "power.csv")
+	if setup["WriteOutputs"] == "annual"
+		write_annual(filepath, dfPower)
+	else 	# setup["WriteOutputs"] == "full"
+		write_fulltimeseries(filepath, power, dfPower)
+	end
 	return dfPower
 end
