@@ -65,23 +65,71 @@ let
                      :STOR => 0,
                      :LDS => 1)
 
+    # MUST_RUN units contribution to reserves
+    must_run = Resource(:Resource => "must_run",
+                        :THERM => 0,
+                        :FLEX => 0,
+                        :HYDRO => 0,
+                        :VRE => 0,
+                        :MUST_RUN => 1,
+                        :STOR => 0,
+                        :LDS => 0,
+                        :Reg_Max => 0,
+                        :Rsv_Max => 0)
+    bad_must_run = Resource(:Resource => "bad_must_run",
+                            :THERM => 0,
+                            :FLEX => 0,
+                            :HYDRO => 0,
+                            :VRE => 0,
+                            :MUST_RUN => 1,
+                            :STOR => 0,
+                            :LDS => 0,
+                            :Reg_Max => 0.083333333,
+                            :Rsv_Max => 0.166666667)
+    bad_mustrun_reg = Resource(:Resource => "bad_mustrun_reg",
+                            :THERM => 0,
+                            :FLEX => 0,
+                            :HYDRO => 0,
+                            :VRE => 0,
+                            :MUST_RUN => 1,
+                            :STOR => 0,
+                            :LDS => 0,
+                            :Reg_Max => 0.083333333,
+                            :Rsv_Max => 0)
+    bad_mustrun_rsv = Resource(:Resource => "bad_mustrun_rsv",
+                            :THERM => 0,
+                            :FLEX => 0,
+                            :HYDRO => 0,
+                            :VRE => 0,
+                            :MUST_RUN => 1,
+                            :STOR => 0,
+                            :LDS => 0,
+                            :Reg_Max => 0,
+                            :Rsv_Max => 0.166666667)
+
     function check_okay(resource)
         e = check_resource(resource)
+        println(e)
         @test length(e) == 0
     end
 
     function check_bad(resource)
         e = check_resource(resource)
+        println(e)
         @test length(e) > 0
     end
 
     check_okay(therm)
     check_okay(stor_lds)
     check_okay(hydro_lds)
+    check_okay(must_run)
 
     check_bad(bad_lds)
     check_bad(bad_none)
     check_bad(bad_twotypes)
+    check_bad(bad_must_run)
+    check_bad(bad_mustrun_reg)
+    check_bad(bad_mustrun_rsv)
 
     multiple_resources = [therm, stor_lds, hydro_lds]
     check_okay(multiple_resources)
