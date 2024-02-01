@@ -57,7 +57,7 @@ function fill_with_zeros!(arr::AbstractArray{GenericAffExpr{C,T}, dims}) where {
 end
 
 @doc raw"""
-    fill_with_const!(arr::Array{GenericAffExpr{C,T}, dims}) where {C,T,dims}
+    fill_with_const!(arr::AbstractArray{GenericAffExpr{C,T}, dims}, con::Real) where {C,T,dims}
 
 Fill an array of expressions with the specified constant, in-place.
 
