@@ -45,7 +45,7 @@ end
 ###### ###### ###### ###### ###### ######
 
 @doc raw"""
-    fill_with_zeros!(arr::Array{GenericAffExpr{C,T}, dims}) where {C,T,dims}
+    fill_with_zeros!(arr::AbstractArray{GenericAffExpr{C,T}, dims}) where {C,T,dims}
 
 Fill an array of expressions with zeros in-place.
 """
