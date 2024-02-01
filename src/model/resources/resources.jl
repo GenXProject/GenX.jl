@@ -34,6 +34,37 @@ function check_resource_type_flags(r::GenXResource)
 end
 
 @doc raw"""
+	check_mustrun_reserve_contribution(r::GenXResource)
+
+Make sure that a MUST_RUN resource has Reg_Max and Rsv_Max set to 0 (since they cannot contribute to reserves).
+"""
+function check_mustrun_reserve_contribution(r::GenXResource)
+    not_set = resource_attribute_not_set()
+    value = get(r, :MUST_RUN, not_set)
+
+    error_strings = String[]
+
+    if value == not_set
+        # not MUST_RUN so the rest is not applicable
+        return error_strings
+    end
+
+    reg_max = get(r, :Reg_Max, not_set)
+    if reg_max != 0
+        e = string("Resource ", resource_name(r), " has :MUST_RUN = ", value, " but :Reg_Max = ", reg_max, ".\n",
+                    "MUST_RUN units must have Reg_Max = 0 since they cannot contribute to reserves.")
+        push!(error_strings, e)
+    end
+    rsv_max = get(r, :Rsv_Max, not_set)
+    if rsv_max != 0
+        e = string("Resource ", resource_name(r), " has :MUST_RUN = ", value, " but :Rsv_Max = ", rsv_max, ".\n",
+                   "MUST_RUN units must have Rsv_Max = 0 since they cannot contribute to reserves.")
+        push!(error_strings, e)
+    end
+    return error_strings
+end
+
+@doc raw"""
 	check_longdurationstorage_applicability(r::GenXResource)
 
 Check whether the LDS flag is set appropriately
@@ -110,6 +141,7 @@ function check_resource(r::GenXResource)::Vector{String}
     e = [e; check_resource_type_flags(r)]
     e = [e; check_longdurationstorage_applicability(r)]
     e = [e; check_maintenance_applicability(r)]
+    e = [e; check_mustrun_reserve_contribution(r)]
     return e
 end
 
