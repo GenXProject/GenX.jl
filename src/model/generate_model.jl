@@ -142,9 +142,6 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	if Z > 1 && setup["DC_OPF"] != 0
 		dcopf_transmission!(EP, inputs, setup)
-		if setup["NetworkExpansion"]==1
-			println("Network expansion with DC-OPF is not avaiable yet, so it will be ignored when modeling DC-OPF")
-		end
 	end
 
 	# Technologies

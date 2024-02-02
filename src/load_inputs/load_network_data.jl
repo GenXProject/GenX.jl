@@ -37,6 +37,23 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["Ohms"] = to_floats(:Line_Resistance_ohms)
     end
 
+    ## Inputs for the DC-OPF 
+    if setup["DC_OPF"] == 1
+        if setup["NetworkExpansion"] == 1
+            println("Network expansion with DC-OPF is not avaiable yet, so it will be ignored when modeling DC-OPF")
+            setup["NetworkExpansion"] = 0;
+        end
+        scale_kilo_to_mega = 10^3
+        scale_to_mega = 10^6
+        println("Reading DC-OPF values...")
+        # Transmission line voltage (in kV)
+        inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
+        # Transmission line impedance (in Ohms)
+        inputs_nw["Impedance_Ohms"] = to_floats(:Line_Impedance_ohms)    
+        inputs_nw["LINE_Angle_Limit"] = to_floats(:Angle_Limit_Deg)
+        inputs_nw["pDC_OPF_coeff"] = ((inputs_nw["kV"]/scale_kilo_to_mega).*(inputs_nw["kV"]/scale_kilo_to_mega))./(inputs_nw["Impedance_Ohms"]/scale_to_mega) * scale_factor # 1/GW ***
+    end
+
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
     inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"]
 
@@ -78,19 +95,6 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].>=0)
         inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"].<0)
-    end
-
-    ## Inputs for the DC-OPF 
-    if setup["DC_OPF"] == 1
-        scale_kilo_to_mega = 10^3
-        scale_to_mega = 10^6
-        println("Reading DC-OPF values...")
-        # Transmission line voltage (in kV)
-        inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
-        # Transmission line impedance (in Ohms)
-        inputs_nw["Impedance_Ohms"] = to_floats(:Line_Impedance_ohms)    
-        inputs_nw["LINE_Angle_Limit"] = to_floats(:Angle_Limit_Deg)
-        inputs_nw["pDC_OPF_coeff"] = ((inputs_nw["kV"]/scale_kilo_to_mega).*(inputs_nw["kV"]/scale_kilo_to_mega))./(inputs_nw["Impedance_Ohms"]/scale_to_mega) * scale_factor # 1/GW ***
     end
 
     println(filename * " Successfully Read!")
