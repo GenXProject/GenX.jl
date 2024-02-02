@@ -8,7 +8,7 @@ export load_dataframe
 export generate_model
 export solve_model
 export write_outputs
-export cluster_inputs 
+export cluster_inputs
 export mga
 export morris
 export simple_operation

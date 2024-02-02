@@ -2,12 +2,12 @@
 
 They are total of 3 generators and three loads
 
-To run the model, first navigate to the example directory at `GenX/Example_Systems/RealSystemExample/IEEE_9BUS`:
+To run the model, first navigate to the example directory at `GenX/Example_Systems/DC_OPF/IEEE_9BUS`:
 
-`cd("Example_Systems/RealSystemExample/IEEE_9BUS")`
+`cd("Example_Systems/DC_OPF/IEEE_9BUS")`
 
-Next, ensure that your settings in `GenX_settings.yml` are correct.
-The default settings use the solver Gurobi (`Solver: Gurobi`).
+Next, ensure that your settings in `Settings/genx_settings.yml` are correct.
+The default settings use the solver HiGHS.
 Other optional policies include minimum capacity requirements, a capacity reserve margin, and more. 
 
 Once the settings are confirmed, run the model with the `Run.jl` script in the example directory:

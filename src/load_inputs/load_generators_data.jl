@@ -28,9 +28,6 @@ function load_generators_data!(setup::Dict, path::AbstractString, inputs_gen::Di
 	## Defining sets of generation and storage resources
 
 	# Set of storage resources with symmetric charge/discharge capacity
-	# print(gen_in)
-	# print(gen_in.STOR)
-	# print(R_ID)
 	inputs_gen["STOR_SYMMETRIC"] = gen_in[gen_in.STOR.==1,:R_ID]
 	# Set of storage resources with asymmetric (separte) charge/discharge capacity components
 	inputs_gen["STOR_ASYMMETRIC"] = gen_in[gen_in.STOR.==2,:R_ID]
