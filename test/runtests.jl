@@ -42,4 +42,8 @@ end
     @testset "Multi Stage" begin
         include("test_multistage.jl")
     end
+
+    @testset "DCOPF" begin
+        include("test_DCOPF.jl")
+    end
 end

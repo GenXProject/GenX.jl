@@ -15,18 +15,22 @@ Base.showerror(io::IO, e::CSVFileNotFound) = print(io, e.filefullpath, " not fou
 
 function run_genx_case_testing(
     test_path::AbstractString,
-    genx_setup::Dict,
+    test_setup::Dict,
     optimizer::Any = HiGHS.Optimizer,
 )
-    @assert genx_setup["MultiStage"] ∈ [0, 1]
+    # Merge the genx_setup with the default settings
+    settings = GenX.default_settings()
+    merge!(settings, test_setup)
+
+    @assert settings["MultiStage"] ∈ [0, 1]
     # Create a ConsoleLogger that prints any log messages with level >= Warn to stderr
     warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
 
     EP, inputs, OPTIMIZER = with_logger(warnerror_logger) do
-        if genx_setup["MultiStage"] == 0
-            run_genx_case_simple_testing(test_path, genx_setup, optimizer)
+        if settings["MultiStage"] == 0
+            run_genx_case_simple_testing(test_path, settings, optimizer)
         else
-            run_genx_case_multistage_testing(test_path, genx_setup, optimizer)
+            run_genx_case_multistage_testing(test_path, settings, optimizer)
         end
     end
     return EP, inputs, OPTIMIZER
