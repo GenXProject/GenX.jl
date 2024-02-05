@@ -181,7 +181,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		if setup["Reserves"]==1 && has_duals(EP) == 1
-			dfOpRegRevenue, dfOpResRevenue = write_operating_reserve_revenue(path, inputs, setup, EP)
+			dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_revenue(path, inputs, setup, EP)
 			elapsed_time_op_res_rev = @elapsed write_operating_reserve_revenue(path, inputs, setup, EP)
 		  	println("Time elapsed for writing oerating reserve price is")
 		  	println(elapsed_time_op_res_rev)
@@ -206,7 +206,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 
-		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor, dfOpRegRevenue, dfOpResRevenue)
+		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor, dfOpRegRevenue, dfOpRsvRevenue)
 	  	println("Time elapsed for writing net revenue is")
 	  	println(elapsed_time_net_rev)
 	end

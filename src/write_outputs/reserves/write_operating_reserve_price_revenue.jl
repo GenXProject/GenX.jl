@@ -10,30 +10,28 @@ Function for reporting the operating reserve prices and revenue earned by genera
 function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
   	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfGen = inputs["dfGen"]
-	G = inputs["G"]
-	T = inputs["T"] 
 	RSV = inputs["RSV"]
 	REG = inputs["REG"]
-	dfOpResRevenue = DataFrame(Region = dfGen[RSV, :region], Resource = dfGen[RSV, :Resource], Zone = dfGen[RSV, :Zone], Cluster = dfGen[RSV, :cluster], AnnualSum = Array{Float64}(undef, length(RSV)),)
+
+	dfOpRsvRevenue = DataFrame(Region = dfGen[RSV, :region], Resource = dfGen[RSV, :Resource], Zone = dfGen[RSV, :Zone], Cluster = dfGen[RSV, :cluster], AnnualSum = Array{Float64}(undef, length(RSV)),)
 	dfOpRegRevenue = DataFrame(Region = dfGen[REG, :region], Resource = dfGen[REG, :Resource], Zone = dfGen[REG, :Zone], Cluster = dfGen[REG, :cluster], AnnualSum = Array{Float64}(undef, length(REG)),)
-	#resrevenue = zeros(G, T)
-	#regrevenue = zeros(G, T)
+	
 	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
 	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
-	resrevenue = value.(EP[:vRSV][RSV, :].data).* transpose(weighted_rsv_price)
 
+	rsvrevenue = value.(EP[:vRSV][RSV, :].data).* transpose(weighted_rsv_price)
 	regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
 
 	if setup["ParameterScale"] == 1
-		resrevenue *= scale_factor
+		rsvrevenue *= scale_factor
 		regrevenue *= scale_factor
 	end
 
-	dfOpResRevenue.AnnualSum .= resrevenue * inputs["omega"]
+	dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
 	dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
-	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpResRevenue)
+	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpRsvRevenue)
 	write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
-	return dfOpRegRevenue, dfOpResRevenue
+	return dfOpRegRevenue, dfOpRsvRevenue
 end
 
 @doc raw"""

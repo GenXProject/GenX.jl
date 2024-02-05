@@ -1,9 +1,9 @@
 @doc raw"""
-	write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame)
+	write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame, dfOpRegRevenue::DataFrame, dfOpRsvRevenue::DataFrame)
 
 Function for writing net revenue of different generation technologies.
 """
-function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame, dfOpRegRevenue::DataFrame, dfOpResRevenue::DataFrame)
+function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame, dfOpRegRevenue::DataFrame, dfOpRsvRevenue::DataFrame)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
@@ -135,7 +135,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
 	if setup["Reserves"] > 0 && has_duals(EP) == 1
-		dfNetRevenue.OperatingReserveRevenue[RSV] = dfOpResRevenue.AnnualSum # Unit is confirmed to be US$
+		dfNetRevenue.OperatingReserveRevenue[RSV] = dfOpRsvRevenue.AnnualSum # Unit is confirmed to be US$
 	 	dfNetRevenue.OperatingRegulationRevenue[REG] = dfOpRegRevenue.AnnualSum # Unit is confirmed to be US$
 	end
 
