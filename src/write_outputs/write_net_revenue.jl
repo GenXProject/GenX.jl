@@ -7,7 +7,9 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
-	G = inputs["G"]     			# Number of generators
+	G = inputs["G"]
+	RSV = inputs["RSV"]
+	REG = inputs["REG"]     			# Number of generators
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
 	VRE_STOR = inputs["VRE_STOR"]
@@ -132,9 +134,9 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add energy and subsidy revenue to the dataframe
 	dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
-	if setuo["Reserves"] > 0 && has_duals(EP) == 1
-		dfNetRevenue.OperatingReserveRevenue = dfOpResRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
-	 	dfNetRevenue.OperatingRegulationRevenue = dfOpRegRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
+	if setup["Reserves"] > 0 && has_duals(EP) == 1
+		dfNetRevenue.OperatingReserveRevenue[RSV] = dfOpResRevenue.AnnualSum # Unit is confirmed to be US$
+	 	dfNetRevenue.OperatingRegulationRevenue[REG] = dfOpRegRevenue.AnnualSum # Unit is confirmed to be US$
 	end
 
 	# Add capacity revenue to the dataframe

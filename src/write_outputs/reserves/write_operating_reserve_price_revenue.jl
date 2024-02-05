@@ -14,15 +14,15 @@ function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, set
 	T = inputs["T"] 
 	RSV = inputs["RSV"]
 	REG = inputs["REG"]
-	dfOpResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster, AnnualSum = Array{Float64}(undef, G),)
-	dfOpRegRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster, AnnualSum = Array{Float64}(undef, G),)
-	resrevenue = zeros(G, T)
-	regrevenue = zeros(G, T)
+	dfOpResRevenue = DataFrame(Region = dfGen[RSV, :region], Resource = dfGen[RSV, :Resource], Zone = dfGen[RSV, :Zone], Cluster = dfGen[RSV, :cluster], AnnualSum = Array{Float64}(undef, length(RSV)),)
+	dfOpRegRevenue = DataFrame(Region = dfGen[REG, :region], Resource = dfGen[REG, :Resource], Zone = dfGen[REG, :Zone], Cluster = dfGen[REG, :cluster], AnnualSum = Array{Float64}(undef, length(REG)),)
+	#resrevenue = zeros(G, T)
+	#regrevenue = zeros(G, T)
 	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
 	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
-	resrevenue[RSV, :] = value.(EP[:vRSV][RSV, :]).* transpose(weighted_rsv_price)
+	resrevenue = value.(EP[:vRSV][RSV, :].data).* transpose(weighted_rsv_price)
 
-	regrevenue[REG, :] = value.(EP[:vREG][REG, :]) .* transpose(weighted_reg_price)
+	regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
 
 	if setup["ParameterScale"] == 1
 		resrevenue *= scale_factor
