@@ -131,6 +131,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$r^{ac,cha}_{y,z,t} \in \mathbb{R}_+$ |  Upward spinning reserves contribution [MW] for the storage AC charge component from technology $y$ in zone $z$ at time $t$ - only applicable for co-located VRE and storage resources with a storage AC charge component, $y \in \mathcal{VS}^{sym,ac} \cup y \in \mathcal{VS}^{asym,ac,cha}$ |
 |$\alpha^{Contingency,Aux}_{y,z} \in \{0,1\}$ | Binary variable that is set to be 1 if the total installed capacity  $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise |
 |$\Phi_{l,t} \in \mathbb{R}_+$ | Power flow in line $l$ at time step $t$ [MWh]|
+|$\theta_{z,t} \in \mathbb{R}$ | Volta phase angle in zone $z$ at time step $t$ [radian]|
 |$v_{y,z,t}$ | Commitment state of the generation cluster $y$ in zone $z$ at time $t$|
 |$\mathcal{X}_{y,z,t}$ | Number of startup decisions,  of the generation cluster $y$ in zone $z$ at time $t$|
 |$\zeta_{y,z,t}$ | Number of shutdown decisions,  of the generation cluster $y$ in zone $z$ at time $t$|
@@ -241,6 +242,8 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\rho_{y,z,t}^{max,wind}$ | Maximum available generation per unit of installed capacity for the wind component of a co-located VRE and storage resource during time step t for technology y in zone z [%]|
 |$VREIndex_{y,z}$ | Resource bin index for VRE technology $y$ in zone $z$. $VREIndex_{y,z}=1$ for the first bin, and $VREIndex_{y,z}=0$ for remaining bins. Only defined for $y\in \mathcal{VRE}$ |
 |$\varphi^{map}_{l,z}$ | Topology of the network, for line l: $\varphi^{map}_{l,z}=1$ for start zone $z$, - 1 for end zone $z$, 0 otherwise. |
+|$\mathcal{B}_{l}$| DC-OPF coefficient for line $l$ [MWh]|
+|$\Delta \theta^{\max}_{l}$|Maximum voltage phase angle difference for line $l$ [radian]|
 |$\eta_{y,z}^{loss}$ | Self discharge rate per time step per unit of installed capacity for storage technology $y$ in zone $z$ [%]|
 |$\eta_{y,z}^{charge}$ | Single-trip efficiency of storage charging/demand deferral for technology $y$ in zone $z$ [%]|
 |$\eta_{y,z}^{discharge}$ | Single-trip efficiency of storage (and hydro reservoir) discharging/demand satisfaction for technology $y$ in zone $z$ [%]|
