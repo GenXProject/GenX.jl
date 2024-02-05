@@ -10,30 +10,29 @@ Function for reporting the operating reserve prices and revenue earned by genera
 function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
   	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfGen = inputs["dfGen"]
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	dfOpResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
-	dfOpRegRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster)
-	#annual_sum = zeros(G)
-	weighted_reg_price = operating_regulation_price(EP, inputs, setup) .* inputs["omega"]
-	weighted_rsv_price = operating_reserve_price(EP, inputs, setup) .* inputs["omega"]
-	#regsym = Symbol("Reg_Max")
-	#rsvsym = Symbol("Rsv_Max")
-	tempregrev = weighted_reg_price#zeros(G)
-	tempresrev = weighted_rsv_price#zeros(G)
-	tempregrev *= scale_factor
-	tempresrev *= scale_factor
-	#annual_reg_sum .+= tempregrev
-	#annual_res_sum .+= tempresrev
-	#print(DataFrame([tempregrev], :auto))
-	#print(DataFrame([tempresrev], :auto))
-	dfOpRegRevenue = DataFrame([tempregrev], :auto)#, [sym]))
-	dfOpResRevenue = DataFrame([tempresrev], :auto)#, [sym]))
+	G = inputs["G"]
+	T = inputs["T"] 
+	RSV = inputs["RSV"]
+	REG = inputs["REG"]
+	dfOpResRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster, AnnualSum = Array{Float64}(undef, G),)
+	dfOpRegRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster, AnnualSum = Array{Float64}(undef, G),)
+	resrevenue = zeros(G, T)
+	regrevenue = zeros(G, T)
+	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
+	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
+	resrevenue[RSV, :] = value.(EP[:vRSV][RSV, :]).* transpose(weighted_rsv_price)
 
-	dfOpRegRevenue.AnnualSum = tempregrev#annual_reg_sum
-	dfOpResRevenue.AnnualSum = tempresrev#annual_res_sum
-	CSV.write(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
-	CSV.write(joinpath(path, "OperatingReserveRevenue.csv"), dfOpResRevenue)
+	regrevenue[REG, :] = value.(EP[:vREG][REG, :]) .* transpose(weighted_reg_price)
+
+	if setup["ParameterScale"] == 1
+		resrevenue *= scale_factor
+		regrevenue *= scale_factor
+	end
+
+	dfOpResRevenue.AnnualSum .= resrevenue * inputs["omega"]
+	dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
+	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpResRevenue)
+	write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
 	return dfOpRegRevenue, dfOpResRevenue
 end
 
