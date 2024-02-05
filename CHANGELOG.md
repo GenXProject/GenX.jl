@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
   piecewise_fuel+CO2, and TDR (#563 and #578).
 - Add functions to compute conflicting constraints when model is infeasible if supported by the solver (#624).
+- New settings parameter, VirtualChargeDischargeCost to test script and VREStor example case. The PR 608 attempts to 
+  introduce this parameter as cost of virtual charging and discharging to avoid unusual results (#608). 
 
 
 ### Fixed
@@ -41,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Correctly scale total reserves column (in reg_dn.csv) (#594)
 - Add validation for `Reg_Max` and `Rsv_Max` columns in `Generators_data.csv` when `MUST_RUN` is set to 1 (#576)
 - Fix scaling of transmission losses in write_transmission_losses.jl (#621)
+- Fixes issue #604 (#608)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
@@ -58,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to specify the solver. (#531)
 - In the examples, change Reg_Max and Rsv_Max of any MUST_RUN generators to 0.
   This mitigates but does not fully fix (#576).
+- Expressions of virtual charging and discharging costs in storage_all.jl and vre_stor.jl
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
