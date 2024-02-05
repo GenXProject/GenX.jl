@@ -1925,6 +1925,8 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
         CONSTRAINTSET = STOR
     end
 
+    virtual_discharge_cost=setup["VirtualChargeDischargeCost"]./scale_factor
+
     # Virtual State of Charge Expressions
     @expression(EP, eVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS],
         EP[:vCAPRES_VS_VRE_STOR][y,t+hours_per_subperiod-1]
@@ -2035,28 +2037,28 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 
     #Variable costs of DC "virtual charging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Charge_DC_virtual[y in DC_CHARGE,t=1:T],
-        inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_DC_CHARGE[y,t]/by_rid(y,:EtaInverter))
+        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_DC_CHARGE[y,t]/by_rid(y,:EtaInverter))
     @expression(EP, eTotalCVar_Charge_DC_T_virtual[t=1:T], sum(eCVar_Charge_DC_virtual[y,t] for y in DC_CHARGE))
     @expression(EP, eTotalCVar_Charge_DC_virtual, sum(eTotalCVar_Charge_DC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Charge_DC_virtual
 
     #Variable costs of DC "virtual discharging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Discharge_DC_virtual[y in DC_DISCHARGE,t=1:T],
-        inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*by_rid(y,:EtaInverter)*vCAPRES_DC_DISCHARGE[y,t])
+        inputs["omega"][t]*virtual_discharge_cost*by_rid(y,:EtaInverter)*vCAPRES_DC_DISCHARGE[y,t])
     @expression(EP, eTotalCVar_Discharge_DC_T_virtual[t=1:T], sum(eCVar_Discharge_DC_virtual[y,t] for y in DC_DISCHARGE))
     @expression(EP, eTotalCVar_Discharge_DC_virtual, sum(eTotalCVar_Discharge_DC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Discharge_DC_virtual
 
     #Variable costs of AC "virtual charging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Charge_AC_virtual[y in AC_CHARGE,t=1:T],
-        inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_AC_CHARGE[y,t])
+        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_AC_CHARGE[y,t])
     @expression(EP, eTotalCVar_Charge_AC_T_virtual[t=1:T], sum(eCVar_Charge_AC_virtual[y,t] for y in AC_CHARGE))
     @expression(EP, eTotalCVar_Charge_AC_virtual, sum(eTotalCVar_Charge_AC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Charge_AC_virtual
 
     #Variable costs of AC "virtual discharging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Discharge_AC_virtual[y in AC_DISCHARGE,t=1:T],
-        inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_AC_DISCHARGE[y,t])
+        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_AC_DISCHARGE[y,t])
     @expression(EP, eTotalCVar_Discharge_AC_T_virtual[t=1:T], sum(eCVar_Discharge_AC_virtual[y,t] for y in AC_DISCHARGE))
     @expression(EP, eTotalCVar_Discharge_AC_virtual, sum(eTotalCVar_Discharge_AC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Discharge_AC_virtual
