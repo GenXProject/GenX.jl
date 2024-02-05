@@ -3,7 +3,7 @@
 
 Function for writing net revenue of different generation technologies.
 """
-function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame)
+function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfCap::DataFrame, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfPower::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfVreStor::DataFrame, dfOpRegRevenue::DataFrame, dfOpResRevenue::DataFrame)
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
@@ -129,6 +129,14 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	 	dfNetRevenue.SubsidyRevenue = dfSubRevenue[1:G,:SubsidyRevenue] # Unit is confirmed to be US$
 	end
 
+	# Add energy and subsidy revenue to the dataframe
+	dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
+	dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
+	if setuo["Reserves"] > 0 && has_duals(EP) == 1
+		dfNetRevenue.OperatingReserveRevenue = dfOpResRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
+	 	dfNetRevenue.OperatingRegulationRevenue = dfOpRegRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
+	end
+
 	# Add capacity revenue to the dataframe
 	dfNetRevenue.ReserveMarginRevenue = zeros(nrow(dfNetRevenue))
  	if setup["CapacityReserveMargin"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
@@ -174,7 +182,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[1:G,:SubsidyRevenue]
 	end
 
-	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue .+ dfNetRevenue.SubsidyRevenue .+ dfNetRevenue.ReserveMarginRevenue .+ dfNetRevenue.ESRRevenue .+ dfNetRevenue.RegSubsidyRevenue
+	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue .+ dfNetRevenue.SubsidyRevenue .+ dfNetRevenue.ReserveMarginRevenue .+ dfNetRevenue.ESRRevenue .+ dfNetRevenue.RegSubsidyRevenue .+ dfNetRevenue.OperatingReserveRevenue .+ dfNetRevenue.OperatingRegulationRevenue
 	dfNetRevenue.Cost = (dfNetRevenue.Inv_cost_MW
                       .+ dfNetRevenue.Inv_cost_MWh
                       .+ dfNetRevenue.Inv_cost_charge_MW
