@@ -43,8 +43,8 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
 		
 	# Bus angle limits (except slack bus)
 	@constraints(EP, begin
-		cANGLE_ub[l=1:L, t=1:T], sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z) <= (pi/180)*inputs["LINE_Angle_Limit"][l]
-		cANGLE_lb[l=1:L, t=1:T], sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z) >= -(pi/180)*inputs["LINE_Angle_Limit"][l]
+		cANGLE_ub[l=1:L, t=1:T], sum(inputs["pNet_Map"][l,z] * vANGLE[z,t] for z=1:Z) <= inputs["Line_Angle_Limit"][l]
+		cANGLE_lb[l=1:L, t=1:T], sum(inputs["pNet_Map"][l,z] * -vANGLE[z,t] for z=1:Z) <= inputs["Line_Angle_Limit"][l]
 	end)
 
 	# Slack Bus angle limit
