@@ -3,7 +3,7 @@ module TestVREStor
 using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 92081.91504
+obj_true = 92376.060123
 test_path = "VREStor"
 
 # Define test inputs

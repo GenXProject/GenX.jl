@@ -18,3 +18,4 @@ MaxCapReq: 1
 MinCapReq: 1
 CO2Cap: 1
 WriteShadowPrices: 1
+VirtualChargeDischargeCost: 1
