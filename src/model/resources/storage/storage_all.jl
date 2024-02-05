@@ -33,6 +33,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	# Energy withdrawn from grid by resource "y" at hour "t" [MWh] on zone "z"
 	@variable(EP, vCHARGE[y in STOR_ALL, t=1:T] >= 0);
 
+	virtual_discharge_cost=setup["VirtualChargeDischargeCost"]./scale_factor
+
 	if CapacityReserveMargin > 0
 		# Virtual discharge contributing to capacity reserves at timestep t for storage cluster y
 		@variable(EP, vCAPRES_discharge[y in STOR_ALL, t=1:T] >= 0)
@@ -61,13 +63,13 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	if CapacityReserveMargin > 0
 		#Variable costs of "virtual charging" for technologies "y" during hour "t" in zone "z"
-		@expression(EP, eCVar_in_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_charge[y,t])
+		@expression(EP, eCVar_in_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*virtual_discharge_cost*vCAPRES_charge[y,t])
 		@expression(EP, eTotalCVarInT_virtual[t=1:T], sum(eCVar_in_virtual[y,t] for y in STOR_ALL))
 		@expression(EP, eTotalCVarIn_virtual, sum(eTotalCVarInT_virtual[t] for t in 1:T))
 		EP[:eObj] += eTotalCVarIn_virtual
 
 		#Variable costs of "virtual discharging" for technologies "y" during hour "t" in zone "z"
-		@expression(EP, eCVar_out_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*(setup["VirtualChargeDischargeCost"]./scale_factor)*vCAPRES_discharge[y,t])
+		@expression(EP, eCVar_out_virtual[y in STOR_ALL,t=1:T], inputs["omega"][t]*virtual_discharge_cost*vCAPRES_discharge[y,t])
 		@expression(EP, eTotalCVarOutT_virtual[t=1:T], sum(eCVar_out_virtual[y,t] for y in STOR_ALL))
 		@expression(EP, eTotalCVarOut_virtual, sum(eTotalCVarOutT_virtual[t] for t in 1:T))
 		EP[:eObj] += eTotalCVarOut_virtual
