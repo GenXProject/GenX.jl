@@ -132,7 +132,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add energy and subsidy revenue to the dataframe
 	dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
-	if setuo["Reserves"] > 0 && has_duals(EP) == 1
+	if setup["Reserves"] > 0 && has_duals(EP) == 1
 		dfNetRevenue.OperatingReserveRevenue = dfOpResRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
 	 	dfNetRevenue.OperatingRegulationRevenue = dfOpRegRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
 	end
