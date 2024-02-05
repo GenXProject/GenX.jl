@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
   piecewise_fuel+CO2, and TDR (#563 and #578).
 - Added write_operating_reserve_price_revenue.jl to compute annual operating reserve and regulation revenue (PR # 611)
+- Added the operating reserve and regulation revenue to net revenue
 
 
 ### Fixed
