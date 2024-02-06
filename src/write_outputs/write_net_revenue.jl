@@ -55,7 +55,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add operations and maintenance cost to the dataframe
 	dfNetRevenue.Fixed_OM_cost_MW = dfGen[!,:Fixed_OM_Cost_per_MWyr] .* dfCap[1:G,:EndCap]
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
-    dfNetRevenue.Fixed_OM_cost_charge_MW = dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr] .* dfCap[1:G, :EndChargeCap]
+    	dfNetRevenue.Fixed_OM_cost_charge_MW = dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr] .* dfCap[1:G, :EndChargeCap]
 
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
@@ -119,14 +119,14 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 	# Add charge cost to the dataframe
 	dfNetRevenue.Charge_cost = zeros(nrow(dfNetRevenue))
-	if has_duals(EP) == 1
+	if has_duals(EP)
 		dfNetRevenue.Charge_cost = dfChargingcost[1:G,:AnnualSum] # Unit is confirmed to be US$
 	end
 
 	# Add energy and subsidy revenue to the dataframe
 	dfNetRevenue.EnergyRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.SubsidyRevenue = zeros(nrow(dfNetRevenue))
-	if has_duals(EP) == 1
+	if has_duals(EP)
 		dfNetRevenue.EnergyRevenue = dfEnergyRevenue[1:G,:AnnualSum] # Unit is confirmed to be US$
 	 	dfNetRevenue.SubsidyRevenue = dfSubRevenue[1:G,:SubsidyRevenue] # Unit is confirmed to be US$
 	end
@@ -134,26 +134,26 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add energy and subsidy revenue to the dataframe
 	dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
-	if setup["Reserves"] > 0 && has_duals(EP) == 1
+	if setup["Reserves"] > 0 && has_duals(EP)
 		dfNetRevenue.OperatingReserveRevenue[RSV] = dfOpRsvRevenue.AnnualSum # Unit is confirmed to be US$
 	 	dfNetRevenue.OperatingRegulationRevenue[REG] = dfOpRegRevenue.AnnualSum # Unit is confirmed to be US$
 	end
 
 	# Add capacity revenue to the dataframe
 	dfNetRevenue.ReserveMarginRevenue = zeros(nrow(dfNetRevenue))
- 	if setup["CapacityReserveMargin"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
+ 	if setup["CapacityReserveMargin"] > 0 && has_duals(EP) # The unit is confirmed to be $
  		dfNetRevenue.ReserveMarginRevenue = dfResRevenue[1:G,:AnnualSum]
  	end
 
 	# Add RPS/CES revenue to the dataframe
 	dfNetRevenue.ESRRevenue = zeros(nrow(dfNetRevenue))
- 	if setup["EnergyShareRequirement"] > 0 && has_duals(EP) == 1 # The unit is confirmed to be $
+ 	if setup["EnergyShareRequirement"] > 0 && has_duals(EP) # The unit is confirmed to be $
  		dfNetRevenue.ESRRevenue = dfESRRev[1:G,:Total]
  	end
 
 	# Calculate emissions cost
 	dfNetRevenue.EmissionsCost = zeros(nrow(dfNetRevenue))
-	if setup["CO2Cap"] >=1 && has_duals(EP) == 1
+	if setup["CO2Cap"] >=1 && has_duals(EP)
 		for cap in 1:inputs["NCO2Cap"]
 			co2_cap_dual = dual(EP[:cCO2Emissions_systemwide][cap])
 			CO2ZONES = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])
@@ -176,7 +176,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
 	# Add regional technology subsidy revenue to the dataframe
 	dfNetRevenue.RegSubsidyRevenue = zeros(nrow(dfNetRevenue))
-	if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
+	if setup["MinCapReq"] >= 1 && has_duals(EP)# The unit is confirmed to be US$
 		dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[1:G,:SubsidyRevenue]
 	end
 
