@@ -155,17 +155,17 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
-	  println("Time elapsed for writing time weights is")
-	  println(elapsed_time_time_weights)
+	  	println("Time elapsed for writing time weights is")
+	  	println(elapsed_time_time_weights)
 		dfESR = DataFrame()
 		dfESRRev = DataFrame()
-		if setup["EnergyShareRequirement"]==1 && has_duals(EP) == 1
+		if setup["EnergyShareRequirement"]==1 && has_duals(EP)
 			dfESR = write_esr_prices(path, inputs, setup, EP)
 			dfESRRev = write_esr_revenue(path, inputs, setup, dfPower, dfESR, EP)
 		end
 		dfResMar = DataFrame()
 		dfResRevenue = DataFrame()
-		if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
+		if setup["CapacityReserveMargin"]==1 && has_duals(EP)
 			dfResMar = write_reserve_margin(path, setup, EP)
 			elapsed_time_rsv_margin = @elapsed write_reserve_margin_w(path, inputs, setup, EP)
 			dfVirtualDischarge = write_virtual_discharge(path, inputs, setup, EP)
@@ -180,25 +180,25 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			end		  
 		end
 
-		if setup["Reserves"]==1 && has_duals(EP) == 1
-			dfOpRegRevenue, dfOpResRevenue = write_operating_reserve_revenue(path, inputs, setup, EP)
-			elapsed_time_op_res_rev = @elapsed write_operating_reserve_revenue(path, inputs, setup, EP)
-		  	println("Time elapsed for writing oerating reserve price is")
+		if setup["Reserves"]==1 && has_duals(EP)
+			dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
+			elapsed_time_op_res_rev = @elapsed write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
+		  	println("Time elapsed for writing oerating reserve and regulation revenue is")
 		  	println(elapsed_time_op_res_rev)
 		end
 
-		if setup["CO2Cap"]>0 && has_duals(EP) == 1
+		if setup["CO2Cap"]>0 && has_duals(EP)
 			dfCO2Cap = write_co2_cap(path, inputs, setup, EP)
 		end
-		if setup["MinCapReq"] == 1 && has_duals(EP) == 1
+		if setup["MinCapReq"] == 1 && has_duals(EP)
 			dfMinCapReq = write_minimum_capacity_requirement(path, inputs, setup, EP)
 		end
 
-		if setup["MaxCapReq"] == 1 && has_duals(EP) == 1
+		if setup["MaxCapReq"] == 1 && has_duals(EP)
 			dfMaxCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
 		end
 
-		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP) == 1
+		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP)
 			dfHydrogenPrice = write_hydrogen_prices(path, inputs, setup, EP)
 			if setup["HydrogenHourlyMatching"] == 1
 				dfHourlyMatchingPrices = write_hourly_matching_prices(path, inputs, setup, EP)
@@ -206,7 +206,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 
-		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor, dfOpRegRevenue, dfOpResRevenue)
+		elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor, dfOpRegRevenue, dfOpRsvRevenue)
 	  	println("Time elapsed for writing net revenue is")
 	  	println(elapsed_time_net_rev)
 	end

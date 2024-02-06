@@ -11,8 +11,8 @@ function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, E
 	NONFLEX = setdiff(collect(1:G), FLEX)
 	dfEnergyRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster, AnnualSum = Array{Float64}(undef, G),)
 	energyrevenue = zeros(G, T)
-    	price = locational_marginal_price(EP, inputs, setup)
-    	energyrevenue[NONFLEX, :] = value.(EP[:vP][NONFLEX, :]) .* transpose(price)[dfGen[NONFLEX, :Zone], :]
+	price = locational_marginal_price(EP, inputs, setup)
+	energyrevenue[NONFLEX, :] = value.(EP[:vP][NONFLEX, :]) .* transpose(price)[dfGen[NONFLEX, :Zone], :]
 	if !isempty(FLEX)
 		energyrevenue[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data .* transpose(price)[dfGen[FLEX, :Zone], :]
 	end

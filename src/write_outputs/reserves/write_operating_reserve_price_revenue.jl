@@ -1,39 +1,36 @@
 @doc raw"""
 	write_operating_reserve_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
-Function for reporting the operating reserve prices and revenue earned by generators listed in the input file.
-    GenX will print this file only when operating reserve is modeled and the shadow price can be obtained form the solver.
-    The revenue is calculated as the operating reserve contribution of each time steps multiplied by the shadow price, and then the sum is taken over all modeled time steps.
-    The last column is the total revenue received from all operating reserve constraints.
-    As a reminder, GenX models the operating reserve at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
+Function for reporting the operating reserve and regulation revenue earned by generators listed in the input file.
+    GenX will print this file only when operating reserve and regulation are modeled and the shadow price can be obtained from the solver.
+    The revenues are calculated as the operating reserve and regulation contributions in each time step multiplied by the corresponding shadow price, and then the sum is taken over all modeled time steps.
+    The last column is the total revenue received from all operating reserve and regulation constraints.
+    As a reminder, GenX models the operating reserve and regulation at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_operating_reserve_regulation_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
   	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfGen = inputs["dfGen"]
-	G = inputs["G"]
-	T = inputs["T"] 
 	RSV = inputs["RSV"]
 	REG = inputs["REG"]
-	dfOpResRevenue = DataFrame(Region = dfGen[RSV, :region], Resource = dfGen[RSV, :Resource], Zone = dfGen[RSV, :Zone], Cluster = dfGen[RSV, :cluster], AnnualSum = Array{Float64}(undef, length(RSV)),)
+
+	dfOpRsvRevenue = DataFrame(Region = dfGen[RSV, :region], Resource = dfGen[RSV, :Resource], Zone = dfGen[RSV, :Zone], Cluster = dfGen[RSV, :cluster], AnnualSum = Array{Float64}(undef, length(RSV)),)
 	dfOpRegRevenue = DataFrame(Region = dfGen[REG, :region], Resource = dfGen[REG, :Resource], Zone = dfGen[REG, :Zone], Cluster = dfGen[REG, :cluster], AnnualSum = Array{Float64}(undef, length(REG)),)
-	#resrevenue = zeros(G, T)
-	#regrevenue = zeros(G, T)
+	
 	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
 	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
-	resrevenue = value.(EP[:vRSV][RSV, :].data).* transpose(weighted_rsv_price)
 
+	rsvrevenue = value.(EP[:vRSV][RSV, :].data).* transpose(weighted_rsv_price)
 	regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
 
-	if setup["ParameterScale"] == 1
-		resrevenue *= scale_factor
-		regrevenue *= scale_factor
-	end
+	
+	rsvrevenue *= scale_factor
+	regrevenue *= scale_factor
 
-	dfOpResRevenue.AnnualSum .= resrevenue * inputs["omega"]
+	dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
 	dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
-	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpResRevenue)
+	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpRsvRevenue)
 	write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
-	return dfOpRegRevenue, dfOpResRevenue
+	return dfOpRegRevenue, dfOpRsvRevenue
 end
 
 @doc raw"""
@@ -42,7 +39,7 @@ end
                                   setup::Dict)::Vector{Float64}
 
 Operating regulation price for each time step.
-This is equal to the dual variable of the regulatin requirement constraint.
+This is equal to the dual variable of the regulation requirement constraint.
 
     Returns a vector, with units of $/MW
 """

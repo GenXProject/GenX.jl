@@ -17,16 +17,13 @@ jobs:
           - "1.6" # LTS (64-bit Linux)
           - "1.7"
           - "1.8" 
-          - '1.9' # latest stable Julia release (Linux)
+          - "1.9" 
+          - '1'  # latest stable Julia release (Linux)
         os:
           - ubuntu-latest
         arch:
           - x64
-        include: # additional tests [Julia-nightly] (Linux) 
-          - os: ubuntu-latest
-            version: 'nightly'
-            arch: x64
-            allow_failure: true
+
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
