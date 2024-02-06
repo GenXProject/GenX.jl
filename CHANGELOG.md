@@ -40,10 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix access of eELOSSByZone expr before initialization (#541)
 - Correctly write unmet reserves (in reg_dn.csv) (#575)
 - Correctly scale total reserves column (in reg_dn.csv) (#594)
-- Fixes issue #46
 - Add validation for `Reg_Max` and `Rsv_Max` columns in `Generators_data.csv` when `MUST_RUN` is set to 1 (#576)
 - Fix scaling of transmission losses in write_transmission_losses.jl (#621)
-- Fixes issue #46 (#611)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
