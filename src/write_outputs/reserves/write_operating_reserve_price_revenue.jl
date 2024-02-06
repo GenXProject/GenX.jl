@@ -1,13 +1,13 @@
 @doc raw"""
 	write_operating_reserve_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
-Function for reporting the operating reserve prices and revenue earned by generators listed in the input file.
-    GenX will print this file only when operating reserve is modeled and the shadow price can be obtained form the solver.
-    The revenue is calculated as the operating reserve contribution of each time steps multiplied by the shadow price, and then the sum is taken over all modeled time steps.
-    The last column is the total revenue received from all operating reserve constraints.
-    As a reminder, GenX models the operating reserve at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
+Function for reporting the operating reserve and regulation revenue earned by generators listed in the input file.
+    GenX will print this file only when operating reserve and regulation are modeled and the shadow price can be obtained from the solver.
+    The revenues are calculated as the operating reserve and regulation contributions in each time step multiplied by the corresponding shadow price, and then the sum is taken over all modeled time steps.
+    The last column is the total revenue received from all operating reserve and regulation constraints.
+    As a reminder, GenX models the operating reserve and regulation at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_operating_reserve_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_operating_reserve_regulation_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
   	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfGen = inputs["dfGen"]
 	RSV = inputs["RSV"]
@@ -40,7 +40,7 @@ end
                                   setup::Dict)::Vector{Float64}
 
 Operating regulation price for each time step.
-This is equal to the dual variable of the regulatin requirement constraint.
+This is equal to the dual variable of the regulation requirement constraint.
 
     Returns a vector, with units of $/MW
 """
