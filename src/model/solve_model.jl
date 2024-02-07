@@ -62,22 +62,58 @@ function solve_model(EP::Model, setup::Dict)
 	## Solve Model
 	optimize!(EP)
 
-	if has_duals(EP) # fully linear model
-		println("LP solved for primal")
-	else
-		println("MILP solved for primal")
+	if has_values(EP)
+
+		if has_duals(EP) # fully linear model
+			println("LP solved for primal")
+		else
+			println("MILP solved for primal")
+		end
+
+		if !has_duals(EP) && setup["WriteShadowPrices"] == 1
+			# function to fix integers and linearize problem
+			fix_integers(EP)
+			# re-solve statement for LP solution
+			println("Solving LP solution for duals")
+			optimize!(EP)
+		end
+
+		## Record solver time
+		solver_time = time() - solver_start_time
+	elseif setup["ComputeConflicts"]==0
+
+		@info "No model solution. You can try to set ComputeConflicts to 1 in the genx_settings.yml file to compute conflicting constraints."
+
+	elseif setup["ComputeConflicts"]==1
+
+		@info "No model solution. Trying to identify conflicting constriants..."
+
+		try
+			compute_conflict!(EP)
+		catch
+			@warn "$(solver_name(EP)) does not support computing conflicting constraints. This is available using either Gurobi or CPLEX."
+			solver_time = time() - solver_start_time
+		else
+			list_of_conflicting_constraints = ConstraintRef[]
+			if get_attribute(EP, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+				for (F, S) in list_of_constraint_types(EP)
+					for con in all_constraints(EP, F, S)
+						if get_attribute(con, MOI.ConstraintConflictStatus()) == MOI.IN_CONFLICT
+							push!(list_of_conflicting_constraints, con)
+						end
+					end
+				end
+				display(list_of_conflicting_constraints)
+				solver_time = time() - solver_start_time
+				return EP, solver_time, list_of_conflicting_constraints
+			else
+				@info "Conflicts computation failed."
+				solver_time = time() - solver_start_time
+				return EP, solver_time, list_of_conflicting_constraints
+			end
+		end
+
 	end
-
-	if !has_duals(EP) && setup["WriteShadowPrices"] == 1
-		# function to fix integers and linearize problem
-		fix_integers(EP)
-		# re-solve statement for LP solution
-		println("Solving LP solution for duals")
-		optimize!(EP)
-	end
-
-	## Record solver time
-	solver_time = time() - solver_start_time
-
+	
 	return EP, solver_time
 end # END solve_model()

@@ -21,8 +21,9 @@ function default_settings()
         "MultiStage" => 0,
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
+        "HydrogenHourlyMatching" => 0,
         "EnableJuMPStringNames" => false,
-        "HydrogenHourlyMatching" => 0
+        "ComputeConflicts" => 0
     )
 end
 
@@ -47,6 +48,10 @@ function validate_settings!(settings::Dict{Any,Any})
         settings have changed recently. OperationWrapping has been removed,
         and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
         Please see the Methods page in the documentation.""" maxlog=1
+    end
+
+    if settings["EnableJuMPStringNames"]==0 && settings["ComputeConflicts"]==1
+        settings["EnableJuMPStringNames"]=1;
     end
 
 end
