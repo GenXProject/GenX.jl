@@ -3,7 +3,6 @@
 
 Function for reading input parameters related to the electricity transmission network
 """
-#DEV NOTE:  add DC power flow related parameter inputs in a subsequent commit
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
