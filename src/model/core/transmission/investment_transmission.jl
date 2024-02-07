@@ -19,8 +19,6 @@
 	    & \bigtriangleup\varphi^{cap}_{l}  \leq \overline{\bigtriangleup\varphi^{cap}_{l}}, &\quad \forall l \in \mathcal{E}
         \end{aligned}
 """
-
-
 function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Investment Transmission Module")
