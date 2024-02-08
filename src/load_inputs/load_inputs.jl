@@ -71,6 +71,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		load_period_map!(setup, path, inputs)
 	end
 
+	# Virtual charge discharge cost
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	inputs["VirtualChargeDischargeCost"] = setup["VirtualChargeDischargeCost"] / scale_factor
+
 	println("CSV Files Successfully Read In From $path")
 
 	return inputs

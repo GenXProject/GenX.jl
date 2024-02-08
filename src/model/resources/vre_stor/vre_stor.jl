@@ -1894,6 +1894,8 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     rep_periods = inputs["REP_PERIOD"]
 
     by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
+
+    virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
     
     ### VARIABLES ###
 
@@ -1924,8 +1926,6 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     else
         CONSTRAINTSET = STOR
     end
-
-    virtual_discharge_cost=setup["VirtualChargeDischargeCost"]./scale_factor
 
     # Virtual State of Charge Expressions
     @expression(EP, eVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS],
@@ -2010,8 +2010,6 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ### CONSTRAINTS ###
-
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     # Constraint 1: Links energy held in reserve in first time step with decisions in last time step of each subperiod
     # We use a modified formulation of this constraint (cVSoCBalLongDurationStorageStart) when modeling multiple representative periods and long duration storage
     @constraint(EP, cVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS], 

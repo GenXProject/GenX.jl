@@ -10,7 +10,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
-	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+	virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -32,8 +33,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Energy withdrawn from grid by resource "y" at hour "t" [MWh] on zone "z"
 	@variable(EP, vCHARGE[y in STOR_ALL, t=1:T] >= 0);
-
-	virtual_discharge_cost=setup["VirtualChargeDischargeCost"]./scale_factor
 
 	if CapacityReserveMargin > 0
 		# Virtual discharge contributing to capacity reserves at timestep t for storage cluster y
