@@ -101,21 +101,6 @@ function Base.get(r::AbstractResource, sym::Symbol, default)
     return haskey(r, sym) ? getproperty(r,sym) : default
 end
 
-"""
-    has(r::AbstractResource, sym::Symbol)
-
-Check if an `AbstractResource` object has a specific attribute.
-
-# Arguments:
-- `r::AbstractResource`: The resource object.
-- `sym::Symbol`: The symbol representing the attribute name.
-
-# Returns:
-- `true` if the attribute exists in the object, `false` otherwise.
-
-"""
-has(r::AbstractResource, sym::Symbol) = haskey(r, sym)
-
 """ 
     Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
 

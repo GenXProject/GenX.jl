@@ -140,13 +140,13 @@ julia> get(thermal_gen[1], :new_build, 0)
 0
 ```
 
-- [`GenX.has(r::AbstractResource, sym::Symbol)`](@ref): Returns `true` if the resource `r` has the attribute `sym`, and `false` otherwise.
+- [`GenX.haskey(r::AbstractResource, sym::Symbol)`](@ref): Returns `true` if the resource `r` has the attribute `sym`, and `false` otherwise.
 
 Example: 
 ```jldoctest example_thermal
-julia> has(thermal_gen[1], :existing_cap_mw)
+julia> haskey(thermal_gen[1], :existing_cap_mw)
 true
-julia> has(thermal_gen[1], :new_build)
+julia> haskey(thermal_gen[1], :new_build)
 false
 ```
 

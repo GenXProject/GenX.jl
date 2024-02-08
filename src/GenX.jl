@@ -23,9 +23,6 @@ export write_multi_stage_outputs
 export run_genx_case!
 export run_timedomainreduction!
 
-# GenX types
-export AbstractResource
-
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
 using CSV

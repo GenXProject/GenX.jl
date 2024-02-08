@@ -83,17 +83,16 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX/stable",
         assets=String[],
     ),
-    pages=[p for p in pages],
-     warnonly=true
+    pages=[p for p in pages]
 )
 
-# deploydocs(;
-#     repo="github.com/GenXProject/GenX.git",
-#     target = "build",
-#     branch = "gh-pages",
-#     devbranch = "main",
-#     devurl = "dev",
-#     push_preview=true,
-#     versions = ["stable" => "v^", "v#.#"],
-#     forcepush = false,
-# )
+deploydocs(;
+    repo="github.com/GenXProject/GenX.git",
+    target = "build",
+    branch = "gh-pages",
+    devbranch = "main",
+    devurl = "dev",
+    push_preview=true,
+    versions = ["stable" => "v^", "v#.#"],
+    forcepush = false,
+)
