@@ -223,6 +223,10 @@ function Base.show(io::IO, r::AbstractResource)
     end
 end
 
+function attributes(r::AbstractResource)
+    return tuple(keys(parent(r))...)
+end
+
 
 """
     findall(f::Function, rs::Vector{<:AbstractResource})
@@ -551,8 +555,8 @@ start_cost_per_mw(r::AbstractResource) = get(r, :start_cost_per_mw, default_zero
 
 # fuel
 fuel(r::AbstractResource) = get(r, :fuel, "None")
-start_fuel_mmbtu_per_mw(r::AbstractResource) = r.start_fuel_mmbtu_per_mw
-heat_rate_mmbtu_per_mwh(r::AbstractResource) = r.heat_rate_mmbtu_per_mwh
+start_fuel_mmbtu_per_mw(r::AbstractResource) = get(r, :start_fuel_mmbtu_per_mw, default_zero)
+heat_rate_mmbtu_per_mwh(r::AbstractResource) = get(r, :heat_rate_mmbtu_per_mwh, default_zero)
 co2_capture_fraction(r::AbstractResource) = get(r, :co2_capture_fraction, default_zero)
 co2_capture_fraction_startup(r::AbstractResource) = get(r, :co2_capture_fraction_startup, default_zero)
 ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cost_per_metric_ton, default_zero)
@@ -657,6 +661,7 @@ Returns the indices of all thermal resources in the vector `rs`.
 thermal(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal), rs)
 up_time(r::Thermal) = get(r, :up_time, default_zero)
 down_time(r::Thermal) = get(r, :down_time, default_zero)
+pwfu_fuel_usage_zero_load_mmbtu_per_h(r::Thermal) = get(r, :pwfu_fuel_usage_zero_load_mmbtu_per_h, default_zero)
 
 # VRE interface
 """

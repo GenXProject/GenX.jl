@@ -188,23 +188,20 @@ function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractStri
     Matrix(dropmissing(df[:, sorted_columns]))
 end
 
-function sort_dataframe_by_resource_names!(df::DataFrame, gen::Vector{<:AbstractResource})::Vector{String}
-    # get all resource names
-    resource_names = resource_name.(gen)
-    # get resources in dataframe
-    resource_in_df = resource_ids(df)
-    # sort by resource name
-    indices = sortperm(findfirst.(isequal.(resource_in_df), Ref(resource_names)))
-    permute!(df, indices)
-    return resource_ids(df)
-end
+function extract_matrix_from_resources(rs::Vector{T}, columnprefix::AbstractString, default=0.0) where T<:AbstractResource
 
-function resource_ids(df::DataFrame)
-    if hasproperty(df, :Resource)
-        return df.Resource
-    elseif hasproperty(df, :resource)
-        return df.resource
-    else
-        error("Dataframe must have a column named 'Resource' or 'resource' with resource names.")
+    # attributes starting with columnprefix with a number suffix
+    attributes_n = [attr for attr in string.(attributes(rs[1])) if startswith(attr, columnprefix)]
+    # sort the attributes by the number suffix
+    sort!(attributes_n, by = x -> parse(Int, split(x, "_")[end]))
+
+    # extract the matrix of the attributes
+    value = Matrix{Float64}(undef, length(rs), length(attributes_n))
+    for (i, r) in enumerate(rs)
+        for (j, attr) in enumerate(attributes_n)
+            value[i, j] = get(r, Symbol(attr), default)
+        end
     end
+
+    return value
 end

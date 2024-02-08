@@ -4,6 +4,7 @@ using Test
 using GenX
 using JLD2
 using Logging, LoggingExtras
+import DataFrames: rename!
 
 struct InputsTrue
     gen_filename::AbstractString
@@ -144,9 +145,9 @@ function test_inputs_keys(inputs, inputs_true)
     @test Set(inputs["NEW_CAP"]) == inputs_true["NEW_CAP"]
     @test Set(inputs["NEW_CAP_ENERGY"]) == inputs_true["NEW_CAP_ENERGY"]
     @test Set(inputs["NEW_CAP_CHARGE"]) == inputs_true["NEW_CAP_CHARGE"]
-    @test inputs["slope_cols"] == inputs_true["slope_cols"]
-    @test inputs["intercept_cols"] == inputs_true["intercept_cols"]
-    @test inputs["PWFU_data"] == inputs_true["PWFU_data"]
+    @test string.(inputs["slope_cols"]) == lowercase.(string.(inputs_true["slope_cols"]))
+    @test string.(inputs["intercept_cols"]) == lowercase.(string.(inputs_true["intercept_cols"]))
+    @test inputs["PWFU_data"] == rename!(inputs_true["PWFU_data"], lowercase.(names(inputs_true["PWFU_data"])))
     @test inputs["PWFU_Num_Segments"] == inputs_true["PWFU_Num_Segments"]
     @test inputs["THERM_COMMIT_PWFU"] == inputs_true["THERM_COMMIT_PWFU"]
 
