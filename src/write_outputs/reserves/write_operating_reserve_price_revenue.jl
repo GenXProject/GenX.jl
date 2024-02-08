@@ -19,15 +19,15 @@ function write_operating_reserve_regulation_revenue(path::AbstractString, inputs
 	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
 	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
 
-	rsvrevenue = value.(EP[:vRSV][RSV, :].data).* transpose(weighted_rsv_price)
+	rsvrevenue = value.(EP[:vRSV][RSV, :].data) .* transpose(weighted_rsv_price)
 	regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
 
-	
 	rsvrevenue *= scale_factor
 	regrevenue *= scale_factor
 
 	dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
 	dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
+
 	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpRsvRevenue)
 	write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
 	return dfOpRegRevenue, dfOpRsvRevenue

@@ -155,8 +155,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
-	  	println("Time elapsed for writing time weights is")
-	  	println(elapsed_time_time_weights)
+	    println("Time elapsed for writing time weights is")
+	    println(elapsed_time_time_weights)
 		dfESR = DataFrame()
 		dfESRRev = DataFrame()
 		if setup["EnergyShareRequirement"]==1 && has_duals(EP)
@@ -181,8 +181,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		if setup["Reserves"]==1 && has_duals(EP)
-			dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
-			elapsed_time_op_res_rev = @elapsed write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
+			elapsed_time_op_res_rev = @elapsed dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
 		  	println("Time elapsed for writing oerating reserve and regulation revenue is")
 		  	println(elapsed_time_op_res_rev)
 		end

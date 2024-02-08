@@ -7,9 +7,9 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfGen = inputs["dfGen"]
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
-	G = inputs["G"]
-	RSV = inputs["RSV"]
-	REG = inputs["REG"]     			# Number of generators
+	G = inputs["G"]     			# Number of generators
+	RSV = inputs["RSV"]				# Generators contributing to operating reserves
+	REG = inputs["REG"]     		# Generators contributing to regulation 
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
 	VRE_STOR = inputs["VRE_STOR"]
@@ -55,7 +55,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add operations and maintenance cost to the dataframe
 	dfNetRevenue.Fixed_OM_cost_MW = dfGen[!,:Fixed_OM_Cost_per_MWyr] .* dfCap[1:G,:EndCap]
  	dfNetRevenue.Fixed_OM_cost_MWh = dfGen[!,:Fixed_OM_Cost_per_MWhyr] .* dfCap[1:G,:EndEnergyCap]
-    	dfNetRevenue.Fixed_OM_cost_charge_MW = dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr] .* dfCap[1:G, :EndChargeCap]
+    dfNetRevenue.Fixed_OM_cost_charge_MW = dfGen[!, :Fixed_OM_Cost_Charge_per_MWyr] .* dfCap[1:G, :EndChargeCap]
 
  	dfNetRevenue.Var_OM_cost_out = (dfGen[!,:Var_OM_Cost_per_MWh]) .* dfPower[1:G,:AnnualSum]
 	if !isempty(VRE_STOR)
@@ -180,7 +180,14 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[1:G,:SubsidyRevenue]
 	end
 
-	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue .+ dfNetRevenue.SubsidyRevenue .+ dfNetRevenue.ReserveMarginRevenue .+ dfNetRevenue.ESRRevenue .+ dfNetRevenue.RegSubsidyRevenue .+ dfNetRevenue.OperatingReserveRevenue .+ dfNetRevenue.OperatingRegulationRevenue
+	dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue 
+							.+ dfNetRevenue.SubsidyRevenue 
+							.+ dfNetRevenue.ReserveMarginRevenue 
+							.+ dfNetRevenue.ESRRevenue 
+							.+ dfNetRevenue.RegSubsidyRevenue 
+							.+ dfNetRevenue.OperatingReserveRevenue 
+							.+ dfNetRevenue.OperatingRegulationRevenue
+
 	dfNetRevenue.Cost = (dfNetRevenue.Inv_cost_MW
                       .+ dfNetRevenue.Inv_cost_MWh
                       .+ dfNetRevenue.Inv_cost_charge_MW
