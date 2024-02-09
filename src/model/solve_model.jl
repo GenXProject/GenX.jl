@@ -90,27 +90,32 @@ function solve_model(EP::Model, setup::Dict)
 
 		try
 			compute_conflict!(EP)
-		catch
-			@warn "$(solver_name(EP)) does not support computing conflicting constraints. This is available using either Gurobi or CPLEX."
-			solver_time = time() - solver_start_time
-		else
-			list_of_conflicting_constraints = ConstraintRef[]
-			if get_attribute(EP, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
-				for (F, S) in list_of_constraint_types(EP)
-					for con in all_constraints(EP, F, S)
-						if get_attribute(con, MOI.ConstraintConflictStatus()) == MOI.IN_CONFLICT
-							push!(list_of_conflicting_constraints, con)
-						end
+		catch e
+			if isa(e, JuMP.ArgumentError)
+				@warn "$(solver_name(EP)) does not support computing conflicting constraints. This is available using either Gurobi or CPLEX."
+				solver_time = time() - solver_start_time
+				return EP, solver_time
+			else
+			 	rethrow(e)
+			end
+		end
+
+		list_of_conflicting_constraints = ConstraintRef[]
+		if get_attribute(EP, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+			for (F, S) in list_of_constraint_types(EP)
+				for con in all_constraints(EP, F, S)
+					if get_attribute(con, MOI.ConstraintConflictStatus()) == MOI.IN_CONFLICT
+						push!(list_of_conflicting_constraints, con)
 					end
 				end
-				display(list_of_conflicting_constraints)
-				solver_time = time() - solver_start_time
-				return EP, solver_time, list_of_conflicting_constraints
-			else
-				@info "Conflicts computation failed."
-				solver_time = time() - solver_start_time
-				return EP, solver_time, list_of_conflicting_constraints
 			end
+			display(list_of_conflicting_constraints)
+			solver_time = time() - solver_start_time
+			return EP, solver_time, list_of_conflicting_constraints
+		else
+			@info "Conflicts computation failed."
+			solver_time = time() - solver_start_time
+			return EP, solver_time, list_of_conflicting_constraints
 		end
 
 	end

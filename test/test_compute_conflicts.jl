@@ -14,10 +14,10 @@ genx_setup =    Dict{Any,Any}(
     "Reserves" => 0,
     "EnergyShareRequirement" => 0,
     "CapacityReserveMargin" => 0,
-    "CO2Cap" => 0,
+    "CO2Cap" => 1,
     "StorageLosses" => 1,
     "MinCapReq" => 0,
-    "MaxCapReq" => 0,
+    "MaxCapReq" => 1,
     "ParameterScale" => 0,
     "WriteShadowPrices" => 0,
     "UCommit" => 0,
@@ -30,7 +30,7 @@ genx_setup =    Dict{Any,Any}(
     "IncludeLossesInESR" => 0,
     "HydrogenHourlyMatching" => 0,
     "EnableJuMPStringNames" => false,
-    "ComputeConflicts" => 0
+    "ComputeConflicts" => 1
 )
 
 genxoutput = redirect_stdout(devnull) do
