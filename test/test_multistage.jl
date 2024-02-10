@@ -17,23 +17,12 @@ multistage_setup = Dict(
 )
 
 genx_setup = Dict(
-    "OverwriteResults" => 0,
-    "PrintModel" => 0,
-    "NetworkExpansion" => 0,
     "Trans_Loss_Segments" => 1,
     "Reserves" => 1,
-    "EnergyShareRequirement" => 0,
-    "CapacityReserveMargin" => 0,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
-    "MinCapReq" => 0,
-    "MaxCapReq" => 0,
     "ParameterScale" => 1,
     "UCommit" => 2,
-    "TimeDomainReductionFolder" => "TDR_Results",
-    "TimeDomainReduction" => 0,
-    "EnableJuMPStringNames" => false,
-    "IncludeLossesInESR" => 0,
     "MultiStage" => 1,
     "MultiStageSettingsDict" => multistage_setup,
 )
@@ -94,19 +83,19 @@ function test_can_retire(EP::Dict,inputs::Dict)
     return a
 end
 
-test_path_new_build = joinpath(@__DIR__,"MultiStage","New_Build");
+test_path_new_build = joinpath(test_path, "New_Build");
 EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path_new_build, genx_setup);
 end
 
 new_build_test_result = @test test_new_build(EP,inputs)
-write_testlog(test_path_new_build,"Testing that the resource with New_Build = 0 did not expand capacity",new_build_test_result)
+write_testlog(test_path,"Testing that the resource with New_Build = 0 did not expand capacity",new_build_test_result)
 
-test_path_can_retire = joinpath(@__DIR__,"MultiStage","Can_Retire");
+test_path_can_retire = joinpath(test_path, "Can_Retire");
 EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path_can_retire, genx_setup);
 end
 can_retire_test_result = @test test_can_retire(EP,inputs)
-write_testlog(test_path_can_retire,"Testing that the resource with Can_Retire = 0 did not expand capacity",can_retire_test_result)
+write_testlog(test_path,"Testing that the resource with Can_Retire = 0 did not expand capacity",can_retire_test_result)
 
 end # module TestMultiStage

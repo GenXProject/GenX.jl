@@ -11,16 +11,6 @@ genx_setup = Dict(
     "UCommit" => 2,
     "CO2Cap" => 1,
     "ParameterScale" => 1,
-    "TimeDomainReduction" => 0,
-    "TimeDomainReductionFolder" => "TDR_Results",
-    "Reserves" => 0,
-    "CapacityReserveMargin" => 0,
-    "MinCapReq" => 0,
-    "MaxCapReq" => 0,
-    "EnergyShareRequirement" => 0,
-    "EnableJuMPStringNames" => false,
-    "MultiStage" => 0,
-    "PrintModel" => 0,
 )
 
 # Run the case and get the objective value and tolerance

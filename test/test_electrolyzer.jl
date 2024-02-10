@@ -11,22 +11,9 @@ test_path = "Electrolyzer"
 genx_setup = Dict(
     "Trans_Loss_Segments" => 1,
     "UCommit" => 2,
-    "EnergyShareRequirement" => 0,
     "StorageLosses" => 1,
     "HydrogenHourlyMatching" => 1,
     "ParameterScale" => 1,
-    "MultiStage" => 0,
-    "TimeDomainReduction" => 0,
-    "TimeDomainReductionFolder" => "TDR_Results",
-    "WriteShadowPrices" => 1,
-    "EnableJuMPStringNames" => false,
-    "Reserves" => 0,
-    "CapacityReserveMargin" => 0,
-    "MinCapReq" => 0,
-    "MaxCapReq" => 0,
-    "CO2Cap" => 0,
-    "IncludeLossesInESR" => 0,
-    "PrintModel" => 0,
 )
 
 # Run the case and get the objective value and tolerance
