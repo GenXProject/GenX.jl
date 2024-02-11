@@ -28,21 +28,21 @@ end
 
 # Inputs for cluster_inputs function
 genx_setup = Dict(
-    "NetworkExpansion" => 0,
     "TimeDomainReduction" => 1,
     "TimeDomainReductionFolder" => "TDR_Results_test",
-    "MultiStage" => 0,
     "UCommit" => 2,
     "CapacityReserveMargin" => 1,
-    "Reserves" => 0,
     "MinCapReq" => 1,
     "MaxCapReq" => 1,
     "EnergyShareRequirement" => 1,
     "CO2Cap" => 2,
 )
 
+settings = GenX.default_settings()
+merge!(settings, genx_setup)
+
 clustering_test =
-    GenX.cluster_inputs(test_folder, settings_path, genx_setup, random = false)["ClusterObject"]
+    GenX.cluster_inputs(test_folder, settings_path, settings, random = false)["ClusterObject"]
 
 # Load true clustering
 clustering_true = JLD2.load(joinpath(TDR_Results_true, "clusters_true.jld2"))["ClusterObject"]

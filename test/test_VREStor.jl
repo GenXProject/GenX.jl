@@ -9,23 +9,13 @@ test_path = "VREStor"
 # Define test inputs
 genx_setup = Dict(
     "NetworkExpansion" => 1,
-    "TimeDomainReduction" => 0,
-    "TimeDomainReductionFolder" => "TDR_Results",
-    "MultiStage" => 0,
     "UCommit" => 2,
     "CapacityReserveMargin" => 1,
-    "Reserves" => 0,
     "MinCapReq" => 1,
     "MaxCapReq" => 1,
-    "EnergyShareRequirement" => 0,
     "CO2Cap" => 1,
     "StorageLosses" => 1,
-    "PrintModel" => 0,
     "ParameterScale" => 1,
-    "Trans_Loss_Segments" => 1,
-    "CapacityReserveMargin" => 1,
-    "EnableJuMPStringNames" => false,
-    "IncludeLossesInESR" => 0,
 )
 
 # Run the case and get the objective value and tolerance
