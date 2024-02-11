@@ -36,6 +36,29 @@ function run_genx_case_testing(
     return EP, inputs, OPTIMIZER
 end
 
+function run_genx_case_conflict_testing(
+    test_path::AbstractString,
+    test_setup::Dict,
+    optimizer::Any = HiGHS.Optimizer,
+)
+
+    # Merge the genx_setup with the default settings
+    settings = GenX.default_settings()
+    merge!(settings, test_setup)
+
+    @assert settings["MultiStage"] ∈ [0, 1]
+    # Create a ConsoleLogger that prints any log messages with level >= Error to stderr
+    error_logger = ConsoleLogger(stderr, Logging.Error)
+
+    output = with_logger(error_logger) do
+        OPTIMIZER = configure_solver(test_path, optimizer)
+        inputs = load_inputs(settings, test_path)
+        EP = generate_model(settings, inputs, OPTIMIZER)
+        solve_model(EP, settings)
+    end
+    return output
+end
+
 function run_genx_case_simple_testing(
     test_path::AbstractString,
     genx_setup::Dict,

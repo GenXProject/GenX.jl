@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maintenance formulation for thermal-commit plants (#556).
 - Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
   piecewise_fuel+CO2, and TDR (#563 and #578).
+- Add functions to compute conflicting constraints when model is infeasible if supported by the solver (#624).
 
 
 ### Fixed
