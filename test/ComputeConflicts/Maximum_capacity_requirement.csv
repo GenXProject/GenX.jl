@@ -1,0 +1,4 @@
+MaxCapReqConstraint,ConstraintDescription,Max_MW
+1,PV,0
+2,Wind,0
+3,Batteries,0

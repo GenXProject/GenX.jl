@@ -42,4 +42,8 @@ end
     @testset "Multi Stage" begin
         include("test_multistage.jl")
     end
+
+    @testset "Compute Conflicts" begin
+        include("test_compute_conflicts.jl")
+    end
 end
