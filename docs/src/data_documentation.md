@@ -32,6 +32,7 @@ Note that all settings parameters are case sensitive.
 |StorageLosses | Flag to account for storage related losses.|
 ||0 = VRE and CO2 constraints DO NOT account for energy lost. |
 ||1 = constraints account for energy lost. |
+|VirtualChargeDischargeCost | Hypothetical cost of charging and discharging storage resources (in $/MWh).|
 |**Policy related**|
 |EnergyShareRequirement | Flag for specifying regional renewable portfolio standard (RPS) and clean energy standard policy (CES) related constraints.|
 || Default = 0 (No RPS or CES constraints).|
