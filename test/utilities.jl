@@ -167,12 +167,16 @@ function test_write_output(test_path::AbstractString, genx_setup::Dict, EP::JuMP
     # True results
     results_true = joinpath(test_path, "Results_true")
     inputs["solve_time"] = solvetime_true
+
+    # Merge the genx_setup with the default settings
+    settings = GenX.default_settings()
+    merge!(settings, genx_setup)
     
     # Write test results
     results_test = joinpath(test_path, "Results_test")
     isdir(results_test) && rm(results_test, recursive = true)  # Remove test folder if it exists
     EP, inputs, _ = redirect_stdout(devnull) do
-        write_outputs(EP, results_test, genx_setup, inputs)
+        write_outputs(EP, results_test, settings, inputs)
     end
     
     # Compare true and test results
