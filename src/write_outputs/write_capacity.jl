@@ -81,7 +81,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	end
 	dfCap = DataFrame(
 		Resource = inputs["RESOURCES"], 
-		Resource_type = inputs["RESOURCE_TYPE"], 
 		Zone = dfGen[!,:Zone],
 		Cluster = dfGen[!,:cluster],
 		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!,:Existing_Cap_MW],
