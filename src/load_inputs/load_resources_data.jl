@@ -365,10 +365,10 @@ function check_LDS_applicability(r::AbstractResource)
     applicable_resources = Union{Storage, Hydro}
     not_set = resource_attribute_not_set()
     error_strings = String[]
-    lds_value = get(r, :LDS, not_set)
+    lds_value = get(r, :lds, not_set)
     # LDS is available onlåy for Hydro and Storage
     if !isa(r, applicable_resources) && lds_value > 0
-        e = string("Resource ", resource_name(r), " has :LDS = ", lds_value, ".\n",
+        e = string("Resource ", resource_name(r), " has :lds = ", lds_value, ".\n",
                    "This setting is valid only for resources where the type is one of $applicable_resources.")
         push!(error_strings, e)
     end
