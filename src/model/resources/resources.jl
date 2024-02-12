@@ -323,7 +323,8 @@ julia> max_cap_mw(gen[3])
 ```
 """
 function ids_with_positive(rs::Vector{T}, name::Symbol) where T <: AbstractResource
-    f = getfield(GenX, name)
+    # if the getter function exists in GenX then use it, otherwise get the attribute directly
+    f = isdefined(GenX, name) ? getfield(GenX, name) : r -> getproperty(r, name)
     return ids_with_positive(rs, f)
 end
 
@@ -370,7 +371,8 @@ julia> ids_with_nonneg(gen, max_cap_mw)
 ```
 """
 function ids_with_nonneg(rs::Vector{T}, name::Symbol) where T <: AbstractResource
-    f = getfield(GenX, name)
+    # if the getter function exists in GenX then use it, otherwise get the attribute directly
+    f = isdefined(GenX, name) ? getfield(GenX, name) : r -> getproperty(r, name)
     return ids_with_nonneg(rs, f)
 end
 
@@ -434,7 +436,8 @@ julia> existing_cap_mw(gen[21])
 ```
 """
 function ids_with(rs::Vector{T}, name::Symbol, default=default_zero) where T <: AbstractResource
-    f = getfield(GenX, name)
+    # if the getter function exists in GenX then use it, otherwise get the attribute directly
+    f = isdefined(GenX, name) ? getfield(GenX, name) : r -> getproperty(r, name)
     return ids_with(rs, f, default)
 end
 
@@ -473,8 +476,12 @@ Function for finding resources in a vector `rs` where the policy specified by `n
 - `ids (Vector{Int64})`: The vector of resource ids with a positive value for policy `name` and tag `tag`.
 """
 function ids_with_policy(rs::Vector{T}, name::Symbol; tag::Int64) where T <: AbstractResource
-    f = getfield(GenX, name)
-    return ids_with_policy(rs, f, tag=tag)
+    # if the getter function exists in GenX then use it, otherwise get the attribute directly
+    if isdefined(GenX, name)
+        f = getfield(GenX, name)
+        return ids_with_policy(rs, f, tag=tag)
+    end
+    return findall(r -> getproperty(r, Symbol(string(name, "_$tag"))) > 0, rs)
 end
 
 function ids_with_policy(rs::Vector{T}, name::AbstractString; tag::Int64) where T <: AbstractResource
