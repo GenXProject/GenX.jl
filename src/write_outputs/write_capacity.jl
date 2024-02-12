@@ -117,7 +117,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
 	end
 	total = DataFrame(
-			Resource = "Total", Resource_type = "Total", Zone = "n/a", Cluster = "n/a",
+			Resource = "Total", Zone = "n/a", Cluster = "n/a",
 			StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 			NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
 			RetroCap = sum(dfCap[!,:RetroCap]),
