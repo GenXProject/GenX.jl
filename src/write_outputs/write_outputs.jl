@@ -190,8 +190,9 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			dfMaxCapReq = write_maximum_capacity_requirement(path, inputs, setup, EP)
 		end
 
-		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP) == 1
+		if ((!isempty(inputs["ELECTROLYZER"])) || (!isempty(inputs["VS_ELEC"]))) && has_duals(EP) == 1
 			dfHydrogenPrice = write_hydrogen_prices(path, inputs, setup, EP)
+			dfElectrolysisEnergyConsumption = write_elec_power_consumption(path, inputs, setup, EP)
 			if setup["HydrogenHourlyMatching"] == 1
 				dfHourlyMatchingPrices = write_hourly_matching_prices(path, inputs, setup, EP)
 			end

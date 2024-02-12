@@ -65,6 +65,11 @@ function load_inputs(setup::Dict,path::AbstractString)
 	if !isempty(inputs["VRE_STOR"])
 		load_vre_stor_variability!(setup, path, inputs)
 	end
+	
+	# Read in hydrogen damand data
+	if (!isempty(inputs["ELECTROLYZER"])) || (!isempty(inputs["VS_ELEC"]))
+		load_hydrogen_demand!(setup, path, inputs)
+	end
 
 	# Read in mapping of modeled periods to representative periods
 	if is_period_map_necessary(inputs) && is_period_map_exist(setup, path, inputs)

@@ -27,6 +27,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	VRE_STOR = inputs["VRE_STOR"]
 	SOLAR = inputs["VS_SOLAR"]
 	WIND = inputs["VS_WIND"]
+	ELEC = inputs["VS_ELEC"]
 	DC = inputs["VS_DC"]
 	STOR = inputs["VS_STOR"]
 	dfGen = inputs["dfGen"]
@@ -43,6 +44,11 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	capwind = zeros(size_vrestor_resources)
 	retcapwind = zeros(size_vrestor_resources)
 	existingcapwind = zeros(size_vrestor_resources)
+
+	# Electrolyzer capacity
+	capelec = zeros(size_vrestor_resources)
+	retcapelec = zeros(size_vrestor_resources)
+	existingcapelec = zeros(size_vrestor_resources)
 
 	# Inverter capacity
 	capdc = zeros(size_vrestor_resources)
@@ -106,6 +112,16 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 			end
 			if i in inputs["RET_CAP_WIND"]
 				retcapwind[j] = first(value.(EP[:vRETWINDCAP][i]))
+			end
+		end
+
+		if i in ELEC
+			existingcapelec[j] = MultiStage == 1 ? value(EP[:vEXISTINGELECCAP][i]) : dfVRE_STOR[j,:Existing_Cap_Elec_MW]
+			if i in inputs["NEW_CAP_ELEC"]
+				capelec[j] = value(EP[:vELECCAP][i])
+			end
+			if i in inputs["RET_CAP_ELEC"]
+				retcapelec[j] = first(value.(EP[:vRETELECCAP][i]))
 			end
 		end
 
@@ -178,6 +194,10 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		RetCapWind = retcapwind[:],
 		NewCapWind = capwind[:],
 		EndCapWind = existingcapwind[:] - retcapwind[:] + capwind[:],
+		StartCapElec = existingcapelec[:],
+		RetCapElec = retcapelec[:],
+		NewCapElec = capelec[:],
+		EndCapElec = existingcapelec[:] - retcapelec[:] + capelec[:],
 		StartCapDC = existingcapdc[:],
 		RetCapDC = retcapdc[:],
 		NewCapDC = capdc[:],
@@ -218,6 +238,10 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 			:RetCapWind,
 			:NewCapWind,
 			:EndCapWind,
+			:StartCapElec,
+			:RetCapElec,
+			:NewCapElec,
+			:EndCapElec,
 			:StartCapDC,
 			:RetCapDC,
 			:NewCapDC,
@@ -256,6 +280,8 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 		NewCapSolar = sum(dfCap[!,:NewCapSolar]), EndCapSolar = sum(dfCap[!,:EndCapSolar]),
 		StartCapWind = sum(dfCap[!,:StartCapWind]), RetCapWind = sum(dfCap[!,:RetCapWind]),
 		NewCapWind = sum(dfCap[!,:NewCapWind]), EndCapWind = sum(dfCap[!,:EndCapWind]),
+		StartCapElec = sum(dfCap[!,:StartCapElec]), RetCapElec = sum(dfCap[!,:RetCapElec]),
+		NewCapElec = sum(dfCap[!,:NewCapElec]), EndCapElec = sum(dfCap[!,:EndCapElec]),
 		StartCapDC = sum(dfCap[!,:StartCapDC]), RetCapDC = sum(dfCap[!,:RetCapDC]),
 		NewCapDC = sum(dfCap[!,:NewCapDC]), EndCapDC = sum(dfCap[!,:EndCapDC]),
 		StartCapGrid = sum(dfCap[!,:StartCapGrid]), RetCapGrid = sum(dfCap[!,:RetCapGrid]),
@@ -333,6 +359,7 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
     AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]
 	WIND = inputs["VS_WIND"]
 	SOLAR = inputs["VS_SOLAR"]
+	ELEC = inputs["VS_ELEC"]
 
 	# DC discharging of battery dataframe
 	if !isempty(DC_DISCHARGE)
@@ -386,6 +413,24 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 		rename!(total,auxNew_Names)
 		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
 		CSV.write(joinpath(path,"vre_stor_wind_power.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
+	end
+
+	# Electrolyzer generation of co-located resource dataframe
+	if !isempty(ELEC)
+		dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCES_ELEC"], Zone = inputs["ZONES_ELEC"], AnnualSum = Array{Union{Missing,Float32}}(undef, size(ELEC)[1]))
+		elec_vre_stor = value.(EP[:vP_ELEC]).data 
+		if setup["ParameterScale"] == 1
+			elec_vre_stor *= ModelScalingFactor
+		end
+		dfVP_VRE_STOR.AnnualSum .= elec_vre_stor * inputs["omega"]
+		dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame(elec_vre_stor, :auto))
+		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
+		rename!(dfVP_VRE_STOR,auxNew_Names)
+		total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
+		total[:, 4:T+3] .= sum(elec_vre_stor, dims = 1)
+		rename!(total,auxNew_Names)
+		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
+		CSV.write(joinpath(path,"vre_stor_elec_power_consumption.csv"), dftranspose(dfVP_VRE_STOR, false), writeheader=false)
 	end
 
 	# Solar generation of co-located resource dataframe

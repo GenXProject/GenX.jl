@@ -9,7 +9,7 @@ This function defines the expressions and constraints for operation of hydrogen 
 
 Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Pi_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Share Requirement policy balance (if applicable), `eESR`.
 
-Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{electrolyzer}_y \times \$^{hydrogen}_y$, is subtracted from the objective function, where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\$^{hydrogen}_y$ is the price of hydrogen per metric tonne for electrolyzer $y$.
+Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{electrolyzer}_{y} \times c^{hydrogen}_{y}$, is subtracted from the objective function, where $\eta^{electrolyzer}_{y}$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $c^{hydrogen}_{y}$ is the price of hydrogen per metric tonne for electrolyzer $y$.
 
 **Ramping limits**
 
@@ -43,7 +43,7 @@ Electrolyzers are bound by the following limits on maximum and minimum power out
 
 ```math
 \begin{aligned}
-	\Theta_{y,t} \leq \rho^{max}_{y,t} \times \Pi_^{total}_{y}
+	\Theta_{y,t} \leq \rho^{max}_{y} \times \Pi^{total}_{y}
 	\hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
@@ -51,16 +51,16 @@ Electrolyzers are bound by the following limits on maximum and minimum power out
 
 **Minimum annual hydrogen production**
 
-The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in inputs:
+The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in inputs in "Hydrogen_demand.csv":
 
 ```math
 \begin{aligned}
-	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{electrolyzer}_y) \geq \mathcal{Min kt}_y \times 10^3
+	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{electrolyzer}_y) \geq \mathcal{Min\_kt}_z \times 10^3
 	\hspace{1cm} \forall y \in \mathcal{EL}
 \end{aligned}
 ```
 
-where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min kt}_y$ is the minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes.
+where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min\_kt}_z$ is the minimum annual quantity of hydrogen that must be produced in region $z$ in kilotonnes.
 (See constraint 5 in the code)
 
 **Hourly clean supply matching constraint**
@@ -77,7 +77,6 @@ This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `gen
 
 This constraint permits modeling of the 'three pillars' requirements for clean hydrogen supply of (1) new clean supply (if only new clean resources are designated as eligible), (2) that is deliverable to the electrolyzer (assuming co-location within the same modeled zone = deliverability), and (3) produced within the same hour as the electrolyzer consumes power (otherwise known as 'additionality/new supply', 'deliverability', and 'temporal matching requirements') See Ricks, Xu & Jenkins (2023), ''Minimizing emissions from grid-based hydrogen production in the United States'' *Environ. Res. Lett.* 18 014025 [doi:10.1088/1748-9326/acacb5](https://iopscience.iop.org/article/10.1088/1748-9326/acacb5/meta) for more.
 """
-
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	println("Electrolyzer Resources Module")
 
@@ -86,9 +85,22 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	G = inputs["G"] 	# Number of generators
+	if (!isempty(inputs["ELECTROLYZER"])) && (!isempty(inputs["VRE_STOR"]))
+		HYDROGEN_ZONES = unique(union(dfGen.Zone[dfGen.ELECTROLYZER.==1], inputs["ZONES_ELEC"]))
+		ELEC_VS = inputs["VS_ELEC"]             # VRE-STOR co-located electrolyzers
+	elseif !isempty(inputs["ELECTROLYZER"])
+		HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELECTROLYZER.==1])
+		ELEC_VS = Int64[]
+	else
+		HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELEC_VRE_STOR.==1])
+		ELEC_VS = inputs["VS_ELEC"]
+	end
 
-	ELECTROLYZERS = inputs["ELECTROLYZER"]
+	ELECTROLYZERS = inputs["ELECTROLYZER"]  # gridded electolyzers
 	STORAGE = inputs["STOR_ALL"]
+	
+	Hydrogen_demand = inputs["dfH2Demand"]
+	Hydrogen_zone = inputs["H2Zone"]
 
 	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
@@ -100,10 +112,8 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Expressions ###
 
 	## Power Balance Expressions ##
-
 	@expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
 	sum(EP[:vUSE][y,t] for y in intersect(ELECTROLYZERS, dfGen[dfGen[!,:Zone].==z,:R_ID])))
-
 	# Electrolyzers consume electricity so their vUSE is subtracted from power balance
 	EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
@@ -133,11 +143,21 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
         [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
     end)
 
-	### Minimum hydrogen production constraint (if any) (Constraint #5)
+	### Minimum hydrogen production constraint in each zone (if any) (Constraint #5)
 	kt_to_t = 10^3
+
+	@expression(EP, eHydrogenMin[z in HYDROGEN_ZONES],
+		if !isempty(ELEC_VS)
+			sum(inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] for t=1:T, y=intersect(ELECTROLYZERS, dfGen[dfGen[!,:Zone].==z,:R_ID]); init=0) +
+			sum(inputs["omega"][t] * EP[:vP_ELEC][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] for t=1:T, y=intersect(ELEC_VS, dfGen[dfGen[!,:Zone].==z,:R_ID]); init=0)
+		else
+			sum(inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] for t=1:T, y=intersect(ELECTROLYZERS, dfGen[dfGen[!,:Zone].==z,:R_ID]); init=0)
+		end
+	)
 	@constraint(EP,
-		cHydrogenMin[y in ELECTROLYZERS],
-		sum(inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] for t=1:T) >= dfGen[y,:Electrolyzer_Min_kt] * kt_to_t
+		cHydrogenMin[z in HYDROGEN_ZONES],
+		EP[:eHydrogenMin][z] >= Hydrogen_demand[findfirst(Zone->Zone==z, Hydrogen_demand[!,:Zone]), :Hydrogen_Demand_kt] * kt_to_t
+	
 	)
 
 	### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
@@ -150,7 +170,6 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
 	if setup["HydrogenHourlyMatching"] == 1
-		HYDROGEN_ZONES = unique(dfGen.Zone[dfGen.ELECTROLYZER.==1])
 		QUALIFIED_SUPPLY = dfGen.R_ID[dfGen.Qualified_Hydrogen_Supply.==1]
 		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
 			sum(EP[:vP][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(dfGen.R_ID[dfGen.Zone.==z], QUALIFIED_SUPPLY, STORAGE))
@@ -170,7 +189,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Objective Function ###
 	# Subtract hydrogen revenue from objective function
 	scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
-	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], (inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] * dfGen[y,:Hydrogen_Price_Per_Tonne] / scale_factor))
+	# ELEC_VS variable costs are included in vre_stor.jl
+	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], 
+		(inputs["omega"][t] * EP[:vUSE][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] * dfGen[y,:Hydrogen_Price_Per_Tonne] / scale_factor)
+	)
 	@expression(EP, eTotalHydrogenValueT[t in 1:T], sum(eHydrogenValue[y,t] for y in ELECTROLYZERS))
 	@expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
 	EP[:eObj] -= eTotalHydrogenValue

@@ -112,6 +112,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     DC = inputs["VS_DC"]                                            # Set of VRE-STOR generators with inverter-component
     WIND = inputs["VS_WIND"]                                        # Set of VRE-STOR generators with wind-component
     STOR = inputs["VS_STOR"]                                        # Set of VRE-STOR generators with storage-component
+    ELEC = inputs["VS_ELEC"]                                        # Set of VRE-STOR generators with electrolyzer-component
     NEW_CAP = intersect(VRE_STOR, inputs["NEW_CAP"])                # Set of VRE-STOR generators eligible for new buildout
     
     # Policy flags
@@ -178,6 +179,11 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Activate storage module constraints & additional policies
     if !isempty(STOR)
         stor_vre_stor!(EP, inputs, setup)
+    end
+
+    # Activate electrolyzer module constraints & additional policies
+    if !isempty(ELEC)
+        elec_vre_stor!(EP, inputs, setup)
     end
 
     ### POLICIES AND POWER BALANCE ###
@@ -1217,6 +1223,198 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     if rep_periods > 1 && !isempty(VS_LDS)
         lds_vre_stor!(EP, inputs)
     end
+end
+
+@doc raw"""
+    elec_vre_stor!(EP::Model, inputs::Dict)
+
+This function defines the decision variables, expressions, and constraints for the electolyzer component of each co-located ELC, VRE, and storage generator.
+    
+The total electrolyzer capacity of each resource is defined as the sum of the existing 
+    electolyzer capacity plus the newly invested electrolyzer capacity minus any retired electrolyzer capacity:
+```math
+\begin{aligned}
+    & \Delta^{total,elec}_{y,z} = (\overline{\Delta^{elec}_{y,z}}+\Omega^{elec}_{y,z}-\Delta^{elec}_{y,z}) \quad \forall y \in \mathcal{VS}^{elec}, z \in \mathcal{Z}
+\end{aligned}
+```
+
+One cannot retire more energy capacity than existing elec capacity:
+```math
+\begin{aligned}
+    &\Delta^{elec}_{y,z} \leq \overline{\Delta^{elec}_{y,z}}
+            \hspace{4 cm}  \forall y \in \mathcal{VS}^{elec}, z \in \mathcal{Z}
+\end{aligned}
+```
+        
+For resources where $\overline{\Omega_{y,z}^{elec}}$ and $\underline{\Omega_{y,z}^{elec}}$ are defined, then we impose constraints on minimum and maximum energy capacity:
+```math
+\begin{aligned}
+    & \Delta^{total,elec}_{y,z} \leq \overline{\Omega}^{elec}_{y,z}
+        \hspace{4 cm}  \forall y \in \mathcal{VS}^{elec}, z \in \mathcal{Z} \\
+    & \Delta^{total,elec}_{y,z}  \geq \underline{\Omega}^{elec}_{y,z}
+        \hspace{4 cm}  \forall y \in \mathcal{VS}^{elec}, z \in \mathcal{Z}
+\end{aligned}
+```
+Constraint 2 applies ramping constraints on electrolyzers where consumption of electricity by electrolyzer $y$ in time $t$ is denoted by $\Pi_{y,z}$ and the rampping constraints are denoated by $\kappa_{y}$.
+```math
+\begin{aligned}
+	\Pi_{y,t-1} - \Pi_{y,t} \leq \kappa_{y}^{down} \Delta^{\text{total}}_{y}, \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
+\end{aligned}
+```
+
+```math
+\begin{aligned}
+	\Pi_{y,t} - \Pi_{y,t-1} \leq \kappa_{y}^{up} \Delta^{\text{total}}_{y} \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
+\end{aligned}
+```
+
+In constraint 3, electrolyzers are bound by the following limits on maximum and minimum power output. Maximum power output is 100% in this case.
+
+```math
+\begin{aligned}
+	\Pi_{y,t} \geq \rho^{min}_{y} \times \Delta^{total}_{y}
+	\hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
+\end{aligned}
+```
+
+```math
+\begin{aligned}
+	\Theta_{y,t} \leq \Pi^{total}_{y}
+	\hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
+\end{aligned}
+```
+The regional demand requirement is included in electrolyzer.jl
+"""
+function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
+
+    println("VRE-STOR Electrolyzer Module")
+
+    ### LOAD DATA ###
+    dfGen = inputs["dfGen"]
+    T = inputs["T"]
+    Z = inputs["Z"]
+    ELEC = inputs["VS_ELEC"]
+    NEW_CAP_ELEC = inputs["NEW_CAP_ELEC"]
+    RET_CAP_ELEC = inputs["RET_CAP_ELEC"]
+    dfVRE_STOR = inputs["dfVRE_STOR"]
+
+    MultiStage = setup["MultiStage"]
+
+    by_rid(rid, sym) = by_rid_df(rid, sym, dfVRE_STOR)
+
+    ### ELEC VARIABLES ###
+
+    @variables(EP, begin
+        # Electrolyzer capacity 
+        vRETELECCAP[y in RET_CAP_ELEC] >= 0                         # Retired wind capacity [MW AC]
+        vELECCAP[y in NEW_CAP_ELEC] >= 0                            # New installed electolyzer capacity [MW AC]
+        vP_ELEC[y in ELEC, t=1:T] >= 0                              # Electrolyzer-component generation [MWh]
+    end)
+
+    if MultiStage == 1
+		@variable(EP, vEXISTINGELECCAP[y in ELEC] >= 0);
+	end
+
+    ### EXPRESSIONS ###
+
+    # 0. Multistage existing capacity definition
+    if MultiStage == 1
+		@expression(EP, eExistingCapElec[y in ELEC], vEXISTINGELECCAP[y])
+	else
+		@expression(EP, eExistingCapElec[y in ELEC], by_rid(y,:Existing_Cap_Elec_MW))
+	end
+
+    # 1. Total electrolyzer capacity
+    @expression(EP, eTotalCap_ELEC[y in ELEC],
+		if (y in intersect(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for new capacity and retirements
+			eExistingCapElec[y] + EP[:vELECCAP][y] - EP[:vRETELECCAP][y]
+		elseif (y in setdiff(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for only new capacity
+			eExistingCapElec[y] + EP[:vELECCAP][y]
+		elseif (y in setdiff(RET_CAP_ELEC, NEW_CAP_ELEC)) # Resources eligible for only capacity retirements
+			eExistingCapElec[y] - EP[:vRETELECCAP][y]
+		else
+			eExistingCapElec[y]
+		end
+	)
+
+    # 2. Objective function additions
+
+    # Fixed costs for electrolyzer resources (if resource is not eligible for new electrolyzer capacity, fixed costs are only O&M costs)
+    @expression(EP, eCFixElec[y in ELEC],
+        if y in NEW_CAP_ELEC # Resources eligible for new capacity
+            by_rid(y,:Inv_Cost_Elec_per_MWyr)*vELECCAP[y] + by_rid(y,:Fixed_OM_Elec_Cost_per_MWyr)*eTotalCap_ELEC[y]
+        else
+            by_rid(y,:Fixed_OM_Elec_Cost_per_MWyr)*eTotalCap_ELEC[y]
+        end
+    )
+    @expression(EP, eTotalCFixElec, sum(eCFixElec[y] for y in ELEC))
+
+    if MultiStage == 1
+        EP[:eObj] += eTotalCFixElec/inputs["OPEXMULT"]
+    else
+        EP[:eObj] += eTotalCFixElec
+    end
+
+    # Variable costs of "generation" for electrolyzer resource "y" during hour "t"
+    @expression(EP, eCVarOutElec[y in ELEC, t=1:T], inputs["omega"][t]*EP[:vP_ELEC][y,t] / dfGen[y,:Hydrogen_MWh_Per_Tonne] * dfGen[y,:Hydrogen_Price_Per_Tonne])
+    @expression(EP, eTotalCVarOutElec, sum(eCVarOutElec[y,t] for y in ELEC, t=1:T))
+    EP[:eObj] += eTotalCVarOutElec
+
+    # 3. Inverter Balance, Electrolyzer Generation Maximum
+    @expression(EP, eElecGenMaxE[y in ELEC, t=1:T], JuMP.AffExpr())
+    for y in ELEC, t=1:T
+        EP[:eInvACBalance][y,t] -= EP[:vP_ELEC][y,t]
+        eElecGenMaxE[y,t] += EP[:vP_ELEC][y,t]
+    end
+
+    for z in 1:Z, t=1:T
+        if !isempty(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID])
+            EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vP_ELEC[y,t] for y=intersect(dfVRE_STOR[(dfVRE_STOR[!,:Zone].==z),:R_ID],ELEC); init=0)
+        end
+    end
+
+    ### CONSTRAINTS ###
+
+    # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
+    if MultiStage == 1
+		@constraint(EP, cExistingCapElec[y in ELEC], EP[:vEXISTINGELECCAP][y] == by_rid(y,:Existing_Cap_Elec_MW))
+	end
+
+    # Constraints 1: Retirements and capacity additions
+    # Cannot retire more capacity than existing capacity for VRE-STOR technologies
+    @constraint(EP, cMaxRet_Elec[y=RET_CAP_ELEC], vRETELECCAP[y] <= eExistingCapElec[y])
+    # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
+	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    @constraint(EP, cMaxCap_Elec[y in dfVRE_STOR[dfVRE_STOR.Max_Cap_Elec_MW.>=0,:R_ID]], 
+        eTotalCap_ELEC[y] <= by_rid(y,:Max_Cap_Elec_MW))
+    # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    @constraint(EP, cMinCap_Elec[y in dfVRE_STOR[dfVRE_STOR.Min_Cap_Elec_MW.>0,:R_ID]], 
+        eTotalCap_ELEC[y] >= by_rid(y,:Min_Cap_Elec_MW))
+
+    # Constraint 2: Maximum ramp up and down between consecutive hours
+	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
+	@constraints(EP, begin
+    ## Maximum ramp up between consecutive hours
+    [y in ELEC, t in 1:T], EP[:vP_ELEC][y,t] - EP[:vP_ELEC][y, hoursbefore(p,t,1)] <= by_rid(y,:Ramp_Up_Percentage_Elec)*eTotalCap_ELEC[y]
+
+    ## Maximum ramp down between consecutive hours
+    [y in ELEC, t in 1:T], EP[:vP_ELEC][y, hoursbefore(p,t,1)] - EP[:vP_ELEC][y,t] <= by_rid(y,:Ramp_Dn_Percentage_Elec)*eTotalCap_ELEC[y]
+    end)
+
+    # Constraint 3: Minimum and maximum power output constraints (Constraints #3-4)
+    # Electrolyzers currently do not contribute to operating reserves, so there is not
+    # special case (for Reserves == 1) here.
+    # Could allow them to contribute as a curtailable demand in future.
+    @constraints(EP, begin
+        # Minimum stable power generated per technology "y" at hour "t" Min_Power
+        [y in ELEC, t in 1:T], EP[:vP_ELEC][y,t] >= by_rid(y,:Min_Power_Elec)*eTotalCap_ELEC[y]
+
+        # Maximum power generated per technology "y" at hour "t"
+        [y in ELEC, t in 1:T], EP[:vP_ELEC][y,t] <= eTotalCap_ELEC[y]
+    end)
+
+     # Constraint 4: meet regional hydrogen demand, included in electolyzer.jl
 end
 
 @doc raw"""

@@ -366,7 +366,7 @@ end
 @doc raw"""
 	load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
 
-Function for reading input parameters related to co-located VRE-storage resources
+Function for reading input parameters related to co-located Electrolyzer-VRE-storage resources
 """
 function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString)
 	
@@ -397,6 +397,9 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 
 		# Wind Resources
 		inputs_gen["VS_WIND"] = vre_stor_in[(vre_stor_in.WIND.!=0),:R_ID]
+
+		# Electrolyzer Resources
+		inputs_gen["VS_ELEC"] = vre_stor_in[(vre_stor_in.ELEC.!=0),:R_ID]
 
 		# Storage Resources
 		split_storage_resources!(vre_stor_in, inputs_gen, setup)
@@ -452,12 +455,21 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 		inputs_gen["ZONES_AC_DISCHARGE"] = vre_stor_in[(vre_stor_in.STOR_AC_DISCHARGE.!=0), :Zone]
 		inputs_gen["ZONES_DC_CHARGE"] = vre_stor_in[(vre_stor_in.STOR_DC_CHARGE.!=0), :Zone]
 		inputs_gen["ZONES_AC_CHARGE"] = vre_stor_in[(vre_stor_in.STOR_AC_CHARGE.!=0), :Zone]
+		inputs_gen["ZONES_ELEC"] = vre_stor_in[(vre_stor_in.ELEC.!=0), :Zone]
+		if !isempty(inputs_gen["VS_ELEC"])
+			# Set of all VRE-STOR resources eligible for new electolyzer capacity
+			inputs_gen["NEW_CAP_ELEC"] = intersect(buildable, vre_stor_in[vre_stor_in.ELEC.!=0,:R_ID], vre_stor_in[vre_stor_in.Max_Cap_Elec_MW.!=0,:R_ID])
+			# Set of all VRE_STOR resources eligible for electolyzer capacity retirements
+			inputs_gen["RET_CAP_ELEC"] = intersect(retirable, vre_stor_in[vre_stor_in.ELEC.!=0,:R_ID], vre_stor_in[vre_stor_in.Existing_Cap_Elec_MW.>=0,:R_ID])
+			inputs_gen["RESOURCES_ELEC"] = vre_stor_in[(vre_stor_in.ELEC.!=0), :Resource]			
 
+		end
 		# Scale the parameters as needed
 		if setup["ParameterScale"] == 1
 			columns_to_scale = [:Existing_Cap_Inverter_MW,
 								:Existing_Cap_Solar_MW,
 								:Existing_Cap_Wind_MW,
+								:Existing_Cap_Elec_MW,
 								:Existing_Cap_Charge_DC_MW,
 								:Existing_Cap_Charge_AC_MW,
 								:Existing_Cap_Discharge_DC_MW,
@@ -468,6 +480,8 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 								:Max_Cap_Solar_MW,
 								:Min_Cap_Wind_MW,
 								:Max_Cap_Wind_MW,
+								:Min_Cap_Elec_MW,
+								:Max_Cap_Elec_MW,
 								:Min_Cap_Charge_AC_MW,
 								:Max_Cap_Charge_AC_MW,
 								:Min_Cap_Charge_DC_MW,
@@ -482,6 +496,8 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 								:Fixed_OM_Solar_Cost_per_MWyr,
 								:Inv_Cost_Wind_per_MWyr,
 								:Fixed_OM_Wind_Cost_per_MWyr,
+								:Inv_Cost_Elec_per_MWyr,
+								:Fixed_OM_Elec_Cost_per_MWyr,
 								:Inv_Cost_Discharge_DC_per_MWyr,
 								:Fixed_OM_Cost_Discharge_DC_per_MWyr,
 								:Inv_Cost_Charge_DC_per_MWyr,
@@ -503,6 +519,7 @@ function load_vre_stor_data!(inputs_gen::Dict, setup::Dict, path::AbstractString
 				columns_to_scale_multistage = [:Min_Retired_Cap_Inverter_MW,
 											   :Min_Retired_Cap_Solar_MW,
 											   :Min_Retired_Cap_Wind_MW,
+											   :Min_Retired_Cap_Elec_MW,
 											   :Min_Retired_Cap_Charge_DC_MW,
 											   :Min_Retired_Cap_Charge_AC_MW,
 											   :Min_Retired_Cap_Discharge_DC_MW,
