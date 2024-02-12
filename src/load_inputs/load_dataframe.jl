@@ -190,9 +190,9 @@ end
 
 function extract_matrix_from_resources(rs::Vector{T}, columnprefix::AbstractString, default=0.0) where T<:AbstractResource
 
-    # attributes starting with columnprefix with a number suffix
+    # attributes starting with columnprefix with a numeric suffix
     attributes_n = [attr for attr in string.(attributes(rs[1])) if startswith(attr, columnprefix)]
-    # sort the attributes by the number suffix
+    # sort the attributes by the numeric suffix
     sort!(attributes_n, by = x -> parse(Int, split(x, "_")[end]))
 
     # extract the matrix of the attributes

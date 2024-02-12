@@ -179,7 +179,9 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     # Creating the range of uncertain parameters in terms of absolute values
     sigma = zeros((1, 2))
     for column in uncertain_columns
-        column_f = getfield(GenX, Symbol(lowercase(column)))   # column_f is the function to get the value "column" for each generator
+        col_sym = Symbol(lowercase(column))
+        # column_f is the function to get the value "column" for each generator
+        column_f = isdefined(GenX, col_sym) ? getfield(GenX, col_sym) : r -> getproperty(r, col_sym)
         sigma = [sigma; [column_f.(gen) .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Lower_bound] ./100) column_f.(gen) .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Upper_bound] ./100)]]
     end
     sigma = sigma[2:end,:]
