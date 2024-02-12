@@ -52,7 +52,7 @@ function _get_summary_map()
         :Hydro => "Hydro",
         :Storage => "Storage",
         :Thermal => "Thermal",
-        :Vre => "Vre",
+        :Vre => "VRE",
         :MustRun => "Must_run",
         :VreStorage => "VRE_and_storage",
     )
@@ -379,7 +379,7 @@ function check_maintenance_applicability(r::AbstractResource)
     applicable_resources = Thermal
 
     not_set = resource_attribute_not_set()
-    maint_value = get(r, :MAINT, not_set)
+    maint_value = get(r, :maint, not_set)
     
     error_strings = String[]
     
@@ -390,12 +390,12 @@ function check_maintenance_applicability(r::AbstractResource)
 
     # MAINT is available only for Thermal
     if !isa(r, applicable_resources) && maint_value > 0
-        e = string("Resource ", resource_name(r), " has :MAINT = ", maint_value, ".\n",
+        e = string("Resource ", resource_name(r), " has :maint = ", maint_value, ".\n",
                    "This setting is valid only for resources where the type is one of $applicable_resources.")
         push!(error_strings, e)
     end
     if get(r, :model, not_set) == 2
-        e = string("Resource ", resource_name(r), " has :MAINT = ", maint_value, ".\n",
+        e = string("Resource ", resource_name(r), " has :maint = ", maint_value, ".\n",
                    "This is valid only for resources with unit commitment (:model = 1);\n",
                    "this has :model = 2.")
         push!(error_strings, e)
