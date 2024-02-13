@@ -114,10 +114,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	### Maximum ramp up and down between consecutive hours (Constraints #1-2)
 	@constraints(EP, begin
 		## Maximum ramp up between consecutive hours
-        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] - EP[:vUSE][y, hoursbefore(p,t,1)] <= ramp_up_percentage(gen[y])*EP[:eTotalCap][y]
+        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] - EP[:vUSE][y, hoursbefore(p,t,1)] <= ramp_up_fraction(gen[y])*EP[:eTotalCap][y]
 
 		## Maximum ramp down between consecutive hours
-		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y, hoursbefore(p,t,1)] - EP[:vUSE][y,t] <= ramp_down_percentage(gen[y])*EP[:eTotalCap][y]
+		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y, hoursbefore(p,t,1)] - EP[:vUSE][y,t] <= ramp_down_fraction(gen[y])*EP[:eTotalCap][y]
 	end)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
@@ -125,8 +125,8 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # special case (for Reserves == 1) here.
     # Could allow them to contribute as a curtailable demand in future.
     @constraints(EP, begin
-		# Minimum stable power generated per technology "y" at hour "t" Min_Power
-		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= min_power(gen[y])*EP[:eTotalCap][y]
+        # Minimum stable power generated per technology "y" at hour "t" Min_Power
+        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= min_power(gen[y])*EP[:eTotalCap][y]
 
         # Maximum power generated per technology "y" at hour "t"
         [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
@@ -175,5 +175,3 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 	EP[:eObj] -= eTotalHydrogenValue
 
 end
-
-

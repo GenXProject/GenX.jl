@@ -85,7 +85,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
 		gen.inv_cost_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))
-		gen.inv_cost_per_mwhyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwhyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))	#TODO: check this, might throw error for non storage resources
+		gen.inv_cost_per_mwhyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwhyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))
 		gen.inv_cost_charge_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_per_mwyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))
 
 		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages

@@ -148,10 +148,6 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 
-function resources_with_fuel(df::DataFrame, fuel::AbstractString)
-    return df[df[!, :Fuel] .== fuel, :R_ID]
-end
-
 function resources_with_fuel(rs::Vector{AbstractResource}, fuel_name::AbstractString)
     condition::BitVector = fuel.(rs) .== fuel_name
     return resource_id.(rs[condition])

@@ -179,15 +179,15 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 	# Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
 	# rampup constraints
 	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
-               EP[:vP][y,t] - EP[:vP][y, hoursbefore(p, t, 1)] + regulation_term[y,t] + reserves_term[y,t] <= ramp_up_percentage(gen[y])*cap_size(gen[y])*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
-			+ min(inputs["pP_Max"][y,t],max(min_power(gen[y]),ramp_up_percentage(gen[y])))*cap_size(gen[y])*EP[:vSTART][y,t]
+               EP[:vP][y,t] - EP[:vP][y, hoursbefore(p, t, 1)] + regulation_term[y,t] + reserves_term[y,t] <= ramp_up_fraction(gen[y])*cap_size(gen[y])*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
+			+ min(inputs["pP_Max"][y,t],max(min_power(gen[y]),ramp_up_fraction(gen[y])))*cap_size(gen[y])*EP[:vSTART][y,t]
 			- min_power(gen[y])*cap_size(gen[y])*EP[:vSHUT][y,t])
 
 	# rampdown constraints
 	@constraint(EP,[y in THERM_COMMIT, t in 1:T],
-               EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= ramp_down_percentage(gen[y])*cap_size(gen[y])*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
+               EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= ramp_down_fraction(gen[y])*cap_size(gen[y])*(EP[:vCOMMIT][y,t]-EP[:vSTART][y,t])
 			- min_power(gen[y])*cap_size(gen[y])*EP[:vSTART][y,t]
-			+ min(inputs["pP_Max"][y,t],max(min_power(gen[y]),ramp_down_percentage(gen[y])))*cap_size(gen[y])*EP[:vSHUT][y,t])
+			+ min(inputs["pP_Max"][y,t],max(min_power(gen[y]),ramp_down_fraction(gen[y])))*cap_size(gen[y])*EP[:vSHUT][y,t])
 
 
 	### Minimum and maximum power output constraints (Constraints #7-8)
@@ -317,7 +317,7 @@ function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup:
 
     MAINT = ids_with_maintenance(gen)
     resource_component(y) = by_rid(y, :resource_name)
-    cap(y) = by_rid(y, :Cap_Size)
+    cap(y) = by_rid(y, :cap_size)
     maint_dur(y) = Int(floor(by_rid(y, :maintenance_duration)))
     maint_freq(y) = Int(floor(by_rid(y, :maintenance_cycle_length_years)))
     maint_begin_cadence(y) = Int(floor(by_rid(y, :maintenance_begin_cadence)))
@@ -372,8 +372,8 @@ function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
 																 t)
     gen = inputs["RESOURCES"]
     resource_component = resource_name(gen[y])
-    capresfactor = eligible_cap_res(gen[y], tag=capres)
-    cap_size = cap_size(gen[y])
+    capresfactor = derating_factor(gen[y], tag=capres)
+    cap = cap_size(gen[y])
     down_var = EP[Symbol(maintenance_down_name(resource_component))]
-    return -capresfactor * down_var[t] * cap_size
+    return -capresfactor * down_var[t] * cap
 end

@@ -68,10 +68,10 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 	@constraints(EP, begin
 
 		## Maximum ramp up between consecutive hours
-        [y in THERM_NO_COMMIT, t in 1:T], EP[:vP][y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= ramp_up_percentage(gen[y])*EP[:eTotalCap][y]
+        [y in THERM_NO_COMMIT, t in 1:T], EP[:vP][y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= ramp_up_fraction(gen[y])*EP[:eTotalCap][y]
 
 		## Maximum ramp down between consecutive hours
-		[y in THERM_NO_COMMIT, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] <= ramp_down_percentage(gen[y])*EP[:eTotalCap][y]
+		[y in THERM_NO_COMMIT, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] <= ramp_down_fraction(gen[y])*EP[:eTotalCap][y]
 	end)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)

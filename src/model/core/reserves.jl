@@ -208,7 +208,6 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	println("Reserves Core Module")
 
 	gen = inputs["RESOURCES"]
-	
 	UCommit = setup["UCommit"]
 
 	T = inputs["T"]     # Number of time steps (hours)
@@ -259,7 +258,6 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	## Objective Function Expressions ##
 
 	# Penalty for unmet operating reserves
-	# TODO: check these expressions
 	@expression(EP, eCRsvPen[t=1:T], inputs["omega"][t]*inputs["pC_Rsv_Penalty"]*vUNMET_RSV[t])
 	@expression(EP, eTotalCRsvPen, sum(eCRsvPen[t] for t=1:T) +
 		sum(reg_cost(gen[y])*vRSV[y,t] for y in RSV, t=1:T) +

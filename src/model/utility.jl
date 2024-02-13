@@ -71,28 +71,15 @@ function is_nonzero(rs::Vector{AbstractResource}, col::Symbol)
     !isnothing(findfirst(r -> get(r, col, 0) ≠ 0, rs))
 end
 
-
-@doc raw"""
-    by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
+@doc raw""" 
+    by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
     
-    This function extracts the row of a DataFrame df for the resource given by the resource ID "rid".
+    This function returns the value of the attribute `sym` for the resource given by the ID `rid`.
 """
-function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
-	return df[df.R_ID .== rid, sym][]
-end
-
 function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
     r = rs[findfirst(resource_id.(rs) .== rid)]
-    f = getfield(GenX, sym)   # get interface to field sym
+    # use getter function for attribute `sym` if exists in GenX, otherwise get the attribute directly
+    f = isdefined(GenX, sym) ? getfield(GenX, sym) : r -> getproperty(r, sym)
     return f(r)
 end
 
-@doc raw"""
-    by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
-    
-    This function extracts the rows of a DataFrame df for the resources given by the vector of resource IDs "rid".
-"""
-function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
-	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
-	return df[indices, sym]
-end

@@ -9,12 +9,18 @@ Function for reporting the operating reserve and regulation revenue earned by ge
 """
 function write_operating_reserve_regulation_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
   	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	dfGen = inputs["dfGen"]
+
+	gen = inputs["RESOURCES"]
 	RSV = inputs["RSV"]
 	REG = inputs["REG"]
 
-	dfOpRsvRevenue = DataFrame(Region = dfGen[RSV, :region], Resource = dfGen[RSV, :Resource], Zone = dfGen[RSV, :Zone], Cluster = dfGen[RSV, :cluster], AnnualSum = Array{Float64}(undef, length(RSV)),)
-	dfOpRegRevenue = DataFrame(Region = dfGen[REG, :region], Resource = dfGen[REG, :Resource], Zone = dfGen[REG, :Zone], Cluster = dfGen[REG, :cluster], AnnualSum = Array{Float64}(undef, length(REG)),)
+    regions = region.(gen)
+    clusters = cluster.(gen)
+    zones = zone_id.(gen)
+    names = inputs["RESOURCE_NAMES"]
+
+	dfOpRsvRevenue = DataFrame(Region = regions[RSV], Resource = names[RSV], Zone = zones[RSV], Cluster = clusters[RSV], AnnualSum = Array{Float64}(undef, length(RSV)),)
+	dfOpRegRevenue = DataFrame(Region = regions[REG], Resource = names[REG], Zone = zones[REG], Cluster = clusters[REG], AnnualSum = Array{Float64}(undef, length(REG)),)
 	
 	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
 	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)

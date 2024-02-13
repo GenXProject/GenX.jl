@@ -18,7 +18,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Default value of Num_VRE_Bins ==1
 	println("Dispatchable Resources Module")
 
-	gen =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
@@ -43,7 +43,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(eligible_cap_res(gen[y], tag=res) * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
+		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res) * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceVRE)
 	end
 
@@ -57,7 +57,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
         for y in VRE_POWER_OUT
             # Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
             # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-            VRE_BINS = intersect(resource_id.(gen[1:G .>= y]), resource_id.(gen[1:G .<= y+num_vre_bins(gen[y])-1]))
+            VRE_BINS = intersect(resource_id.(gen[resource_id.(gen) .>= y]), resource_id.(gen[resource_id.(gen) .<= y+num_vre_bins(gen[y])-1]))
 
             # Maximum power generated per hour by renewable generators must be less than
             # sum of product of hourly capacity factor for each bin times its the bin installed capacity
@@ -102,7 +102,7 @@ The amount of frequency regulation and operating reserves procured in each time 
 ```
 """
 function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
-	gen =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 	T = inputs["T"]
 
     VRE = inputs["VRE"]
@@ -134,7 +134,7 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
 end
 
 function remove_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
-    gen =  inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
 
     VRE = inputs["VRE"]
     VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 

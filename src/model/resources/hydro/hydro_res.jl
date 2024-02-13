@@ -60,7 +60,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Hydro Reservoir Core Resources Module")
 
-	gen =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -107,7 +107,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(eligible_cap_res(gen[y], tag=res) * EP[:vP][y,t]  for y in HYDRO_RES))
+		@expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res) * EP[:vP][y,t]  for y in HYDRO_RES))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
 	end
 
@@ -119,7 +119,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 		CONSTRAINTSET = HYDRO_RES
 	end
 
-	@constraint(EP, cHydroReservoirStart[y in CONSTRAINTSET,t in START_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y, hoursbefore(p,t,1)]- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+	@constraint(EP, cHydroReservoirStart[y in CONSTRAINTSET,t in START_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y, hoursbefore(p,t,1)]- (1/efficiency_down(gen[y])*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 	### Constraints commmon to all reservoir hydro (y in set HYDRO_RES) ###
 	@constraints(EP, begin
@@ -132,8 +132,8 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y, hoursbefore(p,t,1)] - (1/efficiency_down(gen[y])*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down
-        cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + regulation_term[y,t] + reserves_term[y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= ramp_up_percentage(gen[y])*EP[:eTotalCap][y]
-        cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= ramp_down_percentage(gen[y])*EP[:eTotalCap][y]
+        cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + regulation_term[y,t] + reserves_term[y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= ramp_up_fraction(gen[y])*EP[:eTotalCap][y]
+        cRampDown[y in HYDRO_RES, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] - regulation_term[y,t] + reserves_term[y, hoursbefore(p,t,1)] <= ramp_down_fraction(gen[y])*EP[:eTotalCap][y]
 		# Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
 		cHydroMinFlow[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + EP[:vSPILL][y,t] >= min_power(gen[y])*EP[:eTotalCap][y]
 		# DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
@@ -193,7 +193,7 @@ function hydro_res_reserves!(EP::Model, inputs::Dict)
 
 	println("Hydro Reservoir Reserves Module")
 
-	gen =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 

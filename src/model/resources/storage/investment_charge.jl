@@ -42,7 +42,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Charge Investment Module")
 
-	gen =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	MultiStage = setup["MultiStage"]
 
@@ -70,7 +70,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], vEXISTINGCAPCHARGE[y])
 	else
-		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], existing_charge_capacity_mw(gen[y]))
+		@expression(EP, eExistingCapCharge[y in STOR_ASYMMETRIC], existing_charge_cap_mw(gen[y]))
 	end
 
 	@expression(EP, eTotalCapCharge[y in STOR_ASYMMETRIC],
@@ -114,7 +114,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	if MultiStage == 1
 		# Existing capacity variable is equal to existing capacity specified in the input file
-		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == existing_charge_capacity_mw)
+		@constraint(EP, cExistingCapCharge[y in STOR_ASYMMETRIC], EP[:vEXISTINGCAPCHARGE][y] == existing_charge_cap_mw(gen[y]))
 	end
 
 	## Constraints on retirements and capacity additions
@@ -125,7 +125,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Constraint on maximum charge capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-    @constraint(EP, cMaxCapCharge[y in intersect(ids_with_positive(gen, max_cap_mw), STOR_ASYMMETRIC)], eTotalCapCharge[y] <= max_charge_cap_mw(gen[y]))
+    @constraint(EP, cMaxCapCharge[y in intersect(ids_with_positive(gen, max_charge_cap_mw), STOR_ASYMMETRIC)], eTotalCapCharge[y] <= max_charge_cap_mw(gen[y]))
 
 	# Constraint on minimum charge capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty

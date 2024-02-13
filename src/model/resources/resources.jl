@@ -24,12 +24,12 @@ const resource_types = (:Thermal,
 
 # Create composite types (structs) for each resource type in resource_types
 for r in resource_types
-    let dict = Symbol("dict"), r = r
+    let dict = :dict, r = r
         @eval begin
             struct $r{names<:Symbol, T<:Any} <: AbstractResource
                 $dict::Dict{names,T}
             end
-            Base.parent(e::$r) = getfield(e, $(QuoteNode(dict)))
+            Base.parent(r::$r) = getfield(r, $(QuoteNode(dict)))
         end
     end
 end
@@ -47,7 +47,7 @@ Allows to access the attributes of an `AbstractResource` object using dot syntax
 - The value of the attribute if it exists in the parent object.
 
 Throws:
-- `ErrorException`: If the attribute does not exist in the parent object.
+- `ErrorException`: If the attribute does not exist in the resource.
 
 """
 function Base.getproperty(r::AbstractResource, sym::Symbol)
@@ -58,7 +58,7 @@ end
 """
     setproperty!(r::AbstractResource, sym::Symbol, value)
 
-Allows to set the attributes of an `AbstractResource` object using dot syntax. It sets the value of the attribute in the parent object.
+Allows to set the attribute `sym` of an `AbstractResource` object using dot syntax. 
 
 # Arguments:
 - `r::AbstractResource`: The resource object.
@@ -203,11 +203,30 @@ Print the attributes of the given resource.
 
 """
 function Base.show(io::IO, r::AbstractResource)
+    key_length = maximum(length.(string.(attributes(r))))
+    value_length = length(resource_name(r)) + 3
+    println(io, "\nResource: $(r.resource) (id: $(r.id))")
+    println(io, repeat("-", key_length + value_length))
     for (k,v) in pairs(r)
-        println(io, "$k: $v")
+        k,v = string(k), string(v)
+        k = k * repeat(" ", key_length - length(k))
+        println(io, "$k | $v")
     end
+    println(io, repeat("-", key_length + value_length))
 end
 
+"""
+    attributes(r::AbstractResource)
+
+Returns a tuple of the attribute names of the given resource.
+
+# Arguments
+- `r::AbstractResource`: The resource.
+
+# Returns
+- `Tuple`: A tuple with symbols representing the attribute names.
+
+"""
 function attributes(r::AbstractResource)
     return tuple(keys(parent(r))...)
 end
@@ -488,15 +507,12 @@ function ids_with_policy(rs::Vector{T}, name::AbstractString; tag::Int64) where 
     return ids_with_policy(rs, Symbol(lowercase(name)), tag=tag)
 end
 
-
-resource_attribute_not_set() = 0
-
 """
     const default_zero = 0
 
 Default value for resource attributes.
 """
-const default_zero = 0   # default value for resource attributes
+const default_zero = 0 
 
 # INTERFACE FOR ALL RESOURCES
 resource_name(r::AbstractResource) = r.resource
@@ -521,7 +537,7 @@ min_charge_cap_mw(r::AbstractResource) = get(r, :min_charge_cap_mw, default_minm
 
 existing_cap_mw(r::AbstractResource) = r.existing_cap_mw
 existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default_zero)
-existing_charge_capacity_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default_zero)
+existing_charge_cap_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default_zero)
 
 cap_size(r::AbstractResource) = get(r, :cap_size, default_zero)
 
@@ -562,10 +578,10 @@ efficiency_down(r::T) where T <: Union{Hydro,Storage} = get(r, :eff_down, defaul
 # Ramp up and down
 const VarPower = Union{Electrolyzer, Hydro, Thermal}
 min_power(r::VarPower) = get(r, :min_power, default_zero)
-ramp_up_percentage(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
-ramp_down_percentage(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)
+ramp_up_fraction(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
+ramp_down_fraction(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)
 
-# Retirement
+# Retirement - Multistage
 lifetime(r::Storage) = get(r, :lifetime, 15)
 lifetime(r::AbstractResource) = get(r, :lifetime, 30)
 capital_recovery_period(r::Storage) = get(r, :capital_recovery_period, 15)
@@ -585,17 +601,17 @@ mga(r::AbstractResource) = get(r, :mga, default_zero)
 esr(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_$tag"), default_zero)
 min_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_$tag"), default_zero)
 max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), default_zero)
-eligible_cap_res(r::AbstractResource; tag::Int64) = get(r, Symbol("eligible_cap_res_$tag"), default_zero)
+derating_factor(r::AbstractResource; tag::Int64) = get(r, Symbol("derating_factor_$tag"), default_zero)
 
 # write_outputs
 region(r::AbstractResource) = r.region
 cluster(r::AbstractResource) = r.cluster
 
 # UTILITY FUNCTIONS for working with resources
-is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default_zero) > 0, rs)
+is_LDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default_zero) == 1, rs)
 is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, default_zero) == 0, rs)
 
-ids_with_mga(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) > 0, rs)
+ids_with_mga(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) == 1, rs)
 
 ids_with_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
 
@@ -616,7 +632,7 @@ ids_with_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResou
 ids_with_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
 
 # Maintenance
-ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default_zero) > 0, rs)
+ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :maint, default_zero) == 1, rs)
 maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default_zero)
 maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default_zero)
 maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default_zero)
@@ -886,10 +902,6 @@ function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
     # check that the resource exists
     isnothing(r_id) && error("Resource $name not found in resource data. \nHint: Make sure that the resource names in input files match the ones in the \"resource\" folder.\n")
     return rs[r_id]
-end
-
-function resources_by_names(rs::Vector{AbstractResource}, names::Vector{String})
-    return rs[findall(r -> resource_name(r) ∈ names, rs)]
 end
 
 

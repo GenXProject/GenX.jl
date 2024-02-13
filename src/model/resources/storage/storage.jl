@@ -173,7 +173,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(eligible_cap_res(gen[y], tag=res)  * (EP[:vP][y,t] + EP[:vCAPRES_discharge][y,t] - EP[:vCHARGE][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
+		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vP][y,t] + EP[:vCAPRES_discharge][y,t] - EP[:vCHARGE][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
 	end
 

@@ -26,8 +26,9 @@ function update_cumulative_min_ret!(inputs_d::Dict,t::Int,Resource_Set::String,R
 
 	gen_name = "RESOURCES"
 	CumRetCap = Symbol("cum_"*String(RetCap))
-	ret_cap_f = getfield(GenX, RetCap)
-	cum_ret_cap_f = getfield(GenX, CumRetCap)
+	# if the getter function exists in GenX then use it, otherwise get the attribute directly
+	ret_cap_f = isdefined(GenX, RetCap) ? getfield(GenX, RetCap) : r -> getproperty(r, RetCap)
+	cum_ret_cap_f = isdefined(GenX, CumRetCap) ? getfield(GenX, CumRetCap) : r -> getproperty(r, CumRetCap)
 	if !isempty(inputs_d[1][Resource_Set])
 		gen_t = inputs_d[t][gen_name]
 		if t==1

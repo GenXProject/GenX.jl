@@ -4,7 +4,7 @@ The thermal module creates decision variables, expressions, and constraints rela
 This module uses the following 'helper' functions in separate files: ```thermal_commit()``` for thermal resources subject to unit commitment decisions and constraints (if any) and ```thermal_no_commit()``` for thermal resources not subject to unit commitment (if any).
 """
 function thermal!(EP::Model, inputs::Dict, setup::Dict)
-	gen =  inputs["RESOURCES"]
+	gen = inputs["RESOURCES"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
@@ -12,8 +12,6 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	THERM_COMMIT = inputs["THERM_COMMIT"]
 	THERM_NO_COMMIT = inputs["THERM_NO_COMMIT"]
 	THERM_ALL = inputs["THERM_ALL"]
-
-	gen =  inputs["RESOURCES"]
 
 	if !isempty(THERM_COMMIT)
 		thermal_commit!(EP, inputs, setup)
@@ -32,7 +30,7 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	if setup["CapacityReserveMargin"] > 0
         ncapres = inputs["NCapacityReserveMargin"]
         @expression(EP, eCapResMarBalanceThermal[capres in 1:ncapres, t in 1:T],
-                    sum(eligible_cap_res(gen[y], tag=capres) * EP[:eTotalCap][y] for y in THERM_ALL))
+                    sum(derating_factor(gen[y], tag=capres) * EP[:eTotalCap][y] for y in THERM_ALL))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
 
         MAINT = ids_with_maintenance(gen)

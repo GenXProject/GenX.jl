@@ -34,8 +34,8 @@ function _get_policyfile_info()
     policyfile_info = (
         esr     = (filename="Resource_energy_share_requirement.csv"),
         cap_res = (filename="Resource_capacity_reserve_margin.csv"),
-        min_cap_tags = (filename="Resource_minimum_capacity_requirement.csv"),
-        max_cap_tags = (filename="Resource_maximum_capacity_requirement.csv"),
+        min_cap = (filename="Resource_minimum_capacity_requirement.csv"),
+        max_cap = (filename="Resource_maximum_capacity_requirement.csv"),
     )
     return policyfile_info
 end
@@ -239,7 +239,7 @@ Computes the indices for the resources loaded from a single dataframe by shiftin
 - `UnitRange{Int64}`: An array of indices.
 
 """
-function compure_resource_indices(resources_in::DataFrame, offset::Int64)
+function compute_resource_indices(resources_in::DataFrame, offset::Int64)
     range = (1,nrow(resources_in)) .+ offset
     return UnitRange{Int64}(range...)
 end
@@ -318,7 +318,7 @@ function create_resource_array(resource_folder::AbstractString, resources_info::
         if isfile(df_path)
             resource_in = load_resource_df(df_path, scale_factor, resource_type)
             # compute indices for resources of a given type and add them to dataframe
-            resources_indices = compure_resource_indices(resource_in, resource_id_offset)
+            resources_indices = compute_resource_indices(resource_in, resource_id_offset)
             add_id_to_resource_df!(resource_in, resources_indices)
             resources_same_type = create_resources_sametype(resource_in, resource_type)
             push!(resources, resources_same_type)
@@ -363,10 +363,12 @@ end
 
 function check_LDS_applicability(r::AbstractResource)
     applicable_resources = Union{Storage, Hydro}
-    not_set = resource_attribute_not_set()
     error_strings = String[]
+
+    not_set = default_zero
     lds_value = get(r, :lds, not_set)
-    # LDS is available onlåy for Hydro and Storage
+
+    # LDS is available only for Hydro and Storage
     if !isa(r, applicable_resources) && lds_value > 0
         e = string("Resource ", resource_name(r), " has :lds = ", lds_value, ".\n",
                    "This setting is valid only for resources where the type is one of $applicable_resources.")
@@ -378,7 +380,7 @@ end
 function check_maintenance_applicability(r::AbstractResource)
     applicable_resources = Thermal
 
-    not_set = resource_attribute_not_set()
+    not_set = default_zero
     maint_value = get(r, :maint, not_set)
     
     error_strings = String[]
@@ -495,7 +497,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     cols = lowercase.(names(policy_in))
     filter!(col -> col ≠ "resource",cols)
     
-    accepted_cols = ["eligible_cap_res", "esr", "esr_vrestor",
+    accepted_cols = ["derating_factor", "esr", "esr_vrestor",
                         [string(cap, type) for cap in ["min_cap", "max_cap"] for type in ("", "_stor", "_solar", "_wind")]...]
 
     # Check that all policy columns have names in accepted_cols
@@ -544,7 +546,7 @@ Adds the data contained in a `DataFrame` to a vector of resources. Each row in t
 function add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
     # rename columns lowercase to ensure consistency with resources
     rename!(module_in, lowercase.(names(module_in)))
-    # extract columns of module -> new resource attributes
+    # extract columns of module. They will be added as new attributes to resources
     new_sym = Symbol.(filter(x -> x ≠ "resource", names(module_in)))
     # loop oper rows of module and add new attributes to resources
     for row in eachrow(module_in)
@@ -589,9 +591,9 @@ function add_policies_to_resources!(resources::Vector{<:AbstractResource}, setup
     policy_folder = setup["ResourcePath"]
     policy_folder = joinpath(case_path, policy_folder)
     # get filename for each type of policy available in GenX
-    resources_info = _get_policyfile_info()
+    policies_info = _get_policyfile_info()
     # loop over policy files
-    for filename in values(resources_info)
+    for filename in values(policies_info)
         path = joinpath(policy_folder, filename)
         # if file exists, add policy to resources
         if isfile(path) 
@@ -703,7 +705,7 @@ function process_piecewisefuelusage!(setup::Dict, gen::Vector{<:AbstractResource
 		
 		num_segments = size(heat_rate_mat_therm)[2]
 
-        # create a matrix to store the heat rate and load point for each thermal generator in the model (i.e., all gen)
+        # create a matrix to store the heat rate and load point for each generator in the model 
         heat_rate_mat = zeros(length(gen), num_segments)
         load_point_mat = zeros(length(gen), num_segments)
         THERM = thermal(gen)
@@ -773,7 +775,7 @@ function process_piecewisefuelusage!(setup::Dict, gen::Vector{<:AbstractResource
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_data"] = PWFU_data
 		inputs["PWFU_Num_Segments"] = num_segments
-		inputs["THERM_COMMIT_PWFU"] = intersect(thermal(gen), resource_id.(gen[HAS_PWFU]))
+		inputs["THERM_COMMIT_PWFU"] = intersect(ids_with_unit_commitment(gen), resource_id.(gen[HAS_PWFU]))
 
 		@info "Piecewise fuel usage data successfully read!"
 	end
@@ -969,7 +971,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
         new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-        ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_capacity_mw), inputs["STOR_ASYMMETRIC"])
+        ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge
@@ -1028,15 +1030,16 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         end 
 
         # Names for systemwide resources
-        inputs["RESOURCES_VRE_STOR"] = resource_name(gen_VRE_STOR)
+        inputs["RESOURCE_NAMES_VRE_STOR"] = resource_name(gen_VRE_STOR)
 
         # Names for writing outputs
-        inputs["RESOURCES_SOLAR"] = resource_name(gen[inputs["VS_SOLAR"]])
-        inputs["RESOURCES_WIND"] = resource_name(gen[inputs["VS_WIND"]])
-        inputs["RESOURCES_DC_DISCHARGE"] = resource_name(gen[storage_dc_discharge(gen)])
-        inputs["RESOURCES_AC_DISCHARGE"] = resource_name(gen[storage_ac_discharge(gen)])
-        inputs["RESOURCES_DC_CHARGE"] = resource_name(gen[storage_dc_charge(gen)])
-        inputs["RESOURCES_AC_CHARGE"] = resource_name(gen[storage_ac_charge(gen)])
+        inputs["RESOURCE_NAMES_SOLAR"] = resource_name(gen[inputs["VS_SOLAR"]])
+        inputs["RESOURCE_NAMES_WIND"] = resource_name(gen[inputs["VS_WIND"]])
+        inputs["RESOURCE_NAMES_DC_DISCHARGE"] = resource_name(gen[storage_dc_discharge(gen)])
+        inputs["RESOURCE_NAMES_AC_DISCHARGE"] = resource_name(gen[storage_ac_discharge(gen)])
+        inputs["RESOURCE_NAMES_DC_CHARGE"] = resource_name(gen[storage_dc_charge(gen)])
+        inputs["RESOURCE_NAMES_AC_CHARGE"] = resource_name(gen[storage_ac_charge(gen)])
+
         inputs["ZONES_SOLAR"] = zone_id(gen[inputs["VS_SOLAR"]])
         inputs["ZONES_WIND"] = zone_id(gen[inputs["VS_WIND"]])
         inputs["ZONES_DC_DISCHARGE"] = zone_id(gen[storage_dc_discharge(gen)])

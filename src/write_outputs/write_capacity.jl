@@ -43,7 +43,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_CHARGE"]
 			retcapcharge[i] = value(EP[:vRETCAPCHARGE][i])
 		end
-		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : existing_charge_capacity_mw(gen[i])
+		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : existing_charge_cap_mw(gen[i])
 	end
 
 	capenergy = zeros(size(inputs["RESOURCE_NAMES"]))

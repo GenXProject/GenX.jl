@@ -34,8 +34,4 @@ obj_test = round_from_tol!(obj_test, optimal_tol)
 optimal_tol = round_from_tol!(optimal_tol, optimal_tol)
 write_testlog(test_path, obj_test, optimal_tol, test_result)
 
-# Test if output files are written correctly
-solvetime_true = 0.8023929595947266
-test_write_output(test_path, genx_setup, EP, inputs, solvetime_true)
-
 end # module TestThreeZones

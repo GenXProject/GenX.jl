@@ -108,7 +108,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Load VRE-storage inputs
 	VRE_STOR = inputs["VRE_STOR"] 	                                # Set of VRE-STOR generators (indices)
-    gen_VRE_STOR = gen.VreStorage                                     # Set of VRE-STOR generators (objects)
+    gen_VRE_STOR = gen.VreStorage                                   # Set of VRE-STOR generators (objects)
     SOLAR = inputs["VS_SOLAR"]                                      # Set of VRE-STOR generators with solar-component
     DC = inputs["VS_DC"]                                            # Set of VRE-STOR generators with inverter-component
     WIND = inputs["VS_WIND"]                                        # Set of VRE-STOR generators with wind-component
@@ -2030,12 +2030,12 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 
     # Constraint 3: Add capacity reserve margin contributions from VRE-STOR resources to capacity reserve margin constraint
     @expression(EP, eCapResMarBalanceStor_VRE_STOR[res=1:inputs["NCapacityReserveMargin"], t=1:T],(
-        sum(eligible_cap_res(gen[y],tag=res)*by_rid(y,:etainverter)*inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y] for y in inputs["VS_SOLAR"])
-        + sum(eligible_cap_res(gen[y],tag=res)*inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y] for y in inputs["VS_WIND"])
-        + sum(eligible_cap_res(gen[y],tag=res)*by_rid(y,:etainverter)*(EP[:vP_DC_DISCHARGE][y,t]+vCAPRES_DC_DISCHARGE[y,t]) for y in DC_DISCHARGE)
-        + sum(eligible_cap_res(gen[y],tag=res)*(EP[:vP_AC_DISCHARGE][y,t]+vCAPRES_AC_DISCHARGE[y,t]) for y in AC_DISCHARGE)
-        - sum(eligible_cap_res(gen[y],tag=res)*(EP[:vP_DC_CHARGE][y,t]+vCAPRES_DC_CHARGE[y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
-        - sum(eligible_cap_res(gen[y],tag=res)*(EP[:vP_AC_CHARGE][y,t]+vCAPRES_AC_CHARGE[y,t]) for y in AC_CHARGE)))
+        sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y] for y in inputs["VS_SOLAR"])
+        + sum(derating_factor(gen[y],tag=res)*inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y] for y in inputs["VS_WIND"])
+        + sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*(EP[:vP_DC_DISCHARGE][y,t]+vCAPRES_DC_DISCHARGE[y,t]) for y in DC_DISCHARGE)
+        + sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_DISCHARGE][y,t]+vCAPRES_AC_DISCHARGE[y,t]) for y in AC_DISCHARGE)
+        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_DC_CHARGE][y,t]+vCAPRES_DC_CHARGE[y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
+        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_CHARGE][y,t]+vCAPRES_AC_CHARGE[y,t]) for y in AC_CHARGE)))
     EP[:eCapResMarBalance] += EP[:eCapResMarBalanceStor_VRE_STOR]
 
     ### OBJECTIVE FUNCTION ADDITIONS ###

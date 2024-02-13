@@ -54,7 +54,7 @@ function co2!(EP::Model, inputs::Dict)
 
     println("CO2 Module")
 
-    gen =  inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones

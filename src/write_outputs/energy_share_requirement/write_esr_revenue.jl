@@ -18,7 +18,7 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	VRE_STOR = inputs["VRE_STOR"] 	                                # Set of VRE-STOR generators (indices)
 	
 	if !isempty(VRE_STOR)
-		gen_VRE_STOR = gen[VRE_STOR]                                    # Set of VRE-STOR generators (objects)
+		gen_VRE_STOR = gen.VreStorage                                # Set of VRE-STOR generators (objects)
 		SOLAR = inputs["VS_SOLAR"]
 		WIND = inputs["VS_WIND"]
 		SOLAR_ONLY = setdiff(SOLAR, WIND)
