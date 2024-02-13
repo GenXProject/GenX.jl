@@ -8,12 +8,16 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	T = inputs["T"]     			# Number of time steps (hours)
 	Z = inputs["Z"]     			# Number of zones
 	G = inputs["G"]     			# Number of generators
-	RSV = inputs["RSV"]				# Generators contributing to operating reserves
-	REG = inputs["REG"]     		# Generators contributing to regulation 
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
 	VRE_STOR = inputs["VRE_STOR"]
 	dfVRE_STOR = inputs["dfVRE_STOR"]
+
+	if setup["Reserves"] >= 1
+		RSV = inputs["RSV"]				# Generators contributing to operating reserves
+		REG = inputs["REG"]     		# Generators contributing to regulation 
+	end
+
 	if !isempty(VRE_STOR)
 		VRE_STOR_LENGTH = size(inputs["VRE_STOR"])[1]
 		SOLAR = inputs["VS_SOLAR"]
