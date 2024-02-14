@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix access to eELOSSByZone expr before initialization (#541)
 - Fix modeling of hydro reservoir with long duration storage (#572).
 - Fix computation of cumulative minimum capacity retirements in multistage GenX (#514)
+- Fix update of starting transmission capacity in multistage GenX
 
 ### Changed
 
