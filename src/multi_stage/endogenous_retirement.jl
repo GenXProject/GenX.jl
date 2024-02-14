@@ -22,6 +22,32 @@ function get_retirement_stage(cur_stage::Int, lifetime::Int, stage_lens::Array{I
     return Int(ret_stage)
 end
 
+function update_cumulative_min_ret!(inputs_d::Dict,t::Int,Resource_Set::String,dfGen_Name::String,RetCap::Symbol)
+
+	CumRetCap = Symbol("Cum_"*String(RetCap));
+
+	if !isempty(inputs_d[1][Resource_Set])
+		if t==1
+			inputs_d[t][dfGen_Name][!,CumRetCap] = inputs_d[t][dfGen_Name][!,RetCap];
+		else
+			inputs_d[t][dfGen_Name][!,CumRetCap] = inputs_d[t-1][dfGen_Name][!,CumRetCap] + inputs_d[t][dfGen_Name][!,RetCap];
+		end
+	end
+end
+
+function compute_cumulative_min_retirements!(inputs_d::Dict,t::Int)
+
+	mytab =[("G","dfGen",:Min_Retired_Cap_MW),
+	("STOR_ALL","dfGen",:Min_Retired_Energy_Cap_MW),
+	("STOR_ASYMMETRIC","dfGen",:Min_Retired_Charge_Cap_MW)];
+
+	for (Resource_Set,dfGen_Name,RetCap) in mytab
+		update_cumulative_min_ret!(inputs_d,t,Resource_Set,dfGen_Name,RetCap)
+	end
+
+
+end
+
 function endogenous_retirement!(EP::Model, inputs::Dict, setup::Dict)
 	multi_stage_settings = setup["MultiStageSettingsDict"]
 
@@ -78,9 +104,9 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	@expression(EP, eNewCapTrack[y in RET_CAP], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
 	@expression(EP, eMinRetCapTrack[y in RET_CAP],
 		if y in COMMIT
-			sum((dfGen[!,Symbol("Min_Retired_Cap_MW")][y]/dfGen[!,:Cap_Size][y]) for p=1:cur_stage)
+			dfGen[y,:Cum_Min_Retired_Cap_MW]/dfGen[y,:Cap_Size]
 		else
-			sum((dfGen[!,Symbol("Min_Retired_Cap_MW")][y]) for p=1:cur_stage)
+			dfGen[y,:Cum_Min_Retired_Cap_MW]
 		end
 	)
 
@@ -132,7 +158,7 @@ function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int,
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vRETCAPTRACKCHARGE][y,p] for p=1:cur_stage))
 	@expression(EP, eNewCapTrackCharge[y in RET_CAP_CHARGE], sum(EP[:vCAPTRACKCHARGE][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackCharge[y in RET_CAP_CHARGE], sum((dfGen[!,Symbol("Min_Retired_Charge_Cap_MW")][y]) for p=1:cur_stage))
+	@expression(EP, eMinRetCapTrackCharge[y in RET_CAP_CHARGE], dfGen[y,:Cum_Min_Retired_Charge_Cap_MW])
 
 	### Constratints ###
 
@@ -181,7 +207,7 @@ function endogenous_retirement_energy!(EP::Model, inputs::Dict, num_stages::Int,
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vRETCAPTRACKENERGY][y,p] for p=1:cur_stage))
 	@expression(EP, eNewCapTrackEnergy[y in RET_CAP_ENERGY], sum(EP[:vCAPTRACKENERGY][y,p] for p=1:get_retirement_stage(cur_stage, dfGen[!,:Lifetime][y], stage_lens)))
-	@expression(EP, eMinRetCapTrackEnergy[y in RET_CAP_ENERGY], sum((dfGen[!,Symbol("Min_Retired_Energy_Cap_MW")][y]) for p=1:cur_stage))
+	@expression(EP, eMinRetCapTrackEnergy[y in RET_CAP_ENERGY], dfGen[y,:Cum_Min_Retired_Energy_Cap_MW])
 
 	### Constratints ###
 
