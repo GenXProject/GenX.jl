@@ -70,6 +70,12 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	HYDRO_RES = inputs["HYDRO_RES"]	# Set of all reservoir hydro resources, used for common constraints
 	HYDRO_RES_KNOWN_CAP = inputs["HYDRO_RES_KNOWN_CAP"] # Reservoir hydro resources modeled with unknown reservoir energy capacity
 
+	STOR_HYDRO_SHORT_DURATION = inputs["STOR_HYDRO_SHORT_DURATION"]
+	representative_periods = inputs["REP_PERIOD"]
+
+	START_SUBPERIODS = inputs["START_SUBPERIODS"]
+	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+
     # These variables are used in the ramp-up and ramp-down expressions
     reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
     regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
@@ -107,6 +113,14 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	### Constratints ###
 
+	if representative_periods > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+		CONSTRAINTSET = STOR_HYDRO_SHORT_DURATION
+	else
+		CONSTRAINTSET = HYDRO_RES
+	end
+
+	@constraint(EP, cHydroReservoirStart[y in CONSTRAINTSET,t in START_SUBPERIODS], EP[:vS_HYDRO][y,t] == EP[:vS_HYDRO][y, hoursbefore(p,t,1)]- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+
 	### Constraints commmon to all reservoir hydro (y in set HYDRO_RES) ###
 	@constraints(EP, begin
 	### NOTE: time coupling constraints in this block do not apply to first hour in each sample period;
@@ -115,8 +129,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 		# DEV NOTE: Last inputs["pP_Max"][y,t] term above is inflows; currently part of capacity factors inputs in Generators_variability.csv but should be moved to its own Hydro_inflows.csv input in future.
 
 		# Constraints for reservoir hydro
-		cHydroReservoir[y in HYDRO_RES, t in 1:T], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y, hoursbefore(p,t,1)]
-				- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
+		cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS], EP[:vS_HYDRO][y,t] == (EP[:vS_HYDRO][y, hoursbefore(p,t,1)]- (1/dfGen[y,:Eff_Down]*EP[:vP][y,t]) - vSPILL[y,t] + inputs["pP_Max"][y,t]*EP[:eTotalCap][y])
 
 		# Maximum ramp up and down
         cRampUp[y in HYDRO_RES, t in 1:T], EP[:vP][y,t] + regulation_term[y,t] + reserves_term[y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= dfGen[y,:Ramp_Up_Percentage]*EP[:eTotalCap][y]
