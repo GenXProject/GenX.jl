@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix factor of 0.5 when writing out transmission losses. (#480)
 - Fix summation error when a set of hours is empty (in thermal_commit.jl).
 - Fix access to eELOSSByZone expr before initialization (#541)
-- Fix modeling of hydro reservoir with long duration storage (#572).
 
 ### Changed
 
