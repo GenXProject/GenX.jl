@@ -1,0 +1,16 @@
+Resource,Zone,Existing_Cap_MWh,Existing_Cap_MW,New_Build,Can_Retire,Cap_Size,Min_Cap_MW,Max_Cap_MW,Max_Flexible_Demand_Delay,Max_Flexible_Demand_Advance,Flexible_Demand_Energy_Eff,region,technology,cluster
+WECC_trans_light_duty_1,3,0,88930.5,0,0,0,0,0,5,0,1,WECC,trans_light_duty,1
+EIC_trans_light_duty_1,1,0,227552.1,0,0,0,0,0,5,0,1,EIC,trans_light_duty,1
+TRE_trans_light_duty_1,2,0,34387.8,0,0,0,0,0,5,0,1,TRE,trans_light_duty,1
+WECC_comm_water_heat_1,3,0,1130.3,0,0,0,0,0,2,2,1,WECC,comm_water_heat,1
+EIC_comm_water_heat_1,1,0,2922.1,0,0,0,0,0,2,2,1,EIC,comm_water_heat,1
+TRE_comm_water_heat_1,2,0,368.7,0,0,0,0,0,2,2,1,TRE,comm_water_heat,1
+WECC_res_water_heat_1,3,0,2578.7,0,0,0,0,0,2,2,1,WECC,res_water_heat,1
+EIC_res_water_heat_1,1,0,8238.2,0,0,0,0,0,2,2,1,EIC,res_water_heat,1
+TRE_res_water_heat_1,2,0,1049.5,0,0,0,0,0,2,2,1,TRE,res_water_heat,1
+WECC_comm_space_heat_cool_1,3,0,7483.3,0,0,0,0,0,1,1,1,WECC,comm_space_heat_cool,1
+EIC_comm_space_heat_cool_1,1,0,41624.8,0,0,0,0,0,1,1,1,EIC,comm_space_heat_cool,1
+TRE_comm_space_heat_cool_1,2,0,6978.6,0,0,0,0,0,1,1,1,TRE,comm_space_heat_cool,1
+WECC_res_space_heat_cool_1,3,0,12467.5,0,0,0,0,0,1,1,1,WECC,res_space_heat_cool,1
+EIC_res_space_heat_cool_1,1,0,47457,0,0,0,0,0,1,1,1,EIC,res_space_heat_cool,1
+TRE_res_space_heat_cool_1,2,0,7585.9,0,0,0,0,0,1,1,1,TRE,res_space_heat_cool,1

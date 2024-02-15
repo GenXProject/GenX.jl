@@ -5,8 +5,7 @@ Function for reporting time-dependent CO$_2$ emissions by zone.
 
 """
 function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+	
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 
@@ -78,5 +77,5 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 		rename!(total,auxNew_Names)
 		dfEmissions = vcat(dfEmissions, total)
 	end
-	CSV.write(joinpath(path, "emissions.csv"), dftranspose(dfEmissions, false), writeheader=false)
+	CSV.write(joinpath(path, "emissions.csv"), dftranspose(dfEmissions, false), header=false)
 end

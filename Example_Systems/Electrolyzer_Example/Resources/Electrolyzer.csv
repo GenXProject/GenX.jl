@@ -1,0 +1,2 @@
+Resource,Zone,LDS,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Resource_Type,region,cluster,Hydrogen_MWh_Per_Tonne,Electrolyzer_Min_kt,Hydrogen_Price_Per_Tonne,Qualified_Hydrogen_Supply
+electrolyzer,1,0,1,1,0,-1,-1,125000,15000,0.0,0.0,None,1,0,0,1.0,1.0,0.0,hydrogen_electrolyzer,NE,0,55,1000,1000,0

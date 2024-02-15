@@ -33,7 +33,7 @@ vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
 Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ [MMBTU/MWh],
  $f_{y,x}$ represents the heat rate intercept (MMBTU) for a generator $y$ in segment $x$ [MMBTU],
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
-are optional inputs to "Generators_data.csv".
+are optional inputs to the resource .csv files. 
 When Unit commitment is on, if a user provides slope and intercept, the standard heat rate 
 (i.e., Heat_Rate_MMBTU_per_MWh) will not be used. When unit commitment is off, the model will 
 always use the standard heat rate.
@@ -54,7 +54,8 @@ PWFU_Intercept_* for at least one segment.
 
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
     println("Fuel Module")
-    dfGen = inputs["dfGen"]
+    gen =  inputs["RESOURCES"]
+
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     G = inputs["G"]     
@@ -62,7 +63,6 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     THERM_COMMIT = inputs["THERM_COMMIT"]
     fuels = inputs["fuels"]
     NUM_FUEL = length(fuels)
-
 
     # create variable for fuel consumption for output
     @variable(EP, vFuel[y in 1:G, t = 1:T] >= 0)
@@ -72,8 +72,8 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # if unit commitment is modelled
     @expression(EP, eStartFuel[y in 1:G, t = 1:T],
         if y in THERM_COMMIT
-            (dfGen[y,:Cap_Size] * EP[:vSTART][y, t] * 
-                dfGen[y,:Start_Fuel_MMBTU_per_MW])
+            (cap_size(gen[y]) * EP[:vSTART][y, t] * 
+                start_fuel_mmbtu_per_mw(gen[y]))
         else
             0
         end)
@@ -83,23 +83,23 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     # eCFuel_start or eCFuel_out is $ or Million$
     # Start up fuel cost
     @expression(EP, eCFuelStart[y = 1:G, t = 1:T], 
-        (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:eStartFuel][y, t]))
+        (inputs["fuel_costs"][fuel(gen[y])][t] * EP[:eStartFuel][y, t]))
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelStart[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelStart][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelStart[z = 1:Z], 
-        sum(EP[:ePlantCFuelStart][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+        sum(EP[:ePlantCFuelStart][y] for y in resources_in_zone_by_rid(gen,z)))
 
     # Fuel cost for power generation
     @expression(EP, eCFuelOut[y = 1:G, t = 1:T], 
-        (inputs["fuel_costs"][dfGen[y,:Fuel]][t] * EP[:vFuel][y, t]))
+        (inputs["fuel_costs"][fuel(gen[y])][t] * EP[:vFuel][y, t]))
     # plant level start-up fuel cost for output
     @expression(EP, ePlantCFuelOut[y = 1:G], 
         sum(inputs["omega"][t] * EP[:eCFuelOut][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelOut[z = 1:Z], 
-        sum(EP[:ePlantCFuelOut][y] for y in dfGen[dfGen[!, :Zone].==z, :R_ID]))
+        sum(EP[:ePlantCFuelOut][y] for y in resources_in_zone_by_rid(gen,z)))
 
 
     # system level total fuel cost for output
@@ -112,7 +112,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     #fuel consumption (MMBTU or Billion BTU)
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y,t]
-            for y in resources_with_fuel(dfGen, fuels[f])))
+            for y in resources_with_fuel(gen, fuels[f])))
                 
     @expression(EP, eFuelConsumptionYear[f in 1:NUM_FUEL],
         sum(inputs["omega"][t] * EP[:eFuelConsumption][f, t] for t in 1:T))
@@ -121,7 +121,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     ### Constraint ###
     ### only apply constraint to generators with fuel type other than None
     @constraint(EP, FuelCalculation[y in setdiff(HAS_FUEL, THERM_COMMIT), t = 1:T],
-        EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
+        EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y]) == 0)
 
     if !isempty(THERM_COMMIT)        
         # Only apply piecewise fuel consumption to thermal generators in THERM_COMMIT_PWFU set
@@ -141,14 +141,15 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         end
         # constraint for fuel consumption at a constant heat rate 
         @constraint(EP, FuelCalculationCommit[y in setdiff(THERM_COMMIT,THERM_COMMIT_PWFU), t = 1:T],
-            EP[:vFuel][y, t] - EP[:vP][y, t] * dfGen[y, :Heat_Rate_MMBTU_per_MWh] == 0)
+            EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y]) == 0)
     end
 
     return EP
 end
 
 
-function resources_with_fuel(df::DataFrame, fuel::AbstractString)
-    return df[df[!, :Fuel] .== fuel, :R_ID]
+function resources_with_fuel(rs::Vector{AbstractResource}, fuel_name::AbstractString)
+    condition::BitVector = fuel.(rs) .== fuel_name
+    return resource_id.(rs[condition])
 end
 

@@ -1,0 +1,2 @@
+Resource,Zone,Model,LDS,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Up_Time,Down_Time,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Reg_Cost,Rsv_Cost,Hydro_Energy_to_Power_Ratio,MGA,Resource_Type,region,cluster
+thermal_plant,1,1,0,0,0,1,-1,0,0,0,10,1,NG,1,0,0,4,6,1,1,1.0,0,0,0,1,thermal_plant,NE,1

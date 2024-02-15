@@ -25,7 +25,7 @@ function retrofit(EP::Model, inputs::Dict)
 	println("Retrofit Resources Module")
 
 	G = inputs["G"]   # Number of resources (generators, storage, DR, and DERs)
-	RESOURCES = inputs["RESOURCES"] # Set of all resources by name
+	RESOURCES = inputs["RESOURCE_NAMES"] # Set of all resources by name
 	RETRO = inputs["RETRO"] # Set of all retrofit resources by ID
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for capacity expansion by ID
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements by ID
@@ -33,7 +33,7 @@ function retrofit(EP::Model, inputs::Dict)
 	RETRO_SOURCES = inputs["RETROFIT_SOURCES"] # Source technologies by name for each retrofit [1:G]
 	RETRO_SOURCE_IDS = inputs["RETROFIT_SOURCE_IDS"] # Source technologies by ID for each retrofit [1:G]
 	RETRO_EFFICIENCY = inputs["RETROFIT_EFFICIENCIES"] # Ratio of installed retrofit capacity to source capacity [0:1] (indexed by retrofit tech r, source # i)
-	CAP_SIZE = inputs["dfGen"][!, :Cap_Size] # Capacity sizes for resources subject to unit commitment
+	CAP_SIZE = cap_size.(inputs["RESOURCES"]) # Capacity sizes for resources subject to unit commitment
 	NUM_RETRO_SOURCES = inputs["NUM_RETROFIT_SOURCES"] # Number of possible sources for a given retrofit resource
 
 	### Variables ###

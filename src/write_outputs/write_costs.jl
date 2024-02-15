@@ -5,7 +5,7 @@ Function for writing the costs pertaining to the objective function (fixed, vari
 """
 function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Cost results
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 	SEG = inputs["SEG"]  # Number of lines
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
@@ -80,7 +80,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[!,2][11] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
 
-	if any(dfGen.CO2_Capture_Fraction .!= 0)
+	if any(co2_capture_fraction.(gen) .!= 0)
 		dfCost[10,2] += value(EP[:eTotaleCCO2Sequestration])
 	end
 
@@ -102,7 +102,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempHydrogenValue = 0.0
 		tempCCO2 = 0.0
 
-		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
+		Y_ZONE = resources_in_zone_by_rid(gen,z)
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
 		STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
 		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
@@ -137,8 +137,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCTotal += eCVarFlex_in
 		end
 		if !isempty(VRE_STOR)
-			dfVRE_STOR = inputs["dfVRE_STOR"]
-			Y_ZONE_VRE_STOR = dfVRE_STOR[dfVRE_STOR[!,:Zone].==z,:R_ID]
+			gen_VRE_STOR = gen.VreStorage
+			Y_ZONE_VRE_STOR = resources_in_zone_by_rid(gen_VRE_STOR, z)
 
 			# Fixed Costs
 			eCFix_VRE_STOR = 0.0
@@ -218,7 +218,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempCNSE = sum(value.(EP[:eCNSE][:,:,z]))
 		tempCTotal += tempCNSE
 
-		if any(dfGen.CO2_Capture_Fraction .!=0)
+		if any(co2_capture_fraction.(gen) .!=0)
 			tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][Y_ZONE,:]))
 			tempCTotal += tempCCO2		
 		end

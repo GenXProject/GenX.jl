@@ -26,9 +26,9 @@ function load_inputs(setup::Dict,path::AbstractString)
 	# Read temporal-resolved load data, and clustering information if relevant
 	load_demand_data!(setup, path, inputs)
 	# Read fuel cost data, including time-varying fuel costs
-	cost_fuel, CO2_fuel = load_fuels_data!(setup, path, inputs)
+	load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
-	load_generators_data!(setup, path, inputs, cost_fuel, CO2_fuel)
+	load_resources_data!(inputs, setup, path)
 	# Read in generator/resource availability profiles
 	load_generators_variability!(setup, path, inputs)
 

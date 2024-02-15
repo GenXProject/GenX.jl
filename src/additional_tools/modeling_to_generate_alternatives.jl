@@ -1,5 +1,5 @@
 @doc raw"""
-	mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
+	mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
 We have implemented an updated Modeling to Generate Alternatives (MGA) Algorithm proposed by [Berntsen and Trutnevyte (2017)](https://www.sciencedirect.com/science/article/pii/S0360544217304097) to generate a set of feasible, near cost-optimal technology portfolios. This algorithm was developed by [Brill Jr, E. D., 1979](https://pubsonline.informs.org/doi/abs/10.1287/mnsc.25.5.413) and introduced to energy system planning by [DeCarolia, J. F., 2011](https://www.sciencedirect.com/science/article/pii/S0140988310000721).
 
@@ -18,23 +18,24 @@ To create the MGA formulation, we replace the cost-minimizing objective function
 
 where, $\beta_{zr}$ is a random objective fucntion coefficient betwen $[0,100]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. In the second constraint above, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. The constraint $Ax = b$ represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
 """
-function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString)
+function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
     if setup["ModelingToGenerateAlternatives"]==1
         # Start MGA Algorithm
 	    println("MGA Module")
 
-	    # Objective function value of the least cost problem
+	# Objective function value of the least cost problem
 	    Least_System_Cost = objective_value(EP)
 
 	    # Read sets
-	    dfGen = inputs["dfGen"]
+	    gen = inputs["RESOURCES"]
 	    T = inputs["T"]     # Number of time steps (hours)
 	    Z = inputs["Z"]     # Number of zonests
-	    G = inputs["G"]
+	    zones = unique(inputs["R_ZONES"])
 
 	    # Create a set of unique technology types
-	    TechTypes = unique(dfGen[dfGen[!, :MGA] .== 1, :Resource_Type])
+	    resources_with_mga = gen[ids_with_mga(gen)]
+	    TechTypes = unique(resource_type_mga.(resources_with_mga))
 
 	    # Read slack parameter representing desired increase in budget from the least cost solution
 	    slack = setup["ModelingtoGenerateAlternativeSlack"]
@@ -51,8 +52,11 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 	    @constraint(EP, budget, EP[:eObj] <= Least_System_Cost * (1 + slack) )
 
         # Constraint to compute total generation in each zone from a given Technology Type
-	    @constraint(EP,cGeneration[tt = 1:length(TechTypes), z = 1:Z], vSumvP[tt,z] == sum(EP[:vP][y,t] * inputs["omega"][t]
-	    for y in dfGen[(dfGen[!,:Resource_Type] .== TechTypes[tt]) .& (dfGen[!,:Zone] .== z), :R_ID], t in 1:T))
+		function resource_in_zone_with_TechType(tt::Int64, z::Int64)
+			condition::BitVector = (resource_type_mga.(gen) .== TechTypes[tt]) .& (zone_id.(gen) .== z)
+			return resource_id.(gen[condition])
+		end
+        @constraint(EP,cGeneration[tt = 1:length(TechTypes), z = 1:Z], vSumvP[tt,z] == sum(EP[:vP][y,t] * inputs["omega"][t] for y in resource_in_zone_with_TechType(tt,z), t in 1:T))
 
 	    ### End Constraints ###
 
@@ -74,7 +78,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath
 	    for i in 1:setup["ModelingToGenerateAlternativeIterations"]
 
 	    	# Create random coefficients for the generators that we want to include in the MGA run for the given budget
-	    	pRand = rand(length(unique(dfGen[dfGen[!, :MGA] .== 1, :Resource_Type])),length(unique(dfGen[!,:Zone])))
+	    	pRand = rand(length(TechTypes),length(zones))
 
 	    	### Maximization objective
 	    	@objective(EP, Max, sum(pRand[tt,z] * vSumvP[tt,z] for tt in 1:length(TechTypes), z in 1:Z ))

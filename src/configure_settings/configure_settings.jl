@@ -24,7 +24,8 @@ function default_settings()
         "IncludeLossesInESR" => 0,
         "HydrogenHourlyMatching" => 0,
         "EnableJuMPStringNames" => false,
-        "ComputeConflicts" => 0
+        "ComputeConflicts" => 0,
+        "ResourcePath" => "Resources",
     )
 end
 

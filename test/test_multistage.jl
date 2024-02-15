@@ -5,7 +5,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = [79734.80032, 41630.03494, 27855.20631]
-test_path = joinpath(@__DIR__,"MultiStage");
+test_path = joinpath(@__DIR__, "MultiStage");
 
 # Define test inputs
 multistage_setup = Dict(
@@ -25,6 +25,7 @@ genx_setup = Dict(
     "UCommit" => 2,
     "MultiStage" => 1,
     "MultiStageSettingsDict" => multistage_setup,
+    "ResourcePath" => "Resources",
 )
 
 # Run the case and get the objective value and tolerance
@@ -53,7 +54,7 @@ function test_new_build(EP::Dict,inputs::Dict)
 
     for t in keys(EP)
         if t==1
-            a = value(EP[t][:eTotalCap][1]) <= inputs[1]["dfGen"][1,:Existing_Cap_MW][1]
+            a = value(EP[t][:eTotalCap][1]) <= GenX.existing_cap_mw(inputs[1]["RESOURCES"][1])[1]
         else
             a = value(EP[t][:eTotalCap][1]) <= value(EP[t-1][:eTotalCap][1])
         end
@@ -71,7 +72,7 @@ function test_can_retire(EP::Dict,inputs::Dict)
     
     for t in keys(EP)
         if t==1
-            a = value(EP[t][:eTotalCap][1]) >= inputs[1]["dfGen"][1,:Existing_Cap_MW][1]
+            a = value(EP[t][:eTotalCap][1]) >= GenX.existing_cap_mw(inputs[1]["RESOURCES"][1])[1]
         else
             a = value(EP[t][:eTotalCap][1]) >= value(EP[t-1][:eTotalCap][1])
         end

@@ -20,6 +20,7 @@ genx_setup = Dict(
 EP, _, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
+
 obj_test = objective_value(EP)
 optimal_tol_rel = get_attribute(EP, "ipm_optimality_tolerance")
 optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance

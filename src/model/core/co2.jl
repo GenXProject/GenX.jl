@@ -13,7 +13,7 @@ fraction, and whether the feedstock is biomass. Biomass is a factor in this equa
 biomass generators are assumed to generate zero net CO2 emissions, or negative net CO2 emissions 
 in the case that the CO2 they emit is captured and sequestered underground.
 
-If a user wishes to represent a generator that combusts biomass, then in Generators_data.csv,
+If a user wishes to represent a generator that combusts biomass, then in the resource .csv files,
 the "Biomass" column (boolean, 1 or 0), which represents if a generator $y$ uses biomass or not, should be set to 1.
 The CO2 emissions from such a generator will be assumed to be zero without CCS and negative with CCS.
 
@@ -54,29 +54,30 @@ function co2!(EP::Model, inputs::Dict)
 
     println("CO2 Module")
 
-    dfGen = inputs["dfGen"]
+    gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
+
     ### Expressions ###
-    # CO2 emissions from power plants in "Generators_data.csv"
-    # If all the CO2 capture fractions from Generators_data are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
-    if all(dfGen.CO2_Capture_Fraction .==0)
+    # CO2 emissions from power plants in "Thermal.csv"
+    # If all the CO2 capture fractions from Thermal.csv are zeros, the CO2 emissions from thermal generators are determined by fuel consumption times CO2 content per MMBTU 
+    if all(co2_capture_fraction.(gen) .==0)
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T], 
-            ((1-dfGen[y, :Biomass]) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[dfGen[y,:Fuel]]))
+            ((1-biomass(gen[y])) *(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]) * fuel_CO2[fuel(gen[y])]))
     else 
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
         # CO2_Capture_Fraction refers to the CO2 capture rate of CCS equiped power plants at a steady state 
         # CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equiped power plants during startup events
         @expression(EP, eEmissionsByPlant[y=1:G, t=1:T],
-            (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction]) * EP[:vFuel][y, t]  * fuel_CO2[dfGen[y,:Fuel]]+
-            (1-dfGen[y, :Biomass] - dfGen[y, :CO2_Capture_Fraction_Startup]) * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
+            (1-biomass(gen[y]) - co2_capture_fraction(gen[y])) * EP[:vFuel][y, t]  * fuel_CO2[fuel(gen[y])]+
+            (1-biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])])
         
-        # CO2 captured from power plants in "Generators_data.csv"
+        # CO2 captured from power plants in "Thermal.csv"
         @expression(EP, eEmissionsCaptureByPlant[y=1:G, t=1:T],
-            dfGen[y, :CO2_Capture_Fraction] * EP[:vFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]]+
-            dfGen[y, :CO2_Capture_Fraction_Startup] * EP[:eStartFuel][y, t] * fuel_CO2[dfGen[y,:Fuel]])
+            co2_capture_fraction(gen[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(gen[y])]+
+            co2_capture_fraction_startup(gen[y]) * EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])])
 
         @expression(EP, eEmissionsCaptureByPlantYear[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] 
@@ -85,11 +86,10 @@ function co2!(EP::Model, inputs::Dict)
         # when scale factor is on tCO2/MWh = > kt CO2/GWh
         @expression(EP, ePlantCCO2Sequestration[y=1:G], 
             sum(inputs["omega"][t] * eEmissionsCaptureByPlant[y, t] * 
-                dfGen[y, :CCS_Disposal_Cost_per_Metric_Ton] for t in 1:T))
+                ccs_disposal_cost_per_metric_ton(gen[y]) for t in 1:T))
     
         @expression(EP, eZonalCCO2Sequestration[z=1:Z], 
-            sum(ePlantCCO2Sequestration[y] 
-                for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+            sum(ePlantCCO2Sequestration[y] for y in resources_in_zone_by_rid(gen,z)))
     
         @expression(EP, eTotaleCCO2Sequestration, 
             sum(eZonalCCO2Sequestration[z] for z in 1:Z))
@@ -99,7 +99,7 @@ function co2!(EP::Model, inputs::Dict)
 
     # emissions by zone
     @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T], 
-        sum(eEmissionsByPlant[y, t] for y in dfGen[(dfGen[!, :Zone].==z), :R_ID]))
+        sum(eEmissionsByPlant[y, t] for y in resources_in_zone_by_rid(gen,z)))
     return EP
 
 end

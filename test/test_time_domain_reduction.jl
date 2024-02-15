@@ -41,8 +41,9 @@ genx_setup = Dict(
 settings = GenX.default_settings()
 merge!(settings, genx_setup)
 
-clustering_test =
+clustering_test = with_logger(ConsoleLogger(stderr, Logging.Warn)) do
     GenX.cluster_inputs(test_folder, settings_path, settings, random = false)["ClusterObject"]
+end 
 
 # Load true clustering
 clustering_true = JLD2.load(joinpath(TDR_Results_true, "clusters_true.jld2"))["ClusterObject"]

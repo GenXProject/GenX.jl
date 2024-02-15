@@ -11,13 +11,13 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 end
 
 function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
-	G = inputs["G"]
+	gen = inputs["RESOURCES"]
+
 	HAS_FUEL = inputs["HAS_FUEL"]
 	# Fuel consumption cost by each resource, including start up fuel
-	dfPlantFuel = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL], 
-		Fuel = dfGen[HAS_FUEL, :Fuel], 
-		Zone = dfGen[HAS_FUEL,:Zone], 
+	dfPlantFuel = DataFrame(Resource = inputs["RESOURCE_NAMES"][HAS_FUEL], 
+		Fuel = fuel.(gen[HAS_FUEL]), 
+		Zone = zone_id.(gen[HAS_FUEL]), 
 		AnnualSum = zeros(length(HAS_FUEL)))
 	tempannualsum = value.(EP[:ePlantCFuelOut][HAS_FUEL]) + value.(EP[:ePlantCFuelStart][HAS_FUEL])
 
@@ -33,7 +33,7 @@ function write_fuel_consumption_ts(path::AbstractString, inputs::Dict, setup::Di
 	T = inputs["T"]     # Number of time steps (hours)
 	HAS_FUEL = inputs["HAS_FUEL"]
 	# Fuel consumption by each resource per time step, unit is MMBTU
-	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCES"][HAS_FUEL])
+	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCE_NAMES"][HAS_FUEL])
 	tempts = value.(EP[:vFuel] + EP[:eStartFuel])[HAS_FUEL,:]
     if setup["ParameterScale"] == 1
         tempts *= ModelScalingFactor # kMMBTU to MMBTU
@@ -41,7 +41,7 @@ function write_fuel_consumption_ts(path::AbstractString, inputs::Dict, setup::Di
 	dfPlantFuel_TS = hcat(dfPlantFuel_TS,
 		DataFrame(tempts, [Symbol("t$t") for t in 1:T]))
     CSV.write(joinpath(path, "FuelConsumption_plant_MMBTU.csv"), 
-		dftranspose(dfPlantFuel_TS, false), writeheader=false)
+		dftranspose(dfPlantFuel_TS, false), header=false)
 end
 
 

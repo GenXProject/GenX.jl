@@ -20,7 +20,7 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::D
 	filename2 = "Vre_and_stor_wind_variability.csv"
 	vre_stor_wind = load_dataframe(joinpath(my_dir, filename2))
 
-	all_resources = inputs["RESOURCES"]
+	all_resources = inputs["RESOURCE_NAMES"]
 
 	function ensure_column_zeros!(vre_stor_df, all_resources)
 		existing_variability = names(vre_stor_df)

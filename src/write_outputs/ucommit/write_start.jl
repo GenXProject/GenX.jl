@@ -1,10 +1,12 @@
 function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
+	
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	COMMIT = inputs["COMMIT"]
 	# Startup state for each resource in each time step
-	dfStart = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
+	dfStart = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	start = zeros(G,T)
 	start[COMMIT, :] = value.(EP[:vSTART][COMMIT, :])
 	dfStart.AnnualSum = start * inputs["omega"]
@@ -16,5 +18,5 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	total[:, 4:T+3] .= sum(start, dims = 1)
 	rename!(total,auxNew_Names)
 	dfStart = vcat(dfStart, total)
-	CSV.write(joinpath(path, "start.csv"), dftranspose(dfStart, false), writeheader=false)
+	CSV.write(joinpath(path, "start.csv"), dftranspose(dfStart, false), header=false)
 end

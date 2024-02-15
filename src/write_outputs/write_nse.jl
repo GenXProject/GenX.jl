@@ -4,7 +4,6 @@
 Function for reporting non-served energy for every model zone, time step and cost-segment.
 """
 function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	SEG = inputs["SEG"] # Number of demand curtailment segments
@@ -25,6 +24,6 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(total,auxNew_Names)
 	dfNse = vcat(dfNse, total)
 
-	CSV.write(joinpath(path, "nse.csv"),  dftranspose(dfNse, false), writeheader=false)
+	CSV.write(joinpath(path, "nse.csv"),  dftranspose(dfNse, false), header=false)
 	return dfNse
 end
