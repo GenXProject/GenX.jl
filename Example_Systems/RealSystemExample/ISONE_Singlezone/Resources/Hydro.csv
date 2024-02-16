@@ -1,4 +1,0 @@
-region,cluster,Resource,Resource_Type,MGA,R_ID,Zone,LDS,Existing_Cap_MW,New_Build,Can_Retire,Cap_Size,Min_Cap_MW,Max_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Heat_Rate_MMBTU_per_MWh,Fuel,Min_Power,Hydro_Energy_to_Power_Ratio,Ramp_Up_Percentage,Ramp_Dn_Percentage,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost
-NENGREST,1,NENGREST_conventional_hydroelectric_1,other_renewables,0,2,1,0,662.983,0,0,11.24,0,0.0,0,46475,0.0,0,0.0,9.12,None,0.116,1.0,0.083,0.083,0.006916667,0.013833333,0,0
-NENG_CT,1,NENG_CT_conventional_hydroelectric_1,other_renewables,0,15,1,0,67.7,0,0,13.54,0,0.0,0,46475,0.0,0,0.0,9.12,None,0.18,1.0,0.083,0.083,0.006916667,0.013833333,0,0
-NENG_ME,1,NENG_ME_conventional_hydroelectric_1,other_renewables,0,26,1,0,327.81,0,0,7.8,0,0.0,0,46475,0.0,0,0.0,9.12,None,0.402,1.0,0.083,0.083,0.006916667,0.013833333,0,0
