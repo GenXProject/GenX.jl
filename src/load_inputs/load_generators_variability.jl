@@ -10,7 +10,7 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
     if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
         my_dir = data_directory
 	else
-        my_dir = path
+        my_dir = joinpath(path, setup["SystemFolder"])
 	end
     filename = "Generators_variability.csv"
     gen_var = load_dataframe(joinpath(my_dir, filename))

@@ -605,7 +605,8 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
             # this prevents doubled time domain reduction in stages past
             # the first, even if the first stage is okay.
-            prevent_doubled_timedomainreduction(inpath_sub)
+            system_path = joinpath(inpath_sub, mysetup["SystemFolder"])
+            prevent_doubled_timedomainreduction(system_path)
 
         	inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
 
@@ -1000,7 +1001,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
                 # Save output data to stage-specific locations
                 ### TDR_Results/Demand_data_clustered.csv
-                demand_in = get_demand_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per"))
+                demand_in = get_demand_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per"), mysetup["SystemFolder"])
                 demand_in[!,:Sub_Weights] = demand_in[!,:Sub_Weights] * 1.
                 demand_in[1:length(Stage_Weights[per]),:Sub_Weights] .= Stage_Weights[per]
                 demand_in[!,:Rep_Periods][1] = length(Stage_Weights[per])
@@ -1058,7 +1059,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
                 end
 
                 ### TDR_Results/Fuels_data.csv
-                fuel_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", "Fuels_data.csv"))
+                fuel_in = load_dataframe(joinpath(inpath, "Inputs", "Inputs_p$per", mysetup["SystemFolder"], "Fuels_data.csv"))
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1084,7 +1085,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
             mkpath(joinpath(inpath,"Inputs",input_stage_directory, TimeDomainReductionFolder))
 
             ### TDR_Results/Demand_data.csv
-            demand_in = get_demand_dataframe(joinpath(inpath, "Inputs", input_stage_directory))
+            demand_in = get_demand_dataframe(joinpath(inpath, "Inputs", input_stage_directory, mysetup["SystemFolder"]))
             demand_in[!,:Sub_Weights] = demand_in[!,:Sub_Weights] * 1.
             demand_in[1:length(W),:Sub_Weights] .= W
             demand_in[!,:Rep_Periods][1] = length(W)
@@ -1147,7 +1148,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
             ### TDR_Results/Fuels_data.csv
 
-            fuel_in = load_dataframe(joinpath(inpath,"Inputs",input_stage_directory,"Fuels_data.csv"))
+            fuel_in = load_dataframe(joinpath(inpath, "Inputs", input_stage_directory, mysetup["SystemFolder"], "Fuels_data.csv"))
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1169,7 +1170,8 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
         ### TDR_Results/Demand_data.csv
-        demand_in = get_demand_dataframe(inpath)
+        system_path = joinpath(inpath, mysetup["SystemFolder"])
+        demand_in = get_demand_dataframe(system_path)
         demand_in[!,:Sub_Weights] = demand_in[!,:Sub_Weights] * 1.
         demand_in[1:length(W),:Sub_Weights] .= W
         demand_in[!,:Rep_Periods][1] = length(W)
@@ -1231,8 +1233,8 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         end
 
         ### TDR_Results/Fuels_data.csv
-
-        fuel_in = load_dataframe(joinpath(inpath, "Fuels_data.csv"))
+        system_path = joinpath(inpath, mysetup["SystemFolder"])
+        fuel_in = load_dataframe(joinpath(system_path, "Fuels_data.csv"))
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
         NewFuelOutput = vcat(SepFirstRow, FPOutputData)

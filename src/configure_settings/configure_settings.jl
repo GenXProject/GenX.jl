@@ -28,8 +28,11 @@ function default_settings()
         "DC_OPF" => 0,
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
-        "ResourcePath" => "Resources",
         "StorageVirtualDischarge" => 1,
+        "ResourcesFolder" => "Resources",
+        "ResourcePoliciesFolder" => "Policy_assignments",
+        "SystemFolder" => "System",
+        "PoliciesFolder" => "Policies",
     )
 end
 

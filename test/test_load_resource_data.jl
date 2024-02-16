@@ -222,36 +222,42 @@ function test_load_resources_data()
         "OperationalReserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 1,
-        "ResourcePath" => "Resources",
     )
+
+    # Merge the setup with the default settings
+    settings = GenX.default_settings()
+    merge!(settings, setup)
     
     test_path = joinpath("LoadResourceData", "test_gen_non_colocated")
 
     # load dfGen and inputs_true to compare against
     input_true_filenames = InputsTrue("generators_data.csv", "inputs_after_loadgen.jld2")
-    dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, setup)
+    dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, settings)
 
     # Test resource data is loaded correctly
-    gen = GenX.create_resource_array(setup, test_path)
+    resources_path = joinpath(test_path, settings["ResourcesFolder"])
+    gen = GenX.create_resource_array(settings, resources_path)
     @testset "Default fields" begin
         test_load_scaled_resources_data(gen, dfGen)
     end
 
     # Test policy fields are correctly added to the resource structs
-    GenX.add_policies_to_resources!(gen, setup, test_path)
+    resource_policies_path = joinpath(resources_path, settings["ResourcePoliciesFolder"])
+    GenX.validate_policy_files(resource_policies_path, settings)
+    GenX.add_policies_to_resources!(gen, resource_policies_path)
     @testset "Policy attributes" begin
         test_add_policies_to_resources(gen, dfGen)
     end
 
     # Test modules are correctly added to the resource structs
-    GenX.add_modules_to_resources!(gen, setup, test_path)
+    GenX.add_modules_to_resources!(gen, settings, resources_path)
     @testset "Module attributes" begin
         test_add_modules_to_resources(gen, dfGen)
     end
 
     # Test that the inputs keys are correctly set
     inputs = load(joinpath(test_path, "inputs_before_loadgen.jld2"))
-    GenX.add_resources_to_input_data!(inputs, setup, test_path, gen)
+    GenX.add_resources_to_input_data!(inputs, settings, gen)
     @testset "Inputs keys" begin
         test_inputs_keys(inputs, inputs_true)
     end
@@ -269,22 +275,28 @@ function test_load_VRE_STOR_data()
         "OperationalReserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 0,
-        "ResourcePath" => "Resources",
     )
+
+    # Merge the setup with the default settings
+    settings = GenX.default_settings()
+    merge!(settings, setup)
         
     test_path = joinpath("LoadResourceData","test_gen_vre_stor")
     input_true_filenames = InputsTrue("generators_data.csv", "inputs_after_loadgen.jld2")
-    dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, setup)
+    dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, settings)
 
     dfVRE_STOR = GenX.load_dataframe(joinpath(test_path, "Vre_and_stor_data.csv"))
     dfVRE_STOR = GenX.rename!(dfVRE_STOR, lowercase.(names(dfVRE_STOR)))
-    scale_factor = setup["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.
+    scale_factor = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.
     GenX.scale_vre_stor_data!(dfVRE_STOR, scale_factor)
 
-    gen = GenX.create_resource_array(setup, test_path)
-    GenX.add_policies_to_resources!(gen, setup, test_path)
+    resources_path = joinpath(test_path, settings["ResourcesFolder"])
+    gen = GenX.create_resource_array(settings, resources_path)
+    resource_policies_path = joinpath(resources_path, settings["ResourcePoliciesFolder"])
+    GenX.validate_policy_files(resource_policies_path, settings)
+    GenX.add_policies_to_resources!(gen, resource_policies_path)
     inputs = load(joinpath(test_path, "inputs_before_loadgen.jld2"))
-    GenX.add_resources_to_input_data!(inputs, setup, test_path, gen)
+    GenX.add_resources_to_input_data!(inputs, settings, gen)
 
     @test GenX.vre_stor(gen) == dfGen[dfGen.vre_stor .== 1, :r_id]
     sort!(dfVRE_STOR, :resource)

@@ -9,7 +9,8 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
         my_dir = data_directory
     else
-        my_dir = path
+        # If TDR is not used, then use the directory specified in the default setup
+        my_dir = joinpath(path, setup["SystemFolder"])
     end
     filename = "Fuels_data.csv"
     fuels_in = load_dataframe(joinpath(my_dir, filename))

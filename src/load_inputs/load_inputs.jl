@@ -13,11 +13,15 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	## Read input files
 	println("Reading Input CSV Files")
+	## input paths
+	system_path = joinpath(path, setup["SystemFolder"])
+	resources_path = joinpath(path, setup["ResourcesFolder"])
+	policy_path = joinpath(path, setup["PoliciesFolder"])
 	## Declare Dict (dictionary) object used to store parameters
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
-	if isfile(joinpath(path,"Network.csv"))
-		network_var = load_network_data!(setup, path, inputs)
+	if isfile(joinpath(system_path,"Network.csv"))
+		network_var = load_network_data!(setup, system_path, inputs)
 	else
 		inputs["Z"] = 1
 		inputs["L"] = 0
@@ -28,14 +32,14 @@ function load_inputs(setup::Dict,path::AbstractString)
 	# Read fuel cost data, including time-varying fuel costs
 	load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
-	load_resources_data!(inputs, setup, path)
+	load_resources_data!(inputs, setup, path, resources_path)
 	# Read in generator/resource availability profiles
 	load_generators_variability!(setup, path, inputs)
 
     validatetimebasis(inputs)
 
 	if setup["CapacityReserveMargin"]==1
-		load_cap_reserve_margin!(setup, path, inputs)
+		load_cap_reserve_margin!(setup, policy_path, inputs)
 		if inputs["Z"] >1
 			load_cap_reserve_margin_trans!(setup, inputs, network_var)
 		end
@@ -43,32 +47,32 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	# Read in general configuration parameters for operational reserves (resource-specific reserve parameters are read in load_resources_data)
 	if setup["OperationalReserves"]==1
-		load_operational_reserves!(setup, path, inputs)
+		load_operational_reserves!(setup, system_path, inputs)
 	end
 
 	if setup["MinCapReq"] == 1
-		load_minimum_capacity_requirement!(path, inputs, setup)
+		load_minimum_capacity_requirement!(policy_path, inputs, setup)
 	end
 
 	if setup["MaxCapReq"] == 1
-		load_maximum_capacity_requirement!(path, inputs, setup)
+		load_maximum_capacity_requirement!(policy_path, inputs, setup)
 	end
 
 	if setup["EnergyShareRequirement"]==1
-		load_energy_share_requirement!(setup, path, inputs)
+		load_energy_share_requirement!(setup, policy_path, inputs)
 	end
 
 	if setup["CO2Cap"] >= 1
-		load_co2_cap!(setup, path, inputs)
+		load_co2_cap!(setup, policy_path, inputs)
 	end
 
 	if !isempty(inputs["VRE_STOR"])
-		load_vre_stor_variability!(setup, path, inputs)
+		load_vre_stor_variability!(setup, system_path, inputs)
 	end
 
 	# Read in mapping of modeled periods to representative periods
-	if is_period_map_necessary(inputs) && is_period_map_exist(setup, path, inputs)
-		load_period_map!(setup, path, inputs)
+	if is_period_map_necessary(inputs) && is_period_map_exist(setup, system_path, inputs)
+		load_period_map!(setup, system_path, inputs)
 	end
 
 	# Virtual charge discharge cost
