@@ -356,17 +356,20 @@ returns: JuMP model with updated linking constraints.
 """
 function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict, inputs_d::Dict)
 	
-    RET_CAP = inputs_d["RET_CAP"] # Set of all resources subject to inter-stage capacity tracking
-
+    ALL_CAP = union(inputs_d["RET_CAP"],inputs_d["NEW_CAP"]) # Set of all resources subject to inter-stage capacity tracking
+    
     # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-	    if y[1] in RET_CAP # extract resource integer index value from key
-                # Set the right hand side value of the linking initial capacity constraint in the current
-                # stage to the value of the available capacity variable solved for in the previous stages
-                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-            end
+                # Set the right hand side value of the linking initial capacity constraint in the current stage to the value of the available capacity variable solved for in the previous stages
+                if c == :cExistingTransCap
+                    set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+                else
+	                if y[1] in ALL_CAP # extract resource integer index value from key
+                        set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+                    end
+                end
         end
     end
     return EP_cur

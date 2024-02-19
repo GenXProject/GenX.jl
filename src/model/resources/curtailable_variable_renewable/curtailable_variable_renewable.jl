@@ -14,22 +14,22 @@ Note that if ```Reserves=1``` indicating that frequency regulation and operating
 """
 function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Controllable variable renewable generators
-	### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Generators_data.csv  >1
+	### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Vre.csv  >1
 	## Default value of Num_VRE_Bins ==1
 	println("Dispatchable Resources Module")
 
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
-	G = inputs["G"] 	# Number of generators
+	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
 	VRE = inputs["VRE"]
 
-	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
+	VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 
 	VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
 	### Expressions ###
@@ -37,13 +37,13 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Power Balance Expressions ##
 
 	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID]))
+		sum(EP[:vP][y,t] for y in intersect(VRE, resources_in_zone_by_rid(gen,z)))
 	)
 	add_similar_to_expression!(EP[:ePowerBalance], EP[:ePowerBalanceDisp])
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
+		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res) * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceVRE)
 	end
 
@@ -57,7 +57,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
         for y in VRE_POWER_OUT
             # Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
             # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-            VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
+            VRE_BINS = intersect(resource_id.(gen[resource_id.(gen) .>= y]), resource_id.(gen[resource_id.(gen) .<= y+num_vre_bins(gen[y])-1]))
 
             # Maximum power generated per hour by renewable generators must be less than
             # sum of product of hourly capacity factor for each bin times its the bin installed capacity
@@ -72,7 +72,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	end
 	##CO2 Polcy Module VRE Generation by zone
 	@expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
-		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
+		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], resources_in_zone_by_rid(gen,z)))
 	)
 	add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByVRE)
 
@@ -102,11 +102,11 @@ The amount of frequency regulation and operating reserves procured in each time 
 ```
 """
 function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 	T = inputs["T"]
 
     VRE = inputs["VRE"]
-	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
+	VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 
     REG = intersect(VRE_POWER_OUT, inputs["REG"])
     RSV = intersect(VRE_POWER_OUT, inputs["RSV"])
 
@@ -115,15 +115,13 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
     vREG = EP[:vREG]
     vRSV = EP[:vRSV]
     hourly_capacity_factor(y, t) = inputs["pP_Max"][y, t]
-    reg_max(y) = dfGen[y, :Reg_Max]
-    rsv_max(y) = dfGen[y, :Rsv_Max]
 
     hourly_capacity(y, t) = hourly_capacity_factor(y, t) * eTotalCap[y]
-    resources_in_bin(y) = UnitRange(y, y + dfGen[y, :Num_VRE_Bins] - 1)
+    resources_in_bin(y) = UnitRange(y, y + num_vre_bins(gen[y]) - 1)
     hourly_bin_capacity(y, t) = sum(hourly_capacity(yy, t) for yy in resources_in_bin(y))
 
-    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= reg_max(y) * hourly_bin_capacity(y, t))
-    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= rsv_max(y) * hourly_bin_capacity(y, t))
+    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= reg_max(gen[y]) * hourly_bin_capacity(y, t))
+    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= rsv_max(gen[y]) * hourly_bin_capacity(y, t))
 
     expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
     add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
@@ -136,10 +134,10 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
 end
 
 function remove_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
-    dfGen = inputs["dfGen"]
+    gen = inputs["RESOURCES"]
 
     VRE = inputs["VRE"]
-    VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
+    VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins)) 
     REG = inputs["REG"]
     RSV = inputs["RSV"]
 

@@ -1,0 +1,12 @@
+Resource,Zone,Model,LDS,RETRO,Num_RETRO_Sources,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Up_Time,Down_Time,Ramp_Up_Percentage,Ramp_Dn_Percentage,Hydro_Energy_to_Power_Ratio,Min_Power,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,MGA,Resource_Type,region,cluster,Retro1_Source,Retro1_Efficiency,Retro1_Inv_Cost_per_MWyr,Retro2_Source,Retro2_Efficiency,Retro2_Inv_Cost_per_MWyr
+NGCC_bf,1,1,0,0,0,0,1,3400,-1,0,40000,12000,3,7.3,ng,200,70,1,6,2,0.64,0.64,0,0.4,0.25,0.5,0,0,1,NGCC,MO,1,None,0,-1,None,0,-1
+NGCC_gf,1,1,0,0,0,1,1,0,-1,0,40000,12000,3,7.3,ng,200,70,1,6,2,0.64,0.64,0,0.4,0.25,0.5,0,0,1,NGCC,MO,1,None,0,-1,None,0,-1
+NGCT_bf,1,1,0,0,0,0,1,8200,-1,0,30000,11000,4,14.3,ng,100,90,1,6,1,0.64,0.64,0,0.2,0.25,0.5,0,0,1,NGCT,MO,1,None,0,-1,None,0,-1
+NGCT_gf,1,1,0,0,0,1,1,0,-1,0,30000,11000,4,14.3,ng,100,90,1,6,1,0.64,0.64,0,0.2,0.25,0.5,0,0,1,NGCT,MO,1,None,0,-1,None,0,-1
+NGST,1,1,0,0,0,0,1,1060,-1,0,0,11000,4,12.1,ng,500,90,1,6,1,0.64,0.64,0,0.2,0.25,0.5,0,0,1,NGST,MO,1,None,0,-1,None,0,-1
+Coal,1,1,0,0,0,0,1,14700,-1,0,0,30000,5,10.4,coal,500,150,10,6,6,0.64,0.64,0,0.4,0.25,0.5,0,0,1,Coal,MO,1,None,0,-1,None,0,-1
+Nuclear,1,1,0,0,0,0,1,2360,-1,0,0,100000,2,7.43,uranium,1000,0,0,0,0,0.64,0.64,0,0,0.25,0.5,0,0,1,Nuclear,MO,1,None,0,-1,None,0,-1
+Biomass,1,1,0,0,0,0,0,20,-1,0,0,100000,5,13,biomass,100,90,2,6,2,0.64,0.64,0,0.4,0.25,0.5,0,0,1,Biomass,MO,1,None,0,-1,None,0,-1
+Retro_NGCC_CCS,1,1,0,1,2,1,1,0,-1,0,60000,16000,3,7.3,ng_ccs,200,70,1,6,2,0.64,0.64,0,0.4,0.25,0.5,0,0,1,NGCC_CCS,MO,1,NGCC_bf,0.85,60000,NGCC_gf,0.9,55000
+Retro_NGCC_H2,1,1,0,1,2,1,1,0,-1,0,40000,12000,3,7.3,h2,200,70,1,6,2,0.64,0.64,0,0.4,0.25,0.5,0,0,1,Hydrogen,MO,1,NGCC_bf,0.85,40000,NGCC_gf,0.9,35000
+Retro_Coal_SMR,1,1,0,1,1,1,1,0,-1,0,0,6200,0.75,7.43,uranium,200,0,0,0,0,0.64,0.64,0,0,0.25,0.5,0,0,1,Nuclear,MO,1,Coal,0.85,195000,None,0,-1

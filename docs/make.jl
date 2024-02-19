@@ -51,6 +51,7 @@ pages = OrderedDict(
             ],
             "Hydrogen Electrolyzers" => "electrolyzers.md",
             "Scheduled maintenance for various resources" => "maintenance.md",
+            "Resource types" => "resource.md"
         ],
         "Multi_stage" => [
                 "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
@@ -70,7 +71,7 @@ pages = OrderedDict(
     "GenX Outputs Functions" =>"write_outputs.md",
     "Additional Features" => "additional_features.md",
     "Third Party Extensions" => "additional_third_party_extensions.md",
-    #"Unit Testing (Under Development)" => "unit_testing.md"
+    "Developer Docs" => "developer_guide.md",
 )
 makedocs(;
     modules=[GenX],

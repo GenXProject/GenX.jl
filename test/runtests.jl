@@ -9,12 +9,14 @@ include("utilities.jl")
     include("simple_op_test.jl")
 end
 
-@testset "Resource validation" begin
-    include("resource_test.jl")
+@testset "Expr manipulation" begin
+    include("expression_manipulation_test.jl")
 end
 
-@testset "Expression manipulation" begin
-    include("expression_manipulation_test.jl")
+if VERSION ≥ v"1.7"
+    @testset "Resource loading" begin
+        include("test_load_resource_data.jl")
+    end
 end
 
 # Test GenX modules
@@ -23,15 +25,15 @@ end
         include("test_threezones.jl")
     end
 
-    @testset "Time domain reduction" begin
+    @testset "TDR" begin
         include("test_time_domain_reduction.jl")
     end
 
-    @testset "PiecewiseFuel CO2" begin
+    @testset "Piecewise Fuel" begin
         include("test_piecewisefuel_CO2.jl")
     end
 
-    @testset "VRE and storage" begin
+    @testset "VRE_STOR" begin
         include("test_VREStor.jl")
     end
 
@@ -45,5 +47,9 @@ end
 
     @testset "Multi Fuels" begin
         include("test_multifuels.jl")
+    end
+
+    @testset "Compute Conflicts" begin
+        include("test_compute_conflicts.jl")
     end
 end

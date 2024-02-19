@@ -1,11 +1,12 @@
 function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	RSV = inputs["RSV"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	dfRsv = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
+	dfRsv = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	rsv = zeros(G,T)
 	unmet_vec = zeros(T)
 	rsv[RSV, :] = value.(EP[:vRSV][RSV, :]) * scale_factor
@@ -23,5 +24,5 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(total,auxNew_Names)
 	rename!(unmet,auxNew_Names)
 	dfRsv = vcat(dfRsv, unmet, total)
-	CSV.write(joinpath(path, "reg_dn.csv"), dftranspose(dfRsv, false), writeheader=false)
+	CSV.write(joinpath(path, "reg_dn.csv"), dftranspose(dfRsv, false), header=false)
 end

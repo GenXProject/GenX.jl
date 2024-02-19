@@ -5,7 +5,7 @@ Function for writing the costs pertaining to the objective function (fixed, vari
 """
 function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	## Cost results
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 	SEG = inputs["SEG"]  # Number of lines
 	Z = inputs["Z"]     # Number of zones
 	T = inputs["T"]     # Number of time steps (hours)
@@ -33,9 +33,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ? value(EP[:eTotalCFixCharge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_DC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ? value(EP[:eTotalCFixCharge_AC]) : 0.0) + (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ? value(EP[:eTotalCFixDischarge_AC]) : 0.0)) 
 			cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
 		end
-		total_cost =[objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+		total_cost =[value(EP[:eObj]), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 	else
-		total_cost = [objective_value(EP), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
+		total_cost = [value(EP[:eObj]), cFix, cVar, cFuel, value(EP[:eTotalCNSE]), 0.0, 0.0, 0.0, 0.0, 0.0]
 	end
 
 	if !isempty(ELECTROLYZER)
@@ -80,7 +80,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[!,2][11] = value(EP[:eTotalCGrid]) * (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
 	end
 
-	if any(dfGen.CO2_Capture_Fraction .!= 0)
+	if any(co2_capture_fraction.(gen) .!= 0)
 		dfCost[10,2] += value(EP[:eTotaleCCO2Sequestration])
 	end
 
@@ -102,7 +102,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		tempHydrogenValue = 0.0
 		tempCCO2 = 0.0
 
-		Y_ZONE = dfGen[dfGen[!,:Zone].==z,:R_ID]
+		Y_ZONE = resources_in_zone_by_rid(gen,z)
 		STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
 		STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
 		FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
@@ -138,8 +138,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 			tempCTotal += eCVarFlex_in
 		end
 		if !isempty(VRE_STOR)
-			dfVRE_STOR = inputs["dfVRE_STOR"]
-			Y_ZONE_VRE_STOR = dfVRE_STOR[dfVRE_STOR[!,:Zone].==z,:R_ID]
+			gen_VRE_STOR = gen.VreStorage
+			Y_ZONE_VRE_STOR = resources_in_zone_by_rid(gen_VRE_STOR, z)
 
 			# Fixed Costs
 			eCFix_VRE_STOR = 0.0

@@ -11,13 +11,13 @@ end
 
 
 function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+    gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
     # CO2 emissions by plant
-    dfEmissions_plant = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
+    dfEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(gen), AnnualSum=zeros(G))
     emissions_plant = value.(EP[:eEmissionsByPlant])
     if setup["ParameterScale"] == 1
         emissions_plant *= ModelScalingFactor
@@ -31,17 +31,17 @@ function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Di
     total = DataFrame(["Total" 0 sum(dfEmissions_plant[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:T+3] .= sum(emissions_plant, dims=1)
     dfEmissions_plant = vcat(dfEmissions_plant, total)
-    CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), writeheader=false)
+    CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), header=false)
 end
 
 function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+    gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     CCS = inputs["CCS"]
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCES"][CCS], Zone=dfGen[CCS, :Zone], AnnualSum=zeros(length(CCS)))
+    dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"][CCS], Zone=zone_id.(gen[CCS]), AnnualSum=zeros(length(CCS)))
     if !isempty(CCS)
         # Captured CO2 emissions by plant
         emissions_captured_plant = zeros(length(CCS), T)
@@ -59,6 +59,6 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
         total[!, 4:T+3] .= sum(emissions_captured_plant, dims=1)
         dfCapturedEmissions_plant = vcat(dfCapturedEmissions_plant, total)
 
-        CSV.write(joinpath(path, "captured_emissions_plant.csv"), dftranspose(dfCapturedEmissions_plant, false), writeheader=false)
+        CSV.write(joinpath(path, "captured_emissions_plant.csv"), dftranspose(dfCapturedEmissions_plant, false), header=false)
     end
 end

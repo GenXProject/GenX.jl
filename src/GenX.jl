@@ -45,6 +45,11 @@ using HiGHS
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 const ModelScalingFactor = 1e+3
 
+"""
+An abstract type that should be subtyped for users creating GenX resources.
+"""
+abstract type AbstractResource end
+
 # thanks, ChatGPT
 function include_all_in_folder(folder)
     base_path = joinpath(@__DIR__, folder)
@@ -72,4 +77,5 @@ include("simple_operation.jl")
 
 include_all_in_folder("multi_stage")
 include_all_in_folder("additional_tools")
+
 end

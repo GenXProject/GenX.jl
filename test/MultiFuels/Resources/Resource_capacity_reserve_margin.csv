@@ -1,0 +1,5 @@
+Resource,Derating_Factor_1
+natural_gas_combined_cycle,0.93
+solar_pv,0.8
+onshore_wind,0.8
+battery,0.95

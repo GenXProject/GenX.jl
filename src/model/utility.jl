@@ -67,21 +67,19 @@ function is_nonzero(df::DataFrame, col::Symbol)::BitVector
 	convert(BitVector, df[!, col] .> 0)::BitVector
 end
 
-@doc raw"""
-    by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
-    
-    This function extracts the row of a DataFrame df for the resource given by the resource ID "rid".
-"""
-function by_rid_df(rid::Integer, sym::Symbol, df::DataFrame)
-	return df[df.R_ID .== rid, sym][]
+function is_nonzero(rs::Vector{AbstractResource}, col::Symbol)
+    !isnothing(findfirst(r -> get(r, col, 0) ≠ 0, rs))
 end
 
-@doc raw"""
-    by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
+@doc raw""" 
+    by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
     
-    This function extracts the rows of a DataFrame df for the resources given by the vector of resource IDs "rid".
+    This function returns the value of the attribute `sym` for the resource given by the ID `rid`.
 """
-function by_rid_df(rid::Vector{Int}, sym::Symbol, df::DataFrame)
-	indices = [findall(x -> x == y, df.R_ID)[] for y in rid]
-	return df[indices, sym]
+function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
+    r = rs[findfirst(resource_id.(rs) .== rid)]
+    # use getter function for attribute `sym` if exists in GenX, otherwise get the attribute directly
+    f = isdefined(GenX, sym) ? getfield(GenX, sym) : r -> getproperty(r, sym)
+    return f(r)
 end
+

@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maintenance formulation for thermal-commit plants (#556).
 - Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
   piecewise_fuel+CO2, and TDR (#563 and #578).
+- Added write_operating_reserve_price_revenue.jl to compute annual operating reserve and regulation revenue.
+  Added the operating reserve and regulation revenue to net revenue (PR # 611)
+- Add functions to compute conflicting constraints when model is infeasible if supported by the solver (#624).
+- New settings parameter, VirtualChargeDischargeCost to test script and VREStor example case. The PR 608 attempts to 
+  introduce this parameter as cost of virtual charging and discharging to avoid unusual results (#608). 
 
 
 ### Fixed
@@ -38,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix access of eELOSSByZone expr before initialization (#541)
 - Correctly write unmet reserves (in reg_dn.csv) (#575)
 - Correctly scale total reserves column (in reg_dn.csv) (#594)
+- Add validation for `Reg_Max` and `Rsv_Max` columns in `Generators_data.csv` when `MUST_RUN` is set to 1 (#576)
+- Fix scaling of transmission losses in write_transmission_losses.jl (#621)
+- Fix cost assignment to virtual storage charge/discharge - issue #604 (#608)
+- Fix modeling of hydro reservoir with long duration storage (#572).
+- Fix update of starting transmission capacity in multistage GenX
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
@@ -55,6 +65,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to specify the solver. (#531)
 - In the examples, change Reg_Max and Rsv_Max of any MUST_RUN generators to 0.
   This mitigates but does not fully fix (#576).
+- Expressions of virtual charging and discharging costs in storage_all.jl and vre_stor.jl
+- The input file `Generators_data.csv` has been split into different files, one for each type of generator.
+  The new files are: `Thermal.csv`, `Hydro.csv`, `Vre.csv`, `Storage.csv`, `Flex_demand.csv`, `Must_run.csv`, 
+  `Electrolyzer.csv`, and `Vre_stor.csv`. The examples have been updated, and new tests have been added to 
+  check the new data format (#612).
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.

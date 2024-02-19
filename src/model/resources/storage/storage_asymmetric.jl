@@ -10,7 +10,6 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Resources with Asmymetric Charge/Discharge Capacity Module")
 
-	dfGen = inputs["dfGen"]
 	Reserves = setup["Reserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 

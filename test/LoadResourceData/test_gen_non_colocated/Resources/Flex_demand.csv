@@ -1,0 +1,4 @@
+Resource,Zone,MGA,Resource_Type,Max_Flexible_Demand_Advance,Max_Flexible_Demand_Delay,Flexible_Demand_Energy_Eff,Existing_Cap_MW,Cap_Size,Min_Cap_MW,Max_Cap_MW,New_Build,Can_Retire,Inv_Cost_Per_MWyr,Fixed_Om_Cost_Per_MWyr,Var_Om_Cost_Per_MWh,Var_Om_Cost_Per_MWh_In,Heat_Rate_Mmbtu_Per_MWh,Region,Cluster
+NENGREST_heat_load_shifting_1,1,1,heat_load_shifting,0,4,1,165.52,0,0,0,0,0,0,0,0,0,0,NENGREST,1
+NENG_CT_heat_load_shifting_1,2,1,heat_load_shifting,0,4,1,47.27,0,0,0,0,0,0,0,0,0,0,NENG_CT,1
+NENG_ME_heat_load_shifting_1,3,1,heat_load_shifting,0,4,1,22.56,0,0,0,0,0,0,0,0,0,0,NENG_ME,1
