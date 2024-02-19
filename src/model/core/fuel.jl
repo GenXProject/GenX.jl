@@ -111,10 +111,10 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         min_cofire_start =inputs["MIN_COFIRE_START"]
         max_cofire_start =inputs["MAX_COFIRE_START"]
 
-        COFIRE_MAX = [findall(g -> max_cofire_cols(g, tag=1) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
-        COFIRE_MAX_START = [findall(g -> max_cofire_start_cols(g, tag=1) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
-        COFIRE_MIN = [findall(g -> min_cofire_cols(g, tag=1) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
-        COFIRE_MIN_START = [findall(g -> min_cofire_start_cols(g, tag=1) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
+        COFIRE_MAX = [findall(g -> max_cofire_cols(g, tag=i) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
+        COFIRE_MAX_START = [findall(g -> max_cofire_start_cols(g, tag=i) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
+        COFIRE_MIN = [findall(g -> min_cofire_cols(g, tag=i) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
+        COFIRE_MIN_START = [findall(g -> min_cofire_start_cols(g, tag=i) < 1, gen[MULTI_FUELS]) for i in 1:max_fuels]
         
         @variable(EP, vMulFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0) 
         @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T] >= 0)  

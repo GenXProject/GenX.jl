@@ -46,9 +46,9 @@ function write_fuel_consumption_plant(path::AbstractString,inputs::Dict, setup::
 			end
 
 			dfPlantFuel[!, fuel_cols_num[i]] = fuel_cols.(gen[HAS_FUEL], tag=i)
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_HeatInput_Generation"))] = tempannualsum_fuel_heat_multi_generation
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_HeatInput_Start"))] = tempannualsum_fuel_heat_multi_start
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_HeatInput_Total"))] = tempannualsum_fuel_heat_multi_total
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_HeatInput_Generation_MMBtu"))] = tempannualsum_fuel_heat_multi_generation
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_HeatInput_Start_MMBtu"))] = tempannualsum_fuel_heat_multi_start
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_HeatInput_Total_MMBtu"))] = tempannualsum_fuel_heat_multi_total
 			dfPlantFuel[!, Symbol(string(fuel_cols_num[i],"_AnnualSum_Fuel_Cost"))] = tempannualsum_fuel_cost_multi
 		end
 	end
