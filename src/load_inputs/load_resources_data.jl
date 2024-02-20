@@ -946,6 +946,17 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # For now, the only resources eligible for UC are themal resources
     inputs["COMMIT"] = inputs["THERM_COMMIT"]
 
+	# Set of CCS resources (optional set):
+    inputs["CCS"] = ids_with_positive(gen, co2_capture_fraction)
+
+    # Single-fuel resources
+	inputs["SINGLE_FUEL"] = ids_with_singlefuel(gen)
+	# Multi-fuel resources
+	inputs["MULTI_FUELS"] = ids_with_multifuels(gen)
+	if !isempty(inputs["MULTI_FUELS"]) # If there are any resources using multi fuels, read relevant data
+		load_multi_fuels_data!(inputs, gen, setup, case_path)
+	end
+
     buildable = is_buildable(gen)
     retirable = is_retirable(gen)
 
@@ -1060,7 +1071,11 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 
     # Fuel
     inputs["HAS_FUEL"] = ids_with_fuel(gen)
-
+    if !isempty(inputs["MULTI_FUELS"])
+        inputs["HAS_FUEL"] = union(inputs["HAS_FUEL"], inputs["MULTI_FUELS"])
+        sort!(inputs["HAS_FUEL"])
+    end
+ 
     inputs["RESOURCES"] = gen
     return nothing
 end
@@ -1130,4 +1145,43 @@ function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractStri
 
         return nothing
     end
+end
+
+@doc raw"""
+	load_multi_fuels_data!(inputs::Dict, setup::Dict, path::AbstractString)
+
+Function for reading input parameters related to multi fuels
+"""
+function load_multi_fuels_data!(inputs::Dict, gen::Vector{<:AbstractResource}, setup::Dict, path::AbstractString)
+
+	inputs["NUM_FUELS"] = num_fuels.(gen)   # Number of fuels that this resource can use
+	max_fuels = maximum(inputs["NUM_FUELS"])
+    inputs["FUEL_COLS"] = [ Symbol(string("Fuel",f)) for f in 1:max_fuels ]
+	fuel_types = [fuel_cols.(gen, tag=f) for f in 1:max_fuels]
+	heat_rates = [heat_rate_cols.(gen, tag=f) for f in 1:max_fuels]
+	max_cofire = [max_cofire_cols.(gen, tag=f) for f in 1:max_fuels]
+	min_cofire = [min_cofire_cols.(gen, tag=f) for f in 1:max_fuels]
+	max_cofire_start = [max_cofire_start_cols.(gen, tag=f) for f in 1:max_fuels]
+	min_cofire_start = [min_cofire_start_cols.(gen, tag=f) for f in 1:max_fuels]
+	inputs["HEAT_RATES"] = heat_rates
+	inputs["MAX_COFIRE"] = max_cofire
+	inputs["MIN_COFIRE"] = min_cofire
+	inputs["MAX_COFIRE_START"] = max_cofire_start
+	inputs["MIN_COFIRE_START"] = min_cofire_start
+	inputs["FUEL_TYPES"] = fuel_types
+	inputs["MAX_NUM_FUELS"] = max_fuels
+    inputs["MAX_NUM_FUELS"] = max_fuels
+
+	# check whether non-zero heat rates are used for resources that only use a single fuel
+	for f in 1:max_fuels
+		for hr in heat_rates[f][inputs["SINGLE_FUEL"]]
+			if  hr > 0 
+				error("Heat rates for multi fuels must be zero when only one fuel is used")
+			end
+		end
+	end
+	# do not allow the multi-fuel option when piece-wise heat rates are used
+    if haskey(inputs, "THERM_COMMIT_PWFU") && !isempty(inputs["THERM_COMMIT_PWFU"])
+		error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
+	end
 end

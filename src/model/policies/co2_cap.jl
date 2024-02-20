@@ -114,6 +114,7 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 			vCO2Cap_slack[cap] <=
 			sum(inputs["dfMaxCO2Rate"][z,cap] * inputs["omega"][t] * EP[:eGenerationByZone][z,t] for t=1:T, z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
 		)
-	end
+
+	end 
 
 end

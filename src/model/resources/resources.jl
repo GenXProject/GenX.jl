@@ -569,6 +569,14 @@ co2_capture_fraction(r::AbstractResource) = get(r, :co2_capture_fraction, defaul
 co2_capture_fraction_startup(r::AbstractResource) = get(r, :co2_capture_fraction_startup, default_zero)
 ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cost_per_metric_ton, default_zero)
 biomass(r::AbstractResource) = get(r, :biomass, default_zero)
+multi_fuels(r::AbstractResource) = get(r, :multi_fuels, default_zero)
+fuel_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag)), "None")
+num_fuels(r::AbstractResource) = get(r, :num_fuels, default_zero)
+heat_rate_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("heat_rate",tag, "_mmbtu_per_mwh")), default_zero)
+max_cofire_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_max_cofire_level")), 1)
+min_cofire_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_min_cofire_level")), default_zero)
+max_cofire_start_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_max_cofire_level_start")), 1)
+min_cofire_start_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_min_cofire_level_start")), default_zero)
 
 # Reservoir hydro and storage
 const default_percent = 1.0
@@ -614,6 +622,9 @@ is_SDS(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :lds, de
 ids_with_mga(rs::Vector{T}) where T <: AbstractResource = findall(r -> mga(r) == 1, rs)
 
 ids_with_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) != "None", rs)
+
+ids_with_singlefuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 0, rs)
+ids_with_multifuels(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 1, rs)
 
 is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default_zero) == 1, rs)
 is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default_zero) == 1, rs)

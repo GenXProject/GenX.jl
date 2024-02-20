@@ -934,6 +934,32 @@ This file contains the time-series of capacity factors / availability of the win
 
 • Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the `Vre_stor.csv` files in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in all the resource `.csv` files must be unique. 
 
+#### 2.2.12 Settings-specific columns in the Generators\_data.csv to use multi fuels
+
+This file contains additional setting and performance parameters for specifically thermal resources that use multiple fuels.
+These variables must be explicitly listed in the `Generators_data.csv`.
+
+###### Table 17: Settings-specific columns in the Generators\_data.csv file to use multi fuels
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|**Technology type flags**|
+|MULTI_FUELS | {0, 1}, Flag to indicate membership in set of thermal resources that can burn multiple fuels at the same time (e.g., natural gas combined cycle cofiring with hydrogen, coal power plant cofiring with natural gas.|
+||MULTI_FUELS = 0: Not part of set (default) |
+||MULTI_FUELS = 1: Resources that can use fuel blending. |
+|**Technical performance parameters**|
+|Num\_Fuels  |Number of fuels that a multi-fuel generator (MULTI_FUELS = 1) can use at the same time. The length of ['Fuel1', 'Fuel2', ...] should be equal to 'Num\_Fuels'. Each fuel will requires its corresponding heat rate, min cofire level, and max cofire level. |
+|Fuel1  |Frist fuel needed for a mulit-fuel generator (MULTI_FUELS = 1). The names should match with the ones in the `Fuels_data.csv`. |
+|Fuel2  |Second fuel needed for a mulit-fuel generator (MULTI_FUELS = 1). The names should match with the ones in the `Fuels_data.csv`. |
+|Heat1\_Rate\_MMBTU\_per\_MWh  |Heat rate of a multi-fuel generator (MULTI_FUELS = 1) for Fuel1. |
+|Heat2\_Rate\_MMBTU\_per\_MWh  |Heat rate of a multi-fuel generator (MULTI_FUELS = 1) for Fuel2. |
+|Fuel1\_Min\_Cofire\_Level  |The minimum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel1\_Min\_Cofire_Level\_Start  |The minimum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel1\_Max\_Cofire\_Level  |The maximum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel1\_Max\_Cofire_Level\_Start  |The maximum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel2\_Min\_Cofire\_Level  |The minimum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel2\_Min\_Cofire_Level\_Start  |The minimum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel2\_Max\_Cofire\_Level  |The maximum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel2\_Max\_Cofire_Level\_Start  |The maximum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
 
 ## 3 Outputs
 

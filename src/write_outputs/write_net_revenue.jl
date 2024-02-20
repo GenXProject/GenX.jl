@@ -21,6 +21,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	VRE_STOR = inputs["VRE_STOR"]
+	CCS = inputs["CCS"]
 	if !isempty(VRE_STOR)
 		gen_VRE_STOR = gen.VreStorage
 		VRE_STOR_LENGTH = size(inputs["VRE_STOR"])[1]
@@ -130,6 +131,16 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 		dfNetRevenue.Charge_cost = dfChargingcost[1:G,:AnnualSum] # Unit is confirmed to be US$
 	end
 
+	# Add CO2 releated sequestration cost or credit (e.g. 45 Q) to the dataframe
+	dfNetRevenue.CO2SequestrationCost = zeros(nrow(dfNetRevenue))
+	if any(co2_capture_fraction.(gen) .!= 0)
+		dfNetRevenue.CO2SequestrationCost = zeros(G)
+		dfNetRevenue[CCS, :CO2SequestrationCost] = value.(EP[:ePlantCCO2Sequestration]).data
+ 	end
+	if setup["ParameterScale"] == 1
+		dfNetRevenue.CO2SequestrationCost *= ModelScalingFactor^2 # converting Million US$ to US$
+	end
+
 	# Add energy and subsidy revenue to the dataframe
 	dfNetRevenue.EnergyRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.SubsidyRevenue = zeros(nrow(dfNetRevenue))
@@ -196,17 +207,18 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 							.+ dfNetRevenue.OperatingRegulationRevenue
 
 	dfNetRevenue.Cost = (dfNetRevenue.Inv_cost_MW
-                      .+ dfNetRevenue.Inv_cost_MWh
-                      .+ dfNetRevenue.Inv_cost_charge_MW
-                      .+ dfNetRevenue.Fixed_OM_cost_MW
-                      .+ dfNetRevenue.Fixed_OM_cost_MWh
-                      .+ dfNetRevenue.Fixed_OM_cost_charge_MW
-                      .+ dfNetRevenue.Var_OM_cost_out
-                      .+ dfNetRevenue.Var_OM_cost_in
-                      .+ dfNetRevenue.Fuel_cost
-                      .+ dfNetRevenue.Charge_cost
-                      .+ dfNetRevenue.EmissionsCost
-                      .+ dfNetRevenue.StartCost)
+					  .+ dfNetRevenue.Inv_cost_MWh 
+					  .+ dfNetRevenue.Inv_cost_charge_MW
+					  .+ dfNetRevenue.Fixed_OM_cost_MW 
+					  .+ dfNetRevenue.Fixed_OM_cost_MWh 
+					  .+ dfNetRevenue.Fixed_OM_cost_charge_MW
+					  .+ dfNetRevenue.Var_OM_cost_out 
+					  .+ dfNetRevenue.Var_OM_cost_in 
+					  .+ dfNetRevenue.Fuel_cost 
+					  .+ dfNetRevenue.Charge_cost 
+					  .+ dfNetRevenue.EmissionsCost 
+					  .+ dfNetRevenue.StartCost 
+					  .+ dfNetRevenue.CO2SequestrationCost)
 	dfNetRevenue.Profit = dfNetRevenue.Revenue .- dfNetRevenue.Cost
 
 	CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)

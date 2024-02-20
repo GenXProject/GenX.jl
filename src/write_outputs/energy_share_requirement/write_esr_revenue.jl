@@ -67,4 +67,3 @@ function write_esr_revenue(path::AbstractString, inputs::Dict, setup::Dict, dfPo
 	CSV.write(joinpath(path, "ESR_Revenue.csv"), dfESRRev)
 	return dfESRRev
 end
-

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   piecewise-linear approximation of heat rate curves. 
   Adds a CO2 module that determines the CO2 emissions based on fuel consumption, CO2 capture 
   fraction, and whether the feedstock is biomass.
+- Enable thermal power plants to burn multiple fuels (#586) 
 - Feature electrolysis basic (#525)
   Adds hydrogen electrolyzer model which enables the addition of hydrogen electrolyzer
   demands along with optional clean supply constraints.
@@ -80,7 +81,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `New_Build = -1` in `Generators_data.csv`: instead, use `New_Build = 0` and `Can_Retire = 0`.
 - The matrix-style input of the grid for Network.csv is deprecated in favor a column-style input.
   Instead of columns z1, z2, ... with entries -1, 0, 1, use two columns: Start_Zone, End_Zone (#591).
-
 
 ## [0.3.6] - 2023-08-01
 
