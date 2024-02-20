@@ -1,5 +1,5 @@
 # Retrofit
 ```@autodocs
 Modules = [GenX]
-Pages = ["retrofit.jl"]
+Pages = ["retrofits.jl"]
 ```
