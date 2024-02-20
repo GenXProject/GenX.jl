@@ -6,4 +6,4 @@ ParameterScale: 1 # Turn on parameter scaling wherein demand, capacity and power
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
 imeDomainReductionFolder: "TDR_Results" # Directory name where results from time domain reduction will be saved. If results already exist here, these will be used without running time domain reduction script again.
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
-
+ComputeConflicts: 1 # Compute conflicts between constraints; 0 = not active; 1 = active

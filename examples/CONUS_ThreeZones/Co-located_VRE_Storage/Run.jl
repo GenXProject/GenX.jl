@@ -1,3 +1,6 @@
 using GenX
+using Gurobi
 
-run_genx_case!(dirname(@__FILE__))
+optim = Gurobi.Optimizer
+
+run_genx_case!(dirname(@__FILE__), optim)
