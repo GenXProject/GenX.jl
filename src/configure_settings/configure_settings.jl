@@ -35,7 +35,7 @@ function configure_settings(settings_path::String, output_settings_path::String)
     merge!(settings, model_settings)
 
     output_settings = configure_writeoutput(output_settings_path, settings)
-    merge!(settings, output_settings)
+    settings["WriteOutputsSettingsDict"] = output_settings
 
     validate_settings!(settings)
     return settings
@@ -124,7 +124,6 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         writeoutput["WriteCapacityValue"] = false
         writeoutput["WriteReserveMargin"] = false
         writeoutput["WriteReserveMarginWithWeights"] = false
-
     end
 
     # read in YAML file if provided
