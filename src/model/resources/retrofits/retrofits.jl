@@ -1,6 +1,6 @@
 
 @doc raw"""
-	retrofit(EP::Model, inputs::Dict)
+	must_run!(EP::Model, inputs::Dict, setup::Dict)
 
 This function defines the constraints for operation of retrofit technologies, including
 	but not limited to carbon capture and thermal energy storage.

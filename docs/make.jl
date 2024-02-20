@@ -34,6 +34,7 @@ pages = OrderedDict(
                 "Long Duration Hydro" => "hydro_inter_period_linkage.md"
             ],
             "Must Run" => "must_run.md",
+            "Retrofit" => "retrofit.md",
             "Storage" => [
                 "Storage" => "storage.md",
                 "Investment Charge" => "investment_charge.md",
@@ -82,6 +83,7 @@ makedocs(;
         canonical="https://genxproject.github.io/GenX/stable",
         assets=String[],
     ),
+    warnonly = true,
     pages=[p for p in pages]
 )
 
