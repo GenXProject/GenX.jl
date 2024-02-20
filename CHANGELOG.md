@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   piecewise-linear approximation of heat rate curves. 
   Adds a CO2 module that determines the CO2 emissions based on fuel consumption, CO2 capture 
   fraction, and whether the feedstock is biomass.
+- Enable thermal power plants to burn multiple fuels (#586) 
 - Feature electrolysis basic (#525)
   Adds hydrogen electrolyzer model which enables the addition of hydrogen electrolyzer
   demands along with optional clean supply constraints.
