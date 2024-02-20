@@ -26,16 +26,16 @@ end
 
 Internal function to get policy file information.
 
-# 
+# Returns
     policyfile_info (NamedTuple): A tuple containing policy file information.
 
 """
 function _get_policyfile_info()
     policyfile_info = (
-        esr     = (filename="Resource_energy_share_requirement.csv", setupflag="EnergyShareRequirement"),
-        cap_res = (filename="Resource_capacity_reserve_margin.csv", setupflag="CapacityReserveMargin"),
-        min_cap = (filename="Resource_minimum_capacity_requirement.csv", setupflag="MinCapReq"),
-        max_cap = (filename="Resource_maximum_capacity_requirement.csv", setupflag="MaxCapReq"),
+        esr     = (filename="Resource_energy_share_requirement.csv", setup_param="EnergyShareRequirement"),
+        cap_res = (filename="Resource_capacity_reserve_margin.csv", setup_param="CapacityReserveMargin"),
+        min_cap = (filename="Resource_minimum_capacity_requirement.csv", setup_param="MinCapReq"),
+        max_cap = (filename="Resource_maximum_capacity_requirement.csv", setup_param="MaxCapReq"),
     )
     return policyfile_info
 end
@@ -485,9 +485,9 @@ Validate the policy files by checking if they exist in the specified folder and 
 """
 function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
     policyfile_info = _get_policyfile_info()
-    for (filename, setup_flag) in values(policyfile_info)
-        if setup[setup_flag] == 1 && !isfile(joinpath(resource_policies_path, filename))
-            msg = string(setup_flag, " is set to 1 in settings but the file ", filename, " was not found in ", resource_policies_path)
+    for (filename, setup_param) in values(policyfile_info)
+        if setup[setup_param] == 1 && !isfile(joinpath(resource_policies_path, filename))
+            msg = string(setup_param, " is set to 1 in settings but the file ", filename, " was not found in ", resource_policies_path)
             @warn(msg)
         end
     end

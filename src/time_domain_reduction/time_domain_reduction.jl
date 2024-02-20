@@ -131,7 +131,7 @@ function parse_multi_stage_data(inputs_dict)
             push!(solar_col_names, RESOURCE_ZONES[r])
             pv_all_stages = []
             for t in 1:length(keys(inputs_dict))
-                pv_all_periods = vcat(pv_all_stages, inputs_dict[t]["pP_Max"][r,:])
+                pv_all_stages = vcat(pv_all_stages, inputs_dict[t]["pP_Max"][r,:])
             end
             push!(solar_profiles, pv_all_stages)
         elseif occursin("Wind", RESOURCE_ZONES[r]) || occursin("WIND", RESOURCE_ZONES[r]) || occursin("wind", RESOURCE_ZONES[r])
@@ -605,8 +605,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
             # this prevents doubled time domain reduction in stages past
             # the first, even if the first stage is okay.
-            system_path = joinpath(inpath_sub, mysetup["SystemFolder"])
-            prevent_doubled_timedomainreduction(system_path)
+            prevent_doubled_timedomainreduction(joinpath(inpath_sub, mysetup["SystemFolder"]))
 
         	inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
 
