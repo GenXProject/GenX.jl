@@ -9,10 +9,7 @@ test_path = "MultiFuels"
 
 # Define test inputs
 genx_setup = Dict(
-    "PrintModel" => 0,
-    "NetworkExpansion" => 0,
     "Trans_Loss_Segments" => 1,
-    "Reserves" => 0,
     "EnergyShareRequirement" => 1,
     "CapacityReserveMargin" => 1,
     "CO2Cap" => 0,
@@ -22,15 +19,6 @@ genx_setup = Dict(
     "ParameterScale" => 1,
     "WriteShadowPrices" => 1,
     "UCommit" => 2,
-    "TimeDomainReduction" => 0,
-    "TimeDomainReductionFolder" => "TDR_Results",
-    "MultiStage" => 0,
-    "ModelingToGenerateAlternatives" => 0, 
-    "ModelingtoGenerateAlternativeSlack" => 0.1,
-    "ModelingToGenerateAlternativeIterations" => 3,
-    "MethodofMorris" => 0,
-    "EnableJuMPStringNames" => false,
-    "IncludeLossesInESR" => 0,
 )
 
 # Run the case and get the objective value and tolerance

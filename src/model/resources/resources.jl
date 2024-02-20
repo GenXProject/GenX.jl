@@ -570,12 +570,12 @@ co2_capture_fraction_startup(r::AbstractResource) = get(r, :co2_capture_fraction
 ccs_disposal_cost_per_metric_ton(r::AbstractResource) = get(r, :ccs_disposal_cost_per_metric_ton, default_zero)
 biomass(r::AbstractResource) = get(r, :biomass, default_zero)
 multi_fuels(r::AbstractResource) = get(r, :multi_fuels, default_zero)
-fuel_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag)), default_zero)
+fuel_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag)), "None")
 num_fuels(r::AbstractResource) = get(r, :num_fuels, default_zero)
 heat_rate_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("heat_rate",tag, "_mmbtu_per_mwh")), default_zero)
-max_cofire_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_max_cofire_level")), default_zero)
+max_cofire_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_max_cofire_level")), 1)
 min_cofire_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_min_cofire_level")), default_zero)
-max_cofire_start_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_max_cofire_level_start")), default_zero)
+max_cofire_start_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_max_cofire_level_start")), 1)
 min_cofire_start_cols(r::AbstractResource; tag::Int64) = get(r, Symbol(string("fuel",tag, "_min_cofire_level_start")), default_zero)
 
 # Reservoir hydro and storage

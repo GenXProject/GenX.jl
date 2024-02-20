@@ -1071,7 +1071,11 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 
     # Fuel
     inputs["HAS_FUEL"] = ids_with_fuel(gen)
-
+    if !isempty(inputs["MULTI_FUELS"])
+        inputs["HAS_FUEL"] = union(inputs["HAS_FUEL"], inputs["MULTI_FUELS"])
+        sort!(inputs["HAS_FUEL"])
+    end
+ 
     inputs["RESOURCES"] = gen
     return nothing
 end
@@ -1167,8 +1171,6 @@ function load_multi_fuels_data!(inputs::Dict, gen::Vector{<:AbstractResource}, s
 	inputs["FUEL_TYPES"] = fuel_types
 	inputs["MAX_NUM_FUELS"] = max_fuels
     inputs["MAX_NUM_FUELS"] = max_fuels
-    
-
 
 	# check whether non-zero heat rates are used for resources that only use a single fuel
 	for f in 1:max_fuels

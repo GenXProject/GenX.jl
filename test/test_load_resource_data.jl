@@ -90,7 +90,27 @@ function test_load_scaled_resources_data(gen, dfGen)
     @test GenX.co2_capture_fraction_startup.(gen) == dfGen.co2_capture_fraction_startup
     @test GenX.ccs_disposal_cost_per_metric_ton.(gen) == dfGen.ccs_disposal_cost_per_metric_ton
     @test GenX.biomass.(gen) == dfGen.biomass
-
+    ## multi-fuel flags
+    @test GenX.ids_with_fuel(gen) == dfGen[(dfGen[!,:fuel] .!= "None"),:r_id]
+    @test GenX.ids_with_positive(gen, GenX.co2_capture_fraction) == dfGen[dfGen.co2_capture_fraction .>0,:r_id]
+    @test GenX.ids_with_singlefuel(gen) == dfGen[dfGen.multi_fuels.!=1,:r_id]
+    @test GenX.ids_with_multifuels(gen) == dfGen[dfGen.multi_fuels.==1,:r_id]
+    if !isempty(GenX.ids_with_multifuels(gen))
+        MULTI_FUELS = GenX.ids_with_multifuels(gen)
+        max_fuels = maximum(GenX.num_fuels.(gen))
+        for i in 1:max_fuels
+            @test findall(g -> GenX.max_cofire_cols(g, tag=i) < 1, gen[MULTI_FUELS]) == dfGen[dfGen[!, Symbol(string("fuel",i, "_max_cofire_level"))].< 1, :][!, :r_id]
+            @test findall(g -> GenX.max_cofire_start_cols(g, tag=i) < 1, gen[MULTI_FUELS]) == dfGen[dfGen[!, Symbol(string("fuel",i, "_max_cofire_level_start"))].< 1, :][!, :r_id]
+            @test findall(g -> GenX.min_cofire_cols(g, tag=i) > 0, gen[MULTI_FUELS]) == dfGen[dfGen[!, Symbol(string("fuel",i, "_min_cofire_level"))].> 0, :][!, :r_id]
+            @test findall(g -> GenX.min_cofire_start_cols(g, tag=i) > 0, gen[MULTI_FUELS]) == dfGen[dfGen[!, Symbol(string("fuel",i, "_min_cofire_level_start"))].> 0, :][!, :r_id]
+            @test GenX.fuel_cols.(gen, tag=i) == dfGen[!,Symbol(string("fuel",i))]
+            @test GenX.heat_rate_cols.(gen, tag=i) == dfGen[!,Symbol(string("heat_rate",i, "_mmbtu_per_mwh"))]
+            @test GenX.max_cofire_cols.(gen, tag=i) == dfGen[!,Symbol(string("fuel",i, "_max_cofire_level"))]
+            @test GenX.min_cofire_cols.(gen, tag=i) == dfGen[!,Symbol(string("fuel",i, "_min_cofire_level"))]
+            @test GenX.max_cofire_start_cols.(gen, tag=i) == dfGen[!,Symbol(string("fuel",i, "_max_cofire_level_start"))]
+            @test GenX.min_cofire_start_cols.(gen, tag=i) == dfGen[!,Symbol(string("fuel",i, "_min_cofire_level_start"))]
+        end
+    end
     @test GenX.ids_with_mga(gen) == dfGen[dfGen.mga .== 1, :r_id]
 
     @test GenX.region.(gen) == dfGen.region
@@ -116,6 +136,7 @@ function test_add_modules_to_resources(gen, dfGen)
 end
 
 function test_inputs_keys(inputs, inputs_true)
+
     @test inputs["G"] == inputs_true["G"]
 
     @test inputs["HYDRO_RES"] == inputs_true["HYDRO_RES"]
@@ -145,13 +166,14 @@ function test_inputs_keys(inputs, inputs_true)
     @test Set(inputs["NEW_CAP"]) == inputs_true["NEW_CAP"]
     @test Set(inputs["NEW_CAP_ENERGY"]) == inputs_true["NEW_CAP_ENERGY"]
     @test Set(inputs["NEW_CAP_CHARGE"]) == inputs_true["NEW_CAP_CHARGE"]
-    @test string.(inputs["slope_cols"]) == lowercase.(string.(inputs_true["slope_cols"]))
-    @test string.(inputs["intercept_cols"]) == lowercase.(string.(inputs_true["intercept_cols"]))
-    @test inputs["PWFU_data"] == rename!(inputs_true["PWFU_data"], lowercase.(names(inputs_true["PWFU_data"])))
-    @test inputs["PWFU_Num_Segments"] == inputs_true["PWFU_Num_Segments"]
-    @test inputs["THERM_COMMIT_PWFU"] == inputs_true["THERM_COMMIT_PWFU"]
 
-    @test inputs["HAS_FUEL"] == inputs_true["HAS_FUEL"]
+    if isempty(inputs["MULTI_FUELS"]) 
+        @test string.(inputs["slope_cols"]) == lowercase.(string.(inputs_true["slope_cols"]))
+        @test string.(inputs["intercept_cols"]) == lowercase.(string.(inputs_true["intercept_cols"]))
+        @test inputs["PWFU_data"] == rename!(inputs_true["PWFU_data"], lowercase.(names(inputs_true["PWFU_data"])))
+        @test inputs["PWFU_Num_Segments"] == inputs_true["PWFU_Num_Segments"]
+        @test inputs["THERM_COMMIT_PWFU"] == inputs_true["THERM_COMMIT_PWFU"]
+    end
     
     @test inputs["R_ZONES"] == inputs_true["R_ZONES"]
     @test inputs["RESOURCE_ZONES"] == inputs_true["RESOURCE_ZONES"]
