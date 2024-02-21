@@ -1,34 +1,34 @@
 ##########################################################################################################################################
-# The reserves.jl module contains functions to creates decision variables related to frequency regulation and reserves provision
+# The operational_reserves.jl module contains functions to creates decision variables related to frequency regulation and reserves provision
 # and constraints setting overall system requirements for regulation and operating reserves.
 ##########################################################################################################################################
 
 @doc raw"""
-	reserves!(EP::Model, inputs::Dict, setup::Dict)
+	operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
-This function sets up reserve decisions and constraints, using the reserves_core()` and reserves_contingency()` functions.
+This function sets up reserve decisions and constraints, using the operational_reserves_core()` and operational_reserves_contingency()` functions.
 """
-function reserves!(EP::Model, inputs::Dict, setup::Dict)
+function operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
 	UCommit = setup["UCommit"]
 
 	if inputs["pStatic_Contingency"] > 0 || (UCommit >= 1 && inputs["pDynamic_Contingency"] >= 1)
-		reserves_contingency!(EP, inputs, setup)
+		operational_reserves_contingency!(EP, inputs, setup)
 	end
 
-	reserves_core!(EP, inputs, setup)
+	operational_reserves_core!(EP, inputs, setup)
 end
 
 
 @doc raw"""
-	reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
+	operational_reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
-This function establishes several different versions of contingency reserve requirement expression, $CONTINGENCY$ used in the reserves_core() function below.
+This function establishes several different versions of contingency reserve requirement expression, $CONTINGENCY$ used in the operational_reserves_core() function below.
 
-Contingency reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies).
+Contingency operational reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies).
 
 There are three options for the $Contingency$ expression, depending on user settings:
-	1. a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''reserves.csv''' input file;
+	1. a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''Operational_reserves.csv''' input file;
 	2. a dynamic contingency based on installed capacity decisions, in which the largest 'installed' generator is used to determine the contingency requirement for all time periods; and
 	3. dynamic unit commitment based contingency, in which the largest 'committed' generator in any time period is used to determine the contingency requirement in that time period.
 
@@ -67,9 +67,9 @@ Option 3 (dynamic commitment-based contingency) is expressed by the following se
 
 where $M_y$ is a `big M' constant equal to the largest possible capacity that can be installed for generation cluster $y$, and $Contingency\_Aux_{y,z,t} \in [0,1]$ is a binary auxiliary variable that is forced by the second and third equations above to be 1 if the commitment state for that generation cluster $\nu_{y,z,t} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$ and time period $t$, and can be 0 otherwise. Note that this dynamic commitment-based contingency can only be specified if discrete unit commitment decisions are used (e.g. it will not work if relaxed unit commitment is used).
 """
-function reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
+function operational_reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
-	println("Reserves Contingency Module")
+	println("Operational Reserves Contingency Module")
 
 	gen = inputs["RESOURCES"]
 
@@ -83,7 +83,7 @@ function reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
 	### Variables ###
 
-	# NOTE: If Dynamic_Contingency == 0, then contingency is a fixed parameter equal the value specified in reserves.csv via pStatic_Contingency.
+	# NOTE: If Dynamic_Contingency == 0, then contingency is a fixed parameter equal the value specified in Operational_reserves.csv via pStatic_Contingency.
 	if UCommit == 1 && pDynamic_Contingency == 1
 		# Contingency = largest installed thermal unit
 		@variable(EP, vLARGEST_CONTINGENCY >= 0)
@@ -135,7 +135,7 @@ end
 
 
 @doc raw"""
-	reserves_core!(EP::Model, inputs::Dict, setup::Dict)
+	operational_reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates decision variables related to frequency regulation and reserves provision and constraints setting overall system requirements for regulation and operating reserves.
 
@@ -148,7 +148,7 @@ We assume frequency regulation is symmetric (provided in equal quantity towards 
 
 Storage resources ($y \in \mathcal{O}$) have two pairs of auxilary variables to reflect contributions to regulation and reserves when charging and discharging, where the primary variables ($f_{y,z,t}$ \& $r_{y,z,t}$) becomes equal to sum of these auxilary variables.
 
-Co-located VRE-STOR resources are described further in the reserves function for colocated VRE and storage resources (```vre_stor_reserves!()```).
+Co-located VRE-STOR resources are described further in the reserves function for colocated VRE and storage resources (```vre_stor_operational_reserves!()```).
 
 **Unmet operating reserves**
 
@@ -198,14 +198,14 @@ $\rho^{max,wind}_{y,z,t}$ is the forecasted capacity factor for co-located wind 
 $\Delta^{\text{total}}_{y,z}$ is the total installed capacity of standalone variable renewable resources $y \in VRE$ and zone $z$;
 $\Delta^{\text{total,pv}}_{y,z}$ is the total installed capacity of co-located solar PV resources $y \in \mathcal{VS}^{pv}$ and zone $z$;
 $\Delta^{\text{total,wind}}_{y,z}$ is the total installed capacity of co-located wind resources $y \in \mathcal{VS}^{wind}$ and zone $z$;
-and $\epsilon^{demand}_{rsv}$ and $\epsilon^{vre}_{rsv}$ are parameters specifying the required contingency reserves as a fraction of forecasted demand and variable renewable generation. $Contingency$ is an expression defined in the reserves\_contingency() function meant to represent the largest `N-1` contingency (unplanned generator outage) that the system operator must carry operating reserves to cover and depends on how the user wishes to specify contingency requirements.
+and $\epsilon^{demand}_{rsv}$ and $\epsilon^{vre}_{rsv}$ are parameters specifying the required contingency reserves as a fraction of forecasted demand and variable renewable generation. $Contingency$ is an expression defined in the operational\_reserves\_contingency!() function meant to represent the largest `N-1` contingency (unplanned generator outage) that the system operator must carry operating reserves to cover and depends on how the user wishes to specify contingency requirements.
 """
-function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
+function operational_reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 	# DEV NOTE: After simplifying reserve changes are integrated/confirmed, should we revise such that reserves can be modeled without UC constraints on?
 	# Is there a use case for economic dispatch constraints with reserves?
 
-	println("Reserves Core Module")
+	println("Operational Reserves Core Module")
 
 	gen = inputs["RESOURCES"]
 	UCommit = setup["UCommit"]
@@ -226,7 +226,7 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
 	## Integer Unit Commitment configuration for variables
 
-	## Decision variables for reserves
+	## Decision variables for operational reserves
 	@variable(EP, vREG[y in REG, t=1:T] >= 0) # Contribution to regulation (primary reserves), assumed to be symmetric (up & down directions equal)
 	@variable(EP, vRSV[y in RSV, t=1:T] >= 0) # Contribution to operating reserves (secondary reserves or contingency reserves); only model upward reserve requirements
 
@@ -265,7 +265,7 @@ function reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 	add_to_expression!(EP[:eObj], eTotalCRsvPen)
 end
 
-function reserves_constraints!(EP, inputs)
+function operational_reserves_constraints!(EP, inputs)
     T = inputs["T"]     # Number of time steps (hours)
 
     REG = inputs["REG"]

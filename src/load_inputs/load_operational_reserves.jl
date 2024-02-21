@@ -1,11 +1,12 @@
 @doc raw"""
-	load_reserves!(setup::Dict,path::AbstractString, inputs::Dict)
+	load_operational_reserves!(setup::Dict,path::AbstractString, inputs::Dict)
 
 Read input parameters related to frequency regulation and operating reserve requirements
 """
-function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
-    filename = "Reserves.csv"
-    res_in = load_dataframe(joinpath(path, filename))
+function load_operational_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
+    filename = "Operational_reserves.csv"
+	deprecated_synonym = "Reserves.csv"
+    res_in = load_dataframe(path, [filename, deprecated_synonym])
 
 	gen =  inputs["RESOURCES"]
 
@@ -18,7 +19,7 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
         end
         for col in columns
             if col in all_columns
-                @info "The column name $col in file $filename is deprecated; prefer $best"
+                Base.depwarn("The column name $col in file $filename is deprecated; prefer $best", :load_operational_reserves, force=true)
                 return float(df[firstrow, col])
             end
         end
@@ -48,7 +49,7 @@ function load_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
 	if setup["UCommit"] >= 1
 		inputs["pDynamic_Contingency"] = convert(Int8, res_in[1,:Dynamic_Contingency] )
 		# Set BigM value used for dynamic contingencies cases to be largest possible cluster size
-		# Note: this BigM value is only relevant for units in the COMMIT set. See reserves.jl for details on implementation of dynamic contingencies
+		# Note: this BigM value is only relevant for units in the COMMIT set. See operational_reserves.jl for details on implementation of dynamic contingencies
 		if inputs["pDynamic_Contingency"] > 0
 			inputs["pContingency_BigM"] = zeros(Float64, inputs["G"])
 			for y in inputs["COMMIT"]

@@ -912,8 +912,8 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in any of the resource .csv files, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
     end
 
-    ## Reserves
-    if setup["Reserves"] >= 1
+    ## Operational Reserves
+    if setup["OperationalReserves"] >= 1
         # Set for resources with regulation reserve requirements
         inputs["REG"] = ids_with_regulation_reserve_requirements(gen)
         # Set for resources with spinning reserve requirements

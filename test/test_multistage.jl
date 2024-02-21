@@ -18,7 +18,7 @@ multistage_setup = Dict(
 
 genx_setup = Dict(
     "Trans_Loss_Segments" => 1,
-    "Reserves" => 1,
+    "OperationalReserves" => 1,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
     "ParameterScale" => 1,

@@ -4,7 +4,7 @@ function default_settings()
         "OverwriteResults" => 0,
         "NetworkExpansion" => 0,
         "Trans_Loss_Segments" => 1,
-        "Reserves" => 0,
+        "OperationalReserves" => 0,
         "EnergyShareRequirement" => 0,
         "CapacityReserveMargin" => 0,
         "CO2Cap" => 0,
@@ -60,6 +60,13 @@ function validate_settings!(settings::Dict{Any,Any})
         settings have changed recently. OperationWrapping has been removed,
         and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
         Please see the Methods page in the documentation.""" maxlog=1
+    end
+
+    if haskey(settings, "Reserves")
+        Base.depwarn("""The Reserves setting has been deprecated. Please use the
+        OperationalReserves setting instead.""", :validate_settings!, force=true)
+        settings["OperationalReserves"] = settings["Reserves"]
+        delete!(settings, "Reserves")
     end
 
     if settings["EnableJuMPStringNames"]==0 && settings["ComputeConflicts"]==1

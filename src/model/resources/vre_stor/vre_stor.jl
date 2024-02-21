@@ -121,7 +121,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     MinCapReq = setup["MinCapReq"]
     MaxCapReq = setup["MaxCapReq"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
-    Reserves = setup["Reserves"]
+    OperationalReserves = setup["OperationalReserves"]
     
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 
@@ -274,9 +274,9 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         vre_stor_capres!(EP, inputs, setup)
     end
 
-    # Operating Reserves Requirement
-    if Reserves == 1
-        vre_stor_reserves!(EP, inputs, setup)
+    # Operational Reserves Requirement
+    if OperationalReserves == 1
+        vre_stor_operational_reserves!(EP, inputs, setup)
     end
 
     # Power Balance
@@ -2147,7 +2147,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-    vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
+    vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
 This function activates either or both frequency regulation and operating reserve options for co-located 
     VRE-storage resources. Co-located VRE and storage resources ($y \in \mathcal{VS}$) have six pairs of 
@@ -2227,9 +2227,9 @@ Lastly, if the co-located resource has a variable renewable energy component, th
 \end{aligned}
 ```
 """
-function vre_stor_reserves!(EP::Model, inputs::Dict, setup::Dict)
+function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
-    println("VRE-STOR Reserves Module")
+    println("VRE-STOR Operational Reserves Module")
 
     ### LOAD DATA & CREATE SETS ###
 

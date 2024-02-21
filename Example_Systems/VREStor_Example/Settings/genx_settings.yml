@@ -9,7 +9,6 @@ Trans_Loss_Segments: 1
 CapacityReserveMargin: 1
 ModelingtoGenerateAlternativeSlack: 0.1
 MethodofMorris: 0
-Reserves: 0
 StorageLosses: 1
 OverwriteResults: 1
 UCommit: 2

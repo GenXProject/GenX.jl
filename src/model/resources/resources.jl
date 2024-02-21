@@ -637,8 +637,7 @@ ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r 
 # Without unit commitment
 no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 2, rs)
 
-# Reserves
-# cap reserve margin
+# Operational Reserves
 ids_with_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
 ids_with_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
 

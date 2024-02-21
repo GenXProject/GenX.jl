@@ -11,7 +11,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-	if (setup["WriteShadowPrices"]==1 || setup["UCommit"]==0 || (setup["UCommit"]==2 && (setup["Reserves"]==0 || (setup["Reserves"]>0 && inputs["pDynamic_Contingency"]==0)))) # fully linear model
+	if (setup["WriteShadowPrices"]==1 || setup["UCommit"]==0 || (setup["UCommit"]==2 && (setup["OperationalReserves"]==0 || (setup["OperationalReserves"]>0 && inputs["pDynamic_Contingency"]==0)))) # fully linear model
 		# CO2 emissions by zone
 
 		if setup["CO2Cap"]>=1
