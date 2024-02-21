@@ -912,7 +912,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, gen::Vector{<:A
     # Set of flexible demand-side resources
     inputs["FLEX"] = flex_demand(gen)
 
-    ## TODO: MUST_RUN
+    ## MUST_RUN
     # Set of must-run plants - could be behind-the-meter PV, hydro run-of-river, must-run fossil or thermal plants
     inputs["MUST_RUN"] = must_run(gen)
 
