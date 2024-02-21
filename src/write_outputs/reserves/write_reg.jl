@@ -1,10 +1,9 @@
 function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
 	REG = inputs["REG"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-	resources = inputs["RESOURCES"][REG]
-	zones = dfGen[REG, :Zone]
+	resources = inputs["RESOURCE_NAMES"][REG]
+	zones = inputs["R_ZONES"][REG]
 	# Regulation contributions for each resource in each time step
 	reg = value.(EP[:vREG][REG, :].data) * scale_factor
 

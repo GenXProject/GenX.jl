@@ -1,0 +1,9 @@
+﻿Resource,Min_Cap_1,Min_Cap_2,Min_Cap_3
+NENGREST_offshore_wind_turbine_1,1,1,0
+NENGREST_onshore_wind_turbine_1,1,0,0
+NENGREST_solar_photovoltaic_1,0,0,1
+NENG_ME_onshore_wind_turbine_1,1,0,0
+NENGREST_landbasedwind_ltrg1_mid_130_1,1,0,0
+NENGREST_utilitypv_losangeles_mid_80_0_2_1,0,0,1
+NENGREST_offshorewind_otrg3_mid_fixed_1_176_77_1,1,1,0
+NENG_ME_landbasedwind_ltrg1_mid_110_1,1,0,0

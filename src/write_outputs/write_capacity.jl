@@ -4,38 +4,38 @@
 Function for writing the diferent capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
 """
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	# Capacity decisions
-	dfGen = inputs["dfGen"]
+
+	gen = inputs["RESOURCES"]
+
 	MultiStage = setup["MultiStage"]
 	
-	capdischarge = zeros(size(inputs["RESOURCES"]))
+	# Capacity decisions
+	capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
 	for i in inputs["NEW_CAP"]
 		if i in inputs["COMMIT"]
-			capdischarge[i] = value(EP[:vCAP][i])*dfGen[!,:Cap_Size][i]
+			capdischarge[i] = value(EP[:vCAP][i])*cap_size(gen[i])
 		else
 			capdischarge[i] = value(EP[:vCAP][i])
 		end
 	end
 
-	retcapdischarge = zeros(size(inputs["RESOURCES"]))
+	retcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
 	for i in inputs["RET_CAP"]
 		if i in inputs["COMMIT"]
-			retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))*dfGen[!,:Cap_Size][i]
+			retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))*cap_size(gen[i])
 		else
 			retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
 		end
 	end
 
-	capacity_constraint_dual = zeros(size(inputs["RESOURCES"]))
-	if :Max_Cap_MW in propertynames(dfGen)
-		for y in dfGen[dfGen.Max_Cap_MW.>0, :R_ID]
-			capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
-		end
+	capacity_constraint_dual = zeros(size(inputs["RESOURCE_NAMES"]))
+	for y in ids_with_positive(gen, max_cap_mw)
+		capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
 	end
 
-	capcharge = zeros(size(inputs["RESOURCES"]))
-	retcapcharge = zeros(size(inputs["RESOURCES"]))
-	existingcapcharge = zeros(size(inputs["RESOURCES"]))
+	capcharge = zeros(size(inputs["RESOURCE_NAMES"]))
+	retcapcharge = zeros(size(inputs["RESOURCE_NAMES"]))
+	existingcapcharge = zeros(size(inputs["RESOURCE_NAMES"]))
 	for i in inputs["STOR_ASYMMETRIC"]
 		if i in inputs["NEW_CAP_CHARGE"]
 			capcharge[i] = value(EP[:vCAPCHARGE][i])
@@ -43,12 +43,12 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_CHARGE"]
 			retcapcharge[i] = value(EP[:vRETCAPCHARGE][i])
 		end
-		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : dfGen[!,:Existing_Charge_Cap_MW][i]
+		existingcapcharge[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPCHARGE][i]) : existing_charge_cap_mw(gen[i])
 	end
 
-	capenergy = zeros(size(inputs["RESOURCES"]))
-	retcapenergy = zeros(size(inputs["RESOURCES"]))
-	existingcapenergy = zeros(size(inputs["RESOURCES"]))
+	capenergy = zeros(size(inputs["RESOURCE_NAMES"]))
+	retcapenergy = zeros(size(inputs["RESOURCE_NAMES"]))
+	existingcapenergy = zeros(size(inputs["RESOURCE_NAMES"]))
 	for i in inputs["STOR_ALL"]
 		if i in inputs["NEW_CAP_ENERGY"]
 			capenergy[i] = value(EP[:vCAPENERGY][i])
@@ -56,7 +56,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		if i in inputs["RET_CAP_ENERGY"]
 			retcapenergy[i] = value(EP[:vRETCAPENERGY][i])
 		end
-		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  dfGen[i,:Existing_Cap_MWh]
+		existingcapenergy[i] = MultiStage == 1 ? value(EP[:vEXISTINGCAPENERGY][i]) :  existing_cap_mwh(gen[i])
 	end
 	if !isempty(inputs["VRE_STOR"])
 		for i in inputs["VS_STOR"]
@@ -66,13 +66,13 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 			if i in inputs["RET_CAP_STOR"]
 				retcapenergy[i] = value(EP[:vRETCAPENERGY_VS][i])
 			end
-			existingcapenergy[i] = dfGen[i,:Existing_Cap_MWh] # multistage functionality doesn't exist yet for VRE-storage resources
+			existingcapenergy[i] = existing_cap_mwh(gen[i]) # multistage functionality doesn't exist yet for VRE-storage resources
 		end
 	end
 
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCES"], Zone = dfGen[!,:Zone],
-		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : dfGen[!,:Existing_Cap_MW],
+		Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(gen),
+		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen),
 		RetCap = retcapdischarge[:],
 		NewCap = capdischarge[:],
 		EndCap = value.(EP[:eTotalCap]),

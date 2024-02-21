@@ -176,8 +176,8 @@ A full example case with Gurobi as an optimizer is given in `Example_Systems/Sma
 ## Running Modeling to Generate Alternatives with GenX
 GenX includes a modeling to generate alternatives (MGA) package that can be used to automatically enumerate a diverse set of near cost-optimal solutions to electricity system planning problems. To use the MGA algorithm, user will need to perform the following tasks:
 
-1. Add a `Resource_Type` column in the `Generators_data.csv` file denoting the type of each technology.
-2. Add a `MGA` column in the `Generators_data.csv` file denoting the availability of the technology.
+1. Add a `Resource_Type` column in the resource `.csv` files (included in the `Resources` folder) denoting the type of each technology.
+2. Add a `MGA` column in the resource `.csv` files (included in the `Resources` folder) denoting the availability of the technology.
 3. Set the `ModelingToGenerateAlternatives` flag in the `GenX_Settings.yml` file to 1.
 4. Set the `ModelingtoGenerateAlternativeSlack` flag in the `GenX_Settings.yml` file to the desirable level of slack.
 5. Create a `Rand_mga_objective_coefficients.csv` file to provide random objective function coefficients for each MGA iteration.

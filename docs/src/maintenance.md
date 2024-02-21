@@ -35,7 +35,7 @@ Rather than have maintenance potentially start every hour, one can have possible
 (In reality, maintenance is likely scheduled months in advance, so optimizing down to the hour may not be realistic anyway.)
 
 ## How to use
-There are four columns which need to be added to the plant data, i.e. in `Generators_data.csv`:
+There are four columns which need to be added to the plant data, i.e. in the resource `.csv` files:
 
 1. `MAINT` should be `1` for plants that require maintenance and `0` otherwise.
 2. `Maintenance_Duration` is the number of hours the maintenance period lasts.

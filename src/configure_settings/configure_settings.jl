@@ -9,6 +9,7 @@ function default_settings()
         "CapacityReserveMargin" => 0,
         "CO2Cap" => 0,
         "StorageLosses" => 1,
+        "VirtualChargeDischargeCost" => 1,  # $/MWh
         "MinCapReq" => 0,
         "MaxCapReq" => 0,
         "ParameterScale" => 0,
@@ -21,9 +22,12 @@ function default_settings()
         "MultiStage" => 0,
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
+        "HydrogenHourlyMatching" => 0,
         "EnableJuMPStringNames" => false,
         "HydrogenHourlyMatching" => 0,
         "WriteOutputs" => "full",
+        "ComputeConflicts" => 0,
+        "ResourcePath" => "Resources",
     )
 end
 
@@ -54,6 +58,10 @@ function validate_settings!(settings::Dict{Any,Any})
         settings have changed recently. OperationWrapping has been removed,
         and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
         Please see the Methods page in the documentation.""" maxlog=1
+    end
+
+    if settings["EnableJuMPStringNames"]==0 && settings["ComputeConflicts"]==1
+        settings["EnableJuMPStringNames"]=1;
     end
 
 end

@@ -1,5 +1,5 @@
 function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 	T = inputs["T"]     # Number of time steps (hours)
 	Z = inputs["Z"]     # Number of zones
 	SEG = inputs["SEG"] # Number of demand curtailment segments
@@ -23,20 +23,20 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 	dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z), Zone = repeat(1:Z, inner = L), AnnualSum = zeros(L * Z))
 	powerbalance = zeros(Z * L, T) # following the same style of power/charge/storage/nse
 	for z in 1:Z
-		POWER_ZONE = intersect(dfGen[(dfGen[!, :Zone].==z), :R_ID], union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
+		POWER_ZONE = intersect(resources_in_zone_by_rid(gen,z), union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
 		powerbalance[(z-1)*L+1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
-		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL))
-		    STOR_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], STOR_ALL)
+		if !isempty(intersect(resources_in_zone_by_rid(gen,z), STOR_ALL))
+		    STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen,z), STOR_ALL)
 		    powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]), dims = 1)
 		    powerbalance[(z-1)*L+3, :] = (-1) * sum((value.(EP[:vCHARGE][STOR_ALL_ZONE, :]).data), dims = 1)
 		end
-		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], VRE_STOR))
-			VS_ALL_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], inputs["VS_STOR"])
+		if !isempty(intersect(resources_in_zone_by_rid(gen,z), VRE_STOR))
+			VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen,z), inputs["VS_STOR"])
 			powerbalance[(z-1)*L+2, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
 			powerbalance[(z-1)*L+3, :] = (-1) * sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims=1) 
 		end
-		if !isempty(intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX))
-		    FLEX_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], FLEX)
+		if !isempty(intersect(resources_in_zone_by_rid(gen,z), FLEX))
+		    FLEX_ZONE = intersect(resources_in_zone_by_rid(gen,z), FLEX)
 		    powerbalance[(z-1)*L+4, :] = sum((value.(EP[:vCHARGE_FLEX][FLEX_ZONE, :]).data), dims = 1)
 		    powerbalance[(z-1)*L+5, :] = (-1) * sum(value.(EP[:vP][FLEX_ZONE, :]), dims = 1)
 		end
@@ -50,7 +50,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		end
 		powerbalance[(z-1)*L+10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
 		if !isempty(ELECTROLYZER)
-		    ELECTROLYZER_ZONE = intersect(dfGen[dfGen.Zone.==z, :R_ID], ELECTROLYZER)
+		    ELECTROLYZER_ZONE = intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZER)
 			powerbalance[(z-1)*L+11, :] = (-1) * sum(value.(EP[:vUSE][ELECTROLYZER_ZONE, :].data), dims = 1)
 		end
 	end
@@ -58,6 +58,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		powerbalance *= ModelScalingFactor
 	end
 	dfPowerBalance.AnnualSum .= powerbalance * inputs["omega"]
+
 	if setup["WriteOutputs"] == "annual"
 		CSV.write(joinpath(path, "power_balance.csv"), dfPowerBalance)
 	else 	# setup["WriteOutputs"] == "full"	

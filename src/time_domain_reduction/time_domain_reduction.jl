@@ -614,7 +614,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         if MultiStageConcatenate == 1
             if v println("MultiStage with Concatenation") end
             RESOURCE_ZONES = inputs_dict[1]["RESOURCE_ZONES"]
-            RESOURCES = inputs_dict[1]["RESOURCES"]
+            RESOURCES = inputs_dict[1]["RESOURCE_NAMES"]
             ZONES = inputs_dict[1]["R_ZONES"]
             # Parse input data into useful structures divided by type (demand, wind, solar, fuel, groupings thereof, etc.)
             # TO DO LATER: Replace these with collections of col_names, profiles, zones
@@ -626,7 +626,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
             if v println("---> STAGE ", stage_id) end
             myinputs = inputs_dict[stage_id]
             RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
-            RESOURCES = myinputs["RESOURCES"]
+            RESOURCES = myinputs["RESOURCE_NAMES"]
             ZONES = myinputs["R_ZONES"]
             # Parse input data into useful structures divided by type (demand, wind, solar, fuel, groupings thereof, etc.)
             # TO DO LATER: Replace these with collections of col_names, profiles, zones
@@ -638,7 +638,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         if v println("Not MultiStage") end
         myinputs = load_inputs(mysetup_local,inpath)
         RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
-        RESOURCES = myinputs["RESOURCES"]
+        RESOURCES = myinputs["RESOURCE_NAMES"]
         ZONES = myinputs["R_ZONES"]
         # Parse input data into useful structures divided by type (demand, wind, solar, fuel, groupings thereof, etc.)
         # TO DO LATER: Replace these with collections of col_names, profiles, zones
@@ -1023,7 +1023,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
 
                 ### TDR_Results/Generators_variability.csv
                 # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
-                GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(inputs_dict[1]["RESOURCES"]))
+                GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(inputs_dict[1]["RESOURCE_NAMES"]))
                 GVColMap["Time_Index"] = "Time_Index"
                 GVOutputData = GVOutputData[!, Symbol.(RESOURCE_ZONES)]
                 insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
@@ -1108,7 +1108,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
             ### TDR_Results/Generators_variability.csv
 
             # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
-            GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(myinputs["RESOURCES"]))
+            GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(myinputs["RESOURCE_NAMES"]))
             GVColMap["Time_Index"] = "Time_Index"
             GVOutputData = GVOutputData[!, Symbol.(RESOURCE_ZONES)]
             insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))
@@ -1193,7 +1193,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         ### TDR_Results/Generators_variability.csv
 
         # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
-        GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(myinputs["RESOURCES"]))
+        GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(myinputs["RESOURCE_NAMES"]))
         GVColMap["Time_Index"] = "Time_Index"
         GVOutputData = GVOutputData[!, Symbol.(RESOURCE_ZONES)]
         insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData,1))

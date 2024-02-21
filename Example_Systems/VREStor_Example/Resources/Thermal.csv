@@ -1,0 +1,46 @@
+Resource,Zone,Model,Existing_Cap_MWh,Existing_Cap_MW,New_Build,Can_Retire,Cap_Size,Min_Cap_MW,Max_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Heat_Rate_MMBTU_per_MWh,Fuel,Min_Power,Min_Duration,Max_Duration,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,CO2_Capture_Rate,CO2_Capture_Cost_per_Metric_Ton,Ramp_Up_Percentage,Ramp_Dn_Percentage,Up_Time,Down_Time,region,technology,cluster
+EIC_conventional_steam_coal_1,1,1,0,12806.9,0,1,177.87,0,0,0,78258,1.88,124,16.5,13.34,east_north_central_coal,0.5,0,0,0.095,0.19,0,0,0,0,0.57,0.57,24,24,EIC,Conventional Steam Coal,1
+EIC_conventional_steam_coal_2,1,1,0,109345.4,0,1,584.74,0,0,0,64567,1.88,124,16.5,10.89,east_north_central_coal,0.5,0,0,0.095,0.19,0,0,0,0,0.57,0.57,24,24,EIC,Conventional Steam Coal,2
+EIC_natural_gas_fired_combined_cycle_1,1,1,0,27155.3,0,1,163.59,0,0,0,16322,4.53,92,2,9.24,east_north_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,0.64,0.64,6,6,EIC,Natural Gas Fired Combined Cycle,1
+EIC_natural_gas_fired_combined_cycle_2,1,1,0,169897.4,0,1,638.71,0,0,0,11042,3.58,92,2,7.34,east_north_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,0.64,0.64,6,6,EIC,Natural Gas Fired Combined Cycle,2
+EIC_natural_gas_fired_combustion_turbine_1,1,1,0,98926.5,0,1,100.13,0,0,0,10031,5.28,119,3.5,12.03,east_north_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,EIC,Natural Gas Fired Combustion Turbine,1
+EIC_natural_gas_fired_combustion_turbine_2,1,1,0,10412.9,0,1,31.27,0,0,0,13557,5.28,119,3.5,14.66,east_north_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,EIC,Natural Gas Fired Combustion Turbine,2
+EIC_natural_gas_internal_combustion_engine_1,1,1,0,2578.5,0,1,4.44,0,0,0,21000,5.29,38,0,10.29,east_north_central_naturalgas,0.18,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,EIC,Natural Gas Internal Combustion Engine,1
+EIC_natural_gas_steam_turbine_1,1,1,0,39625.2,0,1,203.21,0,0,0,35537,1.06,87,13.7,12.8,east_north_central_naturalgas,0.5,0,0,0.63,1.26,0,0,0,0,0.64,0.64,6,6,EIC,Natural Gas Steam Turbine,1
+EIC_nuclear_1,1,1,0,82406.6,0,1,1030.08,0,0,0,214812,2.84,248,0,10.45,east_north_central_uranium,0.5,0,0,0.041666667,0.083333333,0,0,0,0,0.25,0.25,24,24,EIC,Nuclear,1
+EIC_petroleum_liquids_1,1,1,0,23196.2,0,1,9.96,0,0,0,21000,7.97,38,0,15.5,east_north_central_distillate,0.18,0,0,0,0,0,0,0,0,3.78,3.78,1,1,EIC,Petroleum Liquids,1
+TRE_conventional_steam_coal_1,2,1,0,5063.6,0,1,723.37,0,0,0,60405,1.88,124,16.5,10.33,west_south_central_coal,0.5,0,0,0.095,0.19,0,0,0,0,0.57,0.57,24,24,TRE,Conventional Steam Coal,1
+TRE_conventional_steam_coal_2,2,1,0,3713,0,1,530.43,0,0,0,68432,1.88,124,16.5,12.13,west_south_central_coal,0.5,0,0,0.095,0.19,0,0,0,0,0.57,0.57,24,24,TRE,Conventional Steam Coal,2
+TRE_natural_gas_fired_combined_cycle_1,2,1,0,30139.1,0,1,579.6,0,0,0,10912,3.59,92,2,7.72,west_south_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,0.64,0.64,6,6,TRE,Natural Gas Fired Combined Cycle,1
+TRE_natural_gas_fired_combined_cycle_2,2,1,0,6317.6,0,1,315.88,0,0,0,15698,4.36,92,2,9.8,west_south_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,0.64,0.64,6,6,TRE,Natural Gas Fired Combined Cycle,2
+TRE_natural_gas_fired_combustion_turbine_1,2,1,0,2924,0,1,81.22,0,0,0,10001,5.28,119,3.5,14.08,west_south_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,TRE,Natural Gas Fired Combustion Turbine,1
+TRE_natural_gas_fired_combustion_turbine_2,2,1,0,2826.9,0,1,50.48,0,0,0,11926,5.28,119,3.5,11.11,west_south_central_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,TRE,Natural Gas Fired Combustion Turbine,2
+TRE_natural_gas_internal_combustion_engine_1,2,1,0,502.7,0,1,10.7,0,0,0,21000,4.72,38,0,9.18,west_south_central_naturalgas,0.18,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,TRE,Natural Gas Internal Combustion Engine,1
+TRE_natural_gas_steam_turbine_1,2,1,0,8249.5,0,1,235.7,0,0,0,34182,1.06,87,13.7,13.24,west_south_central_naturalgas,0.5,0,0,0.63,1.26,0,0,0,0,0.64,0.64,6,6,TRE,Natural Gas Steam Turbine,1
+TRE_nuclear_1,2,1,0,5120,0,1,1280,0,0,0,193275,2.84,248,0,10.45,west_south_central_uranium,0.5,0,0,0.041666667,0.083333333,0,0,0,0,0.25,0.25,24,24,TRE,Nuclear,1
+TRE_petroleum_liquids_1,2,1,0,23.7,0,1,1.48,0,0,0,21000,6.38,38,0,12.4,west_south_central_distillate,0.18,0,0,0,0,0,0,0,0,3.78,3.78,1,1,TRE,Petroleum Liquids,1
+WECC_conventional_steam_coal_1,3,1,0,11415.2,0,1,496.31,0,0,0,64165,1.88,124,16.5,10.63,mountain_coal,0.5,0,0,0.095,0.19,0,0,0,0,0.57,0.57,24,24,WECC,Conventional Steam Coal,1
+WECC_conventional_steam_coal_2,3,1,0,2074.5,0,1,129.66,0,0,0,77721,1.88,124,16.5,12.2,mountain_coal,0.5,0,0,0.095,0.19,0,0,0,0,0.57,0.57,24,24,WECC,Conventional Steam Coal,2
+WECC_natural_gas_fired_combined_cycle_1,3,1,0,37593.3,0,1,475.86,0,0,0,10399,3.6,92,2,7.78,mountain_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,0.64,0.64,6,6,WECC,Natural Gas Fired Combined Cycle,1
+WECC_natural_gas_fired_combined_cycle_2,3,1,0,12502.4,0,1,158.26,0,0,0,16492,4.55,92,2,8.51,mountain_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,0.64,0.64,6,6,WECC,Natural Gas Fired Combined Cycle,2
+WECC_natural_gas_fired_combustion_turbine_1,3,1,0,15252.7,0,1,71.61,0,0,0,10479,5.28,119,3.5,11.06,mountain_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,WECC,Natural Gas Fired Combustion Turbine,1
+WECC_natural_gas_fired_combustion_turbine_2,3,1,0,6281.6,0,1,27.92,0,0,0,13486,5.28,119,3.5,12.78,mountain_naturalgas,0.3,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,WECC,Natural Gas Fired Combustion Turbine,2
+WECC_natural_gas_internal_combustion_engine_1,3,1,0,1282.7,0,1,6.51,0,0,0,21000,4.88,38,0,9.49,mountain_naturalgas,0.18,0,0,0.106666667,0.213333333,0,0,0,0,3.78,3.78,1,1,WECC,Natural Gas Internal Combustion Engine,1
+WECC_natural_gas_steam_turbine_1,3,1,0,2669.5,0,1,95.34,0,0,0,51303,1.06,87,13.7,12.4,mountain_naturalgas,0.5,0,0,0.63,1.26,0,0,0,0,0.64,0.64,6,6,WECC,Natural Gas Steam Turbine,1
+WECC_nuclear_1,3,1,0,5175,0,1,1293.75,0,0,0,211822,2.84,248,0,10.45,mountain_uranium,0.5,0,0,0.041666667,0.083333333,0,0,0,0,0.25,0.25,24,24,WECC,Nuclear,1
+WECC_petroleum_liquids_1,3,1,0,636.2,0,1,4.24,0,0,0,21000,7.2,38,0,14,mountain_distillate,0.18,0,0,0,0,0,0,0,0,3.78,3.78,1,1,WECC,Petroleum Liquids,1
+EIC_naturalgas_ccavgcf_moderate_0,1,1,0,0,1,1,500,0,-1,56026,28000,2,106,2,6.36,east_north_central_naturalgas,0.3,0,0,0,0,0,0,0,0,0.64,0.64,6,6,EIC,NaturalGas_CCAvgCF_Moderate,0
+EIC_naturalgas_ctavgcf_moderate_0,1,1,0,0,1,1,100,0,-1,45192,21000,5,137,3.5,9.72,east_north_central_naturalgas,0.3,0,0,0,0,0,0,0,0,3.78,3.78,1,1,EIC,NaturalGas_CTAvgCF_Moderate,0
+EIC_naturalgas_ccccsavgcf_conservative_0,1,1,0,0,1,1,500,0,-1,120812,67000,6,106,0,7.16,east_north_central_naturalgas,0.6,0,0,0.106666667,0.213333333,0,0,0.9,27,0.64,0.64,6,6,EIC,NaturalGas_CCCCSAvgCF_Conservative,0
+EIC_advnuclear_atb_moderate_0,1,1,0,0,1,1,500,0,-1,45000,0,2.84,285,0,10.44,east_north_central_uranium,0.5,0,0,0,0,0,0,0,0,0.25,0.25,24,24,EIC,AdvNuclear_ATB_Moderate,0
+TRE_naturalgas_ccavgcf_moderate_0,2,1,0,0,1,1,500,0,-1,42007,28000,2,106,2,6.36,west_south_central_naturalgas,0.3,0,0,0,0,0,0,0,0,0.64,0.64,6,6,TRE,NaturalGas_CCAvgCF_Moderate,0
+TRE_naturalgas_ctavgcf_moderate_0,2,1,0,0,1,1,100,0,-1,35319,21000,5,137,3.5,9.72,west_south_central_naturalgas,0.3,0,0,0,0,0,0,0,0,3.78,3.78,1,1,TRE,NaturalGas_CTAvgCF_Moderate,0
+TRE_naturalgas_ccccsavgcf_conservative_0,2,1,0,0,1,1,500,0,-1,106685,67000,6,106,0,7.16,west_south_central_naturalgas,0.6,0,0,0.106666667,0.213333333,0,0,0.9,27,0.64,0.64,6,6,TRE,NaturalGas_CCCCSAvgCF_Conservative,0
+TRE_advnuclear_atb_moderate_0,2,1,0,0,1,1,500,0,-1,450000,0,2.84,285,0,10.44,west_south_central_uranium,0.5,0,0,0,0,0,0,0,0,0.25,0.25,24,24,TRE,AdvNuclear_ATB_Moderate,0
+WECC_naturalgas_ccavgcf_moderate_0,3,1,0,0,1,1,500,0,-1,59543,28000,2,106,2,6.36,mountain_naturalgas,0.3,0,0,0,0,0,0,0,0,0.64,0.64,6,6,WECC,NaturalGas_CCAvgCF_Moderate,0
+WECC_naturalgas_ctavgcf_moderate_0,3,1,0,0,1,1,100,0,-1,45587,21000,5,137,3.5,9.72,mountain_naturalgas,0.3,0,0,0,0,0,0,0,0,3.78,3.78,1,1,WECC,NaturalGas_CTAvgCF_Moderate,0
+WECC_naturalgas_ccccsavgcf_conservative_0,3,1,0,0,1,1,500,0,-1,119927,67000,6,106,0,7.16,mountain_naturalgas,0.6,0,0,0.106666667,0.213333333,0,0,0.9,27,0.64,0.64,6,6,WECC,NaturalGas_CCCCSAvgCF_Conservative,0
+WECC_advnuclear_atb_moderate_0,3,1,0,0,1,1,500,0,-1,450000,0,2.84,285,0,10.44,mountain_uranium,0.5,0,0,0,0,0,0,0,0,0.25,0.25,24,24,WECC,AdvNuclear_ATB_Moderate,0
+EIC_naturalgas_ctavgcf_moderate_0_zerocarbon,1,1,0,0,1,1,100,0,-1,61000,0,5,137,3.5,9.72,zerocarbon_fuel,0.3,0,0,0,0,0,0,0,0,3.78,3.78,1,1,EIC,NaturalGas_CTAvgCF_Moderate_zerocarbon,0
+TRE_naturalgas_ctavgcf_moderate_0_zerocarbon,2,1,0,0,1,1,100,0,-1,61000,0,5,137,3.5,9.72,zerocarbon_fuel,0.3,0,0,0,0,0,0,0,0,3.78,3.78,1,1,TRE,NaturalGas_CTAvgCF_Moderate_zerocarbon,0
+WECC_naturalgas_ctavgcf_moderate_0_zerocarbon,3,1,0,0,1,1,100,0,-1,61000,0,5,137,3.5,9.72,zerocarbon_fuel,0.3,0,0,0,0,0,0,0,0,3.78,3.78,1,1,WECC,NaturalGas_CTAvgCF_Moderate_zerocarbon,0

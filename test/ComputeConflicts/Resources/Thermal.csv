@@ -1,0 +1,2 @@
+Resource,Zone,Model,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Up_Time,Down_Time,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Resource_Type,CapRes_1,region,cluster
+natural_gas_combined_cycle,1,1,1,0,0,-1,0,65400,10287,3.55,7.43,NG,250,91,2,6,6,0.64,0.64,0.468,natural_gas_fired_combined_cycle,0.93,NE,1

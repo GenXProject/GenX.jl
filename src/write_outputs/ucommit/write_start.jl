@@ -1,12 +1,12 @@
 function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+
 	COMMIT = inputs["COMMIT"]
 	# Startup state for each resource in each time step
-	start = value.(EP[:vSTART][COMMIT, :].data)
-	resources = inputs["RESOURCES"][COMMIT]
-	zones = dfGen[COMMIT, :Zone]
+	resources = inputs["RESOURCE_NAMES"][COMMIT]
+	zones = inputs["R_ZONES"][COMMIT]
 
 	dfStart = DataFrame(Resource = resources, Zone = zones)
+  start = value.(EP[:vSTART][COMMIT, :].data)
 	dfStart.AnnualSum = start * inputs["omega"]
 
 	filepath = joinpath(path, "start.csv")

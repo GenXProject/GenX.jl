@@ -1,16 +1,13 @@
 function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
-
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
 	RSV = inputs["RSV"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-	resources = inputs["RESOURCES"][RSV]
-	zones = dfGen[RSV, :Zone]
+	resources = inputs["RESOURCE_NAMES"][RSV]
+	zones = inputs["R_ZONES"][RSV]
 	rsv = value.(EP[:vRSV][RSV, :].data) * scale_factor
 
 	dfRsv = DataFrame(Resource = resources, Zone = zones)
+
 	dfRsv.AnnualSum = rsv * inputs["omega"]
 
 	if setup["WriteOutputs"] == "annual"

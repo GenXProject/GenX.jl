@@ -272,6 +272,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 				println("Time elapsed for writing esr revenue is")
 				println(elapsed_time_esr_revenue)
 			end
+
 		end
 
 		dfResRevenue = DataFrame()

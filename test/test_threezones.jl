@@ -9,29 +9,17 @@ test_path = "ThreeZones"
 
 # Define test inputs
 genx_setup = Dict(
-    "OverwriteResults" => 0,
-    "PrintModel" => 0,
     "NetworkExpansion" => 1,
     "Trans_Loss_Segments" => 1,
-    "Reserves" => 0,
-    "EnergyShareRequirement" => 0,
-    "CapacityReserveMargin" => 0,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
     "MinCapReq" => 1,
-    "MaxCapReq" => 0,
     "ParameterScale" => 1,
     "UCommit" => 2,
-    "TimeDomainReductionFolder" => "TDR_Results",
-    "TimeDomainReduction" => 0,
-    "MultiStage" => 0,
-    "MethodofMorris" => 0,
-    "EnableJuMPStringNames" => false,
-    "IncludeLossesInESR" => 0,
 )
 
 # Run the case and get the objective value and tolerance
-EP, _, _ = redirect_stdout(devnull) do
+EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 obj_test = objective_value(EP)

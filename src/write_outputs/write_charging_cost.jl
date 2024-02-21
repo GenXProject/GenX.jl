@@ -1,5 +1,10 @@
 function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
+
+	regions = region.(gen)
+	clusters = cluster.(gen)
+	zones = zone_id.(gen)
+
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	STOR_ALL = inputs["STOR_ALL"]
@@ -10,19 +15,19 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 
     price = locational_marginal_price(EP, inputs, setup)
 
-	dfChargingcost = DataFrame(Region = dfGen[!, :region], Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone], Cluster = dfGen[!, :cluster], AnnualSum = Array{Float64}(undef, G),)
+	dfChargingcost = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, AnnualSum = Array{Float64}(undef, G),)
 	chargecost = zeros(G, T)
 	if !isempty(STOR_ALL)
-	    chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(price)[dfGen[STOR_ALL, :Zone], :]
+	    chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(price)[zone_id.(gen.Storage), :]
 	end
 	if !isempty(FLEX)
-	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .* transpose(price)[dfGen[FLEX, :Zone], :]
+	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .* transpose(price)[zone_id.(gen.FlexDemand), :]
 	end
 	if !isempty(ELECTROLYZER)
-		chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .* transpose(price)[dfGen[ELECTROLYZER, :Zone], :]
+		chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .* transpose(price)[zone_id.(gen.Electrolyzer), :]
 	end
 	if !isempty(VS_STOR)
-		chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .* transpose(price)[dfGen[VS_STOR, :Zone], :]
+		chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .* transpose(price)[zone_id.(gen[VS_STOR]), :]
 	end
 	if setup["ParameterScale"] == 1
 	    chargecost *= ModelScalingFactor
