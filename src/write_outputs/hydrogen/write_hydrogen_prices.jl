@@ -3,5 +3,5 @@ function write_hydrogen_prices(path::AbstractString, inputs::Dict, setup::Dict, 
 	dfHydrogenPrice = DataFrame(Hydrogen_Price_Per_Tonne = convert(Array{Float64}, dual.(EP[:cHydrogenMin])*scale_factor))
 
 	CSV.write(joinpath(path, "hydrogen_prices.csv"), dfHydrogenPrice)
-	return dfHydrogenPrice
+	return nothing
 end

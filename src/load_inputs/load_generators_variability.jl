@@ -15,7 +15,7 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
     filename = "Generators_variability.csv"
     gen_var = load_dataframe(joinpath(my_dir, filename))
 
-    all_resources = inputs["RESOURCES"]
+    all_resources = inputs["RESOURCE_NAMES"]
 
     existing_variability = names(gen_var)
     for r in all_resources
@@ -25,7 +25,7 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
         end
     end
 
-	# Reorder DataFrame to R_ID order (order provided in Generators_data.csv)
+	# Reorder DataFrame to R_ID order
 	select!(gen_var, [:Time_Index; Symbol.(all_resources) ])
 
 	# Maximum power output and variability of each energy resource

@@ -1,5 +1,7 @@
 function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
+
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	THERM_ALL = inputs["THERM_ALL"]
@@ -32,11 +34,9 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		AC_DISCHARGE_EX = intersect(inputs["VS_STOR_AC_DISCHARGE"], VRE_STOR_EX)
 		DC_CHARGE_EX = intersect(DC_CHARGE, VRE_STOR_EX)
 		AC_CHARGE_EX = intersect(inputs["VS_STOR_AC_CHARGE"], VRE_STOR_EX)
-		dfVRE_STOR = inputs["dfVRE_STOR"]
-        crm_derate_vrestor(i, y::Vector{Int}) = by_rid_df(y, Symbol("CapResVreStor_$i"), dfVRE_STOR)'
 	end
 
-    crm_derate(i, y::Vector{Int}) = dfGen[y, Symbol("CapRes_$i")]'
+    crm_derate(i, y::Vector{Int}) = derating_factor.(gen[y], tag=i)'
     max_power(t::Vector{Int}, y::Vector{Int}) = inputs["pP_Max"][y, t]'
     total_cap(y::Vector{Int}) = eTotalCap[y]'
 
@@ -71,36 +71,30 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
 		end
 		if !isempty(VRE_STOR_EX)
             capres_dc_discharge = value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, riskyhour].data)'
-            discharge_eff = dfVRE_STOR[dfVRE_STOR.STOR_DC_DISCHARGE .!= 0, :EtaInverter]'
+            discharge_eff = etainverter.(gen[storage_dc_discharge(gen)])'
             capvalue_dc_discharge = zeros(T, G)
             capvalue_dc_discharge[riskyhour, DC_DISCHARGE] = capres_dc_discharge .* discharge_eff
 
             capres_dc_charge = value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, riskyhour].data)'
-            charge_eff = dfVRE_STOR[dfVRE_STOR.STOR_DC_CHARGE .!= 0, :EtaInverter]'
+            charge_eff = etainverter.(gen[storage_dc_charge(gen)])'
             capvalue_dc_charge = zeros(T, G)
             capvalue_dc_charge[riskyhour, DC_CHARGE] = capres_dc_charge ./ charge_eff
 
-            capvalue[riskyhour, VRE_STOR_EX] = crm_derate_vrestor(i, VRE_STOR_EX) .* power(VRE_STOR_EX) ./ total_cap(VRE_STOR_EX)
+            capvalue[riskyhour, VRE_STOR_EX] = crm_derate(i, VRE_STOR_EX) .* power(VRE_STOR_EX) ./ total_cap(VRE_STOR_EX)
 
             charge_vre_stor = value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR_EX, riskyhour].data)'
-            capvalue[riskyhour, VRE_STOR_STOR_EX] -= crm_derate_vrestor(i, VRE_STOR_STOR_EX) .* charge_vre_stor ./ total_cap(VRE_STOR_STOR_EX)
+            capvalue[riskyhour, VRE_STOR_STOR_EX] -= crm_derate(i, VRE_STOR_STOR_EX) .* charge_vre_stor ./ total_cap(VRE_STOR_STOR_EX)
 
-            capvalue[riskyhour, DC_DISCHARGE_EX] += crm_derate_vrestor(i, DC_DISCHARGE_EX) .* capvalue_dc_discharge[riskyhour, DC_DISCHARGE_EX] ./ total_cap(DC_DISCHARGE_EX)
+            capvalue[riskyhour, DC_DISCHARGE_EX] += crm_derate(i, DC_DISCHARGE_EX) .* capvalue_dc_discharge[riskyhour, DC_DISCHARGE_EX] ./ total_cap(DC_DISCHARGE_EX)
             capres_ac_discharge = value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE_EX, riskyhour].data)'
-            capvalue[riskyhour, AC_DISCHARGE_EX] += crm_derate_vrestor(i, AC_DISCHARGE_EX) .* capres_ac_discharge ./ total_cap(AC_DISCHARGE_EX)
+            capvalue[riskyhour, AC_DISCHARGE_EX] += crm_derate(i, AC_DISCHARGE_EX) .* capres_ac_discharge ./ total_cap(AC_DISCHARGE_EX)
 
-            capvalue[riskyhour, DC_CHARGE_EX] -= crm_derate_vrestor(i, DC_CHARGE_EX) .* capvalue_dc_charge[riskyhour, DC_CHARGE_EX] ./ total_cap(DC_CHARGE_EX)
+            capvalue[riskyhour, DC_CHARGE_EX] -= crm_derate(i, DC_CHARGE_EX) .* capvalue_dc_charge[riskyhour, DC_CHARGE_EX] ./ total_cap(DC_CHARGE_EX)
             capres_ac_charge = value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE_EX, riskyhour].data)'
-            capvalue[riskyhour, AC_CHARGE_EX] -= crm_derate_vrestor(i, AC_CHARGE_EX) .* capres_ac_charge ./ total_cap(AC_CHARGE_EX)
+            capvalue[riskyhour, AC_CHARGE_EX] -= crm_derate(i, AC_CHARGE_EX) .* capres_ac_charge ./ total_cap(AC_CHARGE_EX)
 		end
         capvalue = collect(transpose(capvalue))
-
-        # CapRes_* for all resources except VRE_STOR, CapResVreStor_* for VRE_STOR
-        reserve = Array{Symbol}(undef, G)
-        reserve[filter(x-> x ∉ VRE_STOR, dfGen.R_ID)] .= Symbol("CapRes_$i")
-        reserve[VRE_STOR] .= Symbol("CapResVreStor_$i")
-		
-        temp_dfCapValue = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Reserve = reserve)
+		temp_dfCapValue = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones, Reserve = fill(Symbol("CapRes_$i"), G))
 		temp_dfCapValue = hcat(temp_dfCapValue, DataFrame(capvalue, :auto))
 		auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("Reserve"); [Symbol("t$t") for t in 1:T]]
 		rename!(temp_dfCapValue, auxNew_Names)

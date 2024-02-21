@@ -1,6 +1,2 @@
 ,Network_zones,CO_2_Cap_Zone_1,CO_2_Max_tons_MWh_1,CO_2_Max_Mtons_1
-<<<<<<<< HEAD:test/MultiStage/Can_Retire/Inputs_p1/CO2_cap.csv
 NE,z1,1,1,1
-========
-NE,z1,0.5,0.02,0.018
->>>>>>>> aa7e7a8c (Retrofit_example):Example_Systems/RetrofitExample/OneZone/CO2_cap.csv

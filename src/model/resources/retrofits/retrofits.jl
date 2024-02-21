@@ -29,9 +29,8 @@ function retrofit(EP::Model, inputs::Dict)
 	G = inputs["G"] 	# Number of generators
 	C = inputs["C"] 	# Number of cluster
 
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 
-	RESOURCES = inputs["RESOURCES"] # Set of all resources by name
 	COMMIT 	  = inputs["COMMIT"]   # Set of all resources subject to unit commitment
 	RETRO_CAP   = inputs["RETRO_CAP"]  # Set of all resources being retrofitted
 	RETRO_CREAT = inputs["RETRO"] # Set of all resources being created
@@ -39,12 +38,10 @@ function retrofit(EP::Model, inputs::Dict)
 	RETRO_CAP_CHARGE = inputs["RETRO_CAP_CHARGE"]  # Set of all charge capacity resources being created
 	RETRO_CAP_ENERGY = inputs["RETRO_CAP_ENERGY"]  # Set of all energy resources being created
 
-	### Expressions ###
-
 	@constraint(EP, cRetrofit_zone_commit[c=1:C],
-	sum(dfGen[y,:Cap_Size]* EP[:vRETROCAP][y] for y in intersect(RETRO_CAP,COMMIT,dfGen[(dfGen[!,:cluster].==c),:R_ID])) * 1
-	== sum(dfGen[y1,:Cap_Size]* EP[:vRETROCREATCAP][y1] for y1 in intersect(RETRO_CREAT,COMMIT,dfGen[(dfGen[!,:cluster].==c),:R_ID]))
-	+ sum(EP[:vRETROCREATCAP][y2] for y2 in setdiff(intersect(RETRO_CREAT, dfGen[(dfGen[!,:cluster].==c),:R_ID]), COMMIT))) 
+	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP, COMMIT, resources_in_cluster_by_rid(gen,c))) * 1
+	== sum(cap_size(gen[y1]) * EP[:vRETROCREATCAP][y1] for y1 in intersect(RETRO_CREAT, COMMIT, resources_in_cluster_by_rid(gen,c)))
+	+ sum(EP[:vRETROCREATCAP][y2] for y2 in setdiff(intersect(RETRO_CREAT, resources_in_cluster_by_rid(gen,c)), COMMIT))) 
 
 	return EP
 end

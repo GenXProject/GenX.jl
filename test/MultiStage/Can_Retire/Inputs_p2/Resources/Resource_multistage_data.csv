@@ -1,0 +1,5 @@
+Resource,WACC,Capital_Recovery_Period,Lifetime,Min_Retired_Cap_MW,Min_Retired_Energy_Cap_MW,Min_Retired_Charge_Cap_MW
+natural_gas_combined_cycle,0.039,20,20,0,0,0
+solar_pv,0.017,20,20,0,0,0
+onshore_wind,0.024,20,20,0,0,0
+battery,0.027,20,20,0,0,0

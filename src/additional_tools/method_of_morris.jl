@@ -174,11 +174,15 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     len_design_mat = Morris_range[!,:len_design_mat][1]
     uncertain_columns = unique(Morris_range[!,:Parameter])
     #save_parameters = zeros(length(Morris_range[!,:Parameter]))
+    gen = inputs["RESOURCES"]
 
     # Creating the range of uncertain parameters in terms of absolute values
     sigma = zeros((1, 2))
     for column in uncertain_columns
-        sigma = [sigma; [inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Lower_bound] ./100) inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Upper_bound] ./100)]]
+        col_sym = Symbol(lowercase(column))
+        # column_f is the function to get the value "column" for each generator
+        column_f = isdefined(GenX, col_sym) ? getfield(GenX, col_sym) : r -> getproperty(r, col_sym)
+        sigma = [sigma; [column_f.(gen) .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Lower_bound] ./100) column_f.(gen) .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Upper_bound] ./100)]]
     end
     sigma = sigma[2:end,:]
 
@@ -192,7 +196,8 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
 
         for column in uncertain_columns
             index = findall(s -> s == column, Morris_range[!,:Parameter])
-            inputs["dfGen"][!,Symbol(column)] = sigma[first(index):last(index)]
+            attr_to_set = Symbol(lowercase(column))
+            gen[attr_to_set] = sigma[first(index):last(index)]
         end
 
         EP = generate_model(setup, inputs, OPTIMIZER)

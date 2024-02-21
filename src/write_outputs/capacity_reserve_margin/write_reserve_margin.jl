@@ -5,5 +5,5 @@ function write_reserve_margin(path::AbstractString, setup::Dict, EP::Model)
 	end
 	dfResMar = DataFrame(temp_ResMar, :auto)
 	CSV.write(joinpath(path, "ReserveMargin.csv"), dfResMar)
-	return dfResMar
+	return nothing
 end

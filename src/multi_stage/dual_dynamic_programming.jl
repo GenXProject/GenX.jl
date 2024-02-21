@@ -336,7 +336,7 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     	write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
     end
     write_multi_stage_costs(outpath, multi_stage_settings_d, inputs_dict)
-    write_multi_stage_stats(outpath, stats_d)
+    multi_stage_settings_d["Myopic"] == 0 && write_multi_stage_stats(outpath, stats_d)
     write_multi_stage_settings(outpath, settings_d)
 
 end
@@ -362,11 +362,14 @@ function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dic
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-	    if y[1] in ALL_CAP # extract resource integer index value from key
-                # Set the right hand side value of the linking initial capacity constraint in the current
-                # stage to the value of the available capacity variable solved for in the previous stages
-                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-            end
+                # Set the right hand side value of the linking initial capacity constraint in the current stage to the value of the available capacity variable solved for in the previous stages
+                if c == :cExistingTransCap
+                    set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+                else
+	                if y[1] in ALL_CAP # extract resource integer index value from key
+                        set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+                    end
+                end
         end
     end
     return EP_cur

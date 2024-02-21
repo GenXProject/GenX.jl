@@ -1,0 +1,16 @@
+Resource,Zone,MGA,Resource_Type,Num_Vre_Bins,Existing_Cap_MW,Cap_Size,Min_Cap_MW,Max_Cap_MW,New_Build,Can_Retire,Inv_Cost_Per_MWyr,Fixed_Om_Cost_Per_MWyr,Var_Om_Cost_Per_MWh,Heat_Rate_Mmbtu_Per_MWh,Reg_Cost,Rsv_Cost,Reg_Max,Rsv_Max,Region,Cluster
+NENGREST_offshore_wind_turbine_1,1,1,offshore_wind_turbine,1,30,30,0,0,0,1,0,128440,0,9.12,0,0,0,0,NENGREST,1
+NENGREST_onshore_wind_turbine_1,1,1,onshore_wind_turbine,1,145.8,9.75,0,0,0,1,0,43205,-18,9.12,0,0,0.083333333,0.166666667,NENGREST,1
+NENGREST_solar_photovoltaic_1,1,1,solar_photovoltaic,1,821.4,2.6,0,0,0,1,0,18760,0,9.13,0,0,0.083333333,0.166666667,NENGREST,1
+NENG_CT_onshore_wind_turbine_1,2,1,onshore_wind_turbine,1,6.5,5,0,0,0,1,0,43205,-18,9.12,0,0,0.083333333,0.166666667,NENG_CT,1
+NENG_CT_solar_photovoltaic_1,2,1,solar_photovoltaic,1,374.6,5.67,0,0,0,1,0,18760,0,9.16,0,0,0.083333333,0.166666667,NENG_CT,1
+NENG_ME_onshore_wind_turbine_1,3,1,onshore_wind_turbine,1,1190.9,48.5,0,0,0,1,0,43205,-18,9.12,0,0,0.083333333,0.166666667,NENG_ME,1
+NENG_ME_solar_photovoltaic_1,3,1,solar_photovoltaic,1,11.8,1.5,0,0,0,1,0,18760,0,9.12,0,0,0.083333333,0.166666667,NENG_ME,1
+NENGREST_landbasedwind_ltrg1_mid_130_1,1,1,landbasedwind_ltrg1_mid_130,1,0,1,0,4888.236,1,1,194100,41460,0,0,0,0,0.083333333,0.166666667,NENGREST,1
+NENGREST_utilitypv_losangeles_mid_80_0_2_1,1,1,utilitypv_losangeles_mid_80_0_2,1,0,1,0,20835.569,1,1,99283,13055,0,0,0,0,0.083333333,0.166666667,NENGREST,1
+NENGREST_offshorewind_otrg3_mid_fixed_1_176_77_1,1,1,offshorewind_otrg3_mid_fixed_1_176_77,1,0,1,0,9848.442,1,1,260044,91549,0,0,0,0,0.083333333,0.166666667,NENGREST,1
+NENG_CT_landbasedwind_ltrg1_mid_110_1,2,1,landbasedwind_ltrg1_mid_110,1,0,1,0,1982.895,1,1,185181,41460,0,0,0,0,0.083333333,0.166666667,NENG_CT,1
+NENG_CT_utilitypv_losangeles_mid_80_0_2_1,2,1,utilitypv_losangeles_mid_80_0_2,1,0,1,0,17063.264,1,1,98631,13055,0,0,0,0,0.083333333,0.166666667,NENG_CT,1
+NENG_CT_offshorewind_otrg3_mid_fixed_1_176_77_1,2,1,offshorewind_otrg3_mid_fixed_1_176_77,1,0,1,0,477.5,1,1,247542,91549,0,0,0,0,0.083333333,0.166666667,NENG_CT,1
+NENG_ME_landbasedwind_ltrg1_mid_110_1,3,1,landbasedwind_ltrg1_mid_110,1,0,1,0,20430.499,1,1,233173,41460,0,0,0,0,0.083333333,0.166666667,NENG_ME,1
+NENG_ME_utilitypv_losangeles_mid_100_0_2_1,3,1,utilitypv_losangeles_mid_100_0_2,1,0,1,0,21535.709,1,1,98706,13055,0,0,0,0,0.083333333,0.166666667,NENG_ME,1

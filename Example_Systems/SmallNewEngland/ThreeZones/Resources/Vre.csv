@@ -1,0 +1,5 @@
+Resource,Zone,LDS,Num_VRE_Bins,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Ramp_Up_Percentage,Ramp_Dn_Percentage,Hydro_Energy_to_Power_Ratio,Min_Power,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,MGA,Resource_Type,region,cluster
+MA_solar_pv,1,0,1,1,0,0,-1,0,85300,18760,0.0,9.13,None,0,0,0,1.0,1.0,0,0.0,0.0,0.0,0,0,1,solar_photovoltaic,MA,1
+CT_onshore_wind,2,0,1,1,0,0,-1,0,97200,43205,0.1,9.12,None,0,0,0,1.0,1.0,0,0.0,0.0,0.0,0,0,1,onshore_wind_turbine,CT,1
+CT_solar_pv,2,0,1,1,0,0,-1,0,85300,18760,0.0,9.16,None,0,0,0,1.0,1.0,0,0.0,0.0,0.0,0,0,1,solar_photovoltaic,CT,1
+ME_onshore_wind,3,0,1,1,0,0,-1,0,97200,43205,0.1,9.12,None,0,0,0,1.0,1.0,0,0.0,0.0,0.0,0,0,1,onshore_wind_turbine,ME,1
