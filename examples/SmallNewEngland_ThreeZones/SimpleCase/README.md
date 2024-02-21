@@ -1,6 +1,6 @@
 # Small New England: Three Zones
 
-**SmallNewEngland/ThreeZones**, a one-year example with hourly resolution, contains zones representing Massachusetts, Connecticut, and Maine. The ten represented resources include only natural gas, solar PV, wind, and lithium-ion battery storage.
+**SimpleCase**, a one-year example with hourly resolution, contains zones representing Massachusetts, Connecticut, and Maine. The ten represented resources include only natural gas, solar PV, wind, and lithium-ion battery storage.
 
 To run the model, first navigate to the example directory at `GenX/examples/SmallNewEngland_ThreeZones/SimpleCase`:
 
