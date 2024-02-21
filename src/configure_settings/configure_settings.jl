@@ -24,18 +24,22 @@ function default_settings()
         "IncludeLossesInESR" => 0,
         "HydrogenHourlyMatching" => 0,
         "EnableJuMPStringNames" => false,
+        "HydrogenHourlyMatching" => 0,
+        "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
         "ResourcePath" => "Resources",
     )
 end
 
-function configure_settings(settings_path::String)
+function configure_settings(settings_path::String, output_settings_path::String)
     println("Configuring Settings")
     model_settings = YAML.load(open(settings_path))
 
     settings = default_settings()
-
     merge!(settings, model_settings)
+
+    output_settings = configure_writeoutput(output_settings_path, settings)
+    settings["WriteOutputsSettingsDict"] = output_settings
 
     validate_settings!(settings)
     return settings
@@ -44,6 +48,10 @@ end
 function validate_settings!(settings::Dict{Any,Any})
     # Check for any settings combinations that are not allowed.
     # If we find any then make a response and issue a note to the user.
+    
+    # make WriteOutputs setting lowercase and check for valid value
+    settings["WriteOutputs"] = lowercase(settings["WriteOutputs"])
+    @assert settings["WriteOutputs"] ∈ ["annual", "full"]
 
     if "OperationWrapping" in keys(settings)
         @warn """The behavior of the TimeDomainReduction and OperationWrapping
@@ -56,4 +64,80 @@ function validate_settings!(settings::Dict{Any,Any})
         settings["EnableJuMPStringNames"]=1;
     end
 
+end
+
+function default_writeoutput()
+    Dict{String,Bool}(
+        "WriteCosts" => true,
+        "WriteCapacity" => true,
+        "WriteCapacityValue" => true,
+        "WriteCapacityFactor" => true,
+        "WriteCharge" => true,
+        "WriteChargingCost" => true,
+        "WriteCO2" => true,
+        "WriteCO2Cap" => true,
+        "WriteCommit" => true,
+        "WriteCurtailment" => true,
+        "WriteEmissions" => true,
+        "WriteEnergyRevenue" => true,
+        "WriteESRPrices" => true,
+        "WriteESRRevenue" => true,
+        "WriteFuelConsumption" => true,
+        "WriteHourlyMatchingPrices" => true,
+        "WriteHydrogenPrices" => true,
+        "WriteMaintenance" => true,
+        "WriteMaxCapReq" => true,
+        "WriteMinCapReq" => true,
+        "WriteNetRevenue" => true,
+        "WriteNSE" => true,
+        "WriteNWExpansion" => true,
+        "WriteOpWrapLDSdStor" => true,
+        "WriteOpWrapLDSStorInit" => true,
+        "WritePower" => true,
+        "WritePowerBalance" => true,
+        "WritePrice" => true,
+        "WriteReg" => true,
+        "WriteReliability" => true,
+        "WriteReserveMargin" => true,
+        "WriteReserveMarginRevenue" => true,
+        "WriteReserveMarginSlack" => true,
+        "WriteReserveMarginWithWeights" => true,
+        "WriteRsv" => true,
+        "WriteShutdown" => true,
+        "WriteStart" => true,
+        "WriteStatus" => true,
+        "WriteStorage" => true,
+        "WriteStorageDual" => true,
+        "WriteSubsidyRevenue" => true,
+        "WriteTimeWeights" => true,
+        "WriteTransmissionFlows" => true,
+        "WriteTransmissionLosses" => true,
+        "WriteVirtualDischarge" => true,
+        "WriteVREStor" => true
+    )
+end
+
+function configure_writeoutput(output_settings_path::String, settings::Dict)
+    
+    writeoutput = default_writeoutput()
+
+    # don't write files with hourly data if settings["WriteOutputs"] == "annual"
+    if settings["WriteOutputs"] == "annual"
+        writeoutput["WritePrice"] = false
+        writeoutput["WriteReliability"] = false
+        writeoutput["WriteStorage"] = false
+        writeoutput["WriteStorageDual"] = false
+        writeoutput["WriteTimeWeights"] = false
+        writeoutput["WriteCommit"] = false
+        writeoutput["WriteCapacityValue"] = false
+        writeoutput["WriteReserveMargin"] = false
+        writeoutput["WriteReserveMarginWithWeights"] = false
+    end
+
+    # read in YAML file if provided
+    if isfile(output_settings_path)
+        model_writeoutput = YAML.load(open(output_settings_path))
+        merge!(writeoutput, model_writeoutput)
+    end
+    return writeoutput
 end

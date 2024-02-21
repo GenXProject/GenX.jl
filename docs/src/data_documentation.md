@@ -70,12 +70,17 @@ Note that all settings parameters are case sensitive.
 |PrintModel | Flag for printing the model equations as .lp file.|
 ||1 = including the model equation as an output|
 ||0 = the model equation won't be included as an output|
+| WriteOutputs | Flag for writing the model outputs with hourly resolution or just the annual sum.|
+|| "full" = write the model outputs with hourly resolution.|
+|| "annual" = write only the annual sum of the model outputs.|
 
 Additionally, Solver related settings parameters are specified in the appropriate .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`),
 which should be located in the current working directory.
 Note that GenX supplies default settings for most solver settings in the various solver-specific functions found in the `src/configure_solver/` directory.
 To overwrite default settings, you can specify the below Solver specific settings.
 Settings are specific to each solver.
+
+(Optional) The user can also select the output files that they want to export using the `output_settings.yml` file. This file containes a list of `yes/no` options for each output file, and should be located in the `Settings` folder. By default, if `output_settings.yml` is not included, GenX will export all output files. 
 
 ###### Table 1b: Summary of the Solver settings parameters
 ---

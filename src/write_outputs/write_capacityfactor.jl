@@ -52,5 +52,5 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), dfCapacityfactor)
-    return dfCapacityfactor
+    return nothing
 end

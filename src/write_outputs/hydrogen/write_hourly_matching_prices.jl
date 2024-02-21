@@ -13,5 +13,5 @@ function write_hourly_matching_prices(path::AbstractString, inputs::Dict, setup:
 
 	CSV.write(joinpath(path, "hourly_matching_prices.csv"), dftranspose(dfHourlyMatchPrices, false), header=false)
 
-	return dfHourlyMatchPrices
+	return nothing
 end

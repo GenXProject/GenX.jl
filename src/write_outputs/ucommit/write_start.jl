@@ -1,22 +1,19 @@
 function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	gen = inputs["RESOURCES"]
-	zones = zone_id.(gen)
-	
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
+
 	COMMIT = inputs["COMMIT"]
 	# Startup state for each resource in each time step
-	dfStart = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
-	start = zeros(G,T)
-	start[COMMIT, :] = value.(EP[:vSTART][COMMIT, :])
-	dfStart.AnnualSum = start * inputs["omega"]
-	dfStart = hcat(dfStart, DataFrame(start, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfStart,auxNew_Names)
+	resources = inputs["RESOURCE_NAMES"][COMMIT]
+	zones = inputs["R_ZONES"][COMMIT]
 
-	total = DataFrame(["Total" 0 sum(dfStart.AnnualSum) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(start, dims = 1)
-	rename!(total,auxNew_Names)
-	dfStart = vcat(dfStart, total)
-	CSV.write(joinpath(path, "start.csv"), dftranspose(dfStart, false), header=false)
+	dfStart = DataFrame(Resource = resources, Zone = zones)
+  start = value.(EP[:vSTART][COMMIT, :].data)
+	dfStart.AnnualSum = start * inputs["omega"]
+
+	filepath = joinpath(path, "start.csv")
+	if setup["WriteOutputs"] == "annual"
+		write_annual(filepath, dfStart)
+	else 	# setup["WriteOutputs"] == "full"	
+		write_fulltimeseries(filepath, start, dfStart)
+	end
+	return nothing
 end

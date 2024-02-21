@@ -58,8 +58,14 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 		powerbalance *= ModelScalingFactor
 	end
 	dfPowerBalance.AnnualSum .= powerbalance * inputs["omega"]
-	dfPowerBalance = hcat(dfPowerBalance, DataFrame(powerbalance, :auto))
-	auxNew_Names = [Symbol("BalanceComponent"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
-	rename!(dfPowerBalance,auxNew_Names)
-	CSV.write(joinpath(path, "power_balance.csv"), dftranspose(dfPowerBalance, false), header=false)
+
+	if setup["WriteOutputs"] == "annual"
+		CSV.write(joinpath(path, "power_balance.csv"), dfPowerBalance)
+	else 	# setup["WriteOutputs"] == "full"	
+		dfPowerBalance = hcat(dfPowerBalance, DataFrame(powerbalance, :auto))
+		auxNew_Names = [Symbol("BalanceComponent"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
+		rename!(dfPowerBalance,auxNew_Names)
+		CSV.write(joinpath(path, "power_balance.csv"), dftranspose(dfPowerBalance, false), writeheader=false)
+	end
+	return nothing
 end

@@ -1,23 +1,20 @@
 function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	gen = inputs["RESOURCES"]
-	zones = zone_id.(gen)
-
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
 	REG = inputs["REG"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-	# Regulation contributions for each resource in each time step
-	dfReg = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
-	reg = zeros(G,T)
-	reg[REG, :] = value.(EP[:vREG][REG, :])
-	dfReg.AnnualSum = (reg*scale_factor) * inputs["omega"]
-	dfReg = hcat(dfReg, DataFrame(reg*scale_factor, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfReg,auxNew_Names)
 
-	total = DataFrame(["Total" 0 sum(dfReg.AnnualSum) fill(0.0, (1,T))], :auto)
-	total[!, 4:T+3] .= sum(reg, dims = 1)
-	rename!(total,auxNew_Names)
-	dfReg = vcat(dfReg, total)
-	CSV.write(joinpath(path, "reg.csv"), dftranspose(dfReg, false), header=false)
+	resources = inputs["RESOURCE_NAMES"][REG]
+	zones = inputs["R_ZONES"][REG]
+	# Regulation contributions for each resource in each time step
+	reg = value.(EP[:vREG][REG, :].data) * scale_factor
+
+	dfReg = DataFrame(Resource = resources, Zone = zones)
+	dfReg.AnnualSum = reg * inputs["omega"]
+
+	filepath = joinpath(path, "reg.csv")
+	if setup["WriteOutputs"] == "annual"
+		write_annual(filepath, dfReg)
+	else 	# setup["WriteOutputs"] == "full"
+		write_fulltimeseries(filepath, reg, dfReg)
+	end
+	return nothing
 end

@@ -33,15 +33,14 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 				+ (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data .* inputs["pP_Max_Wind"][SOLAR_WIND, :] .- value.(EP[:vP_WIND][SOLAR_WIND, :]).data))
 		end
 	end
-	dfCurtailment.AnnualSum = curtailment * inputs["omega"]
-	dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfCurtailment,auxNew_Names)
 
-	total = DataFrame(["Total" 0 sum(dfCurtailment[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(curtailment, dims = 1)
-	rename!(total,auxNew_Names)
-	dfCurtailment = vcat(dfCurtailment, total)
-	CSV.write(joinpath(path, "curtail.csv"), dftranspose(dfCurtailment, false), header=false)
-	return dfCurtailment
+	dfCurtailment.AnnualSum = curtailment * inputs["omega"]
+
+	filename = joinpath(path, "curtail.csv")
+	if setup["WriteOutputs"] == "annual"
+		write_annual(filename, dfCurtailment)
+	else 	# setup["WriteOutputs"] == "full"
+		write_fulltimeseries(filename, curtailment, dfCurtailment)
+	end
+	return nothing
 end

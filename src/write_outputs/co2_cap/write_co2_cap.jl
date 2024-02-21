@@ -21,5 +21,5 @@ function write_co2_cap(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
 
     CSV.write(joinpath(path, "CO2_prices_and_penalties.csv"), dfCO2Price)
 
-    return dfCO2Price
+    return nothing
 end

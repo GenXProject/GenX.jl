@@ -18,8 +18,8 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	rename!(dfPrice,auxNew_Names)
 
 	## Linear configuration final output
-	CSV.write(joinpath(path, "prices.csv"), dftranspose(dfPrice, false), header=false)
-	return dfPrice
+	CSV.write(joinpath(path, "prices.csv"), dftranspose(dfPrice, false), writeheader=false)
+	return nothing
 end
 
 @doc raw"""

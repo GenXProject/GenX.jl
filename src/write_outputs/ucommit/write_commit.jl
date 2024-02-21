@@ -1,14 +1,13 @@
 function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	gen = inputs["RESOURCES"]
-	zones = zone_id.(gen)
-
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
+	
 	COMMIT = inputs["COMMIT"]
+	T = inputs["T"]
+
 	# Commitment state for each resource in each time step
-	commit = zeros(G,T)
-	commit[COMMIT, :] = value.(EP[:vCOMMIT][COMMIT, :])
-	dfCommit = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
+	resources = inputs["RESOURCE_NAMES"][COMMIT]
+	zones = inputs["R_ZONES"][COMMIT]
+  commit = value.(EP[:vCOMMIT][COMMIT, :].data)
+	dfCommit = DataFrame(Resource = resources, Zone = zones)
 	dfCommit = hcat(dfCommit, DataFrame(commit, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfCommit,auxNew_Names)

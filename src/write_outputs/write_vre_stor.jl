@@ -300,14 +300,14 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 		charge_dc = zeros(size(DC_CHARGE)[1], T)
 		charge_dc = value.(EP[:vP_DC_CHARGE]).data ./ etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge.!=0)]) * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
 		dfCharge_DC.AnnualSum .= charge_dc * inputs["omega"]
-		dfCharge_DC = hcat(dfCharge_DC, DataFrame(charge_dc, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfCharge_DC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfCharge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		total[:, 4:T+3] .= sum(charge_dc, dims = 1)
-		rename!(total,auxNew_Names)
-		dfCharge_DC = vcat(dfCharge_DC, total)
-		CSV.write(joinpath(path,"vre_stor_dc_charge.csv"), dftranspose(dfCharge_DC, false), header=false)
+
+
+		filepath = joinpath(path,"vre_stor_dc_charge.csv")
+		if setup["WriteOutputs"] == "annual"
+			write_annual(filepath, dfCharge_DC)
+		else 	# setup["WriteOutputs"] == "full"
+			write_fulltimeseries(filepath, charge_dc, dfCharge_DC)
+		end
 	end
 
 	# AC charging of battery dataframe
@@ -316,15 +316,15 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
 		charge_ac = zeros(size(AC_CHARGE)[1], T)
 		charge_ac = value.(EP[:vP_AC_CHARGE]).data * (setup["ParameterScale"]==1 ? ModelScalingFactor : 1)
 		dfCharge_AC.AnnualSum .= charge_ac * inputs["omega"]
-		dfCharge_AC = hcat(dfCharge_AC, DataFrame(charge_ac, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfCharge_AC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfCharge_AC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		total[:, 4:T+3] .= sum(charge_ac, dims = 1)
-		rename!(total,auxNew_Names)
-		dfCharge_AC = vcat(dfCharge_AC, total)
-		CSV.write(joinpath(path,"vre_stor_ac_charge.csv"), dftranspose(dfCharge_AC, false), header=false)
+
+		filepath = joinpath(path,"vre_stor_ac_charge.csv")
+		if setup["WriteOutputs"] == "annual"
+			write_annual(filepath, dfCharge_AC)
+		else 	# setup["WriteOutputs"] == "full"
+			write_fulltimeseries(filepath, charge_ac, dfCharge_AC)
+		end
 	end
+	return nothing
 end
 
 @doc raw"""
@@ -349,14 +349,13 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 			power_vre_stor *= ModelScalingFactor
 		end
 		dfDischarge_DC.AnnualSum .= power_vre_stor * inputs["omega"]
-		dfDischarge_DC = hcat(dfDischarge_DC, DataFrame(power_vre_stor, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfDischarge_DC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfDischarge_DC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		total[:, 4:T+3] .= sum(power_vre_stor, dims = 1)
-		rename!(total,auxNew_Names)
-		dfDischarge_DC = vcat(dfDischarge_DC, total)
-		CSV.write(joinpath(path, "vre_stor_dc_discharge.csv"), dftranspose(dfDischarge_DC, false), header=false)
+
+		filepath = joinpath(path,"vre_stor_dc_discharge.csv")
+		if setup["WriteOutputs"] == "annual"
+			write_annual(filepath, dfDischarge_DC)
+		else 	# setup["WriteOutputs"] == "full"
+			write_fulltimeseries(filepath, power_vre_stor, dfDischarge_DC)
+		end
 	end
 
 	# AC discharging of battery dataframe
@@ -367,14 +366,13 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 			power_vre_stor *= ModelScalingFactor
 		end
 		dfDischarge_AC.AnnualSum .= power_vre_stor * inputs["omega"]
-		dfDischarge_AC = hcat(dfDischarge_AC, DataFrame(power_vre_stor, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfDischarge_AC,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfDischarge_AC[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		total[:, 4:T+3] .= sum(power_vre_stor, dims = 1)
-		rename!(total,auxNew_Names)
-		dfDischarge_AC = vcat(dfDischarge_AC, total)
-		CSV.write(joinpath(path, "vre_stor_ac_discharge.csv"), dftranspose(dfDischarge_AC, false), header=false)
+
+		filepath = joinpath(path,"vre_stor_ac_discharge.csv")
+		if setup["WriteOutputs"] == "annual"
+			write_annual(filepath, dfDischarge_AC)
+		else 	# setup["WriteOutputs"] == "full"
+			write_fulltimeseries(filepath, power_vre_stor, dfDischarge_AC)
+		end
 	end
 
 	# Wind generation of co-located resource dataframe
@@ -385,14 +383,13 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 			vre_vre_stor *= ModelScalingFactor
 		end
 		dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
-		dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame(vre_vre_stor, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfVP_VRE_STOR,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		total[:, 4:T+3] .= sum(vre_vre_stor, dims = 1)
-		rename!(total,auxNew_Names)
-		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
-		CSV.write(joinpath(path,"vre_stor_wind_power.csv"), dftranspose(dfVP_VRE_STOR, false), header=false)
+
+		filepath = joinpath(path,"vre_stor_wind_power.csv")
+		if setup["WriteOutputs"] == "annual"
+			write_annual(filepath, dfVP_VRE_STOR)
+		else 	# setup["WriteOutputs"] == "full"
+			write_fulltimeseries(filepath, vre_vre_stor, dfVP_VRE_STOR)
+		end
 	end
 
 	# Solar generation of co-located resource dataframe
@@ -403,13 +400,13 @@ function write_vre_stor_discharge(path::AbstractString, inputs::Dict, setup::Dic
 			vre_vre_stor *= ModelScalingFactor
 		end
 		dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
-		dfVP_VRE_STOR = hcat(dfVP_VRE_STOR, DataFrame(vre_vre_stor, :auto))
-		auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-		rename!(dfVP_VRE_STOR,auxNew_Names)
-		total = DataFrame(["Total" 0 sum(dfVP_VRE_STOR[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-		total[:, 4:T+3] .= sum(vre_vre_stor, dims = 1)
-		rename!(total,auxNew_Names)
-		dfVP_VRE_STOR = vcat(dfVP_VRE_STOR, total)
-		CSV.write(joinpath(path,"vre_stor_solar_power.csv"), dftranspose(dfVP_VRE_STOR, false), header=false)
+
+		filepath = joinpath(path,"vre_stor_solar_power.csv")
+		if setup["WriteOutputs"] == "annual"
+			write_annual(filepath, dfVP_VRE_STOR)
+		else 	# setup["WriteOutputs"] == "full"
+			write_fulltimeseries(filepath, vre_vre_stor, dfVP_VRE_STOR)
+		end
 	end
+	return nothing
 end

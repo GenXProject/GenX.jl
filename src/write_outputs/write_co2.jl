@@ -13,25 +13,23 @@ end
 function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
 
     # CO2 emissions by plant
     dfEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(gen), AnnualSum=zeros(G))
     emissions_plant = value.(EP[:eEmissionsByPlant])
+
     if setup["ParameterScale"] == 1
         emissions_plant *= ModelScalingFactor
     end
     dfEmissions_plant.AnnualSum .= emissions_plant * inputs["omega"]
-    dfEmissions_plant = hcat(dfEmissions_plant, DataFrame(emissions_plant, :auto))
 
-    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t = 1:T]]
-    rename!(dfEmissions_plant, auxNew_Names)
-
-    total = DataFrame(["Total" 0 sum(dfEmissions_plant[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-    total[!, 4:T+3] .= sum(emissions_plant, dims=1)
-    dfEmissions_plant = vcat(dfEmissions_plant, total)
-    CSV.write(joinpath(path, "emissions_plant.csv"), dftranspose(dfEmissions_plant, false), header=false)
+    filepath = joinpath(path, "emissions_plant.csv")
+    if setup["WriteOutputs"] == "annual"
+        write_annual(filepath, dfEmissions_plant)
+    else 	# setup["WriteOutputs"] == "full"
+        write_fulltimeseries(filepath, emissions_plant, dfEmissions_plant)
+    end
+    return nothing
 end
 
 function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
@@ -44,21 +42,19 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
     dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"][CCS], Zone=zone_id.(gen[CCS]), AnnualSum=zeros(length(CCS)))
     if !isempty(CCS)
         # Captured CO2 emissions by plant
-        emissions_captured_plant = zeros(length(CCS), T)
-        emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]).data)
+        emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]))
+
         if setup["ParameterScale"] == 1
             emissions_captured_plant *= ModelScalingFactor
         end
         dfCapturedEmissions_plant.AnnualSum .= emissions_captured_plant * inputs["omega"]
-        dfCapturedEmissions_plant = hcat(dfCapturedEmissions_plant, DataFrame(emissions_captured_plant, :auto))
 
-        auxNew_Names = [Symbol("Resource"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t = 1:T]]
-        rename!(dfCapturedEmissions_plant, auxNew_Names)
-
-        total = DataFrame(["Total" 0 sum(dfCapturedEmissions_plant[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-        total[!, 4:T+3] .= sum(emissions_captured_plant, dims=1)
-        dfCapturedEmissions_plant = vcat(dfCapturedEmissions_plant, total)
-
-        CSV.write(joinpath(path, "captured_emissions_plant.csv"), dftranspose(dfCapturedEmissions_plant, false), header=false)
+        filepath = joinpath(path, "captured_emissions_plant.csv")
+        if setup["WriteOutputs"] == "annual"
+            write_annual(filepath, dfCapturedEmissions_plant)
+        else     # setup["WriteOutputs"] == "full"
+            write_fulltimeseries(filepath, emissions_captured_plant, dfCapturedEmissions_plant)
+        end
+        return nothing
     end
 end
