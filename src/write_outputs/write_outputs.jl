@@ -260,7 +260,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		dfESRRev = DataFrame()
-		if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1
+		if setup["EnergyShareRequirement"] == 1 && has_duals(EP)
 			dfESR = DataFrame()
 			if output_settings_d["WriteESRPrices"] || output_settings_d["WriteESRRevenue"] || output_settings_d["WriteNetRevenue"]
 				elapsed_time_esr_prices = @elapsed dfESR = write_esr_prices(path, inputs, setup, EP)
@@ -277,7 +277,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		dfResRevenue = DataFrame()
-		if setup["CapacityReserveMargin"]==1 && has_duals(EP) == 1
+		if setup["CapacityReserveMargin"]==1 && has_duals(EP)
 			if output_settings_d["WriteReserveMargin"]
 				elapsed_time_reserve_margin = @elapsed write_reserve_margin(path, setup, EP)
 				println("Time elapsed for writing reserve margin is")
@@ -315,6 +315,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			end
 			
 		end
+
+		dfOpRegRevenue = DataFrame()
+		dfOpRsvRevenue = DataFrame()
+		if setup["Reserves"]==1 && has_duals(EP)
+			elapsed_time_op_res_rev = @elapsed dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
+		  	println("Time elapsed for writing oerating reserve and regulation revenue is")
+		  	println(elapsed_time_op_res_rev)
+		end
+		
 		if setup["CO2Cap"]>0 && has_duals(EP) == 1 && output_settings_d["WriteCO2Cap"]
 			elapsed_time_co2_cap = @elapsed	write_co2_cap(path, inputs, setup, EP)
 			println("Time elapsed for writing co2 cap is")
@@ -332,7 +341,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println(elapsed_time_max_cap_req)
 		end
 
-		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP) == 1
+		if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP)
 			if output_settings_d["WriteHydrogenPrices"]
 				elapsed_time_hydrogen_prices = @elapsed	write_hydrogen_prices(path, inputs, setup, EP)
 				println("Time elapsed for writing hydrogen prices is")
@@ -346,7 +355,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		end
 
 		if output_settings_d["WriteNetRevenue"]
-			elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor)
+			elapsed_time_net_rev = @elapsed write_net_revenue(path, inputs, setup, EP, dfCap, dfESRRev, dfResRevenue, dfChargingcost, dfPower, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfVreStor, dfOpRegRevenue, dfOpRsvRevenue)
 		  	println("Time elapsed for writing net revenue is")
 	  		println(elapsed_time_net_rev)
 		end
