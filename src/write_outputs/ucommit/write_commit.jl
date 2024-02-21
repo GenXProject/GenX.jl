@@ -1,6 +1,7 @@
 function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	
 	COMMIT = inputs["COMMIT"]
+	T = inputs["T"]
 
 	# Commitment state for each resource in each time step
 	resources = inputs["RESOURCE_NAMES"][COMMIT]
