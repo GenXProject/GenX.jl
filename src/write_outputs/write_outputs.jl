@@ -43,7 +43,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 	# Dict containing the list of outputs to write
 	output_settings_d = setup["WriteOutputsSettingsDict"]
-
+	write_settings_file(path, setup)
+	
 	output_settings_d["WriteStatus"] && write_status(path, inputs, setup, EP)
 
 	if output_settings_d["WriteCosts"]
@@ -384,3 +385,5 @@ function write_fulltimeseries(fullpath::AbstractString, dataOut::Matrix{Float64}
 	CSV.write(fullpath, dftranspose(dfOut, false), writeheader=false)
 	return nothing
 end
+
+write_settings_file(path, setup) = YAML.write_file(joinpath(path, "run_settings.yml"), setup)
