@@ -13,7 +13,7 @@ Pages = ["load_fuels_data.jl"]
 ## Generators Input Data
 ```@autodocs
 Modules = [GenX]
-Pages = ["load_generators_data.jl"]
+Pages = ["load_resources_data.jl"]
 ```
 
 ## Variability of Generators' Outputs

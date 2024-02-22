@@ -37,7 +37,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	println("Investment Discharge Module")
 	MultiStage = setup["MultiStage"]
 
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
 
 	G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
 
@@ -71,7 +71,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if !isempty(RETRO)
 		# Dependent iterators only allowed in forward sequence, so we reconstruct retrofit destinations from sources.
 		ALL_SOURCES = intersect(collect(Set(collect(Iterators.flatten(RETRO_SOURCE_IDS)))),RET_CAP)
-		DESTS_BY_SOURCE = [ y in ALL_SOURCES ? intersect(findall(x->in(inputs["RESOURCES"][y],RETRO_SOURCES[x]), 1:G), findall(x->x in NEW_CAP, 1:G)) : []  for y in 1:G]
+		DESTS_BY_SOURCE = [ y in ALL_SOURCES ? intersect(findall(x->in(inputs["RESOURCE_NAMES"][y],RETRO_SOURCES[x]), 1:G), findall(x->x in NEW_CAP, 1:G)) : []  for y in 1:G]
 		@variable(EP, vRETROFIT[yr in ALL_SOURCES, r in DESTS_BY_SOURCE[yr]] >= 0);     # Capacity retrofitted from source technology y to retrofit technology r
 	end
 
@@ -80,7 +80,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	if MultiStage == 1
 		@expression(EP, eExistingCap[y in 1:G], vEXISTINGCAP[y])
 	else
-		@expression(EP, eExistingCap[y in 1:G], dfGen[y,:Existing_Cap_MW])
+		@expression(EP, eExistingCap[y in 1:G], existing_cap_mw(gen[y]))
 	end
 
 	# Cap_Size is set to 1 for all variables when unit UCommit == 0
@@ -88,19 +88,19 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCap[y in 1:G],
 		if y in intersect(NEW_CAP, RET_CAP) # Resources eligible for new capacity and retirements
 			if y in COMMIT
-				eExistingCap[y] + dfGen[y,:Cap_Size]*(EP[:vCAP][y] - EP[:vRETCAP][y])
+				eExistingCap[y] + cap_size(gen[y])*(EP[:vCAP][y] - EP[:vRETCAP][y])
 			else
 				eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y]
 			end
 		elseif y in setdiff(NEW_CAP, RET_CAP) # Resources eligible for only new capacity
 			if y in COMMIT
-				eExistingCap[y] + dfGen[y,:Cap_Size]*EP[:vCAP][y]
+				eExistingCap[y] + cap_size(gen[y])*EP[:vCAP][y]
 			else
 				eExistingCap[y] + EP[:vCAP][y]
 			end
 		elseif y in setdiff(RET_CAP, NEW_CAP) # Resources eligible for only capacity retirements
 			if y in COMMIT
-				eExistingCap[y] - dfGen[y,:Cap_Size]*EP[:vRETCAP][y]
+				eExistingCap[y] - cap_size(gen[y])*EP[:vRETCAP][y]
 			else
 				eExistingCap[y] - EP[:vRETCAP][y]
 			end
@@ -116,18 +116,18 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eCFix[y in 1:G],
 		if y in setdiff(NEW_CAP, RETRO) # Resources eligible for new capacity (Non-Retrofit)
 			if y in COMMIT
-				dfGen[y,:Inv_Cost_per_MWyr]*dfGen[y,:Cap_Size]*vCAP[y] + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 			else
-				dfGen[y,:Inv_Cost_per_MWyr]*vCAP[y] + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				inv_cost_per_mwyr(gen[y])*vCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 			end
 		elseif y in intersect(NEW_CAP, RETRO) # Resources eligible for new capacity (Retrofit yr -> y)
 			if y in COMMIT
-				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*dfGen[y,:Cap_Size]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*cap_size(gen[y])*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 			else
-				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+				sum( RETRO_SOURCE_IDS[y][i] in RET_CAP ? RETRO_INV_CAP_COSTS[y][i]*vRETROFIT[RETRO_SOURCE_IDS[y][i],y]*RETRO_EFFICIENCY[y][i] : 0 for i in 1:NUM_RETRO_SOURCES[y]) + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 			end
 		else
-			dfGen[y,:Fixed_OM_Cost_per_MWyr]*eTotalCap[y]
+			fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 		end
 	)
 
@@ -148,32 +148,32 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
 	if MultiStage == 1
 	    # Existing capacity variable is equal to existing capacity specified in the input file
-		@constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == dfGen[y,:Existing_Cap_MW])
+		@constraint(EP, cExistingCap[y in 1:G], EP[:vEXISTINGCAP][y] == existing_cap_mw(gen[y]))
 	end
 
 	## Constraints on retirements and capacity additions
 	# Cannot retire more capacity than existing capacity
 	@constraint(EP, cMaxRetNoCommit[y in setdiff(RET_CAP,COMMIT)], vRETCAP[y] <= eExistingCap[y])
-	@constraint(EP, cMaxRetCommit[y in intersect(RET_CAP,COMMIT)], dfGen[y,:Cap_Size]*vRETCAP[y] <= eExistingCap[y])
+	@constraint(EP, cMaxRetCommit[y in intersect(RET_CAP,COMMIT)], cap_size(gen[y])*vRETCAP[y] <= eExistingCap[y])
 
 	## Constraints on new built capacity
 	# Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-	@constraint(EP, cMaxCap[y in intersect(dfGen[dfGen.Max_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] <= dfGen[y, :Max_Cap_MW])
+	MAX_CAP = ids_with_positive(gen, max_cap_mw)
+	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_cap_mw(gen[y]))
 
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-	@constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] >= dfGen[y, :Min_Cap_MW])
-
-
+	MIN_CAP = ids_with_positive(gen, min_cap_mw)
+	@constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y] >= min_cap_mw(gen[y]))
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MinCapTag_$mincap")] .== 1, :R_ID]))
+		@expression(EP, eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]], sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, min_cap, tag=mincap)))
 		add_similar_to_expression!(EP[:eMinCapRes], eMinCapResInvest)
 	end
 
 	if setup["MaxCapReq"] == 1
-		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in dfGen[dfGen[!, Symbol("MaxCapTag_$maxcap")] .== 1, :R_ID]))
+		@expression(EP, eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]], sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, max_cap, tag=maxcap)))
 		add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
 	end
 end

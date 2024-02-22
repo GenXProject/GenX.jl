@@ -69,11 +69,8 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("CO2 Policies Module")
 
-	dfGen = inputs["dfGen"]
 	SEG = inputs["SEG"]  # Number of lines
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
 
 	### Variable ###
 	# if input files are present, add CO2 cap slack variables
@@ -117,6 +114,7 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 			vCO2Cap_slack[cap] <=
 			sum(inputs["dfMaxCO2Rate"][z,cap] * inputs["omega"][t] * EP[:eGenerationByZone][z,t] for t=1:T, z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
 		)
-	end
+
+	end 
 
 end

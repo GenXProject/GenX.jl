@@ -5,7 +5,7 @@ Function for writing the capacity factor of different resources. For co-located 
     value is calculated if the site has either or both a solar PV or wind resource.
 """
 function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfGen = inputs["dfGen"]
+    gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     THERM_ALL = inputs["THERM_ALL"]
@@ -15,7 +15,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
 
-    dfCapacityfactor = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
+    dfCapacityfactor = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(gen), AnnualSum=zeros(G), Capacity=zeros(G), CapacityFactor=zeros(G))
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     dfCapacityfactor.AnnualSum .= value.(EP[:vP]) * inputs["omega"] * scale_factor
     dfCapacityfactor.Capacity .= value.(EP[:eTotalCap]) * scale_factor
@@ -24,7 +24,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         SOLAR = setdiff(inputs["VS_SOLAR"],inputs["VS_WIND"])
         WIND = setdiff(inputs["VS_WIND"],inputs["VS_SOLAR"])
         SOLAR_WIND = intersect(inputs["VS_SOLAR"],inputs["VS_WIND"])
-        dfVRE_STOR = inputs["dfVRE_STOR"]
+        gen_VRE_STOR = gen.VreStorage
         if !isempty(SOLAR)
             dfCapacityfactor.AnnualSum[SOLAR] .= value.(EP[:vP_SOLAR][SOLAR, :]).data * inputs["omega"] * scale_factor
             dfCapacityfactor.Capacity[SOLAR] .= value.(EP[:eTotalCap_SOLAR][SOLAR]).data * scale_factor
@@ -35,8 +35,8 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         end
         if !isempty(SOLAR_WIND)
             dfCapacityfactor.AnnualSum[SOLAR_WIND] .= (value.(EP[:vP_WIND][SOLAR_WIND, :]).data 
-                + value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* dfVRE_STOR[((dfVRE_STOR.SOLAR.!=0) .& (dfVRE_STOR.WIND.!=0)), :EtaInverter]) * inputs["omega"] * scale_factor
-            dfCapacityfactor.Capacity[SOLAR_WIND] .= (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data + value.(EP[:eTotalCap_SOLAR][SOLAR_WIND]).data .* dfVRE_STOR[((dfVRE_STOR.SOLAR.!=0) .& (dfVRE_STOR.WIND.!=0)), :EtaInverter]) * scale_factor
+                + value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.wind.!=0) .& (gen_VRE_STOR.solar.!=0)])) * inputs["omega"] * scale_factor
+            dfCapacityfactor.Capacity[SOLAR_WIND] .= (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data + value.(EP[:eTotalCap_SOLAR][SOLAR_WIND]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.wind.!=0) .& (gen_VRE_STOR.solar.!=0)])) * scale_factor
         end
     end
 
@@ -52,5 +52,5 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), dfCapacityfactor)
-    return dfCapacityfactor
+    return nothing
 end

@@ -69,7 +69,7 @@ returns: dictionary containing updated model inputs, to be used in the generate\
 """
 function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
-    dfGen = inputs_d["dfGen"]
+    gen = inputs_d["RESOURCES"]
 
 	# Parameter inputs when multi-year discounting is activated
 	cur_stage = settings_d["CurStage"]
@@ -84,39 +84,40 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 	if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
 		# 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_per_MWhyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_per_MWhyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
-		inputs_d["dfGen"][!,:Inv_Cost_Charge_per_MWyr] = compute_overnight_capital_cost(settings_d,dfGen[!,:Inv_Cost_Charge_per_MWyr],dfGen[!,:Capital_Recovery_Period],dfGen[!,:WACC])
+		gen.inv_cost_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))
+		gen.inv_cost_per_mwhyr = compute_overnight_capital_cost(settings_d, inv_cost_per_mwhyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))
+		gen.inv_cost_charge_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_per_mwyr.(gen), capital_recovery_period.(gen), tech_wacc.(gen))
 
 		# 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
 		# NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWyr] .*= OPEXMULT
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_per_MWhyr] .*= OPEXMULT
-		inputs_d["dfGen"][!,:Fixed_OM_Cost_Charge_per_MWyr] .*= OPEXMULT
+		gen.fixed_om_cost_per_mwyr = fixed_om_cost_per_mwyr.(gen) .* OPEXMULT
+		gen.fixed_om_cost_per_mwhyr = fixed_om_cost_per_mwhyr.(gen) .* OPEXMULT
+		gen.fixed_om_cost_charge_per_mwyr = fixed_om_cost_charge_per_mwyr.(gen) .* OPEXMULT
 
 		# Conduct 1. and 2. for any co-located VRE-STOR resources
 		if !isempty(inputs_d["VRE_STOR"])
-			dfVRE_STOR = inputs_d["dfVRE_STOR"]
-			dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Inverter_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_DC],dfVRE_STOR[!,:WACC_DC])
-			dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Solar_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Solar],dfVRE_STOR[!,:WACC_Solar])
-			dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Wind_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Wind],dfVRE_STOR[!,:WACC_Wind])
-			dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_DC],dfVRE_STOR[!,:WACC_Discharge_DC])
-			dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_DC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_DC],dfVRE_STOR[!,:WACC_Charge_DC])
-			dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Discharge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Discharge_AC],dfVRE_STOR[!,:WACC_Discharge_AC])
-			dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr] = compute_overnight_capital_cost(settings_d,dfVRE_STOR[!,:Inv_Cost_Charge_AC_per_MWyr],dfVRE_STOR[!,:Capital_Recovery_Period_Charge_AC],dfVRE_STOR[!,:WACC_Charge_AC])
+			gen_VRE_STOR = gen.VreStorage
+			gen_VRE_STOR.inv_cost_inverter_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_inverter_per_mwyr.(gen_VRE_STOR), capital_recovery_period_dc.(gen_VRE_STOR), tech_wacc_dc.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_solar_per_mwyr = compute_overnight_capital_cost(settings_d,	inv_cost_solar_per_mwyr.(gen_VRE_STOR), capital_recovery_period_solar.(gen_VRE_STOR), tech_wacc_solar.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_wind_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_wind_per_mwyr.(gen_VRE_STOR), capital_recovery_period_wind.(gen_VRE_STOR), tech_wacc_wind.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_discharge_dc_per_mwyr.(gen_VRE_STOR), capital_recovery_period_discharge_dc.(gen_VRE_STOR), tech_wacc_discharge_dc.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_charge_dc_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_dc_per_mwyr.(gen_VRE_STOR), capital_recovery_period_charge_dc.(gen_VRE_STOR), tech_wacc_charge_dc.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_discharge_ac_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_discharge_ac_per_mwyr.(gen_VRE_STOR), capital_recovery_period_discharge_ac.(gen_VRE_STOR), tech_wacc_discharge_ac.(gen_VRE_STOR))
+			gen_VRE_STOR.inv_cost_charge_ac_per_mwyr = compute_overnight_capital_cost(settings_d, inv_cost_charge_ac_per_mwyr.(gen_VRE_STOR), capital_recovery_period_charge_ac.(gen_VRE_STOR), tech_wacc_charge_ac.(gen_VRE_STOR))
 
-			dfVRE_STOR[!,:Fixed_OM_Inverter_Cost_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Solar_Cost_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Wind_Cost_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_DC_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Charge_DC_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Discharge_AC_per_MWyr] .*= OPEXMULT
-			dfVRE_STOR[!,:Fixed_OM_Cost_Charge_AC_per_MWyr] .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_inverter_cost_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_solar_cost_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_wind_cost_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_discharge_dc_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_charge_dc_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_discharge_ac_per_mwyr .*= OPEXMULT
+			gen_VRE_STOR.fixed_om_cost_charge_ac_per_mwyr .*= OPEXMULT
 		end
 	end
 
-    retirable = resources_which_can_be_retired(dfGen)
+    retirable = is_retirable(gen)
 
+	# TODO: ask Sam about this
     # Set of all resources eligible for capacity retirements
 	inputs_d["RET_CAP"] = retirable
 	# Set of all storage resources eligible for energy capacity retirements

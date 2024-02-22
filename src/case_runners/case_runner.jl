@@ -14,8 +14,9 @@ end
 case - folder for the case
 """
 function run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
-    genx_settings = get_settings_path(case, "genx_settings.yml") #Settings YAML file path
-    mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
+    genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
+    writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
+    mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
         run_genx_case_simple!(case, mysetup, optimizer)
@@ -67,19 +68,21 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
 
     # Run MGA if the MGA flag is set to 1 else only save the least cost solution
-    println("Writing Output")
-    outputs_path = get_default_output_folder(case)
-    elapsed_time = @elapsed outputs_path = write_outputs(EP, outputs_path, mysetup, myinputs)
-    println("Time elapsed for writing is")
-    println(elapsed_time)
-    if mysetup["ModelingToGenerateAlternatives"] == 1
-        println("Starting Model to Generate Alternatives (MGA) Iterations")
-        mga(EP, case, mysetup, myinputs, outputs_path)
-    end
+    if has_values(EP)
+        println("Writing Output")
+        outputs_path = get_default_output_folder(case)
+        elapsed_time = @elapsed outputs_path = write_outputs(EP, outputs_path, mysetup, myinputs)
+        println("Time elapsed for writing is")
+        println(elapsed_time)
+        if mysetup["ModelingToGenerateAlternatives"] == 1
+            println("Starting Model to Generate Alternatives (MGA) Iterations")
+            mga(EP, case, mysetup, myinputs, outputs_path)
+        end
 
-    if mysetup["MethodofMorris"] == 1
-        println("Starting Global sensitivity analysis with Method of Morris")
-        morris(EP, case, mysetup, myinputs, outputs_path, OPTIMIZER)
+        if mysetup["MethodofMorris"] == 1
+            println("Starting Global sensitivity analysis with Method of Morris")
+            morris(EP, case, mysetup, myinputs, outputs_path, OPTIMIZER)
+        end
     end
 end
 

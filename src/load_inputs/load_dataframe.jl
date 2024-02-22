@@ -188,3 +188,20 @@ function extract_matrix_from_dataframe(df::DataFrame, columnprefix::AbstractStri
     Matrix(dropmissing(df[:, sorted_columns]))
 end
 
+function extract_matrix_from_resources(rs::Vector{T}, columnprefix::AbstractString, default=0.0) where T<:AbstractResource
+
+    # attributes starting with columnprefix with a numeric suffix
+    attributes_n = [attr for attr in string.(attributes(rs[1])) if startswith(attr, columnprefix)]
+    # sort the attributes by the numeric suffix
+    sort!(attributes_n, by = x -> parse(Int, split(x, "_")[end]))
+
+    # extract the matrix of the attributes
+    value = Matrix{Float64}(undef, length(rs), length(attributes_n))
+    for (i, r) in enumerate(rs)
+        for (j, attr) in enumerate(attributes_n)
+            value[i, j] = get(r, Symbol(attr), default)
+        end
+    end
+
+    return value
+end

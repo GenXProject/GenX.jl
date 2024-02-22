@@ -1,20 +1,19 @@
 function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
 	# Operational decision variable states
-	COMMIT = inputs["COMMIT"]
+  COMMIT = inputs["COMMIT"]
+  zones = inputs["R_ZONES"][COMMIT]
 	# Shutdown state for each resource in each time step
-	dfShutdown = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
-	shut = zeros(G,T)
-	shut[COMMIT, :] = value.(EP[:vSHUT][COMMIT, :])
+	shut = value.(EP[:vSHUT][COMMIT, :].data)
+	resources = inputs["RESOURCE_NAMES"][COMMIT]
+
+	dfShutdown = DataFrame(Resource = resources, Zone = zones)
 	dfShutdown.AnnualSum = shut * inputs["omega"]
-	dfShutdown = hcat(dfShutdown, DataFrame(shut, :auto))
-	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfShutdown,auxNew_Names)
-	total=DataFrame(["Total" 0 sum(dfShutdown.AnnualSum) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(shut, dims = 1)
-	rename!(total,auxNew_Names)
-	dfShutdown = vcat(dfShutdown, total)
-	CSV.write(joinpath(path, "shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
+
+	filepath = joinpath(path, "shutdown.csv")
+	if setup["WriteOutputs"] == "annual"
+		write_annual(filepath, dfShutdown)
+	else 	# setup["WriteOutputs"] == "full"
+		write_fulltimeseries(filepath, shut, dfShutdown)
+	end
+	return nothing
 end

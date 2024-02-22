@@ -4,7 +4,8 @@
 Function for reporting dual of storage level (state of charge) balance of each resource in each time step.
 """
 function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
+	zones = zone_id.(gen)
 
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
@@ -21,7 +22,7 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	end
 
 	# # Dual of storage level (state of charge) balance of each resource in each time step
-	dfStorageDual = DataFrame(Resource = inputs["RESOURCES"], Zone = dfGen[!, :Zone])
+	dfStorageDual = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
 	dual_values = zeros(G, T)
 
 	# Loop over W separately hours_per_subperiod
@@ -58,5 +59,5 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	dfStorageDual=hcat(dfStorageDual, DataFrame(dual_values, :auto))
 	rename!(dfStorageDual,[Symbol("Resource");Symbol("Zone");[Symbol("t$t") for t in 1:T]])
 
-	CSV.write(joinpath(path, "storagebal_duals.csv"), dftranspose(dfStorageDual, false), writeheader=false)
+	CSV.write(joinpath(path, "storagebal_duals.csv"), dftranspose(dfStorageDual, false), header=false)
 end

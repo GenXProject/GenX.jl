@@ -109,13 +109,11 @@ let
 
     function check_okay(resource)
         e = check_resource(resource)
-        println(e)
         @test length(e) == 0
     end
 
     function check_bad(resource)
         e = check_resource(resource)
-        println(e)
         @test length(e) > 0
     end
 
