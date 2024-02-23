@@ -1,0 +1,15 @@
+Resource,Derating_factor
+solar_pv,0.8
+onshore_wind,0.8
+battery,0.95
+natural_gas_combined_cycle,0.93
+coal_super_1,0.93
+coal_super_2,0.93
+coal_super_3,0.93
+coal_super_4,0.93
+coal_super_5,0.93
+20A_retrofit_1,0.93
+20A_retrofit_2,0.93
+20A_retrofit_3,0.93
+20A_retrofit_4,0.93
+20A_retrofit_5,0.93

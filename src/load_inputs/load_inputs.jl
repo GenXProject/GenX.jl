@@ -25,8 +25,6 @@ function load_inputs(setup::Dict,path::AbstractString)
 
 	# Read temporal-resolved load data, and clustering information if relevant
 	load_demand_data!(setup, path, inputs)
-	# Read clustering information if relevant
-	load_cluster!(setup, path, inputs)
 	# Read fuel cost data, including time-varying fuel costs
 	load_fuels_data!(setup, path, inputs)
 	# Read in generator/resource related inputs
@@ -73,6 +71,10 @@ function load_inputs(setup::Dict,path::AbstractString)
 		load_period_map!(setup, path, inputs)
 	end
 
+	if !isempty(inputs["RETRO"])
+		load_retrofit_data!(path, inputs)
+	end
+
 	# Virtual charge discharge cost
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	inputs["VirtualChargeDischargeCost"] = setup["VirtualChargeDischargeCost"] / scale_factor
@@ -96,3 +98,9 @@ function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
 	is_in_folder = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
 	is_here || is_in_folder
 end
+
+abstract type AbstractLogMsg end
+struct ErrorMsg <: AbstractLogMsg msg::String end
+struct WarnMsg <: AbstractLogMsg msg::String end
+
+

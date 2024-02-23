@@ -525,6 +525,27 @@ resource_type_mga(r::AbstractResource) = r.resource_type
 zone_id(r::AbstractResource) = r.zone
 zone_id(rs::Vector{T}) where T <: AbstractResource = rs.zone
 
+# getter for boolean attributes (true or false) with validation
+function new_build(r::AbstractResource)
+    validate_boolean_attribute(r, :new_build)
+    return Bool(get(r, :new_build, false))
+end
+
+function can_retire(r::AbstractResource)
+    validate_boolean_attribute(r, :can_retire)
+    return Bool(get(r, :can_retire, false))
+end
+
+function can_retrofit(r::AbstractResource)
+    validate_boolean_attribute(r, :can_retrofit)
+    return Bool(get(r, :can_retrofit, false))
+end
+
+function retro_option(r::AbstractResource)
+    validate_boolean_attribute(r, :retro)
+    return Bool(get(r, :retro, false))
+end
+
 const default_minmax_cap = -1.
 max_cap_mw(r::AbstractResource) = get(r, :max_cap_mw, default_minmax_cap)
 min_cap_mw(r::AbstractResource) = get(r, :min_cap_mw, default_minmax_cap)
@@ -626,13 +647,14 @@ ids_with_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) 
 ids_with_singlefuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 0, rs)
 ids_with_multifuels(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 1, rs)
 
-is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default_zero) == 1, rs)
-is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default_zero) == 1, rs)
+is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == true, rs)
+is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == true, rs)
+ids_can_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retrofit(r) == true, rs)
+ids_retrofit_option(rs::Vector{T}) where T <: AbstractResource = findall(r -> retro_option(r) == true, rs)
 
-# Retrofit
-ids_with_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default_zero) == 1, rs)
+retrofit_pool_id(r::AbstractResource) = get(r, :retrofit_pool_id, default_zero)
 
-# Unit commitment
+# Unit commitment}
 ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
 # Without unit commitment
 no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 2, rs)
@@ -671,7 +693,7 @@ Returns the indices of all hydro resources in the vector `rs`.
 """
 hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Hydro), rs)
 
-# THERM interface
+# THERMAL interface
 """
     thermal(rs::Vector{T}) where T <: AbstractResource
 
@@ -897,19 +919,19 @@ function resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
 end
 
 @doc raw"""
-    resources_in_cluster_by_rid(rs::Vector{<:AbstractResource}, c::Int)
+    resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::Int)
 
-Find R_ID's of resources in a cluster `c`.
+Find R_ID's of resources with retrofit pool id `pool_id`.
 
 # Arguments
 - `rs::Vector{<:AbstractResource}`: The vector of resources.
-- `c::Int`: The cluster id.
+- `pool_id::Int`: The retrofit pool id.
 
 # Returns
-- `Vector{Int64}`: The vector of resource ids in the cluster `c`.
+- `Vector{Int64}`: The vector of resource ids in the retrofit pool.
 """
-function resources_in_cluster_by_rid(rs::Vector{<:AbstractResource}, c::Int)
-    return resource_id.(rs[cluster.(rs) .== c])
+function resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::Int)
+    return resource_id.(rs[retrofit_pool_id.(rs) .== pool_id])
 end
 
 """
@@ -931,4 +953,19 @@ function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
     return rs[r_id]
 end
 
+"""
+    validate_boolean_attribute(r::AbstractResource, attr::Symbol)
 
+Validate that the attribute `attr` in the resource `r` is boolean {0, 1}.
+
+# Arguments
+- `r::AbstractResource`: The resource.
+- `attr::Symbol`: The name of the attribute.
+"""
+function validate_boolean_attribute(r::AbstractResource, attr::Symbol)
+    attr_value = get(r, attr, 0)
+    if attr_value != 0 && attr_value != 1
+        error("Attribute $attr in resource $(resource_name(r)) must be boolean. 
+        The only valid values are 0 or 1.")
+    end
+end

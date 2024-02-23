@@ -63,7 +63,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@variable(EP, vRETROCAP[y in RETRO_CAP] >= 0);
 
 	# Retrofitting capacity of resource y 
-	@variable(EP, vRETROCREATCAP[y in RETRO_CREAT] >= 0);
+	# @variable(EP, vRETROCREATCAP[y in RETRO_CREAT] >= 0);
 
 	### Expressions ###
 
@@ -106,13 +106,13 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		end
 	else # Resources not eligible for new capacity or retirement (being retrofitted can be added)
 		#eExistingCap[y] + EP[:vZERO]
-		if y in intersect(RETRO_CREAT, COMMIT)
-			eExistingCap[y] + cap_size(gen[y]) * EP[:vRETROCREATCAP][y]
-		elseif y in setdiff(RETRO_CREAT, COMMIT)
-			eExistingCap[y] + EP[:vRETROCREATCAP][y]
-		else
+		# if y in intersect(RETRO_CREAT, COMMIT)
+		# 	eExistingCap[y] + cap_size(gen[y]) * EP[:vRETROCREATCAP][y]
+		# elseif y in setdiff(RETRO_CREAT, COMMIT)
+		# 	eExistingCap[y] + EP[:vRETROCREATCAP][y]
+		# else
 			eExistingCap[y] + EP[:vZERO]
-		end
+		# end
 	end
 )
 
@@ -124,12 +124,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		else
 			inv_cost_per_mwyr(gen[y])*vCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 		end
-	elseif y in RETRO_CREAT # Resources eligible for both retrofit and new capacity
-		if y in COMMIT
-			inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
-		else
-		    inv_cost_per_mwyr(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
-		end
+	# elseif y in RETRO_CREAT # Resources eligible for both retrofit and new capacity
+	# 	if y in COMMIT
+	# 		inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
+	# 	else
+	# 	    inv_cost_per_mwyr(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
+	# 	end
 	else
 		fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 	end
@@ -166,10 +166,6 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
 	MAX_CAP = ids_with_positive(gen, max_cap_mw)
 	@constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y] <= max_cap_mw(gen[y]))
-
-	#### Need to do unit commitment
-	@constraint(EP, sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP,COMMIT)) 
-	>= sum(cap_size(gen[y1]) * EP[:vRETROCREATCAP][y1] for y1 in intersect(RETRO_CREAT,COMMIT)))
 
 	# Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
 	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
