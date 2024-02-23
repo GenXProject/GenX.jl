@@ -568,6 +568,8 @@ hydro_energy_to_power_ratio(r::AbstractResource) = get(r, :hydro_energy_to_power
 
 qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supply, default_zero)
 
+retrofit_pool_id(r::AbstractResource) = get(r, :retrofit_pool_id, default_zero)
+
 # costs
 reg_cost(r::AbstractResource) = get(r, :reg_cost, default_zero)
 reg_max(r::AbstractResource)::Float64 = get(r, :reg_max, default_zero)
@@ -648,13 +650,12 @@ ids_with_singlefuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> mu
 ids_with_multifuels(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 1, rs)
 
 is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == true, rs)
+not_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == false, rs)
 is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == true, rs)
 ids_can_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retrofit(r) == true, rs)
-ids_retrofit_option(rs::Vector{T}) where T <: AbstractResource = findall(r -> retro_option(r) == true, rs)
+ids_retrofit_options(rs::Vector{T}) where T <: AbstractResource = findall(r -> retro_option(r) == true, rs)
 
-retrofit_pool_id(r::AbstractResource) = get(r, :retrofit_pool_id, default_zero)
-
-# Unit commitment}
+# Unit commitment
 ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
 # Without unit commitment
 no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 2, rs)

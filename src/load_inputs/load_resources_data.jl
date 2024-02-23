@@ -413,9 +413,9 @@ function check_retrofit_resource(r::AbstractResource)
         e = string("Resource ", resource_name(r), " has :can_retrofit = ", can_retrofit(r), " but :can_retire = ", can_retire(r), ".\n",
                    "A unit that can be retrofitted must also be eligible for retirement (:can_retire = 1)")
         push!(error_strings, e)
-    elseif isa(r, Thermal) && retro_option(r) == true && new_build(r) == false
+    elseif isa(r, Thermal) && retro_option(r) == true && new_build(r) == true
         e = string("Resource ", resource_name(r), " has :retro = ", retro_option(r), " but :new_build = ", new_build(r), ".\n",
-                   "This setting is valid only for resources that have :new_build = 1")
+                   "This setting is valid only for resources that have :new_build = 0")
         push!(error_strings, e)
     end
     return ErrorMsg.(error_strings)
@@ -435,7 +435,7 @@ function check_retrofit_pool_id(rs::Vector{AbstractResource})
     thermal_resources = rs.Thermal
 
     units_can_retrofit = ids_can_retrofit(thermal_resources)
-    retrofit_options = ids_retrofit_option(thermal_resources)
+    retrofit_options = ids_retrofit_options(thermal_resources)
 
     # delete 0 from the set of retrofit_pool_id because 0 is the default value
     thermal_pool_id = delete!(Set(retrofit_pool_id.(rs[units_can_retrofit])),0)
@@ -1010,29 +1010,35 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     inputs["RET_CAP"] = intersect(retirable, ids_with_nonneg(gen, existing_cap_mw))
     # Set of all resources eligible for capacity retrofitting (by Yifu, same with retirement)
 	inputs["RETRO_CAP"] = intersect(units_can_retrofit, ids_with_nonneg(gen, existing_cap_mw))
-    inputs["RETRO"] = ids_retrofit_option(gen)
+    inputs["RETRO"] = ids_retrofit_options(gen)
 
     new_cap_energy = Set{Int64}()
     ret_cap_energy = Set{Int64}()
+    retro_cap_energy = Set{Int64}()
     if !isempty(inputs["STOR_ALL"])
         # Set of all storage resources eligible for new energy capacity
         new_cap_energy = intersect(buildable, ids_with(gen, max_cap_mwh), inputs["STOR_ALL"])
         # Set of all storage resources eligible for energy capacity retirements
         ret_cap_energy = intersect(retirable, ids_with_nonneg(gen, existing_cap_mwh), inputs["STOR_ALL"])
+        retro_cap_energy = intersect(not_buildable(gen), inputs["RETRO"], inputs["STOR_ALL"])
     end
     inputs["NEW_CAP_ENERGY"] = new_cap_energy
     inputs["RET_CAP_ENERGY"] = ret_cap_energy
+    inputs["RETRO_CAP_ENERGY"] = retro_cap_energy
 
 	new_cap_charge = Set{Int64}()
 	ret_cap_charge = Set{Int64}()
+    retro_cap_charge = Set{Int64}()
 	if !isempty(inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
         new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
         ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
+        retro_cap_charge = intersect(not_buildable(gen), inputs["RETRO"], inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge
+    inputs["RETRO_CAP_CHARGE"] = retro_cap_charge
 
     ## Co-located resources
     # VRE and storage

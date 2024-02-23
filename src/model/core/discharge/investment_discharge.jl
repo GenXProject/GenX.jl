@@ -63,7 +63,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	@variable(EP, vRETROCAP[y in RETRO_CAP] >= 0);
 
 	# Retrofitting capacity of resource y 
-	# @variable(EP, vRETROCREATCAP[y in RETRO_CREAT] >= 0);
+	@variable(EP, vRETROCREATCAP[y in RETRO_CREAT] >= 0);
 
 	### Expressions ###
 
@@ -105,14 +105,14 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 			eExistingCap[y] + EP[:vCAP][y]
 		end
 	else # Resources not eligible for new capacity or retirement (being retrofitted can be added)
-		#eExistingCap[y] + EP[:vZERO]
-		# if y in intersect(RETRO_CREAT, COMMIT)
-		# 	eExistingCap[y] + cap_size(gen[y]) * EP[:vRETROCREATCAP][y]
-		# elseif y in setdiff(RETRO_CREAT, COMMIT)
-		# 	eExistingCap[y] + EP[:vRETROCREATCAP][y]
-		# else
+		eExistingCap[y] + EP[:vZERO]
+		if y in intersect(RETRO_CREAT, COMMIT)
+			eExistingCap[y] + cap_size(gen[y]) * EP[:vRETROCREATCAP][y]
+		elseif y in setdiff(RETRO_CREAT, COMMIT)
+			eExistingCap[y] + EP[:vRETROCREATCAP][y]
+		else
 			eExistingCap[y] + EP[:vZERO]
-		# end
+		end
 	end
 )
 
@@ -124,12 +124,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 		else
 			inv_cost_per_mwyr(gen[y])*vCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 		end
-	# elseif y in RETRO_CREAT # Resources eligible for both retrofit and new capacity
-	# 	if y in COMMIT
-	# 		inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
-	# 	else
-	# 	    inv_cost_per_mwyr(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
-	# 	end
+	elseif y in RETRO_CREAT # Resources eligible for both retrofit and new capacity
+		if y in COMMIT
+			inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
+		else
+		    inv_cost_per_mwyr(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
+		end
 	else
 		fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 	end
