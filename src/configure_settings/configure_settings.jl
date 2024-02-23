@@ -129,6 +129,76 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         writeoutput["WriteReserveMarginWithWeights"] = false
     end
 
+end
+
+function default_writeoutput()
+    Dict{String,Bool}(
+        "WriteCosts" => true,
+        "WriteCapacity" => true,
+        "WriteCapacityValue" => true,
+        "WriteCapacityFactor" => true,
+        "WriteCharge" => true,
+        "WriteChargingCost" => true,
+        "WriteCO2" => true,
+        "WriteCO2Cap" => true,
+        "WriteCommit" => true,
+        "WriteCurtailment" => true,
+        "WriteEmissions" => true,
+        "WriteEnergyRevenue" => true,
+        "WriteESRPrices" => true,
+        "WriteESRRevenue" => true,
+        "WriteFuelConsumption" => true,
+        "WriteHourlyMatchingPrices" => true,
+        "WriteHydrogenPrices" => true,
+        "WriteMaintenance" => true,
+        "WriteMaxCapReq" => true,
+        "WriteMinCapReq" => true,
+        "WriteNetRevenue" => true,
+        "WriteNSE" => true,
+        "WriteNWExpansion" => true,
+        "WriteOpWrapLDSdStor" => true,
+        "WriteOpWrapLDSStorInit" => true,
+        "WritePower" => true,
+        "WritePowerBalance" => true,
+        "WritePrice" => true,
+        "WriteReg" => true,
+        "WriteReliability" => true,
+        "WriteReserveMargin" => true,
+        "WriteReserveMarginRevenue" => true,
+        "WriteReserveMarginSlack" => true,
+        "WriteReserveMarginWithWeights" => true,
+        "WriteRsv" => true,
+        "WriteShutdown" => true,
+        "WriteStart" => true,
+        "WriteStatus" => true,
+        "WriteStorage" => true,
+        "WriteStorageDual" => true,
+        "WriteSubsidyRevenue" => true,
+        "WriteTimeWeights" => true,
+        "WriteTransmissionFlows" => true,
+        "WriteTransmissionLosses" => true,
+        "WriteVirtualDischarge" => true,
+        "WriteVREStor" => true
+    )
+end
+
+function configure_writeoutput(output_settings_path::String, settings::Dict)
+    
+    writeoutput = default_writeoutput()
+
+    # don't write files with hourly data if settings["WriteOutputs"] == "annual"
+    if settings["WriteOutputs"] == "annual"
+        writeoutput["WritePrice"] = false
+        writeoutput["WriteReliability"] = false
+        writeoutput["WriteStorage"] = false
+        writeoutput["WriteStorageDual"] = false
+        writeoutput["WriteTimeWeights"] = false
+        writeoutput["WriteCommit"] = false
+        writeoutput["WriteCapacityValue"] = false
+        writeoutput["WriteReserveMargin"] = false
+        writeoutput["WriteReserveMarginWithWeights"] = false
+    end
+
     # read in YAML file if provided
     if isfile(output_settings_path)
         model_writeoutput = YAML.load(open(output_settings_path))
