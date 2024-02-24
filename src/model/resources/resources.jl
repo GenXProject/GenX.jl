@@ -541,7 +541,7 @@ function can_retrofit(r::AbstractResource)
     return Bool(get(r, :can_retrofit, false))
 end
 
-function retro_option(r::AbstractResource)
+function is_retro_option(r::AbstractResource)
     validate_boolean_attribute(r, :retro)
     return Bool(get(r, :retro, false))
 end
@@ -652,8 +652,9 @@ ids_with_multifuels(rs::Vector{T}) where T <: AbstractResource = findall(r -> mu
 is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == true, rs)
 not_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == false, rs)
 is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == true, rs)
+not_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == false, rs)
 ids_can_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retrofit(r) == true, rs)
-ids_retrofit_options(rs::Vector{T}) where T <: AbstractResource = findall(r -> retro_option(r) == true, rs)
+ids_retrofit_options(rs::Vector{T}) where T <: AbstractResource = findall(r -> is_retro_option(r) == true, rs)
 
 # Unit commitment
 ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)

@@ -413,8 +413,8 @@ function check_retrofit_resource(r::AbstractResource)
         e = string("Resource ", resource_name(r), " has :can_retrofit = ", can_retrofit(r), " but :can_retire = ", can_retire(r), ".\n",
                    "A unit that can be retrofitted must also be eligible for retirement (:can_retire = 1)")
         push!(error_strings, e)
-    elseif isa(r, Thermal) && retro_option(r) == true && new_build(r) == true
-        e = string("Resource ", resource_name(r), " has :retro = ", retro_option(r), " but :new_build = ", new_build(r), ".\n",
+    elseif isa(r, Thermal) && is_retro_option(r) == true && new_build(r) == true
+        e = string("Resource ", resource_name(r), " has :retro = ", is_retro_option(r), " but :new_build = ", new_build(r), ".\n",
                    "This setting is valid only for resources that have :new_build = 0")
         push!(error_strings, e)
     end
@@ -1020,7 +1020,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         new_cap_energy = intersect(buildable, ids_with(gen, max_cap_mwh), inputs["STOR_ALL"])
         # Set of all storage resources eligible for energy capacity retirements
         ret_cap_energy = intersect(retirable, ids_with_nonneg(gen, existing_cap_mwh), inputs["STOR_ALL"])
-        retro_cap_energy = intersect(not_buildable(gen), inputs["RETRO"], inputs["STOR_ALL"])
+        retro_cap_energy = intersect(not_buildable(gen), not_retirable(gen), inputs["RETRO"], inputs["STOR_ALL"])
     end
     inputs["NEW_CAP_ENERGY"] = new_cap_energy
     inputs["RET_CAP_ENERGY"] = ret_cap_energy
@@ -1034,7 +1034,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
         ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
-        retro_cap_charge = intersect(not_buildable(gen), inputs["RETRO"], inputs["STOR_ASYMMETRIC"])
+        retro_cap_charge = intersect(not_buildable(gen), not_retirable(gen), inputs["RETRO"], inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge

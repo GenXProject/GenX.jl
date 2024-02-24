@@ -24,9 +24,6 @@ function retrofit(EP::Model, inputs::Dict)
 
 	println("Retrofit Resources Module")
 
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
-	G = inputs["G"] 	# Number of generators
 	C = inputs["C"] 	# Number of cluster
 
 	gen = inputs["RESOURCES"]

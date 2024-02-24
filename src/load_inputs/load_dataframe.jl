@@ -223,6 +223,3 @@ function validate_df_cols(df::DataFrame, df_name::AbstractString, required_cols)
         end
     end
 end
-
-# validate_df_cols(df::DataFrame, df_name::AbstractString, required_col::AbstractString) = 
-#     validate_df_cols(df, df_name, (required_col))
