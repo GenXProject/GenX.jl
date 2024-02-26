@@ -13,7 +13,7 @@ end
     include("expression_manipulation_test.jl")
 end
 
-if VERSION ≥ v"1.7" begin
+if VERSION ≥ v"1.7"
     @testset "Resource loading" begin
         include("test_load_resource_data.jl")
     end
