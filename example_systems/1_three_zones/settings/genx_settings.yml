@@ -11,7 +11,6 @@ MaxCapReq: 0  # Activate maximum technology carveout constraints; 0 = not active
 ParameterScale: 1 # Turn on parameter scaling wherein demand, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
 UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
-TimeDomainReductionFolder: "TDR_Results" # Directory name where results from time domain reduction will be saved. If results already exist here, these will be used without running time domain reduction script again.
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
 ModelingToGenerateAlternatives: 0 # Modeling to generate alternatives; 0 = not active; 1 = active. Note: produces a single solution as output
 ModelingtoGenerateAlternativeSlack: 0.1 # Slack value as a fraction of least-cost objective in budget constraint used for evaluating alternative model solutions; positive float value

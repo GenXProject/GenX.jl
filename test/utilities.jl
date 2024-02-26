@@ -88,7 +88,7 @@ function run_genx_case_multistage_testing(
         genx_setup["MultiStageSettingsDict"]["CurStage"] = t
 
         # Step 1) Load Inputs
-        inpath_sub = joinpath(test_path, string("Inputs_p", t))
+        inpath_sub = joinpath(test_path, string("inputs_p", t))
         inputs_dict[t] = load_inputs(genx_setup, inpath_sub)
         inputs_dict[t] = configure_multi_stage_inputs(
             inputs_dict[t],

@@ -16,7 +16,7 @@ function default_settings()
         "WriteShadowPrices" => 0,
         "UCommit" => 0,
         "TimeDomainReduction" => 0,
-        "TimeDomainReductionFolder" => "TDR_Results",
+        "TimeDomainReductionFolder" => "TDR_results",
         "ModelingToGenerateAlternatives" => 0,
         "ModelingtoGenerateAlternativeSlack" => 0.1,
         "MultiStage" => 0,
@@ -29,10 +29,10 @@ function default_settings()
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
         "StorageVirtualDischarge" => 1,
-        "ResourcesFolder" => "Resources",
-        "ResourcePoliciesFolder" => "Policy_assignments",
-        "SystemFolder" => "System",
-        "PoliciesFolder" => "Policies",
+        "ResourcesFolder" => "resources",
+        "ResourcePoliciesFolder" => "policy_assignments",
+        "SystemFolder" => "system",
+        "PoliciesFolder" => "policies",
     )
 end
 
