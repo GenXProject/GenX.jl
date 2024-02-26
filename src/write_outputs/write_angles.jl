@@ -8,10 +8,10 @@ function write_angles(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 	Z = inputs["Z"]     # Number of zones
 
 	dfAngles = DataFrame(Zone = 1:Z) 
-    angles = value.(EP[:vANGLE])
+    	angles = value.(EP[:vANGLE])
 	dfAngles = hcat(dfAngles, DataFrame(angles, :auto))
 
-    auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]
+    	auxNew_Names=[Symbol("Zone");[Symbol("t$t") for t in 1:T]]
 	rename!(dfAngles,auxNew_Names)
 
 	## Linear configuration final output

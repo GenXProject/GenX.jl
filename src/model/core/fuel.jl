@@ -323,7 +323,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 
-function resources_with_fuel(rs::Vector{AbstractResource}, fuel_name::AbstractString)
+function resources_with_fuel(rs::Vector{<:AbstractResource}, fuel_name::AbstractString)
     condition::BitVector = fuel.(rs) .== fuel_name
     return resource_id.(rs[condition])
 end

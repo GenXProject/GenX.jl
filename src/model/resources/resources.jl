@@ -886,7 +886,7 @@ max_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_wind_$tag
 
 ## Utility functions for working with resources
 in_zone(r::AbstractResource, zone::Int) = zone_id(r) == zone
-resources_in_zone(rs::Vector{AbstractResource}, zone::Int) = filter(r -> in_zone(r, zone), rs)
+resources_in_zone(rs::Vector{<:AbstractResource}, zone::Int) = filter(r -> in_zone(r, zone), rs)
 
 @doc raw"""
     resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
@@ -897,7 +897,7 @@ function resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
 end
 
 """
-    resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
+    resource_by_name(rs::Vector{<:AbstractResource}, name::AbstractString)
 
 Find the resource with `name` in the vector `rs`.
 
@@ -908,7 +908,7 @@ Find the resource with `name` in the vector `rs`.
 # Returns
 - `AbstractResource`: The resource with the name `name`.
 """
-function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
+function resource_by_name(rs::Vector{<:AbstractResource}, name::AbstractString)
     r_id = findfirst(r -> resource_name(r) == name, rs)
     # check that the resource exists
     isnothing(r_id) && error("Resource $name not found in resource data. \nHint: Make sure that the resource names in input files match the ones in the \"resource\" folder.\n")

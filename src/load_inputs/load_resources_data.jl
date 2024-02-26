@@ -302,7 +302,7 @@ Construct the array of resources from multiple files of different types located 
 - `scale_factor::Float64`: A scaling factor to adjust the attributes of the resources (default: 1.0).
 
 # Returns
-- `Vector{AbstractResource}`: An array of GenX resources.
+- `Vector{<:AbstractResource}`: An array of GenX resources.
 
 # Raises
 - `Error`: If no resources data is found. Check the data path or the configuration file "genx_settings.yml" inside Settings.
@@ -414,12 +414,12 @@ function check_resource(r::AbstractResource)::Vector{String}
 end
 
 @doc raw"""
-check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
+check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
 
 Validate the consistency of a vector of GenX resources
 Reports any errors in a list of strings.
 """
-function check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
+function check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
     e = String[]
     for r in resources
         e = [e; check_resource(r)]
@@ -436,7 +436,7 @@ function announce_errors_and_halt(e::Vector{String})
     error(s)
 end
 
-function validate_resources(resources::T) where T <: Vector{AbstractResource}
+function validate_resources(resources::Vector{T}) where T <: AbstractResource
     e = check_resource(resources)
     if length(e) > 0
         announce_errors_and_halt(e)
@@ -453,7 +453,7 @@ Function that loads and scales resources data from folder specified in `setup["R
 - `case_path (AbstractString)`: The path to the case.
 
 # Returns
-- `resources (Vector{AbstractResource})`: An array of scaled resources.
+- `resources (Vector{<:AbstractResource})`: An array of scaled resources.
 
 """
 function create_resource_array(setup::Dict, case_path::AbstractString)
@@ -1059,6 +1059,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
     end
 
+    #println(attributes.(gen))
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)
 
