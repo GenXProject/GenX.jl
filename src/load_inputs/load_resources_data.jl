@@ -1059,7 +1059,6 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
     end
 
-    #println(attributes.(gen))
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)
 
