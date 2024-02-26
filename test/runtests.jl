@@ -13,7 +13,7 @@ end
     include("expression_manipulation_test.jl")
 end
 
-if VERSION ≥ v"1.7"
+if VERSION ≥ v"1.7" begin
     @testset "Resource loading" begin
         include("test_load_resource_data.jl")
     end
@@ -47,6 +47,7 @@ end
 
     @testset "DCOPF" begin
         include("test_DCOPF.jl")
+    end
     @testset "Multi Fuels" begin
         include("test_multifuels.jl")
     end
