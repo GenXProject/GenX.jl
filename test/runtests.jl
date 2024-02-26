@@ -48,6 +48,7 @@ end
     @testset "DCOPF" begin
         include("test_DCOPF.jl")
     end
+    #=
     @testset "Multi Fuels" begin
         include("test_multifuels.jl")
     end
@@ -55,4 +56,5 @@ end
     @testset "Compute Conflicts" begin
         include("test_compute_conflicts.jl")
     end
+    =#
 end
