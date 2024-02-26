@@ -43,7 +43,7 @@ function retrofit(EP::Model, inputs::Dict)
 	end
 
 	@constraint(EP, cRetrofit_zone_commit[c=1:C],
-	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0) * retrofit_efficiency
+	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0) * retrofit_efficiency(c)
 	+ sum(EP[:vRETROCAP][y] for y in setdiff(intersect(RETRO_CAP, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)
 	== sum(cap_size(gen[y]) * EP[:vRETROCREATCAP][y] for y in intersect(RETRO_CREAT, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0)
 	+ sum(EP[:vRETROCREATCAP][y] for y in setdiff(intersect(RETRO_CREAT, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)) 
