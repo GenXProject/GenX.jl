@@ -16,5 +16,5 @@ function write_angles(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 
 	## Linear configuration final output
 	CSV.write(joinpath(path, "angles.csv"), dftranspose(dfAngles, false), writeheader=false)
-	return dfAngles
+	return nothing
 end

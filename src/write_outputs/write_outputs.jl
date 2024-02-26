@@ -217,14 +217,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		println(elapsed_time_emissions)
 	end
 
-    if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
-        write_maintenance(path, inputs, EP)
-    end
+    	if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
+        	write_maintenance(path, inputs, EP)
+    	end
 	
 	#Write angles when DC_OPF is activated
-	if setup["DC_OPF"] == 1
-		println("Writing zone angles")
-		dfAngles = write_angles(path, inputs, setup, EP)
+	if setup["DC_OPF"] == 1 && output_settings_d["WriteAngles"]
+		elapsed_time_angles = @elapsed write_angles(path, inputs, setup, EP)
+		println("Time elapsed for writing angles is")
+		println(elapsed_time_angles)
 	end
 
 	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
