@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maintenance formulation for thermal-commit plants (#556).
 - Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
   piecewise_fuel+CO2, and TDR (#563 and #578).
-- Added a DC OPF method to calculate power flows across all lines
+- Added a DC OPF method (#543) to calculate power flows across all lines
 - Added write_operating_reserve_price_revenue.jl to compute annual operating reserve and regulation revenue.
   Added the operating reserve and regulation revenue to net revenue (PR # 611)
 - Add functions to compute conflicting constraints when model is infeasible if supported by the solver (#624).
