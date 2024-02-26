@@ -3,7 +3,6 @@
 
 Function for reading input parameters related to the electricity transmission network
 """
-#DEV NOTE:  add DC power flow related parameter inputs in a subsequent commit
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
@@ -34,7 +33,25 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # Transmission line voltage (in kV)
         inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
         # Transmission line resistance (in Ohms) - Used when modeling quadratic transmission losses
-        inputs_nw["Ohms"] = to_floats(:Line_Resistance_ohms)
+        inputs_nw["Ohms"] = to_floats(:Line_Resistance_Ohms)
+    end
+
+    ## Inputs for the DC-OPF 
+    if setup["DC_OPF"] == 1
+        if setup["NetworkExpansion"] == 1
+            @warn("Because the DC_OPF flag is active, GenX will not allow any transmission capacity expansion. Set the DC_OPF flag to 0 if you want to optimize tranmission capacity expansion.")
+            setup["NetworkExpansion"] = 0;
+        end
+        println("Reading DC-OPF values...")
+        # Transmission line voltage (in kV)
+        line_voltage_kV = to_floats(:Line_Voltage_kV)
+        # Transmission line reactance (in Ohms)
+        line_reactance_Ohms = to_floats(:Line_Reactance_Ohms)    
+        # Line angle limit (in radians)
+        inputs_nw["Line_Angle_Limit"] = to_floats(:Angle_Limit_Rad)
+        # DC-OPF coefficient for each line (in MW when not scaled, in GW when scaled) 
+        # MW = (kV)^2/Ohms 
+        inputs_nw["pDC_OPF_coeff"] =  ((line_voltage_kV.^2)./line_reactance_Ohms)/scale_factor 
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
@@ -67,7 +84,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["pTrans_Loss_Coef"] = inputs_nw["pPercent_Loss"]
     elseif setup["Trans_Loss_Segments"] >= 2
         # If zones are connected, loss coefficient is R/V^2 where R is resistance in Ohms and V is voltage in Volts
-        inputs_nw["pTrans_Loss_Coef"] = (inputs_nw["Ohms"]/10^6)/(inputs_nw["kV"]/10^3)^2 * scale_factor # 1/GW ***
+        inputs_nw["pTrans_Loss_Coef"] = (inputs_nw["Ohms"]/10^6)./(inputs_nw["kV"]/10^3)^2 * scale_factor # 1/GW ***
     end
 
     ## Sets and indices for transmission losses and expansion

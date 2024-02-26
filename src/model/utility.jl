@@ -67,7 +67,7 @@ function is_nonzero(df::DataFrame, col::Symbol)::BitVector
 	convert(BitVector, df[!, col] .> 0)::BitVector
 end
 
-function is_nonzero(rs::Vector{AbstractResource}, col::Symbol)
+function is_nonzero(rs::Vector{<:AbstractResource}, col::Symbol)
     !isnothing(findfirst(r -> get(r, col, 0) ≠ 0, rs))
 end
 

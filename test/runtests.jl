@@ -45,6 +45,10 @@ end
         include("test_multistage.jl")
     end
 
+    @testset "DCOPF" begin
+        include("test_DCOPF.jl")
+    end
+
     @testset "Multi Fuels" begin
         include("test_multifuels.jl")
     end

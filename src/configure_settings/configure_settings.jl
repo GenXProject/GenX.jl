@@ -25,6 +25,7 @@ function default_settings()
         "HydrogenHourlyMatching" => 0,
         "EnableJuMPStringNames" => false,
         "HydrogenHourlyMatching" => 0,
+        "DC_OPF" => 0,
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
         "ResourcePath" => "Resources",
@@ -113,7 +114,8 @@ function default_writeoutput()
         "WriteTransmissionFlows" => true,
         "WriteTransmissionLosses" => true,
         "WriteVirtualDischarge" => true,
-        "WriteVREStor" => true
+        "WriteVREStor" => true,
+        "WriteAngles" => true
     )
 end
 
@@ -132,6 +134,8 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         writeoutput["WriteCapacityValue"] = false
         writeoutput["WriteReserveMargin"] = false
         writeoutput["WriteReserveMarginWithWeights"] = false
+        writeoutput["WriteAngles"] = false
+        writeoutput["WriteTransmissionFlows"] = false
     end
 
     # read in YAML file if provided
