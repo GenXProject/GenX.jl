@@ -5,7 +5,7 @@ This function defines the constraints for operation of retrofit technologies, in
 	but not limited to carbon capture and thermal energy storage.
 
 For retrofittable source technologies $y$ and retrofit technologies $r$, the sum of retrofit capacity $\Omega_{r,z}$ that may be installed
-is constrained by the amount of capacity $\Delta_{y,z}$ retired as well as the retrofit efficiency
+is constrained by the retrofittable capacity $P_{y,z}$ as well as the retrofit efficiency
 $ef_{y,r}$ where $r$ is any technology in the set of retrofit options of $y$ ($RF(y)$).
 
 ```math
@@ -43,7 +43,7 @@ function retrofit(EP::Model, inputs::Dict)
 	end
 
 	@constraint(EP, cRetrofit_zone_commit[c=1:C],
-	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0) * 1.0
+	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0) * retrofit_efficiency
 	+ sum(EP[:vRETROCAP][y] for y in setdiff(intersect(RETRO_CAP, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)
 	== sum(cap_size(gen[y]) * EP[:vRETROCREATCAP][y] for y in intersect(RETRO_CREAT, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0)
 	+ sum(EP[:vRETROCREATCAP][y] for y in setdiff(intersect(RETRO_CREAT, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)) 
