@@ -73,6 +73,9 @@ Note that all settings parameters are case sensitive.
 | WriteOutputs | Flag for writing the model outputs with hourly resolution or just the annual sum.|
 || "full" = write the model outputs with hourly resolution.|
 || "annual" = write only the annual sum of the model outputs.|
+|StorageVirtualDischarge| Flag for whether to include the ability for storage to have a "virtual" charge and discharge that contributes to the capacity reserve margin.
+||1 (default) = include virtual charging and discharging||
+||0 = do not include virtual charging and discharging||
 
 Additionally, Solver related settings parameters are specified in the appropriate .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`),
 which should be located in the current working directory.

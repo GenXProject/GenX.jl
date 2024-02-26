@@ -3,7 +3,7 @@
 A wide range of energy storage devices (all $o \in \mathcal{O}$) can be modeled in GenX, using one of two generic storage formulations: (1) storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), such as Lithium-ion batteries and most other electrochemical storage devices that use the same components for both charge and discharge; and (2) storage technologies that employ distinct and potentially asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), such as most thermal storage technologies or hydrogen electrolysis/storage/fuel cell or combustion turbine systems.
 
 If a capacity reserve margin is modeled, variables for virtual charge, $\Pi^{CRM}_{o,z,t}$, and virtual discharge, $\Theta^{CRM}_{o,z,t}$, are created to represent 
-	contributions that a storage device makes to the capacity reserve margin without actually generating power. These represent power that the storage device could 
+	contributions that a storage device makes to the capacity reserve margin without actually generating power. (This functionality can be turned off with the parameter StorageVirtualDischarge in the GenX settings file.) These represent power that the storage device could 
 	have discharged or consumed if called upon to do so, based on its available state of charge. Importantly, a dedicated set of variables (those of the form $\Pi^{CRM}_{o,z,t}, \Theta^{CRM}_{o,z,t}$) 
 	and constraints are created to ensure that any virtual contributions to the capacity reserve margin could be made as actual charge/discharge if necessary without 
 	affecting system operations in any other timesteps. If a capacity reserve margin is not modeled, all related variables are fixed at 0. The overall contribution 
@@ -143,6 +143,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	IncludeLossesInESR = setup["IncludeLossesInESR"]
 	MultiStage = setup["MultiStage"]
+	StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
 	if !isempty(STOR_ALL)
 		investment_energy!(EP, inputs, setup)
@@ -173,7 +174,11 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vP][y,t] + EP[:vCAPRES_discharge][y,t] - EP[:vCHARGE][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
+		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
+		if StorageVirtualDischarge > 0
+			@expression(EP, eCapResMarBalanceStorVirtual[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vCAPRES_discharge][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
+			add_similar_to_expression!(eCapResMarBalanceStor,eCapResMarBalanceStorVirtual)
+		end
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
 	end
 

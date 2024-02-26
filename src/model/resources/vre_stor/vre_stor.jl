@@ -1901,6 +1901,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     rep_periods = inputs["REP_PERIOD"]
 
     virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
+    StorageVirtualDischarge = setup["StorageVirtualDischarge"]
     
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
     
@@ -2032,10 +2033,18 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eCapResMarBalanceStor_VRE_STOR[res=1:inputs["NCapacityReserveMargin"], t=1:T],(
         sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y] for y in inputs["VS_SOLAR"])
         + sum(derating_factor(gen[y],tag=res)*inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y] for y in inputs["VS_WIND"])
-        + sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*(EP[:vP_DC_DISCHARGE][y,t]+vCAPRES_DC_DISCHARGE[y,t]) for y in DC_DISCHARGE)
-        + sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_DISCHARGE][y,t]+vCAPRES_AC_DISCHARGE[y,t]) for y in AC_DISCHARGE)
-        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_DC_CHARGE][y,t]+vCAPRES_DC_CHARGE[y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
-        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_CHARGE][y,t]+vCAPRES_AC_CHARGE[y,t]) for y in AC_CHARGE)))
+        + sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*(EP[:vP_DC_DISCHARGE][y,t]) for y in DC_DISCHARGE)
+        + sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_DISCHARGE][y,t]) for y in AC_DISCHARGE)
+        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_DC_CHARGE][y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
+        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_CHARGE][y,t]) for y in AC_CHARGE)))
+    if StorageVirtualDischarge > 0
+        @expression(EP, eCapResMarBalanceStor_VRE_STOR_Virtual[res=1:inputs["NCapacityReserveMargin"], t=1:T],(
+        sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*(vCAPRES_DC_DISCHARGE[y,t]) for y in DC_DISCHARGE)
+        + sum(derating_factor(gen[y],tag=res)*(vCAPRES_AC_DISCHARGE[y,t]) for y in AC_DISCHARGE)
+        - sum(derating_factor(gen[y],tag=res)*(vCAPRES_DC_CHARGE[y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
+        - sum(derating_factor(gen[y],tag=res)*(vCAPRES_AC_CHARGE[y,t]) for y in AC_CHARGE)))
+        add_similar_to_expression!(eCapResMarBalanceStor_VRE_STOR,eCapResMarBalanceStor_VRE_STOR_Virtual)
+    end
     EP[:eCapResMarBalance] += EP[:eCapResMarBalanceStor_VRE_STOR]
 
     ### OBJECTIVE FUNCTION ADDITIONS ###
