@@ -228,7 +228,7 @@ function test_load_resources_data()
     settings = GenX.default_settings()
     merge!(settings, setup)
     
-    test_path = joinpath("LoadResourceData", "test_gen_non_colocated")
+    test_path = joinpath("load_resources", "test_gen_non_colocated")
 
     # load dfGen and inputs_true to compare against
     input_true_filenames = InputsTrue("generators_data.csv", "inputs_after_loadgen.jld2")
@@ -281,7 +281,7 @@ function test_load_VRE_STOR_data()
     settings = GenX.default_settings()
     merge!(settings, setup)
         
-    test_path = joinpath("LoadResourceData","test_gen_vre_stor")
+    test_path = joinpath("load_resources","test_gen_vre_stor")
     input_true_filenames = InputsTrue("generators_data.csv", "inputs_after_loadgen.jld2")
     dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, settings)
 

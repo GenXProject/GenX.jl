@@ -5,7 +5,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = 6946.9618
-test_path = "Electrolyzer"
+test_path = "electrolyzer"
 
 # Define test inputs
 genx_setup = Dict(

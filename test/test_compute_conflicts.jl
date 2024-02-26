@@ -3,7 +3,7 @@ module TestConflicts
 using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
-test_path = joinpath(@__DIR__,"ComputeConflicts");
+test_path = joinpath(@__DIR__,"compute_conflicts");
 
 # Define test inputs
 genx_setup =    Dict{Any,Any}(

@@ -12,13 +12,13 @@ console_out = stdout
 redirect_stdout(devnull)
 
 test_folder = settings_path = "TDR"
-TDR_Results_test = joinpath(test_folder, "TDR_Results_test")
+TDR_Results_test = joinpath(test_folder, "TDR_results_test")
 
 # Folder with true clustering results for LTS and non-LTS versions
 TDR_Results_true = if VERSION == v"1.6.7"
-    joinpath(test_folder, "TDR_Results_true_LTS")
+    joinpath(test_folder, "TDR_results_true_LTS")
 else 
-    joinpath(test_folder, "TDR_Results_true")
+    joinpath(test_folder, "TDR_results_true")
 end
 
 # Remove test folder if it exists
@@ -29,7 +29,7 @@ end
 # Inputs for cluster_inputs function
 genx_setup = Dict(
     "TimeDomainReduction" => 1,
-    "TimeDomainReductionFolder" => "TDR_Results_test",
+    "TimeDomainReductionFolder" => "TDR_results_test",
     "UCommit" => 2,
     "CapacityReserveMargin" => 1,
     "MinCapReq" => 1,

@@ -4,7 +4,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = 92376.060123
-test_path = "VREStor"
+test_path = "VRE_storage"
 
 # Define test inputs
 genx_setup = Dict(

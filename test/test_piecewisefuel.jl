@@ -4,7 +4,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = 2341.82308
-test_path = "PiecewiseFuel_CO2"
+test_path = "piecewise_fuel"
 
 # Define test inputs
 genx_setup = Dict(
