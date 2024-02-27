@@ -12,7 +12,8 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::D
     if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
 		my_dir = data_directory
 	else
-        my_dir = path
+        # If TDR is not used, then use the directory specified in the setup
+        my_dir = joinpath(path, setup["SystemFolder"])
 	end
 	filename1 = "Vre_and_stor_solar_variability.csv"
 	vre_stor_solar = load_dataframe(joinpath(my_dir, filename1))

@@ -31,7 +31,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
     if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
         my_dir = data_directory
 	else
-        # If TDR is not used, then use the directory specified in the default setup
+        # If TDR is not used, then use the "system" directory specified in the setup
         my_dir = joinpath(path, setup["SystemFolder"])
 	end
     demand_in = get_demand_dataframe(my_dir)

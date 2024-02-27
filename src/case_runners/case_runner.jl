@@ -36,7 +36,6 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     settings_path = get_settings_path(case)
 
     ### Cluster time series inputs if necessary and if specified by the user
-    
     if mysetup["TimeDomainReduction"] == 1
         TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
         system_path = joinpath(case, mysetup["SystemFolder"])

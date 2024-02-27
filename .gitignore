@@ -27,11 +27,8 @@ test/Logs
 ~$*
 
 # Never include output folders
-**/Results*/
-**/TDR_Results/
+**/results*/
+**/TDR_results/
 
 # Test files
-test/TDR/TDR_Results_test
-test/MethodofMorris/morris.csv
-!test/VREStor/Results_true/
-!test/ThreeZones/Results_true/
+test/TDR/TDR_results_test

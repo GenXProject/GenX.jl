@@ -601,7 +601,7 @@ function cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; r
         	mysetup["MultiStageSettingsDict"]["CurStage"] = t
 
         	# Step 1) Load Inputs
-        	global inpath_sub = string("$inpath/Inputs/Inputs_p",t)
+        	global inpath_sub = string("$inpath/inputs/inputs_p",t)
 
             # this prevents doubled time domain reduction in stages past
             # the first, even if the first stage is okay.

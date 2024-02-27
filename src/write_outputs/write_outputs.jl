@@ -174,6 +174,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println("Time elapsed for writing shutdown is")
 			println(elapsed_time_shutdown)
 		end
+		
 		if setup["OperationalReserves"] == 1
 			if output_settings_d["WriteReg"]
 				elapsed_time_reg = @elapsed write_reg(path, inputs, setup, EP)

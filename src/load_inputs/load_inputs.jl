@@ -16,7 +16,7 @@ function load_inputs(setup::Dict,path::AbstractString)
 	## input paths
 	system_path = joinpath(path, setup["SystemFolder"])
 	resources_path = joinpath(path, setup["ResourcesFolder"])
-	policy_path = joinpath(path, setup["PoliciesFolder"])
+	policies_path = joinpath(path, setup["PoliciesFolder"])
 	## Declare Dict (dictionary) object used to store parameters
 	inputs = Dict()
 	# Read input data about power network topology, operating and expansion attributes
@@ -39,7 +39,7 @@ function load_inputs(setup::Dict,path::AbstractString)
     validatetimebasis(inputs)
 
 	if setup["CapacityReserveMargin"]==1
-		load_cap_reserve_margin!(setup, policy_path, inputs)
+		load_cap_reserve_margin!(setup, policies_path, inputs)
 		if inputs["Z"] >1
 			load_cap_reserve_margin_trans!(setup, inputs, network_var)
 		end
@@ -51,28 +51,28 @@ function load_inputs(setup::Dict,path::AbstractString)
 	end
 
 	if setup["MinCapReq"] == 1
-		load_minimum_capacity_requirement!(policy_path, inputs, setup)
+		load_minimum_capacity_requirement!(policies_path, inputs, setup)
 	end
 
 	if setup["MaxCapReq"] == 1
-		load_maximum_capacity_requirement!(policy_path, inputs, setup)
+		load_maximum_capacity_requirement!(policies_path, inputs, setup)
 	end
 
 	if setup["EnergyShareRequirement"]==1
-		load_energy_share_requirement!(setup, policy_path, inputs)
+		load_energy_share_requirement!(setup, policies_path, inputs)
 	end
 
 	if setup["CO2Cap"] >= 1
-		load_co2_cap!(setup, policy_path, inputs)
+		load_co2_cap!(setup, policies_path, inputs)
 	end
 
 	if !isempty(inputs["VRE_STOR"])
-		load_vre_stor_variability!(setup, system_path, inputs)
+		load_vre_stor_variability!(setup, path, inputs)
 	end
 
 	# Read in mapping of modeled periods to representative periods
-	if is_period_map_necessary(inputs) && is_period_map_exist(setup, system_path, inputs)
-		load_period_map!(setup, system_path, inputs)
+	if is_period_map_necessary(inputs) && is_period_map_exist(setup, path)
+		load_period_map!(setup, path, inputs)
 	end
 
 	# Virtual charge discharge cost
@@ -92,9 +92,9 @@ function is_period_map_necessary(inputs::Dict)
     multiple_rep_periods && (has_stor_lds || has_hydro_lds || has_vre_stor_lds)
 end
 
-function is_period_map_exist(setup::Dict, path::AbstractString, inputs::Dict)
+function is_period_map_exist(setup::Dict, path::AbstractString)
 	filename = "Period_map.csv"
-	is_here = isfile(joinpath(path, filename))
-	is_in_folder = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
-	is_here || is_in_folder
+	is_in_system = isfile(joinpath(path, setup["SystemFolder"], filename))
+	is_in_TDR = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
+	is_in_system || is_in_TDR
 end

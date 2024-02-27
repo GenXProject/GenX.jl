@@ -336,7 +336,7 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     	write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
     end
     write_multi_stage_costs(outpath, multi_stage_settings_d, inputs_dict)
-    write_multi_stage_stats(outpath, stats_d)
+    multi_stage_settings_d["Myopic"] == 0 && write_multi_stage_stats(outpath, stats_d)
     write_multi_stage_settings(outpath, settings_d)
 
 end
