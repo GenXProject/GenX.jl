@@ -85,3 +85,5 @@ Pages = ["core.md",
 ```
 
 ## License
+
+GenX is released under the General Public License, GPL-2.0
