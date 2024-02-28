@@ -863,17 +863,18 @@ function split_storage_resources!(inputs::Dict, gen::Vector{<:AbstractResource})
 end
 
 """
-    add_resources_to_input_data!(inputs::Dict, setup::Dict, gen::Vector{<:AbstractResource})
+    add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
 
 Adds resources to the `inputs` `Dict` with the key "RESOURCES" together with sevaral sets of resource indices that are used inside GenX to construct the optimization problem. The `inputs` `Dict` is modified in-place.
 
 # Arguments
 - `inputs (Dict)`: Dictionary to store the GenX input data.
 - `setup (Dict)`: Dictionary containing GenX settings.
+- `case_path (AbstractString)`: Path to the case.
 - `gen (Vector{<:AbstractResource})`: Array of GenX resources.
 
 """
-function add_resources_to_input_data!(inputs::Dict, setup::Dict, gen::Vector{<:AbstractResource})
+function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
     
     # Number of resources
     G = length(gen)
@@ -1156,7 +1157,7 @@ function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractStri
         add_modules_to_resources!(resources, setup, resources_path)
         
         # add resources information to inputs dict
-        add_resources_to_input_data!(inputs, setup, resources)
+        add_resources_to_input_data!(inputs, setup, case_path, resources)
 
         # print summary of resources
         summary(resources)

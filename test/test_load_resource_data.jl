@@ -257,7 +257,7 @@ function test_load_resources_data()
 
     # Test that the inputs keys are correctly set
     inputs = load(joinpath(test_path, "inputs_before_loadgen.jld2"))
-    GenX.add_resources_to_input_data!(inputs, settings, gen)
+    GenX.add_resources_to_input_data!(inputs, settings, test_path, gen)
     @testset "Inputs keys" begin
         test_inputs_keys(inputs, inputs_true)
     end
@@ -296,7 +296,7 @@ function test_load_VRE_STOR_data()
     GenX.validate_policy_files(resource_policies_path, settings)
     GenX.add_policies_to_resources!(gen, resource_policies_path)
     inputs = load(joinpath(test_path, "inputs_before_loadgen.jld2"))
-    GenX.add_resources_to_input_data!(inputs, settings, gen)
+    GenX.add_resources_to_input_data!(inputs, settings, test_path, gen)
 
     @test GenX.vre_stor(gen) == dfGen[dfGen.vre_stor .== 1, :r_id]
     sort!(dfVRE_STOR, :resource)

@@ -25,8 +25,6 @@ optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 # Test the objective value
 test_result = @test obj_test ≈ obj_true atol = optimal_tol
 
-println("obj_test: ", obj_test)
-
 # Round objective value and tolerance. Write to test log.
 obj_test = round_from_tol!(obj_test, optimal_tol)
 optimal_tol = round_from_tol!(optimal_tol, optimal_tol)

@@ -1,4 +1,0 @@
-Resource,Zone,Model,New_Build,Can_Retire,Existing_Cap_MW,Min_Cap_MW,Max_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Cap_Size,Heat_Rate_MMBTU_per_MWh,Fuel,Min_Power,Ramp_Up_Percentage,Ramp_Dn_Percentage,Up_Time,Down_Time,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,MGA,Resource_Type,region,cluster
-z1_natural_gas,1,1,0,1,250,10,0,0,5,0.1,0,0,250,0.1,natural_gas,0.04,1,1,0,0,1,1,0,0,1,natural_gas,BUS1,1
-z2_natural_gas,2,1,0,1,300,10,0,0,1.2,0.1,0,0,300,0.1,natural_gas,0.033333333,1,1,0,0,1,1,0,0,1,natural_gas,BUS2,1
-z3_natural_gas,3,1,0,1,270,10,0,0,1,0.1,0,0,270,0.1,natural_gas,0.037037037,1,1,0,0,1,1,0,0,1,natural_gas,BUS3,1
