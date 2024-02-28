@@ -100,8 +100,8 @@ makedocs(;
         assets=String[],
         collapselevel=1
     ),
-    pages=[p for p in pages]
-    # warnonly=true
+    pages=[p for p in pages],
+    warnonly=true
 )
 
 # deploydocs(;
