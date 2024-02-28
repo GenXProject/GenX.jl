@@ -408,14 +408,14 @@ end
 function check_retrofit_resource(r::AbstractResource)
     error_strings = String[]
 
-    # check that retrofit_pool_id is set only for retrofitting units and not for new builds or units that can retire
-    if isa(r, Thermal) && can_retrofit(r) == true && can_retire(r) == false
+    # check that retrofit_id is set only for retrofitting units and not for new builds or units that can retire
+    if can_retrofit(r) == true && can_retire(r) == false
         e = string("Resource ", resource_name(r), " has :can_retrofit = ", can_retrofit(r), " but :can_retire = ", can_retire(r), ".\n",
                    "A unit that can be retrofitted must also be eligible for retirement (:can_retire = 1)")
         push!(error_strings, e)
-    elseif isa(r, Thermal) && is_retro_option(r) == true && new_build(r) == true
-        e = string("Resource ", resource_name(r), " has :retro = ", is_retro_option(r), " but :new_build = ", new_build(r), ".\n",
-                   "This setting is valid only for resources that have :new_build = 0")
+    elseif is_retrofit_option(r) == true && new_build(r) == false
+        e = string("Resource ", resource_name(r), " has :retro = ", is_retrofit_option(r), " but :new_build = ", new_build(r), ".\n",
+                   "This setting is valid only for resources that have :new_build = 1")
         push!(error_strings, e)
     end
     return ErrorMsg.(error_strings)
@@ -430,25 +430,21 @@ function check_resource(r::AbstractResource)
     return e
 end
 
-function check_retrofit_pool_id(rs::Vector{AbstractResource})
+function check_retrofit_id(rs::Vector{AbstractResource})
     warning_strings = String[]
-    thermal_resources = rs.Thermal
 
-    units_can_retrofit = ids_can_retrofit(thermal_resources)
-    retrofit_options = ids_retrofit_options(thermal_resources)
+    units_can_retrofit = ids_can_retrofit(rs)
+    retrofit_options = ids_retrofit_options(rs)
 
-    # delete 0 from the set of retrofit_pool_id because 0 is the default value
-    thermal_pool_id = delete!(Set(retrofit_pool_id.(rs[units_can_retrofit])),0)
-    thermal_retrofit_pool_id = delete!(Set(retrofit_pool_id.(rs[retrofit_options])),0)
-    
-    if thermal_pool_id != thermal_retrofit_pool_id
-        msg = string("Retrofit pool IDs for thermal and thermal retrofit resources do not match.\n" *
+    # check that all retrofit_ids for resources that can retrofit and retrofit options match
+    if Set(rs[units_can_retrofit].retrofit_id) != Set(rs[retrofit_options].retrofit_id)
+        msg = string("Retrofit IDs for resources that \"can retrofit\" and \"retrofit options\" do not match.\n" *
                     "All retrofitting units must be associated with a retrofit option.") 
         push!(warning_strings, msg)
     end
+
     return WarnMsg.(warning_strings)
 end
-
 
 @doc raw"""
 check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
@@ -461,7 +457,8 @@ function check_resource(resources::T) where T <: Vector{AbstractResource}
     for r in resources
         e = [e; check_resource(r)]
     end
-    e = [e; check_retrofit_pool_id(resources)]
+    e = [e; check_retrofit_id(resources)]
+    # e = [e; check_retrofit_capsize(resources)]
     return e
 end
 
@@ -897,6 +894,22 @@ function split_storage_resources!(inputs::Dict, gen::Vector{<:AbstractResource})
 end
 
 """
+    update_retrofit_id(r::AbstractResource)
+
+Updates the retrofit_id of a resource that can be retrofit or is a retrofit option by appending the region to the retrofit_id.
+
+# Arguments
+- `r::AbstractResource`: The resource to update.
+"""
+function update_retrofit_id(r::AbstractResource) 
+    if haskey(r, :retrofit_id) && (can_retrofit(r) == true || is_retrofit_option(r) == true)
+        r.retrofit_id = string(r.retrofit_id, "_", region(r))
+    else
+        r.retrofit_id = string("None")
+    end
+end
+
+"""
     add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
 
 Adds resources to the `inputs` `Dict` with the key "RESOURCES" together with sevaral sets of resource indices that are used inside GenX to construct the optimization problem. The `inputs` `Dict` is modified in-place.
@@ -947,7 +960,6 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Set of flexible demand-side resources
     inputs["FLEX"] = flex_demand(gen)
 
-    ## TODO: MUST_RUN
     # Set of must-run plants - could be behind-the-meter PV, hydro run-of-river, must-run fossil or thermal plants
     inputs["MUST_RUN"] = must_run(gen)
 
@@ -1009,36 +1021,54 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Set of all resources eligible for capacity retirements
     inputs["RET_CAP"] = intersect(retirable, ids_with_nonneg(gen, existing_cap_mw))
     # Set of all resources eligible for capacity retrofitting (by Yifu, same with retirement)
-	inputs["RETRO_CAP"] = intersect(units_can_retrofit, ids_with_nonneg(gen, existing_cap_mw))
-    inputs["RETRO"] = ids_retrofit_options(gen)
+	inputs["RETROFIT_CAP"] = intersect(units_can_retrofit, ids_with_nonneg(gen, existing_cap_mw))
+    inputs["RETROFIT_OPTIONS"] = ids_retrofit_options(gen)
+
+    println("RETROFIT_CAP: ", inputs["RETROFIT_CAP"])
+    println("RETROFIT_OPTIONS: ", inputs["RETROFIT_OPTIONS"])
+
+    inputs["RETROFIT_IDS"] = []
+    if (!isempty(inputs["RETROFIT_CAP"]) || !isempty(inputs["RETROFIT_OPTIONS"]))
+        # append region name to the retrofit_id
+        update_retrofit_id.(gen)
+        # store a unique set of retrofit_ids
+        inputs["RETROFIT_IDS"] = Set(retrofit_id.(gen[inputs["RETROFIT_CAP"]]))
+        
+        # Check if retrofit options and retrofitting units with unit commitment have the same capacity when UCommit == 1
+        if setup["UCommit"] == 1
+            can_retrofit_commit = intersect(inputs["RETROFIT_CAP"], inputs["COMMIT"])
+            retrofit_options_commit = intersect(inputs["RETROFIT_OPTIONS"], inputs["COMMIT"])
+            cap_size_can_retrofit_commit = cap_size.(gen[can_retrofit_commit]) .* retrofit_efficiency.(gen[can_retrofit_commit])
+            cap_size_retrofit_options_commit = cap_size.(gen[retrofit_options_commit]) .* retrofit_efficiency.(gen[retrofit_options_commit])
+            if cap_size_can_retrofit_commit != cap_size_retrofit_options_commit
+                msg = "Retrofit options and retrofitting units with unit commitment must have the same capacity.\n" *
+                    "Check \"Cap_Size\" and \"Retrofit_Efficiency\" for the retrofitting units and retrofit options in the input files."
+                @warn(msg)
+            end
+        end
+    end
 
     new_cap_energy = Set{Int64}()
     ret_cap_energy = Set{Int64}()
-    retro_cap_energy = Set{Int64}()
     if !isempty(inputs["STOR_ALL"])
         # Set of all storage resources eligible for new energy capacity
         new_cap_energy = intersect(buildable, ids_with(gen, max_cap_mwh), inputs["STOR_ALL"])
         # Set of all storage resources eligible for energy capacity retirements
         ret_cap_energy = intersect(retirable, ids_with_nonneg(gen, existing_cap_mwh), inputs["STOR_ALL"])
-        retro_cap_energy = intersect(not_buildable(gen), not_retirable(gen), inputs["RETRO"], inputs["STOR_ALL"])
     end
     inputs["NEW_CAP_ENERGY"] = new_cap_energy
     inputs["RET_CAP_ENERGY"] = ret_cap_energy
-    inputs["RETRO_CAP_ENERGY"] = retro_cap_energy
 
 	new_cap_charge = Set{Int64}()
 	ret_cap_charge = Set{Int64}()
-    retro_cap_charge = Set{Int64}()
 	if !isempty(inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
         new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
         ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
-        retro_cap_charge = intersect(not_buildable(gen), not_retirable(gen), inputs["RETRO"], inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge
-    inputs["RETRO_CAP_CHARGE"] = retro_cap_charge
 
     ## Co-located resources
     # VRE and storage

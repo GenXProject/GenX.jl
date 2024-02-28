@@ -1,0 +1,12 @@
+Resource,WACC,Capital_Recovery_Period,Lifetime,Min_Retired_Cap_MW,Min_Retired_Energy_Cap_MW,Min_Retired_Charge_Cap_MW,Min_Retirement
+natural_gas_combined_cycle,0.039,20,20,0,0,0,0
+coal_super_1,0.039,20,20,0,0,0,1
+coal_super_2,0.039,20,20,0,0,0,1
+coal_super_3,0.039,20,20,0,0,0,1
+coal_super_4,0.039,20,20,0,0,0,1
+coal_super_5,0.039,20,20,0,0,0,1
+20A_retrofit_1,0.039,20,20,0,0,0,0
+20A_retrofit_2,0.039,20,20,0,0,0,0
+20A_retrofit_3,0.039,20,20,0,0,0,0
+20A_retrofit_4,0.039,20,20,0,0,0,0
+20A_retrofit_5,0.039,20,20,0,0,0,0

@@ -50,7 +50,6 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
 	RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-	RETRO_CAP_CHARGE = inputs["RETRO_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retrofitting.
 
 	### Variables ###
 
@@ -61,9 +60,6 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Retired charge capacity of resource "y" from existing capacity
 	@variable(EP, vRETCAPCHARGE[y in RET_CAP_CHARGE] >= 0)
-
-	# Retrofited charge capacity of resource "y" from existing capacity
-	@variable(EP, vRETROCAPCHARGE[y in RETRO_CAP_CHARGE] >= 0)
 
 	if MultiStage == 1
 		@variable(EP, vEXISTINGCAPCHARGE[y in STOR_ASYMMETRIC] >= 0);
@@ -85,11 +81,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 		elseif (y in setdiff(RET_CAP_CHARGE, NEW_CAP_CHARGE))
 			eExistingCapCharge[y] - EP[:vRETCAPCHARGE][y]
 		else
-			if y in RETRO_CAP_CHARGE
-				eExistingCapCharge[y] + EP[:vRETROCAPCHARGE][y]
-			else
-				eExistingCapCharge[y] + EP[:vZERO]
-			end
+			eExistingCapCharge[y] + EP[:vZERO]
 		end
 	)
 
@@ -101,11 +93,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 		if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
 			inv_cost_charge_per_mwyr(gen[y])*vCAPCHARGE[y] + fixed_om_cost_charge_per_mwyr(gen[y])*eTotalCapCharge[y]
 		else
-			if y in RETRO_CAP_CHARGE
-				inv_cost_charge_per_mwyr(gen[y])*vRETROCAPCHARGE[y] + fixed_om_cost_charge_per_mwyr(gen[y])*eTotalCapCharge[y]
-			else
-				fixed_om_cost_charge_per_mwyr(gen[y])*eTotalCapCharge[y]
-			end
+			fixed_om_cost_charge_per_mwyr(gen[y])*eTotalCapCharge[y]
 		end
 	)
 

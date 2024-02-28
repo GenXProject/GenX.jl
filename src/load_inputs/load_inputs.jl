@@ -71,10 +71,6 @@ function load_inputs(setup::Dict,path::AbstractString)
 		load_period_map!(setup, path, inputs)
 	end
 
-	if !isempty(inputs["RETRO"])
-		load_retrofit_data!(path, inputs)
-	end
-
 	# Virtual charge discharge cost
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	inputs["VirtualChargeDischargeCost"] = setup["VirtualChargeDischargeCost"] / scale_factor

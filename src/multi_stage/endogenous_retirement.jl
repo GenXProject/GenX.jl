@@ -129,6 +129,7 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
+	RETROFIT_CAP = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
 
 	### Variables ###
@@ -147,7 +148,13 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 		end
 	)
 
-	@expression(EP, eRetCap[y in RET_CAP], EP[:vRETCAP][y])
+	@expression(EP, eRetCap[y in RET_CAP], 
+	if y in ids_contribute_min_retirement(gen[RETROFIT_CAP])
+		EP[:vRETCAP][y] + EP[:vRETROCAP][y]
+	else
+		EP[:vRETCAP][y]
+	end
+	)
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrack[y in RET_CAP], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))

@@ -541,9 +541,14 @@ function can_retrofit(r::AbstractResource)
     return Bool(get(r, :can_retrofit, false))
 end
 
-function is_retro_option(r::AbstractResource)
-    validate_boolean_attribute(r, :retro)
-    return Bool(get(r, :retro, false))
+function is_retrofit_option(r::AbstractResource)
+    validate_boolean_attribute(r, :retrofit_option)
+    return Bool(get(r, :retrofit_option, false))
+end
+
+function can_contribute_min_retirement(r::AbstractResource)
+    validate_boolean_attribute(r, :min_retirement)
+    return Bool(get(r, :min_retirement, false))
 end
 
 const default_minmax_cap = -1.
@@ -568,7 +573,13 @@ hydro_energy_to_power_ratio(r::AbstractResource) = get(r, :hydro_energy_to_power
 
 qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supply, default_zero)
 
-retrofit_pool_id(r::AbstractResource) = get(r, :retrofit_pool_id, default_zero)
+retrofit_id(r::AbstractResource)::String = get(r, :retrofit_id, "None")
+function retrofit_efficiency(r::AbstractResource)
+    (is_retrofit_option(r) || can_retrofit(r)) && return get(r, :retrofit_efficiency, 1.0)
+    msg = "Retrofit efficiency is not defined for resource $(resource_name(r)).\n" *
+          "It's only valid for retrofit options or resources that can be retrofitted."
+    throw(ErrorException(msg))
+end
 
 # costs
 reg_cost(r::AbstractResource) = get(r, :reg_cost, default_zero)
@@ -650,11 +661,9 @@ ids_with_singlefuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> mu
 ids_with_multifuels(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 1, rs)
 
 is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == true, rs)
-not_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == false, rs)
 is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == true, rs)
-not_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == false, rs)
 ids_can_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retrofit(r) == true, rs)
-ids_retrofit_options(rs::Vector{T}) where T <: AbstractResource = findall(r -> is_retro_option(r) == true, rs)
+ids_retrofit_options(rs::Vector{T}) where T <: AbstractResource = findall(r -> is_retrofit_option(r) == true, rs)
 
 # Unit commitment
 ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
@@ -671,6 +680,8 @@ ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> g
 maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default_zero)
 maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default_zero)
 maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default_zero)
+
+ids_contribute_min_retirement(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_contribute_min_retirement(r) == true, rs)
 
 # STORAGE interface
 """
@@ -921,19 +932,19 @@ function resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
 end
 
 @doc raw"""
-    resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::Int)
+    resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::String)
 
 Find R_ID's of resources with retrofit pool id `pool_id`.
 
 # Arguments
 - `rs::Vector{<:AbstractResource}`: The vector of resources.
-- `pool_id::Int`: The retrofit pool id.
+- `pool_id::String`: The retrofit pool id.
 
 # Returns
 - `Vector{Int64}`: The vector of resource ids in the retrofit pool.
 """
-function resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::Int)
-    return resource_id.(rs[retrofit_pool_id.(rs) .== pool_id])
+function resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::String)
+    return resource_id.(rs[retrofit_id.(rs) .== pool_id])
 end
 
 """

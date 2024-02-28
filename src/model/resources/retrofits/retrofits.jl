@@ -24,29 +24,18 @@ function retrofit(EP::Model, inputs::Dict)
 
 	println("Retrofit Resources Module")
 
-	C = inputs["C"] 	# Number of cluster
-
 	gen = inputs["RESOURCES"]
-	dfRetrofit = inputs["dfRetrofit"]
 
 	COMMIT 	  = inputs["COMMIT"]   # Set of all resources subject to unit commitment
-	RETRO_CAP   = inputs["RETRO_CAP"]  # Set of all resources being retrofitted
-	RETRO_CREAT = inputs["RETRO"] # Set of all resources being created
+	RETROFIT_CAP   = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
+	RETROFIT_OPTIONS = inputs["RETROFIT_OPTIONS"] # Set of all resources being created
+	RETROFIT_IDS = inputs["RETROFIT_IDS"] # Set of unique IDs for retrofit resources
 
-	RETRO_CAP_CHARGE = inputs["RETRO_CAP_CHARGE"]  # Set of all charge capacity resources being created
-	RETRO_CAP_ENERGY = inputs["RETRO_CAP_ENERGY"]  # Set of all energy resources being created
-
-	# return retrofit efficiency for retrofit pool id equal to c
-	function retrofit_efficiency(c::Int64)
-		df_row = findfirst(dfRetrofit.retrofit_pool_id .== c)
-		return dfRetrofit[df_row, :retrofit_efficiency]
-	end
-
-	@constraint(EP, cRetrofit_zone_commit[c=1:C],
-	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] for y in intersect(RETRO_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0) * retrofit_efficiency(c)
-	+ sum(EP[:vRETROCAP][y] for y in setdiff(intersect(RETRO_CAP, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)
-	== sum(cap_size(gen[y]) * EP[:vRETROCREATCAP][y] for y in intersect(RETRO_CREAT, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0)
-	+ sum(EP[:vRETROCREATCAP][y] for y in setdiff(intersect(RETRO_CREAT, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)) 
+	@constraint(EP, cRetrofitZone[c in RETROFIT_IDS],
+	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] * retrofit_efficiency(gen[y]) for y in intersect(RETROFIT_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0) 
+	+ sum(EP[:vRETROCAP][y] * retrofit_efficiency(gen[y]) for y in setdiff(intersect(RETROFIT_CAP, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)
+	== sum(cap_size(gen[y]) * EP[:vCAP][y] * retrofit_efficiency(gen[y]) for y in intersect(RETROFIT_OPTIONS, COMMIT, resources_in_retrofit_pool_by_rid(gen,c)); init=0)
+	+ sum(EP[:vCAP][y] * retrofit_efficiency(gen[y]) for y in setdiff(intersect(RETROFIT_OPTIONS, resources_in_retrofit_pool_by_rid(gen,c)), COMMIT); init=0)) 
 
 	return EP
 end

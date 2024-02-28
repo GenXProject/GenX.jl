@@ -180,7 +180,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	# Model constraints, variables, expression related to retrofit technologies
-	if !isempty(inputs["RETRO"])
+	if !isempty(inputs["RETROFIT_OPTIONS"])
 		EP = retrofit(EP, inputs)
 	end
 

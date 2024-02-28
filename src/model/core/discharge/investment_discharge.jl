@@ -44,8 +44,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	NEW_CAP     = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP     = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
 	COMMIT      = inputs["COMMIT"] # Set of all resources eligible for unit commitment
-	RETRO_CAP   = inputs["RETRO_CAP"]  # Set of all resources being retrofitted
-	RETRO_CREAT = inputs["RETRO"] # Set of all resources being created
+	RETROFIT_CAP   = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
 
 	### Variables ###
 
@@ -60,10 +59,8 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	end
 
 	# Being retrofitted capacity of resource y 
-	@variable(EP, vRETROCAP[y in RETRO_CAP] >= 0);
+	@variable(EP, vRETROCAP[y in RETROFIT_CAP] >= 0);
 
-	# Retrofitting capacity of resource y 
-	@variable(EP, vRETROCREATCAP[y in RETRO_CREAT] >= 0);
 
 	### Expressions ###
 
@@ -74,45 +71,38 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	end
 
 	@expression(EP, eTotalCap[y in 1:G],
-	if y in intersect(NEW_CAP, RET_CAP, RETRO_CAP) # Resources eligible for new capacity, retirements and being retrofitted
+	if y in intersect(NEW_CAP, RET_CAP, RETROFIT_CAP) # Resources eligible for new capacity, retirements and being retrofitted
 		if y in COMMIT
 			eExistingCap[y] + cap_size(gen[y])*(EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROCAP][y])
 		else
 			eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROCAP][y]
 		end
-	elseif y in intersect(setdiff(RET_CAP, NEW_CAP), setdiff(RET_CAP, RETRO_CAP)) # Resources eligible for only capacity retirements
+	elseif y in intersect(setdiff(RET_CAP, NEW_CAP), setdiff(RET_CAP, RETROFIT_CAP)) # Resources eligible for only capacity retirements
 		if y in COMMIT
 			eExistingCap[y] - cap_size(gen[y])*EP[:vRETCAP][y]
 		else
 			eExistingCap[y] - EP[:vRETCAP][y]
 		end
-	elseif y in setdiff(intersect(RET_CAP, NEW_CAP), RETRO_CAP) # Resources eligible for retirement and new capacity
+	elseif y in setdiff(intersect(RET_CAP, NEW_CAP), RETROFIT_CAP) # Resources eligible for retirement and new capacity
 		if y in COMMIT
 			eExistingCap[y] + cap_size(gen[y])* (EP[:vCAP][y] - EP[:vRETCAP][y])
 		else
 			eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y]
 		end
-	elseif y in setdiff(intersect(RET_CAP, RETRO_CAP), NEW_CAP) # Resources eligible for retirement and retrofitting
+	elseif y in setdiff(intersect(RET_CAP, RETROFIT_CAP), NEW_CAP) # Resources eligible for retirement and retrofitting
 		if y in COMMIT
 			eExistingCap[y] - cap_size(gen[y]) * (EP[:vRETROCAP][y] + EP[:vRETCAP][y])
 		else
 			eExistingCap[y] - (EP[:vRETROCAP][y] + EP[:vRETCAP][y])
 		end
-	elseif y in intersect(setdiff(NEW_CAP, RET_CAP),setdiff(NEW_CAP, RETRO_CAP))  # Resources eligible for only new capacity
+	elseif y in intersect(setdiff(NEW_CAP, RET_CAP),setdiff(NEW_CAP, RETROFIT_CAP))  # Resources eligible for only new capacity
 		if y in COMMIT
 			eExistingCap[y] + cap_size(gen[y])*EP[:vCAP][y]
 		else
 			eExistingCap[y] + EP[:vCAP][y]
 		end
-	else # Resources not eligible for new capacity or retirement (being retrofitted can be added)
+	else # Resources not eligible for new capacity or retirement
 		eExistingCap[y] + EP[:vZERO]
-		if y in intersect(RETRO_CREAT, COMMIT)
-			eExistingCap[y] + cap_size(gen[y]) * EP[:vRETROCREATCAP][y]
-		elseif y in setdiff(RETRO_CREAT, COMMIT)
-			eExistingCap[y] + EP[:vRETROCREATCAP][y]
-		else
-			eExistingCap[y] + EP[:vZERO]
-		end
 	end
 )
 
@@ -123,12 +113,6 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 			inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 		else
 			inv_cost_per_mwyr(gen[y])*vCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
-		end
-	elseif y in RETRO_CREAT # Resources eligible for both retrofit and new capacity
-		if y in COMMIT
-			inv_cost_per_mwyr(gen[y])*cap_size(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
-		else
-		    inv_cost_per_mwyr(gen[y])*vRETROCREATCAP[y] + fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
 		end
 	else
 		fixed_om_cost_per_mwyr(gen[y])*eTotalCap[y]
@@ -157,9 +141,9 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 	## Constraints on retirements and capacity additions
 	# Cannot retire more capacity than existing capacity
 	@constraint(EP, cMaxRetNoCommit[y in setdiff(RET_CAP,COMMIT)], vRETCAP[y] <= eExistingCap[y])
-	@constraint(EP, cMaxRetroNoCommit[y in setdiff(RETRO_CAP,COMMIT)], vRETROCAP[y] <= eExistingCap[y])
-	@constraint(EP, cMaxTotalNoCommit[y in setdiff(intersect(RET_CAP,RETRO_CAP), COMMIT)], (vRETCAP[y] + vRETROCAP[y])<= eExistingCap[y])
-	@constraint(EP, cMaxRetCommit[y in intersect(RET_CAP,RETRO_CAP,COMMIT)], cap_size(gen[y]) * (vRETCAP[y] + vRETROCAP[y]) <= eExistingCap[y])
+	@constraint(EP, cMaxRetCommit[y in intersect(RET_CAP,COMMIT)], cap_size(gen[y])*vRETCAP[y] <= eExistingCap[y])
+	@constraint(EP, cMaxRetroNoCommit[y in setdiff(RETROFIT_CAP,COMMIT)], vRETROCAP[y] + vRETCAP[y] <= eExistingCap[y])
+	@constraint(EP, cMaxRetroCommit[y in intersect(RETROFIT_CAP,COMMIT)], cap_size(gen[y]) * (vRETROCAP[y] + vRETCAP[y]) <= eExistingCap[y])
 
 	## Constraints on new built capacity
 	# Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]

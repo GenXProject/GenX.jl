@@ -151,7 +151,7 @@ function test_inputs_keys(inputs, inputs_true)
     @test inputs["FLEX"] == inputs_true["FLEX"]
     @test inputs["MUST_RUN"] == inputs_true["MUST_RUN"]
     @test inputs["ELECTROLYZER"] == inputs_true["ELECTROLYZER"]
-    @test inputs["RETRO"] == inputs_true["RETRO"]
+    @test inputs["RETROFIT_OPTIONS"] == inputs_true["RETRO"]
     @test inputs["REG"] == inputs_true["REG"]
     @test inputs["RSV"] == inputs_true["RSV"]
     @test inputs["THERM_ALL"] == inputs_true["THERM_ALL"]

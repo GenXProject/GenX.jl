@@ -52,7 +52,6 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
 	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
 	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
-	RETRO_CAP_ENERGY = inputs["RETRO_CAP_ENERGY"] # Set of asymmetric storage resources eligible for charge capacity retrofitting.
 
 	### Variables ###
 
@@ -63,9 +62,6 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Retired energy capacity of resource "y" from existing capacity
 	@variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY] >= 0)
-
-	# Retrofited energy capacity of resource "y" from existing capacity
-	@variable(EP, vRETROCAPENERGY[y in RETRO_CAP_ENERGY] >= 0)
 
 	if MultiStage == 1
 		@variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL] >= 0);
@@ -87,11 +83,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 		elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
 			eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
 		else
-			if y in RETRO_CAP_ENERGY
-				eExistingCapEnergy[y] + EP[:vRETROCAPENERGY][y]
-			else
-				eExistingCapEnergy[y] + EP[:vZERO]
-			end
+			eExistingCapEnergy[y] + EP[:vZERO]
 		end
 	)
 
@@ -103,11 +95,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 		if y in NEW_CAP_ENERGY # Resources eligible for new capacity
 			inv_cost_per_mwhyr(gen[y])*vCAPENERGY[y] + fixed_om_cost_per_mwhyr(gen[y])*eTotalCapEnergy[y]
 		else
-			if y in RETRO_CAP_ENERGY
-				inv_cost_per_mwhyr(gen[y])*vRETROCAPENERGY[y] + fixed_om_cost_per_mwhyr(gen[y])*eTotalCapEnergy[y]
-			else
-				fixed_om_cost_per_mwhyr(gen[y])*eTotalCapEnergy[y]
-			end
+			fixed_om_cost_per_mwhyr(gen[y])*eTotalCapEnergy[y]
 		end
 	)
 
