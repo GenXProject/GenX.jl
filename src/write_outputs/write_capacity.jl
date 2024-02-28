@@ -22,7 +22,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	retcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
 	for i in inputs["RET_CAP"]
 		if i in inputs["COMMIT"]
-			retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
+			retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))*cap_size(gen[i])
 		else
 			retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
 		end

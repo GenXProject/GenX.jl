@@ -458,7 +458,6 @@ function check_resource(resources::T) where T <: Vector{AbstractResource}
         e = [e; check_resource(r)]
     end
     e = [e; check_retrofit_id(resources)]
-    # e = [e; check_retrofit_capsize(resources)]
     return e
 end
 
@@ -1024,9 +1023,6 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 	inputs["RETROFIT_CAP"] = intersect(units_can_retrofit, ids_with_nonneg(gen, existing_cap_mw))
     inputs["RETROFIT_OPTIONS"] = ids_retrofit_options(gen)
 
-    println("RETROFIT_CAP: ", inputs["RETROFIT_CAP"])
-    println("RETROFIT_OPTIONS: ", inputs["RETROFIT_OPTIONS"])
-
     inputs["RETROFIT_IDS"] = []
     if (!isempty(inputs["RETROFIT_CAP"]) || !isempty(inputs["RETROFIT_OPTIONS"]))
         # append region name to the retrofit_id
@@ -1041,7 +1037,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
             cap_size_can_retrofit_commit = cap_size.(gen[can_retrofit_commit]) .* retrofit_efficiency.(gen[can_retrofit_commit])
             cap_size_retrofit_options_commit = cap_size.(gen[retrofit_options_commit]) .* retrofit_efficiency.(gen[retrofit_options_commit])
             if cap_size_can_retrofit_commit != cap_size_retrofit_options_commit
-                msg = "Retrofit options and retrofitting units with unit commitment must have the same capacity.\n" *
+                msg = "Retrofit options and retrofitting units with unit commitment should have the same capacity.\n" *
                     "Check \"Cap_Size\" and \"Retrofit_Efficiency\" for the retrofitting units and retrofit options in the input files."
                 @warn(msg)
             end
