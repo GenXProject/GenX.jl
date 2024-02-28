@@ -2,7 +2,7 @@
 This guide will walk you through the steps to install Julia, the GenX package, and the required dependencies to run GenX.
 
 ## Installing Julia
-GenX currently exists in version 0.3.6 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of [JuMP](https://jump.dev/JuMP.jl/stable/) v1.1.1. To install Julia, please follow the instructions on the [Julia website](https://julialang.org/downloads/).
+GenX currently exists in version 0.4.0 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of [JuMP](https://jump.dev/JuMP.jl/stable/) v1.1.1. To install Julia, please follow the instructions on the [Julia website](https://julialang.org/downloads/).
 
 !!! note "Note" 
     We recommend the users to stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old `Manifest.toml` file and do a fresh build of GenX.
