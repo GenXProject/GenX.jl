@@ -31,9 +31,9 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	retrocapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
 	for i in inputs["RETROFIT_CAP"]
 		if i in inputs["COMMIT"]
-			retrocapdischarge[i] = first(value.(EP[:vRETROCAP][i])) * cap_size(gen[i])
+			retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i])) * cap_size(gen[i])
 		else
-			retrocapdischarge[i] = first(value.(EP[:vRETROCAP][i]))
+			retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i]))
 		end
 	end
 

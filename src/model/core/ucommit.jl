@@ -66,7 +66,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 				set_integer(EP[:vCAP][y])
 			end
 			if y in inputs["RETROFIT_CAP"]
-				set_integer(EP[:vRETROCAP][y])
+				set_integer(EP[:vRETROFITCAP][y])
 			end
 		end
 	end #END unit commitment configuration

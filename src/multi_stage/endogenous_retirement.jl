@@ -150,7 +150,7 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 
 	@expression(EP, eRetCap[y in RET_CAP], 
 	if y in ids_contribute_min_retirement(gen[RETROFIT_CAP])
-		EP[:vRETCAP][y] + EP[:vRETROCAP][y]
+		EP[:vRETCAP][y] + EP[:vRETROFITCAP][y]
 	else
 		EP[:vRETCAP][y]
 	end

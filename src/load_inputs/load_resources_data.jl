@@ -414,7 +414,7 @@ function check_retrofit_resource(r::AbstractResource)
                    "A unit that can be retrofitted must also be eligible for retirement (:can_retire = 1)")
         push!(error_strings, e)
     elseif is_retrofit_option(r) == true && new_build(r) == false
-        e = string("Resource ", resource_name(r), " has :retro = ", is_retrofit_option(r), " but :new_build = ", new_build(r), ".\n",
+        e = string("Resource ", resource_name(r), " has :retrofit_option = ", is_retrofit_option(r), " but :new_build = ", new_build(r), ".\n",
                    "This setting is valid only for resources that have :new_build = 1")
         push!(error_strings, e)
     end
@@ -1034,7 +1034,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         if setup["UCommit"] == 1
             can_retrofit_commit = intersect(inputs["RETROFIT_CAP"], inputs["COMMIT"])
             retrofit_options_commit = intersect(inputs["RETROFIT_OPTIONS"], inputs["COMMIT"])
-            cap_size_can_retrofit_commit = cap_size.(gen[can_retrofit_commit]) .* retrofit_efficiency.(gen[can_retrofit_commit])
+            cap_size_can_retrofit_commit = cap_size.(gen[can_retrofit_commit])
             cap_size_retrofit_options_commit = cap_size.(gen[retrofit_options_commit]) .* retrofit_efficiency.(gen[retrofit_options_commit])
             if cap_size_can_retrofit_commit != cap_size_retrofit_options_commit
                 msg = "Retrofit options and retrofitting units with unit commitment should have the same capacity.\n" *

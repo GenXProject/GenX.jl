@@ -32,8 +32,8 @@ function retrofit(EP::Model, inputs::Dict)
 	RETROFIT_IDS = inputs["RETROFIT_IDS"] # Set of unique IDs for retrofit resources
 
 	@constraint(EP, cRetrofitZone[id in RETROFIT_IDS],
-	sum(cap_size(gen[y]) * EP[:vRETROCAP][y] * retrofit_efficiency(gen[y]) for y in intersect(RETROFIT_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,id)); init=0) 
-	+ sum(EP[:vRETROCAP][y] * retrofit_efficiency(gen[y]) for y in setdiff(intersect(RETROFIT_CAP, resources_in_retrofit_pool_by_rid(gen,id)), COMMIT); init=0)
+	sum(cap_size(gen[y]) * EP[:vRETROFITCAP][y] for y in intersect(RETROFIT_CAP, COMMIT, resources_in_retrofit_pool_by_rid(gen,id)); init=0) 
+	+ sum(EP[:vRETROFITCAP][y] for y in setdiff(intersect(RETROFIT_CAP, resources_in_retrofit_pool_by_rid(gen,id)), COMMIT); init=0)
 	== sum(cap_size(gen[y]) * EP[:vCAP][y] * retrofit_efficiency(gen[y]) for y in intersect(RETROFIT_OPTIONS, COMMIT, resources_in_retrofit_pool_by_rid(gen,id)); init=0)
 	+ sum(EP[:vCAP][y] * retrofit_efficiency(gen[y]) for y in setdiff(intersect(RETROFIT_OPTIONS, resources_in_retrofit_pool_by_rid(gen,id)), COMMIT); init=0)) 
 

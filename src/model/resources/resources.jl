@@ -575,9 +575,9 @@ qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supp
 
 retrofit_id(r::AbstractResource)::String = get(r, :retrofit_id, "None")
 function retrofit_efficiency(r::AbstractResource)
-    (is_retrofit_option(r) || can_retrofit(r)) && return get(r, :retrofit_efficiency, 1.0)
+    is_retrofit_option(r) && return get(r, :retrofit_efficiency, 1.0)
     msg = "Retrofit efficiency is not defined for resource $(resource_name(r)).\n" *
-          "It's only valid for retrofit options or resources that can be retrofitted."
+          "It's only valid for retrofit options."
     throw(ErrorException(msg))
 end
 
