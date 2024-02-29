@@ -73,6 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The new files are: `Thermal.csv`, `Hydro.csv`, `Vre.csv`, `Storage.csv`, `Flex_demand.csv`, `Must_run.csv`, 
   `Electrolyzer.csv`, and `Vre_stor.csv`. The examples have been updated, and new tests have been added to 
   check the new data format (#612).
+- The settings parameter `Reserves` has been renamed to `OperationalReserves`, `Reserves.csv` to 
+  `Operational_reserves.csv`, and the `.jl` files contain the word `reserves` have been renamed to
+  `operational_reserves` (#641).
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
