@@ -1,4 +1,5 @@
 function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	T = inputs["T"]     # Number of time steps (hours)
 	RSV = inputs["RSV"]
 	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
