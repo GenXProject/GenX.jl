@@ -29,6 +29,7 @@ function default_settings()
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
         "ResourcePath" => "Resources",
+        "StorageVirtualDischarge" => 1,
     )
 end
 
