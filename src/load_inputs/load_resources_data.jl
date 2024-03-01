@@ -31,11 +31,17 @@ Internal function to get policy file information.
 
 """
 function _get_policyfile_info()
+    # filename for each type of policy available in GenX
+    esr_filenames = ["Resource_energy_share_requirement.csv"]
+    cap_res_filenames = ["Resource_capacity_reserve_margin.csv"]
+    min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
+    max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
+
     policyfile_info = (
-        esr     = (filename="Resource_energy_share_requirement.csv", setup_param="EnergyShareRequirement"),
-        cap_res = (filename="Resource_capacity_reserve_margin.csv", setup_param="CapacityReserveMargin"),
-        min_cap = (filename="Resource_minimum_capacity_requirement.csv", setup_param="MinCapReq"),
-        max_cap = (filename="Resource_maximum_capacity_requirement.csv", setup_param="MaxCapReq"),
+        esr     = (filename=esr_filenames, setup_param="EnergyShareRequirement"),
+        cap_res = (filename=cap_res_filenames, setup_param="CapacityReserveMargin"),
+        min_cap = (filename=min_cap_filenames, setup_param="MinCapReq"),
+        max_cap = (filename=max_cap_filenames, setup_param="MaxCapReq"),
     )
     return policyfile_info
 end
@@ -481,13 +487,13 @@ Validate the policy files by checking if they exist in the specified folder and 
 
 # Returns
 - warning messages if the polcies are set to 1 in settings but the files are not found in the resource_policies_path.
-
+!isfile(joinpath(resource_policies_path, filename))
 """
 function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
     policyfile_info = _get_policyfile_info()
-    for (filename, setup_param) in values(policyfile_info)
-        if setup[setup_param] == 1 && !isfile(joinpath(resource_policies_path, filename))
-            msg = string(setup_param, " is set to 1 in settings but the file ", filename, " was not found in ", resource_policies_path)
+    for (filenames, setup_param) in values(policyfile_info)
+        if setup[setup_param] == 1 && any(!isfile(joinpath(resource_policies_path, filename)) for filename in filenames)
+            msg = string(setup_param, " is set to 1 in settings but the required file(s) ", filenames, " was (were) not found in ", resource_policies_path)
             @warn(msg)
         end
     end
@@ -612,12 +618,14 @@ function add_policies_to_resources!(resources::Vector{<:AbstractResource}, resou
     # get filename for each type of policy available in GenX
     policies_info = _get_policyfile_info()
     # loop over policy files
-    for (filename,_) in values(policies_info)
-        path = joinpath(resource_policy_path, filename)
-        # if file exists, add policy to resources
-        if isfile(path) 
-            add_policy_to_resources!(resources, path, filename)
-            @info filename * " Successfully Read."
+    for (filenames,_) in values(policies_info)
+        for filename in filenames
+            path = joinpath(resource_policy_path, filename)
+            # if file exists, add policy to resources
+            if isfile(path) 
+                add_policy_to_resources!(resources, path, filename)
+                @info filename * " Successfully Read."
+            end
         end
     end
     return nothing
@@ -1144,26 +1152,25 @@ function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractStri
             "Please use the new interface for generators creation, and see the documentation for additional details."
         Base.depwarn(msg, :load_resources_data!, force=true)
         error("Exiting GenX...")
-    else
-        # create vector of resources from dataframes
-        resources = create_resource_array(setup, resources_path)
-
-        # read policy files and add policies-related attributes to resource dataframe
-        resource_policies_path = joinpath(resources_path, setup["ResourcePoliciesFolder"])
-        validate_policy_files(resource_policies_path, setup)
-        add_policies_to_resources!(resources, resource_policies_path)
-
-        # read module files add module-related attributes to resource dataframe
-        add_modules_to_resources!(resources, setup, resources_path)
-        
-        # add resources information to inputs dict
-        add_resources_to_input_data!(inputs, setup, case_path, resources)
-
-        # print summary of resources
-        summary(resources)
-
-        return nothing
     end
+    # create vector of resources from dataframes
+    resources = create_resource_array(setup, resources_path)
+
+    # read policy files and add policies-related attributes to resource dataframe
+    resource_policies_path = joinpath(resources_path, setup["ResourcePoliciesFolder"])
+    validate_policy_files(resource_policies_path, setup)
+    add_policies_to_resources!(resources, resource_policies_path)
+
+    # read module files add module-related attributes to resource dataframe
+    add_modules_to_resources!(resources, setup, resources_path)
+    
+    # add resources information to inputs dict
+    add_resources_to_input_data!(inputs, setup, case_path, resources)
+
+    # print summary of resources
+    summary(resources)
+
+    return nothing
 end
 
 @doc raw"""
