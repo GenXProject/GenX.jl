@@ -6,13 +6,10 @@ Read input parameters related to hourly maximum capacity factors for generators,
 function load_generators_variability!(setup::Dict, path::AbstractString, inputs::Dict)
 
 	# Hourly capacity factors
-	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
-    if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
-        my_dir = data_directory
-	else
-        # If TDR is not used, then use the "system" directory specified in the setup
-        my_dir = joinpath(path, setup["SystemFolder"])
-	end
+    TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
+    # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
+    my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    
     filename = "Generators_variability.csv"
     gen_var = load_dataframe(joinpath(my_dir, filename))
 

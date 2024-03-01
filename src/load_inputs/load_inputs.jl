@@ -98,3 +98,28 @@ function is_period_map_exist(setup::Dict, path::AbstractString)
 	is_in_TDR = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
 	is_in_system || is_in_TDR
 end
+
+"""
+	get_systemfiles_path(setup::Dict, TDR_directory::AbstractString, path::AbstractString)
+
+Determine the directory based on the setup parameters.
+
+This function checks if the TimeDomainReduction setup parameter is equal to 1 and if time domain reduced files exist in the data directory. 
+If the condition is met, it returns the path to the TDR_results data directory. Otherwise, it returns the system directory specified in the setup.
+
+Parameters:
+- setup: Dict{String, Any} - The GenX settings parameters containing TimeDomainReduction and SystemFolder information.
+- TDR_directory: String - The data directory where files are located.
+- path: String - Path to the case folder.
+
+Returns:
+- String: The directory path based on the setup parameters.
+"""
+function get_systemfiles_path(setup::Dict, TDR_directory::AbstractString, path::AbstractString)
+    if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory)
+        return TDR_directory
+    else
+		# If TDR is not used, then use the "system" directory specified in the setup
+        return joinpath(path, setup["SystemFolder"])
+    end
+end

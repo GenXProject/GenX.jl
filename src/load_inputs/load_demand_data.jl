@@ -27,13 +27,10 @@ Read input parameters related to electricity demand (load)
 function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
 	# Load related inputs
-	data_directory = joinpath(path, setup["TimeDomainReductionFolder"])
-    if setup["TimeDomainReduction"] == 1  && time_domain_reduced_files_exist(data_directory)
-        my_dir = data_directory
-	else
-        # If TDR is not used, then use the "system" directory specified in the setup
-        my_dir = joinpath(path, setup["SystemFolder"])
-	end
+    TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
+    # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
+    my_dir = get_systemfiles_path(setup, TDR_directory, path)
+
     demand_in = get_demand_dataframe(my_dir)
 
     as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
