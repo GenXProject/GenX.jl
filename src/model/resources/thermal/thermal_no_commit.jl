@@ -75,9 +75,9 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 	end)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
-	if setup["Reserves"] == 1
-		# If modeling with regulation and reserves, constraints are established by thermal_no_commit_reserves() function below
-		thermal_no_commit_reserves!(EP, inputs)
+	if setup["OperationalReserves"] == 1
+		# If modeling with regulation and reserves, constraints are established by thermal_no_commit_operational_reserves() function below
+		thermal_no_commit_operational_reserves!(EP, inputs)
 	else
 		@constraints(EP, begin
 			# Minimum stable power generated per technology "y" at hour "t" Min_Power
@@ -92,7 +92,7 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-	thermal_no_commit_reserves!(EP::Model, inputs::Dict)
+	thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
 
 This function is called by the ```thermal_no_commit()``` function when regulation and reserves constraints are active and defines reserve related constraints for thermal power plants not subject to unit commitment constraints on power plant start-ups and shut-down decisions.
 
@@ -134,7 +134,7 @@ When modeling regulation and spinning reserves, thermal units not subject to uni
 
 Note there are multiple versions of these constraints in the code in order to avoid creation of unecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. ```Reg_Max=0``` and/or ```RSV_Max=0```).
 """
-function thermal_no_commit_reserves!(EP::Model, inputs::Dict)
+function thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
 
 	println("Thermal No Commit Reserves Module")
 

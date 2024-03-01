@@ -41,9 +41,9 @@ function load_inputs(setup::Dict,path::AbstractString)
 		end
 	end
 
-	# Read in general configuration parameters for reserves (resource-specific reserve parameters are read in generators_data())
-	if setup["Reserves"]==1
-		load_reserves!(setup, path, inputs)
+	# Read in general configuration parameters for operational reserves (resource-specific reserve parameters are read in load_resources_data)
+	if setup["OperationalReserves"]==1
+		load_operational_reserves!(setup, path, inputs)
 	end
 
 	if setup["MinCapReq"] == 1

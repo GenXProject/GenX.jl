@@ -219,7 +219,7 @@ end
 function test_load_resources_data()
     setup = Dict(
         "ParameterScale" => 0,
-        "Reserves" => 1,
+        "OperationalReserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 1,
         "ResourcePath" => "Resources",
@@ -266,7 +266,7 @@ function test_load_VRE_STOR_data()
     
     setup = Dict(
         "ParameterScale" => 0,
-        "Reserves" => 1,
+        "OperationalReserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 0,
         "ResourcePath" => "Resources",

@@ -15,11 +15,6 @@ UCommit: 2
 ## Policy settings
 # ---------------
 
-# Regulation (primary) and operating (secondary) reserves
-# 0 = not active
-# 1 = active systemwide
-# Reserves: 0
-
 # Minimum qualifying renewables penetration
 # 0 = not active
 # 1 = active systemwide
