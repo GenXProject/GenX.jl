@@ -7,6 +7,4 @@ CO2Cap: 1
 MinCapReq: 1
 CapacityReserveMargin: 1
 EnergyShareRequirement: 0
-VirtualChargeDischargeCost: 1
-PrintModel: 1
 WriteShadowPrices: 1
