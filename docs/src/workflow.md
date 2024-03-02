@@ -26,6 +26,71 @@ The next sections in this guide provide more details on how to perform all the s
 6. [Running the model](@ref)
 7. [GenX Outputs](@ref)
 
+## Details of running a GenX case 
+This section details as to what happens in the process of running a GenX case. As a first step, the GenX package and the desired solver (is it's anyting other than the default solver, HiGHS; for instance, Gurobi) are loaded 
+
+```@example pcm
+using GenX
+using Gurobi
+optimizer=Gurobi.Optimizer
+```
+The next command the user needs to run is the following:
+
+```@example pcm
+run_genx_case!("<Location_of_the_case_study_data>", optimizer)
+```
+Contingent upon whether a single stage model or a multi-stage model is intended to be run, the above function, inturn makes calls to either of these two functions:
+For single-stage case:
+```@example pcm
+run_genx_case_simple!(case, mysetup, optimizer)
+```
+From within this function, if time-domain reduction (TDR) is needed, GenX first checks 	whether there already is time domain clustered data (in order to avoid duplication of efforts) by running 
+```@example pcm
+prevent_doubled_timedomainreduction(case)
+```
+and if the function
+```@example pcm
+!time_domain_reduced_files_exist(TDRpath)
+```
+returns true value, it then runs
+```@example pcm
+cluster_inputs(case, settings_path, mysetup)
+```
+to generate the time-domain clustered data for the time-series.
+-OR-
+For multi-stage case:
+
+```@example pcm
+run_genx_case_multistage!(case, mysetup, optimizer)
+```
+In this case also, the TDR clustering is done in a similar way, exxcept for the fact that if TDRSettingsDict["MultiStageConcatenate"] is set to 0, the TDR clustering is done individually for each stage. Otherwise, the clustering is done for all the stages together. The next step is configuring the solver, which is done by
+```@example pcm
+OPTIMIZER = configure_solver(settings_path, optimizer)
+```
+The call to configure_solver first gets the particular solver that is being used to solve the particular case at hand, which then calls a function specific to that solver in order to use either the default values of the solver settings parameter or, any other set of values, specified in the settings YAML file for that particular solver. 
+
+The configuration of solver is followed by loading the input files by running the following function:
+```@example pcm
+myinputs = load_inputs(mysetup, case)
+```
+The above function in its turn calls separate functions to load different resources, demand data, fuels data etc. and returns the dictionary myinputs populated by the input data. The next function call is to generate the model 
+```@example pcm
+time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+println("Time elapsed for model building is")
+println(time_elapsed)
+```
+The above function call instantiates the different decision variables, constraints, and objective function expressions from the input data. It can be seen that we also keep track of the time required to build the model. Follwoing this, the solve_model function makes the call to the solver and return the results as well as the solve time. 
+```@example pcm
+EP, solve_time = solve_model(EP, mysetup)
+myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
+```
+For writing the results, we invoke the following function:
+```@example pcm
+outputs_path = get_default_output_folder(case)
+elapsed_time = @elapsed outputs_path = write_outputs(EP, outputs_path, mysetup, myinputs)
+```
+The call to the write_outputs() function in turn calls a series of functions (write_capacity, write_power etc.) each of which querries the respective decision variables and creates dataframes, eventually outputting the results to separate CSV files. 
+
 ## Single and Multi-stage investment planning
 
 In addition to the standard single-stage planning mode, in which the produces a single snapshot of the minimum-cost generation capacity mix to meet demand at least cost under some pre-specified future conditions, recent improvements in the GenX source code (part of v0.3 release) enable its use for studying **long-term evolution** of the power system across multiple investment stages. GenX can be used to study multi-stage power system planning in the following two ways:
