@@ -38,10 +38,10 @@ function _get_policyfile_info()
     max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
 
     policyfile_info = (
-        esr     = (filename=esr_filenames, setup_param="EnergyShareRequirement"),
-        cap_res = (filename=cap_res_filenames, setup_param="CapacityReserveMargin"),
-        min_cap = (filename=min_cap_filenames, setup_param="MinCapReq"),
-        max_cap = (filename=max_cap_filenames, setup_param="MaxCapReq"),
+        esr     = (filenames=esr_filenames, setup_param="EnergyShareRequirement"),
+        cap_res = (filenames=cap_res_filenames, setup_param="CapacityReserveMargin"),
+        min_cap = (filenames=min_cap_filenames, setup_param="MinCapReq"),
+        max_cap = (filenames=max_cap_filenames, setup_param="MaxCapReq"),
     )
     return policyfile_info
 end

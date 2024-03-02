@@ -94,9 +94,9 @@ end
 
 function is_period_map_exist(setup::Dict, path::AbstractString)
 	filename = "Period_map.csv"
-	is_in_system = isfile(joinpath(path, setup["SystemFolder"], filename))
-	is_in_TDR = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
-	is_in_system || is_in_TDR
+	is_in_system_dir = isfile(joinpath(path, setup["SystemFolder"], filename))
+	is_in_TDR_dir = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
+	is_in_system_dir || is_in_TDR_dir
 end
 
 """
