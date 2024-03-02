@@ -5,7 +5,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = [79734.80032, 41630.03494, 27855.20631]
-test_path = joinpath(@__DIR__, "MultiStage");
+test_path = joinpath(@__DIR__, "multi_stage");
 
 # Define test inputs
 multistage_setup = Dict(
@@ -25,7 +25,6 @@ genx_setup = Dict(
     "UCommit" => 2,
     "MultiStage" => 1,
     "MultiStageSettingsDict" => multistage_setup,
-    "ResourcePath" => "Resources",
 )
 
 # Run the case and get the objective value and tolerance
@@ -84,7 +83,7 @@ function test_can_retire(EP::Dict,inputs::Dict)
     return a
 end
 
-test_path_new_build = joinpath(test_path, "New_Build");
+test_path_new_build = joinpath(test_path, "new_build");
 EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path_new_build, genx_setup);
 end
@@ -92,7 +91,7 @@ end
 new_build_test_result = @test test_new_build(EP,inputs)
 write_testlog(test_path,"Testing that the resource with New_Build = 0 did not expand capacity",new_build_test_result)
 
-test_path_can_retire = joinpath(test_path, "Can_Retire");
+test_path_can_retire = joinpath(test_path, "can_retire");
 EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path_can_retire, genx_setup);
 end

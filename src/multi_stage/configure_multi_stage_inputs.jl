@@ -151,7 +151,7 @@ function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkE
 		inputs_d["EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .> inputs_d["pTrans_Max"]) .& (inputs_d["pMax_Line_Reinforcement"] .> 0))
 		inputs_d["NO_EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .<= inputs_d["pTrans_Max"]) .| (inputs_d["pMax_Line_Reinforcement"] .<= 0))
 			# To-Do: Error Handling
-			# 1.) Enforce that pLine_Max_Flow_Possible_MW for the first model stage be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in Inputs/Inputs_p1
+			# 1.) Enforce that pLine_Max_Flow_Possible_MW for the first model stage be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in inputs/inputs_p1
     end
 
     return inputs_d

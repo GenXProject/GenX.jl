@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The settings parameter `Reserves` has been renamed to `OperationalReserves`, `Reserves.csv` to 
   `Operational_reserves.csv`, and the `.jl` files contain the word `reserves` have been renamed to
   `operational_reserves` (#641).
+- New folder structure for a GenX case. The input files are now organized in the following folders: `settings`, 
+  `policies`, `resources` and `system`. The examples and tests have been updated to reflect this change. 
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.

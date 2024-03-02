@@ -14,7 +14,7 @@ function write_multi_stage_capacities_discharge(outpath::String, settings_d::Dic
     capacities_d = Dict()
 
     for p in 1:num_stages
-        inpath = joinpath(outpath, "Results_p$p")
+        inpath = joinpath(outpath, "results_p$p")
         capacities_d[p] = load_dataframe(joinpath(inpath, "capacity.csv"))
     end
 

@@ -141,7 +141,6 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	EnergyShareRequirement = setup["EnergyShareRequirement"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	IncludeLossesInESR = setup["IncludeLossesInESR"]
-	MultiStage = setup["MultiStage"]
 	StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
 	if !isempty(STOR_ALL)
