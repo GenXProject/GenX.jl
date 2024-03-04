@@ -57,3 +57,4 @@ end
 write_testlog(test_path, "Build and Run", test_result)
 
 end # module TestMethodOfMorris
+
