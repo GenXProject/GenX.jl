@@ -40,7 +40,7 @@ pages = OrderedDict(
         "Time Domain Reduction" => "TDR_overview.md",
         "Multi-Stage Modeling" => "multi_stage_overview.md",
     ],
-    "Reference" => [
+    "Model Reference" => [
         "Core" => "core.md",
         "Resources" => [
             "Curtailable Variable Renewable" => "curtailable_variable_renewable.md",
@@ -79,8 +79,10 @@ pages = OrderedDict(
         "Multi-stage" => [
             "Configure multi-stage inputs" => "configure_multi_stage_inputs.md",
             "Model multi stage: Dual Dynamic Programming Algorithm" => "dual_dynamic_programming.md",
-            "Endogenous Retirement" => "endogenous_retirement.md",
+            "Endogenous Retirement" => "endogenous_retirement.md"
         ],
+    ],
+    "Public API Reference" => [
         "Public API" => "public_api.md",
         "Solving the Model" => "solve_model.md",
         "Outputs Functions" => "write_outputs.md",
