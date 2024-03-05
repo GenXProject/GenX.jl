@@ -1,19 +1,3 @@
-"""
-GenX: An Configurable Capacity Expansion Model
-Copyright (C) 2021,  Massachusetts Institute of Technology
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-A complete copy of the GNU General Public License v2 (GPLv2) is available
-in LICENSE.txt.  Users uncompressing this from an archive may not have
-received this license file.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
 @doc raw"""
 	vre_stor(EP::Model, inputs::Dict, setup::Dict)
 
@@ -30,7 +14,7 @@ that each resource must have. If the configured resource has either solar PV and
 storage capabilities, an inverter decision variable is also created. The full module with the decision 
 variables and interactions can be found below. 
 
-![Configurable Co-located VRE and Storage Module Interactions and Decision Variables](assets/vre_stor_module.png)
+![Configurable Co-located VRE and Storage Module Interactions and Decision Variables](../../assets/vre_stor_module.png)
 *Figure. Configurable Co-located VRE and Storage Module Interactions and Decision Variables*
 
 This module is split such that functions are called for each configurable component of a co-located resource: 

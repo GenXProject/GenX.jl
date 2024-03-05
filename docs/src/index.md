@@ -1,5 +1,8 @@
-# GenX Documentation
-Welcome to the GenX documentation! 
+```@raw html
+<img width="600" src="assets/genx_logo.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
+```
+
+### Welcome to the GenX documentation! 
 
 ## What is GenX?
 

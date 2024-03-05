@@ -38,6 +38,12 @@ Modules = [GenX]
 Pages = ["write_capacity.jl"]
 ```
 
+## Write Capacity Value # TODO: add it
+```@autodocs
+Modules = [GenX]
+Pages = ["write_capacity_value.jl"]
+```
+
 ## Write Capacity Factors
 ```@autodocs
 Modules = [GenX]

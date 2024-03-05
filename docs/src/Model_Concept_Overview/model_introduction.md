@@ -29,7 +29,7 @@ Finally, the model is usually configured to consider a full year of operating de
 With appropriate configuration of the model, GenX thus allows the user to tractably consider several interlinking decision layers in a single, monolithic optimization problem that would otherwise have been necessary to solve in different separated stages or models. The following figure reflects the range of configurations currently possible along the three key dimensions of chronological detail, operational detail, and network detail.
 
 
-![Range of configurations currently implemented in GenX along three key dimensions of model resolution](assets/Dimensions_graphic3_background.png)
+![Range of configurations currently implemented in GenX along three key dimensions of model resolution](../assets/Dimensions_graphic3_background.png)
 *Figure. Range of configurations currently implemented in GenX along three key dimensions of model resolution*
 
 The model can be configured to consider a single future planning year or multiple planning stages (or investment periods) in sequence. 

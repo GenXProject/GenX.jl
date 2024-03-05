@@ -720,13 +720,13 @@ This file contains the settings parameters required to run the Method of Morris 
 |policy| Name of the policy|
 
 !!! note "Notes"
-1. Upper and lower bounds are specified in terms of percentage deviation from the nominal value.
-2. Percentage variation for uncertain parameters in a given group is identical. For example, if solar cluster 1 and solar cluster 2 both belong to the ‘solar’ group, their Lower_bound and Upper_bound must be identical
-3. P\_steps should at least be = 1\%, i.e., Upper\_bound – Lower\_bound $<$ p\_steps
-4. P\_steps for parameters in one group must be identical
-5. Total\_num\_trajectory should be around 3 to 4 times the total number of uncertain parameters
-6. num\_trajectory should be approximately equal to the total number of uncertain parameters
-7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
-8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
-9. Upper and lower bounds should be specified for all the resources included in the resource `.csv` file (inside the `Resource`). If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
+    1. Upper and lower bounds are specified in terms of percentage deviation from the nominal value.
+    2. Percentage variation for uncertain parameters in a given group is identical. For example, if solar cluster 1 and solar cluster 2 both belong to the ‘solar’ group, their Lower_bound and Upper_bound must be identical
+    3. P\_steps should at least be = 1\%, i.e., Upper\_bound – Lower\_bound $<$ p\_steps
+    4. P\_steps for parameters in one group must be identical
+    5. Total\_num\_trajectory should be around 3 to 4 times the total number of uncertain parameters
+    6. num\_trajectory should be approximately equal to the total number of uncertain parameters
+    7. len\_design_mat should be 1.5 to 2 times the total number of uncertain parameters
+    8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
+    9. Upper and lower bounds should be specified for all the resources included in the resource `.csv` file (inside the `Resource`). If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
 

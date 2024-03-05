@@ -79,7 +79,7 @@ For example, let's assume that `thermal_gen` is the vector of the three `Thermal
 
 ```@meta
 DocTestSetup = quote
-    using GenX: Thermal, resource_name, existing_cap_mw, inv_cost_per_mwyr, ids_with, ids_with_positive, ids_with_nonneg, ids_with_policy, resource_id, esr, has
+    using GenX: AbstractResource, Thermal, resource_name, existing_cap_mw, inv_cost_per_mwyr, ids_with, ids_with_positive, ids_with_nonneg, ids_with_policy, resource_id, esr, haskey
 end
 ```
 
@@ -130,7 +130,7 @@ julia> thermal_gen[1].existing_cap_mw
 
 Moreover, inside the `resources.jl` file, there is a set of utility functions to work with all the resources and that can be used as building blocks to create more complex functions:
 
-- [`Base.get(r::AbstractResource, sym::Symbol, default)`](@ref): Returns the value of the attribute `sym` of the resource `r`. If the attribute is not defined for the resource, it returns the `default` value of that attribute.
+- [`Base.get`](@ref): Returns the value of the attribute `sym` of the resource `r`. If the attribute is not defined for the resource, it returns the `default` value of that attribute.
 
 Example: 
 ```jldoctest example_thermal
@@ -140,7 +140,7 @@ julia> get(thermal_gen[1], :new_build, 0)
 0
 ```
 
-- [`GenX.haskey(r::AbstractResource, sym::Symbol)`](@ref): Returns `true` if the resource `r` has the attribute `sym`, and `false` otherwise.
+- [`Base.haskey`](@ref): Returns `true` if the resource `r` has the attribute `sym`, and `false` otherwise.
 
 Example: 
 ```jldoctest example_thermal
@@ -150,7 +150,7 @@ julia> haskey(thermal_gen[1], :new_build)
 false
 ```
 
-- [`Base.findall(f::Function, rs::Vector{<:AbstractResource})`](@ref): Returns the indices of the resources in `rs` for which the function `f` returns `true`.
+- [`Base.findall`](@ref): Returns the indices of the resources in `rs` for which the function `f` returns `true`.
 
 Example: 
 ```jldoctest example_thermal
@@ -166,7 +166,7 @@ julia> findall(r -> get(r, :new_build, 0) == 1, thermal_gen) # returns the indic
 1-element Vector{Int64}:
  25
 ```
-- [`GenX.ids_with(rs::Vector{T}, f::Function, default=default_zero) where T <: AbstractResource`](@ref): Returns the indices of the resources in the vector `rs` for which the function `f` is different from `default`.
+- [`GenX.ids_with`](@ref): Returns the indices of the resources in the vector `rs` for which the function `f` is different from `default`.
 
 Example: 
 ```jldoctest example_thermal
@@ -183,7 +183,7 @@ julia> ids_with(thermal_gen, :inv_cost_per_mwyr)
  25
 ```
 
-- [`GenX.ids_with_policy(rs::Vector{T}, name::Symbol; tag::Int64) where T <: AbstractResource`](@ref): Returns the indices of the resources in the vector `rs` that have a policy with the name `name` and the tag `tag`.
+- [`GenX.ids_with_policy`](@ref): Returns the indices of the resources in the vector `rs` that have a policy with the name `name` and the tag `tag`.
 
 Example: 
 ```jldoctest example_thermal
@@ -192,7 +192,7 @@ julia> ids_with_policy(thermal_gen, esr, tag=1)
  23
 ```
 
-- [`GenX.ids_with_positive(rs::Vector{T}, f::Function) where T <: AbstractResource`](@ref): Returns the indices of the resources in the vector `rs` for which the getter function `f` returns a positive value.
+- [`GenX.ids_with_positive`](@ref): Returns the indices of the resources in the vector `rs` for which the getter function `f` returns a positive value.
 
 Example: 
 ```jldoctest example_thermal
@@ -209,10 +209,10 @@ julia> ids_with_positive(thermal_gen, :inv_cost_per_mwyr)
  25
 ```
 
-- [`GenX.ids_with_nonneg(rs::Vector{T}, f::Function) where T <: AbstractResource`](@ref): Returns the indices of the resources in `rs` for which the getter function `f` returns a non-negative value.
+- [`GenX.ids_with_nonneg`](@ref): Returns the indices of the resources in `rs` for which the getter function `f` returns a non-negative value.
 
 Other useful functions available in GenX are:
-- [`GenX.resource_id(r::AbstractResource)`](@ref): Returns the `id` of the resource `r`.
+- `GenX.resource_id`: Returns the `id` of the resource `r`.
 Example: 
 ```jldoctest example_thermal
 julia> resource_id(thermal_gen[1])
@@ -223,7 +223,7 @@ julia> resource_id.(thermal_gen)
  24
  25
 ```
-- [`GenX.resource_name(r::AbstractResource)`](@ref): Returns the `name` of the resource `r`.
+- `GenX.resource_name`: Returns the `name` of the resource `r`.
 Example: 
 ```jldoctest example_thermal
 julia> resource_name(thermal_gen[1])
@@ -241,7 +241,7 @@ julia> resource_name.(thermal_gen)
 GenX is designed to be modular and highly flexible to comply with the rapidly changing electricity landscape. For this reason, adding a new resource to GenX is relatively straightforward. This guide will walk you through the steps to do it.
 
 !!! tip
-    Before you start, ensure you have read the section of the documentation about [2.1.4 Resources input files](@ref). This will help you understand the data format that GenX expects for each resource and where to place the input data files. 
+    Before you start, ensure you have read the section of the documentation about [1.4 Resources input files](@ref). This will help you understand the data format that GenX expects for each resource and where to place the input data files. 
 
 
 ### Step 1: Define the new resource data type
@@ -344,4 +344,10 @@ Once the new resource type has been defined and added to GenX, you can work with
 
 ```@meta
 DocTestSetup = nothing
+```
+
+# Utility functions to work with JuMP expressions in GenX
+```@autodocs
+Modules = [GenX]
+Pages = ["model/expression_manipulation.jl"]
 ```

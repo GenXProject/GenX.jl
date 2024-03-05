@@ -8,10 +8,10 @@ genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
     "Welcome Page" => [
-        "GenX: Introduction" => "Welcome_Page/index.md",
-        "Installation Guide" => "Welcome_Page/installation.md",
-        "Limitation of GenX" => "Welcome_Page/limitations_genx.md",
-        "Third Party Extensions" => "Welcome_Page/third_party_genx.md"
+        "GenX: Introduction" => "index.md",
+        "Installation Guide" => "installation.md",
+        "Limitation of GenX" => "limitations_genx.md",
+        "Third Party Extensions" => "third_party_genx.md"
     ],
     "Getting Started" => [
         "Running GenX" => "Getting_Started/examples_casestudies.md",
@@ -67,7 +67,7 @@ pages = OrderedDict(
             ],
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
             "Retrofit" => "Model_Reference/Resources/retrofit.md",
-            "Resources API" => "Model_Reference/Resources/resources.md",
+            # "Resources API" => "Model_Reference/Resources/resources.md",
             "Scheduled maintenance for various resources" => "Model_Reference/Resources/maintenance.md",
             "Resource types" => "Model_Reference/Resources/resource.md"
         ],
@@ -103,7 +103,7 @@ makedocs(;
         collapselevel=1
     ),
     pages=[p for p in pages],
-    warnonly=true
+    # warnonly=true
 )
 
 # deploydocs(;
