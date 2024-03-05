@@ -1,5 +1,5 @@
 ```@raw html
-<img width="600" src="assets/genx_logo.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
+<img width="600" src="assets/title.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
 ```
 
 ### Welcome to the GenX documentation! 
@@ -29,63 +29,63 @@ We recommend users of GenX to cite it in their academic publications and patent 
 ## Package Manual
 
 ```@contents
-Pages = ["../User_Guide/workflow.md",
-        "../User_Guide/model_input.md",
-        "../User_Guide/TDR_input.md",
-        "../User_Guide/running_TDR.md",
-        "../User_Guide/multi_stage_input.md",
-        "../User_Guide/methodofmorris_input.md",
-        "../User_Guide/model_configuration.md",
-        "../User_Guide/solver_configuration.md",
-        "../User_Guide/running_model.md",
-        "../Getting_Started/commercial_solvers.md",
-        "../User_Guide/generate_alternatives.md",
-        "../User_Guide/model_output.md",
-        "../Model_Concept_Overview/model_introduction.md",
-        "../Model_Concept_Overview/model_notation.md",
-        "../Model_Concept_Overview/objective_function.md",
-        "../Model_Concept_Overview/power_balance.md",
-        "../Model_Concept_Overview/slack_variables_overview.md",
-        "../Model_Concept_Overview/TDR_overview.md",
-        "../Model_Concept_Overview/multi_stage_overview.md",
-        "../additional_third_party_extensions.md"]
+Pages = ["User_Guide/workflow.md",
+        "User_Guide/model_input.md",
+        "User_Guide/TDR_input.md",
+        "User_Guide/running_TDR.md",
+        "User_Guide/multi_stage_input.md",
+        "User_Guide/methodofmorris_input.md",
+        "User_Guide/model_configuration.md",
+        "User_Guide/solver_configuration.md",
+        "User_Guide/running_model.md",
+        "Getting_Started/commercial_solvers.md",
+        "User_Guide/generate_alternatives.md",
+        "User_Guide/model_output.md",
+        "Model_Concept_Overview/model_introduction.md",
+        "Model_Concept_Overview/model_notation.md",
+        "Model_Concept_Overview/objective_function.md",
+        "Model_Concept_Overview/power_balance.md",
+        "Model_Concept_Overview/slack_variables_overview.md",
+        "Model_Concept_Overview/TDR_overview.md",
+        "Model_Concept_Overview/multi_stage_overview.md",
+        "additional_third_party_extensions.md"]
 Depth = 2
 ``` 
-
-## Index
-
-```@index
-Pages = ["../Model_Reference/core.md",
-        "../Model_Reference/Resources/curtailable_variable_renewable.md",
-        "../Model_Reference/Resources/flexible_demand.md",
-        "../Model_Reference/Resources/hydro_res.md",
-        "../Model_Reference/Resources/hydro_inter_period_linkage.md",
-        "../Model_Reference/Resources/must_run.md",
-        "../Model_Reference/Resources/storage.md",
-        "../Model_Reference/Resources/investment_charge.md",
-        "../Model_Reference/Resources/investment_energy.md",
-        "../Model_Reference/Resources/long_duration_storage.md",
-        "../Model_Reference/Resources/storage_all.md",
-        "../Model_Reference/Resources/storage_asymmetric.md",
-        "../Model_Reference/Resources/storage_symmetric.md",
-        "../Model_Reference/Resources/vre_stor.md",
-        "../Model_Reference/Resources/thermal.md",
-        "../Model_Reference/Resources/thermal_commit.md",
-        "../Model_Reference/Resources/thermal_no_commit.md",
-        "../Model_Reference/Resources/electrolyzers.md",
-        "../Model_Reference/Resources/maintenance.md",
-        "../Model_Reference/policies.md",
-        "../User_Guide/solver_configuration.md",
-        "../Model_Reference/load_inputs.md",
-        "../Model_Reference/TDR.md",
-        "../Model_Reference/Multi_Stage/configure_multi_stage_inputs.md",
-        "../Model_Reference/Multi_Stage/dual_dynamic_programming.md",
-        "../Public_API/solve_model.md",
-        "../Public_API/mga.md",
-        "../Public_API/methodofmorris.md",
-        "../Public_API/write_outputs.md"]
-```
 
 ## License
 
 GenX is released under the General Public License, GPL-2.0
+
+## Index
+
+```@index
+Pages = ["Model_Reference/core.md",
+        "Model_Reference/Resources/curtailable_variable_renewable.md",
+        "Model_Reference/Resources/flexible_demand.md",
+        "Model_Reference/Resources/hydro_res.md",
+        "Model_Reference/Resources/hydro_inter_period_linkage.md",
+        "Model_Reference/Resources/must_run.md",
+        "Model_Reference/Resources/storage.md",
+        "Model_Reference/Resources/investment_charge.md",
+        "Model_Reference/Resources/investment_energy.md",
+        "Model_Reference/Resources/long_duration_storage.md",
+        "Model_Reference/Resources/storage_all.md",
+        "Model_Reference/Resources/storage_asymmetric.md",
+        "Model_Reference/Resources/storage_symmetric.md",
+        "Model_Reference/Resources/vre_stor.md",
+        "Model_Reference/Resources/thermal.md",
+        "Model_Reference/Resources/thermal_commit.md",
+        "Model_Reference/Resources/thermal_no_commit.md",
+        "Model_Reference/Resources/electrolyzers.md",
+        "Model_Reference/Resources/maintenance.md",
+        "Model_Reference/policies.md",
+        "User_Guide/solver_configuration.md",
+        "Model_Reference/load_inputs.md",
+        "Model_Reference/TDR.md",
+        "Model_Reference/Multi_Stage/configure_multi_stage_inputs.md",
+        "Model_Reference/Multi_Stage/dual_dynamic_programming.md",
+        "Public_API/solve_model.md",
+        "Public_API/mga.md",
+        "Public_API/methodofmorris.md",
+        "Public_API/write_outputs.md"]
+```

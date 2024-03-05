@@ -3,7 +3,6 @@ import DataStructures: OrderedDict
 using GenX
 using Documenter
 DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
-println(pwd())
 genx_docpath = joinpath(pwd(), "docs/src")
 push!(LOAD_PATH, genx_docpath)
 pages = OrderedDict(
@@ -16,6 +15,11 @@ pages = OrderedDict(
     "Getting Started" => [
         "Running GenX" => "Getting_Started/examples_casestudies.md",
         "Commertial solvers" => "Getting_Started/commercial_solvers.md",
+    ],
+    "Tutorials" => [
+        "Tutorial 0: Introduction to GenX" => "Tutorials/Getting_Started.md",
+        "Tutorial 4: Model Generation" => "Tutorials/Model_Generation.md",
+        "Tutorial 5: Solving the Model" => "Tutorials/Solve_Model.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",
@@ -100,6 +104,7 @@ makedocs(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://github.com/lbonaldo/GenX/stable",
         assets=String[],
+        sidebar_sitename=false,
         collapselevel=1
     ),
     pages=[p for p in pages],
