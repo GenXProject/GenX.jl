@@ -40,9 +40,6 @@ pages = OrderedDict(
         "Objective Function" => "Model_Concept_Overview/objective_function.md",
         "Power Balance" => "Model_Concept_Overview/power_balance.md",
         "Slack Variables for Policies" => "Model_Concept_Overview/slack_variables_overview.md",
-        "Maintenance" => "Model_Concept_Overview/maintenance_overview.md",
-        "Time Domain Reduction" => "Model_Concept_Overview/TDR_overview.md",
-        "Multi-Stage Modeling" => "Model_Concept_Overview/multi_stage_overview.md",
     ],
     "Model Reference" => [
         "Core" => "Model_Reference/core.md",
@@ -75,12 +72,14 @@ pages = OrderedDict(
             "Scheduled maintenance for various resources" => "Model_Reference/Resources/maintenance.md",
             "Resource types" => "Model_Reference/Resources/resource.md"
         ],
+        "Maintenance" => "Model_Reference/maintenance_overview.md",
         "Policies" => "Model_Reference/policies.md",
         "Solver Configurations" => "Model_Reference/solver_configuration_api.md",
         "Inputs Functions" => "Model_Reference/load_inputs.md",
         "Utility Functions" => "Model_Reference/utility_functions.md",
         "TDR" => "Model_Reference/TDR.md",
         "Multi-stage" => [
+            "Multi-Stage Modeling Introduction" => "Model_Reference/Multi_Stage/multi_stage_overview.md",
             "Configure multi-stage inputs" => "Model_Reference/Multi_Stage/configure_multi_stage_inputs.md",
             "Model multi stage: Dual Dynamic Programming Algorithm" => "Model_Reference/Multi_Stage/dual_dynamic_programming.md",
             "Endogenous Retirement" => "Model_Reference/Multi_Stage/endogenous_retirement.md"

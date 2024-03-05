@@ -1,5 +1,6 @@
 ```@raw html
-<img width="600" src="assets/title.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
+<img class="display-light-only" width="600" src="assets/title.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
+<img class="display-dark-only" width="600" src="assets/title_white_text.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
 ```
 
 ### Welcome to the GenX documentation! 
