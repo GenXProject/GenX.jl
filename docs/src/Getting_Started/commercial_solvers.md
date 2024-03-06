@@ -17,7 +17,14 @@ julia> <press close-bracket ] to access the package manager>
 #TODO: Add instructions for adding Gurobi or CPLEX to the Julia Project with the new PR. 
 ```
 
-- Set the appropriate solver in the genx_settings.yml file of your case
+- Edit the `Run.jl` file to use the commercial solver. For example, to use Gurobi, you can add the following lines to the `Run.jl` file:
+
+```julia
+using Gurobi
+using GenX
+
+run_genx_case!(dirname(@__FILE__), Gurobi.Optimizer)
+```
 
 !!! warning "Warning"
     Note that if you have not already installed the required Julia packages or you do not have a valid Gurobi license on your host machine, you will receive an error message and Run.jl will not run to completion.

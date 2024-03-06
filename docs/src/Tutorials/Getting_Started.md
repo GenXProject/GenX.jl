@@ -1,8 +1,6 @@
 # Tutorial 0: Getting Started
 
-Welcome to the GenX tutorials! In the following tutorials, we outline some important features of GenX and how to run them.
-
-Running these notebooks follows similar steps to those in the [GenX documentation](https://genxproject.github.io/GenX/dev/how_to_run_genx). In this tutorial, we go through setting up GenX on Jupyter and navigating to the `Tutorials` file from there.
+In this tutorial, we go through setting up GenX on Jupyter and navigating to the `Tutorials` file from there.
 
 First, as in the documentation, open a terminal window on your computer and navigate to GenX. Then, navigate to Julia and open a project using the command `julia --project=.`.
 

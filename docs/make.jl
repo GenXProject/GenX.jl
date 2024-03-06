@@ -17,6 +17,7 @@ pages = OrderedDict(
         "Commertial solvers" => "Getting_Started/commercial_solvers.md",
     ],
     "Tutorials" => [
+        "Tutorials Overview" => "Tutorials/tutorials_intro.md",
         "Tutorial 0: Introduction to GenX" => "Tutorials/Getting_Started.md",
         "Tutorial 4: Model Generation" => "Tutorials/Model_Generation.md",
         "Tutorial 5: Solving the Model" => "Tutorials/Solve_Model.md",
@@ -30,6 +31,7 @@ pages = OrderedDict(
         "Running the TDR" => "User_Guide/running_TDR.md",
         "MGA package" => "User_Guide/generate_alternatives.md",
         "Multi-stage Model" => "User_Guide/multi_stage_input.md",
+        "Slack Variables for Policies" => "User_Guide/slack_variables_overview.md",
         "Method of Morris Inputs" => "User_Guide/methodofmorris_input.md",
         "Running the Model" => "User_Guide/running_model.md",
         "Model Outputs" => "User_Guide/model_output.md",
@@ -39,7 +41,6 @@ pages = OrderedDict(
         "Notation" => "Model_Concept_Overview/model_notation.md",
         "Objective Function" => "Model_Concept_Overview/objective_function.md",
         "Power Balance" => "Model_Concept_Overview/power_balance.md",
-        "Slack Variables for Policies" => "Model_Concept_Overview/slack_variables_overview.md",
     ],
     "Model Reference" => [
         "Core" => "Model_Reference/core.md",
@@ -76,21 +77,23 @@ pages = OrderedDict(
         "Policies" => "Model_Reference/policies.md",
         "Solver Configurations" => "Model_Reference/solver_configuration_api.md",
         "Inputs Functions" => "Model_Reference/load_inputs.md",
-        "Utility Functions" => "Model_Reference/utility_functions.md",
+        "Generate the Model" => "Model_Reference/generate_model.md",
+        "Solving the Model" => "Model_Reference/solve_model.md",
         "TDR" => "Model_Reference/TDR.md",
+        "Outputs Functions" => "Model_Reference/write_outputs.md",
+        "Modeling to Generate Alternatives" => "Model_Reference/mga.md",
         "Multi-stage" => [
             "Multi-Stage Modeling Introduction" => "Model_Reference/Multi_Stage/multi_stage_overview.md",
             "Configure multi-stage inputs" => "Model_Reference/Multi_Stage/configure_multi_stage_inputs.md",
             "Model multi stage: Dual Dynamic Programming Algorithm" => "Model_Reference/Multi_Stage/dual_dynamic_programming.md",
             "Endogenous Retirement" => "Model_Reference/Multi_Stage/endogenous_retirement.md"
         ],
+        "Method of Morris" => "Model_Reference/methodofmorris.md",
+        "Utility Functions" => "Model_Reference/utility_functions.md",
     ],
     "Public API Reference" => [
         "Public API" => "Public_API/public_api.md",
-        "Solving the Model" => "Public_API/solve_model.md",
-        "Outputs Functions" => "Public_API/write_outputs.md",
-        "Modeling to Generate Alternatives" => "Public_API/mga.md",
-        "Method of Morris" => "Public_API/methodofmorris.md",
+
     ],
     "Third Party Extensions" => "additional_third_party_extensions.md",
     "Developer Docs" => "developer_guide.md",
@@ -102,7 +105,7 @@ makedocs(;
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://github.com/lbonaldo/GenX/stable",
-        assets=String[],
+        assets = ["assets/genx_style.css"],
         sidebar_sitename=false,
         collapselevel=1
     ),

@@ -1,6 +1,6 @@
 ```@raw html
-<img class="display-light-only" width="600" src="assets/title.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
-<img class="display-dark-only" width="600" src="assets/title_white_text.svg" style="padding-left: 50px; padding-top: 20px; display: block; border: none;"/>
+<img class="light-style-only" width="600" src="assets/logo.svg" style="padding-left: 50px; padding-top: 20px; "/>
+<img class="dark-style-only" width="600" src="assets/logo-dark.svg" style="padding-left: 50px; padding-top: 20px; "/>
 ```
 
 ### Welcome to the GenX documentation! 
@@ -26,32 +26,6 @@ From a centralized planning perspective, the GenX model can help to determine th
 
 We recommend users of GenX to cite it in their academic publications and patent filings. Here's the text to put up as the citation for GenX:
 `MIT Energy Initiative and Princeton University ZERO lab. [GenX](https://github.com/GenXProject/GenX): a configurable power system capacity expansion model for studying low-carbon energy futures n.d. https://github.com/GenXProject/GenX.
-
-## Package Manual
-
-```@contents
-Pages = ["User_Guide/workflow.md",
-        "User_Guide/model_input.md",
-        "User_Guide/TDR_input.md",
-        "User_Guide/running_TDR.md",
-        "User_Guide/multi_stage_input.md",
-        "User_Guide/methodofmorris_input.md",
-        "User_Guide/model_configuration.md",
-        "User_Guide/solver_configuration.md",
-        "User_Guide/running_model.md",
-        "Getting_Started/commercial_solvers.md",
-        "User_Guide/generate_alternatives.md",
-        "User_Guide/model_output.md",
-        "Model_Concept_Overview/model_introduction.md",
-        "Model_Concept_Overview/model_notation.md",
-        "Model_Concept_Overview/objective_function.md",
-        "Model_Concept_Overview/power_balance.md",
-        "Model_Concept_Overview/slack_variables_overview.md",
-        "Model_Concept_Overview/TDR_overview.md",
-        "Model_Concept_Overview/multi_stage_overview.md",
-        "additional_third_party_extensions.md"]
-Depth = 2
-``` 
 
 ## License
 
