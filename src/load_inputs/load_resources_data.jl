@@ -657,13 +657,15 @@ Reads module dataframes, loops over files and adds columns as new attributes to 
 - `resources_path::AbstractString`: The path to the resources folder.
 """
 function add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, resources_path::AbstractString)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
+
     modules = Vector{DataFrame}()
 
     ## Load all modules and add them to the list of modules to be added to resources
     # Add multistage if multistage is activated
     if setup["MultiStage"] == 1
         filename = joinpath(resources_path, "Resource_multistage_data.csv")
-        multistage_in = load_multistage_dataframe(filename)
+        multistage_in = load_multistage_dataframe(filename, scale_factor)
         push!(modules, multistage_in)
         @info "Multistage data successfully read."
     end
