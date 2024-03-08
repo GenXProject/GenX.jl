@@ -157,3 +157,13 @@ Modules = [GenX]
 Pages = ["write_maintenance.jl"]
 ```
 
+## Write DCOPF files
+```@docs
+GenX.write_angles
+```
+
+## Write Settings files
+```@autodocs
+Modules = [GenX]
+Pages = ["write_settings.jl"]
+```
