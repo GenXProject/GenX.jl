@@ -1,5 +1,4 @@
 <div align="center"> <img src="docs/src/assets/logo.svg" alt="GenX.jl"></img></div>
----
 
 [![Build and Deploy](https://github.com/GenXProject/GenX/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/workflows/ci.yml)
 
