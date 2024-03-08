@@ -1,13 +1,13 @@
 # Model settings parameters
 
-The first step in configuring a GenX model is to specify the model settings parameters. These parameters are specified in a `genx_settings.yml` file inside a `Settings` folder which must be located in the current working directory. Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. In particular:
+The first step in configuring a GenX model is to specify the model settings parameters. These parameters are specified in a `genx_settings.yml` file inside a `settings` folder which must be located in the current working directory. Settings include those related to model structure, solution strategy and outputs, policy constraints, and others. In particular:
 - Model structure related settings parameters affect the formulation of the model constraints and objective function. 
 - Computational performance related parameters affect the accuracy of the solution.
 - Policy related parameters specify the policy type and policy goal. 
 - Network related parameters specify settings related to transmission network expansion and losses.
 Note that all settings parameters are case sensitive.
 
-(Optional) The user can also select the output files that they want to export using the `output_settings.yml` file. This file containes a list of `yes/no` options for each output file, and should be located in the `Settings` folder. By default, if `output_settings.yml` is not included, GenX will export all output files. 
+(Optional) The user can also select the output files that they want to export using the `output_settings.yml` file. This file containes a list of `yes/no` options for each output file, and should be located in the `settings` folder. By default, if `output_settings.yml` is not included, GenX will export all output files. 
 
 The following tables summarize the model settings parameters and their default/possible values.
 
@@ -19,8 +19,8 @@ The following tables summarize the model settings parameters and their default/p
 ||0 = no unit commitment.|
 ||1 = unit commitment with integer clustering.|
 ||2 = unit commitment with linearized clustering.|
-|Reserves | Flag for modeling operating reserves .|
-||0 = No operating reserves considered. |
+|OperationalReserves | Flag for modeling operational reserves .|
+||0 = No operational reserves considered. |
 ||1 = Consider regulation (primary) and spinning (secondary) reserves. |
 |StorageLosses | Flag to account for storage related losses.|
 ||0 = VRE and CO2 constraints DO NOT account for energy lost. |

@@ -30,11 +30,11 @@ end
     end
 
     @testset "Piecewise Fuel" begin
-        include("test_piecewisefuel_CO2.jl")
+        include("test_piecewisefuel.jl")
     end
 
     @testset "VRE_STOR" begin
-        include("test_VREStor.jl")
+        include("test_VRE_storage.jl")
     end
 
     @testset "Electrolyzer" begin
@@ -43,6 +43,10 @@ end
 
     @testset "Multi Stage" begin
         include("test_multistage.jl")
+    end
+
+    @testset "DCOPF" begin
+        include("test_DCOPF.jl")
     end
 
     @testset "Multi Fuels" begin

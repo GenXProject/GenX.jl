@@ -108,22 +108,21 @@ makedocs(;
     sitename="GenX",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://github.com/lbonaldo/GenX/stable",
+        canonical="https://genxproject.github.io/GenX/stable",
         assets = ["assets/genx_style.css"],
         sidebar_sitename=false,
         collapselevel=1
     ),
-    pages=[p for p in pages],
-    # warnonly=true
+    pages=[p for p in pages]
 )
 
-# deploydocs(;
-#     repo="github.com/GenXProject/GenX.git",
-#     target = "build",
-#     branch = "gh-pages",
-#     devbranch = "main",
-#     devurl = "dev",
-#     push_preview=true,
-#     versions = ["stable" => "v^", "v#.#"],
-#     forcepush = false,
-# )
+deploydocs(;
+    repo="github.com/GenXProject/GenX.git",
+    target = "build",
+    branch = "gh-pages",
+    devbranch = "main",
+    devurl = "dev",
+    push_preview=true,
+    versions = ["stable" => "v^", "v#.#"],
+    forcepush = false,
+)

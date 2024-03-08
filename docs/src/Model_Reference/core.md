@@ -12,10 +12,10 @@ Modules = [GenX]
 Pages = ["non_served_energy.jl"]
 ```
 
-## Reserves
+## Operational Reserves
 ```@autodocs
 Modules = [GenX]
-Pages = ["reserves.jl"]
+Pages = ["operational_reserves.jl"]
 ```
 
 ## Transmission

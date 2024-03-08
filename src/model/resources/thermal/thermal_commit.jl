@@ -98,7 +98,7 @@ If not modeling regulation and spinning reserves, thermal resources subject to u
 
 (See Constraints 7-8 the code)
 
-If modeling reserves and regulation, these constraints are replaced by those established in this ```thermal_commit_reserves()```.
+If modeling reserves and regulation, these constraints are replaced by those established in this ```thermal_commit_operational_reserves()```.
 
 **Minimum and maximum up and down time**
 
@@ -144,7 +144,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
     reserves_term = @expression(EP, [y in THERM_COMMIT, t in 1:T], 0)
     regulation_term = @expression(EP, [y in THERM_COMMIT, t in 1:T], 0)
 
-    if setup["Reserves"] > 0
+    if setup["OperationalReserves"] > 0
         THERM_COMMIT_REG = intersect(THERM_COMMIT, inputs["REG"]) # Set of thermal resources with regulation reserves
         THERM_COMMIT_RSV = intersect(THERM_COMMIT, inputs["RSV"]) # Set of thermal resources with spinning reserves
         regulation_term = @expression(EP, [y in THERM_COMMIT, t in 1:T],
@@ -191,9 +191,9 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
 
 	### Minimum and maximum power output constraints (Constraints #7-8)
-	if setup["Reserves"] == 1
-		# If modeling with regulation and reserves, constraints are established by thermal_commit_reserves() function below
-		thermal_commit_reserves!(EP, inputs)
+	if setup["OperationalReserves"] == 1
+		# If modeling with regulation and reserves, constraints are established by thermal_commit_operational_reserves() function below
+		thermal_commit_operational_reserves!(EP, inputs)
 	else
 		@constraints(EP, begin
 			# Minimum stable power generated per technology "y" at hour "t" > Min power
@@ -224,7 +224,7 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-	thermal_commit_reserves!(EP::Model, inputs::Dict)
+	thermal_commit_operational_reserves!(EP::Model, inputs::Dict)
 
 This function is called by the ```thermal_commit()``` function when regulation and reserves constraints are active and defines reserve related constraints for thermal power plants subject to unit commitment constraints on power plant start-ups and shut-down decisions.
 
@@ -265,9 +265,9 @@ When modeling frequency regulation and spinning reserves contributions, thermal 
 ```
 
 """
-function thermal_commit_reserves!(EP::Model, inputs::Dict)
+function thermal_commit_operational_reserves!(EP::Model, inputs::Dict)
 
-	println("Thermal Commit Reserves Module")
+	println("Thermal Commit Operational Reserves Module")
 
 	gen = inputs["RESOURCES"]
 

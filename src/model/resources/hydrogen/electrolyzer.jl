@@ -121,7 +121,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
 	### Minimum and maximum power output constraints (Constraints #3-4)
     # Electrolyzers currently do not contribute to operating reserves, so there is not
-    # special case (for Reserves == 1) here.
+    # special case (for OperationalReserves == 1) here.
     # Could allow them to contribute as a curtailable demand in future.
     @constraints(EP, begin
         # Minimum stable power generated per technology "y" at hour "t" Min_Power

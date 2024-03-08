@@ -15,7 +15,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	COMMIT = inputs["COMMIT"]		# Thermal units for unit commitment
 	STOR_ALL = inputs["STOR_ALL"]
 
-	if setup["Reserves"] >= 1
+	if setup["OperationalReserves"] >= 1
 		RSV = inputs["RSV"]				# Generators contributing to operating reserves
 		REG = inputs["REG"]     		# Generators contributing to regulation 
 	end
@@ -152,7 +152,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 	# Add energy and subsidy revenue to the dataframe
 	dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
 	dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
-	if setup["Reserves"] > 0 && has_duals(EP)
+	if setup["OperationalReserves"] > 0 && has_duals(EP)
 		dfNetRevenue.OperatingReserveRevenue[RSV] = dfOpRsvRevenue.AnnualSum # Unit is confirmed to be US$
 	 	dfNetRevenue.OperatingRegulationRevenue[REG] = dfOpRegRevenue.AnnualSum # Unit is confirmed to be US$
 	end

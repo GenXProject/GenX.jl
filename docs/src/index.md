@@ -13,10 +13,7 @@ The model was [originally developed](https://energy.mit.edu/publication/enhanced
 
 GenX is a constrained linear or mixed integer linear optimization model that determines the portfolio of electricity generation, storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost, while subject to a variety of power system operational constraints, resource availability limits, and other imposed environmental, market design, and policy constraints.
 
-GenX features a modular and transparent code structure developed in [Julia](http://julialang.org/) + [JuMP](http://jump.dev/). The model is designed to be highly flexible and configurable for use in a variety of applications from academic research and technology evaluation to public policy and regulatory analysis and resource planning. See the **User Guide** for more information on how to use GenX.
-```@meta
-# and the **Developer Guide** for more information on how to contribute to GenX.
-```
+GenX features a modular and transparent code structure developed in [Julia](http://julialang.org/) + [JuMP](http://jump.dev/). The model is designed to be highly flexible and configurable for use in a variety of applications from academic research and technology evaluation to public policy and regulatory analysis and resource planning. See the **User Guide** for more information on how to use GenX and the **Developer Guide** for more information on how to contribute to GenX.
 
 ## Uses
 

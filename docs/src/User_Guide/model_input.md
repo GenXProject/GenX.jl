@@ -9,7 +9,7 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 5. Generators\_data.csv: specify cost and performance data for generation, storage and demand flexibility resources.
  
 Additionally, the user may need to specify eight more **settings-specific** input files based on model configuration and type of scenarios of interest:
-1. Reserves.csv: specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.
+1. Operational\_reserves.csv: specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.
 2. Energy\_share\_requirement.csv: specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.
 3. CO2\_cap.csv: specify regional CO2 emission limits.
 4. Capacity\_reserve\_margin.csv: specify regional capacity reserve margin requirements.
@@ -29,7 +29,7 @@ Description and column details of all potential input files are included in the 
 
 ### 1.1 Fuels\_data.csv
 
-• **First row:** names of all fuels used in the model instance which should match the labels used in `Fuel` column in one of the resource `.csv` file in the `Resources` folder. For renewable resources or other resources that do not consume a fuel, the name of the fuel is `None`.
+• **First row:** names of all fuels used in the model instance which should match the labels used in `Fuel` column in one of the resource `.csv` file in the `resources` folder. For renewable resources or other resources that do not consume a fuel, the name of the fuel is `None`.
 
 • **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
 
@@ -73,11 +73,13 @@ There are two interfaces implemented for specifying the network topology itself:
 Only one choice is permitted in a given file.
 
 The list interface consists of a column for the lines start zone and one for the line's end zone.
+Here is a snippet of the Network.csv file for a map with three zones and two lines:
 ```
 Network_Lines, Start_Zone, End_Zone,
             1,          1,        2,
             2,          1,        3,
 ```
+
 The matrix interface requires N columns labeled `z1, z2, z3 ... zN`,
 and L rows, one for each network line (or interregional path), with a `1` in the column corresponding to the 'start' zone 
 and a `-1` in the column corresponding to the 'end' zone for each line.
@@ -113,7 +115,7 @@ This file includes parameters to characterize model temporal resolution to appro
 
 ### 1.4 Resources input files
 
-The `Resources` folder contains the input files for each resource type. At the current version of GenX, the following resources are included in the model: 
+The `resources` folder contains the input files for each resource type. At the current version of GenX, the following resources are included in the model: 
 1) thermal generators, specified in the `Thermal.csv` file,
 2) variable renewable energy resources (VRE), specified in the `VRE.csv` file,
 3) reservoir hydro resources, specified in the `Hydro.csv` file,
@@ -197,13 +199,13 @@ Each file contains cost and performance parameters for various generators and ot
 |Down\_Time |Minimum amount of time a resource has to remain in the shutdown state.|
 |Start\_Cost\_per\_MW |Cost per MW of nameplate capacity to start a generator ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
 |Start\_Fuel\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each generator (MMBtu/MW per start).|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 7a: Additional columns in the VRE.csv file
+##### Table 7a: Additional columns in the Vre.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -211,11 +213,11 @@ Each file contains cost and performance parameters for various generators and ot
 ||Num\_VRE\_bins = 1: using a single resource availability profile per technology per zone. 1 capacity investment decision variable and 1 generator RID tracking technology power output (and in each zone).|
 ||Num\_VRE\_bins > 1: using multiple resource availability profiles per technology per zone. Num\_VRE\_bins capacity investment decision variables and 1 generator RID used to define technology power output at each time step (and in each zone). Example: Suppose we are modeling 3 bins of wind profiles for each zone. Then include 3 rows with wind resource names as Wind\_1, Wind\_2, and Wind\_3 and a corresponding increasing sequence of RIDs. Set Num\_VRE\_bins for the generator with smallest RID, Wind\_1, to be 3 and set Num\_VRE\_bins for the other rows corresponding to Wind\_2 and Wind\_3, to be zero. By setting Num\_VRE\_bins for Wind\_2 and Wind\_3, the model eliminates the power outputs variables for these generators. The power output from the technology across all bins is reported in the power output variable for the first generator. This allows for multiple bins without significantly increasing number of model variables (adding each bin only adds one new capacity variable and no operational variables). See documentation for `curtailable_variable_renewable()` for more. |
 
-##### Table 6b: Settings-specific columns in the VRE.csv file
+##### Table 6b: Settings-specific columns in the Vre.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -237,7 +239,7 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -278,7 +280,7 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -308,7 +310,7 @@ Each file contains cost and performance parameters for various generators and ot
     Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
 Each co-located VRE and storage resource can be easily configured to contain either a co-located VRE-storage resource, standalone VRE resource (either wind, solar PV, or both), or standalone storage resource.
-##### Table 11a: Additional columns in the VRE_STOR.csv file
+##### Table 11a: Additional columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -404,18 +406,18 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Eff\_Up\_AC  |[0,1], Efficiency of AC charging storage – applies to storage technologies (all STOR types). |
 |Eff\_Down\_AC  |[0,1], Efficiency of AC discharging storage – applies to storage technologies (all STOR types). |
 
-##### Table 11b: Settings-specific columns in the VRE_STOR.csv file
+##### Table 11b: Settings-specific columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
 ##### Policy-related columns for all resources
-In addition to the files described above, the `Resources` folder contains the following files that are used to specify policy-related parameters for specific resources: 
+In addition to the files described above, the `resources` folder contains the following files that are used to specify policy-related parameters for specific resources: 
 
 1) `Resource_energy_share_requirement.csv`
 2) `Resource_minimum_capacity_requirement.csv`
@@ -481,7 +483,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 |Eligible_Cap_Res\_*| Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
 
 ##### Additional module-related columns for all resources
-In addition to the files described above, the `Resources` folder can contain the following files that are used to specify additional attributes for specific resources:
+In addition to the files described above, the `resources` folder can contain the following files that are used to specify additional attributes for specific resources:
 
 1) `Resource_multistage_data.csv`: mandatory if `MultiStage = 1` in the settings file
 2) `Resource_piecewisefuel_usage.csv`
@@ -564,11 +566,11 @@ These variables must be explicitly listed in the `Thermal.csv`.
 
 #### 1.5 Generator\_variability.csv
 
-This file contains the time-series of capacity factors / availability of each resource included in the resource `.csv` file in the `Resources` folder for each time step (e.g. hour) modeled.
+This file contains the time-series of capacity factors / availability of each resource included in the resource `.csv` file in the `resources` folder for each time step (e.g. hour) modeled.
 
 • First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 
-• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the resource `.csv` file in the `Resources` folder in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in the resource `.csv` file must be unique. Note that for Hydro reservoir resources (i.e. `Hydro.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
+• Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the resource `.csv` file in the `resources` folder in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in the resource `.csv` file must be unique. Note that for Hydro reservoir resources (i.e. `Hydro.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
 |Self\_Disch  |[0,1], The power loss of storage technologies per hour (fraction loss per hour)- only applies to storage techs. Note that for co-located VRE-STOR resources, this value applies to the storage component of each resource.|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`. Applies to thermal plants, and reservoir hydro resource (`HYDRO = 1`).|
@@ -601,17 +603,17 @@ This file contains the time-series of capacity factors / availability of the win
 
 ## 2. Optional inputs files
 
-### 2.1 Reserves.csv
+### 2.1 Operational_reserves.csv
 
-This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `Reserves` flag is activated in the YAML file `genx_settings.yml`.
+This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `OperationalReserves` flag is activated in the YAML file `genx_settings.yml`.
 
-###### Table 7: Structure of the Reserves.csv file
+###### Table 7: Structure of the Operational_reserves.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Reg\_Req\_Percent\_Load |[0,1], Regulation requirement as a percent of time-dependent load; here load is the total across all model zones.|
+|Reg\_Req\_Percent\_Demand |[0,1], Regulation requirement as a percent of time-dependent demand; here demand is the total across all model zones.|
 |Reg\_Req\_Percent\_VRE |[0,1], Regulation requirement as a percent of time-dependent wind and solar generation (summed across all model zones).|
-|Rsv\_Req\_Percent\_Load [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent load (which is summed across all zones).|
+|Rsv\_Req\_Percent\_Demand [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent demand (which is summed across all zones).|
 |Rsv\_Req\_Percent\_VRE |[0,1], Spinning up or contingency reserve requirement as a percent of time-dependent wind and solar generation (which is summed across all zones).|
 |Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement ($/MW per time step).|
 |Dynamic\_Contingency |Flags to include capacity (generation or transmission) contingency to be added to the spinning reserve requirement.|

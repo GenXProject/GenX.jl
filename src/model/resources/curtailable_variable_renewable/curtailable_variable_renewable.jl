@@ -11,7 +11,7 @@ For each VRE technology type ``y`` and model zone ``z``, the model allows for in
 \end{aligned}
 ```
 The above constraint is defined as an inequality instead of an equality to allow for VRE power output to be curtailed if desired. This adds the possibility of introducing VRE curtailment as an extra degree of freedom to guarantee that generation exactly meets demand in each time step.
-Note that if ```Reserves=1``` indicating that frequency regulation and operating reserves are modeled, then this function calls ```curtailable_variable_renewable_reserves!()```, which replaces the above constraints with a formulation inclusive of reserve provision.
+Note that if ```OperationalReserves=1``` indicating that frequency regulation and operating reserves are modeled, then this function calls ```curtailable_variable_renewable_operational_reserves!()```, which replaces the above constraints with a formulation inclusive of reserve provision.
 """
 function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	## Controllable variable renewable generators
@@ -21,7 +21,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 
 	gen = inputs["RESOURCES"]
 
-	Reserves = setup["Reserves"]
+	OperationalReserves = setup["OperationalReserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	T = inputs["T"]     # Number of time steps (hours)
@@ -49,10 +49,10 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	end
 
 	### Constraints ###
-    if Reserves == 1
+    if OperationalReserves == 1
         # Constraints on power output and contribution to regulation and reserves
-        curtailable_variable_renewable_reserves!(EP, inputs)
-        remove_reserves_for_binned_vre_resources!(EP, inputs)
+        curtailable_variable_renewable_operational_reserves!(EP, inputs)
+        remove_operational_reserves_for_binned_vre_resources!(EP, inputs)
     else
         # For resource for which we are modeling hourly power output
         for y in VRE_POWER_OUT
@@ -80,7 +80,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-	curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
+	curtailable_variable_renewable_operational_reserves!(EP::Model, inputs::Dict)
 When modeling operating reserves, this function is called by ```curtailable_variable_renewable()```, which modifies the constraint for maximum power output in each time step from VRE resources to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and upward operating (spinning) reserves ($r_{y,z,t}$).
 ```math
 \begin{aligned}
@@ -102,7 +102,7 @@ The amount of frequency regulation and operating reserves procured in each time 
 \end{aligned}
 ```
 """
-function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
+function curtailable_variable_renewable_operational_reserves!(EP::Model, inputs::Dict)
 	gen = inputs["RESOURCES"]
 	T = inputs["T"]
 
@@ -134,7 +134,7 @@ function curtailable_variable_renewable_reserves!(EP::Model, inputs::Dict)
     @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t] <= hourly_bin_capacity(y, t))
 end
 
-function remove_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
+function remove_operational_reserves_for_binned_vre_resources!(EP::Model, inputs::Dict)
     gen = inputs["RESOURCES"]
 
     VRE = inputs["VRE"]

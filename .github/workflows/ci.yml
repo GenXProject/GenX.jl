@@ -23,26 +23,9 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+
     steps:
       - uses: actions/checkout@v3
-      - name: Create a new branch and pull test logs from repo # only push logs if PR is not from a fork
-        if: ${{ ! github.event.pull_request.head.repo.fork }}   
-        run: |
-          git checkout -b ${GITHUB_REF#refs/heads/}-testlogs
-          mkdir test/Logs; cd test/Logs
-          git config --global init.defaultBranch main
-          git init
-          git config --local user.name GenXProject
-          git config --local user.email "84470580+GenXProject@users.noreply.github.com"
-          git remote add testlog https://$LOG_TOKEN@github.com/GenXProject/GenX-testlog.git
-          git pull testlog main
-          if [ -d Logs_v${{ matrix.version }} ]; then
-            mv Logs_v${{ matrix.version }}/*.log .
-          else
-            mkdir Logs_v${{ matrix.version }} 
-          fi
-        env:
-          LOG_TOKEN: ${{ secrets.LOG_TOKEN }}
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
@@ -50,15 +33,6 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
-      - name: Commit logs and push back to repo # only push logs if PR is not from a fork
-        if: ${{ ! github.event.pull_request.head.repo.fork }}   
-        run: |
-          cd ${GITHUB_WORKSPACE}/test/Logs
-          mv *.log Logs_v${{ matrix.version }}
-          git add -f Logs_v${{ matrix.version }}
-          git commit -m "Update test logs for Julia v${{ matrix.version }}"
-          git pull --rebase testlog main # pull again to avoid conflicts from other versions
-          git push testlog main
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v3
         with:

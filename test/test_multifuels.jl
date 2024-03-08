@@ -5,14 +5,13 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = 5494.7919354
-test_path = "MultiFuels"
+test_path = "multi_fuels"
 
 # Define test inputs
 genx_setup = Dict(
     "Trans_Loss_Segments" => 1,
     "EnergyShareRequirement" => 1,
     "CapacityReserveMargin" => 1,
-    "CO2Cap" => 0,
     "StorageLosses" => 1,
     "MinCapReq" => 1,
     "MaxCapReq" => 1,

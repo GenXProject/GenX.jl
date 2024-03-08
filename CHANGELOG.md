@@ -25,11 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maintenance formulation for thermal-commit plants (#556).
 - Add new tests for GenX: three-zone, multi-stage, electrolyzer, VRE+storage, 
   piecewise_fuel+CO2, and TDR (#563 and #578).
+- Added a DC OPF method (#543) to calculate power flows across all lines
 - Added write_operating_reserve_price_revenue.jl to compute annual operating reserve and regulation revenue.
   Added the operating reserve and regulation revenue to net revenue (PR # 611)
 - Add functions to compute conflicting constraints when model is infeasible if supported by the solver (#624).
 - New settings parameter, VirtualChargeDischargeCost to test script and VREStor example case. The PR 608 attempts to 
   introduce this parameter as cost of virtual charging and discharging to avoid unusual results (#608). 
+- New settings parameter, StorageVirtualDischarge, to turn storage virtual charging and discharging off if desired by the user (#638).
 
 
 ### Fixed
@@ -71,6 +73,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The new files are: `Thermal.csv`, `Hydro.csv`, `Vre.csv`, `Storage.csv`, `Flex_demand.csv`, `Must_run.csv`, 
   `Electrolyzer.csv`, and `Vre_stor.csv`. The examples have been updated, and new tests have been added to 
   check the new data format (#612).
+- The settings parameter `Reserves` has been renamed to `OperationalReserves`, `Reserves.csv` to 
+  `Operational_reserves.csv`, and the `.jl` files contain the word `reserves` have been renamed to
+  `operational_reserves` (#641).
+- New folder structure for a GenX case. The input files are now organized in the following folders: `settings`, 
+  `policies`, `resources` and `system`. The examples and tests have been updated to reflect this change. 
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.

@@ -10,7 +10,7 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Storage Resources with Asmymetric Charge/Discharge Capacity Module")
 
-	Reserves = setup["Reserves"]
+	OperationalReserves = setup["OperationalReserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	T = inputs["T"]     # Number of time steps (hours)
@@ -20,8 +20,8 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 	### Constraints ###
 
 	# Storage discharge and charge power (and reserve contribution) related constraints for symmetric storage resources:
-	if Reserves == 1
-		storage_asymmetric_reserves!(EP, inputs, setup)
+	if OperationalReserves == 1
+		storage_asymmetric_operational_reserves!(EP, inputs, setup)
 	else
 		if CapacityReserveMargin > 0
 			# Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
@@ -35,11 +35,11 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-	storage_asymmetric_reserves!(EP::Model, inputs::Dict)
+	storage_asymmetric_operational_reserves!(EP::Model, inputs::Dict)
 
 Sets up variables and constraints specific to storage resources with asymmetric charge and discharge capacities when reserves are modeled. See ```storage()``` in ```storage.jl``` for description of constraints.
 """
-function storage_asymmetric_reserves!(EP::Model, inputs::Dict, setup::Dict)
+function storage_asymmetric_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
 	T = inputs["T"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
