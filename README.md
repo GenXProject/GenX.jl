@@ -1,9 +1,11 @@
-# GenX 
-[![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)
-<!---[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://genxproject.github.io/GenX/stable) -->
-<!---[![Documentation Build](https://img.shields.io/badge/docs-stable-blue.svg](https://genxproject.github.io/GenX/stable) -->
+<div align="center"> <img src="docs/src/assets/logo.svg" alt="GenX.jl"></img></div>
+---
+
+[![Build and Deploy](https://github.com/GenXProject/GenX/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/workflows/ci.yml)
+
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX/dev)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+
 ## Overview
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model 
 that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. 
