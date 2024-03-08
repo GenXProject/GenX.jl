@@ -4,7 +4,7 @@ function default_settings()
         "OverwriteResults" => 0,
         "NetworkExpansion" => 0,
         "Trans_Loss_Segments" => 1,
-        "Reserves" => 0,
+        "OperationalReserves" => 0,
         "EnergyShareRequirement" => 0,
         "CapacityReserveMargin" => 0,
         "CO2Cap" => 0,
@@ -16,7 +16,7 @@ function default_settings()
         "WriteShadowPrices" => 0,
         "UCommit" => 0,
         "TimeDomainReduction" => 0,
-        "TimeDomainReductionFolder" => "TDR_Results",
+        "TimeDomainReductionFolder" => "TDR_results",
         "ModelingToGenerateAlternatives" => 0,
         "ModelingtoGenerateAlternativeSlack" => 0.1,
         "MultiStage" => 0,
@@ -24,9 +24,14 @@ function default_settings()
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
         "HydrogenHourlyMatching" => 0,
+        "DC_OPF" => 0,
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
-        "ResourcePath" => "Resources",
+        "StorageVirtualDischarge" => 1,
+        "ResourcesFolder" => "resources",
+        "ResourcePoliciesFolder" => "policy_assignments",
+        "SystemFolder" => "system",
+        "PoliciesFolder" => "policies",
     )
 end
 
@@ -57,6 +62,13 @@ function validate_settings!(settings::Dict{Any,Any})
         settings have changed recently. OperationWrapping has been removed,
         and is ignored. The relevant behavior is now controlled by TimeDomainReduction.
         Please see the Methods page in the documentation.""" maxlog=1
+    end
+
+    if haskey(settings, "Reserves")
+        Base.depwarn("""The Reserves setting has been deprecated. Please use the
+        OperationalReserves setting instead.""", :validate_settings!, force=true)
+        settings["OperationalReserves"] = settings["Reserves"]
+        delete!(settings, "Reserves")
     end
 
     if settings["EnableJuMPStringNames"]==0 && settings["ComputeConflicts"]==1
@@ -112,7 +124,8 @@ function default_writeoutput()
         "WriteTransmissionFlows" => true,
         "WriteTransmissionLosses" => true,
         "WriteVirtualDischarge" => true,
-        "WriteVREStor" => true
+        "WriteVREStor" => true,
+        "WriteAngles" => true
     )
 end
 
@@ -131,6 +144,8 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         writeoutput["WriteCapacityValue"] = false
         writeoutput["WriteReserveMargin"] = false
         writeoutput["WriteReserveMarginWithWeights"] = false
+        writeoutput["WriteAngles"] = false
+        writeoutput["WriteTransmissionFlows"] = false
     end
 
     # read in YAML file if provided

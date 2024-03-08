@@ -1,5 +1,0 @@
-# SCIP Solver Parameters
-
-#SCIP-specific solver settings
-Dispverblevel: 0
-limitsgap: 0.05

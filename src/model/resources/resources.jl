@@ -670,8 +670,7 @@ ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r 
 # Without unit commitment
 no_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 2, rs)
 
-# Reserves
-# cap reserve margin
+# Operational Reserves
 ids_with_regulation_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> reg_max(r) > 0, rs)
 ids_with_spinning_reserve_requirements(rs::Vector{T}) where T <: AbstractResource = findall(r -> rsv_max(r) > 0, rs)
 
@@ -903,9 +902,9 @@ for attr in (:min_retired_cap_inverter_mw,
              :min_retired_cap_charge_dc_mw,
              :min_retired_cap_discharge_ac_mw,
              :min_retired_cap_charge_ac_mw,)
-    @eval @interface $attr default_zero VreStorage
+    @eval @interface $attr default_zero 
     cum_attr = Symbol("cum_"*String(attr))
-    @eval @interface $cum_attr default_zero VreStorage
+    @eval @interface $cum_attr default_zero 
 end
 
 ## policies
@@ -921,7 +920,7 @@ max_cap_wind(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_wind_$tag
 
 ## Utility functions for working with resources
 in_zone(r::AbstractResource, zone::Int) = zone_id(r) == zone
-resources_in_zone(rs::Vector{AbstractResource}, zone::Int) = filter(r -> in_zone(r, zone), rs)
+resources_in_zone(rs::Vector{<:AbstractResource}, zone::Int) = filter(r -> in_zone(r, zone), rs)
 
 @doc raw"""
     resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
@@ -948,7 +947,7 @@ function resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_
 end
 
 """
-    resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
+    resource_by_name(rs::Vector{<:AbstractResource}, name::AbstractString)
 
 Find the resource with `name` in the vector `rs`.
 
@@ -959,7 +958,7 @@ Find the resource with `name` in the vector `rs`.
 # Returns
 - `AbstractResource`: The resource with the name `name`.
 """
-function resource_by_name(rs::Vector{AbstractResource}, name::AbstractString)
+function resource_by_name(rs::Vector{<:AbstractResource}, name::AbstractString)
     r_id = findfirst(r -> resource_name(r) == name, rs)
     # check that the resource exists
     isnothing(r_id) && error("Resource $name not found in resource data. \nHint: Make sure that the resource names in input files match the ones in the \"resource\" folder.\n")

@@ -26,16 +26,22 @@ end
 
 Internal function to get policy file information.
 
-# 
+# Returns
     policyfile_info (NamedTuple): A tuple containing policy file information.
 
 """
 function _get_policyfile_info()
+    # filename for each type of policy available in GenX
+    esr_filenames = ["Resource_energy_share_requirement.csv"]
+    cap_res_filenames = ["Resource_capacity_reserve_margin.csv"]
+    min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
+    max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
+
     policyfile_info = (
-        esr     = (filename="Resource_energy_share_requirement.csv"),
-        cap_res = (filename="Resource_capacity_reserve_margin.csv"),
-        min_cap = (filename="Resource_minimum_capacity_requirement.csv"),
-        max_cap = (filename="Resource_maximum_capacity_requirement.csv"),
+        esr     = (filenames=esr_filenames, setup_param="EnergyShareRequirement"),
+        cap_res = (filenames=cap_res_filenames, setup_param="CapacityReserveMargin"),
+        min_cap = (filenames=min_cap_filenames, setup_param="MinCapReq"),
+        max_cap = (filenames=max_cap_filenames, setup_param="MaxCapReq"),
     )
     return policyfile_info
 end
@@ -302,7 +308,7 @@ Construct the array of resources from multiple files of different types located 
 - `scale_factor::Float64`: A scaling factor to adjust the attributes of the resources (default: 1.0).
 
 # Returns
-- `Vector{AbstractResource}`: An array of GenX resources.
+- `Vector{<:AbstractResource}`: An array of GenX resources.
 
 # Raises
 - `Error`: If no resources data is found. Check the data path or the configuration file "genx_settings.yml" inside Settings.
@@ -447,7 +453,7 @@ function check_retrofit_id(rs::Vector{AbstractResource})
 end
 
 @doc raw"""
-check_resource(resources::T)::Vector{String} where T <: Vector{AbstractResource}
+check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
 
 Validate the consistency of a vector of GenX resources
 Reports any errors/warnings as a vector of messages.
@@ -490,32 +496,54 @@ function validate_resources(resources::T) where T <: Vector{AbstractResource}
 end
 
 """
-    create_resources(setup::Dict, case_path::AbstractString)
+    create_resources(setup::Dict, resources_path::AbstractString)
 
-Function that loads and scales resources data from folder specified in `setup["ResourcePath"] and returns an array of GenX resources.
+Function that loads and scales resources data from folder specified in resources_path and returns an array of GenX resources.
 
 # Arguments
 - `setup (Dict)`: Dictionary containing GenX settings.
-- `case_path (AbstractString)`: The path to the case.
+- `resources_path (AbstractString)`: The path to the resources folder.
 
 # Returns
-- `resources (Vector{AbstractResource})`: An array of scaled resources.
+- `resources (Vector{<:AbstractResource})`: An array of scaled resources.
 
 """
-function create_resource_array(setup::Dict, case_path::AbstractString)
+function create_resource_array(setup::Dict, resources_path::AbstractString)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
-    
-    resources_folder = setup["ResourcePath"]
-    resources_folder = joinpath(case_path,resources_folder)
     
     # get filename and GenX type for each type of resources available in GenX
     resources_info = _get_resource_info()
 
     # load each resource type, scale data and return array of resources
-    resources = create_resource_array(resources_folder, resources_info, scale_factor)
+    resources = create_resource_array(resources_path, resources_info, scale_factor)
     # validate input before returning resources
     validate_resources(resources)
     return resources
+end
+
+
+"""
+    validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
+
+Validate the policy files by checking if they exist in the specified folder and if the setup flags are consistent with the files found.
+
+# Arguments
+- `resource_policies_path::AbstractString`: The path to the policy files.
+- `setup::Dict`: Dictionary containing GenX settings.
+
+# Returns
+- warning messages if the polcies are set to 1 in settings but the files are not found in the resource_policies_path.
+!isfile(joinpath(resource_policies_path, filename))
+"""
+function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
+    policyfile_info = _get_policyfile_info()
+    for (filenames, setup_param) in values(policyfile_info)
+        if setup[setup_param] == 1 && any(!isfile(joinpath(resource_policies_path, filename)) for filename in filenames)
+            msg = string(setup_param, " is set to 1 in settings but the required file(s) ", filenames, " was (were) not found in ", resource_policies_path)
+            @warn(msg)
+        end
+    end
+    return nothing
 end
 
 """
@@ -624,27 +652,26 @@ function add_policy_to_resources!(resources::Vector{<:AbstractResource}, path::A
 end
 
 """
-    add_policies_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
+    add_policies_to_resources!(resources::Vector{<:AbstractResource}, resources_path::AbstractString)
 
 Reads policy files and adds policies-related attributes to resources in the model.
 
 # Arguments
 - `resources::Vector{<:AbstractResource}`: Vector of resources in the model.
-- `setup (Dict)`: Dictionary containing GenX settings.
-- `case_path::AbstractString`: The path to the case.
+- `resources_path::AbstractString`: The path to the resources folder.
 """
-function add_policies_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
-    policy_folder = setup["ResourcePath"]
-    policy_folder = joinpath(case_path, policy_folder)
+function add_policies_to_resources!(resources::Vector{<:AbstractResource}, resource_policy_path::AbstractString)
     # get filename for each type of policy available in GenX
     policies_info = _get_policyfile_info()
     # loop over policy files
-    for filename in values(policies_info)
-        path = joinpath(policy_folder, filename)
-        # if file exists, add policy to resources
-        if isfile(path) 
-            add_policy_to_resources!(resources, path, filename)
-            @info filename * " Successfully Read."
+    for (filenames,_) in values(policies_info)
+        for filename in filenames
+            path = joinpath(resource_policy_path, filename)
+            # if file exists, add policy to resources
+            if isfile(path) 
+                add_policy_to_resources!(resources, path, filename)
+                @info filename * " Successfully Read."
+            end
         end
     end
     return nothing
@@ -666,26 +693,25 @@ function add_module_to_resources!(resources::Vector{<:AbstractResource}, module_
 end
 
 """
-    add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
+    add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, resources_path::AbstractString)
 
 Reads module dataframes, loops over files and adds columns as new attributes to the resources in the model.
 
 # Arguments
 - `resources::Vector{<:AbstractResource}`: A vector of resources.
 - `setup (Dict)`: A dictionary containing GenX settings.
-- `case_path::AbstractString`: The path to the case.
+- `resources_path::AbstractString`: The path to the resources folder.
 """
-function add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, case_path::AbstractString)
-    modules = Vector{DataFrame}()
+function add_modules_to_resources!(resources::Vector{<:AbstractResource}, setup::Dict, resources_path::AbstractString)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
 
-    module_folder = setup["ResourcePath"]
-    module_folder = joinpath(case_path, module_folder)
+    modules = Vector{DataFrame}()
 
     ## Load all modules and add them to the list of modules to be added to resources
     # Add multistage if multistage is activated
     if setup["MultiStage"] == 1
-        filename = joinpath(module_folder, "Resource_multistage_data.csv")
-        multistage_in = load_multistage_dataframe(filename)
+        filename = joinpath(resources_path, "Resource_multistage_data.csv")
+        multistage_in = load_multistage_dataframe(filename, scale_factor)
         push!(modules, multistage_in)
         @info "Multistage data successfully read."
     end
@@ -959,6 +985,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Set of flexible demand-side resources
     inputs["FLEX"] = flex_demand(gen)
 
+    ## MUST_RUN
     # Set of must-run plants - could be behind-the-meter PV, hydro run-of-river, must-run fossil or thermal plants
     inputs["MUST_RUN"] = must_run(gen)
 
@@ -966,8 +993,8 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Set of hydrogen electolyzer resources:
     inputs["ELECTROLYZER"] = electrolyzer(gen)
 
-    ## Reserves
-    if setup["Reserves"] >= 1
+    ## Operational Reserves
+    if setup["OperationalReserves"] >= 1
         # Set for resources with regulation reserve requirements
         inputs["REG"] = ids_with_regulation_reserve_requirements(gen)
         # Set for resources with spinning reserve requirements
@@ -1188,42 +1215,44 @@ function summary(rs::Vector{<:AbstractResource})
 end
 
 """
-    load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractString)
+    load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractString, resources_path::AbstractString)
 
-This function loads resources data from the `setup["ResourcePath"]` folder and create the GenX data structures and add them to the `inputs` `Dict`. 
+This function loads resources data from the resources_path folder and create the GenX data structures and add them to the `inputs` `Dict`. 
 
 # Arguments
 - `inputs (Dict)`: A dictionary to store the input data.
 - `setup (Dict)`: A dictionary containing GenX settings.
-- `case_path (AbstractString)`: The path to the case.
+- `case_path (AbstractString)`: The path to the case folder.
+- `resources_path (AbstractString)`: The path to the case resources folder.
 
 Raises:
     DeprecationWarning: If the `Generators_data.csv` file is found, a deprecation warning is issued, together with an error message.
 """
-function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractString)
+function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractString, resources_path::AbstractString)
     if isfile(joinpath(case_path, "Generators_data.csv"))
         msg = "The `Generators_data.csv` file was deprecated in release v0.4. " *
             "Please use the new interface for generators creation, and see the documentation for additional details."
         Base.depwarn(msg, :load_resources_data!, force=true)
         error("Exiting GenX...")
-    else
-        # create vector of resources from dataframes
-        resources = create_resource_array(setup, case_path)
-
-        # read policy files and add policies-related attributes to resource dataframe
-        add_policies_to_resources!(resources, setup, case_path)
-
-        # read module files add module-related attributes to resource dataframe
-        add_modules_to_resources!(resources, setup, case_path)
-        
-        # add resources information to inputs dict
-        add_resources_to_input_data!(inputs, setup, case_path, resources)
-
-        # print summary of resources
-        summary(resources)
-
-        return nothing
     end
+    # create vector of resources from dataframes
+    resources = create_resource_array(setup, resources_path)
+
+    # read policy files and add policies-related attributes to resource dataframe
+    resource_policies_path = joinpath(resources_path, setup["ResourcePoliciesFolder"])
+    validate_policy_files(resource_policies_path, setup)
+    add_policies_to_resources!(resources, resource_policies_path)
+
+    # read module files add module-related attributes to resource dataframe
+    add_modules_to_resources!(resources, setup, resources_path)
+    
+    # add resources information to inputs dict
+    add_resources_to_input_data!(inputs, setup, case_path, resources)
+
+    # print summary of resources
+    summary(resources)
+
+    return nothing
 end
 
 @doc raw"""

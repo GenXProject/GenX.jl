@@ -3,7 +3,7 @@
 A wide range of energy storage devices (all $o \in \mathcal{O}$) can be modeled in GenX, using one of two generic storage formulations: (1) storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), such as Lithium-ion batteries and most other electrochemical storage devices that use the same components for both charge and discharge; and (2) storage technologies that employ distinct and potentially asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), such as most thermal storage technologies or hydrogen electrolysis/storage/fuel cell or combustion turbine systems.
 
 If a capacity reserve margin is modeled, variables for virtual charge, $\Pi^{CRM}_{o,z,t}$, and virtual discharge, $\Theta^{CRM}_{o,z,t}$, are created to represent 
-	contributions that a storage device makes to the capacity reserve margin without actually generating power. These represent power that the storage device could 
+	contributions that a storage device makes to the capacity reserve margin without actually generating power. (This functionality can be turned off with the parameter StorageVirtualDischarge in the GenX settings file.) These represent power that the storage device could 
 	have discharged or consumed if called upon to do so, based on its available state of charge. Importantly, a dedicated set of variables (those of the form $\Pi^{CRM}_{o,z,t}, \Theta^{CRM}_{o,z,t}$) 
 	and constraints are created to ensure that any virtual contributions to the capacity reserve margin could be made as actual charge/discharge if necessary without 
 	affecting system operations in any other timesteps. If a capacity reserve margin is not modeled, all related variables are fixed at 0. The overall contribution 
@@ -33,7 +33,7 @@ If reserves are modeled, the following two constraints replace those above:
 \end{aligned}
 ```
 where $f^{charge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while charging, $f^{discharge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while discharging, and $r^{discharge}_{o,z,t}$ is the contribution of storage resources to upward reserves while discharging. Note that as storage resources can contribute to regulation and reserves while either charging or discharging, the proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources where the total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is the sum of the proxy variables.
-These constraints are created with the function ```storage_symmetric_reserves!()``` in ```storage_symmetric.jl```.
+These constraints are created with the function ```storage_symmetric_operational_reserves!()``` in ```storage_symmetric.jl```.
 **Storage with asymmetric charge and discharge capacity**
 For storage technologies with asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), charge rate, $\Pi_{o,z,t}$, is constrained by the total installed charge capacity, $\Delta^{total, charge}_{o,z}$, as follows:
 ```math
@@ -49,7 +49,7 @@ If reserves are modeled, the above constraint is replaced by the following:
 \end{aligned}
 ```
 where $f^{+}_{y=o,z,t}$ is the contribution of storage resources to frequency regulation while charging.
-These constraints are created with the function ```storage_asymmetric_reserves()``` in ```storage_asymmetric.jl```.
+These constraints are created with the function ```storage_symmetric_operational_reserves!()``` in ```storage_asymmetric.jl```.
 **All storage resources**
 The following constraints apply to all storage resources, $o \in \mathcal{O}$, regardless of whether the charge/discharge capacities are symmetric or asymmetric.
 The following two constraints track the state of charge of the storage resources at the end of each time period, relating the volume of energy stored at the end of the time period, $\Gamma_{o,z,t}$, to the state of charge at the end of the prior time period, $\Gamma_{o,z,t-1}$, the charge and discharge decisions in the current time period, $\Pi_{o,z,t}, \Theta_{o,z,t}$, and the self discharge rate for the storage resource (if any), $\eta_{o,z}^{loss}$.  The first of these two constraints enforces storage inventory balance for interior time steps $(t \in \mathcal{T}^{interior})$, while the second enforces storage balance constraint for the initial time step $(t \in \mathcal{T}^{start})$.
@@ -126,7 +126,7 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 	&  \Theta_{o,z,t} + \Theta^{CRM}_{o,z,t} + f^{discharge}_{o,z,t} + r^{discharge}_{o,z,t} \leq \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-The above reserve related constraints are established by ```storage_all_reserves!()``` in ```storage_all.jl```
+The above reserve related constraints are established by ```storage_all_operational_reserves!()``` in ```storage_all.jl```
 """
 function storage!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -138,11 +138,10 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 	p = inputs["hours_per_subperiod"]
     rep_periods = inputs["REP_PERIOD"]
 
-	Reserves = setup["Reserves"]
 	EnergyShareRequirement = setup["EnergyShareRequirement"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 	IncludeLossesInESR = setup["IncludeLossesInESR"]
-	MultiStage = setup["MultiStage"]
+	StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
 	if !isempty(STOR_ALL)
 		investment_energy!(EP, inputs, setup)
@@ -173,7 +172,11 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 
 	# Capacity Reserves Margin policy
 	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vP][y,t] + EP[:vCAPRES_discharge][y,t] - EP[:vCHARGE][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
+		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
+		if StorageVirtualDischarge > 0
+			@expression(EP, eCapResMarBalanceStorVirtual[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vCAPRES_discharge][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
+			add_similar_to_expression!(eCapResMarBalanceStor,eCapResMarBalanceStorVirtual)
+		end
 		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
 	end
 

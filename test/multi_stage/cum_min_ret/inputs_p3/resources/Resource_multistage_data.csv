@@ -1,0 +1,14 @@
+Resource,WACC,Capital_Recovery_Period,capital_recovery_period_dc,tech_wacc_dc,capital_recovery_period_solar,tech_wacc_solar,capital_recovery_period_wind,tech_wacc_wind,capital_recovery_period_discharge_dc,tech_wacc_discharge_dc,capital_recovery_period_charge_dc,tech_wacc_charge_dc,capital_recovery_period_discharge_ac,tech_wacc_discharge_ac,capital_recovery_period_charge_ac,tech_wacc_charge_ac,Lifetime,Min_Retired_Cap_MW,Min_Retired_Energy_Cap_MW,Min_Retired_Charge_Cap_MW,Min_Retired_Cap_Inverter_MW,Min_Retired_Cap_Solar_MW,Min_Retired_Cap_Wind_MW,Min_Retired_Cap_Charge_DC_MW,Min_Retired_Cap_Charge_AC_MW,Min_Retired_Cap_Discharge_DC_MW,Min_Retired_Cap_Discharge_AC_MW
+natural_gas_combined_cycle,0.039,20,30,0.139,40,0.239,50,0.339,60,0.439,70,0.539,80,0.639,90,0.739,20,32,0,0,0,0,0,0,0,0,0
+solar_pv,0.017,20,30,0.117,40,0.217,50,0.317,60,0.417,70,0.517,80,0.617,90,0.717,20,42,0,0,0,0,0,0,0,0,0
+onshore_wind,0.024,20,30,0.124,40,0.224,50,0.324,60,0.424,70,0.524,80,0.624,90,0.724,20,12,0,0,0,0,0,0,0,0,0
+battery_sym,0.024,20,30,0.124,40,0.224,50,0.324,60,0.424,70,0.524,80,0.624,90,0.724,20,7,17,0,0,0,0,0,0,0,0
+battery_asym,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,8,18,28,0,0,0,0,0,0,0
+landbasedwind_class1_moderate,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,9,0,0,0,0,12,0,0,0,0
+utilitypv_class1_moderate,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,10,0,0,29,22,0,0,0,0,0
+storage_sym_discharge,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,11,19,0,0,0,0,0,0,0,0
+storage_asym_ac_discharge,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,12,20,0,0,0,0,0,0,0,35
+storage_asym_dc_discharge,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,13,21,0,30,0,0,0,0,34,0
+storage_sym_charge,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,14,22,0,0,0,0,0,0,0,0
+storage_asym_ac_charge,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,15,23,0,0,0,0,0,33,0,0
+storage_asym_dc_charge,0.027,20,30,0.127,40,0.227,50,0.327,60,0.427,70,0.527,80,0.627,90,0.727,20,16,24,0,31,0,0,32,0,0,0

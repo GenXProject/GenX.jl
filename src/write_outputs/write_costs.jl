@@ -52,7 +52,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 		dfCost[6,2] = value(EP[:eTotalCStart]) + value(EP[:eTotalCFuelStart]) 
 	end
 
-	if setup["Reserves"]==1
+	if setup["OperationalReserves"]==1
 		dfCost[7,2] = value(EP[:eTotalCRsvPen])
 	end
 

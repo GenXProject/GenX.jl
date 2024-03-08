@@ -64,7 +64,7 @@ function load_dataframe(dir::AbstractString, basenames::Vector{String})::DataFra
         target = look_for_file_with_alternate_case(dir, base)
         # admonish
         if target != FILENOTFOUND
-            @info """The filename '$target' is deprecated. '$best_basename' is preferred."""
+            Base.depwarn("""The filename '$target' is deprecated. '$best_basename' is preferred.""", :load_dataframe, force=true)
             return load_dataframe_from_file(joinpath(dir, target))
         end
     end

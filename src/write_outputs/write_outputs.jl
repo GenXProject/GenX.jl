@@ -174,7 +174,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 			println("Time elapsed for writing shutdown is")
 			println(elapsed_time_shutdown)
 		end
-		if setup["Reserves"] == 1
+		
+		if setup["OperationalReserves"] == 1
 			if output_settings_d["WriteReg"]
 				elapsed_time_reg = @elapsed write_reg(path, inputs, setup, EP)
 				println("Time elapsed for writing regulation is")
@@ -217,9 +218,16 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 		println(elapsed_time_emissions)
 	end
 
-    if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
-        write_maintenance(path, inputs, EP)
-    end
+    	if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
+        	write_maintenance(path, inputs, EP)
+    	end
+	
+	#Write angles when DC_OPF is activated
+	if setup["DC_OPF"] == 1 && output_settings_d["WriteAngles"]
+		elapsed_time_angles = @elapsed write_angles(path, inputs, setup, EP)
+		println("Time elapsed for writing angles is")
+		println(elapsed_time_angles)
+	end
 
 	# Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
 	if setup["MultiStage"] == 0
@@ -318,7 +326,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
 		dfOpRegRevenue = DataFrame()
 		dfOpRsvRevenue = DataFrame()
-		if setup["Reserves"]==1 && has_duals(EP)
+		if setup["OperationalReserves"]==1 && has_duals(EP)
 			elapsed_time_op_res_rev = @elapsed dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(path, inputs, setup, EP)
 		  	println("Time elapsed for writing oerating reserve and regulation revenue is")
 		  	println(elapsed_time_op_res_rev)

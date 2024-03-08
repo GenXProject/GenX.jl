@@ -80,7 +80,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
     regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
 
-    if setup["Reserves"] > 0
+    if setup["OperationalReserves"] > 0
         HYDRO_RES_REG = intersect(HYDRO_RES, inputs["REG"]) # Set of reservoir hydro resources with regulation reserves
         HYDRO_RES_RSV = intersect(HYDRO_RES, inputs["RSV"]) # Set of reservoir hydro resources with spinning reserves
         regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T],
@@ -149,9 +149,9 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 	# Maximum energy stored in reservoir must be less than energy capacity in all hours - only applied to HYDRO_RES_KNOWN_CAP
 	@constraint(EP, cHydroMaxEnergy[y in HYDRO_RES_KNOWN_CAP, t in 1:T], EP[:vS_HYDRO][y,t] <= hydro_energy_to_power_ratio(gen[y])*EP[:eTotalCap][y])
 
-	if setup["Reserves"] == 1
+	if setup["OperationalReserves"] == 1
 		### Reserve related constraints for reservoir hydro resources (y in HYDRO_RES), if used
-		hydro_res_reserves!(EP, inputs)
+		hydro_res_operational_reserves!(EP, inputs)
 	end
 	##CO2 Polcy Module Hydro Res Generation by zone
 	@expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
@@ -162,7 +162,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-	hydro_res_reserves!(EP::Model, inputs::Dict)
+	hydro_res_operational_reserves!(EP::Model, inputs::Dict)
 This module defines the modified constraints and additional constraints needed when modeling operating reserves
 **Modifications when operating reserves are modeled**
 When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
@@ -189,9 +189,9 @@ r_{y,z, t} \leq \upsilon^{rsv}_{y,z}\times \Delta^{total}_{y,z}
 \end{aligned}
 ```
 """
-function hydro_res_reserves!(EP::Model, inputs::Dict)
+function hydro_res_operational_reserves!(EP::Model, inputs::Dict)
 
-	println("Hydro Reservoir Reserves Module")
+	println("Hydro Reservoir Operational Reserves Module")
 
 	gen = inputs["RESOURCES"]
 

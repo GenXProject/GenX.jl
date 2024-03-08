@@ -26,8 +26,8 @@ Note that all settings parameters are case sensitive.
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
 ||1: linear|
 ||>=2: piece-wise quadratic|
-|Reserves | Flag for modeling operating reserves .|
-||0 = No operating reserves considered. |
+|OperationalReserves | Flag for modeling operational reserves .|
+||0 = No operational reserves considered. |
 ||1 = Consider regulation (primary) and spinning (secondary) reserves. |
 |StorageLosses | Flag to account for storage related losses.|
 ||0 = VRE and CO2 constraints DO NOT account for energy lost. |
@@ -73,6 +73,9 @@ Note that all settings parameters are case sensitive.
 | WriteOutputs | Flag for writing the model outputs with hourly resolution or just the annual sum.|
 || "full" = write the model outputs with hourly resolution.|
 || "annual" = write only the annual sum of the model outputs.|
+|StorageVirtualDischarge| Flag for whether to include the ability for storage to have a "virtual" charge and discharge that contributes to the capacity reserve margin.
+||1 (default) = include virtual charging and discharging||
+||0 = do not include virtual charging and discharging||
 
 Additionally, Solver related settings parameters are specified in the appropriate .yml file (e.g. `gurobi_settings.yml` or `cplex_settings.yml`),
 which should be located in the current working directory.
@@ -345,7 +348,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Down\_Time |Minimum amount of time a resource has to remain in the shutdown state.|
 |Start\_Cost\_per\_MW |Cost per MW of nameplate capacity to start a generator ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
 |Start\_Fuel\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each generator (MMBtu/MW per start).|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -363,7 +366,7 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -385,7 +388,7 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -426,7 +429,7 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -556,7 +559,7 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|**Reserves = 1** | |
+|**OperationalReserves = 1** | |
 |Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
 |Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
@@ -735,11 +738,11 @@ Modeling grid operations for each hour of the year can be computationally expens
 
 
 
-#### 2.2.2 Reserves.csv
+#### 2.2.2 Operational_reserves.csv
 
-This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `Reserves` flag is activated in the YAML file `genx_settings.yml`.
+This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `OperationalReserves` flag is activated in the YAML file `genx_settings.yml`.
 
-###### Table 8: Structure of the Reserves.csv file
+###### Table 8: Structure of the Operational_reserves.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|

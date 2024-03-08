@@ -8,7 +8,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	println("Storage Core Resources Module")
 
 	gen = inputs["RESOURCES"]
-	Reserves = setup["Reserves"]
+	OperationalReserves = setup["OperationalReserves"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
 
 	virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
@@ -107,8 +107,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	end)
 
 	# Storage discharge and charge power (and reserve contribution) related constraints:
-	if Reserves == 1
-		storage_all_reserves!(EP, inputs, setup)
+	if OperationalReserves == 1
+		storage_all_operational_reserves!(EP, inputs, setup)
 	else
 		if CapacityReserveMargin > 0
 			# Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
@@ -151,7 +151,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 	end
 end
 
-function storage_all_reserves!(EP::Model, inputs::Dict, setup::Dict)
+function storage_all_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
 	gen = inputs["RESOURCES"]
 	T = inputs["T"]

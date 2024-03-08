@@ -42,7 +42,7 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
     dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"][CCS], Zone=zone_id.(gen[CCS]), AnnualSum=zeros(length(CCS)))
     if !isempty(CCS)
         # Captured CO2 emissions by plant
-        emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]))
+        emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]).data)
 
         if setup["ParameterScale"] == 1
             emissions_captured_plant *= ModelScalingFactor
