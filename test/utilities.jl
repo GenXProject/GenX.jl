@@ -242,3 +242,18 @@ function isapprox_col(col1, col2)
     end
     return false
 end
+
+
+macro warn_error_logger(block)
+    quote
+        result = nothing
+        redirect_stdout(devnull) do
+            # Create a ConsoleLogger that prints any log messages with level >= Warn to stderr
+            warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
+            with_logger(warnerror_logger) do
+                result = $(esc(block))
+            end
+        end
+        result
+    end
+end
