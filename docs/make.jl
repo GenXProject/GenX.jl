@@ -17,7 +17,7 @@ pages = OrderedDict(
         "Commertial solvers" => "Getting_Started/commercial_solvers.md",
     ],
     "Tutorials" => [
-        "Tutorials Overview" => "Tutorials/Tutorials_intro.md",
+        "Tutorials Overview" => "Tutorials/tutorials_intro.md",
         "Tutorial 1: Configuring Settings" => "Tutorials/Tutorial_1_configuring_settings.md",
         "Tutorial 2: Network Visualization" => "Tutorials/Tutorial_2_network_visualization.md",
         "Tutorial 3: K-Means and Time Domain Reduction" => "Tutorials/tutorial_3/Tutorial_3_K-means_time_domain_reduction.md",
