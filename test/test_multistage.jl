@@ -111,7 +111,7 @@ function test_update_cumulative_min_ret!()
         true_min_retirements = Dict()
         
         scale_factor = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
-        # redirect_stdout(devnull) do
+        redirect_stdout(devnull) do
             warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
             with_logger(warnerror_logger) do
                 for t in 1:3
@@ -128,7 +128,7 @@ function test_update_cumulative_min_ret!()
                     compute_cumulative_min_retirements!(inputs_dict,t)
                 end
             end
-        # end
+        end
 
         for t in 1:3
             # Test that the cumulative min retirements are updated correctly
