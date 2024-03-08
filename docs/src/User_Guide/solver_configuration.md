@@ -9,7 +9,7 @@ To define and solve the optimization problems, GenX relies on [JuMP](https://jum
 - [HiGHS](https://highs.dev/) (open-source)
 - [SCIP](https://scip.zib.de/) (open-source)
 
-Solver related settings parameters are specified in the appropriate .yml file (e.g. `highs_settings.yml`, `gurobi_settings.yml`, etc.), which should be located in the `Settings` folder inside the current working directory (the same `Settings` folder where `genx_settings.yml` is located). Settings are specific to each solver. Check the `Example_Systems` folder for examples of solver settings files and parameters. 
+Solver related settings parameters are specified in the appropriate .yml file (e.g. `highs_settings.yml`, `gurobi_settings.yml`, etc.), which should be located in the `settings` folder inside the current working directory (the same `settings` folder where `genx_settings.yml` is located). Settings are specific to each solver. Check the `Example_Systems` folder for examples of solver settings files and parameters. 
 
 !!! note "Note"
     GenX supplies default settings for most solver settings in the various solver-specific functions found in the `src/configure_solver/` directory.

@@ -18,7 +18,6 @@ Additionally, the user may need to specify eight more **settings-specific** inpu
 7. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
 8. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
 
-Description and column details of all potential input files are included in the `Input_data_explained` folder in the `Example_Systems` folder. Names of the input files and their functionality is also given below. 
 
 !!! note "Note"
     Names of the input files are case sensitive.

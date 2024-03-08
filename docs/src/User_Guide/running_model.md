@@ -1,6 +1,6 @@
 # Running the model
 
-When running a new case, it is recommended to create a new folder for the case outside of the `GenX` repository. This folder should contain all the `.csv` input files described in the [GenX Inputs](@ref) section, as well as the `Settings` folder containing at least the `genx_settings.yml` and `[solver_name].yml` files.  
+When running a new case, it is recommended to create a new folder for the case outside of the `GenX` repository. This folder should contain all the `.csv` input files described in the [GenX Inputs](@ref) section, as well as the `settings` folder containing at least the `genx_settings.yml` and `[solver_name].yml` files.  
 
 !!! tip "Tip"
     Check out the [Running GenX](@ref) for additional information on how to run GenX and what happens when you run a case.

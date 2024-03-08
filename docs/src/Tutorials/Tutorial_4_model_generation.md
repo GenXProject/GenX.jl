@@ -408,7 +408,7 @@ end
     Emissions Module (for CO2 Policy modularization
 
 
-We then define variables and expressions based on the resources in the inputs and setup arguments. The details of these can be found in the `src/resources` folder and the "Resources" folder under Model Function Reference in the documentation:
+We then define variables and expressions based on the resources in the inputs and setup arguments. The details of these can be found in the `src/resources` folder and the "resources" folder under Model Function Reference in the documentation:
 
 
 ```julia

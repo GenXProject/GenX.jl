@@ -26,7 +26,7 @@ The set of all the resource types available in GenX are contained in the `resour
 
 ### Resource design principles
 
-Resources in GenX are constructed from a set of input files (in `.csv` format, one for each type of resource) located in the `Resources` folder inside the `case` folder. Each row in one of these files defines a new resource instance, and each column corresponds to an attribute of that resource type. 
+Resources in GenX are constructed from a set of input files (in `.csv` format, one for each type of resource) located in the `resources` folder inside the `case` folder. Each row in one of these files defines a new resource instance, and each column corresponds to an attribute of that resource type. 
 
 !!! warning
     The first column of each input data file should be called `Resource` and contain a unique identifier for each resource.
@@ -35,14 +35,15 @@ For example, in the case below, the files `Hydro.csv`, `Thermal.csv`, `Vre.csv`,
 
 ```
 case_folder
-    ├── Resources
+    ├── resources
     │   ├── Hydro.csv
     │   ├── Thermal.csv
     │   ├── Vre.csv
     │   └── Storage.csv
-    ├── Generators_variability.csv
+    ├── system
+    │   └── Generators_variability.csv
     //
-    ├── Setting
+    ├── setting
     │   └── genx_settings.yml
     └── Run.jl
 ```

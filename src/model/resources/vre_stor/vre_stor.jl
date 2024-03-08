@@ -105,7 +105,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     MinCapReq = setup["MinCapReq"]
     MaxCapReq = setup["MaxCapReq"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
-    Reserves = setup["Reserves"]
+    OperationalReserves = setup["OperationalReserves"]
     
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 

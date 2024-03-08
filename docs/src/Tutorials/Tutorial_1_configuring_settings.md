@@ -6,7 +6,7 @@ GenX is easy to customize to fit a variety of problems. In this tutorial, we sho
 
 ## What settings are there?
 
-There are 21 settings available to edit in GenX, found in the file `genx_settings.yml`. These settings are described <a href="https://genxproject.github.io/GenX/dev/data_documentation/" target="_blank">here</a> in the documentation. The file is located in the `Settings` folder in the working directory. To change the location of the file, edit the `settings_path` variable in `Run.jl` within your directory.
+There are 21 settings available to edit in GenX, found in the file `genx_settings.yml`. These settings are described <a href="https://genxproject.github.io/GenX/dev/data_documentation/" target="_blank">here</a> in the documentation. The file is located in the `settings` folder in the working directory. To change the location of the file, edit the `settings_path` variable in `Run.jl` within your directory.
 
 Most settings are set as either 0 or 1, which correspond to whether or not to include a specifc feature. For example, to use `TimeDomainReduction`, you would set its parameter to 0 within `genx_settings.yml`. If you would like to run GenX without it, you would set its parameter to 1.
 
