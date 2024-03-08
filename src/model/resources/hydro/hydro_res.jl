@@ -2,6 +2,7 @@
 	hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 This module defines the operational constraints for reservoir hydropower plants.
 Hydroelectric generators with water storage reservoirs ($y \in \mathcal{W}$) are effectively modeled as energy storage devices that cannot charge from the grid and instead receive exogenous inflows to their storage reservoirs, reflecting stream flow inputs. For resources with unknown reservoir capacity ($y \in \mathcal{W}^{nocap}$), their operation is parametrized by their generation efficiency, $\eta_{y,z}^{down}$, and energy inflows to the reservoir at every time-step, represented as a fraction of the total power capacity,($\rho^{max}_{y,z,t}$).  In case reservoir capacity is known ($y \in \mathcal{W}^{cap}$), an additional parameter, $\mu^{stor}_{y,z}$, referring to the ratio of energy capacity to discharge power capacity, is used to define the available reservoir storage capacity.
+
 **Storage inventory balance**
 Reservoir hydro systems are governed by the storage inventory balance constraint given below. This constraint enforces that energy level of the reservoir resource $y$ and zone $z$ in time step $t$ ($\Gamma_{y,z,t}$) is defined as the sum of the reservoir level in the previous time step, less the amount of electricity generated, $\Theta_{y,z,t}$ (accounting for the generation efficiency, $\eta_{y,z}^{down}$), minus any spillage $\varrho_{y,z,t}$, plus the hourly inflows into the reservoir (equal to the installed reservoir discharged capacity times the normalized hourly inflow parameter $\rho^{max}_{y,z, t}$).
 ```math
@@ -12,6 +13,7 @@ Reservoir hydro systems are governed by the storage inventory balance constraint
 ```
 We implement time-wrapping to endogenize the definition of the intial state prior to the first period with the following assumption. If time step $t$ is the first time step of the year then storage inventory at $t$ is defined based on last time step of the year. Alternatively, if time step $t$ is the first time step of a representative period, then storage inventory at $t$ is defined based on the last time step of the representative period. Thus, when using representative periods, the storage balance constraint for hydro resources does not allow for energy exchange between representative periods.
 Note: in future updates, an option to model hydro resources with large reservoirs that can transfer energy across sample periods will be implemented, similar to the functions for modeling long duration energy storage in ```long_duration_storage.jl```.
+
 **Ramping Limits**
 The following constraints enforce hourly changes in power output (ramps down and ramps up) to be less than the maximum ramp rates ($\kappa^{down}_{y,z}$ and $\kappa^{up}_{y,z}$ ) in per unit terms times the total installed capacity of technology y ($\Delta^{total}_{y,z}$).
 ```math
@@ -27,6 +29,7 @@ The following constraints enforce hourly changes in power output (ramps down and
 \end{aligned}
 ```
 Ramping constraints are enforced for all time steps except the first time step of the year or first time of each representative period when using representative periods to model grid operations.
+
 **Power generation and stream flow bounds**
 Electricity production plus total spilled power from hydro resources is constrained to always be above a minimum output parameter, $\rho^{min}_{y,z}$, to represent operational constraints related to minimum stream flows or other demands for water from hydro reservoirs. Electricity production is constrained by either the the net installed capacity or by the energy level in the reservoir in the prior time step, whichever is more binding. For the latter constraint, the constraint for the first time step of the year (or the first time step of each representative period) is implemented based on energy storage level in last time step of the year (or last time step of each representative period).
 ```math
@@ -47,6 +50,7 @@ Electricity production plus total spilled power from hydro resources is constrai
 \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t\in \mathcal{T}
 \end{aligned}
 ```
+
 **Reservoir energy capacity constraint**
 In case the reservoir capacity is known ($y \in W^{cap}$), then an additional constraint enforces the total stored energy in each time step to be less than or equal to the available reservoir capacity. Here, the reservoir capacity is defined multiplying the parameter, $\mu^{stor}_{y,z}$ with the available power capacity.
 ```math
@@ -164,6 +168,7 @@ end
 @doc raw"""
 	hydro_res_reserves!(EP::Model, inputs::Dict)
 This module defines the modified constraints and additional constraints needed when modeling operating reserves
+
 **Modifications when operating reserves are modeled**
 When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
 ```math

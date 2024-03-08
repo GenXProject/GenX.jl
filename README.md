@@ -1,9 +1,9 @@
-# GenX 
-[![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)
-<!---[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://genxproject.github.io/GenX/stable) -->
-<!---[![Documentation Build](https://img.shields.io/badge/docs-stable-blue.svg](https://genxproject.github.io/GenX/stable) -->
+<div align="center"> <img src="docs/src/assets/logo.svg" alt="GenX.jl"></img></div>
+
+[![Build and Deploy](https://github.com/GenXProject/GenX/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/workflows/ci.yml)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX/dev)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+
 ## Overview
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model 
 that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. 
@@ -254,3 +254,6 @@ Key contributors include [Nestor A. Sepulveda](https://energy.mit.edu/profile/ne
 [Jack Morris](https://www.linkedin.com/in/jack-morris-024b37121),
 [Luca Bonaldo](https://www.linkedin.com/in/luca-bonaldo-56391719b/)
 [Sambuddha Chakrabarti](https://www.linkedin.com/in/sambuddha-chakrabarti-ph-d-84157318).
+
+## Acknowledgement
+The GenX team expresses deep gratitude to Laura Zwanziger and Jacob Schwartz for designing the Julia-themed GenX logo. 

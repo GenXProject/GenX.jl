@@ -23,7 +23,7 @@ end
 @doc raw"""
 	reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
-This function establishes several different versions of contingency reserve requirement expression, $CONTINGENCY$ used in the reserves_core() function below.
+This function establishes several different versions of contingency reserve requirement expression, $CONTINGENCY$ used in the `reserves_core()` function below.
 
 Contingency reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies).
 

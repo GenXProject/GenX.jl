@@ -304,7 +304,7 @@ end
 @doc raw"""
     maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
-    Creates maintenance variables and constraints for thermal-commit plants.
+Creates maintenance variables and constraints for thermal-commit plants.
 """
 function maintenance_formulation_thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -347,8 +347,7 @@ end
 @doc raw"""
     thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model, inputs::Dict)
 
-    Eliminates the contribution of a plant to the capacity reserve margin while it is down
-    for maintenance.
+Eliminates the contribution of a plant to the capacity reserve margin while it is down for maintenance.
 """
 function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
                                                                  inputs::Dict)

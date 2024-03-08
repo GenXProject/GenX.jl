@@ -3,7 +3,7 @@
 
 Reads user-specified solver settings from gurobi\_settings.yml in the directory specified by the string solver\_settings\_path.
 
-Returns a MathOptInterface OptimizerWithAttributes Gurobi optimizer instance to be used in the GenX.generate_model() method.
+Returns a `MathOptInterface.OptimizerWithAttributes` Gurobi optimizer instance to be used in the `GenX.generate_model()` method.
 
 The Gurobi optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
