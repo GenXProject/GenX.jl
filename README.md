@@ -40,7 +40,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX currently exists in version 0.3.6 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
+GenX currently exists in version 0.4 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
 There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
@@ -252,4 +252,5 @@ Key contributors include [Nestor A. Sepulveda](https://energy.mit.edu/profile/ne
 [Neha S. Patankar](https://www.linkedin.com/in/nehapatankar),
 [Qingyu Xu](https://www.linkedin.com/in/qingyu-xu-61b3567b),
 [Jack Morris](https://www.linkedin.com/in/jack-morris-024b37121),
+[Luca Bonaldo](https://www.linkedin.com/in/luca-bonaldo-56391719b/)
 [Sambuddha Chakrabarti](https://www.linkedin.com/in/sambuddha-chakrabarti-ph-d-84157318).

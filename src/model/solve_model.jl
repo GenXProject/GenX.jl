@@ -34,7 +34,7 @@ function fix_integers(jump_model::Model)
 end
 
 @doc raw"""
-	function solve_model()
+	solve_model(EP::Model, setup::Dict)
 
 inputs: EP - a JuMP model representing the energy optimization problem
 setup - a Dict containing GenX setup flags
