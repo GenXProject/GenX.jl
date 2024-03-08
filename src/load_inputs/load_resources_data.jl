@@ -436,7 +436,7 @@ function check_resource(r::AbstractResource)
     return e
 end
 
-function check_retrofit_id(rs::Vector{AbstractResource})
+function check_retrofit_id(rs::Vector{T}) where T <: AbstractResource
     warning_strings = String[]
 
     units_can_retrofit = ids_can_retrofit(rs)
@@ -458,7 +458,7 @@ check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
 Validate the consistency of a vector of GenX resources
 Reports any errors/warnings as a vector of messages.
 """
-function check_resource(resources::T) where T <: Vector{AbstractResource}
+function check_resource(resources::Vector{T}) where T <: AbstractResource
     e = []
     for r in resources
         e = [e; check_resource(r)]
@@ -488,7 +488,7 @@ function announce_errors_and_halt(e::Vector)
     return nothing
 end
 
-function validate_resources(resources::T) where T <: Vector{AbstractResource}
+function validate_resources(resources::Vector{T}) where T <: AbstractResource
     e = check_resource(resources)
     if length(e) > 0
         announce_errors_and_halt(e)

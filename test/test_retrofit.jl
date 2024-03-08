@@ -5,7 +5,7 @@ using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
 obj_true = 3179.6244
-test_path = "Retrofit"
+test_path = "retrofit"
 
 # Define test inputs
 genx_setup = Dict(
