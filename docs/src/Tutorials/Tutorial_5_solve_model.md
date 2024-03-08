@@ -1,5 +1,7 @@
 # Tutorial 5: Solving the Model
 
+[Jupyter Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_5_Solve_Model.ipynb)
+
 In Tutorial 4, we went over how the model is generated when GenX is run using `Run.jl`. In the function `run_genx_case_simple` (or multistage), after `generate_model` is called, `solve_model` is called to solve the EP.
 
 ```@raw html
@@ -18,14 +20,14 @@ In this tutorial, we go over how to use JuMP to solve a model, what it looks lik
 From Tutorial 4, we have the model:
 
 ```math
-\begin{align}
+\begin{aligned}
 & \min 10 x + 15 y &\text{Objective function (cost)}\\ 
 & \text{s.t.} & \\
 & x + y \geq 10 &\text{Grid Demand}\\
 & 55x + 70y \leq \ 1000 &\text{Construction constraint}\\
 & 40 x + 5 y \leq 200 &\text{Emissions constraint} \\
 & x, y \geq 0 &\text{Non-negativity constraints}\\
-\end{align}
+\end{aligned}
 ```
 
 
@@ -55,12 +57,10 @@ power = Model(HiGHS.Optimizer)
 ```
 
 ```math
-$ 10 x + 15 y $
+10 x + 15 y 
 ```
 
-
 JuMP uses the function `optimize!(model)` to solve the LP:
-
 
 ```julia
 optimize!(power)
@@ -148,8 +148,6 @@ solution_summary(power)
       Node count         : 1
 ```
 
-
-
 ## GenX
 
 Let's optimize the GenX model created in the last Tutorial. To do so, we'll create the inputs for `generate_model` and run it. 
@@ -231,8 +229,6 @@ inputs = GenX.load_inputs(setup, case)
       ⋮                     => ⋮
 ```
 
-
-
 ```julia
 EP = GenX.generate_model(setup,inputs,OPTIMIZER)
 ```
@@ -313,7 +309,7 @@ Note that regardless of solver settings, the folder `TDR_Results` stays the same
 In some cases, your model may not be able to return a value. This happens when no value can be found that satisfies all constraints. To see this, let's go back to our simple example and change one of the parameters to break the model.
 
 ```math
-\begin{align}
+\begin{aligned}
 & \min 10 x + 15 y &\text{Objective function (cost)}\\ 
 & \text{s.t.} & \\
 & x + y \geq 10 &\text{Grid Demand}\\
@@ -321,29 +317,24 @@ In some cases, your model may not be able to return a value. This happens when n
 & 40 x + 5 y \leq 200 &\text{Emissions constraint} \\
 & 7 x + 30 y \geq 500 &\textbf{New Constraint} \\
 & x, y \geq 0 &\text{Non-negativity constraints}\\
-\end{align}
+\end{aligned}
 ```
-
 
 ```julia
 @constraint(power, new, 7x + 30y >= 500)
 
 ```
 
-
-
 ```math
-$$ 7 x + 30 y \geq 500 $$
+7 x + 30 y \geq 500 
 ```
-
-
 
 ```julia
 print(power)
 ```
 
 ```math
-$$ \begin{aligned}
+\begin{aligned}
 \min\quad & 10 x + 15 y\\
 \text{Subject to} \quad & x \geq 0\\
  & y \geq 0\\
@@ -353,7 +344,7 @@ $$ \begin{aligned}
  & 55 x + 70 y \leq 1000\\
  & x \in \mathbb{Z}\\
  & y \in \mathbb{Z}\\
-\end{aligned} $$
+\end{aligned} 
 ```
 
 ```julia

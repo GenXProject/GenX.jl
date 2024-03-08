@@ -29,16 +29,16 @@ using HiGHS
 
 Let's say we want to build a power grid consisting of and coal and wind plants. We want to decrease the cost of producing energy while still meeting a certain emissions threshold and full grid demand. Coal plants are cheaper to build and run but have higher emissions than wind farms. To find the minimum cost of a power grid meeting these constraints, we construct an LP using JuMP.
 
-\begin{align}
+```math
+\begin{aligned}
 & \min 10 x + 15 y &\text{Objective function (cost)}\\ 
 & \text{s.t.} & \\
 & x + y \geq 10 &\text{Grid Demand}\\
 & 55x + 70y \leq \ 1000 &\text{Construction constraint}\\
 & 40 x + 5 y \leq 200 &\text{Emissions constraint} \\
 & x, y \geq 0 &\text{Non-negativity constraints}\\
-\end{align}
-
-
+\end{aligned}
+```
 
 The core of the JuMP model is the function `Model()`, which creates the structure of our LP. `Model()` takes an optimizer as its input.
 
@@ -47,17 +47,12 @@ The core of the JuMP model is the function `Model()`, which creates the structur
 power = Model(HiGHS.Optimizer)
 ```
 
-
-
-
     A JuMP Model
     Feasibility problem with:
     Variables: 0
     Model mode: AUTOMATIC
     CachingOptimizer state: EMPTY_OPTIMIZER
     Solver name: HiGHS
-
-
 
 The model needs variables, defined using the JuMP function `@variable`:
 
@@ -66,12 +61,6 @@ The model needs variables, defined using the JuMP function `@variable`:
 @variable(power,x) # Coal
 @variable(power,y) # Wind
 ```
-
-
-
-
-$ y $
-
 
 
 Using the JuMP function `@constraint`, we can add the constraints of the model:
@@ -85,15 +74,9 @@ Using the JuMP function `@constraint`, we can add the constraints of the model:
 @constraint(power, construction_costs, 55x + 70y <= 1000) # Cost of constructing a new plant
 
 @constraint(power, demand, x + y >= 10) # Grid demand
-
 ```
 
-
-
-
-$$ x + y \geq 10 $$
-
-
+`` x + y \geq 10 ``
 
 Next, the function `@expression` defines an expression that can be used in either a constraint or objective function. In GenX, expressions are defined throughout the model generation and put into constraints and the objective function later.
 
@@ -101,13 +84,7 @@ Next, the function `@expression` defines an expression that can be used in eithe
 ```julia
 @expression(power,objective,10x+15y)
 ```
-
-
-
-
 $ 10 x + 15 y $
-
-
 
 Finally, we define the objective function itself:
 
@@ -116,12 +93,7 @@ Finally, we define the objective function itself:
 @objective(power, Min, objective)
 ```
 
-
-
-
-$ 10 x + 15 y $
-
-
+`` 10 x + 15 y ``
 
 Our model is now set up! 
 
@@ -130,36 +102,41 @@ Our model is now set up!
 print(power)
 ```
 
-
-$$ \begin{aligned}
+```math
+\begin{aligned}
 \min\quad & 10 x + 15 y\\
 \text{Subject to} \quad & x \geq 0\\
  & y \geq 0\\
  & x + y \geq 10\\
  & 40 x + 5 y \leq 200\\
  & 55 x + 70 y \leq 1000\\
-\end{aligned} $$
+\end{aligned} 
+```
 
 
 In the next Tutorial, we go over how to use JuMP to solve the model we've constructed.
 
 When `Run.jl` is called, the model for GenX is constructed in a similar way, but with many more factors to consider. The next section goes over how the GenX model is constructed before it is solved.
 
-### Generate Model <a id="GenerateModel"></a>
+### Generate Model 
 
 The basic structure of the way `Run.jl` generates and solves the model is as follows:
 
-<img src="./files/LatexHierarchy.png" style="width: 650px; height: auto" align="left">
+```@raw html
+<img src="./files/LatexHierarchy.png" style="width: 650px; height: auto">
+```
 
 The function `run_genx_case(case)` takes the "case" as its input. The case is all of the input files and settings found in the same folder as `Run.jl`. For example, in `SmallNewEngland/OneZone`, the case is:
 
-<img src="./files/OneZoneCase.png" style="width: auto; height: 500px" align="left">
+```@raw html
+<img src="./files/OneZoneCase.png" style="width: auto; height: 500px" >
+```
 
 `Run_genx_case` defines the __setup__, which are the settings in `genx_settings.yml`. From there, either `run_genx_case_simple(case, mysetup)` or`run_genx_case_multistage(case, mysetup)` is called. Both of these define the __inputs__ and __optimizer__. The optimizer is the solver as specified in `genx_settings.yml`, and the inputs are a variety of parameters specified by the settings and csv files found in the folder. Both of these functions then call `generate_model(mysetup, myinputs, OPTIMIZER)`, which is the main subject of this tutorial.
 
 As in the above example, `generate_model` utilizes the JuMP functions `Model()`, `@expression`, `@variable`, and `@constraints` to form a model. This section goes through `generate_model` and explains how the expressions are formed to create the model.
 
-#### Arguments <a id="Arguments"></a>
+#### Arguments 
 
 `Generate_model` takes three arguments: setup, inputs, and optimizer:
 
@@ -175,15 +152,9 @@ using GenX
 case = joinpath("Example_Systems_Tutorials/SmallNewEngland/OneZone") 
 ```
 
-
-
-
-    "Example_Systems_Tutorials/SmallNewEngland/OneZone"
-
-
+"Example_Systems_Tutorials/SmallNewEngland/OneZone"
 
 Setup includes the settings from `genx_settings.yml` along with the default settings found in `configure_settings.jl`. The function `configure_settings` combines the two.
-
 
 ```julia
 genx_settings = GenX.get_settings_path(case, "genx_settings.yml") # Settings YAML file path
@@ -191,11 +162,6 @@ setup = GenX.configure_settings(genx_settings) # Combines genx_settings with def
 ```
 
     Configuring Settings
-
-
-
-
-
     Dict{Any, Any} with 24 entries:
       "NetworkExpansion"                        => 0
       "TimeDomainReductionFolder"               => "TDR_Results"
@@ -221,8 +187,6 @@ setup = GenX.configure_settings(genx_settings) # Combines genx_settings with def
       "StorageLosses"                           => 1
       "IncludeLossesInESR"                      => 0
       "UCommit"                                 => 2
-
-
 
 It's here that we create the folder `TDR_Results` before generating the model. This occurs if TimeDomainReduction is set to 1 in the setup.
 
@@ -257,10 +221,6 @@ end
     CO2_cap.csv Successfully Read!
     CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
 
-
-
-
-
     Dict{String, Any} with 9 entries:
       "RMSE"          => Dict("Load_MW_z1"=>1100.54, "NG"=>0.312319, "onshore_wind_…
       "OutputDF"      => [1m1848×9 DataFrame[0m[0m…
@@ -284,20 +244,11 @@ OPTIMIZER =  GenX.configure_solver(setup["Solver"], settings_path);
 The function `configure_solver` converts the string from "Solver" to a <a href="https://jump.dev/MathOptInterface.jl/stable/" target="_blank">MathOptInterface</a> optimizer so it can be used in the JuMP model as the optimizer. It also goes into the settings file for the specified solver (in this case HiGHS, so `OneZone/Settings/highs_settings.yml`) and uses the settings to configure the solver to be used later.
 
 
-
-
-
-
 ```julia
 typeof(OPTIMIZER)
 ```
 
-
-
-
     MathOptInterface.OptimizerWithAttributes
-
-
 
 The "inputs" argument is generated by the function `load_inputs` from the case in `run_genx_case_simple` (or multistage). If TDR is set to 1 in the settings file, then `load_inputs` will draw some of the files from the `TDR_Results` folder. `TDR_Results` is produced when the case is run. 
 
@@ -319,10 +270,6 @@ inputs = GenX.load_inputs(setup, case)
     Energy_share_requirement.csv Successfully Read!
     CO2_cap.csv Successfully Read!
     CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
-
-
-
-
 
     Dict{Any, Any} with 66 entries:
       "Z"                   => 1
@@ -353,10 +300,9 @@ inputs = GenX.load_inputs(setup, case)
       ⋮                     => ⋮
 
 
-
 Now that we have our arguments, we're ready to generate the model itself.
 
-#### Run generate_model <a id="Run"></a>
+#### Run generate_model
 
 This subsection replicates the arguments in the function `generate_model`. __Note:__ Running some of these cells for a second time will throw an error as the code will attempt to define a new expression with the name of an existing expression. To run the Tutorial again, clear and restart the kernel.
 
@@ -367,18 +313,12 @@ This subsection replicates the arguments in the function `generate_model`. __Not
 EP = Model(OPTIMIZER)  # From JuMP
 ```
 
-
-
-
     A JuMP Model
     Feasibility problem with:
     Variables: 0
     Model mode: AUTOMATIC
     CachingOptimizer state: EMPTY_OPTIMIZER
     Solver name: HiGHS
-
-
-
 
 ```julia
 T = inputs["T"];   # Number of time steps (hours)
@@ -404,13 +344,8 @@ Next, the dummy variable vZERO, the objective function, the power balance expres
 @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
 ```
 
-
-
-
     1×1848 Matrix{Int64}:
      0  0  0  0  0  0  0  0  0  0  0  0  0  …  0  0  0  0  0  0  0  0  0  0  0  0
-
-
 
 Next, we go through some of the settings in setup and, if they've been set to be utilized (i.e. have a nonzero value), define expressions from their corresponding input files:
 
@@ -432,15 +367,10 @@ if setup["MaxCapReq"] == 1
     @expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
 end
 ```
-
-
-
-
     3-element Vector{Int64}:
      0
      0
      0
-
 
 
 The other settings will be used later on.
@@ -469,7 +399,6 @@ end
 if Z > 1
     GenX.transmission!(EP, inputs, setup)
 end
-
 ```
 
     Discharge Module
@@ -527,36 +456,6 @@ end
 
 ```
 
-    Dispatchable Resources Module
-    Storage Resources Module
-    Storage Investment Module
-    Storage Core Resources Module
-
-
-
-    KeyError: key :eELOSSByZone not found
-
-    
-
-    Stacktrace:
-
-     [1] getindex(m::Model, name::Symbol)
-
-       @ JuMP ~/.julia/packages/JuMP/HjlGr/src/JuMP.jl:917
-
-     [2] storage_all!(EP::Model, inputs::Dict{Any, Any}, setup::Dict{Any, Any})
-
-       @ GenX ~/.julia/packages/GenX/GdKcw/src/model/resources/storage/storage_all.jl:98
-
-     [3] storage!(EP::Model, inputs::Dict{Any, Any}, setup::Dict{Any, Any})
-
-       @ GenX ~/.julia/packages/GenX/GdKcw/src/model/resources/storage/storage.jl:118
-
-     [4] top-level scope
-
-       @ In[25]:15
-
-
 Finally, we define expressions and variables using policies outlined in the inputs. These functions can be found in `src/policies` and in the <a href="https://genxproject.github.io/GenX/dev/policies/" target="_blank">policies documentation</a>:
 
 
@@ -597,10 +496,6 @@ end
     Minimum Capacity Requirement Module
     Maximum Capacity Requirement Module
 
-
-
-
-
     3-element Vector{ConstraintRef{Model, MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LessThan{Float64}}, ScalarShape}}:
      cZoneMaxCapReq[1] : -vRETCAP[2] + vCAP[2] ≤ 50
      cZoneMaxCapReq[2] : -vRETCAP[3] + vCAP[3] ≤ 100
@@ -610,21 +505,18 @@ end
 
 The expressions and variables for the model have all been defined! All that's left to do is define the constraints and objective function.
 
-The  <a href="https://genxproject.github.io/GenX/dev/objective_function/" target="_blank">objective</a>  here is to minimize 
+The [Objective Function](@ref) here is to minimize 
 
 
 ```julia
 @objective(EP,Min,EP[:eObj])
 ```
 
+```
+0.17159171428571432 vP_{1,1} + 0.0004010989010989012 vP_{3,1} + 0.0006016483516483517 vP_{4,1} + 0.17159171428571432 vP_{1,2} + 0.0004010989010989012 vP_{3,2} + 0.0006016483516483517 vP_{4,2} + 0.17159171428571432 vP_{1,3} + 0.0004010989010989012 vP_{3,3} + 0.0006016483516483517 vP_{4,3} + 0.17159171428571432 vP_{1,4} + 0.0004010989010989012 vP_{3,4} + 0.0006016483516483517 vP_{4,4} + 0.17159171428571432 vP_{1,5} + 0.0004010989010989012 vP_{3,5} + 0.0006016483516483517 vP_{4,5} + 0.17159171428571432 vP_{1,6} + 0.0004010989010989012 vP_{3,6} + 0.0006016483516483517 vP_{4,6} + 0.17159171428571432 vP_{1,7} + 0.0004010989010989012 vP_{3,7} + 0.0006016483516483517 vP_{4,7} + 0.17159171428571432 vP_{1,8} + 0.0004010989010989012 vP_{3,8} + 0.0006016483516483517 vP_{4,8} + 0.17159171428571432 vP_{1,9} + 0.0004010989010989012 vP_{3,9} + 0.0006016483516483517 vP_{4,9} + 0.17159171428571432 vP_{1,10} + 0.0004010989010989012 vP_{3,10} + 0.0006016483516483517 vP_{4,10} + [[\ldots\text{11038 terms omitted}\ldots]] + 0.00015041208791208792 vCHARGE_{4,1819} + 0.00015041208791208792 vCHARGE_{4,1820} + 0.00015041208791208792 vCHARGE_{4,1821} + 0.00015041208791208792 vCHARGE_{4,1822} + 0.00015041208791208792 vCHARGE_{4,1823} + 0.00015041208791208792 vCHARGE_{4,1824} + 0.00015041208791208792 vCHARGE_{4,1825} + 0.00015041208791208792 vCHARGE_{4,1826} + 0.00015041208791208792 vCHARGE_{4,1827} + 0.00015041208791208792 vCHARGE_{4,1828} + 0.00015041208791208792 vCHARGE_{4,1829} + 0.00015041208791208792 vCHARGE_{4,1830} + 0.00015041208791208792 vCHARGE_{4,1831} + 0.00015041208791208792 vCHARGE_{4,1832} + 0.00015041208791208792 vCHARGE_{4,1833} + 0.00015041208791208792 vCHARGE_{4,1834} + 0.00015041208791208792 vCHARGE_{4,1835} + 0.00015041208791208792 vCHARGE_{4,1836} + 0.00015041208791208792 vCHARGE_{4,1837} + 0.00015041208791208792 vCHARGE_{4,1838} + 0.00015041208791208792 vCHARGE_{4,1839} + 0.00015041208791208792 vCHARGE_{4,1840} + 0.00015041208791208792 vCHARGE_{4,1841} + 0.00015041208791208792 vCHARGE_{4,1842} + 0.00015041208791208792 vCHARGE_{4,1843} + 0.00015041208791208792 vCHARGE_{4,1844} + 0.00015041208791208792 vCHARGE_{4,1845} + 0.00015041208791208792 vCHARGE_{4,1846} + 0.00015041208791208792 vCHARGE_{4,1847} + 0.00015041208791208792 vCHARGE_{4,1848} $
+```
 
-
-
-$ 0.17159171428571432 vP_{1,1} + 0.0004010989010989012 vP_{3,1} + 0.0006016483516483517 vP_{4,1} + 0.17159171428571432 vP_{1,2} + 0.0004010989010989012 vP_{3,2} + 0.0006016483516483517 vP_{4,2} + 0.17159171428571432 vP_{1,3} + 0.0004010989010989012 vP_{3,3} + 0.0006016483516483517 vP_{4,3} + 0.17159171428571432 vP_{1,4} + 0.0004010989010989012 vP_{3,4} + 0.0006016483516483517 vP_{4,4} + 0.17159171428571432 vP_{1,5} + 0.0004010989010989012 vP_{3,5} + 0.0006016483516483517 vP_{4,5} + 0.17159171428571432 vP_{1,6} + 0.0004010989010989012 vP_{3,6} + 0.0006016483516483517 vP_{4,6} + 0.17159171428571432 vP_{1,7} + 0.0004010989010989012 vP_{3,7} + 0.0006016483516483517 vP_{4,7} + 0.17159171428571432 vP_{1,8} + 0.0004010989010989012 vP_{3,8} + 0.0006016483516483517 vP_{4,8} + 0.17159171428571432 vP_{1,9} + 0.0004010989010989012 vP_{3,9} + 0.0006016483516483517 vP_{4,9} + 0.17159171428571432 vP_{1,10} + 0.0004010989010989012 vP_{3,10} + 0.0006016483516483517 vP_{4,10} + [[\ldots\text{11038 terms omitted}\ldots]] + 0.00015041208791208792 vCHARGE_{4,1819} + 0.00015041208791208792 vCHARGE_{4,1820} + 0.00015041208791208792 vCHARGE_{4,1821} + 0.00015041208791208792 vCHARGE_{4,1822} + 0.00015041208791208792 vCHARGE_{4,1823} + 0.00015041208791208792 vCHARGE_{4,1824} + 0.00015041208791208792 vCHARGE_{4,1825} + 0.00015041208791208792 vCHARGE_{4,1826} + 0.00015041208791208792 vCHARGE_{4,1827} + 0.00015041208791208792 vCHARGE_{4,1828} + 0.00015041208791208792 vCHARGE_{4,1829} + 0.00015041208791208792 vCHARGE_{4,1830} + 0.00015041208791208792 vCHARGE_{4,1831} + 0.00015041208791208792 vCHARGE_{4,1832} + 0.00015041208791208792 vCHARGE_{4,1833} + 0.00015041208791208792 vCHARGE_{4,1834} + 0.00015041208791208792 vCHARGE_{4,1835} + 0.00015041208791208792 vCHARGE_{4,1836} + 0.00015041208791208792 vCHARGE_{4,1837} + 0.00015041208791208792 vCHARGE_{4,1838} + 0.00015041208791208792 vCHARGE_{4,1839} + 0.00015041208791208792 vCHARGE_{4,1840} + 0.00015041208791208792 vCHARGE_{4,1841} + 0.00015041208791208792 vCHARGE_{4,1842} + 0.00015041208791208792 vCHARGE_{4,1843} + 0.00015041208791208792 vCHARGE_{4,1844} + 0.00015041208791208792 vCHARGE_{4,1845} + 0.00015041208791208792 vCHARGE_{4,1846} + 0.00015041208791208792 vCHARGE_{4,1847} + 0.00015041208791208792 vCHARGE_{4,1848} $
-
-
-
-Our constraint is the <a href="https://genxproject.github.io/GenX/dev/power_balance/#Power-Balancewhich " target="_blank">power balance</a>, which is set here to have to meet the demand of the network. The demand is outlined in the last columns of `Load_data.csv`, and is set to inputs in from the `load_load_data` function within `load_inputs`, used in `run_genx_case`.
+Our constraint is the [Power Balance](@ref), which is set here to have to meet the demand of the network. The demand is outlined in the last columns of `Load_data.csv`, and is set to inputs in from the `load_load_data` function within `load_inputs`, used in `run_genx_case`.
 
 
 ```julia
@@ -634,9 +526,6 @@ Our constraint is the <a href="https://genxproject.github.io/GenX/dev/power_bala
 @constraint(EP, cPowerBalance[t=1:T, z=1:Z], EP[:ePowerBalance][t,z] == inputs["pD"][t,z])
 
 ```
-
-
-
 
     1848×1 Matrix{ConstraintRef{Model, MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}, ScalarShape}}:
      cPowerBalance[1,1] : vP[2,1] + vP[3,1] + vP[4,1] + vNSE[1,1,1] - vCHARGE[4,1] = 11.162
@@ -669,8 +558,3 @@ Our constraint is the <a href="https://genxproject.github.io/GenX/dev/power_bala
 
 
 After this final constraint is defined, `generate_model` finishes compiling the EP, and `run_genx_simple` (or multistage) uses `solve_model` to solve the EP. This will be described in Tutorial 5.
-
-
-```julia
-
-```

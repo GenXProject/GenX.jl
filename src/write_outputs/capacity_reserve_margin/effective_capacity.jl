@@ -1,11 +1,11 @@
 @doc raw"""
 	thermal_plant_effective_capacity(EP::Model,
 	                                 inputs::Dict,
-									 resources::Vector{Int},
-									 capres_zone::Int,
-									 timesteps::Vector{Int})::Matrix{Float64}
+                                     resources::Vector{Int},
+                                     capres_zone::Int,
+                                     timesteps::Vector{Int})::Matrix{Float64}
 
-	Effective capacity in a capacity reserve margin zone for certain resources in the given timesteps.
+Effective capacity in a capacity reserve margin zone for certain resources in the given timesteps.
 """
 function thermal_plant_effective_capacity(
     EP,
