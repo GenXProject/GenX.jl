@@ -1,5 +1,5 @@
 @doc raw"""
-	write_operating_reserve_price_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_operating_reserve_regulation_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the operating reserve and regulation revenue earned by generators listed in the input file.
     GenX will print this file only when operating reserve and regulation are modeled and the shadow price can be obtained from the solver.

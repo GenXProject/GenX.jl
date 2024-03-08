@@ -1,5 +1,5 @@
 @doc raw"""
-	vre_stor(EP::Model, inputs::Dict, setup::Dict)
+	vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
 This module enables the modeling of 1) co-located VRE and energy storage technologies, 
 and 2) optimized interconnection sizing for VREs. Utility-scale solar PV and/or wind VRE technologies 

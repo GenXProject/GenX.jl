@@ -1,5 +1,5 @@
 @doc raw"""
-	function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
+	write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
 
 This function writes the file network\_expansion\_multi\_stage.csv to the Results directory. This file contains new transmission capacities for each modeled transmission line for the first and all subsequent model stages.
 

@@ -1,5 +1,6 @@
 @doc raw"""
-	discharge(EP::Model, inputs::Dict, setup::Dict)
+	discharge!(EP::Model, inputs::Dict, setup::Dict)
+
 This module defines the power decision variable $\Theta_{y,t} \forall y \in \mathcal{G}, t \in \mathcal{T}$, representing energy injected into the grid by resource $y$ by at time period $t$.
 This module additionally defines contributions to the objective function from variable costs of generation (variable O&M) from all resources $y \in \mathcal{G}$ over all time periods $t \in \mathcal{T}$:
 ```math

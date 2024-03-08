@@ -1,5 +1,5 @@
 @doc raw"""
-	function transmission!(EP::Model, inputs::Dict, setup::Dict)
+	transmission!(EP::Model, inputs::Dict, setup::Dict)
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
 The function adds transmission reinforcement or construction costs to the objective function. Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$.
 ```math
