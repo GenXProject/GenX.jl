@@ -47,6 +47,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 	
 	output_settings_d["WriteStatus"] && write_status(path, inputs, setup, EP)
 
+	if !has_duals(EP) && setup["WriteShadowPrices"] == 1
+		# function to fix integers and linearize problem
+		fix_integers(EP)
+		# re-solve statement for LP solution
+		println("Solving LP solution for duals")
+		set_silent(EP)
+		optimize!(EP)
+	end
+
 	if output_settings_d["WriteCosts"]
 		elapsed_time_costs = @elapsed write_costs(path, inputs, setup, EP)
 		println("Time elapsed for writing costs is")

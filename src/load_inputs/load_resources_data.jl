@@ -1057,18 +1057,18 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
         # store a unique set of retrofit_ids
         inputs["RETROFIT_IDS"] = Set(retrofit_id.(gen[inputs["RETROFIT_CAP"]]))
         
-        # Check if retrofit options and retrofitting units with unit commitment have the same capacity when UCommit == 1
-        if setup["UCommit"] == 1
-            can_retrofit_commit = intersect(inputs["RETROFIT_CAP"], inputs["COMMIT"])
-            retrofit_options_commit = intersect(inputs["RETROFIT_OPTIONS"], inputs["COMMIT"])
-            cap_size_can_retrofit_commit = cap_size.(gen[can_retrofit_commit])
-            cap_size_retrofit_options_commit = cap_size.(gen[retrofit_options_commit]) .* retrofit_efficiency.(gen[retrofit_options_commit])
-            if cap_size_can_retrofit_commit != cap_size_retrofit_options_commit
-                msg = "Retrofit options and retrofitting units with unit commitment should have the same capacity.\n" *
-                    "Check \"Cap_Size\" and \"Retrofit_Efficiency\" for the retrofitting units and retrofit options in the input files."
-                @warn(msg)
-            end
-        end
+        # # Check if retrofit options and retrofitting units with unit commitment have the same capacity when UCommit == 1
+        # if setup["UCommit"] == 1
+        #     can_retrofit_commit = intersect(inputs["RETROFIT_CAP"], inputs["COMMIT"])
+        #     retrofit_options_commit = intersect(inputs["RETROFIT_OPTIONS"], inputs["COMMIT"])
+        #     cap_size_can_retrofit_commit = cap_size.(gen[can_retrofit_commit])
+        #     cap_size_retrofit_options_commit = cap_size.(gen[retrofit_options_commit]) .* retrofit_efficiency.(gen[retrofit_options_commit])
+        #     if cap_size_can_retrofit_commit != cap_size_retrofit_options_commit
+        #         msg = "Retrofit options and retrofitting units with unit commitment should have the same capacity.\n" *
+        #             "Check \"Cap_Size\" and \"Retrofit_Efficiency\" for the retrofitting units and retrofit options in the input files."
+        #         @warn(msg)
+        #     end
+        # end
     end
 
     new_cap_energy = Set{Int64}()
