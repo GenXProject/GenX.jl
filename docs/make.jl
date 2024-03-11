@@ -17,10 +17,10 @@ pages = OrderedDict(
         "Commertial solvers" => "Getting_Started/commercial_solvers.md",
     ],
     "Tutorials" => [
-        "Tutorials Overview" => "Tutorials/tutorials_intro.md",
+        "Tutorials Overview" => "Tutorials/Tutorials_intro.md",
         "Tutorial 1: Configuring Settings" => "Tutorials/Tutorial_1_configuring_settings.md",
         "Tutorial 2: Network Visualization" => "Tutorials/Tutorial_2_network_visualization.md",
-        "Tutorial 3: K-Means and Time Domain Reduction" => "Tutorials/tutorial_3/Tutorial_3_K-means_time_domain_reduction.md",
+        "Tutorial 3: K-Means and Time Domain Reduction" => "Tutorials/Tutorial_3_K-means_time_domain_reduction.md",
         "Tutorial 4: Model Generation" => "Tutorials/Tutorial_4_model_generation.md",
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
         "Tutorial 6: Post Processing" => "Tutorials/Tutorial_6_solver_settings.md",

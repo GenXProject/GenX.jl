@@ -12,6 +12,7 @@ The table below summarizes the key differences in the two model setups.
 | Objective function cost basis              | Net present value | Annualized costs                     |
 | Price/dual variable information available? | No                | Yes                                  |
 
+
 ### Additional inputs needed for multi-stage modeling
 
 ####  Input data files
@@ -57,6 +58,9 @@ Instead of one set of input files, there is one directory of input files that ne
 | Capital\_Recovery\_Period   | The line-specific period in years over which initial capital costs must be recovered.                                                                |
 | WACC                      | The line-specific weighted average cost of capital.                                                                                                  |
 
+
+!!! warning "Warning"
+    If `New_Build` and `Can_Retire` are both set to 0, the model will not transfer built capacity from one stage to the next, but will instead set capacity to the value of existing capacity from the input files for each stage. Therefore, the user must ensure that the capacity is correctly set in the input files for each stage. Not following this guideline may result in incorrect or unexpected results, particularly when setting a a non-zero value for the `Min_Retired_Cap_MW` parameter. 
 
 #### Settings Files
 A separate settings.yml file includes a list of parameters to be specified to formulate the multi-stage planning model.
