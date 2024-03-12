@@ -1,0 +1,12 @@
+Resource,Fuel,Zone,AnnualSumCosts
+natural_gas_combined_cycle,NG,1,0.0
+coal_super_1,coal,1,90416.17795082826
+coal_super_2,coal,1,0.0
+coal_super_3,coal,1,0.0
+coal_super_4,coal,1,432940.0430203162
+coal_super_5,coal,1,0.0
+20A_retrofit_1,blue_ammonia,1,2.961295902952549e8
+20A_retrofit_2,blue_ammonia,1,1.9846231753152013e8
+20A_retrofit_3,blue_ammonia,1,1.953215381784662e8
+20A_retrofit_4,blue_ammonia,1,0.0
+20A_retrofit_5,blue_ammonia,1,4.046116211447613e8

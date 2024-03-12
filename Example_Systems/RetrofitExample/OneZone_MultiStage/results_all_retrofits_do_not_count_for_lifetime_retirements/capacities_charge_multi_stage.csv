@@ -1,0 +1,16 @@
+Resource,Zone,StartChargeCap_p1,EndChargeCap_p1,EndChargeCap_p2,EndChargeCap_p3
+natural_gas_combined_cycle,1,0.0,0.0,0.0,0.0
+coal_super_1,1,0.0,0.0,0.0,0.0
+coal_super_2,1,0.0,0.0,0.0,0.0
+coal_super_3,1,0.0,0.0,0.0,0.0
+coal_super_4,1,0.0,0.0,0.0,0.0
+coal_super_5,1,0.0,0.0,0.0,0.0
+20A_retrofit_1,1,0.0,0.0,0.0,0.0
+20A_retrofit_2,1,0.0,0.0,0.0,0.0
+20A_retrofit_3,1,0.0,0.0,0.0,0.0
+20A_retrofit_4,1,0.0,0.0,0.0,0.0
+20A_retrofit_5,1,0.0,0.0,0.0,0.0
+solar_pv,1,0.0,0.0,0.0,0.0
+onshore_wind,1,0.0,0.0,0.0,0.0
+battery,1,0.0,0.0,0.0,0.0
+Total,n/a,0.0,0.0,0.0,0.0
