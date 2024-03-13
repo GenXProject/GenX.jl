@@ -1,4 +1,4 @@
-<div align="center"> <img src="docs/src/assets/genx_logo.svg" alt="GenX.jl"></img></div>
+<div align="center"> <img src="docs/src/assets/genx_logo.svg"  height ="100"width="1000" alt="GenX.jl"></img></div>
 
 [![Build and Deploy](https://github.com/GenXProject/GenX/blob/develop/.github/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/blob/develop/.github/workflows/ci.yml)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX/dev)
@@ -11,7 +11,7 @@ that incorporates several state-of-the-art practices in electricity system plann
 The model was [originally developed](https://energy.mit.edu/publication/enhanced-decision-support-changing-electricity-landscape/) by 
 [Jesse D. Jenkins](https://mae.princeton.edu/people/faculty/jenkins) and 
 [Nestor A. Sepulveda](https://energy.mit.edu/profile/nestor-sepulveda/) at the Massachusetts Institute of Technology and is now jointly maintained by 
-[a team of contributors](https://github.com/GenXProject/GenX#genx-team) at the MIT Energy Initiative (led by [Dharik Mallapragada](https://energy.mit.edu/profile/dharik-mallapragada/)) and the Princeton University ZERO Lab (led by Jenkins). 
+[a team of contributors](https://github.com/GenXProject/GenX#genx-team) at the Princeton University ZERO Lab (led by Jenkins), MIT (led by [Ruaridh MacDonald](https://energy.mit.edu/profile/ruaridh-macdonald/)), and NYU (led by [Dharik Mallapragada](https://engineering.nyu.edu/faculty/dharik-mallapragada)). 
 
 GenX is a constrained linear or mixed integer linear optimization model that determines the portfolio of electricity generation, 
 storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost,
