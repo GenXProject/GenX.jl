@@ -34,9 +34,7 @@ using YAML
 genx_settings_SNE = YAML.load(open("example_systems/1_three_zones/settings/genx_settings.yml"))
 ```
 
-
-
-
+```
     Dict{Any, Any} with 19 entries:
       "NetworkExpansion"                        => 1
       "ModelingToGenerateAlternativeIterations" => 3
@@ -57,7 +55,7 @@ genx_settings_SNE = YAML.load(open("example_systems/1_three_zones/settings/genx_
       "MinCapReq"                               => 1
       "CO2Cap"                                  => 2
       "WriteShadowPrices"                       => 1
-
+```
 
 
 Since all settings have defaults, you only need to specify the settings you would like to change. In fact, you can leave your settings file completely blank and it will still run! Let's try editing `genx_settings` in `SmallNewEngland/OneZone` to contain no parameters:
@@ -81,6 +79,7 @@ Now, we run GenX and output the file `capacity.csv` from the `Results` folder. T
 include("example_systems/1_three_zones/Run.jl")
 ```
 
+```
     Configuring Settings
     Configuring Solver
     Loading Inputs
@@ -90,13 +89,11 @@ include("example_systems/1_three_zones/Run.jl")
     Fuels_data.csv Successfully Read!
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
+    [ Info: Thermal.csv Successfully Read.
+    [ Info: Vre.csv Successfully Read.
+    [ Info: Storage.csv Successfully Read.
+    [ Info: Resource_minimum_capacity_requirement.csv Successfully Read.
 
-
-    
     Summary of resources loaded into the model:
     -------------------------------------------------------
     	Resource type 		Number of resources
@@ -124,7 +121,7 @@ include("example_systems/1_three_zones/Run.jl")
     Storage Core Resources Module
     Storage Resources with Symmetric Charge/Discharge Capacity Module
     Thermal (No Unit Commitment) Resources Module
-
+```
 
 
 ```julia

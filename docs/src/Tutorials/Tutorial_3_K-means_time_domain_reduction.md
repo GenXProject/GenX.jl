@@ -13,7 +13,7 @@ A good tool to reduce computation time of GenX is to use [Time Domain Reduction 
 * [Extreme Periods](#ExtPeriods)
 * [Objective Values and Representative Periods](#ObjVals)
 
-### Time Domain Reduction <a id="TDR"></a>
+### Time Domain Reduction
 
 To see how Time Domain Reduction works, let's look at the `Doad_data` in `example_systems/1_three_zones`:
 
@@ -56,6 +56,7 @@ When TDR is used, the file `time_domain_reduction_settings.yml` is called with a
 ```julia
 time_domain_reduction_settings = YAML.load(open(joinpath(case,"settings/time_domain_reduction_settings.yml")))
 ```
+```
     Dict{Any, Any} with 15 entries:
       "IterativelyAddPeriods" => 1
       "ExtremePeriods"        => Dict{Any, Any}("Wind"=>Dict{Any, Any}("System"=>Di…
@@ -72,13 +73,13 @@ time_domain_reduction_settings = YAML.load(open(joinpath(case,"settings/time_dom
       "ScalingMethod"         => "S"
       "ClusterMethod"         => "kmeans"
       "WeightTotal"           => 8760
+```
 
 Important here to note are `MinPeriods` and `MaxPeriods`. As TDR is performed, it is required to keep the number of representative periods to be between the min and max specified in the settings. This is to ensure that computation time is actually decreased and that the k-means algorithm doesn't just form one large cluster of all points. Additionally, `TimestepsPerRepPeriod` is set to 168, the number of hours in a week (`WeightTotal` includes all 8,760 timesteps, the number of hours in a year.) By specifying the number of timesteps in each representative period to be a week, we form 52 clusters from which the algorithm will choose 8-11.
 
 For descriptions of all settings, see [`cluster_inputs`](@ref) in the documentation.
 
 Now back to pre-TDR. Below shows the load per timestep in megawatts for the entire dataset, i.e. with only one representative period of 8760 hours. This is done for Zone 1:
-
 
 ```julia
 loads |>
@@ -87,12 +88,13 @@ loads |>
     width=600,height=400,linewidth=.01)
 ```
 
-![svg](output_14_0.svg)
+![svg](./files/output_14_0.svg)
 
-As in Tutorial 1, we can open the `genx_settings.yml` file for `1_three_zones` to see how `TimeDomainReduction` is set. If it's set to 1, this means TDR is being used.
+As in [Tutorial 1: Configuring Settings](@ref), we can open the `genx_settings.yml` file for `1_three_zones` to see how `TimeDomainReduction` is set. If it's set to 1, this means TDR is being used.
 
 ```julia
 genx_settings_TZ = YAML.load(open((joinpath(case,"settings/genx_settings.yml"))))
+```
 ```
     Dict{Any, Any} with 19 entries:
       "NetworkExpansion"                        => 1
@@ -114,7 +116,7 @@ genx_settings_TZ = YAML.load(open((joinpath(case,"settings/genx_settings.yml")))
       "MinCapReq"                               => 1
       "CO2Cap"                                  => 2
       "WriteShadowPrices"                       => 1
-
+```
 
 To visualize how TDR decreases computation time, let's start by running `SmallNewEngland/OneZone` without TDR. In the third section of this tutorial, we'll run the example again using TDR.
 
@@ -461,9 +463,9 @@ recon_noex[!,:MW] = convert.(Float64,recon_noex[!,:MW]);
 
 ### Objective Values and Representative Periods
 
-Each time `Run.jl` is run, a `Results` folder is produced. This folder contains numerous .csv files with output variable from the GenX model. For more information on all outputs, see the documentation <a href="https://genxproject.github.io/GenX/dev/data_documentation/#Outputs" target="_blank">here</a>.
+Each time `Run.jl` is run, a `Results` folder is produced. This folder contains numerous .csv files with output variable from the GenX model. For more information on all outputs, see the documentation [here](https://genxproject.github.io/GenX/dev/data_documentation/#Outputs).
 
-This section focuses on the __objective value__ of the model. In optimization problems, the objective value is the main value minimized or maximized within the constraints of the model, according to the __objective function__ specified in the problem formulation. In the case of GenX, the objective function is the total annual electricity system cost. A detailed description of the optimization problem is  <a href="https://genxproject.github.io/GenX/dev/objective_function/" target="_blank">here</a> in the documentation. 
+This section focuses on the __objective value__ of the model. In optimization problems, the objective value is the main value minimized or maximized within the constraints of the model, according to the __objective function__ specified in the problem formulation. In the case of GenX, the objective function is the total annual electricity system cost. A detailed description of the optimization problem is [here](https://genxproject.github.io/GenX/dev/objective_function/) in the documentation. 
 
 For the purpose of this tutorial, we focus on the objective value as a way to evaluate how well the representative periods actually "represent" the entire model. To see how well the objective value of representative periods aligns with that of the total period, we can run `SmallNewEngland/OneZone` with a variety of minimum and maximum total periods.
 
