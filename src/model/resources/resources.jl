@@ -542,8 +542,8 @@ function can_retrofit(r::AbstractResource)
 end
 
 function is_retrofit_option(r::AbstractResource)
-    validate_boolean_attribute(r, :retrofit_option)
-    return Bool(get(r, :retrofit_option, false))
+    validate_boolean_attribute(r, :retrofit)
+    return Bool(get(r, :retrofit, false))
 end
 
 function can_contribute_min_retirement(r::AbstractResource)

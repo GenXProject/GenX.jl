@@ -420,7 +420,7 @@ function check_retrofit_resource(r::AbstractResource)
                    "A unit that can be retrofitted must also be eligible for retirement (:can_retire = 1)")
         push!(error_strings, e)
     elseif is_retrofit_option(r) == true && new_build(r) == false
-        e = string("Resource ", resource_name(r), " has :retrofit_option = ", is_retrofit_option(r), " but :new_build = ", new_build(r), ".\n",
+        e = string("Resource ", resource_name(r), " has :retrofit = ", is_retrofit_option(r), " but :new_build = ", new_build(r), ".\n",
                    "This setting is valid only for resources that have :new_build = 1")
         push!(error_strings, e)
     end
