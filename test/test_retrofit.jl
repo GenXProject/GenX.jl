@@ -17,6 +17,7 @@ genx_setup = Dict(
     "UCommit" => 2,
     "EnergyShareRequirement" => 1,
     "CapacityReserveMargin" => 1,
+    "MultiStage" => 0,
 )
 
 # Run the case and get the objective value and tolerance
@@ -34,5 +35,15 @@ test_result = @test obj_test ≈ obj_true atol = optimal_tol
 obj_test = round_from_tol!(obj_test, optimal_tol)
 optimal_tol = round_from_tol!(optimal_tol, optimal_tol)
 write_testlog(test_path, obj_test, optimal_tol, test_result)
+
+# Test the outputs
+outputs_path = joinpath(test_path, "results")
+# Remove result folder if it exists
+isdir(outputs_path) && rm(outputs_path, recursive = true)
+# Write outputs
+!(isdir(outputs_path)) && mkpath(outputs_path)
+GenX.write_capacity(outputs_path, inputs, genx_setup, EP)
+
+@test cmp_csv(joinpath(outputs_path, "capacity.csv"), joinpath(test_path, "results_true","capacity.csv"))
 
 end # module TestRetrofit
