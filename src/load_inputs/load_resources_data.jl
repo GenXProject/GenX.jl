@@ -591,7 +591,7 @@ end
 """
     add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
 
-Adds a set of new attributes (names and corresponding values) to a resource if their values are different from zero. The resource is modified in-place.
+Adds a set of new attributes (names and corresponding values) to a resource. The resource is modified in-place.
 
 # Arguments
 - `resource::AbstractResource`: The resource to add attributes to.
@@ -602,8 +602,8 @@ Adds a set of new attributes (names and corresponding values) to a resource if t
 function add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
     # loop over new attributes
     for (sym, value) in zip(new_symbols, new_values)
-        # add attribute to resource if value is not zero
-        value ≠ 0 && setproperty!(resource, sym, value)
+        # add attribute to resource
+        setproperty!(resource, sym, value)
     end
     return nothing
 end    

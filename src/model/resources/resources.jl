@@ -548,7 +548,7 @@ end
 
 function can_contribute_min_retirement(r::AbstractResource)
     validate_boolean_attribute(r, :min_retirement)
-    return Bool(get(r, :min_retirement, false))
+    return Bool(get(r, :min_retirement, true))
 end
 
 const default_minmax_cap = -1.
@@ -681,6 +681,7 @@ maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_
 maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default_zero)
 
 ids_contribute_min_retirement(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_contribute_min_retirement(r) == true, rs)
+ids_not_contribute_min_retirement(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_contribute_min_retirement(r) == false, rs)
 
 # STORAGE interface
 """
@@ -931,19 +932,19 @@ function resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
 end
 
 @doc raw"""
-    resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::String)
+    resources_in_retrofit_cluster_by_rid(rs::Vector{<:AbstractResource}, cluster_id::String)
 
-Find R_ID's of resources with retrofit pool id `pool_id`.
+Find R_ID's of resources with retrofit cluster id `cluster_id`.
 
 # Arguments
 - `rs::Vector{<:AbstractResource}`: The vector of resources.
-- `pool_id::String`: The retrofit pool id.
+- `cluster_id::String`: The retrofit cluster id.
 
 # Returns
-- `Vector{Int64}`: The vector of resource ids in the retrofit pool.
+- `Vector{Int64}`: The vector of resource ids in the retrofit cluster.
 """
-function resources_in_retrofit_pool_by_rid(rs::Vector{<:AbstractResource}, pool_id::String)
-    return resource_id.(rs[retrofit_id.(rs) .== pool_id])
+function resources_in_retrofit_cluster_by_rid(rs::Vector{<:AbstractResource}, cluster_id::String)
+    return resource_id.(rs[retrofit_id.(rs) .== cluster_id])
 end
 
 """
@@ -978,6 +979,42 @@ function validate_boolean_attribute(r::AbstractResource, attr::Symbol)
     attr_value = get(r, attr, 0)
     if attr_value != 0 && attr_value != 1
         error("Attribute $attr in resource $(resource_name(r)) must be boolean. 
-        The only valid values are 0 or 1.")
+        The only valid values are {0,1}, not $attr_value.")
     end
 end
+
+"""
+    ids_with_not_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
+
+Find the resource ids of the retrofit units in the vector `rs` where not all retrofit options contribute to min retirement.
+
+# Arguments
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Vector{Int64}`: The vector of resource ids.
+"""
+function ids_with_not_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
+    # select resources that can retrofit
+    units_can_retrofit = ids_can_retrofit(rs)
+    # check if all retrofit options in the retrofit cluster of each retrofit resource contribute to min retirement
+    condition::Vector{Bool} = hasnot_all_options_contributing.(rs[units_can_retrofit], Ref(rs))
+    return units_can_retrofit[condition]
+end
+
+"""
+    hasnot_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+
+Check if all retrofit options in the retrofit cluster of the retrofit resource `retrofit_res` contribute to min retirement.
+
+# Arguments
+- `retrofit_res::AbstractResource`: The retrofit resource.
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Bool`: True if not all retrofit options contribute to min retirement, otherwise false.
+"""
+function hasnot_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+    retro_id = retrofit_id(retrofit_res)
+    return !isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id), ids_retrofit_options(rs), ids_not_contribute_min_retirement(rs)))
+end 
