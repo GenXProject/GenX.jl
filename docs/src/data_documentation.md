@@ -306,6 +306,15 @@ Each file contains cost and performance parameters for various generators and ot
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
 |**Required if electrolyzer is included in the model**|
 |Qualified_Hydrogen_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
+|**Required for retrofitting**|
+|Can\_Retrofit | {0, 1}, Flag for resource (storage, generation) eligibility for retrofit.|
+||Can\_Retrofit = 1: eligible for retrofit. |
+||Can\_Retrofit = 0: not eligible for retrofit.|
+|Retrofit | {0, 1}, Flag for resource retrofit technologies (i.e., retrofit options, e.g. CCS retrofit for coal plants).|
+||Retrofit = 1: is a retrofit technology. |
+||Retrofit = 0: is not a retrofit technology.|
+|Retrofit\_Id | Unique identifier to group retrofittable source technologies with retrofit options.|
+|Retrofit\_Efficiency | [0,1], Efficiency of the retrofit technology.|
 
 ##### Table 5b: Settings-specific columns in all resource .csv file
 ---
@@ -654,6 +663,7 @@ The following table describes the columns in each of these two files.
 |Min\_Retired\_Cap\_MW  |Minimum required discharge capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity. Note that for co-located VRE-STOR resources, this value pertains to the grid connection. |
 |Min\_Retired\_Energy\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing energy capacity. Note that for co-located VRE-STOR resources, this value pertains to the storage component.|
 |Min\_Retired\_Charge\_Cap\_MW  |Minimum required energy capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing charge capacity. |
+|Contribute\_Min\_Retirement | {0, 1}, Flag to indicate whether the (retrofitting) resource can contribute to the minimum retirement requirement.|
 |**co-located VRE-STOR resources only**|
 |Capital\_Recovery\_Period_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the inverter component. |
 |Capital\_Recovery\_Period_Solar  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the solar PV component. |
