@@ -136,7 +136,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\zeta_{y,z,t}$ | Number of shutdown decisions,  of the generation cluster $y$ in zone $z$ at time $t$|
 |$\mathcal{Q}_{o,n} \in \mathbb{R}_+$ | Inventory of storage of type $o$ at the beginning of input period $n$ \[MWh]|
 |$\Delta\mathcal{Q}_{o,m} \in \mathbb{R}$ | Excess storage inventory built up during representative period $m$ \[MWh]|
-|$ON^{+}_{l,t} \in \{0,1\} $ | Binary variable to activate positive flows on line $l$ in time $t$|
+|$ON^{+}_{l,t} \in {0,1}$ | Binary variable to activate positive flows on line $l$ in time $t$|
 |$TransON^{+}_{l,t} \in \mathbb{R}_+$ | Variable defining maximum positive flow in line $l$ in time $t$ \[MW\]|
 |$\Theta^{CRM}_{y,z,t} \in \mathbb{R}_+$ | "Virtual" energy discharged by a storage resource that contributes to the capacity reserve margin for technology $y$ at time step $t$ in zone $z$ - only applicable for storage resources with activated capacity reserve margin policies, $y \in \mathcal{O}$ \[MWh]|
 |$\Pi^{CRM}_{y,z,t} \in \mathbb{R}_+$ | "Virtual" energy withdrawn by a storage resource from the grid by technology $y$ at time step $t$ in zone $z$ - only applicable for storage resources with activated capacity reserve margin policies, $y \in \mathcal{O}$ \[MWh]|
@@ -266,6 +266,6 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\mu_{p,z}^{\mathcal{ESR}}$ | share of total demand in each model zone $z \in \mathcal{ESR}^{p}$  that must be served by qualifying renewable energy resources $y \in \mathcal{G}^{ESR}_{p}$|
 |$f(n)$ | Mapping each modeled period $n \in \mathcal{N}$ to corresponding representative period $w \in \mathcal{W}$|
 |$\eta_{y}^{electrolyzer}$ | Efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced \[MWh/t\] (optional parameter)|
-|$\$^{hydrogen}_y$ | Price of hydrogen per metric tonne for electrolyzer $y$ \[\$/t\] (optional parameter)|
+|$ $^{hydrogen}_y$ | Price of hydrogen per metric tonne for electrolyzer $y$ \[\$/t\] (optional parameter)|
 |$\mathcal{Min kt}_y$ | Minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes \[kt\] (optional parameter)|
 ---
