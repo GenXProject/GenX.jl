@@ -547,8 +547,8 @@ function is_retrofit_option(r::AbstractResource)
 end
 
 function can_contribute_min_retirement(r::AbstractResource)
-    validate_boolean_attribute(r, :min_retirement)
-    return Bool(get(r, :min_retirement, true))
+    validate_boolean_attribute(r, :contribute_min_retirement)
+    return Bool(get(r, :contribute_min_retirement, true))
 end
 
 const default_minmax_cap = -1.
@@ -984,9 +984,9 @@ function validate_boolean_attribute(r::AbstractResource, attr::Symbol)
 end
 
 """
-    ids_with_not_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
+    ids_with_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
 
-Find the resource ids of the retrofit units in the vector `rs` where not all retrofit options contribute to min retirement.
+Find the resource ids of the retrofit units in the vector `rs` where all retrofit options contribute to min retirement.
 
 # Arguments
 - `rs::Vector{T}`: The vector of resources.
@@ -994,16 +994,16 @@ Find the resource ids of the retrofit units in the vector `rs` where not all ret
 # Returns
 - `Vector{Int64}`: The vector of resource ids.
 """
-function ids_with_not_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
+function ids_with_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
     # select resources that can retrofit
     units_can_retrofit = ids_can_retrofit(rs)
     # check if all retrofit options in the retrofit cluster of each retrofit resource contribute to min retirement
-    condition::Vector{Bool} = hasnot_all_options_contributing.(rs[units_can_retrofit], Ref(rs))
+    condition::Vector{Bool} = has_all_options_contributing.(rs[units_can_retrofit], Ref(rs))
     return units_can_retrofit[condition]
 end
 
 """
-    hasnot_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+    has_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
 
 Check if all retrofit options in the retrofit cluster of the retrofit resource `retrofit_res` contribute to min retirement.
 
@@ -1012,9 +1012,45 @@ Check if all retrofit options in the retrofit cluster of the retrofit resource `
 - `rs::Vector{T}`: The vector of resources.
 
 # Returns
-- `Bool`: True if not all retrofit options contribute to min retirement, otherwise false.
+- `Bool`: True if all retrofit options contribute to min retirement, otherwise false.
 """
-function hasnot_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+function has_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
     retro_id = retrofit_id(retrofit_res)
-    return !isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id), ids_retrofit_options(rs), ids_not_contribute_min_retirement(rs)))
+    return isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id), ids_retrofit_options(rs), ids_not_contribute_min_retirement(rs)))
+end 
+
+"""
+    ids_with_all_options_not_contributing(rs::Vector{T}) where T <: AbstractResource
+
+Find the resource ids of the retrofit units in the vector `rs` where all retrofit options do not contribute to min retirement.
+
+# Arguments
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Vector{Int64}`: The vector of resource ids.
+"""
+function ids_with_all_options_not_contributing(rs::Vector{T}) where T <: AbstractResource
+    # select resources that can retrofit
+    units_can_retrofit = ids_can_retrofit(rs)
+    # check if all retrofit options in the retrofit cluster of each retrofit resource contribute to min retirement
+    condition::Vector{Bool} = has_all_options_not_contributing.(rs[units_can_retrofit], Ref(rs))
+    return units_can_retrofit[condition]
+end
+
+"""
+    has_all_options_not_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+
+Check if all retrofit options in the retrofit cluster of the retrofit resource `retrofit_res` do not contribute to min retirement.
+
+# Arguments
+- `retrofit_res::AbstractResource`: The retrofit resource.
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Bool`: True if all retrofit options do not contribute to min retirement, otherwise false.
+"""
+function has_all_options_not_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+    retro_id = retrofit_id(retrofit_res)
+    return isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id), ids_retrofit_options(rs), ids_contribute_min_retirement(rs)))
 end 

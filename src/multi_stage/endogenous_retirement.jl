@@ -148,15 +148,12 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 		end
 	)
 
-	@expression(EP, eRetroFittedCap[y in RET_CAP], sum(cap_size(gen[g]) * EP[:vCAP][g] * (1/retrofit_efficiency(gen[g])) for g in intersect(RETROFIT_OPTIONS, COMMIT, resources_in_retrofit_cluster_by_rid(gen,retrofit_id(gen[y])), ids_contribute_min_retirement(gen[RETROFIT_OPTIONS])); init=0)
-		+ sum(EP[:vCAP][g] * (1/retrofit_efficiency(gen[g])) for g in setdiff(intersect(RETROFIT_OPTIONS, resources_in_retrofit_cluster_by_rid(gen,retrofit_id(gen[y])), ids_contribute_min_retirement(gen[RETROFIT_OPTIONS])), COMMIT,); init=0))
-
 	@expression(EP, eRetCap[y in RET_CAP], 
-	if y in COMMIT
-		EP[:vRETCAP][y] + (1/cap_size(gen[y]))*eRetroFittedCap[y]
-	else
-		EP[:vRETCAP][y] + eRetroFittedCap[y]
-	end
+		if y in ids_with_all_options_contributing(gen)
+			EP[:vRETCAP][y] + EP[:vRETROFITCAP][y]
+		else
+			EP[:vRETCAP][y]
+		end
 	)
 
 	# Construct and add the endogenous retirement constraint expressions
@@ -183,7 +180,7 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	# The RHS of this constraint will be updated in the forward pass
 	@constraint(EP, cRetCapTrack[y in RET_CAP,p=1:(cur_stage-1)], vRETCAPTRACK[y,p] == 0)
 
-	RETROFIT_WITH_SLACK = ids_with_not_all_options_contributing(gen)
+	RETROFIT_WITH_SLACK = ids_with_all_options_not_contributing(gen)
 	if !isempty(RETROFIT_WITH_SLACK)
 		@variable(EP, vslack_lifetime[y in RETROFIT_WITH_SLACK] >=0)
 		@expression(EP, vslack_term, 2*maximum(inv_cost_per_mwyr.(gen))*sum(vslack_lifetime[y] for y in RETROFIT_WITH_SLACK; init=0))
