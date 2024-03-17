@@ -19,6 +19,26 @@ GenX features a modular and transparent code structure developed in [Julia](http
 
 From a centralized planning perspective, the GenX model can help to determine the investments needed to supply future electricity demand at minimum cost, as is common in least-cost utility planning or integrated resource planning processes. In the context of liberalized markets, the model can be used by regulators and policy makers for indicative energy planning or policy analysis in order to establish a long-term vision of efficient market and policy outcomes. The model can also be used for techno-economic assessment of emerging electricity generation, storage, and demand-side resources and to enumerate the effect of parametric uncertainty (e.g., technology costs, fuel costs, demand, policy decisions) on the system-wide value or role of different resources.
 
+## Roadmap of the Documentation: A Guide for the Users and Developers
+
+This section provides a quick guidance as to how to navigate through the different parts of the documentation pages; what the different sections contain, and how to relate it to the different parts of the GenX code-base. 
+
+This page serves as a gentle introduction to what GenX is meant for and what it does. 
+
+The next subsection, Installation Guide goes over how to download and install GenX and also how to download and install the Julia programming language (in which GenX is written) and the different open-source non-commercial freely available solvers, as well as the commercial solvers and the respective JuMP interfaces. This subsection also goes over installing the environment dependencies and instantiating a virtual environment.
+
+We also mention the shortcomings of GenX and some third party extentions in the next couple subsections
+
+The next section is Getting Started, that has two subsections. The first subsection, Example Cases, gives a walkthrough through some predefined example systems and how to run GenX for those and interpret the results. It also tells how to run GenX for a user-defined case. The second subsection talks specifically about how to run GenX with commercial solvers like Gurobi and CPLEX that are absolutely indispensable for solving large cases. 
+
+The third section, Tutorial, gives a comprehensive tour of the different steps that are involved when a GenX capacity expansion simulation is run. It consists of 6 tutorial sections, each of which highlights the different important aspects of model construction and run of GenX. The different sections are configuring the GenX settings, visualizing the network, time domain reduction, generating the model, solving the model, and adjusting the different solver settings.
+
+The User Guide, which the fourth section, goes into the depths and details of the different steps and the settings and input parameters from the previous Tutorial section. The sections starts off with an overview of the workflow in GenX, briefing about the different steps (some of which we encountered in the Tutorials) of running GenX model. It then explains the different parameters of settings, policy, time-domain reduction, model structure, and output. Following this, the next subsection explains the different solver settings parameters of the different solvers. The next subsection goes over the different input CSV files and the different fields that are used there. The following two subsections are devoted to Time Domain Reduction (TDR). The first one walks through and explains the different settings parameters for TDR and the second one explains the couple different ways to run TDR for GenX and what exactly happens when we run TDR. 
+
+
+
+
+
 ## How to cite GenX
 
 We recommend users of GenX to cite it in their academic publications and patent filings. Here's the text to put up as the citation for GenX:
