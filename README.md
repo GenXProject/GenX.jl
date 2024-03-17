@@ -1,4 +1,4 @@
-<div align="center"> <img src="docs/src/assets/logo.svg"  height ="100"width="1000" alt="GenX.jl"></img></div>
+<div align="center"> <img src="docs/src/assets/logo_readme.svg"  height ="200"width="1000" alt="GenX.jl"></img></div>
 
 [![CI](https://github.com/GenXProject/GenX/actions/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/actions/workflows/ci.yml)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX/dev)
@@ -182,7 +182,7 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 3. Set the `ModelingToGenerateAlternatives` flag in the `GenX_Settings.yml` file to 1.
 4. Set the `ModelingtoGenerateAlternativeSlack` flag in the `GenX_Settings.yml` file to the desirable level of slack.
 5. Create a `Rand_mga_objective_coefficients.csv` file to provide random objective function coefficients for each MGA iteration.
-  For each iteration, number of rows in the `Rand_mga_objective_coefficients.csv` file represents the number of distinct technology types while number of columns represent the number of model zones.
+    For each iteration, number of rows in the `Rand_mga_objective_coefficients.csv` file represents the number of distinct technology types while number of columns represent the number of model zones.
 6. Solve the model using `Run.jl` file.
 
 Results from the MGA algorithm would be saved in `MGA_max` and `MGA_min` folders in the `Example_Systems/` folder.

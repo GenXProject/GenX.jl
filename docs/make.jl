@@ -1,10 +1,9 @@
-push!(LOAD_PATH, "../src/")
-import DataStructures: OrderedDict
-using GenX
 using Documenter
+using GenX
+import DataStructures: OrderedDict
+
 DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
-genx_docpath = joinpath(pwd(), "docs/src")
-push!(LOAD_PATH, genx_docpath)
+
 pages = OrderedDict(
     "Welcome Page" => [
         "GenX: Introduction" => "index.md",
@@ -24,7 +23,6 @@ pages = OrderedDict(
         "Tutorial 4: Model Generation" => "Tutorials/Tutorial_4_model_generation.md",
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
         "Tutorial 6: Post Processing" => "Tutorials/Tutorial_6_solver_settings.md",
-        # "Tutorial 7: Setup -- Policy Constraints" => "Tutorials/tutorial_7/Tutorial_7_setup.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",
@@ -73,7 +71,6 @@ pages = OrderedDict(
             ],
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
             "Retrofit" => "Model_Reference/Resources/retrofit.md",
-            # "Resources API" => "Model_Reference/Resources/resources.md",
             "Scheduled maintenance for various resources" => "Model_Reference/Resources/maintenance.md",
             "Resource types" => "Model_Reference/Resources/resource.md"
         ],
@@ -102,6 +99,10 @@ pages = OrderedDict(
     "Third Party Extensions" => "additional_third_party_extensions.md",
     "Developer Docs" => "developer_guide.md",
 )
+
+# Build documentation.
+# ====================
+
 makedocs(;
     modules=[GenX],
     authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
@@ -115,6 +116,9 @@ makedocs(;
     ),
     pages=[p for p in pages]
 )
+
+# Deploy built documentation.
+# ===========================
 
 deploydocs(;
     repo="github.com/GenXProject/GenX.git",
