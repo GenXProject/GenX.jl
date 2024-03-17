@@ -801,7 +801,7 @@ function process_piecewisefuelusage!(setup::Dict, gen::Vector{<:AbstractResource
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_data"] = PWFU_data
 		inputs["PWFU_Num_Segments"] = num_segments
-		inputs["THERM_COMMIT_PWFU"] = intersect(ids_with_unit_commitment(gen), resource_id.(gen[HAS_PWFU]))
+		inputs["THERM_COMMIT_PWFU"] = intersect(ids_with_unit_commitment(gen), HAS_PWFU)
 
 		@info "Piecewise fuel usage data successfully read!"
 	end
@@ -898,7 +898,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     inputs["HYDRO_RES"] = hydro(gen)
     # Set of hydro resources modeled with known reservoir energy capacity
     if !isempty(inputs["HYDRO_RES"])
-        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], ids_with(gen, hydro_energy_to_power_ratio))
+        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], ids_with_positive(gen, hydro_energy_to_power_ratio))
     end
 
     ## STORAGE
@@ -1008,7 +1008,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
         new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-        ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
+        ret_cap_charge = intersect(retirable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge
