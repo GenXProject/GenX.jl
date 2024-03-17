@@ -1051,12 +1051,11 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     inputs["RETROFIT_OPTIONS"] = ids_retrofit_options(gen)
 
     # Retrofit
-    # append region name to the retrofit_id
+    # append region name to the retrofit_id if it is not None
     update_retrofit_id.(gen)
     # store a unique set of retrofit_ids
     inputs["RETROFIT_IDS"] = Set(retrofit_id.(gen[inputs["RETROFIT_CAP"]]))
     if (!isempty(inputs["RETROFIT_CAP"]) || !isempty(inputs["RETROFIT_OPTIONS"]))
-        
         # min retired capacity constraint for retrofitting units is only applicable if retrofit options
         # in the same cluster either all have Contribute_Min_Retirement set to 1 or none of them do
         if setup["MultiStage"] == 1 && any(min_retired_cap_mw.(gen[inputs["RETROFIT_CAP"]]) .> 0)
@@ -1087,7 +1086,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 		# Set of asymmetric charge/discharge storage resources eligible for new charge capacity
         new_cap_charge = intersect(buildable, ids_with(gen, max_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 		# Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
-        ret_cap_charge = intersect(buildable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
+        ret_cap_charge = intersect(retirable, ids_with_nonneg(gen, existing_charge_cap_mw), inputs["STOR_ASYMMETRIC"])
 	end
 	inputs["NEW_CAP_CHARGE"] = new_cap_charge
 	inputs["RET_CAP_CHARGE"] = ret_cap_charge

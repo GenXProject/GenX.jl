@@ -129,7 +129,6 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 
 	NEW_CAP = inputs["NEW_CAP"] # Set of all resources eligible for new capacity
 	RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
-	RETROFIT_OPTIONS = inputs["RETROFIT_OPTIONS"]  # Set of all resources being retrofitted
 	COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
 
 	### Variables ###
@@ -157,7 +156,6 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	)
 
 	# Construct and add the endogenous retirement constraint expressions
-	
 	@expression(EP, eRetCapTrack[y in RET_CAP], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
 	@expression(EP, eNewCapTrack[y in RET_CAP], sum(EP[:vCAPTRACK][y,p] for p=1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
 	@expression(EP, eMinRetCapTrack[y in RET_CAP],
@@ -180,6 +178,8 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	# The RHS of this constraint will be updated in the forward pass
 	@constraint(EP, cRetCapTrack[y in RET_CAP,p=1:(cur_stage-1)], vRETCAPTRACK[y,p] == 0)
 
+	# Create a slack variable for each resource that is not contributing to the retired capacity being tracked
+	# This ensures that the model is able to satisfy the minimum retirement constraint
 	RETROFIT_WITH_SLACK = ids_with_all_options_not_contributing(gen)
 	if !isempty(RETROFIT_WITH_SLACK)
 		@variable(EP, vslack_lifetime[y in RETROFIT_WITH_SLACK] >=0)

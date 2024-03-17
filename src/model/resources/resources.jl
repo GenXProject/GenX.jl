@@ -978,8 +978,8 @@ Validate that the attribute `attr` in the resource `r` is boolean {0, 1}.
 function validate_boolean_attribute(r::AbstractResource, attr::Symbol)
     attr_value = get(r, attr, 0)
     if attr_value != 0 && attr_value != 1
-        error("Attribute $attr in resource $(resource_name(r)) must be boolean. 
-        The only valid values are {0,1}, not $attr_value.")
+        error("Attribute $attr in resource $(resource_name(r)) must be boolean." *
+        "The only valid values are {0,1}, not $attr_value.")
     end
 end
 
