@@ -16,10 +16,10 @@ The table below summarizes the key differences in the two model setups.
 ### Additional inputs needed for multi-stage modeling
 
 ####  Input data files
-Instead of one set of input files, there is one directory of input files that needs to be provided for each planning period or stage (e.g., “Inputs/Inputs_p1/” for the first period “Inputs/Inputs_p2/” for the second period, etc.). Below we list the additional parameters that must be provided in the corresponding stage-specific input files to instantiate a multi-stage planning problem.
+Instead of one set of input files, there is one directory of input files that needs to be provided for each planning period or stage (e.g., “inputs/inputs\_p1/” for the first period “inputs/inputs\_p2/” for the second period, etc.). Below we list the additional parameters that must be provided in the corresponding stage-specific input files to instantiate a multi-stage planning problem.
 
 
-|                              |                                                                   **Resource .csv files**                                                                  |
+|                              |                                                                   **Resource_multistage_data.csv files**                                                                  |
 |:------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Min\_Retired\_Cap\_MW        | Minimum capacity in MW that must retire in this planning stage. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                           |
 | Min\_Retired\_Energy\_Cap\_MW | Minimum energy capacity in MW that must retire in this planning stage. Note that for the co-located VRE-STOR module, this value represents the storage component.                                                                                    |
@@ -28,7 +28,7 @@ Instead of one set of input files, there is one directory of input files that ne
 | Capital\_Recovery\_Period      | The technology-specific period in years over which initial capital costs must be recovered. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                               |
 | WACC                         | The technology-specific weighted average cost of capital. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                                 |
 
-|                              |                                                                   **Vre_stor.csv (if activated)**                                                                  |
+|                              |                                                                   **co-located VRE-STOR resources only**                                                                  |
 |:------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
 |Min\_Retired\_Cap\_Inverter\_MW  |Minimum inverter capacity in MW AC that must retire in this plannig stage. |
 |Min\_Retired\_Cap\_Solar\_MW  |Minimum solar PV capacity in MW DC that must retire in this plannig stage. |

@@ -1,6 +1,6 @@
-<div align="center"> <img src="docs/src/assets/genx_logo.svg"  height ="100"width="1000" alt="GenX.jl"></img></div>
+<div align="center"> <img src="docs/src/assets/logo.svg"  height ="100"width="1000" alt="GenX.jl"></img></div>
 
-[![Build and Deploy](https://github.com/GenXProject/GenX/blob/develop/.github/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/blob/develop/.github/workflows/ci.yml)
+[![CI](https://github.com/GenXProject/GenX/actions/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/actions/workflows/ci.yml)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX/dev)
 [![DOI](https://zenodo.org/badge/10814088.svg)](https://zenodo.org/badge/latestdoi/10814088)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
