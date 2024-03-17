@@ -4,7 +4,7 @@
 This function defines the constraints for operation of retrofit technologies, including
 	but not limited to carbon capture and thermal energy storage.
 
-For retrofittable source technologies $y$ and retrofit technologies $r$ in the same retrofit cluster $id$ 
+For retrofittable source technologies $y$ and retrofit technologies $r$ in the same region $z$ and retrofit cluster $id$,
 (i.e. $y \in RF(id)$ and $r \in RF(id)$), the total retrofit capacity $\Omega_{r}$ that may be installed 
 is constrained by the available retrofittable capacity $P_{y}$ as well as the efficiency ${ef}_{r}$ of the retrofit technology.
 

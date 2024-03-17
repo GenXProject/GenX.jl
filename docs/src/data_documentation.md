@@ -313,7 +313,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Retrofit | {0, 1}, Flag for resource retrofit technologies (i.e., retrofit options, e.g. CCS retrofit for coal plants).|
 ||Retrofit = 1: is a retrofit technology. |
 ||Retrofit = 0: is not a retrofit technology.|
-|Retrofit\_Id | Unique identifier to group retrofittable source technologies with retrofit options.|
+|Retrofit\_Id | Unique identifier to group retrofittable source technologies with retrofit options inside the same zone.|
 |Retrofit\_Efficiency | [0,1], Efficiency of the retrofit technology.|
 
 ##### Table 5b: Settings-specific columns in all resource .csv file
