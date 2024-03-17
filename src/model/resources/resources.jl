@@ -795,11 +795,8 @@ for attr in (:max_cap_solar_mw,
              :max_cap_charge_dc_mw, 
              :max_cap_charge_ac_mw, 
              :max_cap_discharge_dc_mw, 
-             :max_cap_discharge_ac_mw)
-    @eval @interface $attr
-end
-
-for attr in (:min_cap_solar_mw, 
+             :max_cap_discharge_ac_mw,
+             :min_cap_solar_mw, 
              :min_cap_wind_mw, 
              :min_cap_inverter_mw, 
              :min_cap_charge_dc_mw, 
@@ -808,7 +805,7 @@ for attr in (:min_cap_solar_mw,
              :min_cap_discharge_ac_mw,
              :inverter_ratio_solar,
              :inverter_ratio_wind,)
-    @eval @interface $attr
+    @eval @interface $attr default_minmax_cap
 end
 
 for attr in (:etainverter,
