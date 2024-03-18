@@ -52,4 +52,8 @@ end
     @testset "Compute Conflicts" begin
         include("test_compute_conflicts.jl")
     end
+
+    @testset "Retrofit" begin
+        include("test_retrofit.jl")
+    end
 end

@@ -364,7 +364,7 @@ function check_mustrun_reserve_contribution(r::AbstractResource)
                    "MUST_RUN units must have Rsv_Max = 0 since they cannot contribute to reserves.")
         push!(error_strings, e)
     end
-    return error_strings
+    return ErrorMsg.(error_strings)
 end
 
 function check_LDS_applicability(r::AbstractResource)
@@ -380,7 +380,7 @@ function check_LDS_applicability(r::AbstractResource)
                    "This setting is valid only for resources where the type is one of $applicable_resources.")
         push!(error_strings, e)
     end
-    return error_strings
+    return ErrorMsg.(error_strings)
 end
 
 function check_maintenance_applicability(r::AbstractResource)
@@ -408,38 +408,84 @@ function check_maintenance_applicability(r::AbstractResource)
                    "this has :model = 2.")
         push!(error_strings, e)
     end
-    return error_strings
+    return ErrorMsg.(error_strings)
 end
 
-function check_resource(r::AbstractResource)::Vector{String}
-    e = String[]
+function check_retrofit_resource(r::AbstractResource)
+    error_strings = String[]
+
+    # check that retrofit_id is set only for retrofitting units and not for new builds or units that can retire
+    if can_retrofit(r) == true && can_retire(r) == false
+        e = string("Resource ", resource_name(r), " has :can_retrofit = ", can_retrofit(r), " but :can_retire = ", can_retire(r), ".\n",
+                   "A unit that can be retrofitted must also be eligible for retirement (:can_retire = 1)")
+        push!(error_strings, e)
+    elseif is_retrofit_option(r) == true && new_build(r) == false
+        e = string("Resource ", resource_name(r), " has :retrofit = ", is_retrofit_option(r), " but :new_build = ", new_build(r), ".\n",
+                   "This setting is valid only for resources that have :new_build = 1")
+        push!(error_strings, e)
+    end
+    return ErrorMsg.(error_strings)
+end 
+
+function check_resource(r::AbstractResource)
+    e = []
     e = [e; check_LDS_applicability(r)]
     e = [e; check_maintenance_applicability(r)]    
     e = [e; check_mustrun_reserve_contribution(r)]
+    e = [e; check_retrofit_resource(r)]
     return e
+end
+
+function check_retrofit_id(rs::Vector{T}) where T <: AbstractResource
+    warning_strings = String[]
+
+    units_can_retrofit = ids_can_retrofit(rs)
+    retrofit_options = ids_retrofit_options(rs)
+
+    # check that all retrofit_ids for resources that can retrofit and retrofit options match
+    if Set(rs[units_can_retrofit].retrofit_id) != Set(rs[retrofit_options].retrofit_id)
+        msg = string("Retrofit IDs for resources that \"can retrofit\" and \"retrofit options\" do not match.\n" *
+                    "All retrofitting units must be associated with a retrofit option.") 
+        push!(warning_strings, msg)
+    end
+
+    return WarnMsg.(warning_strings)
 end
 
 @doc raw"""
     check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
 
 Validate the consistency of a vector of GenX resources
-Reports any errors in a list of strings.
+Reports any errors/warnings as a vector of messages.
 """
-function check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
-    e = String[]
+function check_resource(resources::Vector{T}) where T <: AbstractResource
+    e = []
     for r in resources
         e = [e; check_resource(r)]
     end
+    e = [e; check_retrofit_id(resources)]
     return e
 end
 
-function announce_errors_and_halt(e::Vector{String})    
-    error_count = length(e)
-    for error_message in e
-        @error(error_message)
-    end
+function halt_with_error_count(error_count::Int)
     s = string(error_count, " problems were detected with the input data. Halting.")
     error(s)
+end
+
+function announce_errors_and_halt(e::Vector)
+    error_count = 0
+    for log_message in e
+        if isa(log_message, ErrorMsg)
+            error_count += 1
+            @error(log_message.msg)
+        elseif isa(log_message, WarnMsg)
+            @warn(log_message.msg)
+        else
+            @warn("Unknown log message type: ", log_message)
+        end
+    end
+    error_count > 0 && halt_with_error_count(error_count)
+    return nothing
 end
 
 function validate_resources(resources::Vector{T}) where T <: AbstractResource
@@ -545,7 +591,7 @@ end
 """
     add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
 
-Adds a set of new attributes (names and corresponding values) to a resource if their values are different from zero. The resource is modified in-place.
+Adds a set of new attributes (names and corresponding values) to a resource. The resource is modified in-place.
 
 # Arguments
 - `resource::AbstractResource`: The resource to add attributes to.
@@ -556,8 +602,8 @@ Adds a set of new attributes (names and corresponding values) to a resource if t
 function add_attributes_to_resource!(resource::AbstractResource, new_symbols::Vector{Symbol}, new_values::T) where T <: DataFrameRow
     # loop over new attributes
     for (sym, value) in zip(new_symbols, new_values)
-        # add attribute to resource if value is not zero
-        value ≠ 0 && setproperty!(resource, sym, value)
+        # add attribute to resource
+        setproperty!(resource, sym, value)
     end
     return nothing
 end    
@@ -873,6 +919,22 @@ function split_storage_resources!(inputs::Dict, gen::Vector{<:AbstractResource})
 end
 
 """
+    update_retrofit_id(r::AbstractResource)
+
+Updates the retrofit_id of a resource that can be retrofit or is a retrofit option by appending the region to the retrofit_id.
+
+# Arguments
+- `r::AbstractResource`: The resource to update.
+"""
+function update_retrofit_id(r::AbstractResource) 
+    if haskey(r, :retrofit_id) && (can_retrofit(r) == true || is_retrofit_option(r) == true)
+        r.retrofit_id = string(r.retrofit_id, "_", region(r))
+    else
+        r.retrofit_id = string("None")
+    end
+end
+
+"""
     add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
 
 Adds resources to the `inputs` `Dict` with the key "RESOURCES" together with sevaral sets of resource indices that are used inside GenX to construct the optimization problem. The `inputs` `Dict` is modified in-place.
@@ -931,13 +993,6 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     # Set of hydrogen electolyzer resources:
     inputs["ELECTROLYZER"] = electrolyzer(gen)
 
-    ## Retrofit 
-    inputs["RETRO"] = ids_with_retrofit(gen)
-    # Disable Retrofit while it's under development
-    if !(isempty(inputs["RETRO"]))
-        error("The Retrofits feature, which is activated by nonzero data in a 'RETRO' column in any of the resource .csv files, is under development and is not ready for public use. Disable this message to enable this *experimental* feature.")
-    end
-
     ## Operational Reserves
     if setup["OperationalReserves"] >= 1
         # Set for resources with regulation reserve requirements
@@ -985,11 +1040,40 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
 
     buildable = is_buildable(gen)
     retirable = is_retirable(gen)
-
+    units_can_retrofit = ids_can_retrofit(gen)
+    
     # Set of all resources eligible for new capacity
     inputs["NEW_CAP"] = intersect(buildable, ids_with(gen, max_cap_mw))
     # Set of all resources eligible for capacity retirements
     inputs["RET_CAP"] = intersect(retirable, ids_with_nonneg(gen, existing_cap_mw))
+    # Set of all resources eligible for capacity retrofitting (by Yifu, same with retirement)
+	inputs["RETROFIT_CAP"] = intersect(units_can_retrofit, ids_with_nonneg(gen, existing_cap_mw))
+    inputs["RETROFIT_OPTIONS"] = ids_retrofit_options(gen)
+
+    # Retrofit
+    # append region name to the retrofit_id if it is not None
+    update_retrofit_id.(gen)
+    # store a unique set of retrofit_ids
+    inputs["RETROFIT_IDS"] = Set(retrofit_id.(gen[inputs["RETROFIT_CAP"]]))
+    if (!isempty(inputs["RETROFIT_CAP"]) || !isempty(inputs["RETROFIT_OPTIONS"]))
+        # min retired capacity constraint for retrofitting units is only applicable if retrofit options
+        # in the same cluster either all have Contribute_Min_Retirement set to 1 or none of them do
+        if setup["MultiStage"] == 1
+            for retrofit_res in inputs["RETROFIT_CAP"]
+                if !has_all_options_contributing(gen[retrofit_res], gen) && !has_all_options_not_contributing(gen[retrofit_res], gen)
+                    msg = "Retrofit options in the same cluster either all have Contribute_Min_Retirement set to 1 or none of them do. \n" *
+                        "Check column Contribute_Min_Retirement in the \"Resource_multistage_data.csv\" file for resource $(resource_name(gen[retrofit_res]))."
+                    @error msg
+                    error("Invalid input detected for Contribute_Min_Retirement.")
+                    
+                end
+                if has_all_options_not_contributing(gen[retrofit_res], gen) && setup["MultiStageSettingsDict"]["Myopic"]==1
+                    @error "When performing myopic multistage expansion all retrofit options need to have Contribute_Min_Retirement set to 1 to avoid model infeasibilities."
+                    error("Invalid input detected for Contribute_Min_Retirement.")
+                end
+            end
+        end
+    end
 
     new_cap_energy = Set{Int64}()
     ret_cap_energy = Set{Int64}()

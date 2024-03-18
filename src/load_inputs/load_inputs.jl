@@ -123,3 +123,9 @@ function get_systemfiles_path(setup::Dict, TDR_directory::AbstractString, path::
         return joinpath(path, setup["SystemFolder"])
     end
 end
+
+abstract type AbstractLogMsg end
+struct ErrorMsg <: AbstractLogMsg msg::String end
+struct WarnMsg <: AbstractLogMsg msg::String end
+
+

@@ -54,6 +54,7 @@ pages = OrderedDict(
                 "Long Duration Hydro" => "Model_Reference/Resources/hydro_inter_period_linkage.md"
             ],
             "Must Run" => "Model_Reference/Resources/must_run.md",
+            "Retrofit" => "Model_Reference/Resources/retrofit.md",
             "Storage" => [
                 "Storage" => "Model_Reference/Resources/storage.md",
                 "Investment Charge" => "Model_Reference/Resources/investment_charge.md",

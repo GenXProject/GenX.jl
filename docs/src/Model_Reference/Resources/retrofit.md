@@ -1,5 +1,6 @@
-## Retrofit
+# Retrofit
 
-```@docs
-GenX.retrofit
+```@autodocs
+Modules = [GenX]
+Pages = ["retrofits.jl"]
 ```

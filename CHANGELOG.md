@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New settings parameter, VirtualChargeDischargeCost to test script and VREStor example case. The PR 608 attempts to 
   introduce this parameter as cost of virtual charging and discharging to avoid unusual results (#608). 
 - New settings parameter, StorageVirtualDischarge, to turn storage virtual charging and discharging off if desired by the user (#638).
-
+- Add module to retrofit existing resources with new technologies (#600).
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).

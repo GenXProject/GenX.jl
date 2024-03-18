@@ -525,6 +525,32 @@ resource_type_mga(r::AbstractResource) = r.resource_type
 zone_id(r::AbstractResource) = r.zone
 zone_id(rs::Vector{T}) where T <: AbstractResource = rs.zone
 
+# getter for boolean attributes (true or false) with validation
+function new_build(r::AbstractResource)
+    validate_boolean_attribute(r, :new_build)
+    return Bool(get(r, :new_build, false))
+end
+
+function can_retire(r::AbstractResource)
+    validate_boolean_attribute(r, :can_retire)
+    return Bool(get(r, :can_retire, false))
+end
+
+function can_retrofit(r::AbstractResource)
+    validate_boolean_attribute(r, :can_retrofit)
+    return Bool(get(r, :can_retrofit, false))
+end
+
+function is_retrofit_option(r::AbstractResource)
+    validate_boolean_attribute(r, :retrofit)
+    return Bool(get(r, :retrofit, false))
+end
+
+function can_contribute_min_retirement(r::AbstractResource)
+    validate_boolean_attribute(r, :contribute_min_retirement)
+    return Bool(get(r, :contribute_min_retirement, true))
+end
+
 const default_minmax_cap = -1.
 max_cap_mw(r::AbstractResource) = get(r, :max_cap_mw, default_minmax_cap)
 min_cap_mw(r::AbstractResource) = get(r, :min_cap_mw, default_minmax_cap)
@@ -546,6 +572,14 @@ num_vre_bins(r::AbstractResource) = get(r, :num_vre_bins, default_zero)
 hydro_energy_to_power_ratio(r::AbstractResource) = get(r, :hydro_energy_to_power_ratio, default_zero)
 
 qualified_hydrogen_supply(r::AbstractResource) = get(r, :qualified_hydrogen_supply, default_zero)
+
+retrofit_id(r::AbstractResource)::String = get(r, :retrofit_id, "None")
+function retrofit_efficiency(r::AbstractResource)
+    is_retrofit_option(r) && return get(r, :retrofit_efficiency, 1.0)
+    msg = "Retrofit efficiency is not defined for resource $(resource_name(r)).\n" *
+          "It's only valid for retrofit options."
+    throw(ErrorException(msg))
+end
 
 # costs
 reg_cost(r::AbstractResource) = get(r, :reg_cost, default_zero)
@@ -626,11 +660,10 @@ ids_with_fuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> fuel(r) 
 ids_with_singlefuel(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 0, rs)
 ids_with_multifuels(rs::Vector{T}) where T <: AbstractResource = findall(r -> multi_fuels(r) == 1, rs)
 
-is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :new_build, default_zero) == 1, rs)
-is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :can_retire, default_zero) == 1, rs)
-
-# Retrofit
-ids_with_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> get(r, :retro, default_zero) == 1, rs)
+is_buildable(rs::Vector{T}) where T <: AbstractResource = findall(r -> new_build(r) == true, rs)
+is_retirable(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retire(r) == true, rs)
+ids_can_retrofit(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_retrofit(r) == true, rs)
+ids_retrofit_options(rs::Vector{T}) where T <: AbstractResource = findall(r -> is_retrofit_option(r) == true, rs)
 
 # Unit commitment
 ids_with_unit_commitment(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Thermal) && r.model == 1, rs)
@@ -646,6 +679,9 @@ ids_with_maintenance(rs::Vector{T}) where T <: AbstractResource = findall(r -> g
 maintenance_duration(r::AbstractResource) = get(r, :maintenance_duration, default_zero)
 maintenance_cycle_length_years(r::AbstractResource) = get(r, :maintenance_cycle_length_years, default_zero)
 maintenance_begin_cadence(r::AbstractResource) = get(r, :maintenance_begin_cadence, default_zero)
+
+ids_contribute_min_retirement(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_contribute_min_retirement(r) == true, rs)
+ids_not_contribute_min_retirement(rs::Vector{T}) where T <: AbstractResource = findall(r -> can_contribute_min_retirement(r) == false, rs)
 
 # STORAGE interface
 """
@@ -670,7 +706,7 @@ Returns the indices of all hydro resources in the vector `rs`.
 """
 hydro(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,Hydro), rs)
 
-# THERM interface
+# THERMAL interface
 """
     thermal(rs::Vector{T}) where T <: AbstractResource
 
@@ -892,6 +928,22 @@ function resources_in_zone_by_rid(rs::Vector{<:AbstractResource}, zone::Int)
     return resource_id.(rs[zone_id.(rs) .== zone])
 end
 
+@doc raw"""
+    resources_in_retrofit_cluster_by_rid(rs::Vector{<:AbstractResource}, cluster_id::String)
+
+Find R_ID's of resources with retrofit cluster id `cluster_id`.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `cluster_id::String`: The retrofit cluster id.
+
+# Returns
+- `Vector{Int64}`: The vector of resource ids in the retrofit cluster.
+"""
+function resources_in_retrofit_cluster_by_rid(rs::Vector{<:AbstractResource}, cluster_id::String)
+    return resource_id.(rs[retrofit_id.(rs) .== cluster_id])
+end
+
 """
     resource_by_name(rs::Vector{<:AbstractResource}, name::AbstractString)
 
@@ -911,4 +963,91 @@ function resource_by_name(rs::Vector{<:AbstractResource}, name::AbstractString)
     return rs[r_id]
 end
 
+"""
+    validate_boolean_attribute(r::AbstractResource, attr::Symbol)
 
+Validate that the attribute `attr` in the resource `r` is boolean {0, 1}.
+
+# Arguments
+- `r::AbstractResource`: The resource.
+- `attr::Symbol`: The name of the attribute.
+"""
+function validate_boolean_attribute(r::AbstractResource, attr::Symbol)
+    attr_value = get(r, attr, 0)
+    if attr_value != 0 && attr_value != 1
+        error("Attribute $attr in resource $(resource_name(r)) must be boolean." *
+        "The only valid values are {0,1}, not $attr_value.")
+    end
+end
+
+"""
+    ids_with_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
+
+Find the resource ids of the retrofit units in the vector `rs` where all retrofit options contribute to min retirement.
+
+# Arguments
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Vector{Int64}`: The vector of resource ids.
+"""
+function ids_with_all_options_contributing(rs::Vector{T}) where T <: AbstractResource
+    # select resources that can retrofit
+    units_can_retrofit = ids_can_retrofit(rs)
+    # check if all retrofit options in the retrofit cluster of each retrofit resource contribute to min retirement
+    condition::Vector{Bool} = has_all_options_contributing.(rs[units_can_retrofit], Ref(rs))
+    return units_can_retrofit[condition]
+end
+
+"""
+    has_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+
+Check if all retrofit options in the retrofit cluster of the retrofit resource `retrofit_res` contribute to min retirement.
+
+# Arguments
+- `retrofit_res::AbstractResource`: The retrofit resource.
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Bool`: True if all retrofit options contribute to min retirement, otherwise false.
+"""
+function has_all_options_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+    retro_id = retrofit_id(retrofit_res)
+    return isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id), ids_retrofit_options(rs), ids_not_contribute_min_retirement(rs)))
+end 
+
+"""
+    ids_with_all_options_not_contributing(rs::Vector{T}) where T <: AbstractResource
+
+Find the resource ids of the retrofit units in the vector `rs` where all retrofit options do not contribute to min retirement.
+
+# Arguments
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Vector{Int64}`: The vector of resource ids.
+"""
+function ids_with_all_options_not_contributing(rs::Vector{T}) where T <: AbstractResource
+    # select resources that can retrofit
+    units_can_retrofit = ids_can_retrofit(rs)
+    # check if all retrofit options in the retrofit cluster of each retrofit resource contribute to min retirement
+    condition::Vector{Bool} = has_all_options_not_contributing.(rs[units_can_retrofit], Ref(rs))
+    return units_can_retrofit[condition]
+end
+
+"""
+    has_all_options_not_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+
+Check if all retrofit options in the retrofit cluster of the retrofit resource `retrofit_res` do not contribute to min retirement.
+
+# Arguments
+- `retrofit_res::AbstractResource`: The retrofit resource.
+- `rs::Vector{T}`: The vector of resources.
+
+# Returns
+- `Bool`: True if all retrofit options do not contribute to min retirement, otherwise false.
+"""
+function has_all_options_not_contributing(retrofit_res::AbstractResource, rs::Vector{T}) where T <: AbstractResource
+    retro_id = retrofit_id(retrofit_res)
+    return isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id), ids_retrofit_options(rs), ids_contribute_min_retirement(rs)))
+end 

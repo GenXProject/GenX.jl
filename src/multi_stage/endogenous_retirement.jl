@@ -147,7 +147,13 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 		end
 	)
 
-	@expression(EP, eRetCap[y in RET_CAP], EP[:vRETCAP][y])
+	@expression(EP, eRetCap[y in RET_CAP], 
+		if y in ids_with_all_options_contributing(gen)
+			EP[:vRETCAP][y] + EP[:vRETROFITCAP][y]
+		else
+			EP[:vRETCAP][y]
+		end
+	)
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrack[y in RET_CAP], sum(EP[:vRETCAPTRACK][y,p] for p=1:cur_stage))
@@ -172,8 +178,24 @@ function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::I
 	# The RHS of this constraint will be updated in the forward pass
 	@constraint(EP, cRetCapTrack[y in RET_CAP,p=1:(cur_stage-1)], vRETCAPTRACK[y,p] == 0)
 
-	@constraint(EP, cLifetimeRet[y in RET_CAP], eNewCapTrack[y] + eMinRetCapTrack[y]  <= eRetCapTrack[y])
+	# Create a slack variable for each resource that is not contributing to the retired capacity being tracked
+	# This ensures that the model is able to satisfy the minimum retirement constraint
+	RETROFIT_WITH_SLACK = ids_with_all_options_not_contributing(gen)
+	if !isempty(RETROFIT_WITH_SLACK)
+		@variable(EP, vslack_lifetime[y in RETROFIT_WITH_SLACK] >=0)
+		@expression(EP, vslack_term, 2*maximum(inv_cost_per_mwyr.(gen))*sum(vslack_lifetime[y] for y in RETROFIT_WITH_SLACK; init=0))
+		add_to_expression!(EP[:eObj], vslack_term)
+	end
 
+	@expression(EP,eLifetimeRetRHS[y in RET_CAP],
+	if y in RETROFIT_WITH_SLACK
+		eRetCapTrack[y] + vslack_lifetime[y]
+	else
+		eRetCapTrack[y]
+	end
+	)
+
+	@constraint(EP, cLifetimeRet[y in RET_CAP], eNewCapTrack[y] + eMinRetCapTrack[y]  <= eLifetimeRetRHS[y])
 end
 
 function endogenous_retirement_charge!(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})

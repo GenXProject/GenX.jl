@@ -205,3 +205,21 @@ function extract_matrix_from_resources(rs::Vector{T}, columnprefix::AbstractStri
 
     return value
 end
+
+"""
+    validate_df_cols(df::DataFrame, df_name::AbstractString, required_cols::Vector{AbstractString})
+
+Check that the dataframe has all the required columns.
+
+# Arguments
+- `df::DataFrame`: the dataframe to check
+- `df_name::AbstractString`: the name of the dataframe, for error messages
+- `required_cols::Vector{AbstractString}`: the names of the required columns
+"""
+function validate_df_cols(df::DataFrame, df_name::AbstractString, required_cols) 
+    for col in required_cols
+        if col ∉ names(df)
+            error("$df_name data file is missing column $col")
+        end
+    end
+end

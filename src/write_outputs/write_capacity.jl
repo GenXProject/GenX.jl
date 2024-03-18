@@ -28,6 +28,16 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		end
 	end
 
+	retrocapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+	for i in inputs["RETROFIT_CAP"]
+		if i in inputs["COMMIT"]
+			retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i])) * cap_size(gen[i])
+		else
+			retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i]))
+		end
+	end
+
+
 	capacity_constraint_dual = zeros(size(inputs["RESOURCE_NAMES"]))
 	for y in ids_with_positive(gen, max_cap_mw)
 		capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
@@ -69,11 +79,13 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 			existingcapenergy[i] = existing_cap_mwh(gen[i]) # multistage functionality doesn't exist yet for VRE-storage resources
 		end
 	end
-
 	dfCap = DataFrame(
-		Resource = inputs["RESOURCE_NAMES"], Zone = zone_id.(gen),
+		Resource = inputs["RESOURCE_NAMES"], 
+		Zone = zone_id.(gen),
+		Retrofit_Id = retrofit_id.(gen),
 		StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen),
 		RetCap = retcapdischarge[:],
+		RetroCap = retrocapdischarge[:], #### Need to change later
 		NewCap = capdischarge[:],
 		EndCap = value.(EP[:eTotalCap]),
 		CapacityConstraintDual = capacity_constraint_dual[:],
@@ -89,6 +101,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	if setup["ParameterScale"] ==1
 		dfCap.StartCap = dfCap.StartCap * ModelScalingFactor
 		dfCap.RetCap = dfCap.RetCap * ModelScalingFactor
+		dfCap.RetroCap = dfCap.RetroCap * ModelScalingFactor
 		dfCap.NewCap = dfCap.NewCap * ModelScalingFactor
 		dfCap.EndCap = dfCap.EndCap * ModelScalingFactor
 		dfCap.CapacityConstraintDual = dfCap.CapacityConstraintDual * ModelScalingFactor
@@ -102,9 +115,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 		dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
 	end
 	total = DataFrame(
-			Resource = "Total", Zone = "n/a",
+			Resource = "Total", Zone = "n/a", Retrofit_Id = "n/a",
 			StartCap = sum(dfCap[!,:StartCap]), RetCap = sum(dfCap[!,:RetCap]),
 			NewCap = sum(dfCap[!,:NewCap]), EndCap = sum(dfCap[!,:EndCap]),
+			RetroCap = sum(dfCap[!,:RetroCap]),
 			CapacityConstraintDual = "n/a",
 			StartEnergyCap = sum(dfCap[!,:StartEnergyCap]), RetEnergyCap = sum(dfCap[!,:RetEnergyCap]),
 			NewEnergyCap = sum(dfCap[!,:NewEnergyCap]), EndEnergyCap = sum(dfCap[!,:EndEnergyCap]),
