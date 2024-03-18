@@ -1,4 +1,3 @@
-(installation)=
 # Installation Guide
 This guide will walk you through the steps to install Julia, the GenX package, and the required dependencies to run GenX.
 
