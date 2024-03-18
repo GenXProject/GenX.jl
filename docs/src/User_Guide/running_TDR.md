@@ -1,6 +1,4 @@
-# Running the TDR
-
-## Running a case with Time Domain Reduction
+# Running a case with Time Domain Reduction
 
 There are two ways to run a case with a reduced (e.g. less than full-year) temporal resolution.
 1. Let GenX perform the time domain reduction before optimizing.
@@ -12,7 +10,7 @@ It's also possible for GenX perform clustering separately from the optimization 
 
 Set `TimeDomainReduction: 1 `in the GenX settings for the case.
 
-When the case is run (but before the optimization model is built), reduced time series data will be output to a folder within the case, (typically) `TDR_Results`. Note that if the data already exists in that folder, it will not be overwritten. If a user wants to change the time domain reduction settings and try again, the folder should be deleted before the case is run.
+When the case is run (but before the optimization model is built), reduced time series data will be output to a folder within the case, (typically) `TDR_results`. Note that if the data already exists in that folder, it will not be overwritten. If a user wants to change the time domain reduction settings and try again, the folder should be deleted before the case is run.
 
 The clustering is done according to the settings in `time_domain_reduction.yml`. These are described in the Inputs section of data_documentation.
 
@@ -24,8 +22,6 @@ The header of the file `Load_data.csv` in the main case folder will typically lo
 ..., Rep_Periods, Timesteps_per_Rep_Period, Sub_Weights, ...
                1,                     8760,        8760,
 ```
-
-For an example that uses this method, see `Example_Systems/RealSystemExample/ISONE_Singlezone`.
 
 ## Method 2: Bring your own clustered data
 
@@ -50,8 +46,6 @@ For problems involving Long Duration Storage, a file `Period_map.csv` is necessa
 
 See also the [Time-domain reduction](@ref).
 
-For an example that uses this method, see `Example_Systems/RealSystemExample/ISONE_Trizone`.
-
 ## Performing time domain reduction (TDR) separately from optimization
 *Added in 0.3.4*
 
@@ -64,6 +58,6 @@ julia> using GenX
 julia> run_timedomainreduction!("/path/to/case")
 ```
 
-This function will obey the settings in `path/to/case/Settings/time_domain_reduction_settings.yml`. It will output the resulting clustered time series files in the case.
+This function will obey the settings in `path/to/case/settings/time_domain_reduction_settings.yml`. It will output the resulting clustered time series files in the case.
 
 Running this function will overwrite these files in the case. This is done with the expectation that the user is trying out various settings.

@@ -1,9 +1,9 @@
 # Tutorial 3: K-Means and Time Domain Reduction
 
-[Jupyter Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_3_K-means_Time_Domain_Reduction.ipynb)
+[Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_3_K-means_Time_Domain_Reduction.ipynb)
 
 
-A good tool to reduce computation time of GenX is to use [Time Domain Reduction (TDR)](https://genxproject.github.io/GenX/dev/methods/#Time-Domain-Reduction-(TDR)). Time Domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
+A good tool to reduce computation time of GenX is to use [Time-domain reduction](@ref). Time Domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
 
 ### Table of Contents
 * [Time Domain Reduction](#TDR)
@@ -126,6 +126,23 @@ To run GenX without TDR, we start by editing the settings to set `TimeDomainRedu
 ```julia
 genx_settings_TZ["TimeDomainReduction"] = 0
 genx_settings_TZ ## Output settings
+```
+
+```
+    Dict{Any, Any} with 13 entries:
+    "NetworkExpansion"       => 1
+    "ParameterScale"         => 1
+    "EnergyShareRequirement" => 0
+    "TimeDomainReduction"    => 0
+    "Trans_Loss_Segments"    => 1
+    "CapacityReserveMargin"  => 0
+    "StorageLosses"          => 1
+    "ComputeConflicts"       => 1
+    "UCommit"                => 2
+    "MaxCapReq"              => 0
+    "MinCapReq"              => 1
+    "CO2Cap"                 => 2
+    "WriteShadowPrices"      => 1
 ```
 
 Then we write the edited settings to the file path:
@@ -274,26 +291,17 @@ Period_map = CSV.read(joinpath(case,"TDR_Results/Period_map.csv"),DataFrame,miss
 ```julia
 # Find array of unique representative periods
 rep_periods = unique(Period_map[!,"Rep_Period"])
+
 # Create an array of the time steps and MW values of each representative period
 weeks_load = []
-weeks_wind = []
 for i in rep_periods
     week_temp_loads = [repeat([i],168) loads[(168*i-167):168*i,"Time_Index"] loads[(168*i-167):168*i,"Demand_MW_z1"]]
-    week_temp_wind = [repeat([i],168) generators[(168*i-167):168*i,"Time_Index"] generators[(168*i-167):168*i,"CT_onshore_Wind"]]
     weeks_load = [weeks_load; week_temp_loads]
-    weeks_wind = [weeks_wind; week_temp_wind]
 end
-```
 
-
-```julia
 # Combine with Total (pre TDR)
 loads_plot = [repeat(["Total"],8760) loads[!,"Time_Index"] loads[!,"Demand_MW_z1"]];
-wind_plot = [repeat(["Total"],8760) generators[!,"Time_Index"] generators[!,"CT_onshore_Wind"]]
-```
 
-
-```julia
 # Add column names and convert column type
 loads_with_TDR = [loads_plot; weeks_load]
 loads_with_TDR = DataFrame(loads_with_TDR ,["Week","hour", "MW"])
@@ -303,72 +311,16 @@ loads_with_TDR[!,:MW] = convert.(Float64,loads_with_TDR[!,:MW]);
 
 
 ```julia
-wind_with_TDR = [wind_plot; weeks_wind]
-wind_with_TDR = DataFrame(wind_with_TDR ,["Week","hour", "MW"])
-wind_with_TDR[!,:hour] = convert.(Int64,wind_with_TDR[!,:hour]);
-wind_with_TDR[!,:MW] = convert.(Float64,wind_with_TDR[!,:MW]);
-wind_with_TDR
-```
-
-Here's the same plot from before but with representative weeks highlighted:
-
-
-```julia
 loads_with_TDR  |>
 @vlplot(mark={:line},
     x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Load (MW)"},
     color={"Week:n", scale={scheme="paired"},sort="decsending"}, title="MW Load per hour with TDR Representative Weeks",
     width=845,height=400)
 ```
+![svg](./files/output_58_0.svg)
 
+TDR is performed for four total data sets: demand (found in Demand.csv), wind and solar (found in Generators_variability.csv), and fuel prices (found in Fuels.csv). Above is just the demand load for one of the three total nodes in the example system, which is why the data may not appear to "represent" all 52 weeks (notice there are fewer representative periods in the fall). Instead, the periods more accurately represent all the data time series combined, including some other parts of the data not seen in this particular plot.
 
-```julia
-# F: what units?
-wind_with_TDR  |>
-@vlplot(mark={:line},
-    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Variability",scale={domain=[-.1,1.2]}}, 
-    color={"Week:n", scale={scheme="paired"},sort="decsending"},title="Onshore Wind Variability per hour with TDR Representative Weeks",
-    width=845,height=400)
-```
-
-
-```julia
-# TO DO: Plot other loads?
-# May be better to show wind instead of load -- generators variability
-# Plot representative periods -- reconstructed time series
-```
-
-#### Reconstruction
-
-Below is a plot of a reconstruction of the data using only the weeks isolated as representative periods. 
-
-
-```julia
-recon = []
-for i in range(1,52)
-    index = Period_map[i,"Rep_Period"]
-    recon_temp = [repeat([index],168) collect((168*i-167):168*i) loads[(168*index-167):168*index,"Demand_MW_z1"]]
-    recon = [recon; recon_temp]
-end
-```
-
-
-```julia
-recon = DataFrame(recon,["Week","hour", "MW"])
-recon[!,:hour] = convert.(Int64,recon[!,:hour]);
-recon[!,:MW] = convert.(Float64,recon[!,:MW]);
-```
-
-
-```julia
-recon  |>
-@vlplot(mark={:line},
-    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Load (MW)"},
-    color={"Week:n", scale={scheme="paired"},sort="decsending"},title="MW Load per hour Reconstructed",
-    width=845,height=400)
-```
-
-The range of 8-11 representative periods was chosen by the developers because it was deemed to be the smallest set that still matches the optimal value of the data well. The [last section](#ObjVals) of this Tutorial goes over how the optimal values of the data change as the number of representative periods changes.
 
 ### Extreme Periods Off
 
@@ -421,6 +373,9 @@ loads_with_TDR2[!,:MW] = convert.(Float64,loads_with_TDR2[!,:MW]);
 
 
 ```julia
+# Define a new color scheme to accomodate more periods
+myscheme = ["#a6cee3","#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00",
+    "#cab2d6","#6a3d9a","#ffff99","#b15928","#b1ff00","#095768","#ce7e00","#b4a7d6"];
 [loads_with_TDR; loads_with_TDR2] |>
 @vlplot(mark={:line}, row="Extreme_Periods:n",
     x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Load (MW)"},
@@ -429,74 +384,141 @@ loads_with_TDR2[!,:MW] = convert.(Float64,loads_with_TDR2[!,:MW]);
     width=845,height=300)
 ```
 
+![svg](./files/output_65_0.svg)
+
+The first plot (with Extreme Periods off) may not have the week with the highest peak highlighted. If the week with the highest demand is highlighted, try re-running the cell with Extreme Periods Off plotting the results.
+
+Turn Extreme Periods back on:
 
 ```julia
-recon[!,"Extreme_Periods"] = repeat(["On"],length(recon[!,1]));
+time_domain_reduction_settings["ExtremePeriods"] = 1;
+YAML.write_file(joinpath(case,"settings/time_domain_reduction_settings.yml"), time_domain_reduction_settings);
+rm(joinpath(case,"TDR_results"), recursive=true) 
 ```
 
+#### Reconstruction
+
+Below is a plot of a reconstruction of the data using only the weeks isolated as representative periods. This is what GenX reads when it runs the solver with TDR on.
+
 
 ```julia
-length(recon_noex)
-```
-
-
-```julia
+recon = []
 recon_noex = []
 for i in range(1,52)
-    index = Period_map2[i,"Rep_Period"]
-    recon_noex_temp = [repeat([index],168) collect((168*i-167):168*i) loads[(168*index-167):168*index,"Demand_MW_z1"]]
+    index = Period_map[i,"Rep_Period"]
+    recon_temp = [repeat([index],168) collect((168*i-167):168*i) loads[(168*index-167):168*index,"Demand_MW_z1"]]
+    recon = [recon; recon_temp]
+    
+    index2 = Period_map2[i,"Rep_Period"]
+    recon_noex_temp = [repeat([index2],168) collect((168*i-167):168*i) loads[(168*index2-167):168*index2,"Demand_MW_z1"]]
     recon_noex = [recon_noex; recon_noex_temp]
 end
 
-recon_noex = [recon_noex repeat(["Off"],8736)];
+recon = DataFrame(recon,["Week","hour", "MW"])
+recon[!,:hour] = convert.(Int64,recon[!,:hour]);
+recon[!,:MW] = convert.(Float64,recon[!,:MW]);
+recon[!,"Extreme_Periods"] = repeat(["On"],length(recon[!,1]));
 
+recon_noex = [recon_noex repeat(["Off"],8736)];
 recon_noex = DataFrame(recon_noex,["Week","hour", "MW", "Extreme_Periods"])
 recon_noex[!,:hour] = convert.(Int64,recon_noex[!,:hour]);
 recon_noex[!,:MW] = convert.(Float64,recon_noex[!,:MW]);
-
-[recon_noex; recon]  |>
-@vlplot(mark={:line}, row="Extreme_Periods:n",
-    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Load (MW)"},
-    color={"Week:n", scale={scheme="paired"},sort="decsending"},title="MW Load per hour Reconstructed",
-    width=845,height=400)
 ```
+
+
+```julia
+plotlyjs()
+G1 = Plots.plot(recon_noex[!,:hour], recon_noex[!,:MW], linewidth=1.7,
+    xticks=0:500:9000,xlabelfontsize=8,
+    yticks=0:2000:18000,yformatter =:plain,ylims=(0,18000), ylabel="Demand (MW)",
+    legend=false, title="Reconstruction, Extreme Periods Off", hover=recon_noex[!,:Week],
+    color=recon_noex[!,:Week],size=(845,800),palette=:Paired_12)
+
+G2 = Plots.plot(recon[!,:hour], recon[!,:MW], linewidth=1.7,
+    xticks=0:500:9000,xlabel="Time Step (Hours)",xlabelfontsize=8,
+    ylims=(0,18000),yticks=0:2000:18000,yformatter =:plain,ylabel="Demand (MW)",
+    legend=false, title="Reconstruction, Extreme Periods On",hover=recon[!,:Week],
+    color=recon[!,:Week],size=(845,800),palette=:Paired_12)
+
+Plots.plot(G1,G2,layout=(2,1))
+```
+
+Each color represents one of the representative weeks.
+
+The range of 8-11 representative periods was chosen by the developers because it was deemed to be the smallest set that still matches the optimal value of the data well. The next section of this Tutorial goes over how the optimal values of the data change as the number of representative periods changes.
 
 ### Objective Values and Representative Periods
 
-Each time `Run.jl` is run, a `Results` folder is produced. This folder contains numerous .csv files with output variable from the GenX model. For more information on all outputs, see the documentation [here](https://genxproject.github.io/GenX/dev/data_documentation/#Outputs).
+Each time `Run.jl` is run, a `results` folder is produced. This folder contains numerous .csv files with output variable from the GenX model. For more information on all outputs, see the documentation [GenX Outputs](@ref).
 
-This section focuses on the __objective value__ of the model. In optimization problems, the objective value is the main value minimized or maximized within the constraints of the model, according to the __objective function__ specified in the problem formulation. In the case of GenX, the objective function is the total annual electricity system cost. A detailed description of the optimization problem is [here](https://genxproject.github.io/GenX/dev/objective_function/) in the documentation. 
+This section focuses on the __objective value__ of the model. In optimization problems, the objective value is the main value minimized or maximized within the constraints of the model, according to the __objective function__ specified in the problem formulation. In the case of GenX, the objective function is the total annual electricity system cost. A detailed description of the optimization problem is [Objective Function](@ref) in the documentation. 
 
-For the purpose of this tutorial, we focus on the objective value as a way to evaluate how well the representative periods actually "represent" the entire model. To see how well the objective value of representative periods aligns with that of the total period, we can run `SmallNewEngland/OneZone` with a variety of minimum and maximum total periods.
-
-Each time `Run.jl` is run, a new results folder appears in the model folder. These folders are not overwritten. So far, we've run the model twice, so we should have two results folders, `Results` and `Results_1` in the `OneZone` folder, but you may have more if you've run the model more than twice. To ensure that the following code works, we'll delete any Results folders beyond the original.
-
-
-```julia
-folders = cd(readdir,case)
-```
-
-
-```julia
-for folder in folders
-    if length(folder) >= 8 && folder[1:8] == "Results_"
-        rm("example_systems/1_three_zones/" * folder,recursive=true) 
-    end
-end
-```
-
-
-```julia
-cd(readdir,case) ## Make sure they were deleted
-```
-
-Now, we're going to change the min and max periods in the TDR settings. As a reminder, here are the time domain reduction settings we've been using:
-
+For the purpose of this tutorial, we focus on the objective value as a way to evaluate how well the representative periods actually "represent" the entire model. To see how well the objective value of representative periods aligns with that of the total period, we can run `example_systems/1_three_zone` with a variety of minimum and maximum total periods.
 
 ```julia
 time_domain_reduction_settings
 ```
 
+```
+    Dict{Any, Any} with 15 entries:
+    "IterativelyAddPeriods" => 1
+    "ExtremePeriods"        => 1
+    "UseExtremePeriods"     => 1
+    "MinPeriods"            => 8
+    "MaxPeriods"            => 11
+    "DemandWeight"          => 1
+    "ClusterFuelPrices"     => 1
+    "nReps"                 => 100
+    "MultiStageConcatenate" => 0
+    "Threshold"             => 0.05
+    "TimestepsPerRepPeriod" => 168
+    "IterateMethod"         => "cluster"
+    "ScalingMethod"         => "S"
+    "ClusterMethod"         => "kmeans"
+    "WeightTotal"           => 8760
+```
+
+Each time Run.jl is run, a new results folder appears in the model folder. These folders are not overwritten. So far, we've run the model three times, so we should have three results folders in the 1_three_zones folder, but you may have more if you've run the model more. To ensure that the following code works, we'll delete any results folders beyond the original.
+
+```julia
+folders = cd(readdir,case)
+```
+
+```
+    10-element Vector{String}:
+    ".DS_Store"
+    "README.md"
+    "Run.jl"
+    "policies"
+    "resources"
+    "results"
+    "results_1"
+    "results_2"
+    "settings"
+    "system"
+```
+
+```julia
+for folder in folders
+    if length(folder) >= 8 && folder[1:8] == "results_"
+        rm("example_systems/1_three_zones/" * folder,recursive=true) 
+    end
+end
+     
+cd(readdir,case) ## Make sure they were deleted
+```
+
+```
+    8-element Vector{String}:
+    ".DS_Store"
+    "README.md"
+    "Run.jl"
+    "policies"
+    "resources"
+    "results"
+    "settings"
+    "system"
+```
 To demonstrate how the objective value changes as the number of representative periods does, we'll run GenX ten times, each with a different number of periods, and plot the objective values.
 
 
@@ -526,7 +548,7 @@ end
 
 Note that as the number of periods increases, so does the time it takes to run.
 
-Now, let's check that we have the correct Results folders and process the objecive values to plot. There should be seven results folders, including the original `Results`.
+Now, let's check that we have the correct Results folders and process the objecive values to plot. There should be seven results folders, including the original `results`.
 
 
 ```julia
@@ -537,7 +559,15 @@ The objective value is found in the files `costs.csv` and `status.csv`.
 
 
 ```julia
-status = CSV.read(joinpath(case,"Results/status.csv"),DataFrame,missingstring="NA")
+status = CSV.read(joinpath(case,"results/status.csv"),DataFrame,missingstring="NA")
+```
+
+```
+ 1×3 DataFrame
+    Row  Status     Solve       Objval
+         String     Float64     String
+    ─────────────────────────────────────
+     1	 OPTIMAL	53.9481	    9762.44
 ```
 
 
@@ -578,11 +608,6 @@ obj_val_plot = [4 abs(OV_noTDR[!,3][1]-OV_RP4[!,3][1]);
 
 
 ```julia
-# Add axis and dots for run time
-```
-
-
-```julia
 # Plot the differences as a function of number of representative periods
 plotlyjs()
 Plots.scatter(obj_val_plot[:,1],obj_val_plot[:,2],hover=obj_val_plot[:,2],legend=false,xticks=obj_val_plot[:,1],
@@ -592,7 +617,7 @@ scatter!(twinx(),obj_val_plot[:,1],times,color=:red,markeralpha=.5,label=:"Time"
 ygrid!(:on, :dashdot, 0.1)
 ```
 
-Here, we can see that while having very few representative periods produces an objective value that differs greatly from the orignal, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `SmallNewEngland/OneZone` decreases the run time of GenX significantly while while maintaining an objective value close to the original.
+Here, we can see that while having very few representative periods produces an objective value that differs greatly from the orignal, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `1_three_zones` decreases the run time of GenX significantly while while maintaining an objective value close to the original. 
 
 
 It's important to note, however, that  the difference does not always taper out, and for some systems you'll find that the error in objective value continues to decrease as the number of representative periods increases. There also is no way to know apriori what number of periods works.
@@ -617,5 +642,11 @@ rm(joinpath(case,"TDR_results", recursive=true))
 
 
 ```julia
+rm(joinpath(case,"TDR_results"), recursive=true) 
 YAML.write_file(joinpath(case,"settings/time_domain_reduction_settings.yml"), time_domain_reduction_settings)
-```
+folders = cd(readdir,case)
+for folder in folders
+    if length(folder) >= 7 && folder[1:7] == "results"
+        rm("example_systems/1_three_zones/" * folder,recursive=true) 
+    end
+end```

@@ -1,6 +1,6 @@
 # Tutorial 4: Model Generation
 
-[Jupyter Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_4_Model_Generation.ipynb)
+[Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_4_Model_Generation.ipynb)
 
 To run GenX, we use the file `Run.jl`. This file will solve the optimization problem and generate the output files as described in the documentation and previous tutorial. It does so by first generating the model, then solving the model, both according to settings described in `genx_settings.yml`. However, `Run.jl` only contains one commmand, `run_genx_case!(dirname(@__FILE__))`. This can be confusing for users viewing the files for the first time. In reality, this function signals many more functions to run, generating and solving the model. This tutorial explains how the model in GenX is generated. The next tutorial will then describe how it is solved.
 
@@ -19,7 +19,7 @@ We'll start by explaining JuMP, the optimization package that GenX uses to gener
 
 JuMP is a modeling language for Julia. It allows users to create models for optimization problems, define variables and constraints, and apply a variety of solvers for the model. 
 
-GenX is a __Linear Program (LP)__, which is a form of optimization problem in which a linear objective is minimized (or maximized) according to a set of linear constraints. For more information on LPs, see the <a href="https://en.wikipedia.org/wiki/Linear_programming" target="_blank">Wikipedia</a>. 
+GenX is a __Linear Program (LP)__, which is a form of optimization problem in which a linear objective is minimized (or maximized) according to a set of linear constraints. For more information on LPs, see [Wikipedia](https://en.wikipedia.org/wiki/Linear_programming).
 
 
 ```julia
@@ -126,7 +126,7 @@ The basic structure of the way `Run.jl` generates and solves the model is as fol
 <img src="./files/LatexHierarchy.png" style="width: 650px; height: auto">
 ```
 
-The function `run_genx_case(case)` takes the "case" as its input. The case is all of the input files and settings found in the same folder as `Run.jl`. For example, in `SmallNewEngland/OneZone`, the case is:
+The function `run_genx_case(case)` takes the "case" as its input. The case is all of the input files and settings found in the same folder as `Run.jl`. For example, in `example_systems/1_three_zones`, the case is:
 
 ```@raw html
 <img src="./files/OneZoneCase.png" style="width: auto; height: 500px" >
@@ -149,16 +149,19 @@ using GenX
 
 
 ```julia
-case = joinpath("Example_Systems_Tutorials/SmallNewEngland/OneZone") 
+case = joinpath("example_systems/1_three_zones") 
 ```
 
-"Example_Systems_Tutorials/SmallNewEngland/OneZone"
+```
+    "example_systems/1_three_zones"
+```
 
 Setup includes the settings from `genx_settings.yml` along with the default settings found in `configure_settings.jl`. The function `configure_settings` combines the two.
 
 ```julia
 genx_settings = GenX.get_settings_path(case, "genx_settings.yml") # Settings YAML file path
-setup = GenX.configure_settings(genx_settings) # Combines genx_settings with defaults not specified in the file
+writeoutput_settings = GenX.get_settings_path(case, "output_settings.yml") # Set output path
+setup = GenX.configure_settings(genx_settings,writeoutput_settings) # Combines genx_settings with defaults
 ```
 ```
     Configuring Settings
@@ -188,15 +191,21 @@ setup = GenX.configure_settings(genx_settings) # Combines genx_settings with def
       "IncludeLossesInESR"                      => 0
       "UCommit"                                 => 2
 ```
-It's here that we create the folder `TDR_Results` before generating the model. This occurs if TimeDomainReduction is set to 1 in the setup.
+It's here that we create the folder `TDR_results` before generating the model. This occurs if TimeDomainReduction is set to 1 in the setup. As a reminder, `TDR_results` is __not__ overwritten when called again. The cell below will delete a preexisting `TDR_results` folder if it is there.
 
 
 ```julia
 TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
+system_path = joinpath(case, setup["SystemFolder"])
+
 settings_path = GenX.get_settings_path(case)
 
+if "TDR_results" in cd(readdir,case)
+    rm(joinpath(case,"TDR_results"), recursive=true) 
+end
+
 if setup["TimeDomainReduction"] == 1
-    GenX.prevent_doubled_timedomainreduction(case)
+    GenX.prevent_doubled_timedomainreduction(system_path)
     if !GenX.time_domain_reduced_files_exist(TDRpath)
         println("Clustering Time Series Data (Grouped)...")
         GenX.cluster_inputs(case, settings_path, setup)
@@ -238,17 +247,18 @@ The optimizer argument is taken from setup:
 
 
 ```julia
-OPTIMIZER =  GenX.configure_solver(setup["Solver"], settings_path);
+OPTIMIZER =  GenX.configure_solver(settings_path,HiGHS.Optimizer)
 ```
 
-The function `configure_solver` converts the string from "Solver" to a <a href="https://jump.dev/MathOptInterface.jl/stable/" target="_blank">MathOptInterface</a> optimizer so it can be used in the JuMP model as the optimizer. It also goes into the settings file for the specified solver (in this case HiGHS, so `OneZone/Settings/highs_settings.yml`) and uses the settings to configure the solver to be used later.
+The function `configure_solver` converts the string from "Solver" to a [MathOptInterface](https://jump.dev/MathOptInterface.jl/stable) optimizer so it can be used in the JuMP model as the optimizer. It also goes into the settings file for the specified solver (in this case HiGHS, so `1_three_zones/settings/highs_settings.yml`) and uses the settings to configure the solver to be used later.
 
 
 ```julia
 typeof(OPTIMIZER)
 ```
-
+```
     MathOptInterface.OptimizerWithAttributes
+```
 
 The "inputs" argument is generated by the function `load_inputs` from the case in `run_genx_case_simple` (or multistage). If TDR is set to 1 in the settings file, then `load_inputs` will draw some of the files from the `TDR_Results` folder. `TDR_Results` is produced when the case is run. 
 
@@ -331,17 +341,21 @@ Next, the dummy variable vZERO, the objective function, the power balance expres
 ```julia
 # Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
 # eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
+
+GenX.set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
 @variable(EP, vZERO == 0);
 
 # Initialize Power Balance Expression
 # Expression for "baseline" power balance constraint
-@expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
+GenX.create_empty_expression!(EP, :ePowerBalance, (T, Z))
 
 # Initialize Objective Function Expression
-@expression(EP, eObj, 0)
+EP[:eObj] = AffExpr(0.0)
 
-# Initialize Total Generation per Zone
-@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
+GenX.create_empty_expression!(EP, :eGenerationByZone, (Z, T))
+
+# Energy losses related to technologies
+GenX.create_empty_expression!(EP, :eELOSSByZone, Z)
 ```
 ```
     1×1848 Matrix{Int64}:
@@ -351,28 +365,25 @@ Next, we go through some of the settings in setup and, if they've been set to be
 
 
 ```julia
+# Initialize Capacity Reserve Margin Expression
 if setup["CapacityReserveMargin"] > 0
-    @expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+    GenX.create_empty_expression!(EP, :eCapResMarBalance, (inputs["NCapacityReserveMargin"], T))
 end
 
+# Energy Share Requirement
 if setup["EnergyShareRequirement"] >= 1
-    @expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+    GenX.create_empty_expression!(EP, :eESR, inputs["nESR"])
 end
 
 if setup["MinCapReq"] == 1
-    @expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+    GenX.create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
 end
 
 if setup["MaxCapReq"] == 1
-    @expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
+    GenX.create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
 end
 ```
-```
-    3-element Vector{Int64}:
-     0
-     0
-     0
-```
+
 
 The other settings will be used later on.
 
@@ -391,14 +402,21 @@ if setup["UCommit"] > 0
     GenX.ucommit!(EP, inputs, setup)
 end
 
-GenX.emissions!(EP, inputs)
+GenX.fuel!(EP, inputs, setup)
 
-if setup["Reserves"] > 0
-    GenX.reserves!(EP, inputs, setup)
+GenX.co2!(EP, inputs) 
+
+if setup["OperationalReserves"] > 0
+    GenX.operational_reserves!(EP, inputs, setup)
 end
 
 if Z > 1
+    GenX.investment_transmission!(EP, inputs, setup)
     GenX.transmission!(EP, inputs, setup)
+end
+
+if Z > 1 && setup["DC_OPF"] != 0
+    GenX.dcopf_transmission!(EP, inputs, setup)
 end
 ```
 ```
@@ -406,7 +424,10 @@ end
     Non-served Energy Module
     Investment Discharge Module
     Unit Commitment Module
-    Emissions Module (for CO2 Policy modularization
+    Fuel Module
+    CO2 Module
+    Investment Transmission Module
+    Transmission Module
 ```
 
 We then define variables and expressions based on the resources in the inputs and setup arguments. The details of these can be found in the `src/resources` folder and the "resources" folder under Model Function Reference in the documentation:
@@ -435,6 +456,10 @@ if !isempty(inputs["HYDRO_RES"])
     GenX.hydro_res!(EP, inputs, setup)
 end
 
+if !isempty(inputs["ELECTROLYZER"])
+    GenX.electrolyzer!(EP, inputs, setup)
+end
+
 # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
 if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
     GenX.hydro_inter_period_linkage!(EP, inputs)
@@ -450,22 +475,28 @@ if !isempty(inputs["THERM_ALL"])
     GenX.thermal!(EP, inputs, setup)
 end
 
-# Model constraints, variables, expression related to retrofit technologies
-if !isempty(inputs["RETRO"])
-    EP = GenX.retrofit(EP, inputs)
+# Model constraints, variables, expressions related to the co-located VRE-storage resources
+if !isempty(inputs["VRE_STOR"])
+    GenX.vre_stor!(EP, inputs, setup)
 end
+
 
 ```
 
-Finally, we define expressions and variables using policies outlined in the inputs. These functions can be found in `src/policies` and in the [policies documentation](https://genxproject.github.io/GenX/dev/policies/):
+Finally, we define expressions and variables using policies outlined in the inputs. These functions can be found in `src/policies` and in the [Emission mitigation policies](@ref) section of the documentation:
 
 
 ```julia
 # Policies
+
+if setup["OperationalReserves"] > 0
+    GenX.operational_reserves_constraints!(EP, inputs)
+end
+
 # CO2 emissions limits
-#if setup["CO2Cap"] > 0
- #   GenX.co2_cap!(EP, inputs, setup)
-#end
+if setup["CO2Cap"] > 0
+    GenX.co2_cap!(EP, inputs, setup)
+end
 
 # Endogenous Retirements
 if setup["MultiStage"] > 0
