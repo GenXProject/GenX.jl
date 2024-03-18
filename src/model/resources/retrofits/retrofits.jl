@@ -2,20 +2,19 @@
 	retrofit(EP::Model, inputs::Dict)
 
 This function defines the constraints for operation of retrofit technologies, including
-	but not limited to carbon capture and thermal energy storage.
-
+		but not limited to carbon capture and thermal energy storage.
+	
 For retrofittable source technologies $y$ and retrofit technologies $r$ in the same region $z$ and retrofit cluster $id$,
-(i.e. $y \in RF(id)$ and $r \in RF(id)$), the total retrofit capacity $\Omega_{r}$ that may be installed 
+(i.e. $y \in RS(id)$ and $r \in RO(id)$), the total retrofit capacity $\Omega_{r}$ that may be installed 
 is constrained by the available retrofittable capacity $P_{y}$ as well as the efficiency ${ef}_{r}$ of the retrofit technology.
-
-Here, ``I_{RETROFIT}`` represents the set of all retrofit IDs (clusters) in the model, $RF(id)$ signifies the collection of all resources 
-within the same retrofit cluster $id$, $RS$ encompasses all retrofittable source technologies, and $RO$ encompasses all retrofit technologies.
 
 ```math
 \begin{aligned}
-\sum_{y \in RF(id) \cap RS}P_{y} = \sum_{r \in RF(id) \cap RO}\frac{\Omega_{r}}{{ef}_{r}} \quad \quad \quad \quad \forall id \in I_{RETROFIT}
+    \sum_{y \in RS(id)}P_{y} = \sum_{r \in RO(id)}\frac{\Omega_{r}}{{ef}_{r}} \quad \quad \quad \quad \forall id \in {RETROFIT},
 \end{aligned}
 ```
+where ${RETROFIT}$ represents the set of all retrofit IDs (clusters) in the model.
+
 """
 function retrofit(EP::Model, inputs::Dict)
 

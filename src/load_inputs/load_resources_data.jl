@@ -1058,12 +1058,18 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     if (!isempty(inputs["RETROFIT_CAP"]) || !isempty(inputs["RETROFIT_OPTIONS"]))
         # min retired capacity constraint for retrofitting units is only applicable if retrofit options
         # in the same cluster either all have Contribute_Min_Retirement set to 1 or none of them do
-        if setup["MultiStage"] == 1 && any(min_retired_cap_mw.(gen[inputs["RETROFIT_CAP"]]) .> 0)
+        if setup["MultiStage"] == 1
             for retrofit_res in inputs["RETROFIT_CAP"]
-                if min_retired_cap_mw(gen[retrofit_res]) > 0 && !has_all_options_contributing(gen[retrofit_res], gen) && !has_all_options_not_contributing(gen[retrofit_res], gen)
+                if !has_all_options_contributing(gen[retrofit_res], gen) && !has_all_options_not_contributing(gen[retrofit_res], gen)
                     msg = "Retrofit options in the same cluster either all have Contribute_Min_Retirement set to 1 or none of them do. \n" *
                         "Check column Contribute_Min_Retirement in the \"Resource_multistage_data.csv\" file for resource $(resource_name(gen[retrofit_res]))."
-                    @warn(msg)
+                    @error msg
+                    error("Invalid input detected for Contribute_Min_Retirement.")
+                    
+                end
+                if has_all_options_not_contributing(gen[retrofit_res], gen) && setup["MultiStageSettingsDict"]["Myopic"]==1
+                    @error "When performing myopic multistage expansion all retrofit options need to have Contribute_Min_Retirement set to 1 to avoid model infeasibilities."
+                    error("Invalid input detected for Contribute_Min_Retirement.")
                 end
             end
         end
