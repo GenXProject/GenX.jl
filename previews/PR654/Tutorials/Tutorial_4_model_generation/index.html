@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial 4: Model Generation · GenX</title><meta name="title" content="Tutorial 4: Model Generation · GenX"/><meta property="og:title" content="Tutorial 4: Model Generation · GenX"/><meta property="twitter:title" content="Tutorial 4: Model Generation · GenX"/><meta name="description" content="Documentation for GenX."/><meta property="og:description" content="Documentation for GenX."/><meta property="twitter:description" content="Documentation for GenX."/><meta property="og:url" content="https://genxproject.github.io/GenX/stable/Tutorials/Tutorial_4_model_generation/"/><meta property="twitter:url" content="https://genxproject.github.io/GenX/stable/Tutorials/Tutorial_4_model_generation/"/><link rel="canonical" href="https://genxproject.github.io/GenX/stable/Tutorials/Tutorial_4_model_generation/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/genx_style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img class="docs-light-only" src="../../assets/logo.svg" alt="GenX logo"/><img class="docs-dark-only" src="../../assets/logo-dark.svg" alt="GenX logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><input class="collapse-toggle" id="menuitem-1" type="checkbox"/><label class="tocitem" for="menuitem-1"><span class="docs-label">Welcome Page</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../">GenX: Introduction</a></li><li><a class="tocitem" href="../../installation/">Installation Guide</a></li><li><a class="tocitem" href="../../limitations_genx/">Limitation of GenX</a></li><li><a class="tocitem" href="../../third_party_genx/">Third Party Extensions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox"/><label class="tocitem" for="menuitem-2"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Getting_Started/examples_casestudies/">Running GenX</a></li><li><a class="tocitem" href="../../Getting_Started/commercial_solvers/">Commertial solvers</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Tutorials_intro/">Tutorials Overview</a></li><li><a class="tocitem" href="../Tutorial_1_configuring_settings/">Tutorial 1: Configuring Settings</a></li><li><a class="tocitem" href="../Tutorial_2_network_visualization/">Tutorial 2: Network Visualization</a></li><li><a class="tocitem" href="../Tutorial_3_K-means_time_domain_reduction/">Tutorial 3: K-Means and Time Domain Reduction</a></li><li class="is-active"><a class="tocitem" href>Tutorial 4: Model Generation</a></li><li><a class="tocitem" href="../Tutorial_5_solve_model/">Tutorial 5: Solving the Model</a></li><li><a class="tocitem" href="../Tutorial_6_solver_settings/">Tutorial 6: Post Processing</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">User Guide</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../User_Guide/workflow/">Overall workflow</a></li><li><a class="tocitem" href="../../User_Guide/model_configuration/">Model Configuration</a></li><li><a class="tocitem" href="../../User_Guide/solver_configuration/">Solver Configuration</a></li><li><a class="tocitem" href="../../User_Guide/model_input/">Model Inputs</a></li><li><a class="tocitem" href="../../User_Guide/TDR_input/">Time-domain Reduction Inputs</a></li><li><a class="tocitem" href="../../User_Guide/running_TDR/">Running the Time-domain Reduction</a></li><li><a class="tocitem" href="../../User_Guide/generate_alternatives/">MGA package</a></li><li><a class="tocitem" href="../../User_Guide/multi_stage_input/">Multi-stage Model</a></li><li><a class="tocitem" href="../../User_Guide/slack_variables_overview/">Slack Variables for Policies</a></li><li><a class="tocitem" href="../../User_Guide/methodofmorris_input/">Method of Morris Inputs</a></li><li><a class="tocitem" href="../../User_Guide/running_model/">Running the Model</a></li><li><a class="tocitem" href="../../User_Guide/model_output/">Model Outputs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Model Concept and Overview</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Concept_Overview/model_introduction/">Model Introduction</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/model_notation/">Notation</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/objective_function/">Objective Function</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/power_balance/">Power Balance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Model Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/core/">Core</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Resources</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/curtailable_variable_renewable/">Curtailable Variable Renewable</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/flexible_demand/">Flexible Demand</a></li><li><input class="collapse-toggle" id="menuitem-6-2-3" type="checkbox"/><label class="tocitem" for="menuitem-6-2-3"><span class="docs-label">Hydro</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/hydro_res/">Hydro Reservoir</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/hydro_inter_period_linkage/">Long Duration Hydro</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/must_run/">Must Run</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/retrofit/">Retrofit</a></li><li><input class="collapse-toggle" id="menuitem-6-2-6" type="checkbox"/><label class="tocitem" for="menuitem-6-2-6"><span class="docs-label">Storage</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/storage/">Storage</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/investment_charge/">Investment Charge</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/investment_energy/">Investment Energy</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/long_duration_storage/">Long Duration Storage</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_all/">Storage All</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_asymmetric/">Storage Asymmetric</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_symmetric/">Storage Symmetric</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/vre_stor/">Co-located VRE and Storage</a></li><li><input class="collapse-toggle" id="menuitem-6-2-8" type="checkbox"/><label class="tocitem" for="menuitem-6-2-8"><span class="docs-label">Thermal</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/thermal/">Thermal</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/thermal_commit/">Thermal Commit</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/thermal_no_commit/">Thermal No Commit</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/electrolyzers/">Hydrogen Electrolyzers</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/retrofit/">Retrofit</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/maintenance/">Scheduled maintenance for various resources</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/resource/">Resource types</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/maintenance_overview/">Maintenance</a></li><li><a class="tocitem" href="../../Model_Reference/policies/">Policies</a></li><li><a class="tocitem" href="../../Model_Reference/solver_configuration_api/">Solver Configurations</a></li><li><a class="tocitem" href="../../Model_Reference/load_inputs/">Inputs Functions</a></li><li><a class="tocitem" href="../../Model_Reference/generate_model/">Generate the Model</a></li><li><a class="tocitem" href="../../Model_Reference/solve_model/">Solving the Model</a></li><li><a class="tocitem" href="../../Model_Reference/TDR/">Time-domain Reduction</a></li><li><a class="tocitem" href="../../Model_Reference/write_outputs/">Outputs Functions</a></li><li><a class="tocitem" href="../../Model_Reference/mga/">Modeling to Generate Alternatives</a></li><li><input class="collapse-toggle" id="menuitem-6-12" type="checkbox"/><label class="tocitem" for="menuitem-6-12"><span class="docs-label">Multi-stage</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/multi_stage_overview/">Multi-Stage Modeling Introduction</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/configure_multi_stage_inputs/">Configure multi-stage inputs</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/dual_dynamic_programming/">Model multi stage: Dual Dynamic Programming Algorithm</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/endogenous_retirement/">Endogenous Retirement</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/methodofmorris/">Method of Morris</a></li><li><a class="tocitem" href="../../Model_Reference/utility_functions/">Utility Functions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Public API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Public_API/public_api/">Public API</a></li></ul></li><li><a class="tocitem" href="../../additional_third_party_extensions/">Third Party Extensions</a></li><li><a class="tocitem" href="../../developer_guide/">Developer Docs</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Tutorial 4: Model Generation</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial 4: Model Generation</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/GenXProject/GenX" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/GenXProject/GenX/blob/main/docs/src/Tutorials/Tutorial_4_model_generation.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorial-4:-Model-Generation"><a class="docs-heading-anchor" href="#Tutorial-4:-Model-Generation">Tutorial 4: Model Generation</a><a id="Tutorial-4:-Model-Generation-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-4:-Model-Generation" title="Permalink"></a></h1><p><a href="https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_4_Model_Generation.ipynb">Interactive Notebook of the tutorial</a></p><p>To run GenX, we use the file <code>Run.jl</code>. This file will solve the optimization problem and generate the output files as described in the documentation and previous tutorial. It does so by first generating the model, then solving the model, both according to settings described in <code>genx_settings.yml</code>. However, <code>Run.jl</code> only contains one commmand, <code>run_genx_case!(dirname(@__FILE__))</code>. This can be confusing for users viewing the files for the first time. In reality, this function signals many more functions to run, generating and solving the model. This tutorial explains how the model in GenX is generated. The next tutorial will then describe how it is solved.</p><p>We&#39;ll start by explaining JuMP, the optimization package that GenX uses to generate and solve the model.</p><h3 id="Table-of-Contents"><a class="docs-heading-anchor" href="#Table-of-Contents">Table of Contents</a><a id="Table-of-Contents-1"></a><a class="docs-heading-anchor-permalink" href="#Table-of-Contents" title="Permalink"></a></h3><ul><li><a href="#JuMP">JuMP</a></li><li><a href="#GenerateModel">Generate Model</a><ul><li><a href="#Arguments">Arguments</a></li><li><a href="#Run">Run generate_model</a></li></ul></li></ul><img src="./files/jump_logo.png" style="width: 450px; height: auto" ><p>JuMP is a modeling language for Julia. It allows users to create models for optimization problems, define variables and constraints, and apply a variety of solvers for the model. </p><p>GenX is a <strong>Linear Program (LP)</strong>, which is a form of optimization problem in which a linear objective is minimized (or maximized) according to a set of linear constraints. For more information on LPs, see <a href="https://en.wikipedia.org/wiki/Linear_programming">Wikipedia</a>.</p><pre><code class="language-julia hljs">using JuMP
+using HiGHS</code></pre><p>Let&#39;s say we want to build a power grid consisting of and coal and wind plants. We want to decrease the cost of producing energy while still meeting a certain emissions threshold and full grid demand. Coal plants are cheaper to build and run but have higher emissions than wind farms. To find the minimum cost of a power grid meeting these constraints, we construct an LP using JuMP.</p><p class="math-container">\[\begin{aligned}
+&amp; \min 10 x + 15 y &amp;\text{Objective function (cost)}\\ 
+&amp; \text{s.t.} &amp; \\
+&amp; x + y \geq 10 &amp;\text{Grid Demand}\\
+&amp; 55x + 70y \leq \ 1000 &amp;\text{Construction constraint}\\
+&amp; 40 x + 5 y \leq 200 &amp;\text{Emissions constraint} \\
+&amp; x, y \geq 0 &amp;\text{Non-negativity constraints}\\
+\end{aligned}\]</p><p>The core of the JuMP model is the function <code>Model()</code>, which creates the structure of our LP. <code>Model()</code> takes an optimizer as its input.</p><pre><code class="language-julia hljs">power = Model(HiGHS.Optimizer)</code></pre><pre><code class="nohighlight hljs">A JuMP Model
+Feasibility problem with:
+Variables: 0
+Model mode: AUTOMATIC
+CachingOptimizer state: EMPTY_OPTIMIZER
+Solver name: HiGHS</code></pre><p>The model needs variables, defined using the JuMP function <code>@variable</code>:</p><pre><code class="language-julia hljs">@variable(power,x) # Coal
+@variable(power,y) # Wind</code></pre><p>Using the JuMP function <code>@constraint</code>, we can add the constraints of the model:</p><pre><code class="language-julia hljs">@constraint(power, non_neg_x, x &gt;= 0) # Non-negativity constraint (can&#39;t have negative power plants!)
+@constraint(power, non_neg_y, y &gt;= 0) # Non-negativity constraint
+
+@constraint(power, emissions, 40x + 5y &lt;= 200) # Emisisons constraint
+@constraint(power, construction_costs, 55x + 70y &lt;= 1000) # Cost of constructing a new plant
+
+@constraint(power, demand, x + y &gt;= 10) # Grid demand</code></pre><p><span>$x + y \geq 10$</span></p><p>Next, the function <code>@expression</code> defines an expression that can be used in either a constraint or objective function. In GenX, expressions are defined throughout the model generation and put into constraints and the objective function later.</p><pre><code class="language-julia hljs">@expression(power,objective,10x+15y)</code></pre><p>$ 10 x + 15 y $</p><p>Finally, we define the objective function itself:</p><pre><code class="language-julia hljs">@objective(power, Min, objective)</code></pre><p><span>$10 x + 15 y$</span></p><p>Our model is now set up! </p><pre><code class="language-julia hljs">print(power)</code></pre><p class="math-container">\[\begin{aligned}
+\min\quad &amp; 10 x + 15 y\\
+\text{Subject to} \quad &amp; x \geq 0\\
+ &amp; y \geq 0\\
+ &amp; x + y \geq 10\\
+ &amp; 40 x + 5 y \leq 200\\
+ &amp; 55 x + 70 y \leq 1000\\
+\end{aligned} \]</p><p>In the next Tutorial, we go over how to use JuMP to solve the model we&#39;ve constructed.</p><p>When <code>Run.jl</code> is called, the model for GenX is constructed in a similar way, but with many more factors to consider. The next section goes over how the GenX model is constructed before it is solved.</p><h3 id="Generate-Model"><a class="docs-heading-anchor" href="#Generate-Model">Generate Model</a><a id="Generate-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Generate-Model" title="Permalink"></a></h3><p>The basic structure of the way <code>Run.jl</code> generates and solves the model is as follows:</p><img src="./files/LatexHierarchy.png" style="width: 650px; height: auto"><p>The function <code>run_genx_case(case)</code> takes the &quot;case&quot; as its input. The case is all of the input files and settings found in the same folder as <code>Run.jl</code>. For example, in <code>example_systems/1_three_zones</code>, the case is:</p><img src="./files/OneZoneCase.png" style="width: auto; height: 500px" ><p><code>Run_genx_case</code> defines the <strong>setup</strong>, which are the settings in <code>genx_settings.yml</code>. From there, either <code>run_genx_case_simple(case, mysetup)</code> or<code>run_genx_case_multistage(case, mysetup)</code> is called. Both of these define the <strong>inputs</strong> and <strong>optimizer</strong>. The optimizer is the solver as specified in <code>genx_settings.yml</code>, and the inputs are a variety of parameters specified by the settings and csv files found in the folder. Both of these functions then call <code>generate_model(mysetup, myinputs, OPTIMIZER)</code>, which is the main subject of this tutorial.</p><p>As in the above example, <code>generate_model</code> utilizes the JuMP functions <code>Model()</code>, <code>@expression</code>, <code>@variable</code>, and <code>@constraints</code> to form a model. This section goes through <code>generate_model</code> and explains how the expressions are formed to create the model.</p><h4 id="Arguments"><a class="docs-heading-anchor" href="#Arguments">Arguments</a><a id="Arguments-1"></a><a class="docs-heading-anchor-permalink" href="#Arguments" title="Permalink"></a></h4><p><code>Generate_model</code> takes three arguments: setup, inputs, and optimizer:</p><p>To generate the arguments, we have to set a case path (this is set automatically when <code>Run.jl</code> is called):</p><pre><code class="language-julia hljs">using GenX</code></pre><pre><code class="language-julia hljs">case = joinpath(&quot;example_systems/1_three_zones&quot;) </code></pre><pre><code class="nohighlight hljs">    &quot;example_systems/1_three_zones&quot;</code></pre><p>Setup includes the settings from <code>genx_settings.yml</code> along with the default settings found in <code>configure_settings.jl</code>. The function <code>configure_settings</code> combines the two.</p><pre><code class="language-julia hljs">genx_settings = GenX.get_settings_path(case, &quot;genx_settings.yml&quot;) # Settings YAML file path
+writeoutput_settings = GenX.get_settings_path(case, &quot;output_settings.yml&quot;) # Set output path
+setup = GenX.configure_settings(genx_settings,writeoutput_settings) # Combines genx_settings with defaults</code></pre><pre><code class="nohighlight hljs">    Configuring Settings
+    Dict{Any, Any} with 24 entries:
+      &quot;NetworkExpansion&quot;                        =&gt; 0
+      &quot;TimeDomainReductionFolder&quot;               =&gt; &quot;TDR_Results&quot;
+      &quot;EnableJuMPStringNames&quot;                   =&gt; false
+      &quot;Trans_Loss_Segments&quot;                     =&gt; 1
+      &quot;ModelingtoGenerateAlternativeSlack&quot;      =&gt; 0.1
+      &quot;Solver&quot;                                  =&gt; &quot;HiGHS&quot;
+      &quot;Reserves&quot;                                =&gt; 0
+      &quot;MultiStage&quot;                              =&gt; 0
+      &quot;OverwriteResults&quot;                        =&gt; 0
+      &quot;ModelingToGenerateAlternatives&quot;          =&gt; 0
+      &quot;MaxCapReq&quot;                               =&gt; 1
+      &quot;MinCapReq&quot;                               =&gt; 1
+      &quot;CO2Cap&quot;                                  =&gt; 2
+      &quot;WriteShadowPrices&quot;                       =&gt; 1
+      &quot;ModelingToGenerateAlternativeIterations&quot; =&gt; 3
+      &quot;ParameterScale&quot;                          =&gt; 1
+      &quot;EnergyShareRequirement&quot;                  =&gt; 1
+      &quot;PrintModel&quot;                              =&gt; 0
+      &quot;TimeDomainReduction&quot;                     =&gt; 1
+      &quot;CapacityReserveMargin&quot;                   =&gt; 1
+      &quot;MethodofMorris&quot;                          =&gt; 0
+      &quot;StorageLosses&quot;                           =&gt; 1
+      &quot;IncludeLossesInESR&quot;                      =&gt; 0
+      &quot;UCommit&quot;                                 =&gt; 2</code></pre><p>It&#39;s here that we create the folder <code>TDR_results</code> before generating the model. This occurs if TimeDomainReduction is set to 1 in the setup. As a reminder, <code>TDR_results</code> is <strong>not</strong> overwritten when called again. The cell below will delete a preexisting <code>TDR_results</code> folder if it is there.</p><pre><code class="language-julia hljs">TDRpath = joinpath(case, setup[&quot;TimeDomainReductionFolder&quot;])
+system_path = joinpath(case, setup[&quot;SystemFolder&quot;])
+
+settings_path = GenX.get_settings_path(case)
+
+if &quot;TDR_results&quot; in cd(readdir,case)
+    rm(joinpath(case,&quot;TDR_results&quot;), recursive=true) 
+end
+
+if setup[&quot;TimeDomainReduction&quot;] == 1
+    GenX.prevent_doubled_timedomainreduction(system_path)
+    if !GenX.time_domain_reduced_files_exist(TDRpath)
+        println(&quot;Clustering Time Series Data (Grouped)...&quot;)
+        GenX.cluster_inputs(case, settings_path, setup)
+    else
+        println(&quot;Time Series Data Already Clustered.&quot;)
+    end
+end</code></pre><pre><code class="nohighlight hljs">    Clustering Time Series Data (Grouped)...
+    Reading Input CSV Files
+    Network.csv Successfully Read!
+    Load_data.csv Successfully Read!
+    Fuels_data.csv Successfully Read!
+    Generators_data.csv Successfully Read!
+    Generators_variability.csv Successfully Read!
+    Validating time basis
+    Capacity_reserve_margin.csv Successfully Read!
+    Minimum_capacity_requirement.csv Successfully Read!
+    Maximum_capacity_requirement.csv Successfully Read!
+    Energy_share_requirement.csv Successfully Read!
+    CO2_cap.csv Successfully Read!
+    CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
+
+    Dict{String, Any} with 9 entries:
+      &quot;RMSE&quot;          =&gt; Dict(&quot;Load_MW_z1&quot;=&gt;1100.54, &quot;NG&quot;=&gt;0.312319, &quot;onshore_wind_…
+      &quot;OutputDF&quot;      =&gt; DataFrame…
+      &quot;ColToZoneMap&quot;  =&gt; Dict(&quot;Load_MW_z1&quot;=&gt;1, &quot;battery_z1&quot;=&gt;1, &quot;natural_gas_combin…
+      &quot;ClusterObject&quot; =&gt; KmeansResult{Matrix{Float64}, Float64, Int64}([-1.38728 -1…
+      &quot;TDRsetup&quot;      =&gt; Dict{Any, Any}(&quot;IterativelyAddPeriods&quot;=&gt;1, &quot;ExtremePeriods…
+      &quot;Assignments&quot;   =&gt; [1, 1, 1, 1, 2, 2, 2, 2, 2, 3  …  6, 4, 3, 5, 5, 9, 10, 10…
+      &quot;InputDF&quot;       =&gt; [672×49 DataFrame
+      &quot;Weights&quot;       =&gt; [673.846, 1010.77, 673.846, 842.308, 842.308, 1853.08, 185…
+      &quot;Centers&quot;       =&gt; Any[1, 7, 12, 15, 23, 24, 28, 29, 48, 50, 51]</code></pre><p>The optimizer argument is taken from setup:</p><pre><code class="language-julia hljs">OPTIMIZER =  GenX.configure_solver(settings_path,HiGHS.Optimizer)</code></pre><p>The function <code>configure_solver</code> converts the string from &quot;Solver&quot; to a <a href="https://jump.dev/MathOptInterface.jl/stable">MathOptInterface</a> optimizer so it can be used in the JuMP model as the optimizer. It also goes into the settings file for the specified solver (in this case HiGHS, so <code>1_three_zones/settings/highs_settings.yml</code>) and uses the settings to configure the solver to be used later.</p><pre><code class="language-julia hljs">typeof(OPTIMIZER)</code></pre><pre><code class="nohighlight hljs">    MathOptInterface.OptimizerWithAttributes</code></pre><p>The &quot;inputs&quot; argument is generated by the function <code>load_inputs</code> from the case in <code>run_genx_case_simple</code> (or multistage). If TDR is set to 1 in the settings file, then <code>load_inputs</code> will draw some of the files from the <code>TDR_Results</code> folder. <code>TDR_Results</code> is produced when the case is run. </p><pre><code class="language-julia hljs">inputs = GenX.load_inputs(setup, case)</code></pre><pre><code class="nohighlight hljs">    Reading Input CSV Files
+    Network.csv Successfully Read!
+    Load_data.csv Successfully Read!
+    Fuels_data.csv Successfully Read!
+    Generators_data.csv Successfully Read!
+    Generators_variability.csv Successfully Read!
+    Validating time basis
+    Capacity_reserve_margin.csv Successfully Read!
+    Minimum_capacity_requirement.csv Successfully Read!
+    Maximum_capacity_requirement.csv Successfully Read!
+    Energy_share_requirement.csv Successfully Read!
+    CO2_cap.csv Successfully Read!
+    CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
+
+    Dict{Any, Any} with 66 entries:
+      &quot;Z&quot;                   =&gt; 1
+      &quot;LOSS_LINES&quot;          =&gt; [1]
+      &quot;RET_CAP_CHARGE&quot;      =&gt; Int64[]
+      &quot;pC_D_Curtail&quot;        =&gt; [50.0]
+      &quot;dfGen&quot;               =&gt; [4×68 DataFram
+      &quot;pTrans_Max_Possible&quot; =&gt; [2.95]
+      &quot;pNet_Map&quot;            =&gt; [1.0;;]
+      &quot;omega&quot;               =&gt; [4.01099, 4.01099, 4.01099, 4.01099, 4.01099, 4.0109…
+      &quot;RET_CAP_ENERGY&quot;      =&gt; [4]
+      &quot;RESOURCES&quot;           =&gt; String31[&quot;natural_gas_combined_cycle&quot;, &quot;solar_pv&quot;, &quot;…
+      &quot;COMMIT&quot;              =&gt; [1]
+      &quot;pMax_D_Curtail&quot;      =&gt; [1]
+      &quot;STOR_ALL&quot;            =&gt; [4]
+      &quot;THERM_ALL&quot;           =&gt; [1]
+      &quot;dfCO2CapZones&quot;       =&gt; [1;;]
+      &quot;REP_PERIOD&quot;          =&gt; 11
+      &quot;MinCapReq&quot;           =&gt; [5.0, 10.0, 6.0]
+      &quot;STOR_LONG_DURATION&quot;  =&gt; Int64[]
+      &quot;dfCapRes&quot;            =&gt; [0.156;;]
+      &quot;STOR_SYMMETRIC&quot;      =&gt; [4]
+      &quot;VRE&quot;                 =&gt; [2, 3]
+      &quot;RETRO&quot;               =&gt; Int64[]
+      &quot;THERM_COMMIT&quot;        =&gt; [1]
+      &quot;TRANS_LOSS_SEGS&quot;     =&gt; 1
+      &quot;H&quot;                   =&gt; 168
+      ⋮                     =&gt; ⋮</code></pre><p>Now that we have our arguments, we&#39;re ready to generate the model itself.</p><h4 id="Run-generate_model"><a class="docs-heading-anchor" href="#Run-generate_model">Run generate_model</a><a id="Run-generate_model-1"></a><a class="docs-heading-anchor-permalink" href="#Run-generate_model" title="Permalink"></a></h4><p>This subsection replicates the arguments in the function <code>generate_model</code>. <strong>Note:</strong> Running some of these cells for a second time will throw an error as the code will attempt to define a new expression with the name of an existing expression. To run the Tutorial again, clear and restart the kernel.</p><p>First, we initialize a model and define the time step and zone variables</p><pre><code class="language-julia hljs">EP = Model(OPTIMIZER)  # From JuMP</code></pre><pre><code class="nohighlight hljs">A JuMP Model
+Feasibility problem with:
+Variables: 0
+Model mode: AUTOMATIC
+CachingOptimizer state: EMPTY_OPTIMIZER
+Solver name: HiGHS</code></pre><pre><code class="language-julia hljs">T = inputs[&quot;T&quot;];   # Number of time steps (hours)
+Z = inputs[&quot;Z&quot;];   # Number of zones</code></pre><p>Next, the dummy variable vZERO, the objective function, the power balance expression, and zone generation expression are all initialized to zero:</p><pre><code class="language-julia hljs"># Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
+# eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
+
+GenX.set_string_names_on_creation(EP, Bool(setup[&quot;EnableJuMPStringNames&quot;]))
+@variable(EP, vZERO == 0);
+
+# Initialize Power Balance Expression
+# Expression for &quot;baseline&quot; power balance constraint
+GenX.create_empty_expression!(EP, :ePowerBalance, (T, Z))
+
+# Initialize Objective Function Expression
+EP[:eObj] = AffExpr(0.0)
+
+GenX.create_empty_expression!(EP, :eGenerationByZone, (Z, T))
+
+# Energy losses related to technologies
+GenX.create_empty_expression!(EP, :eELOSSByZone, Z)</code></pre><pre><code class="nohighlight hljs">    1×1848 Matrix{Int64}:
+     0  0  0  0  0  0  0  0  0  0  0  0  0  …  0  0  0  0  0  0  0  0  0  0  0  0</code></pre><p>Next, we go through some of the settings in setup and, if they&#39;ve been set to be utilized (i.e. have a nonzero value), define expressions from their corresponding input files:</p><pre><code class="language-julia hljs"># Initialize Capacity Reserve Margin Expression
+if setup[&quot;CapacityReserveMargin&quot;] &gt; 0
+    GenX.create_empty_expression!(EP, :eCapResMarBalance, (inputs[&quot;NCapacityReserveMargin&quot;], T))
+end
+
+# Energy Share Requirement
+if setup[&quot;EnergyShareRequirement&quot;] &gt;= 1
+    GenX.create_empty_expression!(EP, :eESR, inputs[&quot;nESR&quot;])
+end
+
+if setup[&quot;MinCapReq&quot;] == 1
+    GenX.create_empty_expression!(EP, :eMinCapRes, inputs[&quot;NumberOfMinCapReqs&quot;])
+end
+
+if setup[&quot;MaxCapReq&quot;] == 1
+    GenX.create_empty_expression!(EP, :eMaxCapRes, inputs[&quot;NumberOfMaxCapReqs&quot;])
+end</code></pre><p>The other settings will be used later on.</p><p>Next, we define the model infrastructure using functions found in <code>src/core</code>. These take entries from inputs and setup to create more expressions in our model (EP). To see what the functions do in more detail, see the source code and <a href="https://genxproject.github.io/GenX/dev/core/#Discharge">core documentation</a>.</p><pre><code class="language-julia hljs"># Infrastructure
+GenX.discharge!(EP, inputs, setup)
+
+GenX.non_served_energy!(EP, inputs, setup)
+
+GenX.investment_discharge!(EP, inputs, setup)
+
+if setup[&quot;UCommit&quot;] &gt; 0
+    GenX.ucommit!(EP, inputs, setup)
+end
+
+GenX.fuel!(EP, inputs, setup)
+
+GenX.co2!(EP, inputs) 
+
+if setup[&quot;OperationalReserves&quot;] &gt; 0
+    GenX.operational_reserves!(EP, inputs, setup)
+end
+
+if Z &gt; 1
+    GenX.investment_transmission!(EP, inputs, setup)
+    GenX.transmission!(EP, inputs, setup)
+end
+
+if Z &gt; 1 &amp;&amp; setup[&quot;DC_OPF&quot;] != 0
+    GenX.dcopf_transmission!(EP, inputs, setup)
+end</code></pre><pre><code class="nohighlight hljs">    Discharge Module
+    Non-served Energy Module
+    Investment Discharge Module
+    Unit Commitment Module
+    Fuel Module
+    CO2 Module
+    Investment Transmission Module
+    Transmission Module</code></pre><p>We then define variables and expressions based on the resources in the inputs and setup arguments. The details of these can be found in the <code>src/resources</code> folder and the &quot;resources&quot; folder under Model Function Reference in the documentation:</p><pre><code class="language-julia hljs"># Technologies
+# Model constraints, variables, expression related to dispatchable renewable resources
+
+if !isempty(inputs[&quot;VRE&quot;])
+    GenX.curtailable_variable_renewable!(EP, inputs, setup)
+end
+
+# Model constraints, variables, expression related to non-dispatchable renewable resources
+if !isempty(inputs[&quot;MUST_RUN&quot;])
+    GenX/must_run!(EP, inputs, setup)
+end
+
+# Model constraints, variables, expression related to energy storage modeling
+if !isempty(inputs[&quot;STOR_ALL&quot;])
+    GenX.storage!(EP, inputs, setup)
+end
+
+# Model constraints, variables, expression related to reservoir hydropower resources
+if !isempty(inputs[&quot;HYDRO_RES&quot;])
+    GenX.hydro_res!(EP, inputs, setup)
+end
+
+if !isempty(inputs[&quot;ELECTROLYZER&quot;])
+    GenX.electrolyzer!(EP, inputs, setup)
+end
+
+# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
+if inputs[&quot;REP_PERIOD&quot;] &gt; 1 &amp;&amp; !isempty(inputs[&quot;STOR_HYDRO_LONG_DURATION&quot;])
+    GenX.hydro_inter_period_linkage!(EP, inputs)
+end
+
+# Model constraints, variables, expression related to demand flexibility resources
+if !isempty(inputs[&quot;FLEX&quot;])
+    GenX.flexible_demand!(EP, inputs, setup)
+end
+
+# Model constraints, variables, expression related to thermal resource technologies
+if !isempty(inputs[&quot;THERM_ALL&quot;])
+    GenX.thermal!(EP, inputs, setup)
+end
+
+# Model constraints, variables, expressions related to the co-located VRE-storage resources
+if !isempty(inputs[&quot;VRE_STOR&quot;])
+    GenX.vre_stor!(EP, inputs, setup)
+end
+
+</code></pre><p>Finally, we define expressions and variables using policies outlined in the inputs. These functions can be found in <code>src/policies</code> and in the <a href="../../Model_Reference/policies/#Emission-mitigation-policies">Emission mitigation policies</a> section of the documentation:</p><pre><code class="language-julia hljs"># Policies
+
+if setup[&quot;OperationalReserves&quot;] &gt; 0
+    GenX.operational_reserves_constraints!(EP, inputs)
+end
+
+# CO2 emissions limits
+if setup[&quot;CO2Cap&quot;] &gt; 0
+    GenX.co2_cap!(EP, inputs, setup)
+end
+
+# Endogenous Retirements
+if setup[&quot;MultiStage&quot;] &gt; 0
+    GenX.endogenous_retirement!(EP, inputs, setup)
+end
+
+# Energy Share Requirement
+if setup[&quot;EnergyShareRequirement&quot;] &gt;= 1
+    GenX.energy_share_requirement!(EP, inputs, setup)
+end
+
+#Capacity Reserve Margin
+if setup[&quot;CapacityReserveMargin&quot;] &gt; 0
+    GenX.cap_reserve_margin!(EP, inputs, setup)
+end
+
+if (setup[&quot;MinCapReq&quot;] == 1)
+    GenX.minimum_capacity_requirement!(EP, inputs, setup)
+end
+
+if setup[&quot;MaxCapReq&quot;] == 1
+    GenX.maximum_capacity_requirement!(EP, inputs, setup)
+end
+</code></pre><pre><code class="nohighlight hljs">    Energy Share Requirement Policies Module
+    Capacity Reserve Margin Policies Module
+    Minimum Capacity Requirement Module
+    Maximum Capacity Requirement Module
+
+    3-element Vector{ConstraintRef{Model, MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LessThan{Float64}}, ScalarShape}}:
+     cZoneMaxCapReq[1] : -vRETCAP[2] + vCAP[2] ≤ 50
+     cZoneMaxCapReq[2] : -vRETCAP[3] + vCAP[3] ≤ 100
+     cZoneMaxCapReq[3] : -vRETCAP[4] + vCAP[4] ≤ 60
+</code></pre><p>The expressions and variables for the model have all been defined! All that&#39;s left to do is define the constraints and objective function.</p><p>The <a href="../../Model_Concept_Overview/objective_function/#Objective-Function">Objective Function</a> here is to minimize </p><pre><code class="language-julia hljs">@objective(EP,Min,EP[:eObj])</code></pre><pre><code class="nohighlight hljs">0.17159171428571432 vP_{1,1} + 0.0004010989010989012 vP_{3,1} + 0.0006016483516483517 vP_{4,1} + 0.17159171428571432 vP_{1,2} + 0.0004010989010989012 vP_{3,2} + 0.0006016483516483517 vP_{4,2} + 0.17159171428571432 vP_{1,3} + 0.0004010989010989012 vP_{3,3} + 0.0006016483516483517 vP_{4,3} + 0.17159171428571432 vP_{1,4} + 0.0004010989010989012 vP_{3,4} + 0.0006016483516483517 vP_{4,4} + 0.17159171428571432 vP_{1,5} + 0.0004010989010989012 vP_{3,5} + 0.0006016483516483517 vP_{4,5} + 0.17159171428571432 vP_{1,6} + 0.0004010989010989012 vP_{3,6} + 0.0006016483516483517 vP_{4,6} + 0.17159171428571432 vP_{1,7} + 0.0004010989010989012 vP_{3,7} + 0.0006016483516483517 vP_{4,7} + 0.17159171428571432 vP_{1,8} + 0.0004010989010989012 vP_{3,8} + 0.0006016483516483517 vP_{4,8} + 0.17159171428571432 vP_{1,9} + 0.0004010989010989012 vP_{3,9} + 0.0006016483516483517 vP_{4,9} + 0.17159171428571432 vP_{1,10} + 0.0004010989010989012 vP_{3,10} + 0.0006016483516483517 vP_{4,10} + [[\ldots\text{11038 terms omitted}\ldots]] + 0.00015041208791208792 vCHARGE_{4,1819} + 0.00015041208791208792 vCHARGE_{4,1820} + 0.00015041208791208792 vCHARGE_{4,1821} + 0.00015041208791208792 vCHARGE_{4,1822} + 0.00015041208791208792 vCHARGE_{4,1823} + 0.00015041208791208792 vCHARGE_{4,1824} + 0.00015041208791208792 vCHARGE_{4,1825} + 0.00015041208791208792 vCHARGE_{4,1826} + 0.00015041208791208792 vCHARGE_{4,1827} + 0.00015041208791208792 vCHARGE_{4,1828} + 0.00015041208791208792 vCHARGE_{4,1829} + 0.00015041208791208792 vCHARGE_{4,1830} + 0.00015041208791208792 vCHARGE_{4,1831} + 0.00015041208791208792 vCHARGE_{4,1832} + 0.00015041208791208792 vCHARGE_{4,1833} + 0.00015041208791208792 vCHARGE_{4,1834} + 0.00015041208791208792 vCHARGE_{4,1835} + 0.00015041208791208792 vCHARGE_{4,1836} + 0.00015041208791208792 vCHARGE_{4,1837} + 0.00015041208791208792 vCHARGE_{4,1838} + 0.00015041208791208792 vCHARGE_{4,1839} + 0.00015041208791208792 vCHARGE_{4,1840} + 0.00015041208791208792 vCHARGE_{4,1841} + 0.00015041208791208792 vCHARGE_{4,1842} + 0.00015041208791208792 vCHARGE_{4,1843} + 0.00015041208791208792 vCHARGE_{4,1844} + 0.00015041208791208792 vCHARGE_{4,1845} + 0.00015041208791208792 vCHARGE_{4,1846} + 0.00015041208791208792 vCHARGE_{4,1847} + 0.00015041208791208792 vCHARGE_{4,1848} $</code></pre><p>Our constraint is the <a href="../../Model_Concept_Overview/power_balance/#Power-Balance">Power Balance</a>, which is set here to have to meet the demand of the network. The demand is outlined in the last columns of <code>Load_data.csv</code>, and is set to inputs in from the <code>load_load_data</code> function within <code>load_inputs</code>, used in <code>run_genx_case</code>.</p><pre><code class="language-julia hljs">## Power balance constraints
+# demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
+#          + incoming power flows - outgoing power flows - flow losses - charge of heat storage + generation from NACC
+@constraint(EP, cPowerBalance[t=1:T, z=1:Z], EP[:ePowerBalance][t,z] == inputs[&quot;pD&quot;][t,z])
+</code></pre><pre><code class="nohighlight hljs">    1848×1 Matrix{ConstraintRef{Model, MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.EqualTo{Float64}}, ScalarShape}}:
+     cPowerBalance[1,1] : vP[2,1] + vP[3,1] + vP[4,1] + vNSE[1,1,1] - vCHARGE[4,1] = 11.162
+     cPowerBalance[2,1] : vP[2,2] + vP[3,2] + vP[4,2] + vNSE[1,2,1] - vCHARGE[4,2] = 10.556
+     cPowerBalance[3,1] : vP[2,3] + vP[3,3] + vP[4,3] + vNSE[1,3,1] - vCHARGE[4,3] = 10.105
+     cPowerBalance[4,1] : vP[2,4] + vP[3,4] + vP[4,4] + vNSE[1,4,1] - vCHARGE[4,4] = 9.878
+     cPowerBalance[5,1] : vP[2,5] + vP[3,5] + vP[4,5] + vNSE[1,5,1] - vCHARGE[4,5] = 9.843
+     cPowerBalance[6,1] : vP[2,6] + vP[3,6] + vP[4,6] + vNSE[1,6,1] - vCHARGE[4,6] = 10.017
+     cPowerBalance[7,1] : vP[2,7] + vP[3,7] + vP[4,7] + vNSE[1,7,1] - vCHARGE[4,7] = 10.39
+     cPowerBalance[8,1] : vP[2,8] + vP[3,8] + vP[4,8] + vNSE[1,8,1] - vCHARGE[4,8] = 10.727
+     cPowerBalance[9,1] : vP[2,9] + vP[3,9] + vP[4,9] + vNSE[1,9,1] - vCHARGE[4,9] = 11.298
+     cPowerBalance[10,1] : vP[2,10] + vP[3,10] + vP[4,10] + vNSE[1,10,1] - vCHARGE[4,10] = 11.859
+     cPowerBalance[11,1] : vP[2,11] + vP[3,11] + vP[4,11] + vNSE[1,11,1] - vCHARGE[4,11] = 12.196
+     cPowerBalance[12,1] : vP[2,12] + vP[3,12] + vP[4,12] + vNSE[1,12,1] - vCHARGE[4,12] = 12.321
+     cPowerBalance[13,1] : vP[2,13] + vP[3,13] + vP[4,13] + vNSE[1,13,1] - vCHARGE[4,13] = 12.381
+     ⋮
+     cPowerBalance[1837,1] : vP[2,1837] + vP[3,1837] + vP[4,1837] + vNSE[1,1837,1] - vCHARGE[4,1837] = 13.911
+     cPowerBalance[1838,1] : vP[2,1838] + vP[3,1838] + vP[4,1838] + vNSE[1,1838,1] - vCHARGE[4,1838] = 13.818
+     cPowerBalance[1839,1] : vP[2,1839] + vP[3,1839] + vP[4,1839] + vNSE[1,1839,1] - vCHARGE[4,1839] = 13.71
+     cPowerBalance[1840,1] : vP[2,1840] + vP[3,1840] + vP[4,1840] + vNSE[1,1840,1] - vCHARGE[4,1840] = 13.796
+     cPowerBalance[1841,1] : vP[2,1841] + vP[3,1841] + vP[4,1841] + vNSE[1,1841,1] - vCHARGE[4,1841] = 15.038
+     cPowerBalance[1842,1] : vP[2,1842] + vP[3,1842] + vP[4,1842] + vNSE[1,1842,1] - vCHARGE[4,1842] = 16.088
+     cPowerBalance[1843,1] : vP[2,1843] + vP[3,1843] + vP[4,1843] + vNSE[1,1843,1] - vCHARGE[4,1843] = 16.076
+     cPowerBalance[1844,1] : vP[2,1844] + vP[3,1844] + vP[4,1844] + vNSE[1,1844,1] - vCHARGE[4,1844] = 15.782
+     cPowerBalance[1845,1] : vP[2,1845] + vP[3,1845] + vP[4,1845] + vNSE[1,1845,1] - vCHARGE[4,1845] = 15.392
+     cPowerBalance[1846,1] : vP[2,1846] + vP[3,1846] + vP[4,1846] + vNSE[1,1846,1] - vCHARGE[4,1846] = 14.663
+     cPowerBalance[1847,1] : vP[2,1847] + vP[3,1847] + vP[4,1847] + vNSE[1,1847,1] - vCHARGE[4,1847] = 13.62
+     cPowerBalance[1848,1] : vP[2,1848] + vP[3,1848] + vP[4,1848] + vNSE[1,1848,1] - vCHARGE[4,1848] = 12.388</code></pre><p>After this final constraint is defined, <code>generate_model</code> finishes compiling the EP, and <code>run_genx_simple</code> (or multistage) uses <code>solve_model</code> to solve the EP. This will be described in Tutorial 5.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Tutorial_3_K-means_time_domain_reduction/">« Tutorial 3: K-Means and Time Domain Reduction</a><a class="docs-footer-nextpage" href="../Tutorial_5_solve_model/">Tutorial 5: Solving the Model »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.3.0 on <span class="colophon-date" title="Monday 18 March 2024 23:09">Monday 18 March 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
