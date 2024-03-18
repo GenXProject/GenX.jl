@@ -1,4 +1,3 @@
-(modelConcept)=
 # GenX Model Introduction
 
 ## Introduction

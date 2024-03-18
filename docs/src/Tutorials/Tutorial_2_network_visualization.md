@@ -1,8 +1,8 @@
 # Tutorial 2: Network Visualization
 
-[Jupyter Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_2_Network_Visualization.ipynb)
+[Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_2_Network_Visualization.ipynb)
 
-To run GenX, there are five mandatory input files: `Fuels_data.csv`, `Network.csv`, `Load_data.csv`, `Generators_variability.csv`, and `Generators_data.csv`. Detailed descriptions of these files can be found <a href="https://genxproject.github.io/GenX/dev/data_documentation/" target="_blank">here</a> in the documentation under "Inputs". This tutorial helps visualize the file `Network.csv` using the example system `SmallNewEngland/ThreeZones`.
+To run GenX, there are five mandatory input files: `Fuels_data.csv`, `Network.csv`, `Load_data.csv`, `Generators_variability.csv`, and `Generators_data.csv`. Detailed descriptions of these files can be found in the [GenX Inputs](@ref) page of the documentation. This tutorial helps visualize the file `Network.csv` using the example system `example_systems/1_three_zones`.
 
 
 ```julia
@@ -10,7 +10,7 @@ using CSV
 using DataFrames
 ```
 
-The input file `Network.csv` contains the nodes of your network, how they connect to each other, and some important features about them. Below is the network file for `SmallNewEngland/ThreeZones`:
+The input file `Network.csv` contains the nodes of your network, how they connect to each other, and some important features about them. Below is the network file for `example_systems/1_three_zones`:
 
 
 ```julia

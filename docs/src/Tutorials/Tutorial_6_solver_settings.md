@@ -1,6 +1,6 @@
 # Tutorial 6: Solver Settings
 
-[Jupyter Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_6_Solver_Settings.ipynb)
+[Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_6_Solver_Settings.ipynb)
 
 Though solving the model relies only on `optimize`, there are a number of ways to change the way in which the model is optimized. This tutorial goes over solver parameters and how they affect the model solution.
 
@@ -15,72 +15,46 @@ Though solving the model relies only on `optimize`, there are a number of ways t
 using YAML
 using GenX
 using JuMP
+using HiGHS
 using DataFrames
+using Plots
+using Plotly
 ```
 
 ```julia
-case = joinpath("Example_Systems_Tutorials/SmallNewEngland/OneZone") 
+case = joinpath("example_systems/1_three_zones") 
+
 genx_settings = GenX.get_settings_path(case, "genx_settings.yml");
-setup = GenX.configure_settings(genx_settings);
+writeoutput_settings = GenX.get_settings_path(case, "output_settings.yml")
+setup = GenX.configure_settings(genx_settings,writeoutput_settings) 
 settings_path = GenX.get_settings_path(case)
 ```
 ```
     Configuring Settings
-    Clustering Time Series Data (Grouped)...
-    Reading Input CSV Files
-    Network.csv Successfully Read!
-    Load_data.csv Successfully Read!
-    Fuels_data.csv Successfully Read!
-    Generators_data.csv Successfully Read!
-    Generators_variability.csv Successfully Read!
-    Validating time basis
-    Capacity_reserve_margin.csv Successfully Read!
-    Minimum_capacity_requirement.csv Successfully Read!
-    Maximum_capacity_requirement.csv Successfully Read!
-    Energy_share_requirement.csv Successfully Read!
-    CO2_cap.csv Successfully Read!
-    CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
-    Reading Input CSV Files
-    Network.csv Successfully Read!
-    Load_data.csv Successfully Read!
-    Fuels_data.csv Successfully Read!
-    Generators_data.csv Successfully Read!
-    Generators_variability.csv Successfully Read!
-    Validating time basis
-    Capacity_reserve_margin.csv Successfully Read!
-    Minimum_capacity_requirement.csv Successfully Read!
-    Maximum_capacity_requirement.csv Successfully Read!
-    Energy_share_requirement.csv Successfully Read!
-    CO2_cap.csv Successfully Read!
-    CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
 
-    Dict{Any, Any} with 66 entries:
-      "Z"                   => 1
-      "LOSS_LINES"          => [1]
-      "RET_CAP_CHARGE"      => Int64[]
-      "pC_D_Curtail"        => [50.0]
-      "dfGen"               => [1m4×68 DataFrame[0m[0m…
-      "pTrans_Max_Possible" => [2.95]
-      "pNet_Map"            => [1.0;;]
-      "omega"               => [4.01099, 4.01099, 4.01099, 4.01099, 4.01099, 4.0109…
-      "RET_CAP_ENERGY"      => [4]
-      "RESOURCES"           => String31["natural_gas_combined_cycle", "solar_pv", "…
-      "COMMIT"              => [1]
-      "pMax_D_Curtail"      => [1]
-      "STOR_ALL"            => [4]
-      "THERM_ALL"           => [1]
-      "dfCO2CapZones"       => [1;;]
-      "REP_PERIOD"          => 11
-      "MinCapReq"           => [5.0, 10.0, 6.0]
-      "STOR_LONG_DURATION"  => Int64[]
-      "dfCapRes"            => [0.156;;]
-      "STOR_SYMMETRIC"      => [4]
-      "VRE"                 => [2, 3]
-      "RETRO"               => Int64[]
-      "THERM_COMMIT"        => [1]
-      "TRANS_LOSS_SEGS"     => 1
-      "H"                   => 168
-      ⋮                     => ⋮
+    "example_systems/1_three_zones/settings"
+```
+
+```julia
+### Create TDR_Results
+if "TDR_results" in cd(readdir,case)
+    rm(joinpath(case,"TDR_results"), recursive=true) 
+end
+
+TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
+system_path = joinpath(case, setup["SystemFolder"])
+
+if setup["TimeDomainReduction"] == 1
+    GenX.prevent_doubled_timedomainreduction(system_path)
+    if !GenX.time_domain_reduced_files_exist(TDRpath)
+        println("Clustering Time Series Data (Grouped)...")
+        GenX.cluster_inputs(case, settings_path, setup)
+    else
+        println("Time Series Data Already Clustered.")
+    end
+end
+
+inputs = GenX.load_inputs(setup, case)
 ```
 
 ### The HiGHS Solver
@@ -92,6 +66,19 @@ To set the solver preferences, go into the settings folder of your case and sele
 
 ```julia
 settings_folder = cd(readdir,joinpath(case,"Settings")) # Print Settings folder
+```
+```
+    7-element Vector{String}:
+    ".DS_Store"
+    "clp_settings.yml"
+    "cplex_settings.yml"
+    "genx_settings.yml"
+    "gurobi_settings.yml"
+    "highs_settings.yml"
+    "time_domain_reduction_settings.yml"
+```
+    
+```julia
 highs_settings = YAML.load(open(joinpath(case,"Settings/highs_settings.yml")))
 ```
 ```
@@ -117,18 +104,15 @@ The default settings are combined with the settings you specify in `highs_settin
 
 ### Feasibility Tolerance
 
-The parameters `Feasib_Tol` and `Optimal_Tol` represent the feasibility of the primal and dual functions respectively. Without going into too much detail, a  <a href="https://en.wikipedia.org/wiki/Duality_(optimization)" target="_blank">__dual function__</a> is an analagous formulation of the original ("primal") function whose objective value acts as a lower bound to the primal function. The objective value of the primal function is then the upper bound of the dual function. HiGHS will solve the dual and primal at each time step, then terminate when the solutions of the two are within a certain tolerance range. For more information on how this works specifically in HiGHS, see the  <a href="https://ergo-code.github.io/HiGHS/dev/terminology/" target="_blank">HiGHS documentaion</a>. 
+The parameters `Feasib_Tol` and `Optimal_Tol` represent the feasibility of the primal and dual functions respectively. Without going into too much detail, a [__dual function__](https://en.wikipedia.org/wiki/Duality_(optimization)) is an analagous formulation of the original ("primal") function whose objective value acts as a lower bound to the primal function. The objective value of the primal function is then the upper bound of the dual function. HiGHS will solve the dual and primal at each time step, then terminate when the solutions of the two are within a certain tolerance range. For more information on how this works specifically in HiGHS, see the [HiGHS documentaion](https://ergo-code.github.io/HiGHS/dev/terminology). 
 
 If we decrease the tolerance parameters, the objective value becomes closer to the "true" optimal value.
 
 
 ```julia
 # Change tolerance, generate and solve model`
-tols = [1e-7,1e-5,1e-4,1e-3,1e-2,1e-1]
-OV = [0.0,0.0,0.0,0.0,0.0,0.0]
-times = [0.0,0.0,0.0,0.0,0.0,0.0]
-#highs_settings["Method"] = "ipm"
-#YAML.write_file(joinpath(case,"Settings/highs_settings.yml"), highs_settings)
+tols = [1e-7,1e-4,1e-2,1e-1]
+OV = zeros(1,4)
 
 for i in range(1,length(tols))
     println(" ")
@@ -138,37 +122,39 @@ for i in range(1,length(tols))
     println("----------------------------------------------------")
     highs_settings["Feasib_Tol"] = tols[i]
     highs_settings["Optimal_Tol"] = tols[i]
-    YAML.write_file(joinpath(case,"Settings/highs_settings.yml"), highs_settings)
-    OPTIMIZER1 = GenX.configure_solver(setup["Solver"], settings_path);
+    YAML.write_file(joinpath(case,"settings/highs_settings.yml"), highs_settings)
+    OPTIMIZER1 = GenX.configure_solver(settings_path,HiGHS.Optimizer)
     EP = GenX.generate_model(setup,inputs,OPTIMIZER1)
-    time = @elapsed GenX.solve_model(EP,setup)
+    GenX.solve_model(EP,setup)
     OV[i] = objective_value(EP)
-    times[i] = time
 end
-
-
 ```
 Using the smallest tolerance as our base, we can see the error as the tolerance increases:
 
 ```julia
-DataFrame([tols[2:end] abs.(OV[2:end] .- OV[1]) times[2:end]],["Tolerance", "Error", "Time"])
+DataFrame([tols[2:end] abs.(OV[2:end] .- OV[1])],["Tolerance", "Error"])
 ```
-
+```
+3×2 DataFrame
+    Row	Tolerance	Error
+        Float64	    Float64
+    ───────────────────────────
+    1	0.0001	    0.0
+    2	0.01	    1.81899e-12
+    3	0.1	        3.45608e-11
+```
 
 ```julia
 using Plots
 using Plotly
-import Pkg; Pkg.add("PyPlot")
 ```
 
 
 ```julia
-# Plot the run time as a function of the tolerance
+# Plot the error as a function of the tolerance
 plotlyjs()
 Plots.scatter(tols[2:end], abs.(OV[2:end] .- OV[1]),legend=:topleft,
-                ylabel="Error", xlabel="Tolerance",size=(920,400),label=:"Error")
-scatter!(twinx(),tols[2:end],times[2:end],color=:red,markeralpha=.5,label=:"Time",legend=:topleft,
-    yaxis=(label="Time"))
+                ylabel="Error", xlabel="Tolerance",size=(920,400),label=:"Error",title="Tolerance of Solver vs Error")
 ygrid!(:on, :dashdot, 0.1)
 ```
 

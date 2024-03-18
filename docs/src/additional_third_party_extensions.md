@@ -1,4 +1,3 @@
-(thirdparty)=
 # Additional Third Party Extensions to GenX
 
 ## pygenx: Python interface for GenX

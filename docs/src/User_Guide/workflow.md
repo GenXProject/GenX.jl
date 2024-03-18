@@ -1,4 +1,3 @@
-(UserGuide)=
 # User Guide
 
 ## Introduction

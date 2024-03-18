@@ -1,6 +1,6 @@
 # Tutorial 5: Solving the Model
 
-[Jupyter Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_5_Solve_Model.ipynb)
+[Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_5_Solve_Model.ipynb)
 
 In Tutorial 4, we went over how the model is generated when GenX is run using `Run.jl`. In the function `run_genx_case_simple` (or multistage), after `generate_model` is called, `solve_model` is called to solve the EP.
 
@@ -159,17 +159,20 @@ using GenX
 
 
 ```julia
-case = joinpath("Example_Systems_Tutorials/SmallNewEngland/OneZone") 
+case = joinpath("example_systems/1_three_zones") 
 
 genx_settings = GenX.get_settings_path(case, "genx_settings.yml");
-setup = GenX.configure_settings(genx_settings);
+writeoutput_settings = GenX.get_settings_path(case, "output_settings.yml")
+setup = GenX.configure_settings(genx_settings,writeoutput_settings)
+
 settings_path = GenX.get_settings_path(case)
 
 ### Create TDR_Results
 TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
+system_path = joinpath(case, setup["SystemFolder"])
 
 if setup["TimeDomainReduction"] == 1
-    GenX.prevent_doubled_timedomainreduction(case)
+    GenX.prevent_doubled_timedomainreduction(system_path)
     if !GenX.time_domain_reduced_files_exist(TDRpath)
         println("Clustering Time Series Data (Grouped)...")
         GenX.cluster_inputs(case, settings_path, setup)
@@ -178,55 +181,9 @@ if setup["TimeDomainReduction"] == 1
     end
 end
 
-OPTIMIZER =  GenX.configure_solver(setup["Solver"], settings_path);
+OPTIMIZER =  GenX.configure_solver(settings_path,HiGHS.Optimizer);
 
 inputs = GenX.load_inputs(setup, case)
-```
-
-```
-    Configuring Settings
-    Time Series Data Already Clustered.
-    Reading Input CSV Files
-    Network.csv Successfully Read!
-    Load_data.csv Successfully Read!
-    Fuels_data.csv Successfully Read!
-    Generators_data.csv Successfully Read!
-    Generators_variability.csv Successfully Read!
-    Validating time basis
-    Capacity_reserve_margin.csv Successfully Read!
-    Minimum_capacity_requirement.csv Successfully Read!
-    Maximum_capacity_requirement.csv Successfully Read!
-    Energy_share_requirement.csv Successfully Read!
-    CO2_cap.csv Successfully Read!
-    CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
-
-    Dict{Any, Any} with 66 entries:
-      "Z"                   => 1
-      "LOSS_LINES"          => [1]
-      "RET_CAP_CHARGE"      => Int64[]
-      "pC_D_Curtail"        => [50.0]
-      "dfGen"               => [1m4×68 DataFrame[0m[0m…
-      "pTrans_Max_Possible" => [2.95]
-      "pNet_Map"            => [1.0;;]
-      "omega"               => [4.01099, 4.01099, 4.01099, 4.01099, 4.01099, 4.0109…
-      "RET_CAP_ENERGY"      => [4]
-      "RESOURCES"           => String31["natural_gas_combined_cycle", "solar_pv", "…
-      "COMMIT"              => [1]
-      "pMax_D_Curtail"      => [1]
-      "STOR_ALL"            => [4]
-      "THERM_ALL"           => [1]
-      "dfCO2CapZones"       => [1;;]
-      "REP_PERIOD"          => 11
-      "MinCapReq"           => [5.0, 10.0, 6.0]
-      "STOR_LONG_DURATION"  => Int64[]
-      "dfCapRes"            => [0.156;;]
-      "STOR_SYMMETRIC"      => [4]
-      "VRE"                 => [2, 3]
-      "RETRO"               => Int64[]
-      "THERM_COMMIT"        => [1]
-      "TRANS_LOSS_SEGS"     => 1
-      "H"                   => 168
-      ⋮                     => ⋮
 ```
 
 ```julia
@@ -274,24 +231,6 @@ The function `solve_model(model, setup)` uses `optimize` to optimize the model:
 solution = optimize!(EP) # GenX.solve_model(EP,setup)
 ```
 
-```
-    Running HiGHS 1.6.0: Copyright (c) 2023 HiGHS under MIT licence terms
-    Presolving model
-    36002 rows, 17519 cols, 136507 nonzeros
-    34537 rows, 16058 cols, 136301 nonzeros
-    Presolve : Reductions: rows 34537(-6135); columns 16058(-2434); elements 136301(-29877)
-    Solving the presolved LP
-    Using EKK dual simplex solver - serial
-      Iteration        Objective     Infeasibilities num(sum)
-              0    -6.1414103898e-01 Ph1: 31(126.489); Du: 3(0.614141) 0s
-          17289     1.0127828422e+04 Pr: 0(0); Du: 0(3.1797e-13) 4s
-    Solving the original LP from the solution after postsolve
-    Model   status      : Optimal
-    Simplex   iterations: 17289
-    Objective value     :  1.0127828422e+04
-    HiGHS run time      :          4.56
-```
-
 
 ```julia
 objective_value(EP)
@@ -300,9 +239,6 @@ objective_value(EP)
 ```
     9776.57688838726
 ```
-
-
-Note that regardless of solver settings, the folder `TDR_Results` stays the same, so we won't change it throughout the tutorial.
 
 ## Infeasibility 
 
@@ -373,4 +309,7 @@ optimize!(power)
 
 In this case, the infeasibility was detected on the presovle since it's clear no solution would fit within all constraints. For information on how to debug an infeasible solution, see the [JuMP documentaion](https://jump.dev/JuMP.jl/stable/manual/solutions/#Conflicts). Some solvers, such as Gurobi, will compute what is causing the conflict, e.g. which constraints are infeasible with one another (HiGHS does not do this). 
 
+GenX version 0.4 has the feature `ComputeConflict` in settings. If the model does not work, try setting `ComputeConflict = 1`, and the conflicting constraints will be returned.
+
+Tutorial 6 describes the solver settings, how to change them, and the effects of PreSolve, Crossover, and Feasibility Tolerance.
 

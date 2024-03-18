@@ -51,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix cost assignment to virtual storage charge/discharge - issue #604 (#608)
 - Fix modeling of hydro reservoir with long duration storage (#572).
 - Fix update of starting transmission capacity in multistage GenX
+- Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
