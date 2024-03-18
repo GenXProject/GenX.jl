@@ -115,7 +115,6 @@ makedocs(;
         sidebar_sitename=false,
         collapselevel=1
     ),
-    warnonly = true,
     pages=[p for p in pages]
 )
 

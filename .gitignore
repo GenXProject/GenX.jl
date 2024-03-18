@@ -33,4 +33,3 @@ test/Logs
 # Test files
 test/TDR/TDR_results_test
 !test/TDR/TDR_results_true
-!test/retrofit/results_true
