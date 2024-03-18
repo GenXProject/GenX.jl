@@ -1,0 +1,90 @@
+{
+    "creators": [
+        {
+            "name": "Jesse D. Jenkins",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-9670-7793"
+        },
+        {
+            "name": "Sambuddha Chakrabarti",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-8916-5076"
+        },
+        {
+            "name": "Luca Bonaldo",
+            "affiliation": "Princeton University",
+            "orcid": "0009-0000-0650-0266"
+        },
+        {
+            "name": "Jacob Schwartz",
+            "affiliation": "Princeton Plasma Physics Laboratory",
+            "orcid": "0000-0001-9636-8181"
+        },
+        {
+            "name": "Dharik Mallapragada",
+            "affiliation": "New York University (NYU)",
+            "orcid": "0000-0002-0330-0063"
+        },
+        {
+            "name": "Greg Schivley",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-8947-694X"
+        },
+        {
+            "name": "Filippo Pecci",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0003-3200-0892"
+        },
+        {
+            "name": "Neha Patankar",
+            "affiliation": "Binghamton University",
+            "orcid": "0000-0001-7288-0391"
+        },
+        {
+            "name": "Fangwei Cheng",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0001-6589-2749"
+        },
+        {
+            "name": "Qingyu Xu",
+            "affiliation": "Tsinghua University",
+            "orcid": "0000-0003-2692-5135"
+        },
+        {
+            "name": "Qian Luo",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0003-3894-4093"
+        },
+        {
+            "name": "Ruaridh MacDonald",
+            "affiliation": "Massachusetts Institute of Technology",
+            "orcid": "0000-0001-9034-6635"
+        },
+        {
+            "name": "Yifu Ding",
+            "affiliation": "Massachusetts Institute of Technology",
+            "orcid": "0000-0001-7128-8847"
+        },
+        {
+            "name": "Gabe Mantegna",
+            "affiliation": "Princeton University"
+        },
+        {
+            "name": "Aneesha Manocha",
+            "affiliation": "Princeton University"
+        },
+        {
+            "name": "Nestor Sepulveda",
+            "affiliation": "PWC",
+            "orcid": "0000-0003-2735-8769"
+        },
+        {
+            "name": "Aaron Schwartz",
+            "affiliation": "Rocky Mountain Institute (RMI)"
+        },
+        {
+            "name": "Jack Morris",
+            "affiliation": "Princeton University"
+        }
+    ]
+}
