@@ -121,6 +121,24 @@ function endogenous_retirement!(EP::Model, inputs::Dict, setup::Dict)
 
 end
 
+@doc raw"""
+	endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
+
+This function models the following constraint
+
+```math
+\begin{aligned}
+& RETCAP_{y,p} \geq \sum^p_{t=1} MINRET_{y,t} + \sum^r_{t=1}CAP_{y,t} - \sum^p_{t=1}RETCAP_{y,p}
+\end{aligned}
+```
+where $r \in \{1, ..., (p-1)\}$ is defined as the last stage such that if we built $y$ at the end of stage $r$, it would reach its end of life before the end of stage $p$.
+In other words, it is the largest index $r \in \{1, ..., (p-1)\}$ such that:
+```math
+\begin{aligned}
+\sum^p_{t=r+1}StageLength_{t} \leq LifeTime_{y}
+\end{aligned}
+```
+"""
 function endogenous_retirement_discharge!(EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
 
 	println("Endogenous Retirement (Discharge) Module")
