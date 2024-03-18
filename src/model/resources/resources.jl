@@ -84,7 +84,7 @@ Check if an `AbstractResource` object has a specific attribute. It returns a boo
 Base.haskey(r::AbstractResource, sym::Symbol) = haskey(parent(r), sym)
 
 """
-    get(r::AbstractResource, sym::Symbol, default)
+    Base.get(r::AbstractResource, sym::Symbol, default)
 
 Retrieves the value of a specific attribute from an `AbstractResource` object. If the attribute exists, its value is returned; otherwise, the default value is returned.
 

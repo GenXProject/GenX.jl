@@ -47,7 +47,7 @@ function _get_policyfile_info()
 end
 
 """
-    _get_summar_map()
+    _get_summary_map()
 
 Internal function to get a map of GenX resource type their corresponding names in the summary table.
 """
@@ -420,7 +420,7 @@ function check_resource(r::AbstractResource)::Vector{String}
 end
 
 @doc raw"""
-check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
+    check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
 
 Validate the consistency of a vector of GenX resources
 Reports any errors in a list of strings.
@@ -450,7 +450,7 @@ function validate_resources(resources::Vector{T}) where T <: AbstractResource
 end
 
 """
-    create_resources(setup::Dict, resources_path::AbstractString)
+    create_resource_array(setup::Dict, resources_path::AbstractString)
 
 Function that loads and scales resources data from folder specified in resources_path and returns an array of GenX resources.
 
@@ -1176,7 +1176,7 @@ function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractStri
 end
 
 @doc raw"""
-	load_multi_fuels_data!(inputs::Dict, setup::Dict, path::AbstractString)
+	load_multi_fuels_data!(inputs::Dict, gen::Vector{<:AbstractResource}, setup::Dict, path::AbstractString)
 
 Function for reading input parameters related to multi fuels
 """

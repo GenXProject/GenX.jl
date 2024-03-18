@@ -3,7 +3,6 @@
 
 Function for writing the vre-storage specific files.
 """
-
 function write_vre_stor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 	### CAPACITY DECISIONS ###

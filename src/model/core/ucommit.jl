@@ -1,5 +1,5 @@
 @doc raw"""
-	ucommit(EP::Model, inputs::Dict, setup::Dict)
+	ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates decision variables and cost expressions associated with thermal plant unit commitment or start-up and shut-down decisions (cycling on/off)
 

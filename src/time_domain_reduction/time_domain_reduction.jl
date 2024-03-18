@@ -209,11 +209,9 @@ end
 
 Get representative periods using cluster centers from kmeans or kmedoids.
 
-K-Means:
-https://juliastats.org/Clustering.jl/dev/kmeans.html
+K-Means: [https://juliastats.org/Clustering.jl/dev/kmeans.html](https://juliastats.org/Clustering.jl/dev/kmeans.html)
 
-K-Medoids:
- https://juliastats.org/Clustering.jl/stable/kmedoids.html
+K-Medoids: [https://juliastats.org/Clustering.jl/stable/kmedoids.html](https://juliastats.org/Clustering.jl/stable/kmedoids.html)
 """
 function cluster(ClusterMethod, ClusteringInputDF, NClusters, nIters, v=false, random=true)
     if ClusterMethod == "kmeans"

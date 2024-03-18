@@ -1,5 +1,5 @@
 @doc raw"""
-    function configure_ddp_dicts(setup::Dict, inputs::Dict)
+    configure_ddp_dicts(setup::Dict, inputs::Dict)
 
 This function instantiates Dictionary objects containing the names of linking expressions, constraints, and variables used in multi-stage modeling.
 
@@ -115,7 +115,7 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 end
 
 @doc raw"""
-	function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
+	run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
 This function run the dual dynamic programming (DDP) algorithm, as described in [Pereira and Pinto (1991)](https://doi.org/10.1007/BF01582895), and more recently, [Lara et al. (2018)](https://doi.org/10.1016/j.ejor.2018.05.039). Note that if the algorithm does not converge within 10,000 (currently hardcoded) iterations, this function will return models with sub-optimal solutions. However, results will still be printed as if the model is finished solving. This sub-optimal termination is noted in the output with the 'Exiting Without Covergence!' message.
 
@@ -315,7 +315,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 end
 
 @doc raw"""
-	function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict)
+	write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict)
 
 This function calls various methods which write multi-stage modeling outputs as .csv files.
 
@@ -342,7 +342,7 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
 end
 
 @doc raw"""
-	function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
+	fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
 
 This function sets the right hand side values of the existing capacity linking constraints in the current stage $p$ to the realized values of the total available end capacity linking variable expressions from the previous stage $p-1$ as part of the forward pass.
 
@@ -376,7 +376,7 @@ function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dic
 end
 
 @doc raw"""
-	function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict, cur_stage::Int)
+	fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict, cur_stage::Int)
 
 This function sets the right hand side values of the new and retired capacity tracking linking constraints in the current stage $p$ to the realized values of the new and retired capacity tracking linking variables from the previous stage $p-1$ as part of the forward pass.
 where tracking linking variables are defined variables for tracking, linking and passing realized expansion and retirement of capacities of each stage to the next stage.
@@ -420,7 +420,7 @@ function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict,
 end
 
 @doc raw"""
-	function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::Dict)
+	add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::Dict)
 
 inputs:
 
@@ -486,7 +486,7 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::
 end
 
 @doc raw"""
-	function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
+	generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
 
 This function generates Bender's cut expressions for total new or retired capacity tracking linking variables in the form:
 ```math
@@ -526,7 +526,7 @@ function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::S
 end
 
 @doc raw"""
-	function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
+	generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
 
 This function generates Bender's cut expressions for linking capacity investment variable expression in the form:
 ```math
@@ -564,7 +564,7 @@ function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Sy
 end
 
 @doc raw"""
-	function initialize_cost_to_go(settings_d::Dict, EP::Model)
+	initialize_cost_to_go(settings_d::Dict, EP::Model)
 
 This function scales the model objective function so that costs are consistent with multi-stage modeling and introduces a cost-to-go function variable to the objective function.
 

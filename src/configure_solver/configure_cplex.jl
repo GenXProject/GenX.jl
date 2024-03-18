@@ -3,7 +3,7 @@
 
 Reads user-specified solver settings from `cplex_settings.yml` in the directory specified by the string `solver_settings_path`.
 
-Returns a MathOptInterface OptimizerWithAttributes CPLEX optimizer instance.
+Returns a `MathOptInterface.OptimizerWithAttributes` CPLEX optimizer instance.
 
 The optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 

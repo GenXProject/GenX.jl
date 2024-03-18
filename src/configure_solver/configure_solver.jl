@@ -10,13 +10,15 @@ end
 @doc raw"""
 	configure_solver(solver_settings_path::String, optimizer::Any)
 
-This method returns a solver-specific MathOptInterface OptimizerWithAttributes optimizer instance to be used in the GenX.generate\_model() method.
+This method returns a solver-specific `MathOptInterface.OptimizerWithAttributes` optimizer instance to be used in the `GenX.generate\_model()` method.
 
-The "solver" argument is a string which specifies the solver to be used. It is not case sensitive.
+# Arguments
+- `solver_settings_path::String`: specifies the path to the directory that contains the settings YAML file for the specified solver.
+- `optimizer::Any`: the optimizer instance to be configured.
 Currently supported solvers include: "Gurobi", "CPLEX", "Clp", "Cbc", or "SCIP"
 
-The "solver\_settings\_path" argument is a string which specifies the path to the directory that contains the settings YAML file for the specified solver.
-
+# Returns
+- `optimizer::MathOptInterface.OptimizerWithAttributes`: the configured optimizer instance.
 """
 function configure_solver(solver_settings_path::String, optimizer::Any)
     solver_name = infer_solver(optimizer)

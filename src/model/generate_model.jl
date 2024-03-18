@@ -59,18 +59,14 @@ The power balance constraint of the model ensures that electricity demand is met
 \end{aligned}
 ```
 
-"""
+# Arguments
+- `setup::Dict`: Dictionary containing the settings for the model.
+- `inputs::Dict`: Dictionary containing the inputs for the model.
+- `OPTIMIZER::MOI.OptimizerWithAttributes`: The optimizer to use for solving the model.
 
-## generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
-################################################################################
-##
-## description: Sets up and solves constrained optimization model of electricity
-## system capacity expansion and operation problem and extracts solution variables
-## for later processing
-##
-## returns: Model EP object containing the entire optimization problem model to be solved by SolveModel.jl
-##
-################################################################################
+# Returns
+- `Model`: The model object containing the entire optimization problem model to be solved by solve_model.jl
+"""
 function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
 
 	T = inputs["T"]     # Number of time steps (hours)

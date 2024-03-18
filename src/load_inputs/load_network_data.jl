@@ -1,5 +1,5 @@
 @doc raw"""
-    load_network_data(setup::Dict, path::AbstractString, inputs_nw::Dict)
+    load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
 Function for reading input parameters related to the electricity transmission network
 """
