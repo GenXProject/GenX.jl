@@ -39,18 +39,19 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX currently exists in version 0.4 and runs only on Julia v1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
+GenX currently exists in version 0.4 and runs only on Julia v1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old `Manifest.toml` file and do a fresh build of GenX when switching between Julia versions.
+
 There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
 please look into the GitHub branch, [old_version](https://github.com/GenXProject/GenX/tree/old_version).
 It is currently setup to use one of the following open-source freely available solvers:
-(A) the default solver: [HiGHS](https://github.com/jump-dev/HiGHS.jl) for linear programming and MILP,
-(B) [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems,
-(C) [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems
+- the default solver: [HiGHS](https://github.com/jump-dev/HiGHS.jl) for linear programming and MILP,
+- [Clp](https://github.com/jump-dev/Clp.jl) for linear programming (LP) problems,
+- [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems
 We also provide the option to use one of these two commercial solvers: 
-(D) [Gurobi](https://www.gurobi.com), or 
-(E) [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+- [Gurobi](https://www.gurobi.com), or 
+- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
 Note that using Gurobi and CPLEX requires a valid license on the host machine.
 There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Getting Started`.
 
