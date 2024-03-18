@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.0] - 2024-03-18
+
 ### Added
 - Feature CO2 and fuel module (#536)
   Adds a fuel module which enables modeling of fuel usage via (1) a constant heat rate and (2) 
