@@ -47,7 +47,7 @@ function _get_policyfile_info()
 end
 
 """
-    _get_summar_map()
+    _get_summary_map()
 
 Internal function to get a map of GenX resource type their corresponding names in the summary table.
 """
@@ -453,7 +453,7 @@ function check_retrofit_id(rs::Vector{T}) where T <: AbstractResource
 end
 
 @doc raw"""
-check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
+    check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
 
 Validate the consistency of a vector of GenX resources
 Reports any errors/warnings as a vector of messages.
@@ -496,7 +496,7 @@ function validate_resources(resources::Vector{T}) where T <: AbstractResource
 end
 
 """
-    create_resources(setup::Dict, resources_path::AbstractString)
+    create_resource_array(setup::Dict, resources_path::AbstractString)
 
 Function that loads and scales resources data from folder specified in resources_path and returns an array of GenX resources.
 
@@ -847,7 +847,7 @@ function process_piecewisefuelusage!(setup::Dict, gen::Vector{<:AbstractResource
 		inputs["intercept_cols"] = intercept_cols
 		inputs["PWFU_data"] = PWFU_data
 		inputs["PWFU_Num_Segments"] = num_segments
-		inputs["THERM_COMMIT_PWFU"] = intersect(ids_with_unit_commitment(gen), resource_id.(gen[HAS_PWFU]))
+		inputs["THERM_COMMIT_PWFU"] = intersect(ids_with_unit_commitment(gen), HAS_PWFU)
 
 		@info "Piecewise fuel usage data successfully read!"
 	end
@@ -960,7 +960,7 @@ function add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::Abst
     inputs["HYDRO_RES"] = hydro(gen)
     # Set of hydro resources modeled with known reservoir energy capacity
     if !isempty(inputs["HYDRO_RES"])
-        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], ids_with(gen, hydro_energy_to_power_ratio))
+        inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"], ids_with_positive(gen, hydro_energy_to_power_ratio))
     end
 
     ## STORAGE
@@ -1260,7 +1260,7 @@ function load_resources_data!(inputs::Dict, setup::Dict, case_path::AbstractStri
 end
 
 @doc raw"""
-	load_multi_fuels_data!(inputs::Dict, setup::Dict, path::AbstractString)
+	load_multi_fuels_data!(inputs::Dict, gen::Vector{<:AbstractResource}, setup::Dict, path::AbstractString)
 
 Function for reading input parameters related to multi fuels
 """

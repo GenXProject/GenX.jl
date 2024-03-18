@@ -35,6 +35,20 @@ function default_settings()
     )
 end
 
+@doc raw"""
+    configure_settings(settings_path::String, output_settings_path::String)
+
+Reads in the settings from the `genx_settings.yml` and `output_settings.yml` YAML files and
+merges them with the default settings. It then validates the settings and returns the
+settings dictionary.
+
+# Arguments
+- `settings_path::String`: The path to the settings YAML file.
+- `output_settings_path::String`: The path to the output settings YAML file.
+
+# Returns
+- `settings::Dict`: The settings dictionary.
+"""
 function configure_settings(settings_path::String, output_settings_path::String)
     println("Configuring Settings")
     model_settings = YAML.load(open(settings_path))

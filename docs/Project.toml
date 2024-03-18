@@ -1,4 +1,4 @@
 [deps]
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 GenX = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
-DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"

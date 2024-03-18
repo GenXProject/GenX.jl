@@ -10,8 +10,23 @@ function get_default_output_folder(case::AbstractString)
     return joinpath(case, "results")
 end
 
-@doc raw"""Run the GenX in the given folder
-case - folder for the case
+@doc raw"""
+    run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
+
+Run a GenX case with the specified optimizer. The optimizer can be any solver supported by MathOptInterface.
+
+# Arguments
+- `case::AbstractString`: the path to the case folder
+- `optimizer::Any`: the optimizer instance to be used in the optimization model
+
+# Example
+```julia
+run_genx_case!("path/to/case", HiGHS.Optimizer)
+```
+
+```julia
+run_genx_case!("path/to/case", Gurobi.Optimizer)
+```
 """
 function run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path

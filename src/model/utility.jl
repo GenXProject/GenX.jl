@@ -79,7 +79,7 @@ end
 function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
     r = rs[findfirst(resource_id.(rs) .== rid)]
     # use getter function for attribute `sym` if exists in GenX, otherwise get the attribute directly
-    f = isdefined(GenX, sym) ? getfield(GenX, sym) : r -> getproperty(r, sym)
+    f = isdefined(GenX, sym) ? getfield(GenX, sym) : x -> getproperty(x, sym)
     return f(r)
 end
 

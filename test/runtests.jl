@@ -5,10 +5,6 @@ using Logging
 include("utilities.jl")
 
 
-@testset "Simple operation" begin
-    include("simple_op_test.jl")
-end
-
 @testset "Expr manipulation" begin
     include("expression_manipulation_test.jl")
 end

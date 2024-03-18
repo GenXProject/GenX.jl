@@ -1,5 +1,5 @@
 @doc raw"""
-	function write_multi_stage_costs(outpath::String, settings_d::Dict)
+	write_multi_stage_costs(outpath::String, settings_d::Dict)
 
 This function writes the file costs\_multi\_stage.csv to the Results directory. This file contains variable, fixed, startup, network expansion, unmet reserve, and non-served energy costs discounted to year zero.
 

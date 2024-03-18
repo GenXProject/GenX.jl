@@ -1,5 +1,5 @@
 @doc raw"""
-	function transmission!(EP::Model, inputs::Dict, setup::Dict)
+	transmission!(EP::Model, inputs::Dict, setup::Dict)
 This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
 
 Power flow and transmission loss terms are also added to the power balance constraint for each zone:

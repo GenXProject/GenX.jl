@@ -84,7 +84,7 @@ Check if an `AbstractResource` object has a specific attribute. It returns a boo
 Base.haskey(r::AbstractResource, sym::Symbol) = haskey(parent(r), sym)
 
 """
-    get(r::AbstractResource, sym::Symbol, default)
+    Base.get(r::AbstractResource, sym::Symbol, default)
 
 Retrieves the value of a specific attribute from an `AbstractResource` object. If the attribute exists, its value is returned; otherwise, the default value is returned.
 
@@ -831,11 +831,8 @@ for attr in (:max_cap_solar_mw,
              :max_cap_charge_dc_mw, 
              :max_cap_charge_ac_mw, 
              :max_cap_discharge_dc_mw, 
-             :max_cap_discharge_ac_mw)
-    @eval @interface $attr
-end
-
-for attr in (:min_cap_solar_mw, 
+             :max_cap_discharge_ac_mw,
+             :min_cap_solar_mw, 
              :min_cap_wind_mw, 
              :min_cap_inverter_mw, 
              :min_cap_charge_dc_mw, 
@@ -844,7 +841,7 @@ for attr in (:min_cap_solar_mw,
              :min_cap_discharge_ac_mw,
              :inverter_ratio_solar,
              :inverter_ratio_wind,)
-    @eval @interface $attr
+    @eval @interface $attr default_minmax_cap
 end
 
 for attr in (:etainverter,

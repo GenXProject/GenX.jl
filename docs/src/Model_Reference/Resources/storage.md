@@ -1,0 +1,4 @@
+# Storage
+```@docs
+GenX.storage!
+```

@@ -1,5 +1,6 @@
 @doc raw"""
-load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
+    load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
+
 Read input parameters related to fuel costs and CO$_2$ content of fuels
 """
 function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)

@@ -1,5 +1,5 @@
 @doc raw"""
-	function write_multi_stage_capacities_discharge(outpath::String, settings_d::Dict)
+	write_multi_stage_capacities_discharge(outpath::String, settings_d::Dict)
 
 This function writes the file capacities\_multi\_stage.csv to the Results directory. This file contains starting resource capacities from the first model stage and end resource capacities for the first and all subsequent model stages.
 
