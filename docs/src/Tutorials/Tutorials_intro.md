@@ -1,3 +1,4 @@
+(tutorial)=
 # GenX Tutorials
 
 Welcome to the GenX tutorials! In the following tutorials, we outline some important features of GenX and how to run them.

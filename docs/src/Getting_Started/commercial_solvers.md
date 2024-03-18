@@ -1,3 +1,4 @@
+()runGenX=
 ## Using commercial solvers: Gurobi or CPLEX
 
 If you want to use the commercial solvers Gurobi or CPLEX:

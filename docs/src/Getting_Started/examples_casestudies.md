@@ -1,7 +1,9 @@
+(gstarted)=
 # Running GenX
 
 This section describes how to run GenX with the examples provided in the repository and with user-defined cases. To have a deeper understanding of how to structure the input files and the settings, please refer to the [User Guide](@ref).
 
+(examples)=
 ## Example cases
 GenX repository contains several examples to get you started with GenX. These examples are located in the [example_systems](https://github.com/GenXProject/GenX/tree/main/example_systems) folder of the repository and are designed to be easy to run and to demonstrate the main features of GenX. 
 
