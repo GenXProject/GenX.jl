@@ -95,7 +95,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
 	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
-	
+
 	# Initialize energy losses related to technologies
 	@expression(EP, eELOSSByZone[z=1:Z], 0)
 
@@ -209,7 +209,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	## Define the objective function
-	@objective(EP,Min,EP[:eObj])
+	@objective(EP,Min,setup["ObjScale"]*EP[:eObj])
 
 	## Power balance constraints
 	# demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)

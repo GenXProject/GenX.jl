@@ -23,6 +23,7 @@ function default_settings()
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
         "EnableJuMPStringNames" => false,
+        "ObjScale" => 1,
     )
 end
 
