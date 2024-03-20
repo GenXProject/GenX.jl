@@ -59,18 +59,14 @@ The power balance constraint of the model ensures that electricity demand is met
 \end{aligned}
 ```
 
-"""
+# Arguments
+- `setup::Dict`: Dictionary containing the settings for the model.
+- `inputs::Dict`: Dictionary containing the inputs for the model.
+- `OPTIMIZER::MOI.OptimizerWithAttributes`: The optimizer to use for solving the model.
 
-## generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
-################################################################################
-##
-## description: Sets up and solves constrained optimization model of electricity
-## system capacity expansion and operation problem and extracts solution variables
-## for later processing
-##
-## returns: Model EP object containing the entire optimization problem model to be solved by SolveModel.jl
-##
-################################################################################
+# Returns
+- `Model`: The model object containing the entire optimization problem model to be solved by solve_model.jl
+"""
 function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAttributes)
 
 	T = inputs["T"]     # Number of time steps (hours)
@@ -88,33 +84,32 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	# Initialize Power Balance Expression
 	# Expression for "baseline" power balance constraint
-	@expression(EP, ePowerBalance[t=1:T, z=1:Z], 0)
+	create_empty_expression!(EP, :ePowerBalance, (T, Z))
 
 	# Initialize Objective Function Expression
-	@expression(EP, eObj, 0)
+	EP[:eObj] = AffExpr(0.0)
 
-	#@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-	@expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0)
-	
-	# Initialize energy losses related to technologies
-	@expression(EP, eELOSSByZone[z=1:Z], 0)
+	create_empty_expression!(EP, :eGenerationByZone, (Z, T))
+
+	# Energy losses related to technologies
+	create_empty_expression!(EP, :eELOSSByZone, Z)
 
 	# Initialize Capacity Reserve Margin Expression
 	if setup["CapacityReserveMargin"] > 0
-		@expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
+		create_empty_expression!(EP, :eCapResMarBalance, (inputs["NCapacityReserveMargin"], T))
 	end
 
 	# Energy Share Requirement
 	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eESR[ESR=1:inputs["nESR"]], 0)
+		create_empty_expression!(EP, :eESR, inputs["nESR"])
 	end
 
 	if setup["MinCapReq"] == 1
-		@expression(EP, eMinCapRes[mincap = 1:inputs["NumberOfMinCapReqs"]], 0)
+		create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
 	end
 
 	if setup["MaxCapReq"] == 1
-		@expression(EP, eMaxCapRes[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 0)
+		create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
 	end
 
 	# Infrastructure
@@ -128,14 +123,21 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		ucommit!(EP, inputs, setup)
 	end
 
-	emissions!(EP, inputs)
+	fuel!(EP, inputs, setup)
 
-	if setup["Reserves"] > 0
-		reserves!(EP, inputs, setup)
+	co2!(EP, inputs) 
+
+	if setup["OperationalReserves"] > 0
+		operational_reserves!(EP, inputs, setup)
 	end
 
 	if Z > 1
+		investment_transmission!(EP, inputs, setup)
 		transmission!(EP, inputs, setup)
+	end
+
+	if Z > 1 && setup["DC_OPF"] != 0
+		dcopf_transmission!(EP, inputs, setup)
 	end
 
 	# Technologies
@@ -160,6 +162,10 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 		hydro_res!(EP, inputs, setup)
 	end
 
+	if !isempty(inputs["ELECTROLYZER"])
+		electrolyzer!(EP, inputs, setup)
+	end
+
 	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
 	if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
 		hydro_inter_period_linkage!(EP, inputs)
@@ -175,11 +181,21 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	# Model constraints, variables, expression related to retrofit technologies
-	if !isempty(inputs["RETRO"])
+	if !isempty(inputs["RETROFIT_OPTIONS"])
 		EP = retrofit(EP, inputs)
 	end
 
+	# Model constraints, variables, expressions related to the co-located VRE-storage resources
+	if !isempty(inputs["VRE_STOR"])
+		vre_stor!(EP, inputs, setup)
+	end
+
 	# Policies
+
+	if setup["OperationalReserves"] > 0
+		operational_reserves_constraints!(EP, inputs)
+	end
+
 	# CO2 emissions limits
 	if setup["CO2Cap"] > 0
 		co2_cap!(EP, inputs, setup)

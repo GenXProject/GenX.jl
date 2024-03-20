@@ -1,5 +1,5 @@
 @doc raw"""
-	function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
+	write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
 
 This function writes the file network\_expansion\_multi\_stage.csv to the Results directory. This file contains new transmission capacities for each modeled transmission line for the first and all subsequent model stages.
 
@@ -14,7 +14,7 @@ function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
     trans_capacities_d = Dict()
 
     for p in 1:num_stages
-        inpath = joinpath(outpath, "Results_p$p")
+        inpath = joinpath(outpath, "results_p$p")
         trans_capacities_d[p] = load_dataframe(joinpath(inpath, "network_expansion.csv"))
     end
 

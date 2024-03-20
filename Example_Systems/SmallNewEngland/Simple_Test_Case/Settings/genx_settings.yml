@@ -1,4 +1,0 @@
-StorageLosses: 0 # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
-Solver: HiGHS #Windows users, please make sure to install SCIP solver if using SCIP here; Let us know of bugs # Available solvers: Gurobi, CPLEX, CLP, SCIP
-UCommit: 0 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
-MethodofMorris: 0

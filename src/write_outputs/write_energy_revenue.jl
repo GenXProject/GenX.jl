@@ -4,21 +4,26 @@
 Function for writing energy revenue from the different generation technologies.
 """
 function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	dfGen = inputs["dfGen"]
+	gen = inputs["RESOURCES"]
+	regions = region.(gen)
+	clusters = cluster.(gen)
+	zones = zone_id.(gen)
+
 	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
 	FLEX = inputs["FLEX"]
 	NONFLEX = setdiff(collect(1:G), FLEX)
-	dfEnergyRevenue = DataFrame(Region = dfGen.region, Resource = inputs["RESOURCES"], Zone = dfGen.Zone, Cluster = dfGen.cluster, AnnualSum = Array{Float64}(undef, G),)
+	dfEnergyRevenue = DataFrame(Region = regions, Resource = inputs["RESOURCE_NAMES"], Zone = zones, Cluster = clusters, AnnualSum = Array{Float64}(undef, G),)
 	energyrevenue = zeros(G, T)
-	energyrevenue[NONFLEX, :] = value.(EP[:vP][NONFLEX, :]) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[NONFLEX, :Zone], :]
+    price = locational_marginal_price(EP, inputs, setup)
+    energyrevenue[NONFLEX, :] = value.(EP[:vP][NONFLEX, :]) .* transpose(price)[zone_id.(gen[NONFLEX]), :]
 	if !isempty(FLEX)
-		energyrevenue[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[FLEX, :Zone], :]
+		energyrevenue[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data .* transpose(price)[zone_id.(gen[FLEX]), :]
 	end
 	if setup["ParameterScale"] == 1
-		energyrevenue *= ModelScalingFactor^2
+		energyrevenue *= ModelScalingFactor
 	end
 	dfEnergyRevenue.AnnualSum .= energyrevenue * inputs["omega"]
-	CSV.write(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue)
+	write_simple_csv(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue)
 	return dfEnergyRevenue
 end

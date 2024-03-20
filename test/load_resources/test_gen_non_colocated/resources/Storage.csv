@@ -1,0 +1,9 @@
+Resource,Zone,Model,LDS,Self_Disch,Eff_Up,Eff_Down,Min_Duration,Max_Duration,New_Build,Can_Retire,Existing_Cap_MW,Existing_Cap_MWh,Cap_Size,Min_Cap_MW,Max_Cap_MW,Min_Cap_MWh,Max_Cap_MWh,Inv_Cost_Per_MWyr,Fixed_Om_Cost_Per_MWyr,Inv_Cost_Per_MWhyr,Fixed_Om_Cost_Per_MWhyr,Var_Om_Cost_Per_MWh,Reg_Cost,Rsv_Cost,Reg_Max,Rsv_Max,Region,Cluster,Resource_Type,Mga
+NENGREST_hydroelectric_pumped_storage_1,1,1,0,0,0.866,0.866,0,200,0,0,1768.002,280635.2381,294.67,0,0,0,-1,0,40113,0,0,0,0,0,0.083333333,0.166666667,NENGREST,1,hydroelectric_pumped_storage,0
+NENG_CT_hydroelectric_pumped_storage_1,2,1,0,0,0.866,0.866,0,200,0,0,30.999,4920.47619,10.33,0,0,0,-1,0,40113,0,0,0,0,0,0.083333333,0.166666667,NENG_CT,1,hydroelectric_pumped_storage,0
+NENGREST_battery_mid_0,1,1,0,0,0.92,0.92,1,10,1,1,0,0,1,0,-1,0,-1,19584,4895,22494,5622,0.15,0,0,0.083333333,0.166666667,NENGREST,0,battery_mid,0
+NENG_CT_battery_mid_0,2,1,0,0,0.92,0.92,1,10,1,1,0,0,1,0,-1,0,-1,19584,4895,22494,5622,0.15,0,0,0.083333333,0.166666667,NENG_CT,0,battery_mid,0
+NENG_ME_battery_mid_0,3,1,0,0,0.92,0.92,1,10,1,1,0,0,1,0,-1,0,-1,19584,4895,22494,5622,0.15,0,0,0.083333333,0.166666667,NENG_ME,0,battery_mid,0
+NENGREST_hydrogen_storage_1,1,1,1,0,0.67,0.4,48,2000,1,1,0,0,1,0,-1,0,-1,39761,5000,404,0,4.3,0,0,0,0,NENGREST,1,hydrogen_storage,0
+NENG_CT_hydrogen_storage_1,2,1,1,0,0.67,0.4,48,2000,1,1,0,0,1,0,-1,0,-1,49333,5000,404,0,4.3,0,0,0,0,NENG_CT,1,hydrogen_storage,0
+NENG_ME_hydrogen_storage_1,3,1,1,0,0.67,0.4,48,2000,1,1,0,0,1,0,-1,0,-1,38489,5000,404,0,4.3,0,0,0,0,NENG_ME,1,hydrogen_storage,0

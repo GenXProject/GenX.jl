@@ -3,7 +3,7 @@
 
 Reads user-specified solver settings from scip\_settings.yml in the directory specified by the string solver\_settings\_path.
 
-Returns a MathOptInterface OptimizerWithAttributes SCIP optimizer instance to be used in the GenX.generate_model() method.
+Returns a `MathOptInterface.OptimizerWithAttributes` SCIP optimizer instance to be used in the `GenX.generate_model()` method.
 
 The SCIP optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
@@ -11,7 +11,7 @@ The SCIP optimizer instance is configured with the following default parameters 
  - limitsgap = 0.05
 
 """
-function configure_scip(solver_settings_path::String)
+function configure_scip(solver_settings_path::String, optimizer::Any)
 
 	solver_settings = YAML.load(open(solver_settings_path))
 	solver_settings = convert(Dict{String, Any}, solver_settings)
@@ -28,5 +28,5 @@ function configure_scip(solver_settings_path::String)
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
-	return optimizer_with_attributes(SCIP.Optimizer, attributes...)
+	return optimizer_with_attributes(optimizer, attributes...)
 end

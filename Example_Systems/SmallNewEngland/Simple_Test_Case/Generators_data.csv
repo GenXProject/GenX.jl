@@ -1,5 +1,0 @@
-Resource,Zone,THERM,MUST_RUN,STOR,FLEX,HYDRO,VRE,LDS,Num_VRE_Bins,New_Build,Existing_Cap_MW,Existing_Cap_MWh,Existing_Charge_Cap_MW,Max_Cap_MW,Max_Cap_MWh,Max_Charge_Cap_MW,Min_Cap_MW,Min_Cap_MWh,Min_Charge_Cap_MW,Inv_Cost_per_MWyr,Inv_Cost_per_MWhyr,Inv_Cost_Charge_per_MWyr,Fixed_OM_Cost_per_MWyr,Fixed_OM_Cost_per_MWhyr,Fixed_OM_Cost_Charge_per_MWyr,Var_OM_Cost_per_MWh,Var_OM_Cost_per_MWh_In,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Self_Disch,Eff_Up,Eff_Down,Min_Duration,Max_Duration,Resource_Type,region,cluster
-natural_gas_combined_cycle,1,1,0,0,0,0,0,0,0,1,0,0,0,-1,-1,-1,0,0,0,65400,0,0,10287,0,0,3.55,0,7.43,NG,250,0.64,0.64,0.468,0,1,1,0,0,natural_gas_fired_combined_cycle,NE,1
-solar_pv,1,0,0,0,0,0,1,0,1,1,0,0,0,-1,-1,-1,0,0,0,85300,0,0,18760,0,0,0,0,9.13,None,0,1,1,0,0,1,1,0,0,solar_photovoltaic,NE,1
-onshore_wind,1,0,0,0,0,0,1,0,1,1,0,0,0,-1,-1,-1,0,0,0,97200,0,0,43205,0,0,0.1,0,9.12,None,0,1,1,0,0,1,1,0,0,onshore_wind_turbine,NE,1
-battery,1,0,0,1,0,0,0,0,0,1,0,0,0,-1,-1,-1,0,0,0,19584,22494,0,4895,5622,0,0.15,0.15,0,None,0,1,1,0,0,0.92,0.92,1,10,battery_mid,NE,0

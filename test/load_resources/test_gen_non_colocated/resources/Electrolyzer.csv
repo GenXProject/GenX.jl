@@ -1,0 +1,2 @@
+Resource,Zone,Hydrogen_MWh_Per_Tonne,Electrolyzer_Min_Kt,Hydrogen_Price_Per_Tonne,Qualified_Hydrogen_Supply,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_Per_MWyr,Fixed_Om_Cost_Per_MWyr,Heat_Rate_Mmbtu_Per_MWh,Fuel,Min_Power,Ramp_Up_Percentage,Ramp_Dn_Percentage,Region,Cluster,Resource_Type
+NENG_ME_electrolyzer,1,55,1000,1000,0,1,1,0,-1,-1,125000,15000,0,None,0,1,1,NENG_ME,0,hydrogen_electrolyzer

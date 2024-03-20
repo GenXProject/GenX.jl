@@ -1,0 +1,4 @@
+Resource,Zone,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Cap_Size,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Hydrogen_MWh_Per_Tonne,Electrolyzer_Min_kt,Hydrogen_Price_Per_Tonne,region,cluster
+MA_electrolyzer,1,1,0,0,-1,-1,125000,15000,0,1,1,1,0,55,1000,1000,MA,0
+CT_electrolyzer,2,1,0,0,-1,-1,125000,15000,0,1,1,1,0,55,1000,1000,CT,0
+ME_electrolyzer,3,1,0,0,-1,-1,125000,15000,0,1,1,1,0,55,1000,1000,ME,0

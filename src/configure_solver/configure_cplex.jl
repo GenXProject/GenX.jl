@@ -3,7 +3,7 @@
 
 Reads user-specified solver settings from `cplex_settings.yml` in the directory specified by the string `solver_settings_path`.
 
-Returns a MathOptInterface OptimizerWithAttributes CPLEX optimizer instance.
+Returns a `MathOptInterface.OptimizerWithAttributes` CPLEX optimizer instance.
 
 The optimizer instance is configured with the following default parameters if a user-specified parameter for each respective field is not provided:
 
@@ -77,7 +77,7 @@ The optimizer instance is configured with the following default parameters if a 
 
 Any other attributes in the settings file (which typically start with `CPX_PARAM_`) will also be passed to the solver.
 """
-function configure_cplex(solver_settings_path::String)
+function configure_cplex(solver_settings_path::String, optimizer::Any)
 
     solver_settings = YAML.load(open(solver_settings_path))
     solver_settings = convert(Dict{String, Any}, solver_settings)
@@ -115,5 +115,5 @@ function configure_cplex(solver_settings_path::String)
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
-    return optimizer_with_attributes(CPLEX.Optimizer, attributes...)
+    return optimizer_with_attributes(optimizer, attributes...)
 end

@@ -1,0 +1,12 @@
+NetworkExpansion: 1
+ParameterScale: 1
+EnergyShareRequirement: 1
+Trans_Loss_Segments: 1
+CapacityReserveMargin: 1
+OperationalReserves: 1
+StorageLosses: 1
+OverwriteResults: 1
+UCommit: 2
+MinCapReq: 1
+CO2Cap: 1
+WriteShadowPrices: 1

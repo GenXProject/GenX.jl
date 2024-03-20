@@ -19,26 +19,17 @@ gurobi.log
 cplex.log
 Highs.log
 
+test/Logs
+
 /docs/build/
 
 # Microsoft office temporary files
 ~$*
 
 # Never include output folders
-**/Results*/
-**/TDR_Results/
+**/results*/
+**/TDR_results/
 
-# Example systems which may be or have been under development
-Example_Systems/NYISO*
-Example_Systems/RealSystemExample/PG_Test_2030_p1/
-Example_Systems/RealSystemExample/Inputs/
-Example_Systems/SmallNewEngland/ThreeZones_full*
-Example_Systems/SmallNewEngland/Test_Up_Time/
-Example_Systems/SmallNewEngland/Test_Down_Time/
-2050/
-
-Example_Systems/SmallNewEngland/ThreeZones_full.zip
-Example_Systems/SmallNewEngland/ThreeZones_full/*
-
-Example_Systems/SmallNewEngland/ThreeZones_MultiStage/Inputs/*
-test_get_retirement_period.jl
+# Test files
+test/TDR/TDR_results_test
+!test/TDR/TDR_results_true

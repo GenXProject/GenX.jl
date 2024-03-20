@@ -57,3 +57,29 @@ function hoursafter(p::Int, t::Int, a::UnitRange{Int})::Vector{Int}
     return period * p .+ mod1.(t .+ a, p)
 
 end
+
+@doc raw"""
+    is_nonzero(df::DataFrame, col::Symbol)::BitVector
+
+This function checks if a column in a dataframe is all zeros.
+"""
+function is_nonzero(df::DataFrame, col::Symbol)::BitVector
+	convert(BitVector, df[!, col] .> 0)::BitVector
+end
+
+function is_nonzero(rs::Vector{<:AbstractResource}, col::Symbol)
+    !isnothing(findfirst(r -> get(r, col, 0) ≠ 0, rs))
+end
+
+@doc raw""" 
+    by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
+    
+    This function returns the value of the attribute `sym` for the resource given by the ID `rid`.
+"""
+function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
+    r = rs[findfirst(resource_id.(rs) .== rid)]
+    # use getter function for attribute `sym` if exists in GenX, otherwise get the attribute directly
+    f = isdefined(GenX, sym) ? getfield(GenX, sym) : x -> getproperty(x, sym)
+    return f(r)
+end
+

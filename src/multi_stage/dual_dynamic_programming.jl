@@ -1,5 +1,5 @@
 @doc raw"""
-    function configure_ddp_dicts(setup::Dict, inputs::Dict)
+    configure_ddp_dicts(setup::Dict, inputs::Dict)
 
 This function instantiates Dictionary objects containing the names of linking expressions, constraints, and variables used in multi-stage modeling.
 
@@ -31,6 +31,40 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
         start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
     end
 
+    if !isempty(inputs["VRE_STOR"])
+        if !isempty(inputs["VS_DC"])
+            start_cap_d[Symbol("eTotalCap_DC")] = Symbol("cExistingCapDC")
+        end
+
+        if !isempty(inputs["VS_SOLAR"])
+            start_cap_d[Symbol("eTotalCap_SOLAR")] = Symbol("cExistingCapSolar")
+        end
+
+        if !isempty(inputs["VS_WIND"])
+            start_cap_d[Symbol("eTotalCap_WIND")] = Symbol("cExistingCapWind")
+        end
+
+        if !isempty(inputs["VS_STOR"])
+            start_cap_d[Symbol("eTotalCap_STOR")] = Symbol("cExistingCapEnergy_VS")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
+            start_cap_d[Symbol("eTotalCapDischarge_DC")] = Symbol("cExistingCapDischargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_CHARGE"])
+            start_cap_d[Symbol("eTotalCapCharge_DC")] = Symbol("cExistingCapChargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
+            start_cap_d[Symbol("eTotalCapDischarge_AC")] = Symbol("cExistingCapDischargeAC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_CHARGE"])
+            start_cap_d[Symbol("eTotalCapCharge_AC")] = Symbol("cExistingCapChargeAC")
+        end
+    end
+
     # This dictionary contains the endogenous retirement constraint name as a key,
     # and a tuple consisting of the associated tracking array constraint and variable as the value
     cap_track_d = Dict([(Symbol("vCAPTRACK"), Symbol("cCapTrack"))])
@@ -43,11 +77,45 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
         cap_track_d[Symbol("vCAPTRACKCHARGE")] = Symbol("cCapTrackCharge")
     end
 
+    if !isempty(inputs["VRE_STOR"])
+        if !isempty(inputs["VS_DC"])
+            cap_track_d[Symbol("vCAPTRACKDC")] = Symbol("cCapTrackDC")
+        end
+
+        if !isempty(inputs["VS_SOLAR"])
+            cap_track_d[Symbol("vCAPTRACKSOLAR")] = Symbol("cCapTrackSolar")
+        end
+
+        if !isempty(inputs["VS_WIND"])
+            cap_track_d[Symbol("vCAPTRACKWIND")] = Symbol("cCapTrackWind")
+        end
+
+        if !isempty(inputs["VS_STOR"])
+            cap_track_d[Symbol("vCAPTRACKENERGY_VS")] = Symbol("cCapTrackEnergy_VS")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
+            cap_track_d[Symbol("vCAPTRACKDISCHARGEDC")] = Symbol("cCapTrackDischargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_DC_CHARGE"])
+            cap_track_d[Symbol("vCAPTRACKCHARGEDC")] = Symbol("cCapTrackChargeDC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
+            cap_track_d[Symbol("vCAPTRACKDISCHARGEAC")] = Symbol("cCapTrackDischargeAC")
+        end
+
+        if !isempty(inputs["VS_ASYM_AC_CHARGE"])
+            cap_track_d[Symbol("vCAPTRACKCHARGEAC")] = Symbol("cCapTrackChargeAC")
+        end
+    end
+
     return start_cap_d, cap_track_d
 end
 
 @doc raw"""
-	function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
+	run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
 This function run the dual dynamic programming (DDP) algorithm, as described in [Pereira and Pinto (1991)](https://doi.org/10.1007/BF01582895), and more recently, [Lara et al. (2018)](https://doi.org/10.1016/j.ejor.2018.05.039). Note that if the algorithm does not converge within 10,000 (currently hardcoded) iterations, this function will return models with sub-optimal solutions. However, results will still be printed as if the model is finished solving. This sub-optimal termination is noted in the output with the 'Exiting Without Covergence!' message.
 
@@ -247,7 +315,7 @@ function run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 end
 
 @doc raw"""
-	function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict)
+	write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::Dict)
 
 This function calls various methods which write multi-stage modeling outputs as .csv files.
 
@@ -268,13 +336,13 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     	write_multi_stage_network_expansion(outpath, multi_stage_settings_d)
     end
     write_multi_stage_costs(outpath, multi_stage_settings_d, inputs_dict)
-    write_multi_stage_stats(outpath, stats_d)
+    multi_stage_settings_d["Myopic"] == 0 && write_multi_stage_stats(outpath, stats_d)
     write_multi_stage_settings(outpath, settings_d)
 
 end
 
 @doc raw"""
-	function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
+	fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
 
 This function sets the right hand side values of the existing capacity linking constraints in the current stage $p$ to the realized values of the total available end capacity linking variable expressions from the previous stage $p-1$ as part of the forward pass.
 
@@ -288,8 +356,8 @@ returns: JuMP model with updated linking constraints.
 """
 function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict, inputs_d::Dict)
 	
-    RET_CAP = inputs_d["RET_CAP"] # Set of all resources subject to inter-stage capacity tracking
-
+    ALL_CAP = union(inputs_d["RET_CAP"],inputs_d["NEW_CAP"]) # Set of all resources subject to inter-stage capacity tracking
+    
     # start_cap_d dictionary contains the starting capacity expression name (e) as a key,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
@@ -298,7 +366,7 @@ function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dic
                 if c == :cExistingTransCap
                     set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
                 else
-	                if y[1] in RET_CAP # extract resource integer index value from key
+	                if y[1] in ALL_CAP # extract resource integer index value from key
                         set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
                     end
                 end
@@ -308,7 +376,7 @@ function fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dic
 end
 
 @doc raw"""
-	function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict, cur_stage::Int)
+	fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict, cur_stage::Int)
 
 This function sets the right hand side values of the new and retired capacity tracking linking constraints in the current stage $p$ to the realized values of the new and retired capacity tracking linking variables from the previous stage $p-1$ as part of the forward pass.
 where tracking linking variables are defined variables for tracking, linking and passing realized expansion and retirement of capacities of each stage to the next stage.
@@ -352,7 +420,7 @@ function fix_capacity_tracking(EP_prev::Model, EP_cur::Model, cap_track_d::Dict,
 end
 
 @doc raw"""
-	function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::Dict)
+	add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::Dict)
 
 inputs:
 
@@ -418,7 +486,7 @@ function add_cut(EP_cur::Model, EP_next::Model, start_cap_d::Dict, cap_track_d::
 end
 
 @doc raw"""
-	function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
+	generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
 
 This function generates Bender's cut expressions for total new or retired capacity tracking linking variables in the form:
 ```math
@@ -458,7 +526,7 @@ function generate_cut_component_track(EP_cur::Model, EP_next::Model, var_name::S
 end
 
 @doc raw"""
-	function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
+	generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Symbol, constr_name::Symbol)
 
 This function generates Bender's cut expressions for linking capacity investment variable expression in the form:
 ```math
@@ -496,7 +564,7 @@ function generate_cut_component_inv(EP_cur::Model, EP_next::Model, expr_name::Sy
 end
 
 @doc raw"""
-	function initialize_cost_to_go(settings_d::Dict, EP::Model)
+	initialize_cost_to_go(settings_d::Dict, EP::Model)
 
 This function scales the model objective function so that costs are consistent with multi-stage modeling and introduces a cost-to-go function variable to the objective function.
 

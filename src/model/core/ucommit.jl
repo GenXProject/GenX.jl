@@ -1,5 +1,5 @@
 @doc raw"""
-	ucommit(EP::Model, inputs::Dict, setup::Dict)
+	ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
 This function creates decision variables and cost expressions associated with thermal plant unit commitment or start-up and shut-down decisions (cycling on/off)
 
@@ -26,11 +26,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
 	println("Unit Commitment Module")
 
-	dfGen = inputs["dfGen"]
-
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
 	COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
 
 	### Variables ###
@@ -54,7 +50,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 	@expression(EP, eTotalCStartT[t=1:T], sum(eCStart[y,t] for y in COMMIT))
 	@expression(EP, eTotalCStart, sum(eTotalCStartT[t] for t=1:T))
 
-	EP[:eObj] += eTotalCStart
+	add_to_expression!(EP[:eObj], eTotalCStart)
 
 	### Constratints ###
 	## Declaration of integer/binary variables
@@ -68,6 +64,9 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 			end
 			if y in inputs["NEW_CAP"]
 				set_integer(EP[:vCAP][y])
+			end
+			if y in inputs["RETROFIT_CAP"]
+				set_integer(EP[:vRETROFITCAP][y])
 			end
 		end
 	end #END unit commitment configuration

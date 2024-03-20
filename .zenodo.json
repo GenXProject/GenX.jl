@@ -1,0 +1,92 @@
+{
+    "creators": [
+        {
+            "name": "Bonaldo, Luca",
+            "affiliation": "Princeton University",
+            "orcid": "0009-0000-0650-0266"
+        },
+        {
+            "name": "Chakrabarti, Sambuddha",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-8916-5076"
+        },
+        {
+            "name": "Cheng, Fangwei",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0001-6589-2749"
+        },
+        {
+            "name": "Ding, Yifu",
+            "affiliation": "Massachusetts Institute of Technology",
+            "orcid": "0000-0001-7128-8847"
+        },
+        {
+            "name": "Jenkins, Jesse D.",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-9670-7793"
+        },
+        {
+            "name": "Luo, Qian",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0003-3894-4093"
+        },
+        {
+            "name": "Macdonald, Ruaridh",
+            "affiliation": "Massachusetts Institute of Technology",
+            "orcid": "0000-0001-9034-6635"
+        },
+        {
+            "name": "Mallapragada, Dharik",
+            "affiliation": "New York University (NYU)",
+            "orcid": "0000-0002-0330-0063"
+        },
+        {
+            "name": "Manocha, Aneesha",
+            "affiliation": "University of Cambridge",
+            "orcid": "0000-0002-7190-4782"
+        },
+        {
+            "name": "Mantegna, Gabe ",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-7707-0221"
+        },
+        {
+            "name": "Morris, Jack",
+            "affiliation": "MITRE"
+        },
+        {
+            "name": "Patankar, Neha",
+            "affiliation": "Binghamton University",
+            "orcid": "0000-0001-7288-0391"
+        },
+        {
+            "name": "Pecci, Filippo",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0003-3200-0892"
+        },
+        {
+            "name": "Schwartz, Aaron",
+            "affiliation": "Rocky Mountain Institute (RMI)"
+        },
+        {
+            "name": "Schwartz, Jacob",
+            "affiliation": "Princeton Plasma Physics Laboratory",
+            "orcid": "0000-0001-9636-8181"
+        },
+        {
+            "name": "Schivley, Greg",
+            "affiliation": "Princeton University",
+            "orcid": "0000-0002-8947-694X"
+        },
+        {
+            "name": "Sepulveda, Nestor",
+            "affiliation": "McKinsey and Co.",
+            "orcid": "0000-0003-2735-8769"
+        },
+        {
+            "name": "Xu, Qingyu",
+            "affiliation": "Tsinghua University",
+            "orcid": "0000-0003-2692-5135"
+        }
+    ]
+}

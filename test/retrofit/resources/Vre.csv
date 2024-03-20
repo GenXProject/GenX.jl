@@ -1,0 +1,3 @@
+Resource,Zone,cluster,Num_VRE_Bins,Retrofit,Cap_Retire,New_Build,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,MGA,Resource_Type,region
+solar_pv,1,1,1,0,0,1,0,-1,0,85300,18760,0,9.13,None,0,0,0,0,1,solar_photovoltaic,NE
+onshore_wind,1,1,1,0,0,1,0,-1,0,97200,43205,0.1,9.12,None,0,0,0,0,1,onshore_wind_turbine,NE

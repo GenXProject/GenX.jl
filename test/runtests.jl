@@ -1,18 +1,59 @@
 using GenX
 using Test
-#These are just some dummy sample test; The full-grown unit testing module is under active development currently
-@testset "GenX.jl" begin
-    @test simple_operation(2.0, 3.0) == 5
-    @test simple_operation(2.1, 3.1)==5.2
-    @test simple_operation(21.0, 31.0)== 52.0
-    @test simple_operation(73.0, 35.0)== 108.0
-    #=
-    @test isa(inputs_gen["THERM_COMMIT"], Int64)
-    @test isa(inputs_gen["THERM_NO_COMMIT"], Int64)
-    @test isa(inputs_gen["HYDRO_RES"], Int64)
-    @test isa(inputs_gen["HYDRO_RES_KNOWN_CAP"], Int64)
-    @test isa(inputs_gen["FLEX"], Int64)
-    @test isa(inputs_gen["MUST_RUN"], Int64)
-    @test isa(inputs_gen["VRE"], Int64)
-    =#
+using Logging
+
+include("utilities.jl")
+
+
+@testset "Expr manipulation" begin
+    include("expression_manipulation_test.jl")
+end
+
+if VERSION ≥ v"1.7"
+    @testset "Resource loading" begin
+        include("test_load_resource_data.jl")
+    end
+end
+
+# Test GenX modules
+@testset verbose = true "GenX modules" begin
+    @testset "Three zones" begin
+        include("test_threezones.jl")
+    end
+
+    @testset "TDR" begin
+        include("test_time_domain_reduction.jl")
+    end
+
+    @testset "Piecewise Fuel" begin
+        include("test_piecewisefuel.jl")
+    end
+
+    @testset "VRE_STOR" begin
+        include("test_VRE_storage.jl")
+    end
+
+    @testset "Electrolyzer" begin
+        include("test_electrolyzer.jl")
+    end
+
+    @testset "Multi Stage" begin
+        include("test_multistage.jl")
+    end
+
+    @testset "DCOPF" begin
+        include("test_DCOPF.jl")
+    end
+
+    @testset "Multi Fuels" begin
+        include("test_multifuels.jl")
+    end
+
+    @testset "Compute Conflicts" begin
+        include("test_compute_conflicts.jl")
+    end
+
+    @testset "Retrofit" begin
+        include("test_retrofit.jl")
+    end
 end

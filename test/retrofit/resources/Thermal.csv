@@ -1,0 +1,12 @@
+Resource,Zone,Retrofit_Id,Model,New_Build,Can_Retire,Retrofit_Efficiency,Retrofit,Can_Retrofit,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Up_Time,Down_Time,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,MGA,Resource_Type,region,cluster
+natural_gas_combined_cycle,1,0,1,1,0,0,0,0,0,-1,0,65400,10287,3.55,7.43,NG,250,91,2,6,6,0.64,0.64,0.468,0.25,0.5,0,0,1,natural_gas_fired_combined_cycle,NE,1
+coal_super_1,1,1,1,0,1,0,0,1,6000,0,0,112000,10287,0,7.43,coal,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,Coal_super,NE,1
+coal_super_2,1,2,1,0,1,0,0,1,6000,0,0,112000,10287,0,7.43,coal,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,Coal_super,NE,2
+coal_super_3,1,3,1,0,1,0,0,1,6000,0,0,112000,10287,0,7.43,coal,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,Coal_super,NE,3
+coal_super_4,1,4,1,0,1,0,0,1,6000,0,0,112000,10287,0,7.43,coal,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,Coal_super,NE,4
+coal_super_5,1,5,1,0,1,0,0,1,6000,0,0,112000,10287,0,7.43,coal,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,Coal_super,NE,5
+20A_retrofit_1,1,1,1,1,0,0.85,1,0,0,-1,0,2342,10287,0,5,blue_ammonia,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,ammonia,NE,1
+20A_retrofit_2,1,2,1,1,0,0.85,1,0,0,-1,0,2342,10287,0,5,blue_ammonia,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,ammonia,NE,2
+20A_retrofit_3,1,3,1,1,0,0.85,1,0,0,-1,0,2342,10287,0,5,blue_ammonia,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,ammonia,NE,3
+20A_retrofit_4,1,4,1,1,0,0.85,1,0,0,-1,0,2342,10287,0,5,blue_ammonia,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,ammonia,NE,4
+20A_retrofit_5,1,5,1,1,0,0.85,1,0,0,-1,0,2342,10287,0,5,blue_ammonia,300,17,2,4,4,0.64,0.64,0.55,0.25,0.25,0,0,1,ammonia,NE,5

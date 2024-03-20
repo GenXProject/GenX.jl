@@ -1,3 +1,6 @@
+const SEED = 1234
+
+
 @doc raw"""
 	morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
 
@@ -14,6 +17,7 @@ struct MorrisResult{T1,T2}
     variances::T1
     elementary_effects::T2
 end
+
 function generate_design_matrix(p_range, p_steps, rng;len_design_mat,groups)
     ps = [range(p_range[i][1], stop=p_range[i][2], length=p_steps[i]) for i in 1:length(p_range)]
     indices = [rand(rng, 1:i) for i in p_steps]
@@ -74,8 +78,9 @@ function sample_matrices(p_range,p_steps, rng;num_trajectory,total_num_trajector
     reduce(hcat,matrices)
 end
 
-function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector,len_design_mat,groups)
+function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::AbstractVector, len_design_mat, groups, random)
     rng = Random.default_rng()
+    if !random; Random.seed!(SEED);  end
     design_matrices_original = sample_matrices(p_range, p_steps, rng;num_trajectory,
                                         total_num_trajectory,len_design_mat,groups)
     println(design_matrices_original)
@@ -158,7 +163,7 @@ function my_gsa(f, p_steps, num_trajectory, total_num_trajectory, p_range::Abstr
     end
     MorrisResult(reduce(hcat, means),reduce(hcat, means_star),reduce(hcat, variances),effects)
 end
-function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER)
+function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outpath::AbstractString, OPTIMIZER; random=true)
 
     # Reading the input parameters
     Morris_range = load_dataframe(joinpath(path, "Method_of_morris_range.csv"))
@@ -169,11 +174,15 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     len_design_mat = Morris_range[!,:len_design_mat][1]
     uncertain_columns = unique(Morris_range[!,:Parameter])
     #save_parameters = zeros(length(Morris_range[!,:Parameter]))
+    gen = inputs["RESOURCES"]
 
     # Creating the range of uncertain parameters in terms of absolute values
     sigma = zeros((1, 2))
     for column in uncertain_columns
-        sigma = [sigma; [inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Lower_bound] ./100) inputs["dfGen"][!,Symbol(column)] .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Upper_bound] ./100)]]
+        col_sym = Symbol(lowercase(column))
+        # column_f is the function to get the value "column" for each generator
+        column_f = isdefined(GenX, col_sym) ? getfield(GenX, col_sym) : r -> getproperty(r, col_sym)
+        sigma = [sigma; [column_f.(gen) .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Lower_bound] ./100) column_f.(gen) .* (1 .+ Morris_range[Morris_range[!,:Parameter] .== column, :Upper_bound] ./100)]]
     end
     sigma = sigma[2:end,:]
 
@@ -187,7 +196,8 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
 
         for column in uncertain_columns
             index = findall(s -> s == column, Morris_range[!,:Parameter])
-            inputs["dfGen"][!,Symbol(column)] = sigma[first(index):last(index)]
+            attr_to_set = Symbol(lowercase(column))
+            gen[attr_to_set] = sigma[first(index):last(index)]
         end
 
         EP = generate_model(setup, inputs, OPTIMIZER)
@@ -197,7 +207,7 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     end
 
     # Perform the method of morris analysis
-    m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups)
+    m = my_gsa(f1,p_steps,num_trajectory,total_num_trajectory,p_range,len_design_mat,groups,random)
     println(m.means)
     println(DataFrame(m.means', :auto))
     #save the mean effect of each uncertain variable on the objective fucntion
@@ -207,5 +217,5 @@ function morris(EP::Model, path::AbstractString, setup::Dict, inputs::Dict, outp
     Morris_range[!,:variance] = DataFrame(m.variances', :auto)[!,:x1]
 
     CSV.write(joinpath(outpath, "morris.csv"), Morris_range)
-
+    return Morris_range
 end
