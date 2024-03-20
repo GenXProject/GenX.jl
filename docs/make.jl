@@ -107,7 +107,7 @@ pages = OrderedDict(
 makedocs(;
     modules=[GenX],
     authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
-    sitename="GenX",
+    sitename="GenX.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://genxproject.github.io/GenX.jl/stable",
