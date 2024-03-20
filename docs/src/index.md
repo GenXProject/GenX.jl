@@ -55,7 +55,8 @@ We recommend users of GenX to cite it in their academic publications and patent 
 `MIT Energy Initiative and Princeton University ZERO lab. [GenX](https://github.com/GenXProject/GenX): a configurable power system capacity expansion model for studying low-carbon energy futures n.d. https://github.com/GenXProject/GenX`.
 
 ## Acknowledgement
-The GenX team expresses deep gratitude to Laura Zwanziger and Jacob Schwartz for designing the Julia-themed GenX logo and to [Maya Mutic](https://github.com/mmutic) for developing the tutorials along with Filippo Pecci and Luca Bonaldo. 
+The GenX team expresses deep gratitude to [Maya Mutic](https://github.com/mmutic) for developing the tutorials along with Filippo Pecci and Luca Bonaldo. 
+The Julia-themed GenX logo was designed by Laura Zwanziger and Jacob Schwartz.
 
 ## License
 

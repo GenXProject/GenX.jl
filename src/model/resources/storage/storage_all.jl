@@ -153,12 +153,12 @@ end
 
 function storage_all_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
-	gen = inputs["RESOURCES"]
-	T = inputs["T"]
-	p = inputs["hours_per_subperiod"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"] > 1
+    gen = inputs["RESOURCES"]
+    T = inputs["T"]
+    p = inputs["hours_per_subperiod"]
+    CapacityReserveMargin = setup["CapacityReserveMargin"] > 1
 
-	STOR_ALL = inputs["STOR_ALL"]
+    STOR_ALL = inputs["STOR_ALL"]
 
     STOR_REG = intersect(STOR_ALL, inputs["REG"]) # Set of storage resources with REG reserves
     STOR_RSV = intersect(STOR_ALL, inputs["RSV"]) # Set of storage resources with RSV reserves

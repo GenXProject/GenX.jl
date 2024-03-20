@@ -88,4 +88,5 @@ Key contributors include [Nestor A. Sepulveda](https://energy.mit.edu/profile/ne
 [Sambuddha Chakrabarti](https://www.linkedin.com/in/sambuddha-chakrabarti-ph-d-84157318).
 
 ## Acknowledgement
-The GenX team expresses deep gratitude to Laura Zwanziger and Jacob Schwartz for designing the Julia-themed GenX logo and to [Maya Mutic](https://github.com/mmutic) for developing the tutorials along with Filippo Pecci and Luca Bonaldo. 
+The GenX team expresses deep gratitude to [Maya Mutic](https://github.com/mmutic) for developing the tutorials along with Filippo Pecci and Luca Bonaldo. 
+The Julia-themed GenX logo was designed by Laura Zwanziger and Jacob Schwartz.

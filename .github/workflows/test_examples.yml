@@ -2,6 +2,8 @@ name: Test-examples
 
 on:
   push:
+    branches: [main, develop]
+    tags: ['*']
   schedule:
     - cron: 21 4 * * * # Run at 12:21am US Eastern time
 
