@@ -128,7 +128,7 @@ This function models the following constraint
 
 ```math
 \begin{aligned}
-& RETCAP_{y,p} \geq \sum^p_{t=1} MINRET_{y,t} + \sum^r_{t=1}CAP_{y,t} - \sum^p_{t=1}RETCAP_{y,p}
+& RETCAP_{y,p} \geq \sum^p_{t=1} MINRET_{y,t} + \sum^r_{t=1}CAP_{y,t} - \sum^{(p-1)}_{t=1}RETCAP_{y,t}
 \end{aligned}
 ```
 where $r \in \{1, ..., (p-1)\}$ is defined as the last stage such that if we built $y$ at the end of stage $r$, it would reach its end of life before the end of stage $p$.
