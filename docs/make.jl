@@ -107,10 +107,10 @@ pages = OrderedDict(
 makedocs(;
     modules=[GenX],
     authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
-    sitename="GenX",
+    sitename="GenX.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://genxproject.github.io/GenX/stable",
+        canonical="https://genxproject.github.io/GenX.jl/stable",
         assets = ["assets/genx_style.css"],
         sidebar_sitename=false,
         collapselevel=1
@@ -122,7 +122,7 @@ makedocs(;
 # ===========================
 
 deploydocs(;
-    repo="github.com/GenXProject/GenX.git",
+    repo="github.com/GenXProject/GenX.jl.git",
     target = "build",
     branch = "gh-pages",
     devbranch = "main",
