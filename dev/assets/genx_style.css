@@ -1,0 +1,4 @@
+.light-style-only {display: block;}
+.dark-style-only {display: none;}
+.theme--documenter-dark .light-style-only {display: none;}
+.theme--documenter-dark .dark-style-only {display: block;}
