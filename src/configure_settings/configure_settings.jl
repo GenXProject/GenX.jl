@@ -32,6 +32,7 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
+        "ObjScale" => 1,
     )
 end
 
@@ -66,7 +67,7 @@ end
 function validate_settings!(settings::Dict{Any,Any})
     # Check for any settings combinations that are not allowed.
     # If we find any then make a response and issue a note to the user.
-    
+
     # make WriteOutputs setting lowercase and check for valid value
     settings["WriteOutputs"] = lowercase(settings["WriteOutputs"])
     @assert settings["WriteOutputs"] ∈ ["annual", "full"]
@@ -144,7 +145,7 @@ function default_writeoutput()
 end
 
 function configure_writeoutput(output_settings_path::String, settings::Dict)
-    
+
     writeoutput = default_writeoutput()
 
     # don't write files with hourly data if settings["WriteOutputs"] == "annual"
