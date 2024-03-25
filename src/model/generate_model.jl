@@ -125,7 +125,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 
 	fuel!(EP, inputs, setup)
 
-	co2!(EP, inputs) 
+	co2!(EP, inputs)
 
 	if setup["OperationalReserves"] > 0
 		operational_reserves!(EP, inputs, setup)
@@ -225,7 +225,7 @@ function generate_model(setup::Dict,inputs::Dict,OPTIMIZER::MOI.OptimizerWithAtt
 	end
 
 	## Define the objective function
-	@objective(EP,Min,EP[:eObj])
+	@objective(EP,Min, setup["ObjScale"] * EP[:eObj])
 
 	## Power balance constraints
 	# demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
