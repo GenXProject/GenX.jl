@@ -32,7 +32,7 @@ The objective function of GenX minimizes total annual electricity system costs o
     & \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,dis}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,dc,dis}_{y,z} \times\eta^{inverter}_{y,z} \times \Theta^{dc}_{y,z,t}\right) + \\
     & \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,cha}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,dc,cha}_{y,z} \times \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}}\right) + \\
     & \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,dis}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,ac,dis}_{y,z} \times \Theta^{ac}_{y,z,t}\right) + \\
-    & \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,ac,cha}_{y,z} \times \Pi^{ac}_{y,z,t}\right) 
+    & \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,ac,cha}_{y,z} \times \Pi^{ac}_{y,z,t}\right)
 \end{aligned}
 ```
 
@@ -80,7 +80,7 @@ The eighteenth summation represents the variable O&M cost, $\pi^{VOM,wind}_{y,z}
 The nineteenth summation represents the variable O&M cost, $\pi^{VOM,dc,dis}_{y,z}$, times the energy discharge by storage DC components ($y\in\mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,dis}$) in time step $t$, $\Theta^{dc}_{y,z,t}$, the inverter efficiency, $\eta^{inverter}_{y,z}$, and the weight of each time step $t$, $\omega_t$.
 The twentieth summation represents the variable O&M cost, $\pi^{VOM,dc,cha}_{y,z}$, times the energy withdrawn by storage DC components ($y\in\mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,cha}$) in time step $t$, $\Pi^{dc}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$, and divided by the inverter efficiency, $\eta^{inverter}_{y,z}$.
 The twenty-first summation represents the variable O&M cost, $\pi^{VOM,ac,dis}_{y,z}$, times the energy discharge by storage AC components ($y\in\mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,dis}$) in time step $t$, $\Theta^{ac}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$.
-The twenty-second summation represents the variable O&M cost, $\pi^{VOM,ac,cha}_{y,z}$, times the energy withdrawn by storage AC components ($y\in\mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}$) in time step $t$, $\Pi^{ac}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$. 
+The twenty-second summation represents the variable O&M cost, $\pi^{VOM,ac,cha}_{y,z}$, times the energy withdrawn by storage AC components ($y\in\mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}$) in time step $t$, $\Pi^{ac}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$.
 
 In summary, the objective function can be understood as the minimization of costs associated with five sets of different decisions:
 1. where and how to invest on capacity,
@@ -92,3 +92,6 @@ In summary, the objective function can be understood as the minimization of cost
 Note however that each of these components are considered jointly and the optimization is performed over the whole problem at once as a monolithic co-optimization problem.
 
 While the objective function is formulated as a cost minimization problem, it is also equivalent to a social welfare maximization problem, with the bulk of demand treated as inelastic and always served, and the utility of consumption for price-elastic consumers represented as a segment-wise approximation, as per the cost of unserved demand summation above.
+
+# Objective Scaling
+Sometimes the model will be built into an ill form if some objective terms are quite large or small. To alleviate this problem, we could add a scaling factor to scale the objective function during solving while leaving all other expressions untouched. The default ```ObjScale``` is set to 1 which has no effect on objective. If you want to scale the objective, you can set the ```ObjScale``` to an appropriate value in the ```genx_settings.yml```. The objective function will be multiplied by the ```ObjScale``` value during the solving process.
