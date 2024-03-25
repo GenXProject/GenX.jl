@@ -58,7 +58,7 @@ There are two ways to run GenX with either type of solver options (open-source f
 
 ## Documentation
 
-Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX/dev).
+Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX.jl/dev).
 It includes details of each of GenX's methods, required and optional input files, and outputs.
 Interested users may also want to browse through [prior publications](https://energy.mit.edu/genx/#publications) that have used GenX to understand the various features of the tool.
 
