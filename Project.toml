@@ -1,6 +1,6 @@
 name = "GenX"
 uuid = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
-authors = ["Bonaldo, Luca", "Chakrabarti, Sambuddha", "Cheng, Fangwei", "Ding, Yifu", "Jenkins, Jesse D.", "Luo, Qian", "Macdonald, Ruaridh", "Mallapragada, Dharik", "Manocha, Aneesha", "Mantegna, Gabe ", "Morris, Jack", "Patankar, Neha", "Pecci, Filippo", "Schwartz, Aaron", "Schwartz, Jacob", "Schivley, Greg", "Sepulveda, Nestor", "Xu, Qingyu"]
+authors = ["Bonaldo, Luca", "Chakrabarti, Sambuddha", "Cheng, Fangwei", "Ding, Yifu", "Jenkins, Jesse D.", "Luo, Qian", "Macdonald, Ruaridh", "Mallapragada, Dharik", "Manocha, Aneesha", "Mantegna, Gabe ", "Morris, Jack", "Patankar, Neha", "Pecci, Filippo", "Schwartz, Aaron", "Schwartz, Jacob", "Schivley, Greg", "Sepulveda, Nestor", "Xu, Qingyu", "Zhou, Justin"]
 version = "0.4.0"
 
 [deps]
