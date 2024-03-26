@@ -54,7 +54,7 @@ function generate_benchmark_csv(path::String, bm_file, bm_results::BenchmarkTool
     memory_mb = bm_results.memory ./ 1e6,
     allocs = bm_results.allocs
     )
-    CSV.write(joinpath(path, bm_file, bm_df)
+    CSV.write(joinpath(path, bm_file, bm_df))
 end
 
 
