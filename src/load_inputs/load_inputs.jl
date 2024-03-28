@@ -70,10 +70,15 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_vre_stor_variability!(setup, path, inputs)
     end
 
-    # Read in mapping of modeled periods to representative periods
-    if is_period_map_necessary(inputs) && is_period_map_exist(setup, path)
-        load_period_map!(setup, path, inputs)
-    end
+	# Read in hydrogen damand data
+	if setup["HydrogenMimimumProduction"] ==2
+		load_hydrogen_demand!(setup, system_path, inputs)
+	end
+	
+	# Read in mapping of modeled periods to representative periods
+	if is_period_map_necessary(inputs) && is_period_map_exist(setup, path)
+		load_period_map!(setup, path, inputs)
+	end
 
     # Virtual charge discharge cost
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1

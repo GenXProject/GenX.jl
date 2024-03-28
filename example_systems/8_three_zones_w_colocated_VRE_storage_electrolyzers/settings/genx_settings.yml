@@ -1,0 +1,8 @@
+Trans_Loss_Segments: 1 # Number of segments used in piecewise linear approximation of transmission losses; 1 = linear, >2 = piecewise quadratic
+UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
+StorageLosses: 1 # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)
+HydrogenHourlyMatching: 0 # Hydrogen electrolyzer hourly supply matching required
+ParameterScale: 0 # Turn on parameter scaling wherein demand, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
+TimeDomainReduction: 0 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
+WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
+HydrogenMimimumProduction: 1
