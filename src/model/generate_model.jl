@@ -176,6 +176,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if !isempty(inputs["FLEX"])
         flexible_demand!(EP, inputs, setup)
     end
+    
     # Model constraints, variables, expression related to thermal resource technologies
     if !isempty(inputs["THERM_ALL"])
         thermal!(EP, inputs, setup)
@@ -189,6 +190,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
     if !isempty(inputs["VRE_STOR"])
         vre_stor!(EP, inputs, setup)
+    end
+
+    if setup["HydrogenMimimumProduction"] > 0
+        electrolyzer!(EP, inputs, setup)
     end
 
     # Policies

@@ -883,6 +883,14 @@ wind(rs::Vector{T}) where {T <: AbstractResource} = findall(
         r.wind != 0,
     rs)
 
+elec_vre_stor(r::AbstractResource) = get(r, :elec, default_zero)
+"""
+    elec(rs::Vector{T}) where T <: AbstractResource
+
+Returns the indices of all co-located electrolyzer resources in the vector `rs`.
+"""
+elec(rs::Vector{T}) where T <: AbstractResource = findall(r -> isa(r,VreStorage) && elec_vre_stor(r) != 0, rs)
+
 """
     storage_dc_discharge(rs::Vector{T}) where T <: AbstractResource
 Returns the indices of all co-located storage resources in the vector `rs` that discharge DC.
@@ -948,32 +956,35 @@ function is_LDS_VRE_STOR(rs::Vector{T}) where {T <: AbstractResource}
 end
 
 # loop over the above attributes and define function interfaces for each one
-for attr in (:existing_cap_solar_mw,
-    :existing_cap_wind_mw,
-    :existing_cap_inverter_mw,
-    :existing_cap_charge_dc_mw,
-    :existing_cap_charge_ac_mw,
-    :existing_cap_discharge_dc_mw,
-    :existing_cap_discharge_ac_mw)
+for attr in (:existing_cap_solar_mw, 
+             :existing_cap_wind_mw,
+             :existing_cap_elec_mw,
+             :existing_cap_inverter_mw,
+             :existing_cap_charge_dc_mw,
+             :existing_cap_charge_ac_mw,
+             :existing_cap_discharge_dc_mw,
+             :existing_cap_discharge_ac_mw)
     @eval @interface $attr
 end
 
-for attr in (:max_cap_solar_mw,
-    :max_cap_wind_mw,
-    :max_cap_inverter_mw,
-    :max_cap_charge_dc_mw,
-    :max_cap_charge_ac_mw,
-    :max_cap_discharge_dc_mw,
-    :max_cap_discharge_ac_mw,
-    :min_cap_solar_mw,
-    :min_cap_wind_mw,
-    :min_cap_inverter_mw,
-    :min_cap_charge_dc_mw,
-    :min_cap_charge_ac_mw,
-    :min_cap_discharge_dc_mw,
-    :min_cap_discharge_ac_mw,
-    :inverter_ratio_solar,
-    :inverter_ratio_wind)
+for attr in (:max_cap_solar_mw, 
+             :max_cap_wind_mw, 
+             :max_cap_elec_mw, 
+             :max_cap_inverter_mw, 
+             :max_cap_charge_dc_mw, 
+             :max_cap_charge_ac_mw, 
+             :max_cap_discharge_dc_mw, 
+             :max_cap_discharge_ac_mw,
+             :min_cap_solar_mw, 
+             :min_cap_wind_mw, 
+             :min_cap_elec_mw, 
+             :min_cap_inverter_mw, 
+             :min_cap_charge_dc_mw, 
+             :min_cap_charge_ac_mw, 
+             :min_cap_discharge_dc_mw, 
+             :min_cap_discharge_ac_mw,
+             :inverter_ratio_solar,
+             :inverter_ratio_wind,)
     @eval @interface $attr default_minmax_cap
 end
 
@@ -981,6 +992,7 @@ for attr in (:etainverter,
     :inv_cost_inverter_per_mwyr,
     :inv_cost_solar_per_mwyr,
     :inv_cost_wind_per_mwyr,
+    :inv_cost_elec_per_mwyr,
     :inv_cost_discharge_dc_per_mwyr,
     :inv_cost_charge_dc_per_mwyr,
     :inv_cost_discharge_ac_per_mwyr,
@@ -988,6 +1000,7 @@ for attr in (:etainverter,
     :fixed_om_inverter_cost_per_mwyr,
     :fixed_om_solar_cost_per_mwyr,
     :fixed_om_wind_cost_per_mwyr,
+    :fixed_om_elec_cost_per_mwyr,
     :fixed_om_cost_discharge_dc_per_mwyr,
     :fixed_om_cost_charge_dc_per_mwyr,
     :fixed_om_cost_discharge_ac_per_mwyr,
@@ -1003,8 +1016,17 @@ for attr in (:etainverter,
     :eff_up_dc,
     :eff_down_dc,
     :power_to_energy_ac,
-    :power_to_energy_dc)
+    :power_to_energy_dc,
+    :hydrogen_mwh_per_tonne_elec,
+    :hydrogen_price_per_tonne_elec,
+    :min_power_elec,
+    :electrolyzer_min_kt)
     @eval @interface $attr default_zero VreStorage
+end
+
+for attr in (:ramp_up_percentage_elec,
+             :ramp_dn_percentage_elec,)
+    @eval @interface $attr 1 VreStorage
 end
 
 # Multistage

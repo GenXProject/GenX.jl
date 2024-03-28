@@ -1,0 +1,6 @@
+Resource,Min_Cap_1,Min_Cap_2,Min_Cap_3,Min_Cap_Solar_1,Min_Cap_Wind_1
+MA_solar_pv,1,0,0,0,0
+CT_onshore_wind,0,1,0,0,0
+MA_battery,0,0,1,0,0
+CT_battery,0,0,1,0,0
+ME_battery,0,0,1,0,0
