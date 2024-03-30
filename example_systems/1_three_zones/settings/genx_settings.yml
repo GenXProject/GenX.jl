@@ -10,3 +10,9 @@ ParameterScale: 1 # Turn on parameter scaling wherein demand, capacity and power
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
 UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
+
+# Benchmark 0 or 1; 0 = off or disabled; 1 = on or enabled
+# This flag can be set up for all other systems when needed
+# Flag whether you want to benchmark usually to a function
+# If 1, you also need to add benchmark macro to that function after this option is turned on.
+Benchmark: 1 

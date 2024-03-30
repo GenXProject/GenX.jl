@@ -13,6 +13,9 @@ export mga
 export morris
 export simple_operation
 export choose_output_dir
+export @benchmarked
+export generate_benchmark_csv
+
 
 # Multi-stage methods
 export run_ddp
@@ -57,11 +60,12 @@ function include_all_in_folder(folder)
         for file in files
             if endswith(file, ".jl")
                 include(joinpath(root, file))
+                println("include " * joinpath(root,file))
             end
         end
     end
 end
-
+include_all_in_folder("benchmark")
 include_all_in_folder("case_runners")
 include_all_in_folder("configure_settings")
 include_all_in_folder("configure_solver")
@@ -76,6 +80,6 @@ include("time_domain_reduction/precluster.jl")
 include("simple_operation.jl")
 
 include_all_in_folder("multi_stage")
-include_all_in_folder("additional_tools")
 
+include_all_in_folder("additional_tools")
 end

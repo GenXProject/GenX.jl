@@ -16,7 +16,7 @@ case - folder for the case
 function run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
     writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
-    mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
+    global mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
         run_genx_case_simple!(case, mysetup, optimizer)
@@ -34,7 +34,7 @@ end
 
 function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
-
+    
     ### Cluster time series inputs if necessary and if specified by the user
     if mysetup["TimeDomainReduction"] == 1
         TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
@@ -50,18 +50,25 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(settings_path, optimizer)
+    global OPTIMIZER = configure_solver(settings_path, optimizer)
 
     #### Running a case
 
     ### Load inputs
     println("Loading Inputs")
-    myinputs = load_inputs(mysetup, case)
+    global myinputs = load_inputs(mysetup, case)
 
     println("Generating the Optimization Model")
-    time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
-    println("Time elapsed for model building is")
-    println(time_elapsed)
+    ## Benchmark enabled
+    if mysetup["Benchmark"] == 1
+        EP, bm_results = @benchmarked generate_model(mysetup, myinputs, OPTIMIZER) seconds=30 samples=1000 evals=1
+        println("Benchmark results for generate_model: ")
+        BenchmarkTools.display(bm_results)
+    else
+        time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+        println("Time elapsed for model building is")
+        println(time_elapsed)
+    end
 
     println("Solving Model")
     EP, solve_time = solve_model(EP, mysetup)
@@ -74,6 +81,14 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
         elapsed_time = @elapsed outputs_path = write_outputs(EP, outputs_path, mysetup, myinputs)
         println("Time elapsed for writing is")
         println(elapsed_time)
+
+        ## Generate csv file for  benchmark results if flag is set to be true
+        if mysetup["Benchmark"] == 1 
+            println("Generating benchmark results for generate_model function saved in csv at ")
+            println(joinpath(outputs_path, "generate_model_benchmark_results.csv"))
+            generate_benchmark_csv(outputs_path, "generate_model_benchmark_results.csv", bm_results)
+        end
+    
         if mysetup["ModelingToGenerateAlternatives"] == 1
             println("Starting Model to Generate Alternatives (MGA) Iterations")
             mga(EP, case, mysetup, myinputs, outputs_path)
