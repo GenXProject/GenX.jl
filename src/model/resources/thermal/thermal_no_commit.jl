@@ -42,53 +42,59 @@ When not modeling regulation and reserves, thermal units not subject to unit com
 (See Constraints 3-4 in the code)
 """
 function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
+    println("Thermal (No Unit Commitment) Resources Module")
 
-	println("Thermal (No Unit Commitment) Resources Module")
+    gen = inputs["RESOURCES"]
 
-	gen = inputs["RESOURCES"]
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
 
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
+    p = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
-	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
+    THERM_NO_COMMIT = inputs["THERM_NO_COMMIT"]
 
-	THERM_NO_COMMIT = inputs["THERM_NO_COMMIT"]
+    ### Expressions ###
 
-	### Expressions ###
+    ## Power Balance Expressions ##
+    @expression(EP, ePowerBalanceThermNoCommit[t = 1:T, z = 1:Z],
+        sum(EP[:vP][y, t]
+            for y in intersect(THERM_NO_COMMIT, resources_in_zone_by_rid(gen, z))))
+    add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermNoCommit)
 
-	## Power Balance Expressions ##
-	@expression(EP, ePowerBalanceThermNoCommit[t=1:T, z=1:Z],
-		sum(EP[:vP][y,t] for y in intersect(THERM_NO_COMMIT, resources_in_zone_by_rid(gen,z)))
-	)
-	add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermNoCommit)
+    ### Constraints ###
 
-	### Constraints ###
+    ### Maximum ramp up and down between consecutive hours (Constraints #1-2)
+    @constraints(EP,
+        begin
 
-	### Maximum ramp up and down between consecutive hours (Constraints #1-2)
-	@constraints(EP, begin
+            ## Maximum ramp up between consecutive hours
+            [y in THERM_NO_COMMIT, t in 1:T],
+            EP[:vP][y, t] - EP[:vP][y, hoursbefore(p, t, 1)] <=
+            ramp_up_fraction(gen[y]) * EP[:eTotalCap][y]
 
-		## Maximum ramp up between consecutive hours
-        [y in THERM_NO_COMMIT, t in 1:T], EP[:vP][y,t] - EP[:vP][y, hoursbefore(p,t,1)] <= ramp_up_fraction(gen[y])*EP[:eTotalCap][y]
+            ## Maximum ramp down between consecutive hours
+            [y in THERM_NO_COMMIT, t in 1:T],
+            EP[:vP][y, hoursbefore(p, t, 1)] - EP[:vP][y, t] <=
+            ramp_down_fraction(gen[y]) * EP[:eTotalCap][y]
+        end)
 
-		## Maximum ramp down between consecutive hours
-		[y in THERM_NO_COMMIT, t in 1:T], EP[:vP][y, hoursbefore(p,t,1)] - EP[:vP][y,t] <= ramp_down_fraction(gen[y])*EP[:eTotalCap][y]
-	end)
+    ### Minimum and maximum power output constraints (Constraints #3-4)
+    if setup["OperationalReserves"] == 1
+        # If modeling with regulation and reserves, constraints are established by thermal_no_commit_operational_reserves() function below
+        thermal_no_commit_operational_reserves!(EP, inputs)
+    else
+        @constraints(EP,
+            begin
+                # Minimum stable power generated per technology "y" at hour "t" Min_Power
+                [y in THERM_NO_COMMIT, t = 1:T],
+                EP[:vP][y, t] >= min_power(gen[y]) * EP[:eTotalCap][y]
 
-	### Minimum and maximum power output constraints (Constraints #3-4)
-	if setup["OperationalReserves"] == 1
-		# If modeling with regulation and reserves, constraints are established by thermal_no_commit_operational_reserves() function below
-		thermal_no_commit_operational_reserves!(EP, inputs)
-	else
-		@constraints(EP, begin
-			# Minimum stable power generated per technology "y" at hour "t" Min_Power
-			[y in THERM_NO_COMMIT, t=1:T], EP[:vP][y,t] >= min_power(gen[y])*EP[:eTotalCap][y]
-
-			# Maximum power generated per technology "y" at hour "t"
-			[y in THERM_NO_COMMIT, t=1:T], EP[:vP][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
-		end)
-
-	end
-	# END Constraints for thermal resources not subject to unit commitment
+                # Maximum power generated per technology "y" at hour "t"
+                [y in THERM_NO_COMMIT, t = 1:T],
+                EP[:vP][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
+            end)
+    end
+    # END Constraints for thermal resources not subject to unit commitment
 end
 
 @doc raw"""
@@ -135,10 +141,9 @@ When modeling regulation and spinning reserves, thermal units not subject to uni
 Note there are multiple versions of these constraints in the code in order to avoid creation of unecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. ```Reg_Max=0``` and/or ```RSV_Max=0```).
 """
 function thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
+    println("Thermal No Commit Reserves Module")
 
-	println("Thermal No Commit Reserves Module")
-
-	gen = inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
 
     T = inputs["T"]     # Number of time steps (hours)
 
@@ -152,20 +157,28 @@ function thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
     vRSV = EP[:vRSV]
     eTotalCap = EP[:eTotalCap]
 
-    max_power(y,t) = inputs["pP_Max"][y,t]
+    max_power(y, t) = inputs["pP_Max"][y, t]
 
     # Maximum regulation and reserve contributions
-    @constraint(EP, [y in REG, t in 1:T], vREG[y, t] <= max_power(y, t) * reg_max(gen[y]) * eTotalCap[y])
-    @constraint(EP, [y in RSV, t in 1:T], vRSV[y, t] <= max_power(y, t) * rsv_max(gen[y]) * eTotalCap[y])
+    @constraint(EP,
+        [y in REG, t in 1:T],
+        vREG[y, t]<=max_power(y, t) * reg_max(gen[y]) * eTotalCap[y])
+    @constraint(EP,
+        [y in RSV, t in 1:T],
+        vRSV[y, t]<=max_power(y, t) * rsv_max(gen[y]) * eTotalCap[y])
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
     expr = extract_time_series_to_expression(vP, THERM_NO_COMMIT)
     add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
-    @constraint(EP, [y in THERM_NO_COMMIT, t in 1:T], expr[y, t] >= min_power(gen[y]) * eTotalCap[y])
+    @constraint(EP,
+        [y in THERM_NO_COMMIT, t in 1:T],
+        expr[y, t]>=min_power(gen[y]) * eTotalCap[y])
 
     # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
     expr = extract_time_series_to_expression(vP, THERM_NO_COMMIT)
     add_similar_to_expression!(expr[REG, :], vREG[REG, :])
     add_similar_to_expression!(expr[RSV, :], vRSV[RSV, :])
-    @constraint(EP, [y in THERM_NO_COMMIT, t in 1:T], expr[y, t] <= max_power(y, t) * eTotalCap[y])
+    @constraint(EP,
+        [y in THERM_NO_COMMIT, t in 1:T],
+        expr[y, t]<=max_power(y, t) * eTotalCap[y])
 end

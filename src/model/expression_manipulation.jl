@@ -25,7 +25,9 @@ This can lead to errors later if a method can only operate on expressions.
     
 We don't currently have a method to do this with non-contiguous indexing.
 """
-function create_empty_expression!(EP::Model, exprname::Symbol, dims::NTuple{N, Int64}) where N
+function create_empty_expression!(EP::Model,
+    exprname::Symbol,
+    dims::NTuple{N, Int64}) where {N}
     temp = Array{AffExpr}(undef, dims)
     fill_with_zeros!(temp)
     EP[exprname] = temp
@@ -49,7 +51,7 @@ end
 
 Fill an array of expressions with zeros in-place.
 """
-function fill_with_zeros!(arr::AbstractArray{GenericAffExpr{C,T}, dims}) where {C,T,dims}
+function fill_with_zeros!(arr::AbstractArray{GenericAffExpr{C, T}, dims}) where {C, T, dims}
     for i::Int64 in eachindex(IndexLinear(), arr)::Base.OneTo{Int64}
         arr[i] = AffExpr(0.0)
     end
@@ -64,7 +66,8 @@ Fill an array of expressions with the specified constant, in-place.
 In the future we could expand this to non AffExpr, using GenericAffExpr
 e.g. if we wanted to use Float32 instead of Float64
 """
-function fill_with_const!(arr::AbstractArray{GenericAffExpr{C,T}, dims}, con::Real) where {C,T,dims}
+function fill_with_const!(arr::AbstractArray{GenericAffExpr{C, T}, dims},
+    con::Real) where {C, T, dims}
     for i in eachindex(arr)
         arr[i] = AffExpr(con)
     end
@@ -77,7 +80,7 @@ end
 ###### ###### ###### ###### ###### ######
 #
 function extract_time_series_to_expression(var::Matrix{VariableRef},
-                                           set::AbstractVector{Int})
+    set::AbstractVector{Int})
     TIME_DIM = 2
     time_range = 1:size(var)[TIME_DIM]
 
@@ -87,8 +90,13 @@ function extract_time_series_to_expression(var::Matrix{VariableRef},
     return expr
 end
 
-function extract_time_series_to_expression(var::JuMP.Containers.DenseAxisArray{VariableRef, 2, Tuple{X, Base.OneTo{Int64}}, Y},
-                                           set::AbstractVector{Int}) where {X, Y}
+function extract_time_series_to_expression(var::JuMP.Containers.DenseAxisArray{
+        VariableRef,
+        2,
+        Tuple{X, Base.OneTo{Int64}},
+        Y,
+    },
+    set::AbstractVector{Int}) where {X, Y}
     TIME_DIM = 2
     time_range = var.axes[TIME_DIM]
 
@@ -104,7 +112,7 @@ end
 ###### ###### ###### ###### ###### ######
 
 # Version for single element
-function add_similar_to_expression!(expr1::GenericAffExpr{C,T}, expr2::V) where {C,T,V}
+function add_similar_to_expression!(expr1::GenericAffExpr{C, T}, expr2::V) where {C, T, V}
     add_to_expression!(expr1, expr2)
     return nothing
 end
@@ -116,7 +124,8 @@ Add an array of some type `V` to an array of expressions, in-place.
 This will work on JuMP DenseContainers which do not have linear indexing from 1:length(arr).
 However, the accessed parts of both arrays must have the same dimensions.
 """
-function add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C,T}, dim1}, expr2::AbstractArray{V, dim2}) where {C,T,V,dim1,dim2}
+function add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C, T}, dim1},
+    expr2::AbstractArray{V, dim2}) where {C, T, V, dim1, dim2}
     # This is defined for Arrays of different dimensions
     # despite the fact it will definitely throw an error
     # because the error will tell the user / developer
@@ -134,7 +143,7 @@ end
 ###### ###### ###### ###### ###### ######
 
 # Version for single element
-function add_term_to_expression!(expr1::GenericAffExpr{C,T}, expr2::V) where {C,T,V}
+function add_term_to_expression!(expr1::GenericAffExpr{C, T}, expr2::V) where {C, T, V}
     add_to_expression!(expr1, expr2)
     return nothing
 end
@@ -145,7 +154,8 @@ end
 Add an entry of type `V` to an array of expressions, in-place. 
 This will work on JuMP DenseContainers which do not have linear indexing from 1:length(arr).
 """
-function add_term_to_expression!(expr1::AbstractArray{GenericAffExpr{C,T}, dims}, expr2::V) where {C,T,V,dims}
+function add_term_to_expression!(expr1::AbstractArray{GenericAffExpr{C, T}, dims},
+    expr2::V) where {C, T, V, dims}
     for i in eachindex(expr1)
         add_to_expression!(expr1[i], expr2)
     end
@@ -162,7 +172,8 @@ end
 Check that two arrays have the same dimensions. 
 If not, return an error message which includes the dimensions of both arrays.
 """
-function check_sizes_match(expr1::AbstractArray{C, dim1}, expr2::AbstractArray{T, dim2}) where {C,T,dim1, dim2}
+function check_sizes_match(expr1::AbstractArray{C, dim1},
+    expr2::AbstractArray{T, dim2}) where {C, T, dim1, dim2}
     # After testing, this appears to be just as fast as a method for Array{GenericAffExpr{C,T}, dims} or Array{AffExpr, dims}
     if size(expr1) != size(expr2)
         error("
@@ -181,7 +192,7 @@ as the method only works on the constituent types making up the GenericAffExpr, 
 Also, the default MethodError from add_to_expression! is sometime more informative than the error message here.
 """
 function check_addable_to_expr(C::DataType, T::DataType)
-    if !(hasmethod(add_to_expression!, (C,T)))
+    if !(hasmethod(add_to_expression!, (C, T)))
         error("No method found for add_to_expression! with types $(C) and $(T)")
     end
 end
@@ -196,7 +207,7 @@ end
 Sum an array of expressions into a single expression and return the result.
 We're using errors from add_to_expression!() to check that the types are compatible.
 """
-function sum_expression(expr::AbstractArray{C, dims}) :: AffExpr where {C,dims}
+function sum_expression(expr::AbstractArray{C, dims})::AffExpr where {C, dims}
     # check_addable_to_expr(C,C)
     total = AffExpr(0.0)
     for i in eachindex(expr)

@@ -9,7 +9,6 @@ inputs:
   * stats\_d – Dictionary which contains the run time, upper bound, and lower bound of each DDP iteration.
 """
 function write_multi_stage_stats(outpath::String, stats_d::Dict)
-
     times_a = stats_d["TIMES"] # Time (seconds) of each iteration
     upper_bounds_a = stats_d["UPPER_BOUNDS"] # Upper bound of each iteration
     lower_bounds_a = stats_d["LOWER_BOUNDS"] # Lower bound of each iteration
@@ -20,12 +19,11 @@ function write_multi_stage_stats(outpath::String, stats_d::Dict)
     realtive_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
 
     # Construct dataframe where first column is iteration number, second is iteration time
-    df_stats = DataFrame(Iteration_Number=iteration_count_a,
-        Seconds=times_a,
-        Upper_Bound=upper_bounds_a,
-        Lower_Bound=lower_bounds_a,
-        Relative_Gap=realtive_gap_a)
+    df_stats = DataFrame(Iteration_Number = iteration_count_a,
+        Seconds = times_a,
+        Upper_Bound = upper_bounds_a,
+        Lower_Bound = lower_bounds_a,
+        Relative_Gap = realtive_gap_a)
 
     CSV.write(joinpath(outpath, "stats_multi_stage.csv"), df_stats)
-
 end

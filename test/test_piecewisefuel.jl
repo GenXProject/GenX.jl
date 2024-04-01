@@ -7,11 +7,9 @@ obj_true = 2341.82308
 test_path = "piecewise_fuel"
 
 # Define test inputs
-genx_setup = Dict(
-    "UCommit" => 2,
+genx_setup = Dict("UCommit" => 2,
     "CO2Cap" => 1,
-    "ParameterScale" => 1,
-)
+    "ParameterScale" => 1)
 
 # Run the case and get the objective value and tolerance
 EP, _, _ = redirect_stdout(devnull) do
@@ -22,7 +20,7 @@ optimal_tol_rel = get_attribute(EP, "dual_feasibility_tolerance")
 optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 
 # Test the objective value
-test_result = @test obj_test ≈ obj_true atol = optimal_tol
+test_result = @test obj_test≈obj_true atol=optimal_tol
 
 # Round objective value and tolerance. Write to test log.
 obj_test = round_from_tol!(obj_test, optimal_tol)

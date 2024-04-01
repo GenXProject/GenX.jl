@@ -21,33 +21,30 @@ The Gurobi optimizer instance is configured with the following default parameter
 
 """
 function configure_gurobi(solver_settings_path::String, optimizer::Any)
-
-	solver_settings = YAML.load(open(solver_settings_path))
-	solver_settings = convert(Dict{String, Any}, solver_settings)
+    solver_settings = YAML.load(open(solver_settings_path))
+    solver_settings = convert(Dict{String, Any}, solver_settings)
 
     default_settings = Dict("Feasib_Tol" => 1e-6,
-                            "Optimal_Tol" => 1e-4,
-                            "Pre_Solve" => -1,
-                            "AggFill" => -1,
-                            "PreDual" => -1,
-                            "TimeLimit" => Inf,
-                            "MIPGap" => 1e-3,
-                            "Crossover" => -1,
-                            "Method" => -1,
-                            "BarConvTol" => 1e-8,
-                            "NumericFocus" => 0,
-                            "OutputFlag" => 1
-                           )
+        "Optimal_Tol" => 1e-4,
+        "Pre_Solve" => -1,
+        "AggFill" => -1,
+        "PreDual" => -1,
+        "TimeLimit" => Inf,
+        "MIPGap" => 1e-3,
+        "Crossover" => -1,
+        "Method" => -1,
+        "BarConvTol" => 1e-8,
+        "NumericFocus" => 0,
+        "OutputFlag" => 1)
 
     attributes = merge(default_settings, solver_settings)
 
     key_replacement = Dict("Feasib_Tol" => "FeasibilityTol",
-                           "Optimal_Tol" => "OptimalityTol",
-                           "Pre_Solve" => "Presolve",
-                          )
+        "Optimal_Tol" => "OptimalityTol",
+        "Pre_Solve" => "Presolve")
 
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
-	return optimizer_with_attributes(optimizer, attributes...)
+    return optimizer_with_attributes(optimizer, attributes...)
 end

@@ -33,30 +33,26 @@ The HiGHS optimizer instance is configured with the following default parameters
 	mip_abs_gap: 1e-06
 """
 function configure_highs(solver_settings_path::String, optimizer::Any)
+    solver_settings = YAML.load(open(solver_settings_path))
+    solver_settings = convert(Dict{String, Any}, solver_settings)
 
-	solver_settings = YAML.load(open(solver_settings_path))
-	solver_settings = convert(Dict{String, Any}, solver_settings)
-
-    default_settings = Dict{String,Any}(
-        "Feasib_Tol" => 1e-6,
+    default_settings = Dict{String, Any}("Feasib_Tol" => 1e-6,
         "Optimal_Tol" => 1e-4,
         "Pre_Solve" => "choose",
         "TimeLimit" => Inf,
         "Method" => "ipm",
         "ipm_optimality_tolerance" => 1e-08,
-	"run_crossover" => "off",
-	"mip_rel_gap" => 0.001,
-        "mip_abs_gap" => 1e-06,
-    )
+        "run_crossover" => "off",
+        "mip_rel_gap" => 0.001,
+        "mip_abs_gap" => 1e-06)
 
     attributes = merge(default_settings, solver_settings)
 
     key_replacement = Dict("Feasib_Tol" => "primal_feasibility_tolerance",
-                           "Optimal_Tol" => "dual_feasibility_tolerance",
-                           "TimeLimit" => "time_limit",
-                           "Pre_Solve" => "presolve",
-                           "Method" => "solver",
-                          )
+        "Optimal_Tol" => "dual_feasibility_tolerance",
+        "TimeLimit" => "time_limit",
+        "Pre_Solve" => "presolve",
+        "Method" => "solver")
 
     attributes = rename_keys(attributes, key_replacement)
 

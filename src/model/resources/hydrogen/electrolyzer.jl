@@ -78,99 +78,122 @@ This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `gen
 This constraint permits modeling of the 'three pillars' requirements for clean hydrogen supply of (1) new clean supply (if only new clean resources are designated as eligible), (2) that is deliverable to the electrolyzer (assuming co-location within the same modeled zone = deliverability), and (3) produced within the same hour as the electrolyzer consumes power (otherwise known as 'additionality/new supply', 'deliverability', and 'temporal matching requirements') See Ricks, Xu & Jenkins (2023), ''Minimizing emissions from grid-based hydrogen production in the United States'' *Environ. Res. Lett.* 18 014025 [doi:10.1088/1748-9326/acacb5](https://iopscience.iop.org/article/10.1088/1748-9326/acacb5/meta) for more.
 """
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
-	println("Electrolyzer Resources Module")
+    println("Electrolyzer Resources Module")
 
-	gen = inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
 
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
 
-	ELECTROLYZERS = inputs["ELECTROLYZER"]
-	STORAGE = inputs["STOR_ALL"]
+    ELECTROLYZERS = inputs["ELECTROLYZER"]
+    STORAGE = inputs["STOR_ALL"]
 
-	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
+    p = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
-	### Variables ###
+    ### Variables ###
 
-	# Electrical energy consumed by electrolyzer resource "y" at hour "t"
-	@variable(EP, vUSE[y=ELECTROLYZERS, t in 1:T] >=0);
+    # Electrical energy consumed by electrolyzer resource "y" at hour "t"
+    @variable(EP, vUSE[y = ELECTROLYZERS, t in 1:T]>=0)
 
-	### Expressions ###
+    ### Expressions ###
 
-	## Power Balance Expressions ##
+    ## Power Balance Expressions ##
 
-	@expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
-	sum(EP[:vUSE][y,t] for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen,z))))
+    @expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
+        sum(EP[:vUSE][y, t]
+            for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))))
 
-	# Electrolyzers consume electricity so their vUSE is subtracted from power balance
-	EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
+    # Electrolyzers consume electricity so their vUSE is subtracted from power balance
+    EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
-	# Capacity Reserves Margin policy
-	## Electrolyzers currently do not contribute to capacity reserve margin. Could allow them to contribute as a curtailable demand in future.
+    # Capacity Reserves Margin policy
+    ## Electrolyzers currently do not contribute to capacity reserve margin. Could allow them to contribute as a curtailable demand in future.
 
-	### Constraints ###
+    ### Constraints ###
 
-	### Maximum ramp up and down between consecutive hours (Constraints #1-2)
-	@constraints(EP, begin
-		## Maximum ramp up between consecutive hours
-        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] - EP[:vUSE][y, hoursbefore(p,t,1)] <= ramp_up_fraction(gen[y])*EP[:eTotalCap][y]
+    ### Maximum ramp up and down between consecutive hours (Constraints #1-2)
+    @constraints(EP,
+        begin
+            ## Maximum ramp up between consecutive hours
+            [y in ELECTROLYZERS, t in 1:T],
+            EP[:vUSE][y, t] - EP[:vUSE][y, hoursbefore(p, t, 1)] <=
+            ramp_up_fraction(gen[y]) * EP[:eTotalCap][y]
 
-		## Maximum ramp down between consecutive hours
-		[y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y, hoursbefore(p,t,1)] - EP[:vUSE][y,t] <= ramp_down_fraction(gen[y])*EP[:eTotalCap][y]
-	end)
+            ## Maximum ramp down between consecutive hours
+            [y in ELECTROLYZERS, t in 1:T],
+            EP[:vUSE][y, hoursbefore(p, t, 1)] - EP[:vUSE][y, t] <=
+            ramp_down_fraction(gen[y]) * EP[:eTotalCap][y]
+        end)
 
-	### Minimum and maximum power output constraints (Constraints #3-4)
+    ### Minimum and maximum power output constraints (Constraints #3-4)
     # Electrolyzers currently do not contribute to operating reserves, so there is not
     # special case (for OperationalReserves == 1) here.
     # Could allow them to contribute as a curtailable demand in future.
-    @constraints(EP, begin
-        # Minimum stable power generated per technology "y" at hour "t" Min_Power
-        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] >= min_power(gen[y])*EP[:eTotalCap][y]
+    @constraints(EP,
+        begin
+            # Minimum stable power generated per technology "y" at hour "t" Min_Power
+            [y in ELECTROLYZERS, t in 1:T],
+            EP[:vUSE][y, t] >= min_power(gen[y]) * EP[:eTotalCap][y]
 
-        # Maximum power generated per technology "y" at hour "t"
-        [y in ELECTROLYZERS, t in 1:T], EP[:vUSE][y,t] <= inputs["pP_Max"][y,t]*EP[:eTotalCap][y]
+            # Maximum power generated per technology "y" at hour "t"
+            [y in ELECTROLYZERS, t in 1:T],
+            EP[:vUSE][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
+        end)
+
+    ### Minimum hydrogen production constraint (if any) (Constraint #5)
+    kt_to_t = 10^3
+    @constraint(EP,
+        cHydrogenMin[y in ELECTROLYZERS],
+        sum(inputs["omega"][t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y])
+            for t in 1:T)>=electrolyzer_min_kt(gen[y]) * kt_to_t)
+
+    ### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
+    @constraints(EP, begin
+        [y in ELECTROLYZERS, t in 1:T], EP[:vP][y, t] == 0
     end)
 
-	### Minimum hydrogen production constraint (if any) (Constraint #5)
-	kt_to_t = 10^3
-	@constraint(EP,
-		cHydrogenMin[y in ELECTROLYZERS],
-		sum(inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T) >= electrolyzer_min_kt(gen[y]) * kt_to_t
-	)
+    ### Hydrogen Hourly Supply Matching Constraint (Constraint #6) ###
+    # Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
+    # from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
+    # (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
+    if setup["HydrogenHourlyMatching"] == 1
+        HYDROGEN_ZONES = unique(zone_id.(gen.Electrolyzer))
+        QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
+        @constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
+            sum(EP[:vP][y, t]
+                for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))>=sum(EP[:vUSE][y,
+                t] for y in intersect(resources_in_zone_by_rid(gen,
+                    z),
+                ELECTROLYZERS)) + sum(EP[:vCHARGE][y,
+                t] for y in intersect(resources_in_zone_by_rid(gen,
+                    z),
+                QUALIFIED_SUPPLY,
+                STORAGE)))
+    end
 
-	### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
-	@constraints(EP, begin
-		[y in ELECTROLYZERS, t in 1:T], EP[:vP][y,t] == 0
-	end)
+    ### Energy Share Requirement Policy ###
+    # Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Share Requirement balance to increase demand for clean resources if desired
+    # Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
+    # a share of electrolyzer demand equal to df[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
+    if setup["EnergyShareRequirement"] >= 1
+        @expression(EP,
+            eElectrolyzerESR[ESR in 1:inputs["nESR"]],
+            sum(inputs["omega"][t] * EP[:vUSE][y, t]
+                for y in intersect(ELECTROLYZERS, ids_with_policy(gen, esr, tag = ESR)),
+            t in 1:T))
+        EP[:eESR] -= eElectrolyzerESR
+    end
 
-	### Hydrogen Hourly Supply Matching Constraint (Constraint #6) ###
-	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
-	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
-	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
-	if setup["HydrogenHourlyMatching"] == 1
-		HYDROGEN_ZONES = unique(zone_id.(gen.Electrolyzer))
-		QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
-		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
-			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, STORAGE))
-		)
-	end
-
-
-	### Energy Share Requirement Policy ###
-	# Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Share Requirement balance to increase demand for clean resources if desired
-	# Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
-	# a share of electrolyzer demand equal to df[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
-	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(inputs["omega"][t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, ids_with_policy(gen,esr,tag=ESR)), t in 1:T))
-		EP[:eESR] -= eElectrolyzerESR
-	end
-
-	### Objective Function ###
-	# Subtract hydrogen revenue from objective function
-	scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
-	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], (inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) * hydrogen_price_per_tonne(gen[y]) / scale_factor))
-	@expression(EP, eTotalHydrogenValueT[t in 1:T], sum(eHydrogenValue[y,t] for y in ELECTROLYZERS))
-	@expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
-	EP[:eObj] -= eTotalHydrogenValue
-
+    ### Objective Function ###
+    # Subtract hydrogen revenue from objective function
+    scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
+    @expression(EP,
+        eHydrogenValue[y in ELECTROLYZERS, t in 1:T],
+        (inputs["omega"][t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y]) *
+         hydrogen_price_per_tonne(gen[y])/scale_factor))
+    @expression(EP,
+        eTotalHydrogenValueT[t in 1:T],
+        sum(eHydrogenValue[y, t] for y in ELECTROLYZERS))
+    @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
+    EP[:eObj] -= eTotalHydrogenValue
 end

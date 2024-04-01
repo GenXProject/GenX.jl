@@ -24,22 +24,23 @@ In practice, most existing renewable portfolio standard policies do not account 
 However, with 100% RPS or CES policies enacted in several jurisdictions, policy makers may wish to include storage losses in the minimum energy share, as otherwise there will be a difference between total generation and total demand that will permit continued use of non-qualifying resources (e.g. emitting generators).
 """
 function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
+    println("Energy Share Requirement Policies Module")
 
-	println("Energy Share Requirement Policies Module")
-	
-	# if input files are present, add energy share requirement slack variables
-	if haskey(inputs, "dfESR_slack")
-		@variable(EP, vESR_slack[ESR=1:inputs["nESR"]]>=0)
-		add_similar_to_expression!(EP[:eESR], vESR_slack)
+    # if input files are present, add energy share requirement slack variables
+    if haskey(inputs, "dfESR_slack")
+        @variable(EP, vESR_slack[ESR = 1:inputs["nESR"]]>=0)
+        add_similar_to_expression!(EP[:eESR], vESR_slack)
 
-		@expression(EP, eCESRSlack[ESR=1:inputs["nESR"]], inputs["dfESR_slack"][ESR,:PriceCap] * EP[:vESR_slack][ESR])
-		@expression(EP, eCTotalESRSlack, sum(EP[:eCESRSlack][ESR] for ESR = 1:inputs["nESR"]))
+        @expression(EP,
+            eCESRSlack[ESR = 1:inputs["nESR"]],
+            inputs["dfESR_slack"][ESR, :PriceCap]*EP[:vESR_slack][ESR])
+        @expression(EP,
+            eCTotalESRSlack,
+            sum(EP[:eCESRSlack][ESR] for ESR in 1:inputs["nESR"]))
 
-		add_to_expression!(EP[:eObj], eCTotalESRSlack)
-	end
-	
-	## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
-	@constraint(EP, cESRShare[ESR=1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
+        add_to_expression!(EP[:eObj], eCTotalESRSlack)
+    end
 
-
+    ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
+    @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR]>=0)
 end

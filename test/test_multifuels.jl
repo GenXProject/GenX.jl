@@ -8,8 +8,7 @@ obj_true = 5494.7919354
 test_path = "multi_fuels"
 
 # Define test inputs
-genx_setup = Dict(
-    "Trans_Loss_Segments" => 1,
+genx_setup = Dict("Trans_Loss_Segments" => 1,
     "EnergyShareRequirement" => 1,
     "CapacityReserveMargin" => 1,
     "StorageLosses" => 1,
@@ -17,8 +16,7 @@ genx_setup = Dict(
     "MaxCapReq" => 1,
     "ParameterScale" => 1,
     "WriteShadowPrices" => 1,
-    "UCommit" => 2,
-)
+    "UCommit" => 2)
 
 # Run the case and get the objective value and tolerance
 EP, _, _ = redirect_stdout(devnull) do
@@ -29,7 +27,7 @@ optimal_tol_rel = get_attribute(EP, "ipm_optimality_tolerance")
 optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 
 # Test the objective value
-test_result = @test obj_test ≈ obj_true atol = optimal_tol
+test_result = @test obj_test≈obj_true atol=optimal_tol
 
 # Round objective value and tolerance. Write to test log.
 obj_test = round_from_tol!(obj_test, optimal_tol)

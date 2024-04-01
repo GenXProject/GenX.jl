@@ -79,69 +79,70 @@ The second constraint with both capacity reserve margins and operating reserves 
 The rest of the constraints are dependent upon specific configurable components within the module and are listed below.
 """
 function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-
-	println("VRE-Storage Module")
+    println("VRE-Storage Module")
 
     ### LOAD DATA ###
 
     # Load generators dataframe, sets, and time periods
-	gen = inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
 
-	T = inputs["T"]                                                 # Number of time steps (hours)
-	Z = inputs["Z"]                                                 # Number of zones
+    T = inputs["T"]                                                 # Number of time steps (hours)
+    Z = inputs["Z"]                                                 # Number of zones
 
     # Load VRE-storage inputs
-	VRE_STOR = inputs["VRE_STOR"] 	                                # Set of VRE-STOR generators (indices)
+    VRE_STOR = inputs["VRE_STOR"]                                 # Set of VRE-STOR generators (indices)
     gen_VRE_STOR = gen.VreStorage                                   # Set of VRE-STOR generators (objects)
     SOLAR = inputs["VS_SOLAR"]                                      # Set of VRE-STOR generators with solar-component
     DC = inputs["VS_DC"]                                            # Set of VRE-STOR generators with inverter-component
     WIND = inputs["VS_WIND"]                                        # Set of VRE-STOR generators with wind-component
     STOR = inputs["VS_STOR"]                                        # Set of VRE-STOR generators with storage-component
     NEW_CAP = intersect(VRE_STOR, inputs["NEW_CAP"])                # Set of VRE-STOR generators eligible for new buildout
-    
+
     # Policy flags
     EnergyShareRequirement = setup["EnergyShareRequirement"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
+    CapacityReserveMargin = setup["CapacityReserveMargin"]
     MinCapReq = setup["MinCapReq"]
     MaxCapReq = setup["MaxCapReq"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
     OperationalReserves = setup["OperationalReserves"]
-    
+
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 
     ### VARIABLES ARE DEFINED IN RESPECTIVE MODULES ###
-   
-	### EXPRESSIONS ###
+
+    ### EXPRESSIONS ###
 
     ## 1. Objective Function Expressions ##
 
     # Separate grid costs
     @expression(EP, eCGrid[y in VRE_STOR],
         if y in NEW_CAP # Resources eligible for new capacity
-            inv_cost_per_mwyr(gen[y])*EP[:vCAP][y] + fixed_om_cost_per_mwyr(gen[y])*EP[:eTotalCap][y]
+            inv_cost_per_mwyr(gen[y]) * EP[:vCAP][y] +
+            fixed_om_cost_per_mwyr(gen[y]) * EP[:eTotalCap][y]
         else
-            fixed_om_cost_per_mwyr(gen[y])*EP[:eTotalCap][y]
-        end
-    )
+            fixed_om_cost_per_mwyr(gen[y]) * EP[:eTotalCap][y]
+        end)
     @expression(EP, eTotalCGrid, sum(eCGrid[y] for y in VRE_STOR))
 
-	## 2. Power Balance Expressions ##
+    ## 2. Power Balance Expressions ##
 
     # Note: The subtraction of the charging component can be found in STOR function
-	@expression(EP, ePowerBalance_VRE_STOR[t=1:T, z=1:Z], JuMP.AffExpr())
-    for t=1:T, z=1:Z
+    @expression(EP, ePowerBalance_VRE_STOR[t = 1:T, z = 1:Z], JuMP.AffExpr())
+    for t in 1:T, z in 1:Z
         if !isempty(resources_in_zone_by_rid(gen_VRE_STOR, z))
-            ePowerBalance_VRE_STOR[t,z] += sum(EP[:vP][y,t] for y=resources_in_zone_by_rid(gen_VRE_STOR, z))
+            ePowerBalance_VRE_STOR[t, z] += sum(EP[:vP][y, t]
+                                                for y in resources_in_zone_by_rid(gen_VRE_STOR,
+                z))
         end
     end
 
     ## 3. Module Expressions ##
 
     # Inverter AC Balance
-    @expression(EP, eInvACBalance[y in VRE_STOR, t=1:T], JuMP.AffExpr())
+    @expression(EP, eInvACBalance[y in VRE_STOR, t = 1:T], JuMP.AffExpr())
 
     # Grid Exports
-    @expression(EP, eGridExport[y in VRE_STOR, t=1:T], JuMP.AffExpr())
+    @expression(EP, eGridExport[y in VRE_STOR, t = 1:T], JuMP.AffExpr())
 
     ### COMPONENT MODULE CONSTRAINTS ###
 
@@ -169,87 +170,111 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Energy Share Requirement
     if EnergyShareRequirement >= 1
-        @expression(EP, eESRVREStor[ESR=1:inputs["nESR"]], 
-            sum(inputs["omega"][t]*esr_vrestor(gen[y],tag=ESR)*EP[:vP_SOLAR][y,t]*by_rid(y,:etainverter) 
-            for y=intersect(SOLAR, ids_with_policy(gen, esr_vrestor, tag=ESR)), t=1:T)
-            + sum(inputs["omega"][t]*esr_vrestor(gen[y],tag=ESR)*EP[:vP_WIND][y,t] 
-            for y=intersect(WIND, ids_with_policy(gen, esr_vrestor, tag=ESR)), t=1:T))
+        @expression(EP, eESRVREStor[ESR = 1:inputs["nESR"]],
+            sum(inputs["omega"][t] * esr_vrestor(gen[y], tag = ESR) * EP[:vP_SOLAR][y, t] *
+                by_rid(y, :etainverter)
+                for y in intersect(SOLAR, ids_with_policy(gen, esr_vrestor, tag = ESR)),
+            t in 1:T)
+            +sum(inputs["omega"][t] * esr_vrestor(gen[y], tag = ESR) * EP[:vP_WIND][y, t]
+                 for y in intersect(WIND, ids_with_policy(gen, esr_vrestor, tag = ESR)),
+            t in 1:T))
         EP[:eESR] += eESRVREStor
         if IncludeLossesInESR == 1
-            @expression(EP, eESRVREStorLosses[ESR=1:inputs["nESR"]], 
-                sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS_VRE_STOR][y] 
-                for y=intersect(STOR, resources_in_zone_by_rid(gen_VRE_STOR, z))) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
+            @expression(EP, eESRVREStorLosses[ESR = 1:inputs["nESR"]],
+                sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS_VRE_STOR][y]
+                        for y in intersect(STOR, resources_in_zone_by_rid(gen_VRE_STOR, z)))
+                    for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
             EP[:eESR] -= eESRVREStorLosses
         end
     end
 
     # Minimum Capacity Requirement
     if MinCapReq == 1
-        @expression(EP, eMinCapResSolar[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-            sum(by_rid(y,:etainverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, ids_with_policy(gen_VRE_STOR, min_cap_solar, tag=mincap))))
-		EP[:eMinCapRes] += eMinCapResSolar
+        @expression(EP, eMinCapResSolar[mincap = 1:inputs["NumberOfMinCapReqs"]],
+            sum(by_rid(y, :etainverter) * EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR,
+                ids_with_policy(gen_VRE_STOR, min_cap_solar, tag = mincap))))
+        EP[:eMinCapRes] += eMinCapResSolar
 
-        @expression(EP, eMinCapResWind[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, ids_with_policy(gen_VRE_STOR, min_cap_wind, tag=mincap))))
-		EP[:eMinCapRes] += eMinCapResWind
+        @expression(EP, eMinCapResWind[mincap = 1:inputs["NumberOfMinCapReqs"]],
+            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND,
+                ids_with_policy(gen_VRE_STOR, min_cap_wind, tag = mincap))))
+        EP[:eMinCapRes] += eMinCapResWind
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
-            @expression(EP, eMinCapResACDis[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
-		    EP[:eMinCapRes] += eMinCapResACDis
+            @expression(EP, eMinCapResACDis[mincap = 1:inputs["NumberOfMinCapReqs"]],
+                sum(EP[:eTotalCapDischarge_AC][y]
+                    for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"],
+                    ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
+            EP[:eMinCapRes] += eMinCapResACDis
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
-            @expression(EP, eMinCapResDCDis[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
-		    EP[:eMinCapRes] += eMinCapResDCDis
+            @expression(EP, eMinCapResDCDis[mincap = 1:inputs["NumberOfMinCapReqs"]],
+                sum(EP[:eTotalCapDischarge_DC][y]
+                    for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"],
+                    ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
+            EP[:eMinCapRes] += eMinCapResDCDis
         end
 
         if !isempty(inputs["VS_SYM_AC"])
-            @expression(EP, eMinCapResACStor[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
-		    EP[:eMinCapRes] += eMinCapResACStor
+            @expression(EP, eMinCapResACStor[mincap = 1:inputs["NumberOfMinCapReqs"]],
+                sum(by_rid(y, :power_to_energy_ac) * EP[:eTotalCap_STOR][y]
+                    for y in intersect(inputs["VS_SYM_AC"],
+                    ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
+            EP[:eMinCapRes] += eMinCapResACStor
         end
 
         if !isempty(inputs["VS_SYM_DC"])
-            @expression(EP, eMinCapResDCStor[mincap = 1:inputs["NumberOfMinCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], ids_with_policy(gen_VRE_STOR, min_cap_stor, tag=mincap))))
-		    EP[:eMinCapRes] += eMinCapResDCStor
+            @expression(EP, eMinCapResDCStor[mincap = 1:inputs["NumberOfMinCapReqs"]],
+                sum(by_rid(y, :power_to_energy_dc) * EP[:eTotalCap_STOR][y]
+                    for y in intersect(inputs["VS_SYM_DC"],
+                    ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
+            EP[:eMinCapRes] += eMinCapResDCStor
         end
     end
 
     # Maximum Capacity Requirement
     if MaxCapReq == 1
-        @expression(EP, eMaxCapResSolar[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-            sum(by_rid(y,:etainverter)*EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR, ids_with_policy(gen_VRE_STOR, max_cap_solar, tag=maxcap))))
-		EP[:eMaxCapRes] += eMaxCapResSolar
+        @expression(EP, eMaxCapResSolar[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
+            sum(by_rid(y, :etainverter) * EP[:eTotalCap_SOLAR][y] for y in intersect(SOLAR,
+                ids_with_policy(gen_VRE_STOR, max_cap_solar, tag = maxcap))))
+        EP[:eMaxCapRes] += eMaxCapResSolar
 
-        @expression(EP, eMaxCapResWind[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND, ids_with_policy(gen_VRE_STOR, max_cap_wind, tag=maxcap))))
-		EP[:eMaxCapRes] += eMaxCapResWind
+        @expression(EP, eMaxCapResWind[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
+            sum(EP[:eTotalCap_WIND][y] for y in intersect(WIND,
+                ids_with_policy(gen_VRE_STOR, max_cap_wind, tag = maxcap))))
+        EP[:eMaxCapRes] += eMaxCapResWind
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
-            @expression(EP, eMaxCapResACDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_AC][y] for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
-		    EP[:eMaxCapRes] += eMaxCapResACDis
+            @expression(EP, eMaxCapResACDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
+                sum(EP[:eTotalCapDischarge_AC][y]
+                    for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"],
+                    ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
+            EP[:eMaxCapRes] += eMaxCapResACDis
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
-            @expression(EP, eMaxCapResDCDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(EP[:eTotalCapDischarge_DC][y] for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
-		    EP[:eMaxCapRes] += eMaxCapResDCDis
+            @expression(EP, eMaxCapResDCDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
+                sum(EP[:eTotalCapDischarge_DC][y]
+                    for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"],
+                    ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
+            EP[:eMaxCapRes] += eMaxCapResDCDis
         end
 
         if !isempty(inputs["VS_SYM_AC"])
-            @expression(EP, eMaxCapResACStor[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_AC"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
-		    EP[:eMaxCapRes] += eMaxCapResACStor
+            @expression(EP, eMaxCapResACStor[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
+                sum(by_rid(y, :power_to_energy_ac) * EP[:eTotalCap_STOR][y]
+                    for y in intersect(inputs["VS_SYM_AC"],
+                    ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
+            EP[:eMaxCapRes] += eMaxCapResACStor
         end
 
         if !isempty(inputs["VS_SYM_DC"])
-            @expression(EP, eMaxCapResDCStor[maxcap = 1:inputs["NumberOfMaxCapReqs"]], 
-                sum(by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y] for y in intersect(inputs["VS_SYM_DC"], ids_with_policy(gen_VRE_STOR, max_cap_stor, tag=maxcap))))
-		    EP[:eMaxCapRes] += eMaxCapResDCStor
+            @expression(EP, eMaxCapResDCStor[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
+                sum(by_rid(y, :power_to_energy_dc) * EP[:eTotalCap_STOR][y]
+                    for y in intersect(inputs["VS_SYM_DC"],
+                    ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
+            EP[:eMaxCapRes] += eMaxCapResDCStor
         end
     end
 
@@ -269,33 +294,49 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     ### CONSTRAINTS ###
 
     # Constraint 1: Energy Balance Constraint
-    @constraint(EP, cEnergyBalance[y in VRE_STOR, t=1:T],
-        EP[:vP][y,t] == eInvACBalance[y,t])
-    
+    @constraint(EP, cEnergyBalance[y in VRE_STOR, t = 1:T],
+        EP[:vP][y, t]==eInvACBalance[y, t])
+
     # Constraint 2: Grid Export/Import Maximum
-    @constraint(EP, cGridExport[y in VRE_STOR, t=1:T],
-        EP[:vP][y,t] + eGridExport[y,t] <= EP[:eTotalCap][y])
-    
+    @constraint(EP, cGridExport[y in VRE_STOR, t = 1:T],
+        EP[:vP][y, t] + eGridExport[y, t]<=EP[:eTotalCap][y])
+
     # Constraint 3: Inverter Export/Import Maximum (implemented in main module due to potential capacity reserve margin and operating reserve constraints)
-    @constraint(EP, cInverterExport[y in DC, t=1:T], EP[:eInverterExport][y,t] <= EP[:eTotalCap_DC][y])
+    @constraint(EP,
+        cInverterExport[y in DC, t = 1:T],
+        EP[:eInverterExport][y, t]<=EP[:eTotalCap_DC][y])
 
     # Constraint 4: PV Generation (implemented in main module due to potential capacity reserve margin and operating reserve constraints)
-    @constraint(EP, cSolarGenMaxS[y in SOLAR, t=1:T], EP[:eSolarGenMaxS][y,t] <= inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y])
+    @constraint(EP,
+        cSolarGenMaxS[y in SOLAR, t = 1:T],
+        EP[:eSolarGenMaxS][y, t]<=inputs["pP_Max_Solar"][y, t] * EP[:eTotalCap_SOLAR][y])
 
     # Constraint 5: Wind Generation (implemented in main module due to potential capacity reserve margin and operating reserve constraints)
-    @constraint(EP, cWindGenMaxW[y in WIND, t=1:T], EP[:eWindGenMaxW][y,t] <= inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y])
+    @constraint(EP,
+        cWindGenMaxW[y in WIND, t = 1:T],
+        EP[:eWindGenMaxW][y, t]<=inputs["pP_Max_Wind"][y, t] * EP[:eTotalCap_WIND][y])
 
     # Constraint 6: Symmetric Storage Resources (implemented in main module due to potential capacity reserve margin and operating reserve constraints)
-    @constraint(EP, cChargeDischargeMaxDC[y in inputs["VS_SYM_DC"], t=1:T],
-        EP[:eChargeDischargeMaxDC][y,t] <= by_rid(y,:power_to_energy_dc)*EP[:eTotalCap_STOR][y])
-    @constraint(EP, cChargeDischargeMaxAC[y in inputs["VS_SYM_AC"], t=1:T],
-        EP[:eChargeDischargeMaxAC][y,t] <= by_rid(y,:power_to_energy_ac)*EP[:eTotalCap_STOR][y])
+    @constraint(EP, cChargeDischargeMaxDC[y in inputs["VS_SYM_DC"], t = 1:T],
+        EP[:eChargeDischargeMaxDC][y,
+            t]<=by_rid(y, :power_to_energy_dc) * EP[:eTotalCap_STOR][y])
+    @constraint(EP, cChargeDischargeMaxAC[y in inputs["VS_SYM_AC"], t = 1:T],
+        EP[:eChargeDischargeMaxAC][y,
+            t]<=by_rid(y, :power_to_energy_ac) * EP[:eTotalCap_STOR][y])
 
     # Constraint 7: Asymmetric Storage Resources (implemented in main module due to potential capacity reserve margin and operating reserve constraints)
-    @constraint(EP, cVreStorMaxDischargingDC[y in inputs["VS_ASYM_DC_DISCHARGE"], t=1:T], EP[:eVreStorMaxDischargingDC][y,t] <= EP[:eTotalCapDischarge_DC][y])
-    @constraint(EP, cVreStorMaxChargingDC[y in inputs["VS_ASYM_DC_CHARGE"], t=1:T], EP[:eVreStorMaxChargingDC][y,t] <= EP[:eTotalCapCharge_DC][y])
-    @constraint(EP, cVreStorMaxDischargingAC[y in inputs["VS_ASYM_AC_DISCHARGE"], t=1:T], EP[:eVreStorMaxDischargingAC][y,t] <= EP[:eTotalCapDischarge_AC][y])
-    @constraint(EP, cVreStorMaxChargingAC[y in inputs["VS_ASYM_AC_CHARGE"], t=1:T], EP[:eVreStorMaxChargingAC][y,t] <= EP[:eTotalCapCharge_AC][y])
+    @constraint(EP,
+        cVreStorMaxDischargingDC[y in inputs["VS_ASYM_DC_DISCHARGE"], t = 1:T],
+        EP[:eVreStorMaxDischargingDC][y, t]<=EP[:eTotalCapDischarge_DC][y])
+    @constraint(EP,
+        cVreStorMaxChargingDC[y in inputs["VS_ASYM_DC_CHARGE"], t = 1:T],
+        EP[:eVreStorMaxChargingDC][y, t]<=EP[:eTotalCapCharge_DC][y])
+    @constraint(EP,
+        cVreStorMaxDischargingAC[y in inputs["VS_ASYM_AC_DISCHARGE"], t = 1:T],
+        EP[:eVreStorMaxDischargingAC][y, t]<=EP[:eTotalCapDischarge_AC][y])
+    @constraint(EP,
+        cVreStorMaxChargingAC[y in inputs["VS_ASYM_AC_CHARGE"], t = 1:T],
+        EP[:eVreStorMaxChargingAC][y, t]<=EP[:eTotalCapCharge_AC][y])
 end
 
 @doc raw"""
@@ -371,7 +412,6 @@ In addition, this function adds investment and fixed O&M related costs related t
 ```
 """
 function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-    
     println("VRE-STOR Inverter Module")
 
     ### LOAD DATA ###
@@ -382,7 +422,7 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     RET_CAP_DC = inputs["RET_CAP_DC"]
     gen = inputs["RESOURCES"]
     gen_VRE_STOR = gen.VreStorage
-    
+
     MultiStage = setup["MultiStage"]
 
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
@@ -396,72 +436,73 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end)
 
     if MultiStage == 1
-        @variable(EP, vEXISTINGDCCAP[y in DC] >= 0);
+        @variable(EP, vEXISTINGDCCAP[y in DC]>=0)
     end
 
     ### EXPRESSIONS ###
 
     # 0. Multistage existing capacity definition
     if MultiStage == 1
-		@expression(EP, eExistingCapDC[y in DC], vEXISTINGDCCAP[y])
-	else
-		@expression(EP, eExistingCapDC[y in DC], by_rid(y,:existing_cap_inverter_mw))
-	end
+        @expression(EP, eExistingCapDC[y in DC], vEXISTINGDCCAP[y])
+    else
+        @expression(EP, eExistingCapDC[y in DC], by_rid(y, :existing_cap_inverter_mw))
+    end
 
     # 1. Total inverter capacity
     @expression(EP, eTotalCap_DC[y in DC],
-		if (y in intersect(NEW_CAP_DC, RET_CAP_DC)) # Resources eligible for new capacity and retirements
-			eExistingCapDC[y] + EP[:vDCCAP][y] - EP[:vRETDCCAP][y]
-		elseif (y in setdiff(NEW_CAP_DC, RET_CAP_DC)) # Resources eligible for only new capacity
-			eExistingCapDC[y] + EP[:vDCCAP][y]
-		elseif (y in setdiff(RET_CAP_DC, NEW_CAP_DC)) # Resources eligible for only capacity retirements
-			eExistingCapDC[y] - EP[:vRETDCCAP][y]
-		else
-			eExistingCapDC[y]
-		end
-	)
+        if (y in intersect(NEW_CAP_DC, RET_CAP_DC)) # Resources eligible for new capacity and retirements
+            eExistingCapDC[y] + EP[:vDCCAP][y] - EP[:vRETDCCAP][y]
+        elseif (y in setdiff(NEW_CAP_DC, RET_CAP_DC)) # Resources eligible for only new capacity
+            eExistingCapDC[y] + EP[:vDCCAP][y]
+        elseif (y in setdiff(RET_CAP_DC, NEW_CAP_DC)) # Resources eligible for only capacity retirements
+            eExistingCapDC[y] - EP[:vRETDCCAP][y]
+        else
+            eExistingCapDC[y]
+        end)
 
     # 2. Objective function additions
 
     # Fixed costs for inverter component (if resource is not eligible for new inverter capacity, fixed costs are only O&M costs)
     @expression(EP, eCFixDC[y in DC],
         if y in NEW_CAP_DC # Resources eligible for new capacity
-            by_rid(y,:inv_cost_inverter_per_mwyr)*vDCCAP[y] + by_rid(y,:fixed_om_inverter_cost_per_mwyr)*eTotalCap_DC[y]
+            by_rid(y, :inv_cost_inverter_per_mwyr) * vDCCAP[y] +
+            by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y]
         else
-            by_rid(y,:fixed_om_inverter_cost_per_mwyr)*eTotalCap_DC[y]
-        end
-    )
-    
+            by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y]
+        end)
+
     # Sum individual resource contributions
     @expression(EP, eTotalCFixDC, sum(eCFixDC[y] for y in DC))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixDC/inputs["OPEXMULT"]
+        EP[:eObj] += eTotalCFixDC / inputs["OPEXMULT"]
     else
         EP[:eObj] += eTotalCFixDC
     end
 
     # 3. Inverter exports expression
-    @expression(EP, eInverterExport[y in DC, t=1:T], JuMP.AffExpr())
+    @expression(EP, eInverterExport[y in DC, t = 1:T], JuMP.AffExpr())
 
     ### CONSTRAINTS ###
 
     # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
     if MultiStage == 1
-        @constraint(EP, cExistingCapDC[y in DC], EP[:vEXISTINGDCCAP][y] == by_rid(y,:existing_cap_inverter_mw))
+        @constraint(EP,
+            cExistingCapDC[y in DC],
+            EP[:vEXISTINGDCCAP][y]==by_rid(y, :existing_cap_inverter_mw))
     end
 
     # Constraints 1: Retirements and capacity additions
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
-    @constraint(EP, cMaxRet_DC[y=RET_CAP_DC], vRETDCCAP[y] <= eExistingCapDC[y])
+    @constraint(EP, cMaxRet_DC[y = RET_CAP_DC], vRETDCCAP[y]<=eExistingCapDC[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_DC[y in ids_with_nonneg(gen_VRE_STOR, max_cap_inverter_mw)], 
-        eTotalCap_DC[y] <= by_rid(y,:max_cap_inverter_mw))
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    @constraint(EP, cMaxCap_DC[y in ids_with_nonneg(gen_VRE_STOR, max_cap_inverter_mw)],
+        eTotalCap_DC[y]<=by_rid(y, :max_cap_inverter_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_DC[y in ids_with_positive(gen_VRE_STOR, min_cap_inverter_mw)], 
-        eTotalCap_DC[y] >= by_rid(y,:min_cap_inverter_mw))
+    @constraint(EP, cMinCap_DC[y in ids_with_positive(gen_VRE_STOR, min_cap_inverter_mw)],
+        eTotalCap_DC[y]>=by_rid(y, :min_cap_inverter_mw))
 
     # Constraint 2: Inverter Exports Maximum: see main module because capacity reserve margin/operating reserves may alter constraint
 end
@@ -530,7 +571,6 @@ In addition, this function adds investment, fixed O&M, and variable O&M costs re
 ```
 """
 function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-    
     println("VRE-STOR Solar Module")
 
     ### LOAD DATA ###
@@ -554,91 +594,94 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         vSOLARCAP[y in NEW_CAP_SOLAR] >= 0                            # New installed solar capacity [MW DC]
 
         # Solar-component generation [MWh]
-        vP_SOLAR[y in SOLAR, t=1:T] >= 0
+        vP_SOLAR[y in SOLAR, t = 1:T] >= 0
     end)
 
     if MultiStage == 1
-        @variable(EP, vEXISTINGSOLARCAP[y in SOLAR] >= 0);
+        @variable(EP, vEXISTINGSOLARCAP[y in SOLAR]>=0)
     end
 
     ### EXPRESSIONS ###
 
     # 0. Multistage existing capacity definition
     if MultiStage == 1
-		@expression(EP, eExistingCapSolar[y in SOLAR], vEXISTINGSOLARCAP[y])
-	else
-		@expression(EP, eExistingCapSolar[y in SOLAR], by_rid(y,:existing_cap_solar_mw))
-	end
+        @expression(EP, eExistingCapSolar[y in SOLAR], vEXISTINGSOLARCAP[y])
+    else
+        @expression(EP, eExistingCapSolar[y in SOLAR], by_rid(y, :existing_cap_solar_mw))
+    end
 
     # 1. Total solar capacity
     @expression(EP, eTotalCap_SOLAR[y in SOLAR],
-		if (y in intersect(NEW_CAP_SOLAR, RET_CAP_SOLAR)) # Resources eligible for new capacity and retirements
-			eExistingCapSolar[y] + EP[:vSOLARCAP][y] - EP[:vRETSOLARCAP][y]
-		elseif (y in setdiff(NEW_CAP_SOLAR, RET_CAP_SOLAR)) # Resources eligible for only new capacity
-			eExistingCapSolar[y] + EP[:vSOLARCAP][y]
-		elseif (y in setdiff(RET_CAP_SOLAR, NEW_CAP_SOLAR)) # Resources eligible for only capacity retirements
-			eExistingCapSolar[y] - EP[:vRETSOLARCAP][y]
-		else
-			eExistingCapSolar[y]
-		end
-	)
+        if (y in intersect(NEW_CAP_SOLAR, RET_CAP_SOLAR)) # Resources eligible for new capacity and retirements
+            eExistingCapSolar[y] + EP[:vSOLARCAP][y] - EP[:vRETSOLARCAP][y]
+        elseif (y in setdiff(NEW_CAP_SOLAR, RET_CAP_SOLAR)) # Resources eligible for only new capacity
+            eExistingCapSolar[y] + EP[:vSOLARCAP][y]
+        elseif (y in setdiff(RET_CAP_SOLAR, NEW_CAP_SOLAR)) # Resources eligible for only capacity retirements
+            eExistingCapSolar[y] - EP[:vRETSOLARCAP][y]
+        else
+            eExistingCapSolar[y]
+        end)
 
     # 2. Objective function additions
 
     # Fixed costs for solar resources (if resource is not eligible for new solar capacity, fixed costs are only O&M costs)
     @expression(EP, eCFixSolar[y in SOLAR],
         if y in NEW_CAP_SOLAR # Resources eligible for new capacity
-            by_rid(y,:inv_cost_solar_per_mwyr)*vSOLARCAP[y] + by_rid(y,:fixed_om_solar_cost_per_mwyr)*eTotalCap_SOLAR[y]
+            by_rid(y, :inv_cost_solar_per_mwyr) * vSOLARCAP[y] +
+            by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y]
         else
-            by_rid(y,:fixed_om_solar_cost_per_mwyr)*eTotalCap_SOLAR[y]
-        end
-    )
+            by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y]
+        end)
     @expression(EP, eTotalCFixSolar, sum(eCFixSolar[y] for y in SOLAR))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixSolar/inputs["OPEXMULT"]
+        EP[:eObj] += eTotalCFixSolar / inputs["OPEXMULT"]
     else
         EP[:eObj] += eTotalCFixSolar
     end
 
     # Variable costs of "generation" for solar resource "y" during hour "t"
-    @expression(EP, eCVarOutSolar[y in SOLAR, t=1:T], 
-        inputs["omega"][t]*by_rid(y,:var_om_cost_per_mwh_solar)*by_rid(y,:etainverter)*EP[:vP_SOLAR][y,t])
-    @expression(EP, eTotalCVarOutSolar, sum(eCVarOutSolar[y,t] for y in SOLAR, t=1:T))
+    @expression(EP, eCVarOutSolar[y in SOLAR, t = 1:T],
+        inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_solar)*by_rid(y, :etainverter)*
+        EP[:vP_SOLAR][y, t])
+    @expression(EP, eTotalCVarOutSolar, sum(eCVarOutSolar[y, t] for y in SOLAR, t in 1:T))
     EP[:eObj] += eTotalCVarOutSolar
 
     # 3. Inverter Balance, PV Generation Maximum
-    @expression(EP, eSolarGenMaxS[y in SOLAR, t=1:T],  JuMP.AffExpr())
-    for y in SOLAR, t=1:T
-        EP[:eInvACBalance][y,t] += by_rid(y,:etainverter)*EP[:vP_SOLAR][y,t]
-        EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*EP[:vP_SOLAR][y,t]
-        eSolarGenMaxS[y,t] += EP[:vP_SOLAR][y,t]
+    @expression(EP, eSolarGenMaxS[y in SOLAR, t = 1:T], JuMP.AffExpr())
+    for y in SOLAR, t in 1:T
+        EP[:eInvACBalance][y, t] += by_rid(y, :etainverter) * EP[:vP_SOLAR][y, t]
+        EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * EP[:vP_SOLAR][y, t]
+        eSolarGenMaxS[y, t] += EP[:vP_SOLAR][y, t]
     end
 
     ### CONSTRAINTS ###
 
     # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
     if MultiStage == 1
-		@constraint(EP, cExistingCapSolar[y in SOLAR], EP[:vEXISTINGSOLARCAP][y] == by_rid(y,:existing_cap_solar_mw))
-	end
+        @constraint(EP,
+            cExistingCapSolar[y in SOLAR],
+            EP[:vEXISTINGSOLARCAP][y]==by_rid(y, :existing_cap_solar_mw))
+    end
 
     # Constraints 1: Retirements and capacity additions
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
-    @constraint(EP, cMaxRet_Solar[y=RET_CAP_SOLAR], vRETSOLARCAP[y] <= eExistingCapSolar[y])
+    @constraint(EP, cMaxRet_Solar[y = RET_CAP_SOLAR], vRETSOLARCAP[y]<=eExistingCapSolar[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Solar[y in ids_with_nonneg(gen_VRE_STOR, max_cap_solar_mw)], 
-        eTotalCap_SOLAR[y] <= by_rid(y,:max_cap_solar_mw))
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    @constraint(EP, cMaxCap_Solar[y in ids_with_nonneg(gen_VRE_STOR, max_cap_solar_mw)],
+        eTotalCap_SOLAR[y]<=by_rid(y, :max_cap_solar_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Solar[y in ids_with_positive(gen_VRE_STOR, min_cap_solar_mw)], 
-        eTotalCap_SOLAR[y] >= by_rid(y,:min_cap_solar_mw))
+    @constraint(EP, cMinCap_Solar[y in ids_with_positive(gen_VRE_STOR, min_cap_solar_mw)],
+        eTotalCap_SOLAR[y]>=by_rid(y, :min_cap_solar_mw))
 
     # Constraint 2: PV Generation: see main module because operating reserves may alter constraint
 
     # Constraint 3: Inverter Ratio between solar capacity and grid
-    @constraint(EP, cInverterRatio_Solar[y in ids_with_positive(gen_VRE_STOR, inverter_ratio_solar)], 
-        EP[:eTotalCap_SOLAR][y] == by_rid(y,:inverter_ratio_solar)*EP[:eTotalCap_DC][y])
+    @constraint(EP,
+        cInverterRatio_Solar[y in ids_with_positive(gen_VRE_STOR, inverter_ratio_solar)],
+        EP[:eTotalCap_SOLAR][y]==by_rid(y, :inverter_ratio_solar) * EP[:eTotalCap_DC][y])
 end
 
 @doc raw"""
@@ -705,7 +748,6 @@ In addition, this function adds investment, fixed O&M, and variable O&M costs re
 ```
 """
 function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-
     println("VRE-STOR Wind Module")
 
     ### LOAD DATA ###
@@ -729,89 +771,93 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         vWINDCAP[y in NEW_CAP_WIND] >= 0                            # New installed wind capacity [MW AC]
 
         # Wind-component generation [MWh]
-        vP_WIND[y in WIND, t=1:T] >= 0
+        vP_WIND[y in WIND, t = 1:T] >= 0
     end)
 
     if MultiStage == 1
-		@variable(EP, vEXISTINGWINDCAP[y in WIND] >= 0);
-	end
+        @variable(EP, vEXISTINGWINDCAP[y in WIND]>=0)
+    end
 
     ### EXPRESSIONS ###
 
     # 0. Multistage existing capacity definition
     if MultiStage == 1
-		@expression(EP, eExistingCapWind[y in WIND], vEXISTINGWINDCAP[y])
-	else
-		@expression(EP, eExistingCapWind[y in WIND], by_rid(y,:existing_cap_wind_mw))
-	end
+        @expression(EP, eExistingCapWind[y in WIND], vEXISTINGWINDCAP[y])
+    else
+        @expression(EP, eExistingCapWind[y in WIND], by_rid(y, :existing_cap_wind_mw))
+    end
 
     # 1. Total wind capacity
     @expression(EP, eTotalCap_WIND[y in WIND],
-		if (y in intersect(NEW_CAP_WIND, RET_CAP_WIND)) # Resources eligible for new capacity and retirements
-			eExistingCapWind[y] + EP[:vWINDCAP][y] - EP[:vRETWINDCAP][y]
-		elseif (y in setdiff(NEW_CAP_WIND, RET_CAP_WIND)) # Resources eligible for only new capacity
-			eExistingCapWind[y] + EP[:vWINDCAP][y]
-		elseif (y in setdiff(RET_CAP_WIND, NEW_CAP_WIND)) # Resources eligible for only capacity retirements
-			eExistingCapWind[y] - EP[:vRETWINDCAP][y]
-		else
-			eExistingCapWind[y]
-		end
-	)
+        if (y in intersect(NEW_CAP_WIND, RET_CAP_WIND)) # Resources eligible for new capacity and retirements
+            eExistingCapWind[y] + EP[:vWINDCAP][y] - EP[:vRETWINDCAP][y]
+        elseif (y in setdiff(NEW_CAP_WIND, RET_CAP_WIND)) # Resources eligible for only new capacity
+            eExistingCapWind[y] + EP[:vWINDCAP][y]
+        elseif (y in setdiff(RET_CAP_WIND, NEW_CAP_WIND)) # Resources eligible for only capacity retirements
+            eExistingCapWind[y] - EP[:vRETWINDCAP][y]
+        else
+            eExistingCapWind[y]
+        end)
 
     # 2. Objective function additions
 
     # Fixed costs for wind resources (if resource is not eligible for new wind capacity, fixed costs are only O&M costs)
     @expression(EP, eCFixWind[y in WIND],
         if y in NEW_CAP_WIND # Resources eligible for new capacity
-            by_rid(y,:inv_cost_wind_per_mwyr)*vWINDCAP[y] + by_rid(y,:fixed_om_wind_cost_per_mwyr)*eTotalCap_WIND[y]
+            by_rid(y, :inv_cost_wind_per_mwyr) * vWINDCAP[y] +
+            by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y]
         else
-            by_rid(y,:fixed_om_wind_cost_per_mwyr)*eTotalCap_WIND[y]
-        end
-    )
+            by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y]
+        end)
     @expression(EP, eTotalCFixWind, sum(eCFixWind[y] for y in WIND))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixWind/inputs["OPEXMULT"]
+        EP[:eObj] += eTotalCFixWind / inputs["OPEXMULT"]
     else
         EP[:eObj] += eTotalCFixWind
     end
 
     # Variable costs of "generation" for wind resource "y" during hour "t"
-    @expression(EP, eCVarOutWind[y in WIND, t=1:T], inputs["omega"][t]*by_rid(y,:var_om_cost_per_mwh_wind)*EP[:vP_WIND][y,t])
-    @expression(EP, eTotalCVarOutWind, sum(eCVarOutWind[y,t] for y in WIND, t=1:T))
+    @expression(EP,
+        eCVarOutWind[y in WIND, t = 1:T],
+        inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_wind)*EP[:vP_WIND][y, t])
+    @expression(EP, eTotalCVarOutWind, sum(eCVarOutWind[y, t] for y in WIND, t in 1:T))
     EP[:eObj] += eTotalCVarOutWind
 
     # 3. Inverter Balance, Wind Generation Maximum
-    @expression(EP, eWindGenMaxW[y in WIND, t=1:T], JuMP.AffExpr())
-    for y in WIND, t=1:T
-        EP[:eInvACBalance][y,t] += EP[:vP_WIND][y,t]
-        eWindGenMaxW[y,t] += EP[:vP_WIND][y,t]
+    @expression(EP, eWindGenMaxW[y in WIND, t = 1:T], JuMP.AffExpr())
+    for y in WIND, t in 1:T
+        EP[:eInvACBalance][y, t] += EP[:vP_WIND][y, t]
+        eWindGenMaxW[y, t] += EP[:vP_WIND][y, t]
     end
 
     ### CONSTRAINTS ###
 
     # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
     if MultiStage == 1
-		@constraint(EP, cExistingCapWind[y in WIND], EP[:vEXISTINGWINDCAP][y] == by_rid(y,:existing_cap_wind_mw))
-	end
+        @constraint(EP,
+            cExistingCapWind[y in WIND],
+            EP[:vEXISTINGWINDCAP][y]==by_rid(y, :existing_cap_wind_mw))
+    end
 
     # Constraints 1: Retirements and capacity additions
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
-    @constraint(EP, cMaxRet_Wind[y=RET_CAP_WIND], vRETWINDCAP[y] <= eExistingCapWind[y])
+    @constraint(EP, cMaxRet_Wind[y = RET_CAP_WIND], vRETWINDCAP[y]<=eExistingCapWind[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Wind[y in ids_with_nonneg(gen_VRE_STOR, max_cap_wind_mw)], 
-        eTotalCap_WIND[y] <= by_rid(y,:max_cap_wind_mw))
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    @constraint(EP, cMaxCap_Wind[y in ids_with_nonneg(gen_VRE_STOR, max_cap_wind_mw)],
+        eTotalCap_WIND[y]<=by_rid(y, :max_cap_wind_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Wind[y in ids_with_positive(gen_VRE_STOR, min_cap_wind_mw)], 
-        eTotalCap_WIND[y] >= by_rid(y,:min_cap_wind_mw))
+    @constraint(EP, cMinCap_Wind[y in ids_with_positive(gen_VRE_STOR, min_cap_wind_mw)],
+        eTotalCap_WIND[y]>=by_rid(y, :min_cap_wind_mw))
 
     # Constraint 2: Wind Generation: see main module because capacity reserve margin/operating reserves may alter constraint
 
     # Constraint 3: Inverter Ratio between wind capacity and grid
-    @constraint(EP, cInverterRatio_Wind[y in ids_with_positive(gen_VRE_STOR, inverter_ratio_wind)], 
-        EP[:eTotalCap_WIND][y] == by_rid(y,:inverter_ratio_wind)*EP[:eTotalCap][y])
+    @constraint(EP,
+        cInverterRatio_Wind[y in ids_with_positive(gen_VRE_STOR, inverter_ratio_wind)],
+        EP[:eTotalCap_WIND][y]==by_rid(y, :inverter_ratio_wind) * EP[:eTotalCap][y])
 end
 
 @doc raw"""
@@ -941,12 +987,11 @@ In addition, this function adds investment, fixed O&M, and variable O&M costs re
 ```
 """
 function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-
     println("VRE-STOR Storage Module")
 
     ### LOAD DATA ###
 
-    T = inputs["T"]    
+    T = inputs["T"]
     Z = inputs["Z"]
 
     gen = inputs["RESOURCES"]
@@ -964,8 +1009,8 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     VS_LDS = inputs["VS_LDS"]
 
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-	hours_per_subperiod = inputs["hours_per_subperiod"]     # total number of hours per subperiod
+    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+    hours_per_subperiod = inputs["hours_per_subperiod"]     # total number of hours per subperiod
     rep_periods = inputs["REP_PERIOD"]
 
     MultiStage = setup["MultiStage"]
@@ -978,104 +1023,110 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         # Storage energy capacity
         vCAPENERGY_VS[y in NEW_CAP_STOR] >= 0              # Energy storage reservoir capacity (MWh capacity) built for VRE storage [MWh]
         vRETCAPENERGY_VS[y in RET_CAP_STOR] >= 0           # Energy storage reservoir capacity retired for VRE storage [MWh]
-    
+
         # State of charge variable
-        vS_VRE_STOR[y in STOR, t=1:T] >= 0                  # Storage level of resource "y" at hour "t" [MWh] on zone "z"
+        vS_VRE_STOR[y in STOR, t = 1:T] >= 0                  # Storage level of resource "y" at hour "t" [MWh] on zone "z"
 
         # DC-battery discharge [MWh]
-        vP_DC_DISCHARGE[y in DC_DISCHARGE, t=1:T] >= 0
+        vP_DC_DISCHARGE[y in DC_DISCHARGE, t = 1:T] >= 0
 
         # DC-battery charge [MWh]
-        vP_DC_CHARGE[y in DC_CHARGE, t=1:T] >= 0
+        vP_DC_CHARGE[y in DC_CHARGE, t = 1:T] >= 0
 
         # AC-battery discharge [MWh]
-        vP_AC_DISCHARGE[y in AC_DISCHARGE, t=1:T] >= 0
+        vP_AC_DISCHARGE[y in AC_DISCHARGE, t = 1:T] >= 0
 
         # AC-battery charge [MWh]
-        vP_AC_CHARGE[y in AC_CHARGE, t=1:T] >= 0
+        vP_AC_CHARGE[y in AC_CHARGE, t = 1:T] >= 0
 
         # Grid-interfacing charge (Energy withdrawn from grid by resource VRE_STOR at hour "t") [MWh]
-        vCHARGE_VRE_STOR[y in STOR, t=1:T] >= 0
+        vCHARGE_VRE_STOR[y in STOR, t = 1:T] >= 0
     end)
 
     if MultiStage == 1
-		@variable(EP, vEXISTINGCAPENERGY_VS[y in STOR] >= 0);
-	end
+        @variable(EP, vEXISTINGCAPENERGY_VS[y in STOR]>=0)
+    end
 
     ### EXPRESSIONS ###
 
     # 0. Multistage existing capacity definition
     if MultiStage == 1
-		@expression(EP, eExistingCapEnergy_VS[y in STOR], vEXISTINGCAPENERGY_VS[y])
-	else
-		@expression(EP, eExistingCapEnergy_VS[y in STOR], existing_cap_mwh(gen[y]))
-	end
+        @expression(EP, eExistingCapEnergy_VS[y in STOR], vEXISTINGCAPENERGY_VS[y])
+    else
+        @expression(EP, eExistingCapEnergy_VS[y in STOR], existing_cap_mwh(gen[y]))
+    end
 
     # 1. Total storage energy capacity
     @expression(EP, eTotalCap_STOR[y in STOR],
-		if (y in intersect(NEW_CAP_STOR, RET_CAP_STOR)) # Resources eligible for new capacity and retirements
-			eExistingCapEnergy_VS[y] + EP[:vCAPENERGY_VS][y] - EP[:vRETCAPENERGY_VS][y]
-		elseif (y in setdiff(NEW_CAP_STOR, RET_CAP_STOR)) # Resources eligible for only new capacity
-			eExistingCapEnergy_VS[y] + EP[:vCAPENERGY_VS][y]
-		elseif (y in setdiff(RET_CAP_STOR, NEW_CAP_STOR)) # Resources eligible for only capacity retirements
-			eExistingCapEnergy_VS[y] - EP[:vRETCAPENERGY_VS][y]
-		else
-			eExistingCapEnergy_VS[y]
-		end
-	)
+        if (y in intersect(NEW_CAP_STOR, RET_CAP_STOR)) # Resources eligible for new capacity and retirements
+            eExistingCapEnergy_VS[y] + EP[:vCAPENERGY_VS][y] - EP[:vRETCAPENERGY_VS][y]
+        elseif (y in setdiff(NEW_CAP_STOR, RET_CAP_STOR)) # Resources eligible for only new capacity
+            eExistingCapEnergy_VS[y] + EP[:vCAPENERGY_VS][y]
+        elseif (y in setdiff(RET_CAP_STOR, NEW_CAP_STOR)) # Resources eligible for only capacity retirements
+            eExistingCapEnergy_VS[y] - EP[:vRETCAPENERGY_VS][y]
+        else
+            eExistingCapEnergy_VS[y]
+        end)
 
     # 2. Objective function additions
 
     # Fixed costs for storage resources (if resource is not eligible for new energy capacity, fixed costs are only O&M costs)
-	@expression(EP, eCFixEnergy_VS[y in STOR],
+    @expression(EP, eCFixEnergy_VS[y in STOR],
         if y in NEW_CAP_STOR # Resources eligible for new capacity
-            inv_cost_per_mwhyr(gen[y])*vCAPENERGY_VS[y] + fixed_om_cost_per_mwhyr(gen[y])*eTotalCap_STOR[y]
+            inv_cost_per_mwhyr(gen[y]) * vCAPENERGY_VS[y] +
+            fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y]
         else
-            fixed_om_cost_per_mwhyr(gen[y])*eTotalCap_STOR[y]
-        end
-    )
+            fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y]
+        end)
     @expression(EP, eTotalCFixStor, sum(eCFixEnergy_VS[y] for y in STOR))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixStor/inputs["OPEXMULT"]
+        EP[:eObj] += eTotalCFixStor / inputs["OPEXMULT"]
     else
         EP[:eObj] += eTotalCFixStor
     end
 
     # Variable costs of charging DC for VRE-STOR resources "y" during hour "t"
-    @expression(EP, eCVar_Charge_DC[y in DC_CHARGE, t=1:T], 
-        inputs["omega"][t]*by_rid(y,:var_om_cost_per_mwh_charge_dc)*EP[:vP_DC_CHARGE][y,t]/by_rid(y,:etainverter))
+    @expression(EP, eCVar_Charge_DC[y in DC_CHARGE, t = 1:T],
+        inputs["omega"][t] * by_rid(y, :var_om_cost_per_mwh_charge_dc) *
+        EP[:vP_DC_CHARGE][y, t]/by_rid(y, :etainverter))
     # Variable costs of discharging DC for VRE-STOR resources "y" during hour "t"
-    @expression(EP, eCVar_Discharge_DC[y in DC_DISCHARGE, t=1:T], 
-        inputs["omega"][t]*by_rid(y,:var_om_cost_per_mwh_discharge_dc)*by_rid(y,:etainverter)*EP[:vP_DC_DISCHARGE][y,t])
+    @expression(EP, eCVar_Discharge_DC[y in DC_DISCHARGE, t = 1:T],
+        inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_discharge_dc)*
+        by_rid(y, :etainverter)*EP[:vP_DC_DISCHARGE][y, t])
     # Variable costs of charging AC for VRE-STOR resources "y" during hour "t"
-    @expression(EP, eCVar_Charge_AC[y in AC_CHARGE, t=1:T], 
-        inputs["omega"][t]*by_rid(y,:var_om_cost_per_mwh_charge_ac)*EP[:vP_AC_CHARGE][y,t])
+    @expression(EP, eCVar_Charge_AC[y in AC_CHARGE, t = 1:T],
+        inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_charge_ac)*
+        EP[:vP_AC_CHARGE][y, t])
     # Variable costs of discharging AC for VRE-STOR resources "y" during hour "t"
-    @expression(EP, eCVar_Discharge_AC[y in AC_DISCHARGE, t=1:T], 
-        inputs["omega"][t]*by_rid(y,:var_om_cost_per_mwh_discharge_ac)*EP[:vP_AC_DISCHARGE][y,t])
+    @expression(EP, eCVar_Discharge_AC[y in AC_DISCHARGE, t = 1:T],
+        inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_discharge_ac)*
+        EP[:vP_AC_DISCHARGE][y, t])
 
     # Sum individual resource contributions
-    @expression(EP, eTotalCVarStor, sum(eCVar_Charge_DC[y,t] for y in DC_CHARGE, t=1:T)
-        + sum(eCVar_Discharge_DC[y,t] for y in DC_DISCHARGE, t=1:T)
-        + sum(eCVar_Charge_AC[y,t] for y in AC_CHARGE, t=1:T)
-        + sum(eCVar_Discharge_AC[y,t] for y in AC_CHARGE, t=1:T))
+    @expression(EP,
+        eTotalCVarStor,
+        sum(eCVar_Charge_DC[y, t] for y in DC_CHARGE, t in 1:T)
+        +sum(eCVar_Discharge_DC[y, t] for y in DC_DISCHARGE, t in 1:T)
+        +sum(eCVar_Charge_AC[y, t] for y in AC_CHARGE, t in 1:T)
+        +sum(eCVar_Discharge_AC[y, t] for y in AC_CHARGE, t in 1:T))
     EP[:eObj] += eTotalCVarStor
 
     # 3. Inverter & Power Balance, SoC Expressions
 
     # Check for rep_periods > 1 & LDS=1
-    if rep_periods > 1 && !isempty(VS_LDS) 
-		CONSTRAINTSET = inputs["VS_nonLDS"]
-	else
-		CONSTRAINTSET = STOR
-	end
+    if rep_periods > 1 && !isempty(VS_LDS)
+        CONSTRAINTSET = inputs["VS_nonLDS"]
+    else
+        CONSTRAINTSET = STOR
+    end
 
     # SoC expressions
     @expression(EP, eSoCBalStart_VRE_STOR[y in CONSTRAINTSET, t in START_SUBPERIODS],
-        vS_VRE_STOR[y,t+hours_per_subperiod-1] - self_discharge(gen[y])*vS_VRE_STOR[y,t+hours_per_subperiod-1])
+        vS_VRE_STOR[y,
+            t + hours_per_subperiod - 1]-self_discharge(gen[y]) * vS_VRE_STOR[y, t + hours_per_subperiod - 1])
     @expression(EP, eSoCBalInterior_VRE_STOR[y in STOR, t in INTERIOR_SUBPERIODS],
-        vS_VRE_STOR[y,t-1] - self_discharge(gen[y])*vS_VRE_STOR[y,t-1])
+        vS_VRE_STOR[y, t - 1]-self_discharge(gen[y]) * vS_VRE_STOR[y, t - 1])
     # Expression for energy losses related to technologies (increase in effective demand)
     @expression(EP, eELOSS_VRE_STOR[y in STOR], JuMP.AffExpr())
 
@@ -1085,117 +1136,134 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     AC_CHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, AC_CHARGE)
     for t in START_SUBPERIODS
         for y in DC_DISCHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y,t] -= EP[:vP_DC_DISCHARGE][y,t]/by_rid(y,:eff_down_dc)
+            eSoCBalStart_VRE_STOR[y, t] -= EP[:vP_DC_DISCHARGE][y, t] /
+                                           by_rid(y, :eff_down_dc)
         end
         for y in DC_CHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y,t] += by_rid(y,:eff_up_dc)*EP[:vP_DC_CHARGE][y,t]
+            eSoCBalStart_VRE_STOR[y, t] += by_rid(y, :eff_up_dc) * EP[:vP_DC_CHARGE][y, t]
         end
         for y in AC_DISCHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y,t] -= EP[:vP_AC_DISCHARGE][y,t]/by_rid(y,:eff_down_ac)
+            eSoCBalStart_VRE_STOR[y, t] -= EP[:vP_AC_DISCHARGE][y, t] /
+                                           by_rid(y, :eff_down_ac)
         end
         for y in AC_CHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y,t] += by_rid(y,:eff_up_ac)*EP[:vP_AC_CHARGE][y,t]
+            eSoCBalStart_VRE_STOR[y, t] += by_rid(y, :eff_up_ac) * EP[:vP_AC_CHARGE][y, t]
         end
     end
 
     for y in DC_DISCHARGE
-        EP[:eELOSS_VRE_STOR][y] -= sum(inputs["omega"][t]*vP_DC_DISCHARGE[y,t]*by_rid(y,:etainverter) for t=1:T)
-        for t=1:T
-            EP[:eInvACBalance][y,t] += by_rid(y,:etainverter)*vP_DC_DISCHARGE[y,t]
-            EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*vP_DC_DISCHARGE[y,t]
+        EP[:eELOSS_VRE_STOR][y] -= sum(inputs["omega"][t] * vP_DC_DISCHARGE[y, t] *
+                                       by_rid(y, :etainverter) for t in 1:T)
+        for t in 1:T
+            EP[:eInvACBalance][y, t] += by_rid(y, :etainverter) * vP_DC_DISCHARGE[y, t]
+            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vP_DC_DISCHARGE[y, t]
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y,t] -= EP[:vP_DC_DISCHARGE][y,t]/by_rid(y,:eff_down_dc)
+            eSoCBalInterior_VRE_STOR[y, t] -= EP[:vP_DC_DISCHARGE][y, t] /
+                                              by_rid(y, :eff_down_dc)
         end
     end
 
     for y in DC_CHARGE
-        EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t]*vP_DC_CHARGE[y,t]/by_rid(y,:etainverter) for t=1:T)
-        for t=1:T
-            EP[:eInvACBalance][y,t] -= vP_DC_CHARGE[y,t]/by_rid(y,:etainverter)
-            EP[:eInverterExport][y,t] += vP_DC_CHARGE[y,t]/by_rid(y,:etainverter)
+        EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t] * vP_DC_CHARGE[y, t] /
+                                       by_rid(y, :etainverter) for t in 1:T)
+        for t in 1:T
+            EP[:eInvACBalance][y, t] -= vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
+            EP[:eInverterExport][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y,t] += by_rid(y,:eff_up_dc)*EP[:vP_DC_CHARGE][y,t]
+            eSoCBalInterior_VRE_STOR[y, t] += by_rid(y, :eff_up_dc) *
+                                              EP[:vP_DC_CHARGE][y, t]
         end
     end
 
     for y in AC_DISCHARGE
-        EP[:eELOSS_VRE_STOR][y] -= sum(inputs["omega"][t]*vP_AC_DISCHARGE[y,t] for t=1:T)
-        for t=1:T
-            EP[:eInvACBalance][y,t] += vP_AC_DISCHARGE[y,t]
+        EP[:eELOSS_VRE_STOR][y] -= sum(inputs["omega"][t] * vP_AC_DISCHARGE[y, t]
+                                       for t in 1:T)
+        for t in 1:T
+            EP[:eInvACBalance][y, t] += vP_AC_DISCHARGE[y, t]
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y,t] -= EP[:vP_AC_DISCHARGE][y,t]/by_rid(y,:eff_down_ac)
+            eSoCBalInterior_VRE_STOR[y, t] -= EP[:vP_AC_DISCHARGE][y, t] /
+                                              by_rid(y, :eff_down_ac)
         end
     end
 
     for y in AC_CHARGE
-        EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t]*vP_AC_CHARGE[y,t] for t=1:T)
-        for t=1:T
-            EP[:eInvACBalance][y,t] -= vP_AC_CHARGE[y,t]
+        EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t] * vP_AC_CHARGE[y, t] for t in 1:T)
+        for t in 1:T
+            EP[:eInvACBalance][y, t] -= vP_AC_CHARGE[y, t]
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y,t] += by_rid(y,:eff_up_ac)*EP[:vP_AC_CHARGE][y,t]
+            eSoCBalInterior_VRE_STOR[y, t] += by_rid(y, :eff_up_ac) *
+                                              EP[:vP_AC_CHARGE][y, t]
         end
     end
 
-    for y in STOR, t=1:T
-        EP[:eInvACBalance][y,t] += vCHARGE_VRE_STOR[y,t]
-        EP[:eGridExport][y,t] += vCHARGE_VRE_STOR[y,t]
+    for y in STOR, t in 1:T
+        EP[:eInvACBalance][y, t] += vCHARGE_VRE_STOR[y, t]
+        EP[:eGridExport][y, t] += vCHARGE_VRE_STOR[y, t]
     end
 
-    for z in 1:Z, t=1:T
-        if !isempty(resources_in_zone_by_rid(gen_VRE_STOR,z))
-            EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y,t] for y=intersect(resources_in_zone_by_rid(gen_VRE_STOR,z),STOR))
+    for z in 1:Z, t in 1:T
+        if !isempty(resources_in_zone_by_rid(gen_VRE_STOR, z))
+            EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y, t]
+                                                     for y in intersect(resources_in_zone_by_rid(gen_VRE_STOR,
+                    z),
+                STOR))
         end
     end
 
     # 4. Energy Share Requirement & CO2 Policy Module
 
     # From CO2 Policy module
-	@expression(EP, eELOSSByZone_VRE_STOR[z=1:Z],
-        sum(EP[:eELOSS_VRE_STOR][y] for y in intersect(resources_in_zone_by_rid(gen_VRE_STOR,z),STOR)))
+    @expression(EP, eELOSSByZone_VRE_STOR[z = 1:Z],
+        sum(EP[:eELOSS_VRE_STOR][y]
+            for y in intersect(resources_in_zone_by_rid(gen_VRE_STOR, z), STOR)))
     add_similar_to_expression!(EP[:eELOSSByZone], eELOSSByZone_VRE_STOR)
 
     ### CONSTRAINTS ###
 
     # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
     if MultiStage == 1
-		@constraint(EP, cExistingCapEnergy_VS[y in STOR], EP[:vEXISTINGCAPENERGY_VS][y] == existing_cap_mwh(gen[y]))
-	end
+        @constraint(EP,
+            cExistingCapEnergy_VS[y in STOR],
+            EP[:vEXISTINGCAPENERGY_VS][y]==existing_cap_mwh(gen[y]))
+    end
 
     # Constraints 1: Retirements and capacity additions
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
-    @constraint(EP, cMaxRet_Stor[y=RET_CAP_STOR], vRETCAPENERGY_VS[y] <= eExistingCapEnergy_VS[y])
+    @constraint(EP,
+        cMaxRet_Stor[y = RET_CAP_STOR],
+        vRETCAPENERGY_VS[y]<=eExistingCapEnergy_VS[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-	# DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMaxCap_Stor[y in intersect(ids_with_nonneg(gen, max_cap_mwh), STOR)], 
-        eTotalCap_STOR[y] <= max_cap_mwh(gen[y]))
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    @constraint(EP, cMaxCap_Stor[y in intersect(ids_with_nonneg(gen, max_cap_mwh), STOR)],
+        eTotalCap_STOR[y]<=max_cap_mwh(gen[y]))
     # Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
-    @constraint(EP, cMinCap_Stor[y in intersect(ids_with_positive(gen, min_cap_mwh), STOR)], 
-        eTotalCap_STOR[y] >= min_cap_mwh(gen[y]))
+    @constraint(EP, cMinCap_Stor[y in intersect(ids_with_positive(gen, min_cap_mwh), STOR)],
+        eTotalCap_STOR[y]>=min_cap_mwh(gen[y]))
 
     # Constraint 2: SOC Maximum
-    @constraint(EP, cSOCMax[y in STOR, t=1:T], vS_VRE_STOR[y,t] <= eTotalCap_STOR[y])
+    @constraint(EP, cSOCMax[y in STOR, t = 1:T], vS_VRE_STOR[y, t]<=eTotalCap_STOR[y])
 
     # Constraint 3: State of Charge (energy stored for the next hour)
     @constraint(EP, cSoCBalStart_VRE_STOR[y in CONSTRAINTSET, t in START_SUBPERIODS],
-        vS_VRE_STOR[y,t] == eSoCBalStart_VRE_STOR[y,t])
-    @constraint(EP, cSoCBalInterior_VRE_STOR[y in STOR, t in INTERIOR_SUBPERIODS], 
-        vS_VRE_STOR[y,t] == eSoCBalInterior_VRE_STOR[y,t])
+        vS_VRE_STOR[y, t]==eSoCBalStart_VRE_STOR[y, t])
+    @constraint(EP, cSoCBalInterior_VRE_STOR[y in STOR, t in INTERIOR_SUBPERIODS],
+        vS_VRE_STOR[y, t]==eSoCBalInterior_VRE_STOR[y, t])
 
     ### SYMMETRIC RESOURCE CONSTRAINTS ###
     if !isempty(VS_SYM_DC)
         # Constraint 4: Charging + Discharging DC Maximum: see main module because capacity reserve margin/operating reserves may alter constraint
-        @expression(EP, eChargeDischargeMaxDC[y in VS_SYM_DC, t=1:T],
-            EP[:vP_DC_DISCHARGE][y,t] + EP[:vP_DC_CHARGE][y,t])
+        @expression(EP, eChargeDischargeMaxDC[y in VS_SYM_DC, t = 1:T],
+            EP[:vP_DC_DISCHARGE][y, t]+EP[:vP_DC_CHARGE][y, t])
     end
     if !isempty(VS_SYM_AC)
         # Constraint 4: Charging + Discharging AC Maximum: see main module because capacity reserve margin/operating reserves may alter constraint
-        @expression(EP, eChargeDischargeMaxAC[y in VS_SYM_AC, t=1:T],
-            EP[:vP_AC_DISCHARGE][y,t] + EP[:vP_AC_CHARGE][y,t])
+        @expression(EP, eChargeDischargeMaxAC[y in VS_SYM_AC, t = 1:T],
+            EP[:vP_AC_DISCHARGE][y, t]+EP[:vP_AC_CHARGE][y, t])
     end
 
     ### ASYMMETRIC RESOURCE MODULE ###
@@ -1234,7 +1302,6 @@ The rest of the long duration energy storage constraints are copied and applied 
     long duration energy storage resources are further elaborated upon in ```vre_stor_capres!()```.
 """
 function lds_vre_stor!(EP::Model, inputs::Dict)
-
     println("VRE-STOR LDS Module")
 
     ### LOAD DATA ###
@@ -1244,11 +1311,11 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
     gen_VRE_STOR = gen.VreStorage
 
     REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
-	dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
-	NPeriods = size(inputs["Period_Map"])[1] # Number of modeled periods
+    dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
+    NPeriods = size(inputs["Period_Map"])[1] # Number of modeled periods
     hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
-	MODELED_PERIODS_INDEX = 1:NPeriods
-    REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!,:Rep_Period] .== MODELED_PERIODS_INDEX]
+    MODELED_PERIODS_INDEX = 1:NPeriods
+    REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period] .== MODELED_PERIODS_INDEX]
 
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 
@@ -1259,57 +1326,73 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
         vSOCw_VRE_STOR[y in VS_LDS, n in MODELED_PERIODS_INDEX] >= 0
 
         # Build up in storage inventory over each representative period w (can be pos or neg)
-        vdSOC_VRE_STOR[y in VS_LDS, w=1:REP_PERIOD]
+        vdSOC_VRE_STOR[y in VS_LDS, w = 1:REP_PERIOD]
     end)
 
     ### EXPRESSIONS ###
 
     # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
-    @expression(EP, eVreStorSoCBalLongDurationStorageStart[y in VS_LDS, w=1:REP_PERIOD], 
-        (1-self_discharge(gen[y])) * (EP[:vS_VRE_STOR][y,hours_per_subperiod*w]-EP[:vdSOC_VRE_STOR][y,w]))
-    
+    @expression(EP, eVreStorSoCBalLongDurationStorageStart[y in VS_LDS, w = 1:REP_PERIOD],
+        (1 -
+         self_discharge(gen[y]))*(EP[:vS_VRE_STOR][y, hours_per_subperiod * w] -
+                                  EP[:vdSOC_VRE_STOR][y, w]))
+
     DC_DISCHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_DC_DISCHARGE"], VS_LDS)
     DC_CHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_DC_CHARGE"], VS_LDS)
     AC_DISCHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_AC_DISCHARGE"], VS_LDS)
     AC_CHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_AC_CHARGE"], VS_LDS)
-    for w=1:REP_PERIOD
+    for w in 1:REP_PERIOD
         for y in DC_DISCHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y,w] -= EP[:vP_DC_DISCHARGE][y,hours_per_subperiod*(w-1)+1]/by_rid(y,:eff_down_dc)
+            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] -= EP[:vP_DC_DISCHARGE][y,
+                hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_dc)
         end
 
         for y in DC_CHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y,w] += by_rid(y,:eff_up_dc)*EP[:vP_DC_CHARGE][y,hours_per_subperiod*(w-1)+1]
+            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] += by_rid(y, :eff_up_dc) *
+                                                                 EP[:vP_DC_CHARGE][y,
+                hours_per_subperiod * (w - 1) + 1]
         end
 
         for y in AC_DISCHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y,w] -= EP[:vP_AC_DISCHARGE][y,hours_per_subperiod*(w-1)+1]/by_rid(y,:eff_down_ac)
+            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] -= EP[:vP_AC_DISCHARGE][y,
+                hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_ac)
         end
 
         for y in AC_CHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y,w] += by_rid(y,:eff_up_ac)*EP[:vP_AC_CHARGE][y,hours_per_subperiod*(w-1)+1]
+            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] += by_rid(y, :eff_up_ac) *
+                                                                 EP[:vP_AC_CHARGE][y,
+                hours_per_subperiod * (w - 1) + 1]
         end
     end
 
     ### CONSTRAINTS ### 
 
     # Constraint 1: Link the state of charge between the start of periods for LDS resources
-    @constraint(EP, cVreStorSoCBalLongDurationStorageStart[y in VS_LDS, w=1:REP_PERIOD], 
-        EP[:vS_VRE_STOR][y,hours_per_subperiod*(w-1)+1] == EP[:eVreStorSoCBalLongDurationStorageStart][y,w])
+    @constraint(EP, cVreStorSoCBalLongDurationStorageStart[y in VS_LDS, w = 1:REP_PERIOD],
+        EP[:vS_VRE_STOR][y,
+            hours_per_subperiod * (w - 1) + 1]==EP[:eVreStorSoCBalLongDurationStorageStart][y, w])
 
     # Constraint 2: Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     # Multiply storage build up term from prior period with corresponding weight
-    @constraint(EP, cVreStorSoCBalLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
-        EP[:vSOCw_VRE_STOR][y,mod1(r+1, NPeriods)] == EP[:vSOCw_VRE_STOR][y,r] + EP[:vdSOC_VRE_STOR][y,dfPeriodMap[r,:Rep_Period_Index]])
+    @constraint(EP,
+        cVreStorSoCBalLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
+        EP[:vSOCw_VRE_STOR][y,
+            mod1(r + 1, NPeriods)]==EP[:vSOCw_VRE_STOR][y, r] +
+           EP[:vdSOC_VRE_STOR][y, dfPeriodMap[r, :Rep_Period_Index]])
 
     # Constraint 3: Storage at beginning of each modeled period cannot exceed installed energy capacity
-    @constraint(EP, cVreStorSoCBalLongDurationStorageUpper[y in VS_LDS, r in MODELED_PERIODS_INDEX],
-        EP[:vSOCw_VRE_STOR][y,r] <= EP[:eTotalCap_STOR][y])
+    @constraint(EP,
+        cVreStorSoCBalLongDurationStorageUpper[y in VS_LDS, r in MODELED_PERIODS_INDEX],
+        EP[:vSOCw_VRE_STOR][y, r]<=EP[:eTotalCap_STOR][y])
 
     # Constraint 4: Initial storage level for representative periods must also adhere to sub-period storage inventory balance
     # Initial storage = Final storage - change in storage inventory across representative period
-    @constraint(EP, cVreStorSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
-        EP[:vSOCw_VRE_STOR][y,r] == EP[:vS_VRE_STOR][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] 
-        - EP[:vdSOC_VRE_STOR][y,dfPeriodMap[r,:Rep_Period_Index]])
+    @constraint(EP,
+        cVreStorSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
+        EP[:vSOCw_VRE_STOR][y,
+            r]==EP[:vS_VRE_STOR][y, hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]]
+           -
+           EP[:vdSOC_VRE_STOR][y, dfPeriodMap[r, :Rep_Period_Index]])
 end
 
 @doc raw"""
@@ -1437,7 +1520,6 @@ In addition, this function adds investment and fixed O&M costs related to charge
 ```
 """
 function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-
     println("VRE-STOR Charge Investment Module")
 
     ### LOAD INPUTS ###
@@ -1464,8 +1546,11 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 
     if !isempty(VS_ASYM_DC_DISCHARGE)
-        MAX_DC_DISCHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_discharge_dc_mw), VS_ASYM_DC_DISCHARGE)
-        MIN_DC_DISCHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_discharge_dc_mw), VS_ASYM_DC_DISCHARGE)
+        MAX_DC_DISCHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_discharge_dc_mw),
+            VS_ASYM_DC_DISCHARGE)
+        MIN_DC_DISCHARGE = intersect(ids_with_positive(gen_VRE_STOR,
+                min_cap_discharge_dc_mw),
+            VS_ASYM_DC_DISCHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1474,47 +1559,53 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
         if MultiStage == 1
-            @variable(EP, vEXISTINGCAPDISCHARGEDC[y in VS_ASYM_DC_DISCHARGE] >= 0);
+            @variable(EP, vEXISTINGCAPDISCHARGEDC[y in VS_ASYM_DC_DISCHARGE]>=0)
         end
 
         ### EXPRESSIONS ###
 
         # 0. Multistage existing capacity definition
         if MultiStage == 1
-            @expression(EP, eExistingCapDischargeDC[y in VS_ASYM_DC_DISCHARGE], vEXISTINGCAPDISCHARGEDC[y])
+            @expression(EP,
+                eExistingCapDischargeDC[y in VS_ASYM_DC_DISCHARGE],
+                vEXISTINGCAPDISCHARGEDC[y])
         else
-            @expression(EP, eExistingCapDischargeDC[y in VS_ASYM_DC_DISCHARGE], by_rid(y,:existing_cap_discharge_dc_mw))
+            @expression(EP,
+                eExistingCapDischargeDC[y in VS_ASYM_DC_DISCHARGE],
+                by_rid(y, :existing_cap_discharge_dc_mw))
         end
 
         # 1. Total storage discharge DC capacity
         @expression(EP, eTotalCapDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
             if (y in intersect(NEW_CAP_DISCHARGE_DC, RET_CAP_DISCHARGE_DC))
-                eExistingCapDischargeDC[y] + EP[:vCAPDISCHARGE_DC][y] - EP[:vRETCAPDISCHARGE_DC][y]
+                eExistingCapDischargeDC[y] + EP[:vCAPDISCHARGE_DC][y] -
+                EP[:vRETCAPDISCHARGE_DC][y]
             elseif (y in setdiff(NEW_CAP_DISCHARGE_DC, RET_CAP_DISCHARGE_DC))
                 eExistingCapDischargeDC[y] + EP[:vCAPDISCHARGE_DC][y]
             elseif (y in setdiff(RET_CAP_DISCHARGE_DC, NEW_CAP_DISCHARGE_DC))
                 eExistingCapDischargeDC[y] - EP[:vRETCAPDISCHARGE_DC][y]
             else
                 eExistingCapDischargeDC[y]
-            end
-	    )
+            end)
 
         # 2. Objective Function Additions
 
         # If resource is not eligible for new discharge DC capacity, fixed costs are only O&M costs
         @expression(EP, eCFixDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
             if y in NEW_CAP_DISCHARGE_DC # Resources eligible for new discharge DC capacity
-                by_rid(y,:inv_cost_discharge_dc_per_mwyr)*vCAPDISCHARGE_DC[y] + by_rid(y,:fixed_om_cost_discharge_dc_per_mwyr)*eTotalCapDischarge_DC[y]
+                by_rid(y, :inv_cost_discharge_dc_per_mwyr) * vCAPDISCHARGE_DC[y] +
+                by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y]
             else
-                by_rid(y,:fixed_om_cost_discharge_dc_per_mwyr)*eTotalCapDischarge_DC[y]
-            end
-        )
-        
+                by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y]
+            end)
+
         # Sum individual resource contributions to fixed costs to get total fixed costs
-        @expression(EP, eTotalCFixDischarge_DC, sum(EP[:eCFixDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
+        @expression(EP,
+            eTotalCFixDischarge_DC,
+            sum(EP[:eCFixDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixDischarge_DC/inputs["OPEXMULT"]
+            EP[:eObj] += eTotalCFixDischarge_DC / inputs["OPEXMULT"]
         else
             EP[:eObj] += eTotalCFixDischarge_DC
         end
@@ -1523,29 +1614,41 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
         if MultiStage == 1
-            @constraint(EP, cExistingCapDischargeDC[y in VS_ASYM_DC_DISCHARGE], EP[:vEXISTINGCAPDISCHARGEDC][y] == by_rid(y,:existing_cap_discharge_dc_mw))
+            @constraint(EP,
+                cExistingCapDischargeDC[y in VS_ASYM_DC_DISCHARGE],
+                EP[:vEXISTINGCAPDISCHARGEDC][y]==by_rid(y, :existing_cap_discharge_dc_mw))
         end
 
         # Constraints 1: Retirements and capacity additions
         # Cannot retire more discharge DC capacity than existing discharge capacity
-        @constraint(EP, cVreStorMaxRetDischargeDC[y in RET_CAP_DISCHARGE_DC], vRETCAPDISCHARGE_DC[y] <= eExistingCapDischargeDC[y])
+        @constraint(EP,
+            cVreStorMaxRetDischargeDC[y in RET_CAP_DISCHARGE_DC],
+            vRETCAPDISCHARGE_DC[y]<=eExistingCapDischargeDC[y])
         # Constraint on maximum discharge DC capacity (if applicable) [set input to -1 if no constraint on maximum discharge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMaxCapDischargeDC[y in MAX_DC_DISCHARGE], eTotalCapDischarge_DC[y] <= by_rid(y,:Max_Cap_Discharge_DC_MW))
+        @constraint(EP,
+            cVreStorMaxCapDischargeDC[y in MAX_DC_DISCHARGE],
+            eTotalCapDischarge_DC[y]<=by_rid(y, :Max_Cap_Discharge_DC_MW))
         # Constraint on minimum discharge DC capacity (if applicable) [set input to -1 if no constraint on minimum discharge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMinCapDischargeDC[y in MIN_DC_DISCHARGE], eTotalCapDischarge_DC[y] >= by_rid(y,:Min_Cap_Discharge_DC_MW))
+        @constraint(EP,
+            cVreStorMinCapDischargeDC[y in MIN_DC_DISCHARGE],
+            eTotalCapDischarge_DC[y]>=by_rid(y, :Min_Cap_Discharge_DC_MW))
 
         # Constraint 2: Maximum discharging must be less than discharge power rating
-        @expression(EP, eVreStorMaxDischargingDC[y in VS_ASYM_DC_DISCHARGE, t=1:T], JuMP.AffExpr())
-        for y in VS_ASYM_DC_DISCHARGE, t=1:T
-            eVreStorMaxDischargingDC[y,t] += EP[:vP_DC_DISCHARGE][y,t]
+        @expression(EP,
+            eVreStorMaxDischargingDC[y in VS_ASYM_DC_DISCHARGE, t = 1:T],
+            JuMP.AffExpr())
+        for y in VS_ASYM_DC_DISCHARGE, t in 1:T
+            eVreStorMaxDischargingDC[y, t] += EP[:vP_DC_DISCHARGE][y, t]
         end
     end
-    
+
     if !isempty(VS_ASYM_DC_CHARGE)
-        MAX_DC_CHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_charge_dc_mw), VS_ASYM_DC_CHARGE)
-        MIN_DC_CHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_charge_dc_mw), VS_ASYM_DC_CHARGE)
+        MAX_DC_CHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_charge_dc_mw),
+            VS_ASYM_DC_CHARGE)
+        MIN_DC_CHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_charge_dc_mw),
+            VS_ASYM_DC_CHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1554,16 +1657,20 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
         if MultiStage == 1
-            @variable(EP, vEXISTINGCAPCHARGEDC[y in VS_ASYM_DC_CHARGE] >= 0);
+            @variable(EP, vEXISTINGCAPCHARGEDC[y in VS_ASYM_DC_CHARGE]>=0)
         end
 
         ### EXPRESSIONS ###
 
         # 0. Multistage existing capacity definition
         if MultiStage == 1
-            @expression(EP, eExistingCapChargeDC[y in VS_ASYM_DC_CHARGE], vEXISTINGCAPCHARGEDC[y])
+            @expression(EP,
+                eExistingCapChargeDC[y in VS_ASYM_DC_CHARGE],
+                vEXISTINGCAPCHARGEDC[y])
         else
-            @expression(EP, eExistingCapChargeDC[y in VS_ASYM_DC_CHARGE], by_rid(y,:existing_cap_charge_dc_mw))
+            @expression(EP,
+                eExistingCapChargeDC[y in VS_ASYM_DC_CHARGE],
+                by_rid(y, :existing_cap_charge_dc_mw))
         end
 
         # 1. Total storage charge DC capacity
@@ -1576,25 +1683,26 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 eExistingCapChargeDC[y] - EP[:vRETCAPCHARGE_DC][y]
             else
                 eExistingCapChargeDC[y]
-            end
-	    )
+            end)
 
         # 2. Objective Function Additions
 
         # If resource is not eligible for new charge DC capacity, fixed costs are only O&M costs
         @expression(EP, eCFixCharge_DC[y in VS_ASYM_DC_CHARGE],
             if y in NEW_CAP_CHARGE_DC # Resources eligible for new charge DC capacity
-                by_rid(y,:inv_cost_charge_dc_per_mwyr)*vCAPCHARGE_DC[y] + by_rid(y,:fixed_om_cost_charge_dc_per_mwyr)*eTotalCapCharge_DC[y]
+                by_rid(y, :inv_cost_charge_dc_per_mwyr) * vCAPCHARGE_DC[y] +
+                by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y]
             else
-                by_rid(y,:fixed_om_cost_charge_dc_per_mwyr)*eTotalCapCharge_DC[y]
-            end
-        )
-        
+                by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y]
+            end)
+
         # Sum individual resource contributions to fixed costs to get total fixed costs
-        @expression(EP, eTotalCFixCharge_DC, sum(EP[:eCFixCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
+        @expression(EP,
+            eTotalCFixCharge_DC,
+            sum(EP[:eCFixCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixCharge_DC/inputs["OPEXMULT"]
+            EP[:eObj] += eTotalCFixCharge_DC / inputs["OPEXMULT"]
         else
             EP[:eObj] += eTotalCFixCharge_DC
         end
@@ -1603,29 +1711,42 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
         if MultiStage == 1
-            @constraint(EP, cExistingCapChargeDC[y in VS_ASYM_DC_CHARGE], EP[:vEXISTINGCAPCHARGEDC][y] == by_rid(y,:Existing_Cap_Charge_DC_MW))
+            @constraint(EP,
+                cExistingCapChargeDC[y in VS_ASYM_DC_CHARGE],
+                EP[:vEXISTINGCAPCHARGEDC][y]==by_rid(y, :Existing_Cap_Charge_DC_MW))
         end
 
         # Constraints 1: Retirements and capacity additions
         # Cannot retire more charge DC capacity than existing charge capacity
-        @constraint(EP, cVreStorMaxRetChargeDC[y in RET_CAP_CHARGE_DC], vRETCAPCHARGE_DC[y] <= eExistingCapChargeDC[y])
+        @constraint(EP,
+            cVreStorMaxRetChargeDC[y in RET_CAP_CHARGE_DC],
+            vRETCAPCHARGE_DC[y]<=eExistingCapChargeDC[y])
         # Constraint on maximum charge DC capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMaxCapChargeDC[y in MAX_DC_CHARGE], eTotalCapCharge_DC[y] <= by_rid(y,:max_cap_charge_dc_mw))
+        @constraint(EP,
+            cVreStorMaxCapChargeDC[y in MAX_DC_CHARGE],
+            eTotalCapCharge_DC[y]<=by_rid(y, :max_cap_charge_dc_mw))
         # Constraint on minimum charge DC capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMinCapChargeDC[y in MIN_DC_CHARGE], eTotalCapCharge_DC[y] >= by_rid(y,:min_cap_charge_dc_mw))
+        @constraint(EP,
+            cVreStorMinCapChargeDC[y in MIN_DC_CHARGE],
+            eTotalCapCharge_DC[y]>=by_rid(y, :min_cap_charge_dc_mw))
 
         # Constraint 2: Maximum charging must be less than charge power rating
-        @expression(EP, eVreStorMaxChargingDC[y in VS_ASYM_DC_CHARGE, t=1:T], JuMP.AffExpr())
-        for y in VS_ASYM_DC_CHARGE, t=1:T
-            eVreStorMaxChargingDC[y,t] += EP[:vP_DC_CHARGE][y,t]
+        @expression(EP,
+            eVreStorMaxChargingDC[y in VS_ASYM_DC_CHARGE, t = 1:T],
+            JuMP.AffExpr())
+        for y in VS_ASYM_DC_CHARGE, t in 1:T
+            eVreStorMaxChargingDC[y, t] += EP[:vP_DC_CHARGE][y, t]
         end
     end
 
     if !isempty(VS_ASYM_AC_DISCHARGE)
-        MAX_AC_DISCHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_discharge_ac_mw), VS_ASYM_AC_DISCHARGE)
-        MIN_AC_DISCHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_discharge_ac_mw), VS_ASYM_AC_DISCHARGE)
+        MAX_AC_DISCHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_discharge_ac_mw),
+            VS_ASYM_AC_DISCHARGE)
+        MIN_AC_DISCHARGE = intersect(ids_with_positive(gen_VRE_STOR,
+                min_cap_discharge_ac_mw),
+            VS_ASYM_AC_DISCHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1634,47 +1755,53 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
         if MultiStage == 1
-            @variable(EP, vEXISTINGCAPDISCHARGEAC[y in VS_ASYM_AC_DISCHARGE] >= 0);
+            @variable(EP, vEXISTINGCAPDISCHARGEAC[y in VS_ASYM_AC_DISCHARGE]>=0)
         end
 
         ### EXPRESSIONS ###
 
         # 0. Multistage existing capacity definition
         if MultiStage == 1
-            @expression(EP, eExistingCapDischargeAC[y in VS_ASYM_AC_DISCHARGE], vEXISTINGCAPDISCHARGEAC[y])
+            @expression(EP,
+                eExistingCapDischargeAC[y in VS_ASYM_AC_DISCHARGE],
+                vEXISTINGCAPDISCHARGEAC[y])
         else
-            @expression(EP, eExistingCapDischargeAC[y in VS_ASYM_AC_DISCHARGE], by_rid(y,:existing_cap_discharge_ac_mw))
+            @expression(EP,
+                eExistingCapDischargeAC[y in VS_ASYM_AC_DISCHARGE],
+                by_rid(y, :existing_cap_discharge_ac_mw))
         end
 
         # 1. Total storage discharge AC capacity
         @expression(EP, eTotalCapDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
             if (y in intersect(NEW_CAP_DISCHARGE_AC, RET_CAP_DISCHARGE_AC))
-                eExistingCapDischargeAC[y] + EP[:vCAPDISCHARGE_AC][y] - EP[:vRETCAPDISCHARGE_AC][y]
+                eExistingCapDischargeAC[y] + EP[:vCAPDISCHARGE_AC][y] -
+                EP[:vRETCAPDISCHARGE_AC][y]
             elseif (y in setdiff(NEW_CAP_DISCHARGE_AC, RET_CAP_DISCHARGE_AC))
                 eExistingCapDischargeAC[y] + EP[:vCAPDISCHARGE_AC][y]
             elseif (y in setdiff(RET_CAP_DISCHARGE_AC, NEW_CAP_DISCHARGE_AC))
                 eExistingCapDischargeAC[y] - EP[:vRETCAPDISCHARGE_AC][y]
             else
                 eExistingCapDischargeAC[y]
-            end
-	    )
+            end)
 
         # 2. Objective Function Additions
 
         # If resource is not eligible for new discharge AC capacity, fixed costs are only O&M costs
         @expression(EP, eCFixDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
             if y in NEW_CAP_DISCHARGE_AC # Resources eligible for new discharge AC capacity
-                by_rid(y,:inv_cost_discharge_ac_per_mwyr)*vCAPDISCHARGE_AC[y] + by_rid(y,:fixed_om_cost_discharge_ac_per_mwyr)*eTotalCapDischarge_AC[y]
+                by_rid(y, :inv_cost_discharge_ac_per_mwyr) * vCAPDISCHARGE_AC[y] +
+                by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y]
             else
-                by_rid(y,:fixed_om_cost_discharge_ac_per_mwyr)*eTotalCapDischarge_AC[y]
-            end
-        )
-        
+                by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y]
+            end)
+
         # Sum individual resource contributions to fixed costs to get total fixed costs
-        @expression(EP, eTotalCFixDischarge_AC, sum(EP[:eCFixDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
+        @expression(EP,
+            eTotalCFixDischarge_AC,
+            sum(EP[:eCFixDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixDischarge_AC/inputs["OPEXMULT"]
+            EP[:eObj] += eTotalCFixDischarge_AC / inputs["OPEXMULT"]
         else
             EP[:eObj] += eTotalCFixDischarge_AC
         end
@@ -1683,29 +1810,41 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
         if MultiStage == 1
-            @constraint(EP, cExistingCapDischargeAC[y in VS_ASYM_AC_DISCHARGE], EP[:vEXISTINGCAPDISCHARGEAC][y] == by_rid(y,:existing_cap_discharge_ac_mw))
+            @constraint(EP,
+                cExistingCapDischargeAC[y in VS_ASYM_AC_DISCHARGE],
+                EP[:vEXISTINGCAPDISCHARGEAC][y]==by_rid(y, :existing_cap_discharge_ac_mw))
         end
 
         # Constraints 1: Retirements and capacity additions
         # Cannot retire more discharge AC capacity than existing charge capacity
-        @constraint(EP, cVreStorMaxRetDischargeAC[y in RET_CAP_DISCHARGE_AC], vRETCAPDISCHARGE_AC[y] <= eExistingCapDischargeAC[y])
+        @constraint(EP,
+            cVreStorMaxRetDischargeAC[y in RET_CAP_DISCHARGE_AC],
+            vRETCAPDISCHARGE_AC[y]<=eExistingCapDischargeAC[y])
         # Constraint on maximum discharge AC capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMaxCapDischargeAC[y in MAX_AC_DISCHARGE], eTotalCapDischarge_AC[y] <= by_rid(y,:max_cap_discharge_ac_mw))
+        @constraint(EP,
+            cVreStorMaxCapDischargeAC[y in MAX_AC_DISCHARGE],
+            eTotalCapDischarge_AC[y]<=by_rid(y, :max_cap_discharge_ac_mw))
         # Constraint on minimum discharge AC capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMinCapDischargeAC[y in MIN_AC_DISCHARGE], eTotalCapDischarge_AC[y] >= by_rid(y,:min_cap_discharge_ac_mw))
+        @constraint(EP,
+            cVreStorMinCapDischargeAC[y in MIN_AC_DISCHARGE],
+            eTotalCapDischarge_AC[y]>=by_rid(y, :min_cap_discharge_ac_mw))
 
         # Constraint 2: Maximum discharging rate must be less than discharge power rating
-        @expression(EP, eVreStorMaxDischargingAC[y in VS_ASYM_AC_DISCHARGE, t=1:T], JuMP.AffExpr())
-        for y in VS_ASYM_AC_DISCHARGE, t=1:T
-            eVreStorMaxDischargingAC[y,t] += EP[:vP_AC_DISCHARGE][y,t]
+        @expression(EP,
+            eVreStorMaxDischargingAC[y in VS_ASYM_AC_DISCHARGE, t = 1:T],
+            JuMP.AffExpr())
+        for y in VS_ASYM_AC_DISCHARGE, t in 1:T
+            eVreStorMaxDischargingAC[y, t] += EP[:vP_AC_DISCHARGE][y, t]
         end
     end
 
     if !isempty(VS_ASYM_AC_CHARGE)
-        MAX_AC_CHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_charge_ac_mw), VS_ASYM_AC_CHARGE)
-        MIN_AC_CHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_charge_ac_mw), VS_ASYM_AC_CHARGE)
+        MAX_AC_CHARGE = intersect(ids_with_nonneg(gen_VRE_STOR, max_cap_charge_ac_mw),
+            VS_ASYM_AC_CHARGE)
+        MIN_AC_CHARGE = intersect(ids_with_positive(gen_VRE_STOR, min_cap_charge_ac_mw),
+            VS_ASYM_AC_CHARGE)
 
         ### VARIABLES ###
         @variables(EP, begin
@@ -1714,16 +1853,20 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
         if MultiStage == 1
-            @variable(EP, vEXISTINGCAPCHARGEAC[y in VS_ASYM_AC_CHARGE] >= 0);
+            @variable(EP, vEXISTINGCAPCHARGEAC[y in VS_ASYM_AC_CHARGE]>=0)
         end
 
         ### EXPRESSIONS ###
 
         # 0. Multistage existing capacity definition
         if MultiStage == 1
-            @expression(EP, eExistingCapChargeAC[y in VS_ASYM_AC_CHARGE], vEXISTINGCAPCHARGEAC[y])
+            @expression(EP,
+                eExistingCapChargeAC[y in VS_ASYM_AC_CHARGE],
+                vEXISTINGCAPCHARGEAC[y])
         else
-            @expression(EP, eExistingCapChargeAC[y in VS_ASYM_AC_CHARGE], by_rid(y,:existing_cap_charge_ac_mw))
+            @expression(EP,
+                eExistingCapChargeAC[y in VS_ASYM_AC_CHARGE],
+                by_rid(y, :existing_cap_charge_ac_mw))
         end
 
         # 1. Total storage charge AC capacity
@@ -1736,25 +1879,26 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 eExistingCapChargeAC[y] - EP[:vRETCAPCHARGE_AC][y]
             else
                 eExistingCapChargeAC[y]
-            end
-	    )
+            end)
 
         # 2. Objective Function Additions
 
         # If resource is not eligible for new charge AC capacity, fixed costs are only O&M costs
         @expression(EP, eCFixCharge_AC[y in VS_ASYM_AC_CHARGE],
             if y in NEW_CAP_CHARGE_AC # Resources eligible for new charge AC capacity
-                by_rid(y,:inv_cost_charge_ac_per_mwyr)*vCAPCHARGE_AC[y] + by_rid(y,:fixed_om_cost_charge_ac_per_mwyr)*eTotalCapCharge_AC[y]
+                by_rid(y, :inv_cost_charge_ac_per_mwyr) * vCAPCHARGE_AC[y] +
+                by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y]
             else
-                by_rid(y,:fixed_om_cost_charge_ac_per_mwyr)*eTotalCapCharge_AC[y]
-            end
-        )
-        
+                by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y]
+            end)
+
         # Sum individual resource contributions to fixed costs to get total fixed costs
-        @expression(EP, eTotalCFixCharge_AC, sum(EP[:eCFixCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
+        @expression(EP,
+            eTotalCFixCharge_AC,
+            sum(EP[:eCFixCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixCharge_AC/inputs["OPEXMULT"]
+            EP[:eObj] += eTotalCFixCharge_AC / inputs["OPEXMULT"]
         else
             EP[:eObj] += eTotalCFixCharge_AC
         end
@@ -1763,23 +1907,33 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # Constraint 0: Existing capacity variable is equal to existing capacity specified in the input file
         if MultiStage == 1
-            @constraint(EP, cExistingCapChargeAC[y in VS_ASYM_AC_CHARGE], EP[:vEXISTINGCAPCHARGEAC][y] == by_rid(y,:existing_cap_charge_ac_mw))
+            @constraint(EP,
+                cExistingCapChargeAC[y in VS_ASYM_AC_CHARGE],
+                EP[:vEXISTINGCAPCHARGEAC][y]==by_rid(y, :existing_cap_charge_ac_mw))
         end
 
         # Constraints 1: Retirements and capacity additions
         # Cannot retire more charge AC capacity than existing charge capacity
-        @constraint(EP, cVreStorMaxRetChargeAC[y in RET_CAP_CHARGE_AC], vRETCAPCHARGE_AC[y] <= eExistingCapChargeAC[y])
+        @constraint(EP,
+            cVreStorMaxRetChargeAC[y in RET_CAP_CHARGE_AC],
+            vRETCAPCHARGE_AC[y]<=eExistingCapChargeAC[y])
         # Constraint on maximum charge AC capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMaxCapChargeAC[y in MAX_AC_CHARGE], eTotalCapCharge_AC[y] <= by_rid(y,:max_cap_charge_ac_mw))
+        @constraint(EP,
+            cVreStorMaxCapChargeAC[y in MAX_AC_CHARGE],
+            eTotalCapCharge_AC[y]<=by_rid(y, :max_cap_charge_ac_mw))
         # Constraint on minimum charge AC capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
         # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
-        @constraint(EP, cVreStorMinCapChargeAC[y in MIN_AC_CHARGE], eTotalCapCharge_AC[y] >= by_rid(y,:min_cap_charge_ac_mw))
+        @constraint(EP,
+            cVreStorMinCapChargeAC[y in MIN_AC_CHARGE],
+            eTotalCapCharge_AC[y]>=by_rid(y, :min_cap_charge_ac_mw))
 
         # Constraint 2: Maximum charging rate must be less than charge power rating
-        @expression(EP, eVreStorMaxChargingAC[y in VS_ASYM_AC_CHARGE, t=1:T], JuMP.AffExpr())
-        for y in VS_ASYM_AC_CHARGE, t=1:T
-            eVreStorMaxChargingAC[y,t] += EP[:vP_AC_CHARGE][y,t]
+        @expression(EP,
+            eVreStorMaxChargingAC[y in VS_ASYM_AC_CHARGE, t = 1:T],
+            JuMP.AffExpr())
+        for y in VS_ASYM_AC_CHARGE, t in 1:T
+            eVreStorMaxChargingAC[y, t] += EP[:vP_AC_CHARGE][y, t]
         end
     end
 end
@@ -1858,7 +2012,6 @@ All other constraints are identical to those used to track the actual state of c
     state of charge, build up storage inventory and state of charge at the beginning of each period. 
 """
 function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
-
     println("VRE-STOR Capacity Reserve Margin Module")
 
     ### LOAD DATA ###
@@ -1880,32 +2033,32 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     VS_LDS = inputs["VS_LDS"]
 
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
-	INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-	hours_per_subperiod = inputs["hours_per_subperiod"]     # total number of hours per subperiod
+    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+    hours_per_subperiod = inputs["hours_per_subperiod"]     # total number of hours per subperiod
     rep_periods = inputs["REP_PERIOD"]
 
     virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
     StorageVirtualDischarge = setup["StorageVirtualDischarge"]
-    
+
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
-    
+
     ### VARIABLES ###
 
     @variables(EP, begin
         # Virtual DC discharge contributing to capacity reserves at timestep t for VRE-storage cluster y
-        vCAPRES_DC_DISCHARGE[y in DC_DISCHARGE, t=1:T] >= 0
+        vCAPRES_DC_DISCHARGE[y in DC_DISCHARGE, t = 1:T] >= 0
 
         # Virtual AC discharge contributing to capacity reserves at timestep t for VRE-storage cluster y
-        vCAPRES_AC_DISCHARGE[y in AC_DISCHARGE, t=1:T] >= 0
+        vCAPRES_AC_DISCHARGE[y in AC_DISCHARGE, t = 1:T] >= 0
 
         # Virtual DC charge contributing to capacity reserves at timestep t for VRE-storage cluster y
-        vCAPRES_DC_CHARGE[y in DC_CHARGE, t=1:T] >= 0
+        vCAPRES_DC_CHARGE[y in DC_CHARGE, t = 1:T] >= 0
 
         # Virtual AC charge contributing to capacity reserves at timestep t for VRE-storage cluster y
-        vCAPRES_AC_CHARGE[y in AC_CHARGE, t=1:T] >= 0
+        vCAPRES_AC_CHARGE[y in AC_CHARGE, t = 1:T] >= 0
 
         # Total state of charge being held in reserve at timestep t for VRE-storage cluster y
-        vCAPRES_VS_VRE_STOR[y in STOR, t=1:T] >= 0
+        vCAPRES_VS_VRE_STOR[y in STOR, t = 1:T] >= 0
     end)
 
     ### EXPRESSIONS ###
@@ -1921,11 +2074,13 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 
     # Virtual State of Charge Expressions
     @expression(EP, eVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS],
-        EP[:vCAPRES_VS_VRE_STOR][y,t+hours_per_subperiod-1]
-        - self_discharge(gen[y])*EP[:vCAPRES_VS_VRE_STOR][y,t+hours_per_subperiod-1])
+        EP[:vCAPRES_VS_VRE_STOR][y,
+            t + hours_per_subperiod - 1]
+        -self_discharge(gen[y]) * EP[:vCAPRES_VS_VRE_STOR][y, t + hours_per_subperiod - 1])
     @expression(EP, eVreStorVSoCBalInterior[y in STOR, t in INTERIOR_SUBPERIODS],
-        EP[:vCAPRES_VS_VRE_STOR][y,t-1] 
-        - self_discharge(gen[y])*EP[:vCAPRES_VS_VRE_STOR][y,t-1])
+        EP[:vCAPRES_VS_VRE_STOR][y,
+            t - 1]
+        -self_discharge(gen[y]) * EP[:vCAPRES_VS_VRE_STOR][y, t - 1])
 
     DC_DISCHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, DC_DISCHARGE)
     DC_CHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, DC_CHARGE)
@@ -1933,132 +2088,184 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     AC_CHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, AC_CHARGE)
     for t in START_SUBPERIODS
         for y in DC_DISCHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y,t] += EP[:vCAPRES_DC_DISCHARGE][y,t]/by_rid(y,:eff_down_dc)
+            eVreStorVSoCBalStart[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /
+                                          by_rid(y, :eff_down_dc)
         end
         for y in DC_CHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y,t] -= by_rid(y,:eff_up_dc)*EP[:vCAPRES_DC_CHARGE][y,t]
+            eVreStorVSoCBalStart[y, t] -= by_rid(y, :eff_up_dc) *
+                                          EP[:vCAPRES_DC_CHARGE][y, t]
         end
         for y in AC_DISCHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y,t] += EP[:vCAPRES_AC_DISCHARGE][y,t]/by_rid(y,:eff_down_ac)
+            eVreStorVSoCBalStart[y, t] += EP[:vCAPRES_AC_DISCHARGE][y, t] /
+                                          by_rid(y, :eff_down_ac)
         end
         for y in AC_CHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y,t] -= by_rid(y,:eff_up_ac)*EP[:vCAPRES_AC_CHARGE][y,t]
+            eVreStorVSoCBalStart[y, t] -= by_rid(y, :eff_up_ac) *
+                                          EP[:vCAPRES_AC_CHARGE][y, t]
         end
     end
 
     for t in INTERIOR_SUBPERIODS
         for y in DC_DISCHARGE
-            eVreStorVSoCBalInterior[y,t] += EP[:vCAPRES_DC_DISCHARGE][y,t]/by_rid(y,:eff_down_dc)
+            eVreStorVSoCBalInterior[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /
+                                             by_rid(y, :eff_down_dc)
         end
         for y in DC_CHARGE
-            eVreStorVSoCBalInterior[y,t] -= by_rid(y,:eff_up_dc)*EP[:vCAPRES_DC_CHARGE][y,t]
+            eVreStorVSoCBalInterior[y, t] -= by_rid(y, :eff_up_dc) *
+                                             EP[:vCAPRES_DC_CHARGE][y, t]
         end
         for y in AC_DISCHARGE
-            eVreStorVSoCBalInterior[y,t] += EP[:vCAPRES_AC_DISCHARGE][y,t]/by_rid(y,:eff_down_ac)
+            eVreStorVSoCBalInterior[y, t] += EP[:vCAPRES_AC_DISCHARGE][y, t] /
+                                             by_rid(y, :eff_down_ac)
         end
         for y in AC_CHARGE
-            eVreStorVSoCBalInterior[y,t] -= by_rid(y,:eff_up_ac)*EP[:vCAPRES_AC_CHARGE][y,t]
+            eVreStorVSoCBalInterior[y, t] -= by_rid(y, :eff_up_ac) *
+                                             EP[:vCAPRES_AC_CHARGE][y, t]
         end
     end
 
     # Inverter & grid connection export additions
-    for t=1:T
+    for t in 1:T
         for y in DC_DISCHARGE
-            EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*vCAPRES_DC_DISCHARGE[y,t]
-            EP[:eGridExport][y,t] += by_rid(y,:etainverter)*vCAPRES_DC_DISCHARGE[y,t]
+            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) *
+                                          vCAPRES_DC_DISCHARGE[y, t]
+            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vCAPRES_DC_DISCHARGE[y, t]
         end
         for y in DC_CHARGE
-            EP[:eInverterExport][y,t] += vCAPRES_DC_CHARGE[y,t]/by_rid(y,:etainverter)
-            EP[:eGridExport][y,t] += vCAPRES_DC_CHARGE[y,t]/by_rid(y,:etainverter)
+            EP[:eInverterExport][y, t] += vCAPRES_DC_CHARGE[y, t] / by_rid(y, :etainverter)
+            EP[:eGridExport][y, t] += vCAPRES_DC_CHARGE[y, t] / by_rid(y, :etainverter)
         end
         for y in AC_DISCHARGE
-            EP[:eGridExport][y,t] += vCAPRES_AC_DISCHARGE[y,t]
+            EP[:eGridExport][y, t] += vCAPRES_AC_DISCHARGE[y, t]
         end
         for y in AC_CHARGE
-            EP[:eGridExport][y,t] += vCAPRES_AC_CHARGE[y,t]
+            EP[:eGridExport][y, t] += vCAPRES_AC_CHARGE[y, t]
         end
-    
-    # Asymmetric and symmetric storage contributions
+
+        # Asymmetric and symmetric storage contributions
         for y in VS_ASYM_DC_DISCHARGE
-            EP[:eVreStorMaxDischargingDC][y,t] += vCAPRES_DC_DISCHARGE[y,t]
+            EP[:eVreStorMaxDischargingDC][y, t] += vCAPRES_DC_DISCHARGE[y, t]
         end
         for y in VS_ASYM_AC_DISCHARGE
-            EP[:eVreStorMaxDischargingAC][y,t] += vCAPRES_AC_DISCHARGE[y,t]
+            EP[:eVreStorMaxDischargingAC][y, t] += vCAPRES_AC_DISCHARGE[y, t]
         end
         for y in VS_ASYM_DC_CHARGE
-            EP[:eVreStorMaxChargingDC][y,t] += vCAPRES_DC_CHARGE[y,t]
+            EP[:eVreStorMaxChargingDC][y, t] += vCAPRES_DC_CHARGE[y, t]
         end
         for y in VS_ASYM_AC_CHARGE
-            EP[:eVreStorMaxChargingAC][y,t] += vCAPRES_AC_CHARGE[y,t]
+            EP[:eVreStorMaxChargingAC][y, t] += vCAPRES_AC_CHARGE[y, t]
         end
         for y in VS_SYM_DC
-            EP[:eChargeDischargeMaxDC][y,t] += (vCAPRES_DC_DISCHARGE[y,t]
-                + vCAPRES_DC_CHARGE[y,t])
+            EP[:eChargeDischargeMaxDC][y, t] += (vCAPRES_DC_DISCHARGE[y, t]
+                                                 +
+                                                 vCAPRES_DC_CHARGE[y, t])
         end
         for y in VS_SYM_AC
-            EP[:eChargeDischargeMaxAC][y,t] += (vCAPRES_AC_DISCHARGE[y,t]
-                + vCAPRES_AC_CHARGE[y,t])
+            EP[:eChargeDischargeMaxAC][y, t] += (vCAPRES_AC_DISCHARGE[y, t]
+                                                 +
+                                                 vCAPRES_AC_CHARGE[y, t])
         end
     end
 
     ### CONSTRAINTS ###
     # Constraint 1: Links energy held in reserve in first time step with decisions in last time step of each subperiod
     # We use a modified formulation of this constraint (cVSoCBalLongDurationStorageStart) when modeling multiple representative periods and long duration storage
-    @constraint(EP, cVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS], 
-        vCAPRES_VS_VRE_STOR[y,t] == eVreStorVSoCBalStart[y,t])
+    @constraint(EP, cVreStorVSoCBalStart[y in CONSTRAINTSET, t in START_SUBPERIODS],
+        vCAPRES_VS_VRE_STOR[y, t]==eVreStorVSoCBalStart[y, t])
     # Energy held in reserve for the next hour
-    @constraint(EP, cVreStorVSoCBalInterior[y in STOR, t in INTERIOR_SUBPERIODS], 
-        vCAPRES_VS_VRE_STOR[y,t] == eVreStorVSoCBalInterior[y,t])
+    @constraint(EP, cVreStorVSoCBalInterior[y in STOR, t in INTERIOR_SUBPERIODS],
+        vCAPRES_VS_VRE_STOR[y, t]==eVreStorVSoCBalInterior[y, t])
 
     # Constraint 2: Energy held in reserve acts as a lower bound on the total energy held in storage
-    @constraint(EP, cVreStorSOCMinCapRes[y in STOR, t=1:T], EP[:vS_VRE_STOR][y,t] >= vCAPRES_VS_VRE_STOR[y,t])
+    @constraint(EP,
+        cVreStorSOCMinCapRes[y in STOR, t = 1:T],
+        EP[:vS_VRE_STOR][y, t]>=vCAPRES_VS_VRE_STOR[y, t])
 
     # Constraint 3: Add capacity reserve margin contributions from VRE-STOR resources to capacity reserve margin constraint
-    @expression(EP, eCapResMarBalanceStor_VRE_STOR[res=1:inputs["NCapacityReserveMargin"], t=1:T],(
-        sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y] for y in inputs["VS_SOLAR"])
-        + sum(derating_factor(gen[y],tag=res)*inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y] for y in inputs["VS_WIND"])
-        + sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*(EP[:vP_DC_DISCHARGE][y,t]) for y in DC_DISCHARGE)
-        + sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_DISCHARGE][y,t]) for y in AC_DISCHARGE)
-        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_DC_CHARGE][y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
-        - sum(derating_factor(gen[y],tag=res)*(EP[:vP_AC_CHARGE][y,t]) for y in AC_CHARGE)))
+    @expression(EP,
+        eCapResMarBalanceStor_VRE_STOR[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+        (sum(derating_factor(gen[y], tag = res) * by_rid(y, :etainverter) *
+             inputs["pP_Max_Solar"][y, t] * EP[:eTotalCap_SOLAR][y]
+             for y in inputs["VS_SOLAR"])
+         +
+         sum(derating_factor(gen[y], tag = res) * inputs["pP_Max_Wind"][y, t] *
+             EP[:eTotalCap_WIND][y] for y in inputs["VS_WIND"])
+         +
+         sum(derating_factor(gen[y], tag = res) * by_rid(y, :etainverter) *
+             (EP[:vP_DC_DISCHARGE][y, t]) for y in DC_DISCHARGE)
+         +
+         sum(derating_factor(gen[y], tag = res) * (EP[:vP_AC_DISCHARGE][y, t])
+             for y in AC_DISCHARGE)
+         -
+         sum(derating_factor(gen[y], tag = res) * (EP[:vP_DC_CHARGE][y, t]) /
+             by_rid(y, :etainverter) for y in DC_CHARGE)
+        -sum(derating_factor(gen[y], tag = res) * (EP[:vP_AC_CHARGE][y, t])
+             for y in AC_CHARGE)))
     if StorageVirtualDischarge > 0
-        @expression(EP, eCapResMarBalanceStor_VRE_STOR_Virtual[res=1:inputs["NCapacityReserveMargin"], t=1:T],(
-        sum(derating_factor(gen[y],tag=res)*by_rid(y,:etainverter)*(vCAPRES_DC_DISCHARGE[y,t]) for y in DC_DISCHARGE)
-        + sum(derating_factor(gen[y],tag=res)*(vCAPRES_AC_DISCHARGE[y,t]) for y in AC_DISCHARGE)
-        - sum(derating_factor(gen[y],tag=res)*(vCAPRES_DC_CHARGE[y,t])/by_rid(y,:etainverter) for y in DC_CHARGE)
-        - sum(derating_factor(gen[y],tag=res)*(vCAPRES_AC_CHARGE[y,t]) for y in AC_CHARGE)))
-        add_similar_to_expression!(eCapResMarBalanceStor_VRE_STOR,eCapResMarBalanceStor_VRE_STOR_Virtual)
+        @expression(EP,
+            eCapResMarBalanceStor_VRE_STOR_Virtual[res = 1:inputs["NCapacityReserveMargin"],
+                t = 1:T],
+            (sum(derating_factor(gen[y], tag = res) * by_rid(y, :etainverter) *
+                 (vCAPRES_DC_DISCHARGE[y, t]) for y in DC_DISCHARGE)
+             +
+             sum(derating_factor(gen[y], tag = res) * (vCAPRES_AC_DISCHARGE[y, t])
+                 for y in AC_DISCHARGE)
+             -
+             sum(derating_factor(gen[y], tag = res) * (vCAPRES_DC_CHARGE[y, t]) /
+                 by_rid(y, :etainverter) for y in DC_CHARGE)
+            -sum(derating_factor(gen[y], tag = res) * (vCAPRES_AC_CHARGE[y, t])
+                 for y in AC_CHARGE)))
+        add_similar_to_expression!(eCapResMarBalanceStor_VRE_STOR,
+            eCapResMarBalanceStor_VRE_STOR_Virtual)
     end
     EP[:eCapResMarBalance] += EP[:eCapResMarBalanceStor_VRE_STOR]
 
     ### OBJECTIVE FUNCTION ADDITIONS ###
 
     #Variable costs of DC "virtual charging" for technologies "y" during hour "t" in zone "z"
-    @expression(EP, eCVar_Charge_DC_virtual[y in DC_CHARGE,t=1:T],
-        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_DC_CHARGE[y,t]/by_rid(y,:etainverter))
-    @expression(EP, eTotalCVar_Charge_DC_T_virtual[t=1:T], sum(eCVar_Charge_DC_virtual[y,t] for y in DC_CHARGE))
-    @expression(EP, eTotalCVar_Charge_DC_virtual, sum(eTotalCVar_Charge_DC_T_virtual[t] for t in 1:T))
+    @expression(EP, eCVar_Charge_DC_virtual[y in DC_CHARGE, t = 1:T],
+        inputs["omega"][t] * virtual_discharge_cost *
+        vCAPRES_DC_CHARGE[y, t]/by_rid(y, :etainverter))
+    @expression(EP,
+        eTotalCVar_Charge_DC_T_virtual[t = 1:T],
+        sum(eCVar_Charge_DC_virtual[y, t] for y in DC_CHARGE))
+    @expression(EP,
+        eTotalCVar_Charge_DC_virtual,
+        sum(eTotalCVar_Charge_DC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Charge_DC_virtual
 
     #Variable costs of DC "virtual discharging" for technologies "y" during hour "t" in zone "z"
-    @expression(EP, eCVar_Discharge_DC_virtual[y in DC_DISCHARGE,t=1:T],
-        inputs["omega"][t]*virtual_discharge_cost*by_rid(y,:etainverter)*vCAPRES_DC_DISCHARGE[y,t])
-    @expression(EP, eTotalCVar_Discharge_DC_T_virtual[t=1:T], sum(eCVar_Discharge_DC_virtual[y,t] for y in DC_DISCHARGE))
-    @expression(EP, eTotalCVar_Discharge_DC_virtual, sum(eTotalCVar_Discharge_DC_T_virtual[t] for t in 1:T))
+    @expression(EP, eCVar_Discharge_DC_virtual[y in DC_DISCHARGE, t = 1:T],
+        inputs["omega"][t]*virtual_discharge_cost*by_rid(y, :etainverter)*
+        vCAPRES_DC_DISCHARGE[y, t])
+    @expression(EP,
+        eTotalCVar_Discharge_DC_T_virtual[t = 1:T],
+        sum(eCVar_Discharge_DC_virtual[y, t] for y in DC_DISCHARGE))
+    @expression(EP,
+        eTotalCVar_Discharge_DC_virtual,
+        sum(eTotalCVar_Discharge_DC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Discharge_DC_virtual
 
     #Variable costs of AC "virtual charging" for technologies "y" during hour "t" in zone "z"
-    @expression(EP, eCVar_Charge_AC_virtual[y in AC_CHARGE,t=1:T],
-        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_AC_CHARGE[y,t])
-    @expression(EP, eTotalCVar_Charge_AC_T_virtual[t=1:T], sum(eCVar_Charge_AC_virtual[y,t] for y in AC_CHARGE))
-    @expression(EP, eTotalCVar_Charge_AC_virtual, sum(eTotalCVar_Charge_AC_T_virtual[t] for t in 1:T))
+    @expression(EP, eCVar_Charge_AC_virtual[y in AC_CHARGE, t = 1:T],
+        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_AC_CHARGE[y, t])
+    @expression(EP,
+        eTotalCVar_Charge_AC_T_virtual[t = 1:T],
+        sum(eCVar_Charge_AC_virtual[y, t] for y in AC_CHARGE))
+    @expression(EP,
+        eTotalCVar_Charge_AC_virtual,
+        sum(eTotalCVar_Charge_AC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Charge_AC_virtual
 
     #Variable costs of AC "virtual discharging" for technologies "y" during hour "t" in zone "z"
-    @expression(EP, eCVar_Discharge_AC_virtual[y in AC_DISCHARGE,t=1:T],
-        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_AC_DISCHARGE[y,t])
-    @expression(EP, eTotalCVar_Discharge_AC_T_virtual[t=1:T], sum(eCVar_Discharge_AC_virtual[y,t] for y in AC_DISCHARGE))
-    @expression(EP, eTotalCVar_Discharge_AC_virtual, sum(eTotalCVar_Discharge_AC_T_virtual[t] for t in 1:T))
+    @expression(EP, eCVar_Discharge_AC_virtual[y in AC_DISCHARGE, t = 1:T],
+        inputs["omega"][t]*virtual_discharge_cost*vCAPRES_AC_DISCHARGE[y, t])
+    @expression(EP,
+        eTotalCVar_Discharge_AC_T_virtual[t = 1:T],
+        sum(eCVar_Discharge_AC_virtual[y, t] for y in AC_DISCHARGE))
+    @expression(EP,
+        eTotalCVar_Discharge_AC_virtual,
+        sum(eTotalCVar_Discharge_AC_T_virtual[t] for t in 1:T))
     EP[:eObj] += eTotalCVar_Discharge_AC_virtual
 
     ### LONG DURATION ENERGY STORAGE CAPACITY RESERVE MARGIN MODULE ###
@@ -2070,63 +2277,83 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
         dfPeriodMap = inputs["Period_Map"] # Dataframe that maps modeled periods to representative periods
         NPeriods = size(inputs["Period_Map"])[1] # Number of modeled periods
         MODELED_PERIODS_INDEX = 1:NPeriods
-        REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!,:Rep_Period] .== MODELED_PERIODS_INDEX]
+        REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period] .== MODELED_PERIODS_INDEX]
 
         ### VARIABLES ###
 
-        @variables(EP, begin
-            # State of charge held in reserve for storage at beginning of each modeled period n
-            vCAPCONTRSTOR_VSOCw_VRE_STOR[y in VS_LDS, n in MODELED_PERIODS_INDEX] >= 0
+        @variables(EP,
+            begin
+                # State of charge held in reserve for storage at beginning of each modeled period n
+                vCAPCONTRSTOR_VSOCw_VRE_STOR[y in VS_LDS, n in MODELED_PERIODS_INDEX] >= 0
 
-            # Build up in storage inventory held in reserve over each representative period w (can be pos or neg)
-            vCAPCONTRSTOR_VdSOC_VRE_STOR[y in VS_LDS, w=1:REP_PERIOD]
-        end)
+                # Build up in storage inventory held in reserve over each representative period w (can be pos or neg)
+                vCAPCONTRSTOR_VdSOC_VRE_STOR[y in VS_LDS, w = 1:REP_PERIOD]
+            end)
 
         ### EXPRESSIONS ###
 
-        @expression(EP, eVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w=1:REP_PERIOD],
-            (1-self_discharge(gen[y]))*(EP[:vCAPRES_VS_VRE_STOR][y,hours_per_subperiod*w]-vCAPCONTRSTOR_VdSOC_VRE_STOR[y,w]))
-        
+        @expression(EP,
+            eVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w = 1:REP_PERIOD],
+            (1 -
+             self_discharge(gen[y]))*(EP[:vCAPRES_VS_VRE_STOR][y, hours_per_subperiod * w] -
+                                      vCAPCONTRSTOR_VdSOC_VRE_STOR[y, w]))
+
         DC_DISCHARGE_CONSTRAINTSET = intersect(DC_DISCHARGE, VS_LDS)
         DC_CHARGE_CONSTRAINTSET = intersect(DC_CHARGE, VS_LDS)
         AC_DISCHARGE_CONSTRAINTSET = intersect(AC_DISCHARGE, VS_LDS)
         AC_CHARGE_CONSTRAINTSET = intersect(AC_CHARGE, VS_LDS)
-        for w=1:REP_PERIOD
+        for w in 1:REP_PERIOD
             for y in DC_DISCHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y,w] += EP[:vCAPRES_DC_DISCHARGE][y,hours_per_subperiod*(w-1)+1]/by_rid(y,:eff_down_dc)
+                eVreStorVSoCBalLongDurationStorageStart[y, w] += EP[:vCAPRES_DC_DISCHARGE][y,
+                    hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_dc)
             end
             for y in DC_CHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y,w] -= by_rid(y,:eff_up_dc)*EP[:vCAPRES_DC_CHARGE][y,hours_per_subperiod*(w-1)+1]
+                eVreStorVSoCBalLongDurationStorageStart[y, w] -= by_rid(y, :eff_up_dc) *
+                                                                 EP[:vCAPRES_DC_CHARGE][y,
+                    hours_per_subperiod * (w - 1) + 1]
             end
             for y in AC_DISCHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y,w] += EP[:vCAPRES_AC_DISCHARGE][y,hours_per_subperiod*(w-1)+1]/by_rid(y,:eff_down_ac)
+                eVreStorVSoCBalLongDurationStorageStart[y, w] += EP[:vCAPRES_AC_DISCHARGE][y,
+                    hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_ac)
             end
             for y in AC_CHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y,w] -= by_rid(y,:eff_up_ac)*EP[:vCAPRES_AC_CHARGE][y,hours_per_subperiod*(w-1)+1]
+                eVreStorVSoCBalLongDurationStorageStart[y, w] -= by_rid(y, :eff_up_ac) *
+                                                                 EP[:vCAPRES_AC_CHARGE][y,
+                    hours_per_subperiod * (w - 1) + 1]
             end
         end
 
         ### CONSTRAINTS ###
 
-		# Constraint 1: Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
-		# Modified initial virtual state of storage for long duration storage - initialize wth value carried over from last period
-		# Alternative to cVSoCBalStart constraint which is included when modeling multiple representative periods and long duration storage
-		# Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
-		@constraint(EP, cVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w=1:REP_PERIOD],
-            EP[:vCAPRES_VS_VRE_STOR][y,hours_per_subperiod*(w-1)+1] == eVreStorVSoCBalLongDurationStorageStart[y,w])
+        # Constraint 1: Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
+        # Modified initial virtual state of storage for long duration storage - initialize wth value carried over from last period
+        # Alternative to cVSoCBalStart constraint which is included when modeling multiple representative periods and long duration storage
+        # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
+        @constraint(EP,
+            cVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w = 1:REP_PERIOD],
+            EP[:vCAPRES_VS_VRE_STOR][y,
+                hours_per_subperiod * (w - 1) + 1]==eVreStorVSoCBalLongDurationStorageStart[y, w])
 
         # Constraint 2: Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
         # Multiply storage build up term from prior period with corresponding weight
-        @constraint(EP, cVreStorVSoCBalLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
-            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,mod1(r+1, NPeriods)] == vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r] + vCAPCONTRSTOR_VdSOC_VRE_STOR[y,dfPeriodMap[r,:Rep_Period_Index]])
+        @constraint(EP,
+            cVreStorVSoCBalLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
+            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,
+                mod1(r + 1, NPeriods)]==vCAPCONTRSTOR_VSOCw_VRE_STOR[y, r] +
+               vCAPCONTRSTOR_VdSOC_VRE_STOR[y, dfPeriodMap[r, :Rep_Period_Index]])
 
         # Constraint 3: Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
         # Initial storage = Final storage - change in storage inventory across representative period
-        @constraint(EP, cVreStorVSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
-            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r] == EP[:vCAPRES_VS_VRE_STOR][y,hours_per_subperiod*dfPeriodMap[r,:Rep_Period_Index]] - vCAPCONTRSTOR_VdSOC_VRE_STOR[y,dfPeriodMap[r,:Rep_Period_Index]])
+        @constraint(EP,
+            cVreStorVSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
+            vCAPCONTRSTOR_VSOCw_VRE_STOR[y,
+                r]==EP[:vCAPRES_VS_VRE_STOR][y,
+                hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] - vCAPCONTRSTOR_VdSOC_VRE_STOR[y, dfPeriodMap[r, :Rep_Period_Index]])
 
         # Constraint 4: Energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
-        @constraint(EP, cSOCMinCapResLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX], EP[:vSOCw_VRE_STOR][y,r] >= vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r])
+        @constraint(EP,
+            cSOCMinCapResLongDurationStorage[y in VS_LDS, r in MODELED_PERIODS_INDEX],
+            EP[:vSOCw_VRE_STOR][y, r]>=vCAPCONTRSTOR_VSOCw_VRE_STOR[y, r])
     end
 end
 
@@ -2212,15 +2439,14 @@ Lastly, if the co-located resource has a variable renewable energy component, th
 ```
 """
 function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
-
     println("VRE-STOR Operational Reserves Module")
 
     ### LOAD DATA & CREATE SETS ###
 
-	gen = inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]
     gen_VRE_STOR = gen.VreStorage
 
-	T = inputs["T"]
+    T = inputs["T"]
     VRE_STOR = inputs["VRE_STOR"]
     STOR = inputs["VS_STOR"]
     DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
@@ -2250,10 +2476,10 @@ function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
     SOLAR_RSV = intersect(SOLAR, inputs["RSV"])                                             # Set of solar resources with RSV reserves
     WIND_REG = intersect(WIND, inputs["REG"])                                               # Set of wind resources with REG reserves
     WIND_RSV = intersect(WIND, inputs["RSV"])                                               # Set of wind resources with RSV reserves
-  
-	STOR_REG = intersect(STOR, inputs["REG"])                                               # Set of storage resources with REG reserves
-	STOR_RSV = intersect(STOR, inputs["RSV"])                                               # Set of storage resources with RSV reserves
-	STOR_REG_RSV_UNION = union(STOR_REG, STOR_RSV)                                          # Set of storage resources with either or both REG and RSV reserves
+
+    STOR_REG = intersect(STOR, inputs["REG"])                                               # Set of storage resources with REG reserves
+    STOR_RSV = intersect(STOR, inputs["RSV"])                                               # Set of storage resources with RSV reserves
+    STOR_REG_RSV_UNION = union(STOR_REG, STOR_RSV)                                          # Set of storage resources with either or both REG and RSV reserves
     DC_DISCHARGE_REG = intersect(DC_DISCHARGE, STOR_REG)                                    # Set of DC discharge resources with REG reserves
     DC_DISCHARGE_RSV = intersect(DC_DISCHARGE, STOR_RSV)                                    # Set of DC discharge resources with RSV reserves
     AC_DISCHARGE_REG = intersect(AC_DISCHARGE, STOR_REG)                                    # Set of AC discharge resources with REG reserves
@@ -2279,173 +2505,179 @@ function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     @variables(EP, begin
         # Contribution to regulation (primary reserves), assumed to be symmetric (up & down directions equal)
-        vREG_SOLAR[y in SOLAR_REG, t=1:T] >= 0
-        vREG_WIND[y in WIND_REG, t=1:T] >= 0
-        vREG_DC_Discharge[y in DC_DISCHARGE_REG, t=1:T] >= 0
-        vREG_DC_Charge[y in DC_CHARGE_REG, t=1:T] >= 0
-        vREG_AC_Discharge[y in AC_DISCHARGE_REG, t=1:T] >= 0
-        vREG_AC_Charge[y in AC_CHARGE_REG, t=1:T] >= 0
+        vREG_SOLAR[y in SOLAR_REG, t = 1:T] >= 0
+        vREG_WIND[y in WIND_REG, t = 1:T] >= 0
+        vREG_DC_Discharge[y in DC_DISCHARGE_REG, t = 1:T] >= 0
+        vREG_DC_Charge[y in DC_CHARGE_REG, t = 1:T] >= 0
+        vREG_AC_Discharge[y in AC_DISCHARGE_REG, t = 1:T] >= 0
+        vREG_AC_Charge[y in AC_CHARGE_REG, t = 1:T] >= 0
 
         # Contribution to operating reserves (secondary reserves or contingency reserves); only model upward reserve requirements
-        vRSV_SOLAR[y in SOLAR_RSV, t=1:T] >= 0
-        vRSV_WIND[y in WIND_RSV, t=1:T] >= 0
-        vRSV_DC_Discharge[y in DC_DISCHARGE_RSV, t=1:T] >= 0
-        vRSV_DC_Charge[y in DC_CHARGE_RSV, t=1:T] >= 0
-        vRSV_AC_Discharge[y in AC_DISCHARGE_RSV, t=1:T] >= 0
-        vRSV_AC_Charge[y in AC_CHARGE_RSV, t=1:T] >= 0
+        vRSV_SOLAR[y in SOLAR_RSV, t = 1:T] >= 0
+        vRSV_WIND[y in WIND_RSV, t = 1:T] >= 0
+        vRSV_DC_Discharge[y in DC_DISCHARGE_RSV, t = 1:T] >= 0
+        vRSV_DC_Charge[y in DC_CHARGE_RSV, t = 1:T] >= 0
+        vRSV_AC_Discharge[y in AC_DISCHARGE_RSV, t = 1:T] >= 0
+        vRSV_AC_Charge[y in AC_CHARGE_RSV, t = 1:T] >= 0
     end)
 
     ### EXPRESSIONS ###
 
-    @expression(EP, eVreStorRegOnlyBalance[y in VRE_STOR_REG, t=1:T], JuMP.AffExpr())
-    @expression(EP, eVreStorRsvOnlyBalance[y in VRE_STOR_RSV, t=1:T], JuMP.AffExpr())
-    @expression(EP, eDischargeDCMin[y in DC_DISCHARGE, t=1:T], JuMP.AffExpr())
-    @expression(EP, eChargeDCMin[y in DC_CHARGE, t=1:T], JuMP.AffExpr())
-    @expression(EP, eDischargeACMin[y in AC_DISCHARGE, t=1:T], JuMP.AffExpr())
-    @expression(EP, eChargeACMin[y in AC_CHARGE, t=1:T], JuMP.AffExpr())
-    @expression(EP, eChargeMax[y in STOR_REG_RSV_UNION, t=1:T], JuMP.AffExpr())
-    @expression(EP, eDischargeMax[y in STOR_REG_RSV_UNION, t=1:T], JuMP.AffExpr())
+    @expression(EP, eVreStorRegOnlyBalance[y in VRE_STOR_REG, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eVreStorRsvOnlyBalance[y in VRE_STOR_RSV, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eDischargeDCMin[y in DC_DISCHARGE, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eChargeDCMin[y in DC_CHARGE, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eDischargeACMin[y in AC_DISCHARGE, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eChargeACMin[y in AC_CHARGE, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eChargeMax[y in STOR_REG_RSV_UNION, t = 1:T], JuMP.AffExpr())
+    @expression(EP, eDischargeMax[y in STOR_REG_RSV_UNION, t = 1:T], JuMP.AffExpr())
 
-    for t=1:T
+    for t in 1:T
         for y in DC_DISCHARGE
-            eDischargeDCMin[y,t] += EP[:vP_DC_DISCHARGE][y,t]
-            eDischargeMax[y,t] += EP[:vP_DC_DISCHARGE][y,t]/by_rid(y,:eff_down_dc)
+            eDischargeDCMin[y, t] += EP[:vP_DC_DISCHARGE][y, t]
+            eDischargeMax[y, t] += EP[:vP_DC_DISCHARGE][y, t] / by_rid(y, :eff_down_dc)
         end
 
         for y in DC_CHARGE
-            eChargeDCMin[y,t] += EP[:vP_DC_CHARGE][y,t]
-            eChargeMax[y,t] += by_rid(y,:eff_up_dc)*EP[:vP_DC_CHARGE][y,t]
+            eChargeDCMin[y, t] += EP[:vP_DC_CHARGE][y, t]
+            eChargeMax[y, t] += by_rid(y, :eff_up_dc) * EP[:vP_DC_CHARGE][y, t]
         end
 
         for y in AC_DISCHARGE
-            eDischargeACMin[y,t] += EP[:vP_AC_DISCHARGE][y,t]
-            eDischargeMax[y,t] += EP[:vP_AC_DISCHARGE][y,t]/by_rid(y,:eff_down_ac)
+            eDischargeACMin[y, t] += EP[:vP_AC_DISCHARGE][y, t]
+            eDischargeMax[y, t] += EP[:vP_AC_DISCHARGE][y, t] / by_rid(y, :eff_down_ac)
         end
 
         for y in AC_CHARGE
-            eChargeACMin[y,t] += EP[:vP_AC_CHARGE][y,t]
-            eChargeMax[y,t] += by_rid(y,:eff_up_ac)*EP[:vP_AC_CHARGE][y,t]
+            eChargeACMin[y, t] += EP[:vP_AC_CHARGE][y, t]
+            eChargeMax[y, t] += by_rid(y, :eff_up_ac) * EP[:vP_AC_CHARGE][y, t]
         end
 
         for y in SOLAR_REG
-            eVreStorRegOnlyBalance[y,t] += by_rid(y,:etainverter)*vREG_SOLAR[y,t]
-            EP[:eGridExport][y,t] += by_rid(y,:etainverter)*vREG_SOLAR[y,t]
-            EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*vREG_SOLAR[y,t]
-            EP[:eSolarGenMaxS][y,t] += vREG_SOLAR[y,t]
+            eVreStorRegOnlyBalance[y, t] += by_rid(y, :etainverter) * vREG_SOLAR[y, t]
+            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vREG_SOLAR[y, t]
+            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vREG_SOLAR[y, t]
+            EP[:eSolarGenMaxS][y, t] += vREG_SOLAR[y, t]
         end
         for y in SOLAR_RSV
-            eVreStorRsvOnlyBalance[y,t] += by_rid(y,:etainverter)*vRSV_SOLAR[y,t]
-            EP[:eGridExport][y,t] += by_rid(y,:etainverter)*vRSV_SOLAR[y,t]
-            EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*vRSV_SOLAR[y,t]
-            EP[:eSolarGenMaxS][y,t] += vRSV_SOLAR[y,t]
+            eVreStorRsvOnlyBalance[y, t] += by_rid(y, :etainverter) * vRSV_SOLAR[y, t]
+            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vRSV_SOLAR[y, t]
+            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vRSV_SOLAR[y, t]
+            EP[:eSolarGenMaxS][y, t] += vRSV_SOLAR[y, t]
         end
 
         for y in WIND_REG
-            eVreStorRegOnlyBalance[y,t] += vREG_WIND[y,t]
-            EP[:eGridExport][y,t] += vREG_WIND[y,t]
-            EP[:eWindGenMaxW][y,t] += vREG_WIND[y,t]
+            eVreStorRegOnlyBalance[y, t] += vREG_WIND[y, t]
+            EP[:eGridExport][y, t] += vREG_WIND[y, t]
+            EP[:eWindGenMaxW][y, t] += vREG_WIND[y, t]
         end
         for y in WIND_RSV
-            eVreStorRsvOnlyBalance[y,t] += vRSV_WIND[y,t]
-            EP[:eGridExport][y,t] += vRSV_WIND[y,t]
-            EP[:eWindGenMaxW][y,t] += vRSV_WIND[y,t]
+            eVreStorRsvOnlyBalance[y, t] += vRSV_WIND[y, t]
+            EP[:eGridExport][y, t] += vRSV_WIND[y, t]
+            EP[:eWindGenMaxW][y, t] += vRSV_WIND[y, t]
         end
 
         for y in DC_DISCHARGE_REG
-            eVreStorRegOnlyBalance[y,t] += by_rid(y,:etainverter)*vREG_DC_Discharge[y,t]
-            eDischargeDCMin[y,t] -= vREG_DC_Discharge[y,t]
-            eDischargeMax[y,t] += EP[:vREG_DC_Discharge][y,t]/by_rid(y,:eff_down_dc)
-            EP[:eGridExport][y,t] += by_rid(y,:etainverter)*vREG_DC_Discharge[y,t]
-            EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*vREG_DC_Discharge[y,t]
+            eVreStorRegOnlyBalance[y, t] += by_rid(y, :etainverter) *
+                                            vREG_DC_Discharge[y, t]
+            eDischargeDCMin[y, t] -= vREG_DC_Discharge[y, t]
+            eDischargeMax[y, t] += EP[:vREG_DC_Discharge][y, t] / by_rid(y, :eff_down_dc)
+            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vREG_DC_Discharge[y, t]
+            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vREG_DC_Discharge[y, t]
         end
         for y in DC_DISCHARGE_RSV
-            eVreStorRsvOnlyBalance[y,t] += by_rid(y,:etainverter)*vRSV_DC_Discharge[y,t]
-            eDischargeMax[y,t] += EP[:vRSV_DC_Discharge][y,t]/by_rid(y,:eff_down_dc)
-            EP[:eGridExport][y,t] += by_rid(y,:etainverter)*vRSV_DC_Discharge[y,t]
-            EP[:eInverterExport][y,t] += by_rid(y,:etainverter)*vRSV_DC_Discharge[y,t]
+            eVreStorRsvOnlyBalance[y, t] += by_rid(y, :etainverter) *
+                                            vRSV_DC_Discharge[y, t]
+            eDischargeMax[y, t] += EP[:vRSV_DC_Discharge][y, t] / by_rid(y, :eff_down_dc)
+            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vRSV_DC_Discharge[y, t]
+            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vRSV_DC_Discharge[y, t]
         end
 
         for y in DC_CHARGE_REG
-            eVreStorRegOnlyBalance[y,t] += vREG_DC_Charge[y,t]/by_rid(y,:etainverter)
-            eChargeDCMin[y,t] -= vREG_DC_Charge[y,t]
-            eChargeMax[y,t] += by_rid(y,:eff_up_dc)*EP[:vREG_DC_Charge][y,t]
-            EP[:eGridExport][y,t] += vREG_DC_Charge[y,t]/by_rid(y,:etainverter)
-            EP[:eInverterExport][y,t] += vREG_DC_Charge[y,t]/by_rid(y,:etainverter)
+            eVreStorRegOnlyBalance[y, t] += vREG_DC_Charge[y, t] / by_rid(y, :etainverter)
+            eChargeDCMin[y, t] -= vREG_DC_Charge[y, t]
+            eChargeMax[y, t] += by_rid(y, :eff_up_dc) * EP[:vREG_DC_Charge][y, t]
+            EP[:eGridExport][y, t] += vREG_DC_Charge[y, t] / by_rid(y, :etainverter)
+            EP[:eInverterExport][y, t] += vREG_DC_Charge[y, t] / by_rid(y, :etainverter)
         end
         for y in DC_CHARGE_RSV
-            eVreStorRsvOnlyBalance[y,t] += vRSV_DC_Charge[y,t]/by_rid(y,:etainverter)
-            eChargeDCMin[y,t] -= vRSV_DC_Charge[y,t]
+            eVreStorRsvOnlyBalance[y, t] += vRSV_DC_Charge[y, t] / by_rid(y, :etainverter)
+            eChargeDCMin[y, t] -= vRSV_DC_Charge[y, t]
         end
 
         for y in AC_DISCHARGE_REG
-            eVreStorRegOnlyBalance[y,t] += vREG_AC_Discharge[y,t]
-            eDischargeACMin[y,t] -= vREG_AC_Discharge[y,t]
-            eDischargeMax[y,t] += EP[:vREG_AC_Discharge][y,t]/by_rid(y,:eff_down_ac)
-            EP[:eGridExport][y,t] += vREG_AC_Discharge[y,t]
+            eVreStorRegOnlyBalance[y, t] += vREG_AC_Discharge[y, t]
+            eDischargeACMin[y, t] -= vREG_AC_Discharge[y, t]
+            eDischargeMax[y, t] += EP[:vREG_AC_Discharge][y, t] / by_rid(y, :eff_down_ac)
+            EP[:eGridExport][y, t] += vREG_AC_Discharge[y, t]
         end
         for y in AC_DISCHARGE_RSV
-            eVreStorRsvOnlyBalance[y,t] += vRSV_AC_Discharge[y,t]
-            eDischargeMax[y,t] += EP[:vRSV_AC_Discharge][y,t]/by_rid(y,:eff_down_ac)
-            EP[:eGridExport][y,t] += vRSV_AC_Discharge[y,t]
+            eVreStorRsvOnlyBalance[y, t] += vRSV_AC_Discharge[y, t]
+            eDischargeMax[y, t] += EP[:vRSV_AC_Discharge][y, t] / by_rid(y, :eff_down_ac)
+            EP[:eGridExport][y, t] += vRSV_AC_Discharge[y, t]
         end
 
         for y in AC_CHARGE_REG
-            eVreStorRegOnlyBalance[y,t] += vREG_AC_Charge[y,t]
-            eChargeACMin[y,t] -= vREG_AC_Charge[y,t]
-            eChargeMax[y,t] += by_rid(y,:eff_down_ac)*EP[:vREG_AC_Charge][y,t]
-            EP[:eGridExport][y,t] += vREG_AC_Charge[y,t]
+            eVreStorRegOnlyBalance[y, t] += vREG_AC_Charge[y, t]
+            eChargeACMin[y, t] -= vREG_AC_Charge[y, t]
+            eChargeMax[y, t] += by_rid(y, :eff_down_ac) * EP[:vREG_AC_Charge][y, t]
+            EP[:eGridExport][y, t] += vREG_AC_Charge[y, t]
         end
         for y in AC_CHARGE_RSV
-            eVreStorRsvOnlyBalance[y,t] += vRSV_AC_Charge[y,t]
-            eChargeACMin[y,t] -= vRSV_AC_Charge[y,t]
+            eVreStorRsvOnlyBalance[y, t] += vRSV_AC_Charge[y, t]
+            eChargeACMin[y, t] -= vRSV_AC_Charge[y, t]
         end
 
         for y in VS_SYM_DC_REG
-            EP[:eChargeDischargeMaxDC][y,t] += (vREG_DC_Discharge[y,t]
-                + vREG_DC_Charge[y,t])
+            EP[:eChargeDischargeMaxDC][y, t] += (vREG_DC_Discharge[y, t]
+                                                 +
+                                                 vREG_DC_Charge[y, t])
         end
         for y in VS_SYM_DC_RSV
-            EP[:eChargeDischargeMaxDC][y,t] += vRSV_DC_Discharge[y,t]
+            EP[:eChargeDischargeMaxDC][y, t] += vRSV_DC_Discharge[y, t]
         end
 
         for y in VS_SYM_AC_REG
-            EP[:eChargeDischargeMaxAC][y,t] += (vREG_AC_Discharge[y,t]
-                + vREG_AC_Charge[y,t])
+            EP[:eChargeDischargeMaxAC][y, t] += (vREG_AC_Discharge[y, t]
+                                                 +
+                                                 vREG_AC_Charge[y, t])
         end
         for y in VS_SYM_AC_RSV
-            EP[:eChargeDischargeMaxAC][y,t] += vRSV_AC_Discharge[y,t]
+            EP[:eChargeDischargeMaxAC][y, t] += vRSV_AC_Discharge[y, t]
         end
 
         for y in VS_ASYM_DC_DISCHARGE_REG
-            EP[:eVreStorMaxDischargingDC][y,t] += vREG_DC_Discharge[y,t]
+            EP[:eVreStorMaxDischargingDC][y, t] += vREG_DC_Discharge[y, t]
         end
         for y in VS_ASYM_DC_DISCHARGE_RSV
-            EP[:eVreStorMaxDischargingDC][y,t] += vRSV_DC_Discharge[y,t]
+            EP[:eVreStorMaxDischargingDC][y, t] += vRSV_DC_Discharge[y, t]
         end
 
         for y in VS_ASYM_DC_CHARGE_REG
-            EP[:eVreStorMaxChargingDC][y,t] += vREG_DC_Charge[y,t]
+            EP[:eVreStorMaxChargingDC][y, t] += vREG_DC_Charge[y, t]
         end
 
         for y in VS_ASYM_AC_DISCHARGE_REG
-            EP[:eVreStorMaxDischargingAC][y,t] += vREG_AC_Discharge[y,t]
+            EP[:eVreStorMaxDischargingAC][y, t] += vREG_AC_Discharge[y, t]
         end
         for y in VS_ASYM_AC_DISCHARGE_RSV
-            EP[:eVreStorMaxDischargingAC][y,t] += vRSV_AC_Discharge[y,t]
+            EP[:eVreStorMaxDischargingAC][y, t] += vRSV_AC_Discharge[y, t]
         end
 
         for y in VS_ASYM_AC_CHARGE_REG
-            EP[:eVreStorMaxChargingAC][y,t] += vREG_AC_Charge[y,t]
+            EP[:eVreStorMaxChargingAC][y, t] += vREG_AC_Charge[y, t]
         end
     end
 
     if CapacityReserveMargin > 0
-        for t=1:T
+        for t in 1:T
             for y in DC_DISCHARGE
-                eDischargeMax[y,t] += EP[:vCAPRES_DC_DISCHARGE][y,t]/by_rid(y,:eff_down_dc)
+                eDischargeMax[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /
+                                       by_rid(y, :eff_down_dc)
             end
             for y in AC_DISCHARGE
-                eDischargeMax[y,t] += EP[:vCAPRES_AC_DISCHARGE][y,t]/by_rid(y,:eff_down_ac)
+                eDischargeMax[y, t] += EP[:vCAPRES_AC_DISCHARGE][y, t] /
+                                       by_rid(y, :eff_down_ac)
             end
         end
     end
@@ -2454,88 +2686,121 @@ function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     # Frequency regulation and operating reserves for all co-located VRE-STOR resources
     if !isempty(VRE_STOR_REG_RSV)
-        @constraints(EP, begin
-            # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
-            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vREG][y,t] <= reg_max(gen[y])*EP[:eTotalCap][y]
-            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vRSV][y,t] <= rsv_max(gen[y])*EP[:eTotalCap][y]
+        @constraints(EP,
+            begin
+                # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
+                [y in VRE_STOR_REG_RSV, t = 1:T],
+                EP[:vREG][y, t] <= reg_max(gen[y]) * EP[:eTotalCap][y]
+                [y in VRE_STOR_REG_RSV, t = 1:T],
+                EP[:vRSV][y, t] <= rsv_max(gen[y]) * EP[:eTotalCap][y]
 
-            # Actual contribution to regulation and reserves is sum of auxilary variables
-            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vREG][y,t] == eVreStorRegOnlyBalance[y,t]
-            [y in VRE_STOR_REG_RSV, t=1:T], EP[:vRSV][y,t] == eVreStorRsvOnlyBalance[y,t]
-        end)
+                # Actual contribution to regulation and reserves is sum of auxilary variables
+                [y in VRE_STOR_REG_RSV, t = 1:T],
+                EP[:vREG][y, t] == eVreStorRegOnlyBalance[y, t]
+                [y in VRE_STOR_REG_RSV, t = 1:T],
+                EP[:vRSV][y, t] == eVreStorRsvOnlyBalance[y, t]
+            end)
     end
     if !isempty(VRE_STOR_REG_ONLY)
-        @constraints(EP, begin
-            # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
-            [y in VRE_STOR_REG_ONLY, t=1:T], EP[:vREG][y,t] <= reg_max(gen[y])*EP[:eTotalCap][y]
+        @constraints(EP,
+            begin
+                # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
+                [y in VRE_STOR_REG_ONLY, t = 1:T],
+                EP[:vREG][y, t] <= reg_max(gen[y]) * EP[:eTotalCap][y]
 
-            # Actual contribution to regulation is sum of auxilary variables
-            [y in VRE_STOR_REG_ONLY, t=1:T], EP[:vREG][y,t] == eVreStorRegOnlyBalance[y,t]
-        end)
+                # Actual contribution to regulation is sum of auxilary variables
+                [y in VRE_STOR_REG_ONLY, t = 1:T],
+                EP[:vREG][y, t] == eVreStorRegOnlyBalance[y, t]
+            end)
     end
     if !isempty(VRE_STOR_RSV_ONLY)
-        @constraints(EP, begin
-            # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
-            [y in VRE_STOR_RSV_ONLY, t=1:T], EP[:vRSV][y,t] <= rsv_max(gen[y])*EP[:eTotalCap][y]
+        @constraints(EP,
+            begin
+                # Maximum VRE-STOR contribution to reserves is a specified fraction of installed grid connection capacity
+                [y in VRE_STOR_RSV_ONLY, t = 1:T],
+                EP[:vRSV][y, t] <= rsv_max(gen[y]) * EP[:eTotalCap][y]
 
-            # Actual contribution to reserves is sum of auxilary variables
-            [y in VRE_STOR_RSV_ONLY, t=1:T], EP[:vRSV][y,t] == eVreStorRsvOnlyBalance[y,t]
-        end)
+                # Actual contribution to reserves is sum of auxilary variables
+                [y in VRE_STOR_RSV_ONLY, t = 1:T],
+                EP[:vRSV][y, t] == eVreStorRsvOnlyBalance[y, t]
+            end)
     end
 
     # Frequency regulation and operating reserves for VRE-STOR resources with a VRE component
     if !isempty(SOLAR_REG)
-        @constraints(EP, begin
-            # Maximum generation and contribution to reserves up must be greater than zero
-            [y in SOLAR_REG, t=1:T], EP[:vP_SOLAR][y,t] - EP[:vREG_SOLAR][y,t] >= 0
-        end)
+        @constraints(EP,
+            begin
+                # Maximum generation and contribution to reserves up must be greater than zero
+                [y in SOLAR_REG, t = 1:T], EP[:vP_SOLAR][y, t] - EP[:vREG_SOLAR][y, t] >= 0
+            end)
     end
 
     if !isempty(WIND_REG)
-        @constraints(EP, begin
-            # Maximum generation and contribution to reserves up must be greater than zero
-            [y in WIND_REG, t=1:T], EP[:vP_WIND][y,t] - EP[:vREG_WIND][y,t] >= 0
-        end)
+        @constraints(EP,
+            begin
+                # Maximum generation and contribution to reserves up must be greater than zero
+                [y in WIND_REG, t = 1:T], EP[:vP_WIND][y, t] - EP[:vREG_WIND][y, t] >= 0
+            end)
     end
 
     # Frequency regulation and operating reserves for VRE-STOR resources with a storage component
     if !isempty(STOR_REG_RSV_UNION)
-        @constraints(EP, begin
-            # Maximum DC charging rate plus contribution to reserves up must be greater than zero
-			# Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-			[y in DC_CHARGE, t=1:T], eChargeDCMin[y,t] >= 0
+        @constraints(EP,
+            begin
+                # Maximum DC charging rate plus contribution to reserves up must be greater than zero
+                # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
+                [y in DC_CHARGE, t = 1:T], eChargeDCMin[y, t] >= 0
 
-            # Maximum AC charging rate plus contribution to reserves up must be greater than zero
-			# Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
-			[y in AC_CHARGE, t=1:T], eChargeACMin[y,t] >= 0
+                # Maximum AC charging rate plus contribution to reserves up must be greater than zero
+                # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
+                [y in AC_CHARGE, t = 1:T], eChargeACMin[y, t] >= 0
 
-            # Maximum DC discharging rate and contribution to reserves down must be greater than zero
-			# Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
-			[y in DC_DISCHARGE, t=1:T], eDischargeDCMin[y,t] >= 0
+                # Maximum DC discharging rate and contribution to reserves down must be greater than zero
+                # Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
+                [y in DC_DISCHARGE, t = 1:T], eDischargeDCMin[y, t] >= 0
 
-            # Maximum AC discharging rate and contribution to reserves down must be greater than zero
-			# Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
-			[y in AC_DISCHARGE, t=1:T], eDischargeACMin[y,t] >= 0
+                # Maximum AC discharging rate and contribution to reserves down must be greater than zero
+                # Note: when discharging, reducing discharge rate is contributing to downwards regulation as it drops net supply
+                [y in AC_DISCHARGE, t = 1:T], eDischargeACMin[y, t] >= 0
 
-            # Maximum charging rate plus contributions must be less than available storage capacity
-			[y in STOR_REG_RSV_UNION, t=1:T], eChargeMax[y,t] <= EP[:eTotalCap_STOR][y]-EP[:vS_VRE_STOR][y, hoursbefore(p,t,1)]
+                # Maximum charging rate plus contributions must be less than available storage capacity
+                [y in STOR_REG_RSV_UNION, t = 1:T],
+                eChargeMax[y, t] <=
+                EP[:eTotalCap_STOR][y] - EP[:vS_VRE_STOR][y, hoursbefore(p, t, 1)]
 
-            # Maximum discharging rate and contributions must be less than the available stored energy in prior period
-			# wrapping from end of sample period to start of sample period for energy capacity constraint
-			[y in STOR_REG_RSV_UNION, t=1:T], eDischargeMax[y,t] <= EP[:vS_VRE_STOR][y, hoursbefore(p,t,1)]
-        end)
+                # Maximum discharging rate and contributions must be less than the available stored energy in prior period
+                # wrapping from end of sample period to start of sample period for energy capacity constraint
+                [y in STOR_REG_RSV_UNION, t = 1:T],
+                eDischargeMax[y, t] <= EP[:vS_VRE_STOR][y, hoursbefore(p, t, 1)]
+            end)
     end
 
     # Total system reserve constraints
-    @expression(EP, eRegReqVreStor[t=1:T], inputs["pReg_Req_VRE"]*sum(inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y]*by_rid(y, :etainverter) for y in SOLAR_REG) 
-        + inputs["pReg_Req_VRE"]*sum(inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y] for y in WIND_REG))
-    @expression(EP, eRsvReqVreStor[t=1:T], inputs["pRsv_Req_VRE"]*sum(inputs["pP_Max_Solar"][y,t]*EP[:eTotalCap_SOLAR][y]*by_rid(y, :etainverter) for y in SOLAR_RSV) 
-        + inputs["pRsv_Req_VRE"]*sum(inputs["pP_Max_Wind"][y,t]*EP[:eTotalCap_WIND][y] for y in WIND_RSV))
+    @expression(EP,
+        eRegReqVreStor[t = 1:T],
+        inputs["pReg_Req_VRE"] *
+        sum(inputs["pP_Max_Solar"][y, t] * EP[:eTotalCap_SOLAR][y] *
+            by_rid(y, :etainverter) for y in SOLAR_REG)
+        +inputs["pReg_Req_VRE"] *
+         sum(inputs["pP_Max_Wind"][y, t] * EP[:eTotalCap_WIND][y] for y in WIND_REG))
+    @expression(EP,
+        eRsvReqVreStor[t = 1:T],
+        inputs["pRsv_Req_VRE"] *
+        sum(inputs["pP_Max_Solar"][y, t] * EP[:eTotalCap_SOLAR][y] *
+            by_rid(y, :etainverter) for y in SOLAR_RSV)
+        +inputs["pRsv_Req_VRE"] *
+         sum(inputs["pP_Max_Wind"][y, t] * EP[:eTotalCap_WIND][y] for y in WIND_RSV))
 
     if !isempty(VRE_STOR_REG)
-        @constraint(EP, cRegVreStor[t=1:T], sum(EP[:vREG][y,t] for y in inputs["REG"]) >= EP[:eRegReq][t] + eRegReqVreStor[t])
+        @constraint(EP,
+            cRegVreStor[t = 1:T],
+            sum(EP[:vREG][y, t] for y in inputs["REG"])>=EP[:eRegReq][t] +
+                                                         eRegReqVreStor[t])
     end
     if !isempty(VRE_STOR_RSV)
-        @constraint(EP, cRsvReqVreStor[t=1:T], sum(EP[:vRSV][y,t] for y in inputs["RSV"]) + EP[:vUNMET_RSV][t] >= EP[:eRsvReq][t] + eRsvReqVreStor[t])
+        @constraint(EP,
+            cRsvReqVreStor[t = 1:T],
+            sum(EP[:vRSV][y, t] for y in inputs["RSV"]) +
+            EP[:vUNMET_RSV][t]>=EP[:eRsvReq][t] + eRsvReqVreStor[t])
     end
 end

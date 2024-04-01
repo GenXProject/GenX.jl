@@ -57,23 +57,30 @@ The expressions establishing the capacity reserve margin contributions of each t
 class are included in their respective technology modules.
 """
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
-	# capacity reserve margin constraint
-	T = inputs["T"]
-	NCRM = inputs["NCapacityReserveMargin"]
-	println("Capacity Reserve Margin Policies Module")
+    # capacity reserve margin constraint
+    T = inputs["T"]
+    NCRM = inputs["NCapacityReserveMargin"]
+    println("Capacity Reserve Margin Policies Module")
 
-	# if input files are present, add capacity reserve margin slack variables
-	if haskey(inputs, "dfCapRes_slack")
-		@variable(EP,vCapResSlack[res=1:NCRM, t=1:T]>=0)
-		add_similar_to_expression!(EP[:eCapResMarBalance], vCapResSlack)
+    # if input files are present, add capacity reserve margin slack variables
+    if haskey(inputs, "dfCapRes_slack")
+        @variable(EP, vCapResSlack[res = 1:NCRM, t = 1:T]>=0)
+        add_similar_to_expression!(EP[:eCapResMarBalance], vCapResSlack)
 
-		@expression(EP, eCapResSlack_Year[res=1:NCRM], sum(EP[:vCapResSlack][res,t] * inputs["omega"][t] for t in 1:T))
-		@expression(EP, eCCapResSlack[res=1:NCRM], inputs["dfCapRes_slack"][res,:PriceCap] * EP[:eCapResSlack_Year][res])
-		@expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res = 1:NCRM))
-		add_to_expression!(EP[:eObj], eCTotalCapResSlack)
-	end
+        @expression(EP,
+            eCapResSlack_Year[res = 1:NCRM],
+            sum(EP[:vCapResSlack][res, t] * inputs["omega"][t] for t in 1:T))
+        @expression(EP,
+            eCCapResSlack[res = 1:NCRM],
+            inputs["dfCapRes_slack"][res, :PriceCap]*EP[:eCapResSlack_Year][res])
+        @expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res in 1:NCRM))
+        add_to_expression!(EP[:eObj], eCTotalCapResSlack)
+    end
 
-	@constraint(EP, cCapacityResMargin[res=1:NCRM, t=1:T], EP[:eCapResMarBalance][res, t]
-				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])
-				for z=findall(x->x!=0,inputs["dfCapRes"][:,res])))
+    @constraint(EP,
+        cCapacityResMargin[res = 1:NCRM, t = 1:T],
+        EP[:eCapResMarBalance][res,
+            t]
+        >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
+              for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
 end

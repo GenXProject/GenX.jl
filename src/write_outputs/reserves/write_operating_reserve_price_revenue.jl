@@ -7,36 +7,47 @@ Function for reporting the operating reserve and regulation revenue earned by ge
     The last column is the total revenue received from all operating reserve and regulation constraints.
     As a reminder, GenX models the operating reserve and regulation at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
-function write_operating_reserve_regulation_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-  	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+function write_operating_reserve_regulation_revenue(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-	gen = inputs["RESOURCES"]
-	RSV = inputs["RSV"]
-	REG = inputs["REG"]
+    gen = inputs["RESOURCES"]
+    RSV = inputs["RSV"]
+    REG = inputs["REG"]
 
     regions = region.(gen)
     clusters = cluster.(gen)
     zones = zone_id.(gen)
     names = inputs["RESOURCE_NAMES"]
 
-	dfOpRsvRevenue = DataFrame(Region = regions[RSV], Resource = names[RSV], Zone = zones[RSV], Cluster = clusters[RSV], AnnualSum = Array{Float64}(undef, length(RSV)),)
-	dfOpRegRevenue = DataFrame(Region = regions[REG], Resource = names[REG], Zone = zones[REG], Cluster = clusters[REG], AnnualSum = Array{Float64}(undef, length(REG)),)
-	
-	weighted_reg_price = operating_regulation_price(EP, inputs, setup)
-	weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
+    dfOpRsvRevenue = DataFrame(Region = regions[RSV],
+        Resource = names[RSV],
+        Zone = zones[RSV],
+        Cluster = clusters[RSV],
+        AnnualSum = Array{Float64}(undef, length(RSV)))
+    dfOpRegRevenue = DataFrame(Region = regions[REG],
+        Resource = names[REG],
+        Zone = zones[REG],
+        Cluster = clusters[REG],
+        AnnualSum = Array{Float64}(undef, length(REG)))
 
-	rsvrevenue = value.(EP[:vRSV][RSV, :].data) .* transpose(weighted_rsv_price)
-	regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
+    weighted_reg_price = operating_regulation_price(EP, inputs, setup)
+    weighted_rsv_price = operating_reserve_price(EP, inputs, setup)
 
-	rsvrevenue *= scale_factor
-	regrevenue *= scale_factor
+    rsvrevenue = value.(EP[:vRSV][RSV, :].data) .* transpose(weighted_rsv_price)
+    regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
 
-	dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
-	dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
+    rsvrevenue *= scale_factor
+    regrevenue *= scale_factor
 
-	write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpRsvRevenue)
-	write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
-	return dfOpRegRevenue, dfOpRsvRevenue
+    dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
+    dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
+
+    write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpRsvRevenue)
+    write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
+    return dfOpRegRevenue, dfOpRsvRevenue
 end
 
 @doc raw"""
