@@ -1,7 +1,7 @@
 name = "GenX"
 uuid = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
 authors = ["Jesse Jenkins", "Nestor Sepulveda", "Dharik Mallapragada", "Aaron Schwartz", "Neha Patankar", "Qingyu Xu", "Jack Morris", "Sambuddha Chakrabarti"]
-version = "0.3.6"
+version = "0.3.7"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

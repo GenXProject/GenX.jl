@@ -55,7 +55,7 @@ Note that all settings parameters are case sensitive.
 |ParameterScale | Flag to turn on parameter scaling wherein load, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
-|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
+|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX.jl/v0.3/additional_features/#Modeling-to-Generate-Alternatives)|
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |

@@ -1,9 +1,7 @@
 # GenX 
-[![Build Status](https://travis-ci.com/GenXProject/GenX.svg?branch=main)](https://travis-ci.com/GenXProject/GenX)
-[![Coverage Status](https://coveralls.io/repos/github/GenXProject/GenX/badge.svg?branch=main)](https://coveralls.io/github/GenXProject/GenX?branch=main)
 <!---[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://genxproject.github.io/GenX/stable) -->
 <!---[![Documentation Build](https://img.shields.io/badge/docs-stable-blue.svg](https://genxproject.github.io/GenX/stable) -->
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX/dev)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX.jl/v0.3/)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 ## Overview
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model 
@@ -41,7 +39,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX currently exists in version 0.3.6 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
+GenX currently exists in version 0.3.7 and runs only on Julia v1.5.x, 1.6.x, 1.7.x, 1.8.x, and 1.9.x, where x>=0 and a minimum version of JuMP v1.1.1. We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old Manifest.toml file and do a fresh build of GenX when switching between Julia versions.
 There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.
 For those users who has previously cloned GenX, and has been running it successfully so far,
 and therefore might be unwilling to run it on the latest version of Julia:
@@ -61,7 +59,7 @@ You can see all of the packages installed in your Julia environment and their ve
 
 ## Documentation
 
-Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX/dev).
+Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX.jl/v0.3/).
 It includes details of each of GenX's methods, required and optional input files, and outputs.
 Interested users may also want to browse through [prior publications](https://energy.mit.edu/genx/#publications) that have used GenX to understand the various features of the tool.
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.7] - 2024-04-02
+
+### Fixed
+
+- Add check on COMMIT_ZONE set in write_costs (#507) 
+- Access to eELOSSByZone expr before initialization (#541)
+- Scaling of transmission losses in tlosses.csv (#622) 
+- Correct tracking of current investment stage by SDDP (#628) 
+- Computation of cumulative minimum capacity retirements in multistage GenX (#631)
+- Modeling of hydro reservoir with long duration storage (#632)
+- Update of starting transmission capacity in multistage GenX (#633)
+
 ## [0.3.6] - 2023-08-01
 
 ### Fixed
@@ -18,10 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README with new instructions for running GenX through Julia REPL terminal (#492)
 - Fix factor of 0.5 when writing out transmission losses. (#480)
 - Fix summation error when a set of hours is empty (in thermal_commit.jl).
-- Fix access to eELOSSByZone expr before initialization (#541)
-- Fix modeling of hydro reservoir with long duration storage (#572).
-- Fix computation of cumulative minimum capacity retirements in multistage GenX (#514)
-- Fix update of starting transmission capacity in multistage GenX
 
 ### Changed
 
