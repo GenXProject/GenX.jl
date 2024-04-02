@@ -23,6 +23,14 @@ The HiGHS optimizer instance is configured with the following default parameters
 	# Run the crossover routine for IPX
 	# [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
 	run_crossover: "off"
+
+	# tolerance on relative gap, |ub-lb|/|ub|, to determine whether optimality has been reached for a MIP instance
+	# [type: double, advanced: false, range: [0, inf], default: 0.0001]
+	mip_rel_gap: 0.0001
+	
+	# tolerance on absolute gap of MIP, |ub-lb|, to determine whether optimality has been reached for a MIP instance
+	# [type: double, advanced: false, range: [0, inf], default: 1e-06]
+	mip_abs_gap: 1e-06
 """
 function configure_highs(solver_settings_path::String, optimizer::Any)
 
