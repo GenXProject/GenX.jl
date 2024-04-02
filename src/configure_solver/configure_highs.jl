@@ -35,6 +35,10 @@ The HiGHS optimizer instance is configured with the following default parameters
 	# Objective target for termination
 	# [type: double, advanced: false, range: [-inf, inf], default: -inf]
 	objective_target: -Inf
+
+	# Run the crossover routine for IPX
+	# [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
+	run_crossover: "off"
 """
 function configure_highs(solver_settings_path::String, optimizer::Any)
 
