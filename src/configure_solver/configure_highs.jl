@@ -37,6 +37,8 @@ function configure_highs(solver_settings_path::String, optimizer::Any)
         "Method" => "ipm",
         "ipm_optimality_tolerance" => 1e-08,
 	"run_crossover" => "off",
+	"mip_rel_gap" => 0.001,
+        "mip_abs_gap" => 1e-06,
     )
 
     attributes = merge(default_settings, solver_settings)
