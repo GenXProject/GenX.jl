@@ -1,12 +1,12 @@
 # GenX Inputs
 
-All input files are in CSV format. Running the GenX model requires a minimum of five **mandatory input files**:
+All input files are in CSV format. Running the GenX model requires a minimum of four **mandatory input files** and one folder, which consists of CSV files for generating resources:
 
 1. Fuels\_data.csv: specify fuel type, CO2 emissions intensity, and time-series of fuel prices.
 2. Network.csv: specify network topology, transmission fixed costs, capacity and loss parameters.
 3. Demand\_data.csv: specify time-series of demand profiles for each model zone, weights for each time step, demand shedding costs, and optional time domain reduction parameters.
 4. Generators\_variability.csv: specify time-series of capacity factor/availability for each resource.
-5. Generators\_data.csv: specify cost and performance data for generation, storage and demand flexibility resources.
+5. Resources folder: specify cost and performance data for generation, storage and demand flexibility resources.
  
 Additionally, the user may need to specify eight more **settings-specific** input files based on model configuration and type of scenarios of interest:
 1. Operational\_reserves.csv: specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.
