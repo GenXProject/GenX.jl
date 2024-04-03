@@ -82,8 +82,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The settings parameter `Reserves` has been renamed to `OperationalReserves`, `Reserves.csv` to
   `Operational_reserves.csv`, and the `.jl` files contain the word `reserves` have been renamed to
   `operational_reserves` (#641).
-- New folder structure for a GenX case. The input files are now organized in the following folders: `settings`,
-  `policies`, `resources` and `system`. The examples and tests have been updated to reflect this change.
+- New folder structure for a GenX case. The input files are now organized in the following folders: `settings`, 
+  `policies`, `resources` and `system`. The examples and tests have been updated to reflect this change. 
+- New folder structure implemented for `example_system`. This folder now consists of nine separate folders each pertaining to a different case study example,
+  ranging from the ISONE three zones, with singlestage, multistage, electrolyzers, all the way to the 9 bus IEEE case for running DC-OPF.
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.

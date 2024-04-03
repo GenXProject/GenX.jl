@@ -577,10 +577,10 @@ The updated objective function $OBJ^{*}$ returned by this method takes the form:
 where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor (applied only in the non-myopic case), which discounts costs associated with the model stage $p$ to year-0 dollars:
 ```math
 \begin{aligned}
-    DF = \frac{1}{(1+WACC)^{L*(p-1)}}
+    DF = \frac{1}{(1+WACC)^{L_{p}*(p-1)}}
 \end{aligned}
 ```
-where $WACC$ is the weighted average cost of capital, and $L$ is the length of each stage in years (both set in multi\_stage\_settings.yml)
+where $WACC$ is the weighted average cost of capital, and $L_{p}$ is the length of each stage in years (both set in multi\_stage\_settings.yml)
 
 The second term is a discounted sum of annual operational expenses incurred each year of a multi-year model stage:
 ```math
