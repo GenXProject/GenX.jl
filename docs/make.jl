@@ -128,6 +128,6 @@ deploydocs(;
     devbranch = "main",
     devurl = "dev",
     push_preview=true,
-    versions = ["stable" => "v^", "v#.#"],
+    versions = ["stable" => "v^", "v#.#.#", "dev" => "dev"],
     forcepush = false,
 )
