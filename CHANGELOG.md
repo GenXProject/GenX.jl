@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New settings parameter, StorageVirtualDischarge, to turn storage virtual charging and discharging off if desired by the user (#638).
 - Add module to retrofit existing resources with new technologies (#600).
 - Formatted the code and added a format check to the CI pipeline (#673).
+- Add check when capital recovery period is zero and investment costs are 
+  non-zero in multi-stage GenX (#666)
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
