@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- Add check when capital recovery period is zero and investment costs are 
+  non-zero in multi-stage GenX (#666)
 - Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
 
 ## [0.3.7] - 2024-04-02
