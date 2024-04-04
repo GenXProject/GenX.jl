@@ -9,13 +9,17 @@ function write_co2(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 end
 
-
-function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_co2_emissions_plant(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model)
     gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
     # CO2 emissions by plant
-    dfEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"], Zone=zone_id.(gen), AnnualSum=zeros(G))
+    dfEmissions_plant = DataFrame(Resource = inputs["RESOURCE_NAMES"],
+        Zone = zone_id.(gen),
+        AnnualSum = zeros(G))
     emissions_plant = value.(EP[:eEmissionsByPlant])
 
     if setup["ParameterScale"] == 1
@@ -26,7 +30,7 @@ function write_co2_emissions_plant(path::AbstractString, inputs::Dict, setup::Di
     filepath = joinpath(path, "emissions_plant.csv")
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfEmissions_plant)
-    else 	# setup["WriteOutputs"] == "full"
+    else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filepath, emissions_plant, dfEmissions_plant)
     end
     return nothing
@@ -39,7 +43,9 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    dfCapturedEmissions_plant = DataFrame(Resource=inputs["RESOURCE_NAMES"][CCS], Zone=zone_id.(gen[CCS]), AnnualSum=zeros(length(CCS)))
+    dfCapturedEmissions_plant = DataFrame(Resource = inputs["RESOURCE_NAMES"][CCS],
+        Zone = zone_id.(gen[CCS]),
+        AnnualSum = zeros(length(CCS)))
     if !isempty(CCS)
         # Captured CO2 emissions by plant
         emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]).data)
@@ -53,7 +59,9 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfCapturedEmissions_plant)
         else     # setup["WriteOutputs"] == "full"
-            write_fulltimeseries(filepath, emissions_captured_plant, dfCapturedEmissions_plant)
+            write_fulltimeseries(filepath,
+                emissions_captured_plant,
+                dfCapturedEmissions_plant)
         end
         return nothing
     end

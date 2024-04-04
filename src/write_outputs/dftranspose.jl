@@ -18,10 +18,11 @@ FIXME: This is for DataFrames@0.20.2, as used in GenX.
 Versions 0.21+ could use stack and unstack to make further changes while retaining the order
 """
 function dftranspose(df::DataFrame, withhead::Bool)
-	if withhead
-		colnames = cat(:Row, Symbol.(df[!,1]), dims=1)
-		return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
-	else
-		return DataFrame([[names(df)]; collect.(eachrow(df))], [:Row; Symbol.("x",axes(df, 1))])
-	end
+    if withhead
+        colnames = cat(:Row, Symbol.(df[!, 1]), dims = 1)
+        return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
+    else
+        return DataFrame([[names(df)]; collect.(eachrow(df))],
+            [:Row; Symbol.("x", axes(df, 1))])
+    end
 end # End dftranpose()

@@ -3,14 +3,16 @@ function get_demand_dataframe(path)
     deprecated_synonym = "Load_data.csv"
     df = load_dataframe(path, [filename, deprecated_synonym])
     # update column names
-    old_columns = find_matrix_columns_in_dataframe(df, DEMAND_COLUMN_PREFIX_DEPRECATED()[1:end-1],
-                                     prefixseparator='z')
-    old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED()*string(i) for i in old_columns)
+    old_columns = find_matrix_columns_in_dataframe(df,
+        DEMAND_COLUMN_PREFIX_DEPRECATED()[1:(end - 1)],
+        prefixseparator = 'z')
+    old_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX_DEPRECATED() * string(i)
+                                 for i in old_columns)
     if length(old_column_symbols) > 0
         pref_prefix = DEMAND_COLUMN_PREFIX()
         dep_prefix = DEMAND_COLUMN_PREFIX_DEPRECATED()
         @info "$dep_prefix is deprecated. Use $pref_prefix."
-        new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX()*string(i) for i in old_columns)
+        new_column_symbols = Symbol.(DEMAND_COLUMN_PREFIX() * string(i) for i in old_columns)
         rename!(df, Dict(old_column_symbols .=> new_column_symbols))
     end
     return df
@@ -26,7 +28,7 @@ Read input parameters related to electricity demand (load)
 """
 function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
-	# Load related inputs
+    # Load related inputs
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
     my_dir = get_systemfiles_path(setup, TDR_directory, path)
@@ -35,17 +37,17 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
     as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
 
-	# Number of time steps (periods)
+    # Number of time steps (periods)
     T = length(as_vector(:Time_Index))
-	# Number of demand curtailment/lost load segments
+    # Number of demand curtailment/lost load segments
     SEG = length(as_vector(:Demand_Segment))
 
-	## Set indices for internal use
+    ## Set indices for internal use
     inputs["T"] = T
     inputs["SEG"] = SEG
-	Z = inputs["Z"]   # Number of zones
+    Z = inputs["Z"]   # Number of zones
 
-	inputs["omega"] = zeros(Float64, T) # weights associated with operational sub-period in the model - sum of weight = 8760
+    inputs["omega"] = zeros(Float64, T) # weights associated with operational sub-period in the model - sum of weight = 8760
     # Weights for each period - assumed same weights for each sub-period within a period
     inputs["Weights"] = as_vector(:Sub_Weights) # Weights each period
 
@@ -56,30 +58,31 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
     # Creating sub-period weights from weekly weights
     for w in 1:inputs["REP_PERIOD"]
         for h in 1:inputs["H"]
-            t = inputs["H"]*(w-1)+h
-            inputs["omega"][t] = inputs["Weights"][w]/inputs["H"]
+            t = inputs["H"] * (w - 1) + h
+            inputs["omega"][t] = inputs["Weights"][w] / inputs["H"]
         end
     end
 
-	# Create time set steps indicies
-	inputs["hours_per_subperiod"] = div.(T,inputs["REP_PERIOD"]) # total number of hours per subperiod
-	hours_per_subperiod = inputs["hours_per_subperiod"] # set value for internal use
+    # Create time set steps indicies
+    inputs["hours_per_subperiod"] = div.(T, inputs["REP_PERIOD"]) # total number of hours per subperiod
+    hours_per_subperiod = inputs["hours_per_subperiod"] # set value for internal use
 
-	inputs["START_SUBPERIODS"] = 1:hours_per_subperiod:T 	# set of indexes for all time periods that start a subperiod (e.g. sample day/week)
-	inputs["INTERIOR_SUBPERIODS"] = setdiff(1:T, inputs["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
+    inputs["START_SUBPERIODS"] = 1:hours_per_subperiod:T # set of indexes for all time periods that start a subperiod (e.g. sample day/week)
+    inputs["INTERIOR_SUBPERIODS"] = setdiff(1:T, inputs["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
 
-	# Demand in MW for each zone
+    # Demand in MW for each zone
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     # Max value of non-served energy
     inputs["Voll"] = as_vector(:Voll) / scale_factor # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
     # Demand in MW
     inputs["pD"] = extract_matrix_from_dataframe(demand_in,
-                                                 DEMAND_COLUMN_PREFIX()[1:end-1],
-                                                 prefixseparator='z') / scale_factor
+        DEMAND_COLUMN_PREFIX()[1:(end - 1)],
+        prefixseparator = 'z') / scale_factor
 
-	# Cost of non-served energy/demand curtailment
+    # Cost of non-served energy/demand curtailment
     # Cost of each segment reported as a fraction of value of non-served energy - scaled implicitly
-    inputs["pC_D_Curtail"] = as_vector(:Cost_of_Demand_Curtailment_per_MW) * inputs["Voll"][1]
+    inputs["pC_D_Curtail"] = as_vector(:Cost_of_Demand_Curtailment_per_MW) *
+                             inputs["Voll"][1]
     # Maximum hourly demand curtailable as % of the max demand (for each segment)
     inputs["pMax_D_Curtail"] = as_vector(:Max_Demand_Curtailment)
 
@@ -106,13 +109,13 @@ function validatetimebasis(inputs::Dict)
     expected_length_2 = H * number_of_representative_periods
 
     check_equal = [T,
-                   demand_length,
-                   generators_variability_length,
-                   fuel_costs_length,
-                   expected_length_1,
-                   expected_length_2]
+        demand_length,
+        generators_variability_length,
+        fuel_costs_length,
+        expected_length_1,
+        expected_length_2]
 
-    allequal(x) = all(y->y==x[1], x)
+    allequal(x) = all(y -> y == x[1], x)
     ok = allequal(check_equal)
 
     if ~ok
@@ -160,7 +163,6 @@ This function prevents TimeDomainReduction from running on a case which
 already has more than one Representative Period or has more than one Sub_Weight specified.
 """
 function prevent_doubled_timedomainreduction(path::AbstractString)
-
     demand_in = get_demand_dataframe(path)
     as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
     representative_periods = convert(Int16, as_vector(:Rep_Periods)[1])
@@ -174,5 +176,4 @@ function prevent_doubled_timedomainreduction(path::AbstractString)
               and the number of subperiod weight entries (:Sub_Weights) is ($num_sub_weights).
               Each of these must be 1: only a single period can have TimeDomainReduction applied.""")
     end
-
 end

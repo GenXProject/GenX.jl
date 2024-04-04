@@ -129,55 +129,65 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 The above reserve related constraints are established by ```storage_all_operational_reserves!()``` in ```storage_all.jl```
 """
 function storage!(EP::Model, inputs::Dict, setup::Dict)
+    println("Storage Resources Module")
+    gen = inputs["RESOURCES"]
+    T = inputs["T"]
+    STOR_ALL = inputs["STOR_ALL"]
 
-	println("Storage Resources Module")
-	gen =  inputs["RESOURCES"]
-	T = inputs["T"]
-	STOR_ALL = inputs["STOR_ALL"]
-
-	p = inputs["hours_per_subperiod"]
+    p = inputs["hours_per_subperiod"]
     rep_periods = inputs["REP_PERIOD"]
 
-	EnergyShareRequirement = setup["EnergyShareRequirement"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
-	IncludeLossesInESR = setup["IncludeLossesInESR"]
-	StorageVirtualDischarge = setup["StorageVirtualDischarge"]
+    EnergyShareRequirement = setup["EnergyShareRequirement"]
+    CapacityReserveMargin = setup["CapacityReserveMargin"]
+    IncludeLossesInESR = setup["IncludeLossesInESR"]
+    StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
-	if !isempty(STOR_ALL)
-		investment_energy!(EP, inputs, setup)
-		storage_all!(EP, inputs, setup)
+    if !isempty(STOR_ALL)
+        investment_energy!(EP, inputs, setup)
+        storage_all!(EP, inputs, setup)
 
-		# Include Long Duration Storage only when modeling representative periods and long-duration storage
-		if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
-			long_duration_storage!(EP, inputs, setup)
-		end
-	end
+        # Include Long Duration Storage only when modeling representative periods and long-duration storage
+        if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+            long_duration_storage!(EP, inputs, setup)
+        end
+    end
 
-	if !isempty(inputs["STOR_ASYMMETRIC"])
-		investment_charge!(EP, inputs, setup)
-		storage_asymmetric!(EP, inputs, setup)
-	end
+    if !isempty(inputs["STOR_ASYMMETRIC"])
+        investment_charge!(EP, inputs, setup)
+        storage_asymmetric!(EP, inputs, setup)
+    end
 
-	if !isempty(inputs["STOR_SYMMETRIC"])
-		storage_symmetric!(EP, inputs, setup)
-	end
+    if !isempty(inputs["STOR_SYMMETRIC"])
+        storage_symmetric!(EP, inputs, setup)
+    end
 
-	# ESR Lossses
-	if EnergyShareRequirement >= 1
-		if IncludeLossesInESR == 1
-			@expression(EP, eESRStor[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z,ESR]*sum(EP[:eELOSS][y] for y in intersect(resources_in_zone_by_rid(gen,z),STOR_ALL)) for z=findall(x->x>0,inputs["dfESR"][:,ESR])))
-			add_similar_to_expression!(EP[:eESR], -eESRStor)
-		end
-	end
+    # ESR Lossses
+    if EnergyShareRequirement >= 1
+        if IncludeLossesInESR == 1
+            @expression(EP,
+                eESRStor[ESR = 1:inputs["nESR"]],
+                sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS][y]
+                        for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
+                    for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            add_similar_to_expression!(EP[:eESR], -eESRStor)
+        end
+    end
 
-	# Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vP][y,t] - EP[:vCHARGE][y,t])  for y in STOR_ALL))
-		if StorageVirtualDischarge > 0
-			@expression(EP, eCapResMarBalanceStorVirtual[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(derating_factor(gen[y], tag=res)  * (EP[:vCAPRES_discharge][y,t] - EP[:vCAPRES_charge][y,t])  for y in STOR_ALL))
-			add_similar_to_expression!(eCapResMarBalanceStor,eCapResMarBalanceStorVirtual)
-		end
-		add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
-	end
-
+    # Capacity Reserves Margin policy
+    if CapacityReserveMargin > 0
+        @expression(EP,
+            eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+            sum(derating_factor(gen[y], tag = res) * (EP[:vP][y, t] - EP[:vCHARGE][y, t])
+                for y in STOR_ALL))
+        if StorageVirtualDischarge > 0
+            @expression(EP,
+                eCapResMarBalanceStorVirtual[res = 1:inputs["NCapacityReserveMargin"],
+                    t = 1:T],
+                sum(derating_factor(gen[y], tag = res) *
+                    (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
+                    for y in STOR_ALL))
+            add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
+        end
+        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
+    end
 end

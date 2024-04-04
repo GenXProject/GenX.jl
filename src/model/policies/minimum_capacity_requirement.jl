@@ -15,22 +15,25 @@ Also note that co-located VRE and storage resources, there are three different c
 	requirements.
 """
 function minimum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
+    println("Minimum Capacity Requirement Module")
+    NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
 
-	println("Minimum Capacity Requirement Module")
-	NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
+    # if input files are present, add minimum capacity requirement slack variables
+    if haskey(inputs, "MinCapPriceCap")
+        @variable(EP, vMinCap_slack[mincap = 1:NumberOfMinCapReqs]>=0)
+        add_similar_to_expression!(EP[:eMinCapRes], vMinCap_slack)
 
-	# if input files are present, add minimum capacity requirement slack variables
-	if haskey(inputs, "MinCapPriceCap")
-		@variable(EP, vMinCap_slack[mincap = 1:NumberOfMinCapReqs]>=0)
-		add_similar_to_expression!(EP[:eMinCapRes], vMinCap_slack)
+        @expression(EP,
+            eCMinCap_slack[mincap = 1:NumberOfMinCapReqs],
+            inputs["MinCapPriceCap"][mincap]*EP[:vMinCap_slack][mincap])
+        @expression(EP,
+            eTotalCMinCapSlack,
+            sum(EP[:eCMinCap_slack][mincap] for mincap in 1:NumberOfMinCapReqs))
 
-		@expression(EP, eCMinCap_slack[mincap = 1:NumberOfMinCapReqs], inputs["MinCapPriceCap"][mincap] * EP[:vMinCap_slack][mincap])
-		@expression(EP, eTotalCMinCapSlack, sum(EP[:eCMinCap_slack][mincap] for mincap = 1:NumberOfMinCapReqs))
-		
-		add_to_expression!(EP[:eObj], eTotalCMinCapSlack)
-	end
-	
-	@constraint(EP, cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs], EP[:eMinCapRes][mincap] >= inputs["MinCapReq"][mincap])
+        add_to_expression!(EP[:eObj], eTotalCMinCapSlack)
+    end
 
-
+    @constraint(EP,
+        cZoneMinCapReq[mincap = 1:NumberOfMinCapReqs],
+        EP[:eMinCapRes][mincap]>=inputs["MinCapReq"][mincap])
 end
