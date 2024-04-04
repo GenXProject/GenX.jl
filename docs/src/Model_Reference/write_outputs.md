@@ -38,7 +38,7 @@ Modules = [GenX]
 Pages = ["write_capacity.jl"]
 ```
 
-## Write Capacity Value # TODO: add it
+## Write Capacity Value
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_capacity_value.jl"]
@@ -162,8 +162,7 @@ Pages = ["write_maintenance.jl"]
 GenX.write_angles
 ```
 
-## Write Settings files
-```@autodocs
-Modules = [GenX]
-Pages = ["write_settings.jl"]
+## Write Settings Files
+```@docs
+GenX.write_settings_file
 ```

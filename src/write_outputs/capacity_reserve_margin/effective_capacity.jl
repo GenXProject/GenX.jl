@@ -3,7 +3,7 @@
 	                                 inputs::Dict,
                                      resources::Vector{Int},
                                      capres_zone::Int,
-                                     timesteps::Vector{Int})::Matrix{Float64}
+                                     timesteps::Vector{Int})::Matrix{Float64})
 
 Effective capacity in a capacity reserve margin zone for certain resources in the given timesteps.
 """

@@ -1,5 +1,5 @@
-"""
-	path = choose_output_dir(pathinit)
+@doc raw"""
+	choose_output_dir(pathinit)
 
 Avoid overwriting (potentially important) existing results by appending to the directory name\n
 Checks if the suggested output directory already exists. While yes, it appends _1, _2, etc till an unused name is found

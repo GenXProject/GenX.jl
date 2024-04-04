@@ -70,7 +70,6 @@ pages = OrderedDict("Welcome Page" => [
                 "Thermal No Commit" => "Model_Reference/Resources/thermal_no_commit.md",
             ],
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
-            "Retrofit" => "Model_Reference/Resources/retrofit.md",
             "Scheduled maintenance for various resources" => "Model_Reference/Resources/maintenance.md",
             "Resource types" => "Model_Reference/Resources/resource.md",
         ],

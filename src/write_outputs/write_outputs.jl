@@ -500,6 +500,11 @@ function write_fulltimeseries(fullpath::AbstractString,
     return nothing
 end
 
+"""
+    write_settings_file(path, setup)
+
+Internal function for writing settings files
+"""
 function write_settings_file(path, setup)
     YAML.write_file(joinpath(path, "run_settings.yml"), setup)
 end

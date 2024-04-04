@@ -56,7 +56,7 @@ fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel
     
 For plants using multiple fuels:
     
-During startup, heat input from multiple startup fuels are equal to startup fuel requirements in plant $y$ at time $t$: $StartFuelMMBTUperMW$ times $Capsize$.
+During startup, heat input from multiple startup fuels are equal to startup fuel requirements in plant $y$ at time $t$: $StartFuelMMBTUperMW$ $\times$ $Capsize$.
 ```math
 \begin{aligned}
 \sum_{i \in \mathcal{I} } vMulStartFuels_{y, i, t}= CapSize_{y} \times StartFuelMMBTUperMW_{y} \times vSTART_{y,t}
@@ -76,7 +76,7 @@ vMulFuels_{y, i, t} >= vPower_{y,t} \times MinCofire_{i}
 \begin{aligned}
 vMulFuels_{y, i, t} <= vPower_{y,t} \times MaxCofire_{i}
 \end{aligned}
-
+```
 """
 function fuel!(EP::Model, inputs::Dict, setup::Dict)
     println("Fuel Module")
