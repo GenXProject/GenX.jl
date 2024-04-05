@@ -48,20 +48,6 @@ Electrolyzers are bound by the following limits on maximum and minimum power out
 ```
 (See Constraints 3-4 in the code)
 
-**Minimum annual hydrogen production**
-
-The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in inputs in "Hydrogen_demand.csv":
-
-```math
-\begin{aligned}
-	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{electrolyzer}_y) \geq \mathcal{Min\_kt}_z \times 10^3
-	\hspace{1cm} \forall y \in \mathcal{EL}
-\end{aligned}
-```
-
-where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min\_kt}_z$ is the minimum annual quantity of hydrogen that must be produced in region $z$ in kilotonnes.
-(See constraint 5 in the code)
-
 **Hourly clean supply matching constraint**
 
 This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in the resource `.csv` files) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
@@ -72,7 +58,7 @@ This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `gen
 	\hspace{1cm} \forall z \in \mathcal{Z}, \forall t \in \mathcal{T},
 \end{aligned}
 ```
-(See constraint 6 in the code)
+(See constraint 5 in the code)
 
 This constraint permits modeling of the 'three pillars' requirements for clean hydrogen supply of (1) new clean supply (if only new clean resources are designated as eligible), (2) that is deliverable to the electrolyzer (assuming co-location within the same modeled zone = deliverability), and (3) produced within the same hour as the electrolyzer consumes power (otherwise known as 'additionality/new supply', 'deliverability', and 'temporal matching requirements') See Ricks, Xu & Jenkins (2023), ''Minimizing emissions from grid-based hydrogen production in the United States'' *Environ. Res. Lett.* 18 014025 [doi:10.1088/1748-9326/acacb5](https://iopscience.iop.org/article/10.1088/1748-9326/acacb5/meta) for more.
 """
@@ -155,39 +141,12 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             EP[:vUSE][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
         end)
 
-	### Minimum hydrogen production constraint in each zone (if any) (Constraint #5)
-	kt_to_t = 10^3
-
-	@expression(EP, eHydrogenMin[z in HYDROGEN_ZONES],
-		if !isempty(VS_ELEC)
-			sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T, y = resources_in_zone_by_rid(gen[ELECTROLYZERS], z); init=0) +
-			sum(omega[t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t=1:T, y = resources_in_zone_by_rid(gen[VS_ELEC], z); init=0)
-		else
-			sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T, y = resources_in_zone_by_rid(gen[ELECTROLYZERS], z); init=0)
-		end
-	)
-
-	if setup["HydrogenMimimumProduction"] == 2
-		Hydrogen_demand = inputs["dfH2Demand"]
-		@constraint(EP,
-			cHydrogenMin[z in HYDROGEN_ZONES],
-			EP[:eHydrogenMin][z] >= Hydrogen_demand[findfirst(Zone->Zone==z, Hydrogen_demand[!,:Zone]), :Hydrogen_Demand_kt] * kt_to_t)
-			
-	elseif setup["HydrogenMimimumProduction"] == 1
-		@constraint(EP,                                    # Electrolyzers connected to the grid
-			cHydrogenMinGrid[y in ELECTROLYZERS],
-			sum(inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T) >= electrolyzer_min_kt(gen[y]) * kt_to_t)
-		@constraint(EP,
-			cHydrogenMinVS[y in VS_ELEC],
-			sum(inputs["omega"][t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t=1:T) >= by_rid(y,:electrolyzer_min_kt) * kt_to_t)
-	end
-
 	### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
 	@constraints(EP, begin
 		[y in ELECTROLYZERS, t in 1:T], EP[:vP][y,t] == 0
 	end)
 
-	### Hydrogen Hourly Supply Matching Constraint (Constraint #6) ###
+	### Hydrogen Hourly Supply Matching Constraint (Constraint #5) ###
 	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
 	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
 	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).

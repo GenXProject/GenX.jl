@@ -12,7 +12,9 @@ genx_setup = Dict("Trans_Loss_Segments" => 1,
     "UCommit" => 2,
     "StorageLosses" => 1,
     "HydrogenHourlyMatching" => 1,
-    "ParameterScale" => 1)
+    "ParameterScale" => 1,
+    "HydrogenMimimumProduction"=>1
+)
 
 # Run the case and get the objective value and tolerance
 EP, _, _ = redirect_stdout(devnull) do
