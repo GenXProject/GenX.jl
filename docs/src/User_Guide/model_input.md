@@ -202,9 +202,9 @@ Each file contains cost and performance parameters for various generators and ot
 |PWFU\_Heat\_Rate\_MMBTU\_per\_MWh\_*i| The slope of fuel usage function of the segment i.|
 |PWFU\_Load\_Point\_MW\_*i| The end of segment i (MW).|
 |**Multi-fuel parameters**|
-|MULTI_FUELS | {0, 1}, Flag to indicate membership in set of thermal resources that can burn multiple fuels at the same time (e.g., natural gas combined cycle cofiring with hydrogen, coal power plant cofiring with natural gas.|
-||MULTI_FUELS = 0: Not part of set (default) |
-||MULTI_FUELS = 1: Resources that can use fuel blending. |
+|MULTI\_FUELS | {0, 1}, Flag to indicate membership in set of thermal resources that can burn multiple fuels at the same time (e.g., natural gas combined cycle cofiring with hydrogen, coal power plant cofiring with natural gas.|
+||MULTI\_FUELS = 0: Not part of set (default) |
+||MULTI\_FUELS = 1: Resources that can use fuel blending. |
 |Num\_Fuels  |Number of fuels that a multi-fuel generator (MULTI_FUELS = 1) can use at the same time. The length of ['Fuel1', 'Fuel2', ...] should be equal to 'Num\_Fuels'. Each fuel will requires its corresponding heat rate, min cofire level, and max cofire level. |
 |Fuel1  |Frist fuel needed for a mulit-fuel generator (MULTI_FUELS = 1). The names should match with the ones in the `Fuels_data.csv`. |
 |Fuel2  |Second fuel needed for a mulit-fuel generator (MULTI_FUELS = 1). The names should match with the ones in the `Fuels_data.csv`. |
@@ -329,9 +329,9 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Hydrogen_MWh_Per_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
-|Electrolyzer_Min_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
-|Hydrogen_Price_Per_Tonne| Price (or value) of hydrogen per metric tonne ($/t)|
+|Hydrogen\_MWh\_Per\_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
+|Electrolyzer\_Min\_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
+|Hydrogen\_Price\_Per\_Tonne| Price (or value) of hydrogen per metric tonne ($/t)|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`.|
 |Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 |Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
@@ -350,25 +350,25 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |WIND | {0, 1}, Flag to indicate membership in the set of co-located VRE-storage resources with a wind component.|
 ||WIND = 0: Not part of set (default) |
 ||WIND = 1: If the co-located VRE-storage resource can produce wind energy. ||
-|STOR_DC_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharge behind the meter and through the inverter (DC).|
-||STOR_DC_DISCHARGE = 0: Not part of set (default) |
-||STOR_DC_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_DC_DISCHARGE = 1, STOR_DC_CHARGE = 1.|
-||STOR_DC_DISCHARGE = 2: If the co-located VRE-storage resource has asymmetric discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
-|STOR_DC_CHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that charge through the inverter (DC).|
-||STOR_DC_CHARGE = 0: Not part of set (default) |
-||STOR_DC_CHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_DC_CHARGE = 1, STOR_DC_DISCHARGE = 1.|
-||STOR_DC_CHARGE = 2: If the co-located VRE-storage resource has asymmetric charge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
-|STOR_AC_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharges AC.|
-||STOR_AC_DISCHARGE = 0: Not part of set (default) |
-||STOR_AC_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_AC_DISCHARGE = 1, STOR_AC_CHARGE = 1.|
-||STOR_AC_DISCHARGE = 2: If the co-located VRE-storage resource has asymmetric discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
-|STOR_AC_CHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that charge AC.|
-||STOR_AC_CHARGE = 0: Not part of set (default) |
-||STOR_AC_CHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR_AC_CHARGE = 1, STOR_AC_DISCHARGE = 1.|
-||STOR_AC_CHARGE = 2: If the co-located VRE-storage resource has asymmetric charge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
-|LDS_VRE_STOR | {0, 1}, Flag to indicate the co-located VRE-storage resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage). |
-||LDS_VRE_STOR = 0: Not part of set (default) |
-||LDS_VRE_STOR = 1: Long duration storage resources|
+|STOR\_DC\_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharge behind the meter and through the inverter (DC).|
+||STOR\_DC\_DISCHARGE = 0: Not part of set (default) |
+||STOR\_DC\_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR\_DC\_DISCHARGE = 1, STOR\_DC\_CHARGE = 1.|
+||STOR\_DC\_DISCHARGE = 2: If the co-located VRE-storage resource has asymmetric discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|STOR\_DC\_CHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that charge through the inverter (DC).|
+||STOR\_DC\_CHARGE = 0: Not part of set (default) |
+||STOR\_DC\_CHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR\_DC\_CHARGE = 1, STOR\_DC\_DISCHARGE = 1.|
+||STOR\_DC\_CHARGE = 2: If the co-located VRE-storage resource has asymmetric charge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|STOR\_AC\_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharges AC.|
+||STOR\_AC\_DISCHARGE = 0: Not part of set (default) |
+||STOR\_AC\_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR\_AC\_DISCHARGE = 1, STOR\_AC\_CHARGE = 1.|
+||STOR\_AC\_DISCHARGE = 2: If the co-located VRE-storage resource has asymmetric discharge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|STOR\_AC\_CHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that charge AC.|
+||STOR\_AC\_CHARGE = 0: Not part of set (default) |
+||STOR\_AC\_CHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR\_AC\_CHARGE = 1, STOR\_AC\_DISCHARGE = 1.|
+||STOR\_AC\_CHARGE = 2: If the co-located VRE-storage resource has asymmetric charge capacities using distinct processes (e.g. hydrogen electrolysis, storage, and conversion to power using fuel cell or combustion turbine).|
+|LDS\_VRE\_STOR | {0, 1}, Flag to indicate the co-located VRE-storage resources eligible for long duration storage constraints with inter period linkage (e.g., reservoir hydro, hydrogen storage). |
+||LDS\_VRE\_STOR = 0: Not part of set (default) |
+||LDS\_VRE\_STOR = 1: Long duration storage resources|
 |**Existing technology capacity**|
 |Existing\_Cap\_MW |The existing AC grid connection capacity in MW. |
 |Existing\_Cap\_MWh |The existing capacity of storage in MWh. |
@@ -426,8 +426,8 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |**Technical performance parameters**|
 |Self\_Disch  |[0,1], The power loss of storage component of each resource per hour (fraction loss per hour). |
 |EtaInverter |[0,1], Inverter efficiency representing losses from converting DC to AC power and vice versa for each technology |
-|Inverter_Ratio_Solar  |-1 (default) - no required ratio between solar PV capacity built to inverter capacity built. If non-negative, represents the ratio of solar PV capacity built to inverter capacity built.|
-|Inverter_Ratio_Wind  |-1 (default) - no required ratio between wind capacity built to grid connection capacity built. If non-negative, represents the ratio of wind capacity built to grid connection capacity built.|
+|Inverter\_Ratio_Solar  |-1 (default) - no required ratio between solar PV capacity built to inverter capacity built. If non-negative, represents the ratio of solar PV capacity built to inverter capacity built.|
+|Inverter\_Ratio_Wind  |-1 (default) - no required ratio between wind capacity built to grid connection capacity built. If non-negative, represents the ratio of wind capacity built to grid connection capacity built.|
 |Power\_to\_Energy\_AC  |The power to energy conversion for the storage component for AC discharging/charging of symmetric storage resources.|
 |Power\_to\_Energy\_DC  |The power to energy conversion for the storage component for DC discharging/charging of symmetric storage resources.|
 |Eff\_Up\_DC  |[0,1], Efficiency of DC charging storage – applies to storage technologies (all STOR types). |
@@ -463,7 +463,7 @@ The following table describes the columns in each of these four files.
 
 This policy is applied when if `EnergyShareRequirement > 0` in the settings file. \* corresponds to the ith row of the file `Energy_share_requirement.csv`. 
 
-##### Table 12: Energy share requirement policy parameters
+##### Table 12: Energy share requirement policy parameters in Resource_energy_share_requirement.csv 
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -478,44 +478,43 @@ This policy is applied when if `EnergyShareRequirement > 0` in the settings file
 
 This policy is applied when if `MinCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. 
 
-##### Table 13: Minimum capacity requirement policy parameters
+##### Table 13: Minimum capacity requirement policy parameters in Resource_minimum_capacity_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|Min_Cap\_*| Flag to indicate which resources are considered for the Minimum Capacity Requirement constraint.|
+|Min\_Cap\_*| Flag to indicate which resources are considered for the Minimum Capacity Requirement constraint.|
 |**co-located VRE-STOR resources only**|
-|Min_Cap_Solar\_*| Eligibility of resources with a solar PV component (multiplied by the inverter efficiency for AC terms) to participate in Minimum Technology Carveout constraint.|
-|Min_Cap_Wind\_*| Eligibility of resources with a wind component to participate in Minimum Technology Carveout constraint (AC terms).|
-|Min_Cap_Stor\_*| Eligibility of resources with a storage component to participate in Minimum Technology Carveout constraint (discharge capacity in AC terms).|
+|Min\_Cap\_Solar\_*| Eligibility of resources with a solar PV component (multiplied by the inverter efficiency for AC terms) to participate in Minimum Technology Carveout constraint.|
+|Min\_Cap\_Wind\_*| Eligibility of resources with a wind component to participate in Minimum Technology Carveout constraint (AC terms).|
+|Min\_Cap\_Stor\_*| Eligibility of resources with a storage component to participate in Minimum Technology Carveout constraint (discharge capacity in AC terms).|
 
 This policy is applied when if `MaxCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.
 
-##### Table 14: Maximum capacity requirement policy parameters
+##### Table 14: Maximum capacity requirement policy parameters in Resource_maximum_capacity_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|Max_Cap\_*| Flag to indicate which resources are considered for the Maximum Capacity Requirement constraint.|
+|Max\_Cap\_*| Flag to indicate which resources are considered for the Maximum Capacity Requirement constraint.|
 |**co-located VRE-STOR resources only**|
-|Max_Cap_Solar\_*| Eligibility of resources with a solar PV component (multiplied by the inverter efficiency for AC terms) to participate in Maximum Technology Carveout constraint.
-|Max_Cap_Wind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms).
-|Max_Cap_Stor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms).|
+|Max\_Cap\_Solar\_*| Eligibility of resources with a solar PV component (multiplied by the inverter efficiency for AC terms) to participate in Maximum Technology Carveout constraint.
+|Max\_Cap\_Wind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms).
+|Max\_Cap\_Stor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms).|
 
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
-##### Table 15: Capacity reserve margin policy parameters
+##### Table 15: Capacity reserve margin policy parameters in Resource_capacity_reserve_margin.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|Eligible_Cap_Res\_*| Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
+|Derating\_Factor\_*| Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
 
 ##### Additional module-related columns for all resources
 In addition to the files described above, the `resources` folder can contain additional files that are used to specify attributes for specific resources and modules. Currently, the following files are supported:
 
-1) `Resource_multistage_data.csv`: mandatory if `MultiStage = 1` in the settings file
-<!-- 2) `Resource_piecewisefuel_usage.csv` -->
+`Resource_multistage_data.csv`: mandatory if `MultiStage = 1` in the settings file
 
 !!! warning
     The first column of each additional module file must contain the resource name corresponding to a resource in one of the resource data files described above. Note that the order of resources in these files is not important.
