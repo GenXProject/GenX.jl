@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Formatted the code and added a format check to the CI pipeline (#673).
 - Add check when capital recovery period is zero and investment costs are 
   non-zero in multi-stage GenX (#666)
+- Added condition number scaling added to objective function (#667)
+- Added versioned doc-pages for v0.3.6 and v0.4.0
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
@@ -60,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix modeling of hydro reservoir with long duration storage (#572).
 - Fix update of starting transmission capacity in multistage GenX
 - Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
+- Fixed outputting capital recovery cost to 0 if the remaining number of years is 0 (#666)
+- Updated the docstring for the initialize_cost_to_go function and adjusted the formula for the discount factor to reflect the code implementation (#672).
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
@@ -89,6 +93,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `policies`, `resources` and `system`. The examples and tests have been updated to reflect this change. 
 - New folder structure implemented for `example_system`. This folder now consists of nine separate folders each pertaining to a different case study example,
   ranging from the ISONE three zones, with singlestage, multistage, electrolyzers, all the way to the 9 bus IEEE case for running DC-OPF.
+- Pruned HiGHS solver settings to the necessary minimum (#668)
+- Changed deploydoc URL to GenX.jl (#662)
 
 ### Deprecated
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
