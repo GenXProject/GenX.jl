@@ -52,7 +52,7 @@ It is currently setup to use one of the following open-source freely available s
 - [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems
 We also provide the option to use one of these two commercial solvers: 
 - [Gurobi](https://www.gurobi.com), or 
-- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+- [CPLEX](https://www.ibm.com/docs/en/icos/22.1.1?topic=documentation-orientation-guide).
 Note that using Gurobi and CPLEX requires a valid license on the host machine.
 There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Getting Started`.
 
