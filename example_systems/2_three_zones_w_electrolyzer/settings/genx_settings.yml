@@ -5,3 +5,4 @@ HydrogenHourlyMatching: 1 # Hydrogen electrolyzer hourly supply matching require
 ParameterScale: 1 # Turn on parameter scaling wherein demand, capacity and power variables are defined in GW rather than MW. 0 = not active; 1 = active systemwide
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
+HydrogenMimimumProduction: 1 # Use resource-level hydrogen demand requirement
