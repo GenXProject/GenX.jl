@@ -133,13 +133,12 @@ end
     Fuels_data.csv Successfully Read!
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
-
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
     
     Summary of resources loaded into the model:
@@ -200,13 +199,12 @@ inputs = GenX.load_inputs(setup, case)
     CSV Files Successfully Read In From example_systems/1_three_zones
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
-
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
 
 
@@ -609,13 +607,12 @@ GenX.solve_model(EP2,setup)
     Discharge Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
-
+   Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
     Non-served Energy Module
     Investment Discharge Module
@@ -968,13 +965,12 @@ GenX.solve_model(EP3,setup)
     Discharge Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
-
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
     Non-served Energy Module
     Investment Discharge Module
@@ -1319,13 +1315,12 @@ GenX.solve_model(EP4,setup)
     Non-served Energy Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
-
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
     Investment Discharge Module
     Unit Commitment Module
@@ -1709,12 +1704,12 @@ GenX.solve_model(EP5,setup)
     Non-served Energy Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
 
     Investment Discharge Module
@@ -2057,12 +2052,12 @@ GenX.solve_model(EP6,setup)
     Discharge Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
+   Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
 
     Non-served Energy Module
@@ -2443,12 +2438,12 @@ GenX.solve_model(EP7,setup)
     Discharge Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
 
     Non-served Energy Module
@@ -2855,12 +2850,12 @@ GenX.solve_model(EP8,setup)
     Capacity_reserve_margin.csv Successfully Read!
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
 
     Energy_share_requirement.csv Successfully Read!
@@ -3242,12 +3237,12 @@ GenX.solve_model(EP9,setup)
     Non-served Energy Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
+   Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
 
 
     Investment Discharge Module
@@ -3635,13 +3630,13 @@ GenX.solve_model(EP10,setup)
     Discharge Module
 
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mThermal.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mVre.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mStorage.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_energy_share_requirement.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_capacity_reserve_margin.csv Successfully Read.
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mResource_minimum_capacity_requirement.csv Successfully Read.
-
+    Thermal.csv Successfully Read.
+    Vre.csv Successfully Read.
+    Storage.csv Successfully Read.
+    Resource_energy_share_requirement.csv Successfully Read.
+    Resource_capacity_reserve_margin.csv Successfully Read.
+    Resource_minimum_capacity_requirement.csv Successfully Read.
+    
 
     Non-served Energy Module
     Investment Discharge Module

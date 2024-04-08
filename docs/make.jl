@@ -21,7 +21,9 @@ pages = OrderedDict("Welcome Page" => [
         "Tutorial 3: K-Means and Time Domain Reduction" => "Tutorials/Tutorial_3_K-means_time_domain_reduction.md",
         "Tutorial 4: Model Generation" => "Tutorials/Tutorial_4_model_generation.md",
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
-        "Tutorial 6: Post Processing" => "Tutorials/Tutorial_6_solver_settings.md",
+        "Tutorial 6: Solver Settings" => "Tutorials/Tutorial_6_solver_settings.md",
+        "Tutorial 7: Setup" => "Tutorials/Tutorial_7_setup.md",
+        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",
