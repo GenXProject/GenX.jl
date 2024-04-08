@@ -39,11 +39,6 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
         # Read slack parameter representing desired increase in budget from the least cost solution
         slack = setup["ModelingtoGenerateAlternativeSlack"]
 
-        ### Variables ###
-
-        @variable(EP, vSumvP[TechTypes = 1:length(TechTypes), z = 1:Z]>=0) # Variable denoting total generation from eligible technology of a given type
-
-        ### End Variables ###
 
         ### Constraints ###
 
@@ -56,12 +51,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
                                    (zone_id.(gen) .== z)
             return resource_id.(gen[condition])
         end
-        @constraint(EP,
-            cGeneration[tt = 1:length(TechTypes), z = 1:Z],
-            vSumvP[tt,
-                z]==sum(EP[:vP][y, t] * inputs["omega"][t]
-                   for y in resource_in_zone_with_TechType(tt, z), t in 1:T))
-
+        
         ### End Constraints ###
 
         ### Create Results Directory for MGA iterations
@@ -87,7 +77,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
             ### Maximization objective
             @objective(EP,
                 Max,
-                sum(pRand[tt, z] * vSumvP[tt, z] for tt in 1:length(TechTypes), z in 1:Z))
+                sum(pRand[tt, z] * vSumvCap[tt, z] for tt in 1:length(TechTypes), z in 1:Z))
 
             # Solve Model Iteration
             status = optimize!(EP)
@@ -101,7 +91,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
             ### Minimization objective
             @objective(EP,
                 Min,
-                sum(pRand[tt, z] * vSumvP[tt, z] for tt in 1:length(TechTypes), z in 1:Z))
+                sum(pRand[tt, z] * vSumvCap[tt, z] for tt in 1:length(TechTypes), z in 1:Z))
 
             # Solve Model Iteration
             status = optimize!(EP)
