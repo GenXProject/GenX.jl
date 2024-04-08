@@ -112,8 +112,6 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
                 [y in FLEX_Z, t = 1:T],
                 EP[:vP][y, t] <= EP[:eTotalCap][y]
             end)
-        
-        
         for y in FLEX_Z
 
             # Require deferred demands to be satisfied within the specified time delay
