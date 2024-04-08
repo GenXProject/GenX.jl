@@ -716,18 +716,6 @@ This file contains the settings parameters required to run the Method of Morris 
 |len\_design\_mat| Length of the design matrix|
 |policy| Name of the policy|
 
-### 2.8 Hydrogen\_demand.csv
-
-This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
-
-###### Table 14: Structure of the Hydrogen\_demand.csv file
----
-|**Column Name** | **Description**|
-| :------------ | :-----------|
-|Zone| zone number|
-|Hydrogen_Demand_kt| Hydrogen production requirements for zone *, in 1,000 tons|
-
-
 !!! note "Notes"
     1. Upper and lower bounds are specified in terms of percentage deviation from the nominal value.
     2. Percentage variation for uncertain parameters in a given group is identical. For example, if solar cluster 1 and solar cluster 2 both belong to the ‘solar’ group, their Lower_bound and Upper_bound must be identical
@@ -739,3 +727,13 @@ This file contains inputs specifying regional hydrogen production requirements. 
     8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
     9. Upper and lower bounds should be specified for all the resources included in the resource `.csv` file (inside the `Resource`). If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
 
+### 2.8 Hydrogen\_demand.csv
+
+This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
+
+###### Table 25: Structure of the Hydrogen\_demand.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Zone| zone number|
+|Hydrogen_Demand_kt| Hydrogen production requirements for zone *, in 1,000 tons|
