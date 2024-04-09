@@ -43,7 +43,6 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 
         # Constraint to set budget for MGA iterations
         @constraint(EP, budget, EP[:eObj]<=Least_System_Cost * (1 + slack))
-        
         ### End Constraints ###
 
         ### Create Results Directory for MGA iterations
@@ -69,7 +68,8 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
             ### Maximization objective
             @objective(EP,
                 Max,
-                sum(pRand[tt, z] * EP[:vSumvCap][tt, z] for tt in 1:length(TechTypes), z in 1:Z))
+                sum(pRand[tt, z] * EP[:vSumvCap][tt, z]
+                for tt in 1:length(TechTypes), z in 1:Z))
 
             # Solve Model Iteration
             status = optimize!(EP)
@@ -83,7 +83,8 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
             ### Minimization objective
             @objective(EP,
                 Min,
-                sum(pRand[tt, z] * EP[:vSumvCap][tt, z] for tt in 1:length(TechTypes), z in 1:Z))
+                sum(pRand[tt, z] * EP[:vSumvCap][tt, z]
+                for tt in 1:length(TechTypes), z in 1:Z))
 
             # Solve Model Iteration
             status = optimize!(EP)
@@ -118,20 +119,18 @@ function mga!(EP::Model, inputs::Dict)
 
     Z = inputs["Z"]     # Number of zones
     gen = inputs["RESOURCES"]    # Resources data
-    
     # Create a set of unique technology types
     resources_with_mga_on = gen[ids_with_mga(gen)]
     TechTypes = unique(resource_type_mga.(resources_with_mga_on))
 
     function resource_in_zone_with_TechType(tt::Int64, z::Int64)
         condition::BitVector = (resource_type_mga.(gen) .== TechTypes[tt]) .&
-        (zone_id.(gen) .== z)
+                               (zone_id.(gen) .== z)
         return resource_id.(gen[condition])
     end
-    
     # Constraint to compute total generation in each zone from a given Technology Type
     ### Variables ###
-    @variable(EP, vSumvCap[TechTypes = 1:length(TechTypes), z = 1:Z] >= 0)
+    @variable(EP, vSumvCap[TechTypes = 1:length(TechTypes), z = 1:Z]>=0)
 
     ### Constraint ###
     @constraint(EP, cCapEquiv[tt = 1:length(TechTypes), z = 1:Z], vSumvCap[tt,z] == sum(EP[:eTotalCap][y] for y in resource_in_zone_with_TechType(tt, z)))
