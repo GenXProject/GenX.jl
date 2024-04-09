@@ -617,6 +617,10 @@ returns: JuMP model with updated objective function.
 """
 function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
     cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
+    stage_len_1 = 0
+    for stage_count in 1:(cur_stage-1)
+        stage_len_1 += settings_d["StageLengths"][stage_count]
+    end
     stage_len = settings_d["StageLengths"][cur_stage]
     wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
@@ -629,7 +633,7 @@ function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
         ### No discount factor or OPEX multiplier applied in myopic case as costs are left annualized.
         @objective(EP, Min, EP[:eObj])
     else
-        DF = 1 / (1 + wacc)^(stage_len * (cur_stage - 1))  # Discount factor applied all to costs in each stage ###
+        DF = 1 / (1 + wacc)^(stage_len_1)  # Discount factor applied all to costs in each stage ###
         # Initialize the cost-to-go variable
         @variable(EP, vALPHA>=0)
         @objective(EP, Min, DF * OPEXMULT * EP[:eObj]+vALPHA)
