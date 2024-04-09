@@ -60,7 +60,6 @@ function include_all_in_folder(folder)
         for file in files
             if endswith(file, ".jl")
                 include(joinpath(root, file))
-                println("include " * joinpath(root,file))
             end
         end
     end

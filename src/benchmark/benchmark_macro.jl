@@ -1,7 +1,7 @@
 @doc draw"""
     @benchmarked <expr to benchmark> [setup=<setup expr>] [other keyword parameters...]
 
-    Run benchmarked on a given expression.
+    Run @benchmarked on a given expression.
 
     This macro is a customization of BenchmarkTools' `@benchmark`.
     `@benchmark` only provides benchmark results.
@@ -9,7 +9,8 @@
     Customization uses internals from BenchmarkTools. 
     Updates to this macro is needed when internals get changed from BenchmarkTools.
 
-    #Example
+    This macro is compatible  with BenchmarkTools v1.3.2, so this version is pinned in Project.toml.
+
 """
 
 using BenchmarkTools
@@ -35,7 +36,7 @@ macro benchmarked(args...)
                 " (",
                 $trialallocs,
                 " allocation",
-                $trialallocs == 1 ? "" : "s",
+                $trialallocs == 1 || $trialallocs == 0 ? "" : "s",
                 ": ",
                 $BenchmarkTools.prettymemory($BenchmarkTools.memory($trialmin)),
                 ")",

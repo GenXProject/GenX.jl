@@ -16,7 +16,7 @@ case - folder for the case
 function run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
     writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
-    global mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
+    mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
         run_genx_case_simple!(case, mysetup, optimizer)
@@ -50,18 +50,18 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     ### Configure solver
     println("Configuring Solver")
-    global OPTIMIZER = configure_solver(settings_path, optimizer)
+    OPTIMIZER = configure_solver(settings_path, optimizer)
 
     #### Running a case
 
     ### Load inputs
     println("Loading Inputs")
-    global myinputs = load_inputs(mysetup, case)
+    myinputs = load_inputs(mysetup, case)
 
     println("Generating the Optimization Model")
     ## Benchmark enabled
     if mysetup["Benchmark"] == 1
-        EP, bm_results = @benchmarked generate_model(mysetup, myinputs, OPTIMIZER) seconds=30 samples=1000 evals=1
+        EP, bm_results = @benchmarked generate_model($mysetup, $myinputs, $OPTIMIZER) seconds=30 samples=1000 evals=1
         println("Benchmark results for generate_model: ")
         BenchmarkTools.display(bm_results)
     else
