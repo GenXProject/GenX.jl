@@ -226,13 +226,8 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     if setup["ModelingToGenerateAlternatives"] == 1
-		# Create a set of unique technology types
-		TechTypes = unique(dfGen[dfGen[!, :MGA] .== 1, :Resource_Type])
-		### Variables ###
-		@variable(EP, vSumvCap[TechTypes = 1:length(TechTypes), z = 1:Z] >= 0)
-		### Constraint ###
-        @constraint(EP, cCapEquiv[tt = 1:length(TechTypes), z = 1:Z], vSumvCap[tt,z] == sum(EP[:eTotalCap][y] for y in dfGen[(dfGen[!,:Resource_Type] .== TechTypes[tt]) .& (dfGen[!,:Zone] .== z),:][!,:R_ID]))
-	end
+        mga!(EP, inputs)
+    end
 
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*EP[:eObj])

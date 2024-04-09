@@ -94,7 +94,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
         println(elapsed_time)
         if mysetup["ModelingToGenerateAlternatives"] == 1
             println("Starting Model to Generate Alternatives (MGA) Iterations")
-            mga(EP, case, mysetup, myinputs, outputs_path)
+            mga(EP, case, mysetup, myinputs)
         end
 
         if mysetup["MethodofMorris"] == 1
