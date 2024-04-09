@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add check when capital recovery period is zero and investment costs are 
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
-- Added versioned doc-pages for v0.3.6 and v0.4.0
+- Added versioned doc-pages for v0.3.6 and v0.4.0 (#680)
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
