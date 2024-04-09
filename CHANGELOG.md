@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
 - Fixed outputting capital recovery cost to 0 if the remaining number of years is 0 (#666)
 - Updated the docstring for the initialize_cost_to_go function and adjusted the formula for the discount factor to reflect the code implementation (#672).
+- Fix write_multi_stage_cost.jl: add discount with OPEX multipliers to cUnmetPolicyPenalty (#679)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
