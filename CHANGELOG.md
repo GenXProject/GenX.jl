@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add check when capital recovery period is zero and investment costs are 
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
-- Added versioned doc-pages for v0.3.6 and v0.4.0 (#680)
+- Added versioned doc-pages for v0.3.6 and v0.4.0
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed outputting capital recovery cost to 0 if the remaining number of years is 0 (#666)
 - Updated the docstring for the initialize_cost_to_go function and adjusted the formula for the discount factor to reflect the code implementation (#672).
 - Fix write_multi_stage_cost.jl: add discount with OPEX multipliers to cUnmetPolicyPenalty (#679)
-- Fix DF calculation in DDP to make it more generic for variable length stages
+- Fix DF calculation in DDP to make it more generic for variable length stages (#680)
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
 - Generally, 'demand' is now used where (electrical) 'load' was used previously (#397).
