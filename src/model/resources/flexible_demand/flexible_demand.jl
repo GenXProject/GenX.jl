@@ -110,7 +110,7 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
                 # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
 
                 [y in FLEX_Z, t = 1:T],
-                EP[:vP][y, t] <= EP[:eTotalCap][y]
+                flexible_demand_energy_eff(gen[y]) * EP[:vP][y, t] <= EP[:eTotalCap][y]
             end)
         for y in FLEX_Z
 
