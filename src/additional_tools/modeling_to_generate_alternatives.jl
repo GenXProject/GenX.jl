@@ -10,13 +10,13 @@ To create the MGA formulation, we replace the cost-minimizing objective function
 	\text{max/min} \quad
 	&\sum_{z \in \mathcal{Z}}\sum_{r \in \mathcal{R}} \beta_{z,r}^{k}P_{z,r}\\
 	\text{s.t.} \quad
-	&P_{zr} = \sum_{y \in \mathcal{G}}\sum_{t \in \mathcal{T}} \omega_{t} \Theta_{y,t,z,r}  \\
+	&P_{z,r} = \sum_{g \in \mathcal{G}}C_{g,z}  \\
 	& f \leq f^* + \delta \\
 	&Ax = b
 \end{aligned}
 ```
 
-where, $\beta_{zr}$ is a random objective fucntion coefficient betwen $[0,100]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. In the second constraint above, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. The constraint $Ax = b$ represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
+where, $\beta_{zr}$ is a random objective function coefficient betwen $[0,1]$ for MGA iteration $k$. We aggregate capacity into a new variable $P_{z,r}$ that represents total capacity from technology type $r$ in a zone $z$. In the second constraint above, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. The constraint $Ax = b$ represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
 """
 function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
     if setup["ModelingToGenerateAlternatives"] == 1
@@ -105,7 +105,7 @@ end
     mga!(EP::Model, inputs::Dict)
 
 This function reads the input data, collect the resources with MGA flag on and creates a set of unique technology types. 
-The function then adds a constraint to the model to compute total generation in each zone from a given Technology Type.
+The function then adds a constraint to the model to compute total capacity in each zone from a given Technology Type.
 
 # Arguments
 - `EP::Model`: GenX model object
