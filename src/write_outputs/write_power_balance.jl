@@ -19,6 +19,10 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     if !isempty(ELECTROLYZER)
         push!(Com_list, "Electrolyzer_Consumption")
     end
+    if !isempty(VRE_STOR)
+        push!(Com_list, "VRE_Storage_Discharge")
+        push!(Com_list, "VRE_Storage_Charge")
+    end
     L = length(Com_list)
     dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z),
         Zone = repeat(1:Z, inner = L),
@@ -35,15 +39,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             powerbalance[(z - 1) * L + 3, :] = (-1) *
                                                sum((value.(EP[:vCHARGE][STOR_ALL_ZONE,
                     :]).data),
-                dims = 1)
-        end
-        if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR))
-            VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
-            powerbalance[(z - 1) * L + 2, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]),
-                dims = 1)
-            powerbalance[(z - 1) * L + 3, :] = (-1) *
-                                               sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE,
-                    :]).data,
                 dims = 1)
         end
         if !isempty(intersect(resources_in_zone_by_rid(gen, z), FLEX))
@@ -69,6 +64,24 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             powerbalance[(z - 1) * L + 11, :] = (-1) *
                                                 sum(value.(EP[:vUSE][ELECTROLYZER_ZONE,
                     :].data),
+                dims = 1)
+        end
+        if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR)) & !isempty(ELECTROLYZER)
+            VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
+            powerbalance[(z - 1) * L + 12, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]),
+                dims = 1)
+            powerbalance[(z - 1) * L + 13, :] = (-1) *
+                                               sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE,
+                    :]).data,
+                dims = 1)
+        end
+        if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR)) & isempty(ELECTROLYZER)
+            VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
+            powerbalance[(z - 1) * L + 11, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]),
+                dims = 1)
+            powerbalance[(z - 1) * L + 12, :] = (-1) *
+                                               sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE,
+                    :]).data,
                 dims = 1)
         end
     end
