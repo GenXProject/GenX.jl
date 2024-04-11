@@ -75,8 +75,10 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             discharge_idx = is_electrolyzer_empty ? 11 : 12
             charge_idx = is_electrolyzer_empty ? 12 : 13
 
-            powerbalance[(z - 1) * L + discharge_idx, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
-            powerbalance[(z - 1) * L + charge_idx, :] = (-1) * sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims = 1)
+            powerbalance[(z - 1) * L + discharge_idx, :] = sum(
+                value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
+            powerbalance[(z - 1) * L + charge_idx, :] = (-1) * sum(
+                value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims = 1)
         end
     end
     if setup["ParameterScale"] == 1
