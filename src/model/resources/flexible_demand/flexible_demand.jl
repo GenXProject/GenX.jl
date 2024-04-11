@@ -104,11 +104,9 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
                 EP[:vCHARGE_FLEX][y, t]
 
                 # Maximum charging rate
-                # NOTE: the maximum amount that can be shifted is given by hourly availability of the resource times the maximum capacity of the resource
                 [y in FLEX_Z, t = 1:T],
                 EP[:vCHARGE_FLEX][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
-                # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
-
+                # Maximum discharging rate
                 [y in FLEX_Z, t = 1:T],
                 flexible_demand_energy_eff(gen[y]) * EP[:vP][y, t] <= EP[:eTotalCap][y]
             end)
