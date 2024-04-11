@@ -18,6 +18,12 @@ At any given time step, the amount of demand that can be shifted or deferred can
 \Pi_{y,t} \leq \rho^{max}_{y,z,t}\Delta_{y,z} \hspace{4 cm}  \forall y \in \mathcal{DF}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+At any given time step, the amount of demand that can be met cannot exceed the capacity of the FLEX resources.
+```math
+\begin{aligned}
+\eta_{y,z}^{dflex}\Theta_{y,z,t} \leq \Delta_{y,z} \hspace{4 cm}  \forall y \in \mathcal{DF}, z \in \mathcal{Z}, t \in \mathcal{T}
+\end{aligned}
+```
 **Maximum time delay and advancements**
 Delayed demand must then be served within a fixed number of time steps. This is done by enforcing the sum of demand satisfied ($\Theta_{y,z,t}$) in the following $\tau^{delay}_{y,z}$ time steps (e.g., t + 1 to t + $\tau^{delay}_{y,z}$) to be greater than or equal to the level of energy deferred during time step $t$.
 ```math
