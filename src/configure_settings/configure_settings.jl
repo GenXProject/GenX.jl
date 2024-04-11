@@ -18,6 +18,7 @@ function default_settings()
         "TimeDomainReductionFolder" => "TDR_results",
         "ModelingToGenerateAlternatives" => 0,
         "ModelingtoGenerateAlternativeSlack" => 0.1,
+        "MGAAnnualGeneration" => 0,
         "MultiStage" => 0,
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,

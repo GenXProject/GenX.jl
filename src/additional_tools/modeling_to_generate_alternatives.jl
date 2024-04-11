@@ -114,13 +114,14 @@ The function then adds a constraint to the model to compute total capacity in ea
 # Returns
 - This function updates the model object `EP` with the MGA variables and constraints in-place.
 """
-function mga!(EP::Model, inputs::Dict)
+function mga!(EP::Model, inputs::Dict, setup::Dict)
     println("MGA Module")
 
+    T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     gen = inputs["RESOURCES"]    # Resources data
     # Read set of MGA variables
-    var_set = setup["MGAVariableSet"] ### Choose setting in genx_settings.yaml: MGAVariableSet: 1 = annual generation, otherwise, sum of capacity
+    annual_gen = setup["MGAAnnualGeneration"] ### Choose setting in genx_settings.yaml: MGAAnnualGeneration: 1 = annual generation, otherwise, sum of capacity
     # Create a set of unique technology types
     resources_with_mga_on = gen[ids_with_mga(gen)]
     TechTypes = unique(resource_type_mga.(resources_with_mga_on))
@@ -135,9 +136,9 @@ function mga!(EP::Model, inputs::Dict)
     @variable(EP, vMGA[TechTypes = 1:length(TechTypes), z = 1:Z]>=0)
 
     ### Constraint ###
-    if var_set==1
-        @constraint(EP, cSumProd[tt=1:length(TechTypes), z = 1:Z], vMGA[tt,z] == sum(EP[:vP][y,t] * inputs["omega"][t]
-	    for y in dfGen[(dfGen[!,:Resource_Type] .== TechTypes[tt]) .& (dfGen[!,:Zone] .== z),:][!,:R_ID], t in 1:T))
+    if annual_gen==1   # annual generation
+        @constraint(EP, cSumProd[tt=1:length(TechTypes), z = 1:Z], vMGA[tt,z]==sum(EP[:vP][y,t] * inputs["omega"][t]
+	                for y in resource_in_zone_with_TechType(tt, z), t in 1:T))  
     else
         @constraint(EP, cCapEquiv[tt = 1:length(TechTypes), z = 1:Z], vMGA[tt,z] == sum(EP[:eTotalCap][y] for y in resource_in_zone_with_TechType(tt, z)))
     end

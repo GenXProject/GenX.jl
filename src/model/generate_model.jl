@@ -226,7 +226,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     if setup["ModelingToGenerateAlternatives"] == 1
-        mga!(EP, inputs)
+        mga!(EP, inputs, setup)
     end
 
     ## Define the objective function
