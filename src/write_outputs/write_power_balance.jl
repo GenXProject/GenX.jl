@@ -66,23 +66,17 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
                     :].data),
                 dims = 1)
         end
-        if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR)) & !isempty(ELECTROLYZER)
+        # VRE storage discharge and charge
+        if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR))
             VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
-            powerbalance[(z - 1) * L + 12, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]),
-                dims = 1)
-            powerbalance[(z - 1) * L + 13, :] = (-1) *
-                                               sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE,
-                    :]).data,
-                dims = 1)
-        end
-        if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR)) & isempty(ELECTROLYZER)
-            VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
-            powerbalance[(z - 1) * L + 11, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]),
-                dims = 1)
-            powerbalance[(z - 1) * L + 12, :] = (-1) *
-                                               sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE,
-                    :]).data,
-                dims = 1)
+
+            # if ELECTROLYZER is empty, increase indices by 1
+            is_electrolyzer_empty = isempty(ELECTROLYZER)
+            discharge_idx = is_electrolyzer_empty ? 11 : 12
+            charge_idx = is_electrolyzer_empty ? 12 : 13
+
+            powerbalance[(z - 1) * L + discharge_idx, :] = sum(value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
+            powerbalance[(z - 1) * L + charge_idx, :] = (-1) * sum(value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims = 1)
         end
     end
     if setup["ParameterScale"] == 1
