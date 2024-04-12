@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
 - Added versioned doc-pages for v0.3.6 and v0.4.0
+- Add constraint in mga to compute total capacity in each zone from a given technology type (#681)
+- New settings parameter MGAAnnualGeneration to switch between different MGA formulations (#681)
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
