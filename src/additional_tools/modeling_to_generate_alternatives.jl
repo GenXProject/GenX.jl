@@ -117,7 +117,7 @@ function mga(EP::Model, path::AbstractString, setup::Dict, inputs::Dict)
 end
 
 @doc raw"""
-    mga!(EP::Model, inputs::Dict)
+    mga!(EP::Model, inputs::Dict, setup::Dict)
 
 This function reads the input data, collect the resources with MGA flag on and creates a set of unique technology types. 
 The function then adds a constraint to the model to compute total capacity in each zone from a given Technology Type.
@@ -163,10 +163,13 @@ function mga!(EP::Model, inputs::Dict, setup::Dict)
     @variable(EP, vMGA[TechTypes = 1:length(TechTypes), z = 1:Z]>=0)
 
     ### Constraint ###
-    if annual_gen==1   # annual generation
-        @constraint(EP, cSumProd[tt=1:length(TechTypes), z = 1:Z], vMGA[tt,z]==sum(EP[:vP][y,t] * inputs["omega"][t]
-	                for y in resource_in_zone_with_TechType(tt, z), t in 1:T))  
+    if annual_gen == 1   # annual generation
+        @constraint(EP, cSumProd[tt = 1:length(TechTypes), z = 1:Z],
+            vMGA[tt,z]==sum(EP[:vP][y, t] * inputs["omega"][t]
+            for y in resource_in_zone_with_TechType(tt, z), t in 1:T))
     else
-        @constraint(EP, cCapEquiv[tt = 1:length(TechTypes), z = 1:Z], vMGA[tt,z] == sum(EP[:eTotalCap][y] for y in resource_in_zone_with_TechType(tt, z)))
+        @constraint(EP, cCapEquiv[tt = 1:length(TechTypes), z = 1:Z],
+            vMGA[tt,z]==sum(EP[:eTotalCap][y]
+            for y in resource_in_zone_with_TechType(tt, z)))
     end
 end

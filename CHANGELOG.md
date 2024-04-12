@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
 - Added versioned doc-pages for v0.3.6 and v0.4.0
+- Add constraint in mga to compute total capacity in each zone from a given technology type (#681)
+- New settings parameter MGAAnnualGeneration to switch between different MGA formulations (#681)
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
@@ -65,7 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed outputting capital recovery cost to 0 if the remaining number of years is 0 (#666)
 - Updated the docstring for the initialize_cost_to_go function and adjusted the formula for the discount factor to reflect the code implementation (#672).
 - Fix write_multi_stage_cost.jl: add discount with OPEX multipliers to cUnmetPolicyPenalty (#679)
-- Fix constraint in mga to compute total generation in each zone from a given technology type (#681)
 
 ### Changed
 - Use add_to_expression! instead of the += and -= operators for memory performance improvements (#498).
