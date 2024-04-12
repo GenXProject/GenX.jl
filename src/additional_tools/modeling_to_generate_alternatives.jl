@@ -18,7 +18,7 @@ To create the MGA formulation, we replace the cost-minimizing objective function
 
 where, $\beta_{z,r}$ is a random objective function coefficient betwen $[0,1]$ for MGA iteration $k$. We aggregate capacity into a new variable $P_{z,r}$ that represents total capacity from technology type $r$ in a zone $z$. 
 
-If the user set `MGAAnnualGeneration = 1` in the genx_settings.yml file, the MGA formulation is given as:
+If the users set `MGAAnnualGeneration = 1` in the genx_settings.yml file, the MGA formulation is given as:
 ```math
 \begin{aligned}
 \text{max/min} \quad
@@ -153,7 +153,7 @@ function mga!(EP::Model, inputs::Dict, setup::Dict)
     resources_with_mga_on = gen[ids_with_mga(gen)]
     TechTypes = unique(resource_type_mga.(resources_with_mga_on))
 
-    function resource_in_zone_with_TechType(tt::Int64, z::Int64)
+    function resource_in_zone_same_TechType(tt::Int64, z::Int64)
         condition::BitVector = (resource_type_mga.(gen) .== TechTypes[tt]) .&
                                (zone_id.(gen) .== z)
         return resource_id.(gen[condition])
@@ -164,12 +164,12 @@ function mga!(EP::Model, inputs::Dict, setup::Dict)
 
     ### Constraint ###
     if annual_gen == 1   # annual generation
-        @constraint(EP, cSumProd[tt = 1:length(TechTypes), z = 1:Z],
+        @constraint(EP, cGeneration[tt = 1:length(TechTypes), z = 1:Z],
             vMGA[tt,z]==sum(EP[:vP][y, t] * inputs["omega"][t]
-            for y in resource_in_zone_with_TechType(tt, z), t in 1:T))
+            for y in resource_in_zone_same_TechType(tt, z), t in 1:T))
     else
         @constraint(EP, cCapEquiv[tt = 1:length(TechTypes), z = 1:Z],
             vMGA[tt,z]==sum(EP[:eTotalCap][y]
-            for y in resource_in_zone_with_TechType(tt, z)))
+            for y in resource_in_zone_same_TechType(tt, z)))
     end
 end
