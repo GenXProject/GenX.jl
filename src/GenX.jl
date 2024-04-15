@@ -37,6 +37,9 @@ using Random
 using RecursiveArrayTools
 using Statistics
 using HiGHS
+using Logging
+
+using PrecompileTools: @compile_workload
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -62,7 +65,6 @@ function include_all_in_folder(folder)
     end
 end
 
-include("startup/genx_startup.jl")
 include_all_in_folder("case_runners")
 include_all_in_folder("configure_settings")
 include_all_in_folder("configure_solver")
@@ -76,5 +78,7 @@ include("time_domain_reduction/full_time_series_reconstruction.jl")
 
 include_all_in_folder("multi_stage")
 include_all_in_folder("additional_tools")
+
+include("startup/genx_startup.jl")
 
 end
