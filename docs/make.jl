@@ -2,13 +2,14 @@ using Documenter
 using GenX
 import DataStructures: OrderedDict
 
-DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive = true)
+DocMeta.setdocmeta!(GenX, :DocTestSetup, :(using GenX); recursive=true)
 
-pages = OrderedDict("Welcome Page" => [
+pages = OrderedDict(
+    "Welcome Page" => [
         "GenX: Introduction" => "index.md",
         "Installation Guide" => "installation.md",
         "Limitation of GenX" => "limitations_genx.md",
-        "Third Party Extensions" => "third_party_genx.md",
+        "Third Party Extensions" => "third_party_genx.md"
     ],
     "Getting Started" => [
         "Running GenX" => "Getting_Started/examples_casestudies.md",
@@ -22,8 +23,6 @@ pages = OrderedDict("Welcome Page" => [
         "Tutorial 4: Model Generation" => "Tutorials/Tutorial_4_model_generation.md",
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
         "Tutorial 6: Solver Settings" => "Tutorials/Tutorial_6_solver_settings.md",
-        "Tutorial 7: Setup" => "Tutorials/Tutorial_7_setup.md",
-        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",
@@ -52,7 +51,7 @@ pages = OrderedDict("Welcome Page" => [
             "Flexible Demand" => "Model_Reference/Resources/flexible_demand.md",
             "Hydro" => [
                 "Hydro Reservoir" => "Model_Reference/Resources/hydro_res.md",
-                "Long Duration Hydro" => "Model_Reference/Resources/hydro_inter_period_linkage.md",
+                "Long Duration Hydro" => "Model_Reference/Resources/hydro_inter_period_linkage.md"
             ],
             "Must Run" => "Model_Reference/Resources/must_run.md",
             "Retrofit" => "Model_Reference/Resources/retrofit.md",
@@ -63,17 +62,17 @@ pages = OrderedDict("Welcome Page" => [
                 "Long Duration Storage" => "Model_Reference/Resources/long_duration_storage.md",
                 "Storage All" => "Model_Reference/Resources/storage_all.md",
                 "Storage Asymmetric" => "Model_Reference/Resources/storage_asymmetric.md",
-                "Storage Symmetric" => "Model_Reference/Resources/storage_symmetric.md",
+                "Storage Symmetric" => "Model_Reference/Resources/storage_symmetric.md"
             ],
             "Co-located VRE and Storage" => "Model_Reference/Resources/vre_stor.md",
             "Thermal" => [
                 "Thermal" => "Model_Reference/Resources/thermal.md",
                 "Thermal Commit" => "Model_Reference/Resources/thermal_commit.md",
-                "Thermal No Commit" => "Model_Reference/Resources/thermal_no_commit.md",
+                "Thermal No Commit" => "Model_Reference/Resources/thermal_no_commit.md"
             ],
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
             "Scheduled maintenance for various resources" => "Model_Reference/Resources/maintenance.md",
-            "Resource types" => "Model_Reference/Resources/resource.md",
+            "Resource types" => "Model_Reference/Resources/resource.md"
         ],
         "Maintenance" => "Model_Reference/maintenance_overview.md",
         "Policies" => "Model_Reference/policies.md",
@@ -88,40 +87,46 @@ pages = OrderedDict("Welcome Page" => [
             "Multi-Stage Modeling Introduction" => "Model_Reference/Multi_Stage/multi_stage_overview.md",
             "Configure multi-stage inputs" => "Model_Reference/Multi_Stage/configure_multi_stage_inputs.md",
             "Model multi stage: Dual Dynamic Programming Algorithm" => "Model_Reference/Multi_Stage/dual_dynamic_programming.md",
-            "Endogenous Retirement" => "Model_Reference/Multi_Stage/endogenous_retirement.md",
+            "Endogenous Retirement" => "Model_Reference/Multi_Stage/endogenous_retirement.md"
         ],
         "Method of Morris" => "Model_Reference/methodofmorris.md",
         "Utility Functions" => "Model_Reference/utility_functions.md",
     ],
     "Public API Reference" => [
-        "Public API" => "Public_API/public_api.md"],
+        "Public API" => "Public_API/public_api.md",
+
+    ],
     "Third Party Extensions" => "additional_third_party_extensions.md",
-    "Developer Docs" => "developer_guide.md")
+    "Developer Docs" => "developer_guide.md",
+)
 
 # Build documentation.
 # ====================
 
 makedocs(;
-    modules = [GenX],
-    authors = "Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
-    sitename = "GenX.jl",
-    format = Documenter.HTML(;
-        prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://genxproject.github.io/GenX.jl/stable",
+    modules=[GenX],
+    authors="Jesse Jenkins, Nestor Sepulveda, Dharik Mallapragada, Aaron Schwartz, Neha Patankar, Qingyu Xu, Jack Morris, Sambuddha Chakrabarti",
+    sitename="GenX.jl",
+    format=Documenter.HTML(;
+        prettyurls=get(ENV, "CI", "false") == "true",
+        canonical="https://genxproject.github.io/GenX.jl/stable",
         assets = ["assets/genx_style.css"],
-        sidebar_sitename = false,
-        collapselevel = 1),
-    pages = [p for p in pages])
+        sidebar_sitename=false,
+        collapselevel=1
+    ),
+    pages=[p for p in pages]
+)
 
 # Deploy built documentation.
 # ===========================
 
 deploydocs(;
-    repo = "github.com/GenXProject/GenX.jl.git",
+    repo="github.com/GenXProject/GenX.jl.git",
     target = "build",
     branch = "gh-pages",
     devbranch = "main",
     devurl = "dev",
-    push_preview = true,
+    push_preview=true,
     versions = ["stable" => "v^", "v#.#.#", "dev" => "dev"],
-    forcepush = false)
+    forcepush = false,
+)
