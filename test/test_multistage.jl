@@ -185,4 +185,74 @@ end
 
 test_update_cumulative_min_ret!()
 
+function test_can_retire_validation()
+    @testset "No resources switch from can_retire = 0 to can_retire = 1" begin
+        inputs = Dict{Int,Dict}()
+        inputs[1] = Dict("RESOURCES" => [
+            GenX.Thermal(Dict(:resource => "thermal", :id => 1,
+                :can_retire => 1)),
+            GenX.Vre(Dict(:resource => "vre", :id => 2,
+                :can_retire => 1)),
+            GenX.Hydro(Dict(:resource => "hydro", :id => 3,
+                :can_retire => 1)),
+            GenX.FlexDemand(Dict(:resource => "flex_demand", :id => 4,
+                :can_retire => 1))])
+        inputs[2] = Dict("RESOURCES" => [
+            GenX.Thermal(Dict(:resource => "thermal", :id => 1,
+                :can_retire => 0)),
+            GenX.Vre(Dict(:resource => "vre", :id => 2,
+                :can_retire => 1)),
+            GenX.Hydro(Dict(:resource => "hydro", :id => 3,
+                :can_retire => 1)),
+            GenX.FlexDemand(Dict(:resource => "flex_demand", :id => 4,
+                :can_retire => 1))])
+        inputs[3] = Dict("RESOURCES" => [
+            GenX.Thermal(Dict(:resource => "thermal", :id => 1,
+                :can_retire => 0)),
+            GenX.Vre(Dict(:resource => "vre", :id => 2,
+                :can_retire => 0)),
+            GenX.Hydro(Dict(:resource => "hydro", :id => 3,
+                :can_retire => 1)),
+            GenX.FlexDemand(Dict(:resource => "flex_demand", :id => 4,
+                :can_retire => 1))])
+        @test isnothing(GenX.validate_can_retire_multistage(inputs, 3))
+    end
+
+    @testset "One resource switches from can_retire = 0 to can_retire = 1" begin
+        inputs = Dict{Int,Dict}()
+        inputs[1] = Dict("RESOURCES" => [
+            GenX.Thermal(Dict(:resource => "thermal", :id => 1,
+                :can_retire => 0)),
+            GenX.Vre(Dict(:resource => "vre", :id => 2,
+                :can_retire => 0)),
+            GenX.Hydro(Dict(:resource => "hydro", :id => 3,
+                :can_retire => 0)),
+            GenX.FlexDemand(Dict(:resource => "flex_demand", :id => 4,
+                :can_retire => 1))])
+        inputs[2] = Dict("RESOURCES" => [
+            GenX.Thermal(Dict(:resource => "thermal", :id => 1,
+                :can_retire => 0)),
+            GenX.Vre(Dict(:resource => "vre", :id => 2,
+                :can_retire => 0)),
+            GenX.Hydro(Dict(:resource => "hydro", :id => 3,
+                :can_retire => 1)),
+            GenX.FlexDemand(Dict(:resource => "flex_demand", :id => 4,
+                :can_retire => 1))])
+        inputs[3] = Dict("RESOURCES" => [
+            GenX.Thermal(Dict(:resource => "thermal", :id => 1,
+                :can_retire => 0)),
+            GenX.Vre(Dict(:resource => "vre", :id => 2,
+                :can_retire => 0)),
+            GenX.Hydro(Dict(:resource => "hydro", :id => 3,
+                :can_retire => 1)),
+            GenX.FlexDemand(Dict(:resource => "flex_demand", :id => 4,
+                :can_retire => 1))])
+        @test_throws ErrorException GenX.validate_can_retire_multistage(inputs, 3)
+    end
+end
+
+with_logger(ConsoleLogger(stderr, Logging.Error)) do
+    test_can_retire_validation()
+end
+
 end # module TestMultiStage

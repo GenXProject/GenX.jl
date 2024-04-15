@@ -159,6 +159,9 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         model_dict[t] = generate_model(mysetup, inputs_dict[t], OPTIMIZER)
     end
 
+    # check that resources do not switch from can_retire = 0 to can_retire = 1 between stages
+    validate_can_retire_multistage(inputs_dict, mysetup["MultiStageSettingsDict"]["NumStages"])
+
     ### Solve model
     println("Solving Model")
 
