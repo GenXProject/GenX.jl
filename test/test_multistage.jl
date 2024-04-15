@@ -219,7 +219,7 @@ function test_can_retire_validation()
     end
 
     @testset "One resource switches from can_retire = 0 to can_retire = 1" begin
-        inputs = Dict{Int,Dict}()
+        inputs = Dict{Int, Dict}()
         inputs[1] = Dict("RESOURCES" => [
             GenX.Thermal(Dict(:resource => "thermal", :id => 1,
                 :can_retire => 0)),
