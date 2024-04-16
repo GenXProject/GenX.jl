@@ -23,6 +23,8 @@ pages = OrderedDict(
         "Tutorial 4: Model Generation" => "Tutorials/Tutorial_4_model_generation.md",
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
         "Tutorial 6: Solver Settings" => "Tutorials/Tutorial_6_solver_settings.md",
+        "Tutorial 7: Policy Constraints" => "Tutorials/Tutorial_7_setup.md",
+        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",

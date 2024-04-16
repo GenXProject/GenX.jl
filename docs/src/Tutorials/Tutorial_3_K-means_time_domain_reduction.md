@@ -3,7 +3,7 @@
 [Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_3_K-means_Time_Domain_Reduction.ipynb)
 
 
-A good tool to reduce computation time of GenX is to use [Time-domain reduction](@ref). Time Domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
+A good tool to reduce computation time of GenX is to use [Time-domain reduction](@ref). Time-domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
 
 ### Table of Contents
 * [Time Domain Reduction](#TDR)
@@ -15,7 +15,7 @@ A good tool to reduce computation time of GenX is to use [Time-domain reduction]
 
 ### Time Domain Reduction
 
-To see how Time Domain Reduction works, let's look at the `Doad_data` in `example_systems/1_three_zones`:
+To see how Time Domain Reduction works, let's look at the `Demand_data` in `example_systems/1_three_zones`:
 
 
 ```julia
@@ -29,9 +29,6 @@ using Plots
 using Clustering
 using ScikitLearn
 @sk_import datasets: (make_blobs)
-```
-    WARNING: redefinition of constant make_blobs. This may fail, cause incorrect answers, or produce other errors.
-    PyObject <function make_blobs at 0x29b50d6c0>
 
 ```julia
 case = joinpath("example_systems/1_three_zones");
