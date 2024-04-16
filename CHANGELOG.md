@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
 - Fix write_multi_stage_cost.jl: add discount with OPEX multipliers to 
   cUnmetPolicyPenalty (#679)
+- Add FLEX power constraint (#677) 
 
 ## [0.3.7] - 2024-04-02
 
