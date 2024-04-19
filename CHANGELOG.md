@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added versioned doc-pages for v0.3.6 and v0.4.0
 - Add constraint in mga to compute total capacity in each zone from a given technology type (#681)
 - New settings parameter MGAAnnualGeneration to switch between different MGA formulations (#681)
+- Add validation for `Can_Retire` column in multi-stage GenX since the current implementation 
+  does not allow a resource to switch from can_retire = 0 to can_retire = 1 between stages. (#683)
 - Add tutorials for running GenX (#637 and #685)
 
 ### Fixed
