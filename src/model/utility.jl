@@ -80,37 +80,3 @@ function by_rid_res(rid::Integer, sym::Symbol, rs::Vector{<:AbstractResource})
     f = isdefined(GenX, sym) ? getfield(GenX, sym) : x -> getproperty(x, sym)
     return f(r)
 end
-
-@doc raw"""
-    (inputs_dict::Dict, num_stages::Int)
-
-This function validates that all the resources do not switch from havig `can_retire = 0` to `can_retire = 1` during the multi-stage optimization.
-
-# Arguments
-- `inputs_dict::Dict`: A dictionary containing the inputs for each stage.
-- `num_stages::Int`: The number of stages in the multi-stage optimization.
-
-# Returns
-- Throws an error if a resource switches from `can_retire = 0` to `can_retire = 1` between stages.
-"""
-function validate_can_retire_multistage(inputs_dict::Dict, num_stages::Int)
-    for stage in 2:num_stages   # note: loop starts from 2 because we are comparing stage t with stage t-1
-        can_retire_current = can_retire.(inputs_dict[stage]["RESOURCES"])
-        can_retire_previous = can_retire.(inputs_dict[stage - 1]["RESOURCES"])
-
-        # Check if any resource switched from can_retire = 0 to can_retire = 1 between stage t-1 and t
-        if any(can_retire_current .- can_retire_previous .> 0)
-            # Find the resources that switched from can_retire = 0 to can_retire = 1 and throw an error
-            retire_switch_ids = findall(can_retire_current .- can_retire_previous .> 0)
-            resources_switched = inputs_dict[stage]["RESOURCES"][retire_switch_ids]
-            for resource in resources_switched
-                @warn "Resource `$(resource_name(resource))` with id = $(resource_id(resource)) switched " *
-                      "from can_retire = 0 to can_retire = 1 between stages $(stage - 1) and $stage"
-            end
-            msg = "Current implementation of multi-stage optimization does not allow resources " *
-                  "to switch from can_retire = 0 to can_retire = 1 between stages."
-            error(msg)
-        end
-    end
-    return nothing
-end
