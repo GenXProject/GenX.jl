@@ -10,5 +10,7 @@ Here is a list of the tutorials:
 4. [Tutorial 4: Model Generation](@ref)
 5. [Tutorial 5: Solving the Model](@ref)
 6. [Tutorial 6: Solver Settings](@ref)
+7. [Tutorial 7: Policy Constraints](@ref)
+8. [Tutorial 8: Outputs](@ref)
 
 
