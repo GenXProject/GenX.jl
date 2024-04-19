@@ -218,7 +218,6 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     return inputs_d
 end
 
-
 @doc raw"""
     validate_can_retire_multistage(inputs_dict::Dict, num_stages::Int)
 
