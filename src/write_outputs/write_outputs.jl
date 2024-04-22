@@ -496,15 +496,16 @@ function write_fulltimeseries(fullpath::AbstractString,
     total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)
     dfOut = vcat(dfOut, total)
+
+    if setup["OutputFullTimeSeries"]
+        dfOut_full = reconstruction(case, dftranspose(dfOut, false))
+        CSV.write(fullpath/FullTimeSeries, dfOut_full, writeheader = false)
+    end
+
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
     return nothing
 end
 
-"""
-    write_settings_file(path, setup)
-
-Internal function for writing settings files
-"""
 function write_settings_file(path, setup)
     YAML.write_file(joinpath(path, "run_settings.yml"), setup)
 end
