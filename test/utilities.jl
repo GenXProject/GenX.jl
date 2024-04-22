@@ -12,6 +12,9 @@ struct CSVFileNotFound <: Exception
 end
 Base.showerror(io::IO, e::CSVFileNotFound) = print(io, e.filefullpath, " not found")
 
+const results_path = "results"
+!isdir(results_path) && mkdir(results_path)
+
 function run_genx_case_testing(test_path::AbstractString,
     test_setup::Dict,
     optimizer::Any = HiGHS.Optimizer)
@@ -90,7 +93,7 @@ function run_genx_case_multistage_testing(test_path::AbstractString,
         # Step 2) Generate model
         model_dict[t] = generate_model(genx_setup, inputs_dict[t], OPTIMIZER)
     end
-    model_dict, _, inputs_dict = run_ddp(model_dict, genx_setup, inputs_dict)
+    model_dict, _, inputs_dict = run_ddp(results_path, model_dict, genx_setup, inputs_dict)
     return model_dict, inputs_dict, OPTIMIZER
 end
 

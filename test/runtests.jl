@@ -2,6 +2,7 @@ using GenX
 using Test
 using Logging
 
+
 include("utilities.jl")
 
 @testset "Expr manipulation" begin
@@ -56,3 +57,13 @@ end
         include("test_retrofit.jl")
     end
 end
+
+# Test writing outputs
+@testset "Writing outputs " begin
+    for test_file in readdir("writing_outputs") |> filter(x -> endswith(x, ".jl"))
+        include("writing_outputs/$test_file")
+    end
+end
+
+# Remove temporary files
+isdir(results_path) && rm(results_path, force=true, recursive=true)
