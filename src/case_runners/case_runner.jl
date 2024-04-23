@@ -140,12 +140,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
     ### Solve model
     println("Solving Model")
 
-    # Step 3) Run DDP Algorithm
-    ## Solve Model
-    model_dict, mystats_d, inputs_dict = run_ddp(model_dict, mysetup, inputs_dict)
-
-    # Step 4) Write final outputs from each stage
-
+    # Prepare folder for results    
     outpath = get_default_output_folder(case)
 
     if mysetup["OverwriteResults"] == 1
@@ -160,6 +155,11 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict)
         mkdir(outpath)
     end
 
+    # Step 3) Run DDP Algorithm
+    ## Solve Model
+    model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
+    
+    # Step 4) Write final outputs from each stage
     for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
         outpath_cur = joinpath(outpath, "Results_p$p")
         write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
