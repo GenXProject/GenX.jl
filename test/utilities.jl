@@ -16,8 +16,8 @@ const results_path = "results"
 !isdir(results_path) && mkdir(results_path)
 
 function run_genx_case_testing(test_path::AbstractString,
-    test_setup::Dict,
-    optimizer::Any = HiGHS.Optimizer)
+        test_setup::Dict,
+        optimizer::Any = HiGHS.Optimizer)
     # Merge the genx_setup with the default settings
     settings = GenX.default_settings()
     merge!(settings, test_setup)

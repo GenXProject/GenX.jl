@@ -248,7 +248,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
         end
 
         append!(upper_bounds_a, z_upper) # Store current iteration upper bound
-        update_multi_stage_stats_file(outpath, ic, z_upper, z_lower, NaN, new_row=true)
+        update_multi_stage_stats_file(outpath, ic, z_upper, z_lower, NaN, new_row = true)
 
         # Step f) Backward pass for t = num_stages:2
         for t in num_stages:-1:2

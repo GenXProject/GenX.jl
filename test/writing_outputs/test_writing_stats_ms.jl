@@ -4,7 +4,6 @@ using Test
 using CSV, DataFrames
 using GenX
 
-
 # create temporary directory for testing 
 mkpath("writing_outputs/multi_stage_stats_tmp")
 outpath = "writing_outputs/multi_stage_stats_tmp"
@@ -14,7 +13,8 @@ function test_header()
     # Note: if this test fails, it means that the header in the function _get_multi_stage_stats_header() has been changed.
     # Make sure to check that the code is consistent with the new header, and update the test accordingly.
     header = GenX._get_multi_stage_stats_header()
-    @test header == ["Iteration_Number", "Seconds", "Upper_Bound", "Lower_Bound", "Relative_Gap"]
+    @test header ==
+          ["Iteration_Number", "Seconds", "Upper_Bound", "Lower_Bound", "Relative_Gap"]
 end
 
 function test_skip_existing_file()
@@ -28,14 +28,16 @@ end
 function test_write_multi_stage_stats(iter::Int64 = 10)
     # test writing stats to file for `iter` number of iterations
     times_a, upper_bounds_a, lower_bounds_a = rand(iter), rand(iter), rand(iter)
-    stats_d = Dict("TIMES" => times_a, "UPPER_BOUNDS" => upper_bounds_a, "LOWER_BOUNDS" => lower_bounds_a)
+    stats_d = Dict("TIMES" => times_a, "UPPER_BOUNDS" => upper_bounds_a,
+        "LOWER_BOUNDS" => lower_bounds_a)
 
     @test isnothing(GenX.write_multi_stage_stats(outpath, stats_d))
     df_stats = CSV.read(joinpath(outpath, filename), DataFrame)
     header = GenX._get_multi_stage_stats_header()
     @test size(df_stats) == (iter, length(header))
     for i in 1:iter
-        test_stats_d(df_stats, i, times_a[i], upper_bounds_a[i], lower_bounds_a[i], (upper_bounds_a[i] - lower_bounds_a[i]) / lower_bounds_a[i])
+        test_stats_d(df_stats, i, times_a[i], upper_bounds_a[i], lower_bounds_a[i],
+            (upper_bounds_a[i] - lower_bounds_a[i]) / lower_bounds_a[i])
     end
     rm(joinpath(outpath, filename))
 end
@@ -58,19 +60,25 @@ function test_update_multi_stage_stats_file(iter::Int64 = 10)
     for i in 1:iter
         # upper bound is updated
         upper_bound = rand()
-        GenX.update_multi_stage_stats_file(outpath, i, upper_bound, lower_bound, iteration_time, new_row=true)
+        GenX.update_multi_stage_stats_file(
+            outpath, i, upper_bound, lower_bound, iteration_time, new_row = true)
         df_stats = CSV.read(joinpath(outpath, filename), DataFrame)
-        test_stats_d(df_stats, i, iteration_time, upper_bound, lower_bound, (upper_bound - lower_bound) / lower_bound)
+        test_stats_d(df_stats, i, iteration_time, upper_bound, lower_bound,
+            (upper_bound - lower_bound) / lower_bound)
         # lower bound is updated
         lower_bound = rand()
-        GenX.update_multi_stage_stats_file(outpath, i, upper_bound, lower_bound, iteration_time)
+        GenX.update_multi_stage_stats_file(
+            outpath, i, upper_bound, lower_bound, iteration_time)
         df_stats = CSV.read(joinpath(outpath, filename), DataFrame)
-        test_stats_d(df_stats, i, iteration_time, upper_bound, lower_bound, (upper_bound - lower_bound) / lower_bound)
+        test_stats_d(df_stats, i, iteration_time, upper_bound, lower_bound,
+            (upper_bound - lower_bound) / lower_bound)
         # iteration time is updated
         iteration_time = rand()
-        GenX.update_multi_stage_stats_file(outpath, i, upper_bound, lower_bound, iteration_time)
+        GenX.update_multi_stage_stats_file(
+            outpath, i, upper_bound, lower_bound, iteration_time)
         df_stats = CSV.read(joinpath(outpath, filename), DataFrame)
-        test_stats_d(df_stats, i, iteration_time, upper_bound, lower_bound, (upper_bound - lower_bound) / lower_bound)
+        test_stats_d(df_stats, i, iteration_time, upper_bound, lower_bound,
+            (upper_bound - lower_bound) / lower_bound)
         # test size 
         @test size(df_stats) == (i, length(header))
     end

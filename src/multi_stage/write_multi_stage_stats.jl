@@ -1,5 +1,7 @@
 _get_multi_stage_stats_filename() = "stats_multi_stage.csv"
-_get_multi_stage_stats_header() = ["Iteration_Number", "Seconds", "Upper_Bound", "Lower_Bound", "Relative_Gap"]
+function _get_multi_stage_stats_header()
+    ["Iteration_Number", "Seconds", "Upper_Bound", "Lower_Bound", "Relative_Gap"]
+end
 
 @doc raw"""
   write_multi_stage_stats(outpath::String, stats_d::Dict)
@@ -12,7 +14,6 @@ inputs:
   * stats\_d – Dictionary which contains the run time, upper bound, and lower bound of each DDP iteration.
 """
 function write_multi_stage_stats(outpath::String, stats_d::Dict)
-
     filename = _get_multi_stage_stats_filename()
 
     # don't overwrite existing file
@@ -23,13 +24,14 @@ function write_multi_stage_stats(outpath::String, stats_d::Dict)
     lower_bounds_a = stats_d["LOWER_BOUNDS"] # Lower bound of each iteration
 
     # Create an array of numbers 1 through total number of iterations
-    iteration_count_a = collect(1:length(upper_bounds_a))
+    iteration_count_a = collect(1:length(times_a))
 
     realtive_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
 
     # Construct dataframe where first column is iteration number, second is iteration time
     header = _get_multi_stage_stats_header()
-    df_stats = DataFrame(header .=> [iteration_count_a, times_a, upper_bounds_a, lower_bounds_a, realtive_gap_a])
+    df_stats = DataFrame(header .=>
+        [iteration_count_a, times_a, upper_bounds_a, lower_bounds_a, realtive_gap_a])
 
     CSV.write(joinpath(outpath, filename), df_stats)
     return nothing
@@ -78,7 +80,8 @@ Finally, it writes the updated DataFrame back to the file.
 # Returns
 - Nothing. A CSV file is updated or created at the `outpath`.
 """
-function update_multi_stage_stats_file(outpath::String, ic::Int64, upper_bound::Float64, lower_bound::Float64, iteration_time::Float64; new_row::Bool=false)
+function update_multi_stage_stats_file(outpath::String, ic::Int64, upper_bound::Float64,
+        lower_bound::Float64, iteration_time::Float64; new_row::Bool = false)
     filename = _get_multi_stage_stats_filename()
 
     # If the file does not exist, create it
@@ -86,7 +89,7 @@ function update_multi_stage_stats_file(outpath::String, ic::Int64, upper_bound::
         create_multi_stage_stats_file(outpath)
     end
 
-    df_stats = CSV.read(joinpath(outpath, filename), DataFrame, types=Float64)
+    df_stats = CSV.read(joinpath(outpath, filename), DataFrame, types = Float64)
 
     relative_gap = (upper_bound - lower_bound) / lower_bound
 

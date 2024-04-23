@@ -184,7 +184,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     # Step 3) Run DDP Algorithm
     ## Solve Model
     model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
-    
+
     # Step 4) Write final outputs from each stage
     for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
         outpath_cur = joinpath(outpath, "results_p$p")
