@@ -1,4 +1,4 @@
-@doc draw"""
+@doc raw"""
     @benchmarked <expr to benchmark> [setup=<setup expr>] [other keyword parameters...]
 
     Run @benchmarked on a given expression.
