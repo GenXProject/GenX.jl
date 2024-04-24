@@ -142,13 +142,20 @@ GenX.write_vre_stor_discharge
 ```
 
 ## Write Multi-stage files
+```@autodocs
+Modules = [GenX]
+Pages = ["write_multi_stage_outputs.jl"]
+```
 ```@docs
 GenX.write_multi_stage_costs
 GenX.write_multi_stage_stats
 GenX.write_multi_stage_settings
 GenX.write_multi_stage_network_expansion
+GenX.write_multi_stage_capacities_discharge
 GenX.write_multi_stage_capacities_charge
 GenX.write_multi_stage_capacities_energy
+GenX.create_multi_stage_stats_file
+GenX.update_multi_stage_stats_file
 ```
 
 ## Write maintenance files
