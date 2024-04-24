@@ -16,3 +16,10 @@ using Test
     @test isa(inputs_gen["VRE"], Int64)
     =#
 end
+
+# Test writing outputs
+@testset "Writing outputs " begin
+    for test_file in filter!(x -> endswith(x, ".jl"), readdir("writing_outputs"))
+        include("writing_outputs/$test_file")
+    end
+end

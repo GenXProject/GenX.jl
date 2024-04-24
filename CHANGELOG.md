@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Writing of multistage stats during optimization with foresight (#688) 
+
 ### Fixed
 - Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
 - Add check when capital recovery period is zero and investment costs are 
