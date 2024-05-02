@@ -39,4 +39,14 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
     rename!(dfStorage, auxNew_Names)
     CSV.write(joinpath(path, "storage.csv"), dftranspose(dfStorage, false), header = false)
+
+    if setup["OutputFullTimeSeries"] == 1
+        DFMatrix = Matrix(dftranspose(dfStorage, true))
+        DFnames = DFMatrix[1,:]
+        FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+        output_path = joinpath(path,FullTimeSeriesFolder)
+        dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfStorage, false), DFnames)
+        CSV.write(joinpath(output_path,"storage.csv"), dfOut_full)
+        println("Writing Full Time Series for Storage")
+    end
 end

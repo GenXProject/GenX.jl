@@ -13,6 +13,15 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         write_annual(filepath, dfStart)
     else # setup["WriteOutputs"] == "full"	
         write_fulltimeseries(filepath, start, dfStart)
+
+        if setup["OutputFullTimeSeries"] == 1
+            df_Start = CSV.read(joinpath(path,"start.csv"),DataFrame)
+            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+            output_path = joinpath(path,FullTimeSeriesFolder)
+            dfOut_full = full_time_series_reconstruction(path,setup, df_Start,names(df_Start))
+            CSV.write(joinpath(output_path,"start.csv"), dfOut_full)
+            println("Writing Full Time Series for Startup")
+        end
     end
     return nothing
 end

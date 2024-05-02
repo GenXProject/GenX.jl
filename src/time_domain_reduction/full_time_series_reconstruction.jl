@@ -2,7 +2,7 @@
                             DF::DataFrame)
 Create a DataFrame with all 8,760 hours of the year from the reduced output.
 
-case - folder for the case
+setup - case setup (dictionary)
 DF - DataFrame to be reconstructed
 
 This function uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
@@ -15,15 +15,14 @@ the time series and copies them to get up to all 8,760 hours in a year.
 This function is called when output files with time series data (e.g. power.csv, emissions.csv) are created, if the setup key "OutputFullTimeSeries" is set to "1".
 
 """
-function reconstruction(case::AbstractString,DF::DataFrame)
-    settings_path = GenX.get_settings_path(case)
-    
-    # Read Period map file Period_map.csv
-    Period_map = CSV.read(joinpath(case,"TDR_results/Period_map.csv"),DataFrame)
+function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::DataFrame,DFnames::Vector)
+   # Read Period map file Period_map.csv
+    case = path[1:findlast('/',path)]
+    TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
+    Period_map = CSV.read(joinpath(TDRpath,"Period_map.csv"),DataFrame)
     
     # Read time domain reduction settings file time_domain_reduction_settings.yml
-    myTDRsetup = YAML.load(open(joinpath(settings_path,
-        "time_domain_reduction_settings.yml")))
+    myTDRsetup = YAML.load(open(joinpath(case,"settings/time_domain_reduction_settings.yml")))
     
     # Define Timesteps per Representative Period and Weight Total
     TimestepsPerRepPeriod = myTDRsetup["TimestepsPerRepPeriod"]
@@ -33,38 +32,43 @@ function reconstruction(case::AbstractString,DF::DataFrame)
     numPeriods = floor(Int,WeightTotal/TimestepsPerRepPeriod)
     
     # Get the names of the input DataFrame
-    DFnames = names(DF)
-    
+    DFMatrix = Matrix(DF)
+    #DFnames = DFMatrix[1,:]
     # Initialize an array to add the reconstructed data to
     recon = ["t$t" for t in 1:TimestepsPerRepPeriod*numPeriods]
     
     # Find the index of the row with the first time step
     t1 = findfirst(x -> x == "t1",DF[!,1])
-    
+   
+    reconDF = DataFrame()
+    #names1 = [Symbol(DFnames[1])]
     # Reconstruction of all hours of the year from TDR
     for j in range(2,ncol(DF))
         col = DF[t1:end,j]
-        col_name = DFnames[j]
+        #col_name = DFnames[j]
+        #names1 = [names1 Symbol(col_name)]
         recon_col = []
         for i in range(1,numPeriods)
             index = Period_map[i,"Rep_Period_Index"]
             recon_temp = col[(TimestepsPerRepPeriod*index-(TimestepsPerRepPeriod-1)):(TimestepsPerRepPeriod*index)]
             recon_col = [recon_col; recon_temp]
         end
+        #reconDF[!,col_name] = recon_col
         recon = [recon recon_col]
     end
-    reconDF = DataFrame(recon, DFnames)
+    reconDF = DataFrame(recon, DFnames, makeunique=true)
+    #auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
+    #rename!(reconDF,names1)
     
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
     for i in range(1,t1-1)
-        insert!(reconDF,i,DF[i,1:end])
+        insert!(reconDF,i,DFMatrix[i,1:end],promote=true)
     end
     
     # Repeat the last rows of the year to fill in the gap (should be 24 hours for non-leap year)
     end_diff = WeightTotal - nrow(reconDF) + 1
-    new_rows = reconDF[(nrow(reconDF)-end_diff):nrow(reconDF),2:end]
-    new_rows[!,"Resource"] = ["t$t" for t in (WeightTotal-end_diff):WeightTotal] 
-    
+    new_rows = reconDF[(nrow(reconDF)-end_diff):nrow(reconDF),1:end]
+    new_rows[!,1] = ["t$t" for t in (WeightTotal-end_diff):WeightTotal] 
     reconDF = [reconDF; new_rows]
     
     return reconDF
