@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   does not allow a resource to switch from can_retire = 0 to can_retire = 1 between stages. (#683)
 - Add tutorials for running GenX (#637 and #685)
 - Add writing of multistage stats during optimization with foresight (#687)
+- Fix docstring in operational_reserves.jl (#690)
 
 ### Fixed
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
