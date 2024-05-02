@@ -1,9 +1,13 @@
-@doc raw"""reconstruction(case::AbstractString,
-                            DF::DataFrame)
+@doc raw"""full_time_series_reconstruction(path::AbstractString,
+                            case::AbstractString,
+                            DF::DataFrame,
+                            DFnames::Vector)
 Create a DataFrame with all 8,760 hours of the year from the reduced output.
 
+path -
 setup - case setup (dictionary)
 DF - DataFrame to be reconstructed
+DFnames - Vector of column names
 
 This function uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
 For each 52 weeks of the year, the corresponding representative week is taken from the input DataFrame and copied into the new DataFrame. Representative periods that 
@@ -15,6 +19,12 @@ the time series and copies them to get up to all 8,760 hours in a year.
 This function is called when output files with time series data (e.g. power.csv, emissions.csv) are created, if the setup key "OutputFullTimeSeries" is set to "1".
 
 """
+# TO DO:
+# Add docstring, no example needed
+# Add in a TDR check
+# Try header = false in CSV.write
+# Try transpose to get duplicated column names
+# Look into mybinder
 function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::DataFrame,DFnames::Vector)
    # Read Period map file Period_map.csv
     case = path[1:findlast('/',path)]
@@ -33,15 +43,14 @@ function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::Da
     
     # Get the names of the input DataFrame
     DFMatrix = Matrix(DF)
-    #DFnames = DFMatrix[1,:]
+    
     # Initialize an array to add the reconstructed data to
     recon = ["t$t" for t in 1:TimestepsPerRepPeriod*numPeriods]
     
     # Find the index of the row with the first time step
     t1 = findfirst(x -> x == "t1",DF[!,1])
    
-    reconDF = DataFrame()
-    #names1 = [Symbol(DFnames[1])]
+
     # Reconstruction of all hours of the year from TDR
     for j in range(2,ncol(DF))
         col = DF[t1:end,j]
@@ -50,14 +59,14 @@ function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::Da
         recon_col = []
         for i in range(1,numPeriods)
             index = Period_map[i,"Rep_Period_Index"]
-            recon_temp = col[(TimestepsPerRepPeriod*index-(TimestepsPerRepPeriod-1)):(TimestepsPerRepPeriod*index)]
+            recon_temp = col[(TimestepsPerRepPeriod*index-(TimestepsPerRepPeriod-1)):(TimestepsPerRepPeriod*index)] # Describe how this works
             recon_col = [recon_col; recon_temp]
         end
         #reconDF[!,col_name] = recon_col
         recon = [recon recon_col]
     end
     reconDF = DataFrame(recon, DFnames, makeunique=true)
-    #auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
+
     #rename!(reconDF,names1)
     
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
