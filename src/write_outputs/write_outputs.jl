@@ -23,6 +23,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         mkpath(path)
     end
 
+    if setup["OutputFullTimeSeries"] == 1
+        mkpath(joinpath(path,setup["OutputFullTimeSeriesFolder"]))
+    end
+
     # https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
     status = termination_status(EP)
 
@@ -72,6 +76,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         elapsed_time_power = @elapsed dfPower = write_power(path, inputs, setup, EP)
         println("Time elapsed for writing power is")
         println(elapsed_time_power)
+        println("Here")
     end
 
     if output_settings_d["WriteCharge"]
@@ -174,7 +179,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     if setup["UCommit"] >= 1
         if output_settings_d["WriteCommit"]
             elapsed_time_commit = @elapsed write_commit(path, inputs, setup, EP)
-            println("Time elapsed for writing commitment is")
+            println("Time elapsed for writing commitment is ")
             println(elapsed_time_commit)
         end
 
@@ -496,11 +501,6 @@ function write_fulltimeseries(fullpath::AbstractString,
     total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)
     dfOut = vcat(dfOut, total)
-
-    if setup["OutputFullTimeSeries"]
-        dfOut_full = reconstruction(case, dftranspose(dfOut, false))
-        CSV.write(fullpath/FullTimeSeries, dfOut_full, writeheader = false)
-    end
 
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
     return nothing

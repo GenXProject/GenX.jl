@@ -121,6 +121,16 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             CSV.write(joinpath(path, "emissions.csv"),
                 dftranspose(dfEmissions, false),
                 writeheader = false)
+
+            if setup["OutputFullTimeSeries"] == 1
+                DFMatrix = Matrix(dftranspose(dfEmissions, true))
+                DFnames = DFMatrix[1,:]
+                FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+                output_path = joinpath(path,FullTimeSeriesFolder)
+                dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfEmissions, false), DFnames)
+                CSV.write(joinpath(output_path,"emissions.csv"), dfOut_full)
+                println("Writing Full Time Series for Emissions")
+            end
         end
     end
     return nothing

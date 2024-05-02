@@ -20,4 +20,14 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
     CSV.write(joinpath(path, "reliability.csv"),
         dftranspose(dfReliability, false),
         header = false)
+
+    if setup["OutputFullTimeSeries"] == 1
+        DFMatrix = Matrix(dftranspose(dfReliability, true))
+        DFnames = ["Zone", "1", "2", "3"]
+        FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+        output_path = joinpath(path,FullTimeSeriesFolder)
+        dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfReliability, false), DFnames)
+        CSV.write(joinpath(output_path,"reliability.csv"), dfOut_full)
+        println("Writing Full Time Series for Reliability")
+    end
 end

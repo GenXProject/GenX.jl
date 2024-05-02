@@ -98,6 +98,18 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         CSV.write(joinpath(path, "power_balance.csv"),
             dftranspose(dfPowerBalance, false),
             writeheader = false)
+
+        if setup["OutputFullTimeSeries"] == 1
+            DFnames = dfPowerBalance[:,1]
+            insert!(DFnames,1,"BalanceComponent")
+            #DFMatrix = Matrix(dftranspose(dfPowerBalance, true))
+           # DFnames = DFMatrix[1,:]
+            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+            output_path = joinpath(path,FullTimeSeriesFolder)
+            dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfPowerBalance, false),DFnames)
+            CSV.write(joinpath(output_path,"power_balance.csv"), dfOut_full)
+            println("Writing Full Time Series for Power Balance")
+        end
     end
     return nothing
 end
