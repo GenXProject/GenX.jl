@@ -46,9 +46,9 @@ where $\epsilon^{contingency}$ is static contingency requirement in MWs.
 Option 2 (dynamic capacity-based contingency) is expressed by the following constraints:
 ```math
 \begin{aligned}
-	&Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
-	&\alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
-	&\alpha^{Contingency,Aux}_{y,z} \geq M_y \times \Delta^{\text{total}}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	& Contingency \geq \Omega^{size}_{y,z} \times \alpha^{Contingency,Aux}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	& \alpha^{Contingency,Aux}_{y,z} \leq \Delta^{\text{total}}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+	& \Delta^{\text{total}}_{y,z} \leq M_y \times \alpha^{Contingency,Aux}_{y,z} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
 \end{aligned}
 ```
 
@@ -60,7 +60,7 @@ Option 3 (dynamic commitment-based contingency) is expressed by the following se
 \begin{aligned}
 	& Contingency \geq \Omega^{size}_{y,z} \times Contingency\_Aux_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
 	& Contingency\_Aux_{y,z,t} \leq \nu_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
-	& Contingency\_Aux_{y,z,t} \geq M_y \times \nu_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
+    & \nu_{y,z,t} \leq M_y \times Contingency\_Aux_{y,z,t} & \forall y \in \mathcal{UC}, z \in \mathcal{Z}\\
 \end{aligned}
 ```
 
