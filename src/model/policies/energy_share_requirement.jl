@@ -4,7 +4,7 @@ This function establishes constraints that can be flexibily applied to define al
 These policies usually require that the annual MWh generation from a subset of qualifying generators has to be higher than a pre-specified percentage of demand from qualifying zones.
 The implementation allows for user to define one or multiple RPS/CES style minimum energy share constraints,
 where each constraint can cover different combination of model zones to mimic real-world policy implementation (e.g. multiple state policies, multiple RPS tiers or overlapping RPS and CES policies).
-The number of energy share requirement constraints is specified by the user by the value of the GenX settings parameter ```EnergyShareRequirement``` (this value should be an integer >=0).
+Including an energy share requirement constraint is specified by the user by the value of the GenX settings parameter ```EnergyShareRequirement``` (this value should either 0 or 1).
 For each constraint $p \in \mathcal{P}^{ESR}$, we define a subset of zones $z \in \mathcal{Z}^{ESR}_{p} \subset \mathcal{Z}$ that are eligible for trading renewable/clean energy credits to meet the corresponding renewable/clean energy requirement.
 For each energy share requirement constraint $p \in \mathcal{P}^{ESR}$,
 we specify the share of total demand in each eligible model zone,

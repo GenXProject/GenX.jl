@@ -50,8 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tutorials for running GenX (#637 and #685)
 - Add writing of multistage stats during optimization with foresight (#687)
 - Fix docstring in operational_reserves.jl (#690)
+- Fix docstring in energy_share_requirement.jl (#692)
 
-### Fixed
+### Fixed 
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
   Previously these plants had no resource flag set, and so they did not contribute to the power balance.
   As these plants are now useful, the objective in these cases is slightly lower.
