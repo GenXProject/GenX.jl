@@ -312,7 +312,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eESRTran[ESR = 1:inputs["nESR"]],
             sum(inputs["dfESR"][z, ESR] *
                 sum(inputs["omega"][t] * EP[:eLosses_By_Zone][z, t] for t in 1:T)
-                for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
         add_similar_to_expression!(EP[:eESR], -eESRTran)
     end
 end

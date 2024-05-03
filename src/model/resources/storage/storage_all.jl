@@ -49,9 +49,10 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Energy losses related to technologies (increase in effective demand)
     @expression(EP,
         eELOSS[y in STOR_ALL],
-        sum(inputs["omega"][t] * EP[:vCHARGE][y, t] for t in 1:T)-sum(inputs["omega"][t] *
-                                                                      EP[:vP][y, t]
-                                                                      for t in 1:T))
+        sum(inputs["omega"][t] * EP[:vCHARGE][y, t]
+        for t in 1:T)-sum(inputs["omega"][t] *
+                          EP[:vP][y, t]
+        for t in 1:T))
 
     ## Objective Function Expressions ##
 
@@ -92,7 +93,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Term to represent net dispatch from storage in any period
     @expression(EP, ePowerBalanceStor[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t] - EP[:vCHARGE][y, t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)))
+        for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
     ### Constraints ###

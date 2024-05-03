@@ -67,7 +67,7 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
     ## Power Balance Expressions ##
     @expression(EP, ePowerBalanceDemandFlex[t = 1:T, z = 1:Z],
         sum(-EP[:vP][y, t] + EP[:vCHARGE_FLEX][y, t]
-            for y in intersect(FLEX, resources_in_zone_by_rid(gen, z))))
+        for y in intersect(FLEX, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceDemandFlex)
 
     # Capacity Reserves Margin policy
@@ -127,14 +127,12 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
             @constraint(EP, [t in 1:T],
                 # cFlexibleDemandDelay: Constraints looks forward over next n hours, where n = max_flexible_demand_delay
                 sum(EP[:vP][y, e]
-                    for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_delay))>=EP[:vS_FLEX][y,
-                    t])
+                for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_delay))>=EP[:vS_FLEX][y,t])
 
             @constraint(EP, [t in 1:T],
                 # cFlexibleDemandAdvance: Constraint looks forward over next n hours, where n = max_flexible_demand_advance
                 sum(EP[:vCHARGE_FLEX][y, e]
-                    for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_advance))>=-EP[:vS_FLEX][y,
-                    t])
+                for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_advance))>=-EP[:vS_FLEX][y,t])
         end
     end
 

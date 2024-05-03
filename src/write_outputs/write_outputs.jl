@@ -269,7 +269,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
             if output_settings_d["WriteEnergyRevenue"] ||
                output_settings_d["WriteNetRevenue"]
-                elapsed_time_energy_rev = @elapsed dfEnergyRevenue = write_energy_revenue(path,
+                elapsed_time_energy_rev = @elapsed dfEnergyRevenue = write_energy_revenue(
+                    path,
                     inputs,
                     setup,
                     EP)
@@ -279,7 +280,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
             if output_settings_d["WriteChargingCost"] ||
                output_settings_d["WriteNetRevenue"]
-                elapsed_time_charging_cost = @elapsed dfChargingcost = write_charging_cost(path,
+                elapsed_time_charging_cost = @elapsed dfChargingcost = write_charging_cost(
+                    path,
                     inputs,
                     setup,
                     EP)
@@ -289,7 +291,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
             if output_settings_d["WriteSubsidyRevenue"] ||
                output_settings_d["WriteNetRevenue"]
-                elapsed_time_subsidy = @elapsed dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(path,
+                elapsed_time_subsidy = @elapsed dfSubRevenue, dfRegSubRevenue = write_subsidy_revenue(
+                    path,
                     inputs,
                     setup,
                     EP)
@@ -357,7 +360,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
             if output_settings_d["WriteReserveMarginRevenue"] ||
                output_settings_d["WriteNetRevenue"]
-                elapsed_time_res_rev = @elapsed dfResRevenue = write_reserve_margin_revenue(path,
+                elapsed_time_res_rev = @elapsed dfResRevenue = write_reserve_margin_revenue(
+                    path,
                     inputs,
                     setup,
                     EP)
@@ -388,7 +392,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         dfOpRegRevenue = DataFrame()
         dfOpRsvRevenue = DataFrame()
         if setup["OperationalReserves"] == 1 && has_duals(EP)
-            elapsed_time_op_res_rev = @elapsed dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(path,
+            elapsed_time_op_res_rev = @elapsed dfOpRegRevenue, dfOpRsvRevenue = write_operating_reserve_regulation_revenue(
+                path,
                 inputs,
                 setup,
                 EP)
@@ -432,7 +437,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             end
             if setup["HydrogenHourlyMatching"] == 1 &&
                output_settings_d["WriteHourlyMatchingPrices"]
-                elapsed_time_hourly_matching_prices = @elapsed write_hourly_matching_prices(path,
+                elapsed_time_hourly_matching_prices = @elapsed write_hourly_matching_prices(
+                    path,
                     inputs,
                     setup,
                     EP)
@@ -484,14 +490,14 @@ end
 Internal function for writing full time series outputs. This function wraps the instructions for creating the full time series output files. 
 """
 function write_fulltimeseries(fullpath::AbstractString,
-    dataOut::Matrix{Float64},
-    dfOut::DataFrame)
+        dataOut::Matrix{Float64},
+        dfOut::DataFrame)
     T = size(dataOut, 2)
     dfOut = hcat(dfOut, DataFrame(dataOut, :auto))
     auxNew_Names = [Symbol("Resource");
-        Symbol("Zone");
-        Symbol("AnnualSum");
-        [Symbol("t$t") for t in 1:T]]
+                    Symbol("Zone");
+                    Symbol("AnnualSum");
+                    [Symbol("t$t") for t in 1:T]]
     rename!(dfOut, auxNew_Names)
     total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)

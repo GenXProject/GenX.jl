@@ -1,7 +1,7 @@
 function write_transmission_losses(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     L = inputs["L"]     # Number of transmission lines
     LOSS_LINES = inputs["LOSS_LINES"]

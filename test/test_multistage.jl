@@ -115,7 +115,8 @@ function test_update_cumulative_min_ret!()
                 for t in 1:3
                     inpath_sub = joinpath(test_path, "cum_min_ret", string("inputs_p", t))
 
-                    true_min_retirements[t] = CSV.read(joinpath(inpath_sub,
+                    true_min_retirements[t] = CSV.read(
+                        joinpath(inpath_sub,
                             "resources",
                             "Resource_multistage_data.csv"),
                         DataFrame)

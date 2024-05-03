@@ -167,8 +167,8 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
             @expression(EP,
                 eESRStor[ESR = 1:inputs["nESR"]],
                 sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS][y]
-                        for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
-                    for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+                    for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
+                for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
             add_similar_to_expression!(EP[:eESR], -eESRStor)
         end
     end
@@ -178,14 +178,14 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP,
             eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
             sum(derating_factor(gen[y], tag = res) * (EP[:vP][y, t] - EP[:vCHARGE][y, t])
-                for y in STOR_ALL))
+            for y in STOR_ALL))
         if StorageVirtualDischarge > 0
             @expression(EP,
                 eCapResMarBalanceStorVirtual[res = 1:inputs["NCapacityReserveMargin"],
                     t = 1:T],
                 sum(derating_factor(gen[y], tag = res) *
                     (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
-                    for y in STOR_ALL))
+                for y in STOR_ALL))
             add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
         end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)

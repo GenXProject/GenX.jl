@@ -82,5 +82,5 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
         EP[:eCapResMarBalance][res,
             t]
         >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
-              for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+        for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
 end

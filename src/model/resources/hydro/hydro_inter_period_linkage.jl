@@ -81,17 +81,22 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
         cHydroReservoirLongDurationStorageStart[w = 1:REP_PERIOD,
             y in STOR_HYDRO_LONG_DURATION],
         EP[:vS_HYDRO][y,
-            hours_per_subperiod * (w - 1) + 1]==(EP[:vS_HYDRO][y, hours_per_subperiod * w] - vdSOC_HYDRO[y, w]) -
-           (1 / efficiency_down(gen[y]) * EP[:vP][y, hours_per_subperiod * (w - 1) + 1]) -
-           EP[:vSPILL][y, hours_per_subperiod * (w - 1) + 1] +
-           inputs["pP_Max"][y, hours_per_subperiod * (w - 1) + 1] * EP[:eTotalCap][y])
+            hours_per_subperiod * (w - 1) + 1]==(EP[:vS_HYDRO][y, hours_per_subperiod * w] -
+                                                 vdSOC_HYDRO[y, w]) -
+                                                (1 / efficiency_down(gen[y]) * EP[:vP][
+            y, hours_per_subperiod * (w - 1) + 1]) -
+                                                EP[:vSPILL][
+            y, hours_per_subperiod * (w - 1) + 1] +
+                                                inputs["pP_Max"][
+            y, hours_per_subperiod * (w - 1) + 1] * EP[:eTotalCap][y])
     # Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     ## Multiply storage build up term from prior period with corresponding weight
     @constraint(EP,
         cHydroReservoirLongDurationStorage[y in STOR_HYDRO_LONG_DURATION,
             r in MODELED_PERIODS_INDEX],
         vSOC_HYDROw[y,
-            mod1(r + 1, NPeriods)]==vSOC_HYDROw[y, r] + vdSOC_HYDRO[y, dfPeriodMap[r, :Rep_Period_Index]])
+            mod1(r + 1, NPeriods)]==vSOC_HYDROw[y, r] +
+                                    vdSOC_HYDRO[y, dfPeriodMap[r, :Rep_Period_Index]])
 
     # Storage at beginning of each modeled period cannot exceed installed energy capacity
     @constraint(EP,
@@ -104,7 +109,6 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
     @constraint(EP,
         cHydroReservoirLongDurationStorageSub[y in STOR_HYDRO_LONG_DURATION,
             r in REP_PERIODS_INDEX],
-        vSOC_HYDROw[y,
-            r]==EP[:vS_HYDRO][y, hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] -
-           vdSOC_HYDRO[y, dfPeriodMap[r, :Rep_Period_Index]])
+        vSOC_HYDROw[y,r]==EP[:vS_HYDRO][y, hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] -
+                vdSOC_HYDRO[y, dfPeriodMap[r, :Rep_Period_Index]])
 end

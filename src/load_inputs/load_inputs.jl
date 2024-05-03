@@ -117,8 +117,8 @@ Returns:
 - String: The directory path based on the setup parameters.
 """
 function get_systemfiles_path(setup::Dict,
-    TDR_directory::AbstractString,
-    path::AbstractString)
+        TDR_directory::AbstractString,
+        path::AbstractString)
     if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory)
         return TDR_directory
     else

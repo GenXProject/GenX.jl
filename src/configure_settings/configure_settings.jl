@@ -80,7 +80,8 @@ function validate_settings!(settings::Dict{Any, Any})
 
     if haskey(settings, "Reserves")
         Base.depwarn("""The Reserves setting has been deprecated. Please use the
-        OperationalReserves setting instead.""", :validate_settings!, force = true)
+        OperationalReserves setting instead.""",
+            :validate_settings!, force = true)
         settings["OperationalReserves"] = settings["Reserves"]
         delete!(settings, "Reserves")
     end

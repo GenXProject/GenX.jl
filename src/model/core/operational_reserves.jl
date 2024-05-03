@@ -227,7 +227,8 @@ function operational_reserves_core!(EP::Model, inputs::Dict, setup::Dict)
 
     systemwide_hourly_demand = sum(pDemand, dims = 2)
     function must_run_vre_generation(t)
-        sum(pP_Max(y, t) * EP[:eTotalCap][y]
+        sum(
+            pP_Max(y, t) * EP[:eTotalCap][y]
             for y in intersect(inputs["VRE"], inputs["MUST_RUN"]);
             init = 0)
     end
