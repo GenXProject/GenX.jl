@@ -113,6 +113,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
     end
 
+    if setup["HydrogenMimimumProduction"] == 2
+        create_empty_expression!(EP, :eH2DemandRes, inputs["NumberOfH2DemandReqs"])
+    end
+
     # Infrastructure
     discharge!(EP, inputs, setup)
 

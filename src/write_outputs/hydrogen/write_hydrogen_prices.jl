@@ -10,20 +10,13 @@ function write_hydrogen_prices(path::AbstractString, inputs::Dict, setup::Dict, 
 		VS_ELEC = Vector{Int}[]
 	end
 
-	if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
-		HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
-	elseif !isempty(ELECTROLYZERS)
-		HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
-	else
-		HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
-	end
-
 	scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
 	if setup["HydrogenMimimumProduction"] ==2
+		NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
 		dfHydrogenPrice = DataFrame(
-			Zone = HYDROGEN_ZONES,
-			Hydrogen_Price_Per_Tonne = convert(Array{Float64}, dual.(EP[:cHydrogenMin])*scale_factor))
-		CSV.write(joinpath(path, "hydrogen_prices_zone.csv"), dfHydrogenPrice)
+			H2_Demand = [Symbol("H2_Demand_$h2demand") for h2demand in 1:NumberOfH2DemandReqs],
+			Hydrogen_Price_Per_Tonne = convert(Array{Float64}, dual.(EP[:cZoneH2DemandReq])*scale_factor))
+		CSV.write(joinpath(path, "hydrogen_prices_region.csv"), dfHydrogenPrice)
 
 	elseif setup["HydrogenMimimumProduction"] == 1
 		dfHydrogenPrice_grid = DataFrame()

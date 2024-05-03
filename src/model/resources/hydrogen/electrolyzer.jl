@@ -107,9 +107,26 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
     EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
+	## Hydrogen production expressions ##
+	if setup["HydrogenMimimumProduction"] == 2
+		@expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)], 
+			if y in ELECTROLYZERS
+				sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t in 1:T)
+			else
+				sum(omega[t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t in 1:T)
+			end)
+
+		@expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
+			sum(EP[:eH2Production][y] for y in ids_with_policy(gen, h2_demand, tag = h2demand)))
+		
+		if !isempty(VS_ELEC)
+
+		end
+		add_similar_to_expression!(EP[:eH2DemandRes], eH2ProductionRes)
+	end
+
     # Capacity Reserves Margin policy
     ## Electrolyzers currently do not contribute to capacity reserve margin. Could allow them to contribute as a curtailable demand in future.
-
     ### Constraints ###
 
     ### Maximum ramp up and down between consecutive hours (Constraints #1-2)
