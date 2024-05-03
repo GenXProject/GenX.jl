@@ -135,6 +135,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         dfCost[9, 2] += value(EP[:eTotalCMinCapSlack])
     end
 
+    if haskey(inputs, "H2DemandPriceH2")
+        dfCost[9, 2] += value(EP[:eTotalCH2DemandSlack])
+    end
+
     if !isempty(VRE_STOR)
         dfCost[!, 2][11] = value(EP[:eTotalCGrid]) *
                            (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)

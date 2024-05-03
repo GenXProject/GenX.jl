@@ -50,13 +50,13 @@ function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
 		VS_ELEC = Vector{Int}[]
 	end
 
-	if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
-		HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
-	elseif !isempty(ELECTROLYZERS)
-		HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
-	else
-		HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
-	end
+	# if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
+	# 	HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
+	# elseif !isempty(ELECTROLYZERS)
+	# 	HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
+	# else
+	# 	HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
+	# end
 
     kt_to_t = 10^3
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
@@ -70,22 +70,26 @@ function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
             cHydrogenMinVS[y in VS_ELEC],
             sum(inputs["omega"][t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t=1:T) >= by_rid(y,:electrolyzer_min_kt) * kt_to_t)
 
-
-        @expression(EP, eHydrogenMin[z in HYDROGEN_ZONES],
-            if !isempty(VS_ELEC)
-                sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T, y = resources_in_zone_by_rid(gen[ELECTROLYZERS], z); init=0) +
-                sum(omega[t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t=1:T, y = resources_in_zone_by_rid(gen[VS_ELEC], z); init=0)
-            else
-                sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T, y = resources_in_zone_by_rid(gen[ELECTROLYZERS], z); init=0)
-            end
-        )
-
     ## Zonal level limit constraint
     elseif setup["HydrogenMimimumProduction"] == 2
-		Hydrogen_demand = inputs["dfH2Demand"]
+		NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
+		# slack: if input files are present, add minimum capacity requirement slack variables
+		if haskey(inputs, "H2DemandPriceH2")
+			@variable(EP, vH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs]>=0)
+			add_similar_to_expression!(EP[:eH2DemandRes], vH2Demand_slack)
+	
+			@expression(EP,
+				eCH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs],
+				inputs["H2DemandPriceH2"][h2demand]*EP[:vH2Demand_slack][h2demand])
+			@expression(EP,
+				eTotalCH2DemandSlack,
+				sum(EP[:eCH2Demand_slack][h2demand] for h2demand in 1:NumberOfH2DemandReqs))
+	
+			add_to_expression!(EP[:eObj], eTotalCH2DemandSlack)
+		end
+
 		@constraint(EP,
-			cHydrogenMin[z in HYDROGEN_ZONES],
-			EP[:eHydrogenMin][z] >= Hydrogen_demand[findfirst(Zone->Zone==z, Hydrogen_demand[!,:Zone]), :Hydrogen_Demand_kt] * kt_to_t)
-			
+        cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],
+        EP[:eH2DemandRes][h2demand]>=inputs["H2DemandReq"][h2demand] * kt_to_t)
 	end
 end

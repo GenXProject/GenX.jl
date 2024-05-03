@@ -72,7 +72,7 @@ function load_inputs(setup::Dict, path::AbstractString)
 
 	# Read in hydrogen damand data
 	if setup["HydrogenMimimumProduction"] ==2
-		load_hydrogen_demand!(setup, system_path, inputs)
+		load_hydrogen_demand!(setup, policies_path, inputs)
 	end
 	
 	# Read in mapping of modeled periods to representative periods

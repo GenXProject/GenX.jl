@@ -1087,6 +1087,9 @@ end
 function max_cap_wind(r::AbstractResource; tag::Int64)
     get(r, Symbol("max_cap_wind_$tag"), default_zero)
 end
+function h2_demand(r::AbstractResource; tag::Int64)
+    get(r, Symbol("h2_demand_$tag"), default_zero)
+end
 
 ## Utility functions for working with resources
 in_zone(r::AbstractResource, zone::Int) = zone_id(r) == zone

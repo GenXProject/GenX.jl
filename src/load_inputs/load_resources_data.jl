@@ -34,13 +34,15 @@ function _get_policyfile_info()
     cap_res_filenames = ["Resource_capacity_reserve_margin.csv"]
     min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
     max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
+    h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
 
     policyfile_info = (
         esr = (filenames = esr_filenames,
             setup_param = "EnergyShareRequirement"),
         cap_res = (filenames = cap_res_filenames, setup_param = "CapacityReserveMargin"),
         min_cap = (filenames = min_cap_filenames, setup_param = "MinCapReq"),
-        max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"))
+        max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"),
+        h2_demand = (filenames = h2_demand_filenames, setup_param = "HydrogenMimimumProduction"))
     return policyfile_info
 end
 
@@ -575,7 +577,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     cols = lowercase.(names(policy_in))
     filter!(col -> col ≠ "resource", cols)
 
-    accepted_cols = ["derating_factor", "esr", "esr_vrestor",
+    accepted_cols = ["derating_factor", "esr", "esr_vrestor", "h2_demand",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
          for type in ("", "_stor", "_solar", "_wind")]...]
 
