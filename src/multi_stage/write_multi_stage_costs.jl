@@ -52,6 +52,7 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
 
     # Remove "cTotal" from results (as this includes Cost-to-Go)
     df_costs = df_costs[df_costs[!, :Costs] .!= "cTotal", :]
+    println("The cost calculation of the multi-stage GenX is approximate currently, and we will be refining it more in one of the future releases.")
 
     CSV.write(joinpath(outpath, "costs_multi_stage.csv"), df_costs)
 end
