@@ -30,7 +30,13 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
         if myopic
             DF = 1 # DF=1 because we do not apply discount factor in myopic case
         else
-            DF = 1 / (1 + wacc)^(stage_lens[p] * (p - 1))  # Discount factor applied to ALL costs in each stage
+	    cum_stage_length = 0
+	    if p > 1
+	    	for stage_counter in 1:(p - 1)
+			cum_stage_length += stage_lens[stage_counter]
+	    	end
+	    end
+            DF = 1 / (1 + wacc)^(cum_stage_length)  # Discount factor applied to ALL costs in each stage
         end
         df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!, Symbol("Total")]
     end
@@ -45,6 +51,7 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
 
     # Remove "cTotal" from results (as this includes Cost-to-Go)
     df_costs = df_costs[df_costs[!, :Costs] .!= "cTotal", :]
+    @warn("The cost calculation of the multi-stage GenX is approximate currently, and we will be refining it more in one of the future releases.")
 
     CSV.write(joinpath(outpath, "costs_multi_stage.csv"), df_costs)
 end

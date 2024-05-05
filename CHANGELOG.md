@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
 - Added versioned doc-pages for v0.3.6 and v0.4.0
+
+- Added a warning message in write_costs_multistage mentioning th approximate value of costs currently.
+
+### Fixed
 - Add constraint in mga to compute total capacity in each zone from a given technology type (#681)
 - New settings parameter MGAAnnualGeneration to switch between different MGA formulations (#681)
 - Add validation for `Can_Retire` column in multi-stage GenX since the current implementation 
@@ -51,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add writing of multistage stats during optimization with foresight (#687)
 - Fix docstring in operational_reserves.jl (#690)
 - Fix docstring in energy_share_requirement.jl (#692)
-
-### Fixed 
 - Set MUST_RUN=1 for RealSystemExample/small_hydro plants (#517).
   Previously these plants had no resource flag set, and so they did not contribute to the power balance.
   As these plants are now useful, the objective in these cases is slightly lower.
@@ -73,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed outputting capital recovery cost to 0 if the remaining number of years is 0 (#666)
 - Updated the docstring for the initialize_cost_to_go function and adjusted the formula for the discount factor to reflect the code implementation (#672).
 - Fix write_multi_stage_cost.jl: add discount with OPEX multipliers to cUnmetPolicyPenalty (#679)
+- Fix DF calculation in DDP to make it more generic for variable length stages (#680)
 - Fix write_power_balance.jl: add additional two columns ("VRE_Storage_Discharge" and "VRE_Storage_Charge") for VRE_STOR
 
 ### Changed
