@@ -45,8 +45,7 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
     for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv", "cUnmetPolicyPenalty"]
         if cost in df_costs[!, :Costs]
             df_costs[df_costs[!, :Costs] .== cost, 2:end] = transpose(OPEXMULTS) .*
-                                                            df_costs[df_costs[!, :Costs] .== cost,
-                2:end]
+                                                            df_costs[df_costs[!, :Costs] .== cost, 2:end]
         end
     end
 

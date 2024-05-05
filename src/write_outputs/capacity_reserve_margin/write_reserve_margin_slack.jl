@@ -1,7 +1,7 @@
 function write_reserve_margin_slack(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     NCRM = inputs["NCapacityReserveMargin"]
     T = inputs["T"]     # Number of time steps (hours)
     dfResMar_slack = DataFrame(CRM_Constraint = [Symbol("CapRes_$res") for res in 1:NCRM],

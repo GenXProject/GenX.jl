@@ -19,7 +19,8 @@ function load_operational_reserves!(setup::Dict, path::AbstractString, inputs::D
         end
         for col in columns
             if col in all_columns
-                Base.depwarn("The column name $col in file $filename is deprecated; prefer $best",
+                Base.depwarn(
+                    "The column name $col in file $filename is deprecated; prefer $best",
                     :load_operational_reserves,
                     force = true)
                 return float(df[firstrow, col])

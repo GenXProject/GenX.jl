@@ -18,6 +18,12 @@ At any given time step, the amount of demand that can be shifted or deferred can
 \Pi_{y,t} \leq \rho^{max}_{y,z,t}\Delta_{y,z} \hspace{4 cm}  \forall y \in \mathcal{DF}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+At any given time step, the amount of demand that can be met cannot exceed the capacity of the FLEX resources.
+```math
+\begin{aligned}
+\eta_{y,z}^{dflex}\Theta_{y,z,t} \leq \Delta_{y,z} \hspace{4 cm}  \forall y \in \mathcal{DF}, z \in \mathcal{Z}, t \in \mathcal{T}
+\end{aligned}
+```
 **Maximum time delay and advancements**
 Delayed demand must then be served within a fixed number of time steps. This is done by enforcing the sum of demand satisfied ($\Theta_{y,z,t}$) in the following $\tau^{delay}_{y,z}$ time steps (e.g., t + 1 to t + $\tau^{delay}_{y,z}$) to be greater than or equal to the level of energy deferred during time step $t$.
 ```math
@@ -61,7 +67,7 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
     ## Power Balance Expressions ##
     @expression(EP, ePowerBalanceDemandFlex[t = 1:T, z = 1:Z],
         sum(-EP[:vP][y, t] + EP[:vCHARGE_FLEX][y, t]
-            for y in intersect(FLEX, resources_in_zone_by_rid(gen, z))))
+        for y in intersect(FLEX, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceDemandFlex)
 
     # Capacity Reserves Margin policy
@@ -104,12 +110,12 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
                 EP[:vCHARGE_FLEX][y, t]
 
                 # Maximum charging rate
-                # NOTE: the maximum amount that can be shifted is given by hourly availability of the resource times the maximum capacity of the resource
                 [y in FLEX_Z, t = 1:T],
                 EP[:vCHARGE_FLEX][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
-                # NOTE: no maximum discharge rate unless constrained by other factors like transmission, etc.
+                # Maximum discharging rate
+                [y in FLEX_Z, t = 1:T],
+                flexible_demand_energy_eff(gen[y]) * EP[:vP][y, t] <= EP[:eTotalCap][y]
             end)
-
         for y in FLEX_Z
 
             # Require deferred demands to be satisfied within the specified time delay
@@ -121,14 +127,12 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
             @constraint(EP, [t in 1:T],
                 # cFlexibleDemandDelay: Constraints looks forward over next n hours, where n = max_flexible_demand_delay
                 sum(EP[:vP][y, e]
-                    for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_delay))>=EP[:vS_FLEX][y,
-                    t])
+                for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_delay))>=EP[:vS_FLEX][y,t])
 
             @constraint(EP, [t in 1:T],
                 # cFlexibleDemandAdvance: Constraint looks forward over next n hours, where n = max_flexible_demand_advance
                 sum(EP[:vCHARGE_FLEX][y, e]
-                    for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_advance))>=-EP[:vS_FLEX][y,
-                    t])
+                for e in hoursafter(hours_per_subperiod, t, 1:max_flex_demand_advance))>=-EP[:vS_FLEX][y,t])
         end
     end
 

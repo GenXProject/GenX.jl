@@ -81,8 +81,8 @@ inputs:
 returns: dictionary containing updated model inputs, to be used in the generate\_model() method.
 """
 function configure_multi_stage_inputs(inputs_d::Dict,
-    settings_d::Dict,
-    NetworkExpansion::Int64)
+        settings_d::Dict,
+        NetworkExpansion::Int64)
     gen = inputs_d["RESOURCES"]
 
     # Parameter inputs when multi-year discounting is activated
@@ -121,31 +121,38 @@ function configure_multi_stage_inputs(inputs_d::Dict,
         # Conduct 1. and 2. for any co-located VRE-STOR resources
         if !isempty(inputs_d["VRE_STOR"])
             gen_VRE_STOR = gen.VreStorage
-            gen_VRE_STOR.inv_cost_inverter_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_inverter_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_inverter_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_dc.(gen_VRE_STOR),
                 tech_wacc_dc.(gen_VRE_STOR))
-            gen_VRE_STOR.inv_cost_solar_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_solar_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_solar_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_solar.(gen_VRE_STOR),
                 tech_wacc_solar.(gen_VRE_STOR))
-            gen_VRE_STOR.inv_cost_wind_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_wind_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_wind_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_wind.(gen_VRE_STOR),
                 tech_wacc_wind.(gen_VRE_STOR))
-            gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_discharge_dc_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_discharge_dc.(gen_VRE_STOR),
                 tech_wacc_discharge_dc.(gen_VRE_STOR))
-            gen_VRE_STOR.inv_cost_charge_dc_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_charge_dc_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_charge_dc_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_charge_dc.(gen_VRE_STOR),
                 tech_wacc_charge_dc.(gen_VRE_STOR))
-            gen_VRE_STOR.inv_cost_discharge_ac_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_discharge_ac_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_discharge_ac_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_discharge_ac.(gen_VRE_STOR),
                 tech_wacc_discharge_ac.(gen_VRE_STOR))
-            gen_VRE_STOR.inv_cost_charge_ac_per_mwyr = compute_overnight_capital_cost(settings_d,
+            gen_VRE_STOR.inv_cost_charge_ac_per_mwyr = compute_overnight_capital_cost(
+                settings_d,
                 inv_cost_charge_ac_per_mwyr.(gen_VRE_STOR),
                 capital_recovery_period_charge_ac.(gen_VRE_STOR),
                 tech_wacc_charge_ac.(gen_VRE_STOR))
@@ -216,4 +223,38 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     end
 
     return inputs_d
+end
+
+@doc raw"""
+    validate_can_retire_multistage(inputs_dict::Dict, num_stages::Int)
+
+This function validates that all the resources do not switch from havig `can_retire = 0` to `can_retire = 1` during the multi-stage optimization.
+
+# Arguments
+- `inputs_dict::Dict`: A dictionary containing the inputs for each stage.
+- `num_stages::Int`: The number of stages in the multi-stage optimization.
+
+# Returns
+- Throws an error if a resource switches from `can_retire = 0` to `can_retire = 1` between stages.
+"""
+function validate_can_retire_multistage(inputs_dict::Dict, num_stages::Int)
+    for stage in 2:num_stages   # note: loop starts from 2 because we are comparing stage t with stage t-1
+        can_retire_current = can_retire.(inputs_dict[stage]["RESOURCES"])
+        can_retire_previous = can_retire.(inputs_dict[stage - 1]["RESOURCES"])
+
+        # Check if any resource switched from can_retire = 0 to can_retire = 1 between stage t-1 and t
+        if any(can_retire_current .- can_retire_previous .> 0)
+            # Find the resources that switched from can_retire = 0 to can_retire = 1 and throw an error
+            retire_switch_ids = findall(can_retire_current .- can_retire_previous .> 0)
+            resources_switched = inputs_dict[stage]["RESOURCES"][retire_switch_ids]
+            for resource in resources_switched
+                @warn "Resource `$(resource_name(resource))` with id = $(resource_id(resource)) switched " *
+                      "from can_retire = 0 to can_retire = 1 between stages $(stage - 1) and $stage"
+            end
+            msg = "Current implementation of multi-stage optimization does not allow resources " *
+                  "to switch from can_retire = 0 to can_retire = 1 between stages."
+            error(msg)
+        end
+    end
+    return nothing
 end

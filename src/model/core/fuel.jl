@@ -114,11 +114,11 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         COFIRE_MAX = [findall(g -> max_cofire_cols(g, tag = i) < 1, gen[MULTI_FUELS])
                       for i in 1:max_fuels]
         COFIRE_MAX_START = [findall(g -> max_cofire_start_cols(g, tag = i) < 1,
-            gen[MULTI_FUELS]) for i in 1:max_fuels]
+                                gen[MULTI_FUELS]) for i in 1:max_fuels]
         COFIRE_MIN = [findall(g -> min_cofire_cols(g, tag = i) > 0, gen[MULTI_FUELS])
                       for i in 1:max_fuels]
         COFIRE_MIN_START = [findall(g -> min_cofire_start_cols(g, tag = i) > 0,
-            gen[MULTI_FUELS]) for i in 1:max_fuels]
+                                gen[MULTI_FUELS]) for i in 1:max_fuels]
 
         @variable(EP, vMulFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T]>=0)
         @variable(EP, vMulStartFuels[y in MULTI_FUELS, i = 1:max_fuels, t = 1:T]>=0)
@@ -226,14 +226,15 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(MULTI_FUELS)
         @expression(EP, eFuelConsumption_multi[f in 1:NUM_FUEL, t in 1:T],
             sum((EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) #i: fuel id 
-                for i in 1:max_fuels,
-            y in intersect(resource_id.(gen[fuel_cols.(gen, tag = i) .== string(fuels[f])]),
+            for i in 1:max_fuels,
+            y in intersect(
+                resource_id.(gen[fuel_cols.(gen, tag = i) .== string(fuels[f])]),
                 MULTI_FUELS)))
     end
 
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
-            for y in intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)))
+        for y in intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)))
 
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
@@ -249,13 +250,15 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     ### only apply constraint to generators with fuel type other than None
 
     @constraint(EP,
-        cFuelCalculation_single[y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, THERM_COMMIT)),
+        cFuelCalculation_single[
+            y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, THERM_COMMIT)),
             t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y])==0)
 
     if !isempty(MULTI_FUELS)
         @constraint(EP,
-            cFuelCalculation_multi[y in intersect(MULTI_FUELS,
+            cFuelCalculation_multi[
+                y in intersect(MULTI_FUELS,
                     setdiff(HAS_FUEL, THERM_COMMIT)),
                 t = 1:T],
             sum(EP[:vMulFuels][y, i, t] / heat_rates[i][y] for i in 1:max_fuels) -
@@ -278,19 +281,21 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
                 PiecewiseFuelUsage[y in THERM_COMMIT_PWFU, t = 1:T, seg in segs],
                 EP[:vFuel][y,
                     t]>=(EP[:vP][y, t] * segment_slope(y, seg) +
-                    EP[:vCOMMIT][y, t] * segment_intercept(y, seg)))
+                         EP[:vCOMMIT][y, t] * segment_intercept(y, seg)))
         end
 
         # constraint for fuel consumption at a constant heat rate 
         @constraint(EP,
-            FuelCalculationCommit_single[y in intersect(setdiff(THERM_COMMIT,
+            FuelCalculationCommit_single[
+                y in intersect(setdiff(THERM_COMMIT,
                         THERM_COMMIT_PWFU),
                     SINGLE_FUEL),
                 t = 1:T],
             EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y])==0)
         if !isempty(MULTI_FUELS)
             @constraint(EP,
-                FuelCalculationCommit_multi[y in intersect(setdiff(THERM_COMMIT,
+                FuelCalculationCommit_multi[
+                    y in intersect(setdiff(THERM_COMMIT,
                             THERM_COMMIT_PWFU),
                         MULTI_FUELS),
                     t = 1:T],

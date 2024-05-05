@@ -1,7 +1,7 @@
 function write_opwrap_lds_stor_init(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     ## Extract data frames from input dictionary
     gen = inputs["RESOURCES"]
     zones = zone_id.(gen)

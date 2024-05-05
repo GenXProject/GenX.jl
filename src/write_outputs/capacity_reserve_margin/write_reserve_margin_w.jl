@@ -8,7 +8,7 @@ function write_reserve_margin_w(path::AbstractString, inputs::Dict, setup::Dict,
     end
     dfResMar_w = hcat(dfResMar_w, DataFrame(temp_ResMar_w, :auto))
     auxNew_Names_res = [Symbol("Constraint");
-        [Symbol("CapRes_$i") for i in 1:inputs["NCapacityReserveMargin"]]]
+                        [Symbol("CapRes_$i") for i in 1:inputs["NCapacityReserveMargin"]]]
     rename!(dfResMar_w, auxNew_Names_res)
     CSV.write(joinpath(path, "ReserveMargin_w.csv"), dfResMar_w)
 end

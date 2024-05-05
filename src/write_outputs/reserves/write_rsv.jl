@@ -18,9 +18,9 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         total_unmet = sum(unmet_vec)
         dfRsv = hcat(dfRsv, DataFrame(rsv, :auto))
         auxNew_Names = [Symbol("Resource");
-            Symbol("Zone");
-            Symbol("AnnualSum");
-            [Symbol("t$t") for t in 1:T]]
+                        Symbol("Zone");
+                        Symbol("AnnualSum");
+                        [Symbol("t$t") for t in 1:T]]
         rename!(dfRsv, auxNew_Names)
 
         total = DataFrame(["Total" 0 sum(dfRsv.AnnualSum) zeros(1, T)], :auto)

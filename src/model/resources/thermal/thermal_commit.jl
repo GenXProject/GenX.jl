@@ -154,7 +154,8 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Power Balance Expressions ##
     @expression(EP, ePowerBalanceThermCommit[t = 1:T, z = 1:Z],
-        sum(EP[:vP][y, t] for y in intersect(THERM_COMMIT, resources_in_zone_by_rid(gen, z))))
+        sum(EP[:vP][y, t]
+        for y in intersect(THERM_COMMIT, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermCommit)
 
     ### Constraints ###
@@ -189,7 +190,8 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
                              (EP[:vCOMMIT][y, t] - EP[:vSTART][y, t])
                              +
                              min(inputs["pP_Max"][y, t],
-                                 max(min_power(gen[y]), ramp_up_fraction(gen[y]))) * cap_size(gen[y]) * EP[:vSTART][y, t]
+                                 max(min_power(gen[y]), ramp_up_fraction(gen[y]))) *
+                             cap_size(gen[y]) * EP[:vSTART][y, t]
                              -
                              min_power(gen[y]) * cap_size(gen[y]) * EP[:vSHUT][y, t])
 
@@ -203,7 +205,8 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
                                    min_power(gen[y]) * cap_size(gen[y]) * EP[:vSTART][y, t]
                                    +
                                    min(inputs["pP_Max"][y, t],
-                                       max(min_power(gen[y]), ramp_down_fraction(gen[y]))) * cap_size(gen[y]) * EP[:vSHUT][y, t])
+                                       max(min_power(gen[y]), ramp_down_fraction(gen[y]))) *
+                                   cap_size(gen[y]) * EP[:vSHUT][y, t])
 
     ### Minimum and maximum power output constraints (Constraints #7-8)
     if setup["OperationalReserves"] == 1
@@ -376,7 +379,7 @@ end
 Eliminates the contribution of a plant to the capacity reserve margin while it is down for maintenance.
 """
 function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
-    inputs::Dict)
+        inputs::Dict)
     gen = inputs["RESOURCES"]
 
     T = inputs["T"]     # Number of time steps (hours)
@@ -387,18 +390,18 @@ function thermal_maintenance_capacity_reserve_margin_adjustment!(EP::Model,
 
     maint_adj = @expression(EP, [capres in 1:ncapres, t in 1:T],
         sum(thermal_maintenance_capacity_reserve_margin_adjustment(EP,
-            inputs,
-            y,
-            capres,
-            t) for y in applicable_resources))
+                inputs,
+                y,
+                capres,
+                t) for y in applicable_resources))
     add_similar_to_expression!(EP[:eCapResMarBalance], maint_adj)
 end
 
 function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
-    inputs::Dict,
-    y::Int,
-    capres::Int,
-    t)
+        inputs::Dict,
+        y::Int,
+        capres::Int,
+        t)
     gen = inputs["RESOURCES"]
     resource_component = resource_name(gen[y])
     capresfactor = derating_factor(gen[y], tag = capres)

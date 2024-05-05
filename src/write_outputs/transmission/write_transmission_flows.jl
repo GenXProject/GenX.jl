@@ -1,7 +1,7 @@
 function write_transmission_flows(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     # Transmission related values
     T = inputs["T"]     # Number of time steps (hours)
     L = inputs["L"]     # Number of transmission lines

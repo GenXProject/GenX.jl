@@ -15,9 +15,9 @@ function write_fuel_consumption(path::AbstractString, inputs::Dict, setup::Dict,
 end
 
 function write_fuel_consumption_plant(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     gen = inputs["RESOURCES"]
 
     HAS_FUEL = inputs["HAS_FUEL"]
@@ -41,15 +41,10 @@ function write_fuel_consumption_plant(path::AbstractString,
             tempannualsum_fuel_heat_multi_total = zeros(length(HAS_FUEL))
             tempannualsum_fuel_cost_multi = zeros(length(HAS_FUEL))
             for g in MULTI_FUELS
-                tempannualsum_fuel_heat_multi_generation[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantFuelConsumptionYear_multi_generation][g,
-                    i])
-                tempannualsum_fuel_heat_multi_start[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantFuelConsumptionYear_multi_start][g,
-                    i])
-                tempannualsum_fuel_heat_multi_total[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantFuelConsumptionYear_multi][g,
-                    i])
-                tempannualsum_fuel_cost_multi[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantCFuelOut_multi][g,
-                    i]) + value.(EP[:ePlantCFuelOut_multi_start][g,
-                    i])
+                tempannualsum_fuel_heat_multi_generation[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantFuelConsumptionYear_multi_generation][g,i])
+                tempannualsum_fuel_heat_multi_start[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantFuelConsumptionYear_multi_start][g,i])
+                tempannualsum_fuel_heat_multi_total[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantFuelConsumptionYear_multi][g,i])
+                tempannualsum_fuel_cost_multi[findfirst(x -> x == g, HAS_FUEL)] = value.(EP[:ePlantCFuelOut_multi][g,i]) + value.(EP[:ePlantCFuelOut_multi_start][g,i])
             end
             if setup["ParameterScale"] == 1
                 tempannualsum_fuel_heat_multi_generation *= ModelScalingFactor
@@ -74,9 +69,9 @@ function write_fuel_consumption_plant(path::AbstractString,
 end
 
 function write_fuel_consumption_ts(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     HAS_FUEL = inputs["HAS_FUEL"]
 
@@ -93,9 +88,9 @@ function write_fuel_consumption_ts(path::AbstractString,
 end
 
 function write_fuel_consumption_tot(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     # types of fuel
     fuel_types = inputs["fuels"]
     fuel_number = length(fuel_types)

@@ -32,8 +32,8 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                 DataFrame(tempCO2Price, :auto),
                 DataFrame(AnnualSum = Array{Float64}(undef, Z)))
             auxNew_Names = [Symbol("Zone");
-                [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
-                Symbol("AnnualSum")]
+                            [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
+                            Symbol("AnnualSum")]
             rename!(dfEmissions, auxNew_Names)
         else
             dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Float64}(undef, Z))
@@ -48,10 +48,11 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
         if setup["WriteOutputs"] == "annual"
             total = DataFrame(["Total" sum(dfEmissions.AnnualSum)], [:Zone; :AnnualSum])
             if setup["CO2Cap"] >= 1
-                total = DataFrame(["Total" zeros(1, inputs["NCO2Cap"]) sum(dfEmissions.AnnualSum)],
+                total = DataFrame(
+                    ["Total" zeros(1, inputs["NCO2Cap"]) sum(dfEmissions.AnnualSum)],
                     [:Zone;
-                        [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
-                        :AnnualSum])
+                     [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
+                     :AnnualSum])
             end
             dfEmissions = vcat(dfEmissions, total)
             CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
@@ -60,11 +61,12 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                 DataFrame(emissions_by_zone * scale_factor, :auto))
             if setup["CO2Cap"] >= 1
                 auxNew_Names = [Symbol("Zone");
-                    [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
-                    Symbol("AnnualSum");
-                    [Symbol("t$t") for t in 1:T]]
+                                [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
+                                Symbol("AnnualSum");
+                                [Symbol("t$t") for t in 1:T]]
                 rename!(dfEmissions, auxNew_Names)
-                total = DataFrame(["Total" zeros(1, inputs["NCO2Cap"]) sum(dfEmissions[!,
+                total = DataFrame(
+                    ["Total" zeros(1, inputs["NCO2Cap"]) sum(dfEmissions[!,
                         :AnnualSum]) fill(0.0, (1, T))],
                     :auto)
                 for t in 1:T
@@ -73,10 +75,11 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                 end
             else
                 auxNew_Names = [Symbol("Zone");
-                    Symbol("AnnualSum");
-                    [Symbol("t$t") for t in 1:T]]
+                                Symbol("AnnualSum");
+                                [Symbol("t$t") for t in 1:T]]
                 rename!(dfEmissions, auxNew_Names)
-                total = DataFrame(["Total" sum(dfEmissions[!, :AnnualSum]) fill(0.0,
+                total = DataFrame(
+                    ["Total" sum(dfEmissions[!, :AnnualSum]) fill(0.0,
                         (1, T))],
                     :auto)
                 for t in 1:T
@@ -108,8 +111,8 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             dfEmissions = hcat(dfEmissions,
                 DataFrame(emissions_by_zone * scale_factor, :auto))
             auxNew_Names = [Symbol("Zone");
-                Symbol("AnnualSum");
-                [Symbol("t$t") for t in 1:T]]
+                            Symbol("AnnualSum");
+                            [Symbol("t$t") for t in 1:T]]
             rename!(dfEmissions, auxNew_Names)
             total = DataFrame(["Total" sum(dfEmissions[!, :AnnualSum]) fill(0.0, (1, T))],
                 :auto)

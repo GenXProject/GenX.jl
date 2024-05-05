@@ -35,7 +35,8 @@ function _get_policyfile_info()
     min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
     max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
 
-    policyfile_info = (esr = (filenames = esr_filenames,
+    policyfile_info = (
+        esr = (filenames = esr_filenames,
             setup_param = "EnergyShareRequirement"),
         cap_res = (filenames = cap_res_filenames, setup_param = "CapacityReserveMargin"),
         min_cap = (filenames = min_cap_filenames, setup_param = "MinCapReq"),
@@ -100,7 +101,7 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
         :min_retired_charge_cap_mw,     # to GW
         :min_retired_energy_cap_mw,     # to GW
         :start_cost_per_mw,             # to $M/GW
-        :ccs_disposal_cost_per_metric_ton, :hydrogen_mwh_per_tonne,       # to GWh/t
+        :ccs_disposal_cost_per_metric_ton, :hydrogen_mwh_per_tonne       # to GWh/t
     ]
 
     scale_columns!(resource_in, columns_to_scale, scale_factor)
@@ -183,8 +184,8 @@ Scales in-place the columns in `columns_to_scale` of a dataframe `df` by a `scal
 
 """
 function scale_columns!(df::DataFrame,
-    columns_to_scale::Vector{Symbol},
-    scale_factor::Float64)
+        columns_to_scale::Vector{Symbol},
+        scale_factor::Float64)
     for column in columns_to_scale
         if string(column) in names(df)
             df[!, column] /= scale_factor
@@ -300,8 +301,8 @@ Construct the array of resources from multiple files of different types located 
 
 """
 function create_resource_array(resource_folder::AbstractString,
-    resources_info::NamedTuple,
-    scale_factor::Float64 = 1.0)
+        resources_info::NamedTuple,
+        scale_factor::Float64 = 1.0)
     resource_id_offset = 0
     resources = []
     # loop over available types and load all resources in resource_folder
@@ -530,7 +531,8 @@ function validate_policy_files(resource_policies_path::AbstractString, setup::Di
     policyfile_info = _get_policyfile_info()
     for (filenames, setup_param) in values(policyfile_info)
         if setup[setup_param] == 1 &&
-           any(!isfile(joinpath(resource_policies_path, filename)) for filename in filenames)
+           any(!isfile(joinpath(resource_policies_path, filename))
+        for filename in filenames)
             msg = string(setup_param,
                 " is set to 1 in settings but the required file(s) ",
                 filenames,
@@ -579,7 +581,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     end
     # Check that all policy columns have names with format "[policy_name]_[tagnum]"
     if !all(any([occursin(Regex("$(y)") * r"_\d", col) for y in accepted_cols])
-            for col in cols)
+    for col in cols)
         msg = "Columns in policy file $filename must have names with format \"[policy_name]_[tagnum]\", case insensitive. (e.g., ESR_1, Min_Cap_1, Max_Cap_2, etc.)."
         error(msg)
     end
@@ -598,8 +600,8 @@ Adds a set of new attributes (names and corresponding values) to a resource. The
 
 """
 function add_attributes_to_resource!(resource::AbstractResource,
-    new_symbols::Vector{Symbol},
-    new_values::T) where {T <: DataFrameRow}
+        new_symbols::Vector{Symbol},
+        new_values::T) where {T <: DataFrameRow}
     # loop over new attributes
     for (sym, value) in zip(new_symbols, new_values)
         # add attribute to resource
@@ -643,8 +645,8 @@ Loads a single policy file and adds the columns as new attributes to resources i
 - `filename::AbstractString`: The name of the policy file.
 """
 function add_policy_to_resources!(resources::Vector{<:AbstractResource},
-    path::AbstractString,
-    filename::AbstractString)
+        path::AbstractString,
+        filename::AbstractString)
     policy_in = load_dataframe(path)
     # check if policy file has any attributes, validate column names 
     validate_policy_dataframe!(filename, policy_in)
@@ -663,7 +665,7 @@ Reads policy files and adds policies-related attributes to resources in the mode
 - `resources_path::AbstractString`: The path to the resources folder.
 """
 function add_policies_to_resources!(resources::Vector{<:AbstractResource},
-    resource_policy_path::AbstractString)
+        resource_policy_path::AbstractString)
     # get filename for each type of policy available in GenX
     policies_info = _get_policyfile_info()
     # loop over policy files
@@ -690,7 +692,7 @@ Reads module dataframe and adds columns as new attributes to the resources in th
 - `module_in::DataFrame`: The dataframe with the columns to add to the resources.
 """
 function add_module_to_resources!(resources::Vector{<:AbstractResource},
-    module_in::DataFrame)
+        module_in::DataFrame)
     # add module columns to resources as new attributes
     add_df_to_resources!(resources, module_in)
     return nothing
@@ -707,8 +709,8 @@ Reads module dataframes, loops over files and adds columns as new attributes to 
 - `resources_path::AbstractString`: The path to the resources folder.
 """
 function add_modules_to_resources!(resources::Vector{<:AbstractResource},
-    setup::Dict,
-    resources_path::AbstractString)
+        setup::Dict,
+        resources_path::AbstractString)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
 
     modules = Vector{DataFrame}()
@@ -769,8 +771,8 @@ Reads piecewise fuel usage data from the vector of generators, create a PWFU_dat
 - `inputs::Dict`: The dictionary containing the input data
 """
 function process_piecewisefuelusage!(setup::Dict,
-    gen::Vector{<:AbstractResource},
-    inputs::Dict)
+        gen::Vector{<:AbstractResource},
+        inputs::Dict)
     inputs["PWFU_Num_Segments"] = 0
     inputs["THERM_COMMIT_PWFU"] = Int64[]
 
@@ -846,7 +848,8 @@ function process_piecewisefuelusage!(setup::Dict,
         # create a PWFU_data that contain processed intercept and slope (i.e., heat rate)
         intercept_cols = [Symbol("pwfu_intercept_", i) for i in 1:num_segments]
         intercept_df = DataFrame(intercept_mat, Symbol.(intercept_cols))
-        slope_cols = Symbol.(filter(colname -> startswith(string(colname),
+        slope_cols = Symbol.(filter(
+            colname -> startswith(string(colname),
                 "pwfu_heat_rate_mmbtu_per_mwh"),
             collect(attributes(thermal_gen[1]))))
         sort!(slope_cols, by = x -> parse(Int, split(string(x), "_")[end]))
@@ -962,9 +965,9 @@ Adds resources to the `inputs` `Dict` with the key "RESOURCES" together with sev
 
 """
 function add_resources_to_input_data!(inputs::Dict,
-    setup::Dict,
-    case_path::AbstractString,
-    gen::Vector{<:AbstractResource})
+        setup::Dict,
+        case_path::AbstractString,
+        gen::Vector{<:AbstractResource})
 
     # Number of resources
     G = length(gen)
@@ -1297,9 +1300,9 @@ Raises:
     DeprecationWarning: If the `Generators_data.csv` file is found, a deprecation warning is issued, together with an error message.
 """
 function load_resources_data!(inputs::Dict,
-    setup::Dict,
-    case_path::AbstractString,
-    resources_path::AbstractString)
+        setup::Dict,
+        case_path::AbstractString,
+        resources_path::AbstractString)
     if isfile(joinpath(case_path, "Generators_data.csv"))
         msg = "The `Generators_data.csv` file was deprecated in release v0.4. " *
               "Please use the new interface for generators creation, and see the documentation for additional details."
@@ -1332,9 +1335,9 @@ end
 Function for reading input parameters related to multi fuels
 """
 function load_multi_fuels_data!(inputs::Dict,
-    gen::Vector{<:AbstractResource},
-    setup::Dict,
-    path::AbstractString)
+        gen::Vector{<:AbstractResource},
+        setup::Dict,
+        path::AbstractString)
     inputs["NUM_FUELS"] = num_fuels.(gen)   # Number of fuels that this resource can use
     max_fuels = maximum(inputs["NUM_FUELS"])
     inputs["FUEL_COLS"] = [Symbol(string("Fuel", f)) for f in 1:max_fuels]

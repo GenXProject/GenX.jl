@@ -94,7 +94,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
         println(elapsed_time)
         if mysetup["ModelingToGenerateAlternatives"] == 1
             println("Starting Model to Generate Alternatives (MGA) Iterations")
-            mga(EP, case, mysetup, myinputs, outputs_path)
+            mga(EP, case, mysetup, myinputs)
         end
 
         if mysetup["MethodofMorris"] == 1
@@ -159,15 +159,14 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         model_dict[t] = generate_model(mysetup, inputs_dict[t], OPTIMIZER)
     end
 
+    # check that resources do not switch from can_retire = 0 to can_retire = 1 between stages
+    validate_can_retire_multistage(
+        inputs_dict, mysetup["MultiStageSettingsDict"]["NumStages"])
+
     ### Solve model
     println("Solving Model")
 
-    # Step 3) Run DDP Algorithm
-    ## Solve Model
-    model_dict, mystats_d, inputs_dict = run_ddp(model_dict, mysetup, inputs_dict)
-
-    # Step 4) Write final outputs from each stage
-
+    # Prepare folder for results    
     outpath = get_default_output_folder(case)
 
     if mysetup["OverwriteResults"] == 1
@@ -182,6 +181,11 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         mkdir(outpath)
     end
 
+    # Step 3) Run DDP Algorithm
+    ## Solve Model
+    model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
+
+    # Step 4) Write final outputs from each stage
     for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
         outpath_cur = joinpath(outpath, "results_p$p")
         write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])

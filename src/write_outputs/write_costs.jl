@@ -22,7 +22,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         "cUnmetRsv",
         "cNetworkExp",
         "cUnmetPolicyPenalty",
-        "cCO2",
+        "cCO2"
     ]
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
@@ -70,7 +70,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
-            0.0,
+            0.0
         ]
     else
         total_cost = [
@@ -83,7 +83,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
-            0.0,
+            0.0
         ]
     end
 
@@ -298,7 +298,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             "-",
             "-",
             "-",
-            tempCCO2,
+            tempCCO2
         ]
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")

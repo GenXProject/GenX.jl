@@ -350,7 +350,7 @@ function ids_with_positive(rs::Vector{T}, name::Symbol) where {T <: AbstractReso
 end
 
 function ids_with_positive(rs::Vector{T},
-    name::AbstractString) where {T <: AbstractResource}
+        name::AbstractString) where {T <: AbstractResource}
     return ids_with_positive(rs, Symbol(lowercase(name)))
 end
 
@@ -429,8 +429,8 @@ julia> existing_cap_mw(gen[21])
 ```
 """
 function ids_with(rs::Vector{T},
-    f::Function,
-    default = default_zero) where {T <: AbstractResource}
+        f::Function,
+        default = default_zero) where {T <: AbstractResource}
     return findall(r -> f(r) != default, rs)
 end
 
@@ -460,16 +460,16 @@ julia> existing_cap_mw(gen[21])
 ```
 """
 function ids_with(rs::Vector{T},
-    name::Symbol,
-    default = default_zero) where {T <: AbstractResource}
+        name::Symbol,
+        default = default_zero) where {T <: AbstractResource}
     # if the getter function exists in GenX then use it, otherwise get the attribute directly
     f = isdefined(GenX, name) ? getfield(GenX, name) : r -> getproperty(r, name)
     return ids_with(rs, f, default)
 end
 
 function ids_with(rs::Vector{T},
-    name::AbstractString,
-    default = default_zero) where {T <: AbstractResource}
+        name::AbstractString,
+        default = default_zero) where {T <: AbstractResource}
     return ids_with(rs, Symbol(lowercase(name)), default)
 end
 
@@ -487,8 +487,8 @@ Function for finding resources in a vector `rs` where the policy specified by `f
 - `ids (Vector{Int64})`: The vector of resource ids with a positive value for policy `f` and tag `tag`.
 """
 function ids_with_policy(rs::Vector{T},
-    f::Function;
-    tag::Int64) where {T <: AbstractResource}
+        f::Function;
+        tag::Int64) where {T <: AbstractResource}
     return findall(r -> f(r, tag = tag) > 0, rs)
 end
 
@@ -506,8 +506,8 @@ Function for finding resources in a vector `rs` where the policy specified by `n
 - `ids (Vector{Int64})`: The vector of resource ids with a positive value for policy `name` and tag `tag`.
 """
 function ids_with_policy(rs::Vector{T},
-    name::Symbol;
-    tag::Int64) where {T <: AbstractResource}
+        name::Symbol;
+        tag::Int64) where {T <: AbstractResource}
     # if the getter function exists in GenX then use it, otherwise get the attribute directly
     if isdefined(GenX, name)
         f = getfield(GenX, name)
@@ -517,8 +517,8 @@ function ids_with_policy(rs::Vector{T},
 end
 
 function ids_with_policy(rs::Vector{T},
-    name::AbstractString;
-    tag::Int64) where {T <: AbstractResource}
+        name::AbstractString;
+        tag::Int64) where {T <: AbstractResource}
     return ids_with_policy(rs, Symbol(lowercase(name)), tag = tag)
 end
 
@@ -744,9 +744,7 @@ function no_unit_commitment(rs::Vector{T}) where {T <: AbstractResource}
 end
 
 # Operational Reserves
-function ids_with_regulation_reserve_requirements(rs::Vector{
-    T,
-}) where {T <: AbstractResource}
+function ids_with_regulation_reserve_requirements(rs::Vector{T}) where {T <: AbstractResource}
     findall(r -> reg_max(r) > 0, rs)
 end
 function ids_with_spinning_reserve_requirements(rs::Vector{T}) where {T <: AbstractResource}
@@ -826,7 +824,8 @@ vre(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, Vre), rs)
 
 Returns the indices of all electrolyzer resources in the vector `rs`.
 """
-electrolyzer(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r,
+electrolyzer(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r,
         Electrolyzer),
     rs)
 electrolyzer_min_kt(r::Electrolyzer) = r.electrolyzer_min_kt
@@ -869,7 +868,8 @@ self_discharge(r::VreStorage) = r.self_disch
 
 Returns the indices of all co-located solar resources in the vector `rs`.
 """
-solar(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, VreStorage) &&
+solar(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r, VreStorage) &&
         r.solar != 0,
     rs)
 
@@ -878,7 +878,8 @@ solar(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, VreStor
 
 Returns the indices of all co-located wind resources in the vector `rs`.
 """
-wind(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, VreStorage) &&
+wind(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r, VreStorage) &&
         r.wind != 0,
     rs)
 
@@ -886,7 +887,8 @@ wind(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, VreStora
     storage_dc_discharge(rs::Vector{T}) where T <: AbstractResource
 Returns the indices of all co-located storage resources in the vector `rs` that discharge DC.
 """
-storage_dc_discharge(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r,
+storage_dc_discharge(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r,
         VreStorage) && r.stor_dc_discharge >= 1,
     rs)
 function storage_sym_dc_discharge(rs::Vector{T}) where {T <: AbstractResource}
@@ -900,7 +902,8 @@ end
     storage_dc_charge(rs::Vector{T}) where T <: AbstractResource
     Returns the indices of all co-located storage resources in the vector `rs` that charge DC.
 """
-storage_dc_charge(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r,
+storage_dc_charge(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r,
         VreStorage) && r.stor_dc_charge >= 1,
     rs)
 function storage_sym_dc_charge(rs::Vector{T}) where {T <: AbstractResource}
@@ -914,7 +917,8 @@ end
     storage_ac_discharge(rs::Vector{T}) where T <: AbstractResource
 Returns the indices of all co-located storage resources in the vector `rs` that discharge AC.
 """
-storage_ac_discharge(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r,
+storage_ac_discharge(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r,
         VreStorage) && r.stor_ac_discharge >= 1,
     rs)
 function storage_sym_ac_discharge(rs::Vector{T}) where {T <: AbstractResource}
@@ -928,7 +932,8 @@ end
     storage_ac_charge(rs::Vector{T}) where T <: AbstractResource
 Returns the indices of all co-located storage resources in the vector `rs` that charge AC.
 """
-storage_ac_charge(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r,
+storage_ac_charge(rs::Vector{T}) where {T <: AbstractResource} = findall(
+    r -> isa(r,
         VreStorage) && r.stor_ac_charge >= 1,
     rs)
 function storage_sym_ac_charge(rs::Vector{T}) where {T <: AbstractResource}
@@ -1085,7 +1090,7 @@ Find R_ID's of resources with retrofit cluster id `cluster_id`.
 - `Vector{Int64}`: The vector of resource ids in the retrofit cluster.
 """
 function resources_in_retrofit_cluster_by_rid(rs::Vector{<:AbstractResource},
-    cluster_id::String)
+        cluster_id::String)
     return resource_id.(rs[retrofit_id.(rs) .== cluster_id])
 end
 
@@ -1158,7 +1163,7 @@ Check if all retrofit options in the retrofit cluster of the retrofit resource `
 - `Bool`: True if all retrofit options contribute to min retirement, otherwise false.
 """
 function has_all_options_contributing(retrofit_res::AbstractResource,
-    rs::Vector{T}) where {T <: AbstractResource}
+        rs::Vector{T}) where {T <: AbstractResource}
     retro_id = retrofit_id(retrofit_res)
     return isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id),
         ids_retrofit_options(rs),
@@ -1198,7 +1203,7 @@ Check if all retrofit options in the retrofit cluster of the retrofit resource `
 - `Bool`: True if all retrofit options do not contribute to min retirement, otherwise false.
 """
 function has_all_options_not_contributing(retrofit_res::AbstractResource,
-    rs::Vector{T}) where {T <: AbstractResource}
+        rs::Vector{T}) where {T <: AbstractResource}
     retro_id = retrofit_id(retrofit_res)
     return isempty(intersect(resources_in_retrofit_cluster_by_rid(rs, retro_id),
         ids_retrofit_options(rs),

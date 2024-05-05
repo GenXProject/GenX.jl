@@ -23,9 +23,9 @@ function get_retirement_stage(cur_stage::Int, lifetime::Int, stage_lens::Array{I
 end
 
 function update_cumulative_min_ret!(inputs_d::Dict,
-    t::Int,
-    Resource_Set::String,
-    RetCap::Symbol)
+        t::Int,
+        Resource_Set::String,
+        RetCap::Symbol)
     gen_name = "RESOURCES"
     CumRetCap = Symbol("cum_" * String(RetCap))
     # if the getter function exists in GenX then use it, otherwise get the attribute directly
@@ -170,10 +170,10 @@ In other words, it is the largest index $r \in \{1, ..., (p-1)\}$ such that:
 ```
 """
 function endogenous_retirement_discharge!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (Discharge) Module")
 
     gen = inputs["RESOURCES"]
@@ -211,7 +211,7 @@ function endogenous_retirement_discharge!(EP::Model,
     @expression(EP,
         eNewCapTrack[y in RET_CAP],
         sum(EP[:vCAPTRACK][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP, eMinRetCapTrack[y in RET_CAP],
         if y in COMMIT
             cum_min_retired_cap_mw(gen[y]) / cap_size(gen[y])
@@ -258,10 +258,10 @@ function endogenous_retirement_discharge!(EP::Model,
 end
 
 function endogenous_retirement_charge!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (Charge) Module")
 
     gen = inputs["RESOURCES"]
@@ -293,7 +293,7 @@ function endogenous_retirement_charge!(EP::Model,
     @expression(EP,
         eNewCapTrackCharge[y in RET_CAP_CHARGE],
         sum(EP[:vCAPTRACKCHARGE][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackCharge[y in RET_CAP_CHARGE],
         cum_min_retired_charge_cap_mw(gen[y]))
@@ -324,10 +324,10 @@ function endogenous_retirement_charge!(EP::Model,
 end
 
 function endogenous_retirement_energy!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (Energy) Module")
 
     gen = inputs["RESOURCES"]
@@ -359,7 +359,7 @@ function endogenous_retirement_energy!(EP::Model,
     @expression(EP,
         eNewCapTrackEnergy[y in RET_CAP_ENERGY],
         sum(EP[:vCAPTRACKENERGY][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackEnergy[y in RET_CAP_ENERGY],
         cum_min_retired_energy_cap_mw(gen[y]))
@@ -390,10 +390,10 @@ function endogenous_retirement_energy!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_dc!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage DC) Module")
 
     gen = inputs["RESOURCES"]
@@ -425,7 +425,7 @@ function endogenous_retirement_vre_stor_dc!(EP::Model,
     @expression(EP,
         eNewCapTrackDC[y in RET_CAP_DC],
         sum(EP[:vCAPTRACKDC][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackDC[y in RET_CAP_DC],
         cum_min_retired_cap_inverter_mw(gen[y]))
@@ -456,10 +456,10 @@ function endogenous_retirement_vre_stor_dc!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_solar!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Solar) Module")
 
     gen = inputs["RESOURCES"]
@@ -491,7 +491,7 @@ function endogenous_retirement_vre_stor_solar!(EP::Model,
     @expression(EP,
         eNewCapTrackSolar[y in RET_CAP_SOLAR],
         sum(EP[:vCAPTRACKSOLAR][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackSolar[y in RET_CAP_SOLAR],
         cum_min_retired_cap_solar_mw(gen[y]))
@@ -522,10 +522,10 @@ function endogenous_retirement_vre_stor_solar!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_wind!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Wind) Module")
 
     gen = inputs["RESOURCES"]
@@ -557,7 +557,7 @@ function endogenous_retirement_vre_stor_wind!(EP::Model,
     @expression(EP,
         eNewCapTrackWind[y in RET_CAP_WIND],
         sum(EP[:vCAPTRACKWIND][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackWind[y in RET_CAP_WIND],
         cum_min_retired_cap_wind_mw(gen[y]))
@@ -588,10 +588,10 @@ function endogenous_retirement_vre_stor_wind!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_stor!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Storage) Module")
 
     gen = inputs["RESOURCES"]
@@ -623,7 +623,7 @@ function endogenous_retirement_vre_stor_stor!(EP::Model,
     @expression(EP,
         eNewCapTrackEnergy_VS[y in RET_CAP_STOR],
         sum(EP[:vCAPTRACKENERGY_VS][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackEnergy_VS[y in RET_CAP_STOR],
         cum_min_retired_energy_cap_mw(gen[y]))
@@ -654,10 +654,10 @@ function endogenous_retirement_vre_stor_stor!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_discharge_dc!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Discharge DC) Module")
 
     gen = inputs["RESOURCES"]
@@ -691,7 +691,7 @@ function endogenous_retirement_vre_stor_discharge_dc!(EP::Model,
     @expression(EP,
         eNewCapTrackDischargeDC[y in RET_CAP_DISCHARGE_DC],
         sum(EP[:vCAPTRACKDISCHARGEDC][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackDischargeDC[y in RET_CAP_DISCHARGE_DC],
         cum_min_retired_cap_discharge_dc_mw(gen[y]))
@@ -723,10 +723,10 @@ function endogenous_retirement_vre_stor_discharge_dc!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_charge_dc!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Charge DC) Module")
 
     gen = inputs["RESOURCES"]
@@ -757,7 +757,7 @@ function endogenous_retirement_vre_stor_charge_dc!(EP::Model,
     @expression(EP,
         eNewCapTrackChargeDC[y in RET_CAP_CHARGE_DC],
         sum(EP[:vCAPTRACKCHARGEDC][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackChargeDC[y in RET_CAP_CHARGE_DC],
         cum_min_retired_cap_charge_dc_mw(gen[y]))
@@ -788,10 +788,10 @@ function endogenous_retirement_vre_stor_charge_dc!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_discharge_ac!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Discharge AC) Module")
 
     gen = inputs["RESOURCES"]
@@ -824,7 +824,7 @@ function endogenous_retirement_vre_stor_discharge_ac!(EP::Model,
     @expression(EP,
         eNewCapTrackDischargeAC[y in RET_CAP_DISCHARGE_AC],
         sum(EP[:vCAPTRACKDISCHARGEAC][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackDischargeAC[y in RET_CAP_DISCHARGE_AC],
         cum_min_retired_cap_discharge_ac_mw(gen[y]))
@@ -856,10 +856,10 @@ function endogenous_retirement_vre_stor_discharge_ac!(EP::Model,
 end
 
 function endogenous_retirement_vre_stor_charge_ac!(EP::Model,
-    inputs::Dict,
-    num_stages::Int,
-    cur_stage::Int,
-    stage_lens::Array{Int, 1})
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Charge AC) Module")
 
     gen = inputs["RESOURCES"]
@@ -890,7 +890,7 @@ function endogenous_retirement_vre_stor_charge_ac!(EP::Model,
     @expression(EP,
         eNewCapTrackChargeAC[y in RET_CAP_CHARGE_AC],
         sum(EP[:vCAPTRACKCHARGEAC][y, p]
-            for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
     @expression(EP,
         eMinRetCapTrackChargeAC[y in RET_CAP_CHARGE_AC],
         cum_min_retired_cap_charge_ac_mw(gen[y]))

@@ -56,3 +56,13 @@ end
         include("test_retrofit.jl")
     end
 end
+
+# Test writing outputs
+@testset "Writing outputs " begin
+    for test_file in filter!(x -> endswith(x, ".jl"), readdir("writing_outputs"))
+        include("writing_outputs/$test_file")
+    end
+end
+
+# Remove temporary files
+isdir(results_path) && rm(results_path, force = true, recursive = true)
