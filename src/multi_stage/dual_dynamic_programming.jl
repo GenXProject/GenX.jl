@@ -621,7 +621,6 @@ function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
     for stage_count in 1:(cur_stage-1)
         stage_len_1 += settings_d["StageLengths"][stage_count]
     end
-    println("Value of stage len_1 in stage ", cur_stage, " is ", stage_len_1)
     stage_len = settings_d["StageLengths"][cur_stage]
     wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
