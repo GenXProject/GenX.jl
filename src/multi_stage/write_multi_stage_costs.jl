@@ -30,13 +30,13 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
         if myopic
             DF = 1 # DF=1 because we do not apply discount factor in myopic case
         else
-	    stage_length_1 = 0
+	    cum_stage_length = 0
 	    if p > 1
 	    	for stage_counter in 1:(p - 1)
-			stage_length_1 += stage_lens[stage_counter]
+			cum_stage_length += stage_lens[stage_counter]
 	    	end
 	    end
-            DF = 1 / (1 + wacc)^(stage_length_1)  # Discount factor applied to ALL costs in each stage
+            DF = 1 / (1 + wacc)^(cum_stage_length)  # Discount factor applied to ALL costs in each stage
         end
         df_costs[!, Symbol("TotalCosts_p$p")] = DF .* costs_d[p][!, Symbol("Total")]
     end
