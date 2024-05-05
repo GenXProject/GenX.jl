@@ -617,7 +617,7 @@ returns: JuMP model with updated objective function.
 """
 function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
     cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
-    stage_len_1 = 0
+    cum_years = 0
     for stage_count in 1:(cur_stage-1)
         stage_len_1 += settings_d["StageLengths"][stage_count]
     end
