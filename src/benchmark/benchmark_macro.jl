@@ -1,3 +1,6 @@
+using BenchmarkTools
+using DataFrames
+
 @doc raw"""
     @benchmarked <expr to benchmark> [setup=<setup expr>] [other keyword parameters...]
 
@@ -5,17 +8,20 @@
 
     This macro is a customization of BenchmarkTools' `@benchmark`.
     `@benchmark` only provides benchmark results.
-    With this customization, we can benchmark a function that has a return value.
+    With this customization, we can benchmark a function that returns a value.
+
+# A simple example for usage:
+```jldoctest
+julia> @benchmarked sin(1) 
+ 0.791 ns (0 allocation: 0 bytes)
+(0.8414709848078965, Trial(0.791 ns))
+```
     Customization uses internals from BenchmarkTools. 
     Updates to this macro is needed when internals get changed from BenchmarkTools.
 
-    This macro is compatible  with BenchmarkTools v1.3.2, so this version is pinned in Project.toml.
-
+    This macro is compatible with BenchmarkTools v1.3.2.
+    BenchmarkTools v1.3.2 is pinned in Project.toml.
 """
-
-using BenchmarkTools
-using DataFrames
-
 macro benchmarked(args...)
     _, params = BenchmarkTools.prunekwargs(args...)
     bench, trial, result = gensym(), gensym(), gensym()
@@ -46,8 +52,14 @@ macro benchmarked(args...)
         end,
     )
 end
-
-function generate_benchmark_csv(path::String, bm_file::String, bm_results::BenchmarkTools.Trial)
+@doc raw"""
+    generate_benchmark_csv(...)
+    
+    Use this function to generate a csv file with benchmark results
+"""
+function generate_benchmark_csv(path::String, 
+                                bm_file::String, 
+                                bm_results::BenchmarkTools.Trial)
     bm_df = DataFrame(
     time_ms = bm_results.times ./ 1e6,
     gctime_ms = bm_results.gctimes ./ 1e6,
@@ -57,6 +69,3 @@ function generate_benchmark_csv(path::String, bm_file::String, bm_results::Bench
     )
     CSV.write(joinpath(path, bm_file), bm_df)
 end
-
-
-

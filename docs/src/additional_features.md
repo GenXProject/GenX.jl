@@ -10,3 +10,9 @@ Pages = ["modeling_to_generate_alternatives.jl"]
 Modules = [GenX]
 Pages = ["method_of_morris.jl"]
 ```
+
+## [Benchmark GenX](@id benchmarked)
+```@autodocs
+Modules = [GenX]
+Pages = ["benchmark_macro.jl"] 
+```

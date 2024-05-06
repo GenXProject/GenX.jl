@@ -345,3 +345,91 @@ Once the new resource type has been defined and added to GenX, you can work with
 ```@meta
 DocTestSetup = nothing
 ```
+
+## Benchmark Macro
+### How Benchmark Macro Defined 
+#### Benchmark Macro
+A customized benchmark macro has been defined at [`src/benchmark/benchmark_macro.jl`](@ref benchmarked). See a snippet of the macro below.
+
+```
+macro benchmarked(args...)
+    _, params = BenchmarkTools.prunekwargs(args...)
+    bench, trial, result = gensym(), gensym(), gensym()
+    trialmin, trialallocs = gensym(), gensym()
+    tune_phase = BenchmarkTools.hasevals(params) ? :() : :($BenchmarkTools.tune!($bench))
+    return esc(...
+```
+
+#### Benchmark Flag
+A flag to enable or disable benchmark usage for running an example case has been set for just one example at: [`example_systems/1_three_zones/settings/genx_settings.yml`](https://github.com/GenXProject/GenX.jl/blob/main/example_systems/1_three_zones/settings/genx_settings.yml). 
+
+```
+# Get benchmark analysis data for a function;
+# 0 = off or disabled; 1 = on or enabled;
+# By default this flag is disabled;
+# It is only set up for this example case only;
+Benchmark: 0
+```
+
+!!! note 
+    If you want to add this benchmark macro to your own example case, you may follow suit as the above setting up a flag in your example's genx_settings.yml file.
+    ```
+    NetworkExpansion: 1
+    Trans_Loss_Segments: 1
+    EnergyShareRequirement: 0
+    CapacityReserveMargin: 0
+    CO2Cap: 2
+    StorageLosses: 1
+    MinCapReq: 1
+    MaxCapReq: 0
+    ParameterScale: 1
+    WriteShadowPrices: 1
+    UCommit: 2
+    TimeDomainReduction: 1 
+    Benchmark: 1 
+    ``` 
+## How to Use Benchmark Macro
+#### Step 1: Use Enabled Benchmark Flag
+So, the benchmark flag is set currently disabled in `genx_settings.yml` file of `example_case/1_three_zones.` We enabled it first by setting the value to be `1`:
+
+    Benchmark: 1
+    
+#### Step 2: Use the Macro
+Once we have enabled the benchmark flag. We use the macro for a function that we want to get benchmark data. Use ```generate_model``` as an example. Go to `src/case_runners/case_runner.jl` for this `1_three_zone` example case and make additions to these lines:
+
+```julia
+    time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    println("Time elapsed for model building is")
+    println(time_elapsed)
+```
+
+Add benchmark flag checking statement and use the macro for generate_model function.  Add an output print statement and display the benchmark analysis data to the standard output.
+
+```julia
+    ## Benchmark enabled
+    if mysetup["Benchmark"] == 1
+        EP, bm_results = @benchmarked generate_model($mysetup, $myinputs, $OPTIMIZER) seconds=30 samples=1000 evals=1
+        println("Benchmark results for generate_model: ")
+        BenchmarkTools.display(bm_results)
+    else
+        time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+        println("Time elapsed for model building is")
+        println(time_elapsed)
+    end
+```    
+
+#### Step 3: Run Case with Benchmark Results
+We then run the example case which we have just added benchmark macro. A snapshot of the benchmark results with a histogram from the output of the run is captured, below.
+
+
+![Benchmark Results](./assets/benchmark-results-snapshot.png)
+
+## Turn Benchmark Results into CSV
+We want to save the benchmark results in a file each time we run an example case and would like to make a comparison of them for future analysis.  A function to create a cvs file has been provided together with the benchmark macro. 
+
+#### Use the Function Provided
+We provide this function [generate\_benchmark\_csv](@ref benchmarked) to generate a csv file that includes the complete benchmark results for the example case.
+
+In the same case_runner.jl file that we use benchmark macro, we use this function for producing a csv file with all the benchmark results.
+
+![csv with benchmark results](./assets/benchmark-in-csv.png)
