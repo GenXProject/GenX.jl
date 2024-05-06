@@ -38,7 +38,7 @@ Modules = [GenX]
 Pages = ["write_capacity.jl"]
 ```
 
-## Write Capacity Value # TODO: add it
+## Write Capacity Value
 ```@autodocs
 Modules = [GenX]
 Pages = ["write_capacity_value.jl"]
@@ -142,13 +142,20 @@ GenX.write_vre_stor_discharge
 ```
 
 ## Write Multi-stage files
+```@autodocs
+Modules = [GenX]
+Pages = ["write_multi_stage_outputs.jl"]
+```
 ```@docs
 GenX.write_multi_stage_costs
 GenX.write_multi_stage_stats
 GenX.write_multi_stage_settings
 GenX.write_multi_stage_network_expansion
+GenX.write_multi_stage_capacities_discharge
 GenX.write_multi_stage_capacities_charge
 GenX.write_multi_stage_capacities_energy
+GenX.create_multi_stage_stats_file
+GenX.update_multi_stage_stats_file
 ```
 
 ## Write maintenance files
@@ -162,8 +169,7 @@ Pages = ["write_maintenance.jl"]
 GenX.write_angles
 ```
 
-## Write Settings files
-```@autodocs
-Modules = [GenX]
-Pages = ["write_settings.jl"]
+## Write Settings Files
+```@docs
+GenX.write_settings_file
 ```

@@ -78,40 +78,35 @@ The optimizer instance is configured with the following default parameters if a 
 Any other attributes in the settings file (which typically start with `CPX_PARAM_`) will also be passed to the solver.
 """
 function configure_cplex(solver_settings_path::String, optimizer::Any)
-
     solver_settings = YAML.load(open(solver_settings_path))
     solver_settings = convert(Dict{String, Any}, solver_settings)
 
     default_settings = Dict("Feasib_Tol" => 1e-6,
-                            "Optimal_Tol" => 1e-4,
-                            "AggFill" => 10,
-                            "PreDual" => 0,
-                            "TimeLimit" => 1e+75,
-                            "MIPGap" => 1e-3,
-                            "Method" => 0,
-                            "BarConvTol" => 1e-8,
-                            "NumericFocus" => 0,
-                            "BarObjRng" => 1e+75,
-                            "SolutionType" => 2,
-                           )
-
+        "Optimal_Tol" => 1e-4,
+        "AggFill" => 10,
+        "PreDual" => 0,
+        "TimeLimit" => 1e+75,
+        "MIPGap" => 1e-3,
+        "Method" => 0,
+        "BarConvTol" => 1e-8,
+        "NumericFocus" => 0,
+        "BarObjRng" => 1e+75,
+        "SolutionType" => 2)
 
     attributes = merge(default_settings, solver_settings)
 
-    key_replacement = Dict(
-         "Feasib_Tol" => "CPX_PARAM_EPRHS",
-         "Optimal_Tol" => "CPX_PARAM_EPOPT",
-         "AggFill" => "CPX_PARAM_AGGFILL",
-         "PreDual" => "CPX_PARAM_PREDUAL",
-         "TimeLimit" => "CPX_PARAM_TILIM",
-         "MIPGap" => "CPX_PARAM_EPGAP",
-         "Method" => "CPX_PARAM_LPMETHOD",
-         "Pre_Solve" => "CPX_PARAM_PREIND", # https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-presolve-switch
-         "BarConvTol" => "CPX_PARAM_BAREPCOMP",
-         "NumericFocus" => "CPX_PARAM_NUMERICALEMPHASIS",
-         "BarObjRng" => "CPX_PARAM_BAROBJRNG",
-         "SolutionType" => "CPX_PARAM_SOLUTIONTYPE",
-    )
+    key_replacement = Dict("Feasib_Tol" => "CPX_PARAM_EPRHS",
+        "Optimal_Tol" => "CPX_PARAM_EPOPT",
+        "AggFill" => "CPX_PARAM_AGGFILL",
+        "PreDual" => "CPX_PARAM_PREDUAL",
+        "TimeLimit" => "CPX_PARAM_TILIM",
+        "MIPGap" => "CPX_PARAM_EPGAP",
+        "Method" => "CPX_PARAM_LPMETHOD",
+        "Pre_Solve" => "CPX_PARAM_PREIND", # https://www.ibm.com/docs/en/icos/12.8.0.0?topic=parameters-presolve-switch
+        "BarConvTol" => "CPX_PARAM_BAREPCOMP",
+        "NumericFocus" => "CPX_PARAM_NUMERICALEMPHASIS",
+        "BarObjRng" => "CPX_PARAM_BAROBJRNG",
+        "SolutionType" => "CPX_PARAM_SOLUTIONTYPE")
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}

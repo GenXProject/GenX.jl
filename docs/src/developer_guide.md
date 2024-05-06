@@ -12,6 +12,19 @@ GenX is an open-source project, and we welcome contributions from the community.
 
 The following sections describe in more detail how to work with GenX resources and how to add a new resource to GenX.
 
+## Style guide
+GenX project follows the [SciML Style Guide](https://github.com/SciML/SciMLStyle). We encourage contributors to follow this style guide when submitting code changes to GenX. Before submitting a new PR, please run the following command to format a file or a directory:
+```julia
+julia> using JuliaFormatter
+julia> format("path_to_directory", SciMLStyle(), verbose=true)
+```
+or
+```julia
+julia> using JuliaFormatter
+julia> format("path_to_file.jl", SciMLStyle(), verbose=true)
+```
+The GitHub repository of GenX is configured to verify the code style of each PR and will automatically provide comments to assist you in formatting the code according to the style guide.
+
 ## GenX resources
 
 In GenX, a resource is defined as an instance of a `GenX resource type`, a subtype of an `AbstractResource`. This allows the code to use multiple dispatch and define a common interface (behavior) for all resources in the code. 
