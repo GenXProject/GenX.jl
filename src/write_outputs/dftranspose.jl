@@ -10,18 +10,17 @@
 ## Note this function is necessary because no stock function to transpose
 ## DataFrames appears to exist.
 ################################################################################
-"""
+@doc raw"""
    df = dftranspose(df::DataFrame, withhead::Bool)
 
-Returns a transpose of a Dataframe.\n
-FIXME: This is for DataFrames@0.20.2, as used in GenX. 
-Versions 0.21+ could use stack and unstack to make further changes while retaining the order
+Returns a transpose of a Dataframe.
 """
 function dftranspose(df::DataFrame, withhead::Bool)
-	if withhead
-		colnames = cat(:Row, Symbol.(df[!,1]), dims=1)
-		return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
-	else
-		return DataFrame([[names(df)]; collect.(eachrow(df))], [:Row; Symbol.("x",axes(df, 1))])
-	end
+    if withhead
+        colnames = cat(:Row, Symbol.(df[!, 1]), dims = 1)
+        return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
+    else
+        return DataFrame([[names(df)]; collect.(eachrow(df))],
+            [:Row; Symbol.("x", axes(df, 1))])
+    end
 end # End dftranpose()

@@ -32,7 +32,7 @@ The objective function of GenX minimizes total annual electricity system costs o
     & \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,dis}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,dc,dis}_{y,z} \times\eta^{inverter}_{y,z} \times \Theta^{dc}_{y,z,t}\right) + \\
     & \sum_{y \in \mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,cha}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,dc,cha}_{y,z} \times \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}}\right) + \\
     & \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,dis}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,ac,dis}_{y,z} \times \Theta^{ac}_{y,z,t}\right) + \\
-    & \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,ac,cha}_{y,z} \times \Pi^{ac}_{y,z,t}\right) 
+    & \sum_{y \in \mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,ac,cha}_{y,z} \times \Pi^{ac}_{y,z,t}\right)
 \end{aligned}
 ```
 
@@ -56,7 +56,7 @@ The seventh summation represents the total cost of not meeting hourly operating 
 The eighth summation corresponds to the startup costs incurred by technologies to which unit commitment decisions apply (e.g. $y \in \mathcal{UC}$), equal to the cost of start-up, $\pi^{START}_{y,z}$, times the number of startup events, $\chi_{y,z,t}$, for the cluster of units in each zone and time step (weighted by $\omega_t$).
 
 The ninth term corresponds to the transmission reinforcement or construction costs, for each transmission line (if modeled).
-Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$. Note that fixed O&M and replacement capital costs (depreciation) for existing transmission capacity is treated as a sunk cost and not included explicitly in the GenX objective function.
+Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $\pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$. Note that fixed O&M and replacement capital costs (depreciation) for existing transmission capacity is treated as a sunk cost and not included explicitly in the GenX objective function.
 
 The tenth term onwards specifically relates to the breakdown investment, fixed O&M, and variable O&M costs associated with each configurable component of a co-located VRE and storage resource.
 The tenth term represents to the fixed cost of installed inverter capacity and is summed over only the co-located resources with an inverter component ($y \in \mathcal{VS}^{inv}$).
@@ -80,7 +80,7 @@ The eighteenth summation represents the variable O&M cost, $\pi^{VOM,wind}_{y,z}
 The nineteenth summation represents the variable O&M cost, $\pi^{VOM,dc,dis}_{y,z}$, times the energy discharge by storage DC components ($y\in\mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,dis}$) in time step $t$, $\Theta^{dc}_{y,z,t}$, the inverter efficiency, $\eta^{inverter}_{y,z}$, and the weight of each time step $t$, $\omega_t$.
 The twentieth summation represents the variable O&M cost, $\pi^{VOM,dc,cha}_{y,z}$, times the energy withdrawn by storage DC components ($y\in\mathcal{VS}^{sym,dc} \cup \mathcal{VS}^{asym,dc,cha}$) in time step $t$, $\Pi^{dc}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$, and divided by the inverter efficiency, $\eta^{inverter}_{y,z}$.
 The twenty-first summation represents the variable O&M cost, $\pi^{VOM,ac,dis}_{y,z}$, times the energy discharge by storage AC components ($y\in\mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,dis}$) in time step $t$, $\Theta^{ac}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$.
-The twenty-second summation represents the variable O&M cost, $\pi^{VOM,ac,cha}_{y,z}$, times the energy withdrawn by storage AC components ($y\in\mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}$) in time step $t$, $\Pi^{ac}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$. 
+The twenty-second summation represents the variable O&M cost, $\pi^{VOM,ac,cha}_{y,z}$, times the energy withdrawn by storage AC components ($y\in\mathcal{VS}^{sym,ac} \cup \mathcal{VS}^{asym,ac,cha}$) in time step $t$, $\Pi^{ac}_{y,z,t}$, and the weight of each time step $t$, $\omega_t$.
 
 In summary, the objective function can be understood as the minimization of costs associated with five sets of different decisions:
 1. where and how to invest on capacity,
@@ -92,3 +92,6 @@ In summary, the objective function can be understood as the minimization of cost
 Note however that each of these components are considered jointly and the optimization is performed over the whole problem at once as a monolithic co-optimization problem.
 
 While the objective function is formulated as a cost minimization problem, it is also equivalent to a social welfare maximization problem, with the bulk of demand treated as inelastic and always served, and the utility of consumption for price-elastic consumers represented as a segment-wise approximation, as per the cost of unserved demand summation above.
+
+# Objective Scaling
+Sometimes the model will be built into an ill form if some objective terms are quite large or small. To alleviate this problem, we could add a scaling factor to scale the objective function during solving while leaving all other expressions untouched. The default ```ObjScale``` is set to 1 which has no effect on objective. If you want to scale the objective, you can set the ```ObjScale``` to an appropriate value in the ```genx_settings.yml```. The objective function will be multiplied by the ```ObjScale``` value during the solving process.

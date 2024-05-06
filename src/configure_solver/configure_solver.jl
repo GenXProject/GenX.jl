@@ -6,7 +6,6 @@ function infer_solver(optimizer::Any)
     return lowercase(string(parentmodule(optimizer)))
 end
 
-
 @doc raw"""
 	configure_solver(solver_settings_path::String, optimizer::Any)
 
@@ -24,15 +23,13 @@ function configure_solver(solver_settings_path::String, optimizer::Any)
     solver_name = infer_solver(optimizer)
     path = joinpath(solver_settings_path, solver_name * "_settings.yml")
 
-    configure_functions = Dict(
-        "highs" => configure_highs,
+    configure_functions = Dict("highs" => configure_highs,
         "gurobi" => configure_gurobi,
         "cplex" => configure_cplex,
         "clp" => configure_clp,
         "cbc" => configure_cbc,
-        "scip" => configure_scip,
-    )
-    
+        "scip" => configure_scip)
+
     return configure_functions[solver_name](path, optimizer)
 end
 
@@ -50,7 +47,8 @@ function rename_keys(attributes::Dict, new_key_names::Dict)
         else
             new_key = new_key_names[old_key]
             if haskey(attributes, new_key)
-                @error "Colliding keys: '$old_key' needs to be renamed to '$new_key' but '$new_key' already exists in", attributes
+                @error "Colliding keys: '$old_key' needs to be renamed to '$new_key' but '$new_key' already exists in",
+                attributes
             end
         end
         updated_attributes[new_key] = value

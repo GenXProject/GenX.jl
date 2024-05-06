@@ -1,9 +1,10 @@
 <div align="center"> <img src="docs/src/assets/logo_readme.svg"  height ="200"width="1000" alt="GenX.jl"></img></div>
 
-[![CI](https://github.com/GenXProject/GenX/actions/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/actions/workflows/ci.yml)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX.jl/dev)
-[![DOI](https://zenodo.org/badge/10814088.svg)](https://zenodo.org/badge/latestdoi/10814088)
-[![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+|  **Documentation** | **DOI** |
+|:-------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://genxproject.github.io/GenX.jl/stable/) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://genxproject.github.io/GenX.jl/dev) | [![DOI](https://zenodo.org/badge/368957308.svg)](https://zenodo.org/doi/10.5281/zenodo.10846069) 
+
+[![CI](https://github.com/GenXProject/GenX/actions/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/actions/workflows/ci.yml) [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle) [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 
 ## Overview
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model 
@@ -51,14 +52,14 @@ It is currently setup to use one of the following open-source freely available s
 - [Cbc](https://github.com/jump-dev/Cbc.jl) for mixed integer linear programming (MILP) problems
 We also provide the option to use one of these two commercial solvers: 
 - [Gurobi](https://www.gurobi.com), or 
-- [CPLEX](https://www.ibm.com/analytics/cplex-optimizer).
+- [CPLEX](https://www.ibm.com/docs/en/icos/22.1.1?topic=documentation-orientation-guide).
 Note that using Gurobi and CPLEX requires a valid license on the host machine.
 There are two ways to run GenX with either type of solver options (open-source free or, licensed commercial) as detailed in the section, `Getting Started`.
 
 
 ## Documentation
 
-Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX/dev).
+Detailed documentation for GenX can be found [here](https://genxproject.github.io/GenX.jl/dev).
 It includes details of each of GenX's methods, required and optional input files, and outputs.
 Interested users may also want to browse through [prior publications](https://energy.mit.edu/genx/#publications) that have used GenX to understand the various features of the tool.
 

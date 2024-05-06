@@ -9,7 +9,6 @@ inputs:
   * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 """
 function write_multi_stage_capacities_energy(outpath::String, settings_d::Dict)
-
     num_stages = settings_d["NumStages"] # Total number of investment planning stages
     capacities_d = Dict()
 
@@ -19,7 +18,8 @@ function write_multi_stage_capacities_energy(outpath::String, settings_d::Dict)
     end
 
     # Set first column of DataFrame as resource names from the first stage
-    df_cap = DataFrame(Resource=capacities_d[1][!, :Resource], Zone=capacities_d[1][!, :Zone])
+    df_cap = DataFrame(Resource = capacities_d[1][!, :Resource],
+        Zone = capacities_d[1][!, :Zone])
 
     # Store starting capacities from the first stage
     df_cap[!, Symbol("StartEnergyCap_p1")] = capacities_d[1][!, :StartEnergyCap]
@@ -30,5 +30,4 @@ function write_multi_stage_capacities_energy(outpath::String, settings_d::Dict)
     end
 
     CSV.write(joinpath(outpath, "capacities_energy_multi_stage.csv"), df_cap)
-
 end

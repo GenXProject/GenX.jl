@@ -52,7 +52,8 @@
         },
         {
             "name": "Morris, Jack",
-            "affiliation": "MITRE"
+            "affiliation": "MITRE",
+            "orcid": "0000-0002-1471-9708"
         },
         {
             "name": "Patankar, Neha",
@@ -87,6 +88,10 @@
             "name": "Xu, Qingyu",
             "affiliation": "Tsinghua University",
             "orcid": "0000-0003-2692-5135"
+        },
+        {
+            "name": "Zhou, Justin",
+            "affiliation": "Massachusetts Institute of Technology"
         }
     ]
 }

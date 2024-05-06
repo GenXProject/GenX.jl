@@ -3,19 +3,19 @@
 [Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_3_K-means_Time_Domain_Reduction.ipynb)
 
 
-A good tool to reduce computation time of GenX is to use [Time-domain reduction](@ref). Time Domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
+A good tool to reduce computation time of GenX is to use [Time-domain reduction](@ref). Time-domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
 
 ### Table of Contents
 * [Time Domain Reduction](#TDR)
 * [K-Means Clustering](#Kmeans)
 * [Results of Time Domain Reduction](#TDRResults)
-    * [Reconstruction](#Reconstruction)
+* [Reconstruction](#Reconstruction)
 * [Extreme Periods](#ExtPeriods)
 * [Objective Values and Representative Periods](#ObjVals)
 
 ### Time Domain Reduction
 
-To see how Time Domain Reduction works, let's look at the `Doad_data` in `example_systems/1_three_zones`:
+To see how Time Domain Reduction works, let's look at the `Demand_data` in `example_systems/1_three_zones`:
 
 
 ```julia
@@ -29,9 +29,6 @@ using Plots
 using Clustering
 using ScikitLearn
 @sk_import datasets: (make_blobs)
-```
-    WARNING: redefinition of constant make_blobs. This may fail, cause incorrect answers, or produce other errors.
-    PyObject <function make_blobs at 0x29b50d6c0>
 
 ```julia
 case = joinpath("example_systems/1_three_zones");
@@ -88,7 +85,7 @@ loads |>
     width=600,height=400,linewidth=.01)
 ```
 
-![svg](./files/output_14_0.svg)
+![svg](./files/t3_demand.svg)
 
 As in [Tutorial 1: Configuring Settings](@ref), we can open the `genx_settings.yml` file for `1_three_zones` to see how `TimeDomainReduction` is set. If it's set to 1, this means TDR is being used.
 
@@ -118,7 +115,7 @@ genx_settings_TZ = YAML.load(open((joinpath(case,"settings/genx_settings.yml")))
       "WriteShadowPrices"                       => 1
 ```
 
-To visualize how TDR decreases computation time, let's start by running `SmallNewEngland/OneZone` without TDR. In the third section of this tutorial, we'll run the example again using TDR.
+To visualize how TDR decreases computation time, let's start by running `example_systems/1_three_zones` without TDR. In the third section of this tutorial, we'll run the example again using TDR.
 
 To run GenX without TDR, we start by editing the settings to set `TimeDomainReduction` to 0:
 
@@ -158,14 +155,16 @@ And run it using `include`. (Note: this process will take a few minutes):
 ```julia
 @time include("example_systems/1_three_zones/Run.jl")
 ```
+Time elapsed for writing is
+    142.404724 seconds
 
 This took a little while to run, and would take even longer for larger systems. Let's see how we can get the run time down using Time Domain Reduction. The next sections go over how K-means clustering is used to perform TDR, and how to interpret the resulting files in GenX.
 
 ### K-means clustering
 
-Let's go over how TDR works. To perform TDR, GenX uses __K-means clustering__. K-means is an optimization method that clusters data into several groups based on their proximity to "centers" determined by the algorithm. 
+Let's go over how TDR works. To perform TDR, GenX uses __K-means clustering__. _K_-means is an optimization method that clusters data into several groups based on their proximity to "centers" determined by the algorithm. 
 
-K-means finds a set number of groups such that the variance between the distance of each point in the group to the mean of the group is minimized. 
+_K_-means finds a set number of groups such that the variance between the distance of each point in the group to the mean of the group is minimized. 
 
 ```math
 \begin{align*}
@@ -173,7 +172,7 @@ K-means finds a set number of groups such that the variance between the distance
 \end{align*}
 ```
 
-Where $\mathbf{S} = \{S_1, ... , S_k\}$ are the clusters, with $x$ denoting the elements of the clusters, and $\mu_i$ the mean of each cluster, i.e. the mean of the distances from each point to the center of the cluster. By taking the argmin over $\mathbf{S}$, the points $x$ are clustered into groups where their distance to the center is the smallest. For more information on how k-means works, see the [Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering). 
+Where $\mathbf{S} = \{S_1, ... , S_k\}$ are the clusters, with $x$ denoting the elements of the clusters, and $\mu_i$ the mean of each cluster, i.e. the mean of the distances from each point to the center of the cluster. By taking the argmin over $\mathbf{S}$, the points $x$ are clustered into groups where their distance to the center is the smallest. For more information on how _k_-means works, see the [Wikipedia](https://en.wikipedia.org/wiki/K-means_clustering). 
 
 GenX uses the package `Clustering.jl`, with documentation [here](https://juliastats.org/Clustering.jl/dev/kmeans.html#K-means). As an example, using the package `ScikitLearn.jl`, let's generate data that can cluster easily.
 
@@ -184,13 +183,15 @@ X, y = make_blobs(n_samples=50,centers=centers); # From scikit-learn
 b = DataFrame(X,:auto)
 ```
 
-Note that clustering works for data without obvious groupings, but using blobs as an example makes k-means easier to visualize.
+Note that clustering works for data without obvious groupings, but using blobs as an example makes _k_-means easier to visualize.
 
 
 ```julia
 plotly()
 Plots.scatter(b[!,"x1"],b[!,"x2"],legend=false,title="Before K-means Clustering")
 ```
+
+![png](./files/t3_nokmeans.png)
 
 Now we use the function `kmeans`, which is also used in `src/time_domain_reduction` in GenX.
 
@@ -217,11 +218,13 @@ plotly()
 Plots.scatter(b[!,"x1"],b[!,"x2"],legend=false,marker_z=R.assignments,c=:lightrainbow,title="After K-means Clustering")
 ```
 
+![png](./files/t3_kmeans.png)
+
 In GenX, the representative periods are the centers of the clusters, each representing one week of the year. In the above example that would mean there are 52 data points gathered into 11 clusters (to see this for yourself, change `make_blobs` to have 52 data points and 11 clusters.)
 
 ### Results of Time Domain Reduction
 
-To visualize the results of TDR, we'll set TDR = 1 back in the `genx_settings.yml` file in `Example_Systems_Tutorials/SmallNewEngland/OneZone/`:
+To visualize the results of TDR, we'll set TDR = 1 back in the `genx_settings.yml` file in `example_systems/1_three_zones`:
 
 
 ```julia
@@ -245,7 +248,7 @@ And run GenX again with TDR:
 @time include("example_systems/1_three_zones/Run.jl")
 ```
 
-Csv files with the results of TDR are generated automatically in a folder called `TDR_results` found within the same folder containing the input csv files, in this case `Example_Systems_Tutorials/SmallNewEngland/OneZone`. The csv files in this folder show the files used in `Run.jl` that have been pared down from the initial input files.
+Csv files with the results of TDR are generated automatically in a folder called `TDR_results` found within the same folder containing the input csv files, in this case `example_systems/1_three_zones`. The csv files in this folder show the files used in `Run.jl` that have been pared down from the initial input files.
 
 As an example, consider the input file `Fuels_data.csv`:
 
@@ -268,7 +271,7 @@ As you can see, the original has all 8,760 hours, while the TDR version only has
 loads_TDR = CSV.read(joinpath(case,"TDR_Results/Demand_data.csv"),DataFrame,missingstring="NA")
 ```
 
-The 1,848 hours are divided into 11 sections of 168 hours, with each section representing one week of the original data.  The number of hours per representative period is set in `time_domain_reduction_settings.yml`. Also specified in the file are the minimum and maximum number of clusters we would like to have (in this case 8 and 11). The k-means algorithm will then select the number of clusters that should be sufficient to capture the GenX model in fewer time steps (in this case 11).
+The 1,848 hours are divided into 11 sections of 168 hours, with each section representing one week of the original data.  The number of hours per representative period is set in `time_domain_reduction_settings.yml`. Also specified in the file are the minimum and maximum number of clusters we would like to have (in this case 8 and 11). The _k_-means algorithm will then select the number of clusters that should be sufficient to capture the GenX model in fewer time steps (in this case 11).
 
 
 ```julia
@@ -286,7 +289,9 @@ Below, we create arrays out of the representative weeks and plot them on the sam
 ```julia
 Period_map = CSV.read(joinpath(case,"TDR_Results/Period_map.csv"),DataFrame,missingstring="NA")
 ```
-
+``` @raw html
+<div><div style = "float: left;"><span>52×3 DataFrame</span></div><div style = "float: right;"><span style = "font-style: italic;">27 rows omitted</span></div><div style = "clear: both;"></div></div><div class = "data-frame" style = "overflow-x: scroll;"><table class = "data-frame" style = "margin-bottom: 6px;"><thead><tr class = "header"><th class = "rowNumber" style = "font-weight: bold; text-align: right;">Row</th><th style = "text-align: left;">Period_Index</th><th style = "text-align: left;">Rep_Period</th><th style = "text-align: left;">Rep_Period_Index</th></tr><tr class = "subheader headerLastRow"><th class = "rowNumber" style = "font-weight: bold; text-align: right;"></th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th><th title = "Int64" style = "text-align: left;">Int64</th></tr></thead><tbody><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">1</td><td style = "text-align: right;">1</td><td style = "text-align: right;">4</td><td style = "text-align: right;">1</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">2</td><td style = "text-align: right;">2</td><td style = "text-align: right;">4</td><td style = "text-align: right;">1</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">3</td><td style = "text-align: right;">3</td><td style = "text-align: right;">4</td><td style = "text-align: right;">1</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">4</td><td style = "text-align: right;">4</td><td style = "text-align: right;">4</td><td style = "text-align: right;">1</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">5</td><td style = "text-align: right;">5</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">6</td><td style = "text-align: right;">6</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">7</td><td style = "text-align: right;">7</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">8</td><td style = "text-align: right;">8</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">9</td><td style = "text-align: right;">9</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">10</td><td style = "text-align: right;">10</td><td style = "text-align: right;">12</td><td style = "text-align: right;">3</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">11</td><td style = "text-align: right;">11</td><td style = "text-align: right;">12</td><td style = "text-align: right;">3</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">12</td><td style = "text-align: right;">12</td><td style = "text-align: right;">12</td><td style = "text-align: right;">3</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">13</td><td style = "text-align: right;">13</td><td style = "text-align: right;">12</td><td style = "text-align: right;">3</td></tr><tr><td style = "text-align: right;">&vellip;</td><td style = "text-align: right;">&vellip;</td><td style = "text-align: right;">&vellip;</td><td style = "text-align: right;">&vellip;</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">41</td><td style = "text-align: right;">41</td><td style = "text-align: right;">20</td><td style = "text-align: right;">5</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">42</td><td style = "text-align: right;">42</td><td style = "text-align: right;">20</td><td style = "text-align: right;">5</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">43</td><td style = "text-align: right;">43</td><td style = "text-align: right;">23</td><td style = "text-align: right;">6</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">44</td><td style = "text-align: right;">44</td><td style = "text-align: right;">17</td><td style = "text-align: right;">4</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">45</td><td style = "text-align: right;">45</td><td style = "text-align: right;">48</td><td style = "text-align: right;">10</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">46</td><td style = "text-align: right;">46</td><td style = "text-align: right;">48</td><td style = "text-align: right;">10</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">47</td><td style = "text-align: right;">47</td><td style = "text-align: right;">48</td><td style = "text-align: right;">10</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">48</td><td style = "text-align: right;">48</td><td style = "text-align: right;">48</td><td style = "text-align: right;">10</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">49</td><td style = "text-align: right;">49</td><td style = "text-align: right;">49</td><td style = "text-align: right;">11</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">50</td><td style = "text-align: right;">50</td><td style = "text-align: right;">49</td><td style = "text-align: right;">11</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">51</td><td style = "text-align: right;">51</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr><tr><td class = "rowNumber" style = "font-weight: bold; text-align: right;">52</td><td style = "text-align: right;">52</td><td style = "text-align: right;">8</td><td style = "text-align: right;">2</td></tr></tbody></table></div>
+```
 
 ```julia
 # Find array of unique representative periods
@@ -317,7 +322,7 @@ loads_with_TDR  |>
     color={"Week:n", scale={scheme="paired"},sort="decsending"}, title="MW Load per hour with TDR Representative Weeks",
     width=845,height=400)
 ```
-![svg](./files/output_58_0.svg)
+![svg](./files/t3_TDR_demand.svg)
 
 TDR is performed for four total data sets: demand (found in Demand.csv), wind and solar (found in Generators_variability.csv), and fuel prices (found in Fuels.csv). Above is just the demand load for one of the three total nodes in the example system, which is why the data may not appear to "represent" all 52 weeks (notice there are fewer representative periods in the fall). Instead, the periods more accurately represent all the data time series combined, including some other parts of the data not seen in this particular plot.
 
@@ -384,7 +389,7 @@ myscheme = ["#a6cee3","#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c
     width=845,height=300)
 ```
 
-![svg](./files/output_65_0.svg)
+![svg](./files/t3_ext_periods.svg)
 
 The first plot (with Extreme Periods off) may not have the week with the highest peak highlighted. If the week with the highest demand is highlighted, try re-running the cell with Extreme Periods Off plotting the results.
 
@@ -396,7 +401,7 @@ YAML.write_file(joinpath(case,"settings/time_domain_reduction_settings.yml"), ti
 rm(joinpath(case,"TDR_results"), recursive=true) 
 ```
 
-#### Reconstruction
+### Reconstruction
 
 Below is a plot of a reconstruction of the data using only the weeks isolated as representative periods. This is what GenX reads when it runs the solver with TDR on.
 
@@ -442,6 +447,8 @@ G2 = Plots.plot(recon[!,:hour], recon[!,:MW], linewidth=1.7,
 
 Plots.plot(G1,G2,layout=(2,1))
 ```
+
+![svg](./files/t3_recon.svg)
 
 Each color represents one of the representative weeks.
 
@@ -616,6 +623,8 @@ scatter!(twinx(),obj_val_plot[:,1],times,color=:red,markeralpha=.5,label=:"Time"
     yaxis=(label="Time"))
 ygrid!(:on, :dashdot, 0.1)
 ```
+
+![svg](./files/t3_obj_val.svg)
 
 Here, we can see that while having very few representative periods produces an objective value that differs greatly from the orignal, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `1_three_zones` decreases the run time of GenX significantly while while maintaining an objective value close to the original. 
 
