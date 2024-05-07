@@ -43,8 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
 - Added versioned doc-pages for v0.3.6 and v0.4.0
-
 - Added a warning message in write_costs_multistage mentioning th approximate value of costs currently.
+- Added [compat] of Random package in Project.toml and set it to "1" (#693)
 
 ### Fixed
 - Add constraint in mga to compute total capacity in each zone from a given technology type (#681)
