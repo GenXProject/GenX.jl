@@ -478,11 +478,10 @@ The updated objective function $OBJ^{*}$ returned by this method takes the form:
 where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor (applied only in the non-myopic case), which discounts costs associated with the model stage $p$ to year-0 dollars:
 ```math
 \begin{aligned}
-    DF = \frac{1}{(1+WACC)^{L*(p-1)}}
+    DF = \frac{1}{(1+WACC)^{\sum^{(p-1)}_{k=0}L_{k}}}
 \end{aligned}
 ```
-where $WACC$ is the weighted average cost of capital, and $L$ is the length of each stage in years (both set in multi\_stage\_settings.yml)
-
+where $WACC$ is the weighted average cost of capital, and $L_{p}$ is the length of each stage in years (both set in multi\_stage\_settings.yml)
 The second term is a discounted sum of annual operational expenses incurred each year of a multi-year model stage:
 ```math
 \begin{aligned}
@@ -503,10 +502,14 @@ returns: JuMP model with updated objective function.
 function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
 
     cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
-    stage_len = settings_d["StageLengths"][cur_stage]
     wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
     OPEXMULT = inputs["OPEXMULT"] # OPEX multiplier to count multiple years between two model stages, set in configure_multi_stage_inputs.jl
+
+    cum_years = 0
+    for stage_count in 1:(cur_stage-1)
+        cum_years += settings_d["StageLengths"][stage_count]
+    end
 
     # Overwrite the objective function to include the cost-to-go variable (not in myopic case)
     # Multiply discount factor to all terms except the alpha term or the cost-to-go function
@@ -515,7 +518,7 @@ function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
         ### No discount factor or OPEX multiplier applied in myopic case as costs are left annualized.
         @objective(EP, Min, EP[:eObj])
     else
-        DF = 1 / (1 + wacc)^(stage_len * (cur_stage - 1))  # Discount factor applied all to costs in each stage ###
+        DF = 1 / (1 + wacc)^(cum_years) # Discount factor applied all to costs in each stage ###
         # Initialize the cost-to-go variable
         @variable(EP, vALPHA >= 0)
         @objective(EP, Min, DF * OPEXMULT * EP[:eObj] + vALPHA)

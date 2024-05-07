@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- Writing of multistage stats during optimization with foresight (#688) 
+- Writing of multistage stats during optimization with foresight (#688)
+- Added a warning message in write_costs_multistage mentioning th approximate value of costs currently (#680)
+
 
 ### Fixed
 - Fix write_status with UCommit = WriteShadowPrices = 1 (#645)
@@ -17,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add FLEX power constraint (#677) 
 - Fix write_multi_stage_cost.jl: add discount with OPEX multipliers to 
   cUnmetPolicyPenalty (#679)
+- Fix DF calculation in DDP to make it more generic for variable length stages (#680)
 
 ## [0.3.7] - 2024-04-02
 
