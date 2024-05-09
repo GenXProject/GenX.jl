@@ -125,7 +125,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                 dftranspose(dfEmissions, false),
                 writeheader = false)
 
-            if setup["OutputFullTimeSeries"] == 1
+            if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
                 DFMatrix = Matrix(dftranspose(dfEmissions, true))
                 DFnames = DFMatrix[1,:]
                 FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]

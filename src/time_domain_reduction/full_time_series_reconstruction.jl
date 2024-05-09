@@ -4,7 +4,7 @@
                             DFnames::Vector)
 Create a DataFrame with all 8,760 hours of the year from the reduced output.
 
-path -
+path - Path input to the results folder
 setup - case setup (dictionary)
 DF - DataFrame to be reconstructed
 DFnames - Vector of column names
@@ -20,10 +20,7 @@ This function is called when output files with time series data (e.g. power.csv,
 
 """
 # TO DO:
-# Add docstring, no example needed
 # Add in a TDR check
-# Try header = false in CSV.write
-# Try transpose to get duplicated column names
 # Look into mybinder
 function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::DataFrame,DFnames::Vector)
    # Read Period map file Period_map.csv
