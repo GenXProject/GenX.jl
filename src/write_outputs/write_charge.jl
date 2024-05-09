@@ -42,7 +42,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         write_annual(filepath, dfCharge)
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filepath, charge, dfCharge)
-        if setup["OutputFullTimeSeries"] == 1
+        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             df_Charge = CSV.read(joinpath(path,"charge.csv"),DataFrame)
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path,FullTimeSeriesFolder)

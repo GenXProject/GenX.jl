@@ -90,6 +90,16 @@ function write_fuel_consumption_ts(path::AbstractString,
         DataFrame(tempts, [Symbol("t$t") for t in 1:T]))
     CSV.write(joinpath(path, "FuelConsumption_plant_MMBTU.csv"),
         dftranspose(dfPlantFuel_TS, false), header = false)
+
+    if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
+        DFMatrix = Matrix(dftranspose(dfPlantFuel_TS, true))
+        DFnames = DFMatrix[1,:]
+        FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+        output_path = joinpath(path,FullTimeSeriesFolder)
+        dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfPlantFuel_TS, false), DFnames)
+        CSV.write(joinpath(output_path,"commit.csv"), dfOut_full, header = false)
+        println("Writing Full Time Series for Fuel Consumption")
+    end
 end
 
 function write_fuel_consumption_tot(path::AbstractString,

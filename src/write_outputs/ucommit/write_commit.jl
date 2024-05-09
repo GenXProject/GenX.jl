@@ -16,13 +16,13 @@ function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     println("-------------------------------")
 
    
-    if setup["OutputFullTimeSeries"] == 1
+    if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
         DFMatrix = Matrix(dftranspose(dfCommit, true))
         DFnames = DFMatrix[1,:]
         FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
         output_path = joinpath(path,FullTimeSeriesFolder)
-        dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfCommit, true), DFnames)
-        CSV.write(joinpath(output_path,"commit.csv"), dfOut_full)
+        dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfCommit, false), DFnames)
+        CSV.write(joinpath(output_path,"commit.csv"), dfOut_full, header = false)
         println("Writing Full Time Series for Commitment")
     end
 

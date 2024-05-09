@@ -58,7 +58,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         write_annual(filename, dfCurtailment)
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filename, curtailment, dfCurtailment)
-        if setup["OutputFullTimeSeries"] == 1
+        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             df_Curtail = CSV.read(joinpath(path,"curtail.csv"),DataFrame)
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path,FullTimeSeriesFolder)

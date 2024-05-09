@@ -25,7 +25,7 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         write_annual(filepath, dfPower)
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filepath, power, dfPower)
-        if setup["OutputFullTimeSeries"] == 1
+        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             df_Power = CSV.read(joinpath(path,"power.csv"),DataFrame)
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path,FullTimeSeriesFolder)
