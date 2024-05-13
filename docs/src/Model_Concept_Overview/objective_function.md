@@ -10,14 +10,14 @@ The objective function of GenX minimizes total annual electricity system costs o
     &\sum_{y \in \mathcal{O}} \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST,energy}_{y,z} \times    \Omega^{energy}_{y,z}) + (\pi^{FOM,energy}_{y,z} \times  \Delta^{total,energy}_{y,z})\right) +  \\
     &\sum_{y \in \mathcal{O}^{asym}}  \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST,charge}_{y,z} \times    \Omega^{charge}_{y,z}) + (\pi^{FOM,charge}_{y,z} \times  \Delta^{total,charge}_{y,z})\right) +  \\
     & \sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times(\pi^{VOM}_{y,z} + \pi^{FUEL}_{y,z})\times \Theta_{y,z,t}\right) + \sum_{y \in \mathcal{O \cup DF} } \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left( \omega_{t}\times\pi^{VOM,charge}_{y,z} \times \Pi_{y,z,t}\right) + \\
-    &\sum_{s \in \mathcal{S}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left(\omega_{t} \times n_{s}^{slope} \times \Lambda_{s,z,t}\right) + \sum_{t \in \mathcal{T}} \left(\omega_{t} \times \pi^{unmet}_{rsv} \times r^{unmet}_{t}\right)  \\
+    &\sum_{s \in \mathcal{S}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}} \left(\omega_{t} \times n_{s}^{slope} \times \Lambda_{s,z,t}\right) + \sum_{t \in \mathcal{T}} \left(\omega_{t} \times \pi^{unmet}_{rsv} \times r^{unmet}_{t}\right) + \\
     &\sum_{y \in \mathcal{H}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}}\left(\omega_{t} \times \pi^{START}_{y,z} \times \chi_{s,z,t}\right) +  \\
     & \sum_{l \in \mathcal{L}}\left(\pi^{TCAP}_{l} \times \bigtriangleup\varphi^{max}_{l}\right) + \\
     &\sum_{y \in \mathcal{VS}^{inv}} \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST, inv}_{y,z} \times \Omega^{inv}_{y,z})
     + (\pi^{FOM, inv}_{y,z} \times  \Delta^{total,inv}_{y,z})\right) + \\
     &\sum_{y \in \mathcal{VS}^{pv}} \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST, pv}_{y,z} \times \Omega^{pv}_{y,z})
     + (\pi^{FOM, pv}_{y,z} \times  \Delta^{total,pv}_{y,z})\right) + \\
-    &\sum_{y \in \mathcal{VS}^{wind}} \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST, wind}_{y,z} \times \Omega^{pv}_{y,z})
+    &\sum_{y \in \mathcal{VS}^{wind}} \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST, wind}_{y,z} \times \Omega^{wind}_{y,z})
     + (\pi^{FOM, wind}_{y,z} \times  \Delta^{total,wind}_{y,z})\right) + \\
     &\sum_{y \in \mathcal{VS}^{asym,dc,dis}} \sum_{z \in \mathcal{Z}} \left( (\pi^{INVEST,dc,dis}_{y,z} \times \Omega^{dc,dis}_{y,z})
     + (\pi^{FOM,dc,dis}_{y,z} \times  \Delta^{total,dc,dis}_{y,z})\right) + \\
@@ -40,10 +40,10 @@ The objective function of GenX minimizes total annual electricity system costs o
 The first summation represents the fixed costs of generation/discharge over all zones and technologies, which reflects the sum of the annualized capital cost, $\pi^{INVEST}_{y,z}$, times the total new capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM}_{y,z}$, times the net installed generation capacity, $\overline{\Omega}^{size}_{y,z} \times \Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 
 The second summation corresponds to the fixed cost of installed energy storage capacity and is summed over only the storage resources ($y \in \mathcal{O} \cup \mathcal{VS}^{stor}$).
-This term includes the sum of the annualized energy capital cost, $\pi^{INVEST,energy}_{y,z}$, times the total new energy capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed energy storage capacity, $\Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions).
+This term includes the sum of the annualized energy capital cost, $\pi^{INVEST,energy}_{y,z}$, times the total new energy capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed energy storage capacity, $\Delta^{total,energy}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 
-The third summation corresponds to the fixed cost of installed charging power capacity and is summed over only over storage resources with independent/asymmetric charge and discharge power components ($y \in \mathcal{O}^{asym}$).
-This term includes the sum of the annualized charging power capital cost, $\pi^{INVEST,charge}_{y,z}$, times the total new charging power capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed charging power capacity, $\Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions).
+The third summation corresponds to the fixed cost of installed charging power capacity and is summed over only storage resources with independent/asymmetric charge and discharge power components ($y \in \mathcal{O}^{asym}$).
+This term includes the sum of the annualized charging power capital cost, $\pi^{INVEST,charge}_{y,z}$, times the total new charging power capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed charging power capacity, $\Delta^{total,charge}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 
 The fourth and fifth summations correspond to the operational cost across all zones, technologies, and time steps.
 The fourth summation represents the sum of fuel cost, $\pi^{FUEL}_{y,z}$ (if any), plus variable O&M cost, $\pi^{VOM}_{y,z}$ times the energy generation/discharge by generation or storage resources (or demand satisfied via flexible demand resources, $y\in\mathcal{DF}$) in time step $t$, $\Theta_{y,z,t}$, and the weight of each time step $t$, $\omega_t$. The fifth summation represents the variable charging O&M cost, $\pi^{VOM,charge}_{y,z}$ times the energy withdrawn for charging by storage resources (or demand deferred by flexible demand resources) in time step $t$ , $\Pi_{y,z,t}$ and the annual weight of time step $t$,$\omega_t$.
@@ -59,7 +59,7 @@ The ninth term corresponds to the transmission reinforcement or construction cos
 Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $\pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{max}_{l}$. Note that fixed O&M and replacement capital costs (depreciation) for existing transmission capacity is treated as a sunk cost and not included explicitly in the GenX objective function.
 
 The tenth term onwards specifically relates to the breakdown investment, fixed O&M, and variable O&M costs associated with each configurable component of a co-located VRE and storage resource.
-The tenth term represents to the fixed cost of installed inverter capacity and is summed over only the co-located resources with an inverter component ($y \in \mathcal{VS}^{inv}$).
+The tenth term represents the fixed cost of installed inverter capacity and is summed over only the co-located resources with an inverter component ($y \in \mathcal{VS}^{inv}$).
 This term includes the sum of the annualized inverter capital cost, $\pi^{INVEST,inv}_{y,z}$, times the total new inverter capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, inv}_{y,z}$, times the net installed inverter capacity, $\Delta^{total,inv}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 The eleventh term represents the fixed cost of installed solar PV capacity and is summed over only the co-located resources with a solar PV component ($y \in \mathcal{VS}^{pv}$).
 This term includes the sum of the annualized solar PV capital cost, $\pi^{INVEST,pv}_{y,z}$, times the total new solar PV capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, pv}_{y,z}$, times the net installed solar PV capacity, $\Delta^{total,pv}_{y,z}$ (e.g., existing capacity less retirements plus additions).
