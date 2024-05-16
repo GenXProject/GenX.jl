@@ -71,7 +71,7 @@ function load_inputs(setup::Dict, path::AbstractString)
     end
 
 	# Read in hydrogen damand data
-	if setup["HydrogenMimimumProduction"] ==2
+	if setup["HydrogenMimimumProduction"] == 1
 		load_hydrogen_demand!(setup, policies_path, inputs)
 	end
 	
