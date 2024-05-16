@@ -22,16 +22,6 @@ The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ 
 where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min\_kt}_z$ is the minimum annual quantity of hydrogen that must be produced in region $z$ in kilotonnes.
 (See constraint 5 in the code)
 
-**Resource-level limit constraint**
-The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in "Electrolyzer_Min_kt" in Generates_data.csv:
-
-```math
-\begin{aligned}
-	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{electrolyzer}_y) \geq \mathcal{Min kt}_y \times 10^3
-	\hspace{1cm} \forall y \in \mathcal{EL}
-\end{aligned}
-```
-
 where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min kt}_y$ is the minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes.
 """
 function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
@@ -50,46 +40,26 @@ function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
 		VS_ELEC = Vector{Int}[]
 	end
 
-	# if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
-	# 	HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
-	# elseif !isempty(ELECTROLYZERS)
-	# 	HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
-	# else
-	# 	HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
-	# end
-
     kt_to_t = 10^3
     by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
     
-    ## Resource-level limit constraint
-    if setup["HydrogenMimimumProduction"] == 1
-        @constraint(EP,                                    # Electrolyzers connected to the grid
-            cHydrogenMinGrid[y in ELECTROLYZERS],
-            sum(inputs["omega"][t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t=1:T) >= electrolyzer_min_kt(gen[y]) * kt_to_t)
-        @constraint(EP,
-            cHydrogenMinVS[y in VS_ELEC],
-            sum(inputs["omega"][t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t=1:T) >= by_rid(y,:electrolyzer_min_kt) * kt_to_t)
-
     ## Zonal level limit constraint
-    elseif setup["HydrogenMimimumProduction"] == 2
-		NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
-		# slack: if input files are present, add minimum capacity requirement slack variables
-		if haskey(inputs, "H2DemandPriceH2")
-			@variable(EP, vH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs]>=0)
-			add_similar_to_expression!(EP[:eH2DemandRes], vH2Demand_slack)
-	
-			@expression(EP,
-				eCH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs],
-				inputs["H2DemandPriceH2"][h2demand]*EP[:vH2Demand_slack][h2demand])
-			@expression(EP,
-				eTotalCH2DemandSlack,
-				sum(EP[:eCH2Demand_slack][h2demand] for h2demand in 1:NumberOfH2DemandReqs))
-	
-			add_to_expression!(EP[:eObj], eTotalCH2DemandSlack)
-		end
+	NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
+	if haskey(inputs, "H2DemandPriceH2")
+		@variable(EP, vH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs]>=0)
+		add_similar_to_expression!(EP[:eH2DemandRes], vH2Demand_slack)
 
-		@constraint(EP,
-        cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],
-        EP[:eH2DemandRes][h2demand]>=inputs["H2DemandReq"][h2demand] * kt_to_t)
+		@expression(EP,
+			eCH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs],
+			inputs["H2DemandPriceH2"][h2demand]*EP[:vH2Demand_slack][h2demand])
+		@expression(EP,
+			eTotalCH2DemandSlack,
+			sum(EP[:eCH2Demand_slack][h2demand] for h2demand in 1:NumberOfH2DemandReqs))
+
+		add_to_expression!(EP[:eObj], eTotalCH2DemandSlack)
 	end
+
+	@constraint(EP,
+	cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],
+	EP[:eH2DemandRes][h2demand]>=inputs["H2DemandReq"][h2demand] * kt_to_t)
 end

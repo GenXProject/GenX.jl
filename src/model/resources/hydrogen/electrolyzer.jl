@@ -108,7 +108,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
 	## Hydrogen production expressions ##
-	if setup["HydrogenMimimumProduction"] == 2
+	if setup["HydrogenMimimumProduction"] == 1
 		@expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)], 
 			if y in ELECTROLYZERS
 				sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t in 1:T)
