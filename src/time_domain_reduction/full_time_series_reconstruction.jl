@@ -19,9 +19,7 @@ the time series and copies them to get up to all 8,760 hours in a year.
 This function is called when output files with time series data (e.g. power.csv, emissions.csv) are created, if the setup key "OutputFullTimeSeries" is set to "1".
 
 """
-# TO DO:
-# Add in a TDR check
-# Look into mybinder
+
 function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::DataFrame,DFnames::Vector)
    # Read Period map file Period_map.csv
     case = path[1:findlast('/',path)]
