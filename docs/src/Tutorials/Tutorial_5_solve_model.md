@@ -4,9 +4,7 @@
 
 In Tutorial 4, we went over how the model is generated when GenX is run using `Run.jl`. In the function `run_genx_case_simple` (or multistage), after `generate_model` is called, `solve_model` is called to solve the EP.
 
-```@raw html
-<img src="./files/runcase.png" style="width: 805px; height: auto">
-```
+![png](./files/runcase.png)
 
 In this tutorial, we go over how to use JuMP to solve a model, what it looks like to solve GenX, and how to edit the solver settings.
 

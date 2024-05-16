@@ -868,8 +868,3 @@ Finally, set the CO2 Cap back to 2:
 genx_settings_TZ["CO2Cap"] = 2
 YAML.write_file((joinpath(case,"settings/genx_settings.yml")), genx_settings_TZ)
 ```
-
-
-```julia
-
-```
