@@ -110,7 +110,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     # NEW: Call configure_settings_multistage(multistage_settings) to merge default settings with those specified in the YAML file
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml") # Multi stage settings YAML file path
     mysetup["MultiStageSettingsDict"] = configure_settings_multistage(multistage_settings)
-
+    
     ### Cluster time series inputs if necessary and if specified by the user
     if mysetup["TimeDomainReduction"] == 1
         tdr_settings = get_settings_path(case, "time_domain_reduction_settings.yml") # Multi stage settings YAML file path
