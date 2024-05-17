@@ -1,10 +1,11 @@
 function write_minimum_capacity_requirement(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
-    dfMinCapPrice = DataFrame(Constraint = [Symbol("MinCapReq_$mincap")
-                                            for mincap in 1:NumberOfMinCapReqs],
+    dfMinCapPrice = DataFrame(
+        Constraint = [Symbol("MinCapReq_$mincap")
+                      for mincap in 1:NumberOfMinCapReqs],
         Price = dual.(EP[:cZoneMinCapReq]))
 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1

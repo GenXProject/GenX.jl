@@ -67,7 +67,8 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
                 if !isempty(MIN_CAP_GEN_SOLAR)
                     dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN_SOLAR] .+= ((value.(EP[:eTotalCap_SOLAR][MIN_CAP_GEN_SOLAR]).data)
                                                                            .*
-                                                                           etainverter.(gen[ids_with_policy(gen,
+                                                                           etainverter.(gen[ids_with_policy(
+                        gen,
                         min_cap_solar,
                         tag = mincap)])
                                                                            *

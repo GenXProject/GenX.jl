@@ -41,7 +41,7 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         cPOWER_FLOW_OPF[l = 1:L, t = 1:T],
         EP[:vFLOW][l,
             t]==inputs["pDC_OPF_coeff"][l] *
-           sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z))
+                sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z))
 
     # Bus angle limits (except slack bus)
     @constraints(EP,

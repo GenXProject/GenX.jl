@@ -95,10 +95,10 @@ function co2!(EP::Model, inputs::Dict)
             else
                 sum((1 - biomass(gen[y]) - co2_capture_fraction(gen[y])) *
                     EP[:vMulFuels][y, i, t] * fuel_CO2[fuel_cols(gen[y], tag = i)]
-                    for i in 1:max_fuels) +
+                for i in 1:max_fuels) +
                 sum((1 - biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) *
                     EP[:vMulStartFuels][y, i, t] * fuel_CO2[fuel_cols(gen[y], tag = i)]
-                    for i in 1:max_fuels)
+                for i in 1:max_fuels)
             end)
 
         # CO2 captured from power plants in "Generators_data.csv"
@@ -116,7 +116,7 @@ function co2!(EP::Model, inputs::Dict)
 
         @expression(EP, eEmissionsCaptureByPlantYear[y in CCS],
             sum(omega[t] * eEmissionsCaptureByPlant[y, t]
-                for t in 1:T))
+            for t in 1:T))
         # add CO2 sequestration cost to objective function
         # when scale factor is on tCO2/MWh = > kt CO2/GWh
         @expression(EP, ePlantCCO2Sequestration[y in CCS],
@@ -125,7 +125,7 @@ function co2!(EP::Model, inputs::Dict)
 
         @expression(EP, eZonalCCO2Sequestration[z = 1:Z],
             sum(ePlantCCO2Sequestration[y]
-                for y in intersect(resources_in_zone_by_rid(gen, z), CCS)))
+            for y in intersect(resources_in_zone_by_rid(gen, z), CCS)))
 
         @expression(EP, eTotaleCCO2Sequestration,
             sum(eZonalCCO2Sequestration[z] for z in 1:Z))

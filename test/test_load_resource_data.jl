@@ -29,8 +29,8 @@ function test_ids_with_positive(attr::Symbol, gen, dfGen)
 end
 
 function prepare_inputs_true(test_path::AbstractString,
-    in_filenames::InputsTrue,
-    setup::Dict)
+        in_filenames::InputsTrue,
+        setup::Dict)
     gen_filename = in_filenames.gen_filename
     inputs_filename = in_filenames.inputs_filename
     dfGen = GenX.load_dataframe(joinpath(test_path, gen_filename))
@@ -103,17 +103,21 @@ function test_load_scaled_resources_data(gen, dfGen)
         max_fuels = maximum(GenX.num_fuels.(gen))
         for i in 1:max_fuels
             @test findall(g -> GenX.max_cofire_cols(g, tag = i) < 1, gen[MULTI_FUELS]) ==
-                  dfGen[dfGen[!, Symbol(string("fuel", i, "_max_cofire_level"))] .< 1, :][!,
+                  dfGen[dfGen[!, Symbol(string("fuel", i, "_max_cofire_level"))] .< 1, :][
+                !,
                 :r_id]
             @test findall(g -> GenX.max_cofire_start_cols(g, tag = i) < 1,
-                gen[MULTI_FUELS]) == dfGen[dfGen[!, Symbol(string("fuel", i, "_max_cofire_level_start"))] .< 1,
+                gen[MULTI_FUELS]) == dfGen[
+                dfGen[!, Symbol(string("fuel", i, "_max_cofire_level_start"))] .< 1,
                 :][!,
                 :r_id]
             @test findall(g -> GenX.min_cofire_cols(g, tag = i) > 0, gen[MULTI_FUELS]) ==
-                  dfGen[dfGen[!, Symbol(string("fuel", i, "_min_cofire_level"))] .> 0, :][!,
+                  dfGen[dfGen[!, Symbol(string("fuel", i, "_min_cofire_level"))] .> 0, :][
+                !,
                 :r_id]
             @test findall(g -> GenX.min_cofire_start_cols(g, tag = i) > 0,
-                gen[MULTI_FUELS]) == dfGen[dfGen[!, Symbol(string("fuel", i, "_min_cofire_level_start"))] .> 0,
+                gen[MULTI_FUELS]) == dfGen[
+                dfGen[!, Symbol(string("fuel", i, "_min_cofire_level_start"))] .> 0,
                 :][!,
                 :r_id]
             @test GenX.fuel_cols.(gen, tag = i) == dfGen[!, Symbol(string("fuel", i))]

@@ -26,9 +26,9 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     else # setup["WriteOutputs"] == "full"
         dfNse = hcat(dfNse, DataFrame(nse, :auto))
         auxNew_Names = [Symbol("Segment");
-            Symbol("Zone");
-            Symbol("AnnualSum");
-            [Symbol("t$t") for t in 1:T]]
+                        Symbol("Zone");
+                        Symbol("AnnualSum");
+                        [Symbol("t$t") for t in 1:T]]
         rename!(dfNse, auxNew_Names)
 
         total = DataFrame(["Total" 0 sum(dfNse[!, :AnnualSum]) fill(0.0, (1, T))], :auto)

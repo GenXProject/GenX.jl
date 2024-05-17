@@ -10,9 +10,9 @@ function write_co2(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 end
 
 function write_co2_emissions_plant(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 

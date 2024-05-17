@@ -4,11 +4,11 @@
 Function for reporting the renewable/clean credit revenue earned by each generator listed in the input file. GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. Each row corresponds to a generator, and each column starting from the 6th to the second last is the total revenue earned from each RPS constraint. The revenue is calculated as the total annual generation (if elgible for the corresponding constraint) multiplied by the RPS/CES price. The last column is the total revenue received from all constraint. The unit is \$.
 """
 function write_esr_revenue(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    dfPower::DataFrame,
-    dfESR::DataFrame,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        dfPower::DataFrame,
+        dfESR::DataFrame,
+        EP::Model)
     gen = inputs["RESOURCES"]
     regions = region.(gen)
     clusters = cluster.(gen)
@@ -66,14 +66,16 @@ function write_esr_revenue(path::AbstractString,
                 dfESRRev[SOLAR_WIND, esr_col] = (((value.(EP[:vP_WIND][SOLAR_WIND,
                     :]).data * weight)
                                                   .*
-                                                  esr_vrestor.(gen_VRE_STOR[solar_and_wind_resources],
+                                                  esr_vrestor.(
+                    gen_VRE_STOR[solar_and_wind_resources],
                     tag = i) * price) +
                                                  (value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data
                                                   .*
                                                   etainverter.(gen_VRE_STOR[solar_and_wind_resources])
                                                   *
                                                   weight) .*
-                                                 esr_vrestor.(gen_VRE_STOR[solar_and_wind_resources],
+                                                 esr_vrestor.(
+                    gen_VRE_STOR[solar_and_wind_resources],
                     tag = i) * price)
             end
         end

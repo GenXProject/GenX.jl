@@ -67,10 +67,12 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     # Capacity factor for electrolyzers is based on vUSE variable not vP
     if (!isempty(ELECTROLYZER))
         dfCapacityfactor.AnnualSum[ELECTROLYZER] .= value.(EP[:vUSE][ELECTROLYZER,
-                                                        :]).data * inputs["omega"] * scale_factor
+                                                        :]).data * inputs["omega"] *
+                                                    scale_factor
         dfCapacityfactor.CapacityFactor[ELECTROLYZER] .= (dfCapacityfactor.AnnualSum[ELECTROLYZER] ./
                                                           dfCapacityfactor.Capacity[ELECTROLYZER]) /
-                                                         sum(inputs["omega"][t] for t in 1:T)
+                                                         sum(inputs["omega"][t]
+        for t in 1:T)
     end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), dfCapacityfactor)

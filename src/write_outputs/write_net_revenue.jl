@@ -4,20 +4,20 @@
 Function for writing net revenue of different generation technologies.
 """
 function write_net_revenue(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model,
-    dfCap::DataFrame,
-    dfESRRev::DataFrame,
-    dfResRevenue::DataFrame,
-    dfChargingcost::DataFrame,
-    dfPower::DataFrame,
-    dfEnergyRevenue::DataFrame,
-    dfSubRevenue::DataFrame,
-    dfRegSubRevenue::DataFrame,
-    dfVreStor::DataFrame,
-    dfOpRegRevenue::DataFrame,
-    dfOpRsvRevenue::DataFrame)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model,
+        dfCap::DataFrame,
+        dfESRRev::DataFrame,
+        dfResRevenue::DataFrame,
+        dfChargingcost::DataFrame,
+        dfPower::DataFrame,
+        dfEnergyRevenue::DataFrame,
+        dfSubRevenue::DataFrame,
+        dfRegSubRevenue::DataFrame,
+        dfVreStor::DataFrame,
+        dfOpRegRevenue::DataFrame,
+        dfOpRsvRevenue::DataFrame)
     gen = inputs["RESOURCES"]
     zones = zone_id.(gen)
     regions = region.(gen)
@@ -114,14 +114,13 @@ function write_net_revenue(path::AbstractString,
         end
         if !isempty(DC_DISCHARGE)
             dfNetRevenue.Var_OM_cost_out[DC_DISCHARGE] += var_om_cost_per_mwh_discharge_dc.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)]) .*
-                                                          (value.(EP[:vP_DC_DISCHARGE][DC_DISCHARGE,
-                :]).data .* etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)]) *
+                                                          (value.(EP[:vP_DC_DISCHARGE][DC_DISCHARGE,:]).data .*
+                                                           etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)]) *
                                                            inputs["omega"])
         end
         if !isempty(AC_DISCHARGE)
             dfNetRevenue.Var_OM_cost_out[AC_DISCHARGE] += var_om_cost_per_mwh_discharge_ac.(gen_VRE_STOR[(gen_VRE_STOR.stor_ac_discharge .!= 0)]) .*
-                                                          (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE,
-                :]).data * inputs["omega"])
+                                                          (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE,:]).data * inputs["omega"])
         end
     end
     if setup["ParameterScale"] == 1
@@ -147,8 +146,8 @@ function write_net_revenue(path::AbstractString,
     if !isempty(VRE_STOR)
         if !isempty(DC_CHARGE)
             dfNetRevenue.Var_OM_cost_in[DC_CHARGE] += var_om_cost_per_mwh_charge_dc.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge .!= 0)]) .*
-                                                      (value.(EP[:vP_DC_CHARGE][DC_CHARGE,
-                :]).data ./ etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge .!= 0)]) *
+                                                      (value.(EP[:vP_DC_CHARGE][DC_CHARGE,:]).data ./
+                                                       etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge .!= 0)]) *
                                                        inputs["omega"])
         end
         if !isempty(AC_CHARGE)

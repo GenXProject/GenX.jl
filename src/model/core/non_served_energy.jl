@@ -93,7 +93,7 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
             @expression(EP,
                 eCapResMarBalanceNSE[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
                 sum(EP[:vNSE][s, t, z]
-                    for s in 2:SEG, z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+                for s in 2:SEG, z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
             add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceNSE)
         end
     end

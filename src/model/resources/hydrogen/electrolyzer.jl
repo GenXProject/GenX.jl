@@ -101,7 +101,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
     @expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
         sum(EP[:vUSE][y, t]
-            for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))))
+        for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))))
 
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
     EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
@@ -145,7 +145,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP,
         cHydrogenMin[y in ELECTROLYZERS],
         sum(inputs["omega"][t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y])
-            for t in 1:T)>=electrolyzer_min_kt(gen[y]) * kt_to_t)
+        for t in 1:T)>=electrolyzer_min_kt(gen[y]) * kt_to_t)
 
     ### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
     @constraints(EP, begin
@@ -161,14 +161,9 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
         QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
         @constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
             sum(EP[:vP][y, t]
-                for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))>=sum(EP[:vUSE][y,
-                t] for y in intersect(resources_in_zone_by_rid(gen,
-                    z),
-                ELECTROLYZERS)) + sum(EP[:vCHARGE][y,
-                t] for y in intersect(resources_in_zone_by_rid(gen,
-                    z),
-                QUALIFIED_SUPPLY,
-                STORAGE)))
+            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))>=sum(EP[:vUSE][y,t]
+            for y in intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t]
+            for y in intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, STORAGE)))
     end
 
     ### Energy Share Requirement Policy ###
@@ -179,7 +174,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP,
             eElectrolyzerESR[ESR in 1:inputs["nESR"]],
             sum(inputs["omega"][t] * EP[:vUSE][y, t]
-                for y in intersect(ELECTROLYZERS, ids_with_policy(gen, esr, tag = ESR)),
+            for y in intersect(ELECTROLYZERS, ids_with_policy(gen, esr, tag = ESR)),
             t in 1:T))
         EP[:eESR] -= eElectrolyzerESR
     end

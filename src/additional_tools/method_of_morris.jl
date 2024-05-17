@@ -62,12 +62,12 @@ function calculate_spread(matrix)
 end
 
 function sample_matrices(p_range,
-    p_steps,
-    rng;
-    num_trajectory,
-    total_num_trajectory,
-    len_design_mat,
-    groups)
+        p_steps,
+        rng;
+        num_trajectory,
+        total_num_trajectory,
+        len_design_mat,
+        groups)
     matrix_array = []
     println(num_trajectory)
     println(total_num_trajectory)
@@ -85,13 +85,13 @@ function sample_matrices(p_range,
 end
 
 function my_gsa(f,
-    p_steps,
-    num_trajectory,
-    total_num_trajectory,
-    p_range::AbstractVector,
-    len_design_mat,
-    groups,
-    random)
+        p_steps,
+        num_trajectory,
+        total_num_trajectory,
+        p_range::AbstractVector,
+        len_design_mat,
+        groups,
+        random)
     rng = Random.default_rng()
     if !random
         Random.seed!(SEED)
@@ -113,7 +113,8 @@ function my_gsa(f,
                     pairs(eachcol(L[!,
                         ((i - 1) * len_design_mat + 1):(i * len_design_mat)]))))))
             distinct_trajectories[i] = length(Matrix(DataFrame(unique(last,
-                pairs(eachcol(L[!, ((i - 1) * len_design_mat + 1):(i * len_design_mat)])))))[1,
+                pairs(eachcol(L[!, ((i - 1) * len_design_mat + 1):(i * len_design_mat)])))))[
+                1,
                 :])
         end
     end
@@ -189,12 +190,12 @@ function my_gsa(f,
         effects)
 end
 function morris(EP::Model,
-    path::AbstractString,
-    setup::Dict,
-    inputs::Dict,
-    outpath::AbstractString,
-    OPTIMIZER;
-    random = true)
+        path::AbstractString,
+        setup::Dict,
+        inputs::Dict,
+        outpath::AbstractString,
+        OPTIMIZER;
+        random = true)
 
     # Reading the input parameters
     Morris_range = load_dataframe(joinpath(path, "Method_of_morris_range.csv"))
@@ -215,11 +216,12 @@ function morris(EP::Model,
         column_f = isdefined(GenX, col_sym) ? getfield(GenX, col_sym) :
                    r -> getproperty(r, col_sym)
         sigma = [sigma;
-            [column_f.(gen) .* (1 .+
-              Morris_range[Morris_range[!, :Parameter] .== column, :Lower_bound] ./ 100) column_f.(gen) .*
-                                                                                         (1 .+
-                                                                                          Morris_range[Morris_range[!, :Parameter] .== column,
-            :Upper_bound] ./ 100)]]
+                 [column_f.(gen) .* (1 .+
+                   Morris_range[Morris_range[!, :Parameter] .== column, :Lower_bound] ./
+                   100) column_f.(gen) .*
+                        (1 .+
+                         Morris_range[Morris_range[!, :Parameter] .== column,
+                     :Upper_bound] ./ 100)]]
     end
     sigma = sigma[2:end, :]
 

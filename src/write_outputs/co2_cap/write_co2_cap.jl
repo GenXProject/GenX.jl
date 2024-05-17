@@ -5,7 +5,8 @@ Function for reporting carbon price associated with carbon cap constraints.
 
 """
 function write_co2_cap(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    dfCO2Price = DataFrame(CO2_Cap = [Symbol("CO2_Cap_$cap") for cap in 1:inputs["NCO2Cap"]],
+    dfCO2Price = DataFrame(
+        CO2_Cap = [Symbol("CO2_Cap_$cap") for cap in 1:inputs["NCO2Cap"]],
         CO2_Price = (-1) * (dual.(EP[:cCO2Emissions_systemwide])))
     if setup["ParameterScale"] == 1
         dfCO2Price.CO2_Price .*= ModelScalingFactor # Convert Million$/kton to $/ton

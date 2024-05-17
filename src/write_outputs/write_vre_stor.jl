@@ -263,7 +263,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
             :StartDischargeACCap,
             :RetDischargeACCap,
             :NewDischargeACCap,
-            :EndDischargeACCap,
+            :EndDischargeACCap
         ]
         dfCap[!, columns_to_scale] .*= ModelScalingFactor
     end
@@ -365,9 +365,9 @@ end
 Function for writing the vre-storage discharging decision variables/expressions.
 """
 function write_vre_stor_discharge(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     gen = inputs["RESOURCES"]
     gen_VRE_STOR = gen.VreStorage
     T = inputs["T"]

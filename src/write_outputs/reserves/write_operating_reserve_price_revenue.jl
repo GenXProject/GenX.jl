@@ -8,9 +8,9 @@ Function for reporting the operating reserve and regulation revenue earned by ge
     As a reminder, GenX models the operating reserve and regulation at the time-dependent level, and each constraint either stands for an overall market or a locality constraint.
 """
 function write_operating_reserve_regulation_revenue(path::AbstractString,
-    inputs::Dict,
-    setup::Dict,
-    EP::Model)
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     gen = inputs["RESOURCES"]
