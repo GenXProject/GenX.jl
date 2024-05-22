@@ -200,6 +200,14 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             t = 1 #  update forward pass solution for the first stage
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
+
+            if myopic && WriteIntermittentOutputs
+                for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+                    outpath_cur = joinpath(outpath, "results_p$p")
+                    write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
+                end
+            end
+            
         end
         ## Forward pass for t=2:num_stages
         for t in 2:num_stages
@@ -222,6 +230,13 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             # Step d.iii) Solve the model at time t
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
+
+            if myopic && WriteIntermittentOutputs
+                for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+                    outpath_cur = joinpath(outpath, "results_p$p")
+                    write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
+                end
+            end
         end
 
         ### For the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.
