@@ -39,10 +39,9 @@ function full_time_series_reconstruction(
 
     # Get the names of the input DataFrame
     DFMatrix = Matrix(DF)
-    
     # Initialize an array to add the reconstructed data to
-    recon = ["t$t" for t in 1:TimestepsPerRepPeriod*numPeriods]
-    
+    recon = ["t$t" for t in 1:(TimestepsPerRepPeriod * numPeriods)]
+
     # Find the index of the row with the first time step
     t1 = findfirst(x -> x == "t1",DF[!,1])
    
