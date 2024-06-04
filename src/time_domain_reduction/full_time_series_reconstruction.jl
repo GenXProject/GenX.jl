@@ -34,7 +34,6 @@ function full_time_series_reconstruction(
     # Define Timesteps per Representative Period and Weight Total
     TimestepsPerRepPeriod = myTDRsetup["TimestepsPerRepPeriod"]
     WeightTotal = myTDRsetup["WeightTotal"]
-    
     # Calculate the number of total periods the original time series was split into (will usually be 52)
     numPeriods = floor(Int,WeightTotal/TimestepsPerRepPeriod)
     
