@@ -24,7 +24,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     end
 
     if setup["OutputFullTimeSeries"] == 1
-        mkpath(joinpath(path,setup["OutputFullTimeSeriesFolder"]))
+        mkpath(joinpath(path, setup["OutputFullTimeSeriesFolder"]))
     end
 
     # https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode

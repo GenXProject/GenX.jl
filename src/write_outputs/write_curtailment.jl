@@ -59,11 +59,12 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filename, curtailment, dfCurtailment)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            df_Curtail = CSV.read(joinpath(path,"curtail.csv"),DataFrame)
+            df_Curtail = CSV.read(joinpath(path, "curtail.csv"), DataFrame)
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-            output_path = joinpath(path,FullTimeSeriesFolder)
-            dfOut_full = full_time_series_reconstruction(path,setup, df_Curtail,names(df_Curtail))
-            CSV.write(joinpath(output_path,"curtail.csv"), dfOut_full)
+            output_path = joinpath(path, FullTimeSeriesFolder)
+            dfOut_full = full_time_series_reconstruction(
+                path, setup, df_Curtail, names(df_Curtail))
+            CSV.write(joinpath(output_path, "curtail.csv"), dfOut_full)
             println("Writing Full Time Series for Curtailment")
         end
     end
