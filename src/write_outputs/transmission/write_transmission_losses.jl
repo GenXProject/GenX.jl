@@ -39,7 +39,6 @@ function write_transmission_losses(path::AbstractString,
             CSV.write(joinpath(output_path,"tlosses.csv"), dfOut_full, header = false)
             println("Writing Full Time Series for Time Losses")
         end
-        
     end
     return nothing
 end
