@@ -25,5 +25,4 @@ function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         CSV.write(joinpath(output_path, "commit.csv"), dfOut_full, header = false)
         println("Writing Full Time Series for Commitment")
     end
-
 end
