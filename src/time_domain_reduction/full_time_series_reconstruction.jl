@@ -28,8 +28,9 @@ function full_time_series_reconstruction(
     Period_map = CSV.read(joinpath(TDRpath, "Period_map.csv"), DataFrame)
 
     # Read time domain reduction settings file time_domain_reduction_settings.yml
-    myTDRsetup = YAML.load(open(joinpath(case,"settings/time_domain_reduction_settings.yml")))
-    
+    myTDRsetup = YAML.load(open(joinpath(
+        case, "settings/time_domain_reduction_settings.yml")))
+
     # Define Timesteps per Representative Period and Weight Total
     TimestepsPerRepPeriod = myTDRsetup["TimestepsPerRepPeriod"]
     WeightTotal = myTDRsetup["WeightTotal"]
