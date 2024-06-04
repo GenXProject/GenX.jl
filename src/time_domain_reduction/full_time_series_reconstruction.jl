@@ -20,9 +20,10 @@ This function is called when output files with time series data (e.g. power.csv,
 
 """
 
-function full_time_series_reconstruction(path::AbstractString,setup::Dict,DF::DataFrame,DFnames::Vector)
-   # Read Period map file Period_map.csv
-    case = path[1:findlast('/',path)]
+function full_time_series_reconstruction(
+        path::AbstractString, setup::Dict, DF::DataFrame, DFnames::Vector)
+    # Read Period map file Period_map.csv
+    case = path[1:findlast('/', path)]
     TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
     Period_map = CSV.read(joinpath(TDRpath,"Period_map.csv"),DataFrame)
     
