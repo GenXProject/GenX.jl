@@ -63,8 +63,8 @@ function full_time_series_reconstruction(
 
     #rename!(reconDF,names1)
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
-    for i in range(1,t1-1)
-        insert!(reconDF,i,DFMatrix[i,1:end],promote=true)
+    for i in range(1, t1 - 1)
+        insert!(reconDF, i, DFMatrix[i, 1:end], promote = true)
     end
     # Repeat the last rows of the year to fill in the gap (should be 24 hours for non-leap year)
     end_diff = WeightTotal - nrow(reconDF) + 1
