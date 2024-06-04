@@ -43,24 +43,23 @@ function full_time_series_reconstruction(
     recon = ["t$t" for t in 1:(TimestepsPerRepPeriod * numPeriods)]
 
     # Find the index of the row with the first time step
-    t1 = findfirst(x -> x == "t1",DF[!,1])
-   
+    t1 = findfirst(x -> x == "t1", DF[!, 1])
 
     # Reconstruction of all hours of the year from TDR
-    for j in range(2,ncol(DF))
-        col = DF[t1:end,j]
+    for j in range(2, ncol(DF))
+        col = DF[t1:end, j]
         #col_name = DFnames[j]
         #names1 = [names1 Symbol(col_name)]
         recon_col = []
-        for i in range(1,numPeriods)
-            index = Period_map[i,"Rep_Period_Index"]
-            recon_temp = col[(TimestepsPerRepPeriod*index-(TimestepsPerRepPeriod-1)):(TimestepsPerRepPeriod*index)] # Describe how this works
+        for i in range(1, numPeriods)
+            index = Period_map[i, "Rep_Period_Index"]
+            recon_temp = col[(TimestepsPerRepPeriod * index - (TimestepsPerRepPeriod - 1)):(TimestepsPerRepPeriod * index)] # Describe how this works
             recon_col = [recon_col; recon_temp]
         end
         #reconDF[!,col_name] = recon_col
         recon = [recon recon_col]
     end
-    reconDF = DataFrame(recon, DFnames, makeunique=true)
+    reconDF = DataFrame(recon, DFnames, makeunique = true)
 
     #rename!(reconDF,names1)
     
