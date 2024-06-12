@@ -201,7 +201,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
 
-            if myopic && WriteIntermittentOutputs
+            if myopic && mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"]
                 for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
                     outpath_cur = joinpath(outpath, "results_p$p")
                     write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
@@ -231,7 +231,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
 
-            if myopic && WriteIntermittentOutputs
+            if myopic && mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"]
                 for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
                     outpath_cur = joinpath(outpath, "results_p$p")
                     write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])

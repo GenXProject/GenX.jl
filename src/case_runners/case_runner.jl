@@ -109,6 +109,9 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml") # Multi stage settings YAML file path
     # merge default settings with those specified in the YAML file
     mysetup["MultiStageSettingsDict"] = configure_settings_multistage(multistage_settings)
+    println(mysetup["MultiStageSettingsDict"])
+    println(mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"])
+
     ### Cluster time series inputs if necessary and if specified by the user
     if mysetup["TimeDomainReduction"] == 1
         tdr_settings = get_settings_path(case, "time_domain_reduction_settings.yml") # Multi stage settings YAML file path
@@ -186,10 +189,12 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
 
     # Step 4) Write final outputs from each stage
-    for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
-        mysetup["MultiStageSettingsDict"]["CurStage"] = p
-        outpath_cur = joinpath(outpath, "results_p$p")
-        write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
+    if mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"] == 0
+        for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+            mysetup["MultiStageSettingsDict"]["CurStage"] = p
+            outpath_cur = joinpath(outpath, "results_p$p")
+            write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
+        end
     end
 
     # Step 5) Write DDP summary outputs
