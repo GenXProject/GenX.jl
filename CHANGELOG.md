@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+- Fix formatting and images in tutorials 3, 5, 6, and 8 to address issue #697 (#698)
+
 ### Added
 - Add objective scaler for addressing problem ill-conditioning (#667)
 
