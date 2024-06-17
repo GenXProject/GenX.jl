@@ -29,6 +29,7 @@ using Plots
 using Clustering
 using ScikitLearn
 @sk_import datasets: (make_blobs)
+```
 
 ```julia
 case = joinpath("example_systems/1_three_zones");
@@ -448,7 +449,7 @@ G2 = Plots.plot(recon[!,:hour], recon[!,:MW], linewidth=1.7,
 Plots.plot(G1,G2,layout=(2,1))
 ```
 
-![svg](./files/t3_recon.svg)
+![png](./files/t3_recon.png)
 
 Each color represents one of the representative weeks.
 
@@ -624,7 +625,7 @@ scatter!(twinx(),obj_val_plot[:,1],times,color=:red,markeralpha=.5,label=:"Time"
 ygrid!(:on, :dashdot, 0.1)
 ```
 
-![svg](./files/t3_obj_val.svg)
+![svg](./files/t3_obj_vals.svg)
 
 Here, we can see that while having very few representative periods produces an objective value that differs greatly from the orignal, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `1_three_zones` decreases the run time of GenX significantly while while maintaining an objective value close to the original. 
 
@@ -658,4 +659,5 @@ for folder in folders
     if length(folder) >= 7 && folder[1:7] == "results"
         rm("example_systems/1_three_zones/" * folder,recursive=true) 
     end
-end```
+end
+```
