@@ -1423,18 +1423,6 @@ function add_resources_to_input_data!(inputs::Dict,
     inputs["ALLAM_CYCLE_LOX"] = allam_cycle_lox(gen)
     inputs["WITH_LOX"] = is_with_lox(gen)
 
-    if setup["UCommit"] >= 1
-        # Start-up cost is sum of fixed cost per start startup
-        inputs["C_Start_Allam_sCO2turbine"] = zeros(Float64, G, T)
-        inputs["C_Start_Allam_ASU"] = zeros(Float64, G, T)
-        for g in inputs["ALLAM_CYCLE_LOX"]
-            start_up_cost_sco2turbine = start_cost_sco2turbine_per_mw(gen[g]) * cap_size_sco2turbine(gen[g])
-            start_up_cost_asu = start_cost_asu_per_mw(gen[g]) * cap_size_asu(gen[g])
-            inputs["C_Start_Allam_sCO2turbine"][g, :] .= start_up_cost_sco2turbine
-            inputs["C_Start_Allam_ASU"][g, :] .= start_up_cost_asu
-        end
-    end
-
     #reconstruct a dictionary to store component-wise data for Allam Cycle w/ LOX.
     # the order must follow sCO2 turbine -> ASU -> LOX
     allam_dict = Dict()

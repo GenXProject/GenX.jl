@@ -232,10 +232,9 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
         ## Objective Function Expressions ##
         # start up costs associated with sCO2 turbine and ASU
         # Startup costs for resource "y" during hour "t"   
-        @expression(EP, eCStart_Allam[y in COMMIT_Allam , i in 1:2, t=1:T],
-            ( sum(omega[t]*(allam_dict[y,"start_cost"][i]*vSTART_Allam[y,i,t]) for y in ALLAM_CYCLE_LOX for i in 1:2)))
+        @expression(EP, eCStart_Allam[y in COMMIT_Allam , t=1:T], sum(omega[t]*(allam_dict[y,"start_cost"][i]*vSTART_Allam[y,i,t]) for i in 1:2))
  
-        @expression(EP, eTotalCStart_Allam_T[t = 1:T], sum(eCStart_Allam[y,i,t] for y in ALLAM_CYCLE_LOX for i in 1:2))
+        @expression(EP, eTotalCStart_Allam_T[t = 1:T], sum(eCStart_Allam[y,t] for y in COMMIT_Allam))
         
         @expression(EP, eTotalCStart_Allam, sum(eTotalCStart_Allam_T[t] for t in 1:T))
         
@@ -266,10 +265,10 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
                     set_integer.(vCOMMIT_Allam[y,i,:])
                     set_integer.(vSTART_Allam[y,i,:])
                     set_integer.(vSHUT_Allam[y,i,:])
-                    if y in inputs["RET_CAP_Allam"]
+                    if y in RET_CAP_Allam 
                         set_integer(EP[:vRETCAP_AllamCycleLOX][y,i])allam_dict[y, "cap_size"][i]
                     end
-                    if y in inputs["NEW_CAP_Allam"]
+                    if y in NEW_CAP_Allam
                          set_integer(EP[:vCAP_AllamCycleLOX][y,i])
                     end
                 end
