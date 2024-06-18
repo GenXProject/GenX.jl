@@ -161,6 +161,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         VS_STOR = []
     end
 
+    if !isempty(inputs["ALLAM_CYCLE_LOX"])
+        write_allam_capacity(path, inputs, setup, EP)
+        write_allam_output(path, inputs, setup, EP)
+    end
+
     if has_duals(EP) == 1
         if output_settings_d["WriteReliability"]
             elapsed_time_reliability = @elapsed write_reliability(path, inputs, setup, EP)

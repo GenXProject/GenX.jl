@@ -199,6 +199,12 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
        (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
         electrolyzer!(EP, inputs, setup)
     end
+    
+    # Allam Cycle LOX
+    if !isempty(inputs["ALLAM_CYCLE_LOX"])
+        allamcyclelox!(EP, inputs, setup)
+    end
+
     # Policies
 
     if setup["OperationalReserves"] > 0

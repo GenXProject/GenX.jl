@@ -14,6 +14,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     MUST_RUN = inputs["MUST_RUN"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     weight = inputs["omega"]
 
     df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
@@ -62,10 +63,11 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     has_capacity = findall(x -> x >= 1, df.Capacity)
     EXISTING = intersect(produces_power, has_capacity)
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
-    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR), EXISTING)
+    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR, ALLAM_CYCLE_LOX), EXISTING)
     df.CapacityFactor[CF_GEN] .= (df.AnnualSum[CF_GEN] ./
                                   df.Capacity[CF_GEN]) /
                                  sum(weight)
+
     # Capacity factor for electrolyzers is based on vUSE variable not vP
     if !isempty(ELECTROLYZER)
         df.AnnualSum[ELECTROLYZER] .= energy_sum(:vUSE, ELECTROLYZER)

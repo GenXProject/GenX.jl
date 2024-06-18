@@ -12,6 +12,7 @@ Possible values:
 - :FlexDemand
 - :VreStorage
 - :Electrolyzer
+- :AllamCycleLox
 """
 const resource_types = (:Thermal,
     :Vre,
@@ -20,7 +21,8 @@ const resource_types = (:Thermal,
     :MustRun,
     :FlexDemand,
     :VreStorage,
-    :Electrolyzer)
+    :Electrolyzer,
+    :AllamCycleLOX)
 
 # Create composite types (structs) for each resource type in resource_types
 for r in resource_types
@@ -606,6 +608,7 @@ inv_cost_per_mwyr(r::AbstractResource) = get(r, :inv_cost_per_mwyr, default_zero
 fixed_om_cost_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr, default_zero)
 var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default_zero)
 inv_cost_per_mwhyr(r::AbstractResource) = get(r, :inv_cost_per_mwhyr, default_zero)
+
 function fixed_om_cost_per_mwhyr(r::AbstractResource)
     get(r, :fixed_om_cost_per_mwhyr, default_zero)
 end
@@ -1061,6 +1064,69 @@ for attr in (:min_retired_cap_inverter_mw,
     cum_attr = Symbol("cum_" * String(attr))
     @eval @interface $cum_attr default_zero
 end
+
+# Allam Cycle with LOX 
+"""
+    allam_cycle_lox(rs::Vector{T}) where T <: AbstractResource
+
+Returns the indices of all VRE_STOR resources in the vector `rs`.
+"""
+allam_cycle_lox(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, AllamCycleLOX), rs)
+
+with_lox(r::AbstractResource) = get(r, :with_lox, default_zero)
+
+function is_with_lox(rs::Vector{T}) where {T <: AbstractResource}
+    findall(r -> with_lox(r) == 1, rs)
+end
+
+# cap size of each component
+cap_size_sco2turbine(r::AbstractResource) = get(r, :cap_size_sco2turbine, default_percent)
+cap_size_asu(r::AbstractResource) = get(r, :cap_size_asu, default_percent)
+cap_size_lox(r::AbstractResource) = get(r, :cap_size_lox, default_percent)
+
+#cost related to allam cycle lox
+inv_cost_sco2turbine_per_mwyr(r::AbstractResource) = get(r, :inv_cost_sco2turbine_per_mwyr, default_zero)
+inv_cost_asu_per_mwyr(r::AbstractResource) = get(r, :inv_cost_asu_per_mwyr, default_zero)
+inv_cost_lox_per_tyr(r::AbstractResource) = get(r, :inv_cost_lox_per_tyr, default_zero)
+
+fixed_om_cost_sco2turbine_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_sco2turbine_per_mwyr, default_zero)
+fixed_om_cost_asu_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_asu_per_mwyr, default_zero)
+fixed_om_cost_lox_per_tyr(r::AbstractResource) = get(r, :fixed_om_cost_lox_per_tyr, default_zero)
+
+var_om_cost_sco2turbine_per_mwh(r::AbstractResource) = get(r, :var_om_cost_sco2turbine_per_mwh, default_zero)
+var_om_cost_asu_per_mwh(r::AbstractResource) = get(r, :var_om_cost_asu_per_mwh, default_zero)
+var_om_cost_lox_per_t(r::AbstractResource) = get(r, :var_om_cost_lox_per_t, default_zero)
+
+start_cost_sco2turbine_per_mw(r::AbstractResource) = get(r, :start_cost_sco2turbine_per_mw, default_zero)
+start_cost_asu_per_mw(r::AbstractResource) = get(r, :start_cost_asu_per_mw, default_zero)
+
+start_fuel_sco2turbine_mmbtu_per_mw(r::AbstractResource) = get(r, :start_fuel_sco2turbine_mmbtu_per_mw, default_zero)
+start_fuel_asu_mmbtu_per_mw(r::AbstractResource) = get(r, :start_fuel_asu_mmbtu_per_mw, default_zero)
+
+# unit commitment for allam cycle, only sco2 turbine and asu are subjected to unit commitment
+min_power_sco2turbine(r::AbstractResource) = get(r, :min_power_sco2turbine, default_zero)
+min_power_asu(r::AbstractResource) = get(r, :min_power_asu, default_zero)
+
+ramp_up_percentage_sco2turbine(r::AbstractResource) = get(r, :ramp_up_percentage_sco2turbine, default_percent)
+ramp_up_percentage_asu(r::AbstractResource) = get(r, :ramp_up_percentage_asu, default_percent)
+
+ramp_dn_percentage_sco2turbine(r::AbstractResource) = get(r, :ramp_dn_percentage_sco2turbine, default_percent)
+ramp_dn_percentage_asu(r::AbstractResource) = get(r, :ramp_dn_percentage_asu, default_percent)
+
+up_time_sco2turbine(r::AbstractResource) = get(r, :up_time_sco2turbine, default_zero)
+up_time_asu(r::AbstractResource) = get(r, :up_time_asu, default_zero)
+
+down_time_sco2turbine(r::AbstractResource) = get(r, :down_time_sco2turbine, default_zero)
+down_time_asu(r::AbstractResource) = get(r, :down_time_asu, default_zero)
+
+
+existing_cap_sco2turbine(r::AbstractResource) = get(r, :existing_cap_sco2turbine, default_zero)
+existing_cap_asu(r::AbstractResource) = get(r, :existing_cap_asu, default_zero)
+existing_cap_lox(r::AbstractResource) = get(r, :existing_cap_lox, default_zero)
+
+
+
+
 
 ## policies
 # co-located storage
