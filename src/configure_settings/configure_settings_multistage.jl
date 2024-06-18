@@ -3,7 +3,8 @@ function default_settings_multistage()
         "StageLengths" => [10,10,10],
         "WACC" => 0.045,
         "ConvergenceTolerance" => 0.01,
-        "Myopic" => 0)
+        "Myopic" => 0),
+        "WriteIntermittentOutputs" => 0
 end
 
 @doc raw"""
