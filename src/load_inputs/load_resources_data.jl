@@ -201,7 +201,11 @@ storage coupled NGCC-CCS)
 """
 
 function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
-    columns_to_scale = [:existing_cap_unit,        # to GW or kt 
+    columns_to_scale = [
+        :existing_cap_sco2turbine,        # to GW or kt 
+        :existing_cap_asu,        # to GW or kt 
+        :existing_cap_lox,        # to GW or kt
+
         :cap_size_sco2turbine,                      # to GW or kt 
         :cap_size_asu,
         :cap_size_lox,
@@ -214,11 +218,13 @@ function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
         :max_cap_lox,                  # to GW
 
         :inv_cost_sco2turbine_per_mwyr,           # to $M/GW/yr
-        :fixed_om_sco2turbine_cost_per_mwyr,      # to $M/GW/yr
+        :fixed_om_cost_sco2turbine_per_mwyr,      # to $M/GW/yr
+
         :inv_cost_asu_per_mwyr,           # to $M/GW/yr
-        :fixed_om_asu_cost_per_mwyr,      # to $M/GW/yr
-        :inv_cost_lox_per_mwyr,           # to $M/GW/yr
-        :fixed_om_lox_cost_per_mwyr,      # to $M/GW/yr
+        :fixed_om_cost_asu_per_mwyr,      # to $M/GW/yr
+
+        :inv_cost_lox_per_tyr,           # to $M/GW/yr
+        :fixed_om_cost_lox_per_tyr,      # to $M/GW/yr
 
         :var_om_cost_sco2turbine_per_mwh,          # to $M/GWh
         :var_om_cost_asu_per_mwh,          # to $M/GWh
@@ -226,9 +232,7 @@ function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
 
         :start_cost_sco2turbine_per_mw,           # to $M/GW
         :start_cost_asu_per_mw,           # to $M/GW
-        :start_cost_lox_per_t,           # to $M/GW
-
-        :co2_sequestration             # to GWh/t
+        :start_cost_lox_per_t           # to $M/GW
     ]
 
     scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
