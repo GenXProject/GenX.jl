@@ -124,7 +124,7 @@ deploydocs(;
     repo = "github.com/GenXProject/GenX.jl.git",
     target = "build",
     branch = "gh-pages",
-    devbranch = "main",
+    devbranch = "develop",
     devurl = "dev",
     push_preview = true,
     versions = ["stable" => "v^", "v#.#.#", "dev" => "dev"],
