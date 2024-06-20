@@ -16,14 +16,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch }}
-      - uses: julia-actions/cache@v1.2.2
       - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.version }}
-      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@latest
       - name: Test examples
         shell: julia --project=. --color=yes {0}
         run: |
