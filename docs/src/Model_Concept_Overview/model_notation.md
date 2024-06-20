@@ -218,6 +218,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\pi_{y,z}^{VOM,ac,cha}$ | Variable O&M cost of the storage AC charge component of technology $y$ in zone $z$ - only applicable to co-located VRE and storage resources with a storage AC charge component, $y \in \mathcal{VS}^{sym,ac} \cup y \in \mathcal{VS}^{asym,ac,cha}$ [\$/MWh]|
 |$\pi_{y,z}^{FUEL}$ | Fuel cost of technology $y$ in zone $z$ [\$/MWh]|
 |$\pi_{y,z}^{START}$ | Startup cost of technology $y$ in zone $z$ [\$/startup]|
+|$\pi^{TCAP}_{l}$ | Transmission line reinforcement or construction cost for line $l$|
 |$\upsilon^{reg}_{y,z}$ | Maximum fraction of capacity that a resource $y$ in zone $z$ can contribute to frequency regulation reserve requirements|
 |$\upsilon^{rsv}_{y,z}$ | Maximum fraction of capacity that a resource $y$ in zone $z$ can contribute to upward operating (spinning) reserve requirements|
 |$\pi^{Unmet}_{rsv}$ | Cost of unmet spinning reserves in [\$/MW\]|
