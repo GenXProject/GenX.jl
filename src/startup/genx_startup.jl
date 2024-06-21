@@ -16,7 +16,6 @@ function print_genx_version()
     return nothing
 end
 
-
 # This function is a workaround for Julia versions < 1.9.
 function pkgversion(m::Module)
     if VERSION >= v"1.9"
