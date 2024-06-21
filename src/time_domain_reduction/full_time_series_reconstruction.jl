@@ -37,7 +37,7 @@ function full_time_series_reconstruction(
     # Calculate the number of total periods the original time series was split into (will usually be 52)
     numPeriods = floor(Int, WeightTotal / TimestepsPerRepPeriod)
 
-    # Get the names of the input DataFrame
+    # Get a matrix of the input DataFrame
     DFMatrix = Matrix(DF)
     # Initialize an array to add the reconstructed data to
     recon = ["t$t" for t in 1:(TimestepsPerRepPeriod * numPeriods)]
@@ -48,24 +48,21 @@ function full_time_series_reconstruction(
     # Reconstruction of all hours of the year from TDR
     for j in range(2, ncol(DF))
         col = DF[t1:end, j]
-        #col_name = DFnames[j]
-        #names1 = [names1 Symbol(col_name)]
         recon_col = []
         for i in range(1, numPeriods)
             index = Period_map[i, "Rep_Period_Index"]
             recon_temp = col[(TimestepsPerRepPeriod * index - (TimestepsPerRepPeriod - 1)):(TimestepsPerRepPeriod * index)] # Describe how this works
             recon_col = [recon_col; recon_temp]
         end
-        #reconDF[!,col_name] = recon_col
         recon = [recon recon_col]
     end
     reconDF = DataFrame(recon, DFnames, makeunique = true)
 
-    #rename!(reconDF,names1)
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
     for i in range(1, t1 - 1)
         insert!(reconDF, i, DFMatrix[i, 1:end], promote = true)
     end
+
     # Repeat the last rows of the year to fill in the gap (should be 24 hours for non-leap year)
     end_diff = WeightTotal - nrow(reconDF) + 1
     new_rows = reconDF[(nrow(reconDF) - end_diff):nrow(reconDF), 1:end]

@@ -11,9 +11,6 @@ function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
     rename!(dfCommit, auxNew_Names)
     CSV.write(joinpath(path, "commit.csv"), dftranspose(dfCommit, false), header = false)
-    println("-------------------------------")
-    println("PATH = ", path)
-    println("-------------------------------")
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
         DFMatrix = Matrix(dftranspose(dfCommit, true))

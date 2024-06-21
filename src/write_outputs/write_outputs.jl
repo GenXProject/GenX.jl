@@ -77,7 +77,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         elapsed_time_power = @elapsed dfPower = write_power(path, inputs, setup, EP)
         println("Time elapsed for writing power is")
         println(elapsed_time_power)
-        println("Here")
     end
 
     if output_settings_d["WriteCharge"]
