@@ -62,6 +62,7 @@ function include_all_in_folder(folder)
     end
 end
 
+include("startup/genx_startup.jl")
 include_all_in_folder("case_runners")
 include_all_in_folder("configure_settings")
 include_all_in_folder("configure_solver")

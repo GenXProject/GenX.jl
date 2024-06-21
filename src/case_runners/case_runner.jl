@@ -29,6 +29,7 @@ run_genx_case!("path/to/case", Gurobi.Optimizer)
 ```
 """
 function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
+    print_genx_version()
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
     writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
     mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
