@@ -50,7 +50,7 @@ settings dictionary.
 - `settings::Dict`: The settings dictionary.
 """
 function configure_settings(settings_path::String, output_settings_path::String)
-    println("Configuring Settings")
+    println("\nConfiguring Settings")
     model_settings = YAML.load(open(settings_path))
 
     settings = default_settings()

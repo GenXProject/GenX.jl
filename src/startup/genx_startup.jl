@@ -1,3 +1,7 @@
+function __init__()
+    print_genx_version()
+end
+
 function print_genx_version()
     v = pkgversion(GenX)
     ascii_art = raw"""  ____           __  __   _ _
@@ -7,7 +11,7 @@ function print_genx_version()
     \____|\___|_| |_/_/\_(_)/ |_|
                           |__/
     """
-    ascii_art *= "Version: $(v)\n"
+    ascii_art *= "Version: $(v)"
     println(ascii_art)
     return nothing
 end
