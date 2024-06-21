@@ -533,7 +533,6 @@ Writes a file named `env_summary.yml` in the specified directory.
 """
 function write_system_env_summary(path::AbstractString)
     v = pkgversion(GenX)
-    
     env_summary = Dict(
         :ARCH => getproperty(Sys, :ARCH),
         :CPU_NAME => getproperty(Sys, :CPU_NAME),
