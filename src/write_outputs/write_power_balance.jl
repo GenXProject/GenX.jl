@@ -100,8 +100,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             DFnames = dfPowerBalance[:, 1]
             insert!(DFnames, 1, "BalanceComponent")
-            #DFMatrix = Matrix(dftranspose(dfPowerBalance, true))
-            # DFnames = DFMatrix[1,:]
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(

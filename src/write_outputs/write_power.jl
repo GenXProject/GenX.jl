@@ -26,12 +26,24 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filepath, power, dfPower)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            df_Power = CSV.read(joinpath(path, "power.csv"), DataFrame)
+            T = size(power, 2)
+            dfPower = hcat(dfPower, DataFrame(power, :auto))
+            auxNew_Names = [Symbol("Resource");
+                            Symbol("Zone");
+                            Symbol("AnnualSum");
+                            [Symbol("t$t") for t in 1:T]]
+            rename!(dfPower, auxNew_Names)
+            total = DataFrame(["Total" 0 sum(dfPower[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
+            total[!, 4:(T + 3)] .= sum(power, dims = 1)
+            df_Power = vcat(dfPower, total)
+            DFMatrix = Matrix(dftranspose(df_Power, true))
+            DFnames = DFMatrix[1,:]
+
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup, df_Power, names(df_Power))
-            CSV.write(joinpath(output_path, "power.csv"), dfOut_full)
+                path, setup, dftranspose(df_Power, false), DFnames)
+            CSV.write(joinpath(output_path, "power.csv"), dfOut_full, writeheader = false)
             println("Writing Full Time Series for Power")
         end
     end
