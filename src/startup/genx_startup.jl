@@ -4,7 +4,8 @@ end
 
 function print_genx_version()
     v = pkgversion(GenX)
-    ascii_art = raw"""  ____           __  __   _ _
+    ascii_art = raw"""
+     ____           __  __   _ _
     / ___| ___ _ __ \ \/ /  (_) |
    | |  _ / _ \ '_ \ \  /   | | |
    | |_| |  __/ | | |/  \ _ | | |
