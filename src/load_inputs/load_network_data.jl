@@ -42,6 +42,13 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             setup["NetworkExpansion"] = 0
         end
         println("Reading DC-OPF values...")
+        #Adding the base quantities
+        # Base voltage (in kV)
+        line_voltage_kV_Base = to_floats(:Line_Voltage_kV_Base)
+        # MVA_Base (in MVA)
+        MVA_Base = to_floats(:MVA_Base)
+        # Base reactance
+        line_reactance_Ohms_Base = (line_voltage_kV .^ 2) ./ MVA_Base
         # Transmission line voltage (in kV)
         line_voltage_kV = to_floats(:Line_Voltage_kV)
         # Transmission line reactance (in Ohms)
@@ -52,6 +59,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # MW = (kV)^2/Ohms 
         inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
                                      scale_factor
+        #Reactance in pu
+        inputs_nw["pu_reactance'] = line_reactance_Ohms ./ line_reactance_Ohms_Base
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
