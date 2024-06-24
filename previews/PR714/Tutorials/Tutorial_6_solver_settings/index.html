@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial 6: Solver Settings · GenX.jl</title><meta name="title" content="Tutorial 6: Solver Settings · GenX.jl"/><meta property="og:title" content="Tutorial 6: Solver Settings · GenX.jl"/><meta property="twitter:title" content="Tutorial 6: Solver Settings · GenX.jl"/><meta name="description" content="Documentation for GenX.jl."/><meta property="og:description" content="Documentation for GenX.jl."/><meta property="twitter:description" content="Documentation for GenX.jl."/><meta property="og:url" content="https://genxproject.github.io/GenX.jl/stable/Tutorials/Tutorial_6_solver_settings/"/><meta property="twitter:url" content="https://genxproject.github.io/GenX.jl/stable/Tutorials/Tutorial_6_solver_settings/"/><link rel="canonical" href="https://genxproject.github.io/GenX.jl/stable/Tutorials/Tutorial_6_solver_settings/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/genx_style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img class="docs-light-only" src="../../assets/logo.svg" alt="GenX.jl logo"/><img class="docs-dark-only" src="../../assets/logo-dark.svg" alt="GenX.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><input class="collapse-toggle" id="menuitem-1" type="checkbox"/><label class="tocitem" for="menuitem-1"><span class="docs-label">Welcome Page</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../">GenX: Introduction</a></li><li><a class="tocitem" href="../../installation/">Installation Guide</a></li><li><a class="tocitem" href="../../limitations_genx/">Limitation of GenX</a></li><li><a class="tocitem" href="../../third_party_genx/">Third Party Extensions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox"/><label class="tocitem" for="menuitem-2"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Getting_Started/examples_casestudies/">Running GenX</a></li><li><a class="tocitem" href="../../Getting_Started/commercial_solvers/">Commertial solvers</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Tutorials_intro/">Tutorials Overview</a></li><li><a class="tocitem" href="../Tutorial_1_configuring_settings/">Tutorial 1: Configuring Settings</a></li><li><a class="tocitem" href="../Tutorial_2_network_visualization/">Tutorial 2: Network Visualization</a></li><li><a class="tocitem" href="../Tutorial_3_K-means_time_domain_reduction/">Tutorial 3: K-Means and Time Domain Reduction</a></li><li><a class="tocitem" href="../Tutorial_4_model_generation/">Tutorial 4: Model Generation</a></li><li><a class="tocitem" href="../Tutorial_5_solve_model/">Tutorial 5: Solving the Model</a></li><li class="is-active"><a class="tocitem" href>Tutorial 6: Solver Settings</a><ul class="internal"><li><a class="tocitem" href="#Table-of-Contents"><span>Table of Contents</span></a></li></ul></li><li><a class="tocitem" href="../Tutorial_7_setup/">Tutorial 7: Policy Constraints</a></li><li><a class="tocitem" href="../Tutorial_8_outputs/">Tutorial 8: Outputs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">User Guide</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../User_Guide/workflow/">Overall workflow</a></li><li><a class="tocitem" href="../../User_Guide/model_configuration/">Model Configuration</a></li><li><a class="tocitem" href="../../User_Guide/solver_configuration/">Solver Configuration</a></li><li><a class="tocitem" href="../../User_Guide/model_input/">Model Inputs</a></li><li><a class="tocitem" href="../../User_Guide/TDR_input/">Time-domain Reduction Inputs</a></li><li><a class="tocitem" href="../../User_Guide/running_TDR/">Running the Time-domain Reduction</a></li><li><a class="tocitem" href="../../User_Guide/generate_alternatives/">MGA package</a></li><li><a class="tocitem" href="../../User_Guide/multi_stage_input/">Multi-stage Model</a></li><li><a class="tocitem" href="../../User_Guide/slack_variables_overview/">Slack Variables for Policies</a></li><li><a class="tocitem" href="../../User_Guide/methodofmorris_input/">Method of Morris Inputs</a></li><li><a class="tocitem" href="../../User_Guide/running_model/">Running the Model</a></li><li><a class="tocitem" href="../../User_Guide/model_output/">Model Outputs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Model Concept and Overview</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Concept_Overview/model_introduction/">Model Introduction</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/model_notation/">Notation</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/objective_function/">Objective Function</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/power_balance/">Power Balance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Model Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/core/">Core</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Resources</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/curtailable_variable_renewable/">Curtailable Variable Renewable</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/flexible_demand/">Flexible Demand</a></li><li><input class="collapse-toggle" id="menuitem-6-2-3" type="checkbox"/><label class="tocitem" for="menuitem-6-2-3"><span class="docs-label">Hydro</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/hydro_res/">Hydro Reservoir</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/hydro_inter_period_linkage/">Long Duration Hydro</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/must_run/">Must Run</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/retrofit/">Retrofit</a></li><li><input class="collapse-toggle" id="menuitem-6-2-6" type="checkbox"/><label class="tocitem" for="menuitem-6-2-6"><span class="docs-label">Storage</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/storage/">Storage</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/investment_charge/">Investment Charge</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/investment_energy/">Investment Energy</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/long_duration_storage/">Long Duration Storage</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_all/">Storage All</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_asymmetric/">Storage Asymmetric</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_symmetric/">Storage Symmetric</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/vre_stor/">Co-located VRE and Storage</a></li><li><input class="collapse-toggle" id="menuitem-6-2-8" type="checkbox"/><label class="tocitem" for="menuitem-6-2-8"><span class="docs-label">Thermal</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/thermal/">Thermal</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/thermal_commit/">Thermal Commit</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/thermal_no_commit/">Thermal No Commit</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/electrolyzers/">Hydrogen Electrolyzers</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/maintenance/">Scheduled maintenance for various resources</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/resource/">Resource types</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/maintenance_overview/">Maintenance</a></li><li><a class="tocitem" href="../../Model_Reference/policies/">Policies</a></li><li><a class="tocitem" href="../../Model_Reference/solver_configuration_api/">Solver Configurations</a></li><li><a class="tocitem" href="../../Model_Reference/load_inputs/">Inputs Functions</a></li><li><a class="tocitem" href="../../Model_Reference/generate_model/">Generate the Model</a></li><li><a class="tocitem" href="../../Model_Reference/solve_model/">Solving the Model</a></li><li><a class="tocitem" href="../../Model_Reference/TDR/">Time-domain Reduction</a></li><li><a class="tocitem" href="../../Model_Reference/write_outputs/">Outputs Functions</a></li><li><a class="tocitem" href="../../Model_Reference/mga/">Modeling to Generate Alternatives</a></li><li><input class="collapse-toggle" id="menuitem-6-12" type="checkbox"/><label class="tocitem" for="menuitem-6-12"><span class="docs-label">Multi-stage</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/multi_stage_overview/">Multi-Stage Modeling Introduction</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/configure_multi_stage_inputs/">Configure multi-stage inputs</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/dual_dynamic_programming/">Model multi stage: Dual Dynamic Programming Algorithm</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/endogenous_retirement/">Endogenous Retirement</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/methodofmorris/">Method of Morris</a></li><li><a class="tocitem" href="../../Model_Reference/utility_functions/">Utility Functions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Public API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Public_API/public_api/">Public API</a></li></ul></li><li><a class="tocitem" href="../../additional_third_party_extensions/">Third Party Extensions</a></li><li><a class="tocitem" href="../../developer_guide/">Developer Docs</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Tutorial 6: Solver Settings</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial 6: Solver Settings</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/GenXProject/GenX.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/GenXProject/GenX.jl/blob/main/docs/src/Tutorials/Tutorial_6_solver_settings.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorial-6:-Solver-Settings"><a class="docs-heading-anchor" href="#Tutorial-6:-Solver-Settings">Tutorial 6: Solver Settings</a><a id="Tutorial-6:-Solver-Settings-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-6:-Solver-Settings" title="Permalink"></a></h1><p><a href="https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_6_Solver_Settings.ipynb">Interactive Notebook of the tutorial</a></p><p>Though solving the model relies only on <code>optimize</code>, there are a number of ways to change the way in which the model is optimized. This tutorial goes over solver parameters and how they affect the model solution.</p><h2 id="Table-of-Contents"><a class="docs-heading-anchor" href="#Table-of-Contents">Table of Contents</a><a id="Table-of-Contents-1"></a><a class="docs-heading-anchor-permalink" href="#Table-of-Contents" title="Permalink"></a></h2><ul><li><a href="#HiGHs">The HiGHs Solver</a></li><li><a href="#Feasibility">Feasibility Tolerance</a></li><li><a href="#PreSolve">PreSolve</a></li><li><a href="#Crossover">Crossover</a></li></ul><pre><code class="language-julia hljs">using YAML
+using GenX
+using JuMP
+using HiGHS
+using DataFrames
+using Plots
+using Plotly</code></pre><pre><code class="language-julia hljs">case = joinpath(&quot;example_systems/1_three_zones&quot;) 
+
+genx_settings = GenX.get_settings_path(case, &quot;genx_settings.yml&quot;);
+writeoutput_settings = GenX.get_settings_path(case, &quot;output_settings.yml&quot;)
+setup = GenX.configure_settings(genx_settings,writeoutput_settings) 
+settings_path = GenX.get_settings_path(case)</code></pre><pre><code class="nohighlight hljs">    Configuring Settings
+
+    &quot;example_systems/1_three_zones/settings&quot;</code></pre><pre><code class="language-julia hljs">### Create TDR_Results
+if &quot;TDR_results&quot; in cd(readdir,case)
+    rm(joinpath(case,&quot;TDR_results&quot;), recursive=true) 
+end
+
+TDRpath = joinpath(case, setup[&quot;TimeDomainReductionFolder&quot;])
+system_path = joinpath(case, setup[&quot;SystemFolder&quot;])
+
+if setup[&quot;TimeDomainReduction&quot;] == 1
+    GenX.prevent_doubled_timedomainreduction(system_path)
+    if !GenX.time_domain_reduced_files_exist(TDRpath)
+        println(&quot;Clustering Time Series Data (Grouped)...&quot;)
+        GenX.cluster_inputs(case, settings_path, setup)
+    else
+        println(&quot;Time Series Data Already Clustered.&quot;)
+    end
+end
+
+inputs = GenX.load_inputs(setup, case)</code></pre><h3 id="The-HiGHS-Solver"><a class="docs-heading-anchor" href="#The-HiGHS-Solver">The HiGHS Solver</a><a id="The-HiGHS-Solver-1"></a><a class="docs-heading-anchor-permalink" href="#The-HiGHS-Solver" title="Permalink"></a></h3><p>In the example files, the solver is <a href="https://highs.dev">HiGHS</a>. HiGHS is freely available for all to use. Other solvers, such as <a href="https://www.gurobi.com">Gurobi</a>, are available for free for academics. For the purpose of this tutorial, we will be focusing on HiGHS. </p><p>To set the solver preferences, go into the settings folder of your case and select the YAML file of the solver you&#39;re using.</p><pre><code class="language-julia hljs">settings_folder = cd(readdir,joinpath(case,&quot;Settings&quot;)) # Print Settings folder</code></pre><pre><code class="nohighlight hljs">    7-element Vector{String}:
+    &quot;.DS_Store&quot;
+    &quot;clp_settings.yml&quot;
+    &quot;cplex_settings.yml&quot;
+    &quot;genx_settings.yml&quot;
+    &quot;gurobi_settings.yml&quot;
+    &quot;highs_settings.yml&quot;
+    &quot;time_domain_reduction_settings.yml&quot;</code></pre><pre><code class="language-julia hljs">highs_settings = YAML.load(open(joinpath(case,&quot;Settings/highs_settings.yml&quot;)))</code></pre><pre><code class="nohighlight hljs">    Dict{Any, Any} with 6 entries:
+      &quot;Method&quot;        =&gt; &quot;choose&quot;
+      &quot;Feasib_Tol&quot;    =&gt; 0.1
+      &quot;run_crossover&quot; =&gt; &quot;on&quot;
+      &quot;TimeLimit&quot;     =&gt; 1.0e23
+      &quot;Optimal_Tol&quot;   =&gt; 0.1
+      &quot;Pre_Solve&quot;     =&gt; &quot;choose&quot;</code></pre><p>The function <code>configure_highs</code> in <code>src/configure_solver</code> contains a list of default settings for the HiGHS solver</p><p><img src="../files/highs_defaults.png" alt="png"/></p><p>There are about 80, so we&#39;ll only focus on a few for now. In most cases, you can leave the other settings on default. </p><p>The default settings are combined with the settings you specify in <code>highs_settings.yml</code> in <code>configure_highs</code>, which is called from <code>configure_solver</code> in <code>run_genx_case_simple</code> right before the model is generated.</p><h3 id="Feasibility-Tolerance"><a class="docs-heading-anchor" href="#Feasibility-Tolerance">Feasibility Tolerance</a><a id="Feasibility-Tolerance-1"></a><a class="docs-heading-anchor-permalink" href="#Feasibility-Tolerance" title="Permalink"></a></h3><p>The parameters <code>Feasib_Tol</code> and <code>Optimal_Tol</code> represent the feasibility of the primal and dual functions respectively. Without going into too much detail, a <a href="https://en.wikipedia.org/wiki/Duality_(optimization)"><strong>dual function</strong></a> is an analagous formulation of the original (&quot;primal&quot;) function whose objective value acts as a lower bound to the primal function. The objective value of the primal function is then the upper bound of the dual function. HiGHS will solve the dual and primal at each time step, then terminate when the solutions of the two are within a certain tolerance range. For more information on how this works specifically in HiGHS, see the <a href="https://ergo-code.github.io/HiGHS/dev/terminology">HiGHS documentaion</a>. </p><p>If we decrease the tolerance parameters, the objective value becomes closer to the &quot;true&quot; optimal value.</p><pre><code class="language-julia hljs"># Change tolerance, generate and solve model`
+tols = [1e-7,1e-4,1e-2,1e-1]
+OV = zeros(1,4)
+
+for i in range(1,length(tols))
+    println(&quot; &quot;)
+    println(&quot;----------------------------------------------------&quot;)
+    println(&quot;Iteration &quot;,i)
+    println(&quot;Tolerance = &quot;,tols[i])
+    println(&quot;----------------------------------------------------&quot;)
+    highs_settings[&quot;Feasib_Tol&quot;] = tols[i]
+    highs_settings[&quot;Optimal_Tol&quot;] = tols[i]
+    YAML.write_file(joinpath(case,&quot;settings/highs_settings.yml&quot;), highs_settings)
+    OPTIMIZER1 = GenX.configure_solver(settings_path,HiGHS.Optimizer)
+    EP = GenX.generate_model(setup,inputs,OPTIMIZER1)
+    GenX.solve_model(EP,setup)
+    OV[i] = objective_value(EP)
+end</code></pre><p>Using the smallest tolerance as our base, we can see the error as the tolerance increases:</p><pre><code class="language-julia hljs">DataFrame([tols[2:end] abs.(OV[2:end] .- OV[1])],[&quot;Tolerance&quot;, &quot;Error&quot;])</code></pre><pre><code class="nohighlight hljs">3×2 DataFrame
+    Row	Tolerance	Error
+        Float64	    Float64
+    ───────────────────────────
+    1	0.0001	    0.0
+    2	0.01	    1.81899e-12
+    3	0.1	        3.45608e-11</code></pre><pre><code class="language-julia hljs">using Plots
+using Plotly</code></pre><pre><code class="language-julia hljs"># Plot the error as a function of the tolerance
+plotlyjs()
+Plots.scatter(tols[2:end], abs.(OV[2:end] .- OV[1]),legend=:topleft,
+                ylabel=&quot;Error&quot;, xlabel=&quot;Tolerance&quot;,size=(920,400),label=:&quot;Error&quot;,title=&quot;Tolerance of Solver vs Error&quot;)
+ygrid!(:on, :dashdot, 0.1)</code></pre><p><img src="../files/t6_tols.svg" alt="svg"/></p><h3 id="PreSolve"><a class="docs-heading-anchor" href="#PreSolve">PreSolve</a><a id="PreSolve-1"></a><a class="docs-heading-anchor-permalink" href="#PreSolve" title="Permalink"></a></h3><p>In optimization, presolve is a stage at the beginning of the solver in which the problem is simplified to remove redunant constraints and otherwise simplify the problem before the optimization itself begins. The default for presolve in GenX is &quot;choose&quot;, allowing the solver to use presolve only if it will reduce computation time. </p><p>Let&#39;s try setting presolve to off and on, then compare computation times.</p><pre><code class="language-julia hljs"># First, set tolerances back to original
+highs_settings[&quot;Feasib_Tol&quot;] = 1e-5
+highs_settings[&quot;Optimal_Tol&quot;] = 1e-5
+YAML.write_file(joinpath(case,&quot;Settings/highs_settings.yml&quot;), highs_settings)    </code></pre><pre><code class="language-julia hljs">highs_settings[&quot;Pre_Solve&quot;] = &quot;off&quot;
+YAML.write_file(joinpath(case,&quot;Settings/highs_settings.yml&quot;), highs_settings)
+OPTIMIZER2 = GenX.configure_solver(setup[&quot;Solver&quot;], settings_path);
+EP2 = GenX.generate_model(setup,inputs,OPTIMIZER2)</code></pre><pre><code class="nohighlight hljs">    Discharge Module
+    Non-served Energy Module
+    Investment Discharge Module
+    Unit Commitment Module
+    Emissions Module (for CO2 Policy modularization
+    Dispatchable Resources Module
+    Storage Resources Module
+    Storage Investment Module
+    Storage Core Resources Module
+    Storage Resources with Symmetric Charge/Discharge Capacity Module
+    Thermal (Unit Commitment) Resources Module
+    C02 Policies Module
+    Energy Share Requirement Policies Module
+    Capacity Reserve Margin Policies Module
+    Minimum Capacity Requirement Module
+    Maximum Capacity Requirement Module
+
+    A JuMP Model
+    Minimization problem with:
+    Variables: 18492
+    Objective function type: AffExpr
+    `AffExpr`-in-`MathOptInterface.EqualTo{Float64}`: 5544 constraints
+    `AffExpr`-in-`MathOptInterface.GreaterThan{Float64}`: 7398 constraints
+    `AffExpr`-in-`MathOptInterface.LessThan{Float64}`: 27730 constraints
+    `VariableRef`-in-`MathOptInterface.EqualTo{Float64}`: 2 constraints
+    `VariableRef`-in-`MathOptInterface.GreaterThan{Float64}`: 18490 constraints
+    Model mode: AUTOMATIC
+    CachingOptimizer state: EMPTY_OPTIMIZER
+    Solver name: HiGHS
+    Names registered in the model: cCO2Emissions_systemwide, cCapacityResMargin, cESRShare, cMaxCap, cMaxCapEnergy, cMaxCapEnergyDuration, cMaxNSE, cMaxRetCommit, cMaxRetEnergy, cMaxRetNoCommit, cMinCap, cMinCapEnergy, cMinCapEnergyDuration, cNSEPerSeg, cPowerBalance, cSoCBalInterior, cSoCBalStart, cZoneMaxCapReq, cZoneMinCapReq, eCFix, eCFixEnergy, eCNSE, eCStart, eCVar_in, eCVar_out, eCapResMarBalance, eCapResMarBalanceStor, eCapResMarBalanceThermal, eCapResMarBalanceVRE, eELOSS, eELOSSByZone, eESR, eESRDischarge, eEmissionsByPlant, eEmissionsByZone, eExistingCap, eExistingCapEnergy, eGenerationByThermAll, eGenerationByVRE, eGenerationByZone, eMaxCapRes, eMaxCapResInvest, eMinCapRes, eMinCapResInvest, eObj, ePowerBalance, ePowerBalanceDisp, ePowerBalanceNse, ePowerBalanceStor, ePowerBalanceThermCommit, eTotalCFix, eTotalCFixEnergy, eTotalCNSE, eTotalCNSET, eTotalCNSETS, eTotalCStart, eTotalCStartT, eTotalCVarIn, eTotalCVarInT, eTotalCVarOut, eTotalCVarOutT, eTotalCap, eTotalCapEnergy, vCAP, vCAPENERGY, vCHARGE, vCO2Cap_slack, vCOMMIT, vNSE, vP, vRETCAP, vRETCAPENERGY, vS, vSHUT, vSTART, vZERO</code></pre><pre><code class="language-julia hljs">solution2 = @elapsed GenX.solve_model(EP2,setup)</code></pre><pre><code class="nohighlight hljs">    Running HiGHS 1.6.0: Copyright (c) 2023 HiGHS under MIT licence terms
+    Solving LP without presolve or with basis
+    Using EKK dual simplex solver - serial
+      Iteration        Objective     Infeasibilities num(sum)
+              0    -4.3842305368e+02 Ph1: 19318(12391.6); Du: 5(438.423) 0s
+          18662     9.5083526285e+03 Pr: 3142(5018.36); Du: 0(0.000872182) 5s
+          23359     9.8583752055e+03 Pr: 0(0); Du: 0(1.27565e-13) 6s
+    Model   status      : Optimal
+    Simplex   iterations: 23359
+    Objective value     :  9.8583752055e+03
+    HiGHS run time      :          6.77
+    LP solved for primal
+
+    6.84933975</code></pre><pre><code class="language-julia hljs">highs_settings[&quot;Pre_Solve&quot;] = &quot;on&quot;
+YAML.write_file(joinpath(case,&quot;Settings/highs_settings.yml&quot;), highs_settings)
+OPTIMIZER3 = GenX.configure_solver(setup[&quot;Solver&quot;], settings_path);
+EP3 = GenX.generate_model(setup,inputs,OPTIMIZER3)</code></pre><pre><code class="nohighlight hljs">    Discharge Module
+    Non-served Energy Module
+    Investment Discharge Module
+    Unit Commitment Module
+    Emissions Module (for CO2 Policy modularization
+    Dispatchable Resources Module
+    Storage Resources Module
+    Storage Investment Module
+    Storage Core Resources Module
+    Storage Resources with Symmetric Charge/Discharge Capacity Module
+    Thermal (Unit Commitment) Resources Module
+    C02 Policies Module
+    Energy Share Requirement Policies Module
+    Capacity Reserve Margin Policies Module
+    Minimum Capacity Requirement Module
+    Maximum Capacity Requirement Module
+
+    A JuMP Model
+    Minimization problem with:
+    Variables: 18492
+    Objective function type: AffExpr
+    `AffExpr`-in-`MathOptInterface.EqualTo{Float64}`: 5544 constraints
+    `AffExpr`-in-`MathOptInterface.GreaterThan{Float64}`: 7398 constraints
+    `AffExpr`-in-`MathOptInterface.LessThan{Float64}`: 27730 constraints
+    `VariableRef`-in-`MathOptInterface.EqualTo{Float64}`: 2 constraints
+    `VariableRef`-in-`MathOptInterface.GreaterThan{Float64}`: 18490 constraints
+    Model mode: AUTOMATIC
+    CachingOptimizer state: EMPTY_OPTIMIZER
+    Solver name: HiGHS
+    Names registered in the model: cCO2Emissions_systemwide, cCapacityResMargin, cESRShare, cMaxCap, cMaxCapEnergy, cMaxCapEnergyDuration, cMaxNSE, cMaxRetCommit, cMaxRetEnergy, cMaxRetNoCommit, cMinCap, cMinCapEnergy, cMinCapEnergyDuration, cNSEPerSeg, cPowerBalance, cSoCBalInterior, cSoCBalStart, cZoneMaxCapReq, cZoneMinCapReq, eCFix, eCFixEnergy, eCNSE, eCStart, eCVar_in, eCVar_out, eCapResMarBalance, eCapResMarBalanceStor, eCapResMarBalanceThermal, eCapResMarBalanceVRE, eELOSS, eELOSSByZone, eESR, eESRDischarge, eEmissionsByPlant, eEmissionsByZone, eExistingCap, eExistingCapEnergy, eGenerationByThermAll, eGenerationByVRE, eGenerationByZone, eMaxCapRes, eMaxCapResInvest, eMinCapRes, eMinCapResInvest, eObj, ePowerBalance, ePowerBalanceDisp, ePowerBalanceNse, ePowerBalanceStor, ePowerBalanceThermCommit, eTotalCFix, eTotalCFixEnergy, eTotalCNSE, eTotalCNSET, eTotalCNSETS, eTotalCStart, eTotalCStartT, eTotalCVarIn, eTotalCVarInT, eTotalCVarOut, eTotalCVarOutT, eTotalCap, eTotalCapEnergy, vCAP, vCAPENERGY, vCHARGE, vCO2Cap_slack, vCOMMIT, vNSE, vP, vRETCAP, vRETCAPENERGY, vS, vSHUT, vSTART, vZERO</code></pre><pre><code class="language-julia hljs">solution3 = @elapsed GenX.solve_model(EP3,setup)</code></pre><pre><code class="nohighlight hljs">    Running HiGHS 1.6.0: Copyright (c) 2023 HiGHS under MIT licence terms
+    Presolving model
+    35947 rows, 17464 cols, 136177 nonzeros
+    34470 rows, 15991 cols, 136110 nonzeros
+    Presolve : Reductions: rows 34470(-6202); columns 15991(-2501); elements 136110(-29848)
+    Solving the presolved LP
+    Using EKK dual simplex solver - serial
+      Iteration        Objective     Infeasibilities num(sum)
+              0    -2.9011432493e+00 Ph1: 118(557.293); Du: 15(2.90114) 0s
+          16445     9.8583752055e+03 Pr: 0(0); Du: 0(1.25316e-13) 4s
+    Solving the original LP from the solution after postsolve
+    Model   status      : Optimal
+    Simplex   iterations: 16445
+    Objective value     :  9.8583752055e+03
+    HiGHS run time      :          4.55
+    LP solved for primal
+
+    4.655439792</code></pre><p>As we can see, the runtime with PreSolve is shorter, and would be even shorter for a larger system. However, it could introduce numerical inaccuracies. If you find the model is struggling to converge, try turn PreSolve off.</p><pre><code class="language-julia hljs"># Write PreSolve back to choose
+highs_settings[&quot;Pre_Solve&quot;] = &quot;choose&quot;
+YAML.write_file(joinpath(case,&quot;Settings/highs_settings.yml&quot;), highs_settings)</code></pre><h3 id="Crossover"><a class="docs-heading-anchor" href="#Crossover">Crossover</a><a id="Crossover-1"></a><a class="docs-heading-anchor-permalink" href="#Crossover" title="Permalink"></a></h3><p>Crossover is a method in which, at each step of the optimization algorithm, the solution is pushed to the boundary of the solution space. This allows for a potentially more accurate solution, but can be computationally intensive. Let&#39;s try turning crossover on and off and see what solutions we get:</p><pre><code class="language-julia hljs">highs_settings[&quot;run_crossover&quot;] = &quot;off&quot;
+YAML.write_file(joinpath(case,&quot;Settings/highs_settings.yml&quot;), highs_settings)
+OPTIMIZER4 = GenX.configure_solver(setup[&quot;Solver&quot;], settings_path);
+EP4 = GenX.generate_model(setup,inputs,OPTIMIZER4)</code></pre><pre><code class="nohighlight hljs">    Discharge Module
+    Non-served Energy Module
+    Investment Discharge Module
+    Unit Commitment Module
+    Emissions Module (for CO2 Policy modularization
+    Transmission Module
+    Dispatchable Resources Module
+    Storage Resources Module
+    Storage Investment Module
+    Storage Core Resources Module
+    Storage Resources with Symmetric Charge/Discharge Capacity Module
+    Thermal (Unit Commitment) Resources Module
+    C02 Policies Module
+    Minimum Capacity Requirement Module
+
+    A JuMP Model
+    Minimization problem with:
+    Variables: 83192
+    Objective function type: AffExpr
+    `AffExpr`-in-`MathOptInterface.EqualTo{Float64}`: 24024 constraints
+    `AffExpr`-in-`MathOptInterface.GreaterThan{Float64}`: 20334 constraints
+    `AffExpr`-in-`MathOptInterface.LessThan{Float64}`: 103509 constraints
+    `VariableRef`-in-`MathOptInterface.EqualTo{Float64}`: 4 constraints
+    `VariableRef`-in-`MathOptInterface.GreaterThan{Float64}`: 79492 constraints
+    Model mode: AUTOMATIC
+    CachingOptimizer state: EMPTY_OPTIMIZER
+    Solver name: HiGHS
+    Names registered in the model: cCO2Emissions_systemwide, cMaxCap, cMaxCapEnergy, cMaxCapEnergyDuration, cMaxFlow_in, cMaxFlow_out, cMaxLineReinforcement, cMaxNSE, cMaxRetCommit, cMaxRetEnergy, cMaxRetNoCommit, cMinCap, cMinCapEnergy, cMinCapEnergyDuration, cNSEPerSeg, cPowerBalance, cSoCBalInterior, cSoCBalStart, cTAuxLimit, cTAuxSum, cTLoss, cZoneMinCapReq, eAvail_Trans_Cap, eCFix, eCFixEnergy, eCNSE, eCStart, eCVar_in, eCVar_out, eELOSS, eELOSSByZone, eEmissionsByPlant, eEmissionsByZone, eExistingCap, eExistingCapEnergy, eGenerationByThermAll, eGenerationByVRE, eGenerationByZone, eLosses_By_Zone, eMinCapRes, eMinCapResInvest, eNet_Export_Flows, eObj, ePowerBalance, ePowerBalanceDisp, ePowerBalanceLossesByZone, ePowerBalanceNetExportFlows, ePowerBalanceNse, ePowerBalanceStor, ePowerBalanceThermCommit, eTotalCFix, eTotalCFixEnergy, eTotalCNSE, eTotalCNSET, eTotalCNSETS, eTotalCNetworkExp, eTotalCStart, eTotalCStartT, eTotalCVarIn, eTotalCVarInT, eTotalCVarOut, eTotalCVarOutT, eTotalCap, eTotalCapEnergy, eTransMax, vCAP, vCAPENERGY, vCHARGE, vCO2Cap_slack, vCOMMIT, vFLOW, vNEW_TRANS_CAP, vNSE, vP, vRETCAP, vRETCAPENERGY, vS, vSHUT, vSTART, vTAUX_NEG, vTAUX_POS, vTLOSS, vZERO</code></pre><pre><code class="language-julia hljs">solution4 = @elapsed GenX.solve_model(EP4,setup)</code></pre><pre><code class="nohighlight hljs">    Running HiGHS 1.6.0: Copyright (c) 2023 HiGHS under MIT licence terms
+    Presolving model
+    123675 rows, 81174 cols, 478190 nonzeros
+    116575 rows, 74076 cols, 478470 nonzeros
+    Presolve : Reductions: rows 116575(-31292); columns 74076(-9116); elements 478470(-75676)
+    Solving the presolved LP
+    Using EKK dual simplex solver - serial
+      Iteration        Objective     Infeasibilities num(sum)
+              0     1.9243583242e+03 Pr: 5545(9397.81); Du: 0(3.92542e-09) 0s
+          13530     2.9999821788e+03 Pr: 30131(9.49605e+06); Du: 0(0.0013131) 5s
+          17547     3.5484267823e+03 Pr: 19414(952045); Du: 0(0.00175439) 10s
+          20723     4.7298157079e+03 Pr: 29321(991206); Du: 0(0.00183106) 15s
+          23580     5.7123748112e+03 Pr: 32150(7.12339e+06); Du: 0(0.00148821) 21s
+          26170     6.1864339355e+03 Pr: 23825(7.35638e+06); Du: 0(0.00149712) 26s
+          29149     6.6441899572e+03 Pr: 27775(3.51868e+06); Du: 0(0.00148729) 31s
+          31348     6.8846964690e+03 Pr: 35484(2.8051e+06); Du: 0(0.00139557) 36s
+          33603     6.9920173954e+03 Pr: 24118(2.03558e+06); Du: 0(0.00124593) 42s
+          35671     7.2015870783e+03 Pr: 34108(1.48506e+07); Du: 0(0.00155189) 47s
+          37885     7.4048679609e+03 Pr: 31619(4.35123e+07); Du: 0(0.00179926) 52s
+          40109     7.6356641465e+03 Pr: 25843(2.88592e+06); Du: 0(0.00205301) 58s
+          42353     7.8375259516e+03 Pr: 31443(8.49023e+06); Du: 0(0.00226205) 64s
+          45258     8.1692860958e+03 Pr: 37870(5.26412e+06); Du: 0(0.00255441) 69s
+          48083     8.3152673717e+03 Pr: 40961(1.14875e+07); Du: 0(0.00294817) 75s
+          50545     8.4510258333e+03 Pr: 30790(3.72272e+08); Du: 0(0.00304629) 80s
+          52861     8.5807507297e+03 Pr: 22492(930796); Du: 0(0.00320519) 85s
+          54980     8.6629986832e+03 Pr: 30776(2.08885e+07); Du: 0(0.00337039) 91s
+          57333     8.7549581833e+03 Pr: 26257(1.13046e+06); Du: 0(0.00357615) 96s
+          59389     8.8000584935e+03 Pr: 36678(2.40379e+06); Du: 0(0.00364701) 101s
+          61669     8.8767323679e+03 Pr: 35715(2.44371e+06); Du: 0(0.00390224) 107s
+          63914     8.9782186363e+03 Pr: 43654(3.60725e+06); Du: 0(0.00423026) 113s
+          66084     9.0603325781e+03 Pr: 22220(2.48776e+06); Du: 0(0.00410399) 118s
+          69022     9.1231092369e+03 Pr: 22727(1.78641e+06); Du: 0(0.00444875) 124s
+          71953     9.1538574545e+03 Pr: 22264(5.37124e+06); Du: 0(0.00461629) 129s
+          74846     9.1867207120e+03 Pr: 26970(1.49142e+06); Du: 0(0.00477614) 135s
+          77129     9.2058130738e+03 Pr: 0(0); Du: 0(0.00107487) 140s
+          77129     9.2058130738e+03 Pr: 0(0); Du: 0(0.00107487) 140s
+    Using EKK dual simplex solver - serial
+      Iteration        Objective     Infeasibilities num(sum)
+          77129     9.2058130738e+03 Pr: 1(0.000235421); Du: 0(0.000836801) 140s
+          77136     9.2058130749e+03 Pr: 0(0); Du: 0(0.000836801) 140s
+          77136     9.2058130749e+03 Pr: 0(0); Du: 0(0.000836801) 140s
+    Solving the original LP from the solution after postsolve
+    Model   status      : Optimal
+    Simplex   iterations: 77136
+    Objective value     :  9.2058130749e+03
+    HiGHS run time      :        140.51
+    LP solved for primal
+
+    140.762363</code></pre><pre><code class="language-julia hljs">highs_settings[&quot;run_crossover&quot;] = &quot;on&quot;
+YAML.write_file(joinpath(case,&quot;Settings/highs_settings.yml&quot;), highs_settings)
+OPTIMIZER5 = GenX.configure_solver(setup[&quot;Solver&quot;], settings_path);
+EP5 = GenX.generate_model(setup,inputs,OPTIMIZER5)</code></pre><pre><code class="nohighlight hljs">    Discharge Module
+    Non-served Energy Module
+    Investment Discharge Module
+    Unit Commitment Module
+    Emissions Module (for CO2 Policy modularization
+    Transmission Module
+    Dispatchable Resources Module
+    Storage Resources Module
+    Storage Investment Module
+    Storage Core Resources Module
+    Storage Resources with Symmetric Charge/Discharge Capacity Module
+    Thermal (Unit Commitment) Resources Module
+    C02 Policies Module
+    Minimum Capacity Requirement Module
+
+    A JuMP Model
+    Minimization problem with:
+    Variables: 83192
+    Objective function type: AffExpr
+    `AffExpr`-in-`MathOptInterface.EqualTo{Float64}`: 24024 constraints
+    `AffExpr`-in-`MathOptInterface.GreaterThan{Float64}`: 20334 constraints
+    `AffExpr`-in-`MathOptInterface.LessThan{Float64}`: 103509 constraints
+    `VariableRef`-in-`MathOptInterface.EqualTo{Float64}`: 4 constraints
+    `VariableRef`-in-`MathOptInterface.GreaterThan{Float64}`: 79492 constraints
+    Model mode: AUTOMATIC
+    CachingOptimizer state: EMPTY_OPTIMIZER
+    Solver name: HiGHS
+    Names registered in the model: cCO2Emissions_systemwide, cMaxCap, cMaxCapEnergy, cMaxCapEnergyDuration, cMaxFlow_in, cMaxFlow_out, cMaxLineReinforcement, cMaxNSE, cMaxRetCommit, cMaxRetEnergy, cMaxRetNoCommit, cMinCap, cMinCapEnergy, cMinCapEnergyDuration, cNSEPerSeg, cPowerBalance, cSoCBalInterior, cSoCBalStart, cTAuxLimit, cTAuxSum, cTLoss, cZoneMinCapReq, eAvail_Trans_Cap, eCFix, eCFixEnergy, eCNSE, eCStart, eCVar_in, eCVar_out, eELOSS, eELOSSByZone, eEmissionsByPlant, eEmissionsByZone, eExistingCap, eExistingCapEnergy, eGenerationByThermAll, eGenerationByVRE, eGenerationByZone, eLosses_By_Zone, eMinCapRes, eMinCapResInvest, eNet_Export_Flows, eObj, ePowerBalance, ePowerBalanceDisp, ePowerBalanceLossesByZone, ePowerBalanceNetExportFlows, ePowerBalanceNse, ePowerBalanceStor, ePowerBalanceThermCommit, eTotalCFix, eTotalCFixEnergy, eTotalCNSE, eTotalCNSET, eTotalCNSETS, eTotalCNetworkExp, eTotalCStart, eTotalCStartT, eTotalCVarIn, eTotalCVarInT, eTotalCVarOut, eTotalCVarOutT, eTotalCap, eTotalCapEnergy, eTransMax, vCAP, vCAPENERGY, vCHARGE, vCO2Cap_slack, vCOMMIT, vFLOW, vNEW_TRANS_CAP, vNSE, vP, vRETCAP, vRETCAPENERGY, vS, vSHUT, vSTART, vTAUX_NEG, vTAUX_POS, vTLOSS, vZERO</code></pre><pre><code class="language-julia hljs">solution5 = @elapsed GenX.solve_model(EP5,setup)</code></pre><pre><code class="nohighlight hljs">    Running HiGHS 1.6.0: Copyright (c) 2023 HiGHS under MIT licence terms
+    Presolving model
+    123675 rows, 81174 cols, 478190 nonzeros
+    116575 rows, 74076 cols, 478470 nonzeros
+    Presolve : Reductions: rows 116575(-31292); columns 74076(-9116); elements 478470(-75676)
+    Solving the presolved LP
+    Using EKK dual simplex solver - serial
+      Iteration        Objective     Infeasibilities num(sum)
+              0     1.9243583242e+03 Pr: 5545(9397.81); Du: 0(3.92542e-09) 0s
+          13530     2.9999821788e+03 Pr: 30131(9.49605e+06); Du: 0(0.0013131) 5s
+          17547     3.5484267823e+03 Pr: 19414(952045); Du: 0(0.00175439) 10s
+          20723     4.7298157079e+03 Pr: 29321(991206); Du: 0(0.00183106) 15s
+          23580     5.7123748112e+03 Pr: 32150(7.12339e+06); Du: 0(0.00148821) 21s
+          26170     6.1864339355e+03 Pr: 23825(7.35638e+06); Du: 0(0.00149712) 26s
+          29149     6.6441899572e+03 Pr: 27775(3.51868e+06); Du: 0(0.00148729) 31s
+          31348     6.8846964690e+03 Pr: 35484(2.8051e+06); Du: 0(0.00139557) 36s
+          33603     6.9920173954e+03 Pr: 24118(2.03558e+06); Du: 0(0.00124593) 42s
+          35671     7.2015870783e+03 Pr: 34108(1.48506e+07); Du: 0(0.00155189) 47s
+          37885     7.4048679609e+03 Pr: 31619(4.35123e+07); Du: 0(0.00179926) 52s
+          40109     7.6356641465e+03 Pr: 25843(2.88592e+06); Du: 0(0.00205301) 58s
+          42353     7.8375259516e+03 Pr: 31443(8.49023e+06); Du: 0(0.00226205) 63s
+          45258     8.1692860958e+03 Pr: 37870(5.26412e+06); Du: 0(0.00255441) 69s
+          48083     8.3152673717e+03 Pr: 40961(1.14875e+07); Du: 0(0.00294817) 75s
+          50545     8.4510258333e+03 Pr: 30790(3.72272e+08); Du: 0(0.00304629) 80s
+          52861     8.5807507297e+03 Pr: 22492(930796); Du: 0(0.00320519) 85s
+          54980     8.6629986832e+03 Pr: 30776(2.08885e+07); Du: 0(0.00337039) 91s
+          57333     8.7549581833e+03 Pr: 26257(1.13046e+06); Du: 0(0.00357615) 96s
+          59389     8.8000584935e+03 Pr: 36678(2.40379e+06); Du: 0(0.00364701) 101s
+          61669     8.8767323679e+03 Pr: 35715(2.44371e+06); Du: 0(0.00390224) 107s
+          63914     8.9782186363e+03 Pr: 43654(3.60725e+06); Du: 0(0.00423026) 113s
+          66084     9.0603325781e+03 Pr: 22220(2.48776e+06); Du: 0(0.00410399) 118s
+          69022     9.1231092369e+03 Pr: 22727(1.78641e+06); Du: 0(0.00444875) 124s
+          71953     9.1538574545e+03 Pr: 22264(5.37124e+06); Du: 0(0.00461629) 129s
+          74408     9.1814081583e+03 Pr: 29329(5.2193e+06); Du: 0(0.00473215) 134s
+          77012     9.2060247446e+03 Pr: 0(0); Du: 0(0.00509972) 140s
+          77129     9.2058130738e+03 Pr: 0(0); Du: 0(0.00107487) 140s
+          77129     9.2058130738e+03 Pr: 0(0); Du: 0(0.00107487) 140s
+    Using EKK dual simplex solver - serial
+      Iteration        Objective     Infeasibilities num(sum)
+          77129     9.2058130738e+03 Pr: 1(0.000235421); Du: 0(0.000836801) 140s
+          77136     9.2058130749e+03 Pr: 0(0); Du: 0(0.000836801) 140s
+          77136     9.2058130749e+03 Pr: 0(0); Du: 0(0.000836801) 140s
+    Solving the original LP from the solution after postsolve
+    Model   status      : Optimal
+    Simplex   iterations: 77136
+    Objective value     :  9.2058130749e+03
+    HiGHS run time      :        140.44
+    LP solved for primal
+
+    140.74829025</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Tutorial_5_solve_model/">« Tutorial 5: Solving the Model</a><a class="docs-footer-nextpage" href="../Tutorial_7_setup/">Tutorial 7: Policy Constraints »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Monday 24 June 2024 01:56">Monday 24 June 2024</span>. Using Julia version 1.10.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
