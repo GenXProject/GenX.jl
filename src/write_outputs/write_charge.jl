@@ -41,24 +41,10 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfCharge)
     else # setup["WriteOutputs"] == "full"
-        write_fulltimeseries(filepath, charge, dfCharge)
-        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-
-        # full path, dataout, dfout
-       
-            T = size(charge, 2)
-            dfCharge = hcat(dfCharge, DataFrame(charge, :auto))
-            auxNew_Names = [Symbol("Resource");
-                            Symbol("Zone");
-                            Symbol("AnnualSum");
-                            [Symbol("t$t") for t in 1:T]]
-            rename!(dfCharge, auxNew_Names)
-            total = DataFrame(["Total" 0 sum(dfCharge[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-            total[!, 4:(T + 3)] .= sum(charge, dims = 1)
-            df_Charge = vcat(dfCharge, total)
+        df_Charge = write_fulltimeseries(filepath, charge, dfCharge)
+        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1            
             DFMatrix = Matrix(dftranspose(df_Charge, true))
             DFnames = DFMatrix[1,:]
-            
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
