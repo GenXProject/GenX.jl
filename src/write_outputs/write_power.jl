@@ -24,21 +24,10 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfPower)
     else # setup["WriteOutputs"] == "full"
-        write_fulltimeseries(filepath, power, dfPower)
+        df_Power = write_fulltimeseries(filepath, power, dfPower)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            T = size(power, 2)
-            dfPower = hcat(dfPower, DataFrame(power, :auto))
-            auxNew_Names = [Symbol("Resource");
-                            Symbol("Zone");
-                            Symbol("AnnualSum");
-                            [Symbol("t$t") for t in 1:T]]
-            rename!(dfPower, auxNew_Names)
-            total = DataFrame(["Total" 0 sum(dfPower[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-            total[!, 4:(T + 3)] .= sum(power, dims = 1)
-            df_Power = vcat(dfPower, total)
             DFMatrix = Matrix(dftranspose(df_Power, true))
             DFnames = DFMatrix[1,:]
-
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(

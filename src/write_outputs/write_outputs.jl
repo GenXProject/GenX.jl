@@ -509,7 +509,7 @@ function write_fulltimeseries(fullpath::AbstractString,
     dfOut = vcat(dfOut, total)
 
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
-    return nothing
+    return dfOut
 end
 
 function write_settings_file(path, setup)

@@ -57,21 +57,10 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     if setup["WriteOutputs"] == "annual"
         write_annual(filename, dfCurtailment)
     else # setup["WriteOutputs"] == "full"
-        write_fulltimeseries(filename, curtailment, dfCurtailment)
+        df_Curtailment = write_fulltimeseries(filename, curtailment, dfCurtailment)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            T = size(curtailment, 2)
-            dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
-            auxNew_Names = [Symbol("Resource");
-                            Symbol("Zone");
-                            Symbol("AnnualSum");
-                            [Symbol("t$t") for t in 1:T]]
-            rename!(dfCurtailment, auxNew_Names)
-            total = DataFrame(["Total" 0 sum(dfCurtailment[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-            total[!, 4:(T + 3)] .= sum(curtailment, dims = 1)
-            df_Curtailment = vcat(dfCurtailment, total)
             DFMatrix = Matrix(dftranspose(df_Curtailment, true))
             DFnames = DFMatrix[1,:]
-
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
