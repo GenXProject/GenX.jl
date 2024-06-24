@@ -9,7 +9,7 @@ To run the model, first navigate to the example directory:
 
 ```bash
 $ julia
-julia> cd("example_systems/3_three_zone_w_co2_capture//")
+julia> cd("example_systems/3_three_zone_w_co2_capture/")
 ```
 
 - Using a terminal or command prompt:

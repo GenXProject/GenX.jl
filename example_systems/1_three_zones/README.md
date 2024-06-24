@@ -8,12 +8,12 @@ To run the model, first navigate to the example directory:
 
 ```bash
 $ julia
-julia> cd("example_systems/1_three_zones")
+julia> cd("example_systems/1_three_zones/")
 ```
 
 - Using a terminal or command prompt:
 ```bash
-$ cd example_systems/1_three_zones
+$ cd example_systems/1_three_zones/
 ``` 
    
 Next, ensure that your settings in `settings/genx_settings.yml` are correct. The default settings use the solver `HiGHS`, time domain reduced input data (`TimeDomainReduction: 1`) and minimum capacity requirement policy (`MinCapReq: 1`) as specified in the `policies/Minimum_capacity_requirement.csv` file. Other optional policies include a capacity reserve margin, an energy share requirement (such as renewable portfolio standard (RPS) or clean electricity standard (CES) policies), a CO2 emissions cap, and a maximum capacity requirement policy (see the documentation for more details). For this example, a rate-based carbon cap of 50 gCO<sub>2</sub> per kWh is specified in the `policies/CO2_cap.csv` input file.
