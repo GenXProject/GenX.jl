@@ -59,12 +59,24 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filename, curtailment, dfCurtailment)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            df_Curtail = CSV.read(joinpath(path, "curtail.csv"), DataFrame)
+            T = size(curtailment, 2)
+            dfCurtailment = hcat(dfCurtailment, DataFrame(curtailment, :auto))
+            auxNew_Names = [Symbol("Resource");
+                            Symbol("Zone");
+                            Symbol("AnnualSum");
+                            [Symbol("t$t") for t in 1:T]]
+            rename!(dfCurtailment, auxNew_Names)
+            total = DataFrame(["Total" 0 sum(dfCurtailment[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
+            total[!, 4:(T + 3)] .= sum(curtailment, dims = 1)
+            df_Curtailment = vcat(dfCurtailment, total)
+            DFMatrix = Matrix(dftranspose(df_Curtailment, true))
+            DFnames = DFMatrix[1,:]
+
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup, df_Curtail, names(df_Curtail))
-            CSV.write(joinpath(output_path, "curtail.csv"), dfOut_full)
+                path, setup, dftranspose(df_Curtailment, false), DFnames)
+            CSV.write(joinpath(output_path, "curtail.csv"), dfOut_full, writeheader = false)
             println("Writing Full Time Series for Curtailment")
         end
     end

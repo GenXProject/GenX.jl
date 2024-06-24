@@ -33,12 +33,24 @@ function write_co2_emissions_plant(path::AbstractString,
     else # setup["WriteOutputs"] == "full"
         write_fulltimeseries(filepath, emissions_plant, dfEmissions_plant)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            df_Emissions_plant = CSV.read(joinpath(path, "emissions_plant.csv"), DataFrame)
+            T = size(emissions_plant, 2)
+            dfEmissions_plant = hcat(dfEmissions_plant, DataFrame(emissions_plant, :auto))
+            auxNew_Names = [Symbol("Resource");
+                            Symbol("Zone");
+                            Symbol("AnnualSum");
+                            [Symbol("t$t") for t in 1:T]]
+            rename!(dfEmissions_plant, auxNew_Names)
+            total = DataFrame(["Total" 0 sum(dfEmissions_plant[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
+            total[!, 4:(T + 3)] .= sum(emissions_plant, dims = 1)
+            df_Emissions_plant = vcat(dfEmissions_plant, total)
+            DFMatrix = Matrix(dftranspose(df_Emissions_plant, true))
+            DFnames = DFMatrix[1,:]
+
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup, df_Emissions_plant, names(df_Emissions_plant))
-            CSV.write(joinpath(output_path, "emissions_plant.csv"), dfOut_full)
+                path, setup,  dftranspose(df_Emissions_plant, false), DFnames)
+            CSV.write(joinpath(output_path, "emissions_plant.csv"), dfOut_full, writeheader = false)
             println("Writing Full Time Series for Emissions Plant")
         end
     end
