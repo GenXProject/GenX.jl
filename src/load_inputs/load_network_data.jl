@@ -50,8 +50,15 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # Base reactance
         line_reactance_Ohms_Base = (line_voltage_kV .^ 2) ./ MVA_Base
         #Adding Transformer data
+        line_transformer_MVA_base = :Transformer_MVA_Base
+        #Transformer turns ratio
         line_transformer_ht_turns = :Transformer_HT_Turns
-        line_transformer_ht_turns = :Transformer_LT_Turns
+        line_transformer_lt_turns = :Transformer_LT_Turns
+        #Transformer LT side data
+        line_transformer_lt_pu_reactance = :Transformer_LT_Reactance
+        #Transformer HT side data
+        line_transformer_ht_pu_reactance = :Transformer_HT_Reactance
+        #Transformer HT side data
         # Transmission line voltage (in kV)
         line_voltage_kV = to_floats(:Line_Voltage_kV)
         # Transmission line reactance (in Ohms)
