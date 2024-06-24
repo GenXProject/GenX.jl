@@ -60,7 +60,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
                                      scale_factor
         #Reactance in pu
-        inputs_nw["pu_reactance'] = line_reactance_Ohms ./ line_reactance_Ohms_Base
+        inputs_nw["pu_reactance"] = line_reactance_Ohms ./ line_reactance_Ohms_Base
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
