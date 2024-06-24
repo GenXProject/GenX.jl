@@ -43,6 +43,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     # Dict containing the list of outputs to write
     output_settings_d = setup["WriteOutputsSettingsDict"]
     write_settings_file(path, setup)
+    write_system_env_summary(path)
 
     output_settings_d["WriteStatus"] && write_status(path, inputs, setup, EP)
 
@@ -513,4 +514,36 @@ Internal function for writing settings files
 """
 function write_settings_file(path, setup)
     YAML.write_file(joinpath(path, "run_settings.yml"), setup)
+end
+
+"""
+    write_system_env_summary(path::AbstractString)
+
+Write a summary of the current testing environment to a YAML file. The summary 
+includes information like the CPU name and architecture, number of CPU threads, 
+JIT status, operating system kernel, machine name, Julia standard library path, 
+Julia version and GenX version.
+
+# Arguments
+- `path::AbstractString`: The directory path where the YAML file will be written.
+
+# Output
+Writes a file named `env_summary.yml` in the specified directory.
+
+"""
+function write_system_env_summary(path::AbstractString)
+    v = pkgversion(GenX)
+    env_summary = Dict(
+        :ARCH => getproperty(Sys, :ARCH),
+        :CPU_NAME => getproperty(Sys, :CPU_NAME),
+        :CPU_THREADS => getproperty(Sys, :CPU_THREADS),
+        :JIT => getproperty(Sys, :JIT),
+        :KERNEL => getproperty(Sys, :KERNEL),
+        :MACHINE => getproperty(Sys, :MACHINE),
+        :JULIA_STDLIB => getproperty(Sys, :STDLIB),
+        :JULIA_VERSION => VERSION,
+        :GENX_VERSION => v
+    )
+
+    YAML.write_file(joinpath(path, "system_summary.yml"), env_summary)
 end

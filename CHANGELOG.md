@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Add objective scaler for addressing problem ill-conditioning (#667)
 - Add workflow that ensures that CHANGELOG.md and the version number are updated (#711)
+- Print GenX version at startup and export it to disk (#712) 
 
 ## [0.4.0] - 2024-03-18
 
