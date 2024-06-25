@@ -58,7 +58,7 @@ function _precompile()
         warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
         with_logger(warnerror_logger) do
             @compile_workload begin
-                run_genx_case!(joinpath(pkgdir(GenX),"precompile/case"), HiGHS.Optimizer)
+                run_genx_case!(joinpath(pkgdir(GenX), "precompile/case"), HiGHS.Optimizer)
             end
         end
     end
