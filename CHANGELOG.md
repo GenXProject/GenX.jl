@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the option to output results with time series reconstructed for the entire year (#700)
 - Added default settings in multitage optimization (#703)
 - Added the option to write results after each iteration of a multistage run (Myopic) (#704)
+- Add option to precompile run_genx_case!  function (#718)
 
 ## [0.4.0] - 2024-03-18
 
