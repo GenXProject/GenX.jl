@@ -62,7 +62,8 @@ function _precompile()
             end
         end
     end
-    isdir("precompile/case/results") && rm("precompile/case/results"; force=true, recursive=true)
+    isdir("precompile/case/results") &&
+        rm("precompile/case/results"; force = true, recursive = true)
     return nothing
 end
 
