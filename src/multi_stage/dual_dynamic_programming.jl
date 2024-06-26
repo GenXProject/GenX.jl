@@ -136,6 +136,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
     num_stages = settings_d["NumStages"]  # Total number of investment planning stages
     EPSILON = settings_d["ConvergenceTolerance"] # Tolerance
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
+    write_intermittent_outputs = settings_d["WriteIntermittentOutputs"] == 1 # 1 if write outputs for each stage
 
     start_cap_d, cap_track_d = configure_ddp_dicts(setup, inputs_d[1])
 
@@ -170,6 +171,13 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
     models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
     inputs_d[t]["solve_time"] = solve_time_d[t]
 
+    if myopic && write_intermittent_outputs
+        for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+            outpath_cur = joinpath(outpath, "results_p$p")
+            write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
+        end
+    end
+    
     # Step c.i) Initialize the lower bound, equal to the objective function value for the first period in the first iteration
     global z_lower = objective_value(models_d[t])
 
@@ -200,14 +208,6 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             t = 1 #  update forward pass solution for the first stage
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
-
-            if myopic && mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"]
-                for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
-                    outpath_cur = joinpath(outpath, "results_p$p")
-                    write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
-                end
-            end
-            
         end
         ## Forward pass for t=2:num_stages
         for t in 2:num_stages
@@ -231,7 +231,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
 
-            if myopic && mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"]
+            if myopic && write_intermittent_outputs
                 for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
                     outpath_cur = joinpath(outpath, "results_p$p")
                     write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
