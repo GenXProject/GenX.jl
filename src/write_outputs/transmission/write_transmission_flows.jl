@@ -25,11 +25,10 @@ function write_transmission_flows(path::AbstractString,
         CSV.write(filepath, dftranspose(dfFlow, false), writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            DFnames = ["Line", "1", "2"]
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup, dftranspose(dfFlow, false), DFnames)
+                path, setup, dftranspose(dfFlow, false))
             CSV.write(joinpath(output_path, "flow.csv"), dfOut_full, header = false)
             println("Writing Full Time Series for Transmission Flows")
         end

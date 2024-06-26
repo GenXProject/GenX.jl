@@ -7,7 +7,6 @@ Create a DataFrame with all 8,760 hours of the year from the reduced output.
 path - Path input to the results folder
 setup - case setup (dictionary)
 DF - DataFrame to be reconstructed
-DFnames - Vector of column names
 
 This function uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
 For each 52 weeks of the year, the corresponding representative week is taken from the input DataFrame and copied into the new DataFrame. Representative periods that 
@@ -21,7 +20,7 @@ This function is called when output files with time series data (e.g. power.csv,
 """
 
 function full_time_series_reconstruction(
-        path::AbstractString, setup::Dict, DF::DataFrame, DFnames::Vector)
+        path::AbstractString, setup::Dict, DF::DataFrame)
     # Read Period map file Period_map.csv
     case = path[1:findlast('/', path)]
     TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
@@ -56,7 +55,7 @@ function full_time_series_reconstruction(
         end
         recon = [recon recon_col]
     end
-    reconDF = DataFrame(recon, DFnames, makeunique = true)
+    reconDF = DataFrame(recon, :auto)
 
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
     for i in range(1, t1 - 1)

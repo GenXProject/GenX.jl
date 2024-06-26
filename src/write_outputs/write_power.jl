@@ -26,12 +26,10 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     else # setup["WriteOutputs"] == "full"
         df_Power = write_fulltimeseries(filepath, power, dfPower)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            DFMatrix = Matrix(dftranspose(df_Power, true))
-            DFnames = DFMatrix[1,:]
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup, dftranspose(df_Power, false), DFnames)
+                path, setup, dftranspose(df_Power, false))
             CSV.write(joinpath(output_path, "power.csv"), dfOut_full, writeheader = false)
             println("Writing Full Time Series for Power")
         end
