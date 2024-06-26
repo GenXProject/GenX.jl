@@ -98,12 +98,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-            output_path = joinpath(path, FullTimeSeriesFolder)
-            dfOut_full = full_time_series_reconstruction(
-                path, setup, dftranspose(dfPowerBalance, false))
-            CSV.write(
-                joinpath(output_path, "power_balance.csv"), dfOut_full, header = false)
+            full_time_series_reconstruction(path, setup, dfPowerBalance, "power_balance")
             println("Writing Full Time Series for Power Balance")
         end
     end

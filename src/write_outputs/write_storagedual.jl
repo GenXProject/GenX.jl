@@ -81,11 +81,7 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
         header = false)
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-        FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-        output_path = joinpath(path, FullTimeSeriesFolder)
-        dfOut_full = full_time_series_reconstruction(
-            path, setup, dftranspose(dfStorageDual, false))
-        CSV.write(joinpath(output_path, "storagebal_duals.csv"), dfOut_full, header = false)
+        full_time_series_reconstruction(path, setup, dfStorageDual, "storagebal_duals")
         println("Writing Full Time Series for Storage Duals")
     end
 end
