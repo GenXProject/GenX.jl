@@ -1339,6 +1339,7 @@ function cluster_inputs(inpath,
                     "inputs_p$per",
                     mysetup["SystemFolder"],
                     "Fuels_data.csv"))
+                ensure_column!(fuel_in, "None", 0.0)
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1484,6 +1485,7 @@ function cluster_inputs(inpath,
                 input_stage_directory,
                 mysetup["SystemFolder"],
                 "Fuels_data.csv"))
+            ensure_column!(fuel_in, "None", 0.0)
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1599,6 +1601,7 @@ function cluster_inputs(inpath,
         ### TDR_Results/Fuels_data.csv
         system_path = joinpath(inpath, mysetup["SystemFolder"])
         fuel_in = load_dataframe(joinpath(system_path, "Fuels_data.csv"))
+        ensure_column!(fuel_in, "None", 0.0)
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
         NewFuelOutput = vcat(SepFirstRow, FPOutputData)
