@@ -171,13 +171,11 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
     models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
     inputs_d[t]["solve_time"] = solve_time_d[t]
 
-    if myopic && write_intermittent_outputs
-        for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
-            outpath_cur = joinpath(outpath, "results_p$p")
-            write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
-        end
+    if myopic && write_intermittent_outputs 
+        outpath_cur = joinpath(outpath, "results_p$t")
+        write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
     end
-    
+
     # Step c.i) Initialize the lower bound, equal to the objective function value for the first period in the first iteration
     global z_lower = objective_value(models_d[t])
 
@@ -231,11 +229,9 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
 
-            if myopic && write_intermittent_outputs
-                for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
-                    outpath_cur = joinpath(outpath, "results_p$p")
-                    write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
-                end
+            if myopic && write_intermittent_outputs 
+                outpath_cur = joinpath(outpath, "results_p$t")
+                write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
             end
         end
 
