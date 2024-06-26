@@ -229,7 +229,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
 
-            if myopic && write_intermittent_outputs 
+            if myopic && write_intermittent_outputs
                 outpath_cur = joinpath(outpath, "results_p$t")
                 write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
             end
