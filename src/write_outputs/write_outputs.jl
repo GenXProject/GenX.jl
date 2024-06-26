@@ -179,7 +179,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     if setup["UCommit"] >= 1
         if output_settings_d["WriteCommit"]
             elapsed_time_commit = @elapsed write_commit(path, inputs, setup, EP)
-            println("Time elapsed for writing commitment is ")
+            println("Time elapsed for writing commitment is")
             println(elapsed_time_commit)
         end
 
@@ -507,11 +507,15 @@ function write_fulltimeseries(fullpath::AbstractString,
     total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)
     dfOut = vcat(dfOut, total)
-
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
     return dfOut
 end
 
+"""
+    write_settings_file(path, setup)
+
+Internal function for writing settings files
+"""
 function write_settings_file(path, setup)
     YAML.write_file(joinpath(path, "run_settings.yml"), setup)
 end
@@ -547,3 +551,35 @@ function write_system_env_summary(path::AbstractString)
 
     YAML.write_file(joinpath(path, "system_summary.yml"), env_summary)
 end
+
+@doc raw"""write_full_time_series_reconstruction(path::AbstractString,
+                            setup::Dict,
+                            DF::DataFrame,
+                            name::String)
+Create a DataFrame with all 8,760 hours of the year from the reduced output.
+
+This function calls `full_time_series_reconstruction()``, which uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
+For each 52 weeks of the year, the corresponding representative week is taken from the input DataFrame and copied into the new DataFrame. Representative periods that 
+represent more than one week will appear multiple times in the output. 
+
+Note: Currently, TDR only gives the representative periods in Period_map for 52 weeks, when a (non-leap) year is 52 weeks + 24 hours. This function takes the last 24 hours of 
+the time series and copies them to get up to all 8,760 hours in a year.
+
+This function is called when output files with time series data (e.g. power.csv, emissions.csv) are created, if the setup key "OutputFullTimeSeries" is set to "1".
+
+# Arguments
+- `path` (AbstractString): Path input to the results folder
+- `setup` (Dict): Case setup
+- `DF` (DataFrame): DataFrame to be reconstructed
+- `name` (String): Name desired for the .csv file
+
+"""
+function write_full_time_series_reconstruction(
+        path::AbstractString, setup::Dict, DF::DataFrame, name::String)
+    FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+    output_path = joinpath(path, FullTimeSeriesFolder)
+    dfOut_full = full_time_series_reconstruction(path, setup, dftranspose(DF, false))
+    CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
+    return nothing
+end
+

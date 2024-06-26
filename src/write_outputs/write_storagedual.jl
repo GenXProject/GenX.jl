@@ -81,7 +81,7 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
         header = false)
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-        full_time_series_reconstruction(path, setup, dfStorageDual, "storagebal_duals")
+        write_full_time_series_reconstruction(path, setup, dfStorageDual, "storagebal_duals")
         println("Writing Full Time Series for Storage Duals")
     end
 end

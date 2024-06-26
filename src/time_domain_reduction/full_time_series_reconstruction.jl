@@ -1,40 +1,17 @@
-@doc raw"""full_time_series_reconstruction(path::AbstractString,
-                            setup::Dict,
-                            DF::DataFrame,
-                            name::String)
-Create a DataFrame with all 8,760 hours of the year from the reduced output.
-
-path - Path input to the results folder
-setup - case setup (dictionary)
-DF - DataFrame to be reconstructed
-name - name desired for the .csv file
-
-This function calls perform_reconstruction(), which uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
-For each 52 weeks of the year, the corresponding representative week is taken from the input DataFrame and copied into the new DataFrame. Representative periods that 
-represent more than one week will appear multiple times in the output. 
-
-Note: Currently, TDR only gives the representative periods in Period_map for 52 weeks, when a (non-leap) year is 52 weeks + 24 hours. This function takes the last 24 hours of 
-the time series and copies them to get up to all 8,760 hours in a year.
-
-This function is called when output files with time series data (e.g. power.csv, emissions.csv) are created, if the setup key "OutputFullTimeSeries" is set to "1".
-
 """
-
-function full_time_series_reconstruction(
-        path::AbstractString, setup::Dict, DF::DataFrame, name::String)
-    FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-    output_path = joinpath(path, FullTimeSeriesFolder)
-    dfOut_full = perform_reconstruction(path, setup, dftranspose(DF, false))
-    CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
-    return nothing
-end
-
-"""
-    perform_reconstruction(path::AbstractString, setup::Dict, DF::DataFrame)
+    full_time_series_reconstruction(path::AbstractString, setup::Dict, DF::DataFrame)
 
 Internal function for performing the reconstruction. This function returns a DataFrame with the full series reconstruction. 
+
+# Arguments
+- `path` (AbstractString): Path input to the results folder
+- `setup` (Dict): Case setup
+- `DF` (DataFrame): DataFrame to be reconstructed
+
+# Returns
+- `reconDF` (DataFrame): DataFrame with the full series reconstruction
 """
-function perform_reconstruction(
+function full_time_series_reconstruction(
     path::AbstractString, setup::Dict, DF::DataFrame)
     # Read Period map file Period_map.csv
     case = path[1:findlast('/', path)]

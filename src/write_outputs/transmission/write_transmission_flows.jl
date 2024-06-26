@@ -25,7 +25,7 @@ function write_transmission_flows(path::AbstractString,
         CSV.write(filepath, dftranspose(dfFlow, false), writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            full_time_series_reconstruction(path, setup, dfFlow, "flow")
+            write_full_time_series_reconstruction(path, setup, dfFlow, "flow")
             println("Writing Full Time Series for Transmission Flows")
         end
     end
