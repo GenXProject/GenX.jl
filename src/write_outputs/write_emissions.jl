@@ -126,10 +126,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                 writeheader = false)
 
             if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-                FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-                output_path = joinpath(path,FullTimeSeriesFolder)
-                dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(dfEmissions, false))
-                CSV.write(joinpath(output_path,"emissions.csv"), dfOut_full)
+                full_time_series_reconstruction(path, setup, dfEmissions, "emissions")
                 println("Writing Full Time Series for Emissions")
             end
         end

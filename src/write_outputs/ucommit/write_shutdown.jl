@@ -15,10 +15,7 @@ function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     else # setup["WriteOutputs"] == "full"
         df_Shutdown = write_fulltimeseries(filepath, shut, dfShutdown)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-            output_path = joinpath(path,FullTimeSeriesFolder)
-            dfOut_full = full_time_series_reconstruction(path,setup, dftranspose(df_Shutdown, false))
-            CSV.write(joinpath(output_path,"shutdown.csv"), dfOut_full, writeheader = false)
+            full_time_series_reconstruction(path, setup, df_Shutdown, "shutdown")
             println("Writing Full Time Series for Shutdown")
         end
     end

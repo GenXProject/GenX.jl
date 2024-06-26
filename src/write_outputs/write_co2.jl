@@ -33,11 +33,7 @@ function write_co2_emissions_plant(path::AbstractString,
     else # setup["WriteOutputs"] == "full"
         df_Emissions_plant = write_fulltimeseries(filepath, emissions_plant, dfEmissions_plant)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-            output_path = joinpath(path, FullTimeSeriesFolder)
-            dfOut_full = full_time_series_reconstruction(
-                path, setup,  dftranspose(df_Emissions_plant, false))
-            CSV.write(joinpath(output_path, "emissions_plant.csv"), dfOut_full, writeheader = false)
+            full_time_series_reconstruction(path, setup, df_Emissions_plant, "emissions_plant")
             println("Writing Full Time Series for Emissions Plant")
         end
     end

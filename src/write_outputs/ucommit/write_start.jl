@@ -14,11 +14,7 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     else # setup["WriteOutputs"] == "full"	
         df_Start = write_fulltimeseries(filepath, start, dfStart)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-            output_path = joinpath(path, FullTimeSeriesFolder)
-            dfOut_full = full_time_series_reconstruction(
-                path, setup, dftranspose(df_Start, false))
-            CSV.write(joinpath(output_path, "start.csv"), dfOut_full, writeheader = false)
+            full_time_series_reconstruction(path, setup, df_Start, "start")
             println("Writing Full Time Series for Startup")
         end
     end

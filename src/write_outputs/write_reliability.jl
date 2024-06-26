@@ -22,11 +22,7 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
         header = false)
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-        FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-        output_path = joinpath(path, FullTimeSeriesFolder)
-        dfOut_full = full_time_series_reconstruction(
-            path, setup, dftranspose(dfReliability, false))
-        CSV.write(joinpath(output_path, "reliability.csv"), dfOut_full, header = false)
+        full_time_series_reconstruction(path, setup, dfReliability, "reliability")
         println("Writing Full Time Series for Reliability")
     end
 end

@@ -43,11 +43,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     else # setup["WriteOutputs"] == "full"
         df_Charge = write_fulltimeseries(filepath, charge, dfCharge)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-            output_path = joinpath(path, FullTimeSeriesFolder)
-            dfOut_full = full_time_series_reconstruction(
-                path, setup,  dftranspose(df_Charge, false))
-            CSV.write(joinpath(output_path, "charge.csv"), dfOut_full, writeheader = false)
+            full_time_series_reconstruction(path, setup, df_Charge, "charge")
             println("Writing Full Time Series for Charge")
         end
     end

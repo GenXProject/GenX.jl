@@ -1,14 +1,15 @@
 @doc raw"""full_time_series_reconstruction(path::AbstractString,
-                            case::AbstractString,
+                            setup::Dict,
                             DF::DataFrame,
-                            DFnames::Vector)
+                            name::String)
 Create a DataFrame with all 8,760 hours of the year from the reduced output.
 
 path - Path input to the results folder
 setup - case setup (dictionary)
 DF - DataFrame to be reconstructed
+name - name desired for the .csv file
 
-This function uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
+This function calls perform_reconstruction(), which uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
 For each 52 weeks of the year, the corresponding representative week is taken from the input DataFrame and copied into the new DataFrame. Representative periods that 
 represent more than one week will appear multiple times in the output. 
 
@@ -20,7 +21,21 @@ This function is called when output files with time series data (e.g. power.csv,
 """
 
 function full_time_series_reconstruction(
-        path::AbstractString, setup::Dict, DF::DataFrame)
+        path::AbstractString, setup::Dict, DF::DataFrame, name::String)
+    FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
+    output_path = joinpath(path, FullTimeSeriesFolder)
+    dfOut_full = perform_reconstruction(path, setup, dftranspose(DF, false))
+    CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
+    return nothing
+end
+
+"""
+    perform_reconstruction(path::AbstractString, setup::Dict, DF::DataFrame)
+
+Internal function for performing the reconstruction. This function returns a DataFrame with the full series reconstruction. 
+"""
+function perform_reconstruction(
+    path::AbstractString, setup::Dict, DF::DataFrame)
     # Read Period map file Period_map.csv
     case = path[1:findlast('/', path)]
     TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
@@ -50,7 +65,7 @@ function full_time_series_reconstruction(
         recon_col = []
         for i in range(1, numPeriods)
             index = Period_map[i, "Rep_Period_Index"]
-            recon_temp = col[(TimestepsPerRepPeriod * index - (TimestepsPerRepPeriod - 1)):(TimestepsPerRepPeriod * index)] # Describe how this works
+            recon_temp = col[(TimestepsPerRepPeriod * index - (TimestepsPerRepPeriod - 1)):(TimestepsPerRepPeriod * index)]
             recon_col = [recon_col; recon_temp]
         end
         recon = [recon recon_col]

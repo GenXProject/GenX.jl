@@ -41,11 +41,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     CSV.write(joinpath(path, "storage.csv"), dftranspose(dfStorage, false), header = false)
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-        FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
-        output_path = joinpath(path, FullTimeSeriesFolder)
-        dfOut_full = full_time_series_reconstruction(
-            path, setup, dftranspose(dfStorage, false))
-        CSV.write(joinpath(output_path, "storage.csv"), dfOut_full, header = false)
+        full_time_series_reconstruction(path, setup, dfStorage, "storage")
         println("Writing Full Time Series for Storage")
     end
 end
