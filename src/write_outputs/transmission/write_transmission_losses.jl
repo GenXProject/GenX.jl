@@ -32,11 +32,10 @@ function write_transmission_losses(path::AbstractString,
             writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            DFnames = ["Line", "1", "2", "Total"]
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup, dftranspose(dfTLosses, false), DFnames)
+                path, setup, dftranspose(dfTLosses, false))
             CSV.write(joinpath(output_path, "tlosses.csv"), dfOut_full, header = false)
             println("Writing Full Time Series for Time Losses")
         end

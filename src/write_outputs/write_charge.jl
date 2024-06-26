@@ -42,13 +42,11 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         write_annual(filepath, dfCharge)
     else # setup["WriteOutputs"] == "full"
         df_Charge = write_fulltimeseries(filepath, charge, dfCharge)
-        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1            
-            DFMatrix = Matrix(dftranspose(df_Charge, true))
-            DFnames = DFMatrix[1,:]
+        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
             output_path = joinpath(path, FullTimeSeriesFolder)
             dfOut_full = full_time_series_reconstruction(
-                path, setup,  dftranspose(df_Charge, false), DFnames)
+                path, setup,  dftranspose(df_Charge, false))
             CSV.write(joinpath(output_path, "charge.csv"), dfOut_full, writeheader = false)
             println("Writing Full Time Series for Charge")
         end
