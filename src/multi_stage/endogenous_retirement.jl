@@ -607,7 +607,7 @@ function endogenous_retirement_vre_stor_elec!(EP::Model, inputs::Dict, num_stage
 	NEW_CAP_ELEC = inputs["NEW_CAP_ELEC"] # Set of all resources eligible for new capacity
 	RET_CAP_ELEC = inputs["RET_CAP_ELEC"] # Set of all resources eligible for capacity retirements
 
-	### Variables ###
+    ### Variables ###
 
 	# Keep track of all new and retired capacity from all stages
 	@variable(EP, vCAPTRACKELEC[y in RET_CAP_ELEC,p=1:num_stages] >= 0 )
