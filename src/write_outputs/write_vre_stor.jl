@@ -50,10 +50,10 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
 	retcapelec = zeros(size_vrestor_resources)
 	existingcapelec = zeros(size_vrestor_resources)
 
-	# Inverter capacity
-	capdc = zeros(size_vrestor_resources)
-	retcapdc = zeros(size_vrestor_resources)
-	existingcapdc = zeros(size_vrestor_resources)
+    # Inverter capacity
+    capdc = zeros(size_vrestor_resources)
+    retcapdc = zeros(size_vrestor_resources)
+    existingcapdc = zeros(size_vrestor_resources)
 
     # Grid connection capacity
     capgrid = zeros(size_vrestor_resources)
