@@ -1349,7 +1349,6 @@ In constraint 3, electrolyzers are bound by the following limits on maximum and 
 The regional demand requirement is included in electrolyzer.jl
 """
 function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-
     println("VRE-STOR Electrolyzer Module")
 
     ### LOAD DATA ###
