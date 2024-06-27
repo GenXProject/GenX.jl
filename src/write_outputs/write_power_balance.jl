@@ -69,7 +69,8 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
 
             # if ELECTROLYZER is empty, increase indices by 1
-            is_electrolyzer_empty = isempty(ELECTROLYZER) || setup["HydrogenMimimumProduction"] == 0
+            is_electrolyzer_empty = isempty(ELECTROLYZER) ||
+                                    setup["HydrogenMimimumProduction"] == 0
             discharge_idx = is_electrolyzer_empty ? 11 : 12
             charge_idx = is_electrolyzer_empty ? 12 : 13
 
