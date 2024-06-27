@@ -119,7 +119,7 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
         end
 
         if i in ELEC
-			existingcapelec[j] = MultiStage == 1 ? value(EP[:vEXISTINGELECCAP][i]) : 
+            existingcapelec[j] = MultiStage == 1 ? value(EP[:vEXISTINGELECCAP][i]) :
                                  existing_cap_elec_mw(gen_VRE_STOR[j])
             if i in inputs["NEW_CAP_ELEC"]
                 capelec[j] = value(EP[:vELECCAP][i])
