@@ -462,16 +462,16 @@ function write_vre_stor_discharge(path::AbstractString,
         end
     end
 
-	# Electrolyzer consumption of co-located resource dataframe
-	if !isempty(ELEC)
-		dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_ELEC"], 
-            Zone = inputs["ZONES_ELEC"], 
-            AnnualSum = Array{Union{Missing,Float32}}(undef, size(ELEC)[1]))
-		elec_vre_stor = value.(EP[:vP_ELEC]).data 
-		if setup["ParameterScale"] == 1
-			elec_vre_stor *= ModelScalingFactor
-		end
-		dfVP_VRE_STOR.AnnualSum .= elec_vre_stor * inputs["omega"]
+    # Electrolyzer consumption of co-located resource dataframe
+    if !isempty(ELEC)
+        dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_ELEC"],
+            Zone = inputs["ZONES_ELEC"],
+            AnnualSum = Array{Union{Missing, Float32}}(undef, size(ELEC)[1]))
+        elec_vre_stor = value.(EP[:vP_ELEC]).data
+        if setup["ParameterScale"] == 1
+            elec_vre_stor *= ModelScalingFactor
+        end
+        dfVP_VRE_STOR.AnnualSum .= elec_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_elec_power_consumption.csv")
         if setup["WriteOutputs"] == "annual"
