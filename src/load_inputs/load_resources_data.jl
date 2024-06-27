@@ -42,7 +42,8 @@ function _get_policyfile_info()
         cap_res = (filenames = cap_res_filenames, setup_param = "CapacityReserveMargin"),
         min_cap = (filenames = min_cap_filenames, setup_param = "MinCapReq"),
         max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"),
-        h2_demand = (filenames = h2_demand_filenames, setup_param = "HydrogenMimimumProduction"))
+        h2_demand = (
+            filenames = h2_demand_filenames, setup_param = "HydrogenMimimumProduction"))
     return policyfile_info
 end
 
