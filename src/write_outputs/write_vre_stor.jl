@@ -400,9 +400,9 @@ function write_vre_stor_discharge(path::AbstractString,
     T = inputs["T"]
     DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
     AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]
-	WIND = inputs["VS_WIND"]
-	SOLAR = inputs["VS_SOLAR"]
-	ELEC = inputs["VS_ELEC"]
+    WIND = inputs["VS_WIND"]
+    SOLAR = inputs["VS_SOLAR"]
+    ELEC = inputs["VS_ELEC"]
 
     # DC discharging of battery dataframe
     if !isempty(DC_DISCHARGE)
