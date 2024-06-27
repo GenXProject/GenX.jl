@@ -479,7 +479,7 @@ function write_vre_stor_discharge(path::AbstractString,
         else # setup["WriteOutputs"] == "full"
             write_fulltimeseries(filepath, elec_vre_stor, dfVP_VRE_STOR)
         end
-	end
+    end
 
     if !isempty(SOLAR)
         dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_SOLAR"],
