@@ -26,14 +26,14 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
     gen = inputs["RESOURCES"]
     gen_VRE_STOR = gen.VreStorage
 
-	VRE_STOR = inputs["VRE_STOR"]
-	SOLAR = inputs["VS_SOLAR"]
-	WIND = inputs["VS_WIND"]
-	ELEC = inputs["VS_ELEC"]
-	DC = inputs["VS_DC"]
-	STOR = inputs["VS_STOR"]
-	MultiStage = setup["MultiStage"]
-	size_vrestor_resources = size(inputs["RESOURCE_NAMES_VRE_STOR"])
+    VRE_STOR = inputs["VRE_STOR"]
+    SOLAR = inputs["VS_SOLAR"]
+    WIND = inputs["VS_WIND"]
+    ELEC = inputs["VS_ELEC"]
+    DC = inputs["VS_DC"]
+    STOR = inputs["VS_STOR"]
+    MultiStage = setup["MultiStage"]
+    size_vrestor_resources = size(inputs["RESOURCE_NAMES_VRE_STOR"])
 
     # Solar capacity
     capsolar = zeros(size_vrestor_resources)
