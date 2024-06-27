@@ -1055,10 +1055,10 @@ for attr in (:min_retired_cap_inverter_mw,
     :min_retired_cap_discharge_dc_mw,
     :min_retired_cap_charge_dc_mw,
     :min_retired_cap_discharge_ac_mw,
-    :min_retired_cap_charge_ac_mw,)
-    @eval @interface $attr default_zero 
-    cum_attr = Symbol("cum_"*String(attr))
-    @eval @interface $cum_attr default_zero 
+    :min_retired_cap_charge_ac_mw)
+    @eval @interface $attr default_zero
+    cum_attr = Symbol("cum_" * String(attr))
+    @eval @interface $cum_attr default_zero
 end
 
 ## policies
