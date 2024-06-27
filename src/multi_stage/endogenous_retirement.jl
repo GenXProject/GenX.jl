@@ -613,7 +613,7 @@ function endogenous_retirement_vre_stor_elec!(EP::Model, inputs::Dict, num_stage
     @variable(EP, vCAPTRACKELEC[y in RET_CAP_ELEC, p = 1:num_stages]>=0)
     @variable(EP, vRETCAPTRACKELEC[y in RET_CAP_ELEC, p = 1:num_stages]>=0)
 
-	### Expressions ###
+    ### Expressions ###
 
     @expression(EP, eNewCapElec[y in RET_CAP_ELEC],
         if y in NEW_CAP_ELEC
