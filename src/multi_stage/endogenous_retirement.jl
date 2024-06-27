@@ -622,7 +622,7 @@ function endogenous_retirement_vre_stor_elec!(EP::Model, inputs::Dict, num_stage
             EP[:vZERO]
         end)
 
-	@expression(EP, eRetCapElec[y in RET_CAP_ELEC], EP[:vRETELECCAP][y])
+    @expression(EP, eRetCapElec[y in RET_CAP_ELEC], EP[:vRETELECCAP][y])
 
 	# Construct and add the endogenous retirement constraint expressions
 	@expression(EP, eRetCapTrackElec[y in RET_CAP_ELEC], sum(EP[:vRETCAPTRACKELEC][y,p] for p=1:cur_stage))
