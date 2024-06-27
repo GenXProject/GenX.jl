@@ -107,15 +107,16 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
             end
         end
 
-		if i in WIND
-			existingcapwind[j] = MultiStage == 1 ? value(EP[:vEXISTINGWINDCAP][i]) : existing_cap_wind_mw(gen_VRE_STOR[j])
-			if i in inputs["NEW_CAP_WIND"]
-				capwind[j] = value(EP[:vWINDCAP][i])
-			end
-			if i in inputs["RET_CAP_WIND"]
-				retcapwind[j] = first(value.(EP[:vRETWINDCAP][i]))
-			end
-		end
+        if i in WIND
+            existingcapwind[j] = MultiStage == 1 ? value(EP[:vEXISTINGWINDCAP][i]) :
+                                 existing_cap_wind_mw(gen_VRE_STOR[j])
+            if i in inputs["NEW_CAP_WIND"]
+                capwind[j] = value(EP[:vWINDCAP][i])
+            end
+            if i in inputs["RET_CAP_WIND"]
+                retcapwind[j] = first(value.(EP[:vRETWINDCAP][i]))
+            end
+        end
 
         if i in ELEC
 			existingcapelec[j] = MultiStage == 1 ? value(EP[:vEXISTINGELECCAP][i]) : 
