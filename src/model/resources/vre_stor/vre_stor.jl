@@ -1378,8 +1378,8 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end)
 
     if MultiStage == 1
-		@variable(EP, vEXISTINGELECCAP[y in ELEC] >= 0);
-	end
+        @variable(EP, vEXISTINGELECCAP[y in ELEC]>=0)
+    end
 
     ### EXPRESSIONS ###
 
