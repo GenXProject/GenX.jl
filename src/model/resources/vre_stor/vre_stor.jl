@@ -1374,7 +1374,7 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         vELECCAP[y in NEW_CAP_ELEC] >= 0                            # New installed electolyzer capacity [MW AC]
 
         # Electrolyzer-component generation [MWh]
-        vP_ELEC[y in ELEC, t=1:T] >= 0
+        vP_ELEC[y in ELEC, t = 1:T] >= 0
     end)
 
     if MultiStage == 1
