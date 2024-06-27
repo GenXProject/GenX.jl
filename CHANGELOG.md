@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add objective scaler for addressing problem ill-conditioning (#667)
 - Add workflow that ensures that CHANGELOG.md and the version number are updated (#711)
 - Print GenX version at startup and export it to disk (#712) 
+- Added co-location of electrolyzers to VRE_STOR and eneable regional hydrogen production limits (#678)
 
 ## [0.4.0] - 2024-03-18
 
@@ -49,7 +50,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   non-zero in multi-stage GenX (#666)
 - Added condition number scaling added to objective function (#667)
 - Added versioned doc-pages for v0.3.6 and v0.4.0
-
 - Added a warning message in write_costs_multistage mentioning th approximate value of costs currently.
 
 ### Fixed

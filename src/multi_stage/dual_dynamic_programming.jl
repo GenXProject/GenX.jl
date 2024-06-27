@@ -44,6 +44,10 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
             start_cap_d[Symbol("eTotalCap_WIND")] = Symbol("cExistingCapWind")
         end
 
+        if !isempty(inputs["VS_ELEC"])
+            start_cap_d[Symbol("eTotalCap_ELEC")] = Symbol("cExistingCapElec")
+        end
+
         if !isempty(inputs["VS_STOR"])
             start_cap_d[Symbol("eTotalCap_STOR")] = Symbol("cExistingCapEnergy_VS")
         end
@@ -88,6 +92,10 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
         if !isempty(inputs["VS_WIND"])
             cap_track_d[Symbol("vCAPTRACKWIND")] = Symbol("cCapTrackWind")
+        end
+
+        if !isempty(inputs["VS_ELEC"])
+            cap_track_d[Symbol("vCAPTRACKELEC")] = Symbol("cCapTrackElec")
         end
 
         if !isempty(inputs["VS_STOR"])

@@ -17,6 +17,7 @@ Additionally, the user may need to specify eight more **settings-specific** inpu
 6. Vre\_and\_stor\_data.csv: specify cost and performance data for co-located VRE and storage resources.
 7. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
 8. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
+9. Hydrogen\_demand.csv: specify regional hydrogen production requirements.
 
 
 !!! note "Note"
@@ -726,3 +727,13 @@ This file contains the settings parameters required to run the Method of Morris 
     8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
     9. Upper and lower bounds should be specified for all the resources included in the resource `.csv` file (inside the `Resource`). If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
 
+### 2.8 Hydrogen\_demand.csv
+
+This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
+
+###### Table 25: Structure of the Hydrogen\_demand.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Zone| zone number|
+|Hydrogen_Demand_kt| Hydrogen production requirements for zone *, in 1,000 tons|
