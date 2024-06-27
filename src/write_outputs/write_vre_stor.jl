@@ -45,10 +45,10 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
     retcapwind = zeros(size_vrestor_resources)
     existingcapwind = zeros(size_vrestor_resources)
 
-	# Electrolyzer capacity
-	capelec = zeros(size_vrestor_resources)
-	retcapelec = zeros(size_vrestor_resources)
-	existingcapelec = zeros(size_vrestor_resources)
+    # Electrolyzer capacity
+    capelec = zeros(size_vrestor_resources)
+    retcapelec = zeros(size_vrestor_resources)
+    existingcapelec = zeros(size_vrestor_resources)
 
     # Inverter capacity
     capdc = zeros(size_vrestor_resources)
