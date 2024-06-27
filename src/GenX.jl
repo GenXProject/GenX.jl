@@ -71,7 +71,7 @@ include_all_in_folder("write_outputs")
 
 include("time_domain_reduction/time_domain_reduction.jl")
 include("time_domain_reduction/precluster.jl")
-include("time_domain_reduction/full_time_series_reconstruction.jl")
+include("time_domain_reduction/ write_full_time_series_reconstruction.jl")
 
 include_all_in_folder("multi_stage")
 include_all_in_folder("additional_tools")

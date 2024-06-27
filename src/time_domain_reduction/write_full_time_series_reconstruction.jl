@@ -1,4 +1,4 @@
-@doc raw"""full_time_series_reconstruction(path::AbstractString,
+@doc raw"""write_full_time_series_reconstruction(path::AbstractString,
                             setup::Dict,
                             DF::DataFrame,
                             name::String)
@@ -20,7 +20,7 @@ This function is called when output files with time series data (e.g. power.csv,
 
 """
 
-function full_time_series_reconstruction(
+function write_full_time_series_reconstruction(
         path::AbstractString, setup::Dict, DF::DataFrame, name::String)
     FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
     output_path = joinpath(path, FullTimeSeriesFolder)

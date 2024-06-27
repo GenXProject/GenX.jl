@@ -39,7 +39,7 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         CSV.write(joinpath(path, "nse.csv"), dftranspose(dfNse, false), writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            full_time_series_reconstruction(path, setup, dfNse, "nse")
+            write_full_time_series_reconstruction(path, setup, dfNse, "nse")
             println("Writing Full Time Series for NSE")
         end
     end

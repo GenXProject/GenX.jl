@@ -13,7 +13,7 @@ function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     CSV.write(joinpath(path, "commit.csv"), dftranspose(dfCommit, false), header = false)
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-        full_time_series_reconstruction(path, setup, dfCommit, "commit")
+        write_full_time_series_reconstruction(path, setup, dfCommit, "commit")
         println("Writing Full Time Series for Commitment")
     end
 end
