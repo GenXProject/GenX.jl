@@ -1392,16 +1392,15 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # 1. Total electrolyzer capacity
     @expression(EP, eTotalCap_ELEC[y in ELEC],
-		if (y in intersect(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for new capacity and retirements
-			eExistingCapElec[y] + EP[:vELECCAP][y] - EP[:vRETELECCAP][y]
-		elseif (y in setdiff(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for only new capacity
-			eExistingCapElec[y] + EP[:vELECCAP][y]
-		elseif (y in setdiff(RET_CAP_ELEC, NEW_CAP_ELEC)) # Resources eligible for only capacity retirements
-			eExistingCapElec[y] - EP[:vRETELECCAP][y]
-		else
-			eExistingCapElec[y]
-		end
-	)
+        if (y in intersect(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for new capacity and retirements
+            eExistingCapElec[y] + EP[:vELECCAP][y] - EP[:vRETELECCAP][y]
+        elseif (y in setdiff(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for only new capacity
+            eExistingCapElec[y] + EP[:vELECCAP][y]
+        elseif (y in setdiff(RET_CAP_ELEC, NEW_CAP_ELEC)) # Resources eligible for only capacity retirements
+            eExistingCapElec[y] - EP[:vRETELECCAP][y]
+        else
+            eExistingCapElec[y]
+        end)
 
     # 2. Objective function additions
 
