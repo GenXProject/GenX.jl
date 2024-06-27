@@ -140,7 +140,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
                 settings_d, 
                 inv_cost_elec_per_mwyr.(gen_VRE_STOR), 
                 capital_recovery_period_elec.(gen_VRE_STOR), 
-                tech_elec_elec.(gen_VRE_STOR))
+                tech_wacc_elec.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_discharge_dc_per_mwyr.(gen_VRE_STOR),
