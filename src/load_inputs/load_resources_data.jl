@@ -1182,8 +1182,8 @@ function add_resources_to_input_data!(inputs::Dict,
             elec(gen),
             ids_with(gen_VRE_STOR, max_cap_elec_mw))
         # Set of all VRE_STOR resources eligible for electrolyzer capacity retirements
-        inputs["RET_CAP_ELEC"] = intersect(retirable, 
-            elec(gen), 
+        inputs["RET_CAP_ELEC"] = intersect(retirable,
+            elec(gen),
             ids_with_nonneg(gen_VRE_STOR, existing_cap_elec_mw))
         # Set of all VRE-STOR resources eligible for new inverter capacity
         inputs["NEW_CAP_DC"] = intersect(buildable,
