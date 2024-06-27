@@ -1385,10 +1385,10 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # 0. Multistage existing capacity definition
     if MultiStage == 1
-		@expression(EP, eExistingCapElec[y in ELEC], vEXISTINGELECCAP[y])
-	else
-		@expression(EP, eExistingCapElec[y in ELEC], by_rid(y,:existing_cap_elec_mw))
-	end
+        @expression(EP, eExistingCapElec[y in ELEC], vEXISTINGELECCAP[y])
+    else
+        @expression(EP, eExistingCapElec[y in ELEC], by_rid(y, :existing_cap_elec_mw))
+    end
 
     # 1. Total electrolyzer capacity
     @expression(EP, eTotalCap_ELEC[y in ELEC],
