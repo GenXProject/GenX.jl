@@ -609,9 +609,9 @@ function endogenous_retirement_vre_stor_elec!(EP::Model, inputs::Dict, num_stage
 
     ### Variables ###
 
-	# Keep track of all new and retired capacity from all stages
-	@variable(EP, vCAPTRACKELEC[y in RET_CAP_ELEC,p=1:num_stages] >= 0 )
-	@variable(EP, vRETCAPTRACKELEC[y in RET_CAP_ELEC,p=1:num_stages] >= 0 )
+    # Keep track of all new and retired capacity from all stages
+    @variable(EP, vCAPTRACKELEC[y in RET_CAP_ELEC, p = 1:num_stages]>=0)
+    @variable(EP, vRETCAPTRACKELEC[y in RET_CAP_ELEC, p = 1:num_stages]>=0)
 
 	### Expressions ###
 
