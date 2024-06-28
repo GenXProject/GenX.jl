@@ -13,7 +13,6 @@ Internal function for performing the reconstruction. This function returns a Dat
 """
 function full_time_series_reconstruction(
         path::AbstractString, setup::Dict, DF::DataFrame)
-        
     if setup["MultiStage"] == 1
         dirs = splitpath(path)
         case = joinpath(dirs[.!occursin.("result", dirs)])  # Get the case folder without the "results" folder(s)
