@@ -17,7 +17,8 @@ function full_time_series_reconstruction(
         dirs = splitpath(path)
         case = joinpath(dirs[.!occursin.("result", dirs)])  # Get the case folder without the "results" folder(s)
         cur_stage = setup["MultiStageSettingsDict"]["CurStage"]
-        TDRpath = joinpath(case, "inputs", string("inputs_p", cur_stage), setup["TimeDomainReductionFolder"])
+        TDRpath = joinpath(case, "inputs", string("inputs_p", cur_stage),
+            setup["TimeDomainReductionFolder"])
     else
         case = path[1:findlast('/', path)]
         TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
