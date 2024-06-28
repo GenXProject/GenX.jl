@@ -58,7 +58,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         write_annual(filename, dfCurtailment)
     else # setup["WriteOutputs"] == "full"
         df_Curtailment = write_fulltimeseries(filename, curtailment, dfCurtailment)
-        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_Curtailment, "curtail")
             @info("Writing Full Time Series for Curtailment")
         end

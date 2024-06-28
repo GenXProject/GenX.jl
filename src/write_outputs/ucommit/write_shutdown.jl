@@ -14,7 +14,7 @@ function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         write_annual(filepath, dfShutdown)
     else # setup["WriteOutputs"] == "full"
         df_Shutdown = write_fulltimeseries(filepath, shut, dfShutdown)
-        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_Shutdown, "shutdown")
             @info("Writing Full Time Series for Shutdown")
         end

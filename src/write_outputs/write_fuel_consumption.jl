@@ -86,7 +86,7 @@ function write_fuel_consumption_ts(path::AbstractString,
     CSV.write(joinpath(path, "FuelConsumption_plant_MMBTU.csv"),
         dftranspose(dfPlantFuel_TS, false), header = false)
 
-    if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
+    if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(
             path, setup, dfPlantFuel_TS, "FuelConsumption_plant_MMBTU")
         @info("Writing Full Time Series for Fuel Consumption")

@@ -13,7 +13,7 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         write_annual(filepath, dfStart)
     else # setup["WriteOutputs"] == "full"	
         df_Start = write_fulltimeseries(filepath, start, dfStart)
-        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_Start, "start")
             @info("Writing Full Time Series for Startup")
         end

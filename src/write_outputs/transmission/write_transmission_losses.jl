@@ -31,7 +31,7 @@ function write_transmission_losses(path::AbstractString,
             dftranspose(dfTLosses, false),
             writeheader = false)
 
-        if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, dfTLosses, "tlosses")
             @info("Writing Full Time Series for Time Losses")
         end
