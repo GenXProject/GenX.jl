@@ -16,6 +16,8 @@ function default_settings()
         "UCommit" => 0,
         "TimeDomainReduction" => 0,
         "TimeDomainReductionFolder" => "TDR_results",
+        "OutputFullTimeSeries" => 0,
+        "OutputFullTimeSeriesFolder" => "Full_TimeSeries",
         "ModelingToGenerateAlternatives" => 0,
         "ModelingtoGenerateAlternativeSlack" => 0.1,
         "MGAAnnualGeneration" => 0,

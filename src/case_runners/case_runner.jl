@@ -187,6 +187,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
 
     # Step 4) Write final outputs from each stage
     for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
+        mysetup["MultiStageSettingsDict"]["CurStage"] = p
         outpath_cur = joinpath(outpath, "results_p$p")
         write_outputs(model_dict[p], outpath_cur, mysetup, inputs_dict[p])
     end

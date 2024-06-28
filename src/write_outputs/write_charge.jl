@@ -41,7 +41,12 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfCharge)
     else # setup["WriteOutputs"] == "full"
-        write_fulltimeseries(filepath, charge, dfCharge)
+        df_Charge = write_fulltimeseries(filepath, charge, dfCharge)
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+            write_full_time_series_reconstruction(
+                path, setup, df_Charge, "charge")
+            @info("Writing Full Time Series for Charge")
+        end
     end
     return nothing
 end
