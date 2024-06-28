@@ -178,7 +178,7 @@ function default_settings_multistage()
 end
 
 @doc raw"""
-    configure_settings(settings_path::String, output_settings_path::String)
+    configure_settings_multistage(settings_path::String)
 
 Reads in the settings from the `multi_stage_settings.yml` YAML file and
 merges them with the default multistage settings. It then returns the

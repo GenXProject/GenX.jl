@@ -17,6 +17,7 @@ GenX.mga
 ## Multi-stage specific functions
 
 ```@docs
+GenX.configure_settings_multistage
 GenX.configure_multi_stage_inputs
 GenX.run_ddp
 GenX.write_multi_stage_outputs
