@@ -192,7 +192,7 @@ settings dictionary.
 """
 function configure_settings_multistage(settings_path::String)
     println("Configuring Multistage Settings")
-    model_settings = YAML.load(open(settings_path))
+    model_settings = isfile(settings_path) ? YAML.load(open(settings_path)) : Dict{Any, Any}()
 
     settings = default_settings_multistage()
     merge!(settings, model_settings)
