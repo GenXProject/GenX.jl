@@ -507,6 +507,7 @@ function write_fulltimeseries(fullpath::AbstractString,
     total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)
     dfOut = vcat(dfOut, total)
+
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
     return dfOut
 end
