@@ -13,4 +13,3 @@ GenX.run_timedomainreduction!
 ```@docs
 GenX.full_time_series_reconstruction
 ```
-
