@@ -13,9 +13,17 @@ Internal function for performing the reconstruction. This function returns a Dat
 """
 function full_time_series_reconstruction(
         path::AbstractString, setup::Dict, DF::DataFrame)
+        
+    if setup["MultiStage"] == 1
+        dirs = splitpath(path)
+        case = joinpath(dirs[.!occursin.("result", dirs)])  # Get the case folder without the "results" folder(s)
+        cur_stage = setup["MultiStageSettingsDict"]["CurStage"]
+        TDRpath = joinpath(case, "inputs", string("inputs_p", cur_stage), setup["TimeDomainReductionFolder"])
+    else
+        case = path[1:findlast('/', path)]
+        TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
+    end 
     # Read Period map file Period_map.csv
-    case = path[1:findlast('/', path)]
-    TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
     Period_map = CSV.read(joinpath(TDRpath, "Period_map.csv"), DataFrame)
 
     # Read time domain reduction settings file time_domain_reduction_settings.yml
