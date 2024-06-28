@@ -92,5 +92,9 @@ The following tables summarize the model settings parameters and their default/p
 | WriteOutputs | Flag for writing the model outputs with hourly resolution or just the annual sum.|
 || "full" = write the model outputs with hourly resolution.|
 || "annual" = write only the annual sum of the model outputs.|
+| OutputFullTimeSeries | Flag for writing the full time series of the model outputs.|
+||1 = write the full time series of the model outputs.|
+||0 = write only the reduced time series of the model outputs.|
+| OutputFullTimeSeriesFolder | Name of the folder where the full time series of the model outputs will be stored inside the results directory (default: Full_TimeSeries).|
 
 The next step in configuring a GenX model is to specify the solver settings parameters using a `[solver_name]_settings.yml` file inside the `settings` folder. The solver settings parameters are solver specific and are described in the following section.
