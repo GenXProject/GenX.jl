@@ -21,7 +21,7 @@ function full_time_series_reconstruction(
     else
         case = path[1:findlast('/', path)]
         TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
-    end 
+    end
     # Read Period map file Period_map.csv
     Period_map = CSV.read(joinpath(TDRpath, "Period_map.csv"), DataFrame)
 
