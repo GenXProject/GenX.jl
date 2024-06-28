@@ -34,7 +34,8 @@ function write_co2_emissions_plant(path::AbstractString,
         df_Emissions_plant = write_fulltimeseries(
             filepath, emissions_plant, dfEmissions_plant)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, df_Emissions_plant, "emissions_plant")
+            write_full_time_series_reconstruction(
+                path, setup, df_Emissions_plant, "emissions_plant")
             @info("Writing Full Time Series for Emissions Plant")
         end
     end

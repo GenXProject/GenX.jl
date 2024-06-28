@@ -583,4 +583,3 @@ function write_full_time_series_reconstruction(
     CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
     return nothing
 end
-

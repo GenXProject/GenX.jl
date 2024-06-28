@@ -12,7 +12,7 @@ Internal function for performing the reconstruction. This function returns a Dat
 - `reconDF` (DataFrame): DataFrame with the full series reconstruction
 """
 function full_time_series_reconstruction(
-    path::AbstractString, setup::Dict, DF::DataFrame)
+        path::AbstractString, setup::Dict, DF::DataFrame)
     # Read Period map file Period_map.csv
     case = path[1:findlast('/', path)]
     TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
