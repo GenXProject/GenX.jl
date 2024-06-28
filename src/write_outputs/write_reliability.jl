@@ -23,6 +23,6 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(path, setup, dfReliability, "reliability")
-        println("Writing Full Time Series for Reliability")
+        @info("Writing Full Time Series for Reliability")
     end
 end

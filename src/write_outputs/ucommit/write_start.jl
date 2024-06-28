@@ -15,7 +15,7 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         df_Start = write_fulltimeseries(filepath, start, dfStart)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_Start, "start")
-            println("Writing Full Time Series for Startup")
+            @info("Writing Full Time Series for Startup")
         end
     end
     return nothing

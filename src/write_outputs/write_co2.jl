@@ -31,10 +31,11 @@ function write_co2_emissions_plant(path::AbstractString,
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfEmissions_plant)
     else # setup["WriteOutputs"] == "full"
-        df_Emissions_plant = write_fulltimeseries(filepath, emissions_plant, dfEmissions_plant)
+        df_Emissions_plant = write_fulltimeseries(
+            filepath, emissions_plant, dfEmissions_plant)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_Emissions_plant, "emissions_plant")
-            println("Writing Full Time Series for Emissions Plant")
+            @info("Writing Full Time Series for Emissions Plant")
         end
     end
     return nothing

@@ -98,8 +98,9 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, dfPowerBalance, "power_balance")
-            println("Writing Full Time Series for Power Balance")
+            write_full_time_series_reconstruction(
+                path, setup, dfPowerBalance, "power_balance")
+            @info("Writing Full Time Series for Power Balance")
         end
     end
     return nothing

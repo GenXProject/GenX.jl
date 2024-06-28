@@ -42,6 +42,6 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(path, setup, dfStorage, "storage")
-        println("Writing Full Time Series for Storage")
+        @info("Writing Full Time Series for Storage")
     end
 end

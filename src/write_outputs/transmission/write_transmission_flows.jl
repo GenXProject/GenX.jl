@@ -26,7 +26,7 @@ function write_transmission_flows(path::AbstractString,
 
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, dfFlow, "flow")
-            println("Writing Full Time Series for Transmission Flows")
+            @info("Writing Full Time Series for Transmission Flows")
         end
     end
     return nothing

@@ -127,7 +127,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 
             if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
                 write_full_time_series_reconstruction(path, setup, dfEmissions, "emissions")
-                println("Writing Full Time Series for Emissions")
+                @info("Writing Full Time Series for Emissions")
             end
         end
     end

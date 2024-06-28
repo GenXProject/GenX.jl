@@ -27,7 +27,7 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         df_Power = write_fulltimeseries(filepath, power, dfPower)
         if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_Power, "power")
-            println("Writing Full Time Series for Power")
+            @info("Writing Full Time Series for Power")
         end
     end
 

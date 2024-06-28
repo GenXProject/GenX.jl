@@ -24,7 +24,7 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(path, setup, dfPrice, "prices")
-        println("Writing Full Time Series for Price")
+        @info("Writing Full Time Series for Price")
     end
     return nothing
 end

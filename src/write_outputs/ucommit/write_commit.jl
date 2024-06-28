@@ -14,6 +14,6 @@ function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 
     if setup["OutputFullTimeSeries"] == 1 & setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(path, setup, dfCommit, "commit")
-        println("Writing Full Time Series for Commitment")
+        @info("Writing Full Time Series for Commitment")
     end
 end
