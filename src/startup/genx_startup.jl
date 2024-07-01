@@ -40,9 +40,9 @@ end
 """
     precompile()
 
-Precompiles the function `run_genx_case!` with specific arguments. 
-This function is intended to speed up the first use of `run_genx_case!` 
-in a new Julia session by precompiling it. 
+Precompiles the functions `run_genx_case!` and `cluster_inputs` with specific 
+arguments. This function is intended to speed up the first use of GenX in a 
+new Julia session by precompiling it. 
 
 The function redirects standard output to `devnull` to suppress any output 
 generated during the precompilation process, and sets up a logger to capture 
@@ -58,16 +58,28 @@ function _precompile()
         warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
         with_logger(warnerror_logger) do
             @compile_workload begin
-                run_genx_case!(joinpath(pkgdir(GenX), "precompile/case"), HiGHS.Optimizer)
+                case = joinpath(pkgdir(GenX), "precompile/case")
+                _precompile_tdr(case)   # Precompile TDR
+                run_genx_case!(case, HiGHS.Optimizer)   # Precompile run_genx_case!
             end
         end
     end
     isdir("precompile/case/results") &&
-        rm("precompile/case/results"; force = true, recursive = true)
+        rm("precompile/case/results"; force = true, recursive = true)   # Clean up
     return nothing
 end
 
-# Precompile `run_genx_case!` if the environment variable `GENX_PRECOMPILE` is set to `true`
+function _precompile_tdr(case)
+    settings_path = get_settings_path(case)
+    setup = configure_settings(get_settings_path(case, "genx_settings.yml"), get_settings_path(case, "output_settings.yml"))
+    setup["TimeDomainReduction"] = 1    # Enable TDR for precompilation
+    cluster_inputs(case, settings_path, setup)
+    isdir("precompile/case/TDR_results") &&
+        rm("precompile/case/TDR_results"; force = true, recursive = true)   # Clean up
+    return nothing
+end
+
+# Precompile `run_genx_case!` and `TDR` if the environment variable `GENX_PRECOMPILE` is set to `true`
 if get(ENV, "GENX_PRECOMPILE", "false") == "true"
     _precompile()
 end
