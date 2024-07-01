@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix formatting and images in tutorials 3, 5, 6, and 8 to address issue #697 (#698)
 - Fix `devbranch` in the docs `make.jl` file to track the develop branch (#710)
 - Fix `TDR` to load `Fuels_data.csv` w/wo optional `None` column (#720)
+- Include all settings flags in docs (#721)
 
 ### Added
 - Add objective scaler for addressing problem ill-conditioning (#667)
