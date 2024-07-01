@@ -42,7 +42,7 @@ The following tables summarize the model settings parameters and their default/p
 |ParameterScale | Flag to turn on parameter scaling wherein demand, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
-|ObjScale| Value to scale the objective function during optimization.|
+|ObjScale| Parameter value to scale the objective function during optimization.|
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
@@ -86,7 +86,7 @@ The following tables summarize the model settings parameters and their default/p
 |NetworkExpansion | Flag for activating or deactivating inter-regional transmission expansion.|
 ||1 = active|
 ||0 = modeling single zone or for multi-zone problems in which inter regional transmission expansion is not allowed.|
-| DC\_OPF | Flag for using DC-OPF formulation for transmission constraints.|
+| DC\_OPF | Flag for using the DC-OPF formulation for calculating transmission line MW flows and imposing constraints.|
 ||1 = use DC-OPF formulation|
 ||0 = do not use DC-OPF formulation|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
@@ -111,7 +111,7 @@ The following tables summarize the model settings parameters and their default/p
 ||1 = write the full time series of the model outputs.|
 ||0 = write only the reduced time series of the model outputs.|
 | OutputFullTimeSeriesFolder | Name of the folder where the full time series of the model outputs will be stored inside the results directory (default: Full_TimeSeries).|
-|OverwriteResults | Flag for overwriting the output results of the previous run.|
+|OverwriteResults | Flag for overwriting the output results from the previous run.|
 ||1 = overwrite the results.|
 ||0 = do not overwrite the results.|
 
