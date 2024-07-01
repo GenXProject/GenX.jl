@@ -207,8 +207,8 @@ function validate_multistage_settings!(settings::Dict{Any, Any})
     # If we find any then make a response and issue a note to the user.
 
     if settings["Myopic"] == 0 && settings["WriteIntermittentOutputs"] == 1
-        msg = "WriteIntermittentOutputs is not supported for non-myopic multistage models." * 
-        " Setting WriteIntermittentOutputs to 0 in the multistage settings."
+        msg = "WriteIntermittentOutputs is not supported for non-myopic multistage models." *
+              " Setting WriteIntermittentOutputs to 0 in the multistage settings."
         @warn msg
         settings["WriteIntermittentOutputs"] = 0
     end
