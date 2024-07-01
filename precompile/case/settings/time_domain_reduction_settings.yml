@@ -1,0 +1,60 @@
+TimestepsPerRepPeriod: 24
+ClusterMethod: 'kmeans'
+ScalingMethod: "S"
+MaxPeriods: 5
+MinPeriods: 5
+IterativelyAddPeriods: 1
+IterateMethod: "cluster"
+Threshold: 0.05
+nReps: 100
+DemandWeight: 1
+WeightTotal: 8760
+ClusterFuelPrices: 1
+UseExtremePeriods: 1
+MultiStageConcatenate: 0
+ExtremePeriods:
+   Demand:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+      System:
+         Absolute:
+            Max: 1
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+   PV:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 1
+      System:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+   Wind:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 1
+      System:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0

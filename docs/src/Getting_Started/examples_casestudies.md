@@ -144,3 +144,22 @@ The following are the main steps performed in this function:
 7. Write the output files to a specified directory.
 
 After the script runs to completion, results will be written to a folder called `results`, located in the current working directory.
+
+## Precompile GenX
+*Added in 0.4.1*
+
+!!! note "Note"
+    The following steps must be performed before loading GenX for the first time. If GenX was already loaded, please read the note below.
+
+GenX can be precompiled to reduce the latency of the first execution of a case. To precompile GenX, a user can run the following commands:
+
+```
+$ julia --project="/path/to/env"
+julia> ENV["GENX_PRECOMPILE"] = "true"
+julia> using GenX
+```
+
+where `/path/to/env` is the path to the environment with GenX installed. After running these commands, GenX will be precompiled. This process may take a couple of minutes, but it will reduce the time it takes to run subsequent cases.
+
+!!! note "Note"
+    The environment variable `GENX_PRECOMPILE` must be set before loading GenX for the first time. To force the recompilation of GenX, a user can delete the `~/.julia/compiled/vZ.Y/GenX/*.ji` binaries, set `ENV["GENX_PRECOMPILE"]` to `"true"`, and then reload the package (where vZ.Y is the version of Julia being used, e.g., v1.9). If GenX was imported via `Pkg.develop` or `] dev`, modifying any of the package files will also force recompilation.
