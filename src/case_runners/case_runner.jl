@@ -187,7 +187,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
 
     # Step 4) Write final outputs from each stage
-    if mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"] == 0
+    if mysetup["MultiStageSettingsDict"]["Myopic"] == 0 || mysetup["MultiStageSettingsDict"]["WriteIntermittentOutputs"] == 0
         for p in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
             mysetup["MultiStageSettingsDict"]["CurStage"] = p
             outpath_cur = joinpath(outpath, "results_p$p")

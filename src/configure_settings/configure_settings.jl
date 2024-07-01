@@ -174,7 +174,8 @@ function default_settings_multistage()
         "StageLengths" => [10, 10, 10],
         "WACC" => 0.045,
         "ConvergenceTolerance" => 0.01,
-        "Myopic" => 1)
+        "Myopic" => 1, 
+        "WriteIntermittentOutputs" => 0)
 end
 
 @doc raw"""
@@ -197,5 +198,18 @@ function configure_settings_multistage(settings_path::String)
     settings = default_settings_multistage()
     merge!(settings, model_settings)
 
+    validate_multistage_settings!(settings)
     return settings
+end
+
+function validate_multistage_settings!(settings::Dict{Any, Any})
+    # Check for any settings combinations that are not allowed.
+    # If we find any then make a response and issue a note to the user.
+
+    if settings["Myopic"] == 0 && settings["WriteIntermittentOutputs"] == 1
+        msg = "WriteIntermittentOutputs is not supported for non-myopic multistage models." * 
+        " Setting WriteIntermittentOutputs to 0 in the multistage settings."
+        @warn msg
+        settings["WriteIntermittentOutputs"] = 0
+    end
 end
