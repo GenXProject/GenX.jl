@@ -26,25 +26,10 @@ where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megaw
 """
 function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
     println("Hydrogen Demand Module")
-
-    omega = inputs["omega"]
-    gen = inputs["RESOURCES"]
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-    ELECTROLYZERS = inputs["ELECTROLYZER"]      # Set of electrolyzers connected to the grid (indices)
-    VRE_STOR = inputs["VRE_STOR"]             # Set of VRE-STOR generators (indices)
-    gen_VRE_STOR = gen.VreStorage               # Set of VRE-STOR generators (objects)
-    if !isempty(VRE_STOR)
-        VS_ELEC = inputs["VS_ELEC"]             # Set of VRE-STOR co-located electrolyzers (indices)
-    else
-        VS_ELEC = Vector{Int}[]
-    end
-
     kt_to_t = 10^3
-    by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
+    NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
 
     ## Zonal level limit constraint
-    NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
     if haskey(inputs, "H2DemandPriceH2")
         @variable(EP, vH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs]>=0)
         add_similar_to_expression!(EP[:eH2DemandRes], vH2Demand_slack)
