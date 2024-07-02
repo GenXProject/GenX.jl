@@ -137,9 +137,9 @@ function configure_multi_stage_inputs(inputs_d::Dict,
                 capital_recovery_period_wind.(gen_VRE_STOR),
                 tech_wacc_wind.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_elec_per_mwyr = compute_overnight_capital_cost(
-                settings_d, 
-                inv_cost_elec_per_mwyr.(gen_VRE_STOR), 
-                capital_recovery_period_elec.(gen_VRE_STOR), 
+                settings_d,
+                inv_cost_elec_per_mwyr.(gen_VRE_STOR),
+                capital_recovery_period_elec.(gen_VRE_STOR),
                 tech_wacc_elec.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
@@ -168,7 +168,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
                                                         OPEXMULT
             gen_VRE_STOR.fixed_om_wind_cost_per_mwyr = fixed_om_wind_cost_per_mwyr.(gen_VRE_STOR) .*
                                                        OPEXMULT
-            gen_VRE_STOR.fixed_om_elec_cost_per_mwyr = fixed_om_elec_cost_per_mwyr.(gen_VRE_STOR) .* 
+            gen_VRE_STOR.fixed_om_elec_cost_per_mwyr = fixed_om_elec_cost_per_mwyr.(gen_VRE_STOR) .*
                                                        OPEXMULT
             gen_VRE_STOR.fixed_om_cost_discharge_dc_per_mwyr = fixed_om_cost_discharge_dc_per_mwyr.(gen_VRE_STOR) .*
                                                                OPEXMULT

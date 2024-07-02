@@ -176,7 +176,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if !isempty(inputs["FLEX"])
         flexible_demand!(EP, inputs, setup)
     end
-    
+
     # Model constraints, variables, expression related to thermal resource technologies
     if !isempty(inputs["THERM_ALL"])
         thermal!(EP, inputs, setup)
@@ -230,11 +230,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         maximum_capacity_requirement!(EP, inputs, setup)
     end
 
-	# Hydrogen demand limits
-	if setup["HydrogenMimimumProduction"] > 0
-		hydrogen_demand!(EP, inputs, setup)
-	end
-    
+    # Hydrogen demand limits
+    if setup["HydrogenMimimumProduction"] > 0
+        hydrogen_demand!(EP, inputs, setup)
+    end
+
     if setup["ModelingToGenerateAlternatives"] == 1
         mga!(EP, inputs, setup)
     end

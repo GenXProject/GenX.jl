@@ -28,9 +28,9 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     if !isempty(FLEX)
         charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * scale_factor
     end
-	if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
-	    charge[ELECTROLYZER, :] = value.(EP[:vUSE][ELECTROLYZER, :]) * scale_factor
-	end
+    if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
+        charge[ELECTROLYZER, :] = value.(EP[:vUSE][ELECTROLYZER, :]) * scale_factor
+    end
     if !isempty(VS_STOR)
         charge[VS_STOR, :] = value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :]) * scale_factor
     end

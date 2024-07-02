@@ -4,22 +4,22 @@
 Function for writing the costs pertaining to the objective function (fixed, variable O&M etc.).
 """
 function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-	## Cost results
-	gen = inputs["RESOURCES"]
-	SEG = inputs["SEG"]  # Number of lines
-	Z = inputs["Z"]     # Number of zones
-	T = inputs["T"]     # Number of time steps (hours)
-	VRE_STOR = inputs["VRE_STOR"]
-	if !isempty(VRE_STOR)
-		VS_ELEC = inputs["VS_ELEC"] 
-	else
-		VS_ELEC = Vector{Int}[]
-	end
-	if !isempty(VS_ELEC)
-		ELECTROLYZER = union(VS_ELEC, inputs["ELECTROLYZER"])
-	else
-		ELECTROLYZER = inputs["ELECTROLYZER"]
-	end
+    ## Cost results
+    gen = inputs["RESOURCES"]
+    SEG = inputs["SEG"]  # Number of lines
+    Z = inputs["Z"]     # Number of zones
+    T = inputs["T"]     # Number of time steps (hours)
+    VRE_STOR = inputs["VRE_STOR"]
+    if !isempty(VRE_STOR)
+        VS_ELEC = inputs["VS_ELEC"]
+    else
+        VS_ELEC = Vector{Int}[]
+    end
+    if !isempty(VS_ELEC)
+        ELECTROLYZER = union(VS_ELEC, inputs["ELECTROLYZER"])
+    else
+        ELECTROLYZER = inputs["ELECTROLYZER"]
+    end
 
     cost_list = [
         "cTotal",
@@ -36,7 +36,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
     end
-	if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
+    if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
         push!(cost_list, "cHydrogenRevenue")
     end
     dfCost = DataFrame(Costs = cost_list)
@@ -182,7 +182,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         tempCTotal += tempCVar
 
         tempCFuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE, :]))
-        tempCTotal += tempCFuel		
+        tempCTotal += tempCFuel
 
         if !isempty(STOR_ALL_ZONE)
             eCVar_in = sum(value.(EP[:eCVar_in][STOR_ALL_ZONE, :]))
@@ -216,9 +216,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                 eCFix_VRE_STOR += sum(value.(EP[:eCFixWind][WIND_ZONE_VRE_STOR]))
             end
             ELEC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_ELEC"])
-			if !isempty(ELEC_ZONE_VRE_STOR)
-				eCFix_VRE_STOR += sum(value.(EP[:eCFixElec][ELEC_ZONE_VRE_STOR]))
-			end
+            if !isempty(ELEC_ZONE_VRE_STOR)
+                eCFix_VRE_STOR += sum(value.(EP[:eCFixElec][ELEC_ZONE_VRE_STOR]))
+            end
             DC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_DC"])
             if !isempty(DC_ZONE_VRE_STOR)
                 eCFix_VRE_STOR += sum(value.(EP[:eCFixDC][DC_ZONE_VRE_STOR]))

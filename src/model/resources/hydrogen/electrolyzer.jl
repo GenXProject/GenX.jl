@@ -63,35 +63,35 @@ This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `gen
 This constraint permits modeling of the 'three pillars' requirements for clean hydrogen supply of (1) new clean supply (if only new clean resources are designated as eligible), (2) that is deliverable to the electrolyzer (assuming co-location within the same modeled zone = deliverability), and (3) produced within the same hour as the electrolyzer consumes power (otherwise known as 'additionality/new supply', 'deliverability', and 'temporal matching requirements') See Ricks, Xu & Jenkins (2023), ''Minimizing emissions from grid-based hydrogen production in the United States'' *Environ. Res. Lett.* 18 014025 [doi:10.1088/1748-9326/acacb5](https://iopscience.iop.org/article/10.1088/1748-9326/acacb5/meta) for more.
 """
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
-	println("Electrolyzer Resources Module")
-	
-	omega = inputs["omega"]
-	gen = inputs["RESOURCES"]
+    println("Electrolyzer Resources Module")
+
+    omega = inputs["omega"]
+    gen = inputs["RESOURCES"]
 
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-	ELECTROLYZERS = inputs["ELECTROLYZER"]      # Set of electrolyzers connected to the grid (indices)
-	VRE_STOR = inputs["VRE_STOR"] 	            # Set of VRE-STOR generators (indices)
+    ELECTROLYZERS = inputs["ELECTROLYZER"]      # Set of electrolyzers connected to the grid (indices)
+    VRE_STOR = inputs["VRE_STOR"]             # Set of VRE-STOR generators (indices)
     gen_VRE_STOR = gen.VreStorage               # Set of VRE-STOR generators (objects)
-	if !isempty(VRE_STOR)
-		VS_ELEC = inputs["VS_ELEC"]             # Set of VRE-STOR co-located electrolyzers (indices)
-	else
-		VS_ELEC = Vector{Int}[]
-	end
-	STORAGE = inputs["STOR_ALL"] 	            # Set of storage (indices)
+    if !isempty(VRE_STOR)
+        VS_ELEC = inputs["VS_ELEC"]             # Set of VRE-STOR co-located electrolyzers (indices)
+    else
+        VS_ELEC = Vector{Int}[]
+    end
+    STORAGE = inputs["STOR_ALL"]             # Set of storage (indices)
 
-	if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
-		HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
-	elseif !isempty(ELECTROLYZERS)
-		HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
-	else
-		HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
-	end
+    if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
+        HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
+    elseif !isempty(ELECTROLYZERS)
+        HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
+    else
+        HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
+    end
 
-	p = inputs["hours_per_subperiod"] #total number of hours per subperiod
-	by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
-	### Variables ###
+    p = inputs["hours_per_subperiod"] #total number of hours per subperiod
+    by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
+    ### Variables ###
 
     # Electrical energy consumed by electrolyzer resource "y" at hour "t"
     @variable(EP, vUSE[y = ELECTROLYZERS, t in 1:T]>=0)
@@ -107,23 +107,24 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
     EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
-	## Hydrogen production expressions ##
-	if setup["HydrogenMimimumProduction"] == 1
-		@expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)], 
-			if y in ELECTROLYZERS
-				sum(omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) for t in 1:T)
-			else
-				sum(omega[t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) for t in 1:T)
-			end)
+    ## Hydrogen production expressions ##
+    if setup["HydrogenMimimumProduction"] == 1
+        @expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)],
+            if y in ELECTROLYZERS
+                sum(omega[t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y]) for t in 1:T)
+            else
+                sum(omega[t] * EP[:vP_ELEC][y, t] / by_rid(y, :hydrogen_mwh_per_tonne_elec)
+                for t in 1:T)
+            end)
 
-		@expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
-			sum(EP[:eH2Production][y] for y in ids_with_policy(gen, h2_demand, tag = h2demand)))
-		
-		if !isempty(VS_ELEC)
+        @expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
+            sum(EP[:eH2Production][y]
+            for y in ids_with_policy(gen, h2_demand, tag = h2demand)))
 
-		end
-		add_similar_to_expression!(EP[:eH2DemandRes], eH2ProductionRes)
-	end
+        if !isempty(VS_ELEC)
+        end
+        add_similar_to_expression!(EP[:eH2DemandRes], eH2ProductionRes)
+    end
 
     # Capacity Reserves Margin policy
     ## Electrolyzers currently do not contribute to capacity reserve margin. Could allow them to contribute as a curtailable demand in future.
@@ -158,50 +159,54 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             EP[:vUSE][y, t] <= inputs["pP_Max"][y, t] * EP[:eTotalCap][y]
         end)
 
-	### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
-	@constraints(EP, begin
-		[y in ELECTROLYZERS, t in 1:T], EP[:vP][y,t] == 0
-	end)
+    ### Remove vP (electrolyzers do not produce power so vP = 0 for all periods)
+    @constraints(EP, begin
+        [y in ELECTROLYZERS, t in 1:T], EP[:vP][y, t] == 0
+    end)
 
-	### Hydrogen Hourly Supply Matching Constraint (Constraint #5) ###
-	# Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
-	# from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
-	# (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
-	if setup["HydrogenHourlyMatching"] == 1
-		QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
-		@constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
-			sum(EP[:vP][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY)) >= sum(EP[:vUSE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t] for y=intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, STORAGE))
-		)
-	end
+    ### Hydrogen Hourly Supply Matching Constraint (Constraint #5) ###
+    # Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
+    # from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
+    # (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
+    if setup["HydrogenHourlyMatching"] == 1
+        QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
+        @constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
+            sum(EP[:vP][y, t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))>=sum(EP[:vUSE][y,t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STORAGE)))
+    end
 
+    ### Energy Share Requirement Policy ###
+    # Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Share Requirement balance to increase demand for clean resources if desired
+    # Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
+    # a share of electrolyzer demand equal to df[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
+    if setup["EnergyShareRequirement"] >= 1
+        @expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]],
+            sum(omega[t] * EP[:vUSE][y, t]
+            for y in intersect(ELECTROLYZERS, ids_with_policy(gen, esr, tag = ESR)),
+            t in 1:T))
+        EP[:eESR] -= eElectrolyzerESR
+    end
 
-	### Energy Share Requirement Policy ###
-	# Since we're using vUSE to denote electrolyzer consumption, we subtract this from the eESR Energy Share Requirement balance to increase demand for clean resources if desired
-	# Electrolyzer demand is only accounted for in an ESR that the electrolyzer resources is tagged in in Generates_data.csv (e.g. ESR_N > 0) and
-	# a share of electrolyzer demand equal to df[y,:ESR_N] must be met by resources qualifying for ESR_N for each electrolyzer resource y.
-	if setup["EnergyShareRequirement"] >= 1
-		@expression(EP, eElectrolyzerESR[ESR in 1:inputs["nESR"]], sum(omega[t]*EP[:vUSE][y,t] for y=intersect(ELECTROLYZERS, ids_with_policy(gen,esr,tag=ESR)), t in 1:T))
-		EP[:eESR] -= eElectrolyzerESR
-	end
-
-	### Objective Function ###
-	# Subtract hydrogen revenue from objective function
-	scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
-	@expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T], 
-		omega[t] * EP[:vUSE][y,t] / hydrogen_mwh_per_tonne(gen[y]) * hydrogen_price_per_tonne(gen[y]) / scale_factor
-	)
-	if !isempty(VS_ELEC)
-		@expression(EP, eHydrogenValue_vs[y in VS_ELEC, t in 1:T], 
-			omega[t] * EP[:vP_ELEC][y,t] / by_rid(y,:hydrogen_mwh_per_tonne_elec) * by_rid(y,:hydrogen_price_per_tonne_elec) / scale_factor
-		)
-	end
-	@expression(EP, eTotalHydrogenValueT[t in 1:T], 
-		if !isempty(VS_ELEC)
-			sum(eHydrogenValue[y,t] for y in ELECTROLYZERS) + sum(eHydrogenValue_vs[y,t] for y in VS_ELEC)
-		else
-			sum(eHydrogenValue[y,t] for y in ELECTROLYZERS)
-		end)
-	@expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
-	EP[:eObj] -= eTotalHydrogenValue
-
+    ### Objective Function ###
+    # Subtract hydrogen revenue from objective function
+    scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
+    @expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T],
+        omega[t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y]) *
+        hydrogen_price_per_tonne(gen[y])/scale_factor)
+    if !isempty(VS_ELEC)
+        @expression(EP, eHydrogenValue_vs[y in VS_ELEC, t in 1:T],
+            omega[t] * EP[:vP_ELEC][y, t] / by_rid(y, :hydrogen_mwh_per_tonne_elec) *
+            by_rid(y, :hydrogen_price_per_tonne_elec)/scale_factor)
+    end
+    @expression(EP, eTotalHydrogenValueT[t in 1:T],
+        if !isempty(VS_ELEC)
+            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS) +
+            sum(eHydrogenValue_vs[y, t] for y in VS_ELEC)
+        else
+            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS)
+        end)
+    @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
+    EP[:eObj] -= eTotalHydrogenValue
 end

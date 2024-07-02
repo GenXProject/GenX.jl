@@ -29,7 +29,7 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
         chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .*
                                transpose(price)[zone_id.(gen.FlexDemand), :]
     end
-	if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
+    if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
         chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .*
                                        transpose(price)[zone_id.(gen.Electrolyzer), :]
     end
