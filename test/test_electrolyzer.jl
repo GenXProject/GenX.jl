@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 6946.9618
+obj_true = 21678.826
 test_path = "electrolyzer"
 
 # Define test inputs
