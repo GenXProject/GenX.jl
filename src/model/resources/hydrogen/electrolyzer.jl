@@ -120,9 +120,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
             sum(EP[:eH2Production][y]
             for y in ids_with_policy(gen, h2_demand, tag = h2demand)))
-
-        if !isempty(VS_ELEC)
-        end
+                
         add_similar_to_expression!(EP[:eH2DemandRes], eH2ProductionRes)
     end
 
