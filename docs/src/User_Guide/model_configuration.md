@@ -31,9 +31,6 @@ The following tables summarize the model settings parameters and their default/p
 |StorageVirtualDischarge | Flag to enable contributions that a storage device makes to the capacity reserve margin without generating power.|
 ||1 = activate the virtual discharge of storage resources.|
 ||0 = do not activate the virtual discharge of storage resources.|
-|HydrogenHourlyMatching | Constraint to match hydrogen production and consumption in the same zone.|
-||1 = Constraint is active.|
-||0 = Constraint is not active.| 
 
 ## 2. Solution strategy
 
@@ -78,6 +75,12 @@ The following tables summarize the model settings parameters and their default/p
 |MaxCapReq | Maximum system-wide technology capacity limit constraints.|
 || 1 = if one or more maximum technology capacity constraints are specified|
 || 0 = otherwise|
+|HydrogenHourlyMatching | Constraint to match hydrogen production and consumption in the same zone.|
+||1 = Constraint is active.|
+||0 = Constraint is not active.| 
+|HydrogenMimimumProduction | Hydrogen production requirements from electrolyzers.|
+|1 = Constraint is active.|
+||0 = Constraint is not active.| 
 
 ## 4. Network related
 

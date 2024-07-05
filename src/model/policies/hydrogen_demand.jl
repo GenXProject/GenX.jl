@@ -3,9 +3,7 @@
 
 This policy constraints add hydrogen prodcution demand requirement for electrolyzers.
 
-The hydrogen demand requirement can be defined in on the following ways:
-a) a resource-level limit defined in terms of annual hydrogen production (in 1,000 tonnes of hydrogen) and
-b) a zonal limit defined in terms of annual hydrogen production (in 1,000 tonnes of hydrogen).
+The hydrogen demand requirement can be defined as a zonal limit defined in terms of annual hydrogen production (in 1,000 tonnes of hydrogen).
 
 **Minimum annual hydrogen production**
 
@@ -20,9 +18,7 @@ The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ 
 ```
 
 where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min\_kt}_z$ is the minimum annual quantity of hydrogen that must be produced in region $z$ in kilotonnes.
-(See constraint 5 in the code)
 
-where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min kt}_y$ is the minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes.
 """
 function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
     println("Hydrogen Demand Module")

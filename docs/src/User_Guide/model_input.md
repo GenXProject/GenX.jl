@@ -339,7 +339,7 @@ Each file contains cost and performance parameters for various generators and ot
 !!! note
     Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
-Each co-located VRE and storage resource can be easily configured to contain either a co-located VRE-storage resource, standalone VRE resource (either wind, solar PV, or both), or standalone storage resource.
+Each co-located VRE, electroluzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
 ##### Table 11a: Additional columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
@@ -351,6 +351,8 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |WIND | {0, 1}, Flag to indicate membership in the set of co-located VRE-storage resources with a wind component.|
 ||WIND = 0: Not part of set (default) |
 ||WIND = 1: If the co-located VRE-storage resource can produce wind energy. ||
+|ELEC = 0: Not part of set (default) |
+||ELEC = 1: If the co-located VRE-storage resource can consume electricity to produce hydrogen. ||
 |STOR\_DC\_DISCHARGE | {0, 1, 2}, Flag to indicate membership in set of co-located VRE-storage resources that discharge behind the meter and through the inverter (DC).|
 ||STOR\_DC\_DISCHARGE = 0: Not part of set (default) |
 ||STOR\_DC\_DISCHARGE = 1: If the co-located VRE-storage resource contains symmetric charge/discharge power capacity with charging capacity equal to discharging capacity (e.g. lithium-ion battery storage). Note that if STOR\_DC\_DISCHARGE = 1, STOR\_DC\_CHARGE = 1.|
@@ -376,6 +378,7 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Existing\_Cap\_Inverter\_MW |The existing capacity of co-located VRE-STOR resource's inverter in MW (AC). |
 |Existing\_Cap\_Solar\_MW |The existing capacity of co-located VRE-STOR resource's solar PV in MW (DC). |
 |Existing\_Cap\_Wind\_MW |The existing capacity of co-located VRE-STOR resource's wind in MW (AC). |
+|Existing\_Cap\_Elec\_MW |The existing capacity of co-located VRE-STOR resource's wind in MW (AC). |
 |Existing\_Cap\_Discharge\_DC\_MW |The existing discharge capacity of co-located VRE-STOR resource's storage component in MW (DC). Note that this only applies to resources where `STOR_DC_DISCHARGE = 2`. |
 |Existing\_Cap\_Charge\_DC\_MW |The existing charge capacity of co-located VRE-STOR resource's storage component in MW (DC). Note that this only applies to resources where `STOR_DC_CHARGE = 2`. |
 |Existing\_Cap\_Discharge\_AC\_MW |The existing discharge capacity of co-located VRE-STOR resource's storage component in MW (AC). Note that this only applies to resources where `STOR_AC_DISCHARGE = 2`. |
@@ -388,6 +391,7 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Max\_Cap\_Inverter\_MW |-1 (default) – no limit on maximum inverter capacity of the resource. If non-negative, represents maximum allowed inverter capacity (in MW AC) of the resource. |
 |Max\_Cap\_Solar\_MW |-1 (default) – no limit on maximum solar PV capacity of the resource. If non-negative, represents maximum allowed solar PV capacity (in MW DC) of the resource. |
 |Max\_Cap\_Wind\_MW |-1 (default) – no limit on maximum wind capacity of the resource. If non-negative, represents maximum allowed wind capacity (in MW AC) of the resource. |
+|Max\_Cap\_Elec\_MW |-1 (default) – no limit on maximum electrolyzer capacity of the resource. If non-negative, represents maximum allowed electrolyzer capacity (in MW AC) of the resource. |
 |Max\_Cap\_Discharge\_DC\_MW |-1 (default) – no limit on maximum DC discharge capacity of the resource. If non-negative, represents maximum allowed DC discharge capacity (in MW DC) of the resource with `STOR_DC_DISCHARGE = 2`.|
 |Max\_Cap\_Charge\_DC\_MW |-1 (default) – no limit on maximum DC charge capacity of the resource. If non-negative, represents maximum allowed DC charge capacity (in MW DC) of the resource with `STOR_DC_CHARGE = 2`.|
 |Max\_Cap\_Discharge\_AC\_MW |-1 (default) – no limit on maximum AC discharge capacity of the resource. If non-negative, represents maximum allowed AC discharge capacity (in MW AC) of the resource with `STOR_AC_DISCHARGE = 2`.|
@@ -395,6 +399,7 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Min\_Cap\_Inverter\_MW |-1 (default) – no limit on minimum inverter capacity of the resource. If non-negative, represents minimum allowed inverter capacity (in MW AC) of the resource. |
 |Min\_Cap\_Solar\_MW |-1 (default) – no limit on minimum solar PV capacity of the resource. If non-negative, represents minimum allowed solar PV capacity (in MW DC) of the resource. |
 |Min\_Cap\_Wind\_MW |-1 (default) – no limit on minimum wind capacity of the resource. If non-negative, represents minimum allowed wind capacity (in MW AC) of the resource. |
+|Min\_Cap\_Elec\_MW |-1 (default) – no limit on minimum electrolyzer capacity of the resource. If non-negative, represents minimum allowed electrolyzer capacity (in MW AC) of the resource. |
 |Min\_Cap\_Discharge\_DC\_MW |-1 (default) – no limit on minimum DC discharge capacity of the resource. If non-negative, represents minimum allowed DC discharge capacity (in MW DC) of the resource with `STOR_DC_DISCHARGE = 2`.|
 |Min\_Cap\_Charge\_DC\_MW |-1 (default) – no limit on minimum DC charge capacity of the resource. If non-negative, represents minimum allowed DC charge capacity (in MW DC) of the resource with `STOR_DC_CHARGE = 2`.|
 |Min\_Cap\_Discharge\_AC\_MW |-1 (default) – no limit on minimum AC discharge capacity of the resource. If non-negative, represents minimum allowed AC discharge capacity (in MW AC) of the resource with `STOR_AC_DISCHARGE = 2`.|
@@ -407,6 +412,7 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Inv\_Cost\_Inverter\_per\_MWyr | Annualized capacity investment cost of the inverter component ($/MW-AC/year). |
 |Inv\_Cost\_Solar\_per\_MWyr | Annualized capacity investment cost of the solar PV component ($/MW-DC/year). |
 |Inv\_Cost\_Wind\_per\_MWyr | Annualized capacity investment cost of the wind component ($/MW-AC/year). |
+|Inv\_Cost\_Elec\_per\_MWyr | Annualized capacity investment cost of the electrolyzer component ($/MW-AC/year). |
 |Inv\_Cost\_Discharge\_DC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_DC_DISCHARGE = 2` ($/MW-DC/year). |
 |Inv\_Cost\_Charge\_DC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_DC_CHARGE = 2` ($/MW-DC/year). |
 |Inv\_Cost\_Discharge\_AC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MW-AC/year). |
@@ -414,12 +420,14 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Fixed\_OM\_Inverter\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the inverter component ($/MW-AC/year).|
 |Fixed\_OM\_Solar\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the solar PV component ($/MW-DC/year).|
 |Fixed\_OM\_Wind\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the wind component ($/MW-AC/year).|
+|Fixed\_OM\_Elec\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the electrolyzer component ($/MW-AC/year).|
 |Fixed\_OM\_Cost\_Discharge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` ($/MW-DC/year).|
 |Fixed\_OM\_Cost\_Charge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` ($/MW-DC/year).|
 |Fixed\_OM\_Cost\_Discharge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MW-AC/year).|
 |Fixed\_OM\_Cost\_Charge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year).|
 |Var\_OM\_Cost\_per\_MWh\_Solar | Variable operations and maintenance cost of the solar PV component (multiplied by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Wind | Variable operations and maintenance cost of the wind component ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Elec | Variable operations and maintenance cost of the electrolyzer component ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` (multiplied by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` (divided by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MWh). |
@@ -435,7 +443,11 @@ Each co-located VRE and storage resource can be easily configured to contain eit
 |Eff\_Down\_DC  |[0,1], Efficiency of DC discharging storage – applies to storage technologies (all STOR types). |
 |Eff\_Up\_AC  |[0,1], Efficiency of AC charging storage – applies to storage technologies (all STOR types). |
 |Eff\_Down\_AC  |[0,1], Efficiency of AC discharging storage – applies to storage technologies (all STOR types). |
-
+|Ramp\_Up\_Percentage\_Elec |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_Elec |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Min\_Power\_Elec |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`.|
+|Hydrogen\_MWh\_Per\_Tonne\_Elec| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
+|Hydrogen\_Price\_Per\_Tonne\_Elec| Price (or value) of hydrogen per metric tonne ($/t)|
 ##### Table 11b: Settings-specific columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
