@@ -40,8 +40,16 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP,
         cPOWER_FLOW_OPF[l = 1:L, t = 1:T],
         EP[:vFLOW][l,
-            t]==inputs["pDC_OPF_coeff"][l] *
+            t]==(1 / inputs["pu_reactance"][l]) *
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z))
+	
+
+    # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
+    @constraints(EP,
+        begin
+            cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
+            cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
+        end)
 
     # Bus angle limits (except slack bus)
     @constraints(EP,

@@ -136,4 +136,13 @@ The following tables summarize the model settings parameters and their default/p
 |ResourcePoliciesFolder | Name of the folder inside the `ResourcesFolder` where the input data for resource policy assignments is stored (default = "policy_assignments").|
 |TimeDomainReductionFolder | Name of the folder inside the current working directory where time domain reduced input data is stored.|
 
+
+"ComputeConflicts" => 0,
+        "StorageVirtualDischarge" => 1,
+        "ResourcesFolder" => "resources",
+        "ResourcePoliciesFolder" => "policy_assignments",
+        "SystemFolder" => "system",
+        "PoliciesFolder" => "policies",
+        "ObjScale"
+
 The next step in configuring a GenX model is to specify the solver settings parameters using a `[solver_name]_settings.yml` file inside the `settings` folder. The solver settings parameters are solver specific and are described in the following section.
