@@ -93,4 +93,13 @@ The following tables summarize the model settings parameters and their default/p
 || "full" = write the model outputs with hourly resolution.|
 || "annual" = write only the annual sum of the model outputs.|
 
+
+"ComputeConflicts" => 0,
+        "StorageVirtualDischarge" => 1,
+        "ResourcesFolder" => "resources",
+        "ResourcePoliciesFolder" => "policy_assignments",
+        "SystemFolder" => "system",
+        "PoliciesFolder" => "policies",
+        "ObjScale"
+
 The next step in configuring a GenX model is to specify the solver settings parameters using a `[solver_name]_settings.yml` file inside the `settings` folder. The solver settings parameters are solver specific and are described in the following section.
