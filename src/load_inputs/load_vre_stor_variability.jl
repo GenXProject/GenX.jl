@@ -1,18 +1,24 @@
 @doc raw"""
-	load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict)
+	load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
 
 Read input parameters related to hourly maximum capacity factors for the solar PV 
 	(DC capacity factors) component and wind (AC capacity factors) component of co-located
 	generators
 """
-function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict)
+function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
 
     # Hourly capacity factors
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    my_dir = get_systemfiles_path(setup, TDR_directory, path, input_names)
 
     # Resource names
+    filename1 = input_names["vre_stor_solar_name"]
+    vre_stor_solar = load_dataframe(joinpath(my_dir, filename1))
+
+    filename2 = input_names["vre_stor_wind_name"]
+    vre_stor_wind = load_dataframe(joinpath(my_dir, filename2))
+
     all_resources = inputs["RESOURCE_NAMES"]
 
     # SOLAR VARIABILITY

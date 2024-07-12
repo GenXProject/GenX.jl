@@ -1,0 +1,15 @@
+#default_location: default/path/to/data
+# system
+#system_location: path/to/data
+demand_name: "Demand.csv"
+fuel_name: "Fuels_data.csv"
+
+# policies
+policies_location: /Users/mayamutic/Desktop/policies
+#co2_name: file_or_table_name
+#minimum_capacity_name: file_or_table_name
+
+# resources
+
+
+# policy assignments

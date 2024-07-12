@@ -1,10 +1,10 @@
 @doc raw"""
-    load_maximum_capacity_requirement!(path::AbstractString, inputs::Dict, setup::Dict)
+    load_maximum_capacity_requirement!(path::AbstractString, inputs::Dict, setup::Dict, input_names::Dict)
 
 Read input parameters related to maximum capacity requirement constraints (e.g. technology specific deployment mandates)
 """
-function load_maximum_capacity_requirement!(path::AbstractString, inputs::Dict, setup::Dict)
-    filename = "Maximum_capacity_requirement.csv"
+function load_maximum_capacity_requirement!(path::AbstractString, inputs::Dict, setup::Dict, input_names::Dict)
+    filename = input_names["max_cap_name"]
     df = load_dataframe(joinpath(path, filename))
     inputs["NumberOfMaxCapReqs"] = nrow(df)
     inputs["MaxCapReq"] = df[!, :Max_MW]

@@ -1,12 +1,12 @@
 @doc raw"""
-    load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
+    load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, input_names::Dict)
 
 Function for reading input parameters related to the electricity transmission network
 """
-function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
+function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, input_names::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    filename = "Network.csv"
+    filename = input_names["network_name"]
     network_var = load_dataframe(joinpath(path, filename))
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))

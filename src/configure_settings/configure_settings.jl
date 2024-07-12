@@ -216,3 +216,49 @@ function validate_multistage_settings!(settings::Dict{Any, Any})
         settings["WriteIntermittentOutputs"] = 0
     end
 end
+
+function default_input_names(case::AbstractString)
+    Dict{Any, Any}("system_location" => joinpath(case, "system"),
+    "demand_name" => "Demand_data.csv",
+    "fuel_name" => "Fuels_data.csv",
+    "generators_name" => "Generators_variability.csv",
+    "network_name" => "Network.csv",
+    "resources_location" => joinpath(case, "resources"),
+    "storage_name" => "Storage.csv",
+    "thermal_name" => "Thermal.csv",
+    "vre_name" => "Vre.csv",
+    "vre_stor_name" => "Vre_stor.csv",
+    "vre_stor_solar_name" => "Vre_and_stor_solar_variability.csv",
+    "vre_stor_wind_name" => "Vre_and_stor_wind_variability.csv",
+    "hydro_name" => "Hydro.csv",
+    "flex_demand_name" => "Flex_demand.csv",
+    "must_run_name" => "Must_run.csv",
+    "electrolyzer_name" => "Electrolyzer.csv",
+    "resource_cap_name" => "Resource_capacity_reserve_margin.csv",
+    "resource_energy_share_requirement" => "Resource_energy_share_requirement.csv",
+    "resource_min_name" => "Resource_minimum_capacity_requirement.csv",
+    "resource_max_name" => "Resource_maximum_capacity_requirement.csv",
+    "policies_location" => joinpath(case, "policies"),
+    "capacity_name" => "Capacity_reserve_margin.csv",
+    "CRM_slack_name" => "Capacity_reserve_margin_slack.csv",
+    "co2_cap_name" => "CO2_cap.csv",
+    "co2_cap_slack_name" => "CO2_cap_slack.csv",
+    "esr_name" => "Energy_share_requirement.csv",
+    "esr_slack_name" => "Energy_share_requirement_slack.csv",
+    "min_cap_name" => "Minimum_capacity_requirement.csv",
+    "max_cap_name" => "Maximum_capacity_requirement.csv",
+    "operational_reserves_name" => "Operational_reserves.csv")
+end
+
+function configure_input_names(case::AbstractString)
+    println("Configuring Input File and Path Names")
+    input_settings_path = get_settings_path(case, "input_settings.yml")
+    input_names = YAML.load(open(input_settings_path))
+    #input_names = isfile(settings_path) ? YAML.load(open(input_settings_path)) : Dict{Any, Any}()
+
+    default_names = default_input_names(case)
+    merge!(default_names,input_names)
+
+    return default_names
+end
+

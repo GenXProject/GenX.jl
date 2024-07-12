@@ -1,19 +1,19 @@
 @doc raw"""
-	load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict)
+	load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
 
 Read input parameters related to planning reserve margin constraints
 """
-function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict)
+function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    filename = "Capacity_reserve_margin_slack.csv"
+    filename = input_names["CRM_slack_name"]
     if isfile(joinpath(path, filename))
         df = load_dataframe(joinpath(path, filename))
         inputs["dfCapRes_slack"] = df
         inputs["dfCapRes_slack"][!, :PriceCap] ./= scale_factor # Million $/GW if scaled, $/MW if not scaled
     end
 
-    filename = "Capacity_reserve_margin.csv"
+    filename = input_names["capacity_name"]
     df = load_dataframe(joinpath(path, filename))
 
     mat = extract_matrix_from_dataframe(df, "CapRes")

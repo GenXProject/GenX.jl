@@ -1,10 +1,10 @@
 @doc raw"""
-	load_operational_reserves!(setup::Dict,path::AbstractString, inputs::Dict)
+	load_operational_reserves!(setup::Dict,path::AbstractString, inputs::Dict, input_names::Dict)
 
 Read input parameters related to frequency regulation and operating reserve requirements
 """
-function load_operational_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
-    filename = "Operational_reserves.csv"
+function load_operational_reserves!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+    filename = input_names["operational_reserves_name"]
     deprecated_synonym = "Reserves.csv"
     res_in = load_dataframe(path, [filename, deprecated_synonym])
 

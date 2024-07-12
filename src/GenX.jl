@@ -37,8 +37,8 @@ using RecursiveArrayTools
 using Statistics
 using HiGHS
 using Logging
-
 using PrecompileTools: @compile_workload
+using DuckDB
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)

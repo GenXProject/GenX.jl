@@ -1,5 +1,5 @@
 """
-    _get_resource_info()
+    _get_resource_info(names::Dict)
 
 Internal function to get resource information (filename and GenX type) for each type of resource available in GenX.
 
@@ -7,20 +7,20 @@ Internal function to get resource information (filename and GenX type) for each 
     resource_info (NamedTuple): A tuple containing resource information.
 
 """
-function _get_resource_info()
-    resource_info = (hydro = (filename = "Hydro.csv", type = Hydro),
-        thermal = (filename = "Thermal.csv", type = Thermal),
-        vre = (filename = "Vre.csv", type = Vre),
-        storage = (filename = "Storage.csv", type = Storage),
-        flex_demand = (filename = "Flex_demand.csv", type = FlexDemand),
-        must_run = (filename = "Must_run.csv", type = MustRun),
-        electrolyzer = (filename = "Electrolyzer.csv", type = Electrolyzer),
-        vre_stor = (filename = "Vre_stor.csv", type = VreStorage))
+function _get_resource_info(names::Dict)
+    resource_info = (hydro = (filename = names["hydro_name"], type = Hydro),
+        thermal = (filename = names["thermal_name"], type = Thermal),
+        vre = (filename = names["vre_name"], type = Vre),
+        storage = (filename = names["storage_name"], type = Storage),
+        flex_demand = (filename = names["flex_demand_name"], type = FlexDemand),
+        must_run = (filename = names["must_run_name"], type = MustRun),
+        electrolyzer = (filename = names["electrolyzer_name"], type = Electrolyzer),
+        vre_stor = (filename = names["vre_stor_name"], type = VreStorage))
     return resource_info
 end
 
 """
-    _get_policyfile_info()
+    _get_policyfile_info(names::Dict)
 
 Internal function to get policy file information.
 
@@ -28,14 +28,14 @@ Internal function to get policy file information.
     policyfile_info (NamedTuple): A tuple containing policy file information.
 
 """
-function _get_policyfile_info()
+function _get_policyfile_info(names::Dict)
     # filename for each type of policy available in GenX
-    esr_filenames = ["Resource_energy_share_requirement.csv"]
-    cap_res_filenames = ["Resource_capacity_reserve_margin.csv"]
-    min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
-    max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
     h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
     hourly_matching_filenames = ["Resource_hourly_matching.csv"]
+    esr_filenames = [names["resource_energy_share_requirement"]]
+    cap_res_filenames = [names["resource_cap_name"]]
+    min_cap_filenames = [names["resource_min_name"]]
+    max_cap_filenames = [names["resource_max_name"]]
 
     policyfile_info = (
         esr = (filenames = esr_filenames, setup_param = "EnergyShareRequirement"),
@@ -589,11 +589,11 @@ Function that loads and scales resources data from folder specified in resources
 - `resources (Vector{<:AbstractResource})`: An array of scaled resources.
 
 """
-function create_resource_array(setup::Dict, resources_path::AbstractString)
+function create_resource_array(setup::Dict, resources_path::AbstractString, input_names::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
 
     # get filename and GenX type for each type of resources available in GenX
-    resources_info = _get_resource_info()
+    resources_info = _get_resource_info(input_names)
 
     # load each resource type, scale data and return array of resources
     resources = create_resource_array(resources_path, resources_info, scale_factor)
@@ -603,20 +603,21 @@ function create_resource_array(setup::Dict, resources_path::AbstractString)
 end
 
 """
-    validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
+    validate_policy_files(resource_policies_path::AbstractString, setup::Dict, input_names::Dict)
 
 Validate the policy files by checking if they exist in the specified folder and if the setup flags are consistent with the files found.
 
 # Arguments
 - `resource_policies_path::AbstractString`: The path to the policy files.
 - `setup::Dict`: Dictionary containing GenX settings.
+- `input_names::Dict`: Dictionary containing names of the input files specified by the user
 
 # Returns
 - warning messages if the polcies are set to 1 in settings but the files are not found in the resource_policies_path.
 !isfile(joinpath(resource_policies_path, filename))
 """
-function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
-    policyfile_info = _get_policyfile_info()
+function validate_policy_files(resource_policies_path::AbstractString, setup::Dict, input_names::Dict)
+    policyfile_info = _get_policyfile_info(input_names)
     for (filenames, setup_param) in values(policyfile_info)
         if setup[setup_param] == 1 &&
            any(!isfile(joinpath(resource_policies_path, filename))
@@ -752,11 +753,12 @@ Reads policy files and adds policies-related attributes to resources in the mode
 # Arguments
 - `resources::Vector{<:AbstractResource}`: Vector of resources in the model.
 - `resources_path::AbstractString`: The path to the resources folder.
+- `input_names::Dict`: Dictionary containing the names of input files specified by the user.
 """
 function add_policies_to_resources!(resources::Vector{<:AbstractResource},
-        resource_policy_path::AbstractString)
+        resource_policy_path::AbstractString,input_names::Dict)
     # get filename for each type of policy available in GenX
-    policies_info = _get_policyfile_info()
+    policies_info = _get_policyfile_info(input_names)
     # loop over policy files
     for (filenames, _) in values(policies_info)
         for filename in filenames
@@ -1416,6 +1418,7 @@ This function loads resources data from the resources_path folder and create the
 # Arguments
 - `inputs (Dict)`: A dictionary to store the input data.
 - `setup (Dict)`: A dictionary containing GenX settings.
+- `input_names (Dict)`: A dictionary containing the names of the input files.
 - `case_path (AbstractString)`: The path to the case folder.
 - `resources_path (AbstractString)`: The path to the case resources folder.
 
@@ -1424,6 +1427,7 @@ Raises:
 """
 function load_resources_data!(inputs::Dict,
         setup::Dict,
+        input_names::Dict,
         case_path::AbstractString,
         resources_path::AbstractString)
     if isfile(joinpath(case_path, "Generators_data.csv"))
@@ -1433,12 +1437,12 @@ function load_resources_data!(inputs::Dict,
         error("Exiting GenX...")
     end
     # create vector of resources from dataframes
-    resources = create_resource_array(setup, resources_path)
+    resources = create_resource_array(setup, resources_path, input_names)
 
     # read policy files and add policies-related attributes to resource dataframe
     resource_policies_path = joinpath(resources_path, setup["ResourcePoliciesFolder"])
-    validate_policy_files(resource_policies_path, setup)
-    add_policies_to_resources!(resources, resource_policies_path)
+    validate_policy_files(resource_policies_path, setup, input_names)
+    add_policies_to_resources!(resources, resource_policies_path, input_names)
 
     # read module files add module-related attributes to resource dataframe
     add_modules_to_resources!(resources, setup, resources_path)

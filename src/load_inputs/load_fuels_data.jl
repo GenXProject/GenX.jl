@@ -1,16 +1,17 @@
 @doc raw"""
-    load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
+    load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
 
 Read input parameters related to fuel costs and CO$_2$ content of fuels
 """
-function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
+function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
 
     # Fuel related inputs - read in different files depending on if time domain reduction is activated or not
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    my_dir = get_systemfiles_path(setup, TDR_directory, path, input_names)
 
-    filename = "Fuels_data.csv"
+    filename = input_names["fuel_name"]
+    println(filename)
     fuels_in = load_dataframe(joinpath(my_dir, filename))
 
     for nonfuel in ("None",)
