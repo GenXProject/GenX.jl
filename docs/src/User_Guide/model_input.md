@@ -339,7 +339,7 @@ Each file contains cost and performance parameters for various generators and ot
 !!! note
     Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
-Each co-located VRE, electroluzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
+Each co-located VRE, electrolyzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
 ##### Table 11a: Additional columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|

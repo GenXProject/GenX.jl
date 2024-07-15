@@ -1291,10 +1291,10 @@ end
 @doc raw"""
     elec_vre_stor!(EP::Model, inputs::Dict)
 
-This function defines the decision variables, expressions, and constraints for the electolyzer component of each co-located ELC, VRE, and storage generator.
+This function defines the decision variables, expressions, and constraints for the electrolyzer component of each co-located ELC, VRE, and storage generator.
     
 The total electrolyzer capacity of each resource is defined as the sum of the existing 
-    electolyzer capacity plus the newly invested electrolyzer capacity minus any retired electrolyzer capacity:
+    electrolyzer capacity plus the newly invested electrolyzer capacity minus any retired electrolyzer capacity:
 ```math
 \begin{aligned}
     & \Delta^{total,elec}_{y,z} = (\overline{\Delta^{elec}_{y,z}}+\Omega^{elec}_{y,z}-\Delta^{elec}_{y,z}) \quad \forall y \in \mathcal{VS}^{elec}, z \in \mathcal{Z}
@@ -1356,7 +1356,6 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     gen_VRE_STOR = gen.VreStorage
 
     T = inputs["T"]
-    Z = inputs["Z"]
     ELEC = inputs["VS_ELEC"]
     NEW_CAP_ELEC = inputs["NEW_CAP_ELEC"]
     RET_CAP_ELEC = inputs["RET_CAP_ELEC"]
@@ -1369,8 +1368,8 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     @variables(EP, begin
         # Electrolyzer capacity 
-        vRETELECCAP[y in RET_CAP_ELEC] >= 0                         # Retired wind capacity [MW AC]
-        vELECCAP[y in NEW_CAP_ELEC] >= 0                            # New installed electolyzer capacity [MW AC]
+        vRETELECCAP[y in RET_CAP_ELEC] >= 0                         # Retired electrolyzer capacity [MW AC]
+        vELECCAP[y in NEW_CAP_ELEC] >= 0                            # New installed electrolyzer capacity [MW AC]
 
         # Electrolyzer-component generation [MWh]
         vP_ELEC[y in ELEC, t = 1:T] >= 0
@@ -1476,8 +1475,6 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             # Maximum power generated per technology "y" at hour "t"
             [y in ELEC, t in 1:T], EP[:vP_ELEC][y, t] <= eTotalCap_ELEC[y]
         end)
-
-    # Constraint 4: meet regional hydrogen demand, included in electolyzer.jl
 end
 
 @doc raw"""

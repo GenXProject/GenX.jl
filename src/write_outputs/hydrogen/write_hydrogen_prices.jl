@@ -1,15 +1,4 @@
 function write_hydrogen_prices(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
-    ELECTROLYZERS = inputs["ELECTROLYZER"]      # Set of electrolyzers connected to the grid (indices)
-    VRE_STOR = inputs["VRE_STOR"]             # Set of VRE-STOR generators (indices)
-    gen_VRE_STOR = gen.VreStorage               # Set of VRE-STOR generators (objects)
-
-    if !isempty(VRE_STOR)
-        VS_ELEC = inputs["VS_ELEC"]             # Set of VRE-STOR co-located electrolyzers (indices)
-    else
-        VS_ELEC = Vector{Int}[]
-    end
-
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1  # If ParameterScale==1, costs are in millions of $
 
     NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
