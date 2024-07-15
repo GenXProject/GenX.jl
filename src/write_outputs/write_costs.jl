@@ -10,16 +10,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]     # Number of zones
     T = inputs["T"]     # Number of time steps (hours)
     VRE_STOR = inputs["VRE_STOR"]
-    if !isempty(VRE_STOR)
-        VS_ELEC = inputs["VS_ELEC"]
-    else
-        VS_ELEC = Vector{Int}[]
-    end
-    if !isempty(VS_ELEC)
-        ELECTROLYZER = union(VS_ELEC, inputs["ELECTROLYZER"])
-    else
-        ELECTROLYZER = inputs["ELECTROLYZER"]
-    end
+    VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
+    ELECTROLYZER = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) : inputs["ELECTROLYZER"]
 
     cost_list = [
         "cTotal",

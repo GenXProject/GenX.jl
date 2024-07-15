@@ -74,19 +74,14 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     ELECTROLYZERS = inputs["ELECTROLYZER"]      # Set of electrolyzers connected to the grid (indices)
     VRE_STOR = inputs["VRE_STOR"]             # Set of VRE-STOR generators (indices)
     gen_VRE_STOR = gen.VreStorage               # Set of VRE-STOR generators (objects)
-    if !isempty(VRE_STOR)
-        VS_ELEC = inputs["VS_ELEC"]             # Set of VRE-STOR co-located electrolyzers (indices)
-    else
-        VS_ELEC = Vector{Int}[]
-    end
+    
+    VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]    # Set of VRE-STOR co-located electrolyzers (indices)
+    
     STORAGE = inputs["STOR_ALL"]             # Set of storage (indices)
 
-    if (!isempty(ELECTROLYZERS)) && (!isempty(VS_ELEC))
-        HYDROGEN_ZONES = unique(union(zone_id(gen[ELECTROLYZERS]), zone_id(gen[VS_ELEC])))
-    elseif !isempty(ELECTROLYZERS)
-        HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
-    else
-        HYDROGEN_ZONES = unique(zone_id(gen[VS_ELEC]))
+    HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
+    if !isempty(VS_ELEC)
+        HYDROGEN_ZONES = unique(union(HYDROGEN_ZONES, zone_id(gen[VS_ELEC])))
     end
 
     p = inputs["hours_per_subperiod"] #total number of hours per subperiod
@@ -198,12 +193,12 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             by_rid(y, :hydrogen_price_per_tonne_elec)/scale_factor)
     end
     @expression(EP, eTotalHydrogenValueT[t in 1:T],
-        if !isempty(VS_ELEC)
-            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS) +
-            sum(eHydrogenValue_vs[y, t] for y in VS_ELEC)
-        else
-            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS)
-        end)
+        sum(eHydrogenValue[y, t] for y in ELECTROLYZERS))
+    # Add the revenue from co-located VRE-STOR electrolyzers
+    if !isempty(VS_ELEC)
+        expr = @expression(EP, [t in 1:T], sum(eHydrogenValue_vs[y, t] for y in VS_ELEC))
+        add_similar_to_expression!(EP[:eTotalHydrogenValueT], expr)
+    end
     @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
     EP[:eObj] -= eTotalHydrogenValue
 end
