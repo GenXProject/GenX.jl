@@ -17,6 +17,9 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps
+    Z = inputs["Z"]     # Number of zones
+
+    QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]
 
     ### Variables ###
 
@@ -46,5 +49,15 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
             -sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * inputs["pD"][t, z]
             for t in 1:T, z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
         add_similar_to_expression!(EP[:eESR], eESRDischarge)
+    end
+
+    # Hourly Matching Policy
+    if setup["HourlyMatching"] >= 1
+        @expression(EP, eHMDischarge[t = 1:T, z = 1:Z],
+            +sum(EP[:vP][y, t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))
+            #-inputs["dfHM"][z] * inputs["pD"][t, z]
+            )
+        add_similar_to_expression!(EP[:eHM], eHMDischarge)
     end
 end

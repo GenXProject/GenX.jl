@@ -26,6 +26,7 @@ function default_settings()
         "IncludeLossesInESR" => 0,
         "HydrogenMinimumProduction" => 0,
         "EnableJuMPStringNames" => false,
+        "HourlyMatching" => 0,
         "HydrogenHourlyMatching" => 0,
         "DC_OPF" => 0,
         "WriteOutputs" => "full",

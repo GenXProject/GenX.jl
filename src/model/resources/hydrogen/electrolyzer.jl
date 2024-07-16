@@ -156,13 +156,11 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
     # from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
     # (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
-    if setup["HydrogenHourlyMatching"] == 1
-        QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
-        @constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
-            sum(EP[:vP][y, t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))>=sum(EP[:vUSE][y,t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STORAGE)))
+    if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 1
+        @expression(EP, eHMElectrolyzer[t in 1:T, z in 1:Z],
+            -sum(EP[:vUSE][y, t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZERS)))
+        add_similar_to_expression!(EP[:eHM], eHMElectrolyzer)
     end
 
     ### Energy Share Requirement Policy ###
