@@ -427,7 +427,6 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Fixed\_OM\_Cost\_Charge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year).|
 |Var\_OM\_Cost\_per\_MWh\_Solar | Variable operations and maintenance cost of the solar PV component (multiplied by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Wind | Variable operations and maintenance cost of the wind component ($/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Elec | Variable operations and maintenance cost of the electrolyzer component ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` (multiplied by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` (divided by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MWh). |
@@ -465,6 +464,7 @@ In addition to the files described above, the `resources` folder contains the fo
 2) `Resource_minimum_capacity_requirement.csv`
 3) `Resource_maximum_capacity_requirement.csv`
 4) `Resource_capacity_reserve_margin.csv`
+5) `Resource_hydrogen_demand.csv`
 
 !!! note
     These files are optional and can be omitted if no policy-related parameters are specified in the settings file. Also, not all the resources need to be included in these files, only those for which the policy applies.
@@ -524,6 +524,15 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
 |Derating\_Factor\_*| Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
 
+This policy is applied when if `HydrogenMimimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
+
+##### Table 16: Hydrogen demand policy parameters in Resource_hydrogen_demand.csv
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource| Resource name corresponding to a resource in one of the resource data files described above.|
+|Hydrogen\_Demand\_*| Flag to indicate which resources are considered for the Hydrogen Demand constraint.|
+
 ##### Additional module-related columns for all resources
 In addition to the files described above, the `resources` folder can contain additional files that are used to specify attributes for specific resources and modules. Currently, the following files are supported:
 
@@ -532,7 +541,7 @@ In addition to the files described above, the `resources` folder can contain add
 !!! warning
     The first column of each additional module file must contain the resource name corresponding to a resource in one of the resource data files described above. Note that the order of resources in these files is not important.
 
-##### Table 16: Multistage parameters
+##### Table 17: Multistage parameters
 !!! warning
     This file is mandatory if `MultiStage = 1` in the settings file.
 ---
@@ -549,6 +558,7 @@ In addition to the files described above, the `resources` folder can contain add
 |Capital\_Recovery\_Period_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the inverter component. |
 |Capital\_Recovery\_Period_Solar  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the solar PV component. |
 |Capital\_Recovery\_Period_Wind  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the wind component. |
+|Capital\_Recovery\_Period_Elec  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the electrolyzer component. |
 |Capital\_Recovery\_Period_Discharge_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the discharge DC component when `STOR_DC_DISCHARGE = 2  `. |
 |Capital\_Recovery\_Period_Charge_DC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the charge DC component when `STOR_DC_CHARGE = 2  `. |
 |Capital\_Recovery\_Period_Discharge_AC  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for the discharge AC component when `STOR_AC_DISCHARGE = 2  `. |
@@ -556,6 +566,7 @@ In addition to the files described above, the `resources` folder can contain add
 |Min\_Retired\_Cap\_Inverter\_MW  |Minimum required inverter capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Solar\_MW  |Minimum required solar capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Wind\_MW  |Minimum required wind capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
+|Min\_Retired\_Cap\_Elec\_MW  |Minimum required electrolyzer capacity retirements in the current model period. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Discharge_DC\_MW  |Minimum required discharge capacity retirements in the current model period for storage resources with `STOR_DC_DISCHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Charge_DC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_DC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Discharge_AC\_MW  |Minimum required discharge capacity retirements in the current model period for storage resources with `STOR_AC_DISCHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
@@ -563,6 +574,7 @@ In addition to the files described above, the `resources` folder can contain add
 | WACC\_DC | The line-specific weighted average cost of capital for the inverter component. |
 | WACC\_Solar | The line-specific weighted average cost of capital for the solar PV component. |
 | WACC\_Wind | The line-specific weighted average cost of capital for the wind component. |
+| WACC\_Elec | The line-specific weighted average cost of capital for the electrolyzer component. |
 | WACC\_Discharge\_DC | The line-specific weighted average cost of capital for the discharging DC storage component with `STOR_DC_DISCHARGE = 2`. |
 | WACC\_Charge\_DC | The line-specific weighted average cost of capital for the charging DC storage component with `STOR_DC_CHARGE = 2`. |
 | WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
@@ -575,7 +587,7 @@ This file contains the time-series of capacity factors / availability of each re
 1) First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 2) Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the resource `.csv` file in the   `resources` folder in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in the resource `.csv` file must be unique. Note that for Hydro reservoir resources (i.e. `Hydro.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
-###### Table 17: Structure of the Generator\_variability.csv file
+###### Table 18: Structure of the Generator\_variability.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -614,7 +626,7 @@ This file contains the time-series of capacity factors / availability of the win
 
 This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `OperationalReserves` flag is activated in the YAML file `genx_settings.yml`.
 
-###### Table 18: Structure of the Operational_reserves.csv file
+###### Table 19: Structure of the Operational_reserves.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -636,7 +648,7 @@ This file contains inputs specifying minimum energy share requirement policies, 
 
 Note: this file should use the same region name as specified in the the resource `.csv` file (inside the `Resource`).
 
-###### Table 19: Structure of the Energy\_share\_requirement.csv file
+###### Table 20: Structure of the Energy\_share\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -650,7 +662,7 @@ Note: this file should use the same region name as specified in the the resource
 
 This file contains inputs specifying CO2 emission limits policies (e.g. emissions cap and permit trading programs). This file is needed if `CO2Cap` flag is activated in the YAML file `genx_settings.yml`. `CO2Cap` flag set to 1 represents mass-based (tCO2 ) emission target. `CO2Cap` flag set to 2 is specified when emission target is given in terms of rate (tCO2/MWh) and is based on total demand met. `CO2Cap` flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
 
-###### Table 20: Structure of the CO2\_cap.csv file
+###### Table 21: Structure of the CO2\_cap.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -667,7 +679,7 @@ This file contains the regional capacity reserve margin requirements. This file 
 
 Note: this file should use the same region name as specified in the resource `.csv` file (inside the `Resource`).
 
-###### Table 21: Structure of the Capacity\_reserve\_margin.csv file
+###### Table 22: Structure of the Capacity\_reserve\_margin.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -681,7 +693,7 @@ Note: this file should use the same region name as specified in the resource `.c
 
 This file contains the minimum capacity carve-out requirement to be imposed (e.g. a storage capacity mandate or offshore wind capacity mandate). This file is needed if the `MinCapReq` flag has a non-zero value in the YAML file `genx_settings.yml`.
 
-###### Table 22: Structure of the Minimum\_capacity\_requirement.csv file
+###### Table 23: Structure of the Minimum\_capacity\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -697,7 +709,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 This contains the maximum capacity limits to be imposed (e.g. limits on total deployment of solar, wind, or batteries in the system as a whole or in certain collections of zones).
 It is required if the `MaxCapReq` flag has a non-zero value in `genx_settings.yml`.
 
-###### Table 23: Structure of the Maximum\_capacity\_requirement.csv file
+###### Table 24: Structure of the Maximum\_capacity\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -712,7 +724,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 
 This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
 
-###### Table 24: Structure of the Method\_of\_morris\_range.csv file
+###### Table 25: Structure of the Method\_of\_morris\_range.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -743,9 +755,11 @@ This file contains the settings parameters required to run the Method of Morris 
 
 This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
 
-###### Table 25: Structure of the Hydrogen\_demand.csv file
+###### Table 26: Structure of the Hydrogen\_demand.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|Zone| zone number|
-|Hydrogen_Demand_kt| Hydrogen production requirements for zone *, in 1,000 tons|
+|H2DemandConstraint| Index of the hydrogen demand constraint.|
+|Constraint\_Description| Names of hydrogen demand constraints; not to be read by model, but used as a helpful notation to the model user. |
+|Hydrogen_Demand_kt| Hydrogen production requirements in 1,000 tons|
+|PriceH2| Price of hydrogen per metric ton ($/t)|

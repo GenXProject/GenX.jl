@@ -634,7 +634,7 @@ function endogenous_retirement_vre_stor_elec!(
     ### Constraints ###
 
     # Keep track of newly built capacity from previous stages
-    @constraint(EP, cCapTrackNewElec[y in RET_CAP_Elec],
+    @constraint(EP, cCapTrackNewElec[y in RET_CAP_ELEC],
         eNewCapElec[y]==vCAPTRACKELEC[y, cur_stage])
     # The RHS of this constraint will be updated in the forward pass
     @constraint(EP, cCapTrackElec[y in RET_CAP_ELEC, p = 1:(cur_stage - 1)],
