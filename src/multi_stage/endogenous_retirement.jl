@@ -596,10 +596,10 @@ function endogenous_retirement_vre_stor_wind!(EP::Model,
         eNewCapTrackWind[y] + eMinRetCapTrackWind[y]<=eRetCapTrackWind[y])
 end
 
-function endogenous_retirement_vre_stor_elec!(EP::Model, 
-        inputs::Dict, 
-        num_stages::Int, 
-        cur_stage::Int, 
+function endogenous_retirement_vre_stor_elec!(EP::Model,
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
         stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Electrolyzer) Module")
 

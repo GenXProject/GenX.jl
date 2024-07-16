@@ -50,7 +50,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     write_system_env_summary(path)
 
     output_settings_d["WriteStatus"] && write_status(path, inputs, setup, EP)
-    
+
     # linearize and re-solve model if duals are not available but ShadowPrices are requested
     if !has_duals(EP) && setup["WriteShadowPrices"] == 1
         # function to fix integers and linearize problem

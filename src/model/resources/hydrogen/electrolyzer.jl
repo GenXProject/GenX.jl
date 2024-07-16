@@ -74,9 +74,9 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     ELECTROLYZERS = inputs["ELECTROLYZER"]      # Set of electrolyzers connected to the grid (indices)
     VRE_STOR = inputs["VRE_STOR"]             # Set of VRE-STOR generators (indices)
     gen_VRE_STOR = gen.VreStorage               # Set of VRE-STOR generators (objects)
-    
+
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]    # Set of VRE-STOR co-located electrolyzers (indices)
-    
+
     STORAGE = inputs["STOR_ALL"]             # Set of storage (indices)
 
     HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
