@@ -193,12 +193,12 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             by_rid(y, :hydrogen_price_per_tonne_elec)/scale_factor)
     end
     @expression(EP, eTotalHydrogenValueT[t in 1:T],
-        sum(eHydrogenValue[y, t] for y in ELECTROLYZERS))
-    # Add the revenue from co-located VRE-STOR electrolyzers
-    if !isempty(VS_ELEC)
-        expr = @expression(EP, [t in 1:T], sum(eHydrogenValue_vs[y, t] for y in VS_ELEC))
-        add_similar_to_expression!(EP[:eTotalHydrogenValueT], expr)
-    end
+        if !isempty(VS_ELEC)
+            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS) +
+            sum(eHydrogenValue_vs[y, t] for y in VS_ELEC)
+        else
+            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS)
+        end)
     @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
     EP[:eObj] -= eTotalHydrogenValue
 end
