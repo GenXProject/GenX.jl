@@ -11,7 +11,7 @@ function write_hourly_matching_prices(path::AbstractString,
     # Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of the constraint
     dfHourlyMatchPrices = hcat(dfHourlyMatchPrices,
         DataFrame(
-            dual.(EP[:cHourlyMatching]).data ./ transpose(inputs["omega"]) *
+            transpose(dual.(EP[:cHourlyMatching])) ./ transpose(inputs["omega"]) *
             scale_factor,
             :auto))
 
@@ -19,8 +19,7 @@ function write_hourly_matching_prices(path::AbstractString,
     rename!(dfHourlyMatchPrices, auxNew_Names)
 
     CSV.write(joinpath(path, "hourly_matching_prices.csv"),
-        dftranspose(dfHourlyMatchPrices, false),
-        header = false)
+        dftranspose(dfHourlyMatchPrices, false), writeheader = false)
 
     return nothing
 end
