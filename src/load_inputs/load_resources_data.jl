@@ -35,15 +35,16 @@ function _get_policyfile_info()
     min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
     max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
     h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
+    hourly_matching_filenames = ["Resource_hourly_matching.csv"]
 
     policyfile_info = (
-        esr = (filenames = esr_filenames,
-            setup_param = "EnergyShareRequirement"),
+        esr = (filenames = esr_filenames, setup_param = "EnergyShareRequirement"),
         cap_res = (filenames = cap_res_filenames, setup_param = "CapacityReserveMargin"),
         min_cap = (filenames = min_cap_filenames, setup_param = "MinCapReq"),
         max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"),
-        h2_demand = (
-            filenames = h2_demand_filenames, setup_param = "HydrogenMinimumProduction"))
+        h2_demand = (filenames = h2_demand_filenames, setup_param = "HydrogenMinimumProduction"),
+        hourly_matching = (filenames = hourly_matching_filenames, setup_param = "HourlyMatching")
+    )
     return policyfile_info
 end
 
@@ -578,7 +579,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     cols = lowercase.(names(policy_in))
     filter!(col -> col ≠ "resource", cols)
 
-    accepted_cols = ["derating_factor", "esr", "esr_vrestor", "h2_demand",
+    accepted_cols = ["derating_factor", "esr", "esr_vrestor", "h2_demand", "qualified_supply",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
          for type in ("", "_stor", "_solar", "_wind")]...]
 
@@ -1137,6 +1138,9 @@ function add_resources_to_input_data!(inputs::Dict,
     end
     inputs["NEW_CAP_CHARGE"] = new_cap_charge
     inputs["RET_CAP_CHARGE"] = ret_cap_charge
+
+    # Hourly matching - qualified supply
+    inputs["QUALIFIED_SUPPLY"] = ids_with_policy(gen, qualified_supply, tag = 1)
 
     ## Co-located resources
     # VRE and storage

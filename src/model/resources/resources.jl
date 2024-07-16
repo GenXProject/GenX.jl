@@ -695,6 +695,10 @@ max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), defaul
 function derating_factor(r::AbstractResource; tag::Int64)
     get(r, Symbol("derating_factor_$tag"), default_zero)
 end
+function qualified_supply(r::AbstractResource; tag::Int64)
+    get(r, Symbol("qualified_supply_$tag"), default_zero)
+end
+
 
 # write_outputs
 region(r::AbstractResource) = r.region
