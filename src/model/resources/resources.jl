@@ -699,7 +699,6 @@ function qualified_supply(r::AbstractResource; tag::Int64)
     get(r, Symbol("qualified_supply_$tag"), default_zero)
 end
 
-
 # write_outputs
 region(r::AbstractResource) = r.region
 cluster(r::AbstractResource) = r.cluster

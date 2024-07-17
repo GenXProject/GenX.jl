@@ -435,7 +435,8 @@ function check_hydrogen_resources(r::AbstractResource)
 
     # check that qualified_hydrogen_supply is set only for non-electrolyzer resources
     if isa(r, Electrolyzer) == true && qualified_hydrogen_supply(r) == true
-        e = string("Resource ", resource_name(r), " is an Electrolyzer but has :qualified_hydrogen_supply = ",
+        e = string("Resource ", resource_name(r),
+            " is an Electrolyzer but has :qualified_hydrogen_supply = ",
             qualified_hydrogen_supply(r), ".\n",
             "This setting is valid only for resources that are not Electrolyzers.", "\n",
             "Please check the documentation for the correct setting.")
@@ -447,8 +448,10 @@ end
 function check_qualified_hydrogen_supply(r::AbstractResource)
     warning_strings = String[]
 
-    if qualified_hydrogen_supply(r) == 1 
-        e = string("Resource ", resource_name(r), " has :qualified_hydrogen_supply = 1. However \n" *
+    if qualified_hydrogen_supply(r) == 1
+        e = string("Resource ",
+            resource_name(r),
+            " has :qualified_hydrogen_supply = 1. However \n" *
             "the :qualified_hydrogen_supply attribute is deprecated and will be removed in a future version. \n" *
             "Please use the :qualified_supply column in the `Resource_hourly_matching.csv` file instead, and remove \n" *
             "the :qualified_hydrogen_supply attribute from the resource file. \n" *
@@ -456,7 +459,7 @@ function check_qualified_hydrogen_supply(r::AbstractResource)
         push!(warning_strings, e)
     end
     return WarnMsg.(warning_strings)
-end         
+end
 
 function check_resource(r::AbstractResource)
     e = []
@@ -1174,17 +1177,19 @@ function add_resources_to_input_data!(inputs::Dict,
     ## this validations are for backward compatibility with previous version of the hourly matching constraint
     # if HydrogenHourlyMatching is enabled, but HourlyMatching is not, enable HourlyMatching 
     if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 0
-        Base.depwarn("""HydrogenHourlyMatching is enabled, but HourlyMatching is not.
-        Switching HourlyMatching to 1 to enable backward compatibility with previous versions of constraint.""",
+        Base.depwarn(
+            """HydrogenHourlyMatching is enabled, but HourlyMatching is not.
+            Switching HourlyMatching to 1 to enable backward compatibility with previous versions of constraint.""",
             :add_resources_to_input_data!, force = true)
         setup["HourlyMatching"] = 1
     end
     # if qualified_supply is empty, use qualified_hydrogen_supply 
-    if isempty(inputs["QUALIFIED_SUPPLY"]) && !isempty(ids_with(gen, qualified_hydrogen_supply))
+    if isempty(inputs["QUALIFIED_SUPPLY"]) &&
+       !isempty(ids_with(gen, qualified_hydrogen_supply))
         Base.depwarn("""The column name :qualified_hydrogen_supply_1 is deprecated. 
         Please use the `Resource_hourly_matching.csv` instead. The column 
-        :qualified_hydrogen_supply_1 will be removed in the future release.""", 
-        :add_resources_to_input_data!, force = true)
+        :qualified_hydrogen_supply_1 will be removed in the future release.""",
+            :add_resources_to_input_data!, force = true)
         inputs["QUALIFIED_SUPPLY"] = ids_with(gen, qualified_hydrogen_supply)
     end
 

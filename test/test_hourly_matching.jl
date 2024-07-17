@@ -8,12 +8,12 @@ obj_true = 9375.6845867
 test_path = "hourly_matching"
 
 # Define test settings
-genx_setup = Dict("Trans_Loss_Segments" => 1, 
-    "UCommit" => 2, 
+genx_setup = Dict("Trans_Loss_Segments" => 1,
+    "UCommit" => 2,
     "StorageLosses" => 1,
     "ParameterScale" => 1,
     "HourlyMatching" => 1,
-    "HydrogenHourlyMatching" => 1,
+    "HydrogenHourlyMatching" => 1
 )
 settings = GenX.default_settings()
 merge!(settings, genx_setup)
@@ -32,8 +32,8 @@ optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 
 # Test all the results
 ## Test loading functions and api
-@test GenX.qualified_supply.(inputs["RESOURCES"], tag=1) == [0,1,0,0,1,0]
-@test inputs["QUALIFIED_SUPPLY"] == [2,5]
+@test GenX.qualified_supply.(inputs["RESOURCES"], tag = 1) == [0, 1, 0, 0, 1, 0]
+@test inputs["QUALIFIED_SUPPLY"] == [2, 5]
 
 ## Test the objective value
 test_result = @test obj_test≈obj_true atol=optimal_tol
