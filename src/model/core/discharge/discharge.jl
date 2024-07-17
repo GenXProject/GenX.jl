@@ -57,7 +57,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
             +sum(EP[:vP][y, t]
             for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))
             #-inputs["dfHM"][z] * inputs["pD"][t, z]
-            )
+        )
         add_similar_to_expression!(EP[:eHM], eHMDischarge)
     end
 end
