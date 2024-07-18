@@ -192,10 +192,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         vre_stor!(EP, inputs, setup)
     end
 
-    if setup["HydrogenMimimumProduction"] > 0
+    # Model constraints, variables, expressions related to telectrolyzers
+    if !isempty(inputs["ELECTROLYZER"] ) | (!isempty(inputs["VRE_STOR"]) & !isempty(inputs["VS_ELEC"]))
         electrolyzer!(EP, inputs, setup)
     end
-
     # Policies
 
     if setup["OperationalReserves"] > 0

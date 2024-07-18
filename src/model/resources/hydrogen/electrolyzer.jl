@@ -103,15 +103,15 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
     ## Hydrogen production expressions ##
+    @expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)],
+        if y in ELECTROLYZERS
+            sum(omega[t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y]) for t in 1:T)
+        else
+            sum(omega[t] * EP[:vP_ELEC][y, t] / by_rid(y, :hydrogen_mwh_per_tonne_elec)
+            for t in 1:T)
+        end)
+        
     if setup["HydrogenMimimumProduction"] == 1
-        @expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)],
-            if y in ELECTROLYZERS
-                sum(omega[t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y]) for t in 1:T)
-            else
-                sum(omega[t] * EP[:vP_ELEC][y, t] / by_rid(y, :hydrogen_mwh_per_tonne_elec)
-                for t in 1:T)
-            end)
-
         @expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
             sum(EP[:eH2Production][y]
             for y in ids_with_policy(gen, h2_demand, tag = h2demand)))
