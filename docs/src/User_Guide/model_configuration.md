@@ -31,9 +31,12 @@ The following tables summarize the model settings parameters and their default/p
 |StorageVirtualDischarge | Flag to enable contributions that a storage device makes to the capacity reserve margin without generating power.|
 ||1 = activate the virtual discharge of storage resources.|
 ||0 = do not activate the virtual discharge of storage resources.|
-|HydrogenHourlyMatching | Constraint to match hydrogen production and consumption in the same zone.|
+|HourlyMatching| Constraint to match generation from clean sources with hourly consumption.|
 ||1 = Constraint is active.|
-||0 = Constraint is not active.| 
+||0 = Constraint is not active.|
+|HydrogenHourlyMatching | Flag to allow hydrogen production to contribute to the hourly clean supply matching constraint.|
+||1 = Hydrogen production contributes to the hourly clean supply matching constraint.|
+||0 = Hydrogen production does not contribute to the hourly clean supply matching constraint.|
 
 ## 2. Solution strategy
 

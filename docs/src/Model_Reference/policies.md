@@ -30,3 +30,9 @@ Pages = ["maximum_capacity_requirement.jl"]
 ```@docs
 GenX.hydrogen_demand!
 ```
+
+## Hourly clean supply matching constraint
+```@autodocs
+Modules = [GenX]
+Pages = ["hourly_matching.jl"]
+```
