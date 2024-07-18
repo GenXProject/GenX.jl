@@ -28,7 +28,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
     end
-    if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
+    if (!isempty(ELECTROLYZER))
         push!(cost_list, "cHydrogenRevenue")
     end
     dfCost = DataFrame(Costs = cost_list)
@@ -88,9 +88,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         ]
     end
 
-    if (setup["HydrogenMimimumProduction"] > 0) & (!isempty(ELECTROLYZER))
+    if (!isempty(ELECTROLYZER))
         push!(total_cost,
-            (!isempty(inputs["ELECTROLYZER"]) ? -1 * value(EP[:eTotalHydrogenValue]) : 0.0))
+            -1 * value(EP[:eTotalHydrogenValue]))
     end
 
     dfCost[!, Symbol("Total")] = total_cost
@@ -273,9 +273,16 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCTotal += eCStart
         end
 
-        if !isempty(ELECTROLYZERS_ZONE)
-            tempHydrogenValue = -1 * sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
-            tempCTotal += tempHydrogenValue
+        if !isempty(ELECTROLYZERS)
+            if !isempty(ELECTROLYZERS_ZONE)
+                tempHydrogenValue = -1 * sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
+                if !isempty(ELEC_ZONE_VRE_STOR)
+                    tempHydrogenValue = tempHydrogenValue - 1 * sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
+                end
+                tempCTotal += tempHydrogenValue
+            else 
+                tempHydrogenValue = -1 * sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
+            end
         end
 
         tempCNSE = sum(value.(EP[:eCNSE][:, :, z]))
@@ -312,7 +319,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")
         end
-        if !isempty(ELECTROLYZERS_ZONE)
+        if !isempty(ELECTROLYZERS)
             push!(temp_cost_list, tempHydrogenValue)
         end
 
