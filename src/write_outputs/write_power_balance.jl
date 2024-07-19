@@ -16,7 +16,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         "Demand_Response", "Nonserved_Energy",
         "Transmission_NetExport", "Transmission_Losses",
         "Demand"]
-    if setup["HydrogenMimimumProduction"] > 0
+    if !isempty(ELECTROLYZER)
         push!(Com_list, "Electrolyzer_Consumption")
     end
     if !isempty(VRE_STOR)
@@ -58,7 +58,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             powerbalance[(z - 1) * L + 9, :] = -(value.(EP[:eLosses_By_Zone][z, :]))
         end
         powerbalance[(z - 1) * L + 10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
-        if setup["HydrogenMimimumProduction"] > 0 & !isempty(ELECTROLYZER)
+        if !isempty(ELECTROLYZER)
             ELECTROLYZER_ZONE = intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZER)
             powerbalance[(z - 1) * L + 11, :] = (-1) * sum(
                 value.(EP[:vUSE][ELECTROLYZER_ZONE,:].data),
@@ -69,8 +69,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
 
             # if ELECTROLYZER is empty, increase indices by 1
-            is_electrolyzer_empty = isempty(ELECTROLYZER) ||
-                                    setup["HydrogenMimimumProduction"] == 0
+            is_electrolyzer_empty = isempty(ELECTROLYZER)
             discharge_idx = is_electrolyzer_empty ? 11 : 12
             charge_idx = is_electrolyzer_empty ? 12 : 13
 

@@ -110,7 +110,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(omega[t] * EP[:vP_ELEC][y, t] / by_rid(y, :hydrogen_mwh_per_tonne_elec)
             for t in 1:T)
         end)
-        
+
     if setup["HydrogenMimimumProduction"] == 1
         @expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
             sum(EP[:eH2Production][y]
@@ -194,10 +194,10 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     end
     @expression(EP, eTotalHydrogenValueT[t in 1:T],
         if !isempty(VS_ELEC)
-            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS) +
+            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS; init = 0) +
             sum(eHydrogenValue_vs[y, t] for y in VS_ELEC)
         else
-            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS)
+            sum(eHydrogenValue[y, t] for y in ELECTROLYZERS; init = 0)
         end)
     @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
     EP[:eObj] -= eTotalHydrogenValue
