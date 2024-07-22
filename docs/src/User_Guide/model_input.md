@@ -531,7 +531,7 @@ This policy is applied when if `HydrogenMimimumProduction = 1` in the settings f
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|Hydrogen\_Demand\_*| Flag to indicate which resources are considered for the Hydrogen Demand constraint.|
+|H2\_Demand\_*| Flag to indicate which resources are considered for the Hydrogen Demand constraint.|
 
 ##### Additional module-related columns for all resources
 In addition to the files described above, the `resources` folder can contain additional files that are used to specify attributes for specific resources and modules. Currently, the following files are supported:
