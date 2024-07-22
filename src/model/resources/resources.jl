@@ -882,14 +882,14 @@ wind(rs::Vector{T}) where {T <: AbstractResource} = findall(
         r.wind != 0,
     rs)
 
-elec_vre_stor(r::AbstractResource) = get(r, :elec, default_zero)
+is_elec_vre_stor(r::AbstractResource) = get(r, :elec, default_zero)
 """
     elec(rs::Vector{T}) where T <: AbstractResource
 
 Returns the indices of all co-located electrolyzer resources in the vector `rs`.
 """
 elec(rs::Vector{T}) where {T <: AbstractResource} = findall(
-    r -> isa(r, VreStorage) && elec_vre_stor(r) != 0, rs)
+    r -> isa(r, VreStorage) && is_elec_vre_stor(r) != 0, rs)
 
 """
     storage_dc_discharge(rs::Vector{T}) where T <: AbstractResource
