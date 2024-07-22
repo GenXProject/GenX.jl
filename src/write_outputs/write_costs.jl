@@ -11,7 +11,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     VRE_STOR = inputs["VRE_STOR"]
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
-    ELECTROLYZER = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) : inputs["ELECTROLYZER"]
+    ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) : inputs["ELECTROLYZER"]
 
     cost_list = [
         "cTotal",
@@ -28,7 +28,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
     end
-    if (!isempty(ELECTROLYZER))
+    if !isempty(ELECTROLYZER_ALL)
         push!(cost_list, "cHydrogenRevenue")
     end
     dfCost = DataFrame(Costs = cost_list)
@@ -88,9 +88,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         ]
     end
 
-    if (!isempty(ELECTROLYZER))
-        push!(total_cost,
-            -1 * value(EP[:eTotalHydrogenValue]))
+    if !isempty(ELECTROLYZER_ALL)
+        push!(total_cost, -1 * value(EP[:eTotalHydrogenValue]))
     end
 
     dfCost[!, Symbol("Total")] = total_cost
@@ -273,16 +272,15 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCTotal += eCStart
         end
 
-        if !isempty(ELECTROLYZER)
+        if !isempty(ELECTROLYZER_ALL) # both electrolyzers and VRE storage with electrolyzer component
+            tempHydrogenValue = 0.0
             if !isempty(ELECTROLYZERS_ZONE)
-                tempHydrogenValue = -1 * sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
-                if !isempty(ELEC_ZONE_VRE_STOR)
-                    tempHydrogenValue = tempHydrogenValue - 1 * sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
-                end
-                tempCTotal += tempHydrogenValue
-            else 
-                tempHydrogenValue = -1 * sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
+                tempHydrogenValue -= sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
             end
+            if !isempty(VRE_STOR) && !isempty(ELEC_ZONE_VRE_STOR)
+                tempHydrogenValue -= sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
+            end
+            tempCTotal += tempHydrogenValue
         end
 
         tempCNSE = sum(value.(EP[:eCNSE][:, :, z]))
@@ -319,7 +317,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")
         end
-        if !isempty(ELECTROLYZER)
+        if !isempty(ELECTROLYZER_ALL)
             push!(temp_cost_list, tempHydrogenValue)
         end
 
