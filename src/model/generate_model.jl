@@ -193,7 +193,8 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     # Model constraints, variables, expressions related to telectrolyzers
-    if !isempty(inputs["ELECTROLYZER"]) || (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+    if !isempty(inputs["ELECTROLYZER"]) ||
+       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
         electrolyzer!(EP, inputs, setup)
     end
     # Policies
