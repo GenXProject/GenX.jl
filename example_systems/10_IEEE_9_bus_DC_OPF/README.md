@@ -8,12 +8,12 @@ To run the model, first navigate to the example directory:
 
 ```bash
 $ julia
-julia> cd("example_systems/IEEE_9_bus_DC_OPF/")
+julia> cd("example_systems/10_IEEE_9_bus_DC_OPF/")
 ```
 
 - Using a terminal or command prompt:
 ```bash
-$ cd example_systems/IEEE_9_bus_DC_OPF/
+$ cd example_systems/10_IEEE_9_bus_DC_OPF/
 ``` 
 
 Next, ensure that your settings in `settings/genx_settings.yml` are correct (the default settings use the solver `HiGHS`).

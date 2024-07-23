@@ -8,7 +8,7 @@ To run the model, first navigate to the example directory:
 
 ```bash
 $ julia
-julia> cd("example_systems/7_three_zones_w_colocated_VRE_storage/")
+julia> cd("example_systems/8_three_zones_w_colocated_VRE_storage_electrolyzers/")
 ```
 
 - Using a terminal or command prompt:
