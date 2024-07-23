@@ -1,0 +1,5 @@
+Resource,Zone,Num_VRE_Bins,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,region,cluster,Qualified_Hydrogen_Supply
+MA_solar_pv,1,1,1,0,0,-1,0,85300,18760,0,9.13,0,0,0,0,MA,1,1
+CT_onshore_wind,2,1,1,0,0,-1,0,97200,43205,0.1,9.12,0,0,0,0,CT,1,1
+CT_solar_pv,2,1,1,0,0,-1,0,85300,18760,0,9.16,0,0,0,0,CT,1,1
+ME_onshore_wind,3,1,1,0,0,-1,0,97200,43205,0.1,9.12,0,0,0,0,ME,1,1

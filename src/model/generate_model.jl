@@ -113,6 +113,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
     end
 
+    if setup["HydrogenMimimumProduction"] > 0
+        create_empty_expression!(EP, :eH2DemandRes, inputs["NumberOfH2DemandReqs"])
+    end
+
     # Infrastructure
     discharge!(EP, inputs, setup)
 
@@ -163,10 +167,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         hydro_res!(EP, inputs, setup)
     end
 
-    if !isempty(inputs["ELECTROLYZER"])
-        electrolyzer!(EP, inputs, setup)
-    end
-
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
     if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage!(EP, inputs)
@@ -176,6 +176,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if !isempty(inputs["FLEX"])
         flexible_demand!(EP, inputs, setup)
     end
+
     # Model constraints, variables, expression related to thermal resource technologies
     if !isempty(inputs["THERM_ALL"])
         thermal!(EP, inputs, setup)
@@ -191,6 +192,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         vre_stor!(EP, inputs, setup)
     end
 
+    # Model constraints, variables, expressions related to telectrolyzers
+    if !isempty(inputs["ELECTROLYZER"]) ||
+       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+        electrolyzer!(EP, inputs, setup)
+    end
     # Policies
 
     if setup["OperationalReserves"] > 0
@@ -223,6 +229,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     if setup["MaxCapReq"] == 1
         maximum_capacity_requirement!(EP, inputs, setup)
+    end
+
+    # Hydrogen demand limits
+    if setup["HydrogenMimimumProduction"] > 0
+        hydrogen_demand!(EP, inputs, setup)
     end
 
     if setup["ModelingToGenerateAlternatives"] == 1

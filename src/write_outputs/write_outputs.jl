@@ -431,7 +431,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             println(elapsed_time_max_cap_req)
         end
 
-        if !isempty(inputs["ELECTROLYZER"]) && has_duals(EP)
+        if setup["HydrogenMimimumProduction"] == 1 && has_duals(EP)
             if output_settings_d["WriteHydrogenPrices"]
                 elapsed_time_hydrogen_prices = @elapsed write_hydrogen_prices(path,
                     inputs,

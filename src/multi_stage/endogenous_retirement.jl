@@ -54,6 +54,7 @@ function compute_cumulative_min_retirements!(inputs_d::Dict, t::Int)
                 ("VS_DC", :min_retired_cap_inverter_mw),
                 ("VS_SOLAR", :min_retired_cap_solar_mw),
                 ("VS_WIND", :min_retired_cap_wind_mw),
+                ("VS_ELEC", :min_retired_cap_elec_mw),
                 ("VS_ASYM_DC_DISCHARGE", :min_retired_cap_discharge_dc_mw),
                 ("VS_ASYM_DC_CHARGE", :min_retired_cap_charge_dc_mw),
                 ("VS_ASYM_AC_DISCHARGE", :min_retired_cap_discharge_ac_mw),
@@ -103,6 +104,14 @@ function endogenous_retirement!(EP::Model, inputs::Dict, setup::Dict)
 
         if !isempty(inputs["VS_WIND"])
             endogenous_retirement_vre_stor_wind!(EP,
+                inputs,
+                num_stages,
+                cur_stage,
+                stage_lens)
+        end
+
+        if !isempty(inputs["VS_ELEC"])
+            endogenous_retirement_vre_stor_elec!(EP,
                 inputs,
                 num_stages,
                 cur_stage,
@@ -587,11 +596,66 @@ function endogenous_retirement_vre_stor_wind!(EP::Model,
         eNewCapTrackWind[y] + eMinRetCapTrackWind[y]<=eRetCapTrackWind[y])
 end
 
-function endogenous_retirement_vre_stor_stor!(EP::Model,
+function endogenous_retirement_vre_stor_elec!(EP::Model,
         inputs::Dict,
         num_stages::Int,
         cur_stage::Int,
         stage_lens::Array{Int, 1})
+    println("Endogenous Retirement (VRE-Storage Electrolyzer) Module")
+
+    gen = inputs["RESOURCES"]
+
+    NEW_CAP_ELEC = inputs["NEW_CAP_ELEC"] # Set of all resources eligible for new capacity
+    RET_CAP_ELEC = inputs["RET_CAP_ELEC"] # Set of all resources eligible for capacity retirements
+
+    ### Variables ###
+
+    # Keep track of all new and retired capacity from all stages
+    @variable(EP, vCAPTRACKELEC[y in RET_CAP_ELEC, p = 1:num_stages]>=0)
+    @variable(EP, vRETCAPTRACKELEC[y in RET_CAP_ELEC, p = 1:num_stages]>=0)
+
+    ### Expressions ###
+
+    @expression(EP, eNewCapElec[y in RET_CAP_ELEC],
+        if y in NEW_CAP_ELEC
+            EP[:vELECCAP][y]
+        else
+            EP[:vZERO]
+        end)
+
+    @expression(EP, eRetCapElec[y in RET_CAP_ELEC], EP[:vRETELECCAP][y])
+
+    # Construct and add the endogenous retirement constraint expressions
+    @expression(EP, eRetCapTrackElec[y in RET_CAP_ELEC],
+        sum(EP[:vRETCAPTRACKELEC][y, p] for p in 1:cur_stage))
+    @expression(EP, eNewCapTrackElec[y in RET_CAP_ELEC],
+        sum(EP[:vCAPTRACKELEC][y, p]
+        for p in 1:get_retirement_stage(cur_stage, lifetime(gen[y]), stage_lens)))
+    @expression(EP, eMinRetCapTrackElec[y in RET_CAP_ELEC],
+        cum_min_retired_cap_elec_mw(gen[y]))
+
+    ### Constraints ###
+
+    # Keep track of newly built capacity from previous stages
+    @constraint(EP, cCapTrackNewElec[y in RET_CAP_ELEC],
+        eNewCapElec[y]==vCAPTRACKELEC[y, cur_stage])
+    # The RHS of this constraint will be updated in the forward pass
+    @constraint(EP, cCapTrackElec[y in RET_CAP_ELEC, p = 1:(cur_stage - 1)],
+        vCAPTRACKELEC[y, p]==0)
+
+    # Keep track of retired capacity from previous stages
+    @constraint(EP, cRetCapTrackNewElec[y in RET_CAP_ELEC],
+        eRetCapElec[y]==vRETCAPTRACKELEC[y, cur_stage])
+    # The RHS of this constraint will be updated in the forward pass
+    @constraint(EP, cRetCapTrackElec[y in RET_CAP_ELEC, p = 1:(cur_stage - 1)],
+        vRETCAPTRACKELEC[y, p]==0)
+
+    @constraint(EP, cLifetimeRetElec[y in RET_CAP_ELEC],
+        eNewCapTrackElec[y] + eMinRetCapTrackElec[y]<=eRetCapTrackElec[y])
+end
+
+function endogenous_retirement_vre_stor_stor!(
+        EP::Model, inputs::Dict, num_stages::Int, cur_stage::Int, stage_lens::Array{Int, 1})
     println("Endogenous Retirement (VRE-Storage Storage) Module")
 
     gen = inputs["RESOURCES"]

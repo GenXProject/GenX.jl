@@ -31,6 +31,7 @@ function scale_multistage_data!(multistage_in::DataFrame, scale_factor::Float64)
         :min_retired_cap_inverter_mw,
         :min_retired_cap_solar_mw,
         :min_retired_cap_wind_mw,
+        :min_retired_cap_elec_mw,
         :min_retired_cap_charge_dc_mw,
         :min_retired_cap_charge_ac_mw,
         :min_retired_cap_discharge_dc_mw,
