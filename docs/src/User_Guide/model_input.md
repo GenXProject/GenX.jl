@@ -156,7 +156,7 @@ Each file contains cost and performance parameters for various generators and ot
 |region | Name of the model region|
 |cluster | Number of the cluster when representing multiple clusters of a given technology in a given region.  |
 |**Required if electrolyzer is included in the model**|
-|Qualified_Hydrogen_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
+|Qualified\_Hydrogen\_Supply| {0,1}, Indicates that generator or storage resources is eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint)|
 |**Required for retrofitting**|
 |Can\_Retrofit | {0, 1}, Flag for resource (storage, generation) eligibility for retrofit.|
 ||Can\_Retrofit = 1: eligible for retrofit. |
@@ -476,7 +476,7 @@ The following table describes the columns in each of these four files.
 
 This policy is applied when if `EnergyShareRequirement > 0` in the settings file. \* corresponds to the ith row of the file `Energy_share_requirement.csv`. 
 
-##### Table 12: Energy share requirement policy parameters in Resource_energy_share_requirement.csv 
+##### Table 12: Energy share requirement policy parameters in Resource\_energy\_share\_requirement.csv 
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -491,7 +491,7 @@ This policy is applied when if `EnergyShareRequirement > 0` in the settings file
 
 This policy is applied when if `MinCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. 
 
-##### Table 13: Minimum capacity requirement policy parameters in Resource_minimum_capacity_requirement.csv
+##### Table 13: Minimum capacity requirement policy parameters in Resource\_minimum\_capacity\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -504,7 +504,7 @@ This policy is applied when if `MinCapReq = 1` in the settings file. \* correspo
 
 This policy is applied when if `MaxCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.
 
-##### Table 14: Maximum capacity requirement policy parameters in Resource_maximum_capacity_requirement.csv
+##### Table 14: Maximum capacity requirement policy parameters in Resource\_maximum\_capacity\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -517,7 +517,7 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
-##### Table 15: Capacity reserve margin policy parameters in Resource_capacity_reserve_margin.csv
+##### Table 15: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -526,7 +526,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 
 This policy is applied when if `HydrogenMimimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
 
-##### Table 16: Hydrogen demand policy parameters in Resource_hydrogen_demand.csv
+##### Table 16: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -761,5 +761,5 @@ This file contains inputs specifying regional hydrogen production requirements. 
 | :------------ | :-----------|
 |H2DemandConstraint| Index of the hydrogen demand constraint.|
 |Constraint\_Description| Names of hydrogen demand constraints; not to be read by model, but used as a helpful notation to the model user. |
-|Hydrogen_Demand_kt| Hydrogen production requirements in 1,000 tons|
+|Hydrogen\_Demand\_kt| Hydrogen production requirements in 1,000 tons|
 |PriceH2| Price of hydrogen per metric ton ($/t)|
