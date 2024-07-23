@@ -273,7 +273,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCTotal += eCStart
         end
 
-        if !isempty(ELECTROLYZER_ALL) # both electrolyzers and VRE storage with electrolyzer component
+        if !isempty(ELECTROLYZER_ALL) # both electrolyzers and VRE+storage with electrolyzer component
             tempHydrogenValue = 0.0
             if !isempty(ELECTROLYZERS_ZONE)
                 tempHydrogenValue -= sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
