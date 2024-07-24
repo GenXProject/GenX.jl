@@ -1,0 +1,10 @@
+Resource	Zone	Existing_Cap_MWh	Existing_Cap_MW	New_Build	Can_Retire	Cap_Size	Min_Cap_MW	Max_Cap_MW	Inv_Cost_per_MWyr	Fixed_OM_Cost_per_MWyr	Var_OM_Cost_per_MWh	Start_Cost_per_MW	Heat_Rate_MMBTU_per_MWh	Fuel	Min_Power	Self_Disch	Eff_Up	Eff_Down	Ramp_Up_Percentage	Ramp_Dn_Percentage	Up_Time	Down_Time	region	technology	cluster
+EIC_biomass_1	1	0	1722.5	0	0	1.27	0	0	0	150850	7.32	172	17.03	biomass	0.308	0	1	1	1	1	0	0	EIC	Biomass	1
+EIC_small_hydroelectric_1	1	0	1672.2	0	0	1.06	0	0	0	47048	0	0	10.34	None	0.273	0	1	1	1	1	0	0	EIC	Small Hydroelectric	1
+TRE_biomass_1	2	0	44.5	0	0	1.48	0	0	0	150850	6.51	172	15.15	biomass	0.591	0	1	1	1	1	0	0	TRE	Biomass	1
+TRE_small_hydroelectric_1	2	0	11.2	0	0	0.75	0	0	0	47048	0	0	10.34	None	0	0	1	1	1	1	0	0	TRE	Small Hydroelectric	1
+WECC_biomass_1	3	0	551	0	0	2.01	0	0	0	150850	7.14	172	16.63	biomass	0.362	0	1	1	1	1	0	0	WECC	Biomass	1
+WECC_small_hydroelectric_1	3	0	1064.3	0	0	1.62	0	0	0	47048	0	0	10.34	None	0.181	0	1	1	1	1	0	0	WECC	Small Hydroelectric	1
+WECC_distributed_generation_1	3	0	250535	0	0	0	0	0	0	0	0	0	0	None	0	0	1	1	1	1	0	0	WECC	distributed_generation	1
+EIC_distributed_generation_1	1	0	1770000	0	0	0	0	0	0	0	0	0	0	None	0	0	1	1	1	1	0	0	EIC	distributed_generation	1
+TRE_distributed_generation_1	2	0	17006	0	0	0	0	0	0	0	0	0	0	None	0	0	1	1	1	1	0	0	TRE	distributed_generation	1

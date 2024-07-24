@@ -1,0 +1,4 @@
+Resource	Zone	Existing_Cap_MWh	Existing_Cap_MW	New_Build	Can_Retire	Cap_Size	Min_Cap_MW	Max_Cap_MW	Inv_Cost_per_MWyr	Fixed_OM_Cost_per_MWyr	Var_OM_Cost_per_MWh	Heat_Rate_MMBTU_per_MWh	Fuel	Min_Power	Self_Disch	Eff_Up	Eff_Down	Hydro_Energy_to_Power_Ratio	Ramp_Up_Percentage	Ramp_Dn_Percentage	Up_Time	Down_Time	region	technology	cluster
+EIC_conventional_hydroelectric_1	1	0	24200.8	0	0	32.35	0	0	0	47048	0	10.34	None	0.273	0	1	1	1	1	1	0	0	EIC	Conventional Hydroelectric	1
+TRE_conventional_hydroelectric_1	2	0	477	0	0	25.1	0	0	0	47048	0	10.34	None	0	0	1	1	1	1	1	0	0	TRE	Conventional Hydroelectric	1
+WECC_conventional_hydroelectric_1	3	0	46528	0	0	72.7	0	0	0	47048	0	10.34	None	0.214	0	1	1	1	1	1	0	0	WECC	Conventional Hydroelectric	1
