@@ -33,7 +33,7 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::D
 end
 
 function load_process_variability!(filepath::AbstractString, all_resources::Vector{T},
-        inputs::Dict, maxpower_key::String) where T <: AbstractString
+        inputs::Dict, maxpower_key::String) where {T <: AbstractString}
     vre_stor = load_dataframe(filepath)
 
     # Set variability to zero for resources not in the file
