@@ -39,16 +39,17 @@ end
 Load and process variability data for different VRE_storage components.
 
 This function reads a CSV file specified by `filepath`, containing variability 
-data for different VRE_storage components. The function then set the variability
-to zero for resources not in the file, select the resources in the order of
-`all_resources`, and store the maximum power output and variability of each
+data for different VRE_storage components. The function then sets the variability
+to zero for resources not in the file, selects the resources in the order of
+`all_resources`, and stores the maximum power output and variability of each
 energy resource in the `inputs` dictionary.
 
 # Arguments
 - `filepath::AbstractString`: Path to the CSV file with variability data.
 - `all_resources::Vector{T}`: Vector containing all the energy resources.
 - `inputs::Dict`: Dictionary to store input data.
-- `maxpower_key::String`: Key for the maximum power output in the `inputs` dict.
+- `maxpower_key::String`: Identifier for the key for the maximum power 
+output in the `inputs` dict.
 """
 function load_process_variability!(filepath::AbstractString, all_resources::Vector{T},
         inputs::Dict, maxpower_key::String) where {T <: AbstractString}
