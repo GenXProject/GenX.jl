@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `devbranch` in the docs `make.jl` file to track the develop branch (#710)
 - Fix `TDR` to load `Fuels_data.csv` w/wo optional `None` column (#720)
 - Include comprehensive list of all settings flags (that are currently in GenX) in the docs (#721)
+- Allow `load_vre_stor_variability!` to load only wind or solar resources as 
+part of the VRE_STOR module (#728)
 
 ### Added
 - Add objective scaler for addressing problem ill-conditioning (#667)
