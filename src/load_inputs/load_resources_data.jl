@@ -1441,14 +1441,7 @@ function add_resources_to_input_data!(inputs::Dict,
         allam_dict[y, "ramp_dn"] = ramp_dn_percentage_sco2turbine(gen[y]), ramp_dn_percentage_asu(gen[y]), 0
         allam_dict[y, "existing_cap"] = existing_cap_sco2turbine(gen[y]), existing_cap_asu(gen[y]), existing_cap_lox(gen[y])
     end
-
-
     inputs["allam_dict"] = allam_dict
-
-
-
-
-
 
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)

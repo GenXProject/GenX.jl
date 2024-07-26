@@ -195,6 +195,12 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
 
     # all the allam cycle output should be less than the capacity 
     @constraint(EP, [y in ALLAM_CYCLE_LOX, i in 1:3, t in 1:T], vOutput_AllamcycleLOX[y, i, t] <= eTotalCap_AllamcycleLOX[y,i])
+    
+    # the duration of lox
+    @constraint(EP, cMaxLoxDuration_in[y in ALLAM_CYCLE_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] <= lox_max_duration(gen[y]) * vLOX_in[y,t])
+    @constraint(EP, cMaxLoxDuration_out[y in ALLAM_CYCLE_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] <= lox_max_duration(gen[y]) * eLOX_out[y,t])
+    @constraint(EP, cMinLoxDuration_in[y in ALLAM_CYCLE_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] >= lox_min_duration(gen[y]) * vLOX_in[y,t])
+    @constraint(EP, cMinLoxDuration_out[y in ALLAM_CYCLE_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] >= lox_min_duration(gen[y]) * eLOX_out[y,t])
 
     # step 3. add variable cost 
     # variale costs are related to the main output, e.g., gross power output frmo sCO2 turbine
