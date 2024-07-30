@@ -26,7 +26,7 @@ part of the VRE_STOR module (#728)
 - Added the option to write results after each iteration of a multistage run (Myopic) (#704)
 - Add option to precompile `run_genx_case!` and `cluster_inputs` to speedup TTFX of GenX (#718)
 - Added co-location of electrolyzers to VRE_STOR and eneabled regional hydrogen production limits (#678)
-- Added text in boldface to doc pages for retrofits (#)
+- Added text in boldface to doc pages for retrofits (#730)
 
 ## [0.4.0] - 2024-03-18
 
