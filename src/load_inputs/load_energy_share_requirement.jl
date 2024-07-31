@@ -1,20 +1,20 @@
 @doc raw"""
-    load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+    load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
 
 Read input parameters related to minimum energy share requirement constraints
 (e.g. renewable portfolio standard or clean electricity standard policies)
 """
-function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    filename = input_names["esr_slack_name"]
+    filename = setup["WriteInputNamesDict"]["esr_slack_name"]
     if isfile(joinpath(path, filename))
         df = load_dataframe(joinpath(path, filename))
         inputs["dfESR_slack"] = df
         inputs["dfESR_slack"][!, :PriceCap] ./= scale_factor # million $/GWh if scaled, $/MWh if not scaled
     end
 
-    filename = input_names["esr_name"]
+    filename = setup["WriteInputNamesDict"]["esr_name"]
     df = load_dataframe(joinpath(path, filename))
     mat = extract_matrix_from_dataframe(df, "ESR")
     inputs["dfESR"] = mat

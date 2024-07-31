@@ -9,7 +9,7 @@ path - string path to working directory
 
 returns: Dict (dictionary) object containing all data inputs
 """
-function load_inputs(setup::Dict, path::AbstractString, names::Dict)
+function load_inputs(setup::Dict, path::AbstractString)
     ## Read input files
     println("Reading Input CSV Files")
     ## input paths
@@ -17,33 +17,33 @@ function load_inputs(setup::Dict, path::AbstractString, names::Dict)
     #resources_path = joinpath(path, setup["ResourcesFolder"])
     #policies_path = joinpath(path, setup["PoliciesFolder"])
 
-    system_path = names["system_location"]
-    resources_path = names["resources_location"]
-    policies_path = names["policies_location"]
+    system_path = setup["WriteInputNamesDict"]["system_location"]
+    resources_path = setup["WriteInputNamesDict"]["resources_location"]
+    policies_path = setup["WriteInputNamesDict"]["policies_location"]
     println(policies_path)
     ## Declare Dict (dictionary) object used to store parameters
     inputs = Dict()
     # Read input data about power network topology, operating and expansion attributes
-    if isfile(joinpath(system_path, names["network_name"]))
-        network_var = load_network_data!(setup, system_path, inputs, names)
+    if isfile(joinpath(system_path,setup["WriteInputNamesDict"]["network_name"]))
+        network_var = load_network_data!(setup, system_path, inputs)
     else
         inputs["Z"] = 1
         inputs["L"] = 0
     end
 
     # Read temporal-resolved load data, and clustering information if relevant
-    load_demand_data!(setup, path, inputs, names)
+    load_demand_data!(setup, path, inputs)
     # Read fuel cost data, including time-varying fuel costs
-    load_fuels_data!(setup, path, inputs, names)
+    load_fuels_data!(setup, path, inputs)
     # Read in generator/resource related inputs
-    load_resources_data!(inputs, setup, names, path, resources_path)
+    load_resources_data!(inputs, setup, path, resources_path)
     # Read in generator/resource availability profiles
-    load_generators_variability!(setup, path, inputs, names)
+    load_generators_variability!(setup, path, inputs)
 
     validatetimebasis(inputs)
 
     if setup["CapacityReserveMargin"] == 1
-        load_cap_reserve_margin!(setup, policies_path, inputs, names)
+        load_cap_reserve_margin!(setup, policies_path, inputs)
         if inputs["Z"] > 1
             load_cap_reserve_margin_trans!(setup, inputs, network_var)
         end
@@ -51,27 +51,27 @@ function load_inputs(setup::Dict, path::AbstractString, names::Dict)
 
     # Read in general configuration parameters for operational reserves (resource-specific reserve parameters are read in load_resources_data)
     if setup["OperationalReserves"] == 1
-        load_operational_reserves!(setup, system_path, inputs, names)
+        load_operational_reserves!(setup, system_path, inputs)
     end
 
     if setup["MinCapReq"] == 1
-        load_minimum_capacity_requirement!(policies_path, inputs, setup, names)
+        load_minimum_capacity_requirement!(policies_path, inputs, setup)
     end
 
     if setup["MaxCapReq"] == 1
-        load_maximum_capacity_requirement!(policies_path, inputs, setup, names)
+        load_maximum_capacity_requirement!(policies_path, inputs, setup)
     end
 
     if setup["EnergyShareRequirement"] == 1
-        load_energy_share_requirement!(setup, policies_path, inputs, names)
+        load_energy_share_requirement!(setup, policies_path, inputs)
     end
 
     if setup["CO2Cap"] >= 1
-        load_co2_cap!(setup, policies_path, inputs, names)
+        load_co2_cap!(setup, policies_path, inputs)
     end
 
     if !isempty(inputs["VRE_STOR"])
-        load_vre_stor_variability!(setup, path, inputs, names)
+        load_vre_stor_variability!(setup, path, inputs)
     end
 
     # Read in hydrogen damand data
@@ -121,16 +121,14 @@ Parameters:
 - setup: Dict{String, Any} - The GenX settings parameters containing TimeDomainReduction and SystemFolder information.
 - TDR_directory: String - The data directory where files are located.
 - path: String - Path to the case folder.
-- input_names: Dict{Any, Any} - The names of the input files specified in input_settings.yml
 
 Returns:
 - String: The directory path based on the setup parameters.
 """
 function get_systemfiles_path(setup::Dict,
         TDR_directory::AbstractString,
-        path::AbstractString,
-        input_names::Dict)
-    if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory, input_names)
+        path::AbstractString)
+    if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory, setup)
         return TDR_directory
     else
         # If TDR is not used, then use the "system" directory specified in the setup

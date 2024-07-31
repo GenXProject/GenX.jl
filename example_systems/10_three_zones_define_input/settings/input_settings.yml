@@ -1,8 +1,8 @@
 #default_location: default/path/to/data
 # system
 #system_location: path/to/data
-demand_name: "Demand1.parquet"
-fuel_name: "Fuels_data.csv"
+demand_name: "Demand_data.csv"
+fuel_name: "Fuels_data.csv.gz"
 
 # policies
 #policies_location: /path/to/data

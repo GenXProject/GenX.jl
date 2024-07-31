@@ -1,19 +1,19 @@
 @doc raw"""
-    load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+    load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
 
 Read input parameters related to CO$_2$ emissions cap constraints
 """
-function load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+function load_co2_cap!(setup::Dict, path::AbstractString, inputs::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    filename = input_names["co2_cap_slack_name"]
+    filename = setup["WriteInputNamesDict"]["co2_cap_slack_name"]
     if isfile(joinpath(path, filename))
         df = load_dataframe(joinpath(path, filename))
         inputs["dfCO2Cap_slack"] = df
         inputs["dfCO2Cap_slack"][!, :PriceCap] ./= scale_factor # Million $/kton if scaled, $/ton if not scaled
     end
 
-    filename = input_names["co2_cap_name"]
+    filename = setup["WriteInputNamesDict"]["co2_cap_name"]
     df = load_dataframe(joinpath(path, filename))
 
     inputs["dfCO2Cap"] = df

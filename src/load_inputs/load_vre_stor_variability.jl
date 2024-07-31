@@ -1,22 +1,26 @@
 @doc raw"""
-	load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+	load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict)
 
 Read input parameters related to hourly maximum capacity factors for the solar PV 
 	(DC capacity factors) component and wind (AC capacity factors) component of co-located
 	generators
 """
-function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::Dict)
 
     # Hourly capacity factors
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path, input_names)
+    my_dir = get_systemfiles_path(setup, TDR_directory, path)
 
+<<<<<<< HEAD
     # Resource names
     filename1 = input_names["vre_stor_solar_name"]
+=======
+    filename1 = setup["WriteInputNamesDict"]["vre_stor_solar_name"]
+>>>>>>> 8a69955c2 (Added write_output_file to take in parquet and json filetypes)
     vre_stor_solar = load_dataframe(joinpath(my_dir, filename1))
 
-    filename2 = input_names["vre_stor_wind_name"]
+    filename2 = setup["WriteInputNamesDict"]["vre_stor_wind_name"]
     vre_stor_wind = load_dataframe(joinpath(my_dir, filename2))
 
     all_resources = inputs["RESOURCE_NAMES"]

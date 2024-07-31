@@ -18,10 +18,23 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     power = value.(EP[:vP])
     power *= scale_factor
 
+<<<<<<< HEAD
     df = DataFrame(Resource = resources,
         Zone = zones,
         AnnualSum = zeros(G))
     df.AnnualSum .= power * weight
+=======
+    filepath = joinpath(path, "power.csv")
+    if setup["WriteOutputs"] == "annual"
+        write_annual(filepath, dfPower)
+    else # setup["WriteOutputs"] == "full"
+        df_Power = write_fulltimeseries(filepath, power, dfPower, setup)
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+            write_full_time_series_reconstruction(path, setup, df_Power, "power")
+            @info("Writing Full Time Series for Power")
+        end
+    end
+>>>>>>> 8a69955c2 (Added write_output_file to take in parquet and json filetypes)
 
     write_temporal_data(df, power, path, setup, "power")
     return df

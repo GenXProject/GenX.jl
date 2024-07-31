@@ -112,7 +112,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         dfCap.NewChargeCap = dfCap.NewChargeCap * ModelScalingFactor
         dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
     end
-    total = DataFrame(Resource = "Total", Zone = "n/a", Retrofit_Id = "n/a",
+    #=total = DataFrame(Resource = "Total", Zone = "n/a", Retrofit_Id = "n/a",
         StartCap = sum(dfCap[!, :StartCap]), RetCap = sum(dfCap[!, :RetCap]),
         NewCap = sum(dfCap[!, :NewCap]), EndCap = sum(dfCap[!, :EndCap]),
         RetroCap = sum(dfCap[!, :RetroCap]),
@@ -124,9 +124,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         StartChargeCap = sum(dfCap[!, :StartChargeCap]),
         RetChargeCap = sum(dfCap[!, :RetChargeCap]),
         NewChargeCap = sum(dfCap[!, :NewChargeCap]),
-        EndChargeCap = sum(dfCap[!, :EndChargeCap]))
+        EndChargeCap = sum(dfCap[!, :EndChargeCap]))=#
 
-    dfCap = vcat(dfCap, total)
-    CSV.write(joinpath(path, "capacity.csv"), dfCap)
+    #dfCap = vcat(dfCap, total)
+    #CSV.write(joinpath(path, "capacity.csv"), dfCap)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacity_name"]), dfCap, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return dfCap
 end

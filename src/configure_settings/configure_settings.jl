@@ -37,24 +37,27 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1,
+        "ResultsFileType" => "auto_detect",
+        "ResultsCompressionType" => "auto_detect")
 end
 
 @doc raw"""
-    configure_settings(settings_path::String, output_settings_path::String)
+    configure_settings(settings_path::String, output_settings_path::String, case::AbstractString)
 
-Reads in the settings from the `genx_settings.yml` and `output_settings.yml` YAML files and
+Reads in the settings from the `genx_settings.yml`, `output_settings.yml`, `input_settings.yml`, and `results_settings.yml` YAML files and
 merges them with the default settings. It then validates the settings and returns the
 settings dictionary.
 
 # Arguments
 - `settings_path::String`: The path to the settings YAML file.
 - `output_settings_path::String`: The path to the output settings YAML file.
+- `case::AbstractString`: The case used for this instance of GenX.
 
 # Returns
 - `settings::Dict`: The settings dictionary.
 """
-function configure_settings(settings_path::String, output_settings_path::String)
+function configure_settings(settings_path::String, output_settings_path::String, case::AbstractString)
     println("\nConfiguring Settings")
     model_settings = YAML.load(open(settings_path))
 
@@ -63,6 +66,12 @@ function configure_settings(settings_path::String, output_settings_path::String)
 
     output_settings = configure_writeoutput(output_settings_path, settings)
     settings["WriteOutputsSettingsDict"] = output_settings
+
+    input_settings = configure_input_names(case)
+    settings["WriteInputNamesDict"] = input_settings
+
+    results_settings = configure_results_names(case)
+    settings["WriteResultsNamesDict"] = results_settings
 
     validate_settings!(settings)
     return settings
@@ -250,15 +259,97 @@ function default_input_names(case::AbstractString)
     "operational_reserves_name" => "Operational_reserves.csv")
 end
 
+@doc raw"""
+    configure_input_names(case::AbstractString)
+
+Reads in the settings from the `input_settings.yml` YAML file and
+merges them with the default input settings. It then returns the
+settings dictionary.
+
+# Arguments
+- `case::AbstractString`: The case containing the settings file.
+
+# Returns
+- `names::Dict`: The input names dictionary.
+"""
 function configure_input_names(case::AbstractString)
     println("Configuring Input File and Path Names")
     input_settings_path = get_settings_path(case, "input_settings.yml")
     input_names = YAML.load(open(input_settings_path))
-    #input_names = isfile(settings_path) ? YAML.load(open(input_settings_path)) : Dict{Any, Any}()
+    input_names = isfile(input_settings_path) ? YAML.load(open(input_settings_path)) : Dict{Any, Any}()
 
-    default_names = default_input_names(case)
-    merge!(default_names,input_names)
+    names = default_input_names(case)
+    merge!(names,input_names)
 
-    return default_names
+    return names
+end
+
+function default_results_names()
+   Dict{Any, Any}("capacity_name" => "capacity",
+    "capacity_factor_name" => "capacityfactor",
+    "captured_emissions_plant_name" => "captured_emissions_plant",
+    "charge_name" => "charge.csv",
+    "charging_cost_name" => "ChargingCost",
+    "co2_prices_name" => "CO2_prices_and_penalties",
+    "commit_name" => "commit",
+    "costs_name" => "costs",
+    "curtail_name" => "curtail",
+    "emissions_plant_name" => "emissions_plant",
+    "emissions_name" => "emissions",
+    "energy_revenue_name" => "EnergyRevenue",
+    "flow_name" => "flow",
+    "fuel_cost_plant_name" => "Fuel_cost_plant",
+    "fuel_consumption_plant_name" => "FuelConsumption_plant_MMBTU",
+    "fuel_consumption_total_name" => "FuelConsumtion_total_MMBTU",
+    "mincap_name" => "MinCapReq_prices_and_penalties",
+    "revenue_name" => "NetRevenue",
+    "network_expansion_name" => "network_expansion",
+    "nse_name" => "nse",
+    "power_balance_name" => "power_balance",
+    "power_name" => "power",
+    "prices_name" => "prices",
+    "reg_subsidy_revenue_name" => "RegSubsidyRevenue",
+    "reg_name" => "reg",
+    "reg_dn_name" => "reg_dn",
+    "reliability_name" => "reliability",
+    "shutdown_name" => "shutdown",
+    "start_name" => "start",
+    "status_name" => "status",
+    "storage_name" => "storage",
+    "subsidy_revenue_name" => "SubsidyRevenue",
+    "time_weights_name" => "time_weights",
+    "tlosses_name" => "tlosses",
+    "virtual_discharge_name" => "virtual_discharge",
+    "vre_stor_dc_charge_name" => "vre_stor_dc_charge",
+    "vre_stor_ac_charge_name" => "vre_stor_ac_charge",
+    "vre_stor_dc_discharge_name" => "vre_stor_dc_discharge",
+    "vre_stor_ac_discharge_name" => "vre_stor_ac_discharge",
+    "vre_stor_wind_power_name" => "vre_stor_wind_power",
+    "vre_stor_solar_power_name" => "vre_stor_solar_power")
+end
+
+@doc raw"""
+    configure_results_names(case::AbstractString)
+
+Reads in the settings from the `results_settings.yml` YAML file and
+merges them with the default results settings. It then returns the
+settings dictionary.
+
+# Arguments
+- `case::AbstractString`: The case containing the settings file.
+
+# Returns
+- `names::Dict`: The results names dictionary.
+"""
+function configure_results_names(case::AbstractString)
+    println("Configuring Results File Names")
+    results_settings_path = get_settings_path(case, "results_settings.yml")
+    results_names = YAML.load(open(results_settings_path))
+    results_names = isfile(results_settings_path) ? YAML.load(open(results_settings_path)) : Dict{Any, Any}()
+
+    names = default_results_names()
+    merge!(names,results_names)
+
+    return names
 end
 

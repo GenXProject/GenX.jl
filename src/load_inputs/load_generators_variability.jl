@@ -1,16 +1,16 @@
 @doc raw"""
-	load_generators_variability!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+	load_generators_variability!(setup::Dict, path::AbstractString, inputs::Dict)
 
 Read input parameters related to hourly maximum capacity factors for generators, storage, and flexible demand resources
 """
-function load_generators_variability!(setup::Dict, path::AbstractString, inputs::Dict, input_names::Dict)
+function load_generators_variability!(setup::Dict, path::AbstractString, inputs::Dict)
 
     # Hourly capacity factors
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path, input_names)
+    my_dir = get_systemfiles_path(setup, TDR_directory, path)
 
-    filename = input_names["generators_name"]
+    filename = setup["WriteInputNamesDict"]["generators_name"]
     gen_var = load_dataframe(joinpath(my_dir, filename))
 
     all_resources = inputs["RESOURCE_NAMES"]

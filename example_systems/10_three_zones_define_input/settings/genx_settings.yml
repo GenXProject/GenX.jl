@@ -10,3 +10,5 @@ MaxCapReq: 0
 MinCapReq: 1
 CO2Cap: 2
 WriteShadowPrices: 1
+ResultsFileType: "auto_detect"
+ResultsCompressionType: "none"

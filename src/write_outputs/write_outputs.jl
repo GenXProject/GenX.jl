@@ -489,20 +489,27 @@ end # END output()
 
 Internal function for writing annual outputs. 
 """
+<<<<<<< HEAD
 function write_annual(fullpath::AbstractString, dfOut::DataFrame)
     push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
+=======
+function write_annual(fullpath::AbstractString, dfOut::DataFrame, setup::Dict)
+    push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum])])
+>>>>>>> 8a69955c2 (Added write_output_file to take in parquet and json filetypes)
     CSV.write(fullpath, dfOut)
+    #write_output_file(fullpath, dOut, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return nothing
 end
 
 """
-	write_fulltimeseries(fullpath::AbstractString, dataOut::Matrix{Float64}, dfOut::DataFrame)
+	write_fulltimeseries(fullpath::AbstractString, dataOut::Matrix{Float64}, dfOut::DataFrame, setup::Dict)
 
 Internal function for writing full time series outputs. This function wraps the instructions for creating the full time series output files. 
 """
 function write_fulltimeseries(fullpath::AbstractString,
         dataOut::Matrix{Float64},
-        dfOut::DataFrame)
+        dfOut::DataFrame,
+        setup::Dict)
     T = size(dataOut, 2)
     dfOut = hcat(dfOut, DataFrame(dataOut, :auto))
     auxNew_Names = [Symbol("Resource");
@@ -516,6 +523,7 @@ function write_fulltimeseries(fullpath::AbstractString,
     dfOut = vcat(dfOut, total)
 
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
+    #write_output_file(fullpath, dftranspose(dfOut, false), filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return dfOut
 end
 
@@ -614,5 +622,190 @@ function write_full_time_series_reconstruction(
     output_path = joinpath(path, FullTimeSeriesFolder)
     dfOut_full = full_time_series_reconstruction(path, setup, dftranspose(DF, false))
     CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
+    #write_output_file(joinpath(output_path, "$name"), dfOut_full, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return nothing
+end
+
+@doc raw"""write_output_file(path::String,
+            file::DataFrame;
+            filetype::String = "auto_detect",
+            compression::String = "auto_detect")
+    This internal function takes a dataframe and saves it according to the type specified in `ResultsFileType` in `genx_settings.yml`. Acceptable file types are .csv, .json, and .parqet.
+    It also has the option to compress files according to the compression type specified in `ResultsCompressionType` in `genx_settings.yml`. Acceptable compression types are gzip for CSV and JSON files,
+    and snappy and zstd for parquet files. It compresses and saves the files using DuckDB.
+
+    This function has the ability to automatically detect the correct file extension from the file name, if one exists, by settings `ResultsFileType = "auto_detect"`. If a filename has an extension that clashes with the extension provided in 
+    `ResultsFileType`, the extension already present in the name is used. For example, if a file is called "capacity.csv" in `results_settings.yml`, but `ResultsFileType = ".parquet"`, the file will be saved as a CSV.
+    If no extension is present, and `ResultsFileType` is set to `auto_detect`, then .csv is automatically used.
+
+    Compression type can also be automatically detected by setting `ResultsCompressionType = "auto_detect"`. This will automatically detect if `.gz` is present in the filename for CSV and JSON files,
+    and for parquet files will automatically detect if "-snappy" or "-zstd" is present in the file name. If `auto_detect` is on, but no compression is present, the files will be saved uncompressed.
+    If a file extension contains `.gz`, but `ResultsCompressionType = "none"`, the file will still be compressed as a gzip. 
+
+    The keyword arguments `filetype` and `compression` are optional and are both set to `auto_detect` by default.
+
+    # Arguments
+    - `path::AbstractString`: The path including the file name. This can include the file extension (e.g. .csv) but does not have to.
+    - `file::DataFrame`: The DataFrame being saved to the input path. All columns in the DataFrame must have a type (cannot be type "Any") in order for DuckDB to work.
+    - `filetype::String`: The file type, as specified in `ResultsFileType` in `genx_settings.yml`. Accepted inputs are `.csv`,`.csv.gz` `.parquet`, `.json`, `.json.gz`, and `auto_detect` (default).
+    - `compression::String`: The compression type, as specified in `ResultsCompressionType` in `genx_settings.yml`. Accepted inputs are `gzip`, `snappy`, `zstd`, `none`, and `auto_detect` (default). 
+"""
+function write_output_file(path::AbstractString, file::DataFrame; filetype::String = "auto_detect", compression::String = "auto_detect")
+    # 1) Create a DuckDB Interface
+    con = DBInterface.connect(DuckDB.DB)
+    println(typeof(file))
+    println(file)
+
+    # 2) Register the DataFrame with DuckDB
+    DuckDB.register_data_frame(con, file, "temp_df")
+
+    # 3) Check if an extension is already in the file name, if not, add it based on filetype
+    if occursin(".", path)
+        if occursin(".", splitext(path)[1]) # If two extensions are present (eg .csv.gz, or .json.gz, only the first will be added to the filetype as .gz will be autodetected by DuckDB later)
+            if filetype == "auto_detect" # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext
+                filetype = splitext(splitext(path)[1])[2]
+            elseif filetype != splitext(splitext(path)[1])[2] # If the extension in the file name is different than the filetype key, override the filetype key and throw a warning.
+                newfiletype = splitext(path)[2]
+                @warn("Filetype '$filetype' is incompatible with extension specified in results_settings.yml. Saving as '$newfiletype' instead.")
+                filetype = splitext(splitext(path)[1])[2]
+            end
+        else
+            if filetype == "auto_detect"  # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext
+                filetype = splitext(path)[2]
+            elseif filetype != splitext(path)[2] # If the extension in the file name is different than the filetype key, override the filetype key and throw a warning.
+                newfiletype = splitext(path)[2]
+                @warn("Filetype '$filetype' is incompatible with extension specified in results_settings.yml. Saving as '$newfiletype' instead.")
+                filetype = splitext(path)[2]
+            end
+            if splitext(path)[2] == ".csv" && (compression == ".gz" || compression == "gz" || compression == "gzip") 
+                path = path * ".gz" # If the file only ends in ".csv", but compression is set to gzip, add ".gz" to the end of the file
+            elseif splitext(path)[2] == ".json" && (compression == ".gz" || compression == "gz" || compression == "gzip")
+                path = path * ".gz"
+            end
+        end  
+    elseif filetype == "auto_detect" # If no extension is detected in the file name, but auto-detect is on, .csv will automatically be added
+        # println("File type cannot be auto-detected. Saving as CSV")
+        filetype = ".csv"
+        path = path * ".csv"
+    elseif filetype == ".csv" # If no extension is present, but filetype is set to .csv, .csv will be appended to the path name.
+       if compression == "none" 
+            path = path * ".csv"
+       elseif compression == "gzip" || compression == ".gz" || compression == "gz"# If no extension is present, and compression is set to gzip, add .gz to the end of the file name.
+            path = path * ".csv.gz"
+       elseif compression == "auto_detect" # If no extension is present, but compression is set to auto_detect, no compression is added
+            path = path * ".csv"
+       else
+            @warn("Compression type '$compression' not supported with .csv. Saving as uncompressed csv.")
+            path = path * ".csv"
+       end
+    elseif filetype == ".json" # If no extension is present, but filetype is set to .csv, .csv will be appended to the path name
+        if compression == "none"
+            path = path * ".json"
+        elseif compression == "gzip" || compression == ".gz"
+            path = path * ".json.gz"
+        elseif compression == "auto_detect"
+            path = path * ".json"
+        else
+            @warn("Compression type '$compression' not supported with .json. Saving as uncompressed json.")
+            path = path * ".json"
+        end
+    elseif filetype == ".parquet"
+        if compression == "none"
+            path = path * ".parquet"
+        elseif compression == "snappy" || compression == "-snappy"
+            path = path * "-snappy.parqet"
+        elseif compression == "zstd" || compressoin == "-zstd"
+            path = path * "-zstd.parquet"
+        elseif compression == "auto_detect"
+            path = path * ".parquet"
+        else
+            @warn("Compression type '$compression' not supported with .parquet. Saving as uncompressed parquet.")
+            path = path * ".parquet"
+        end
+    else
+        @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .gz, .parquet, and .json."
+    end
+
+    # 4) Save file according to compression type: auto_detect, gzip, snappy, zstd, or none
+    if compression == "auto_detect"
+        if filetype == ".csv" || filetype == ".csv.gz"
+            DBInterface.execute(con, "COPY temp_df TO '$path'") # DuckDB will automatically detect if the file should be compressed or not
+        elseif filetype == ".parquet"
+            filename = splitext(path)[1]
+            compression_type = filename[findlast('-', filename):end]
+            if compression_type == "-snappy"
+                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'snappy');")
+            elseif compression_type == "-zstd"
+                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'zstd');")
+            elseif compression_type == "-uncompressed"
+                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+            else
+                @warn "Unable to auto-detect compression type of parquet file. Saving as uncompressed parquet."
+                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+            end
+        elseif filetype == ".json"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+        else
+            @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .parquet, and .json."
+        end        
+    elseif compression == "gzip" || compression == ".gz" || compression == "gz"
+        if filetype == ".csv"
+            if splitext(path)[2] == ".gz"
+                DBInterface.execute(con, "COPY temp_df TO '$path'")
+            else
+                path = path * ".gz"
+                DBInterface.execute(con, "COPY temp_df TO '$path'")
+            end
+        elseif filetype == ".json"
+            if splitext(path)[2] == ".gz"
+                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+            else
+                path = path * ".gz"
+                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+            end
+        elseif filetype == ".parquet"
+            @warn(".parquet cannot be compressed as gzip. Saving as uncompressed parquet")
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+        else
+            @error("Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz.")
+        end
+    elseif compression == "snappy" || compression == "-snappy"
+        if filetype == ".parquet"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'snappy');")
+        elseif filetype == ".csv"
+            @warn("Filetype .csv cannot be saved with snappy compression. Saving as uncompressed csv.")
+            DBInterface.execute(con, "COPY temp_df TO '$path'")
+        elseif filetype == ".json"
+            @warn("Filetype .json cannot be saved with snappy compression. Saving as uncompressed json.")
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+        end
+    elseif compression == "zstd" || compression == "-zstd"
+        if filetype == ".parquet"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'zstd');")
+        elseif filetype == ".csv"
+            @warn("Filetype .csv cannot be saved with zstd compression. Saving as uncompressed csv.")
+            DBInterface.execute(con, "COPY temp_df TO '$path'")
+        elseif filetype == ".json"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION zstd);")
+        else
+            @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz."
+        end
+    else
+        if compression != "none"
+            @warn("Compression type '$compression' is not accepted. Saving without file compression")
+        end
+        if filetype == ".csv" 
+            DBInterface.execute(con, "COPY temp_df TO '$path'")
+        elseif filetype == "csv.gz" # If compression type is listed as none, but filetype has .gz in it, compression type is overridden and .gz is used.
+            DBInterface.execute(con, "COPY temp_df TO '$path'")
+        elseif filetype == ".parquet"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+        elseif filetype == ".json"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION none);")
+        elseif filetype == ".json.gz"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION gzip);")
+        else
+            @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz."
+        end
+    end
 end

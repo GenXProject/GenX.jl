@@ -74,7 +74,8 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
                                            sum(weight)
     end
 
-    CSV.write(joinpath(path, "capacityfactor.csv"), df)
+    #CSV.write(joinpath(path, "capacityfactor.csv"), dfCapacityfactor)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacity_factor_name"]), dfCapacityfactor, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return nothing
 end
 

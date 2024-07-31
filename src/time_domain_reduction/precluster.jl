@@ -13,7 +13,7 @@ function run_timedomainreduction!(case::AbstractString)
     mysetup = configure_settings(genx_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
-        cluster_inputs(case, settings_path, mysetup, myinput_names)
+        cluster_inputs(case, settings_path, mysetup)
     elseif mysetup["MultiStage"] == 1
         run_timedomainreduction_multistage!(case)
     else
@@ -37,11 +37,11 @@ function run_timedomainreduction_multistage!(case::AbstractString)
     if TDRSettingsDict["MultiStageConcatenate"] == 0
         println("Clustering Time Series Data (Individually)...")
         for stage_id in 1:mysetup["MultiStageSettingsDict"]["NumStages"]
-            cluster_inputs(case, settings_path, mysetup, myinput_names, stage_id)
+            cluster_inputs(case, settings_path, mysetup, stage_id)
         end
     else
         println("Clustering Time Series Data (Grouped)...")
-        cluster_inputs(case, settings_path, mysetup, myinput_names)
+        cluster_inputs(case, settings_path, mysetup)
     end
 
     return

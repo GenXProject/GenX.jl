@@ -589,10 +589,11 @@ Function that loads and scales resources data from folder specified in resources
 - `resources (Vector{<:AbstractResource})`: An array of scaled resources.
 
 """
-function create_resource_array(setup::Dict, resources_path::AbstractString, input_names::Dict)
+function create_resource_array(setup::Dict, resources_path::AbstractString,)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
 
     # get filename and GenX type for each type of resources available in GenX
+    input_names = setup["WriteInputNamesDict"]
     resources_info = _get_resource_info(input_names)
 
     # load each resource type, scale data and return array of resources
@@ -603,20 +604,20 @@ function create_resource_array(setup::Dict, resources_path::AbstractString, inpu
 end
 
 """
-    validate_policy_files(resource_policies_path::AbstractString, setup::Dict, input_names::Dict)
+    validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
 
 Validate the policy files by checking if they exist in the specified folder and if the setup flags are consistent with the files found.
 
 # Arguments
 - `resource_policies_path::AbstractString`: The path to the policy files.
 - `setup::Dict`: Dictionary containing GenX settings.
-- `input_names::Dict`: Dictionary containing names of the input files specified by the user
 
 # Returns
 - warning messages if the polcies are set to 1 in settings but the files are not found in the resource_policies_path.
 !isfile(joinpath(resource_policies_path, filename))
 """
-function validate_policy_files(resource_policies_path::AbstractString, setup::Dict, input_names::Dict)
+function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
+    input_names = setup["WriteInputNamesDict"]
     policyfile_info = _get_policyfile_info(input_names)
     for (filenames, setup_param) in values(policyfile_info)
         if setup[setup_param] == 1 &&
@@ -746,14 +747,14 @@ function add_policy_to_resources!(resources::Vector{<:AbstractResource},
 end
 
 """
-    add_policies_to_resources!(resources::Vector{<:AbstractResource}, resources_path::AbstractString)
+    add_policies_to_resources!(resources::Vector{<:AbstractResource}, resources_path::AbstractString, input_names::Dict)
 
 Reads policy files and adds policies-related attributes to resources in the model.
 
 # Arguments
 - `resources::Vector{<:AbstractResource}`: Vector of resources in the model.
 - `resources_path::AbstractString`: The path to the resources folder.
-- `input_names::Dict`: Dictionary containing the names of input files specified by the user.
+- `input_names::Dict`: The names of the input files specified from the user, usually part of the setup
 """
 function add_policies_to_resources!(resources::Vector{<:AbstractResource},
         resource_policy_path::AbstractString,input_names::Dict)
@@ -1418,7 +1419,6 @@ This function loads resources data from the resources_path folder and create the
 # Arguments
 - `inputs (Dict)`: A dictionary to store the input data.
 - `setup (Dict)`: A dictionary containing GenX settings.
-- `input_names (Dict)`: A dictionary containing the names of the input files.
 - `case_path (AbstractString)`: The path to the case folder.
 - `resources_path (AbstractString)`: The path to the case resources folder.
 
@@ -1427,7 +1427,6 @@ Raises:
 """
 function load_resources_data!(inputs::Dict,
         setup::Dict,
-        input_names::Dict,
         case_path::AbstractString,
         resources_path::AbstractString)
     if isfile(joinpath(case_path, "Generators_data.csv"))
@@ -1437,12 +1436,12 @@ function load_resources_data!(inputs::Dict,
         error("Exiting GenX...")
     end
     # create vector of resources from dataframes
-    resources = create_resource_array(setup, resources_path, input_names)
+    resources = create_resource_array(setup, resources_path)
 
     # read policy files and add policies-related attributes to resource dataframe
     resource_policies_path = joinpath(resources_path, setup["ResourcePoliciesFolder"])
-    validate_policy_files(resource_policies_path, setup, input_names)
-    add_policies_to_resources!(resources, resource_policies_path, input_names)
+    validate_policy_files(resource_policies_path, setup)
+    add_policies_to_resources!(resources, resource_policies_path, setup["WriteInputNamesDict"])
 
     # read module files add module-related attributes to resource dataframe
     add_modules_to_resources!(resources, setup, resources_path)

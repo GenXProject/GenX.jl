@@ -329,4 +329,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         dfCost[!, Symbol("Zone$z")] = temp_cost_list
     end
     CSV.write(joinpath(path, "costs.csv"), dfCost)
+    #write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["costs_name"]), dfCost, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

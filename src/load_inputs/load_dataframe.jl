@@ -134,19 +134,6 @@ function load_dataframe_from_file(path::AbstractString)
     # Create a duckdb connection
     con = DBInterface.connect(DuckDB.DB, ":memory:")
     DBInterface.execute(con, "SELECT * FROM '$path'") |> DataFrames.DataFrame
-
-    # Determine file type and load data
-    #file_extension = splitext(path)[2]
-    #println(file_extension)
-    #if file_extension == ".csv"
-     #   data = DBInterface.execute(con, "SELECT * FROM '$path'") |> DataFrames.DataFrame
-   # elseif file_extension == ".parquet"
-    #    data = con.execute("SELECT * FROM read_parquet('{file_path}')").fetchdf()
-    #else
-     #   con.close()
-      #  @error """Unsupported file type: $file_extension"""
-    #end
-   # con.close()
 end
 
 function find_matrix_columns_in_dataframe(df::DataFrame,

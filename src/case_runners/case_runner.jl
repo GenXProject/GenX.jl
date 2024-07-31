@@ -32,34 +32,33 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
     print_genx_version() # Log the GenX version
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
     writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
-    mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
-    input_names = configure_input_names(case)
+    mysetup = configure_settings(genx_settings, writeoutput_settings, case) # mysetup dictionary stores settings and GenX-specific parameters
     if mysetup["MultiStage"] == 0
-        run_genx_case_simple!(case, mysetup, optimizer, input_names)
+        run_genx_case_simple!(case, mysetup, optimizer)
     else
         run_genx_case_multistage!(case, mysetup, optimizer)
     end
 end
 
-function time_domain_reduced_files_exist(tdrpath, names::Dict)
+function time_domain_reduced_files_exist(tdrpath, setup::Dict)
     #tdr_demand = file_exists(tdrpath names["demand_name"])
-    tdr_demand = isfile(joinpath(tdrpath, names["demand_name"]))
-    tdr_genvar = isfile(joinpath(tdrpath, names["generators_name"]))
-    tdr_fuels = isfile(joinpath(tdrpath, names["fuel_name"]))
+    tdr_demand = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["demand_name"]))
+    tdr_genvar = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["generators_name"]))
+    tdr_fuels = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["fuel_name"]))
     return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 
-function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any, myinput_names::Dict)
+function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
 
     ### Cluster time series inputs if necessary and if specified by the user
     if mysetup["TimeDomainReduction"] == 1
         TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
         system_path = joinpath(case, mysetup["SystemFolder"])
-        prevent_doubled_timedomainreduction(system_path, myinput_names)
-        if !time_domain_reduced_files_exist(TDRpath, myinput_names)
+        prevent_doubled_timedomainreduction(system_path, mysetup)
+        if !time_domain_reduced_files_exist(TDRpath, mysetup)
             println("Clustering Time Series Data (Grouped)...")
-            cluster_inputs(case, settings_path, mysetup, myinput_names)
+            cluster_inputs(case, settings_path, mysetup)
         else
             println("Time Series Data Already Clustered.")
         end
@@ -74,7 +73,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     ### Load inputs
     println("Loading Inputs")
-    myinputs = load_inputs(mysetup, case, myinput_names)
+    myinputs = load_inputs(mysetup, case)
 
     println("Generating the Optimization Model")
     time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
@@ -107,7 +106,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     end
 end
 
-function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::Any, myinput_names::Dict)
+function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::Any)
     settings_path = get_settings_path(case)
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml") # Multi stage settings YAML file path
     # merge default settings with those specified in the YAML file
@@ -121,8 +120,8 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         first_stage_path = joinpath(case, "inputs", "inputs_p1")
         TDRpath = joinpath(first_stage_path, mysetup["TimeDomainReductionFolder"])
         system_path = joinpath(first_stage_path, mysetup["SystemFolder"])
-        prevent_doubled_timedomainreduction(system_path)
-        if !time_domain_reduced_files_exist(TDRpath, myinput_names)
+        prevent_doubled_timedomainreduction(system_path, mysetup)
+        if !time_domain_reduced_files_exist(TDRpath, mysetup)
             if (mysetup["MultiStage"] == 1) &&
                (TDRSettingsDict["MultiStageConcatenate"] == 0)
                 println("Clustering Time Series Data (Individually)...")
@@ -131,7 +130,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
                 end
             else
                 println("Clustering Time Series Data (Grouped)...")
-                cluster_inputs(case, settings_path, mysetup, myinput_names)
+                cluster_inputs(case, settings_path, mysetup)
             end
         else
             println("Time Series Data Already Clustered.")
