@@ -78,6 +78,11 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     println("Time elapsed for model building is")
     println(time_elapsed)
 
+    if mysetup["AdvancedScaling"] == 1
+        println("Scaling Constraints")
+        scale_constraints!(EP)
+    end
+
     println("Solving Model")
     EP, solve_time = solve_model(EP, mysetup)
     myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
