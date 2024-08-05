@@ -13,7 +13,7 @@ is constrained by the available retrofittable capacity $P_{y}$ as well as the ef
     \sum_{y \in RS(id)}P_{y} = \sum_{r \in RO(id)}\frac{\Omega_{r}}{{ef}_{r}} \quad \quad \quad \quad \forall id \in {RETROFIT},
 \end{aligned}
 ```
-where ${RETROFIT}$ represents the set of all retrofit IDs (clusters) in the model **and efficiency 𝑒𝑓𝑟 is a scalar multiplier that 
+where ${RETROFIT}$ represents the set of all retrofit IDs (clusters) in the model **and efficiency $efr$ is a scalar multiplier that 
 denotes an 'exchange rate' between capacity of the original resource and any retrofit technologies (e.g. how many MW of resource 
 B can be sited per MW of resource A retired).**
 
