@@ -23,7 +23,7 @@ For resources where $\overline{\Omega_{y,z}}$ and $\underline{\Omega_{y,z}}$ is 
 	\hspace{4 cm}  \forall y \in \mathcal{G}, z \in \mathcal{Z}
 \end{aligned}
 ```
-In addition, this function adds investment and fixed O\&M related costs related to discharge/generation capacity to the objective function:
+In addition, this function adds investment and fixed O&M related costs related to discharge/generation capacity to the objective function:
 ```math
 \begin{aligned}
 & 	\sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z}}
