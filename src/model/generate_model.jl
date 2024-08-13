@@ -77,9 +77,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Generate Energy Portfolio (EP) Model
     EP = Model(OPTIMIZER)
     set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
-    # Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
-    # eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
-    @variable(EP, vZERO==0)
 
     # Initialize Power Balance Expression
     # Expression for "baseline" power balance constraint

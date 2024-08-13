@@ -102,7 +102,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
                 eExistingCap[y] + EP[:vCAP][y]
             end
         else # Resources not eligible for new capacity or retirement
-            eExistingCap[y] + EP[:vZERO]
+            eExistingCap[y]
         end)
 
     ### Need editting ##
