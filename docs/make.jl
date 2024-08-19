@@ -1,3 +1,5 @@
+ENV["GENX_PRECOMPILE"] = "false" # Disable GenX precompilation for documentation build
+
 using Documenter
 using GenX
 import DataStructures: OrderedDict
