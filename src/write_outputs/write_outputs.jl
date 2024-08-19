@@ -208,6 +208,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println(elapsed_time_rsv)
             end
         end
+
+        # fusion is only applicable to UCommit=1 resources
+        if output_settings_d["WriteFusion"] && has_fusion(inputs)
+            write_fusion_net_capacity_factor(path, inputs, setup, EP)
+            write_fusion_pulse_starts(path, inputs, setup, EP)
+        end
     end
 
     # Output additional variables related inter-period energy transfer via storage
@@ -249,7 +255,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     end
 
     if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
-        write_maintenance(path, inputs, EP)
+        write_maintenance(path, inputs, setup, EP)
     end
 
     #Write angles when DC_OPF is activated

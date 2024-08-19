@@ -14,6 +14,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+    FUSION = ids_with(gen, :fusion)
 
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
@@ -35,6 +36,11 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     if !isempty(VS_STOR)
         push!(charge, value.(EP[:vCHARGE_VRE_STOR]))
         push!(charge_ids, VS_STOR)
+    end
+    if !isempty(FUSION)
+        _, mat = prepare_fusion_parasitic_power(EP, inputs)
+        push!(charge, mat)
+        push!(charge_ids, FUSION)
     end
     charge = reduce(vcat, charge, init = zeros(0, T))
     charge_ids = reduce(vcat, charge_ids, init = Int[])

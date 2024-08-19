@@ -26,7 +26,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     df.Capacity .= value.(EP[:eTotalCap]) * scale_factor
 
     # The .data only works on DenseAxisArray variables or expressions
-    # In contract vP and eTotalCap are whole vectors / matrices
+    # In contrast vP and eTotalCap are whole vectors / matrices
     energy_sum(sym, set) = value.(EP[sym][set, :]).data * weight * scale_factor
     capacity(sym, set) = value.(EP[sym][set]).data * scale_factor
 
@@ -75,5 +75,47 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)
+    return nothing
+end
+
+@doc raw"""
+	write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
+The "net capacity factor" for fusion plants is the ratio of the annual net output to the
+net time-averaged capacity. The net output is the gross output less parasitic power.
+The net time-averaged capacity accounts for parasitic power and average capacity due to
+the need to pulse the plant, if any.
+"""
+function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    gen = inputs["RESOURCES"]
+    FUSION = ids_with(gen, fusion)
+    gen_fusion = gen[FUSION]
+    resource_names = resource_name.(gen_fusion)
+    G_fusion = length(gen_fusion)
+
+    ω = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    df = DataFrame(Resource = resource_names,
+        Zone = zone_id.(gen_fusion),
+        NetOutput = zeros(G_fusion),
+        NetCapacity = zeros(G_fusion),
+        NetCapacityFactor = zeros(G_fusion))
+
+    reactor = FusionReactorData.(gen_fusion)
+    avg_power_factor = average_net_power_factor.(reactor)
+
+    gross_power = value.(EP[:vP][FUSION, :]) * ω * scale_factor
+    parasitic_power = thermal_fusion_annual_parasitic_power(EP, inputs, setup)
+    df.NetOutput .= gross_power - parasitic_power
+    df.NetCapacity .= value.(EP[:eTotalCap][FUSION]) * scale_factor .* avg_power_factor
+
+    # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+    enough_power = findall(x -> x >= 1, df.NetOutput)
+    enough_capacity = findall(x -> x >= 1, df.NetCapacity)
+    CF_GEN = intersect(enough_power, enough_capacity)
+    df.NetCapacityFactor[CF_GEN] .= (df.NetOutput[CF_GEN] ./ df.NetCapacity[CF_GEN]) / sum(ω)
+
+    CSV.write(joinpath(path, "fusion_net_capacity_factor.csv"), df)
     return nothing
 end

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Fusion plant optional features for thermal plants (#743).
+
 ### Changed
 - The `charge.csv` and `storage.csv` files now include only resources with 
 charge and storage variables (#760 and #763).

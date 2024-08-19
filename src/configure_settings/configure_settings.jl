@@ -111,6 +111,7 @@ function default_writeoutput()
         "WriteESRPrices" => true,
         "WriteESRRevenue" => true,
         "WriteFuelConsumption" => true,
+        "WriteFusion" => true,
         "WriteHourlyMatchingPrices" => true,
         "WriteHydrogenPrices" => true,
         "WriteMaintenance" => true,
