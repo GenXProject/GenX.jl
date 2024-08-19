@@ -52,6 +52,9 @@ Additionally, the user may need to specify eight more **settings-specific** inpu
 
 ### 1.2 Network.csv
 
+!!! note "Note"
+    If running a single-zone model, this file is not mandatory.
+
 This input file contains input parameters related to: 1) definition of model zones (regions between which transmission flows are explicitly modeled) and 2) definition of transmission network topology, existing capacity, losses and reinforcement costs. The following table describe each of the mandatory parameter inputs need to be specified to run an instance of the model, along with comments for the model configurations when they are needed.
 
 ###### Table 3: Structure of the Network.csv file
