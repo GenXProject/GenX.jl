@@ -580,7 +580,7 @@ existing_cap_mw(r::AbstractResource) = r.existing_cap_mw
 existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default_zero)
 existing_charge_cap_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default_zero)
 
-cap_size(r::AbstractResource) = get(r, :cap_size, default_zero)
+cap_size(r::AbstractResource) = get(r, :cap_size, 1)
 
 num_vre_bins(r::AbstractResource) = get(r, :num_vre_bins, default_zero)
 
