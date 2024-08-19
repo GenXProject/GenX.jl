@@ -1,7 +1,7 @@
 @doc raw"""
     load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
 
-Read input parameters related to mimimum energy share requirement constraints
+Read input parameters related to minimum energy share requirement constraints
 (e.g. renewable portfolio standard or clean electricity standard policies)
 """
 function load_energy_share_requirement!(setup::Dict, path::AbstractString, inputs::Dict)
