@@ -80,7 +80,7 @@ function _precompile_tdr(case)
     return nothing
 end
 
-# Precompile `run_genx_case!` and `TDR` if the environment variable `GENX_PRECOMPILE` is set to `true`
-if get(ENV, "GENX_PRECOMPILE", "false") == "true"
+# Precompile `run_genx_case!` and `TDR` unless the environment variable `GENX_PRECOMPILE` is set to `false`
+if get(ENV, "GENX_PRECOMPILE", "true") != "false"
     _precompile()
 end
