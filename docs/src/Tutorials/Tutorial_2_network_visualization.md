@@ -2,7 +2,7 @@
 
 [Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_2_Network_Visualization.ipynb)
 
-To run GenX, there are five mandatory input files: `Fuels_data.csv`, `Network.csv`, `Load_data.csv`, `Generators_variability.csv`, and `Generators_data.csv`. Detailed descriptions of these files can be found in the [GenX Inputs](@ref) page of the documentation. This tutorial helps visualize the file `Network.csv` using the example system `example_systems/1_three_zones`.
+To run GenX, there are five mandatory input files: `Fuels_data.csv`, `Network.csv`, `Load_data.csv`, `Generators_variability.csv`, and `Generators_data.csv` (note that `Network.csv` is not mandatory if running a single-zone model)). Detailed descriptions of these files can be found in the [GenX Inputs](@ref) page of the documentation. This tutorial helps visualize the file `Network.csv` using the example system `example_systems/1_three_zones`.
 
 
 ```julia
