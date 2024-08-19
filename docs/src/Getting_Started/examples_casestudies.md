@@ -149,17 +149,17 @@ After the script runs to completion, results will be written to a folder called 
 *Added in 0.4.1*
 
 !!! note "Note"
-    The following steps must be performed before loading GenX for the first time. If GenX was already loaded, please read the note below.
+    By default, GenX is precompiled when the package is installed to reduce the latency of the first execution of a case. This process may take a couple of minutes, but it will reduce the time needed to run subsequent cases.
 
-GenX can be precompiled to reduce the latency of the first execution of a case. To precompile GenX, a user can run the following commands:
+However, if you want to disable precompilation, you can set the environment variable `GENX_PRECOMPILE` to `"false"` before loading GenX:
 
 ```
 $ julia --project="/path/to/env"
-julia> ENV["GENX_PRECOMPILE"] = "true"
+julia> ENV["GENX_PRECOMPILE"] = "false"
 julia> using GenX
 ```
 
-where `/path/to/env` is the path to the environment with GenX installed. After running these commands, GenX will be precompiled. This process may take a couple of minutes, but it will reduce the time it takes to run subsequent cases.
+Here, `/path/to/env` is the path to the environment where GenX is installed.
 
 !!! note "Note"
-    The environment variable `GENX_PRECOMPILE` must be set before loading GenX for the first time. To force the recompilation of GenX, a user can delete the `~/.julia/compiled/vZ.Y/GenX/*.ji` binaries, set `ENV["GENX_PRECOMPILE"]` to `"true"`, and then reload the package (where vZ.Y is the version of Julia being used, e.g., v1.9). If GenX was imported via `Pkg.develop` or `] dev`, modifying any of the package files will also force recompilation.
+    The environment variable `GENX_PRECOMPILE` must be set before loading GenX for the first time. However, To force recompilation of GenX, you can delete the `~/.julia/compiled/vZ.Y/GenX/*.ji` binaries (where vZ.Y is the version of Julia being used, e.g., v1.9), set the environment variable `GENX_PRECOMPILE` to the desired value, and then reload the package. If GenX was imported via `Pkg.develop` or `] dev`, modifying any of the package files will also force recompilation.
