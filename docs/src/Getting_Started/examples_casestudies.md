@@ -162,4 +162,4 @@ julia> using GenX
 Here, `/path/to/env` is the path to the environment where GenX is installed.
 
 !!! note "Note"
-    The environment variable `GENX_PRECOMPILE` must be set before loading GenX for the first time. However, To force recompilation of GenX, you can delete the `~/.julia/compiled/vZ.Y/GenX/*.ji` binaries (where vZ.Y is the version of Julia being used, e.g., v1.9), set the environment variable `GENX_PRECOMPILE` to the desired value, and then reload the package. If GenX was imported via `Pkg.develop` or `] dev`, modifying any of the package files will also force recompilation.
+    The environment variable `GENX_PRECOMPILE` must be set before loading GenX for the first time. However, to force recompilation of GenX, you can delete the `~/.julia/compiled/vZ.Y/GenX/*.ji` binaries (where vZ.Y is the version of Julia being used, e.g., v1.9), set the environment variable `GENX_PRECOMPILE` to the desired value, and then reload the package. If GenX was imported via `Pkg.develop` or `] dev`, modifying any of the package files will also force recompilation.
