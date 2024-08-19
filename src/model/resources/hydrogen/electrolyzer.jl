@@ -106,7 +106,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             for t in 1:T)
         end)
 
-    if setup["HydrogenMimimumProduction"] == 1
+    if setup["HydrogenMinimumProduction"] == 1
         @expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
             sum(EP[:eH2Production][y]
             for y in ids_with_policy(gen, h2_demand, tag = h2demand)))

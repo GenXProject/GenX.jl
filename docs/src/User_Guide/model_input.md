@@ -524,7 +524,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
 |Derating\_Factor\_*| Fraction of the resource capacity eligible for contributing to the capacity reserve margin constraint (e.g. derate factor).|
 
-This policy is applied when if `HydrogenMimimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
+This policy is applied when if `HydrogenMinimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
 
 ##### Table 16: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
 ---

@@ -16,7 +16,7 @@ julia> cd("example_systems/2_three_zones_w_electrolyzer/")
 $ cd example_systems/2_three_zones_w_electrolyzer/
 ``` 
    
-Next, ensure that your settings in `settings/GenX_settings.yml` are correct. The default settings use the solver `HiGHS`, time domain reduced input data (`TimeDomainReduction: 1`), regional requirements for hydrogen production (`HydrogenMimimumProduction: 1`), and minimum capacity requirement policy (`MinCapReq: 1`) as specified in the `policies/Minimum_capacity_requirement.csv` file. Other optional policies include a capacity reserve margin, an energy share requirement (such as renewable portfolio standard (RPS) or clean electricity standard (CES) policies), a CO2 emissions cap, and a maximum capacity requirement policy (see the documentation for more details). 
+Next, ensure that your settings in `settings/GenX_settings.yml` are correct. The default settings use the solver `HiGHS`, time domain reduced input data (`TimeDomainReduction: 1`), regional requirements for hydrogen production (`HydrogenMinimumProduction: 1`), and minimum capacity requirement policy (`MinCapReq: 1`) as specified in the `policies/Minimum_capacity_requirement.csv` file. Other optional policies include a capacity reserve margin, an energy share requirement (such as renewable portfolio standard (RPS) or clean electricity standard (CES) policies), a CO2 emissions cap, and a maximum capacity requirement policy (see the documentation for more details). 
 
 Once the settings are confirmed, run the model with the `Run.jl` script in the example directory:
 
