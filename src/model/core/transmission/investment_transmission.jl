@@ -61,10 +61,10 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             if l in EXPANSION_LINES
                 eTransMax[l] + vNEW_TRANS_CAP[l]
             else
-                eTransMax[l] + EP[:vZERO]
+                eTransMax[l]
             end)
     else
-        @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l]+EP[:vZERO])
+        @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
     end
 
     ## Objective Function Expressions ##

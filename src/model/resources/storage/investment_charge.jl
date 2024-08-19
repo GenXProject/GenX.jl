@@ -82,7 +82,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
         elseif (y in setdiff(RET_CAP_CHARGE, NEW_CAP_CHARGE))
             eExistingCapCharge[y] - EP[:vRETCAPCHARGE][y]
         else
-            eExistingCapCharge[y] + EP[:vZERO]
+            eExistingCapCharge[y]
         end)
 
     ## Objective Function Expressions ##

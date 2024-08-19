@@ -203,7 +203,7 @@ function endogenous_retirement_discharge!(EP::Model,
         if y in NEW_CAP
             EP[:vCAP][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCap[y in RET_CAP],
@@ -290,7 +290,7 @@ function endogenous_retirement_charge!(EP::Model,
         if y in NEW_CAP_CHARGE
             EP[:vCAPCHARGE][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapCharge[y in RET_CAP_CHARGE], EP[:vRETCAPCHARGE][y])
@@ -356,7 +356,7 @@ function endogenous_retirement_energy!(EP::Model,
         if y in NEW_CAP_ENERGY
             EP[:vCAPENERGY][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapEnergy[y in RET_CAP_ENERGY], EP[:vRETCAPENERGY][y])
@@ -422,7 +422,7 @@ function endogenous_retirement_vre_stor_dc!(EP::Model,
         if y in NEW_CAP_DC
             EP[:vDCCAP][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapDC[y in RET_CAP_DC], EP[:vRETDCCAP][y])
@@ -488,7 +488,7 @@ function endogenous_retirement_vre_stor_solar!(EP::Model,
         if y in NEW_CAP_SOLAR
             EP[:vSOLARCAP][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapSolar[y in RET_CAP_SOLAR], EP[:vRETSOLARCAP][y])
@@ -554,7 +554,7 @@ function endogenous_retirement_vre_stor_wind!(EP::Model,
         if y in NEW_CAP_WIND
             EP[:vWINDCAP][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapWind[y in RET_CAP_WIND], EP[:vRETWINDCAP][y])
@@ -620,7 +620,7 @@ function endogenous_retirement_vre_stor_elec!(EP::Model,
         if y in NEW_CAP_ELEC
             EP[:vELECCAP][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapElec[y in RET_CAP_ELEC], EP[:vRETELECCAP][y])
@@ -675,7 +675,7 @@ function endogenous_retirement_vre_stor_stor!(
         if y in NEW_CAP_STOR
             EP[:vCAPENERGY_VS][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapEnergy_VS[y in RET_CAP_STOR], EP[:vRETCAPENERGY_VS][y])
@@ -741,7 +741,7 @@ function endogenous_retirement_vre_stor_discharge_dc!(EP::Model,
         if y in NEW_CAP_DISCHARGE_DC
             EP[:vCAPDISCHARGE_DC][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP,
@@ -809,7 +809,7 @@ function endogenous_retirement_vre_stor_charge_dc!(EP::Model,
         if y in NEW_CAP_CHARGE_DC
             EP[:vCAPCHARGE_DC][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapChargeDC[y in RET_CAP_CHARGE_DC], EP[:vRETCAPCHARGE_DC][y])
@@ -874,7 +874,7 @@ function endogenous_retirement_vre_stor_discharge_ac!(EP::Model,
         if y in NEW_CAP_DISCHARGE_AC
             EP[:vCAPDISCHARGE_AC][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP,
@@ -942,7 +942,7 @@ function endogenous_retirement_vre_stor_charge_ac!(EP::Model,
         if y in NEW_CAP_CHARGE_AC
             EP[:vCAPCHARGE_AC][y]
         else
-            EP[:vZERO]
+            0
         end)
 
     @expression(EP, eRetCapChargeAC[y in RET_CAP_CHARGE_AC], EP[:vRETCAPCHARGE_AC][y])
