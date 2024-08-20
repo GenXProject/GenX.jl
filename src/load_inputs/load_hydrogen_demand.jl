@@ -12,8 +12,8 @@ function load_hydrogen_demand!(setup::Dict, path::AbstractString, inputs::Dict)
 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1 # Million $/kton if scaled, $/ton if not scaled
 
-    if "PriceH2" in names(df)
-        inputs["H2DemandPriceH2"] = df[!, :PriceH2] / scale_factor
+    if "PriceCap" in names(df)
+        inputs["H2DemandPriceCap"] = df[!, :PriceCap] / scale_factor
     end
     println(filename * " Successfully Read!")
 end
