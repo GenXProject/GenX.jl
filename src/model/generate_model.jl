@@ -102,6 +102,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         create_empty_expression!(EP, :eESR, inputs["nESR"])
     end
 
+    # Hourly Matching Requirement
+    if setup["HourlyMatching"] == 1
+        create_empty_expression!(EP, :eHM, (T, Z))
+    end
+
     if setup["MinCapReq"] == 1
         create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
     end
@@ -213,6 +218,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Energy Share Requirement
     if setup["EnergyShareRequirement"] >= 1
         energy_share_requirement!(EP, inputs, setup)
+    end
+
+    # Energy Share Requirement
+    if setup["HourlyMatching"] == 1
+        hourly_matching!(EP, inputs)
     end
 
     #Capacity Reserve Margin

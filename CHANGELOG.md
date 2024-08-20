@@ -28,6 +28,11 @@ part of the VRE_STOR module (#728)
 - Added co-location of electrolyzers to VRE_STOR and eneabled regional hydrogen production limits (#678)
 - Added text to doc pages for retrofits (#730)
 
+### Changed
+- Generalized the cHourlyMatching constraint in electrolyzer.jl and implemented it similarly 
+to the other policies, making it easier for developers to add further contributions 
+to the constraint (#725).
+
 ## [0.4.0] - 2024-03-18
 
 ### Added

@@ -9,7 +9,16 @@ This function defines the expressions and constraints for operation of hydrogen 
 
 Consumption of electricity by electrolyzer $y$ in time $t$, denoted by $\Pi_{y,z}$, is subtracted from power balance expression `ePowerBalance` (as per other demands or battery charging) and added to Energy Share Requirement policy balance (if applicable), `eESR`.
 
-Revenue from hydrogen production by each electrolyzer $y$, equal to $\omega_t \times \Pi_{y,t} / \eta^{electrolyzer}_{y} \times c^{hydrogen}_{y}$, is subtracted from the objective function, where $\eta^{electrolyzer}_{y}$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $c^{hydrogen}_{y}$ is the price of hydrogen per metric tonne for electrolyzer $y$.
+Revenue from hydrogen production by each electrolyzer $y$, equal to `` \omega_t \times \Pi_{y,t} / \eta^{electrolyzer}_y \times \$^{hydrogen}_y ``, is subtracted from the objective function, where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and ``\$^{hydrogen}_y`` is the price of hydrogen per metric tonne for electrolyzer $y$.
+
+Hourly consumption from electrolyzers $y$ in the zone, equal to:
+```math
+\begin{aligned}
+    \sum_{y \in {z \cap \mathcal{EL}}} \Pi_{y,t}
+\end{aligned}
+```
+is subtracted from the hourly matching policy balance `eHM` (if applicable).
+
 **Ramping limits**
 
 Electrolyzers adhere to the following ramping limits on hourly changes in power output:
@@ -48,19 +57,6 @@ Electrolyzers are bound by the following limits on maximum and minimum power out
 ```
 (See Constraints 3-4 in the code)
 
-**Hourly clean supply matching constraint**
-
-This optional constraint (enabled by setting `HydrogenHourlyMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Hydrogen_Supply==1` in the resource `.csv` files) from within the same zone $z$ as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone (and any charging by qualified storage within the zone used to help increase electrolyzer utilization):
-
-```math
-\begin{aligned}
-	\sum_{y \in \{z \cap \mathcal{Qualified}\}} \Theta_{y,t} \geq \sum_{y \in \{z \cap \mathcal{EL}\}} \Pi_{y,t} + \sum_{y \in \{z \cap \mathcal{Qualified} \cap \mathcal{STOR}\}}  \Pi_{y,t}
-	\hspace{1cm} \forall z \in \mathcal{Z}, \forall t \in \mathcal{T},
-\end{aligned}
-```
-(See constraint 5 in the code)
-
-This constraint permits modeling of the 'three pillars' requirements for clean hydrogen supply of (1) new clean supply (if only new clean resources are designated as eligible), (2) that is deliverable to the electrolyzer (assuming co-location within the same modeled zone = deliverability), and (3) produced within the same hour as the electrolyzer consumes power (otherwise known as 'additionality/new supply', 'deliverability', and 'temporal matching requirements') See Ricks, Xu & Jenkins (2023), ''Minimizing emissions from grid-based hydrogen production in the United States'' *Environ. Res. Lett.* 18 014025 [doi:10.1088/1748-9326/acacb5](https://iopscience.iop.org/article/10.1088/1748-9326/acacb5/meta) for more.
 """
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     println("Electrolyzer Resources Module")
@@ -71,7 +67,6 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    STORAGE = inputs["STOR_ALL"]            # Set of storage (indices)
     ELECTROLYZERS = inputs["ELECTROLYZER"]  # Set of electrolyzers connected to the grid (indices)
     VRE_STOR = inputs["VRE_STOR"]           # Set of VRE-STOR generators (indices)
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]    # Set of VRE-STOR co-located electrolyzers (indices)
@@ -152,17 +147,15 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
         [y in ELECTROLYZERS, t in 1:T], EP[:vP][y, t] == 0
     end)
 
-    ## Hydrogen Hourly Supply Matching Constraint (Constraint #5)
+    ### Hydrogen Hourly Supply Matching Constraint ###
     # Requires generation from qualified resources (indicated by Qualified_Hydrogen_Supply==1 in the resource .csv files)
     # from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
     # (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
-    if setup["HydrogenHourlyMatching"] == 1
-        QUALIFIED_SUPPLY = ids_with(gen, qualified_hydrogen_supply)
-        @constraint(EP, cHourlyMatching[z in HYDROGEN_ZONES, t in 1:T],
-            sum(EP[:vP][y, t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))>=sum(EP[:vUSE][y,t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZERS)) + sum(EP[:vCHARGE][y,t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STORAGE)))
+    if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 1
+        @expression(EP, eHMElectrolyzer[t in 1:T, z in 1:Z],
+            -sum(EP[:vUSE][y, t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZERS)))
+        add_similar_to_expression!(EP[:eHM], eHMElectrolyzer)
     end
 
     ### Energy Share Requirement Policy ###

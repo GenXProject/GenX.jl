@@ -440,7 +440,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println("Time elapsed for writing hydrogen prices is")
                 println(elapsed_time_hydrogen_prices)
             end
-            if setup["HydrogenHourlyMatching"] == 1 &&
+            if setup["HourlyMatching"] == 1 &&
                output_settings_d["WriteHourlyMatchingPrices"]
                 elapsed_time_hourly_matching_prices = @elapsed write_hourly_matching_prices(
                     path,
