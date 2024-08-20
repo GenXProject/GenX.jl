@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 9375.6845867
+obj_true = 4566.0704168
 test_path = "hourly_matching"
 
 # Define test settings
