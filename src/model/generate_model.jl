@@ -103,7 +103,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     # Hourly Matching Requirement
-    if setup["HourlyMatching"] >= 1
+    if setup["HourlyMatching"] == 1
         create_empty_expression!(EP, :eHM, (T, Z))
     end
 

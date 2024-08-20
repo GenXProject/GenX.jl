@@ -131,7 +131,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     # Hourly matching constraints
-    if setup["HourlyMatching"] >= 1
+    if setup["HourlyMatching"] == 1
         QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
         @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
             -sum(EP[:vCHARGE][y, t]
