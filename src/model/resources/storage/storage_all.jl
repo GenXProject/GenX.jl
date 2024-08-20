@@ -25,8 +25,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
 
-    QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]
-
     ### Variables ###
 
     # Storage level of resource "y" at hour "t" [MWh] on zone "z" - unbounded
@@ -134,6 +132,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     # Hourly matching constraints
     if setup["HourlyMatching"] >= 1
+        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
         @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
             -sum(EP[:vCHARGE][y, t]
             for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STOR_ALL)))

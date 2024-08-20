@@ -19,8 +19,6 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps
     Z = inputs["Z"]     # Number of zones
 
-    QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]
-
     ### Variables ###
 
     # Energy injected into the grid by resource "y" at hour "t"
@@ -53,6 +51,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
     # Hourly Matching Policy
     if setup["HourlyMatching"] >= 1
+        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
         @expression(EP, eHMDischarge[t = 1:T, z = 1:Z],
             sum(EP[:vP][y, t]
             for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY)))
