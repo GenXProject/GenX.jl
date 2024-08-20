@@ -26,13 +26,13 @@ function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
     NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
 
     ## Zonal level limit constraint
-    if haskey(inputs, "H2DemandPriceH2")
+    if haskey(inputs, "H2DemandPriceCap")
         @variable(EP, vH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs]>=0)
         add_similar_to_expression!(EP[:eH2DemandRes], vH2Demand_slack)
 
         @expression(EP,
             eCH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs],
-            inputs["H2DemandPriceH2"][h2demand]*EP[:vH2Demand_slack][h2demand])
+            inputs["H2DemandPriceCap"][h2demand]*EP[:vH2Demand_slack][h2demand])
         @expression(EP,
             eTotalCH2DemandSlack,
             sum(EP[:eCH2Demand_slack][h2demand] for h2demand in 1:NumberOfH2DemandReqs))

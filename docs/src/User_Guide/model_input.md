@@ -787,4 +787,4 @@ This file contains inputs specifying regional hydrogen production requirements. 
 |H2DemandConstraint| Index of the hydrogen demand constraint.|
 |Constraint\_Description| Names of hydrogen demand constraints; not to be read by model, but used as a helpful notation to the model user. |
 |Hydrogen\_Demand\_kt| Hydrogen production requirements in 1,000 tons|
-|PriceH2| Price of hydrogen per metric ton ($/t)|
+|PriceCap| Price of hydrogen per metric ton ($/t)|

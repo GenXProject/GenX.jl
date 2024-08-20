@@ -1,2 +1,2 @@
-﻿H2DemandConstraint,ConstraintDescription,Hydrogen_Demand_kt,PriceH2
+﻿H2DemandConstraint,ConstraintDescription,Hydrogen_Demand_kt,PriceCap
 1,all,6000,9999
