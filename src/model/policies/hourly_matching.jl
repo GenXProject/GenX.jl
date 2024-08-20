@@ -21,6 +21,5 @@ function hourly_matching!(EP::Model, inputs::Dict)
     T = inputs["T"]
     Z = inputs["Z"]
 
-    ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
     @constraint(EP, cHourlyMatching[t = 1:T, z = 1:Z], EP[:eHM][t, z]>=0)
 end
