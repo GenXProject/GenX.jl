@@ -54,9 +54,8 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
     # Hourly Matching Policy
     if setup["HourlyMatching"] >= 1
         @expression(EP, eHMDischarge[t = 1:T, z = 1:Z],
-            +sum(EP[:vP][y, t]
+            sum(EP[:vP][y, t]
             for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))
-            #-inputs["dfHM"][z] * inputs["pD"][t, z]
         )
         add_similar_to_expression!(EP[:eHM], eHMDischarge)
     end
