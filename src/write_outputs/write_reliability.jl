@@ -20,4 +20,9 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
     CSV.write(joinpath(path, "reliability.csv"),
         dftranspose(dfReliability, false),
         header = false)
+
+    if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+        write_full_time_series_reconstruction(path, setup, dfReliability, "reliability")
+        @info("Writing Full Time Series for Reliability")
+    end
 end

@@ -44,6 +44,10 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
             start_cap_d[Symbol("eTotalCap_WIND")] = Symbol("cExistingCapWind")
         end
 
+        if !isempty(inputs["VS_ELEC"])
+            start_cap_d[Symbol("eTotalCap_ELEC")] = Symbol("cExistingCapElec")
+        end
+
         if !isempty(inputs["VS_STOR"])
             start_cap_d[Symbol("eTotalCap_STOR")] = Symbol("cExistingCapEnergy_VS")
         end
@@ -88,6 +92,10 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
         if !isempty(inputs["VS_WIND"])
             cap_track_d[Symbol("vCAPTRACKWIND")] = Symbol("cCapTrackWind")
+        end
+
+        if !isempty(inputs["VS_ELEC"])
+            cap_track_d[Symbol("vCAPTRACKELEC")] = Symbol("cCapTrackElec")
         end
 
         if !isempty(inputs["VS_STOR"])
@@ -136,6 +144,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
     num_stages = settings_d["NumStages"]  # Total number of investment planning stages
     EPSILON = settings_d["ConvergenceTolerance"] # Tolerance
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
+    write_intermittent_outputs = settings_d["WriteIntermittentOutputs"] == 1 # 1 if write outputs for each stage
 
     start_cap_d, cap_track_d = configure_ddp_dicts(setup, inputs_d[1])
 
@@ -169,6 +178,11 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
     ddp_prev_time = time() # Begin tracking time of each iteration
     models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
     inputs_d[t]["solve_time"] = solve_time_d[t]
+
+    if myopic && write_intermittent_outputs
+        outpath_cur = joinpath(outpath, "results_p$t")
+        write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
+    end
 
     # Step c.i) Initialize the lower bound, equal to the objective function value for the first period in the first iteration
     global z_lower = objective_value(models_d[t])
@@ -222,6 +236,11 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
             # Step d.iii) Solve the model at time t
             models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
             inputs_d[t]["solve_time"] = solve_time_d[t]
+
+            if myopic && write_intermittent_outputs
+                outpath_cur = joinpath(outpath, "results_p$t")
+                write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
+            end
         end
 
         ### For the myopic solution, algorithm should terminate here after the first forward pass calculation and then move to Outputs writing.

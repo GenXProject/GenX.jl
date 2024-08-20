@@ -386,9 +386,9 @@ for i in range(2,4)
     power_plot = [power_plot; power_plot_temp]
 end
 
-loads =  CSV.read(joinpath(case,"system/Demand_data.csv"),DataFrame,missingstring="NA")
-loads_tot = loads[!,"Demand_MW_z1"]+loads[!,"Demand_MW_z2"]+loads[!,"Demand_MW_z3"]
-power_plot[!,"Demand_Total"] = repeat(loads_tot[tstart:tend],4);
+demands =  CSV.read(joinpath(case,"system/Demand_data.csv"),DataFrame,missingstring="NA")
+demands_tot = demands[!,"Demand_MW_z1"]+demands[!,"Demand_MW_z2"]+demands[!,"Demand_MW_z3"]
+power_plot[!,"Demand_Total"] = repeat(demands_tot[tstart:tend],4);
 ```
 
 
@@ -396,9 +396,9 @@ power_plot[!,"Demand_Total"] = repeat(loads_tot[tstart:tend],4);
 power_plot  |>
 @vlplot()+
 @vlplot(mark={:area},
-    x={:Hour,title="Time Step (hours)",labels="Resource_Type:n",axis={values=0:12:168}}, y={:MW,title="Load (MW)",type="quantitative"},
+    x={:Hour,title="Time Step (hours)",labels="Resource_Type:n",axis={values=0:12:168}}, y={:MW,title="Demand (MW)",type="quantitative"},
     color={"Resource_Type:n",scale={scheme="accent"},sort="descending"},order={field="Resource_Type:n"},width=845,height=400)+
-@vlplot(mark=:line,x=:Hour,y=:Demand_Total,lables="Demand",color={datum="Demand",legend={title=nothing}},title="Resource Capacity per Hour with Load Demand Curve, all Zones")
+@vlplot(mark=:line,x=:Hour,y=:Demand_Total,lables="Demand",color={datum="Demand",legend={title=nothing}},title="Resource Capacity per Hour with Demand Curve, all Zones")
 ```
     
 ![svg](./files/t8_cap.svg)
@@ -852,7 +852,7 @@ We can see how the emmissions, summed over all zones, compare in the following p
 emm1sum = sum(eachcol(emm_tot));
 emm2sum = sum(eachcol(emm_tot2));
 
-Plots.plot(collect((tstart-3):(tend-3)),emm1sum[tstart:tend],size=(800,400),label="Load Based CO2 Cap",
+Plots.plot(collect((tstart-3):(tend-3)),emm1sum[tstart:tend],size=(800,400),label="Demand Based CO2 Cap",
     xlabel="Time Step (Hours)",ylabel="Emmissions (Tons)",thickness_scaling = 1.1,linewidth = 1.5,
     title="Emmisions per Time Step",xticks=tstart:72:tend)
 Plots.plot!(collect((tstart-3):(tend-3)),emm2sum[tstart:tend],label="No CO2 Cap",linewidth = 1.5)
@@ -867,9 +867,4 @@ Finally, set the CO2 Cap back to 2:
 ```julia
 genx_settings_TZ["CO2Cap"] = 2
 YAML.write_file((joinpath(case,"settings/genx_settings.yml")), genx_settings_TZ)
-```
-
-
-```julia
-
 ```

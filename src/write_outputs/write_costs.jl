@@ -10,7 +10,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]     # Number of zones
     T = inputs["T"]     # Number of time steps (hours)
     VRE_STOR = inputs["VRE_STOR"]
-    ELECTROLYZER = inputs["ELECTROLYZER"]
+    VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
+    ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) :
+                       inputs["ELECTROLYZER"]
 
     cost_list = [
         "cTotal",
@@ -27,7 +29,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
     end
-    if !isempty(ELECTROLYZER)
+    if !isempty(ELECTROLYZER_ALL)
         push!(cost_list, "cHydrogenRevenue")
     end
     dfCost = DataFrame(Costs = cost_list)
@@ -87,9 +89,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         ]
     end
 
-    if !isempty(ELECTROLYZER)
-        push!(total_cost,
-            (!isempty(inputs["ELECTROLYZER"]) ? -1 * value(EP[:eTotalHydrogenValue]) : 0.0))
+    if !isempty(ELECTROLYZER_ALL)
+        push!(total_cost, -1 * value(EP[:eTotalHydrogenValue]))
     end
 
     dfCost[!, Symbol("Total")] = total_cost
@@ -124,6 +125,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
     if haskey(inputs, "MinCapPriceCap")
         dfCost[9, 2] += value(EP[:eTotalCMinCapSlack])
+    end
+
+    if haskey(inputs, "H2DemandPriceCap")
+        dfCost[9, 2] += value(EP[:eTotalCH2DemandSlack])
     end
 
     if !isempty(VRE_STOR)
@@ -202,6 +207,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             if !isempty(WIND_ZONE_VRE_STOR)
                 eCFix_VRE_STOR += sum(value.(EP[:eCFixWind][WIND_ZONE_VRE_STOR]))
             end
+            ELEC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_ELEC"])
+            if !isempty(ELEC_ZONE_VRE_STOR)
+                eCFix_VRE_STOR += sum(value.(EP[:eCFixElec][ELEC_ZONE_VRE_STOR]))
+            end
             DC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_DC"])
             if !isempty(DC_ZONE_VRE_STOR)
                 eCFix_VRE_STOR += sum(value.(EP[:eCFixDC][DC_ZONE_VRE_STOR]))
@@ -264,8 +273,14 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCTotal += eCStart
         end
 
-        if !isempty(ELECTROLYZERS_ZONE)
-            tempHydrogenValue = -1 * sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
+        if !isempty(ELECTROLYZER_ALL) # both electrolyzers and VRE+storage with electrolyzer component
+            tempHydrogenValue = 0.0
+            if !isempty(ELECTROLYZERS_ZONE)
+                tempHydrogenValue -= sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
+            end
+            if !isempty(VRE_STOR) && !isempty(ELEC_ZONE_VRE_STOR)
+                tempHydrogenValue -= sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
+            end
             tempCTotal += tempHydrogenValue
         end
 
@@ -303,7 +318,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")
         end
-        if !isempty(ELECTROLYZERS_ZONE)
+        if !isempty(ELECTROLYZER_ALL)
             push!(temp_cost_list, tempHydrogenValue)
         end
 

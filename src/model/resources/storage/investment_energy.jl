@@ -82,7 +82,7 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
         elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
             eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
         else
-            eExistingCapEnergy[y] + EP[:vZERO]
+            eExistingCapEnergy[y]
         end)
 
     ## Objective Function Expressions ##

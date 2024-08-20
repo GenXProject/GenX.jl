@@ -12,7 +12,8 @@ multistage_setup = Dict("NumStages" => 3,
     "StageLengths" => [10, 10, 10],
     "WACC" => 0.045,
     "ConvergenceTolerance" => 0.01,
-    "Myopic" => 0)
+    "Myopic" => 0,
+    "WriteIntermittentOutputs" => 0)
 
 genx_setup = Dict("Trans_Loss_Segments" => 1,
     "OperationalReserves" => 1,

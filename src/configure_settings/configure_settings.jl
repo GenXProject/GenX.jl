@@ -16,13 +16,17 @@ function default_settings()
         "UCommit" => 0,
         "TimeDomainReduction" => 0,
         "TimeDomainReductionFolder" => "TDR_results",
+        "OutputFullTimeSeries" => 0,
+        "OutputFullTimeSeriesFolder" => "Full_TimeSeries",
         "ModelingToGenerateAlternatives" => 0,
         "ModelingtoGenerateAlternativeSlack" => 0.1,
         "MGAAnnualGeneration" => 0,
         "MultiStage" => 0,
         "MethodofMorris" => 0,
         "IncludeLossesInESR" => 0,
+        "HydrogenMinimumProduction" => 0,
         "EnableJuMPStringNames" => false,
+        "HourlyMatching" => 0,
         "HydrogenHourlyMatching" => 0,
         "DC_OPF" => 0,
         "WriteOutputs" => "full",
@@ -50,7 +54,7 @@ settings dictionary.
 - `settings::Dict`: The settings dictionary.
 """
 function configure_settings(settings_path::String, output_settings_path::String)
-    println("Configuring Settings")
+    println("\nConfiguring Settings")
     model_settings = YAML.load(open(settings_path))
 
     settings = default_settings()
@@ -165,4 +169,49 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         merge!(writeoutput, model_writeoutput)
     end
     return writeoutput
+end
+
+function default_settings_multistage()
+    Dict{Any, Any}("NumStages" => 3,
+        "StageLengths" => [10, 10, 10],
+        "WACC" => 0.045,
+        "ConvergenceTolerance" => 0.01,
+        "Myopic" => 1,
+        "WriteIntermittentOutputs" => 0)
+end
+
+@doc raw"""
+    configure_settings_multistage(settings_path::String)
+
+Reads in the settings from the `multi_stage_settings.yml` YAML file and
+merges them with the default multistage settings. It then returns the
+settings dictionary.
+
+# Arguments
+- `settings_path::String`: The path to the multistage settings YAML file.
+
+# Returns
+- `settings::Dict`: The multistage settings dictionary.
+"""
+function configure_settings_multistage(settings_path::String)
+    println("Configuring Multistage Settings")
+    model_settings = isfile(settings_path) ? YAML.load(open(settings_path)) : Dict{Any, Any}()
+
+    settings = default_settings_multistage()
+    merge!(settings, model_settings)
+
+    validate_multistage_settings!(settings)
+    return settings
+end
+
+function validate_multistage_settings!(settings::Dict{Any, Any})
+    # Check for any settings combinations that are not allowed.
+    # If we find any then make a response and issue a note to the user.
+
+    if settings["Myopic"] == 0 && settings["WriteIntermittentOutputs"] == 1
+        msg = "WriteIntermittentOutputs is not supported for non-myopic multistage models." *
+              " Setting WriteIntermittentOutputs to 0 in the multistage settings."
+        @warn msg
+        settings["WriteIntermittentOutputs"] = 0
+    end
 end

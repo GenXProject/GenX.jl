@@ -119,7 +119,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraints(EP,
         begin
-
             # Maximum energy stored must be less than energy capacity
             [y in STOR_ALL, t in 1:T], EP[:vS][y, t] <= EP[:eTotalCapEnergy][y]
 
@@ -130,6 +129,15 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             (efficiency_up(gen[y]) * EP[:vCHARGE][y, t]) -
             (self_discharge(gen[y]) * EP[:vS][y, t - 1])
         end)
+
+    # Hourly matching constraints
+    if setup["HourlyMatching"] == 1
+        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
+        @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
+            -sum(EP[:vCHARGE][y, t]
+            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STOR_ALL)))
+        add_similar_to_expression!(EP[:eHM], eHMCharge)
+    end
 
     # Storage discharge and charge power (and reserve contribution) related constraints:
     if OperationalReserves == 1

@@ -58,6 +58,11 @@ Modules = [GenX]
 Pages = ["load_energy_share_requirement.jl"]
 ```
 
+## Hydrogen Production Demand Requirement
+```@docs
+GenX.load_hydrogen_demand!
+```
+
 ## Mapping Representative Time Periods
 ```@autodocs
 Modules = [GenX]

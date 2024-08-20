@@ -25,3 +25,14 @@ GenX.minimum_capacity_requirement!
 Modules = [GenX]
 Pages = ["maximum_capacity_requirement.jl"]
 ```
+
+## Hydrogen Production Demand Requirement (Electrolyzer)
+```@docs
+GenX.hydrogen_demand!
+```
+
+## Hourly clean supply matching constraint
+```@autodocs
+Modules = [GenX]
+Pages = ["hourly_matching.jl"]
+```

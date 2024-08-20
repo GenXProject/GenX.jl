@@ -34,13 +34,19 @@ function _get_policyfile_info()
     cap_res_filenames = ["Resource_capacity_reserve_margin.csv"]
     min_cap_filenames = ["Resource_minimum_capacity_requirement.csv"]
     max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
+    h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
+    hourly_matching_filenames = ["Resource_hourly_matching.csv"]
 
     policyfile_info = (
-        esr = (filenames = esr_filenames,
-            setup_param = "EnergyShareRequirement"),
+        esr = (filenames = esr_filenames, setup_param = "EnergyShareRequirement"),
         cap_res = (filenames = cap_res_filenames, setup_param = "CapacityReserveMargin"),
         min_cap = (filenames = min_cap_filenames, setup_param = "MinCapReq"),
-        max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"))
+        max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"),
+        h2_demand = (
+            filenames = h2_demand_filenames, setup_param = "HydrogenMinimumProduction"),
+        hourly_matching = (
+            filenames = hourly_matching_filenames, setup_param = "HourlyMatching")
+    )
     return policyfile_info
 end
 
@@ -123,6 +129,7 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [:existing_cap_inverter_mw,
         :existing_cap_solar_mw,
         :existing_cap_wind_mw,
+        :existing_cap_elec_mw,
         :existing_cap_charge_dc_mw,
         :existing_cap_charge_ac_mw,
         :existing_cap_discharge_dc_mw,
@@ -133,6 +140,8 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
         :max_cap_solar_mw,
         :min_cap_wind_mw,
         :max_cap_wind_mw,
+        :min_cap_elec_mw,
+        :max_cap_elec_mw,
         :min_cap_charge_ac_mw,
         :max_cap_charge_ac_mw,
         :min_cap_charge_dc_mw,
@@ -147,6 +156,8 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
         :fixed_om_solar_cost_per_mwyr,
         :inv_cost_wind_per_mwyr,
         :fixed_om_wind_cost_per_mwyr,
+        :inv_cost_elec_per_mwyr,
+        :fixed_om_elec_cost_per_mwyr,
         :inv_cost_discharge_dc_per_mwyr,
         :fixed_om_cost_discharge_dc_per_mwyr,
         :inv_cost_charge_dc_per_mwyr,
@@ -164,6 +175,7 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
         :min_retired_cap_inverter_mw,
         :min_retired_cap_solar_mw,
         :min_retired_cap_wind_mw,
+        :min_retired_cap_elec_mw,
         :min_retired_cap_charge_dc_mw,
         :min_retired_cap_charge_ac_mw,
         :min_retired_cap_discharge_dc_mw,
@@ -420,12 +432,45 @@ function check_retrofit_resource(r::AbstractResource)
     return ErrorMsg.(error_strings)
 end
 
+function check_hydrogen_resources(r::AbstractResource)
+    error_strings = String[]
+
+    # check that qualified_hydrogen_supply is set only for non-electrolyzer resources
+    if isa(r, Electrolyzer) == true && qualified_hydrogen_supply(r) == true
+        e = string("Resource ", resource_name(r),
+            " is an Electrolyzer but has :qualified_hydrogen_supply = ",
+            qualified_hydrogen_supply(r), ".\n",
+            "This setting is valid only for resources that are not Electrolyzers.", "\n",
+            "Please check the documentation for the correct setting.")
+        push!(error_strings, e)
+    end
+    return ErrorMsg.(error_strings)
+end
+
+function check_qualified_hydrogen_supply(r::AbstractResource)
+    warning_strings = String[]
+
+    if qualified_hydrogen_supply(r) == 1
+        e = string("Resource ",
+            resource_name(r),
+            " has :qualified_hydrogen_supply = 1. However \n" *
+            "the :qualified_hydrogen_supply attribute is deprecated and will be removed in a future version. \n" *
+            "Please use the :qualified_supply column in the `Resource_hourly_matching.csv` file instead, and remove \n" *
+            "the :qualified_hydrogen_supply attribute from the resource file. \n" *
+            "Please see the documentation for more information.")
+        push!(warning_strings, e)
+    end
+    return WarnMsg.(warning_strings)
+end
+
 function check_resource(r::AbstractResource)
     e = []
     e = [e; check_LDS_applicability(r)]
     e = [e; check_maintenance_applicability(r)]
     e = [e; check_mustrun_reserve_contribution(r)]
     e = [e; check_retrofit_resource(r)]
+    e = [e; check_qualified_hydrogen_supply(r)]
+    e = [e; check_hydrogen_resources(r)]
     return e
 end
 
@@ -570,6 +615,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     filter!(col -> col ≠ "resource", cols)
 
     accepted_cols = ["derating_factor", "esr", "esr_vrestor",
+        "h2_demand", "qualified_supply",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
          for type in ("", "_stor", "_solar", "_wind")]...]
 
@@ -1129,6 +1175,27 @@ function add_resources_to_input_data!(inputs::Dict,
     inputs["NEW_CAP_CHARGE"] = new_cap_charge
     inputs["RET_CAP_CHARGE"] = ret_cap_charge
 
+    ### Hourly matching - qualified supply
+    inputs["QUALIFIED_SUPPLY"] = ids_with_policy(gen, qualified_supply, tag = 1)
+    ## this validations are for backward compatibility with previous version of the hourly matching constraint
+    # if HydrogenHourlyMatching is enabled, but HourlyMatching is not, enable HourlyMatching 
+    if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 0
+        Base.depwarn(
+            """HydrogenHourlyMatching is enabled, but HourlyMatching is not.
+            Switching HourlyMatching to 1 to enable backward compatibility with previous versions of constraint.""",
+            :add_resources_to_input_data!, force = true)
+        setup["HourlyMatching"] = 1
+    end
+    # if qualified_supply is empty but qualified_hydrogen_supply is not, use qualified_hydrogen_supply
+    if isempty(inputs["QUALIFIED_SUPPLY"]) &&
+       !isempty(ids_with(gen, qualified_hydrogen_supply))
+        Base.depwarn("""The column name :qualified_hydrogen_supply is deprecated. 
+        Please use the `Resource_hourly_matching.csv` instead. The resource attribute 
+        :qualified_hydrogen_supply will be removed in the future release.""",
+            :add_resources_to_input_data!, force = true)
+        inputs["QUALIFIED_SUPPLY"] = ids_with(gen, qualified_hydrogen_supply)
+    end
+
     ## Co-located resources
     # VRE and storage
     inputs["VRE_STOR"] = vre_stor(gen)
@@ -1136,6 +1203,9 @@ function add_resources_to_input_data!(inputs::Dict,
     if !isempty(inputs["VRE_STOR"])
         # Solar PV Resources
         inputs["VS_SOLAR"] = solar(gen)
+
+        # Electrolyzer Resources
+        inputs["VS_ELEC"] = elec(gen)
 
         # DC Resources
         inputs["VS_DC"] = union(storage_dc_discharge(gen),
@@ -1165,6 +1235,14 @@ function add_resources_to_input_data!(inputs::Dict,
         inputs["RET_CAP_WIND"] = intersect(retirable,
             wind(gen),
             ids_with_nonneg(gen_VRE_STOR, existing_cap_wind_mw))
+        # Set of all VRE-STOR resources eligible for new electrolyzer capacity
+        inputs["NEW_CAP_ELEC"] = intersect(buildable,
+            elec(gen),
+            ids_with(gen_VRE_STOR, max_cap_elec_mw))
+        # Set of all VRE_STOR resources eligible for electrolyzer capacity retirements
+        inputs["RET_CAP_ELEC"] = intersect(retirable,
+            elec(gen),
+            ids_with_nonneg(gen_VRE_STOR, existing_cap_elec_mw))
         # Set of all VRE-STOR resources eligible for new inverter capacity
         inputs["NEW_CAP_DC"] = intersect(buildable,
             ids_with(gen_VRE_STOR, max_cap_inverter_mw),
@@ -1222,6 +1300,7 @@ function add_resources_to_input_data!(inputs::Dict,
         # Names for writing outputs
         inputs["RESOURCE_NAMES_SOLAR"] = resource_name(gen[inputs["VS_SOLAR"]])
         inputs["RESOURCE_NAMES_WIND"] = resource_name(gen[inputs["VS_WIND"]])
+        inputs["RESOURCE_NAMES_ELEC"] = resource_name(gen[inputs["VS_ELEC"]])
         inputs["RESOURCE_NAMES_DC_DISCHARGE"] = resource_name(gen[storage_dc_discharge(gen)])
         inputs["RESOURCE_NAMES_AC_DISCHARGE"] = resource_name(gen[storage_ac_discharge(gen)])
         inputs["RESOURCE_NAMES_DC_CHARGE"] = resource_name(gen[storage_dc_charge(gen)])
@@ -1229,6 +1308,7 @@ function add_resources_to_input_data!(inputs::Dict,
 
         inputs["ZONES_SOLAR"] = zone_id(gen[inputs["VS_SOLAR"]])
         inputs["ZONES_WIND"] = zone_id(gen[inputs["VS_WIND"]])
+        inputs["ZONES_ELEC"] = zone_id(gen[inputs["VS_ELEC"]])
         inputs["ZONES_DC_DISCHARGE"] = zone_id(gen[storage_dc_discharge(gen)])
         inputs["ZONES_AC_DISCHARGE"] = zone_id(gen[storage_ac_discharge(gen)])
         inputs["ZONES_DC_CHARGE"] = zone_id(gen[storage_dc_charge(gen)])

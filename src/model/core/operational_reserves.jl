@@ -152,7 +152,7 @@ $r_{y,t,z} \geq 0$ is the contribution of generation or storage resource $y \in 
 
 We assume frequency regulation is symmetric (provided in equal quantity towards both upwards and downwards regulation). To reduce computational complexity, operating reserves are only modeled in the upwards direction, as downwards reserves requirements are rarely binding in practice.
 
-Storage resources ($y \in \mathcal{O}$) have two pairs of auxilary variables to reflect contributions to regulation and reserves when charging and discharging, where the primary variables ($f_{y,z,t}$ \& $r_{y,z,t}$) becomes equal to sum of these auxilary variables.
+Storage resources ($y \in \mathcal{O}$) have two pairs of auxilary variables to reflect contributions to regulation and reserves when charging and discharging, where the primary variables ($f_{y,z,t}$ and $r_{y,z,t}$) becomes equal to sum of these auxilary variables.
 
 Co-located VRE-STOR resources are described further in the reserves function for colocated VRE and storage resources (```vre_stor_operational_reserves!()```).
 

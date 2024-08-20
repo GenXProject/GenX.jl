@@ -77,9 +77,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Generate Energy Portfolio (EP) Model
     EP = Model(OPTIMIZER)
     set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
-    # Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
-    # eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
-    @variable(EP, vZERO==0)
 
     # Initialize Power Balance Expression
     # Expression for "baseline" power balance constraint
@@ -105,12 +102,21 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         create_empty_expression!(EP, :eESR, inputs["nESR"])
     end
 
+    # Hourly Matching Requirement
+    if setup["HourlyMatching"] == 1
+        create_empty_expression!(EP, :eHM, (T, Z))
+    end
+
     if setup["MinCapReq"] == 1
         create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
     end
 
     if setup["MaxCapReq"] == 1
         create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
+    end
+
+    if setup["HydrogenMinimumProduction"] > 0
+        create_empty_expression!(EP, :eH2DemandRes, inputs["NumberOfH2DemandReqs"])
     end
 
     # Infrastructure
@@ -163,10 +169,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         hydro_res!(EP, inputs, setup)
     end
 
-    if !isempty(inputs["ELECTROLYZER"])
-        electrolyzer!(EP, inputs, setup)
-    end
-
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
     if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage!(EP, inputs)
@@ -176,6 +178,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if !isempty(inputs["FLEX"])
         flexible_demand!(EP, inputs, setup)
     end
+
     # Model constraints, variables, expression related to thermal resource technologies
     if !isempty(inputs["THERM_ALL"])
         thermal!(EP, inputs, setup)
@@ -191,6 +194,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         vre_stor!(EP, inputs, setup)
     end
 
+    # Model constraints, variables, expressions related to telectrolyzers
+    if !isempty(inputs["ELECTROLYZER"]) ||
+       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+        electrolyzer!(EP, inputs, setup)
+    end
     # Policies
 
     if setup["OperationalReserves"] > 0
@@ -212,6 +220,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         energy_share_requirement!(EP, inputs, setup)
     end
 
+    # Energy Share Requirement
+    if setup["HourlyMatching"] == 1
+        hourly_matching!(EP, inputs)
+    end
+
     #Capacity Reserve Margin
     if setup["CapacityReserveMargin"] > 0
         cap_reserve_margin!(EP, inputs, setup)
@@ -223,6 +236,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     if setup["MaxCapReq"] == 1
         maximum_capacity_requirement!(EP, inputs, setup)
+    end
+
+    # Hydrogen demand limits
+    if setup["HydrogenMinimumProduction"] > 0
+        hydrogen_demand!(EP, inputs, setup)
     end
 
     if setup["ModelingToGenerateAlternatives"] == 1

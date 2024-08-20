@@ -120,6 +120,7 @@ A separate settings.yml file includes a list of parameters to be specified to fo
 | Myopic               | 0 = perfect foresight, 1 = myopic model (see above table)                                                                                                          |
 | ConvergenceTolerance | The relative optimality gap used for convergence of the dual dynamic programming algorithm. Only required when Myopic = 0                                          |
 | WACC                 | Rate used to discount non-technology-specific costs from stage to stage (i.e., the “social discount rate”).                                                        |
+| WriteIntermittentOutputs | (valid if Myopic = 1) 0 = do not write intermittent outputs, 1 = write intermittent output. |
 
 |                       |                                                                                  **time\_domain\_reduction\_settings.yml**                                                                                  |
 |:-----------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

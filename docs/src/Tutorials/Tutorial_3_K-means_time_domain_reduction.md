@@ -29,13 +29,14 @@ using Plots
 using Clustering
 using ScikitLearn
 @sk_import datasets: (make_blobs)
+```
 
 ```julia
 case = joinpath("example_systems/1_three_zones");
 ```
 
 ```julia
-loads =  CSV.read(joinpath(case,"system/Demand_data.csv"),DataFrame,missingstring="NA")
+demands =  CSV.read(joinpath(case,"system/Demand_data.csv"),DataFrame,missingstring="NA")
 ```
 
 ```@raw html
@@ -76,12 +77,12 @@ Important here to note are `MinPeriods` and `MaxPeriods`. As TDR is performed, i
 
 For descriptions of all settings, see [`cluster_inputs`](@ref) in the documentation.
 
-Now back to pre-TDR. Below shows the load per timestep in megawatts for the entire dataset, i.e. with only one representative period of 8760 hours. This is done for Zone 1:
+Now back to pre-TDR. Below shows the demand during each timestep in megawatts for the entire dataset, i.e. with only one representative period of 8760 hours. This is done for Zone 1:
 
 ```julia
-loads |>
+demands |>
 @vlplot(:line, 
-    x=:Time_Index, y=:Demand_MW_z1, title="MW Load per hour, No TDR",
+    x=:Time_Index, y=:Demand_MW_z1, title="MW Demand per hour, No TDR",
     width=600,height=400,linewidth=.01)
 ```
 
@@ -268,7 +269,7 @@ As you can see, the original has all 8,760 hours, while the TDR version only has
 
 
 ```julia
-loads_TDR = CSV.read(joinpath(case,"TDR_Results/Demand_data.csv"),DataFrame,missingstring="NA")
+demands_TDR = CSV.read(joinpath(case,"TDR_Results/Demand_data.csv"),DataFrame,missingstring="NA")
 ```
 
 The 1,848 hours are divided into 11 sections of 168 hours, with each section representing one week of the original data.  The number of hours per representative period is set in `time_domain_reduction_settings.yml`. Also specified in the file are the minimum and maximum number of clusters we would like to have (in this case 8 and 11). The _k_-means algorithm will then select the number of clusters that should be sufficient to capture the GenX model in fewer time steps (in this case 11).
@@ -298,38 +299,38 @@ Period_map = CSV.read(joinpath(case,"TDR_Results/Period_map.csv"),DataFrame,miss
 rep_periods = unique(Period_map[!,"Rep_Period"])
 
 # Create an array of the time steps and MW values of each representative period
-weeks_load = []
+weeks_demand = []
 for i in rep_periods
-    week_temp_loads = [repeat([i],168) loads[(168*i-167):168*i,"Time_Index"] loads[(168*i-167):168*i,"Demand_MW_z1"]]
-    weeks_load = [weeks_load; week_temp_loads]
+    week_temp_demands = [repeat([i],168) demands[(168*i-167):168*i,"Time_Index"] demands[(168*i-167):168*i,"Demand_MW_z1"]]
+    weeks_demand = [weeks_demand; week_temp_demands]
 end
 
 # Combine with Total (pre TDR)
-loads_plot = [repeat(["Total"],8760) loads[!,"Time_Index"] loads[!,"Demand_MW_z1"]];
+demands_plot = [repeat(["Total"],8760) demands[!,"Time_Index"] demands[!,"Demand_MW_z1"]];
 
 # Add column names and convert column type
-loads_with_TDR = [loads_plot; weeks_load]
-loads_with_TDR = DataFrame(loads_with_TDR ,["Week","hour", "MW"])
-loads_with_TDR[!,:hour] = convert.(Int64,loads_with_TDR[!,:hour]);
-loads_with_TDR[!,:MW] = convert.(Float64,loads_with_TDR[!,:MW]);
+demands_with_TDR = [demands_plot; weeks_demand]
+demands_with_TDR = DataFrame(demands_with_TDR ,["Week","hour", "MW"])
+demands_with_TDR[!,:hour] = convert.(Int64,demands_with_TDR[!,:hour]);
+demands_with_TDR[!,:MW] = convert.(Float64,demands_with_TDR[!,:MW]);
 ```
 
 
 ```julia
-loads_with_TDR  |>
+demands_with_TDR  |>
 @vlplot(mark={:line},
-    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Load (MW)"},
-    color={"Week:n", scale={scheme="paired"},sort="decsending"}, title="MW Load per hour with TDR Representative Weeks",
+    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Demand (MW)"},
+    color={"Week:n", scale={scheme="paired"},sort="decsending"}, title="MW Demand per hour with TDR Representative Weeks",
     width=845,height=400)
 ```
 ![svg](./files/t3_TDR_demand.svg)
 
-TDR is performed for four total data sets: demand (found in Demand.csv), wind and solar (found in Generators_variability.csv), and fuel prices (found in Fuels.csv). Above is just the demand load for one of the three total nodes in the example system, which is why the data may not appear to "represent" all 52 weeks (notice there are fewer representative periods in the fall). Instead, the periods more accurately represent all the data time series combined, including some other parts of the data not seen in this particular plot.
+TDR is performed for four total data sets: demand (found in Demand.csv), wind and solar (found in Generators_variability.csv), and fuel prices (found in Fuels.csv). Above is just the demand for one of the three total nodes in the example system, which is why the data may not appear to "represent" all 52 weeks (notice there are fewer representative periods in the fall). Instead, the periods more accurately represent all the data time series combined, including some other parts of the data not seen in this particular plot.
 
 
 ### Extreme Periods Off
 
-GenX has a feature called `ExtremePeriods`, which forces kmeans to include the highest and lowest points in the algorithm. This is done to ensure outliers are used, which is needed in planning energy capacity as the system needs to be able to account for outliers in energy needs. In the above graph, we can see that energy needs peak during the summer, and that the week with the highest load demand is included as a representative week. Let's try turning extreme periods off, and see what happens. move this up
+GenX has a feature called `ExtremePeriods`, which forces kmeans to include the highest and lowest points in the algorithm. This is done to ensure outliers are used, which is needed in planning energy capacity as the system needs to be able to account for outliers in energy needs. In the above graph, we can see that energy needs peak during the summer, and that the week with the highest demand is included as a representative week. Let's try turning extreme periods off, and see what happens. move this up
 
 
 ```julia
@@ -345,7 +346,7 @@ include("example_systems/1_three_zones/Run.jl")
 
 
 ```julia
-Loads_TDR2 = CSV.read(joinpath(case,"TDR_Results/Load_data.csv"),DataFrame,missingstring="NA");
+Demands_TDR2 = CSV.read(joinpath(case,"TDR_Results/Demand_data.csv"),DataFrame,missingstring="NA");
 Period_map2 = CSV.read(joinpath(case,"TDR_Results/Period_map.csv"),DataFrame,missingstring="NA");
 ```
 
@@ -355,7 +356,7 @@ rep_periods2 = unique(Period_map2[!,"Rep_Period"])
 
 weeks2 = []
 for i in rep_periods2
-    week_temp = [repeat([i],168) loads[(168*i-167):168*i,"Time_Index"] loads[(168*i-167):168*i,"Demand_MW_z1"]]
+    week_temp = [repeat([i],168) demands[(168*i-167):168*i,"Time_Index"] demands[(168*i-167):168*i,"Demand_MW_z1"]]
     weeks2 = [weeks2; week_temp]
 end
 
@@ -364,16 +365,16 @@ weeks2 = [weeks2 repeat(["Off"],1848)];
 
 
 ```julia
-loads_plotOff = [repeat(["Total"],8760) loads[!,"Time_Index"] loads[!,"Demand_MW_z1"] repeat(["Off"],8760) ];
-loads_with_TDR[!,"Extreme_Periods"] = repeat(["On"],length(loads_with_TDR[!,1]));
-loads_with_TDR2 = [loads_plotOff; weeks2]
+demands_plotOff = [repeat(["Total"],8760) demands[!,"Time_Index"] demands[!,"Demand_MW_z1"] repeat(["Off"],8760) ];
+demands_with_TDR[!,"Extreme_Periods"] = repeat(["On"],length(demands_with_TDR[!,1]));
+demands_with_TDR2 = [demands_plotOff; weeks2]
 ```
 
 
 ```julia
-loads_with_TDR2 = DataFrame(loads_with_TDR2 ,["Week","hour","MW","Extreme_Periods"])
-loads_with_TDR2[!,:hour] = convert.(Int64,loads_with_TDR2[!,:hour]);
-loads_with_TDR2[!,:MW] = convert.(Float64,loads_with_TDR2[!,:MW]);
+demands_with_TDR2 = DataFrame(demands_with_TDR2 ,["Week","hour","MW","Extreme_Periods"])
+demands_with_TDR2[!,:hour] = convert.(Int64,demands_with_TDR2[!,:hour]);
+demands_with_TDR2[!,:MW] = convert.(Float64,demands_with_TDR2[!,:MW]);
 ```
 
 
@@ -381,11 +382,11 @@ loads_with_TDR2[!,:MW] = convert.(Float64,loads_with_TDR2[!,:MW]);
 # Define a new color scheme to accomodate more periods
 myscheme = ["#a6cee3","#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00",
     "#cab2d6","#6a3d9a","#ffff99","#b15928","#b1ff00","#095768","#ce7e00","#b4a7d6"];
-[loads_with_TDR; loads_with_TDR2] |>
+[demands_with_TDR; demands_with_TDR2] |>
 @vlplot(mark={:line}, row="Extreme_Periods:n",
-    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Load (MW)"},
+    x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Demand (MW)"},
     color={"Week:n", scale={scheme="paired"},sort="decsending"}, 
-    title="MW Load per hour with TDR Representative Weeks, Extreme Periods Off",
+    title="MW Demand per hour with TDR Representative Weeks, Extreme Periods Off",
     width=845,height=300)
 ```
 
@@ -411,11 +412,11 @@ recon = []
 recon_noex = []
 for i in range(1,52)
     index = Period_map[i,"Rep_Period"]
-    recon_temp = [repeat([index],168) collect((168*i-167):168*i) loads[(168*index-167):168*index,"Demand_MW_z1"]]
+    recon_temp = [repeat([index],168) collect((168*i-167):168*i) demands[(168*index-167):168*index,"Demand_MW_z1"]]
     recon = [recon; recon_temp]
     
     index2 = Period_map2[i,"Rep_Period"]
-    recon_noex_temp = [repeat([index2],168) collect((168*i-167):168*i) loads[(168*index2-167):168*index2,"Demand_MW_z1"]]
+    recon_noex_temp = [repeat([index2],168) collect((168*i-167):168*i) demands[(168*index2-167):168*index2,"Demand_MW_z1"]]
     recon_noex = [recon_noex; recon_noex_temp]
 end
 
@@ -448,7 +449,7 @@ G2 = Plots.plot(recon[!,:hour], recon[!,:MW], linewidth=1.7,
 Plots.plot(G1,G2,layout=(2,1))
 ```
 
-![svg](./files/t3_recon.svg)
+![png](./files/t3_recon.png)
 
 Each color represents one of the representative weeks.
 
@@ -624,7 +625,7 @@ scatter!(twinx(),obj_val_plot[:,1],times,color=:red,markeralpha=.5,label=:"Time"
 ygrid!(:on, :dashdot, 0.1)
 ```
 
-![svg](./files/t3_obj_val.svg)
+![svg](./files/t3_obj_vals.svg)
 
 Here, we can see that while having very few representative periods produces an objective value that differs greatly from the orignal, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `1_three_zones` decreases the run time of GenX significantly while while maintaining an objective value close to the original. 
 
@@ -658,4 +659,5 @@ for folder in folders
     if length(folder) >= 7 && folder[1:7] == "results"
         rm("example_systems/1_three_zones/" * folder,recursive=true) 
     end
-end```
+end
+```

@@ -23,6 +23,11 @@ function write_transmission_flows(path::AbstractString,
         auxNew_Names = [Symbol("Line"); [Symbol("t$t") for t in 1:T]]
         rename!(dfFlow, auxNew_Names)
         CSV.write(filepath, dftranspose(dfFlow, false), writeheader = false)
+
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+            write_full_time_series_reconstruction(path, setup, dfFlow, "flow")
+            @info("Writing Full Time Series for Transmission Flows")
+        end
     end
     return nothing
 end

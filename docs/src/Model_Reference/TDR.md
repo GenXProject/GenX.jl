@@ -9,3 +9,7 @@ Order = [:type, :function]
 ```@docs
 GenX.run_timedomainreduction!
 ```
+
+```@docs
+GenX.full_time_series_reconstruction
+```

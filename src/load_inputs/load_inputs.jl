@@ -70,6 +70,11 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_vre_stor_variability!(setup, path, inputs)
     end
 
+    # Read in hydrogen damand data
+    if setup["HydrogenMinimumProduction"] == 1
+        load_hydrogen_demand!(setup, policies_path, inputs)
+    end
+
     # Read in mapping of modeled periods to representative periods
     if is_period_map_necessary(inputs) && is_period_map_exist(setup, path)
         load_period_map!(setup, path, inputs)

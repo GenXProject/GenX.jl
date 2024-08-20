@@ -59,7 +59,7 @@ inputs = GenX.load_inputs(setup, case)
 
 ### The HiGHS Solver
 
-In the example files, the solver [HiGHS](https://highs.dev). HiGHS is freely available for all to use. Other solvers, such as [Gurobi](https://www.gurobi.com), are available for free for academics. For the purpose of this tutorial, we will be focusing on HiGHS. 
+In the example files, the solver is [HiGHS](https://highs.dev). HiGHS is freely available for all to use. Other solvers, such as [Gurobi](https://www.gurobi.com), are available for free for academics. For the purpose of this tutorial, we will be focusing on HiGHS. 
 
 To set the solver preferences, go into the settings folder of your case and select the YAML file of the solver you're using.
 
@@ -93,9 +93,7 @@ highs_settings = YAML.load(open(joinpath(case,"Settings/highs_settings.yml")))
 
 The function `configure_highs` in `src/configure_solver` contains a list of default settings for the HiGHS solver
 
-```@raw html
-<img src="./files/highs_defaults.png" style="width: auto; height: 500px" align="left">
-```
+![png](./files/highs_defaults.png)
 
 There are about 80, so we'll only focus on a few for now. In most cases, you can leave the other settings on default. 
 
@@ -157,6 +155,8 @@ Plots.scatter(tols[2:end], abs.(OV[2:end] .- OV[1]),legend=:topleft,
                 ylabel="Error", xlabel="Tolerance",size=(920,400),label=:"Error",title="Tolerance of Solver vs Error")
 ygrid!(:on, :dashdot, 0.1)
 ```
+
+![svg](./files/t6_tols.svg)
 
 ### PreSolve
 
