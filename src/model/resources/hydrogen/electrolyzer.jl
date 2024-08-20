@@ -57,20 +57,6 @@ Electrolyzers are bound by the following limits on maximum and minimum power out
 ```
 (See Constraints 3-4 in the code)
 
-**Minimum annual hydrogen production**
-
-The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in inputs:
-
-```math
-\begin{aligned}
-	\sum_{t \in T} (\omega_{t} \times \Pi_{y,t} / \eta^{electrolyzer}_y) \geq \mathcal{Min kt}_y \times 10^3
-	\hspace{1cm} \forall y \in \mathcal{EL}
-\end{aligned}
-```
-
-where $\eta^{electrolyzer}_y$ is the efficiency of the electrolyzer $y$ in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced and $\mathcal{Min kt}_y$ is the minimum annual quantity of hydrogen that must be produced by electrolyzer $y$ in kilotonnes.
-(See constraint 5 in the code)
-
 """
 function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     println("Electrolyzer Resources Module")
