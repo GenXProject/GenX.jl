@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default settings in multitage optimization (#703)
 - Option to write results after each iteration of a multistage run (Myopic) (#704)
 - Option to precompile `run_genx_case!` and `cluster_inputs` to speedup TTFX of GenX (#718)
-- Co-location of electrolyzers to VRE_STOR and eneabled regional hydrogen production limits (#678)
+- Co-location of electrolyzers to VRE_STOR and enabled regional hydrogen production limits (#678)
 
 ### Fixed
 - Formatting and images in tutorials 3, 5, 6, and 8 to address issue #697 (#698)
