@@ -7,26 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.1] - 2024-08-20
+
+### Added
+- Objective scaler for addressing problem ill-conditioning (#667)
+- Workflow that ensures that CHANGELOG.md and the version number are updated (#711)
+- Print GenX version at startup and export it to disk (#712)
+- Option to output results with time series reconstructed for the entire year (#700)
+- Default settings in multitage optimization (#703)
+- Option to write results after each iteration of a multistage run (Myopic) (#704)
+- Option to precompile `run_genx_case!` and `cluster_inputs` to speedup TTFX of GenX (#718)
+- Co-location of electrolyzers to VRE_STOR and eneabled regional hydrogen production limits (#678)
+
 ### Fixed
-- Fix formatting and images in tutorials 3, 5, 6, and 8 to address issue #697 (#698)
-- Fix `devbranch` in the docs `make.jl` file to track the develop branch (#710)
-- Fix `TDR` to load `Fuels_data.csv` w/wo optional `None` column (#720)
+- Formatting and images in tutorials 3, 5, 6, and 8 to address issue #697 (#698)
+- `devbranch` in the docs `make.jl` file to track the develop branch (#710)
+- `TDR` to load `Fuels_data.csv` w/wo optional `None` column (#720)
 - Include comprehensive list of all settings flags (that are currently in GenX) in the docs (#721)
 - Allow `load_vre_stor_variability!` to load only wind or solar resources as 
 part of the VRE_STOR module (#728)
-- Fix typo in HydrogenMinimumProduction setting key (#746)
-- Fix default value of `Cap_Size` attribute for thermal generators (#747)
-
-### Added
-- Add objective scaler for addressing problem ill-conditioning (#667)
-- Add workflow that ensures that CHANGELOG.md and the version number are updated (#711)
-- Print GenX version at startup and export it to disk (#712)
-- Added the option to output results with time series reconstructed for the entire year (#700)
-- Added default settings in multitage optimization (#703)
-- Added the option to write results after each iteration of a multistage run (Myopic) (#704)
-- Add option to precompile `run_genx_case!` and `cluster_inputs` to speedup TTFX of GenX (#718)
-- Added co-location of electrolyzers to VRE_STOR and eneabled regional hydrogen production limits (#678)
-- Added text to doc pages for retrofits (#730)
+- Typo in HydrogenMinimumProduction setting key (#746)
+- Default value of `Cap_Size` attribute for thermal generators (#747)
+- Text to doc pages for retrofits (#730)
 
 ### Changed
 - Generalized the cHourlyMatching constraint in electrolyzer.jl and implemented it similarly 
