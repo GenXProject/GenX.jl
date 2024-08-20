@@ -67,7 +67,6 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    STORAGE = inputs["STOR_ALL"]            # Set of storage (indices)
     ELECTROLYZERS = inputs["ELECTROLYZER"]  # Set of electrolyzers connected to the grid (indices)
     VRE_STOR = inputs["VRE_STOR"]           # Set of VRE-STOR generators (indices)
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]    # Set of VRE-STOR co-located electrolyzers (indices)
