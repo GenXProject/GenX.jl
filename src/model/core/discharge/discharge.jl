@@ -55,8 +55,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
     if setup["HourlyMatching"] >= 1
         @expression(EP, eHMDischarge[t = 1:T, z = 1:Z],
             sum(EP[:vP][y, t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY))
-        )
+            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY)))
         add_similar_to_expression!(EP[:eHM], eHMDischarge)
     end
 end

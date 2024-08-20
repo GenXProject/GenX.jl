@@ -42,8 +42,10 @@ function _get_policyfile_info()
         cap_res = (filenames = cap_res_filenames, setup_param = "CapacityReserveMargin"),
         min_cap = (filenames = min_cap_filenames, setup_param = "MinCapReq"),
         max_cap = (filenames = max_cap_filenames, setup_param = "MaxCapReq"),
-        h2_demand = (filenames = h2_demand_filenames, setup_param = "HydrogenMinimumProduction"),
-        hourly_matching = (filenames = hourly_matching_filenames, setup_param = "HourlyMatching")
+        h2_demand = (
+            filenames = h2_demand_filenames, setup_param = "HydrogenMinimumProduction"),
+        hourly_matching = (
+            filenames = hourly_matching_filenames, setup_param = "HourlyMatching")
     )
     return policyfile_info
 end
@@ -612,7 +614,8 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     cols = lowercase.(names(policy_in))
     filter!(col -> col ≠ "resource", cols)
 
-    accepted_cols = ["derating_factor", "esr", "esr_vrestor", "h2_demand", "qualified_supply",
+    accepted_cols = ["derating_factor", "esr", "esr_vrestor", 
+        "h2_demand", "qualified_supply",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
          for type in ("", "_stor", "_solar", "_wind")]...]
 
