@@ -10,7 +10,7 @@ As show in previous tutorials, the settings file can be changed to adapt to a nu
     * [Mass Cap](#MassCap)
         * [Tolerance](#Tolerance)
         * [CO2 Slack](#CO2Slack)
-    * [Load-based Cap](#LoadCap)
+    * [Demand-based Cap](#DemandCap)
     * [Generator-based Cap](#GenerateCap)
 * [Energy Share Requirement](#ESR)
 * [Capacity Reserve Margin](#CRM)
@@ -1301,7 +1301,7 @@ plot(G4,G3,G2,size=(900,450),layout=(1,3),titlefontsize=8)
 
 Adding in the slack variables allowed for some natural gas to be used once again and decreased the overall cost (objective function).
 
-###  Load-based Cap
+###  Demand-based Cap
 
 Another way to set the CO$_2$ emissions cap is to limit emissions as a function of the total demand in that region. This can be done by setting `CO2Cap` to "2" in the setup:
 
@@ -1550,7 +1550,7 @@ println(" ")
 
 G5 = groupedbar(transpose(totCapB5), bar_position = :stack, bar_width=.8,size=(500,450), xticks=[ ],ylabel="GW",
         labels=["Natural Gas" "Solar" "Wind" "Battery"],color=colors,
-        title="CO2 Load Rate Cap \n Obj Val: $(round(objective_value(EP5),digits=6))")
+        title="CO2 Demand Rate Cap \n Obj Val: $(round(objective_value(EP5),digits=6))")
 plot(G5,G2,size=(800,450), titlefontsize=9)
 ```
 
@@ -2842,7 +2842,7 @@ println(" ")
 
 G10 = groupedbar(transpose(totCapB10), bar_position = :stack, bar_width=.7,size=(500,450), xticks=[ ],ylabel="GW",
         labels=["Natural Gas" "Solar" "Wind" "Battery"],color=colors,
-        title="MCR + ESR + CSM + CO2 Load Cap \n Obj Val: $(round(objective_value(EP10),digits=6))",ylabelfontsize=8)
+        title="MCR + ESR + CSM + CO2 Demand Cap \n Obj Val: $(round(objective_value(EP10),digits=6))",ylabelfontsize=8)
 
 plot(G10, titlefontsize=8)
 ```

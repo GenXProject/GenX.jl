@@ -16,7 +16,7 @@ The clustering is done according to the settings in `time_domain_reduction.yml`.
 
 Time domain clustering can only be performed on data which represents a single contiguous period: typically a year of 8760 or 8736 hours.
 
-The header of the file `Load_data.csv` in the main case folder will typically look like this:
+The header of the file `Demand_data.csv` in the main case folder will typically look like this:
 
 ```
 ..., Rep_Periods, Timesteps_per_Rep_Period, Sub_Weights, ...
@@ -29,7 +29,7 @@ The second method is to use an external program to generate the reduced ('cluste
 
 Running using this method **requires** setting `TimeDomainReduction: 0` in the GenX settings for the case.
 
-Clustered time series data requires specifying the clustering data using three columns in `Load_data.csv`: `Rep_Periods`, `Timesteps_per_Rep_Period`, and `Sub_Weights`. For example, a problem representing a full year via 3 representative weeks, and where the first week represents one which is twice as common as the others, would look like
+Clustered time series data requires specifying the clustering data using three columns in `Demand_data.csv`: `Rep_Periods`, `Timesteps_per_Rep_Period`, and `Sub_Weights`. For example, a problem representing a full year via 3 representative weeks, and where the first week represents one which is twice as common as the others, would look like
 
 ```
 ..., Rep_Periods, Timesteps_per_Rep_Period, Sub_Weights, ...
