@@ -1183,12 +1183,12 @@ function add_resources_to_input_data!(inputs::Dict,
             :add_resources_to_input_data!, force = true)
         setup["HourlyMatching"] = 1
     end
-    # if qualified_supply is empty, use qualified_hydrogen_supply 
+    # if qualified_supply is empty but qualified_hydrogen_supply is not, use qualified_hydrogen_supply
     if isempty(inputs["QUALIFIED_SUPPLY"]) &&
        !isempty(ids_with(gen, qualified_hydrogen_supply))
-        Base.depwarn("""The column name :qualified_hydrogen_supply_1 is deprecated. 
-        Please use the `Resource_hourly_matching.csv` instead. The column 
-        :qualified_hydrogen_supply_1 will be removed in the future release.""",
+        Base.depwarn("""The column name :qualified_hydrogen_supply is deprecated. 
+        Please use the `Resource_hourly_matching.csv` instead. The resource attribute 
+        :qualified_hydrogen_supply will be removed in the future release.""",
             :add_resources_to_input_data!, force = true)
         inputs["QUALIFIED_SUPPLY"] = ids_with(gen, qualified_hydrogen_supply)
     end
