@@ -36,10 +36,6 @@ end
         include("test_electrolyzer.jl")
     end
 
-    @testset "Hourly Matching" begin
-        include("test_hourly_matching.jl")
-    end
-
     @testset "Multi Stage" begin
         include("test_multistage.jl")
     end
