@@ -230,7 +230,7 @@ end
     Clustering Time Series Data (Grouped)...
     Reading Input CSV Files
     Network.csv Successfully Read!
-    Load_data.csv Successfully Read!
+    Demand_data.csv Successfully Read!
     Fuels_data.csv Successfully Read!
     Generators_data.csv Successfully Read!
     Generators_variability.csv Successfully Read!
@@ -243,9 +243,9 @@ end
     CSV Files Successfully Read In From Example_Systems_Tutorials/SmallNewEngland/OneZone
 
     Dict{String, Any} with 9 entries:
-      "RMSE"          => Dict("Load_MW_z1"=>1100.54, "NG"=>0.312319, "onshore_wind_…
+      "RMSE"          => Dict("Demand_MW_z1"=>1100.54, "NG"=>0.312319, "onshore_wind_…
       "OutputDF"      => DataFrame…
-      "ColToZoneMap"  => Dict("Load_MW_z1"=>1, "battery_z1"=>1, "natural_gas_combin…
+      "ColToZoneMap"  => Dict("Demand_MW_z1"=>1, "battery_z1"=>1, "natural_gas_combin…
       "ClusterObject" => KmeansResult{Matrix{Float64}, Float64, Int64}([-1.38728 -1…
       "TDRsetup"      => Dict{Any, Any}("IterativelyAddPeriods"=>1, "ExtremePeriods…
       "Assignments"   => [1, 1, 1, 1, 2, 2, 2, 2, 2, 3  …  6, 4, 3, 5, 5, 9, 10, 10…
@@ -281,7 +281,7 @@ inputs = GenX.load_inputs(setup, case)
 ```
     Reading Input CSV Files
     Network.csv Successfully Read!
-    Load_data.csv Successfully Read!
+    Demand_data.csv Successfully Read!
     Fuels_data.csv Successfully Read!
     Generators_data.csv Successfully Read!
     Generators_variability.csv Successfully Read!
@@ -560,7 +560,7 @@ The [Objective Function](@ref) here is to minimize
 0.17159171428571432 vP_{1,1} + 0.0004010989010989012 vP_{3,1} + 0.0006016483516483517 vP_{4,1} + 0.17159171428571432 vP_{1,2} + 0.0004010989010989012 vP_{3,2} + 0.0006016483516483517 vP_{4,2} + 0.17159171428571432 vP_{1,3} + 0.0004010989010989012 vP_{3,3} + 0.0006016483516483517 vP_{4,3} + 0.17159171428571432 vP_{1,4} + 0.0004010989010989012 vP_{3,4} + 0.0006016483516483517 vP_{4,4} + 0.17159171428571432 vP_{1,5} + 0.0004010989010989012 vP_{3,5} + 0.0006016483516483517 vP_{4,5} + 0.17159171428571432 vP_{1,6} + 0.0004010989010989012 vP_{3,6} + 0.0006016483516483517 vP_{4,6} + 0.17159171428571432 vP_{1,7} + 0.0004010989010989012 vP_{3,7} + 0.0006016483516483517 vP_{4,7} + 0.17159171428571432 vP_{1,8} + 0.0004010989010989012 vP_{3,8} + 0.0006016483516483517 vP_{4,8} + 0.17159171428571432 vP_{1,9} + 0.0004010989010989012 vP_{3,9} + 0.0006016483516483517 vP_{4,9} + 0.17159171428571432 vP_{1,10} + 0.0004010989010989012 vP_{3,10} + 0.0006016483516483517 vP_{4,10} + [[\ldots\text{11038 terms omitted}\ldots]] + 0.00015041208791208792 vCHARGE_{4,1819} + 0.00015041208791208792 vCHARGE_{4,1820} + 0.00015041208791208792 vCHARGE_{4,1821} + 0.00015041208791208792 vCHARGE_{4,1822} + 0.00015041208791208792 vCHARGE_{4,1823} + 0.00015041208791208792 vCHARGE_{4,1824} + 0.00015041208791208792 vCHARGE_{4,1825} + 0.00015041208791208792 vCHARGE_{4,1826} + 0.00015041208791208792 vCHARGE_{4,1827} + 0.00015041208791208792 vCHARGE_{4,1828} + 0.00015041208791208792 vCHARGE_{4,1829} + 0.00015041208791208792 vCHARGE_{4,1830} + 0.00015041208791208792 vCHARGE_{4,1831} + 0.00015041208791208792 vCHARGE_{4,1832} + 0.00015041208791208792 vCHARGE_{4,1833} + 0.00015041208791208792 vCHARGE_{4,1834} + 0.00015041208791208792 vCHARGE_{4,1835} + 0.00015041208791208792 vCHARGE_{4,1836} + 0.00015041208791208792 vCHARGE_{4,1837} + 0.00015041208791208792 vCHARGE_{4,1838} + 0.00015041208791208792 vCHARGE_{4,1839} + 0.00015041208791208792 vCHARGE_{4,1840} + 0.00015041208791208792 vCHARGE_{4,1841} + 0.00015041208791208792 vCHARGE_{4,1842} + 0.00015041208791208792 vCHARGE_{4,1843} + 0.00015041208791208792 vCHARGE_{4,1844} + 0.00015041208791208792 vCHARGE_{4,1845} + 0.00015041208791208792 vCHARGE_{4,1846} + 0.00015041208791208792 vCHARGE_{4,1847} + 0.00015041208791208792 vCHARGE_{4,1848} $
 ```
 
-Our constraint is the [Power Balance](@ref), which is set here to have to meet the demand of the network. The demand is outlined in the last columns of `Load_data.csv`, and is set to inputs in from the `load_load_data` function within `load_inputs`, used in `run_genx_case`.
+Our constraint is the [Power Balance](@ref), which is set here to have to meet the demand of the network. The demand is outlined in the last columns of `Demand_data.csv`, and is set to inputs in from the `load_demand_data` function within `load_inputs`, used in `run_genx_case`.
 
 
 ```julia
