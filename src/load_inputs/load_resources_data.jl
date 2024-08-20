@@ -614,7 +614,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     cols = lowercase.(names(policy_in))
     filter!(col -> col ≠ "resource", cols)
 
-    accepted_cols = ["derating_factor", "esr", "esr_vrestor", 
+    accepted_cols = ["derating_factor", "esr", "esr_vrestor",
         "h2_demand", "qualified_supply",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
          for type in ("", "_stor", "_solar", "_wind")]...]
