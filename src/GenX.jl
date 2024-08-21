@@ -11,7 +11,6 @@ export write_outputs
 export cluster_inputs
 export mga
 export morris
-export simple_operation
 export choose_output_dir
 
 # Multi-stage methods
