@@ -583,6 +583,7 @@ existing_charge_cap_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, de
 cap_size(r::AbstractResource) = get(r, :cap_size, 1)
 
 num_vre_bins(r::AbstractResource) = get(r, :num_vre_bins, default_zero)
+num_vre_bins(r::Vre) = get(r, :num_vre_bins, 1)
 
 function hydro_energy_to_power_ratio(r::AbstractResource)
     get(r, :hydro_energy_to_power_ratio, default_zero)
