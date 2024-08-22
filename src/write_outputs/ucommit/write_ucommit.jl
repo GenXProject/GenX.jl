@@ -12,7 +12,7 @@ end
 
 function _write_ucommit_var(path, inputs, setup, EP, var, filename)
     df_annual, data = _prepare_ucommit_var(inputs, EP, var)
-    _write_ucommit_var(df_annual, data, path, setup, filename)
+    _write_ucommit_file(df_annual, data, path, setup, filename)
 end
 
 function _prepare_ucommit_var(inputs::Dict, EP::Model, var::Symbol)
@@ -26,7 +26,7 @@ function _prepare_ucommit_var(inputs::Dict, EP::Model, var::Symbol)
     return df_annual, data
 end
 
-function _write_ucommit_var(df_annual, data, path, setup::Dict, filename::AbstractString)
+function _write_ucommit_file(df_annual, data, path, setup::Dict, filename::AbstractString)
     filepath = joinpath(path, filename*".csv")
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, df_annual)
