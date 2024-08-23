@@ -553,6 +553,31 @@ function write_system_env_summary(path::AbstractString)
     YAML.write_file(joinpath(path, "system_summary.yml"), env_summary)
 end
 
+# used by ucommit. Could be used by more functions as well.
+function _prepare_annualsum_df(inputs::Dict, set::Vector{Int64}, data::Matrix{Float64})
+    resources = inputs["RESOURCE_NAMES"][set]
+    zones = inputs["R_ZONES"][set]
+    weight = inputs["omega"]
+    df_annual = DataFrame(Resource = resources, Zone = zones)
+    df_annual.AnnualSum = data * weight
+    return df_annual
+end
+
+function _write_timeseries_file(df_annual, data, path, setup::Dict, filename::AbstractString)
+    filepath = joinpath(path, filename * ".csv")
+    if setup["WriteOutputs"] == "annual"
+        # df_annual is expected to have an AnnualSum column.
+        write_annual(filepath, df_annual)
+    else # setup["WriteOutputs"] == "full"
+        df_full = write_fulltimeseries(filepath, data, df_annual)
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+            write_full_time_series_reconstruction(path, setup, df_full, filename)
+            @info("Writing Full Time Series for "*filename)
+        end
+    end
+    return nothing
+end
+
 @doc raw"""write_full_time_series_reconstruction(path::AbstractString,
                             setup::Dict,
                             DF::DataFrame,
