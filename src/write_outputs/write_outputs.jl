@@ -563,7 +563,8 @@ function _prepare_annualsum_df(inputs::Dict, set::Vector{Int64}, data::Matrix{Fl
     return df_annual
 end
 
-function _write_timeseries_or_annual_file(df_annual, data, path, setup::Dict, filename::AbstractString)
+function _write_timeseries_or_annual_file(
+        df_annual, data, path, setup::Dict, filename::AbstractString)
     filepath = joinpath(path, filename * ".csv")
     if setup["WriteOutputs"] == "annual"
         # df_annual is expected to have an AnnualSum column.
