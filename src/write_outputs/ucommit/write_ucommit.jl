@@ -13,7 +13,7 @@ end
 function _write_ucommit_var(path, inputs, setup, EP, var, filename)
     COMMIT, data = _prepare_ucommit_var(inputs, EP, var)
     df_annual = _prepare_annualsum_df(inputs, COMMIT, data)
-    _write_timeseries_or_annual_file(df_annual, data, path, setup, filename)
+    write_temporal_data(df_annual, data, path, setup, filename)
 end
 
 function _prepare_ucommit_var(inputs::Dict, EP::Model, var::Symbol)
