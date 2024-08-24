@@ -564,7 +564,7 @@ function _create_annualsum_df(inputs::Dict, set::Vector{Int64}, data::Matrix{Flo
 end
 
 function write_temporal_data(
-        df_annual, data, path, setup::Dict, filename::AbstractString)
+        df_annual, data, path::AbstractString, setup::Dict, filename::AbstractString)
     filepath = joinpath(path, filename * ".csv")
     if setup["WriteOutputs"] == "annual"
         # df_annual is expected to have an AnnualSum column.

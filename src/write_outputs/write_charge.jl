@@ -5,6 +5,7 @@ Function for writing the charging energy values of the different storage technol
 """
 function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
+    resources = inputs["RESOURCE_NAMES"]
     zones = zone_id.(gen)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
@@ -14,39 +15,31 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+    weight = inputs["omega"]
 
-    # Power withdrawn to charge each resource in each time step
-    dfCharge = DataFrame(Resource = inputs["RESOURCE_NAMES"],
-        Zone = zones,
-        AnnualSum = Array{Union{Missing, Float64}}(undef, G))
     charge = zeros(G, T)
 
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     if !isempty(STOR_ALL)
-        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]) * scale_factor
+        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
     end
     if !isempty(FLEX)
-        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]) * scale_factor
+        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :])
     end
     if (setup["HydrogenMinimumProduction"] > 0) & (!isempty(ELECTROLYZER))
-        charge[ELECTROLYZER, :] = value.(EP[:vUSE][ELECTROLYZER, :]) * scale_factor
+        charge[ELECTROLYZER, :] = value.(EP[:vUSE][ELECTROLYZER, :])
     end
     if !isempty(VS_STOR)
-        charge[VS_STOR, :] = value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :]) * scale_factor
+        charge[VS_STOR, :] = value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :])
     end
 
-    dfCharge.AnnualSum .= charge * inputs["omega"]
+    charge *= scale_factor
 
-    filepath = joinpath(path, "charge.csv")
-    if setup["WriteOutputs"] == "annual"
-        write_annual(filepath, dfCharge)
-    else # setup["WriteOutputs"] == "full"
-        df_Charge = write_fulltimeseries(filepath, charge, dfCharge)
-        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(
-                path, setup, df_Charge, "charge")
-            @info("Writing Full Time Series for Charge")
-        end
-    end
+    df = DataFrame(Resource = resources,
+        Zone = zones,
+        AnnualSum = zeros(G))
+    df.AnnualSum .= charge * weight
+
+    write_temporal_data(df, charge, path, setup, "charge")
     return nothing
 end
