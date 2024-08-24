@@ -155,7 +155,6 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         writeoutput["WriteStorage"] = false
         writeoutput["WriteStorageDual"] = false
         writeoutput["WriteTimeWeights"] = false
-        writeoutput["WriteCommit"] = false
         writeoutput["WriteCapacityValue"] = false
         writeoutput["WriteReserveMargin"] = false
         writeoutput["WriteReserveMarginWithWeights"] = false
