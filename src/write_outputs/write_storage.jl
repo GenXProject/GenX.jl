@@ -4,8 +4,8 @@
 Function for writing the capacities of different storage technologies, including hydro reservoir, flexible storage tech etc.
 """
 function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
-    resources = inputs["RESOURCE_NAMES"]
+    gen = inputs["RESOURCES"]   # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"]   # Resource names
     zones = zone_id.(gen)
 
     T = inputs["T"]     # Number of time steps (hours)
@@ -15,11 +15,11 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     FLEX = inputs["FLEX"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     stored = zeros(G, T)
-
     if !isempty(STOR_ALL)
         stored[STOR_ALL, :] = value.(EP[:vS][STOR_ALL, :])
     end
@@ -36,5 +36,6 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
 
     df = DataFrame(Resource = resources, Zone = zones)
     df.AnnualSum = stored * weight
+    
     write_temporal_data(df, stored, path, setup, "storage")
 end

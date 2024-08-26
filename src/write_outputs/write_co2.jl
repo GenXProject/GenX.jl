@@ -13,32 +13,36 @@ function write_co2_emissions_plant(path::AbstractString,
         inputs::Dict,
         setup::Dict,
         EP::Model)
-    gen = inputs["RESOURCES"]
+
+    gen = inputs["RESOURCES"]  # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"] # Resource names
+    zones = zone_id.(gen)
+
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
-    emissions_plant = value.(EP[:eEmissionsByPlant])
-
+    weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    emissions_plant = value.(EP[:eEmissionsByPlant])
     emissions_plant *= scale_factor
 
-    df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
-        Zone = zone_id.(gen),
+    df = DataFrame(Resource = resources,
+        Zone =  zones,
         AnnualSum = zeros(G))
-    df.AnnualSum .= emissions_plant * inputs["omega"]
+    df.AnnualSum .= emissions_plant * weight
 
     write_temporal_data(df, emissions_plant, path, setup, "emissions_plant")
     return nothing
 end
 
 function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]   # Resources (objects)
     CCS = inputs["CCS"]
-    resources = inputs["RESOURCE_NAMES"][CCS]
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    zones = zone_id.(gen[CCS])
-    T = inputs["T"]     # Number of time steps (hours)
-    weight = inputs["omega"]
 
+    resources = inputs["RESOURCE_NAMES"][CCS]   # Resource names
+    zones = zone_id.(gen[CCS])
+
+    weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     df = DataFrame(Resource = resources,
@@ -46,7 +50,6 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
         AnnualSum = zeros(length(CCS)))
     if !isempty(CCS)
         emissions_captured_plant = value.(EP[:eEmissionsCaptureByPlant]).data
-
         emissions_captured_plant *= scale_factor
 
         df.AnnualSum .= emissions_captured_plant * weight

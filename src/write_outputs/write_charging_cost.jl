@@ -1,6 +1,6 @@
 function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
-    resources = inputs["RESOURCE_NAMES"]
+    gen = inputs["RESOURCES"]  # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"] # Resource names
 
     regions = region.(gen)
     clusters = cluster.(gen)
@@ -13,6 +13,7 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+    
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 

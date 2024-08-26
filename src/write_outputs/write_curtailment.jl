@@ -5,12 +5,15 @@ Function for writing the curtailment values of the different variable renewable 
 	co-located).
 """
 function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
-    resources = inputs["RESOURCE_NAMES"]
+    gen = inputs["RESOURCES"]  # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"] # Resource names
+    zones = zone_id.(gen)
+
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     VRE = inputs["VRE"]
     VRE_STOR = inputs["VRE_STOR"]
+
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
@@ -35,11 +38,9 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
                                     value.(EP[:vP_WIND][WIND, :]).data)
         end
         if !isempty(SOLAR_WIND)
-            curtailment[SOLAR_WIND, :] = ((value.(EP[:eTotalCap_SOLAR])[SOLAR_WIND].data
-                                           .*
+            curtailment[SOLAR_WIND, :] = ((value.(EP[:eTotalCap_SOLAR])[SOLAR_WIND].data .*
                                            inputs["pP_Max_Solar"][SOLAR_WIND, :] .-
-                                           value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data)
-                                          .*
+                                           value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data) .*
                                           etainverter.(gen_VRE_STOR[((gen_VRE_STOR.wind .!= 0) .& (gen_VRE_STOR.solar .!= 0))])
                                           +
                                           (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data .*
@@ -51,7 +52,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     curtailment *= scale_factor
 
     df = DataFrame(Resource = resources,
-        Zone = zone_id.(gen),
+        Zone = zones,
         AnnualSum = zeros(G))
     df.AnnualSum = curtailment * weight
 

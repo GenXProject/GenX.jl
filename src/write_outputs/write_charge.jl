@@ -4,8 +4,8 @@
 Function for writing the charging energy values of the different storage technologies.
 """
 function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
-    resources = inputs["RESOURCE_NAMES"]
+    gen = inputs["RESOURCES"]   # Resources (objects) 
+    resources = inputs["RESOURCE_NAMES"]    # Resource names
     zones = zone_id.(gen)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
@@ -15,11 +15,11 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+
     weight = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     charge = zeros(G, T)
-
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     if !isempty(STOR_ALL)
         charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
     end
