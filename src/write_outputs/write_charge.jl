@@ -8,8 +8,6 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     resources = inputs["RESOURCE_NAMES"]    # Resource names
     zones = zone_id.(gen)
 
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
@@ -19,26 +17,32 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    charge = zeros(G, T)
+    charge = Matrix[]
+    charge_ids = Vector{Int}[]
     if !isempty(STOR_ALL)
-        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
+        push!(charge, value.(EP[:vCHARGE]))
+        push!(charge_ids, STOR_ALL)
     end
     if !isempty(FLEX)
-        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :])
+        push!(charge, value.(EP[:vCHARGE_FLEX]))
+        push!(charge_ids, FLEX)
     end
     if (setup["HydrogenMinimumProduction"] > 0) & (!isempty(ELECTROLYZER))
-        charge[ELECTROLYZER, :] = value.(EP[:vUSE][ELECTROLYZER, :])
+        push!(charge, value.(EP[:vUSE]))
+        push!(charge_ids, ELECTROLYZER)
     end
     if !isempty(VS_STOR)
-        charge[VS_STOR, :] = value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :])
+        push!(charge, value.(EP[:vCHARGE_VRE_STOR]))
+        push!(charge_ids, VS_STOR)
     end
-
+    charge = reduce(vcat, charge)
+    charge_ids = reduce(vcat, charge_ids)
+    
     charge *= scale_factor
-
-    df = DataFrame(Resource = resources,
-        Zone = zones,
-        AnnualSum = zeros(G))
-    df.AnnualSum .= charge * weight
+    
+    df = DataFrame(Resource = resources[charge_ids],
+        Zone = zones[charge_ids])
+    df.AnnualSum = charge * weight
 
     write_temporal_data(df, charge, path, setup, "charge")
     return nothing

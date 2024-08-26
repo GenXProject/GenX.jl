@@ -19,23 +19,26 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    stored = zeros(G, T)
+    stored = Matrix[]
     if !isempty(STOR_ALL)
-        stored[STOR_ALL, :] = value.(EP[:vS][STOR_ALL, :])
+        push!(stored, value.(EP[:vS]))
     end
     if !isempty(HYDRO_RES)
-        stored[HYDRO_RES, :] = value.(EP[:vS_HYDRO][HYDRO_RES, :])
+        push!(stored, value.(EP[:vS_HYDRO]))
     end
     if !isempty(FLEX)
-        stored[FLEX, :] = value.(EP[:vS_FLEX][FLEX, :])
+        push!(stored, value.(EP[:vS_FLEX]))
     end
     if !isempty(VS_STOR)
-        stored[VS_STOR, :] = value.(EP[:vS_VRE_STOR][VS_STOR, :])
+        push!(stored, value.(EP[:vS_VRE_STOR]))
     end
+    stored = reduce(vcat, stored)
     stored *= scale_factor
 
-    df = DataFrame(Resource = resources, Zone = zones)
+    stored_ids = convert(Vector{Int}, vcat(STOR_ALL, HYDRO_RES, FLEX, VS_STOR))
+    df = DataFrame(Resource = resources[stored_ids],
+        Zone = zones[stored_ids])
     df.AnnualSum = stored * weight
-    
+
     write_temporal_data(df, stored, path, setup, "storage")
 end
