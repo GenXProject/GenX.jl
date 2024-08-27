@@ -275,7 +275,7 @@ When modeling frequency regulation and spinning reserves contributions, thermal 
 
 ```math
 \begin{aligned}
-	\Theta_{y,z,t} - f_{y,z,t} \geq \rho^{min}_{y,z} \times Omega^{size}_{y,z} \times \nu_{y,z,t}
+	\Theta_{y,z,t} - f_{y,z,t} \geq \rho^{min}_{y,z} \times \Omega^{size}_{y,z} \times \nu_{y,z,t}
 	\hspace{1.5cm} \forall y \in \mathcal{UC}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
 \end{aligned}
 ```
