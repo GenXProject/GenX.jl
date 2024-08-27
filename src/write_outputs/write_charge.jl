@@ -8,6 +8,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     resources = inputs["RESOURCE_NAMES"]    # Resource names
     zones = zone_id.(gen)
 
+    T = inputs["T"]     # Number of time steps (hours)
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
@@ -35,11 +36,11 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         push!(charge, value.(EP[:vCHARGE_VRE_STOR]))
         push!(charge_ids, VS_STOR)
     end
-    charge = reduce(vcat, charge)
-    charge_ids = reduce(vcat, charge_ids)
-    
+    charge = reduce(vcat, charge, init = zeros(0, T))
+    charge_ids = reduce(vcat, charge_ids, init = Int[])
+
     charge *= scale_factor
-    
+
     df = DataFrame(Resource = resources[charge_ids],
         Zone = zones[charge_ids])
     df.AnnualSum = charge * weight

@@ -484,7 +484,7 @@ end # END output()
 Internal function for writing annual outputs. 
 """
 function write_annual(fullpath::AbstractString, dfOut::DataFrame)
-    push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum])])
+    push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
     CSV.write(fullpath, dfOut)
     return nothing
 end
@@ -504,8 +504,9 @@ function write_fulltimeseries(fullpath::AbstractString,
                     Symbol("AnnualSum");
                     [Symbol("t$t") for t in 1:T]]
     rename!(dfOut, auxNew_Names)
-    total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-    total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)
+    total = DataFrame(
+        ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0) fill(0.0, (1, T))], auxNew_Names)
+    total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)
     dfOut = vcat(dfOut, total)
 
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
