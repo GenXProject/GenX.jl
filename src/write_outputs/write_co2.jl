@@ -27,7 +27,7 @@ function write_co2_emissions_plant(path::AbstractString,
     emissions_plant *= scale_factor
 
     df = DataFrame(Resource = resources,
-        Zone =  zones,
+        Zone = zones,
         AnnualSum = zeros(G))
     df.AnnualSum .= emissions_plant * weight
 
@@ -54,7 +54,8 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
 
         df.AnnualSum .= emissions_captured_plant * weight
 
-        write_temporal_data(df, emissions_captured_plant, path, setup, "captured_emissions_plant")
+        write_temporal_data(
+            df, emissions_captured_plant, path, setup, "captured_emissions_plant")
     end
     return nothing
 end
