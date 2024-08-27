@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- The `charge.csv` and `storage.csv` files now export only resources with 
+non-zero charge and storage variables (#760 and #763).
+
 ## [0.4.1] - 2024-08-20
 
 ### Added
