@@ -32,7 +32,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     if !isempty(VS_STOR)
         push!(stored, value.(EP[:vS_VRE_STOR]))
     end
-    stored = reduce(vcat, stored)
+    stored = reduce(vcat, stored, init=zeros(0, T))
     stored *= scale_factor
 
     stored_ids = convert(Vector{Int}, vcat(STOR_ALL, HYDRO_RES, FLEX, VS_STOR))
