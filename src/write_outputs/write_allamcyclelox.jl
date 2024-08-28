@@ -129,30 +129,38 @@ function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP:
     dfAllam_output = DataFrame(Resource = 
 		[inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_sco2turbine_gross_power_mw";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_asu_gross_power_mw";
+		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_net_power_output_mw";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_storage_lox_t";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_lox_in_t";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_lox_out_t"])
+		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_lox_out_t";
+		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_gox_t"])
 
 	gross_power_sco2turbine = value.(EP[:vOutput_AllamcycleLOX])[:,sco2turbine,:]
 	gross_power_asu = value.(EP[:vOutput_AllamcycleLOX])[:,asu,:]
+	net_power_out = value.(EP[:vP_Allam])[:,:]
 	lox_storage = value.(EP[:vOutput_AllamcycleLOX])[:,lox,:]
 	lox_in = value.(EP[:vLOX_in])
 	lox_out = value.(EP[:eLOX_out])
+	gox = value.(EP[:vGOX])
 
 
     if setup["ParameterScale"] == 1
         gross_power_sco2turbine *= ModelScalingFactor
 		gross_power_asu *= ModelScalingFactor
+		net_power_out *= ModelScalingFactor
 		lox_storage *= ModelScalingFactor
 		lox_in *= ModelScalingFactor
 		lox_out *= ModelScalingFactor
+		gox *= ModelScalingFactor
     end
 
 	allamoutput = [Array(gross_power_sco2turbine);
 	Array(gross_power_asu);
+	Array(net_power_out);
 	Array(lox_storage);
 	Array(lox_in);
-	Array(lox_out)]
+	Array(lox_out);
+	Array(gox)]
 
 	final_allam = permutedims(DataFrame(hcat(Array(dfAllam_output), allamoutput), :auto))
     CSV.write(joinpath(path,"output_allam_cycle_lox.csv"), final_allam, writeheader = false)

@@ -1076,7 +1076,7 @@ allam_cycle_lox(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(
 with_lox(r::AbstractResource) = get(r, :with_lox, default_zero)
 
 function is_with_lox(rs::Vector{T}) where {T <: AbstractResource}
-    findall(r -> with_lox(r) == 1, rs)
+    return findall(r -> with_lox(r) == 1, rs)
 end
 
 # cap size of each component
