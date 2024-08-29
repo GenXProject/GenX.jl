@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - The `charge.csv` and `storage.csv` files now include only resources with 
 charge and storage variables (#760 and #763).
+- Deduplicated docs on optimized scheduled maintenance for thermal resources (#745).
 
 ## [0.4.1] - 2024-08-20
 
