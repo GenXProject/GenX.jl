@@ -38,7 +38,7 @@ function write_transmission_flows(path::AbstractString,
             compression = setup["ResultsCompressionType"])
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, dfFlow, "flow")
+            write_full_time_series_reconstruction(path, setup, dfFlow, setup["WriteResultsNamesDict"]["flow"])
             @info("Writing Full Time Series for Transmission Flows")
         end
     end

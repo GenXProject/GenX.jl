@@ -47,7 +47,7 @@ function write_transmission_losses(path::AbstractString,
             compression = setup["ResultsCompressionType"])
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, dfTLosses, "tlosses")
+            write_full_time_series_reconstruction(path, setup, dfTLosses, setup["WriteResultsNamesDict"]["tlosses"])
             @info("Writing Full Time Series for Time Losses")
         end
     end

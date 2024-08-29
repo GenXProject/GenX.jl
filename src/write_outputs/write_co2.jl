@@ -31,7 +31,22 @@ function write_co2_emissions_plant(path::AbstractString,
         AnnualSum = zeros(G))
     df.AnnualSum .= emissions_plant * weight
 
+<<<<<<< HEAD
     write_temporal_data(df, emissions_plant, path, setup, setup["WriteResultsNamesDict"]["emissions"])
+=======
+    filepath = joinpath(path, setup["WriteResultsNamesDict"]["emissions_plant"])
+    if setup["WriteOutputs"] == "annual"
+        write_annual(filepath, dfEmissions_plant, setup)
+    else # setup["WriteOutputs"] == "full"
+        df_Emissions_plant = write_fulltimeseries(
+            filepath, emissions_plant, dfEmissions_plant, setup)
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+            write_full_time_series_reconstruction(
+                path, setup, df_Emissions_plant, setup["WriteResultsNamesDict"]["emissions_plant"])
+            @info("Writing Full Time Series for Emissions Plant")
+        end
+    end
+>>>>>>> 7b8d28340 (Code cleanup)
     return nothing
 end
 

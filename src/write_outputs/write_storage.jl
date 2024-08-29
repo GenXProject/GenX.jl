@@ -40,5 +40,13 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
         Zone = zones[stored_ids])
     df.AnnualSum = stored * weight
 
+<<<<<<< HEAD
     write_temporal_data(df, stored, path, setup, setup["WriteResultsNamesDict"]["storage"])
+=======
+
+    if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+        write_full_time_series_reconstruction(path, setup, dfStorage, setup["WriteResultsNamesDict"]["storage"])
+        @info("Writing Full Time Series for Storage")
+    end
+>>>>>>> 7b8d28340 (Code cleanup)
 end

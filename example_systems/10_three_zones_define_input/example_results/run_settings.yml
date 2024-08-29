@@ -1,0 +1,173 @@
+HydrogenHourlyMatching: 0
+NetworkExpansion: 1
+TimeDomainReductionFolder: "TDR_results"
+WriteOutputs: "full"
+SystemFolder: "system"
+EnableJuMPStringNames: false
+Trans_Loss_Segments: 1
+ModelingtoGenerateAlternativeSlack: 0.1
+PoliciesFolder: "policies"
+MultiStage: 0
+ComputeConflicts: 0
+OverwriteResults: 0
+ObjScale: 1
+ModelingToGenerateAlternatives: 0
+OutputFullTimeSeries: 1
+MaxCapReq: 0
+MinCapReq: 1
+CO2Cap: 2
+WriteShadowPrices: 1
+ResultsCompressionType: "auto_detect"
+ResultsFileType: "auto_detect"
+OutputFullTimeSeriesFolder: "Full_TimeSeries"
+OperationalReserves: 0
+ParameterScale: 1
+WriteInputNamesDict:
+  capacity: "Capacity_reserve_margin.csv"
+  resource_cap: "Resource_capacity_reserve_margin.csv"
+  vre_stor_solar_variability: "Vre_and_stor_solar_variability.csv"
+  resources_location: "/Users/mayamutic/Desktop/GenX/example_systems/10_three_zones_define_input/resources"
+  resource_min: "Resource_minimum_capacity_requirement.csv"
+  generators: "Generators_variability.csv"
+  vre_stor: "Vre_stor.csv"
+  min_cap: "Minimum_capacity_requirement.csv"
+  esr: "Energy_share_requirement.csv"
+  storage: "Storage.csv"
+  thermal: "Thermal.csv"
+  CRM_slack: "Capacity_reserve_margin_slack.csv"
+  co2_cap: "CO2_cap.csv"
+  vre_stor_wind_variability: "Vre_and_stor_wind_variability.csv"
+  fuel: "Fuels_data.csv.gz"
+  resource_max: "Resource_maximum_capacity_requirement.csv"
+  esr_slack: "Energy_share_requirement_slack.csv"
+  demand: "Demand_data.csv"
+  vre: "Vre.csv"
+  system_location: "/Users/mayamutic/Desktop/GenX/example_systems/10_three_zones_define_input/system"
+  flex_demand: "Flex_demand.csv"
+  max_cap: "Maximum_capacity_requirement.csv"
+  policies_location: "/Users/mayamutic/Desktop/GenX/example_systems/10_three_zones_define_input/policies"
+  electrolyzer: "Electrolyzer.csv"
+  network: "Network.csv"
+  must_run: "Must_run.csv"
+  co2_cap_slack: "CO2_cap_slack.csv"
+  operational_reserves: "Operational_reserves.csv"
+  resource_energy_share_requirement: "Resource_energy_share_requirement.csv"
+  hydro: "Hydro.csv"
+EnergyShareRequirement: 1
+PrintModel: 0
+TimeDomainReduction: 1
+DC_OPF: 0
+CapacityReserveMargin: 1
+MethodofMorris: 0
+WriteResultsNamesDict:
+  hourly_matching_prices: "hourly_matching_prices"
+  curtail: "curtail.csv.gz"
+  storage_init: "StorageInit"
+  fuel_consumption_plant: "FuelConsumption_plant_MMBTU"
+  power_balance: "power_balance.csv"
+  co2_prices: "CO2_prices_and_penalties.csv"
+  dStorage: "dStorage"
+  storagebal_duals: "storagebal_duals"
+  vre_stor_wind_power: "vre_stor_wind_power"
+  subsidy_revenue: "SubsidyRevenue"
+  reserve_margin_prices_and_penalties: "ReserveMargin_prices_and_penalties"
+  storage: "storage"
+  energy_revenue: "EnergyRevenue"
+  vre_stor_capacity: "vre_stor_capacity"
+  reg_dn: "reg_dn"
+  emissions_plant: "emissions_plant"
+  start: "start"
+  nse: "nse.csv"
+  reg_subsidy_revenue: "RegSubsidyRevenue"
+  esr_revenue: "ESR_Revenue"
+  capacity_name: "capacity"
+  reserve_margin_revenue: "ReserveMarginRevenue"
+  capacity_factor: "capacityfactor.csv"
+  costs: "costs.parquet"
+  fuel_cost_plant: "Fuel_cost_plant"
+  vre_stor_dc_charge: "vre_stor_dc_charge"
+  shutdown: "shutdown"
+  reg: "reg"
+  charge: "charge.csv"
+  time_weights: "time_weights"
+  vre_stor_solar_power: "vre_stor_solar_power"
+  hydrogen_prices: "hydrogen_prices"
+  vre_stor_dc_discharge: "vre_stor_dc_discharge"
+  virtual_discharge: "virtual_discharge"
+  status: "status"
+  mincap: "MinCapReq_prices_and_penalties"
+  revenue: "NetRevenue"
+  vre_stor_ac_discharge: "vre_stor_ac_discharge"
+  flow: "flow"
+  fuel_consumption_total: "FuelConsumtion_total_MMBTU"
+  maxcap: "MaxCapReq_prices_and_penalties"
+  tlosses: "tlosses"
+  reserve_margin_w: "ReserveMargin_w.csv"
+  esr_prices_and_penalties: "ESR_prices_and_penalties"
+  power: "power"
+  emissions: "emissions"
+  prices: "prices"
+  commit: "commit.parquet"
+  captured_emissions_plant: "captured_emissions_plant"
+  charging_cost: "ChargingCost.csv"
+  network_expansion: "network_expansion"
+  reserve_margin: "ReserveMargin"
+  reliability: "reliability"
+  vre_stor_ac_charge: "vre_stor_ac_charge"
+  capacity: "Capacity_test.csv"
+StorageVirtualDischarge: 1
+MGAAnnualGeneration: 0
+StorageLosses: 1
+IncludeLossesInESR: 0
+ResourcePoliciesFolder: "policy_assignments"
+WriteOutputsSettingsDict:
+  WriteReserveMarginWithWeights: true
+  WriteStorage: true
+  WriteStatus: true
+  WriteRsv: true
+  WriteNetRevenue: true
+  WriteNWExpansion: true
+  WriteSubsidyRevenue: true
+  WriteTimeWeights: true
+  WriteVREStor: true
+  WriteCO2: true
+  WriteESRPrices: true
+  WriteReg: true
+  WriteCurtailment: true
+  WriteCapacityFactor: true
+  WriteCommit: true
+  WriteStart: true
+  WriteReserveMargin: true
+  WriteChargingCost: true
+  WriteCapacityValue: true
+  WriteEnergyRevenue: true
+  WriteAngles: true
+  WriteFuelConsumption: true
+  WriteStorageDual: true
+  WriteTransmissionLosses: true
+  WriteTransmissionFlows: true
+  WriteNSE: true
+  WriteCO2Cap: true
+  WriteOpWrapLDSStorInit: true
+  WriteEmissions: true
+  WriteESRRevenue: true
+  WriteCapacity: true
+  WriteVirtualDischarge: true
+  WriteReserveMarginRevenue: true
+  WriteOpWrapLDSdStor: true
+  WriteMaintenance: true
+  WritePower: true
+  WriteReliability: true
+  WriteCharge: true
+  WriteShutdown: true
+  WriteHydrogenPrices: true
+  WriteReserveMarginSlack: true
+  WriteCosts: true
+  WriteMaxCapReq: true
+  WriteHourlyMatchingPrices: true
+  WritePowerBalance: true
+  WriteMinCapReq: true
+  WritePrice: true
+VirtualChargeDischargeCost: 1
+UCommit: 2
+ResourcesFolder: "resources"

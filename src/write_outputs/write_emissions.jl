@@ -149,14 +149,14 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             dfEmissions = dfEmissionsEmissions[2:end,:]
             dfEmissions[!,2:end] = convert.(Float64,dfEmissions[!,2:end])
 
-            write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["cemissions"]), 
+            write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
                 dfEmissions, 
                 filetype = setup["ResultsFileType"], 
                 compression = setup["ResultsCompressionType"])
 
 
             if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-                write_full_time_series_reconstruction(path, setup, dfEmissions, "emissions")
+                write_full_time_series_reconstruction(path, setup, dfEmissions, setup["WriteResultsNamesDict"]["emissions"])
                 @info("Writing Full Time Series for Emissions")
             end
         end

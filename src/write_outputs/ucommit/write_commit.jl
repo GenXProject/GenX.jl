@@ -21,7 +21,7 @@ function write_commit(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["commit"]), dfCommit, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-        write_full_time_series_reconstruction(path, setup, dfCommit, "commit")
+        write_full_time_series_reconstruction(path, setup, dfCommit, setup["WriteResultsNamesDict"]["commit"])
         @info("Writing Full Time Series for Commitment")
     end
 end

@@ -1,8 +1,8 @@
 IterativelyAddPeriods: 1
 ExtremePeriods: 1
 UseExtremePeriods: 1
-MinPeriods: 2
-MaxPeriods: 2
+MinPeriods: 8
+MaxPeriods: 11
 DemandWeight: 1
 ClusterFuelPrices: 1
 nReps: 100

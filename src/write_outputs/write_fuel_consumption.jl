@@ -98,7 +98,7 @@ function write_fuel_consumption_ts(path::AbstractString,
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(
-            path, setup, dfPlantFuel_TS, "FuelConsumption_plant_MMBTU")
+            path, setup, dfPlantFuel_TS,setup["WriteResultsNamesDict"]["fuel_consumption_plant"])
         @info("Writing Full Time Series for Fuel Consumption")
     end
 end

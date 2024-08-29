@@ -33,7 +33,7 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             compression = setup["ResultsCompressionType"])
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-        write_full_time_series_reconstruction(path, setup, dfPrice, "prices")
+        write_full_time_series_reconstruction(path, setup, dfPrice, setup["WriteResultsNamesDict"]["prices"])
         @info("Writing Full Time Series for Price")
     end
     return nothing

@@ -628,16 +628,7 @@ function write_full_time_series_reconstruction(
         path::AbstractString, setup::Dict, DF::DataFrame, name::String)
     FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
     output_path = joinpath(path, FullTimeSeriesFolder)
-    #println(DF)
-    #=DF[!,:Zone] = convert.(Float64,DF[!,:Zone])
-    DF = dftranspose(DF,false)
-    rename!(DF, Symbol.(Vector(DF[1,:])))
-    DF = DF[2:end,:]
-    DF[!,1] = convert.(String,DF[!,1])
-    DF[!,2:end] = convert.(Float64,DF[!,2:end])=#
-    #println(DF)
     dfOut_full = full_time_series_reconstruction(path, setup, DF)
-    println(dfOut_full)
     dfOut_full[!,1] = convert.(String,dfOut_full[!,1])
     dfOut_full[!,2:end] = convert.(Float64,dfOut_full[!,2:end])
     #CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
@@ -673,20 +664,6 @@ end
     - `compression::String`: The compression type, as specified in `ResultsCompressionType` in `genx_settings.yml`. Accepted inputs are `gzip`, `snappy`, `zstd`, `none`, and `auto_detect` (default). 
 """
 function write_output_file(path::AbstractString, file::DataFrame; filetype::String = "auto_detect", compression::String = "auto_detect")
-    println(file)
-    println(path)
-    #=if file[2,1] == "Zone"
-        file = dftranspose(file, true)
-        println(file)
-        select!(file, Not(:Zone))
-        file = dftranspose(file,true)
-        println(file)
-    end=#
-    # Set 'n/a' to missing/nothing x = [1, 2, missing]
-    #=for col in names(file)
-        replace!(file[:,col],"n/a"=>missing)
-    end=#
-
     # 1) Check if an extension is already in the file name, if not, add it based on filetype
     if occursin(".", path)
         if occursin(".", splitext(path)[1]) # If two extensions are present (eg .csv.gz, or .json.gz, only the first will be added to the filetype as .gz will be autodetected by DuckDB later)
