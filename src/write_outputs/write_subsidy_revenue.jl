@@ -98,7 +98,17 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
         dfRegSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$
     end
 
-    CSV.write(joinpath(path, "SubsidyRevenue.csv"), dfSubRevenue)
-    CSV.write(joinpath(path, "RegSubsidyRevenue.csv"), dfRegSubRevenue)
+    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["subsidy_revenue"]), dfSubRevenue)
+    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["reg_subsidy_revenue"]), dfRegSubRevenue)
+
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["subsidy_revenue"]),
+            dfSubRevenue,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reg_subsidy_revenue"]),
+            dfRegSubRevenue,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
+
     return dfSubRevenue, dfRegSubRevenue
 end

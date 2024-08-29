@@ -13,9 +13,6 @@ function load_inputs(setup::Dict, path::AbstractString)
     ## Read input files
     println("Reading Input CSV Files")
     ## input paths
-    #system_path = joinpath(path, setup["SystemFolder"])
-    #resources_path = joinpath(path, setup["ResourcesFolder"])
-    #policies_path = joinpath(path, setup["PoliciesFolder"])
 
     system_path = setup["WriteInputNamesDict"]["system_location"]
     resources_path = setup["WriteInputNamesDict"]["resources_location"]
@@ -24,7 +21,7 @@ function load_inputs(setup::Dict, path::AbstractString)
     ## Declare Dict (dictionary) object used to store parameters
     inputs = Dict()
     # Read input data about power network topology, operating and expansion attributes
-    if isfile(joinpath(system_path,setup["WriteInputNamesDict"]["network_name"]))
+    if isfile(joinpath(system_path,setup["WriteInputNamesDict"]["network"]))
         network_var = load_network_data!(setup, system_path, inputs)
     else
         inputs["Z"] = 1

@@ -1,12 +1,12 @@
-capacity_name: "Capacity_test.csv"
-capacity_factor_name: "capacityfactor"
-charge_name: "charge.csv"
-charging_cost_name: "ChargingCost.csv"
-co2_prices_name: "CO2_prices_and_penalties.csv"
-commit_name: "commit"
-costs_name: "costs"
-curtail_name: "curtail"
-emissions_plant_name: "emissions_plant"
+capacity: "Capacity_test.csv"
+capacity_factor: "capacityfactor.parquet"
+charge: "charge.csv"
+charging_cost: "ChargingCost.csv"
+co2_prices: "CO2_prices_and_penalties.csv"
+commit: "commit"
+costs: "costs"
+curtail: "curtail"
+emissions_plant: "emissions_plant"
 
 
 

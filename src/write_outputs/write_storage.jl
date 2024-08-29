@@ -40,5 +40,5 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
         Zone = zones[stored_ids])
     df.AnnualSum = stored * weight
 
-    write_temporal_data(df, stored, path, setup, "storage")
+    write_temporal_data(df, stored, path, setup, setup["WriteResultsNamesDict"]["storage"])
 end

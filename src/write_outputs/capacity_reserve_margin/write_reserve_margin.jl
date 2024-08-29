@@ -4,6 +4,10 @@ function write_reserve_margin(path::AbstractString, setup::Dict, EP::Model)
         temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
     end
     dfResMar = DataFrame(temp_ResMar, :auto)
-    CSV.write(joinpath(path, "ReserveMargin.csv"), dfResMar)
+    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin"]), dfResMar)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin"]),
+            dftranspose(dfResMar,false),
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
     return nothing
 end

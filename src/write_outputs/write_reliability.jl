@@ -17,9 +17,21 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
     auxNew_Names = [Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
     rename!(dfReliability, auxNew_Names)
 
-    CSV.write(joinpath(path, "reliability.csv"),
+    #=CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["reliability"]),
         dftranspose(dfReliability, false),
-        header = false)
+        header = false)=#
+
+    # Maya: Transpose dataframe, make the first row the header, convert columns to type String and Float 64
+    dfReliability = dftranspose(dfReliability, false)
+    rename!(dfReliability, Symbol.(Vector(dfReliability[1,:])))
+    dfReliability = dfReliability[2:end,:]
+    dfReliability[!,2:end] = convert.(Float64,dfReliability[!,2:end])
+    
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reliability"]),
+            dfReliability,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
+
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(path, setup, dfReliability, "reliability")

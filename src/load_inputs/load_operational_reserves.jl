@@ -4,7 +4,7 @@
 Read input parameters related to frequency regulation and operating reserve requirements
 """
 function load_operational_reserves!(setup::Dict, path::AbstractString, inputs::Dict)
-    filename = setup["WriteInputNamesDict"]s["operational_reserves_name"]
+    filename = setup["WriteInputNamesDict"]s["operational_reserves"]
     deprecated_synonym = "Reserves.csv"
     res_in = load_dataframe(path, [filename, deprecated_synonym])
 

@@ -13,14 +13,18 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::D
     my_dir = get_systemfiles_path(setup, TDR_directory, path)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     # Resource names
     filename1 = input_names["vre_stor_solar_name"]
 =======
     filename1 = setup["WriteInputNamesDict"]["vre_stor_solar_name"]
 >>>>>>> 8a69955c2 (Added write_output_file to take in parquet and json filetypes)
+=======
+    filename1 = setup["WriteInputNamesDict"]["vre_stor_solar"]
+>>>>>>> d3f7a43f6 (Added write_output_file to all results)
     vre_stor_solar = load_dataframe(joinpath(my_dir, filename1))
 
-    filename2 = setup["WriteInputNamesDict"]["vre_stor_wind_name"]
+    filename2 = setup["WriteInputNamesDict"]["vre_stor_wind"]
     vre_stor_wind = load_dataframe(joinpath(my_dir, filename2))
 
     all_resources = inputs["RESOURCE_NAMES"]

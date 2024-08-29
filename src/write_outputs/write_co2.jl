@@ -31,7 +31,7 @@ function write_co2_emissions_plant(path::AbstractString,
         AnnualSum = zeros(G))
     df.AnnualSum .= emissions_plant * weight
 
-    write_temporal_data(df, emissions_plant, path, setup, setup["WriteResultsNamesDict"]["emissions_name"])
+    write_temporal_data(df, emissions_plant, path, setup, setup["WriteResultsNamesDict"]["emissions"])
     return nothing
 end
 
@@ -55,10 +55,14 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
         df.AnnualSum .= emissions_captured_plant * weight
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         write_temporal_data(
             df, emissions_captured_plant, path, setup, "captured_emissions_plant")
 =======
         filepath = joinpath(path, setup["WriteResultsNamesDict"]["captured_emissions_plant_name"])
+=======
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["captured_emissions_plant"])
+>>>>>>> d3f7a43f6 (Added write_output_file to all results)
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfCapturedEmissions_plant, setup)
         else     # setup["WriteOutputs"] == "full"

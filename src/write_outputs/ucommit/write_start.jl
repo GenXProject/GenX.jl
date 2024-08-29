@@ -8,7 +8,7 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     start = value.(EP[:vSTART][COMMIT, :].data)
     dfStart.AnnualSum = start * inputs["omega"]
 
-    filepath = joinpath(path, setup["WriteResultsNamesDict"]["start_name"])
+    filepath = joinpath(path, setup["WriteResultsNamesDict"]["start"])
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfStart, setup)
     else # setup["WriteOutputs"] == "full"	

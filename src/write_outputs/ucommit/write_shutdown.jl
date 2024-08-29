@@ -9,7 +9,7 @@ function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     dfShutdown = DataFrame(Resource = resources, Zone = zones)
     dfShutdown.AnnualSum = shut * inputs["omega"]
 
-    filepath = joinpath(path,setup["WriteResultsNamesDict"]["shutdown_name"])
+    filepath = joinpath(path,setup["WriteResultsNamesDict"]["shutdown"])
     if setup["WriteOutputs"] == "annual"
         write_annual(filepath, dfShutdown, setup)
     else # setup["WriteOutputs"] == "full"

@@ -10,7 +10,7 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
     my_dir = get_systemfiles_path(setup, TDR_directory, path)
 
-    filename = setup["WriteInputNamesDict"]["fuel_name"]
+    filename = setup["WriteInputNamesDict"]["fuel"]
     println(filename)
     fuels_in = load_dataframe(joinpath(my_dir, filename))
 

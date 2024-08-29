@@ -6,7 +6,7 @@ Function for reading input parameters related to the electricity transmission ne
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    filename = setup["WriteInputNamesDict"]["network_name"]
+    filename = setup["WriteInputNamesDict"]["network"]
     network_var = load_dataframe(joinpath(path, filename))
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))

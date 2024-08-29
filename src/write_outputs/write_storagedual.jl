@@ -76,9 +76,23 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
     rename!(dfStorageDual,
         [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]])
 
-    CSV.write(joinpath(path, "storagebal_duals.csv"),
+    # Maya:
+    dfStorageDual[!,:Zone] = convert.(Float64,dfStorageDual[!,:Zone])
+    dfStorageDual = dftranspose(dfStorageDual, false)
+    rename!(dfStorageDual, Symbol.(Vector(dfStorageDual[1,:])))
+    dfStorageDual = dfStorageDual[2:end,:]
+    dfStorageDual[!,1] = convert.(String,dfStorageDual[!,1])
+    dfStorageDual[!,2:end] = convert.(Float64,dfStorageDual[!,2:end])
+
+    #=CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["storagebal_duals"]),
         dftranspose(dfStorageDual, false),
-        header = false)
+        header = false)=#
+
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["storagebal_duals"]),
+            dfStorageDual, 
+            filetype = setup["ResultsFileType"], 
+            compression = setup["ResultsCompressionType"])
+
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(

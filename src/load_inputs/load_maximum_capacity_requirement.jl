@@ -4,7 +4,7 @@
 Read input parameters related to maximum capacity requirement constraints (e.g. technology specific deployment mandates)
 """
 function load_maximum_capacity_requirement!(path::AbstractString, inputs::Dict, setup::Dict)
-    filename = setup["WriteInputNamesDict"]["max_cap_name"]
+    filename = setup["WriteInputNamesDict"]["max_cap"]
     df = load_dataframe(joinpath(path, filename))
     inputs["NumberOfMaxCapReqs"] = nrow(df)
     inputs["MaxCapReq"] = df[!, :Max_MW]

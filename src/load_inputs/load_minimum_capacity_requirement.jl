@@ -4,7 +4,7 @@
 Read input parameters related to minimum capacity requirement constraints (e.g. technology specific deployment mandates)
 """
 function load_minimum_capacity_requirement!(path::AbstractString, inputs::Dict, setup::Dict)
-    filename = setup["WriteInputNamesDict"]["min_cap_name"]
+    filename = setup["WriteInputNamesDict"]["min_cap"]
     df = load_dataframe(joinpath(path, filename))
     NumberOfMinCapReqs = length(df[!, :MinCapReqConstraint])
     inputs["NumberOfMinCapReqs"] = NumberOfMinCapReqs

@@ -331,7 +331,13 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
         EndDischargeACCap = sum(dfCap[!, :EndDischargeACCap]))
 
     dfCap = vcat(dfCap, total)
-    CSV.write(joinpath(path, "vre_stor_capacity.csv"), dfCap)
+    CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_capacity"]), dfCap)
+
+   #= write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_capacity"]),
+            dfCap,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])=#
+
     return dfCap
 end
 
@@ -358,7 +364,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
                     (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1)
         dfCharge_DC.AnnualSum .= charge_dc * inputs["omega"]
 
-        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_dc_charge_name"])
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_dc_charge"])
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfCharge_DC, setup)
         else # setup["WriteOutputs"] == "full"
@@ -376,7 +382,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
                     (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1)
         dfCharge_AC.AnnualSum .= charge_ac * inputs["omega"]
 
-        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_ac_charge_name"])
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_ac_charge"])
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfCharge_AC, setup)
         else # setup["WriteOutputs"] == "full"
@@ -416,7 +422,7 @@ function write_vre_stor_discharge(path::AbstractString,
         end
         dfDischarge_DC.AnnualSum .= power_vre_stor * inputs["omega"]
 
-        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_dc_discharge_name"])
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_dc_discharge"])
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfDischarge_DC, setup)
         else # setup["WriteOutputs"] == "full"
@@ -435,7 +441,7 @@ function write_vre_stor_discharge(path::AbstractString,
         end
         dfDischarge_AC.AnnualSum .= power_vre_stor * inputs["omega"]
 
-        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_ac_discharge_name"])
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_ac_discharge"])
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfDischarge_AC, setup)
         else # setup["WriteOutputs"] == "full"
@@ -454,7 +460,7 @@ function write_vre_stor_discharge(path::AbstractString,
         end
         dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
 
-        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_wind_power_name"])
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_wind_power"])
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfVP_VRE_STOR, setup)
         else # setup["WriteOutputs"] == "full"
@@ -492,7 +498,7 @@ function write_vre_stor_discharge(path::AbstractString,
         end
         dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
 
-        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_solar_power_name"])
+        filepath = joinpath(path, setup["WriteResultsNamesDict"]["vre_stor_solar_power"])
         if setup["WriteOutputs"] == "annual"
             write_annual(filepath, dfVP_VRE_STOR, setup)
         else # setup["WriteOutputs"] == "full"

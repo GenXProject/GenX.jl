@@ -10,7 +10,7 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
     my_dir = get_systemfiles_path(setup, TDR_directory, path)
 
-    filename = setup["WriteInputNamesDict"]["generators_name"]
+    filename = setup["WriteInputNamesDict"]["generators"]
     gen_var = load_dataframe(joinpath(my_dir, filename))
 
     all_resources = inputs["RESOURCE_NAMES"]

@@ -103,7 +103,8 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     dfPowerBalance.AnnualSum .= powerbalance * inputs["omega"]
 
     if setup["WriteOutputs"] == "annual"
-        CSV.write(joinpath(path, "power_balance.csv"), dfPowerBalance)
+        CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["power_balance"]), dfPowerBalance)
+        #write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["power_balance"]),dfPowerBalance, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     else # setup["WriteOutputs"] == "full"	
         dfPowerBalance = hcat(dfPowerBalance, DataFrame(powerbalance, :auto))
         auxNew_Names = [Symbol("BalanceComponent");
@@ -111,15 +112,29 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
                         Symbol("AnnualSum");
                         [Symbol("t$t") for t in 1:T]]
         rename!(dfPowerBalance, auxNew_Names)
-        CSV.write(joinpath(path, "power_balance.csv"),
+        
+        dfPowerBalance[!,:Zone] = convert.(Float64,dfPowerBalance[!,:Zone])
+        CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["power_balance"]),
             dftranspose(dfPowerBalance, false),
             writeheader = false)
 
-        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+        #= Maya:
+        dfPowerBalance = dftranspose(dfPowerBalance, false)
+        
+        rename!(dfPowerBalance, Symbol.(Vector(dfPowerBalance[1,:])))
+        dfPowerBalance = dfPowerBalance[2:end,:]
+        dfPowerBalance[!,2:end] = convert.(Float64,dfPowerBalance[!,2:end])
+
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["power_balance"]),
+                dfPowerBalance, 
+                filetype = setup["ResultsFileType"], 
+                compression = setup["ResultsCompressionType"]) =#
+
+        #=if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(
                 path, setup, dfPowerBalance, "power_balance")
             @info("Writing Full Time Series for Power Balance")
-        end
+        end=#
     end
     return nothing
 end

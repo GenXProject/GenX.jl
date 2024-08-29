@@ -41,10 +41,9 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
 end
 
 function time_domain_reduced_files_exist(tdrpath, setup::Dict)
-    #tdr_demand = file_exists(tdrpath names["demand_name"])
-    tdr_demand = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["demand_name"]))
-    tdr_genvar = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["generators_name"]))
-    tdr_fuels = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["fuel_name"]))
+    tdr_demand = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["demand"]))
+    tdr_genvar = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["generators"]))
+    tdr_fuels = isfile(joinpath(tdrpath, setup["WriteInputNamesDict"]["fuel"]))
     return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 

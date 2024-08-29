@@ -21,6 +21,6 @@ function dftranspose(df::DataFrame, withhead::Bool)
         return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
     else
         return DataFrame([[names(df)]; collect.(eachrow(df))],
-            [:Row; Symbol.("x", axes(df, 1))])
+            [:Row1; Symbol.("x", axes(df, 1))])
     end
 end # End dftranpose()

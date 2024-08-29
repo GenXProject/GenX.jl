@@ -1,5 +1,5 @@
 function get_demand_dataframe(path::String, setup::Dict)
-    filename = setup["WriteInputNamesDict"]["demand_name"]
+    filename = setup["WriteInputNamesDict"]["demand"]
     deprecated_synonym = "Load_data.csv"
     df = load_dataframe(path, [filename, deprecated_synonym])
     # update column names

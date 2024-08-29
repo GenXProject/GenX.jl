@@ -55,7 +55,7 @@ function full_time_series_reconstruction(
         end
         recon = [recon recon_col]
     end
-    reconDF = DataFrame(recon, :auto)
+    reconDF = DataFrame(recon, names(DF))
 
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
     for i in range(1, t1 - 1)

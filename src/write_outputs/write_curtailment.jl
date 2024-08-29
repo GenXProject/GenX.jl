@@ -55,6 +55,6 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         AnnualSum = zeros(G))
     df.AnnualSum = curtailment * weight
 
-    write_temporal_data(df, curtailment, path, setup, setup["WriteResultsNamesDict"]["curtail_name"])
+    write_temporal_data(df, curtailment, path, setup, setup["WriteResultsNamesDict"]["curtail"])
     return nothing
 end

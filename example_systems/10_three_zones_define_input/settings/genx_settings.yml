@@ -1,9 +1,9 @@
 NetworkExpansion: 1
 ParameterScale: 1
-EnergyShareRequirement: 0
+EnergyShareRequirement: 1
 TimeDomainReduction: 1
 Trans_Loss_Segments: 1
-CapacityReserveMargin: 0
+CapacityReserveMargin: 1
 StorageLosses: 1
 UCommit: 2
 MaxCapReq: 0
@@ -11,4 +11,5 @@ MinCapReq: 1
 CO2Cap: 2
 WriteShadowPrices: 1
 ResultsFileType: "auto_detect"
-ResultsCompressionType: "none"
+ResultsCompressionType: "auto_detect"
+OutputFullTimeSeries: 1

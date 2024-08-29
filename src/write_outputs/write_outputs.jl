@@ -313,7 +313,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         end
 
         if output_settings_d["WriteTimeWeights"]
-            elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
+            elapsed_time_time_weights = @elapsed write_time_weights(path, inputs, setup)
             println("Time elapsed for writing time weights is")
             println(elapsed_time_time_weights)
         end
@@ -522,8 +522,16 @@ function write_fulltimeseries(fullpath::AbstractString,
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)
     dfOut = vcat(dfOut, total)
 
-    CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
-    #write_output_file(fullpath, dftranspose(dfOut, false), filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+    dfOut[!,:Zone] = convert.(Float64,dfOut[!,:Zone])
+    dfOut = dftranspose(dfOut,false)
+    rename!(dfOut, Symbol.(Vector(dfOut[1,:])))
+    dfOut = dfOut[2:end,:]
+    dfOut[!,1] = convert.(String,dfOut[!,1])
+    dfOut[!,2:end] = convert.(Float64,dfOut[!,2:end])
+    #CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
+    write_output_file(fullpath, dfOut, 
+            filetype = setup["ResultsFileType"], 
+            compression = setup["ResultsCompressionType"])
     return dfOut
 end
 
@@ -620,9 +628,23 @@ function write_full_time_series_reconstruction(
         path::AbstractString, setup::Dict, DF::DataFrame, name::String)
     FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
     output_path = joinpath(path, FullTimeSeriesFolder)
-    dfOut_full = full_time_series_reconstruction(path, setup, dftranspose(DF, false))
-    CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
-    #write_output_file(joinpath(output_path, "$name"), dfOut_full, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+    #println(DF)
+    #=DF[!,:Zone] = convert.(Float64,DF[!,:Zone])
+    DF = dftranspose(DF,false)
+    rename!(DF, Symbol.(Vector(DF[1,:])))
+    DF = DF[2:end,:]
+    DF[!,1] = convert.(String,DF[!,1])
+    DF[!,2:end] = convert.(Float64,DF[!,2:end])=#
+    #println(DF)
+    dfOut_full = full_time_series_reconstruction(path, setup, DF)
+    println(dfOut_full)
+    dfOut_full[!,1] = convert.(String,dfOut_full[!,1])
+    dfOut_full[!,2:end] = convert.(Float64,dfOut_full[!,2:end])
+    #CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
+    write_output_file(joinpath(output_path, "$name"), 
+            dfOut_full, 
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
     return nothing
 end
 
@@ -651,15 +673,21 @@ end
     - `compression::String`: The compression type, as specified in `ResultsCompressionType` in `genx_settings.yml`. Accepted inputs are `gzip`, `snappy`, `zstd`, `none`, and `auto_detect` (default). 
 """
 function write_output_file(path::AbstractString, file::DataFrame; filetype::String = "auto_detect", compression::String = "auto_detect")
-    # 1) Create a DuckDB Interface
-    con = DBInterface.connect(DuckDB.DB)
-    println(typeof(file))
     println(file)
+    println(path)
+    #=if file[2,1] == "Zone"
+        file = dftranspose(file, true)
+        println(file)
+        select!(file, Not(:Zone))
+        file = dftranspose(file,true)
+        println(file)
+    end=#
+    # Set 'n/a' to missing/nothing x = [1, 2, missing]
+    #=for col in names(file)
+        replace!(file[:,col],"n/a"=>missing)
+    end=#
 
-    # 2) Register the DataFrame with DuckDB
-    DuckDB.register_data_frame(con, file, "temp_df")
-
-    # 3) Check if an extension is already in the file name, if not, add it based on filetype
+    # 1) Check if an extension is already in the file name, if not, add it based on filetype
     if occursin(".", path)
         if occursin(".", splitext(path)[1]) # If two extensions are present (eg .csv.gz, or .json.gz, only the first will be added to the filetype as .gz will be autodetected by DuckDB later)
             if filetype == "auto_detect" # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext
@@ -677,20 +705,19 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
                 @warn("Filetype '$filetype' is incompatible with extension specified in results_settings.yml. Saving as '$newfiletype' instead.")
                 filetype = splitext(path)[2]
             end
-            if splitext(path)[2] == ".csv" && (compression == ".gz" || compression == "gz" || compression == "gzip") 
+            if splitext(path)[2] == ".csv" && isgzip(compression)
                 path = path * ".gz" # If the file only ends in ".csv", but compression is set to gzip, add ".gz" to the end of the file
-            elseif splitext(path)[2] == ".json" && (compression == ".gz" || compression == "gz" || compression == "gzip")
+            elseif splitext(path)[2] == ".json" && isgzip(compression)
                 path = path * ".gz"
             end
         end  
     elseif filetype == "auto_detect" # If no extension is detected in the file name, but auto-detect is on, .csv will automatically be added
-        # println("File type cannot be auto-detected. Saving as CSV")
         filetype = ".csv"
         path = path * ".csv"
     elseif filetype == ".csv" # If no extension is present, but filetype is set to .csv, .csv will be appended to the path name.
        if compression == "none" 
             path = path * ".csv"
-       elseif compression == "gzip" || compression == ".gz" || compression == "gz"# If no extension is present, and compression is set to gzip, add .gz to the end of the file name.
+       elseif isgzip(compression) # If no extension is present, and compression is set to gzip, add .gz to the end of the file name.
             path = path * ".csv.gz"
        elseif compression == "auto_detect" # If no extension is present, but compression is set to auto_detect, no compression is added
             path = path * ".csv"
@@ -726,67 +753,71 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
         @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .gz, .parquet, and .json."
     end
 
-    # 4) Save file according to compression type: auto_detect, gzip, snappy, zstd, or none
+    # 2) Save file according to compression type: auto_detect, gzip, snappy, zstd, or none
     if compression == "auto_detect"
         if filetype == ".csv" || filetype == ".csv.gz"
-            DBInterface.execute(con, "COPY temp_df TO '$path'") # DuckDB will automatically detect if the file should be compressed or not
+            save_with_duckdb(file,path,"csv","none") # DuckDB will automatically detect if the file should be compressed or not
         elseif filetype == ".parquet"
-            filename = splitext(path)[1]
-            compression_type = filename[findlast('-', filename):end]
-            if compression_type == "-snappy"
-                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'snappy');")
-            elseif compression_type == "-zstd"
-                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'zstd');")
-            elseif compression_type == "-uncompressed"
-                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+            if occursin("-", path) # Parquet files can be saved with compression types in the name e.g. "capacity-snappy.parquet"
+                filename = splitext(path)[1]
+                compression_type = filename[findlast('-', filename):end]
+                if compression_type == "-snappy"
+                    save_with_duckdb(file,path,"parquet","snappy")
+                elseif compression_type == "-zstd"
+                    save_with_duckdb(file,path,"parquet","zstd")
+                elseif compression_type == "-uncompressed"
+                    save_with_duckdb(file,path,"parquet","uncompressed")
+                else
+                    @warn "Unable to auto-detect compression type of parquet file. Saving as uncompressed parquet."
+                    save_with_duckdb(file,path,"parquet","uncompressed")
+                end
             else
-                @warn "Unable to auto-detect compression type of parquet file. Saving as uncompressed parquet."
-                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+                save_with_duckdb(file,path,"parquet","uncompressed") # If no "-" is present, file is saved uncompressed.
             end
         elseif filetype == ".json"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+            save_with_duckdb(file,path,"json","none")
         else
             @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .parquet, and .json."
         end        
-    elseif compression == "gzip" || compression == ".gz" || compression == "gz"
+    elseif isgzip(compression)
         if filetype == ".csv"
             if splitext(path)[2] == ".gz"
-                DBInterface.execute(con, "COPY temp_df TO '$path'")
+                save_with_duckdb(file,path,"csv","gzip")
             else
                 path = path * ".gz"
-                DBInterface.execute(con, "COPY temp_df TO '$path'")
+                save_with_duckdb(file,path,"csv","gzip")
             end
         elseif filetype == ".json"
             if splitext(path)[2] == ".gz"
-                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+                save_with_duckdb(file,path,"json","auto_detect")
             else
                 path = path * ".gz"
-                DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+                save_with_duckdb(file,path,"json","auto_detect")
             end
         elseif filetype == ".parquet"
             @warn(".parquet cannot be compressed as gzip. Saving as uncompressed parquet")
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+            save_with_duckdb(file,path,"parquet","uncompressed")
         else
             @error("Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz.")
         end
     elseif compression == "snappy" || compression == "-snappy"
         if filetype == ".parquet"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'snappy');")
+            save_with_duckdb(file,path,"parquet","snappy")
         elseif filetype == ".csv"
             @warn("Filetype .csv cannot be saved with snappy compression. Saving as uncompressed csv.")
-            DBInterface.execute(con, "COPY temp_df TO '$path'")
+            save_with_duckdb(file,path,"csv","none")
         elseif filetype == ".json"
             @warn("Filetype .json cannot be saved with snappy compression. Saving as uncompressed json.")
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+            save_with_duckdb(file,path,"json","auto_detect")
         end
     elseif compression == "zstd" || compression == "-zstd"
         if filetype == ".parquet"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'zstd');")
+            save_with_duckdb(file,path,"parquet","zstd")
         elseif filetype == ".csv"
             @warn("Filetype .csv cannot be saved with zstd compression. Saving as uncompressed csv.")
-            DBInterface.execute(con, "COPY temp_df TO '$path'")
+            save_with_duckdb(file,path,"csv","none")
         elseif filetype == ".json"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION zstd);")
+            save_with_duckdb(file,path,"json","zstd")
         else
             @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz."
         end
@@ -795,17 +826,59 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
             @warn("Compression type '$compression' is not accepted. Saving without file compression")
         end
         if filetype == ".csv" 
-            DBInterface.execute(con, "COPY temp_df TO '$path'")
+            save_with_duckdb(file,path,"csv","none")
         elseif filetype == "csv.gz" # If compression type is listed as none, but filetype has .gz in it, compression type is overridden and .gz is used.
-            DBInterface.execute(con, "COPY temp_df TO '$path'")
+            save_with_duckdb(file,path,"csv","gzip")
         elseif filetype == ".parquet"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC 'uncompressed');")
+            save_with_duckdb(file,path,"parquet","uncompressed")
         elseif filetype == ".json"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION none);")
+            save_with_duckdb(file,path,"json","none")
         elseif filetype == ".json.gz"
-            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION gzip);")
+            save_with_duckdb(file,path,"json","gzip")
         else
             @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz."
         end
     end
+end
+
+@doc raw"""isgzip(compression::String)
+    This internal function determines if the compression is of type gzip. It's purporse is to prevent a misspelling of gzip, since you can write "gz" or "gzip".
+
+    # Arguments
+    - `compression::String`: - compression type, from the genxsettings YAML file or default dictionary
+    
+    # Output
+    - `true` or `false` if the file has a compression type of gzip.
+"""
+function isgzip(compression::String)
+    if compression == "gzip" || compression == ".gz" || compression == "gz"
+        return true
+    end
+    return false
+end
+
+@doc raw"""save_with_duckdb(compression::String)
+    This internal function saves a DataFrame using the package DuckDB.
+
+    # Arguments
+    - `file::DataFrame`: Dataframe of information to be saved
+    - `path::AbstractString`: path of the directory to save the file in
+    - `filetype::String`: file type, from the genxsettings YAML file or default dictionary. Can be `csv`, `json`, or `parquet`
+    - `compression::String`: - compression type, from the genxsettings YAML file or default dictionary. Can be `gzip`, `snappy`, `zstd`, `none`, or `uncompressed`.
+"""
+function save_with_duckdb(file::DataFrame,path::AbstractString,filetype::String,compression::String)
+    con = DBInterface.connect(DuckDB.DB)
+    DuckDB.register_data_frame(con, file, "temp_df")
+    if filetype == "csv"
+        DBInterface.execute(con, "COPY temp_df TO '$path'") # DuckDB will auto detect the prescence of gzip
+    elseif filetype == "parquet"
+        DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT 'parquet', CODEC '$compression');")
+    elseif filetype == "json"
+        if compression == "auto_detect"
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, AUTO_DETECT true);")
+        else
+            DBInterface.execute(con, "COPY temp_df TO '$path' (FORMAT JSON, COMPRESSION '$compression');")
+        end
+    end
+    DBInterface.close(con)
 end

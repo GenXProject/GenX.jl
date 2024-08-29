@@ -8,14 +8,14 @@ Internal function to get resource information (filename and GenX type) for each 
 
 """
 function _get_resource_info(names::Dict)
-    resource_info = (hydro = (filename = names["hydro_name"], type = Hydro),
-        thermal = (filename = names["thermal_name"], type = Thermal),
-        vre = (filename = names["vre_name"], type = Vre),
-        storage = (filename = names["storage_name"], type = Storage),
-        flex_demand = (filename = names["flex_demand_name"], type = FlexDemand),
-        must_run = (filename = names["must_run_name"], type = MustRun),
-        electrolyzer = (filename = names["electrolyzer_name"], type = Electrolyzer),
-        vre_stor = (filename = names["vre_stor_name"], type = VreStorage))
+    resource_info = (hydro = (filename = names["hydro"], type = Hydro),
+        thermal = (filename = names["thermal"], type = Thermal),
+        vre = (filename = names["vre"], type = Vre),
+        storage = (filename = names["storage"], type = Storage),
+        flex_demand = (filename = names["flex_demand"], type = FlexDemand),
+        must_run = (filename = names["must_run"], type = MustRun),
+        electrolyzer = (filename = names["electrolyzer"], type = Electrolyzer),
+        vre_stor = (filename = names["vre_stor"], type = VreStorage))
     return resource_info
 end
 
@@ -33,9 +33,9 @@ function _get_policyfile_info(names::Dict)
     h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
     hourly_matching_filenames = ["Resource_hourly_matching.csv"]
     esr_filenames = [names["resource_energy_share_requirement"]]
-    cap_res_filenames = [names["resource_cap_name"]]
-    min_cap_filenames = [names["resource_min_name"]]
-    max_cap_filenames = [names["resource_max_name"]]
+    cap_res_filenames = [names["resource_cap"]]
+    min_cap_filenames = [names["resource_min"]]
+    max_cap_filenames = [names["resource_max"]]
 
     policyfile_info = (
         esr = (filenames = esr_filenames, setup_param = "EnergyShareRequirement"),
