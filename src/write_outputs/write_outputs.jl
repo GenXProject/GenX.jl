@@ -685,46 +685,46 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
             if splitext(path)[2] == ".csv" && isgzip(compression)
                 path = path * ".gz" # If the file only ends in ".csv", but compression is set to gzip, add ".gz" to the end of the file
             elseif splitext(path)[2] == ".json" && isgzip(compression)
-                path = path * ".gz"
+                path *= ".gz"
             end
         end  
     elseif filetype == "auto_detect" # If no extension is detected in the file name, but auto-detect is on, .csv will automatically be added
         filetype = ".csv"
-        path = path * ".csv"
+        path *= ".csv"
     elseif filetype == ".csv" # If no extension is present, but filetype is set to .csv, .csv will be appended to the path name.
        if compression == "none" 
-            path = path * ".csv"
+            path *= ".csv"
        elseif isgzip(compression) # If no extension is present, and compression is set to gzip, add .gz to the end of the file name.
-            path = path * ".csv.gz"
+            path *= ".csv.gz"
        elseif compression == "auto_detect" # If no extension is present, but compression is set to auto_detect, no compression is added
-            path = path * ".csv"
+            path *= ".csv"
        else
             @warn("Compression type '$compression' not supported with .csv. Saving as uncompressed csv.")
-            path = path * ".csv"
+            path *= ".csv"
        end
     elseif filetype == ".json" # If no extension is present, but filetype is set to .csv, .csv will be appended to the path name
         if compression == "none"
-            path = path * ".json"
+            path *= ".json"
         elseif compression == "gzip" || compression == ".gz"
-            path = path * ".json.gz"
+            path *= ".json.gz"
         elseif compression == "auto_detect"
-            path = path * ".json"
+            path *= ".json"
         else
             @warn("Compression type '$compression' not supported with .json. Saving as uncompressed json.")
-            path = path * ".json"
+            path *= ".json"
         end
     elseif filetype == ".parquet"
         if compression == "none"
-            path = path * ".parquet"
+            path *= ".parquet"
         elseif compression == "snappy" || compression == "-snappy"
-            path = path * "-snappy.parqet"
-        elseif compression == "zstd" || compressoin == "-zstd"
-            path = path * "-zstd.parquet"
+            path *= "-snappy.parqet"
+        elseif compression == "zstd" || compression == "-zstd"
+            path *= "-zstd.parquet"
         elseif compression == "auto_detect"
-            path = path * ".parquet"
+            path *= ".parquet"
         else
             @warn("Compression type '$compression' not supported with .parquet. Saving as uncompressed parquet.")
-            path = path * ".parquet"
+            path *= ".parquet"
         end
     else
         @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .gz, .parquet, and .json."
@@ -761,14 +761,14 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
             if splitext(path)[2] == ".gz"
                 save_with_duckdb(file,path,"csv","gzip")
             else
-                path = path * ".gz"
+                path *= ".gz"
                 save_with_duckdb(file,path,"csv","gzip")
             end
         elseif filetype == ".json"
             if splitext(path)[2] == ".gz"
                 save_with_duckdb(file,path,"json","auto_detect")
             else
-                path = path * ".gz"
+                path *= ".gz"
                 save_with_duckdb(file,path,"json","auto_detect")
             end
         elseif filetype == ".parquet"
