@@ -88,7 +88,13 @@ A constraint ensures that the value of `vMDOWN` in any hour is always more than 
 Another constraint ensures that the number of plants committed (`vCOMMIT`) at any one time plus the number of plants under maintenance (`vMDOWN`) is less than the total number of plants.
 
 ## Developer note: adding maintenance to a resource
-The maintenance formulation is applied on a per-resource basis, by calling the function `maintenance_formulation!`.
+The maintenance formulation is applied on a per-resource basis, by calling the function [`GenX.maintenance_formulation!`](@ref). 
+See [`GenX.maintenance_formulation_thermal_commit!`](@ref) for an example of how to apply it to a new resource.
+
+* The resource must have a `eTotalCap`-like quantity and a `cap_size`-like parameter; only the ratio of the two is used.
+* The resource must have a `vCOMMIT`-like variable which is proportional to the maximum power output, etc at any given timestep.
+
+The generic maintenance module functions are listed below.
 
 ```@docs
 GenX.maintenance_formulation!
