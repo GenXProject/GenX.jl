@@ -126,7 +126,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         NewChargeCap = sum(dfCap[!, :NewChargeCap]),
         EndChargeCap = sum(dfCap[!, :EndChargeCap]))
 
-    #dfCap = vcat(dfCap, total)
+    dfCap = vcat(dfCap, total)
     #CSV.write(joinpath(path, "capacity.csv"), dfCap)
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacity_name"]), dfCap, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return dfCap

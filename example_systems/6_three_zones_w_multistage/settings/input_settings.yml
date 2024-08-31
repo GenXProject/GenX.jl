@@ -1,9 +1,9 @@
 #default_location: default/path/to/data
 # system
-system_location: path/to/data
-- demand: "Demand_data.csv"
-- fuel: "Fuels_data.csv.gz"
-- generators: "Generators_variability.csv"
+#system_location: path/to/data
+demand: "Demand_data.csv"
+fuel: "Fuels_data.csv.gz"
+generators: "Generators_variability.csv"
 
 # policies
 #policies_location: /path/to/data

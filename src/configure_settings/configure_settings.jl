@@ -64,6 +64,11 @@ function configure_settings(settings_path::String, output_settings_path::String,
     settings = default_settings()
     merge!(settings, model_settings)
 
+    println(settings)
+    if settings["ResultsFileType"] ∉ ["auto_detect",".csv.gz",".parquet",".json",".json.gz","csv","parquet","json","csv.gz","json.gz"]
+        throw("Results File Type in genx_settings.yml is not accepted. Acceptable types are csv, csv.gz, parquet, json, and json.gz.")
+    end
+
     output_settings = configure_writeoutput(output_settings_path, settings)
     settings["WriteOutputsSettingsDict"] = output_settings
 
