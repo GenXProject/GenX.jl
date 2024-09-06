@@ -7,7 +7,9 @@ This function model transmission expansion and adds transmission reinforcement o
 \end{aligned}
 ```
 Note that fixed O\&M and replacement capital costs (depreciation) for existing transmission capacity is treated as a sunk cost and not included explicitly in the GenX objective function.
-**Accounting for Transmission Between Zones**
+
+**Accounting for Transmission Between Zones**\\
+
 Available transmission capacity between zones is set equal to the existing line's maximum power transfer capacity, $\overline{\varphi^{cap}_{l}}$, plus any transmission capacity added on that line (for lines eligible for expansion in the set $\mathcal{E}$). 
 ```math
 \begin{aligned}
