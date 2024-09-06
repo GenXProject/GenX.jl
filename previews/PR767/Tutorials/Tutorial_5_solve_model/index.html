@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial 5: Solving the Model · GenX.jl</title><meta name="title" content="Tutorial 5: Solving the Model · GenX.jl"/><meta property="og:title" content="Tutorial 5: Solving the Model · GenX.jl"/><meta property="twitter:title" content="Tutorial 5: Solving the Model · GenX.jl"/><meta name="description" content="Documentation for GenX.jl."/><meta property="og:description" content="Documentation for GenX.jl."/><meta property="twitter:description" content="Documentation for GenX.jl."/><meta property="og:url" content="https://genxproject.github.io/GenX.jl/stable/Tutorials/Tutorial_5_solve_model/"/><meta property="twitter:url" content="https://genxproject.github.io/GenX.jl/stable/Tutorials/Tutorial_5_solve_model/"/><link rel="canonical" href="https://genxproject.github.io/GenX.jl/stable/Tutorials/Tutorial_5_solve_model/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/genx_style.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img class="docs-light-only" src="../../assets/logo.svg" alt="GenX.jl logo"/><img class="docs-dark-only" src="../../assets/logo-dark.svg" alt="GenX.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><input class="collapse-toggle" id="menuitem-1" type="checkbox"/><label class="tocitem" for="menuitem-1"><span class="docs-label">Welcome Page</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../">GenX: Introduction</a></li><li><a class="tocitem" href="../../installation/">Installation Guide</a></li><li><a class="tocitem" href="../../limitations_genx/">Limitation of GenX</a></li><li><a class="tocitem" href="../../third_party_genx/">Third Party Extensions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox"/><label class="tocitem" for="menuitem-2"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Getting_Started/examples_casestudies/">Running GenX</a></li><li><a class="tocitem" href="../../Getting_Started/commercial_solvers/">Commertial solvers</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox" checked/><label class="tocitem" for="menuitem-3"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../Tutorials_intro/">Tutorials Overview</a></li><li><a class="tocitem" href="../Tutorial_1_configuring_settings/">Tutorial 1: Configuring Settings</a></li><li><a class="tocitem" href="../Tutorial_2_network_visualization/">Tutorial 2: Network Visualization</a></li><li><a class="tocitem" href="../Tutorial_3_K-means_time_domain_reduction/">Tutorial 3: K-Means and Time Domain Reduction</a></li><li><a class="tocitem" href="../Tutorial_4_model_generation/">Tutorial 4: Model Generation</a></li><li class="is-active"><a class="tocitem" href>Tutorial 5: Solving the Model</a><ul class="internal"><li><a class="tocitem" href="#Table-of-Contents"><span>Table of Contents</span></a></li><li><a class="tocitem" href="#A-Simple-Example"><span>A Simple Example</span></a></li><li><a class="tocitem" href="#GenX"><span>GenX</span></a></li><li><a class="tocitem" href="#Infeasibility"><span>Infeasibility</span></a></li></ul></li><li><a class="tocitem" href="../Tutorial_6_solver_settings/">Tutorial 6: Solver Settings</a></li><li><a class="tocitem" href="../Tutorial_7_setup/">Tutorial 7: Policy Constraints</a></li><li><a class="tocitem" href="../Tutorial_8_outputs/">Tutorial 8: Outputs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">User Guide</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../User_Guide/workflow/">Overall workflow</a></li><li><a class="tocitem" href="../../User_Guide/model_configuration/">Model Configuration</a></li><li><a class="tocitem" href="../../User_Guide/solver_configuration/">Solver Configuration</a></li><li><a class="tocitem" href="../../User_Guide/model_input/">Model Inputs</a></li><li><a class="tocitem" href="../../User_Guide/TDR_input/">Time-domain Reduction Inputs</a></li><li><a class="tocitem" href="../../User_Guide/running_TDR/">Running the Time-domain Reduction</a></li><li><a class="tocitem" href="../../User_Guide/generate_alternatives/">MGA package</a></li><li><a class="tocitem" href="../../User_Guide/multi_stage_input/">Multi-stage Model</a></li><li><a class="tocitem" href="../../User_Guide/slack_variables_overview/">Slack Variables for Policies</a></li><li><a class="tocitem" href="../../User_Guide/methodofmorris_input/">Method of Morris Inputs</a></li><li><a class="tocitem" href="../../User_Guide/running_model/">Running the Model</a></li><li><a class="tocitem" href="../../User_Guide/model_output/">Model Outputs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Model Concept and Overview</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Concept_Overview/model_introduction/">Model Introduction</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/model_notation/">Notation</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/objective_function/">Objective Function</a></li><li><a class="tocitem" href="../../Model_Concept_Overview/power_balance/">Power Balance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Model Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/core/">Core</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Resources</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/curtailable_variable_renewable/">Curtailable Variable Renewable</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/flexible_demand/">Flexible Demand</a></li><li><input class="collapse-toggle" id="menuitem-6-2-3" type="checkbox"/><label class="tocitem" for="menuitem-6-2-3"><span class="docs-label">Hydro</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/hydro_res/">Hydro Reservoir</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/hydro_inter_period_linkage/">Long Duration Hydro</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/must_run/">Must Run</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/retrofit/">Retrofit</a></li><li><input class="collapse-toggle" id="menuitem-6-2-6" type="checkbox"/><label class="tocitem" for="menuitem-6-2-6"><span class="docs-label">Storage</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/storage/">Storage</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/investment_charge/">Investment Charge</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/investment_energy/">Investment Energy</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/long_duration_storage/">Long Duration Storage</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_all/">Storage All</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_asymmetric/">Storage Asymmetric</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/storage_symmetric/">Storage Symmetric</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/vre_stor/">Co-located VRE and Storage</a></li><li><input class="collapse-toggle" id="menuitem-6-2-8" type="checkbox"/><label class="tocitem" for="menuitem-6-2-8"><span class="docs-label">Thermal</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Resources/thermal/">Thermal</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/thermal_commit/">Thermal Commit</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/thermal_no_commit/">Thermal No Commit</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/maintenance/">Scheduled maintenance for Thermal Commit</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/Resources/electrolyzers/">Hydrogen Electrolyzers</a></li><li><a class="tocitem" href="../../Model_Reference/Resources/resource/">Resource types</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/policies/">Policies</a></li><li><a class="tocitem" href="../../Model_Reference/solver_configuration_api/">Solver Configurations</a></li><li><a class="tocitem" href="../../Model_Reference/load_inputs/">Inputs Functions</a></li><li><a class="tocitem" href="../../Model_Reference/generate_model/">Generate the Model</a></li><li><a class="tocitem" href="../../Model_Reference/solve_model/">Solving the Model</a></li><li><a class="tocitem" href="../../Model_Reference/TDR/">Time-domain Reduction</a></li><li><a class="tocitem" href="../../Model_Reference/write_outputs/">Outputs Functions</a></li><li><a class="tocitem" href="../../Model_Reference/mga/">Modeling to Generate Alternatives</a></li><li><input class="collapse-toggle" id="menuitem-6-11" type="checkbox"/><label class="tocitem" for="menuitem-6-11"><span class="docs-label">Multi-stage</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/multi_stage_overview/">Multi-Stage Modeling Introduction</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/configure_multi_stage_inputs/">Configure multi-stage inputs</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/dual_dynamic_programming/">Model multi stage: Dual Dynamic Programming Algorithm</a></li><li><a class="tocitem" href="../../Model_Reference/Multi_Stage/endogenous_retirement/">Endogenous Retirement</a></li></ul></li><li><a class="tocitem" href="../../Model_Reference/methodofmorris/">Method of Morris</a></li><li><a class="tocitem" href="../../Model_Reference/utility_functions/">Utility Functions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Public API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../Public_API/public_api/">Public API</a></li></ul></li><li><a class="tocitem" href="../../additional_third_party_extensions/">Third Party Extensions</a></li><li><a class="tocitem" href="../../developer_guide/">Developer Docs</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Tutorial 5: Solving the Model</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial 5: Solving the Model</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/GenXProject/GenX.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/GenXProject/GenX.jl/blob/main/docs/src/Tutorials/Tutorial_5_solve_model.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorial-5:-Solving-the-Model"><a class="docs-heading-anchor" href="#Tutorial-5:-Solving-the-Model">Tutorial 5: Solving the Model</a><a id="Tutorial-5:-Solving-the-Model-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-5:-Solving-the-Model" title="Permalink"></a></h1><p><a href="https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_5_Solve_Model.ipynb">Interactive Notebook of the tutorial</a></p><p>In Tutorial 4, we went over how the model is generated when GenX is run using <code>Run.jl</code>. In the function <code>run_genx_case_simple</code> (or multistage), after <code>generate_model</code> is called, <code>solve_model</code> is called to solve the EP.</p><p><img src="../files/runcase.png" alt="png"/></p><p>In this tutorial, we go over how to use JuMP to solve a model, what it looks like to solve GenX, and how to edit the solver settings.</p><h2 id="Table-of-Contents"><a class="docs-heading-anchor" href="#Table-of-Contents">Table of Contents</a><a id="Table-of-Contents-1"></a><a class="docs-heading-anchor-permalink" href="#Table-of-Contents" title="Permalink"></a></h2><ul><li><a href="#Simple">A Simple Example</a></li><li><a href="#GenX">GenX</a></li><li><a href="#Infeasibility">Infeasibility</a></li></ul><h2 id="A-Simple-Example"><a class="docs-heading-anchor" href="#A-Simple-Example">A Simple Example</a><a id="A-Simple-Example-1"></a><a class="docs-heading-anchor-permalink" href="#A-Simple-Example" title="Permalink"></a></h2><p>From Tutorial 4, we have the model:</p><p class="math-container">\[\begin{aligned}
+&amp; \min 10 x + 15 y &amp;\text{Objective function (cost)}\\ 
+&amp; \text{s.t.} &amp; \\
+&amp; x + y \geq 10 &amp;\text{Grid Demand}\\
+&amp; 55x + 70y \leq \ 1000 &amp;\text{Construction constraint}\\
+&amp; 40 x + 5 y \leq 200 &amp;\text{Emissions constraint} \\
+&amp; x, y \geq 0 &amp;\text{Non-negativity constraints}\\
+\end{aligned}\]</p><pre><code class="language-julia hljs">using JuMP
+using HiGHS</code></pre><pre><code class="language-julia hljs">power = Model(HiGHS.Optimizer)
+
+@variable(power,x,Int) # Coal
+@variable(power,y,Int) # Wind
+
+@constraint(power, non_neg_x, x &gt;= 0) # Non-negativity constraint (can&#39;t have negative power plants!)
+@constraint(power, non_neg_y, y &gt;= 0) # Non-negativity constraint
+
+@constraint(power, emissions, 40x + 5y &lt;= 200) # Emisisons constraint
+@constraint(power, construction_costs, 55x + 70y &lt;= 1000) # Cost of constructing a new plant
+
+@constraint(power, demand, x + y &gt;= 10) # Grid demand
+
+@expression(power,objective,10x+15y)
+
+@objective(power, Min, objective)</code></pre><p class="math-container">\[10 x + 15 y \]</p><p>JuMP uses the function <code>optimize!(model)</code> to solve the LP:</p><pre><code class="language-julia hljs">optimize!(power)</code></pre><pre><code class="nohighlight hljs">    Running HiGHS 1.6.0: Copyright (c) 2023 HiGHS under MIT licence terms
+    Presolving model
+    3 rows, 2 cols, 6 nonzeros
+    3 rows, 2 cols, 6 nonzeros
+    Objective function is integral with scale 0.2
+    
+    Solving MIP model with:
+       3 rows
+       2 cols (0 binary, 2 integer, 0 implied int., 0 continuous)
+       6 nonzeros
+    
+            Nodes      |    B&amp;B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+         Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+    
+             0       0         0   0.00%   90              inf                  inf        0      0      0         0     0.0s
+    
+    Solving report
+      Status            Optimal
+      Primal bound      130
+      Dual bound        130
+      Gap               0% (tolerance: 0.01%)
+      Solution status   feasible
+                        130 (objective)
+                        0 (bound viol.)
+                        0 (int. viol.)
+                        0 (row viol.)
+      Timing            0.00 (total)
+                        0.00 (presolve)
+                        0.00 (postsolve)
+      Nodes             1
+      LP iterations     1 (total)
+                        0 (strong br.)
+                        0 (separation)
+                        0 (heuristics)</code></pre><p>We can use the function <code>value.()</code> to get the value of each variable, and <code>objective_value()</code> to get the total objective value.</p><pre><code class="language-julia hljs">println(&quot;# Coal Plants: &quot;, value.(x))
+println(&quot;# Wind Farms: &quot;, value.(y))
+println(&quot;Cost: &quot;, objective_value(power))</code></pre><pre><code class="nohighlight hljs">    # Coal Plants: 4.0
+    # Wind Farms: 6.0
+    Cost: 130.0</code></pre><p>We can also use the JuMP function <code>solution_summary</code> to see more details of the <a href="https://jump.dev/JuMP.jl/stable/manual/solutions/">solution</a>:</p><pre><code class="language-julia hljs">solution_summary(power)</code></pre><pre><code class="nohighlight hljs">    * Solver : HiGHS
+    
+    * Status
+      Result count       : 1
+      Termination status : OPTIMAL
+      Message from the solver:
+      &quot;kHighsModelStatusOptimal&quot;
+    
+    * Candidate solution (result #1)
+      Primal status      : FEASIBLE_POINT
+      Dual status        : NO_SOLUTION
+      Objective value    : 1.30000e+02
+      Objective bound    : 1.30000e+02
+      Relative gap       : 0.00000e+00
+    
+    * Work counters
+      Solve time (sec)   : 3.36621e-03
+      Simplex iterations : 1
+      Barrier iterations : -1
+      Node count         : 1</code></pre><h2 id="GenX"><a class="docs-heading-anchor" href="#GenX">GenX</a><a id="GenX-1"></a><a class="docs-heading-anchor-permalink" href="#GenX" title="Permalink"></a></h2><p>Let&#39;s optimize the GenX model created in the last Tutorial. To do so, we&#39;ll create the inputs for <code>generate_model</code> and run it. </p><pre><code class="language-julia hljs">using GenX</code></pre><pre><code class="language-julia hljs">case = joinpath(&quot;example_systems/1_three_zones&quot;) 
+
+genx_settings = GenX.get_settings_path(case, &quot;genx_settings.yml&quot;);
+writeoutput_settings = GenX.get_settings_path(case, &quot;output_settings.yml&quot;)
+setup = GenX.configure_settings(genx_settings,writeoutput_settings)
+
+settings_path = GenX.get_settings_path(case)
+
+### Create TDR_Results
+TDRpath = joinpath(case, setup[&quot;TimeDomainReductionFolder&quot;])
+system_path = joinpath(case, setup[&quot;SystemFolder&quot;])
+
+if setup[&quot;TimeDomainReduction&quot;] == 1
+    GenX.prevent_doubled_timedomainreduction(system_path)
+    if !GenX.time_domain_reduced_files_exist(TDRpath)
+        println(&quot;Clustering Time Series Data (Grouped)...&quot;)
+        GenX.cluster_inputs(case, settings_path, setup)
+    else
+        println(&quot;Time Series Data Already Clustered.&quot;)
+    end
+end
+
+OPTIMIZER =  GenX.configure_solver(settings_path,HiGHS.Optimizer);
+
+inputs = GenX.load_inputs(setup, case)</code></pre><pre><code class="language-julia hljs">EP = GenX.generate_model(setup,inputs,OPTIMIZER)</code></pre><pre><code class="nohighlight hljs">    Discharge Module
+    Non-served Energy Module
+    Investment Discharge Module
+    Unit Commitment Module
+    Emissions Module (for CO2 Policy modularization
+    Dispatchable Resources Module
+    Storage Resources Module
+    Storage Investment Module
+    Storage Core Resources Module
+    Storage Resources with Symmetric Charge/Discharge Capacity Module
+    Thermal (Unit Commitment) Resources Module
+    C02 Policies Module
+    Energy Share Requirement Policies Module
+    Capacity Reserve Margin Policies Module
+    Minimum Capacity Requirement Module
+    Maximum Capacity Requirement Module
+
+    A JuMP Model
+    Minimization problem with:
+    Variables: 18492
+    Objective function type: AffExpr
+    `AffExpr`-in-`MathOptInterface.EqualTo{Float64}`: 5544 constraints
+    `AffExpr`-in-`MathOptInterface.GreaterThan{Float64}`: 7398 constraints
+    `AffExpr`-in-`MathOptInterface.LessThan{Float64}`: 27730 constraints
+    `VariableRef`-in-`MathOptInterface.EqualTo{Float64}`: 2 constraints
+    `VariableRef`-in-`MathOptInterface.GreaterThan{Float64}`: 18490 constraints
+    Model mode: AUTOMATIC
+    CachingOptimizer state: EMPTY_OPTIMIZER
+    Solver name: HiGHS
+    Names registered in the model: cCO2Emissions_systemwide, cCapacityResMargin, cESRShare, cMaxCap, cMaxCapEnergy, cMaxCapEnergyDuration, cMaxNSE, cMaxRetCommit, cMaxRetEnergy, cMaxRetNoCommit, cMinCap, cMinCapEnergy, cMinCapEnergyDuration, cNSEPerSeg, cPowerBalance, cSoCBalInterior, cSoCBalStart, cZoneMaxCapReq, cZoneMinCapReq, eCFix, eCFixEnergy, eCNSE, eCStart, eCVar_in, eCVar_out, eCapResMarBalance, eCapResMarBalanceStor, eCapResMarBalanceThermal, eCapResMarBalanceVRE, eELOSS, eELOSSByZone, eESR, eESRDischarge, eEmissionsByPlant, eEmissionsByZone, eExistingCap, eExistingCapEnergy, eGenerationByThermAll, eGenerationByVRE, eGenerationByZone, eMaxCapRes, eMaxCapResInvest, eMinCapRes, eMinCapResInvest, eObj, ePowerBalance, ePowerBalanceDisp, ePowerBalanceNse, ePowerBalanceStor, ePowerBalanceThermCommit, eTotalCFix, eTotalCFixEnergy, eTotalCNSE, eTotalCNSET, eTotalCNSETS, eTotalCStart, eTotalCStartT, eTotalCVarIn, eTotalCVarInT, eTotalCVarOut, eTotalCVarOutT, eTotalCap, eTotalCapEnergy, vCAP, vCAPENERGY, vCHARGE, vCO2Cap_slack, vCOMMIT, vNSE, vP, vRETCAP, vRETCAPENERGY, vS, vSHUT, vSTART, vZERO</code></pre><p>The function <code>solve_model(model, setup)</code> uses <code>optimize</code> to optimize the model:</p><pre><code class="language-julia hljs">solution = optimize!(EP) # GenX.solve_model(EP,setup)</code></pre><pre><code class="language-julia hljs">objective_value(EP)</code></pre><pre><code class="nohighlight hljs">    9776.57688838726</code></pre><h2 id="Infeasibility"><a class="docs-heading-anchor" href="#Infeasibility">Infeasibility</a><a id="Infeasibility-1"></a><a class="docs-heading-anchor-permalink" href="#Infeasibility" title="Permalink"></a></h2><p>In some cases, your model may not be able to return a value. This happens when no value can be found that satisfies all constraints. To see this, let&#39;s go back to our simple example and change one of the parameters to break the model.</p><p class="math-container">\[\begin{aligned}
+&amp; \min 10 x + 15 y &amp;\text{Objective function (cost)}\\ 
+&amp; \text{s.t.} &amp; \\
+&amp; x + y \geq 10 &amp;\text{Grid Demand}\\
+&amp; 55x + 70y \leq \ 1000 &amp;\text{Construction constraint}\\
+&amp; 40 x + 5 y \leq 200 &amp;\text{Emissions constraint} \\
+&amp; 7 x + 30 y \geq 500 &amp;\textbf{New Constraint} \\
+&amp; x, y \geq 0 &amp;\text{Non-negativity constraints}\\
+\end{aligned}\]</p><pre><code class="language-julia hljs">@constraint(power, new, 7x + 30y &gt;= 500)
+</code></pre><p class="math-container">\[7 x + 30 y \geq 500 \]</p><pre><code class="language-julia hljs">print(power)</code></pre><p class="math-container">\[\begin{aligned}
+\min\quad &amp; 10 x + 15 y\\
+\text{Subject to} \quad &amp; x \geq 0\\
+ &amp; y \geq 0\\
+ &amp; x + y \geq 10\\
+ &amp; 7 x + 30 y \geq 500\\
+ &amp; 40 x + 5 y \leq 200\\
+ &amp; 55 x + 70 y \leq 1000\\
+ &amp; x \in \mathbb{Z}\\
+ &amp; y \in \mathbb{Z}\\
+\end{aligned} \]</p><pre><code class="language-julia hljs">optimize!(power)</code></pre><pre><code class="nohighlight hljs">    Presolving model
+    Presolve: Infeasible
+    
+    Solving report
+      Status            Infeasible
+      Primal bound      inf
+      Dual bound        -inf
+      Gap               inf
+      Solution status   -
+      Timing            0.00 (total)
+                        0.00 (presolve)
+                        0.00 (postsolve)
+      Nodes             0
+      LP iterations     0 (total)
+                        0 (strong br.)
+                        0 (separation)
+                        0 (heuristics)</code></pre><p>In this case, the infeasibility was detected on the presovle since it&#39;s clear no solution would fit within all constraints. For information on how to debug an infeasible solution, see the <a href="https://jump.dev/JuMP.jl/stable/manual/solutions/#Conflicts">JuMP documentaion</a>. Some solvers, such as Gurobi, will compute what is causing the conflict, e.g. which constraints are infeasible with one another (HiGHS does not do this). </p><p>GenX version 0.4 has the feature <code>ComputeConflict</code> in settings. If the model does not work, try setting <code>ComputeConflict = 1</code>, and the conflicting constraints will be returned.</p><p>Tutorial 6 describes the solver settings, how to change them, and the effects of PreSolve, Crossover, and Feasibility Tolerance.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Tutorial_4_model_generation/">« Tutorial 4: Model Generation</a><a class="docs-footer-nextpage" href="../Tutorial_6_solver_settings/">Tutorial 6: Solver Settings »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Friday 6 September 2024 15:36">Friday 6 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
