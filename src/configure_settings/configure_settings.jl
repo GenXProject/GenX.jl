@@ -64,7 +64,6 @@ function configure_settings(settings_path::String, output_settings_path::String,
     settings = default_settings()
     merge!(settings, model_settings)
 
-    println(settings)
     if settings["ResultsFileType"] ∉ ["auto_detect",".csv.gz",".parquet",".json",".json.gz","csv","parquet","json","csv.gz","json.gz"]
         throw("Results File Type in genx_settings.yml is not accepted. Acceptable types are csv, csv.gz, parquet, json, and json.gz.")
     end
@@ -280,7 +279,8 @@ settings dictionary.
 function configure_input_names(case::AbstractString)
     println("Configuring Input File and Path Names")
     input_settings_path = get_settings_path(case, "input_settings.yml")
-    input_names = YAML.load(open(input_settings_path))
+    println(input_settings_path)
+    #input_names = YAML.load(open(input_settings_path))
     input_names = isfile(input_settings_path) ? YAML.load(open(input_settings_path)) : Dict{Any, Any}()
 
     names = default_input_names(case)

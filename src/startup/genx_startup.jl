@@ -71,7 +71,7 @@ end
 function _precompile_tdr(case)
     settings_path = get_settings_path(case)
     setup = configure_settings(get_settings_path(case, "genx_settings.yml"),
-        get_settings_path(case, "output_settings.yml"))
+        get_settings_path(case, "output_settings.yml"),case)
     setup["TimeDomainReduction"] = 1    # Enable TDR for precompilation
     cluster_inputs(case, settings_path, setup)
     isdir("precompile/case/TDR_results") &&

@@ -2,7 +2,7 @@
 # system
 system_location: path/to/data
 demand: "Demand_data.csv"
-fuel: "Fuels_data.csv.gz"
+fuel: "Fuels_data.csv"
 generators: "Generators_variability.csv"
 
 # policies

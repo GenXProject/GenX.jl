@@ -489,13 +489,8 @@ end # END output()
 
 Internal function for writing annual outputs. 
 """
-<<<<<<< HEAD
 function write_annual(fullpath::AbstractString, dfOut::DataFrame)
     push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
-=======
-function write_annual(fullpath::AbstractString, dfOut::DataFrame, setup::Dict)
-    push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum])])
->>>>>>> 8a69955c2 (Added write_output_file to take in parquet and json filetypes)
     CSV.write(fullpath, dfOut)
     #write_output_file(fullpath, dOut, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return nothing
@@ -593,7 +588,7 @@ function write_temporal_data(
         # df_annual is expected to have an AnnualSum column.
         write_annual(filepath, df_annual)
     else # setup["WriteOutputs"] == "full"
-        df_full = write_fulltimeseries(filepath, data, df_annual)
+        df_full = write_fulltimeseries(filepath, data, df_annual, setup)
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_full, filename)
             @info("Writing Full Time Series for "*filename)
@@ -647,7 +642,7 @@ end
     It also has the option to compress files according to the compression type specified in `ResultsCompressionType` in `genx_settings.yml`. Acceptable compression types are gzip for CSV and JSON files,
     and snappy and zstd for parquet files. It compresses and saves the files using DuckDB.
 
-    This function has the ability to automatically detect the correct file extension from the file name, if one exists, by settings `ResultsFileType = "auto_detect"`. If a filename has an extension that clashes with the extension provided in 
+    This function has the ability to automatically detect the correct file extension from the file name, if one exists, by setting `ResultsFileType = "auto_detect"`. If a filename has an extension that clashes with the extension provided in 
     `ResultsFileType`, the extension already present in the name is used. For example, if a file is called "capacity.csv" in `results_settings.yml`, but `ResultsFileType = ".parquet"`, the file will be saved as a CSV.
     If no extension is present, and `ResultsFileType` is set to `auto_detect`, then .csv is automatically used.
 
@@ -665,6 +660,8 @@ end
 """
 function write_output_file(path::AbstractString, file::DataFrame; filetype::String = "auto_detect", compression::String = "auto_detect")
     # 1) Check if an extension is already in the file name, if not, add it based on filetype
+    println(path)
+    println(file)
     if occursin(".", path)
         if occursin(".", splitext(path)[1]) # If two extensions are present (eg .csv.gz, or .json.gz, only the first will be added to the filetype as .gz will be autodetected by DuckDB later)
             if filetype == "auto_detect" # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext

@@ -47,25 +47,10 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 
     charge *= scale_factor
 
-<<<<<<< HEAD
     df = DataFrame(Resource = resources[charge_ids],
         Zone = zones[charge_ids])
     df.AnnualSum = charge * weight
 
     write_temporal_data(df, charge, path, setup, setup["WriteResultsNamesDict"]["charge"])
-=======
-    filepath = joinpath(path, setup["WriteResultsNamesDict"]["charge"])
-    if setup["WriteOutputs"] == "annual"
-        write_annual(filepath, dfCharge, setup)
-    else # setup["WriteOutputs"] == "full"
-        df_Charge = write_fulltimeseries(filepath, charge, dfCharge, setup)
-        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            print("Charge:")
-            print(df_Charge)
-            write_full_time_series_reconstruction(path, setup, df_Charge, setup["WriteResultsNamesDict"]["charge"])
-            @info("Writing Full Time Series for Charge")
-        end
-    end
->>>>>>> 7b8d28340 (Code cleanup)
     return nothing
 end

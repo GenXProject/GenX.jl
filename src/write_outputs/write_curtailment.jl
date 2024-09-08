@@ -50,24 +50,11 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     curtailment *= scale_factor
 
-<<<<<<< HEAD
     df = DataFrame(Resource = resources,
         Zone = zones,
         AnnualSum = zeros(G))
     df.AnnualSum = curtailment * weight
 
     write_temporal_data(df, curtailment, path, setup, setup["WriteResultsNamesDict"]["curtail"])
-=======
-    filename = joinpath(path, setup["WriteResultsNamesDict"]["curtail"])
-    if setup["WriteOutputs"] == "annual"
-        write_annual(filename, dfCurtailment, setup)
-    else # setup["WriteOutputs"] == "full"
-        df_Curtailment = write_fulltimeseries(filename, curtailment, dfCurtailment, setup)
-        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, df_Curtailment, setup["WriteResultsNamesDict"]["curtail"])
-            @info("Writing Full Time Series for Curtailment")
-        end
-    end
->>>>>>> 7b8d28340 (Code cleanup)
     return nothing
 end
