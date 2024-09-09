@@ -174,8 +174,8 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
     @constraints(EP,
         begin
-            cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
-            cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
+            cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l] #Change these with Auxiliary 
+            cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l] #Change these with Auxiliary 
         end)
 
     # Transmission loss related constraints - linear losses as a function of absolute value
