@@ -927,12 +927,20 @@ The following two constraints track the state of charge of the storage resources
 \end{aligned}
 ```
 
-The last constraint limits the volume of energy stored at any time, $\Gamma_{y,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{y,z}$. 
+This constraint limits the volume of energy stored at any time, $\Gamma_{y,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{y,z}$. 
 ```math
 \begin{aligned}
 	&  \Gamma_{y,z,t} \leq \Delta^{total, energy}_{y,z} & \quad \forall y \in \mathcal{VS}^{stor}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
+The last constraint limits the volume of energy exported from the grid to the storage at any time, $\Pi_{y,z,t}$, to be less than the electricity charged to the energy storage component, $\Pi_{y,z,t}^{ac} + \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}}$. 
+```math
+\begin{aligned}
+    & \Pi_{y,z,t} = \Pi_{y,z,t}^{ac} + \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}}
+\end{aligned}
+```
+
 The next set of constraints only apply to symmetric storage resources (all $y \in \mathcal{VS}^{sym,dc} \cup y \in \mathcal{VS}^{sym,ac}$). 
     For storage technologies with symmetric charge and discharge capacity (all $y \in \mathcal{VS}^{sym,dc}  \cup y \in \mathcal{VS}^{sym,ac}$), 
     since storage resources generally represent a 'cluster' of multiple similar storage devices of the same type/cost in the same zone, GenX 
