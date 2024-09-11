@@ -34,25 +34,35 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
+        EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
+        
     end
 
     ### Variables ###
 
     if MultiStage == 1
         @variable(EP, vTRANSMAX[l = 1:L]>=0)
+        @variable(EP, vTRANSMAX_Pos[l = 1:L_asym]>=0)
+        @variable(EP, vTRANSMAX_Neg[l = 1:L_asym]>=0)
     end
 
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         @variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
+        @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
+        @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
     end
 
     ### Expressions ###
 
     if MultiStage == 1
         @expression(EP, eTransMax[l = 1:L], vTRANSMAX[l])
+        @expression(EP, eTransMax_Pos[l = 1:L_asym], vTRANSMAX_Pos[l])
+        @expression(EP, eTransMax_Neg[l = 1:L_asym], vTRANSMAX_Neg[l])
     else
         @expression(EP, eTransMax[l = 1:L], inputs["pTrans_Max"][l])
+        @expression(EP, eTransMax_Pos[l = 1:L_asym], inputs["pTrans_Max_Pos"][l])
+        @expression(EP, eTransMax_Neg[l = 1:L_asym], inputs["pTrans_Max_Neg"][l])
     end
 
     ## Transmission power flow and loss related expressions:
