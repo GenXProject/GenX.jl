@@ -1131,6 +1131,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         CONSTRAINTSET = STOR
     end
 
+    # total charging expressions: total storage charge (including both AC and DC) [MWh]
+    @expression(EP, eCHARGE_VS_STOR[y in STOR, t = 1:T], JuMP.AffExpr())
+
     # SoC expressions
     @expression(EP, eSoCBalStart_VRE_STOR[y in CONSTRAINTSET, t in START_SUBPERIODS],
         vS_VRE_STOR[y,
@@ -1180,6 +1183,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                                        by_rid(y, :etainverter) for t in 1:T)
         for t in 1:T
             EP[:eInvACBalance][y, t] -= vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
+            EP[:eCHARGE_VS_STOR][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
             EP[:eInverterExport][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
         end
         for t in INTERIOR_SUBPERIODS
@@ -1204,6 +1208,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t] * vP_AC_CHARGE[y, t] for t in 1:T)
         for t in 1:T
             EP[:eInvACBalance][y, t] -= vP_AC_CHARGE[y, t]
+            EP[:eCHARGE_VS_STOR][y, t] += vP_AC_CHARGE[y, t]
         end
         for t in INTERIOR_SUBPERIODS
             eSoCBalInterior_VRE_STOR[y, t] += by_rid(y, :eff_up_ac) *
@@ -1286,6 +1291,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     if rep_periods > 1 && !isempty(VS_LDS)
         lds_vre_stor!(EP, inputs)
     end
+
+    # Constraint 3: electricity charged from the grid cannot exceed the charging capacity of the storage component in VRE_STOR
+    @constraint(EP, [y in STOR, t = 1:T], vCHARGE_VRE_STOR[y,t] <= eCHARGE_VS_STOR[y,t])
 end
 
 @doc raw"""
