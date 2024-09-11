@@ -7,6 +7,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     gen = inputs["RESOURCES"]   # Resources (objects) 
     resources = inputs["RESOURCE_NAMES"]    # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     T = inputs["T"]     # Number of time steps (hours)
     STOR_ALL = inputs["STOR_ALL"]

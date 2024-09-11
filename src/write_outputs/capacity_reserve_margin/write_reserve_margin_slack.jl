@@ -14,11 +14,10 @@ function write_reserve_margin_slack(path::AbstractString,
     end
 
     if setup["WriteOutputs"] == "annual"
-        CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_prices_and_penalties"]), dfResMar_slack)
-        #= write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_prices_and_penalties"]),
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_prices_and_penalties"]),
             dfResMar_slack,
             filetype = setup["ResultsFileType"],
-            compression = setup["ResultsCompressionType"])=#
+            compression = setup["ResultsCompressionType"])
     else     # setup["WriteOutputs"] == "full"
         temp_ResMar_slack = value.(EP[:vCapResSlack])
         if setup["ParameterScale"] == 1
@@ -26,13 +25,10 @@ function write_reserve_margin_slack(path::AbstractString,
         end
         dfResMar_slack = hcat(dfResMar_slack,
             DataFrame(temp_ResMar_slack, [Symbol("t$t") for t in 1:T]))
-        CSV.write(joinpath(path,  setup["WriteResultsNamesDict"]["reserve_margin_prices_and_penalties"]),
-            dftranspose(dfResMar_slack, false),
-            writeheader = false)
-        #=write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_prices_and_penalties"]),
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_prices_and_penalties"]),
             dftranspose(dfResMar_slack, false),
             filetype = setup["ResultsFileType"],
-            compression = setup["ResultsCompressionType"])=#
+            compression = setup["ResultsCompressionType"])
     end
     return nothing
 end

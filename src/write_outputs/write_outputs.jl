@@ -489,10 +489,9 @@ end # END output()
 
 Internal function for writing annual outputs. 
 """
-function write_annual(fullpath::AbstractString, dfOut::DataFrame)
+function write_annual(fullpath::AbstractString, dfOut::DataFrame, setup::Dict)
     push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
-    CSV.write(fullpath, dfOut)
-    #write_output_file(fullpath, dOut, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+    write_output_file(fullpath, dfOut, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return nothing
 end
 
@@ -513,17 +512,10 @@ function write_fulltimeseries(fullpath::AbstractString,
                     [Symbol("t$t") for t in 1:T]]
     rename!(dfOut, auxNew_Names)
     total = DataFrame(
-        ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0) fill(0.0, (1, T))], auxNew_Names)
+        ["Total" missing sum(dfOut[!, :AnnualSum], init = 0.0) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)
     dfOut = vcat(dfOut, total)
-
-    dfOut[!,:Zone] = convert.(Float64,dfOut[!,:Zone])
-    dfOut = dftranspose(dfOut,false)
-    rename!(dfOut, Symbol.(Vector(dfOut[1,:])))
-    dfOut = dfOut[2:end,:]
-    dfOut[!,1] = convert.(String,dfOut[!,1])
-    dfOut[!,2:end] = convert.(Float64,dfOut[!,2:end])
-    #CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
+    dfOut = dftranspose(dfOut, true)
     write_output_file(fullpath, dfOut, 
             filetype = setup["ResultsFileType"], 
             compression = setup["ResultsCompressionType"])
@@ -583,10 +575,10 @@ end
 
 function write_temporal_data(
         df_annual, data, path::AbstractString, setup::Dict, filename::AbstractString)
-    filepath = joinpath(path, filename * ".csv")
+    filepath = joinpath(path, filename)
     if setup["WriteOutputs"] == "annual"
         # df_annual is expected to have an AnnualSum column.
-        write_annual(filepath, df_annual)
+        write_annual(filepath, df_annual, setup)
     else # setup["WriteOutputs"] == "full"
         df_full = write_fulltimeseries(filepath, data, df_annual, setup)
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
@@ -603,7 +595,7 @@ end
                             name::String)
 Create a DataFrame with all 8,760 hours of the year from the reduced output.
 
-This function calls `full_time_series_reconstruction()``, which uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
+This function calls `full_time_series_reconstruction()``, which uses the file `Period_map`` to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
 For each 52 weeks of the year, the corresponding representative week is taken from the input DataFrame and copied into the new DataFrame. Representative periods that 
 represent more than one week will appear multiple times in the output. 
 
@@ -624,9 +616,6 @@ function write_full_time_series_reconstruction(
     FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
     output_path = joinpath(path, FullTimeSeriesFolder)
     dfOut_full = full_time_series_reconstruction(path, setup, DF)
-    dfOut_full[!,1] = convert.(String,dfOut_full[!,1])
-    dfOut_full[!,2:end] = convert.(Float64,dfOut_full[!,2:end])
-    #CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
     write_output_file(joinpath(output_path, "$name"), 
             dfOut_full, 
             filetype = setup["ResultsFileType"],
@@ -660,15 +649,12 @@ end
 """
 function write_output_file(path::AbstractString, file::DataFrame; filetype::String = "auto_detect", compression::String = "auto_detect")
     # 1) Check if an extension is already in the file name, if not, add it based on filetype
-    println(path)
-    println(file)
     if occursin(".", path)
         if occursin(".", splitext(path)[1]) # If two extensions are present (eg .csv.gz, or .json.gz, only the first will be added to the filetype as .gz will be autodetected by DuckDB later)
             if filetype == "auto_detect" # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext
                 filetype = splitext(splitext(path)[1])[2]
             elseif filetype != splitext(splitext(path)[1])[2] # If the extension in the file name is different than the filetype key, override the filetype key and throw a warning.
                 newfiletype = splitext(path)[2]
-                @warn("Filetype '$filetype' is incompatible with extension specified in results_settings.yml. Saving as '$newfiletype' instead.")
                 filetype = splitext(splitext(path)[1])[2]
             end
         else
@@ -676,7 +662,6 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
                 filetype = splitext(path)[2]
             elseif filetype != splitext(path)[2] # If the extension in the file name is different than the filetype key, override the filetype key and throw a warning.
                 newfiletype = splitext(path)[2]
-                @warn("Filetype '$filetype' is incompatible with extension specified in results_settings.yml. Saving as '$newfiletype' instead.")
                 filetype = splitext(path)[2]
             end
             if splitext(path)[2] == ".csv" && isgzip(compression)

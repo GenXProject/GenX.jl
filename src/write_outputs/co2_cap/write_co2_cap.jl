@@ -21,7 +21,6 @@ function write_co2_cap(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
         end
     end
 
-    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["co2_prices"]), dfCO2Price)
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["co2_prices"]),
             dfCO2Price,
             filetype = setup["ResultsFileType"],

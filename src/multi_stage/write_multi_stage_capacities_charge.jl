@@ -29,5 +29,7 @@ function write_multi_stage_capacities_charge(outpath::String, settings_d::Dict)
         df_cap[!, Symbol("EndChargeCap_p$p")] = capacities_d[p][!, :EndChargeCap]
     end
 
-    CSV.write(joinpath(outpath, "capacities_charge_multi_stage.csv"), df_cap)
+    CSV.write(joinpath(outpath, setup["WriteResultsNamesDict"]["capacities_charge_multi_stage"]), df_cap)
+    #write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacities_charge_multi_stage"]),df_cap, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

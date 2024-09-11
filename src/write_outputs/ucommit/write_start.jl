@@ -3,6 +3,7 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     # Startup state for each resource in each time step
     resources = inputs["RESOURCE_NAMES"][COMMIT]
     zones = inputs["R_ZONES"][COMMIT]
+    zones = convert.(Float64,zones)
 
     dfStart = DataFrame(Resource = resources, Zone = zones)
     start = value.(EP[:vSTART][COMMIT, :].data)

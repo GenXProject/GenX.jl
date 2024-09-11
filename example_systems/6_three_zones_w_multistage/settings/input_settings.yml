@@ -1,16 +1,41 @@
-#default_location: default/path/to/data
-# system
-#system_location: path/to/data
-demand: "Demand_data.csv"
-fuel: "Fuels_data.csv.gz"
-generators: "Generators_variability.csv"
+inputs_p1:
+    resources_location: "inputs/inputs_p1/resources"
+    resources: "Resource_multistage_data.csv"
+    storage: "Storage1.csv" 
+    thermal: "Thermal1.csv"
+    vre: "Vre1.csv"
+    policies_location: "inputs/inputs_p1/policies"
+    co2_cap: "CO2_cap1.csv"
+    system_location: "inputs/inputs_p1/system"
+    demand: "Demand_data1.csv"
+    fuel: "Fuels_data1.csv"
+    generators: "Generators_variability1.csv"
+    network: "Network1.csv"
 
-# policies
-#policies_location: /path/to/data
-#co2_name: file_or_table_name
-#minimum_capacity_name: file_or_table_name
+inputs_p2:
+    resources_location: "inputs/inputs_p1/resources"
+    resources: "Resource_multistage_data.csv"
+    storage: "Storage1.csv" 
+    thermal: "Thermal1.csv"
+    vre: "Vre1.csv"
+    policies_location: "inputs/inputs_p2/policies"
+    co2_cap: "CO2_cap.csv"
+    system_location: "inputs/inputs_p2/system"
+    demand: "Demand_data.csv"
+    fuel: "Fuels_data.csv"
+    generators: "Generators_variability.csv"
+    network: "Network.csv"
 
-# resources
-
-
-# policy assignments
+inputs_p3:
+    resources_location: "inputs/inputs_p1/resources"
+    resources: "Resource_multistage_data.csv"
+    storage: "Storage1.csv" 
+    thermal: "Thermal1.csv"
+    vre: "Vre1.csv"
+    policies_location: "inputs/inputs_p3/policies"
+    co2_cap: "CO2_cap.csv"
+    system_location: "inputs/inputs_p3/system"
+    demand: "Demand_data.csv"
+    fuel: "Fuels_data.csv"
+    generators: "Generators_variability.csv"
+    network: "Network.csv"

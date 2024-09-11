@@ -30,7 +30,7 @@ function run_timedomainreduction_multistage!(case::AbstractString)
     mysetup = configure_settings(genx_settings)
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml")
 
-    mysetup["MultiStageSettingsDict"] = configure_settings_multistage(multistage_settings)
+    mysetup["MultiStageSettingsDict"] = configure_settings_multistage(case,multistage_settings)
 
     tdr_settings = get_settings_path(case, "time_domain_reduction_settings.yml")
     TDRSettingsDict = YAML.load(open(tdr_settings))

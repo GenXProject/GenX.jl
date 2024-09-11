@@ -8,6 +8,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     gen = inputs["RESOURCES"]  # Resources (objects)
     resources = inputs["RESOURCE_NAMES"] # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)

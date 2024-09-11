@@ -12,7 +12,7 @@ function write_esr_prices(path::AbstractString, inputs::Dict, setup::Dict, EP::M
             dfESR[!, :ESR_AnnualPenalty] *= (ModelScalingFactor^2) # Converting MillionUSD to USD
         end
     end
-    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["esr_prices_and_penalties"]), dfESR)
+    
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["esr_prices_and_penalties"]),
             dfESR,
             filetype = setup["ResultsFileType"],

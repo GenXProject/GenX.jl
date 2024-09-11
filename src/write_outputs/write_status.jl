@@ -18,7 +18,6 @@ function write_status(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
             Objval = objective_value(EP), Objbound = objective_bound(EP),
             FinalMIPGap = (objective_value(EP) - objective_bound(EP)) / objective_value(EP))
     end
-    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["status"]), dfStatus)
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["status"]),
             dfStatus, 
             filetype = setup["ResultsFileType"],

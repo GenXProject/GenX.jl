@@ -91,7 +91,6 @@ function write_reserve_margin_revenue(path::AbstractString,
         dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [Symbol("CapRes_$i")]))
     end
     dfResRevenue.AnnualSum = annual_sum
-    #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_revenue"]), dfResRevenue)
 
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_revenue"]),
             dfResRevenue,

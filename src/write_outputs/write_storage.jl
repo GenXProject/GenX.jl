@@ -7,6 +7,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     gen = inputs["RESOURCES"]   # Resources (objects)
     resources = inputs["RESOURCE_NAMES"]   # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     T = inputs["T"]     # Number of time steps (hours)
     G = inputs["G"]

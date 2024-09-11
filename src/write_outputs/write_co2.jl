@@ -17,6 +17,7 @@ function write_co2_emissions_plant(path::AbstractString,
     gen = inputs["RESOURCES"]  # Resources (objects)
     resources = inputs["RESOURCE_NAMES"] # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 

@@ -35,6 +35,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                             [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
                             Symbol("AnnualSum")]
             rename!(dfEmissions, auxNew_Names)
+            dfEmissions[!,1] = convert.(Float64,dfEmissions[!,1])
         else
             dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Float64}(undef, Z))
         end
@@ -55,8 +56,10 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                      :AnnualSum])
             end
             dfEmissions = vcat(dfEmissions, total)
-            #CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
-            write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), dfEmissions, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+            write_output_file(joinpath(path, 
+                    setup["WriteResultsNamesDict"]["emissions"]), 
+                    dfEmissions, filetype = setup["ResultsFileType"], 
+                    compression = setup["ResultsCompressionType"])
 
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
@@ -90,15 +93,8 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            #=CSV.write(joinpath(path, "emissions.csv"),
-                dftranspose(dfEmissions, false),
-                writeheader = false)=#
-
             # Maya:
-            dfEmissions = dftranspose(dfEmissions, false)
-            rename!(dfEmissions, Symbol.(Vector(dfEmissions[1,:])))
-            dfEmissions = dfEmissions[2:end,:]
-            dfEmissions[!,2:end] = convert.(Float64,dfEmissions[!,2:end])
+            dfEmissions = dftranspose(dfEmissions, true)
 
             write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
                 dfEmissions, 
@@ -120,7 +116,6 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
         if setup["WriteOutputs"] == "annual"
             total = DataFrame(["Total" sum(dfEmissions.AnnualSum)], [:Zone; :AnnualSum])
             dfEmissions = vcat(dfEmissions, total)
-            #CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
             write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
                     dfEmissions, 
                     filetype = setup["ResultsFileType"], 
@@ -140,14 +135,8 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            #CSV.write(joinpath(path, "emissions.csv"),
-             #   dftranspose(dfEmissions, false),
-              #  writeheader = false)
 
-            dfEmissions = dftranspose(dfEmissions, false)
-            rename!(dfEmissions, Symbol.(Vector(dfEmissions[1,:])))
-            dfEmissions = dfEmissionsEmissions[2:end,:]
-            dfEmissions[!,2:end] = convert.(Float64,dfEmissions[!,2:end])
+            dfEmissions = dftranspose(dfEmissions, true)
 
             write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
                 dfEmissions, 

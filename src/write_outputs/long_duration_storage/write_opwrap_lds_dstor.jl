@@ -26,10 +26,6 @@ function write_opwrap_lds_dstor(path::AbstractString, inputs::Dict, setup::Dict,
     dfdStorage = hcat(dfdStorage, DataFrame(dsoc, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("w$t") for t in 1:W]]
     rename!(dfdStorage, auxNew_Names)
-    #=CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["dStorage"]),
-        dftranspose(dfdStorage, false),
-        header = false)=#
-
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["dStorage"]),
         dftranspose(dfdStorage, false),
         filetype = setup["ResultsFileType"],

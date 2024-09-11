@@ -70,9 +70,19 @@ function configure_settings(settings_path::String, output_settings_path::String,
 
     output_settings = configure_writeoutput(output_settings_path, settings)
     settings["WriteOutputsSettingsDict"] = output_settings
-
-    input_settings = configure_input_names(case)
-    settings["WriteInputNamesDict"] = input_settings
+ 
+    if settings["MultiStage"] == 1
+        multistage_settings = configure_settings_multistage(case,settings_path)
+        settings["WriteInputNamesDict"] = Dict{}()
+        for t in 1:multistage_settings["NumStages"]
+            subdict_name = string("inputs_p", t)
+            input_settings = configure_input_names(case,t=t)
+            settings["WriteInputNamesDict"][subdict_name] = input_settings
+        end
+    else
+        input_settings = configure_input_names(case)
+        settings["WriteInputNamesDict"] = input_settings
+    end
 
     results_settings = configure_results_names(case)
     settings["WriteResultsNamesDict"] = results_settings
@@ -207,7 +217,7 @@ settings dictionary.
 # Returns
 - `settings::Dict`: The multistage settings dictionary.
 """
-function configure_settings_multistage(settings_path::String)
+function configure_settings_multistage(case::AbstractString,settings_path::String)
     println("Configuring Multistage Settings")
     model_settings = isfile(settings_path) ? YAML.load(open(settings_path)) : Dict{Any, Any}()
 
@@ -251,7 +261,11 @@ function default_input_names(case::AbstractString)
     "resource_energy_share_requirement" => "Resource_energy_share_requirement.csv",
     "resource_min" => "Resource_minimum_capacity_requirement.csv",
     "resource_max" => "Resource_maximum_capacity_requirement.csv",
+    "resource_hydrogen_demand" => "Resource_hydrogen_demand.csv",
+    "resource_hourly_matching" => "Resource_hourly_matching.csv",
+    "resource_multistage_data" => "Resource_multistage_data.csv",
     "policies_location" => joinpath(case, "policies"),
+    "period_map" => "Period_map.csv",
     "capacity" => "Capacity_reserve_margin.csv",
     "CRM_slack" => "Capacity_reserve_margin_slack.csv",
     "co2_cap" => "CO2_cap.csv",
@@ -276,28 +290,38 @@ settings dictionary.
 # Returns
 - `names::Dict`: The input names dictionary.
 """
-function configure_input_names(case::AbstractString)
+function configure_input_names(case::AbstractString; t::Int64 = 0)
     println("Configuring Input File and Path Names")
     input_settings_path = get_settings_path(case, "input_settings.yml")
-    println(input_settings_path)
-    #input_names = YAML.load(open(input_settings_path))
     input_names = isfile(input_settings_path) ? YAML.load(open(input_settings_path)) : Dict{Any, Any}()
 
-    names = default_input_names(case)
-    merge!(names,input_names)
+    if t > 0
+        input_folder = string("inputs_p", t)
+        names = default_input_names(joinpath(case,"inputs",input_folder))
+        merge!(names,input_names[input_folder])
+    else
+        names = default_input_names(case)
+        merge!(names,input_names)
+    end
 
     return names
 end
 
 function default_results_names()
-   Dict{Any, Any}("capacity_name" => "capacity",
+   Dict{Any, Any}("angles" => "angles",
+    "capacity_name" => "capacity",
     "capacity_factor" => "capacityfactor",
+    "capacity_vaue" => "CapacityValue",
+    "capacities_charge_multi_stage" => "capacities_charge_multi_stage",
+    "capacities_multi_stage" => "capacities_multi_stage",
+    "capacities_energy_multi_stage" => "capacities_energy_multi_stage",
     "captured_emissions_plant" => "captured_emissions_plant",
     "charge" => "charge.csv",
     "charging_cost" => "ChargingCost",
     "co2_prices" => "CO2_prices_and_penalties",
     "commit" => "commit",
     "costs" => "costs",
+    "costs_multi_stage" => "costs_multi_stage",
     "curtail" => "curtail",
     "dStorage" => "dStorage",
     "emissions_plant" => "emissions_plant",
@@ -313,8 +337,11 @@ function default_results_names()
     "hydrogen_prices" => "hydrogen_prices",
     "mincap" => "MinCapReq_prices_and_penalties",
     "maxcap" => "MaxCapReq_prices_and_penalties",
+    "maint_down" => "maint_down",
+    "morris" => "morris",
     "revenue" => "NetRevenue",
     "network_expansion" => "network_expansion",
+    "network_expansion_multi_stage" => "network_expansion_multi_stage",
     "nse" => "nse",
     "power_balance" => "power_balance",
     "power" => "power",
@@ -342,6 +369,7 @@ function default_results_names()
     "vre_stor_ac_charge" => "vre_stor_ac_charge",
     "vre_stor_dc_discharge" => "vre_stor_dc_discharge",
     "vre_stor_ac_discharge" => "vre_stor_ac_discharge",
+    "vre_stor_elec_power_consumption" => "vre_stor_elec_power_consumption",
     "vre_stor_wind_power" => "vre_stor_wind_power",
     "vre_stor_solar_power" => "vre_stor_solar_power",
     "vre_stor_capacity" => "vre_stor_capacity")
@@ -363,7 +391,6 @@ settings dictionary.
 function configure_results_names(case::AbstractString)
     println("Configuring Results File Names")
     results_settings_path = get_settings_path(case, "results_settings.yml")
-    results_names = YAML.load(open(results_settings_path))
     results_names = isfile(results_settings_path) ? YAML.load(open(results_settings_path)) : Dict{Any, Any}()
 
     names = default_results_names()

@@ -18,22 +18,13 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     rename!(dfPrice, auxNew_Names)
 
     ## Linear configuration final output
-    #=CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["prices"]),
-        dftranspose(dfPrice, false),
-        writeheader = false)=#
-
-    # Maya: Transpose dataframe, make the first row the header, convert columns to type String and Float 64
-    dfPrice = dftranspose(dfPrice, false)
-    rename!(dfPrice, Symbol.(Vector(dfPrice[1,:])))
-    dfPrice = dfPrice[2:end,:]
-    dfPrice[!,2:end] = convert.(Float64,dfPrice[!,2:end])
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["prices"]),
-            dfPrice, 
-            filetype = setup["ResultsFileType"], 
-            compression = setup["ResultsCompressionType"])
+        dftranspose(dfPrice, true), 
+        filetype = setup["ResultsFileType"], 
+        compression = setup["ResultsCompressionType"])
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-        write_full_time_series_reconstruction(path, setup, dfPrice, setup["WriteResultsNamesDict"]["prices"])
+        write_full_time_series_reconstruction(path, setup, dftranspose(dfPrice, true), setup["WriteResultsNamesDict"]["prices"])
         @info("Writing Full Time Series for Price")
     end
     return nothing

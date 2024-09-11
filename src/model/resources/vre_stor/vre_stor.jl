@@ -916,7 +916,7 @@ The following two constraints track the state of charge of the storage resources
     this constraint relates storage inventory in the first timestep of the representative period with the inventory at the last time step of the representative period, where each representative period is made of 
     $\tau^{period}$ time steps. In this implementation, energy exchange between representative periods is not permitted. When modeling representative time periods, GenX enables modeling of long duration 
     energy storage which tracks state of charge between representative periods enable energy to be moved throughout the year. If there is more than one representative period and ```LDS_VRE_STOR=1``` has been enabled for 
-    resources in ```Vre_and_stor_data.csv```, this function calls ```lds_vre_stor!()``` to enable this feature. The first of these two constraints enforces storage inventory balance for interior time 
+    resources in ```Vre_and_stor_data```, this function calls ```lds_vre_stor!()``` to enable this feature. The first of these two constraints enforces storage inventory balance for interior time 
     steps $(t \in \mathcal{T}^{interior})$, while the second enforces storage balance constraint for the initial time step $(t \in \mathcal{T}^{start})$:
 ```math
 \begin{aligned}
@@ -1498,7 +1498,7 @@ end
 
 This function defines the decision variables, expressions, and constraints for any 
     long duration energy storage component of each co-located VRE and storage generator (
-    there is more than one representative period and ```LDS_VRE_STOR=1``` in the ```Vre_and_stor_data.csv```). 
+    there is more than one representative period and ```LDS_VRE_STOR=1``` in the ```Vre_and_stor_data```). 
 
 These constraints follow the same formulation that is outlined by the function ```long_duration_storage!()``` 
     in the storage module. One constraint changes, which links the state of charge between the start of periods 

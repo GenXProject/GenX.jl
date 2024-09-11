@@ -30,8 +30,8 @@ Internal function to get policy file information.
 """
 function _get_policyfile_info(names::Dict)
     # filename for each type of policy available in GenX
-    h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
-    hourly_matching_filenames = ["Resource_hourly_matching.csv"]
+    h2_demand_filenames = [names["resource_hydrogen_demand"]]
+    hourly_matching_filenames = [names["resource_hourly_matching"]]
     esr_filenames = [names["resource_energy_share_requirement"]]
     cap_res_filenames = [names["resource_cap"]]
     min_cap_filenames = [names["resource_min"]]
@@ -495,7 +495,7 @@ function check_qualified_hydrogen_supply(r::AbstractResource)
             resource_name(r),
             " has :qualified_hydrogen_supply = 1. However \n" *
             "the :qualified_hydrogen_supply attribute is deprecated and will be removed in a future version. \n" *
-            "Please use the :qualified_supply column in the `Resource_hourly_matching.csv` file instead, and remove \n" *
+            "Please use the :qualified_supply column in the `Resource_hourly_matching` file instead, and remove \n" *
             "the :qualified_hydrogen_supply attribute from the resource file. \n" *
             "Please see the documentation for more information.")
         push!(warning_strings, e)
@@ -589,11 +589,16 @@ Function that loads and scales resources data from folder specified in resources
 - `resources (Vector{<:AbstractResource})`: An array of scaled resources.
 
 """
-function create_resource_array(setup::Dict, resources_path::AbstractString,)
+function create_resource_array(setup::Dict, resources_path::AbstractString)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
 
     # get filename and GenX type for each type of resources available in GenX
-    input_names = setup["WriteInputNamesDict"]
+    if setup["MultiStage"] == 0
+        input_names = setup["WriteInputNamesDict"]
+    else
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        input_names = setup["WriteInputNamesDict"][string("inputs_p",stage)]
+    end
     resources_info = _get_resource_info(input_names)
 
     # load each resource type, scale data and return array of resources
@@ -617,7 +622,12 @@ Validate the policy files by checking if they exist in the specified folder and 
 !isfile(joinpath(resource_policies_path, filename))
 """
 function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
-    input_names = setup["WriteInputNamesDict"]
+    if setup["MultiStage"] == 0
+        input_names = setup["WriteInputNamesDict"]
+    else
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        input_names = setup["WriteInputNamesDict"][string("inputs_p",stage)]
+    end
     policyfile_info = _get_policyfile_info(input_names)
     for (filenames, setup_param) in values(policyfile_info)
         if setup[setup_param] == 1 &&
@@ -810,7 +820,8 @@ function add_modules_to_resources!(resources::Vector{<:AbstractResource},
     ## Load all modules and add them to the list of modules to be added to resources
     # Add multistage if multistage is activated
     if setup["MultiStage"] == 1
-        filename = joinpath(resources_path, "Resource_multistage_data.csv")
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        filename = joinpath(resources_path, setup["WriteInputNamesDict"][string("inputs_p",stage)]["resource_multistage_data"])
         multistage_in = load_multistage_dataframe(filename, scale_factor)
         push!(modules, multistage_in)
         @info "Multistage data successfully read."
@@ -1236,7 +1247,7 @@ function add_resources_to_input_data!(inputs::Dict,
     if isempty(inputs["QUALIFIED_SUPPLY"]) &&
        !isempty(ids_with(gen, qualified_hydrogen_supply))
         Base.depwarn("""The column name :qualified_hydrogen_supply is deprecated. 
-        Please use the `Resource_hourly_matching.csv` instead. The resource attribute 
+        Please use the `Resource_hourly_matching` instead. The resource attribute 
         :qualified_hydrogen_supply will be removed in the future release.""",
             :add_resources_to_input_data!, force = true)
         inputs["QUALIFIED_SUPPLY"] = ids_with(gen, qualified_hydrogen_supply)
@@ -1441,8 +1452,12 @@ function load_resources_data!(inputs::Dict,
     # read policy files and add policies-related attributes to resource dataframe
     resource_policies_path = joinpath(resources_path, setup["ResourcePoliciesFolder"])
     validate_policy_files(resource_policies_path, setup)
-    add_policies_to_resources!(resources, resource_policies_path, setup["WriteInputNamesDict"])
-
+    if setup["MultiStage"] == 1
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        add_policies_to_resources!(resources, resource_policies_path, setup["WriteInputNamesDict"][string("inputs_p",stage)])
+    else
+        add_policies_to_resources!(resources, resource_policies_path, setup["WriteInputNamesDict"])
+    end
     # read module files add module-related attributes to resource dataframe
     add_modules_to_resources!(resources, setup, resources_path)
 

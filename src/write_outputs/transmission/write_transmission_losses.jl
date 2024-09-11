@@ -18,7 +18,6 @@ function write_transmission_losses(path::AbstractString,
     if setup["WriteOutputs"] == "annual"
         total = DataFrame(["Total" sum(dfTLosses.AnnualSum)], [:Line, :AnnualSum])
         dfTLosses = vcat(dfTLosses, total)
-        #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["tlosses"]), dfTLosses)
         write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["tlosses"]),
                 dfTLosses,
                 filetype = setup["ResultsFileType"],
@@ -31,23 +30,14 @@ function write_transmission_losses(path::AbstractString,
             auxNew_Names)
         total[:, 3:(T + 2)] .= sum(tlosses, dims = 1)
         dfTLosses = vcat(dfTLosses, total)
-        #=CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["tlosses"]),
-            dftranspose(dfTLosses, false),
-            writeheader = false)=#
-        
-        # Maya: Transpose dataframe, make the first row the header, convert columns to type String and Float 64
-        dfTLosses = dftranspose(dfTLosses, false)
-        rename!(dfTLosses, Symbol.(Vector(dfTLosses[1,:])))
-        dfTLosses = dfTLosses[2:end,:]
-        dfTLosses[!,2:end] = convert.(Float64,dfTLosses[!,2:end])
         
         write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["tlosses"]),
-            dfTLosses,
+            dftranspose(dfTLosses, true),
             filetype = setup["ResultsFileType"],
             compression = setup["ResultsCompressionType"])
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, dfTLosses, setup["WriteResultsNamesDict"]["tlosses"])
+            write_full_time_series_reconstruction(path, setup, dftranspose(dfTLosses, true), setup["WriteResultsNamesDict"]["tlosses"])
             @info("Writing Full Time Series for Time Losses")
         end
     end

@@ -11,7 +11,6 @@ function write_reserve_margin_w(path::AbstractString, inputs::Dict, setup::Dict,
     auxNew_Names_res = [Symbol("Constraint");
                         [Symbol("CapRes_$i") for i in 1:inputs["NCapacityReserveMargin"]]]
     rename!(dfResMar_w, auxNew_Names_res)
-    #CSV.write(joinpath(path, "ReserveMargin_w.csv"), dfResMar_w)
     write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserve_margin_w"]),
             dfResMar_w,
             filetype = setup["ResultsFileType"],

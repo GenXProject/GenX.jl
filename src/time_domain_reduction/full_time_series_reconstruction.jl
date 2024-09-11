@@ -24,7 +24,7 @@ function full_time_series_reconstruction(
         TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
     end
     # Read Period map file Period_map.csv
-    Period_map = CSV.read(joinpath(TDRpath, "Period_map.csv"), DataFrame)
+    Period_map = CSV.read(joinpath(TDRpath, setup["WriteResultsNamesDict"]["period_map"]), DataFrame)
 
     # Read time domain reduction settings file time_domain_reduction_settings.yml
     myTDRsetup = YAML.load(open(joinpath(

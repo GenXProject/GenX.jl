@@ -8,9 +8,15 @@ function load_generators_variability!(setup::Dict, path::AbstractString, inputs:
     # Hourly capacity factors
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    if setup["MultiStage"] == 1
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        filename = setup["WriteInputNamesDict"][string("inputs_p",stage)]["generators"]
+    else
+        
+        filename = setup["WriteInputNamesDict"]["generators"]
+    end
 
-    filename = setup["WriteInputNamesDict"]["generators"]
+    my_dir = get_systemfiles_path(setup, TDR_directory, path)
     gen_var = load_dataframe(joinpath(my_dir, filename))
 
     all_resources = inputs["RESOURCE_NAMES"]

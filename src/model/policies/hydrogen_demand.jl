@@ -8,7 +8,7 @@ The hydrogen demand requirement can be defined as a zonal limit defined in terms
 **Minimum annual hydrogen production**
 
 **Zonal limit**
-The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in inputs in "Hydrogen_demand.csv":
+The sum of annual hydrogen production by each electrolyzer $y \in \mathcal{EL}$ must exceed a minimum quantity specified in inputs in "Hydrogen_demand":
 
 ```math
 \begin{aligned}

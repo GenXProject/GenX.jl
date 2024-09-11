@@ -2,6 +2,7 @@ function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     # Operational decision variable states
     COMMIT = inputs["COMMIT"]
     zones = inputs["R_ZONES"][COMMIT]
+    zones = convert.(Float64,zones)
     # Shutdown state for each resource in each time step
     shut = value.(EP[:vSHUT][COMMIT, :].data)
     resources = inputs["RESOURCE_NAMES"][COMMIT]

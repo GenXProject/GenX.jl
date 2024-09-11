@@ -36,7 +36,7 @@ vFuel_{y,t} >= vP_{y,t} * h_{y,x} + U_{g,t}* f_{y,x}
 Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ [MMBTU/MWh],
  $f_{y,x}$ represents the heat rate intercept (MMBTU) for a generator $y$ in segment $x$ [MMBTU],
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
-are optional inputs to the resource .csv files. 
+are optional inputs to the resource input files. 
 When Unit commitment is on, if a user provides slope and intercept, the standard heat rate 
 (i.e., Heat\_Rate\_MMBTU\_per\_MWh) will not be used. When unit commitment is off, the model will 
 always use the standard heat rate.
