@@ -27,6 +27,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Investment Transmission Module")
 
     L = inputs["L"]     # Number of transmission lines
+    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
 
@@ -56,16 +57,42 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Transmission power flow and loss related expressions:
     # Total availabile maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
-    if NetworkExpansion == 1
-        @expression(EP, eAvail_Trans_Cap[l = 1:L],
-            if l in EXPANSION_LINES
-                eTransMax[l] + vNEW_TRANS_CAP[l]
-            else
-                eTransMax[l]
-            end)
+    if asymmetrical_trans_flow_limit ==1
+        if NetworkExpansion == 1
+            @expression(EP, eAvail_Trans_Cap[l = 1:L],
+                if l in EXPANSION_LINES
+                    eTransMax[l] + vNEW_TRANS_CAP[l]
+                else
+                    eTransMax[l]
+                end)
+            @expression(EP, eAvail_Trans_Cap_Pos[l = 1:L_asym],
+                if l in EXPANSION_LINES
+                    eTransMax_Pos[l] + vNEW_TRANS_CAP_Pos[l]
+                else
+                    eTransMax_Pos[l]
+                end)
+             @expression(EP, eAvail_Trans_Cap_Neg[l = 1:L_asym],
+                if l in EXPANSION_LINES
+                    eTransMax_Neg[l] + vNEW_TRANS_CAP_Neg[l]
+                else
+                    eTransMax_Neg[l]
+                end)
+        else
+            @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
+            @expression(EP, eAvail_Trans_Cap_Pos[l = 1:L_asym], eTransMax_Pos[l])
+            @expression(EP, eAvail_Trans_Cap_Neg[l = 1:L_asym], eTransMax_Neg[l])
+        end
     else
-        @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
-    end
+        if NetworkExpansion == 1
+            @expression(EP, eAvail_Trans_Cap[l = 1:L],
+                if l in EXPANSION_LINES
+                    eTransMax[l] + vNEW_TRANS_CAP[l]
+                else
+                    eTransMax[l]
+                end)
+        else
+            @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
+        end
 
     ## Objective Function Expressions ##
 
