@@ -1189,7 +1189,7 @@ function add_resources_to_input_data!(inputs::Dict,
                 if !has_all_options_contributing(gen[retrofit_res], gen) &&
                    !has_all_options_not_contributing(gen[retrofit_res], gen)
                     msg = "Retrofit options in the same cluster either all have Contribute_Min_Retirement set to 1 or none of them do. \n" *
-                          "Check column Contribute_Min_Retirement in the \"Resource_multistage_data.csv\" file for resource $(resource_name(gen[retrofit_res]))."
+                          "Check column Contribute_Min_Retirement in the \"Resource_multistage_data\" file for resource $(resource_name(gen[retrofit_res]))."
                     @error msg
                     error("Invalid input detected for Contribute_Min_Retirement.")
                 end

@@ -127,6 +127,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         EndChargeCap = sum(dfCap[!, :EndChargeCap]))
 
     dfCap = vcat(dfCap, total)
-    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacity_name"]), dfCap, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacity"]), dfCap, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
     return dfCap
 end

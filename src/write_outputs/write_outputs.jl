@@ -654,15 +654,15 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
             if filetype == "auto_detect" # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext
                 filetype = splitext(splitext(path)[1])[2]
             elseif filetype != splitext(splitext(path)[1])[2] # If the extension in the file name is different than the filetype key, override the filetype key and throw a warning.
-                newfiletype = splitext(path)[2]
                 filetype = splitext(splitext(path)[1])[2]
+                @warn("File extension conflicts with filetype in genx_settings.yml. Saving file as $filetype")
             end
         else
             if filetype == "auto_detect"  # If auto-detect is on for the extension type, change the filetype to the extension detected using splitext
                 filetype = splitext(path)[2]
             elseif filetype != splitext(path)[2] # If the extension in the file name is different than the filetype key, override the filetype key and throw a warning.
-                newfiletype = splitext(path)[2]
                 filetype = splitext(path)[2]
+                @warn("File extension conflicts with filetype in genx_settings.yml. Saving file as $filetype")
             end
             if splitext(path)[2] == ".csv" && isgzip(compression)
                 path = path * ".gz" # If the file only ends in ".csv", but compression is set to gzip, add ".gz" to the end of the file
@@ -687,7 +687,7 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
     elseif filetype == ".json" # If no extension is present, but filetype is set to .csv, .csv will be appended to the path name
         if compression == "none"
             path *= ".json"
-        elseif compression == "gzip" || compression == ".gz"
+        elseif isgzip(compression)
             path *= ".json.gz"
         elseif compression == "auto_detect"
             path *= ".json"
@@ -782,17 +782,19 @@ function write_output_file(path::AbstractString, file::DataFrame; filetype::Stri
         end
     else
         if compression != "none"
-            @warn("Compression type '$compression' is not accepted. Saving without file compression")
+            @warn("Compression type '$compression' is not accepted. Saving without file compression.")
         end
         if filetype == ".csv" 
             save_with_duckdb(file,path,"csv","none")
         elseif filetype == "csv.gz" # If compression type is listed as none, but filetype has .gz in it, compression type is overridden and .gz is used.
+            @warn("Gzip compression detected in file name. Saving with gzip compression.")
             save_with_duckdb(file,path,"csv","gzip")
         elseif filetype == ".parquet"
             save_with_duckdb(file,path,"parquet","uncompressed")
         elseif filetype == ".json"
             save_with_duckdb(file,path,"json","none")
         elseif filetype == ".json.gz"
+            @warn("Gzip compression detected in file name. Saving with gzip compression.")
             save_with_duckdb(file,path,"json","gzip")
         else
             @error "Filetype '$filetype' not accepted. Accepted formats are .csv, .csv.gz, .parquet, .json, and .json.gz."
@@ -810,7 +812,7 @@ end
     - `true` or `false` if the file has a compression type of gzip.
 """
 function isgzip(compression::String)
-    if compression == "gzip" || compression == ".gz" || compression == "gz"
+    if compression == "gzip" || compression == ".gz" || compression == "gz" || compression == ".gzip"
         return true
     end
     return false

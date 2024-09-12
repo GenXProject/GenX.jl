@@ -38,7 +38,7 @@ function default_settings()
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
         "ObjScale" => 1,
-        "ResultsFileType" => "auto_detect",
+        "ResultsFileType" => "auto_detect", 
         "ResultsCompressionType" => "auto_detect")
 end
 
@@ -309,7 +309,7 @@ end
 
 function default_results_names()
    Dict{Any, Any}("angles" => "angles",
-    "capacity_name" => "capacity",
+    "capacity" => "capacity",
     "capacity_factor" => "capacityfactor",
     "capacity_vaue" => "CapacityValue",
     "capacities_charge_multi_stage" => "capacities_charge_multi_stage",

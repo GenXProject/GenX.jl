@@ -7,10 +7,9 @@ generators: "Generators_variability.csv"
 
 # policies
 #policies_location: /path/to/data
-#co2_name: file_or_table_name
-#minimum_capacity_name: file_or_table_name
+#co2_cap: file_or_table_name
+#minimum_capacity: file_or_table_name
 
 # resources
-
 
 # policy assignments
