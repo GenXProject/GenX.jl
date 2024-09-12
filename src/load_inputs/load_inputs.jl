@@ -10,31 +10,48 @@ path - string path to working directory
 returns: Dict (dictionary) object containing all data inputs
 """
 function load_inputs(setup::Dict, path::AbstractString)
-
     ## Read input files
     println("Reading Input CSV Files")
     ## input paths
-    system_path = joinpath(path, setup["SystemFolder"])
-    resources_path = joinpath(path, setup["ResourcesFolder"])
-    policies_path = joinpath(path, setup["PoliciesFolder"])
+
     ## Declare Dict (dictionary) object used to store parameters
     inputs = Dict()
-    # Read input data about power network topology, operating and expansion attributes
-    if isfile(joinpath(system_path, "Network.csv"))
-        network_var = load_network_data!(setup, system_path, inputs)
+
+    if setup["MultiStage"] == 0
+        system_path = setup["WriteInputNamesDict"]["system_location"]
+        resources_path = setup["WriteInputNamesDict"]["resources_location"]
+        policies_path = setup["WriteInputNamesDict"]["policies_location"]
+
+        # Read input data about power network topology, operating and expansion attributes
+        if isfile(joinpath(system_path,setup["WriteInputNamesDict"]["network"]))
+            network_var = load_network_data!(setup, system_path, inputs)
+        else
+            inputs["Z"] = 1
+            inputs["L"] = 0
+        end
     else
-        inputs["Z"] = 1
-        inputs["L"] = 0
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        system_path = joinpath(path,setup["WriteInputNamesDict"][string("inputs_p", stage)]["system_location"])
+        resources_path = joinpath(path,setup["WriteInputNamesDict"][string("inputs_p", stage)]["resources_location"])
+        policies_path = joinpath(path,setup["WriteInputNamesDict"][string("inputs_p", stage)]["policies_location"])
+        # Read input data about power network topology, operating and expansion attributes
+        if isfile(joinpath(system_path,setup["WriteInputNamesDict"][string("inputs_p", stage)]["network"]))
+            network_var = load_network_data!(setup, system_path, inputs)
+        else
+            inputs["Z"] = 1
+            inputs["L"] = 0
+        end
     end
 
-    # Read temporal-resolved load data, and clustering information if relevant
-    load_demand_data!(setup, path, inputs)
-    # Read fuel cost data, including time-varying fuel costs
-    load_fuels_data!(setup, path, inputs)
-    # Read in generator/resource related inputs
-    load_resources_data!(inputs, setup, path, resources_path)
-    # Read in generator/resource availability profiles
-    load_generators_variability!(setup, path, inputs)
+     # Read temporal-resolved load data, and clustering information if relevant
+     load_demand_data!(setup, system_path, inputs)
+     # Read fuel cost data, including time-varying fuel costs
+     load_fuels_data!(setup, system_path, inputs)
+     # Read in generator/resource related inputs
+     load_resources_data!(inputs, setup, path, resources_path)
+     # Read in generator/resource availability profiles
+     load_generators_variability!(setup,system_path, inputs)
+   
 
     validatetimebasis(inputs)
 
@@ -99,7 +116,7 @@ function is_period_map_necessary(inputs::Dict)
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString)
-    filename = "Period_map.csv"
+    filename = setup["WriteResultsNamesDict"]["period_map"]
     is_in_system_dir = isfile(joinpath(path, setup["SystemFolder"], filename))
     is_in_TDR_dir = isfile(joinpath(path, setup["TimeDomainReductionFolder"], filename))
     is_in_system_dir || is_in_TDR_dir
@@ -124,11 +141,21 @@ Returns:
 function get_systemfiles_path(setup::Dict,
         TDR_directory::AbstractString,
         path::AbstractString)
-    if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory)
-        return TDR_directory
+    if setup["MultiStage"] == 1
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory, setup["WriteInputNamesDict"][string("inputs_p",stage)])
+            return TDR_directory
+        else
+            # If TDR is not used, then use the "system" directory specified in the setup
+            return path
+        end
     else
-        # If TDR is not used, then use the "system" directory specified in the setup
-        return joinpath(path, setup["SystemFolder"])
+        if setup["TimeDomainReduction"] == 1 && time_domain_reduced_files_exist(TDR_directory, setup)
+            return TDR_directory
+        else
+            # If TDR is not used, then use the "system" directory specified in the setup
+            return path
+        end
     end
 end
 

@@ -24,7 +24,7 @@ function full_time_series_reconstruction(
         TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
     end
     # Read Period map file Period_map.csv
-    Period_map = CSV.read(joinpath(TDRpath, "Period_map.csv"), DataFrame)
+    Period_map = CSV.read(joinpath(TDRpath, setup["WriteResultsNamesDict"]["period_map"]), DataFrame)
 
     # Read time domain reduction settings file time_domain_reduction_settings.yml
     myTDRsetup = YAML.load(open(joinpath(
@@ -55,7 +55,7 @@ function full_time_series_reconstruction(
         end
         recon = [recon recon_col]
     end
-    reconDF = DataFrame(recon, :auto)
+    reconDF = DataFrame(recon, names(DF))
 
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
     for i in range(1, t1 - 1)

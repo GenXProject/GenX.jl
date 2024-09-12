@@ -30,6 +30,10 @@ function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, E
         energyrevenue *= ModelScalingFactor
     end
     dfEnergyRevenue.AnnualSum .= energyrevenue * inputs["omega"]
-    write_simple_csv(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["energy_revenue"]), 
+        dfEnergyRevenue, 
+        filetype = setup["ResultsFileType"], 
+        compression = setup["ResultsCompressionType"])
+    
     return dfEnergyRevenue
 end

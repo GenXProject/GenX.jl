@@ -45,8 +45,14 @@ function write_operating_reserve_regulation_revenue(path::AbstractString,
     dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
     dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
 
-    write_simple_csv(joinpath(path, "OperatingReserveRevenue.csv"), dfOpRsvRevenue)
-    write_simple_csv(joinpath(path, "OperatingRegulationRevenue.csv"), dfOpRegRevenue)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["op_reserve_revenue"]),
+            dfOpRsvRevenue,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["op_regulation_revenue"]),
+            dfOpRegRevenue,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
     return dfOpRegRevenue, dfOpRsvRevenue
 end
 

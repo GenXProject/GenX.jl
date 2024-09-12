@@ -19,11 +19,11 @@ function write_virtual_discharge(path::AbstractString, inputs::Dict, setup::Dict
     dfVirtualDischarge = DataFrame(Resource = resources, Zone = zones)
     dfVirtualDischarge.AnnualSum .= virtual_discharge * inputs["omega"]
 
-    filepath = joinpath(path, "virtual_discharge.csv")
+    filepath = joinpath(path, setup["WriteResultsNamesDict"]["virtual_discharge"])
     if setup["WriteOutputs"] == "annual"
-        write_annual(filepath, dfVirtualDischarge)
+        write_annual(filepath, dfVirtualDischarge, setup)
     else # setup["WriteOutputs"] == "full"
-        write_fulltimeseries(filepath, virtual_discharge, dfVirtualDischarge)
+        write_fulltimeseries(filepath, virtual_discharge, dfVirtualDischarge, setup)
     end
     return nothing
 end

@@ -153,3 +153,81 @@ This file includes the renewable/clean credit revenue earned by each generator l
 ### 2.8 SubsidyRevenue.csv
 
 This file includes subsidy revenue earned if a generator specified Min\_Cap is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is $.
+
+## 3 Output file names and type
+
+As of GenX v0.4.2, the names of all results files can be changed by including the file `results_settings.yml`. Inclusion of this file is not necessary; the default names described above will be used if the file is not present. 
+
+Files are automatically saved as `.csv` in GenX. To change this, you can 1) change the extension of a file name in `results_settings.yml` (e.g. set `demand: "Demand.json"`), or 2) use `ResultsFileType` in `genx_settings.yml` to change the type of all the files. File names in `results_settings.yml` with preexisting extensions will override the type in `ResultsFileType`. For example, if `ResultsFileType = .csv`, but in `results_settings.yml` you have `demand: "Demand.json"`, the demand file will be saved as JSON, and all others will be saved as CSV. No error will be thrown. 
+
+Files can also be saved with gzip, snappy, and zstd compression. To choose which files are compressed, add the compression to the extension in `results_settings.yml` (e.g. set `demand: "Demand-snappy.parquet"` or `fuels: "Fuels.csv.gz"`). To compress all files, specify the `ResultsCompressionType` in `genx_settings.yml`. If the compression type is specified in settings, it does not need to be present in the results names. The correct file extension will be appended to the filename. If the file type and compression type conflict (e.g. CSV with snappy compression), no compression will be used.
+
+For an example, see `1_three_zones/settings`.
+
+Both single and multistage results files are in the same file. The file `results_settings.yml` has the following structure:
+
+|**Key** | **Default Value**|
+|:----------------------|:---------------|
+|angles | angles|
+|capacity_name | capacity|
+|capacity_factor | capacityfactor|
+|capacity_vaue | CapacityValue|
+|capacities_charge_multi_stage | capacities_charge_multi_stage|
+|capacities_multi_stage | capacities_multi_stage|
+|capacities_energy_multi_stage | capacities_energy_multi_stage|
+|captured_emissions_plant | captured_emissions_plant|
+|charge | charge.csv|
+|charging_cost | ChargingCost|
+|co2_prices | CO2_prices_and_penalties|
+|commit | commit|
+|costs | costs|
+|costs_multi_stage | costs_multi_stage |
+|curtail | curtail|
+|dStorage | dStorage|
+|emissions_plant | emissions_plant|
+|emissions | emissions|
+|energy_revenue | EnergyRevenue|
+|esr_prices_and_penalties | ESR_prices_and_penalties|
+|esr_revenue | ESR_Revenue|
+|flow | flow|
+|fuel_cost_plant | Fuel_cost_plant|
+|fuel_consumption_plant | FuelConsumption_plant_MMBTU|
+|fuel_consumption_total | FuelConsumtion_total_MMBTU|
+|hourly_matching_prices | hourly_matching_prices|
+|hydrogen_prices | hydrogen_prices|
+|mincap | MinCapReq_prices_and_penalties|
+|maxcap | MaxCapReq_prices_and_penalties|
+|maint_down | maint_down|
+|revenue | NetRevenue|
+|network_expansion | network_expansion|
+|network_expansion_multi_stage | network_expansion_multi_stage|
+|nse | nse|
+|power_balance | power_balance|
+|power | power|
+|prices | prices|
+|reg_subsidy_revenue | RegSubsidyRevenue|
+|reserve_margin | ReserveMargin|
+|reserve_margin_revenue | ReserveMarginRevenue|
+|reserve_margin_prices_and_penalties | ReserveMargin_prices_and_penalties|
+|reserve_margin_w | ReserveMargin_w.csv|
+|reg | reg|
+|reg_dn | reg_dn|
+|reliability | reliability|
+|shutdown | shutdown|
+|start | start|
+|status | status|
+|storage | storage|
+|storagebal_duals | storagebal_duals|
+|storage_init | StorageInit|
+|subsidy_revenue | SubsidyRevenue|
+|time_weights | time_weights|
+|tlosses | tlosses|
+|virtual_discharge | virtual_discharge|
+|vre_stor_dc_charge | vre_stor_dc_charge|
+|vre_stor_ac_charge | vre_stor_ac_charge|
+|vre_stor_dc_discharge | vre_stor_dc_discharge|
+|vre_stor_ac_discharge | vre_stor_ac_discharge|
+|vre_stor_elec_power_consumption | vre_stor_elec_power_consumption|
+|vre_stor_wind_power | vre_stor_wind_power|
+|vre_stor_solar_power | vre_stor_solar_power
+|vre_stor_capacity | vre_stor_capacity|

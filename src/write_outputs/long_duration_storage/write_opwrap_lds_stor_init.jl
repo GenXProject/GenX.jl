@@ -29,7 +29,9 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     dfStorageInit = hcat(dfStorageInit, DataFrame(socw, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:NPeriods]]
     rename!(dfStorageInit, auxNew_Names)
-    CSV.write(joinpath(path, "StorageInit.csv"),
-        dftranspose(dfStorageInit, false),
-        header = false)
+
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["storage_init"]),
+        dftranspose(dfdStorageInit, false),
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
 end

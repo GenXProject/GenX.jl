@@ -13,7 +13,7 @@ fraction, and whether the feedstock is biomass. Biomass is a factor in this equa
 biomass generators are assumed to generate zero net CO2 emissions, or negative net CO2 emissions 
 in the case that the CO2 they emit is captured and sequestered underground.
 
-If a user wishes to represent a generator that combusts biomass, then in the resource .csv files,
+If a user wishes to represent a generator that combusts biomass, then in the resource input files,
 the "Biomass" column (boolean, 1 or 0), which represents if a generator $y$ uses biomass or not, should be set to 1.
 The CO2 emissions from such a generator will be assumed to be zero without CCS and negative with CCS.
 

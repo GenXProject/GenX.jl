@@ -6,7 +6,7 @@ Function for reporting dual of storage level (state of charge) balance of each r
 function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
     zones = zone_id.(gen)
-
+    zones = convert.(Float64,zones)
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
 
@@ -74,15 +74,16 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     dfStorageDual = hcat(dfStorageDual, DataFrame(dual_values, :auto))
     rename!(dfStorageDual,
-        [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]])
+        ["Resource"; "Zone"; [String("t$t") for t in 1:T]])
 
-    CSV.write(joinpath(path, "storagebal_duals.csv"),
-        dftranspose(dfStorageDual, false),
-        header = false)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["storagebal_duals"]),
+            dftranspose(dfStorageDual, true), 
+            filetype = setup["ResultsFileType"], 
+            compression = setup["ResultsCompressionType"])
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(
-            path, setup, dfStorageDual, "storagebal_duals")
+            path, setup, dftranspose(dfStorageDual, true), setup["WriteResultsNamesDict"]["storagebal_duals"])
         @info("Writing Full Time Series for Storage Duals")
     end
 end

@@ -3,8 +3,9 @@ function write_maximum_capacity_requirement(path::AbstractString,
         setup::Dict,
         EP::Model)
     NumberOfMaxCapReqs = inputs["NumberOfMaxCapReqs"]
+    # Maya: Changed Symbol to string for CO2 Cap labels
     dfMaxCapPrice = DataFrame(
-        Constraint = [Symbol("MaxCapReq_$maxcap")
+        Constraint = [String("MaxCapReq_$maxcap")
                       for maxcap in 1:NumberOfMaxCapReqs],
         Price = -dual.(EP[:cZoneMaxCapReq]))
 
@@ -18,5 +19,9 @@ function write_maximum_capacity_requirement(path::AbstractString,
         dfMaxCapPrice.Slack *= scale_factor # Convert GW to MW
         dfMaxCapPrice.Penalty *= scale_factor^2 # Convert Million $ to $
     end
-    CSV.write(joinpath(path, "MaxCapReq_prices_and_penalties.csv"), dfMaxCapPrice)
+    
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["maxcap"]),
+        dfMaxCapPrice,
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
 end

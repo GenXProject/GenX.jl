@@ -54,4 +54,6 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict, inputs_dict:
     @warn("The cost calculation of the multi-stage GenX is approximate currently, and we will be refining it more in one of the future releases.")
 
     CSV.write(joinpath(outpath, "costs_multi_stage.csv"), df_costs)
+    #write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["costs_multi_stage"]),df_costs, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

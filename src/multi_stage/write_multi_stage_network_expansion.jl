@@ -27,5 +27,7 @@ function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
             :New_Trans_Capacity]
     end
 
-    CSV.write(joinpath(outpath, "network_expansion_multi_stage.csv"), df_trans_cap)
+    CSV.write(joinpath(outpath, setup["WriteResultsNamesDict"]["network_expansion_multi_stage"]), df_trans_cap)
+    #write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["network_expansion_multi_stage"]),df_trans_cap, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

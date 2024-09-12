@@ -35,6 +35,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                             [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
                             Symbol("AnnualSum")]
             rename!(dfEmissions, auxNew_Names)
+            dfEmissions[!,1] = convert.(Float64,dfEmissions[!,1])
         else
             dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Float64}(undef, Z))
         end
@@ -55,7 +56,11 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                      :AnnualSum])
             end
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
+            write_output_file(joinpath(path, 
+                    setup["WriteResultsNamesDict"]["emissions"]), 
+                    dfEmissions, filetype = setup["ResultsFileType"], 
+                    compression = setup["ResultsCompressionType"])
+
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
                 DataFrame(emissions_by_zone * scale_factor, :auto))
@@ -88,9 +93,14 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"),
-                dftranspose(dfEmissions, false),
-                writeheader = false)
+            # Maya:
+            dfEmissions = dftranspose(dfEmissions, true)
+
+            write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
+                dfEmissions, 
+                filetype = setup["ResultsFileType"], 
+                compression = setup["ResultsCompressionType"])
+
         end
         ## Aaron - Combined elseif setup["Dual_MIP"]==1 block with the first block since they were identical. Why do we have this third case? What is different about it?
     else
@@ -106,7 +116,11 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
         if setup["WriteOutputs"] == "annual"
             total = DataFrame(["Total" sum(dfEmissions.AnnualSum)], [:Zone; :AnnualSum])
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
+            write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
+                    dfEmissions, 
+                    filetype = setup["ResultsFileType"], 
+                    compression = setup["ResultsCompressionType"])
+
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
                 DataFrame(emissions_by_zone * scale_factor, :auto))
@@ -121,12 +135,17 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"),
-                dftranspose(dfEmissions, false),
-                writeheader = false)
+
+            dfEmissions = dftranspose(dfEmissions, true)
+
+            write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["emissions"]), 
+                dfEmissions, 
+                filetype = setup["ResultsFileType"], 
+                compression = setup["ResultsCompressionType"])
+
 
             if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-                write_full_time_series_reconstruction(path, setup, dfEmissions, "emissions")
+                write_full_time_series_reconstruction(path, setup, dfEmissions, setup["WriteResultsNamesDict"]["emissions"])
                 @info("Writing Full Time Series for Emissions")
             end
         end

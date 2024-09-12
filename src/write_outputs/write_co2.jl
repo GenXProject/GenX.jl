@@ -17,6 +17,7 @@ function write_co2_emissions_plant(path::AbstractString,
     gen = inputs["RESOURCES"]  # Resources (objects)
     resources = inputs["RESOURCE_NAMES"] # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
@@ -31,7 +32,7 @@ function write_co2_emissions_plant(path::AbstractString,
         AnnualSum = zeros(G))
     df.AnnualSum .= emissions_plant * weight
 
-    write_temporal_data(df, emissions_plant, path, setup, "emissions_plant")
+    write_temporal_data(df, emissions_plant, path, setup, setup["WriteResultsNamesDict"]["emissions"])
     return nothing
 end
 
@@ -53,9 +54,9 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
         emissions_captured_plant *= scale_factor
 
         df.AnnualSum .= emissions_captured_plant * weight
-
         write_temporal_data(
-            df, emissions_captured_plant, path, setup, "captured_emissions_plant")
+            df, emissions_captured_plant, path, setup, setup["WriteResultsNamesDict"]["captured_emissions_plant"])
+
     end
     return nothing
 end

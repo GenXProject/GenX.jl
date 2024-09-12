@@ -1,12 +1,17 @@
 @doc raw"""
-    load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
+    load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict; stage::Int64 = 0)
 
 Function for reading input parameters related to the electricity transmission network
 """
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
-    filename = "Network.csv"
+    if setup["MultiStage"] == 1
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        filename = setup["WriteInputNamesDict"][string("inputs_p",stage)]["network"]
+    else
+        filename = setup["WriteInputNamesDict"]["network"]
+    end
     network_var = load_dataframe(joinpath(path, filename))
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))

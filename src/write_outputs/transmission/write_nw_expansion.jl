@@ -19,5 +19,8 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
         dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
     end
 
-    CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["network_expansion"]),
+            dfTransCap,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
 end

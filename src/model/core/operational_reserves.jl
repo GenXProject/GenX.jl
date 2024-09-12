@@ -27,7 +27,7 @@ This function establishes several different versions of contingency reserve requ
 Contingency operational reserves represent requirements for upward ramping capability within a specified time frame to compensated for forced outages or unplanned failures of generators or transmission lines (e.g. N-1 contingencies).
 
 There are three options for the $Contingency$ expression, depending on user settings:
-	1. a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''Operational_reserves.csv''' input file;
+	1. a static contingency, in which the contingency requirement is set based on a fixed value (in MW) specified in the '''Operational_reserves''' input file;
 	2. a dynamic contingency based on installed capacity decisions, in which the largest 'installed' generator is used to determine the contingency requirement for all time periods; and
 	3. dynamic unit commitment based contingency, in which the largest 'committed' generator in any time period is used to determine the contingency requirement in that time period.
 
@@ -81,7 +81,7 @@ function operational_reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
 
     ### Variables ###
 
-    # NOTE: If Dynamic_Contingency == 0, then contingency is a fixed parameter equal the value specified in Operational_reserves.csv via pStatic_Contingency.
+    # NOTE: If Dynamic_Contingency == 0, then contingency is a fixed parameter equal the value specified in Operational_reserves via pStatic_Contingency.
     if UCommit == 1 && pDynamic_Contingency == 1
         # Contingency = largest installed thermal unit
         @variable(EP, vLARGEST_CONTINGENCY>=0)

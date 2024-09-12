@@ -673,15 +673,21 @@ function cluster_inputs(inpath,
 
     MultiStage = mysetup["MultiStage"]
     if MultiStage == 1
+        stage = mysetup["MultiStageSettingsDict"]["CurStage"]
         MultiStageConcatenate = myTDRsetup["MultiStageConcatenate"]
         NumStages = mysetup["MultiStageSettingsDict"]["NumStages"]
+        Demand_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"][string("inputs_p",stage)]["demand"])
+        GVar_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"][string("inputs_p",stage)]["generators"])
+        Fuel_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"][string("inputs_p",stage)]["fuel"])
+        PMap_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"][string("inputs_p",stage)]["period_map"])
+        YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
+    else
+        Demand_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"]["demand"])
+        GVar_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"]["generators"])
+        Fuel_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"]["fuel"])
+        PMap_Outfile = joinpath(TimeDomainReductionFolder, mysetup["WriteInputNamesDict"]["period_map"])
+        YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
     end
-
-    Demand_Outfile = joinpath(TimeDomainReductionFolder, "Demand_data.csv")
-    GVar_Outfile = joinpath(TimeDomainReductionFolder, "Generators_variability.csv")
-    Fuel_Outfile = joinpath(TimeDomainReductionFolder, "Fuels_data.csv")
-    PMap_Outfile = joinpath(TimeDomainReductionFolder, "Period_map.csv")
-    YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
 
     # Define a local version of the setup so that you can modify the mysetup["ParameterScale"] value to be zero in case it is 1
     mysetup_local = copy(mysetup)
@@ -703,14 +709,12 @@ function cluster_inputs(inpath,
             mysetup["MultiStageSettingsDict"]["CurStage"] = t
 
             # Step 1) Load Inputs
-            global inpath_sub = string("$inpath/inputs/inputs_p", t)
 
             # this prevents doubled time domain reduction in stages past
             # the first, even if the first stage is okay.
-            prevent_doubled_timedomainreduction(joinpath(inpath_sub,
-                mysetup["SystemFolder"]))
+            prevent_doubled_timedomainreduction(joinpath(inpath,mysetup["WriteInputNamesDict"][string("inputs_p",t)]["system_location"]),mysetup["WriteInputNamesDict"][string("inputs_p",t)])
 
-            inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
+            inputs_dict[t] = load_inputs(mysetup_MS, inpath)
 
             inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],
                 mysetup["MultiStageSettingsDict"],
@@ -1217,9 +1221,9 @@ function cluster_inputs(inpath,
             Stage_PeriodMaps = Dict()
             Stage_Outfiles = Dict()
             SolarVar_Outfile = joinpath(TimeDomainReductionFolder,
-                "Vre_and_stor_solar_variability.csv")
+            mysetup["WriteInputNamesDict"]["vre_stor_solar_variability"])
             WindVar_Outfile = joinpath(TimeDomainReductionFolder,
-                "Vre_and_stor_wind_variability.csv")
+            mysetup["WriteInputNamesDict"]["vre_stor_wind_variability"])
             for per in 1:NumStages                      # Iterate over multi-stages
                 mkpath(joinpath(inpath,
                     "inputs",
@@ -1253,7 +1257,8 @@ function cluster_inputs(inpath,
                 ### TDR_Results/Demand_data_clustered.csv
                 demand_in = get_demand_dataframe(
                     joinpath(inpath, "inputs", "inputs_p$per"),
-                    mysetup["SystemFolder"])
+                    mysetup["SystemFolder"]
+                    )
                 demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
                 demand_in[1:length(Stage_Weights[per]), :Sub_Weights] .= Stage_Weights[per]
                 demand_in[!, :Rep_Periods][1] = length(Stage_Weights[per])
@@ -1276,8 +1281,9 @@ function cluster_inputs(inpath,
                 if v
                     println("Writing demand file...")
                 end
-                CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["Demand"]),
-                    demand_in)
+
+                write_output_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["Demand"]), demand_in)
+
 
                 ### TDR_Results/Generators_variability.csv
                 # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
@@ -1290,9 +1296,8 @@ function cluster_inputs(inpath,
                 if v
                     println("Writing resource file...")
                 end
-                CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["GVar"]),
-                    GVOutputData,
-                    header = NewGVColNames)
+                write_output_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["GVar"]),GVOutputData)
+
 
                 if !isempty(inputs_dict[per]["VRE_STOR"])
                     gen_var = load_dataframe(joinpath(inpath,
@@ -1326,11 +1331,11 @@ function cluster_inputs(inpath,
                     solar_var[!, :Time_Index] = 1:size(solar_var, 1)
                     wind_var = gen_var[!, wind_col_names]
                     wind_var[!, :Time_Index] = 1:size(wind_var, 1)
+                    
+                    write_output_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["GSolar"]), solar_var)
+                    write_output_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["GWind"]), wind_var)
 
-                    CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["GSolar"]),
-                        solar_var)
-                    CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["GWind"]),
-                        wind_var)
+
                 end
 
                 ### TDR_Results/Fuels_data.csv
@@ -1338,8 +1343,9 @@ function cluster_inputs(inpath,
                     "inputs",
                     "inputs_p$per",
                     mysetup["SystemFolder"],
-                    "Fuels_data.csv"))
+                    mysetup["WriteInputNamesDict"]["fuel"]))
                 ensure_column!(fuel_in, "None", 0.0)
+                    
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1348,15 +1354,15 @@ function cluster_inputs(inpath,
                 if v
                     println("Writing fuel profiles...")
                 end
-                CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["Fuel"]),
-                    NewFuelOutput)
+
+                write_output_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["Fuel"]), NewFuelOutput)
+
 
                 ### TDR_Results/Period_map.csv
                 if v
                     println("Writing period map...")
                 end
-                CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["PMap"]),
-                    Stage_PeriodMaps[per])
+                write_output_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["PMap"]),Stage_PeriodMaps[per])
 
                 ### TDR_Results/time_domain_reduction_settings.yml
                 if v
@@ -1383,7 +1389,9 @@ function cluster_inputs(inpath,
             demand_in = get_demand_dataframe(joinpath(inpath,
                 "inputs",
                 input_stage_directory,
-                mysetup["SystemFolder"]))
+                mysetup["SystemFolder"]),
+                mysetup["WriteInputNamesDict"][string("inputs_p",stage_id)]
+                )
             demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
             demand_in[1:length(W), :Sub_Weights] .= W
             demand_in[!, :Rep_Periods][1] = length(W)
@@ -1406,8 +1414,9 @@ function cluster_inputs(inpath,
             if v
                 println("Writing demand file...")
             end
-            CSV.write(joinpath(inpath, "inputs", input_stage_directory, Demand_Outfile),
-                demand_in)
+            
+            write_output_file(joinpath(inpath, "inputs", input_stage_directory, Demand_Outfile),demand_in)
+
 
             ### TDR_Results/Generators_variability.csv
 
@@ -1421,9 +1430,9 @@ function cluster_inputs(inpath,
             if v
                 println("Writing resource file...")
             end
-            CSV.write(joinpath(inpath, "inputs", input_stage_directory, GVar_Outfile),
-                GVOutputData,
-                header = NewGVColNames)
+
+            write_output_file(joinpath(inpath, "inputs", input_stage_directory, GVar_Outfile),GVOutputData)
+
 
             # Break up VRE-storage components if needed
             if !isempty(myinputs["VRE_STOR"])
@@ -1461,21 +1470,14 @@ function cluster_inputs(inpath,
                 wind_var[!, :Time_Index] = 1:size(wind_var, 1)
 
                 SolarVar_Outfile = joinpath(TimeDomainReductionFolder,
-                    "Vre_and_stor_solar_variability.csv")
+                mysetup["WriteInputNamesDict"]["vre_stor_solar_variability"])
                 WindVar_Outfile = joinpath(TimeDomainReductionFolder,
-                    "Vre_and_stor_wind_variability.csv")
-                CSV.write(
-                    joinpath(inpath,
-                        "inputs",
-                        input_stage_directory,
-                        SolarVar_Outfile),
-                    solar_var)
-                CSV.write(
-                    joinpath(inpath,
-                        "inputs",
-                        input_stage_directory,
-                        WindVar_Outfile),
-                    wind_var)
+                mysetup["WriteInputNamesDict"]["vre_stor_wind_variability"])
+
+                write_output_file(joinpath(inpath, "inputs", input_stage_directory, SolarVar_Outfile),solar_var)
+                write_output_file(joinpath(inpath, "inputs", input_stage_directory, WindVar_Outfile),wind_var)
+
+
             end
 
             ### TDR_Results/Fuels_data.csv
@@ -1484,8 +1486,9 @@ function cluster_inputs(inpath,
                 "inputs",
                 input_stage_directory,
                 mysetup["SystemFolder"],
-                "Fuels_data.csv"))
+                mysetup["WriteInputNamesDict"][string("inputs_p",stage_id)]["fuel"]))
             ensure_column!(fuel_in, "None", 0.0)
+                
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
@@ -1494,15 +1497,15 @@ function cluster_inputs(inpath,
             if v
                 println("Writing fuel profiles...")
             end
-            CSV.write(joinpath(inpath, "inputs", input_stage_directory, Fuel_Outfile),
-                NewFuelOutput)
+
+            write_output_file(joinpath(inpath, "inputs", input_stage_directory, Fuel_Outfile),NewFuelOutput)
+
 
             ### Period_map.csv
             if v
                 println("Writing period map...")
             end
-            CSV.write(joinpath(inpath, "inputs", input_stage_directory, PMap_Outfile),
-                PeriodMap)
+            write_output_file(joinpath(inpath, "inputs", input_stage_directory, PMap_Outfile),PeriodMap)
 
             ### time_domain_reduction_settings.yml
             if v
@@ -1520,7 +1523,7 @@ function cluster_inputs(inpath,
 
         ### TDR_Results/Demand_data.csv
         system_path = joinpath(inpath, mysetup["SystemFolder"])
-        demand_in = get_demand_dataframe(system_path)
+        demand_in = get_demand_dataframe(system_path,mysetup)
         demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
         demand_in[1:length(W), :Sub_Weights] .= W
         demand_in[!, :Rep_Periods][1] = length(W)
@@ -1542,7 +1545,8 @@ function cluster_inputs(inpath,
         if v
             println("Writing demand file...")
         end
-        CSV.write(joinpath(inpath, Demand_Outfile), demand_in)
+        write_output_file(joinpath(inpath, Demand_Outfile),demand_in)
+
 
         ### TDR_Results/Generators_variability.csv
 
@@ -1556,8 +1560,9 @@ function cluster_inputs(inpath,
         if v
             println("Writing resource file...")
         end
-        CSV.write(joinpath(inpath, GVar_Outfile), GVOutputData, header = NewGVColNames)
-
+        path = joinpath(inpath, GVar_Outfile)
+        file_extension = splitext(path)
+        write_output_file(joinpath(inpath, GVar_Outfile), GVOutputData)
         # Break up VRE-storage components if needed
         if !isempty(myinputs["VRE_STOR"])
             gen_var = load_dataframe(joinpath(inpath, GVar_Outfile))
@@ -1591,16 +1596,17 @@ function cluster_inputs(inpath,
             wind_var[!, :Time_Index] = 1:size(wind_var, 1)
 
             SolarVar_Outfile = joinpath(TimeDomainReductionFolder,
-                "Vre_and_stor_solar_variability.csv")
+            mysetup["WriteInputNamesDict"]["vre_stor_solar_variability"])
             WindVar_Outfile = joinpath(TimeDomainReductionFolder,
-                "Vre_and_stor_wind_variability.csv")
-            CSV.write(joinpath(inpath, SolarVar_Outfile), solar_var)
-            CSV.write(joinpath(inpath, WindVar_Outfile), wind_var)
+            mysetup["WriteInputNamesDict"]["vre_stor_wind_variability"])
+            write_output_file(joinpath(inpath, SolarVar_Outfile), solar_var)
+            write_output_file(joinpath(inpath, WindVar_Outfile), wind_var)
+
         end
 
         ### TDR_Results/Fuels_data.csv
         system_path = joinpath(inpath, mysetup["SystemFolder"])
-        fuel_in = load_dataframe(joinpath(system_path, "Fuels_data.csv"))
+        fuel_in = load_dataframe(joinpath(system_path, mysetup["WriteInputNamesDict"]["fuel"]))
         ensure_column!(fuel_in, "None", 0.0)
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
@@ -1610,13 +1616,14 @@ function cluster_inputs(inpath,
         if v
             println("Writing fuel profiles...")
         end
-        CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
+        path = joinpath(inpath, Fuel_Outfile)
+        write_output_file(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
 
         ### TDR_Results/Period_map.csv
         if v
             println("Writing period map...")
         end
-        CSV.write(joinpath(inpath, PMap_Outfile), PeriodMap)
+        write_output_file(joinpath(inpath, PMap_Outfile), PeriodMap)
 
         ### TDR_Results/time_domain_reduction_settings.yml
         if v

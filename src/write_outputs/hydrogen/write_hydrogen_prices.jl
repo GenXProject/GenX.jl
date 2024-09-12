@@ -6,7 +6,10 @@ function write_hydrogen_prices(path::AbstractString, inputs::Dict, setup::Dict, 
         H2_Demand = [Symbol("H2_Demand_$h2demand") for h2demand in 1:NumberOfH2DemandReqs],
         Hydrogen_Price_Per_Tonne = convert(
             Array{Float64}, dual.(EP[:cZoneH2DemandReq]) * scale_factor))
-    CSV.write(joinpath(path, "hydrogen_prices.csv"), dfHydrogenPrice)
 
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["hydrogen_prices"]),
+        dfHydrogenPrice,
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
     return nothing
 end

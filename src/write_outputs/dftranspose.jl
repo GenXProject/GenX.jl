@@ -18,9 +18,10 @@ Returns a transpose of a Dataframe.
 function dftranspose(df::DataFrame, withhead::Bool)
     if withhead
         colnames = cat(:Row, Symbol.(df[!, 1]), dims = 1)
-        return DataFrame([[names(df)]; collect.(eachrow(df))], colnames)
+        df_new = df[:,2:end]
+        return DataFrame([[names(df_new)]; collect.(eachrow(df_new))], colnames)
     else
         return DataFrame([[names(df)]; collect.(eachrow(df))],
-            [:Row; Symbol.("x", axes(df, 1))])
+            [:Row1; Symbol.("x", axes(df, 1))])
     end
 end # End dftranpose()

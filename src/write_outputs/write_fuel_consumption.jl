@@ -65,7 +65,8 @@ function write_fuel_consumption_plant(path::AbstractString,
         tempannualsum *= ModelScalingFactor^2 # 
     end
     dfPlantFuel.AnnualSumCosts .+= tempannualsum
-    CSV.write(joinpath(path, "Fuel_cost_plant.csv"), dfPlantFuel)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["fuel_cost_plant"]), dfPlantFuel, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end
 
 function write_fuel_consumption_ts(path::AbstractString,
@@ -83,12 +84,15 @@ function write_fuel_consumption_ts(path::AbstractString,
     end
     dfPlantFuel_TS = hcat(dfPlantFuel_TS,
         DataFrame(tempts, [Symbol("t$t") for t in 1:T]))
-    CSV.write(joinpath(path, "FuelConsumption_plant_MMBTU.csv"),
-        dftranspose(dfPlantFuel_TS, false), header = false)
+
+    write_output_file(joinpath(path, 
+            setup["WriteResultsNamesDict"]["fuel_consumption_plant"]),
+            dftranspose(dfPlantFuel_TS, true), filetype = setup["ResultsFileType"], 
+            compression = setup["ResultsCompressionType"])
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(
-            path, setup, dfPlantFuel_TS, "FuelConsumption_plant_MMBTU")
+            path, setup, dftranspose(dfPlantFuel_TS, true),setup["WriteResultsNamesDict"]["fuel_consumption_plant"])
         @info("Writing Full Time Series for Fuel Consumption")
     end
 end
@@ -107,5 +111,6 @@ function write_fuel_consumption_tot(path::AbstractString,
         tempannualsum *= ModelScalingFactor # billion MMBTU to MMBTU
     end
     dfFuel.AnnualSum .+= tempannualsum
-    CSV.write(joinpath(path, "FuelConsumption_total_MMBTU.csv"), dfFuel)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["fuel_consumption_total"]),dfFuel, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

@@ -18,7 +18,10 @@ function write_transmission_losses(path::AbstractString,
     if setup["WriteOutputs"] == "annual"
         total = DataFrame(["Total" sum(dfTLosses.AnnualSum)], [:Line, :AnnualSum])
         dfTLosses = vcat(dfTLosses, total)
-        CSV.write(joinpath(path, "tlosses.csv"), dfTLosses)
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["tlosses"]),
+                dfTLosses,
+                filetype = setup["ResultsFileType"],
+                compression = setup["ResultsCompressionType"])
     else
         dfTLosses = hcat(dfTLosses, DataFrame(tlosses, :auto))
         auxNew_Names = [Symbol("Line"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
@@ -27,12 +30,14 @@ function write_transmission_losses(path::AbstractString,
             auxNew_Names)
         total[:, 3:(T + 2)] .= sum(tlosses, dims = 1)
         dfTLosses = vcat(dfTLosses, total)
-        CSV.write(joinpath(path, "tlosses.csv"),
-            dftranspose(dfTLosses, false),
-            writeheader = false)
+        
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["tlosses"]),
+            dftranspose(dfTLosses, true),
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, dfTLosses, "tlosses")
+            write_full_time_series_reconstruction(path, setup, dftranspose(dfTLosses, true), setup["WriteResultsNamesDict"]["tlosses"])
             @info("Writing Full Time Series for Time Losses")
         end
     end

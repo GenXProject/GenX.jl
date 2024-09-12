@@ -9,7 +9,7 @@ For each resource $y \in \mathcal{G}$ with annualized investment cost $AIC_{y}$ 
     & OCC_{y} = \sum^{min(CRP_{y},H)}_{i=1}\frac{AIC_{y}}{(1+WACC_{y})^{i}}
 \end{aligned}
 ```
-where $WACC_y$ is the technology-specific weighted average cost of capital (set by the "WACC" field in the Generators\_data.csv or Network.csv files), $H$ is the number of years remaining between the start of the current model stage and the model horizon (the end of the final model stage) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Generators\_data.csv).
+where $WACC_y$ is the technology-specific weighted average cost of capital (set by the "WACC" field in the Generators\_data or Network.csv files), $H$ is the number of years remaining between the start of the current model stage and the model horizon (the end of the final model stage) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Generators\_data.csv).
 
 inputs:
 
@@ -70,7 +70,7 @@ This function overwrites input parameters read in via the load\_inputs() method 
 
 3) Internal set representations of resources eligible for capacity retirements are overwritten to ensure compatability with multi-stage modeling.
 
-4) When NetworkExpansion is active and there are multiple model zones, parameters related to transmission and network expansion are updated. First, annualized transmission reinforcement costs are converted into overnight capital costs. Next, the maximum allowable transmission line reinforcement parameter is overwritten by the model stage-specific value specified in the "Line\_Max\_Flow\_Possible\_MW" fields in the network\_multi\_stage.csv file. Finally, internal representations of lines eligible or not eligible for transmission expansion are overwritten based on the updated maximum allowable transmission line reinforcement parameters.
+4) When NetworkExpansion is active and there are multiple model zones, parameters related to transmission and network expansion are updated. First, annualized transmission reinforcement costs are converted into overnight capital costs. Next, the maximum allowable transmission line reinforcement parameter is overwritten by the model stage-specific value specified in the "Line\_Max\_Flow\_Possible\_MW" fields in the network\_multi\_stage file. Finally, internal representations of lines eligible or not eligible for transmission expansion are overwritten based on the updated maximum allowable transmission line reinforcement parameters.
 
 inputs:
 
