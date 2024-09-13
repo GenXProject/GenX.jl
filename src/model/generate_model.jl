@@ -169,6 +169,17 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         hydro_res!(EP, inputs, setup)
     end
 
+    # Allam Cycle LOX
+    if !isempty(inputs["ALLAM_CYCLE_LOX"])
+        allamcyclelox!(EP, inputs, setup)
+    end
+
+    # Model constraints, variables, expressions related to telectrolyzers
+    if !isempty(inputs["ELECTROLYZER"]) ||
+        (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+         electrolyzer!(EP, inputs, setup)
+     end
+
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
     if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage!(EP, inputs, setup)
@@ -192,17 +203,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
     if !isempty(inputs["VRE_STOR"])
         vre_stor!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expressions related to telectrolyzers
-    if !isempty(inputs["ELECTROLYZER"]) ||
-       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
-        electrolyzer!(EP, inputs, setup)
-    end
-    
-    # Allam Cycle LOX
-    if !isempty(inputs["ALLAM_CYCLE_LOX"])
-        allamcyclelox!(EP, inputs, setup)
     end
 
     # Policies

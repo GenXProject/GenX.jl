@@ -1,11 +1,53 @@
 
 @doc raw"""
-This module models the Allam cycle with or without liquid oxygen storage (LOX) tank. In this
-module, the key components of Allam cycle w/ LOX are break down into mutiple components with 
-independent capacity decisions. Then we use linear constraint formulations to represent the 
-corresponding mass and energy balance.
+allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
+This module models the Allam cycle with or without liquid oxygen storage (LOX) tank. 
+In this module, the key components of Allam cycle w/ LOX are break down into mutiple components with independent capacity decisions. 
+
+**Important expressions**
+1. power balance within an Allam Cycle resource
+Consumption of electricity by Air Seperation Unit (ASU) $y, asu$ in time $t$, denoted by $\Pi_{y,asu,z}$, and auxiliary load, denoted by $\Pi_{y,aux,z}$, is subtracted from power generation from the sCO2 turbines, denoted by $\Pi_{y,sco2turbine,z}$
+
+2. power balance between an Allam Cycle resource and the grid
+Net power output from Allam Cycle $y$ in time $t$ (net generation - electricity charged from the grid, denoted by $\Theta_{y,z}$), denoted by $\Pi_{y,z}^{net}$, is added to power balance expression `ePowerBalance`
+
+```math
+\begin{aligned}
+    \Pi_{y,z}^{net} = \Pi_{y,sco2turbine,z} - \Pi_{y,asu,z} - \Pi_{y,aux,z} - \Theta_{y,z}
+\end{aligned}
+```
+
+**Important constraints**
+1. liquid oxygen storage mass balance: the state of the liquid oxygen storage at hour $h$ is determined by the state of the liquid oxygen storage at hour $h-1$, and of the production and consumption of liquid oxygen at hour $h$.
+
+```math
+\begin{aligned}
+	&  \Gamma_{y,z,t} =\Gamma_{y,z,t-1} + \Pi_{y,asu,z}\$O2_production_rate$ - \frac{\Pi_{y,sco2turbine,z}}{$O2_consumption_rate$}
+\end{aligned}
+```
+
+2. power balance
+
+@constraint(EP, cCharge[y in ALLAM_CYCLE_LOX, t = 1:T], vOutput_AllamcycleLOX[y, asu, t] >= vCHARGE_ALLAM[y,t])
+@constraint(EP, cP_net[y in ALLAM_CYCLE_LOX, t = 1:T], eP_Allam[y, t] == EP[:vP][y,t])
+@expression(EP, ePowerBalanceAllam[t = 1:T, z = 1:Z],
+    sum((EP[:eP_Allam][y,t] - EP[:vCHARGE_ALLAM][y,t])
+    for y in intersect(ALLAM_CYCLE_LOX, resources_in_zone_by_rid(gen, z))))
+add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceAllam)
+
+3. all the allam cycle output should be less than the capacity 
+@constraint(EP, [y in ALLAM_CYCLE_LOX, i in 1:3, t in 1:T], vOutput_AllamcycleLOX[y, i, t] <= eTotalCap_AllamcycleLOX[y,i])
+
+4: duration of lox
+@constraint(EP, cMaxLoxDuration_in[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] <= lox_max_duration(gen[y]) * vLOX_in[y,t])
+@constraint(EP, cMaxLoxDuration_out[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] <= lox_max_duration(gen[y]) * eLOX_out[y,t])
+@constraint(EP, cMinLoxDuration_in[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] >= lox_min_duration(gen[y]) * vLOX_in[y,t])
+@constraint(EP, cMinLoxDuration_out[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] >= lox_min_duration(gen[y]) * eLOX_out[y,t])
+
+# 5: call allamcycle_commit!(EP, inputs, setup) and allamcycle_commit!(EP, inputs, setup) for specific constraints related to unit commitment
+
+
 """
-#
 function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
@@ -13,121 +55,100 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     Z = inputs["Z"]                                                 # Number of zones
     MultiStage = setup["MultiStage"]
     omega = inputs["omega"]
-    
 
     # Load Allam Cycle related inputs 
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]                     # Set of Allam Cycle generators (indices)
     NEW_CAP_Allam = intersect(inputs["NEW_CAP"], ALLAM_CYCLE_LOX)
     RET_CAP_Allam = intersect(inputs["RET_CAP"], ALLAM_CYCLE_LOX)
-    COMMIT_Allam = setup["UCommit"] > 1 ? ALLAM_CYCLE_LOX : Int[]
-    WITH_LOX = inputs["WITH_LOX"]
+    COMMIT_Allam = setup["UCommit"] > 0 ? ALLAM_CYCLE_LOX : Int[]
+    WITH_LOX = inputs["WITH_LOX"]                                   # Set of Allam Cycel generators that can use liquid oxygen storage
 
     # time related 
-    START_SUBPERIODS = inputs["START_SUBPERIODS"] #start
-    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"] #interiors
+    START_SUBPERIODS = inputs["START_SUBPERIODS"]                   # start
+    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]             # interiors
     hours_per_subperiod = inputs["hours_per_subperiod"]
 
     # Allam cycle components
     # by default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
     sco2turbine, asu, lox = 1, 2, 3
     
-    # get component-wise data
+    # get component-wise parameter data
     allam_dict = inputs["allam_dict"]
 
-
-    # Capacity variables
+    # Variables
     # retired capacity of Allam cycle 
     @variable(EP, vRET_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
     # new capacity of Allam cycle
     @variable(EP, vCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
 
-    # # fix capacity ratio between sCO2turbine and LOX
-    # @constraint(EP, [y in ALLAM_CYCLE_LOX], vCAP_AllamCycleLOX[y, sco2turbine] * allam_dict[y,"cap_size"][sco2turbine] == 4*vCAP_AllamCycleLOX[y, asu]*allam_dict[y,"cap_size"][asu])
-
-    # construct a matrix represent the main output of each component 
-    # (e.g., sCO2 Turbine, air separation unit (ASU), and liquid oxygen storage tank (LOX))
-    # y represent the plant, i represent the specfic subcomponents, t represent the time
-    # the main output from sCO2Turbine/ASU/LOX is the gross power output from sCO2 cycle (MWh), power 
-    # consumption associated with ASU (MWh), and the amout of LOX (tonne) stored in the LOX tank
-    # by default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
+    # construct a matrix represent the main output of each component (e.g., sCO2 Turbine, air separation unit (ASU), and liquid oxygen storage tank (LOX))
+    # y represents the plant, i represents the specfic subcomponents, and t represents the time
+    # The main output from sCO2Turbine/ASU/LOX is the gross power output from sCO2 cycle (MWh), power consumption associated with ASU (MWh), and the amout of LOX (tonne) stored in the LOX tank
     @variable(EP, vOutput_AllamcycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3, t = 1:T]  >= 0)
 
-    # Step 1. Using the linear formulations to represent the mass and energy balance of Allam 
-    # Cycle with LOX storage
+    # Grid export to the system to support ASU
+    @variable(EP, vCHARGE_ALLAM[y in ALLAM_CYCLE_LOX, t=1:T] >= 0)
 
-    # variales related to CO2 and solvent
+    # Mass and energy balance of Allam Cycle resources
     @variables(EP, begin
-        vLOX_in[y in ALLAM_CYCLE_LOX, t=1:T] >= 0 # lox generated by ASU
-        vGOX[y in ALLAM_CYCLE_LOX, t=1:T] >= 0 # gox generated by ASU
+        vLOX_in[y in ALLAM_CYCLE_LOX, t=1:T] >= 0 # lox generated by ASU, stored in the storage
+        vGOX[y in ALLAM_CYCLE_LOX, t=1:T] >= 0 # gox generated by ASU, used by sCO2 turbines directly
     end)
 
-
-    # Thermal Energy input of sCO2 turbine at hour t [MMBTU] is determined by the gross power output of 
-    # sCO2 turbine and the corresponding heat rate
+    # Expressions and constraints of Allam Cycle operations
+    # Thermal Energy input of sCO2 turbine at hour t [MMBTU] is determined by the gross power output of sCO2 turbine and the corresponding heat rate
     @expression(EP, eFuel_Allam[y in ALLAM_CYCLE_LOX ,t=1:T],
         gen[y].heatrate_sco2* vOutput_AllamcycleLOX[y, sco2turbine, t])
 
-    # power consumption assumed by ASU is a function of gnerated LOX
+    # Power consumption assumed by ASU is a function of gnerated LOX
     # Note: it should be noticed that the poweruserate to generate GOX and LOX are differernt.
     @constraint(EP, [y in ALLAM_CYCLE_LOX, t = 1:T], vOutput_AllamcycleLOX[y, asu, t] ==  gen[y].lox_poweruserate_o2 * vLOX_in[y,t] + gen[y].gox_poweruserate_o2 * vGOX[y,t])
     
-    # auxiliary load
+    # Auxiliary load
     @expression(EP, ePower_other[y in ALLAM_CYCLE_LOX,t=1:T],  gen[y].poweruserate_other * vOutput_AllamcycleLOX[y, sco2turbine, t])
     
-    # the amount of LOX feed into oxyfuel cycle should be propotional to the power generated by oxyfuel cycle
+    # The amount of LOX feed into oxyfuel cycle should be propotional to the power generated by oxyfuel cycle
     @expression(EP, eLOX_out[y in ALLAM_CYCLE_LOX,t=1:T], gen[y].o2userate * vOutput_AllamcycleLOX[y, sco2turbine, t] - vGOX[y,t])
     @constraint(EP, cLOX_out[y in ALLAM_CYCLE_LOX,t=1:T], eLOX_out[y ,t]>=0)
     
-    # liquid oxygen storage mass balance
+    # Constraint 1: liquid oxygen storage mass balance
     # note, this is not compatiable when time domain reduction is on
     # dynamic of lox storage system, normal [tonne LOX]
-    @constraint(EP, cStore_lox[y in ALLAM_CYCLE_LOX, t in INTERIOR_SUBPERIODS], vOutput_AllamcycleLOX[y,lox,t] == vOutput_AllamcycleLOX[y,lox, t-1] + vLOX_in[y,t] - eLOX_out[y,t])
+    @constraint(EP, cStore_lox[y in ALLAM_CYCLE_LOX, t in INTERIOR_SUBPERIODS], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, t-1] + vLOX_in[y, t] - eLOX_out[y, t])
     # dynamic of lox storage system, wrapping [tonne LOX]
-    @constraint(EP, cStore_loxwrap[y in ALLAM_CYCLE_LOX, t in START_SUBPERIODS], vOutput_AllamcycleLOX[y,lox,t] == vOutput_AllamcycleLOX[y,lox,t+hours_per_subperiod-1]  + vLOX_in[y,t] - eLOX_out[y,t])
+    @constraint(EP, cStore_loxwrap[y in ALLAM_CYCLE_LOX, t in START_SUBPERIODS], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, t+hours_per_subperiod-1] + vLOX_in[y, t] - eLOX_out[y, t])
 
-
+    # Constraint 2: power balance
     # net power output = gross power output from sCO2 - power consumption associated with ASU - auxiliary power
-    # connect the net power output from Allam Cycle with LOX to the vP
-    @expression(EP, vP_Allam[y in ALLAM_CYCLE_LOX, t=1:T], (vOutput_AllamcycleLOX[y,sco2turbine,t] - vOutput_AllamcycleLOX[y,asu,t] - ePower_other[y,t]))
-    # vP_Allam can be negative values so do not need to link to vP, same for VRE_STOR!!!!!! 
-    # # Linking vP_Allam to vP
-    # @constraint(EP, cvP_Allam[y in ALLAM_CYCLE_LOX, t=1:T], EP[:vP][y,t] == vP_Allam[y,t])
-    # Power Balance Expressions ##
+    @expression(EP, eP_Allam[y in ALLAM_CYCLE_LOX, t=1:T], (vOutput_AllamcycleLOX[y, sco2turbine, t] - vOutput_AllamcycleLOX[y, asu, t] - ePower_other[y, t] + vCHARGE_ALLAM[y,t]))
+    # link vP, vCHARGE_ALLAM, and eP_Allam
+    @constraint(EP, cCharge[y in ALLAM_CYCLE_LOX, t = 1:T], vOutput_AllamcycleLOX[y, asu, t] >= vCHARGE_ALLAM[y,t])
+    @constraint(EP, cP_net[y in ALLAM_CYCLE_LOX, t = 1:T], eP_Allam[y, t] == EP[:vP][y,t])
     @expression(EP, ePowerBalanceAllam[t = 1:T, z = 1:Z],
-        sum(EP[:vP_Allam][y,t]
+        sum((eP_Allam[y,t] - vCHARGE_ALLAM[y,t])
         for y in intersect(ALLAM_CYCLE_LOX, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceAllam)
 
+    # Expressions and constraints related to Allam Cycle costs
 
-    # Step 2. Add fixed Cost
-
-    # For Allam Cycle with LOX system, each component (e.g., sCO2 turbine, ASU, and LOX) has 
-    # the component-wise cost data. 
-    # construct a matrix to represent the capacity decisions of each component 
-    # (e.g., sCO2 Turbine, air separation unit (ASU), and liquid oxygen storage tank (LOX))
-    # y represent the plant, i represent the specfic subcomponents
-    # Allam Cycle with LOX storage has 3 components by default
-  
-    
     if MultiStage ==1
         @variable(EP, vEXISTINGCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]>=0)
     end
 
-    ### Expressions ###
     if MultiStage == 1
         @expression(EP, eExistingCap_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3], vEXISTINGCAP_AllamCycleLOX[y,i])
     else
         @expression(EP, eExistingCap_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3], allam_dict[y, "existing_cap"][i])
     end
 
-    # Allam Cycle is not compatiable with RETRO for now..
+    # Note: Allam Cycle is not compatiable with RETRO for now.
     @expression(EP, eTotalCap_AllamcycleLOX[y in ALLAM_CYCLE_LOX, i in 1:3],
     if y in intersect(NEW_CAP_Allam, RET_CAP_Allam) # Resources eligible for new capacity and retirements 
         if y in COMMIT_Allam
             eExistingCap_AllamcycleLOX[y,i] +
                 allam_dict[y,"cap_size"][i] * (EP[:vCAP_AllamCycleLOX][y,i] - EP[:vRETCAP_AllamCycleLOX][y,i])
         else
-            eExistingCap_AllamCycleLOX[y, i] + EP[:vCAP_AllamCycleLOX][y, i] - EP[:vRETCAP][y,i] 
+            eExistingCap_AllamCycleLOX[y, i] + EP[:vCAP_AllamCycleLOX][y, i] - EP[:vRETCAP_AllamCycleLOX][y,i]
         end
     elseif y in setdiff(RET_CAP_Allam, NEW_CAP_Allam) # Resources eligible for only capacity retirements
         if y in COMMIT_Allam
@@ -163,14 +184,9 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
             allam_dict[y,"fom_cost"][i]  * eTotalCap_AllamcycleLOX[y,i]
         end)
 
-    # # total fixed cost of all the Allam cycle plants
     # connect eCFix_Allam_Plant to eCFix
-
     @expression(EP, eCFix_Allam_Plant[y in ALLAM_CYCLE_LOX], sum(EP[:eCFix_Allam][y,i] for i in 1:3))
-
     @expression(EP, eTotalCFix_Allam, sum(EP[:eCFix_Allam_Plant][y] for y in  ALLAM_CYCLE_LOX ))
-
-
     # add this to eTotalCFix
     add_to_expression!(EP[:eTotalCFix], eTotalCFix_Allam)
 
@@ -191,22 +207,23 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
         @constraint(EP, cExistingCap_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i in 1:3], EP[:vEXISTINGCAP_AllamCycleLOX][y,i]== allam_dict[y, "existing_cap"][i])
     end
 
-    # all the allam cycle output should be less than the capacity 
+    # Constraint 3: all the allam cycle output should be less than the capacity 
     @constraint(EP, [y in ALLAM_CYCLE_LOX, i in 1:3, t in 1:T], vOutput_AllamcycleLOX[y, i, t] <= eTotalCap_AllamcycleLOX[y,i])
     
-    # add constraint to the duration of lox
+    # Constraint 4: the duration of lox
     @constraint(EP, cMaxLoxDuration_in[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] <= lox_max_duration(gen[y]) * vLOX_in[y,t])
     @constraint(EP, cMaxLoxDuration_out[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] <= lox_max_duration(gen[y]) * eLOX_out[y,t])
     @constraint(EP, cMinLoxDuration_in[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] >= lox_min_duration(gen[y]) * vLOX_in[y,t])
     @constraint(EP, cMinLoxDuration_out[y in WITH_LOX, t in 1:T],  eTotalCap_AllamcycleLOX[y,lox] >= lox_min_duration(gen[y]) * eLOX_out[y,t])
 
-    # step 3. add variable cost 
+    # connect eFuel_Allam to vFuel so the fuel cost will be determined in fuel.jl. We don't need to double account 
+    # Allam cycle is exluded from the constraint on vFuel in fuel.jl
+    @constraint(EP, [y in ALLAM_CYCLE_LOX, t in 1:T], EP[:vFuel][y,t] == eFuel_Allam[y,t])
+    
+    # add vom
     # variale costs are related to the main output, e.g., gross power output frmo sCO2 turbine
     # power consumption associated with the ASU, and CO2 sequestration costs 
     # variable costs will be mutiplied by inputs["omega"] to be compatiable with time domain reduction
-
-    # connect eFuel_Allam to vFuel so the fuel cost will be determined in fuel.jl. We don't need to double account them
-    @constraint(EP, [y in ALLAM_CYCLE_LOX, t in 1:T], EP[:vFuel][y,t] == eFuel_Allam[y,t])
 
     # variable OM 
     @expression(EP, eCVar_component[y in ALLAM_CYCLE_LOX, i = 1:3, t = 1:T], omega[t] * vOutput_AllamcycleLOX[y,i,t] * allam_dict[y,"vom_cost"][i])
@@ -221,186 +238,54 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     # add to obj
     add_to_expression!(EP[:eObj], EP[:eTotalCVar_Allam])
 
-    # step 4 unit commitment 
+    # Constraint 5: call allamcycle_commit!(EP, inputs, setup) and allamcycle_commit!(EP, inputs, setup) for specific constraints related to unit commitment
     if setup["UCommit"] > 0 
-        ### Variables ###
-        # For Allam Cylce w/ LOX, only sCO2 turbine and ASU are subjected to unit commitment
-        # by default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
-        ## Decision variables for unit commitment
-        @variable(EP, vCOMMIT_Allam[y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T] >= 0)
-        # startup event variable
-        @variable(EP, vSTART_Allam[y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T] >= 0)
-        # shutdown event variable
-        @variable(EP, vSHUT_Allam[y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T] >= 0)
-        ### Expressions ###
-        ## Objective Function Expressions ##
-        # start up costs associated with sCO2 turbine and ASU
-        # Startup costs for resource "y" during hour "t"   
-        @expression(EP, eCStart_Allam[y in COMMIT_Allam , t=1:T], sum(omega[t]*(allam_dict[y,"start_cost"][i]*vSTART_Allam[y,i,t]) for i in 1:2))
- 
-        @expression(EP, eTotalCStart_Allam_T[t = 1:T], sum(eCStart_Allam[y,t] for y in COMMIT_Allam))
-        
-        @expression(EP, eTotalCStart_Allam, sum(eTotalCStart_Allam_T[t] for t in 1:T))
-        
-        add_to_expression!(EP[:eTotalCStart], eTotalCStart_Allam)
-        # since start up costs only related to COMMIT (Thermal units) so we don't need to connect CStart_Allam to eCStart
-        # add start cost to objective function
-        add_to_expression!(EP[:eObj], eTotalCStart_Allam)
-        
-
-        # Start up fuel for each component
-        @variable(EP, vStartFuel_Allam[y in COMMIT_Allam , i in 1:2, t = 1:T]>=0)
-
-        @constraint(EP, cStartFuel_Allam[y in COMMIT_Allam, i in 1:2, t = 1:T],
-            EP[:vStartFuel_Allam][y, i, t] - allam_dict[y,"cap_size"][i] * EP[:vSTART_Allam][y,i, t] * allam_dict[y, "start_fuel"][i] .==0)
-        
-        # Start up fuel for each plant
-        @expression(EP, eStartFuel_Allam[y in COMMIT_Allam , t = 1:T], sum(vStartFuel_Allam[y,i, t] for i in 1:2) )
-        
-        # Connect start up fuel here to vStartFuel
-        @constraint(EP, [y in COMMIT_Allam , t = 1:T], EP[:vStartFuel][y,t] == eStartFuel_Allam[y,t])
-
-
-
-        ## Declaration of integer/binary variables
-        if setup["UCommit"] == 1 # Integer UC constraints
-            for y in ALLAM_CYCLE_LOX
-                for i in 1:2
-                    set_integer.(vCOMMIT_Allam[y,i,:])
-                    set_integer.(vSTART_Allam[y,i,:])
-                    set_integer.(vSHUT_Allam[y,i,:])
-                    if y in RET_CAP_Allam 
-                        set_integer(EP[:vRETCAP_AllamCycleLOX][y,i])allam_dict[y, "cap_size"][i]
-                    end
-                    if y in NEW_CAP_Allam
-                         set_integer(EP[:vCAP_AllamCycleLOX][y,i])
-                    end
-                end
-            end
-        end 
-
-        ### Constraints ###
-        ### Capacitated limits on unit commitment decision variables (Constraints #1-3)
-        @constraints(EP, begin
-            [y in ALLAM_CYCLE_LOX, i in 1:2 , t=1:T], vCOMMIT_Allam[y,i,t] <= eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]
-            [y in ALLAM_CYCLE_LOX, i in 1:2 , t=1:T], vSTART_Allam[y,i,t] <= eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]
-            [y in ALLAM_CYCLE_LOX, i in 1:2 , t=1:T], vSHUT_Allam[y,i,t] <= eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]
-        end)
-
-
-        # Commitment state constraint linking startup and shutdown decisions (Constraint #4)
-        @constraints(EP, begin
-            # For Start Hours, links first time step with last time step in subperiod
-            [y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] == vCOMMIT_Allam[y,i,(t+hours_per_subperiod-1)] + vSTART_Allam[y,i,t] - vSHUT_Allam[y,i,t]
-            # For all other hours, links commitment state in hour t with commitment state in prior hour + sum of start up and shut down in current hour
-            [y in ALLAM_CYCLE_LOX, i in 1:2, t in INTERIOR_SUBPERIODS], vCOMMIT_Allam[y,i,t] == vCOMMIT_Allam[y,i,t-1] + vSTART_Allam[y,i,t] - vSHUT_Allam[y,i,t]
-        end)
-
-        ### Maximum ramp up and down between consecutive hours (Constraints #5-6
-        ## For Start Hours
-        # Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
-        # rampup constraints
-        @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS],
-            EP[:vOutput_AllamcycleLOX][y,i,t]-EP[:vOutput_AllamcycleLOX][y,i,(t+hours_per_subperiod-1)] <= allam_dict[y, "ramp_up"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
-                + min(1,max(allam_dict[y, "min_power"][i],allam_dict[y, "ramp_up"][i]))*allam_dict[y, "cap_size"][i]*vSTART_Allam[y,i,t]
-                -allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vSHUT_Allam[y,i,t])
-
-        # rampdown constraints
-        @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS],
-            EP[:vOutput_AllamcycleLOX][y,i,(t+hours_per_subperiod-1)]-EP[:vOutput_AllamcycleLOX][y,i,t] <=allam_dict[y, "ramp_dn"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
-                -allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vSTART_Allam[y,i,t]
-                + min(1,max(allam_dict[y, "min_power"][i],allam_dict[y, "ramp_dn"][i]))*allam_dict[y, "cap_size"][i]*vSHUT_Allam[y,i,t])
-
-        ## For Interior Hours
-        # rampup constraints
-        @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in INTERIOR_SUBPERIODS],
-            EP[:vOutput_AllamcycleLOX][y,i,t]-EP[:vOutput_AllamcycleLOX][y,i,t-1] <=allam_dict[y, "ramp_up"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
-                + min(1,max(allam_dict[y, "min_power"][i],allam_dict[y, "ramp_up"][i]))*allam_dict[y, "cap_size"][i]*vSTART_Allam[y,i,t]
-                -allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vSHUT_Allam[y,i,t])
-
-        # rampdown constraints
-        @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in INTERIOR_SUBPERIODS],
-            EP[:vOutput_AllamcycleLOX][y,i,t-1]-EP[:vOutput_AllamcycleLOX][y,i,t] <=allam_dict[y, "ramp_dn"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
-                -allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vSTART_Allam[y,i,t]
-                +min(1,max(allam_dict[y, "min_power"][i],allam_dict[y, "ramp_dn"][i]))*allam_dict[y, "cap_size"][i]*vSHUT_Allam[y,i,t])
-
-        ### Minimum and maximum power output constraints (Constraints #7-8)
-        @constraints(EP, begin
-            # Minimum stable power generated per technology "y" at hour "t" > Min power
-            [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] >= allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vCOMMIT_Allam[y,i,t]
-        # Maximum power generated per technology "y" at hour "t" < Max power
-            [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] <= allam_dict[y, "cap_size"][i]*vCOMMIT_Allam[y,i,t]
-        end)
-
-
-
-        ### Minimum up and down times (Constraints #9-10)
-        for y in ALLAM_CYCLE_LOX
-            for i in 1:2
-                ## up time
-                Up_Time = Int(floor(allam_dict[y, "up_time"][i]))
-                Up_Time_HOURS = [] # Set of hours in the summation term of the maximum up time constraint for the first subperiod of each representative period
-                for s in START_SUBPERIODS
-                    Up_Time_HOURS = union(Up_Time_HOURS, (s+1):(s+Up_Time-1))
-                end
-
-                @constraints(EP, begin
-                    # cUpTimeInterior: Constraint looks back over last n hours, where n = allam_dict[y, "up_time"][i])
-                    [t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], vCOMMIT_Allam[y,i,t] >= sum(vSTART_Allam[y,i,e] for e=(t-allam_dict[y, "up_time"][i]):t)
-
-                    # cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-                    # cUpTimeWrap constraint equivalant to: sum(vSTART_Allam[y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(vSTART_Allam[y,e] for e=(hours_per_subperiod_max-(allam_dict[y, "up_time"][i])-(t%hours_per_subperiod))):hours_per_subperiod_max)
-                    [t in Up_Time_HOURS], vCOMMIT_Allam[y,i,t] >= sum(vSTART_Allam[y,i,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(vSTART_Allam[y,i,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(allam_dict[y, "up_time"][i]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
-
-                    # cUpTimeStart:
-                    # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-                    [t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] >= vSTART_Allam[y,i,t]+sum(vSTART_Allam[y,i,e] for e=((t+hours_per_subperiod-1)-(allam_dict[y, "up_time"][i]-1)):(t+hours_per_subperiod-1))
-                end)
-
-                ## down time
-                Down_Time = Int(floor(allam_dict[y, "down_time"][i]))
-                Down_Time_HOURS = [] # Set of hours in the summation term of the maximum down time constraint for the first subperiod of each representative period
-                for s in START_SUBPERIODS
-                    Down_Time_HOURS = union(Down_Time_HOURS, (s+1):(s+Down_Time-1))
-                end
-
-                # Constraint looks back over last n hours, where n = allam_dict[y, "down_time"][i]
-                # TODO: Replace LHS of constraints in this block with eNumPlantsOffline[y,t]
-                @constraints(EP, begin
-                    # cDownTimeInterior: Constraint looks back over last n hours, where n = inputs["pDMS_Time"][y]
-                    [t in setdiff(INTERIOR_SUBPERIODS,Down_Time_HOURS)], eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t] >= sum(vSHUT_Allam[y,i,e] for e=(t-allam_dict[y, "down_time"][i]):t)
-
-                    # cDownTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-                    # cDownTimeWrap constraint equivalant to: eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,t] >= sum(vSHUT_Allam[y,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(vSHUT_Allam[y,e] for e=(hours_per_subperiod_max-(allam_dict[y, "down_time"][i]-(t%hours_per_subperiod))):hours_per_subperiod_max)
-                    [t in Down_Time_HOURS], eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t] >= sum(vSHUT_Allam[y,i,e] for e=(t-((t%hours_per_subperiod)-1):t))+sum(vSHUT_Allam[y,i,e] for e=((t+hours_per_subperiod-(t%hours_per_subperiod))-(allam_dict[y, "down_time"][i]-(t%hours_per_subperiod))):(t+hours_per_subperiod-(t%hours_per_subperiod)))
-    
-                    # cDownTimeStart:
-                    # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-                    [t in START_SUBPERIODS], eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t]  >= vSHUT_Allam[y,i,t]+sum(vSHUT_Allam[y,i,e] for e=((t+hours_per_subperiod-1)-(allam_dict[y, "down_time"][i]-1)):(t+hours_per_subperiod-1))
-                end)
-            end
-        end
+        allamcycle_commit!(EP, inputs, setup)
+    else
+        println("Warning: it is not recommended to run Allam Cycele wihtout unit commit. Please set UCommit to 1 in the setting file.")
+        allamcycle_no_commit!(EP, inputs, setup)
     end
 
-    # connect the net capacity of Allam Cycle to vCAP such that it will report the net capacity of Allam Cycle as outputs
-	@constraint(EP, [y in ALLAM_CYCLE_LOX, t = 1:T], vP_Allam[y,t] <= EP[:vCAP][y])
-    # add costs to the capacity so that vCAP==max(vP_Allam), need to update!!!!!
-    add_to_expression!(EP[:eTotalCFix], 0.1*sum(EP[:vCAP][y] for y in ALLAM_CYCLE_LOX))
-    #step 5
-    # Policies  ##### need to update ######
+    # system capacity equal to sCO2 turbine capacity
+    @constraint(EP, [y in ALLAM_CYCLE_LOX, t = 1:T], EP[:vCAP][y] == EP[:vCAP_AllamCycleLOX][y, sco2turbine])
+
+    # Expressions related to policies
     # Capacity Reserves Margin policy
     if setup["CapacityReserveMargin"] > 0
         @expression(EP,
             eCapResMarBalanceAllam[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
-            sum(derating_factor(gen[y], tag = res) * vP_Allam[y, t] for y in ALLAM_CYCLE_LOX))
+            sum(derating_factor(gen[y], tag = res) * (eP_Allam[y, t]-vCHARGE_ALLAM[y,t]) for y in ALLAM_CYCLE_LOX))
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceAllam)
     end
 
-    # Maximum Capacity Requirement
-    if setup["MaxCapReq"] == 1
-        @expression(EP, eMaxCapResAllam[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
-            sum(EP[:vCAP][y] 
-            for y in ALLAM_CYCLE_LOX))
-        EP[:eMaxCapRes] += eMaxCapResAllam
+    # Energy Share Requirements
+    if setup["EnergyShareRequirement"] >= 1
+        @expression(EP,
+            eAllamCycleESR[ESR in 1:inputs["nESR"]],
+            sum(inputs["omega"][t] * esr(gen[y], tag = ESR) * (eP_Allam[y, t]-vCHARGE_ALLAM[y,t])
+            for y in intersect(ALLAM_CYCLE_LOX, ids_with_policy(gen, esr, tag = ESR)), t in 1:T))
+        EP[:eESR] += eAllamCycleESR
+    end
+
+    # Maximum Capacity Requirement: consistent with other resources, included in investment_discharge.jl
+
+    # Minimum Capacity Requirement
+    if setup["MinCapReq"] == 1
+        @expression(EP, eMinCapResAllam[mincap = 1:inputs["NumberOfMinCapReqs"]],
+            sum((EP[:eTotalCap_AllamcycleLOX][y, sco2turbine] - 
+                 EP[:eTotalCap_AllamcycleLOX][y, asu] * gen[y].lox_poweruserate_o2 -
+                 EP[:eTotalCap_AllamcycleLOX][y, asu] * gen[y].gox_poweruserate_o2 -
+                 EP[:eTotalCap_AllamcycleLOX][y, asu] * gen[y].poweruserate_other)
+                 for y in (ALLAM_CYCLE_LOX, ids_with_policy(gen, min_cap, tag = mincap))))
+        EP[:eMinCapRes] += eMinCapResAllam
+    end
+
+    # Hourly matching constraints
+    if setup["HourlyMatching"] == 1
+        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
+        @expression(EP, eHMAllam[t = 1:T, z = 1:Z],
+            -sum(EP[:vCHARGE_ALLAM][y,t] 
+            for y in intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, ALLAM_CYCLE_LOX)))
+        add_similar_to_expression!(EP[:eHM], eHMAllam)
     end
 end

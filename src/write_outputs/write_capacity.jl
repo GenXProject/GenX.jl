@@ -8,11 +8,16 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     MultiStage = setup["MultiStage"]
 
+    sco2turbine = 1
+    COMMIT_Allam = setup["UCommit"] > 0 ? inputs["ALLAM_CYCLE_LOX"] : Int[]
+
     # Capacity decisions
     capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["NEW_CAP"]
         if i in inputs["COMMIT"]
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
+        elseif i in COMMIT_Allam
+            capdischarge[i] = value(EP[:vCAP][i]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         else
             capdischarge[i] = value(EP[:vCAP][i])
         end
@@ -22,6 +27,8 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     for i in inputs["RET_CAP"]
         if i in inputs["COMMIT"]
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
+        elseif i in COMMIT_Allam
+            retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         else
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
         end

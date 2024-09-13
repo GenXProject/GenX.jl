@@ -116,19 +116,22 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 	
 end
 
-
-
-
 function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] 
+	T = inputs["T"]
     # Allam cycle components
     # by default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
     sco2turbine, asu, lox = 1, 2, 3
 
+	@expression(EP, eNetPowerAllam[y in ALLAM_CYCLE_LOX, t = 1:T],
+        EP[:eP_Allam][y,t] - EP[:vCHARGE_ALLAM][y,t])
+
     # Power injected by each resource in each time step
     dfAllam_output = DataFrame(Resource = 
 		[inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_sco2turbine_gross_power_mw";
+		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_sco2turbine_commit";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_asu_gross_power_mw";
+		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_asu_commit";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_net_power_output_mw";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_storage_lox_t";
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_lox_in_t";
@@ -136,13 +139,19 @@ function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP:
 		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_gox_t"])
 
 	gross_power_sco2turbine = value.(EP[:vOutput_AllamcycleLOX])[:,sco2turbine,:]
+	if setup["UCommit"] > 0
+		sco2turbine_commit = value.(EP[:vCOMMIT_Allam])[:, sco2turbine, :]
+		asu_commit = value.(EP[:vCOMMIT_Allam])[:, asu, :]
+	else
+		sco2turbine_commit = zeros(1,T)
+		asu_commit = zeros(1,T)
+	end
 	gross_power_asu = value.(EP[:vOutput_AllamcycleLOX])[:,asu,:]
-	net_power_out = value.(EP[:vP_Allam])[:,:]
+	net_power_out = value.(EP[:eNetPowerAllam])[:,:]
 	lox_storage = value.(EP[:vOutput_AllamcycleLOX])[:,lox,:]
 	lox_in = value.(EP[:vLOX_in])
 	lox_out = value.(EP[:eLOX_out])
 	gox = value.(EP[:vGOX])
-
 
     if setup["ParameterScale"] == 1
         gross_power_sco2turbine *= ModelScalingFactor
@@ -155,7 +164,9 @@ function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP:
     end
 
 	allamoutput = [Array(gross_power_sco2turbine);
+	Array(sco2turbine_commit);
 	Array(gross_power_asu);
+	Array(asu_commit);
 	Array(net_power_out);
 	Array(lox_storage);
 	Array(lox_in);
