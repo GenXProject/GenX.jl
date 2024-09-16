@@ -67,7 +67,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Transmission power flow and loss related expressions:
     # Total availabile maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
-    if asymmetrical_trans_flow_limit ==1
+    if setup["asymmetrical_trans_flow_limit"] ==1
         if NetworkExpansion == 1
             @expression(EP, eAvail_Trans_Cap[l = 1:L],
                 if l in EXPANSION_LINES
