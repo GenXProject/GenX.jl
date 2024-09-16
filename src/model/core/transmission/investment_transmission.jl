@@ -131,6 +131,8 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if MultiStage == 1
         # Linking constraint for existing transmission capacity
         @constraint(EP, cExistingTransCap[l = 1:L], vTRANSMAX[l]==inputs["pTrans_Max"][l])
+        @constraint(EP, cExistingTransCapPos[l = 1:L_asym], vTRANSMAX_Pos[l]==inputs["pTrans_Max_Pos"][l])
+        @constraint(EP, cExistingTransCapNeg[l = 1:L_asym], vTRANSMAX_Neg[l]==inputs["pTrans_Max_Neg"][l])
     end
 
     # If network expansion is used:
@@ -141,11 +143,19 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             @constraint(EP,
                 cMaxFlowPossible[l in EXPANSION_LINES],
                 eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
+                cMaxFlowPossible_Pos[l in EXPANSION_LINES_ASYM],
+                eAvail_Trans_Cap_Pos[l]<=inputs["pTrans_Max_Possible_Pos"][l])
+                cMaxFlowPossible_Neg[l in EXPANSION_LINES_ASYM],
+                eAvail_Trans_Cap_Neg[l]<=inputs["pTrans_Max_Possible_Neg"][l])
         end
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
         @constraint(EP,
             cMaxLineReinforcement[l in EXPANSION_LINES],
             vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
+            cMaxLineReinforcement_Pos[l in EXPANSION_LINES_ASYM],
+            vNEW_TRANS_CAP_Pos[l]<=inputs["pMax_Line_Reinforcement_Pos"][l])
+            cMaxLineReinforcement_Neg[l in EXPANSION_LINES_ASYM],
+            vNEW_TRANS_CAP_Neg[l]<=inputs["pMax_Line_Reinforcement_Neg"][l])
     end
     #END network expansion contraints
 
