@@ -18,16 +18,16 @@ function _fusion_maintenance_parasitic_power_adjustment!(
     passive = reactor.parasitic_passive_fraction
     reduction_factor = reactor.maintenance_remaining_parasitic_power_fraction
     η = reactor.eff_down
-    cap_size = reactor.component_size
+    component_size = reactor.component_size
 
     reduction = passive * (1 - reduction_factor)
 
-    get_from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[Symbol(f(resource_component))]
 
-    ePassiveParasitic = get_from_model(fusion_parasitic_passive_name)
-    vMDOWN = get_from_model(maintenance_down_name)
+    ePassiveParasitic = from_model(fusion_parasitic_passive_name)
+    vMDOWN = from_model(maintenance_down_name)
 
-    eReduction = -reduction * η * cap_size * vMDOWN
+    eReduction = -reduction * η * component_size * vMDOWN
 
     add_similar_to_expression!(ePassiveParasitic, eReduction)
 end

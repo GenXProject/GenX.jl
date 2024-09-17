@@ -150,7 +150,7 @@ end
 
 # Base.@kwdef could be used if we enforce Julia >= 1.9
 # That would replace need for the keyword-argument constructor below
-struct FusionReactorData
+Base.@kwdef struct FusionReactorData
     component_size::Float64
     parasitic_passive_fraction::Float64
     parasitic_active_fraction::Float64
@@ -162,35 +162,6 @@ struct FusionReactorData
     max_pulse_length::Int
     max_starts::Int
     max_fpy_per_year::Float64
-end
-
-# useful because the matching of arguments can be verified
-function FusionReactorData(;
-        component_size::Float64,
-        parasitic_passive_fraction::Float64,
-        parasitic_active_fraction::Float64,
-        parasitic_start_energy_fraction::Float64,
-        pulse_start_power_fraction::Float64,
-        maintenance_remaining_parasitic_power_fraction::Float64,
-        eff_down::Float64,
-        dwell_time::Float64,
-        max_pulse_length::Int,
-        max_starts::Int,
-        max_fpy_per_year::Float64
-)
-    FusionReactorData(
-        component_size,
-        parasitic_passive_fraction,
-        parasitic_active_fraction,
-        parasitic_start_energy_fraction,
-        pulse_start_power_fraction,
-        maintenance_remaining_parasitic_power_fraction,
-        eff_down,
-        dwell_time,
-        max_pulse_length,
-        max_starts,
-        max_fpy_per_year
-    )
 end
 
 #######################################

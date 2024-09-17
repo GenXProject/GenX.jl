@@ -126,7 +126,7 @@ With a value of $0.5$ it is reduced by half, and so on.
 
 Use of the fusion module leads to two new outputs files, and changes to existing output files.
 
-- `fusion_pulse_starts`. This file is similar to `start/commit/shut.csv` for unit committment.
+- `fusion_pulse_starts`. This file is similar to `start/commit/shutdown.csv` for unit committment.
 There is a column for each fusion resource component and a row for each timestep.
 Values are number of plant units (of a given resource component) starting a fusion pulse in each timestep.
 
