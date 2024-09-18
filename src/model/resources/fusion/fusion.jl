@@ -14,32 +14,32 @@ const FUSION_COMPONENT_ZONE = "FusionComponentZones"
 # Individual fusion reactor component variable and expressions names
 #####################################################################
 
-function fusion_pulse_start_name(resource_component::AbstractString)::String
-    "vFusionPulseStart_" * resource_component
+function fusion_pulse_start_name(resource_component::AbstractString)
+    Symbol("vFusionPulseStart_" * resource_component)
 end
 
-function fusion_pulse_underway_name(resource_component::AbstractString)::String
-    "vFusionPulseUnderway_" * resource_component
+function fusion_pulse_underway_name(resource_component::AbstractString)
+    Symbol("vFusionPulseUnderway_" * resource_component)
 end
 
-function fusion_parasitic_active_name(resource_component::AbstractString)::String
-    "eFusionParasiticActive_" * resource_component
+function fusion_parasitic_active_name(resource_component::AbstractString)
+    Symbol("eFusionParasiticActive_" * resource_component)
 end
 
-function fusion_parasitic_passive_name(resource_component::AbstractString)::String
-    "eFusionParasiticPassive_" * resource_component
+function fusion_parasitic_passive_name(resource_component::AbstractString)
+    Symbol("eFusionParasiticPassive_" * resource_component)
 end
 
-function fusion_parasitic_start_energy_name(resource_component::AbstractString)::String
-    "eFusionParasiticStartEnergy_" * resource_component
+function fusion_parasitic_start_energy_name(resource_component::AbstractString)
+    Symbol("eFusionParasiticStartEnergy_" * resource_component)
 end
 
-function fusion_pulse_start_power_name(resource_component::AbstractString)::String
-    "eFusionParasiticPulseStartPower_" * resource_component
+function fusion_pulse_start_power_name(resource_component::AbstractString)
+    Symbol("eFusionParasiticPulseStartPower_" * resource_component)
 end
 
-function fusion_parasitic_total_name(resource_component::AbstractString)::String
-    "eFusionParasiticTotal_" * resource_component
+function fusion_parasitic_total_name(resource_component::AbstractString)
+    Symbol("eFusionParasiticTotal_" * resource_component)
 end
 
 #############################################################################
@@ -104,7 +104,7 @@ end
 """
 function fusion_parasitic_power_expressions(inputs::Dict, zone::Int)::Set{Symbol}
     fusion_in_zone = inputs[FUSION_COMPONENT_ZONE][zone]
-    exprs = Symbol.(fusion_parasitic_total_name.(fusion_in_zone))
+    exprs = fusion_parasitic_total_name.(fusion_in_zone)
     return Set(exprs)
 end
 
@@ -271,18 +271,16 @@ function fusion_pulse_variables!(EP::Model,
     ω = inputs["omega"]
     p = inputs["hours_per_subperiod"]
 
-    start_name = fusion_pulse_start_name(resource_component)
-    underway_name = fusion_pulse_underway_name(resource_component)
-    start = Symbol(start_name)
-    underway = Symbol(underway_name)
+    start = fusion_pulse_start_name(resource_component)
+    underway = fusion_pulse_underway_name(resource_component)
 
     union!(inputs[FUSION_PULSE_START], (start,))
     union!(inputs[FUSION_PULSE_UNDERWAY], (underway,))
 
     ecap = EP[capacity][r_id]
 
-    vPulseStart = EP[start] = @variable(EP, [t in 1:T], base_name=start_name, lower_bound=0)
-    vPulseUnderway = EP[underway] = @variable(EP, [t in 1:T], base_name=underway_name,
+    vPulseStart = EP[start] = @variable(EP, [t in 1:T], base_name=string(start), lower_bound=0)
+    vPulseUnderway = EP[underway] = @variable(EP, [t in 1:T], base_name=string(underway),
         lower_bound=0)
 
     if integer_operational_unit_commitment
@@ -328,7 +326,7 @@ function fusion_pulse_status_linking_constraints!(
 
     commit = EP[vcommit] # measured in number of components
 
-    from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[f(resource_component)]
 
     vPulseStart = from_model(fusion_pulse_start_name)
     vPulseUnderway = from_model(fusion_pulse_underway_name)
@@ -362,7 +360,7 @@ function fusion_pulse_thermal_power_generation_constraint!(
     component_size = reactor.component_size
     dwell_time = reactor.dwell_time
 
-    from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[f(resource_component)]
     ePulseStart = component_size * from_model(fusion_pulse_start_name)
     ePulseUnderway = component_size * from_model(fusion_pulse_underway_name)
 
@@ -404,17 +402,19 @@ function fusion_parasitic_power!(
     dwell_time = reactor.dwell_time
     η = reactor.eff_down
 
-    from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[f(resource_component)]
 
     pulsestart = component_size * from_model(fusion_pulse_start_name)
     underway = component_size * from_model(fusion_pulse_underway_name)
 
     capacity = EP[component_capacity][r_id]
 
-    passive = Symbol(fusion_parasitic_passive_name(resource_component))
-    active = Symbol(fusion_parasitic_active_name(resource_component))
-    start_energy = Symbol(fusion_parasitic_start_energy_name(resource_component))
-    pulse_start_power = Symbol(fusion_pulse_start_power_name(resource_component))
+    passive = fusion_parasitic_passive_name(resource_component)
+    active = fusion_parasitic_active_name(resource_component)
+    start_energy = fusion_parasitic_start_energy_name(resource_component)
+    pulse_start_power = fusion_pulse_start_power_name(resource_component)
+
+    union!(inputs[FUSION_PULSE_START_POWER], (pulse_start_power,))
 
     # Passive recirculating power, depending on built capacity
     EP[passive] = @expression(EP, [t in 1:T], capacity*η*parasitic_passive_fraction)
@@ -434,7 +434,6 @@ function fusion_parasitic_power!(
     EP[pulse_start_power] = @expression(EP,
         [t in 1:T],
         pulsestart[t]*η*pulse_start_power_fraction)
-    union!(inputs[FUSION_PULSE_START_POWER], (pulse_start_power,))
 end
 
 function fusion_max_fpy_per_year_constraint!(
@@ -465,13 +464,13 @@ function fusion_total_parasitic_power!(
 )
     T = inputs["T"]
 
-    from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[f(resource_component)]
 
     ePassive = from_model(fusion_parasitic_passive_name)
     eActive = from_model(fusion_parasitic_active_name)
     eStartEnergy = from_model(fusion_parasitic_start_energy_name)
 
-    total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
+    total_parasitic = fusion_parasitic_total_name(resource_component)
 
     EP[total_parasitic] = @expression(EP, [t in 1:T], ePassive[t] + eActive[t] + eStartEnergy[t])
 
@@ -488,7 +487,7 @@ function fusion_adjust_power_balance!(
         z = zones_for_resources[y]
         resource_component = resource_name(gen[y]) * component
         fusion_total_parasitic_power!(EP, inputs, resource_component, y)
-        eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
+        eTotalParasitic = EP[fusion_parasitic_total_name(resource_component)]
         add_similar_to_expression!(ePowerBalance[:, z], -eTotalParasitic)
     end
 end
@@ -500,7 +499,7 @@ end
 function fusion_annual_parasitic_power(
         EP, inputs, resource_component::AbstractString)::AffExpr
     ω = inputs["omega"]
-    eTotalParasitic = EP[Symbol(fusion_parasitic_total_name(resource_component))]
+    eTotalParasitic = EP[fusion_parasitic_total_name(resource_component)]
     annual_parasitic = ω' * eTotalParasitic
     return annual_parasitic
 end

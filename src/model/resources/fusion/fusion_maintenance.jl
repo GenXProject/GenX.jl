@@ -22,7 +22,7 @@ function _fusion_maintenance_parasitic_power_adjustment!(
 
     reduction = passive * (1 - reduction_factor)
 
-    from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[f(resource_component)]
 
     ePassiveParasitic = from_model(fusion_parasitic_passive_name)
     vMDOWN = from_model(maintenance_down_name)

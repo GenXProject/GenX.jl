@@ -54,14 +54,14 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     component = gen[y]
     eTotalCap = EP[:eTotalCap][y]
 
-    capresfactor = get(component, Symbol("capres_" * string(capres_zone)), 0.0)
+    capresfactor = derating_factor(component, tag=capres_zone)
     if capresfactor == 0.0
         return AffExpr.(zero.(timesteps))
     end
     dwell_time = Float64(get(component, :dwell_time, 0.0))
     component_size = get(component, :cap_size, 0.0)
 
-    from_model(f::Function) = EP[Symbol(f(resource_component))]
+    from_model(f::Function) = EP[f(resource_component)]
 
     ePassive = from_model(fusion_parasitic_passive_name)
     eActive = from_model(fusion_parasitic_active_name)
@@ -75,7 +75,7 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
     dwell_adj = -capresfactor *
                 _fusion_dwell_avoided_operation.(dwell_time, ePulseStart[timesteps])
 
-    total_adj = capacity_to_underway_adj + parasitic_adj + dwell_adj
+    total_adj = @expression(EP, [t in 1:T], capacity_to_underway_adj[t] + parasitic_adj[t] + dwell_adj[t])
 
     # Cancel out the dependence on down_var, since CRM is related to power, not capacity
     if y in ids_with_maintenance(gen)
@@ -94,27 +94,27 @@ thermal_fusion_capacity_reserve_margin_adjustment = fusion_capacity_reserve_marg
 # Where the math actually happens
 #################################
 @doc raw"""
-    _fusion_crm_parasitic_adjustment(capresfactor::Float64,
+    _fusion_crm_parasitic_adjustment(derating_factor::Float64,
                passive_power::AffExpr,
                active_power::AffExpr,
                start_power::AffExpr)
 
     Parasitic power for a fusion plant.
     Passive parasitic power is always on, even if the plant is undergoing maintenance,
-    so this adjustment is independent of capresfactor. Active and start power are associated
-    with a plant being in working order, so they do get `capresfactor` applied.
+    so this adjustment is independent of the CRM derating factor. Active and start power are associated
+    with a plant being in working order, so they do get `derating_factor` applied.
 
-    capresfactor: Factor associated with the reliability of a plant's ability to produce power.
+    derating_factor: Factor associated with the reliability of a plant's ability to produce power.
        Must logically be between 0 to 1.
     passive_power: Expression for parasitic passive recirculating power.
     active_power: Expression for parasitic active recirculating power.
     start_power: Expression for parasitic pulse start (peak) power.
 """
-function _fusion_crm_parasitic_adjustment(capresfactor::Float64,
+function _fusion_crm_parasitic_adjustment(derating_factor::Float64,
         passive_power::AffExpr,
         active_power::AffExpr,
         start_power::AffExpr)::AffExpr
-    return -capresfactor * (active_power + start_power) - passive_power
+    return -derating_factor * (active_power + start_power) - passive_power
 end
 
 #################################
