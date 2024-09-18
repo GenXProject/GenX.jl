@@ -212,30 +212,6 @@ end
 # Compute reactor properties
 #######################################
 
-#TODO consider moving these to resources.jl? Or get rid of them in favor of direct resource
-# access?
-
-function has_parasitic_power(r::FusionReactorData)
-    r.parasitic_start_energy > 0 || r.parasitic_passive_fraction > 0 ||
-        r.parasitic_active_fraction > 0
-end
-
-function has_finite_starts(r::FusionReactorData)
-    r.max_starts > 0
-end
-
-function has_max_pulse_length(r::FusionReactorData)
-    r.max_pulse_length > 0
-end
-
-function has_pulse_start_power(r::FusionReactorData)
-    r.pulse_start_power_fraction > 0
-end
-
-function has_max_annual_power_output(r::FusionReactorData)
-    r.max_fpy_per_year > 0
-end
-
 function average_net_power_factor(reactor::FusionReactorData)
     dwell_time = reactor.dwell_time
     max_up = reactor.max_pulse_length
@@ -299,16 +275,16 @@ function fusion_pulse_variables!(EP::Model,
     # Looks back over interior timesteps and ensures that a core cannot
     # be committed unless it has been started at some point in
     # the previous n timesteps
-    if has_max_pulse_length(reactor)
-        max_pulse_length = reactor.max_pulse_length
+    max_pulse_length = reactor.max_pulse_length
+    if max_pulse_length > 0
         function starts_in_previous_hours(t)
             vPulseStart[hoursbefore(p, t, 0:(max_pulse_length - 1))]
         end
         @constraint(EP, [t in 1:T], vPulseUnderway[t]<=sum(starts_in_previous_hours(t)))
     end
 
-    if has_finite_starts(reactor)
-        max_starts = reactor.max_starts
+    max_starts = reactor.max_starts
+    if max_starts > 0
         @constraint(EP,
             sum(vPulseStart[t] * ω[t] for t in 1:T) * component_size<=max_starts * ecap[y])
     end
