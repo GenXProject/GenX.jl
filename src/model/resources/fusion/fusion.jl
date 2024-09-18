@@ -463,6 +463,8 @@ function fusion_total_parasitic_power!(
         resource_component,
         r_id::Int
 )
+    T = inputs["T"]
+
     from_model(f::Function) = EP[Symbol(f(resource_component))]
 
     ePassive = from_model(fusion_parasitic_passive_name)
@@ -471,7 +473,7 @@ function fusion_total_parasitic_power!(
 
     total_parasitic = Symbol(fusion_parasitic_total_name(resource_component))
 
-    EP[total_parasitic] = ePassive + eActive + eStartEnergy
+    EP[total_parasitic] = @expression(EP, [t in 1:T], ePassive[t] + eActive[t] + eStartEnergy[t])
 
     union!(inputs[FUSION_PARASITIC_POWER], (total_parasitic,))
 end
