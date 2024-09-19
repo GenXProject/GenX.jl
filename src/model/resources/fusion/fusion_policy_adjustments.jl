@@ -130,7 +130,7 @@ function fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
     FUSION = ids_with(gen, fusion)
 
     for y in FUSION, p in 1:nESR
-        esr_derating = esr(gen[y], p)
+        esr_derating = esr(gen[y], tag=p)
         if esr_derating > 0
             resource_component = resource_name(gen[y])
             adjustment = -esr_derating *
