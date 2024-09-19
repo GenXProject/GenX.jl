@@ -151,8 +151,6 @@ The ratio of the gross power produced to (the gross capacity * one year). Compar
 There are two new variables, representing the number of pulse starts ($\chi^{pulse}_{y,z,t}$) and pulses underway ($\nu^{pulse}_{y,z,t}$).
 These are similar to the conventional unit commitment start $\chi$ and commit status $\nu$.
 
-`TODO: tidy up math presentation?`
-
 ```math
 \begin{align*}
 0 & \le \chi^{pulse}_{y,z,t} \le \overline{\Omega}^{size}_{y,z} \cdot \Delta^\mathrm{total}_{y,z} \\
