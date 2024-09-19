@@ -88,7 +88,7 @@ function fusion_capacity_reserve_margin_adjustment(EP::Model,
 end
 
 # alias for better parallelism in effective_capacity.jl
-thermal_fusion_capacity_reserve_margin_adjustment = fusion_capacity_reserve_margin_adjustment
+const thermal_fusion_capacity_reserve_margin_adjustment = fusion_capacity_reserve_margin_adjustment
 
 #################################
 # Where the math actually happens
