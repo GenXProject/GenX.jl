@@ -41,7 +41,6 @@ end
 
 function write_maintenance(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     set, data = prepare_maintenance_downvars_matrix(EP, inputs)
-    gen = inputs["RESOURCES"][set]
     df = _create_annualsum_df(inputs, set, data)
     write_temporal_data(df, data, path, setup, "maint_down")
 end
