@@ -414,7 +414,7 @@ function check_maintenance_applicability(r::AbstractResource)
     return ErrorMsg.(error_strings)
 end
 
-function check_fusion_applicability(r::AbstractResource)
+function check_fusion_applicability(setup::Dict, r::AbstractResource)
     applicable_resources = Thermal
 
     not_set = default_zero
@@ -424,7 +424,7 @@ function check_fusion_applicability(r::AbstractResource)
 
     if value == not_set
         # not FUSION so the rest is not applicable
-        return error_strings
+        return ErrorMsg.(error_strings)
     end
 
     if !isa(r, applicable_resources) && value > 0
@@ -440,6 +440,14 @@ function check_fusion_applicability(r::AbstractResource)
         e = string("Resource ", resource_name(r), " has :fusion = ", value, ".\n",
             "This is valid only for resources with unit commitment (:model = 1);\n",
             "this has :model = 2.")
+        push!(error_strings, e)
+    end
+
+    if setup["UCommit"] == 0
+        e = string("Resource ", resource_name(r), " has :fusion = ", value, ".\n",
+                   "Use of the fusion module requires the setting UCommit > 0.\n",
+                   "Contact the fusion module maintainers (Jacob Schwartz) if you are interested\n",
+                   "in running a fusion case without unit commitment.")
         push!(error_strings, e)
     end
 
@@ -495,11 +503,11 @@ function check_qualified_hydrogen_supply(r::AbstractResource)
     return WarnMsg.(warning_strings)
 end
 
-function check_resource(r::AbstractResource)
+function check_resource(setup::Dict, r::AbstractResource)
     e = []
     e = [e; check_LDS_applicability(r)]
     e = [e; check_maintenance_applicability(r)]
-    e = [e; check_fusion_applicability(r)]
+    e = [e; check_fusion_applicability(setup, r)]
     e = [e; check_mustrun_reserve_contribution(r)]
     e = [e; check_retrofit_resource(r)]
     e = [e; check_qualified_hydrogen_supply(r)]
@@ -524,15 +532,15 @@ function check_retrofit_id(rs::Vector{T}) where {T <: AbstractResource}
 end
 
 @doc raw"""
-    check_resource(resources::Vector{T})::Vector{String} where T <: AbstractResource
+    check_resource(setup::Dict, resources::Vector{T})::Vector{String} where T <: AbstractResource
 
 Validate the consistency of a vector of GenX resources
 Reports any errors/warnings as a vector of messages.
 """
-function check_resource(resources::Vector{T}) where {T <: AbstractResource}
+function check_resource(setup::Dict, resources::Vector{T}) where {T <: AbstractResource}
     e = []
     for r in resources
-        e = [e; check_resource(r)]
+        e = [e; check_resource(setup, r)]
     end
     e = [e; check_retrofit_id(resources)]
     return e
@@ -559,8 +567,8 @@ function announce_errors_and_halt(e::Vector)
     return nothing
 end
 
-function validate_resources(resources::Vector{T}) where {T <: AbstractResource}
-    e = check_resource(resources)
+function validate_resources(setup::Dict, resources::Vector{T}) where {T <: AbstractResource}
+    e = check_resource(setup, resources)
     if length(e) > 0
         announce_errors_and_halt(e)
     end
@@ -588,7 +596,7 @@ function create_resource_array(setup::Dict, resources_path::AbstractString)
     # load each resource type, scale data and return array of resources
     resources = create_resource_array(resources_path, resources_info, scale_factor)
     # validate input before returning resources
-    validate_resources(resources)
+    validate_resources(setup, resources)
     return resources
 end
 
