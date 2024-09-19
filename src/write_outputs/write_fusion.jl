@@ -36,7 +36,6 @@ end
 function write_fusion_pulse_starts(
         path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     set, data = prepare_fusion_pulse_starts(EP, inputs)
-    gen = inputs["RESOURCES"][set]
     df = _create_annualsum_df(inputs, set, data)
     write_temporal_data(df, data, path, setup, "fusion_pulse_starts")
 end
