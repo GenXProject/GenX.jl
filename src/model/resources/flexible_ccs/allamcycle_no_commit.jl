@@ -1,5 +1,8 @@
 @doc raw"""
-
+allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
+This function defines the operating constraints for allam cycle power plants subject to unit commitment constraints on power plant start-ups and shut-down decision ($y \in UC$).
+The capacity investment decisions and commitment and cycling (start-up, shut-down) of ASU and sCO2 turbine in allam cycle power systems are similar to constraints defined in thermal_no_commit.jl
+Operaional constraints include max ramping up/donw, min power level, and operational reserves.
 """
 function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
@@ -39,7 +42,7 @@ function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
         EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(hours_per_subperiod,t,1)] - EP[:vOutput_AllamcycleLOX][y,i,t] <=
         allam_dict[y, "ramp_dn"][i] * EP[:vCAP_AllamCycleLOX][y,i])
 
-    ### Minimum and maximum power output constraints (Constraints #7-8)
+    ### Minimum and maximum power output constraints
     @constraints(EP, begin
         # Minimum stable power generated per technology "y" at hour "t" > Min power
         [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] >= allam_dict[y, "min_power"][i]*EP[:vCAP_AllamCycleLOX][y,i]

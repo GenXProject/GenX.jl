@@ -177,7 +177,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     if setup["MaxCapReq"] == 1
         @expression(EP,
             eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, max_cap, tag = maxcap)))
+            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, max_cap, tag = maxcap), ALLAM_CYCLE_LOX)))
         add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
     end
 end

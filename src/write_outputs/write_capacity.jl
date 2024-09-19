@@ -5,7 +5,6 @@ Function for writing the diferent capacities for the different generation techno
 """
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
-
     MultiStage = setup["MultiStage"]
 
     sco2turbine = 1
@@ -31,6 +30,15 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         else
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
+        end
+    end
+
+    endcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+    for i in inputs["G"]
+        if i in COMMIT_Allam
+            endcapdischarge[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
+        else
+            endcapdischarge[i] = first(value.(EP[:eTotalCap][i]))
         end
     end
 
@@ -93,7 +101,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         RetCap = retcapdischarge[:],
         RetroCap = retrocapdischarge[:], #### Need to change later
         NewCap = capdischarge[:],
-        EndCap = value.(EP[:eTotalCap]),
+        EndCap = (MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen)) - retcapdischarge[:] + capdischarge[:],
         CapacityConstraintDual = capacity_constraint_dual[:],
         StartEnergyCap = existingcapenergy[:],
         RetEnergyCap = retcapenergy[:],

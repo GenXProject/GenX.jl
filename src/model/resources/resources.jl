@@ -1125,8 +1125,7 @@ existing_cap_asu(r::AbstractResource) = get(r, :existing_cap_asu, default_zero)
 existing_cap_lox(r::AbstractResource) = get(r, :existing_cap_lox, default_zero)
 
 # duration for lox
-lox_max_duration(r::AbstractResource) = get(r, :lox_max_duration, default_zero)
-lox_min_duration(r::AbstractResource) = get(r, :lox_min_duration, default_zero)
+lox_duration(r::AbstractResource) = get(r, :lox_duration, default_zero)
 
 ## policies
 # co-located storage
