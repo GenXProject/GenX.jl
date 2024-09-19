@@ -31,7 +31,6 @@ end
 
 function strip_common_prefix(v::Vector{Symbol}, prefix::AbstractString)
     s = string.(v)
-    len = length(prefix)
     return Symbol.(chopprefix.(s, prefix))
 end
 
