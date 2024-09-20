@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 300.5962608 # see README.md
+obj_true = 300.5962608 # see fusion_pulse_every_hour/README.md
 test_path = "fusion_pulse_every_hour"
 
 # Define test inputs
