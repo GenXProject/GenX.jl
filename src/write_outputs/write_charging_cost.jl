@@ -13,7 +13,8 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
-    
+    FUSION = ids_with(gen, :fusion)
+
     weight = inputs["omega"]
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
@@ -35,6 +36,10 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     if !isempty(VS_STOR)
         chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .*
                                   transpose(price)[zone_id.(gen[VS_STOR]), :]
+    end
+    if !isempty(FUSION)
+        _, mat = prepare_fusion_parasitic_power(EP, inputs)
+        chargecost[FUSION, :] = mat
     end
     chargecost *= scale_factor
 

@@ -11,6 +11,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     FLEX = inputs["FLEX"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
+    FUSION = ids_with(gen, :fusion)
     Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
         "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
         "Demand_Response", "Nonserved_Energy",
@@ -22,6 +23,9 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     if !isempty(VRE_STOR)
         push!(Com_list, "VRE_Storage_Discharge")
         push!(Com_list, "VRE_Storage_Charge")
+    end
+    if !isempty(FUSION)
+        push!(Com_list, "Fusion_parasitic_power")
     end
     L = length(Com_list)
     dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z),
@@ -68,7 +72,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR))
             VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
 
-            # if ELECTROLYZER is empty, increase indices by 1
+            # if ELECTROLYZER is not empty, increase indices by 1
             is_electrolyzer_empty = isempty(ELECTROLYZER)
             discharge_idx = is_electrolyzer_empty ? 11 : 12
             charge_idx = is_electrolyzer_empty ? 12 : 13
@@ -77,6 +81,20 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
                 value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
             powerbalance[(z - 1) * L + charge_idx, :] = (-1) * sum(
                 value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims = 1)
+        end
+        FUSION_ZONE = intersect(resources_in_zone_by_rid(gen, z), FUSION)
+        if !isempty(FUSION_ZONE)
+            # this index-modification strategy is becoming unsustainable. We should just use
+            # a dataframe with named columns or something else.
+            idx = 11
+            if !isempty(ELECTROLYZER)
+                idx += 1
+            end
+            if !isempty(VRE_STOR)
+                idx += 2
+            end
+            powerbalance[(z - 1) * L + idx, :] = -fusion_total_parasitic_power_unscaled(
+                EP, inputs, z)
         end
     end
     if setup["ParameterScale"] == 1
