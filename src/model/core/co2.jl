@@ -74,12 +74,13 @@ function co2!(EP::Model, inputs::Dict)
     if isempty(CCS)
         @expression(EP, eEmissionsByPlant[y = 1:G, t = 1:T],
             if y in SINGLE_FUEL
-                ((1 - biomass(gen[y])) * (EP[:vFuel][y, t] + EP[:vStartFuel][y, t]) *
-                 fuel_CO2[fuel(gen[y])])
+                (1 - biomass(gen[y])) * fuel_CO2[fuel(gen[y])] * (EP[:vFuel][y, t] + EP[:vStartFuel][y, t])
             else
-                sum(((1 - biomass(gen[y])) *
-                     (EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t]) *
-                     fuel_CO2[fuel_cols(gen[y], tag = i)]) for i in 1:max_fuels)
+                sum(
+                    (1 - biomass(gen[y])) * fuel_CO2[fuel_cols(gen[y], tag = i)] *
+                    (EP[:vMulFuels][y, i, t] + EP[:vMulStartFuels][y, i, t])
+                    for i in 1:max_fuels
+                )
             end)
     else
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
