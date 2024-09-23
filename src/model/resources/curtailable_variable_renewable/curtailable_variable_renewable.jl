@@ -33,13 +33,15 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     VRE_POWER_OUT = intersect(VRE, ids_with_positive(gen, num_vre_bins))
     VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
+    VRE_BY_ZONE = [intersect(VRE, resources_in_zone_by_rid(gen, z)) for z in 1:Z]
+
     ### Expressions ###
 
     ## Power Balance Expressions ##
 
-    @expression(EP, ePowerBalanceDisp[t = 1:T, z = 1:Z],
-        sum(EP[:vP][y, t] for y in intersect(VRE, resources_in_zone_by_rid(gen, z))))
-    add_similar_to_expression!(EP[:ePowerBalance], EP[:ePowerBalanceDisp])
+    @expression(EP, eGenerationByVRE[t = 1:T, z = 1:Z],
+        sum(EP[:vP][y, t] for y in VRE_BY_ZONE[z]))
+    add_similar_to_expression!(EP[:ePowerBalance], EP[:eGenerationByVRE])
 
     # Capacity Reserves Margin policy
     if CapacityReserveMargin > 0
@@ -77,11 +79,10 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     for y in VRE_NO_POWER_OUT
         fix.(EP[:vP][y, :], 0.0, force = true)
     end
-    ##CO2 Polcy Module VRE Generation by zone
-    @expression(EP, eGenerationByVRE[z = 1:Z, t = 1:T], # the unit is GW
-        sum(EP[:vP][y, t]
-        for y in intersect(inputs["VRE"], resources_in_zone_by_rid(gen, z))))
-    add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByVRE)
+    ##CO2 Policy Module VRE Generation by zone
+    # We use the transpose here because eGenerationByZone is [1:Z, 1:T] and
+    # eGenerationByVRE is [1:T, 1:Z].
+    add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByVRE')
 end
 
 @doc raw"""
