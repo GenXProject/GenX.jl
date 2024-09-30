@@ -14,7 +14,7 @@ For imposing the constraint of maximum allowed voltage phase angle difference ac
 	& \sum_{z\in \mathcal{Z}}{(\varphi^{map}_{l,z} \times \theta_{z,t})} \geq -\Delta \theta^{\max}_{l} \quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 \end{aligned}
 ```
-Finally, we enforce the reference voltage phase angle constraint:
+Finally, we enforce the reference voltage phase angle constraint (for the slack bus/reference bus):
 ```math
 \begin{aligned}
 \theta_{1,t} = 0 \quad \forall t  \in \mathcal{T}
