@@ -37,6 +37,9 @@ using RecursiveArrayTools
 using Statistics
 using HiGHS
 using Logging
+using MathOptInterface
+const MOI = MathOptInterface
+using OrderedCollections
 
 using PrecompileTools: @compile_workload
 
