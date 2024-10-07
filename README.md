@@ -13,7 +13,7 @@ that incorporates several state-of-the-art practices in electricity system plann
 The model was [originally developed](https://energy.mit.edu/publication/enhanced-decision-support-changing-electricity-landscape/) by 
 [Jesse D. Jenkins](https://mae.princeton.edu/people/faculty/jenkins) and 
 [Nestor A. Sepulveda](https://energy.mit.edu/profile/nestor-sepulveda/) at the Massachusetts Institute of Technology and is now jointly maintained by 
-[a team of contributors](https://github.com/GenXProject/GenX#genx-team) at the Princeton University ZERO Lab (led by Jenkins), MIT (led by [Ruaridh MacDonald](https://energy.mit.edu/profile/ruaridh-macdonald/)), and NYU (led by [Dharik Mallapragada](https://engineering.nyu.edu/faculty/dharik-mallapragada)). 
+[a team of contributors](https://github.com/GenXProject/GenX#genx-team) at the Princeton University ZERO Lab (led by Jenkins), MIT (led by [Ruaridh MacDonald](https://energy.mit.edu/profile/ruaridh-macdonald/)), NYU (led by [Dharik Mallapragada](https://engineering.nyu.edu/faculty/dharik-mallapragada)), and Binghamton University (led by [Neha Patankar](https://www.binghamton.edu/ssie/people/profile.html?id=npatankar)).
 
 GenX is a constrained linear or mixed integer linear optimization model that determines the portfolio of electricity generation, 
 storage, transmission, and demand-side resource investments and operational decisions to meet electricity demand in one or more future planning years at lowest cost,
