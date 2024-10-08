@@ -6,6 +6,8 @@
     rhs_ub::Float64 = 1e6
     allow_recursion::Bool = true
     count_actions::Bool = false
+    proxy_var_ratio_ub::Float64 = 10.0  
+    proxy_var_map::Dict{VariableRef, Vector{Tuple{VariableRef, Float64}}} = Dict{VariableRef, Vector{Tuple{VariableRef, Float64}}}()
 end
 
 function get_scaling_settings(settings::Dict)
@@ -82,59 +84,66 @@ function scale_constraint!(con_ref::ConstraintRef, scaling_settings::ScalingSett
         action_count += 1
     # Else we'll recreate the constraint with proxy variables to scale the coefficients one-by-one
     else
-        scale_and_remake_constraint(con_ref, scaling_settings, Dict{VariableRef, VariableRef}())
+        scale_and_remake_constraint(con_ref, scaling_settings)
         action_count += 1
     end
     return action_count
 end
 
-function scale_and_remake_constraint(con_ref::ConstraintRef, scaling_settings::ScalingSettings, proxy_var_map::Dict{VariableRef, VariableRef})
+function scale_and_remake_constraint(con_ref::ConstraintRef, scaling_settings::ScalingSettings)
     var_coeff_pairs = constraint_object(con_ref).func.terms
     new_var_coeff_pairs = OrderedDict{VariableRef, Float64}()
 
-    coeff_lb = scaling_settings.coeff_lb
-    coeff_ub = scaling_settings.coeff_ub
-    
     # First we want to check if we need to scale the RHS constant
     # We'd like to do this without making it impossible to scale some coefficients with proxy variables
-    rhs_multiplier = calc_rhs_multiplier(con_ref, scaling_settings.rhs_lb, scaling_settings.rhs_ub, coeff_lb, coeff_ub)
+    rhs_multiplier = calc_rhs_multiplier(con_ref, scaling_settings.rhs_lb, scaling_settings.rhs_ub, scaling_settings.coeff_lb, scaling_settings.coeff_ub)
 
     for (var, coeff) in var_coeff_pairs
-        if coeff == 0.0 || (coeff_lb <= (abs(coeff) * rhs_multiplier) <= coeff_ub)
+        if coeff == 0.0 || (scaling_settings.coeff_lb <= (abs(coeff) * rhs_multiplier) <= scaling_settings.coeff_ub)
             new_var_coeff_pairs[var] = coeff * rhs_multiplier
             continue
         end
-        (updated_var, updated_coeff) = update_var_coeff_pair(var, coeff * rhs_multiplier, coeff_lb, coeff_ub, scaling_settings.min_coeff, scaling_settings.allow_recursion)
+        (updated_var, updated_coeff) = update_var_coeff_pair(var, coeff * rhs_multiplier, scaling_settings)
         new_var_coeff_pairs[updated_var] = updated_coeff
     end
     replace_constraint!(con_ref, new_var_coeff_pairs, rhs_multiplier)
 end
 
-function update_var_coeff_pair(var::VariableRef, coeff::Real, coeff_lb::Real, coeff_ub::Real, min_coeff::Real=1e-9, allow_recursion::Bool=true)
-    multiplier = calc_coeff_multiplier(abs(coeff), coeff_lb, coeff_ub)
+function update_var_coeff_pair(var::VariableRef, coeff::Real, scaling_settings::ScalingSettings)
+    multiplier = calc_coeff_multiplier(coeff, scaling_settings.coeff_lb, scaling_settings.coeff_ub)
     new_coeff = coeff * multiplier
-    abs_new_coeff = abs(new_coeff)
-    if abs_new_coeff < min_coeff
+    if abs(new_coeff) < scaling_settings.min_coeff
         return (var, 0.0)
     end
+    # Get a new or cached proxy variable, and new or cached multiplier
+    (proxy_var, multiplier) = get_proxy_var(var, multiplier, scaling_settings.proxy_var_map, scaling_settings.proxy_var_ratio_ub)
+    new_coeff = coeff * multiplier
     # Tidy up near-unity coefficients, in case that allows a speedup
-    if new_coeff ≈ 1.0
-        new_coeff = 1.0
-        multiplier = new_coeff / coeff
-    elseif new_coeff ≈ -1.0
-        new_coeff = -1.0
-        multiplier = new_coeff / coeff
-    end
-    if coeff_lb <= abs_new_coeff <= coeff_ub
-        proxy_var = make_proxy_var(var, multiplier)
+    (new_coeff, multiplier) = prune_coefficients(new_coeff, coeff, multiplier)
+    # If the new coefficient is within bounds, we're done
+    if scaling_settings.coeff_lb <= abs(new_coeff) <= scaling_settings.coeff_ub
         return (proxy_var, new_coeff)
     end
+    # Else, the new coefficient is too large or too small
+    # If recursion is allowed, we repeate the process with the new coefficient
     if allow_recursion
-        return update_var_coeff_pair(var, new_coeff, coeff_lb, coeff_ub, min_coeff, false)
+        return update_var_coeff_pair(proxy_var, new_coeff, scaling_settings)
+    # Else, we return the current proxy variable and coefficient
+    # as the best we can do given the user's coefficient range.
+    # In the future we could try to balance this better with
+    # the RHS scaling
     else
-        proxy_var = make_proxy_var(var, multiplier)
         return (proxy_var, new_coeff)
     end
+end
+
+function prune_coefficients(new_coeff::Real, coeff::Real, multiplier::Real)
+    if new_coeff ≈ 1.0
+        return (1.0, new_coeff / coeff)
+    elseif new_coeff ≈ -1.0
+        return (-1.0, new_coeff / coeff)
+    end
+    return (new_coeff, multiplier)
 end
 
 function calc_rhs_multiplier(con_ref::ConstraintRef, rhs_lb::Real, rhs_ub::Real, coeff_lb::Real, coeff_ub::Real)
@@ -153,13 +162,35 @@ function calc_rhs_multiplier(con_ref::ConstraintRef, rhs_lb::Real, rhs_ub::Real,
     end
 end
 
-function calc_coeff_multiplier(abs_coeff::Real, coeff_lb::Real, coeff_ub::Real)
+function calc_coeff_multiplier(coeff::Real, coeff_lb::Real, coeff_ub::Real)
+    abs_coeff = abs(coeff)
     if abs_coeff < coeff_lb
         return minimum([coeff_ub, 1.0 / abs_coeff]) # We could shift the target value (i.e. 1.0 here)
     end
     if abs_coeff > coeff_ub
         return maximum([coeff_lb, 1.0 / abs_coeff])
     end
+end
+
+function get_proxy_var(var::VariableRef, multiplier::Real, proxy_var_map::Dict{VariableRef, Vector{Tuple{VariableRef, Float64}}}, proxy_var_ratio_ub::Real)
+    cached_result = existing_proxy_var(var, multiplier, proxy_var_map, proxy_var_ratio_ub)
+    if !isnothing(cached_result)
+        return cached_result
+    end
+    proxy_var = make_proxy_var(var, multiplier)
+    return proxy_var, multiplier
+end
+
+function existing_proxy_var(var::VariableRef, multiplier::Real, proxy_var_map::Dict{VariableRef, Vector{Tuple{VariableRef, Float64}}}, proxy_var_ratio_ub::Real)
+    if !haskey(proxy_var_map, var)
+        return nothing
+    end
+    for (proxy_var, cached_multiplier) in proxy_var_map[var]
+        if 1 / proxy_var_ratio_ub < multiplier / cached_multiplier < proxy_var_ratio_ub
+            return proxy_var, cached_multiplier
+        end
+    end
+    return nothing
 end
 
 function make_proxy_var(var::VariableRef, multiplier::Real)
