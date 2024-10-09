@@ -36,7 +36,9 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1,
+        "AdvancedScaling" => 1,
+    )
 end
 
 @doc raw"""
@@ -59,6 +61,8 @@ function configure_settings(settings_path::String, output_settings_path::String)
 
     settings = default_settings()
     merge!(settings, model_settings)
+
+    settings["ScalingSettings"] = get_scaling_settings(settings)
 
     output_settings = configure_writeoutput(output_settings_path, settings)
     settings["WriteOutputsSettingsDict"] = output_settings
