@@ -126,7 +126,7 @@ function update_var_coeff_pair(var::VariableRef, coeff::Real, scaling_settings::
     end
     # Else, the new coefficient is too large or too small
     # If recursion is allowed, we repeate the process with the new coefficient
-    if allow_recursion
+    if scaling_settings.allow_recursion
         return update_var_coeff_pair(proxy_var, new_coeff, scaling_settings)
     # Else, we return the current proxy variable and coefficient
     # as the best we can do given the user's coefficient range.
@@ -178,6 +178,10 @@ function get_proxy_var(var::VariableRef, multiplier::Real, proxy_var_map::Dict{V
         return cached_result
     end
     proxy_var = make_proxy_var(var, multiplier)
+    if !haskey(proxy_var_map, var)
+        proxy_var_map[var] = Vector{Tuple{VariableRef, Float64}}()
+    end
+    push!(proxy_var_map[var], (proxy_var, multiplier))
     return proxy_var, multiplier
 end
 
