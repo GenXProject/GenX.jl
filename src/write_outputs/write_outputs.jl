@@ -265,18 +265,27 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         println(elapsed_time_angles)
     end
 
-    # Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
+    # Temporary! Suppress these outputs until we know that they are compatable with multi-stage
+    # modeling
+    if output_settings_d["WriteTimeWeights"]
+        elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
+        println("Time elapsed for writing time weights is")
+        println(elapsed_time_time_weights)
+    end
+    if has_duals(EP) == 1
+        if output_settings_d["WritePrice"]
+            elapsed_time_price = @elapsed write_price(path, inputs, setup, EP)
+            println("Time elapsed for writing price is")
+            println(elapsed_time_price)
+        end
+    end
+
     if setup["MultiStage"] == 0
         dfEnergyRevenue = DataFrame()
         dfChargingcost = DataFrame()
         dfSubRevenue = DataFrame()
         dfRegSubRevenue = DataFrame()
         if has_duals(EP) == 1
-            if output_settings_d["WritePrice"]
-                elapsed_time_price = @elapsed write_price(path, inputs, setup, EP)
-                println("Time elapsed for writing price is")
-                println(elapsed_time_price)
-            end
 
             if output_settings_d["WriteEnergyRevenue"] ||
                output_settings_d["WriteNetRevenue"]
@@ -310,12 +319,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println("Time elapsed for writing subsidy is")
                 println(elapsed_time_subsidy)
             end
-        end
-
-        if output_settings_d["WriteTimeWeights"]
-            elapsed_time_time_weights = @elapsed write_time_weights(path, inputs)
-            println("Time elapsed for writing time weights is")
-            println(elapsed_time_time_weights)
         end
 
         dfESRRev = DataFrame()
