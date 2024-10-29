@@ -16,6 +16,7 @@ export choose_output_dir
 
 # Multi-stage methods
 export run_ddp
+export run_myopic_multistage
 export configure_multi_stage_inputs
 export load_inputs_multi_stage
 export compute_cumulative_min_retirements!
