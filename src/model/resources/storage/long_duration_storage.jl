@@ -55,7 +55,44 @@ If the capacity reserve margin constraint is enabled, a similar set of constrain
 & \frac{1}{\eta_{o,z}^{discharge}}\Theta^{CRM}_{o,z,(m-1)\times \tau^{period}+1} - \eta_{o,z}^{charge}\Pi^{CRM}_{o,z,(m-1)\times \tau^{period}+1} \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}
 \end{aligned}
 ```
-All other constraints are identical to those used to track the actual state of charge, except with the new variables $Q^{CRM}_{o,z,n}$ and $\Delta Q^{CRM}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively.
+All other constraints are identical to those used to track the actual state of charge, except with the new variables $Q^{CRM}_{o,z,n}$ and $\Delta Q^{CRM}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively. \
+
+**Bound storage inventory in non-representative periods**
+We need additional variables and constraints to ensure that the storage content is within zero and the installed energy capacity in non-representative periods. We introduce
+the variables $\Delta Q^{max,pos}_{o,z,m}$ and $\Delta Q^{max,neg}_{o,z,m}$ that represent the maximum positive and negative storage content variations within the representative
+period $m$, respectively, extracted as:
+
+```math
+\begin{aligned}
+& \Delta Q^{max,pos}_{o,z,m} \geq \Gamma_{o,z,(m-1)\times \tau^{period}+t } - \Gamma_{o,z,(m-1)\times \tau^{period}+1 } \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}, t \in \mathcal{T}
+& \end{aligned}
+```
+
+```math
+\begin{aligned}
+& \Delta Q^{max,neg}_{o,z,m} \leq \Gamma_{o,z,(m-1)\times \tau^{period}+t } - \Gamma_{o,z,(m-1)\times \tau^{period}+1 } \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}, t \in \mathcal{T}
+& \end{aligned}
+```
+
+For every input period $n \in \mathcal{N}$, the maximum storage is computed and constrained to be less than or equal to the installed energy capacity as:
+
+```math
+\begin{aligned}
+&  Q_{o,z,n} \times \left(1-\eta_{o,z}^{loss}\right) - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,(m-1)\times \tau^{period}+1} + \eta_{o,z}^{charge}\Pi_{o,z,(m-1)\times \tau^{period}+1} + \Delta Q^{max,pos}_{o,z,f(n)} \leq \Delta^{total, energy}_{o,z} \\
+& \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
+& \end{aligned}
+```
+
+Similarly, the minimum storage content is imposed to be positive in every period of the time horizon:
+
+```math
+\begin{aligned}
+&  Q_{o,z,n} \times \left(1-\eta_{o,z}^{loss}\right) - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,(m-1)\times \tau^{period}+1} + \eta_{o,z}^{charge}\Pi_{o,z,(m-1)\times \tau^{period}+1} + \Delta Q^{max,neg}_{o,z,f(n)} \geq 0 \\
+& \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
+& \end{aligned}
+```
+
+Additional details on this approach are available in [Parolin et al., 2024](https://doi.org/10.48550/arXiv.2409.19079).
 """
 function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
     println("Long Duration Storage Module")
