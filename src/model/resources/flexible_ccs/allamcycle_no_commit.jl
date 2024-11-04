@@ -20,8 +20,6 @@ function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     WITH_LOX = inputs["WITH_LOX"]
 
     # time related 
-    START_SUBPERIODS = inputs["START_SUBPERIODS"] #start
-    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"] #interiors
     hours_per_subperiod = inputs["hours_per_subperiod"]
 
     # Allam cycle components

@@ -88,7 +88,7 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Commitment state constraint linking startup and shutdown decisions (Constraint #4)
     @constraints(EP, begin
         # For Start Hours, links first time step with last time step in subperiod
-        [y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] == vCOMMIT_Allam[y,i,(t+hours_per_subperiod-1)] + vSTART_Allam[y,i,t] - vSHUT_Allam[y,i,t]
+        [y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] == vCOMMIT_Allam[y,i,hoursbefore(hours_per_subperiod, t, 1)] + vSTART_Allam[y,i,t] - vSHUT_Allam[y,i,t]
         # For all other hours, links commitment state in hour t with commitment state in prior hour + sum of start up and shut down in current hour
         [y in ALLAM_CYCLE_LOX, i in 1:2, t in INTERIOR_SUBPERIODS], vCOMMIT_Allam[y,i,t] == vCOMMIT_Allam[y,i,t-1] + vSTART_Allam[y,i,t] - vSHUT_Allam[y,i,t]
     end)
@@ -98,13 +98,13 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
     # rampup constraints
     @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS],
-        EP[:vOutput_AllamcycleLOX][y,i,t]-EP[:vOutput_AllamcycleLOX][y,i,(t+hours_per_subperiod-1)] <= allam_dict[y, "ramp_up"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
+        EP[:vOutput_AllamcycleLOX][y,i,t]-EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(hours_per_subperiod, t, 1)] <= allam_dict[y, "ramp_up"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
             + min(1,max(allam_dict[y, "min_power"][i],allam_dict[y, "ramp_up"][i]))*allam_dict[y, "cap_size"][i]*vSTART_Allam[y,i,t]
             -allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vSHUT_Allam[y,i,t])
 
     # rampdown constraints
     @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in START_SUBPERIODS],
-        EP[:vOutput_AllamcycleLOX][y,i,(t+hours_per_subperiod-1)]-EP[:vOutput_AllamcycleLOX][y,i,t] <=allam_dict[y, "ramp_dn"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
+        EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(hours_per_subperiod, t, 1)]-EP[:vOutput_AllamcycleLOX][y,i,t] <=allam_dict[y, "ramp_dn"][i]*allam_dict[y, "cap_size"][i]*(vCOMMIT_Allam[y,i,t]-vSTART_Allam[y,i,t])
             -allam_dict[y, "min_power"][i]*allam_dict[y, "cap_size"][i]*vSTART_Allam[y,i,t]
             + min(1,max(allam_dict[y, "min_power"][i],allam_dict[y, "ramp_dn"][i]))*allam_dict[y, "cap_size"][i]*vSHUT_Allam[y,i,t])
 
@@ -149,7 +149,7 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
 
                 # cUpTimeStart:
                 # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-                [t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] >= vSTART_Allam[y,i,t]+sum(vSTART_Allam[y,i,e] for e=((t+hours_per_subperiod-1)-(allam_dict[y, "up_time"][i]-1)):(t+hours_per_subperiod-1))
+                [t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] >= vSTART_Allam[y,i,t]+sum(vSTART_Allam[y,i,e] for e=(hoursbefore(hours_per_subperiod, t, 1)-(allam_dict[y, "up_time"][i]-1)):hoursbefore(hours_per_subperiod, t, 1))
             end)
 
             ## down time
@@ -171,7 +171,7 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
 
                 # cDownTimeStart:
                 # NOTE: Expression t+hours_per_subperiod-(t%hours_per_subperiod) is equivalant to "hours_per_subperiod_max"
-                [t in START_SUBPERIODS], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t]  >= vSHUT_Allam[y,i,t]+sum(vSHUT_Allam[y,i,e] for e=((t+hours_per_subperiod-1)-(allam_dict[y, "down_time"][i]-1)):(t+hours_per_subperiod-1))
+                [t in START_SUBPERIODS], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t]  >= vSHUT_Allam[y,i,t]+sum(vSHUT_Allam[y,i,e] for e=(hoursbefore(hours_per_subperiod, t, 1)-(allam_dict[y, "down_time"][i]-1)):hoursbefore(hours_per_subperiod, t, 1))
             end)
         end
     end
