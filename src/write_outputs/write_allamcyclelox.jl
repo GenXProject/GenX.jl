@@ -17,9 +17,10 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
     # get component-wise data
     allam_dict = inputs["allam_dict"]
 
-	capAllam_sco2turbine = zeros(size(inputs["RESOURCE_NAMES"]))
-	capAllam_asu = zeros(size(inputs["RESOURCE_NAMES"]))
-	capAllam_lox = zeros(size(inputs["RESOURCE_NAMES"]))
+	G = inputs["G"]
+	capAllam_sco2turbine = zeros(G)
+	capAllam_asu = zeros(G)
+	capAllam_lox = zeros(G)
 
 	# new cap
 	for y in ALLAM_CYCLE_LOX
@@ -72,22 +73,25 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 		EndCap_LOX_t = [value.(EP[:eTotalCap_AllamcycleLOX])[y,lox] for y in ALLAM_CYCLE_LOX]
 	)
 
+	if setup["ParameterScale"] == 1
+		columns_to_scale = [
+		:StartCap_sCO2turbine_MW_gross,
+		:RetCap_sCO2turbine_MW_gross,
+		:NewCap_sCO2turbine_MW_gross,
+		:EndCap_sCO2turbine_MW_gross,
+		
+		:StartCap_ASU_MW_gross,
+		:RetCap_ASU_MW_gross,
+		:NewCap_ASU_MW_gross,
+		:EndCap_ASU_MW_gross,
 
-	if setup["ParameterScale"] ==1
-		dfCapAllam.StartCap_sCO2turbine_MW_gross = dfCapAllam.StartCap_sCO2turbine_MW_gross* ModelScalingFactor
-		dfCapAllam.RetCap_sCO2turbine_MW_gross = dfCapAllam.RetCap_sCO2turbine_MW_gross * ModelScalingFactor
-		dfCapAllam.NewCap_sCO2turbine_MW_gross = dfCapAllam.NewCap_sCO2turbine_MW_gross * ModelScalingFactor
-		dfCapAllam.EndCap_sCO2turbine_MW_gross = dfCapAllam.EndCap_sCO2turbine_MW_gross * ModelScalingFactor
+		:StartCap_LOX_t,
+		:RetCap_LOX_t,
+		:NewCap_LOX_t,
+		:EndCap_LOX_t
+		]
 
-		dfCapAllam.StartCap_ASU_MW_gross = dfCapAllam.StartCap_ASU_MW_gross* ModelScalingFactor
-		dfCapAllam.RetCap_ASU_MW_gross = dfCapAllam.RetCap_ASU_MW_gross * ModelScalingFactor
-		dfCapAllam.NewCap_ASU_MW_gross = dfCapAllam.NewCap_ASU_MW_gross * ModelScalingFactor
-		dfCapAllam.EndCap_ASU_MW_gross = dfCapAllam.EndCap_ASU_MW_gross * ModelScalingFactor
-
-		dfCapAllam.StartCap_LOX_t = dfCapAllam.StartCap_LOX_t * ModelScalingFactor
-		dfCapAllam.RetCap_LOX_t = dfCapAllam.RetCap_LOX_t * ModelScalingFactor
-		dfCapAllam.NewCap_LOX_t = dfCapAllam.NewCap_LOX_t * ModelScalingFactor
-		dfCapAllam.EndCap_LOX_t = dfCapAllam.EndCap_LOX_t * ModelScalingFactor
+		scale_columns!(dfCapAllam, columns_to_scale, ModelScalingFactor)
 	end
 
 	total_allam = DataFrame(
@@ -127,16 +131,17 @@ function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP:
         EP[:eP_Allam][y,t] - EP[:vCHARGE_ALLAM][y,t])
 
     # Power injected by each resource in each time step
+	allam_resources = inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX]
     dfAllam_output = DataFrame(Resource = 
-		[inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_sco2turbine_gross_power_mw";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_sco2turbine_commit";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_asu_gross_power_mw";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_asu_commit";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_net_power_output_mw";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_storage_lox_t";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_lox_in_t";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_lox_out_t";
-		inputs["RESOURCE_NAMES"][ALLAM_CYCLE_LOX] .*"_gox_t"])
+		[allam_resources .*"_sco2turbine_gross_power_mw";
+		allam_resources .*"_sco2turbine_commit";
+		allam_resources .*"_asu_gross_power_mw";
+		allam_resources .*"_asu_commit";
+		allam_resources .*"_net_power_output_mw";
+		allam_resources .*"_storage_lox_t";
+		allam_resources .*"_lox_in_t";
+		allam_resources .*"_lox_out_t";
+		allam_resources .*"_gox_t"])
 
 	gross_power_sco2turbine = value.(EP[:vOutput_AllamcycleLOX])[:,sco2turbine,:]
 	if setup["UCommit"] > 0
