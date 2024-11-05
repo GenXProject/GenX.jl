@@ -19,8 +19,10 @@ Currently supported solvers include: "Gurobi", "CPLEX", "Clp", "Cbc", or "SCIP"
 # Returns
 - `optimizer::MathOptInterface.OptimizerWithAttributes`: the configured optimizer instance.
 """
-function configure_solver(solver_settings_path::String, optimizer::Any)
-    solver_name = infer_solver(optimizer)
+function configure_solver(solver_settings_path::String, optimizer::Any; solver_name::String="")
+    if isempty(solver_name)
+        solver_name = infer_solver(optimizer)
+    end
     path = joinpath(solver_settings_path, solver_name * "_settings.yml")
 
     configure_functions = Dict("highs" => configure_highs,

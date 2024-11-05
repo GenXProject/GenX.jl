@@ -65,7 +65,8 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(settings_path, optimizer)
+    solver_name = lowercase(get(mysetup, "Solver", ""))
+    OPTIMIZER = configure_solver(settings_path, optimizer; solver_name=solver_name)
 
     #### Running a case
 
@@ -137,7 +138,8 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(settings_path, optimizer)
+    solver_name = lowercase(get(mysetup, "Solver", ""))
+    OPTIMIZER = configure_solver(settings_path, optimizer; solver_name=solver_name)
 
     model_dict = Dict()
     inputs_dict = Dict()
