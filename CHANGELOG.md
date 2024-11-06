@@ -17,6 +17,10 @@ number of concurrent Gurobi uses is limited (#783).
 charge and storage variables (#760 and #763).
 - Deduplicated docs on optimized scheduled maintenance for thermal resources (#745).
 
+### Fixed
+- Update `getproperty` function for vectors of resources to ensure compatibility 
+with Julia v1.11 (#785).
+
 ## [0.4.1] - 2024-08-20
 
 ### Added
