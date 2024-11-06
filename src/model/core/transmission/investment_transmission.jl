@@ -27,14 +27,19 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Investment Transmission Module")
 
     L = inputs["L"]     # Number of transmission lines
-    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
+    L_asym = 0 #default value of number of asymmetrical bidirectional flow lines
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
+    end
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
-        EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
+        end
         
     end
 
@@ -42,27 +47,35 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     if MultiStage == 1
         @variable(EP, vTRANSMAX[l = 1:L]>=0)
-        @variable(EP, vTRANSMAX_Pos[l = 1:L_asym]>=0)
-        @variable(EP, vTRANSMAX_Neg[l = 1:L_asym]>=0)
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            @variable(EP, vTRANSMAX_Pos[l = 1:L_asym]>=0)
+            @variable(EP, vTRANSMAX_Neg[l = 1:L_asym]>=0)
+        end
     end
 
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         @variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
-        @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
-        @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
+            @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
+        end
     end
 
     ### Expressions ###
 
     if MultiStage == 1
         @expression(EP, eTransMax[l = 1:L], vTRANSMAX[l])
-        @expression(EP, eTransMax_Pos[l = 1:L_asym], vTRANSMAX_Pos[l])
-        @expression(EP, eTransMax_Neg[l = 1:L_asym], vTRANSMAX_Neg[l])
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            @expression(EP, eTransMax_Pos[l = 1:L_asym], vTRANSMAX_Pos[l])
+            @expression(EP, eTransMax_Neg[l = 1:L_asym], vTRANSMAX_Neg[l])
+        end
     else
         @expression(EP, eTransMax[l = 1:L], inputs["pTrans_Max"][l])
-        @expression(EP, eTransMax_Pos[l = 1:L_asym], inputs["pTrans_Max_Pos"][l])
-        @expression(EP, eTransMax_Neg[l = 1:L_asym], inputs["pTrans_Max_Neg"][l])
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            @expression(EP, eTransMax_Pos[l = 1:L_asym], inputs["pTrans_Max_Pos"][l])
+            @expression(EP, eTransMax_Neg[l = 1:L_asym], inputs["pTrans_Max_Neg"][l])
+        end
     end
 
     ## Transmission power flow and loss related expressions:
@@ -103,16 +116,21 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         else
             @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
         end
-
+    end
     ## Objective Function Expressions ##
 
     if NetworkExpansion == 1
         @expression(EP,
             eTotalCNetworkExp,
-            sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
-            for l in EXPANSION_LINES)+sum(vNEW_TRANS_CAP_Pos[l] * inputs["pC_Line_Reinforcement_Pos"][l]
-            for l in EXPANSION_LINES_ASYM)+sum(vNEW_TRANS_CAP_Neg[l] * inputs["pC_Line_Reinforcement_Neg"][l]
-            for l in EXPANSION_LINES_ASYM))
+            if setup["asymmetrical_trans_flow_limit"] == 1
+                sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
+                for l in EXPANSION_LINES)+sum(vNEW_TRANS_CAP_Pos[l] * inputs["pC_Line_Reinforcement_Pos"][l]
+                for l in EXPANSION_LINES_ASYM)+sum(vNEW_TRANS_CAP_Neg[l] * inputs["pC_Line_Reinforcement_Neg"][l]
+                for l in EXPANSION_LINES_ASYM)
+            else
+                sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
+                for l in EXPANSION_LINES)
+            end)
 
         if MultiStage == 1
             # OPEX multiplier to count multiple years between two model stages
@@ -131,8 +149,10 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if MultiStage == 1
         # Linking constraint for existing transmission capacity
         @constraint(EP, cExistingTransCap[l = 1:L], vTRANSMAX[l]==inputs["pTrans_Max"][l])
-        @constraint(EP, cExistingTransCapPos[l = 1:L_asym], vTRANSMAX_Pos[l]==inputs["pTrans_Max_Pos"][l])
-        @constraint(EP, cExistingTransCapNeg[l = 1:L_asym], vTRANSMAX_Neg[l]==inputs["pTrans_Max_Neg"][l])
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            @constraint(EP, cExistingTransCapPos[l = 1:L_asym], vTRANSMAX_Pos[l]==inputs["pTrans_Max_Pos"][l])
+            @constraint(EP, cExistingTransCapNeg[l = 1:L_asym], vTRANSMAX_Neg[l]==inputs["pTrans_Max_Neg"][l])
+        end
     end
 
     # If network expansion is used:
@@ -143,19 +163,27 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             @constraint(EP,
                 cMaxFlowPossible[l in EXPANSION_LINES],
                 eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
-                cMaxFlowPossible_Pos[l in EXPANSION_LINES_ASYM],
-                eAvail_Trans_Cap_Pos[l]<=inputs["pTrans_Max_Possible_Pos"][l])
-                cMaxFlowPossible_Neg[l in EXPANSION_LINES_ASYM],
-                eAvail_Trans_Cap_Neg[l]<=inputs["pTrans_Max_Possible_Neg"][l])
+                if setup["asymmetrical_trans_flow_limit"] == 1
+                    @constraint(EP,
+                        cMaxFlowPossible_Pos[l in EXPANSION_LINES_ASYM],
+                        eAvail_Trans_Cap_Pos[l]<=inputs["pTrans_Max_Possible_Pos"][l])
+                    @constraint(EP,
+                        cMaxFlowPossible_Neg[l in EXPANSION_LINES_ASYM],
+                        eAvail_Trans_Cap_Neg[l]<=inputs["pTrans_Max_Possible_Neg"][l])
+                end
         end
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
         @constraint(EP,
             cMaxLineReinforcement[l in EXPANSION_LINES],
             vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
-            cMaxLineReinforcement_Pos[l in EXPANSION_LINES_ASYM],
-            vNEW_TRANS_CAP_Pos[l]<=inputs["pMax_Line_Reinforcement_Pos"][l])
-            cMaxLineReinforcement_Neg[l in EXPANSION_LINES_ASYM],
-            vNEW_TRANS_CAP_Neg[l]<=inputs["pMax_Line_Reinforcement_Neg"][l])
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            @constraint(EP,
+                cMaxLineReinforcement_Pos[l in EXPANSION_LINES_ASYM],
+                vNEW_TRANS_CAP_Pos[l]<=inputs["pMax_Line_Reinforcement_Pos"][l])
+            @constraint(EP,
+                cMaxLineReinforcement_Neg[l in EXPANSION_LINES_ASYM],
+                vNEW_TRANS_CAP_Neg[l]<=inputs["pMax_Line_Reinforcement_Neg"][l])
+        end
     end
     #END network expansion contraints
 

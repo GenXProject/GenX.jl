@@ -7,3 +7,4 @@ ParameterScale: 1
 WriteShadowPrices: 1
 UCommit: 2
 OverwriteResults: 1
+asymmetrical_trans_flow_limit: 0
