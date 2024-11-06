@@ -66,9 +66,7 @@ Allows to set the attribute `sym` of an `AbstractResource` object using dot synt
 - `value`: The value to set for the attribute.
 
 """
-Base.setproperty!(r::AbstractResource, sym::Symbol, value) = setindex!(parent(r),
-    value,
-    sym)
+Base.setproperty!(r::AbstractResource, sym::Symbol, value) = setindex!(parent(r), value, sym)
 
 """
     haskey(r::AbstractResource, sym::Symbol)
@@ -254,8 +252,7 @@ julia> findall(r -> max_cap_mwh(r) != 0, gen.Storage)
  50
 ```
 """
-Base.findall(f::Function, rs::Vector{<:AbstractResource}) = resource_id.(filter(r -> f(r),
-    rs))
+Base.findall(f::Function, rs::Vector{<:AbstractResource}) = resource_id.(filter(r -> f(r), rs))
 
 """
     interface(name, default=default_zero, type=AbstractResource)
