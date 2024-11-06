@@ -73,29 +73,18 @@ function write_reserve_margin_revenue(path::AbstractString,
             gen_VRE_STOR = gen.VreStorage
             tempresrev[VRE_STOR] = derating_factor.(gen_VRE_STOR, tag = i) .*
                                    ((value.(EP[:vP][VRE_STOR, :])) * weighted_price)
-            tempresrev[VRE_STOR_STOR] .-= derating_factor.(
-                gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0) .| (gen_VRE_STOR.stor_dc_charge .!= 0) .| (gen_VRE_STOR.stor_ac_discharge .!= 0) .| (gen_VRE_STOR.stor_ac_charge .!= 0)],
-                tag = i) .* (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR,
-                :]).data * weighted_price)
-            tempresrev[DC_DISCHARGE] .+= derating_factor.(
-                gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)],
-                tag = i) .* ((value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE,
-                :]).data .*
-                                           etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)])) *
-                                          weighted_price)
-            tempresrev[AC_DISCHARGE] .+= derating_factor.(
-                gen_VRE_STOR[(gen_VRE_STOR.stor_ac_discharge .!= 0)],
-                tag = i) .* ((value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE,
-                :]).data) * weighted_price)
-            tempresrev[DC_CHARGE] .-= derating_factor.(
-                gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge .!= 0)],
-                tag = i) .* ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./
-                                        etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_charge .!= 0)])) *
-                                       weighted_price)
-            tempresrev[AC_CHARGE] .-= derating_factor.(
-                gen_VRE_STOR[(gen_VRE_STOR.stor_ac_charge .!= 0)],
-                tag = i) .* ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) *
-                                       weighted_price)
+            tempresrev[VRE_STOR_STOR] .-= derating_factor.(gen[VRE_STOR_STOR], tag = i) .* 
+                                            (value.(EP[:vCHARGE_VRE_STOR][VRE_STOR_STOR, :]).data * weighted_price)
+            tempresrev[DC_DISCHARGE] .+= derating_factor.(gen[DC_DISCHARGE], tag = i) .* 
+                                          ((value.(EP[:vCAPRES_DC_DISCHARGE][DC_DISCHARGE, :]).data .*
+                                           etainverter.(gen[DC_DISCHARGE])) * weighted_price)
+            tempresrev[AC_DISCHARGE] .+= derating_factor.(gen[AC_DISCHARGE], tag = i) .* 
+                                          ((value.(EP[:vCAPRES_AC_DISCHARGE][AC_DISCHARGE, :]).data) * weighted_price)
+            tempresrev[DC_CHARGE] .-= derating_factor.(gen[DC_CHARGE], tag = i) .* 
+                                          ((value.(EP[:vCAPRES_DC_CHARGE][DC_CHARGE, :]).data ./
+                                           etainverter.(gen[DC_CHARGE])) * weighted_price)
+            tempresrev[AC_CHARGE] .-= derating_factor.(gen[AC_CHARGE], tag = i) .* 
+                                          ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * weighted_price)
         end
         tempresrev *= scale_factor
         annual_sum .+= tempresrev
