@@ -36,15 +36,19 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     # Write storage evolution over full time horizon
     hours_per_subperiod = inputs["hours_per_subperiod"];
     t_interior = 2:hours_per_subperiod
-    T = hours_per_subperiod*NPeriods
-    SOC_t = zeros(G, T)
+    T_hor = hours_per_subperiod*NPeriods # total number of time steps in time horizon
+    SOC_t = zeros(G, T_hor)
     stor_long_duration = inputs["STOR_LONG_DURATION"]
     stor_hydro_long_duration = inputs["STOR_HYDRO_LONG_DURATION"]
     period_map = inputs["Period_Map"].Rep_Period_Index
     pP_max = inputs["pP_Max"]
     e_total_cap = value.(EP[:eTotalCap])
-    v_charge = value.(EP[:vCHARGE])*1000
-    v_P = value.(EP[:vP])*1000
+    v_charge = value.(EP[:vCHARGE])
+    v_P = value.(EP[:vP])
+    if setup["ParameterScale"] == 1
+        v_charge *= ModelScalingFactor
+        v_P *= ModelScalingFactor
+    end
     if !isempty(stor_hydro_long_duration)
         v_spill = value.(EP[:vSPILL])
     end
@@ -72,11 +76,9 @@ function write_opwrap_lds_stor_init(path::AbstractString,
             end
         end
     end
-    # println(SOC_t[10,:])
-    # error("STOP")
     df_SOC_t = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
     df_SOC_t = hcat(df_SOC_t, DataFrame(SOC_t, :auto))
-    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:T]]
+    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:T_hor]]
     rename!(df_SOC_t,auxNew_Names)
     CSV.write(joinpath(path, "StorageEvol.csv"), dftranspose(df_SOC_t, false), writeheader=false)
 
