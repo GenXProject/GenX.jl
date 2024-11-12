@@ -187,7 +187,42 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     end
     # Transmission loss related constraints - linear losses as a function of absolute value
     if TRANS_LOSS_SEGS == 1
-        @constraints(EP,
+        #= Do I need to model different expressions for linear losses for each direction, like the following?
+        if setup["asymmetrical_trans_flow_limit"] ==1
+            @constraints(EP,
+            begin
+                # Losses are alpha times absolute values
+                cTLossPos[l in LOSS_LINES, t = 1:T],
+                vTLOSSPos[l, t] ==
+                inputs["pPercent_LossPos"][l] * (vTAUX_POS[l, t])
+
+                # Power flow is sum of positive and negative components
+                cTAuxSum[l in LOSS_LINES, t = 1:T],
+                vTAUX_POS[l, t] == vFLOW[l, t]
+
+                # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
+                cTAuxLimitPos[l in LOSS_LINES, t = 1:T],
+                vTAUX_POS[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
+            end)
+
+            @constraints(EP,
+            begin
+                # Losses are alpha times absolute values
+                cTLossNeg[l in LOSS_LINES, t = 1:T],
+                vTLOSSNeg[l, t] ==
+                inputs["pPercent_LossNeg"][l] * (vTAUX_NEG[l, t])
+
+                # Power flow is sum of positive and negative components
+                cTAuxSum[l in LOSS_LINES, t = 1:T],
+                vTAUX_NEG[l, t] == vFLOW[l, t]
+
+                # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
+                cTAuxLimitNeg[l in LOSS_LINES, t = 1:T],
+                vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
+            end)
+        else =#
+
+            @constraints(EP,
             begin
                 # Losses are alpha times absolute values
                 cTLoss[l in LOSS_LINES, t = 1:T],
@@ -202,7 +237,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 cTAuxLimit[l in LOSS_LINES, t = 1:T],
                 vTAUX_POS[l, t] + vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l]
             end)
-
+        end
         if UCommit == 1
             # Constraints to limit phantom losses that can occur to avoid discrete cycling costs/opportunity costs due to min down
             @constraints(EP,
@@ -244,10 +279,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             cTLoss[l in LOSS_LINES, t = 1:T],
             vTLOSS[l,
                 t]==
-            (inputs["pTrans_Loss_Coef"][l] *
+            (inputs["pTrans_Loss_Coef_Pos"][l] *
              sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                  vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
-            (inputs["pTrans_Loss_Coef"][l] *
+            (inputs["pTrans_Loss_Coef_Neg"][l] *
              sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                  vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
         # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
