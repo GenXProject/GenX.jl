@@ -187,7 +187,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     end
     # Transmission loss related constraints - linear losses as a function of absolute value
     if TRANS_LOSS_SEGS == 1
-        #= Do I need to model different expressions for linear losses for each direction, like the following?
+        ## Do I need to model different expressions for linear losses for each direction, like the following?
         if setup["asymmetrical_trans_flow_limit"] ==1
             @constraints(EP,
             begin
@@ -220,7 +220,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 cTAuxLimitNeg[l in LOSS_LINES, t = 1:T],
                 vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
             end)
-        else =#
+        else ## Do I need to model different expressions for linear losses for each direction, like the following?
 
             @constraints(EP,
             begin
@@ -275,16 +275,29 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Losses are expressed as a piecewise approximation of a quadratic function of power flows across each line
         # Eq 1: Total losses are function of loss coefficient times the sum of auxilary segment variables across all segments of piecewise approximation
         # (Includes both positive domain and negative domain segments)
-        @constraint(EP,
-            cTLoss[l in LOSS_LINES, t = 1:T],
-            vTLOSS[l,
-                t]==
-            (inputs["pTrans_Loss_Coef_Pos"][l] *
-             sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                 vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
-            (inputs["pTrans_Loss_Coef_Neg"][l] *
-             sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                 vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
+        if setup["asymmetrical_trans_flow_limit"] ==1
+            @constraint(EP,
+                cTLoss[l in LOSS_LINES, t = 1:T],
+                vTLOSS[l,
+                    t]==
+                (inputs["pTrans_Loss_Coef_Pos"][l] *
+                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
+                (inputs["pTrans_Loss_Coef_Neg"][l] *
+                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
+        else
+            @constraint(EP,
+                cTLoss[l in LOSS_LINES, t = 1:T],
+                vTLOSS[l,
+                    t]==
+                (inputs["pTrans_Loss_Coef"][l] *
+                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
+                (inputs["pTrans_Loss_Coef"][l] *
+                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
+        end
         # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
         # from both positive and negative domains must total the actual power flow across the line
         @constraints(EP,
