@@ -15,6 +15,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
     weight = inputs["omega"]
 
     df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
