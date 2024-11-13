@@ -554,7 +554,7 @@ The updated objective function $OBJ^{*}$ returned by this method takes the form:
     OBJ^{*} = DF * OPEXMULT * OBJ + \alpha
 \end{aligned}
 ```
-where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor (applied only in the non-myopic case), which discounts costs associated with the model stage $p$ to year-0 dollars:
+where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor, which discounts costs associated with the model stage $p$ to year-0 dollars:
 ```math
 \begin{aligned}
     DF = \frac{1}{(1+WACC)^{\sum^{(p-1)}_{k=0}L_{k}}}
@@ -585,23 +585,16 @@ function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
     for stage_count in 1:(cur_stage - 1)
         cum_years += settings_d["StageLengths"][stage_count]
     end
-    stage_len = settings_d["StageLengths"][cur_stage]
     wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
-    myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
     OPEXMULT = inputs["OPEXMULT"] # OPEX multiplier to count multiple years between two model stages, set in configure_multi_stage_inputs.jl
 
     # Overwrite the objective function to include the cost-to-go variable (not in myopic case)
     # Multiply discount factor to all terms except the alpha term or the cost-to-go function
     # All OPEX terms get an additional adjustment factor
-    if myopic
-        ### No discount factor or OPEX multiplier applied in myopic case as costs are left annualized.
-        @objective(EP, Min, EP[:eObj])
-    else
-        DF = 1 / (1 + wacc)^(cum_years)  # Discount factor applied all to costs in each stage ###
-        # Initialize the cost-to-go variable
-        @variable(EP, vALPHA>=0)
-        @objective(EP, Min, DF * OPEXMULT * EP[:eObj]+vALPHA)
-    end
+    DF = 1 / (1 + wacc)^(cum_years)  # Discount factor applied all to costs in each stage ###
+    # Initialize the cost-to-go variable
+    @variable(EP, vALPHA>=0)
+    @objective(EP, Min, DF * OPEXMULT * EP[:eObj]+vALPHA)
 
     return EP
 end
