@@ -54,9 +54,7 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
             if !isempty(inputs["VRE_STOR"])
                 gen_VRE_STOR = gen.VreStorage
                 HAS_MIN_CAP_STOR = ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap)
-                MIN_CAP_GEN_SOLAR = ids_with_policy(gen_VRE_STOR,
-                    min_cap_solar,
-                    tag = mincap)
+                MIN_CAP_GEN_SOLAR = ids_with_policy(gen_VRE_STOR, min_cap_solar, tag = mincap)
                 MIN_CAP_GEN_WIND = ids_with_policy(gen_VRE_STOR, min_cap_wind, tag = mincap)
                 MIN_CAP_GEN_ASYM_DC_DIS = intersect(inputs["VS_ASYM_DC_DISCHARGE"],
                     HAS_MIN_CAP_STOR)
@@ -85,13 +83,13 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
                 end
                 if !isempty(MIN_CAP_GEN_SYM_DC)
                     dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN_SYM_DC] .+= ((value.(EP[:eTotalCap_STOR][MIN_CAP_GEN_SYM_DC]).data .* 
-                                                                            power_to_energy_dc.(gen[intersect(HAS_MIN_CAP_STOR, storage_sym_dc_discharge(gen))]) .* 
-                                                                            etainverter.(gen[intersect(HAS_MIN_CAP_STOR, storage_sym_dc_discharge(gen))])) * 
+                                                                            power_to_energy_dc.(gen[MIN_CAP_GEN_SYM_DC]) .* 
+                                                                            etainverter.(gen[MIN_CAP_GEN_SYM_DC])) * 
                                                                             (dual.(EP[:cZoneMinCapReq][mincap])))
                 end
                 if !isempty(MIN_CAP_GEN_SYM_AC)
                     dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN_SYM_AC] .+= ((value.(EP[:eTotalCap_STOR][MIN_CAP_GEN_SYM_AC]).data .* 
-                                                                            power_to_energy_ac.(gen[intersect(HAS_MIN_CAP_STOR, storage_sym_ac_discharge(gen))])) * 
+                                                                            power_to_energy_ac.(gen[MIN_CAP_GEN_SYM_AC])) * 
                                                                             (dual.(EP[:cZoneMinCapReq][mincap])))
                 end
             end
