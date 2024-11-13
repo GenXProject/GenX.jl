@@ -925,7 +925,7 @@ function process_piecewisefuelusage!(setup::Dict,
     inputs["THERM_COMMIT_PWFU"] = Int64[]
 
     if any(haskey.(gen, :pwfu_fuel_usage_zero_load_mmbtu_per_h))
-        thermal_gen = gen.Thermalthermal_gen = gen.Thermal
+        thermal_gen = gen.Thermal
         has_pwfu = haskey.(thermal_gen, :pwfu_fuel_usage_zero_load_mmbtu_per_h)
         @assert all(has_pwfu) "Piecewise fuel usage data is not consistent across thermal generators"
 

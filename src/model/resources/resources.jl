@@ -1069,7 +1069,7 @@ end
 """
     allam_cycle_lox(rs::Vector{T}) where T <: AbstractResource
 
-Returns the indices of all VRE_STOR resources in the vector `rs`.
+Returns the indices of all ALLAM_CYCLE_LOX resources in the vector `rs`.
 """
 allam_cycle_lox(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, AllamCycleLOX), rs)
 

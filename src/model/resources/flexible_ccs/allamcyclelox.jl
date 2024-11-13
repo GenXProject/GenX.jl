@@ -66,9 +66,8 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     WITH_LOX = inputs["WITH_LOX"]                                   # Set of Allam Cycel generators that can use liquid oxygen storage
 
     # time related 
-    START_SUBPERIODS = inputs["START_SUBPERIODS"]                   # start
-    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]             # interiors
-    hours_per_subperiod = inputs["hours_per_subperiod"]
+
+    p = inputs["hours_per_subperiod"]
 
     # Allam cycle components
     # by default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
@@ -114,11 +113,8 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cLOX_out[y in ALLAM_CYCLE_LOX,t=1:T], eLOX_out[y ,t]>=0)
     
     # Constraint 1: liquid oxygen storage mass balance
-    # note, this is not compatiable when time domain reduction is on
-    # dynamic of lox storage system, normal [tonne LOX]
-    @constraint(EP, cStore_lox[y in ALLAM_CYCLE_LOX, t in INTERIOR_SUBPERIODS], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, t-1] + vLOX_in[y, t] - eLOX_out[y, t])
-    # dynamic of lox storage system, wrapping [tonne LOX]
-    @constraint(EP, cStore_loxwrap[y in ALLAM_CYCLE_LOX, t in START_SUBPERIODS], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, t+hours_per_subperiod-1] + vLOX_in[y, t] - eLOX_out[y, t])
+    # dynamic of lox storage system
+    @constraint(EP, cStore_lox[y in ALLAM_CYCLE_LOX, t i = 1:T], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, hoursbefore(p, t, 1)] + vLOX_in[y, t] - eLOX_out[y, t])
 
     # Constraint 2: power balance
     # net power output = gross power output from sCO2 - power consumption associated with ASU - auxiliary power

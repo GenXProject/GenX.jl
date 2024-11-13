@@ -20,7 +20,7 @@ function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     WITH_LOX = inputs["WITH_LOX"]
 
     # time related 
-    hours_per_subperiod = inputs["hours_per_subperiod"]
+    p = inputs["hours_per_subperiod"]
 
     # Allam cycle components
     # by default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
@@ -32,23 +32,22 @@ function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     ### Maximum ramp up and down between consecutive hours 
     # rampup constraints
     @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in 1:T],
-        EP[:vOutput_AllamcycleLOX][y,i,t] - EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(hours_per_subperiod, t, 1)] <=
-        allam_dict[y, "ramp_up"][i] * EP[:vCAP_AllamCycleLOX][y,i])
+        EP[:vOutput_AllamcycleLOX][y,i,t] - EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(p, t,1)] <=
+        allam_dict[y, "ramp_up"][i] * EP[:eTotalCap_AllamcycleLOX][y,i])
 
     # rampdown constraints
     @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t in 1:T],
-        EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(hours_per_subperiod,t,1)] - EP[:vOutput_AllamcycleLOX][y,i,t] <=
-        allam_dict[y, "ramp_dn"][i] * EP[:vCAP_AllamCycleLOX][y,i])
+        EP[:vOutput_AllamcycleLOX][y,i,hoursbefore(p, t,1)] - EP[:vOutput_AllamcycleLOX][y,i,t] <=
+        allam_dict[y, "ramp_dn"][i] * EP[:eTotalCap_AllamcycleLOX][y,i])
 
     ### Minimum and maximum power output constraints
     @constraints(EP, begin
         # Minimum stable power generated per technology "y" at hour "t" > Min power
-        [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] >= allam_dict[y, "min_power"][i]*EP[:vCAP_AllamCycleLOX][y,i]
+        [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] >= allam_dict[y, "min_power"][i]*EP[:eTotalCap_AllamcycleLOX][y,i]
     # Maximum power generated per technology "y" at hour "t" < Max power
-        [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] <= EP[:vCAP_AllamCycleLOX][y,i]
+        [y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T], EP[:vOutput_AllamcycleLOX][y,i,t] <= EP[:eTotalCap_AllamcycleLOX][y,i]
     end)
 
-    
     # operational reserve
     # operational reserve is based on the sCO2 turbines instead of the whole system
     if setup["OperationalReserves"] > 0
@@ -74,10 +73,10 @@ function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     
         # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
         expr = extract_time_series_to_expression(EP[:vP_Allam], ALLAM_CYCLE_LOX)
-        add_similar_to_expression!(expr[ALLAM_REG, :], -ALLAM_RSV[ALLAM_REG, :])
+        add_similar_to_expression!(expr[ALLAM_REG, :], -vRSV[ALLAM_REG, :])
         @constraint(EP,
             [y in ALLAM_CYCLE_LOX, t in 1:T],
-            expr[y, t]>=min_power(gen[y]) * eTotalCap[y,sco2turbine])
+            expr[y, t]>=allam_dict[y, "min_power"][sco2turbine] * eTotalCap[y,sco2turbine])
     
         # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
         expr = extract_time_series_to_expression(EP[:vP_Allam], ALLAM_CYCLE_LOX)
