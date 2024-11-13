@@ -89,6 +89,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     HAS_FUEL = inputs["HAS_FUEL"]
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
 
     fuels = inputs["fuels"]
     fuel_costs = inputs["fuel_costs"]
@@ -234,7 +235,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
-        for y in intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)))
+        for y in intersect(setdiff(resources_with_fuel(gen, fuels[f]), CCS_SOLVENT_STORAGE), SINGLE_FUEL)))
 
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
@@ -251,7 +252,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP,
         cFuelCalculation_single[
-            y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, THERM_COMMIT)),
+            y in intersect(SINGLE_FUEL, setdiff(setdiff(HAS_FUEL, THERM_COMMIT), CCS_SOLVENT_STORAGE)),
             t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y])==0)
 

@@ -59,7 +59,8 @@ function co2!(EP::Model, inputs::Dict)
     Z = inputs["Z"]     # Number of zones
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
-    CCS = inputs["CCS"]
+    CCS = inputs["CCS"] # including CCS_SOLVENT_STORAGE
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
 
     fuel_CO2 = inputs["fuel_CO2"] # CO2 content of fuel (t CO2/MMBTU or ktCO2/Billion BTU)
     omega = inputs["omega"]
@@ -85,28 +86,40 @@ function co2!(EP::Model, inputs::Dict)
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
         # CO2_Capture_Fraction refers to the CO2 capture rate of CCS equiped power plants at a steady state 
         # CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equiped power plants during startup events
-
         @expression(EP, eEmissionsByPlant[y = 1:G, t = 1:T],
             if y in SINGLE_FUEL
-                (1 - biomass(gen[y]) - co2_capture_fraction(gen[y])) * EP[:vFuel][y, t] *
-                fuel_CO2[fuel(gen[y])] +
-                (1 - biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) *
-                EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])]
+                if y in CCS_SOLVENT_STORAGE
+                    EP[:eEmissionsByPlant_CCS_SS][y, t]
+                else
+                    (1 - biomass(gen[y]) - co2_capture_fraction(gen[y])) * EP[:vFuel][y, t] *
+                    fuel_CO2[fuel(gen[y])] +
+                    (1 - biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) *
+                    EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])]
+                end
             else
-                sum((1 - biomass(gen[y]) - co2_capture_fraction(gen[y])) *
-                    EP[:vMulFuels][y, i, t] * fuel_CO2[fuel_cols(gen[y], tag = i)]
-                for i in 1:max_fuels) +
-                sum((1 - biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) *
-                    EP[:vMulStartFuels][y, i, t] * fuel_CO2[fuel_cols(gen[y], tag = i)]
-                for i in 1:max_fuels)
+                if y in CCS_SOLVENT_STORAGE
+                    println("Error: CCS with solvent storage is not compatiable with multi fuels")
+                else
+                    sum((1 - biomass(gen[y]) - co2_capture_fraction(gen[y])) *
+                        EP[:vMulFuels][y, i, t] * fuel_CO2[fuel_cols(gen[y], tag = i)]
+                    for i in 1:max_fuels) +
+                    sum((1 - biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) *
+                        EP[:vMulStartFuels][y, i, t] * fuel_CO2[fuel_cols(gen[y], tag = i)]
+                    for i in 1:max_fuels)
+                end
             end)
 
         # CO2 captured from power plants in "Generators_data.csv"
+        absorber = 3 # index for the absorber in CCS_SOLVENT_STORAGE
         @expression(EP, eEmissionsCaptureByPlant[y in CCS, t = 1:T],
             if y in SINGLE_FUEL
-                co2_capture_fraction(gen[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(gen[y])] +
-                co2_capture_fraction_startup(gen[y]) * EP[:eStartFuel][y, t] *
-                fuel_CO2[fuel(gen[y])]
+                if y in CCS_SOLVENT_STORAGE
+                    EP[:vOutput_CCS_SS][y, absorber, t]
+                else
+                    co2_capture_fraction(gen[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(gen[y])] +
+                    co2_capture_fraction_startup(gen[y]) * EP[:eStartFuel][y, t] *
+                    fuel_CO2[fuel(gen[y])]
+                end
             else
                 sum(co2_capture_fraction(gen[y]) * EP[:vMulFuels][y, i, t] *
                     fuel_CO2[fuel_cols(gen[y], tag = i)] for i in 1:max_fuels) +

@@ -1,0 +1,8 @@
+Resource,ESR_1,ESR_2
+MA_solar_pv,1,1
+CT_onshore_wind,1,1
+CT_solar_pv,1,1
+ME_onshore_wind,1,1
+MA_CCS_SolventStorage,0.95,0.95
+CT_CCS_SolventStorage,0.95,0.95
+ME_CCS_SolventStorage,0.95,0.95

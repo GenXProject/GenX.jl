@@ -161,6 +161,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         VS_STOR = []
     end
 
+    if !isempty(inputs["CCS_SOLVENT_STORAGE"])
+        elapsed_time_output_ccs_ss = @elapsed write_ccs_ss_output(path, inputs, setup, EP)
+        println("Time elapsed for writing output from CCS with solvent storage is")
+        println(elapsed_time_output_ccs_ss)
+        elapsed_time_capacity_ccs_ss = @elapsed write_ccs_ss_capacity(path, inputs, setup, EP)
+        println("Time elapsed for writing capacity of CCS with solvent storage is")
+        println(elapsed_time_capacity_ccs_ss)
+    end
+
     if has_duals(EP) == 1
         if output_settings_d["WriteReliability"]
             elapsed_time_reliability = @elapsed write_reliability(path, inputs, setup, EP)

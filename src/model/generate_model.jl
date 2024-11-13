@@ -132,6 +132,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     fuel!(EP, inputs, setup)
 
+    # Model constraints, variables, expressions related to CCS Solvent Storage
+    if !isempty(inputs["CCS_SOLVENT_STORAGE"])
+        ccs_solvent_storage!(EP, inputs, setup)
+    end
+
     co2!(EP, inputs)
 
     if setup["OperationalReserves"] > 0
@@ -199,6 +204,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
        (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
         electrolyzer!(EP, inputs, setup)
     end
+
     # Policies
 
     if setup["OperationalReserves"] > 0

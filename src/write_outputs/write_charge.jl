@@ -14,6 +14,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
     FUSION = ids_with(gen, :fusion)
 
     weight = inputs["omega"]
@@ -36,6 +37,10 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     if !isempty(VS_STOR)
         push!(charge, value.(EP[:vCHARGE_VRE_STOR]))
         push!(charge_ids, VS_STOR)
+    end
+    if !isempty(CCS_SOLVENT_STORAGE)
+        push!(charge, value.(EP[:vCHARGE_CCS_SS]))
+        push!(charge_ids, CCS_SOLVENT_STORAGE)
     end
     if !isempty(FUSION)
         _, mat = prepare_fusion_parasitic_power(EP, inputs)

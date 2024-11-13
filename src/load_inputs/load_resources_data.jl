@@ -15,7 +15,8 @@ function _get_resource_info()
         flex_demand = (filename = "Flex_demand.csv", type = FlexDemand),
         must_run = (filename = "Must_run.csv", type = MustRun),
         electrolyzer = (filename = "Electrolyzer.csv", type = Electrolyzer),
-        vre_stor = (filename = "Vre_stor.csv", type = VreStorage))
+        vre_stor = (filename = "Vre_stor.csv", type = VreStorage),
+        ccs_solvent_storage = (filename = "CCS_Solvent_Storage.csv", type = CCSSolventStorage))
     return resource_info
 end
 
@@ -63,7 +64,8 @@ function _get_summary_map()
         :Thermal => "Thermal",
         :Vre => "VRE",
         :MustRun => "Must_run",
-        :VreStorage => "VRE_and_storage")
+        :VreStorage => "VRE_and_storage",
+        :CCSSolventStorage => "CCS_Solvent_Storage")
     max_length = maximum(length.(values(names_map)))
     for (k, v) in names_map
         names_map[k] = v * repeat(" ", max_length - length(v))
@@ -185,6 +187,89 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
 end
 
 """
+    scale_ccssolventstorage_data!(ccs_solvent_storage_in::DataFrame, scale_factor::Float64)
+
+Scales vre_stor attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
+See documentation for descriptions of each column being scaled.
+
+# Arguments
+- `ccssolventstorage_in` (DataFrame): A dataframe containing data for flexible ccs (e.g, AllamCycle or 
+storage coupled NGCC-CCS)
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
+"""
+
+function scale_ccs_solvent_storage_data!(ccs_solvent_storage_in::DataFrame, scale_factor::Float64)
+    columns_to_scale = [
+        :existing_cap_mw_gasturbine,              # to GW
+        :existing_cap_mw_steamturbine,            # to GW
+        :existing_cap_ton_absorber,               # to kt
+        :existing_cap_mw_compressor,              # to GW
+        :existing_cap_ton_regenerator,            # to kt
+        :existing_cap_ton_solventstorage_rich,    # to kt
+        :existing_cap_ton_solventstorage_lean,    # to kt
+
+        :cap_size_mw_gasturbine,
+        :cap_size_mw_steamturbine,
+        :cap_size_ton_absorber,
+        :cap_size_mw_compressor,
+        :cap_size_ton_regenerator,
+        :cap_size_ton_solventstorage_rich,
+        :cap_size_ton_solventstorage_lean,
+
+        :min_cap_gasturbine,
+        :max_cap_gasturbine,
+        :min_cap_steamturbine,
+        :max_cap_steamturbine,
+        :min_ton_absorber,
+        :max_ton_absorber,
+        :min_mw_compressor,
+        :max_mw_compressor,
+        :min_ton_regenerator,
+        :max_ton_regenerator,
+        :min_ton_solventstorage_rich,
+        :max_ton_solventstorage_rich,
+        :min_ton_solventstorage_lean,
+        :max_ton_solventstorage_lean,
+
+        :inv_cost_per_mwyr_gasturbine,           # to $M/GW/yr
+        :inv_cost_per_mwyr_steamturbine,         # to $M/GW/yr
+        :inv_cost_per_tonyr_absorber,            # to $M/kt/yr
+        :inv_cost_per_mwyr_compressor,           # to $M/GW/yr
+        :inv_cost_per_tonyr_regenerator,         # to $M/kt/yr
+        :inv_cost_per_tonyr_solventstorage_rich, # to $M/kt/yr
+        :inv_cost_per_tonyr_solventstorage_lean, # to $M/kt/yr
+
+        :fixed_om_cost_per_mwyr_gasturbine,
+        :fixed_om_cost_per_mwyr_steamturbine,
+        :fixed_om_cost_per_tonyr_absorber,
+        :fixed_om_cost_per_mwyr_compressor,
+        :fixed_om_cost_per_tonyr_regenerator,
+        :fixed_om_cost_per_tonyr_solventstorage_rich,
+        :fixed_om_cost_per_tonyr_solventstorage_lean,
+
+        :var_om_cost_per_mwh_gasturbine,          # to $M/GWh
+        :var_om_cost_per_mwh_steamturbine,        # to $M/GWh
+        :var_om_cost_per_ton_absorber,            # to $M/kt
+        :var_om_cost_per_mwh_compressor,          # to $M/GWh
+        :var_om_cost_per_ton_regenerator,         # to $M/kt
+        :var_om_cost_per_ton_solventstorage_rich, # to $M/kt
+        :var_om_cost_per_ton_solventstorage_lean, # to $M/kt
+
+        :start_cost_per_mw_gasturbine,            # to $M/GW
+        :start_cost_per_mw_steamturbine,          # to $M/GW
+        :start_cost_per_ton_absorber,             # to $M/kt
+        :start_cost_per_mw_compressor,            # to $M/GW
+        :start_cost_per_ton_regenerator,          # to $M/kt
+        :start_cost_per_ton_solventstorage_rich,  # to $M/kt
+        :start_cost_per_ton_solventstorage_lean,  # to $M/kt
+    ]
+
+    scale_columns!(ccs_solvent_storage_in, columns_to_scale, scale_factor)
+    return nothing
+end
+
+"""
     scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
 
 Scales in-place the columns in `columns_to_scale` of a dataframe `df` by a `scale_factor`.
@@ -227,6 +312,8 @@ function load_resource_df(path::AbstractString, scale_factor::Float64, resource_
     scale_resources_data!(resource_in, scale_factor)
     # scale vre_stor columns if necessary
     resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor)
+    # scale ccs_solvent_storage columns if necessary???????
+    resource_type == CCSSolventStorage && scale_ccs_solvent_storage_data!(resource_in, scale_factor)
     return resource_in
 end
 
@@ -1355,6 +1442,58 @@ function add_resources_to_input_data!(inputs::Dict,
         inputs["ZONES_DC_CHARGE"] = zone_id(gen[storage_dc_charge(gen)])
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
     end
+
+    ## flexible operation of CCS
+    # CCS with solvent storage
+    inputs["CCS_SOLVENT_STORAGE"] = ccs_solvent_storage(gen)
+
+    #reconstruct a dictionary to store component-wise data for CCS with solvent storage.
+    # the order must follow gas turbine -> steam turbine -> absorber -> compressor -> regenerator -> rich solvent storage -> lean solvent storage
+    solvent_storage_dict = Dict()
+    for y in inputs["CCS_SOLVENT_STORAGE"]
+        solvent_storage_dict[y, "inv_cost"] = inv_cost_per_mwyr_gasturbine(gen[y]), inv_cost_per_mwyr_steamturbine(gen[y]),
+                                              inv_cost_per_tonyr_absorber(gen[y]), inv_cost_per_mwyr_compressor(gen[y]),
+                                              inv_cost_per_tonyr_regenerator(gen[y]), inv_cost_per_tonyr_solventstorage_rich(gen[y]),
+                                              inv_cost_per_tonyr_solventstorage_lean(gen[y])
+        solvent_storage_dict[y, "fom_cost"] = fixed_om_cost_per_mwyr_gasturbine(gen[y]), fixed_om_cost_per_mwyr_steamturbine(gen[y]),
+                                              fixed_om_cost_per_tonyr_absorber(gen[y]), fixed_om_cost_per_mwyr_compressor(gen[y]),
+                                              fixed_om_cost_per_tonyr_regenerator(gen[y]), fixed_om_cost_per_tonyr_solventstorage_rich(gen[y]),
+                                              fixed_om_cost_per_tonyr_solventstorage_lean(gen[y])
+        solvent_storage_dict[y, "vom_cost"] = var_om_cost_per_mwh_gasturbine(gen[y]), var_om_cost_per_mwh_steamturbine(gen[y]),
+                                              var_om_cost_per_ton_absorber(gen[y]), var_om_cost_per_mwh_compressor(gen[y]),
+                                              var_om_cost_per_ton_regenerator(gen[y]), var_om_cost_per_ton_solventstorage_rich(gen[y]),
+                                              var_om_cost_per_ton_solventstorage_lean(gen[y])
+        solvent_storage_dict[y, "cap_size"] = cap_size_mw_gasturbine(gen[y]), cap_size_mw_steamturbine(gen[y]),
+                                              cap_size_ton_absorber(gen[y]), cap_size_mw_compressor(gen[y]),
+                                              cap_size_ton_regenerator(gen[y]), cap_size_ton_solventstorage_rich(gen[y]),
+                                              cap_size_ton_solventstorage_lean(gen[y])
+        solvent_storage_dict[y, "start_cost"] = start_cost_per_mw_gasturbine(gen[y]), start_cost_per_mw_steamturbine(gen[y]),
+                                                start_cost_per_ton_absorber(gen[y]), start_cost_per_mw_compressor(gen[y]),
+                                                start_cost_per_ton_regenerator(gen[y]), start_cost_per_ton_solventstorage_rich(gen[y]),
+                                                start_cost_per_ton_solventstorage_lean(gen[y])
+        solvent_storage_dict[y,"start_fuel"] = start_fuel_mmbtu_per_mw_gasturbine(gen[y]), start_fuel_mmbtu_per_mw_steamturbine(gen[y]),
+                                               0, 0, 0, 0, 0
+        solvent_storage_dict[y, "min_power"] = min_power_gasturbine(gen[y]), min_power_steamturbine(gen[y]),
+                                               min_power_absorber(gen[y]), min_power_compressor(gen[y]),
+                                               min_power_regenerator(gen[y])
+        solvent_storage_dict[y, "up_time"] = up_time_gasturbine(gen[y]), up_time_steamturbine(gen[y]),
+                                             up_time_absorber(gen[y]), up_time_compressor(gen[y]),
+                                             up_time_regenerator(gen[y]), 0, 0
+        solvent_storage_dict[y, "down_time"] = dn_time_gasturbine(gen[y]), dn_time_steamturbine(gen[y]),
+                                               dn_time_absorber(gen[y]), dn_time_compressor(gen[y]),
+                                               dn_time_regenerator(gen[y]), 0, 0
+        solvent_storage_dict[y, "ramp_up"] = ramp_up_gasturbine(gen[y]), ramp_up_steamturbine(gen[y]),
+                                             ramp_up_absorber(gen[y]), ramp_up_compressor(gen[y]),
+                                             ramp_up_regenerator(gen[y]), 0, 0
+        solvent_storage_dict[y, "ramp_dn"] = ramp_dn_gasturbine(gen[y]), ramp_dn_steamturbine(gen[y]),
+                                             ramp_dn_absorber(gen[y]), ramp_dn_compressor(gen[y]),
+                                             ramp_dn_regenerator(gen[y]), 0, 0
+        solvent_storage_dict[y, "existing_cap"] = existing_cap_mw_gasturbine(gen[y]), existing_cap_mw_steamturbine(gen[y]),
+                                                  existing_cap_ton_absorber(gen[y]), existing_cap_mw_compressor(gen[y]),
+                                                  existing_cap_ton_regenerator(gen[y]), existing_cap_ton_solventstorage_rich(gen[y]),
+                                                  existing_cap_ton_solventstorage_lean(gen[y])
+    end
+    inputs["solvent_storage_dict"] = solvent_storage_dict
 
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)

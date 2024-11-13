@@ -12,6 +12,7 @@ Possible values:
 - :FlexDemand
 - :VreStorage
 - :Electrolyzer
+- :CCSSolventStorage
 """
 const resource_types = (:Thermal,
     :Vre,
@@ -20,7 +21,8 @@ const resource_types = (:Thermal,
     :MustRun,
     :FlexDemand,
     :VreStorage,
-    :Electrolyzer)
+    :Electrolyzer,
+    :CCSSolventStorage)
 
 # Create composite types (structs) for each resource type in resource_types
 for r in resource_types
@@ -1065,6 +1067,97 @@ for attr in (:min_retired_cap_inverter_mw,
     cum_attr = Symbol("cum_" * String(attr))
     @eval @interface $cum_attr default_zero
 end
+
+# Flexible CCS with solvent storage
+"""
+    ccs_solvent_storage(rs::Vector{T}) where T <: AbstractResource
+Returns the indices of all CCS_SOLVENT_STORAGE resources in the vector `rs`.
+"""
+ccs_solvent_storage(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, CCSSolventStorage), rs)
+
+# cap size of each component
+cap_size_mw_gasturbine(r::AbstractResource) = get(r, :cap_size_mw_gasturbine, default_percent)
+cap_size_mw_steamturbine(r::AbstractResource) = get(r, :cap_size_mw_steamturbine, default_percent)
+cap_size_ton_absorber(r::AbstractResource) = get(r, :cap_size_ton_absorber, default_percent)
+cap_size_mw_compressor(r::AbstractResource) = get(r, :cap_size_mw_compressor, default_percent)
+cap_size_ton_regenerator(r::AbstractResource) = get(r, :cap_size_ton_regenerator, default_percent)
+cap_size_ton_solventstorage_rich(r::AbstractResource) = get(r, :cap_size_ton_solventstorage_rich, default_percent)
+cap_size_ton_solventstorage_lean(r::AbstractResource) = get(r, :cap_size_ton_solventstorage_lean, default_percent)
+
+#cost related to ccs with solvent storage
+inv_cost_per_mwyr_gasturbine(r::AbstractResource) = get(r, :inv_cost_per_mwyr_gasturbine, default_zero)
+inv_cost_per_mwyr_steamturbine(r::AbstractResource) = get(r, :inv_cost_per_mwyr_steamturbine, default_zero)
+inv_cost_per_tonyr_absorber(r::AbstractResource) = get(r, :inv_cost_per_tonyr_absorber, default_zero)
+inv_cost_per_mwyr_compressor(r::AbstractResource) = get(r, :inv_cost_per_mwyr_compressor, default_zero)
+inv_cost_per_tonyr_regenerator(r::AbstractResource) = get(r, :inv_cost_per_tonyr_regenerator, default_zero)
+inv_cost_per_tonyr_solventstorage_rich(r::AbstractResource) = get(r, :inv_cost_per_tonyr_solventstorage_rich, default_zero)
+inv_cost_per_tonyr_solventstorage_lean(r::AbstractResource) = get(r, :inv_cost_per_tonyr_solventstorage_lean, default_zero)
+
+fixed_om_cost_per_mwyr_gasturbine(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr_gasturbine, default_zero)
+fixed_om_cost_per_mwyr_steamturbine(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr_steamturbine, default_zero)
+fixed_om_cost_per_tonyr_absorber(r::AbstractResource) = get(r, :fixed_om_cost_per_tonyr_absorber, default_zero)
+fixed_om_cost_per_mwyr_compressor(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr_compressor, default_zero)
+fixed_om_cost_per_tonyr_regenerator(r::AbstractResource) = get(r, :fixed_om_cost_per_tonyr_regenerator, default_zero)
+fixed_om_cost_per_tonyr_solventstorage_rich(r::AbstractResource) = get(r, :fixed_om_cost_per_tonyr_solventstorage_rich, default_zero)
+fixed_om_cost_per_tonyr_solventstorage_lean(r::AbstractResource) = get(r, :fixed_om_cost_per_tonyr_solventstorage_lean, default_zero)
+
+var_om_cost_per_mwh_gasturbine(r::AbstractResource) = get(r, :var_om_cost_per_mwh_gasturbine, default_zero)
+var_om_cost_per_mwh_steamturbine(r::AbstractResource) = get(r, :var_om_cost_per_mwh_steamturbine, default_zero)
+var_om_cost_per_ton_absorber(r::AbstractResource) = get(r, :var_om_cost_per_ton_absorber, default_zero)
+var_om_cost_per_mwh_compressor(r::AbstractResource) = get(r, :var_om_cost_per_mwh_compressor, default_zero)
+var_om_cost_per_ton_regenerator(r::AbstractResource) = get(r, :var_om_cost_per_ton_regenerator, default_zero)
+var_om_cost_per_ton_solventstorage_rich(r::AbstractResource) = get(r, :var_om_cost_per_ton_solventstorage_rich, default_zero)
+var_om_cost_per_ton_solventstorage_lean(r::AbstractResource) = get(r, :var_om_cost_per_ton_solventstorage_lean, default_zero)
+
+start_cost_per_mw_gasturbine(r::AbstractResource) = get(r, :start_cost_per_mw_gasturbine, default_zero)
+start_cost_per_mw_steamturbine(r::AbstractResource) = get(r, :start_cost_per_mw_steamturbine, default_zero)
+start_cost_per_ton_absorber(r::AbstractResource) = get(r, :start_cost_per_ton_absorber, default_zero)
+start_cost_per_mw_compressor(r::AbstractResource) = get(r, :start_cost_per_mw_compressor, default_zero)
+start_cost_per_ton_regenerator(r::AbstractResource) = get(r, :start_cost_per_ton_regenerator, default_zero)
+start_cost_per_ton_solventstorage_rich(r::AbstractResource) = get(r, :start_cost_per_ton_solventstorage_rich, default_zero)
+start_cost_per_ton_solventstorage_lean(r::AbstractResource) = get(r, :start_cost_per_ton_solventstorage_lean, default_zero)
+
+start_fuel_mmbtu_per_mw_gasturbine(r::AbstractResource) = get(r, :start_fuel_mmbtu_per_mw_gasturbine, default_zero)
+start_fuel_mmbtu_per_mw_steamturbine(r::AbstractResource) = get(r, :start_fuel_mmbtu_per_mw_steamturbine, default_zero)
+
+# unit commitment for ccs with solvent storage, only for turbines, absorbers, compressors, and regenerators
+min_power_gasturbine(r::AbstractResource) = get(r, :min_power_percentage_gasturbine, default_zero)
+min_power_steamturbine(r::AbstractResource) = get(r, :min_power_percentage_steamturbine, default_zero)
+min_power_absorber(r::AbstractResource) = get(r, :min_power_percentage_absorber, default_zero)
+min_power_compressor(r::AbstractResource) = get(r, :min_power_percentage_compressor, default_zero)
+min_power_regenerator(r::AbstractResource) = get(r, :min_power_percentage_regenerator, default_zero)
+
+ramp_up_gasturbine(r::AbstractResource) = get(r, :ramp_up_percentage_gasturbine, default_percent)
+ramp_up_steamturbine(r::AbstractResource) = get(r, :ramp_up_percentage_steamturbine, default_percent)
+ramp_up_absorber(r::AbstractResource) = get(r, :ramp_up_percentage_absorber, default_percent)
+ramp_up_compressor(r::AbstractResource) = get(r, :ramp_up_percentage_compressor, default_percent)
+ramp_up_regenerator(r::AbstractResource) = get(r, :ramp_up_percentage_regenerator, default_percent)
+
+ramp_dn_gasturbine(r::AbstractResource) = get(r, :ramp_dn_percentage_gasturbine, default_percent)
+ramp_dn_steamturbine(r::AbstractResource) = get(r, :ramp_dn_percentage_steamturbine, default_percent)
+ramp_dn_absorber(r::AbstractResource) = get(r, :ramp_dn_percentage_absorber, default_percent)
+ramp_dn_compressor(r::AbstractResource) = get(r, :ramp_dn_percentage_compressor, default_percent)
+ramp_dn_regenerator(r::AbstractResource) = get(r, :ramp_dn_percentage_regenerator, default_percent)
+
+up_time_gasturbine(r::AbstractResource) = get(r, :up_time_gasturbine, default_zero)
+up_time_steamturbine(r::AbstractResource) = get(r, :up_time_steamturbine, default_zero)
+up_time_absorber(r::AbstractResource) = get(r, :up_time_absorber, default_zero)
+up_time_compressor(r::AbstractResource) = get(r, :up_time_compressor, default_zero)
+up_time_regenerator(r::AbstractResource) = get(r, :up_time_regenerator, default_zero)
+
+dn_time_gasturbine(r::AbstractResource) = get(r, :dn_time_gasturbine, default_zero)
+dn_time_steamturbine(r::AbstractResource) = get(r, :dn_time_steamturbine, default_zero)
+dn_time_absorber(r::AbstractResource) = get(r, :dn_time_absorber, default_zero)
+dn_time_compressor(r::AbstractResource) = get(r, :dn_time_compressor, default_zero)
+dn_time_regenerator(r::AbstractResource) = get(r, :dn_time_regenerator, default_zero)
+
+existing_cap_mw_gasturbine(r::AbstractResource) = get(r, :existing_cap_mw_gasturbine, default_zero)
+existing_cap_mw_steamturbine(r::AbstractResource) = get(r, :existing_cap_mw_steamturbine, default_zero)
+existing_cap_ton_absorber(r::AbstractResource) = get(r, :existing_cap_ton_absorber, default_zero)
+existing_cap_mw_compressor(r::AbstractResource) = get(r, :existing_cap_mw_compressor, default_zero)
+existing_cap_ton_regenerator(r::AbstractResource) = get(r, :existing_cap_ton_regenerator, default_zero)
+existing_cap_ton_solventstorage_rich(r::AbstractResource) = get(r, :existing_cap_ton_solventstorage_rich, default_zero)
+existing_cap_ton_solventstorage_lean(r::AbstractResource) = get(r, :existing_cap_ton_solventstorage_lean, default_zero)
 
 ## policies
 # co-located storage
