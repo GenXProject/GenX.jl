@@ -87,7 +87,9 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Transmission Module")
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
-    L = inputs["L"]     # Number of transmission lines
+    L_asym = inputs["L_asym"]# Number of transmission lines with asymmetrical bidirectional flow
+    L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
+    L = L_asym+L_sym
 
     UCommit = setup["UCommit"]
     CapacityReserveMargin = setup["CapacityReserveMargin"]
@@ -178,6 +180,15 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
         end)
 
+    if setup["asymmetrical_trans_flow_limit"] ==1
+        # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
+        @constraints(EP,
+            begin
+                cMaxFlow_out[l = 1:L_asym, t = 1:T], vTAUX_POS[l, t] <= EP[:eAvail_Trans_Cap_Pos][l] #Change these with Auxiliary 
+                cMaxFlow_in[l = 1:L_asym, t = 1:T], vTAUX_NEG[l, t] >= -EP[:eAvail_Trans_Cap_Neg][l] #Change these with Auxiliary 
+            end)
+    end
+
     # Transmission loss related constraints - linear losses as a function of absolute value
     if TRANS_LOSS_SEGS == 1
         @constraints(EP,
@@ -185,7 +196,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 # Losses are alpha times absolute values
                 cTLoss[l in LOSS_LINES, t = 1:T],
                 vTLOSS[l, t] ==
-                inputs["pPercent_Loss"][l] * (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
+                inputs["pPercent_Loss_Pos"][l] * (vTAUX_POS[l, t] + vTAUX_NEG[l, t]) + inputs["pPercent_Loss_Neg"][l] * (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
 
                 # Power flow is sum of positive and negative components
                 cTAuxSum[l in LOSS_LINES, t = 1:T],
@@ -237,10 +248,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             cTLoss[l in LOSS_LINES, t = 1:T],
             vTLOSS[l,
                 t]==
-            (inputs["pTrans_Loss_Coef"][l] *
+            (inputs["pTrans_Loss_Coef_Pos"][l] *
              sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                  vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
-            (inputs["pTrans_Loss_Coef"][l] *
+            (inputs["pTrans_Loss_Coef_Neg"][l] *
              sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                  vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
         # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
