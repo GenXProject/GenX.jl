@@ -32,37 +32,29 @@ function run_myopic_multistage(outpath::AbstractString, models_d::Dict, setup::D
         models_d[t] = initialize_cost_to_go(settings_d, models_d[t], inputs_d[t])
     end
 
-    t = 1 # Stage = 1
-    solve_time_d = Dict()
-    models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
-    inputs_d[t]["solve_time"] = solve_time_d[t]
-
-    if write_intermittent_outputs
-        outpath_cur = joinpath(outpath, "results_p$t")
-        write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
-    end
-
-    ## solve t=2:num_stages
-    for t in 2:num_stages
+    ## solve
+    for t in 1:num_stages
         println("***********")
         println("Running stage $t...")
         println("***********")
 
-        # Step d.i) Fix initial investments for model at time t given optimal solution for time t-1
-        models_d[t] = fix_initial_investments(models_d[t - 1],
-            models_d[t],
-            start_cap_d,
-            inputs_d[t])
+        if t > 1
+            # Fix initial investments for model at time t given optimal solution for time t-1
+            models_d[t] = fix_initial_investments(models_d[t - 1],
+                models_d[t],
+                start_cap_d,
+                inputs_d[t])
 
-        # Step d.ii) Fix capacity tracking variables for endogenous retirements
-        models_d[t] = fix_capacity_tracking(models_d[t - 1],
-            models_d[t],
-            cap_track_d,
-            t)
+            # Fix capacity tracking variables for endogenous retirements
+            models_d[t] = fix_capacity_tracking(models_d[t - 1],
+                models_d[t],
+                cap_track_d,
+                t)
+        end
 
-        # Step d.iii) Solve the model at time t
-        models_d[t], solve_time_d[t] = solve_model(models_d[t], setup)
-        inputs_d[t]["solve_time"] = solve_time_d[t]
+        # Solve the model at time t
+        @objective(models_d[t], Min, models_d[t][:eObj])
+        models_d[t], inputs_d[t]["solve_time"] = solve_model(models_d[t], setup)
 
         if write_intermittent_outputs
             outpath_cur = joinpath(outpath, "results_p$t")
