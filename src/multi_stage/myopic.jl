@@ -26,12 +26,6 @@ function run_myopic_multistage(outpath::AbstractString, models_d::Dict, setup::D
 
     start_cap_d, cap_track_d = configure_ddp_dicts(setup, inputs_d[1])
 
-    # Step a.i) Initialize cost-to-go function for t = 1:num_stages
-    for t in 1:num_stages
-        settings_d["CurStage"] = t
-        models_d[t] = initialize_cost_to_go(settings_d, models_d[t], inputs_d[t])
-    end
-
     ## solve
     for t in 1:num_stages
         println("***********")
