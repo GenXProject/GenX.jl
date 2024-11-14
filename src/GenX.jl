@@ -37,6 +37,7 @@ using RecursiveArrayTools
 using Statistics
 using HiGHS
 using Logging
+using MacroEnergySystemsScaling
 
 using PrecompileTools: @compile_workload
 
