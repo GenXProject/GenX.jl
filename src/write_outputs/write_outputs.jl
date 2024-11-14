@@ -458,6 +458,29 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             end
         end
 
+        if setup["PPA"] == 1 && has_duals(EP)
+            if output_settings_d["WritePPA"]
+                elapsed_time_ppa = @elapsed write_vom_ppa(path,
+                    inputs,
+                    setup,
+                    EP)
+                println("Time elapsed for writing PPA results is")
+                println(elapsed_time_ppa)
+                elapsed_time_ppa = @elapsed write_fom_ppa(path,
+                    inputs,
+                    setup,
+                    EP)
+                println("Time elapsed for writing PPA results is")
+                println(elapsed_time_ppa)
+                elapsed_time_ppa = @elapsed write_real_cost(path,
+                    inputs,
+                    setup,
+                    EP)
+                println("Time elapsed for writing PPA results is")
+                println(elapsed_time_ppa)
+            end
+        end
+
         if output_settings_d["WriteNetRevenue"]
             elapsed_time_net_rev = @elapsed write_net_revenue(path,
                 inputs,
