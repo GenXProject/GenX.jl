@@ -37,8 +37,8 @@ function default_settings()
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
         "ObjScale" => 1,
-        "asymmetrical_trans_flow_limit" => 0
-        )
+        "asymmetrical_trans_flow_limit" => 0,
+        "PPA" => 0)
 end
 
 @doc raw"""
@@ -145,7 +145,8 @@ function default_writeoutput()
         "WriteTransmissionLosses" => true,
         "WriteVirtualDischarge" => true,
         "WriteVREStor" => true,
-        "WriteAngles" => true)
+        "WriteAngles" => true,
+        "WritePPA" => true)
 end
 
 function configure_writeoutput(output_settings_path::String, settings::Dict)

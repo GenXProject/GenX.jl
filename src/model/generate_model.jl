@@ -247,6 +247,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         mga!(EP, inputs, setup)
     end
 
+    if setup["PPA"] == 1
+        ppa!(EP, inputs, setup)
+    end
+
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
 

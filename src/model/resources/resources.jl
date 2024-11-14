@@ -616,6 +616,8 @@ function fixed_om_cost_charge_per_mwyr(r::AbstractResource)
     get(r, :fixed_om_cost_charge_per_mwyr, default_zero)
 end
 start_cost_per_mw(r::AbstractResource) = get(r, :start_cost_per_mw, default_zero)
+fixed_om_cost_per_mwh_ppa(r::AbstractResource) = get(r, :ppa_fixedcost, default_zero)
+var_om_cost_per_mwh_ppa(r::AbstractResource) = get(r, :ppa_variablecost, default_zero)
 
 # fuel
 fuel(r::AbstractResource) = get(r, :fuel, "None")
@@ -695,6 +697,7 @@ end
 function qualified_supply(r::AbstractResource; tag::Int64)
     get(r, Symbol("qualified_supply_$tag"), default_zero)
 end
+ppa(r::AbstractResource) = get(r, :ppa, default_zero)
 
 # write_outputs
 region(r::AbstractResource) = r.region

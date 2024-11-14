@@ -1141,6 +1141,9 @@ function add_resources_to_input_data!(inputs::Dict,
     # Set of CCS resources (optional set):
     inputs["CCS"] = ids_with_positive(gen, co2_capture_fraction)
 
+    # Set of PPA resources (optional set):
+    inputs["PPA"] = ids_with_positive(gen, ppa)
+
     # Single-fuel resources
     inputs["SINGLE_FUEL"] = ids_with_singlefuel(gen)
     # Multi-fuel resources
