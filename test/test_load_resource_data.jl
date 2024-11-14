@@ -34,9 +34,8 @@ function prepare_inputs_true(test_path::AbstractString,
     gen_filename = in_filenames.gen_filename
     inputs_filename = in_filenames.inputs_filename
     dfGen = GenX.load_dataframe(joinpath(test_path, gen_filename))
-    scale_factor = setup["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
     GenX.rename!(dfGen, lowercase.(names(dfGen)))
-    GenX.scale_resources_data!(dfGen, scale_factor)
+    GenX.scale_resources_data!(dfGen)
     dfGen[!, :r_id] = 1:size(dfGen, 1)
     inputs_true = load(joinpath(test_path, inputs_filename))
     return dfGen, inputs_true
@@ -308,8 +307,7 @@ function test_load_VRE_STOR_data()
 
     dfVRE_STOR = GenX.load_dataframe(joinpath(test_path, "Vre_and_stor_data.csv"))
     dfVRE_STOR = GenX.rename!(dfVRE_STOR, lowercase.(names(dfVRE_STOR)))
-    scale_factor = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
-    GenX.scale_vre_stor_data!(dfVRE_STOR, scale_factor)
+    GenX.scale_vre_stor_data!(dfVRE_STOR)
 
     resources_path = joinpath(test_path, settings["ResourcesFolder"])
     gen = GenX.create_resource_array(settings, resources_path)

@@ -4,12 +4,12 @@ function write_hourly_matching_prices(path::AbstractString,
         EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     ## Extract dual variables of constraints
     dfHourlyMatchPrices = DataFrame(Zone = 1:Z) # The unit is $/MWh
     # Dividing dual variable for each hour with corresponding hourly weight to retrieve marginal cost of the constraint
-    price = dual.(EP[:cHourlyMatching]) ./ inputs["omega"] * scale_factor
+    price = dual.(EP[:cHourlyMatching]) ./ inputs["omega"] 
     dfHourlyMatchPrices = hcat(dfHourlyMatchPrices,
         DataFrame(transpose(price), :auto))
 

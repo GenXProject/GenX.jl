@@ -8,7 +8,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     if (setup["WriteShadowPrices"] == 1 || setup["UCommit"] == 0 ||
         (setup["UCommit"] == 2 && (setup["OperationalReserves"] == 0 ||
@@ -24,7 +24,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                         tempCO2Price[z, cap] = (-1) *
                                                dual.(EP[:cCO2Emissions_systemwide])[cap]
                         # when scaled, The objective function is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
-                        tempCO2Price[z, cap] *= scale_factor
+
                     end
                 end
             end
@@ -41,8 +41,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
 
         emissions_by_zone = value.(EP[:eEmissionsByZone])
         for i in 1:Z
-            dfEmissions[i, :AnnualSum] = sum(inputs["omega"] .* emissions_by_zone[i, :]) *
-                                         scale_factor
+            dfEmissions[i, :AnnualSum] = sum(inputs["omega"] .* emissions_by_zone[i, :])
         end
 
         if setup["WriteOutputs"] == "annual"
@@ -58,7 +57,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
-                DataFrame(emissions_by_zone * scale_factor, :auto))
+                DataFrame(emissions_by_zone , :auto))
             if setup["CO2Cap"] >= 1
                 auxNew_Names = [Symbol("Zone");
                                 [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
@@ -99,8 +98,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
         dfEmissions = hcat(DataFrame(Zone = 1:Z),
             DataFrame(AnnualSum = Array{Float64}(undef, Z)))
         for i in 1:Z
-            dfEmissions[i, :AnnualSum] = sum(inputs["omega"] .* emissions_by_zone[i, :]) *
-                                         scale_factor
+            dfEmissions[i, :AnnualSum] = sum(inputs["omega"] .* emissions_by_zone[i, :])
         end
 
         if setup["WriteOutputs"] == "annual"
@@ -109,7 +107,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
-                DataFrame(emissions_by_zone * scale_factor, :auto))
+                DataFrame(emissions_by_zone , :auto))
             auxNew_Names = [Symbol("Zone");
                             Symbol("AnnualSum");
                             [Symbol("t$t") for t in 1:T]]

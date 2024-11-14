@@ -21,10 +21,10 @@ function write_co2_emissions_plant(path::AbstractString,
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     emissions_plant = value.(EP[:eEmissionsByPlant])
-    emissions_plant *= scale_factor
+
 
     df = DataFrame(Resource = resources,
         Zone = zones,
@@ -43,14 +43,14 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
     zones = zone_id.(gen[CCS])
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     df = DataFrame(Resource = resources,
         Zone = zones,
         AnnualSum = zeros(length(CCS)))
     if !isempty(CCS)
         emissions_captured_plant = value.(EP[:eEmissionsCaptureByPlant]).data
-        emissions_captured_plant *= scale_factor
+
 
         df.AnnualSum .= emissions_captured_plant * weight
 

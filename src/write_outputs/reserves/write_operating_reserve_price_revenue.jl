@@ -11,7 +11,7 @@ function write_operating_reserve_regulation_revenue(path::AbstractString,
         inputs::Dict,
         setup::Dict,
         EP::Model)
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     gen = inputs["RESOURCES"]
     RSV = inputs["RSV"]
@@ -39,9 +39,6 @@ function write_operating_reserve_regulation_revenue(path::AbstractString,
     rsvrevenue = value.(EP[:vRSV][RSV, :].data) .* transpose(weighted_rsv_price)
     regrevenue = value.(EP[:vREG][REG, :].data) .* transpose(weighted_reg_price)
 
-    rsvrevenue *= scale_factor
-    regrevenue *= scale_factor
-
     dfOpRsvRevenue.AnnualSum .= rsvrevenue * inputs["omega"]
     dfOpRegRevenue.AnnualSum .= regrevenue * inputs["omega"]
 
@@ -63,8 +60,8 @@ This is equal to the dual variable of the regulation requirement constraint.
 
 function operating_regulation_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
     ω = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    return dual.(EP[:cReg]) ./ ω * scale_factor
+    
+    return dual.(EP[:cReg]) ./ ω 
 end
 
 @doc raw"""
@@ -80,6 +77,6 @@ This is equal to the dual variable of the reserve requirement constraint.
 
 function operating_reserve_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
     ω = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    return dual.(EP[:cRsvReq]) ./ ω * scale_factor
+    
+    return dual.(EP[:cRsvReq]) ./ ω 
 end

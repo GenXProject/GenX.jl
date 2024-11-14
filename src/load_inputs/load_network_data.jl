@@ -4,7 +4,7 @@
 Function for reading input parameters related to the electricity transmission network
 """
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     filename = "Network.csv"
     network_var = load_dataframe(joinpath(path, filename))
@@ -23,7 +23,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
 
     # Transmission capacity of the network (in MW)
-    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW)   # convert to GW
 
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
@@ -50,8 +50,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["Line_Angle_Limit"] = to_floats(:Angle_Limit_Rad)
         # DC-OPF coefficient for each line (in MW when not scaled, in GW when scaled) 
         # MW = (kV)^2/Ohms 
-        inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
-                                     scale_factor
+        inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms)
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
@@ -59,12 +58,11 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     if setup["NetworkExpansion"] == 1
         # Read between zone network reinforcement costs per peak MW of capacity added
-        inputs_nw["pC_Line_Reinforcement"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) /
-                                             scale_factor # convert to million $/GW/yr with objective function in millions
+        inputs_nw["pC_Line_Reinforcement"] = to_floats(:Line_Reinforcement_Cost_per_MWyr)
         # Maximum reinforcement allowed in MW
         #NOTE: values <0 indicate no expansion possible
         inputs_nw["pMax_Line_Reinforcement"] = map(x -> max(0, x),
-            to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
+            to_floats(:Line_Max_Reinforcement_MW))  # convert to GW
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
     end
 
@@ -77,8 +75,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         end
 
         # Max Flow Possible on Each Line
-        inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) /
-                                                  scale_factor # Convert to GW
+        inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW)
     end
 
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)
@@ -88,7 +85,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     elseif setup["Trans_Loss_Segments"] >= 2
         # If zones are connected, loss coefficient is R/V^2 where R is resistance in Ohms and V is voltage in Volts
         inputs_nw["pTrans_Loss_Coef"] = (inputs_nw["Ohms"] / 10^6) ./
-                                        (inputs_nw["kV"] / 10^3)^2 * scale_factor # 1/GW ***
+                                        (inputs_nw["kV"] / 10^3)^2 # 1/GW ***
     end
 
     ## Sets and indices for transmission losses and expansion

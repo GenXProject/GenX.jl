@@ -17,7 +17,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     FUSION = ids_with(gen, :fusion)
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     charge = Matrix[]
     charge_ids = Vector{Int}[]
@@ -44,8 +44,6 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     end
     charge = reduce(vcat, charge, init = zeros(0, T))
     charge_ids = reduce(vcat, charge_ids, init = Int[])
-
-    charge *= scale_factor
 
     df = DataFrame(Resource = resources[charge_ids],
         Zone = zones[charge_ids])

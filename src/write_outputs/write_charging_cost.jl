@@ -16,7 +16,7 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     FUSION = ids_with(gen, :fusion)
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     price = locational_marginal_price(EP, inputs, setup)
 
@@ -41,8 +41,6 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
         _, mat = prepare_fusion_parasitic_power(EP, inputs)
         chargecost[FUSION, :] = mat
     end
-    chargecost *= scale_factor
-
     dfChargingcost = DataFrame(Region = regions,
         Resource = resources,
         Zone = zones,

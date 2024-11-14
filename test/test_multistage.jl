@@ -109,7 +109,6 @@ function test_update_cumulative_min_ret!()
         inputs_dict = Dict()
         true_min_retirements = Dict()
 
-        scale_factor = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
         redirect_stdout(devnull) do
             warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
             with_logger(warnerror_logger) do
@@ -123,7 +122,7 @@ function test_update_cumulative_min_ret!()
                         DataFrame)
                     rename!(true_min_retirements[t],
                         lowercase.(names(true_min_retirements[t])))
-                    GenX.scale_multistage_data!(true_min_retirements[t], scale_factor)
+                    GenX.scale_multistage_data!(true_min_retirements[t])
 
                     inputs_dict[t] = Dict()
                     inputs_dict[t]["Z"] = 1

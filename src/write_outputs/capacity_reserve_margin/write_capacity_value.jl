@@ -29,11 +29,11 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
     MUST_RUN = inputs["MUST_RUN"]
     VRE_STOR = inputs["VRE_STOR"]
 
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
     eTotalCap = value.(EP[:eTotalCap])
 
     minimum_plant_size = 1 # MW
-    large_plants = findall(>=(minimum_plant_size), eTotalCap * scale_factor)
+    large_plants = findall(>=(minimum_plant_size), eTotalCap )
 
     THERM_ALL_EX = intersect(THERM_ALL, large_plants)
     VRE_EX = intersect(VRE, large_plants)
@@ -165,6 +165,6 @@ function capacity_reserve_margin_price(EP::Model,
         setup::Dict,
         capres_zone::Int)::Vector{Float64}
     ω = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω * scale_factor
+    
+    return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω 
 end

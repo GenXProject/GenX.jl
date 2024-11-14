@@ -81,9 +81,7 @@ function load_inputs(setup::Dict, path::AbstractString)
     end
 
     # Virtual charge discharge cost
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    inputs["VirtualChargeDischargeCost"] = setup["VirtualChargeDischargeCost"] /
-                                           scale_factor
+    inputs["VirtualChargeDischargeCost"] = setup["VirtualChargeDischargeCost"]
 
     println("CSV Files Successfully Read In From $path")
 

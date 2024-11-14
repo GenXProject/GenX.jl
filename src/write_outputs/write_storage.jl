@@ -17,7 +17,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     stored = Matrix[]
     if !isempty(STOR_ALL)
@@ -33,7 +33,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
         push!(stored, value.(EP[:vS_VRE_STOR]))
     end
     stored = reduce(vcat, stored, init = zeros(0, T))
-    stored *= scale_factor
+
 
     stored_ids = convert(Vector{Int}, vcat(STOR_ALL, HYDRO_RES, FLEX, VS_STOR))
     df = DataFrame(Resource = resources[stored_ids],

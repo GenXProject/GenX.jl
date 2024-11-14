@@ -12,11 +12,11 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     # Power injected by each resource in each time step
     power = value.(EP[:vP])
-    power *= scale_factor
+
 
     df = DataFrame(Resource = resources,
         Zone = zones,

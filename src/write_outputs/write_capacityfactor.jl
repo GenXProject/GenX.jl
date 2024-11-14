@@ -21,14 +21,14 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         AnnualSum = zeros(G),
         Capacity = zeros(G),
         CapacityFactor = zeros(G))
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    df.AnnualSum .= value.(EP[:vP]) * weight * scale_factor
-    df.Capacity .= value.(EP[:eTotalCap]) * scale_factor
+    
+    df.AnnualSum .= value.(EP[:vP]) * weight 
+    df.Capacity .= value.(EP[:eTotalCap]) 
 
     # The .data only works on DenseAxisArray variables or expressions
     # In contrast vP and eTotalCap are whole vectors / matrices
-    energy_sum(sym, set) = value.(EP[sym][set, :]).data * weight * scale_factor
-    capacity(sym, set) = value.(EP[sym][set]).data * scale_factor
+    energy_sum(sym, set) = value.(EP[sym][set, :]).data * weight 
+    capacity(sym, set) = value.(EP[sym][set]).data 
 
     if !isempty(VRE_STOR)
         VS_SOLAR = inputs["VS_SOLAR"]
@@ -94,7 +94,7 @@ function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, se
     G_fusion = length(gen_fusion)
 
     ω = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     df = DataFrame(Resource = resource_names,
         Zone = zone_id.(gen_fusion),
@@ -105,10 +105,10 @@ function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, se
     reactor = FusionReactorData.(gen_fusion)
     avg_power_factor = average_net_power_factor.(reactor)
 
-    gross_power = value.(EP[:vP][FUSION, :]) * ω * scale_factor
+    gross_power = value.(EP[:vP][FUSION, :]) * ω 
     parasitic_power = thermal_fusion_annual_parasitic_power(EP, inputs, setup)
     df.NetOutput .= gross_power - parasitic_power
-    df.NetCapacity .= value.(EP[:eTotalCap][FUSION]) * scale_factor .* avg_power_factor
+    df.NetCapacity .= value.(EP[:eTotalCap][FUSION])  .* avg_power_factor
 
     # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
     enough_power = findall(x -> x >= 1, df.NetOutput)

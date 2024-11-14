@@ -43,12 +43,11 @@ function load_operational_reserves!(setup::Dict, path::AbstractString, inputs::D
     # Spinning up reserve requirement as a percent of hourly wind and solar generation (which is summed across all zones)
     inputs["pRsv_Req_VRE"] = float(res_in[1, :Rsv_Req_Percent_VRE])
 
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     # Penalty for not meeting hourly spinning reserve requirement
-    inputs["pC_Rsv_Penalty"] = float(res_in[1, :Unmet_Rsv_Penalty_Dollar_per_MW]) /
-                               scale_factor # convert to million $/GW with objective function in millions
-    inputs["pStatic_Contingency"] = float(res_in[1, :Static_Contingency_MW]) / scale_factor # convert to GW
+    inputs["pC_Rsv_Penalty"] = float(res_in[1, :Unmet_Rsv_Penalty_Dollar_per_MW])
+    inputs["pStatic_Contingency"] = float(res_in[1, :Static_Contingency_MW])  # convert to GW
 
     if setup["UCommit"] >= 1
         inputs["pDynamic_Contingency"] = convert(Int8, res_in[1, :Dynamic_Contingency])

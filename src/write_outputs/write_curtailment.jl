@@ -15,7 +15,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     VRE_STOR = inputs["VRE_STOR"]
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     curtailment = zeros(G, T)
     curtailment[VRE, :] = (value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .-
@@ -48,7 +48,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         end
     end
 
-    curtailment *= scale_factor
+
 
     df = DataFrame(Resource = resources,
         Zone = zones,

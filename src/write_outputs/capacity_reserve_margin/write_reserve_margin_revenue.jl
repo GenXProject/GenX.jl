@@ -12,7 +12,7 @@ function write_reserve_margin_revenue(path::AbstractString,
         inputs::Dict,
         setup::Dict,
         EP::Model)
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
 
     gen = inputs["RESOURCES"]
     regions = region.(gen)
@@ -86,7 +86,7 @@ function write_reserve_margin_revenue(path::AbstractString,
             tempresrev[AC_CHARGE] .-= derating_factor.(gen[AC_CHARGE], tag = i) .* 
                                           ((value.(EP[:vCAPRES_AC_CHARGE][AC_CHARGE, :]).data) * weighted_price)
         end
-        tempresrev *= scale_factor
+
         annual_sum .+= tempresrev
         dfResRevenue = hcat(dfResRevenue, DataFrame([tempresrev], [Symbol("CapRes_$i")]))
     end
