@@ -223,7 +223,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                     # McCormick constraint 1
                     [l in LOSS_LINES, t = 1:T],
                     vPROD_TRANSCAP_ON[l, t] <=
-                    inputs["pTrans_Max_Possible"][l] * vTAUX_POS_ON[l, t]
+                    inputs["pTrans_Max_Possible_Pos"][l] * vTAUX_POS_ON[l, t]
 
                     # McCormick constraint 2
                     [l in LOSS_LINES, t = 1:T],
@@ -249,10 +249,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             vTLOSS[l,
                 t]==
             (inputs["pTrans_Loss_Coef_Pos"][l] *
-             sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+             sum((2 * s - 1) * (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS) *
                  vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
             (inputs["pTrans_Loss_Coef_Neg"][l] *
-             sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+             sum((2 * s - 1) * (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS) *
                  vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
         # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
         # from both positive and negative domains must total the actual power flow across the line
@@ -271,10 +271,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 begin
                     cTAuxMaxPos[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                     vTAUX_POS[l, s, t] <=
-                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
+                    (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS)
                     cTAuxMaxNeg[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                     vTAUX_NEG[l, s, t] <=
-                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
+                    (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS)
                 end)
         else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
             # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
@@ -284,19 +284,19 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 begin
                     cTAuxOrderPos1[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                     vTAUX_POS[l, s, t] <=
-                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_POS_ON[l, s, t]
                     cTAuxOrderNeg1[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                     vTAUX_NEG[l, s, t] <=
-                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_NEG_ON[l, s, t]
                     cTAuxOrderPos2[l in LOSS_LINES, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
                     vTAUX_POS[l, s, t] >=
-                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_POS_ON[l, s + 1, t]
                     cTAuxOrderNeg2[l in LOSS_LINES, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
                     vTAUX_NEG[l, s, t] >=
-                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_NEG_ON[l, s + 1, t]
                 end)
 
@@ -307,13 +307,13 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                     # (and takes on value of the full negative flow), forcing all vTAUX_POS other segments (s>=1) to be zero
                     cTAuxSegmentZeroPos[l in LOSS_LINES, t = 1:T],
                     vTAUX_POS[l, 0, t] <=
-                    inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_POS_ON[l, 1, t])
+                    inputs["pTrans_Max_Possible_Pos"][l] * (1 - vTAUX_POS_ON[l, 1, t])
 
                     # If flow is negative, vTAUX_NEG segment 0 must be zero; If flow is positive, vTAUX_NEG segment 0 must be positive
                     # (and takes on value of the full positive flow), forcing all other vTAUX_NEG segments (s>=1) to be zero
                     cTAuxSegmentZeroNeg[l in LOSS_LINES, t = 1:T],
                     vTAUX_NEG[l, 0, t] <=
-                    inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_NEG_ON[l, 1, t])
+                    inputs["pTrans_Max_Possible_Neg"][l] * (1 - vTAUX_NEG_ON[l, 1, t])
                 end)
         end
     end # End if(TRANS_LOSS_SEGS > 0) block
