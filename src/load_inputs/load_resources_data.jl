@@ -214,20 +214,20 @@ function scale_columns!(df::DataFrame,
 end
 
 """
-    load_resource_df(path::AbstractString, scale_factor::Float64=1.0, resource_type::Type)
+    load_resource_df(path::AbstractString, resource_type::Type, scale_factor::Float64=1.0)
 
 Function to load and scale the dataframe of a given resource.
 
 # Arguments
 - `path::AbstractString`: Path to the resource dataframe.
-- `scale_factor::Float64=1.0`: Scaling factor for the resource data.
 - `resource_type::Type`: GenX type of the resource.
+- `scale_factor::Float64=1.0`: Scaling factor for the resource data.
 
 # Returns
 - `resource_in::DataFrame`: The loaded and scaled resource data.
 
 """
-function load_resource_df(path::AbstractString, scale_factor::Float64=1.0, resource_type::Type)
+function load_resource_df(path::AbstractString, resource_type::Type, scale_factor::Float64=1.0)
     resource_in = load_dataframe(path)
     # rename columns lowercase for internal consistency
     rename!(resource_in, lowercase.(names(resource_in)))
@@ -303,7 +303,7 @@ function create_resources_sametype(resource_in::DataFrame, ResourceType)
 end
 
 """
-    create_resource_array(resource_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0=1.0)
+    create_resource_array(resource_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
 
 Construct the array of resources from multiple files of different types located in the specified `resource_folder`. The `resources_info` NamedTuple contains the filename and GenX type for each type of resource available in GenX.
 
@@ -329,7 +329,7 @@ function create_resource_array(resource_folder::AbstractString,
         df_path = joinpath(resource_folder, filename)
         # if file exists, load resources of a single resource_type
         if isfile(df_path)
-            resource_in = load_resource_df(df_path, scale_factor, resource_type)
+            resource_in = load_resource_df(df_path, resource_type, scale_factor)
             # compute indices for resources of a given type and add them to dataframe
             resources_indices = compute_resource_indices(resource_in, resource_id_offset)
             add_id_to_resource_df!(resource_in, resources_indices)
