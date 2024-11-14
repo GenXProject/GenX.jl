@@ -82,7 +82,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     if mysetup["AutoScaling"] == 1
         println("Scaling Constraints")
-        scale_constraints!(EP)
+        scale_constraints!(EP, mysetup["ScalingSettings"])
     end
 
     println("Solving Model")
