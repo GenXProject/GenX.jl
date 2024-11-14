@@ -56,10 +56,8 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
                 HAS_MIN_CAP_STOR = ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap)
                 MIN_CAP_GEN_SOLAR = ids_with_policy(gen_VRE_STOR, min_cap_solar, tag = mincap)
                 MIN_CAP_GEN_WIND = ids_with_policy(gen_VRE_STOR, min_cap_wind, tag = mincap)
-                MIN_CAP_GEN_ASYM_DC_DIS = intersect(inputs["VS_ASYM_DC_DISCHARGE"],
-                    HAS_MIN_CAP_STOR)
-                MIN_CAP_GEN_ASYM_AC_DIS = intersect(inputs["VS_ASYM_AC_DISCHARGE"],
-                    HAS_MIN_CAP_STOR)
+                MIN_CAP_GEN_ASYM_DC_DIS = intersect(inputs["VS_ASYM_DC_DISCHARGE"], HAS_MIN_CAP_STOR)
+                MIN_CAP_GEN_ASYM_AC_DIS = intersect(inputs["VS_ASYM_AC_DISCHARGE"], HAS_MIN_CAP_STOR)
                 MIN_CAP_GEN_SYM_DC = intersect(inputs["VS_SYM_DC"], HAS_MIN_CAP_STOR)
                 MIN_CAP_GEN_SYM_AC = intersect(inputs["VS_SYM_AC"], HAS_MIN_CAP_STOR)
                 if !isempty(MIN_CAP_GEN_SOLAR)
@@ -72,7 +70,6 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
                                                                           (dual.(EP[:cZoneMinCapReq][mincap])))
                 end
                 if !isempty(MIN_CAP_GEN_ASYM_DC_DIS)
-                    MIN_CAP_GEN_ASYM_DC_DIS = intersect(inputs["VS_ASYM_DC_DISCHARGE"], HAS_MIN_CAP_STOR)
                     dfRegSubRevenue.SubsidyRevenue[MIN_CAP_GEN_ASYM_DC_DIS] .+= ((value.(EP[:eTotalCapDischarge_DC][MIN_CAP_GEN_ASYM_DC_DIS].data) .* 
                                                                                 etainverter.(gen[MIN_CAP_GEN_ASYM_DC_DIS])) * 
                                                                                 (dual.(EP[:cZoneMinCapReq][mincap])))
