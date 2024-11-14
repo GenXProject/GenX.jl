@@ -37,8 +37,7 @@ genx_setup = Dict("NetworkExpansion" => 1,
     "CO2Cap" => 1,
     "StorageLosses" => 1,
     "VirtualChargeDischargeCost" => 1,
-    "ParameterScale" => 1)
-
+)
 # Run test cases
 for (test_path, obj_true) in test_cases
     test_case(test_path, obj_true, genx_setup)

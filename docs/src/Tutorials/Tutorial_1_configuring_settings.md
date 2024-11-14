@@ -35,7 +35,6 @@ genx_settings_SNE = YAML.load(open("example_systems/1_three_zones/settings/genx_
     Dict{Any, Any} with 19 entries:
       "NetworkExpansion"                        => 1
       "ModelingToGenerateAlternativeIterations" => 3
-      "ParameterScale"                          => 1
       "EnergyShareRequirement"                  => 0
       "PrintModel"                              => 0
       "TimeDomainReduction"                     => 1

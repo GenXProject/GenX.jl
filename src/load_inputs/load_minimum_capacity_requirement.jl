@@ -9,14 +9,8 @@ function load_minimum_capacity_requirement!(path::AbstractString, inputs::Dict, 
     NumberOfMinCapReqs = length(df[!, :MinCapReqConstraint])
     inputs["NumberOfMinCapReqs"] = NumberOfMinCapReqs
     inputs["MinCapReq"] = df[!, :Min_MW]
-    if setup["ParameterScale"] == 1
-        inputs["MinCapReq"] /= ModelScalingFactor # Convert to GW
-    end
     if "PriceCap" in names(df)
         inputs["MinCapPriceCap"] = df[!, :PriceCap]
-        if setup["ParameterScale"] == 1
-            inputs["MinCapPriceCap"] /= ModelScalingFactor # Convert to million $/GW
-        end
     end
     println(filename * " Successfully Read!")
 end

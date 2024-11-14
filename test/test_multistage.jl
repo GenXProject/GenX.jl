@@ -19,7 +19,6 @@ genx_setup = Dict("Trans_Loss_Segments" => 1,
     "OperationalReserves" => 1,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
-    "ParameterScale" => 1,
     "UCommit" => 2,
     "MultiStage" => 1,
     "MultiStageSettingsDict" => multistage_setup)
@@ -102,8 +101,8 @@ function test_update_cumulative_min_ret!()
     # Merge the genx_setup with the default settings
     settings = GenX.default_settings()
 
-    for ParameterScale in [0, 1]
-        genx_setup["ParameterScale"] = ParameterScale
+    for AutoScale in [0, 1]
+        genx_setup["AutoScaling"] = AutoScale
         merge!(settings, genx_setup)
 
         inputs_dict = Dict()

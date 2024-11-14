@@ -14,7 +14,6 @@ genx_setup = Dict("Trans_Loss_Segments" => 1,
     "StorageLosses" => 1,
     "MinCapReq" => 1,
     "MaxCapReq" => 1,
-    "ParameterScale" => 1,
     "WriteShadowPrices" => 1,
     "UCommit" => 2)
 

@@ -242,7 +242,7 @@ function test_resource_specific_attributes(gen, dfGen, inputs)
 end
 
 function test_load_resources_data()
-    setup = Dict("ParameterScale" => 0,
+    setup = Dict(
         "OperationalReserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 1)
@@ -292,7 +292,7 @@ function test_load_resources_data()
 end
 
 function test_load_VRE_STOR_data()
-    setup = Dict("ParameterScale" => 0,
+    setup = Dict(
         "OperationalReserves" => 1,
         "UCommit" => 2,
         "MultiStage" => 0)

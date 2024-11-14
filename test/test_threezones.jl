@@ -13,7 +13,6 @@ genx_setup = Dict("NetworkExpansion" => 1,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
     "MinCapReq" => 1,
-    "ParameterScale" => 1,
     "UCommit" => 2)
 
 # Run the case and get the objective value and tolerance

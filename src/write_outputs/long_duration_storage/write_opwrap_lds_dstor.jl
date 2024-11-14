@@ -19,9 +19,6 @@ function write_opwrap_lds_dstor(path::AbstractString, inputs::Dict, setup::Dict,
             end
         end
     end
-    if setup["ParameterScale"] == 1
-        dsoc *= ModelScalingFactor
-    end
 
     dfdStorage = hcat(dfdStorage, DataFrame(dsoc, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("w$t") for t in 1:W]]

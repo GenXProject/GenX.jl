@@ -8,11 +8,11 @@ obj_true = 3179.6244
 test_path = "retrofit"
 
 # Define test inputs
-genx_setup = Dict("CO2Cap" => 2,
+genx_setup = Dict(
+    "CO2Cap" => 2,
     "StorageLosses" => 1,
     "MinCapReq" => 1,
     "MaxCapReq" => 1,
-    "ParameterScale" => 1,
     "UCommit" => 2,
     "EnergyShareRequirement" => 1,
     "CapacityReserveMargin" => 1,

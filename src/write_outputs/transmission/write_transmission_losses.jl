@@ -9,9 +9,6 @@ function write_transmission_losses(path::AbstractString,
     dfTLosses = DataFrame(Line = 1:L)
     tlosses = zeros(L, T)
     tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
-    if setup["ParameterScale"] == 1
-        tlosses[LOSS_LINES, :] *= ModelScalingFactor
-    end
 
     dfTLosses.AnnualSum = tlosses * inputs["omega"]
 

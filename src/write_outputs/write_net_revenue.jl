@@ -75,11 +75,6 @@ function write_net_revenue(path::AbstractString,
                                                   dfVreStor[1:VRE_STOR_LENGTH, :NewCapWind]
         end
     end
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
-        dfNetRevenue.Inv_cost_MW *= ModelScalingFactor # converting Million US$ to US$
-        dfNetRevenue.Inv_cost_charge_MW *= ModelScalingFactor # converting Million US$ to US$
-    end
 
     # Add operations and maintenance cost to the dataframe
     dfNetRevenue.Fixed_OM_cost_MW = fixed_om_cost_per_mwyr.(gen) .* dfCap[1:G, :EndCap]
@@ -121,18 +116,9 @@ function write_net_revenue(path::AbstractString,
                                                           (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE,:]).data * inputs["omega"])
         end
     end
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
-        dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
-        dfNetRevenue.Fixed_OM_cost_charge_MW *= ModelScalingFactor # converting Million US$ to US$
-        dfNetRevenue.Var_OM_cost_out *= ModelScalingFactor # converting Million US$ to US$
-    end
 
     # Add fuel cost to the dataframe
     dfNetRevenue.Fuel_cost = sum(value.(EP[:ePlantCFuelOut]), dims = 2)
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.Fuel_cost *= ModelScalingFactor^2 # converting Million US$ to US$
-    end
 
     # Add storage cost to the dataframe
     dfNetRevenue.Var_OM_cost_in = zeros(nrow(dfNetRevenue))
@@ -154,18 +140,12 @@ function write_net_revenue(path::AbstractString,
         end
     end
 
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$
-    end
     # Add start-up cost to the dataframe
     dfNetRevenue.StartCost = zeros(nrow(dfNetRevenue))
     if setup["UCommit"] >= 1 && !isempty(COMMIT)
         start_costs = vec(sum(value.(EP[:eCStart][COMMIT, :]).data, dims = 2))
         start_fuel_costs = vec(value.(EP[:ePlantCFuelStart][COMMIT]))
         dfNetRevenue.StartCost[COMMIT] .= start_costs + start_fuel_costs
-    end
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.StartCost *= ModelScalingFactor^2 # converting Million US$ to US$
     end
     # Add charge cost to the dataframe
     dfNetRevenue.Charge_cost = zeros(nrow(dfNetRevenue))
@@ -178,9 +158,6 @@ function write_net_revenue(path::AbstractString,
     if any(co2_capture_fraction.(gen) .!= 0)
         dfNetRevenue.CO2SequestrationCost = zeros(G)
         dfNetRevenue[CCS, :CO2SequestrationCost] = value.(EP[:ePlantCCO2Sequestration]).data
-    end
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.CO2SequestrationCost *= ModelScalingFactor^2 # converting Million US$ to US$
     end
 
     # Add energy and subsidy revenue to the dataframe
@@ -235,9 +212,6 @@ function write_net_revenue(path::AbstractString,
                            inputs["omega"]
                 dfNetRevenue.EmissionsCost[Y] += -co2_cap_dual * temp_vec
             end
-        end
-        if setup["ParameterScale"] == 1
-            dfNetRevenue.EmissionsCost *= ModelScalingFactor^2 # converting Million US$ to US$
         end
     end
 

@@ -65,7 +65,6 @@ setup = GenX.configure_settings(genx_settings,writeoutput_settings)
       "CO2Cap"                             => 2
       "WriteShadowPrices"                  => 1
       "OperationalReserves"                => 0
-      "ParameterScale"                     => 1
       "EnergyShareRequirement"             => 0
       "PrintModel"                         => 0
       "TimeDomainReduction"                => 1

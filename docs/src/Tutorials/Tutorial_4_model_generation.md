@@ -193,7 +193,6 @@ setup = GenX.configure_settings(genx_settings,writeoutput_settings) # Combines g
       "CO2Cap"                                  => 2
       "WriteShadowPrices"                       => 1
       "ModelingToGenerateAlternativeIterations" => 3
-      "ParameterScale"                          => 1
       "EnergyShareRequirement"                  => 1
       "PrintModel"                              => 0
       "TimeDomainReduction"                     => 1

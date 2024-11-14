@@ -3,7 +3,6 @@ Trans_Loss_Segments: 1
 CO2Cap: 2
 StorageLosses: 1
 MinCapReq: 1 
-ParameterScale: 1
 WriteShadowPrices: 1
 UCommit: 2
 OverwriteResults: 1

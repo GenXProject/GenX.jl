@@ -8,8 +8,8 @@ obj_true = 300.5962608 # see fusion_pulse_every_hour/README.md
 test_path = "fusion_pulse_every_hour"
 
 # Define test inputs
-genx_setup = Dict("UCommit" => 2,
-    "ParameterScale" => 1,
+genx_setup = Dict(
+    "UCommit" => 2,
 )
 settings = GenX.default_settings()
 merge!(settings, genx_setup)

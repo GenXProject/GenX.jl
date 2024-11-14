@@ -41,13 +41,6 @@ using MacroEnergySystemsScaling
 
 using PrecompileTools: @compile_workload
 
-# Global scaling factor used when ParameterScale is on to shift values from MW to GW
-# DO NOT CHANGE THIS (Unless you do so very carefully)
-# To translate MW to GW, divide by ModelScalingFactor
-# To translate $ to $M, multiply by ModelScalingFactor^2
-# To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
-const ModelScalingFactor = 1e+3
-
 """
 An abstract type that should be subtyped for users creating GenX resources.
 """
