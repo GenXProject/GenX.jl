@@ -14,7 +14,7 @@ function ppa!(EP::Model, inputs::Dict, setup::Dict)
                 if y in PPA
                     EP[:vP][y, t] * gen[y].var_om_cost_per_mwh_ppa
                 else
-                    0
+                    0.0
                 end)
     # @expression(EP, eVariableSubsidiesByZone[z = 1:Z, t = 1:T],
     #         sum(eVariableSubsidiesByPlant[y, t] for y in resources_in_zone_by_rid(gen, z)))
@@ -25,11 +25,11 @@ function ppa!(EP::Model, inputs::Dict, setup::Dict)
                 if y in PPA
                     inputs["pP_Max"][y, t] * EP[:eTotalCap][y] * gen[y].fixed_om_cost_per_mwh_ppa
                 else
-                    0
+                    0.0
                 end)
     # @expression(EP, eFixedSubsidiesByZone[z = 1:Z, t = 1:T],
     #         sum(eFixedSubsidiesByPlant[y, t] for y in resources_in_zone_by_rid(gen, z)))
     @expression(EP, eTotalFixedSubsidies,
             sum(omega[t] * eFixedSubsidiesByPlant[y, t] for t in 1:T, y in PPA))
-    add_to_expression!(EP[:eObj], -EP[:eTotalVariableSubsidies]- EP[:eTotalFixedSubsidies])
+    add_to_expression!(EP[:eObj], - EP[:eTotalVariableSubsidies] - EP[:eTotalFixedSubsidies])
 end
