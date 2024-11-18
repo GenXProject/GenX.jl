@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Additional long-duration storage constraints to bound state of charge in 
+non-representative periods (#781).
+
 ## [0.4.1] - 2024-08-20
 
 ### Added
