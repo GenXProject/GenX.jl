@@ -17,6 +17,10 @@ number of concurrent Gurobi uses is limited (#783).
 charge and storage variables (#760 and #763).
 - Deduplicated docs on optimized scheduled maintenance for thermal resources (#745).
 
+### Fixed
+- Add constraint to ensure that electricity charged from the grid cannot exceed 
+the charging capacity of the storage component in VRE_STOR (#770).
+
 ## [0.4.1] - 2024-08-20
 
 ### Added
