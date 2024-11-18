@@ -1300,7 +1300,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         lds_vre_stor!(EP, inputs)
     end
 
-    # Constraint 3: electricity charged from the grid cannot exceed the charging capacity of the storage component in VRE_STOR
+    # Constraint 4: electricity charged from the grid cannot exceed the charging capacity of the storage component in VRE_STOR
     @constraint(EP, [y in STOR, t = 1:T], vCHARGE_VRE_STOR[y,t] <= eCHARGE_VS_STOR[y,t])
 end
 
