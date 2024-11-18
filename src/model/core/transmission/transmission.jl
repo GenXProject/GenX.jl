@@ -196,7 +196,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 # Losses are alpha times absolute values
                 cTLoss[l in LOSS_LINES, t = 1:T],
                 vTLOSS[l, t] ==
-                inputs["pPercent_Loss_Pos"][l] * (vTAUX_POS[l, t] + vTAUX_NEG[l, t]) + inputs["pPercent_Loss_Neg"][l] * (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
+                inputs["pPercent_Loss_Pos"][l] * (vTAUX_POS[l, t]) + inputs["pPercent_Loss_Neg"][l] * (vTAUX_NEG[l, t])
 
                 # Power flow is sum of positive and negative components
                 cTAuxSum[l in LOSS_LINES, t = 1:T],
