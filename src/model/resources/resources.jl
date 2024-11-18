@@ -66,9 +66,7 @@ Allows to set the attribute `sym` of an `AbstractResource` object using dot synt
 - `value`: The value to set for the attribute.
 
 """
-Base.setproperty!(r::AbstractResource, sym::Symbol, value) = setindex!(parent(r),
-    value,
-    sym)
+Base.setproperty!(r::AbstractResource, sym::Symbol, value) = setindex!(parent(r), value, sym)
 
 """
     haskey(r::AbstractResource, sym::Symbol)
@@ -106,32 +104,31 @@ end
 """ 
     Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
 
-Allows to access attributes of a vector of `AbstractResource` objects using dot syntax. If the `sym` is an element of the `resource_types` constant, it returns all resources of that type. Otherwise, it returns the value of the attribute for each resource in the vector.
+Allows to return all resources of a given type of a vector of `AbstractResource` objects using dot syntax.
 
 # Arguments:
 - `rs::Vector{<:AbstractResource}`: The vector of `AbstractResource` objects.
-- `sym::Symbol`: The symbol representing the attribute name or a type from `resource_types`.
+- `sym::Symbol`: The symbol representing the type from `resource_types`.
 
 # Returns:
 - If `sym` is an element of the `resource_types` constant, it returns a vector containing all resources of that type.
-- If `sym` is an attribute name, it returns a vector containing the value of the attribute for each resource.
 
 ## Examples
 ```julia
 julia> vre_gen = gen.Vre;  # gen vector of resources
 julia> typeof(vre_gen)
 Vector{Vre} (alias for Array{Vre, 1})
-julia> vre_gen.zone
+julia> GenX.zone_id.(vre_gen)
 ```
 """
 function Base.getproperty(rs::Vector{<:AbstractResource}, sym::Symbol)
-    # if sym is Type then return a vector resources of that type
+    # if sym is one of the resource types then return a vector resources of that type
     if sym ∈ resource_types
         res_type = eval(sym)
         return Vector{res_type}(rs[isa.(rs, res_type)])
+    else
+        return getfield(rs, sym)
     end
-    # if sym is a field of the resource then return that field for all resources
-    return [getproperty(r, sym) for r in rs]
 end
 
 """
@@ -255,8 +252,7 @@ julia> findall(r -> max_cap_mwh(r) != 0, gen.Storage)
  50
 ```
 """
-Base.findall(f::Function, rs::Vector{<:AbstractResource}) = resource_id.(filter(r -> f(r),
-    rs))
+Base.findall(f::Function, rs::Vector{<:AbstractResource}) = resource_id.(filter(r -> f(r), rs))
 
 """
     interface(name, default=default_zero, type=AbstractResource)
@@ -531,14 +527,14 @@ const default_zero = 0
 
 # INTERFACE FOR ALL RESOURCES
 resource_name(r::AbstractResource) = r.resource
-resource_name(rs::Vector{T}) where {T <: AbstractResource} = rs.resource
+resource_name(rs::Vector{T}) where {T <: AbstractResource} = resource_name.(rs)
 
 resource_id(r::AbstractResource)::Int64 = r.id
 resource_id(rs::Vector{T}) where {T <: AbstractResource} = resource_id.(rs)
 resource_type_mga(r::AbstractResource) = r.resource_type
 
 zone_id(r::AbstractResource) = r.zone
-zone_id(rs::Vector{T}) where {T <: AbstractResource} = rs.zone
+zone_id(rs::Vector{T}) where {T <: AbstractResource} = zone_id.(rs)
 
 # getter for boolean attributes (true or false) with validation
 function new_build(r::AbstractResource)

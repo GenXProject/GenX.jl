@@ -22,6 +22,8 @@ charge and storage variables (#760 and #763).
 ### Fixed
 - Add constraint to ensure that electricity charged from the grid cannot exceed 
 the charging capacity of the storage component in VRE_STOR (#770).
+- Update `getproperty` function for vectors of resources to ensure compatibility 
+with Julia v1.11 (#785).
 
 ## [0.4.1] - 2024-08-20
 

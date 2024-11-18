@@ -354,7 +354,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(DC_CHARGE)[1]))
         charge_dc = zeros(size(DC_CHARGE)[1], T)
         charge_dc = value.(EP[:vP_DC_CHARGE]).data ./
-                    etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)]) *
+                    etainverter.(gen[DC_CHARGE]) *
                     (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1)
         dfCharge_DC.AnnualSum .= charge_dc * inputs["omega"]
 
@@ -410,7 +410,7 @@ function write_vre_stor_discharge(path::AbstractString,
             Zone = inputs["ZONES_DC_DISCHARGE"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(DC_DISCHARGE)[1]))
         power_vre_stor = value.(EP[:vP_DC_DISCHARGE]).data .*
-                         etainverter.(gen_VRE_STOR[(gen_VRE_STOR.stor_dc_discharge .!= 0)])
+                         etainverter.(gen[DC_DISCHARGE])
         if setup["ParameterScale"] == 1
             power_vre_stor *= ModelScalingFactor
         end
@@ -486,7 +486,7 @@ function write_vre_stor_discharge(path::AbstractString,
             Zone = inputs["ZONES_SOLAR"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(SOLAR)[1]))
         vre_vre_stor = value.(EP[:vP_SOLAR]).data .*
-                       etainverter.(gen_VRE_STOR[(gen_VRE_STOR.solar .!= 0)])
+                       etainverter.(gen[SOLAR])
         if setup["ParameterScale"] == 1
             vre_vre_stor *= ModelScalingFactor
         end

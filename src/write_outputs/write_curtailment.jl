@@ -25,12 +25,11 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         SOLAR = setdiff(inputs["VS_SOLAR"], inputs["VS_WIND"])
         WIND = setdiff(inputs["VS_WIND"], inputs["VS_SOLAR"])
         SOLAR_WIND = intersect(inputs["VS_SOLAR"], inputs["VS_WIND"])
-        gen_VRE_STOR = gen.VreStorage
         if !isempty(SOLAR)
             curtailment[SOLAR, :] = (value.(EP[:eTotalCap_SOLAR][SOLAR]).data .*
-                                     inputs["pP_Max_Solar"][SOLAR, :] .-
-                                     value.(EP[:vP_SOLAR][SOLAR, :]).data) .*
-                                    etainverter.(gen_VRE_STOR[(gen_VRE_STOR.solar .!= 0)])
+                                    inputs["pP_Max_Solar"][SOLAR, :] .-
+                                    value.(EP[:vP_SOLAR][SOLAR, :]).data) .*
+                                    etainverter.(gen[SOLAR])
         end
         if !isempty(WIND)
             curtailment[WIND, :] = (value.(EP[:eTotalCap_WIND][WIND]).data .*
@@ -41,7 +40,7 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
             curtailment[SOLAR_WIND, :] = ((value.(EP[:eTotalCap_SOLAR])[SOLAR_WIND].data .*
                                            inputs["pP_Max_Solar"][SOLAR_WIND, :] .-
                                            value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data) .*
-                                          etainverter.(gen_VRE_STOR[((gen_VRE_STOR.wind .!= 0) .& (gen_VRE_STOR.solar .!= 0))])
+                                          etainverter.(gen[SOLAR_WIND])
                                           +
                                           (value.(EP[:eTotalCap_WIND][SOLAR_WIND]).data .*
                                            inputs["pP_Max_Wind"][SOLAR_WIND, :] .-
