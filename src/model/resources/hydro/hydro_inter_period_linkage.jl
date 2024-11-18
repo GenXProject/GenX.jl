@@ -42,6 +42,43 @@ Finally, the next constraint enforces that the initial storage level for each in
 \quad \forall n \in \mathcal{N}, o \in \mathcal{O}^{LDES}
 \end{aligned}
 ```
+
+**Bound storage inventory in non-representative periods**
+We need additional variables and constraints to ensure that the storage content is within zero and the installed energy capacity in non-representative periods. We introduce
+the variables $\Delta Q^{max,pos}_{o,z,m}$ and $\Delta Q^{max,neg}_{o,z,m}$ that represent the maximum positive and negative storage content variations within the representative
+period $m$, respectively, extracted as:
+
+```math
+\begin{aligned}
+& \Delta Q^{max,pos}_{o,z,m} \geq \Gamma_{o,z,(m-1)\times \tau^{period}+t } - \Gamma_{o,z,(m-1)\times \tau^{period}+1 } \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}, t \in \mathcal{T}
+& \end{aligned}
+```
+
+```math
+\begin{aligned}
+& \Delta Q^{max,neg}_{o,z,m} \leq \Gamma_{o,z,(m-1)\times \tau^{period}+t } - \Gamma_{o,z,(m-1)\times \tau^{period}+1 } \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}, t \in \mathcal{T}
+& \end{aligned}
+```
+
+For every input period $n \in \mathcal{N}$, the maximum storage is computed and constrained to be less than or equal to the installed energy capacity as:
+
+```math
+\begin{aligned}
+&  Q_{o,z,n} \times \left(1-\eta_{o,z}^{loss}\right) - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,(m-1)\times \tau^{period}+1} + \eta_{o,z}^{charge}\Pi_{o,z,(m-1)\times \tau^{period}+1} + \Delta Q^{max,pos}_{o,z,f(n)} \leq \Delta^{total, energy}_{o,z} \\
+& \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
+& \end{aligned}
+```
+
+Similarly, the minimum storage content is imposed to be positive in every period of the time horizon:
+
+```math
+\begin{aligned}
+&  Q_{o,z,n} \times \left(1-\eta_{o,z}^{loss}\right) - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,(m-1)\times \tau^{period}+1} + \eta_{o,z}^{charge}\Pi_{o,z,(m-1)\times \tau^{period}+1} + \Delta Q^{max,neg}_{o,z,f(n)} \geq 0 \\
+& \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
+& \end{aligned}
+```
+
+Additional details on this approach are available in [Parolin et al., 2024](https://doi.org/10.48550/arXiv.2409.19079).
 """
 function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
     println("Long Duration Storage Module for Hydro Reservoir")
@@ -70,6 +107,12 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
     # Build up in storage inventory over each representative period w
     # Build up inventory can be positive or negative
     @variable(EP, vdSOC_HYDRO[y in STOR_HYDRO_LONG_DURATION, w = 1:REP_PERIOD])
+
+    # Maximum positive storage inventory change within subperiod
+	@variable(EP, vdSOC_maxPos_HYDRO[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD] >= 0)
+
+	# Maximum negative storage inventory change within subperiod
+	@variable(EP, vdSOC_maxNeg_HYDRO[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD] <= 0)	
 
     ### Constraints ###
 
@@ -111,4 +154,27 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
             r in REP_PERIODS_INDEX],
         vSOC_HYDROw[y,r]==EP[:vS_HYDRO][y, hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] -
                 vdSOC_HYDRO[y, dfPeriodMap[r, :Rep_Period_Index]])
+
+    # Extract maximum storage level variation (positive) within subperiod
+    @constraint(EP, cMaxSoCVarPos_H[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
+                    vdSOC_maxPos_HYDRO[y,w] >= EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+t] - EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1])
+
+    # Extract maximum storage level variation (negative) within subperiod
+    @constraint(EP, cMaxSoCVarNeg_H[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
+                    vdSOC_maxNeg_HYDRO[y,w] <= EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+t] - EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1])
+
+    # Max storage content within each modeled period cannot exceed installed energy capacity
+    @constraint(EP, cSoCLongDurationStorageMaxInt_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+        vSOC_HYDROw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+        -EP[:vSPILL][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]
+        +inputs["pP_Max"][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]*EP[:eTotalCap][y]
+        +vdSOC_maxPos_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]] <= hydro_energy_to_power_ratio(gen[y])*EP[:eTotalCap][y])
+
+    # Min storage content within each modeled period cannot be negative
+    @constraint(EP, cSoCLongDurationStorageMinInt_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+        vSOC_HYDROw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+        -EP[:vSPILL][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]
+        +inputs["pP_Max"][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]*EP[:eTotalCap][y]
+        +vdSOC_maxPos_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]] >= 0)     
+
 end

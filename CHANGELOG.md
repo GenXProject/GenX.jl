@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fusion plant optional features for thermal plants (#743).
 - Support for reusing the same Gurobi environment for multiple solves when 
 number of concurrent Gurobi uses is limited (#783).
+- Additional long-duration storage constraints to bound state of charge in 
+non-representative periods (#781).
 
 ### Changed
 - The `charge.csv` and `storage.csv` files now include only resources with 
