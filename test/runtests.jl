@@ -36,6 +36,10 @@ end
         include("test_electrolyzer.jl")
     end
 
+    @testset "Fusion" begin
+        include("test_fusion.jl")
+    end
+
     @testset "Multi Stage" begin
         include("test_multistage.jl")
     end

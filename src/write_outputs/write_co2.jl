@@ -13,62 +13,49 @@ function write_co2_emissions_plant(path::AbstractString,
         inputs::Dict,
         setup::Dict,
         EP::Model)
-    gen = inputs["RESOURCES"]
+
+    gen = inputs["RESOURCES"]  # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"] # Resource names
+    zones = zone_id.(gen)
+
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
-    # CO2 emissions by plant
-    dfEmissions_plant = DataFrame(Resource = inputs["RESOURCE_NAMES"],
-        Zone = zone_id.(gen),
-        AnnualSum = zeros(G))
+    weight = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
     emissions_plant = value.(EP[:eEmissionsByPlant])
+    emissions_plant *= scale_factor
 
-    if setup["ParameterScale"] == 1
-        emissions_plant *= ModelScalingFactor
-    end
-    dfEmissions_plant.AnnualSum .= emissions_plant * inputs["omega"]
+    df = DataFrame(Resource = resources,
+        Zone = zones,
+        AnnualSum = zeros(G))
+    df.AnnualSum .= emissions_plant * weight
 
-    filepath = joinpath(path, "emissions_plant.csv")
-    if setup["WriteOutputs"] == "annual"
-        write_annual(filepath, dfEmissions_plant)
-    else # setup["WriteOutputs"] == "full"
-        df_Emissions_plant = write_fulltimeseries(
-            filepath, emissions_plant, dfEmissions_plant)
-        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(
-                path, setup, df_Emissions_plant, "emissions_plant")
-            @info("Writing Full Time Series for Emissions Plant")
-        end
-    end
+    write_temporal_data(df, emissions_plant, path, setup, "emissions_plant")
     return nothing
 end
 
 function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
-    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    gen = inputs["RESOURCES"]   # Resources (objects)
     CCS = inputs["CCS"]
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
 
-    dfCapturedEmissions_plant = DataFrame(Resource = inputs["RESOURCE_NAMES"][CCS],
-        Zone = zone_id.(gen[CCS]),
+    resources = inputs["RESOURCE_NAMES"][CCS]   # Resource names
+    zones = zone_id.(gen[CCS])
+
+    weight = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    df = DataFrame(Resource = resources,
+        Zone = zones,
         AnnualSum = zeros(length(CCS)))
     if !isempty(CCS)
-        # Captured CO2 emissions by plant
-        emissions_captured_plant = (value.(EP[:eEmissionsCaptureByPlant]).data)
+        emissions_captured_plant = value.(EP[:eEmissionsCaptureByPlant]).data
+        emissions_captured_plant *= scale_factor
 
-        if setup["ParameterScale"] == 1
-            emissions_captured_plant *= ModelScalingFactor
-        end
-        dfCapturedEmissions_plant.AnnualSum .= emissions_captured_plant * inputs["omega"]
+        df.AnnualSum .= emissions_captured_plant * weight
 
-        filepath = joinpath(path, "captured_emissions_plant.csv")
-        if setup["WriteOutputs"] == "annual"
-            write_annual(filepath, dfCapturedEmissions_plant)
-        else     # setup["WriteOutputs"] == "full"
-            write_fulltimeseries(filepath,
-                emissions_captured_plant,
-                dfCapturedEmissions_plant)
-        end
-        return nothing
+        write_temporal_data(
+            df, emissions_captured_plant, path, setup, "captured_emissions_plant")
     end
+    return nothing
 end

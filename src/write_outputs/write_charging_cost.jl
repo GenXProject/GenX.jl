@@ -1,5 +1,6 @@
 function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    gen = inputs["RESOURCES"]
+    gen = inputs["RESOURCES"]  # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"] # Resource names
 
     regions = region.(gen)
     clusters = cluster.(gen)
@@ -12,14 +13,13 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
+    FUSION = ids_with(gen, :fusion)
+
+    weight = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     price = locational_marginal_price(EP, inputs, setup)
 
-    dfChargingcost = DataFrame(Region = regions,
-        Resource = inputs["RESOURCE_NAMES"],
-        Zone = zones,
-        Cluster = clusters,
-        AnnualSum = Array{Float64}(undef, G))
     chargecost = zeros(G, T)
     if !isempty(STOR_ALL)
         chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .*
@@ -37,10 +37,19 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
         chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .*
                                   transpose(price)[zone_id.(gen[VS_STOR]), :]
     end
-    if setup["ParameterScale"] == 1
-        chargecost *= ModelScalingFactor
+    if !isempty(FUSION)
+        _, mat = prepare_fusion_parasitic_power(EP, inputs)
+        chargecost[FUSION, :] = mat
     end
-    dfChargingcost.AnnualSum .= chargecost * inputs["omega"]
+    chargecost *= scale_factor
+
+    dfChargingcost = DataFrame(Region = regions,
+        Resource = resources,
+        Zone = zones,
+        Cluster = clusters,
+        AnnualSum = Array{Float64}(undef, G))
+    dfChargingcost.AnnualSum .= chargecost * weight
+
     write_simple_csv(joinpath(path, "ChargingCost.csv"), dfChargingcost)
     return dfChargingcost
 end

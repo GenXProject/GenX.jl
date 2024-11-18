@@ -111,6 +111,7 @@ function default_writeoutput()
         "WriteESRPrices" => true,
         "WriteESRRevenue" => true,
         "WriteFuelConsumption" => true,
+        "WriteFusion" => true,
         "WriteHourlyMatchingPrices" => true,
         "WriteHydrogenPrices" => true,
         "WriteMaintenance" => true,
@@ -155,7 +156,6 @@ function configure_writeoutput(output_settings_path::String, settings::Dict)
         writeoutput["WriteStorage"] = false
         writeoutput["WriteStorageDual"] = false
         writeoutput["WriteTimeWeights"] = false
-        writeoutput["WriteCommit"] = false
         writeoutput["WriteCapacityValue"] = false
         writeoutput["WriteReserveMargin"] = false
         writeoutput["WriteReserveMarginWithWeights"] = false
