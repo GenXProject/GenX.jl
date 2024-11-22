@@ -15,14 +15,14 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Number of zones in the network
     Z = length(as_vector(:Network_zones))
     inputs_nw["Z"] = Z
-    # Number of lines in the network
-    L_sym = length(as_vector(:Network_Lines_Symmetric))
+    L_sym = length(as_vector(:Network_Lines))
     inputs_nw["L_sym"] = L_sym
     L_asym = 0 #Default number of asymmetrical lines
+    # Number of lines in the network
     if setup["asymmetrical_trans_flow_limit"] == 1
         L_asym = length(as_vector(:Network_Lines_Asymmetric))
+        inputs_nw["L_asym"] = L_asym
     end
-    inputs_nw["L_asym"] = L_asym
     L = L_sym + L_asym
 
     # Topology of the network source-sink matrix

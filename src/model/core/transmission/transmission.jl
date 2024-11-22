@@ -87,9 +87,13 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Transmission Module")
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
-    L_asym = inputs["L_asym"]# Number of transmission lines with asymmetrical bidirectional flow
     L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
-    L = L_asym+L_sym
+    L_asym = 0 #Default number of asymmetrical lines
+    # Number of lines in the network
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        L_asym = inputs_nw["L_asym"] #Number of transmission lines with different capacities in two directions
+    end
+    L = L_sym + L_asym
 
     UCommit = setup["UCommit"]
     CapacityReserveMargin = setup["CapacityReserveMargin"]
@@ -99,6 +103,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     ## sets and indices for transmission losses
     TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
     LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
+
+    if setup["asymmetrical_trans_flow_limit"] == 0
+        inputs["pPercent_Loss_Pos"] = inputs["pPercent_Loss_Neg"] = inputs["pPercent_Loss"]
+    end
 
     ### Variables ###
 
