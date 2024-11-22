@@ -1,7 +1,3 @@
-function __init__()
-    print_genx_version()
-end
-
 function print_genx_version()
     v = pkgversion(GenX)
     ascii_art = raw"""

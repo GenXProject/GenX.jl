@@ -609,7 +609,9 @@ function check_retrofit_id(rs::Vector{T}) where {T <: AbstractResource}
     retrofit_options = ids_retrofit_options(rs)
 
     # check that all retrofit_ids for resources that can retrofit and retrofit options match
-    if Set(rs[units_can_retrofit].retrofit_id) != Set(rs[retrofit_options].retrofit_id)
+    can_retrofit_retro_ids = [r.retrofit_id for r in rs[units_can_retrofit]]  # retrofit cluster ids for units that can retrofit
+    retrofit_option_retro_ids = [r.retrofit_id for r in rs[retrofit_options]]  # retrofit cluster ids for retrofit options
+    if Set(can_retrofit_retro_ids) != Set(retrofit_option_retro_ids)
         msg = string("Retrofit IDs for resources that \"can retrofit\" and \"retrofit options\" do not match.\n" *
                      "All retrofitting units must be associated with a retrofit option.")
         push!(warning_strings, msg)
