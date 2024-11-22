@@ -215,12 +215,16 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
     # Power injected by each resource in each time step
     solvent_storage_resources = inputs["RESOURCE_NAMES"][CCS_SOLVENT_STORAGE]
     dfCCS_SS_output = DataFrame(Resource = 
-        [solvent_storage_resources .*"_gasturbine_power_mw";
-        solvent_storage_resources .*"_steamturbine_power_mw";
+        [solvent_storage_resources .*"_gasturbine_power_mwh";
+        solvent_storage_resources .*"_steamturbine_power_mwh";
         solvent_storage_resources .*"_combinedcycle_commit";
-        solvent_storage_resources .*"_net_power_output_mw";
+        solvent_storage_resources .*"_net_power_output_mwh";
         solvent_storage_resources .*"_absorber_CO2_t";
+        solvent_storage_resources .*"_absorber_mwh";
         solvent_storage_resources .*"_absorber_commit";
+        solvent_storage_resources .*"_solvent_storage_rich_t";
+        solvent_storage_resources .*"_solvent_storage_lean_t";
+        solvent_storage_resources .*"_compressor_mwh";
         solvent_storage_resources .*"_compressor_commit";
         solvent_storage_resources .*"_regenerator_CO2_t";
         
@@ -243,14 +247,22 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
     gross_power_steamturbine = value.(EP[:vOutput_CCS_SS])[:,steamturbine,:]
     net_power_out = value.(EP[:eNetPowerCCS_SS])[:,:]
     absorber_co2 = value.(EP[:vOutput_CCS_SS])[:,absorber,:]
+    solvent_storage_rich = value.(EP[:vOutput_CCS_SS])[:,solventstorage_rich,:]
+    solvent_storage_lean = value.(EP[:vOutput_CCS_SS])[:,solventstorage_lean,:]
     regenerator_co2 = value.(EP[:vOutput_CCS_SS])[:,regenerator,:]
+    power_consumption_compressor = value.(EP[:vOutput_CCS_SS])[:,compressor,:]
+    power_consumption_absorber = value.(EP[:ePower_absorber])[:,:]
 
     if setup["ParameterScale"] == 1
         gross_power_gasturbine *= ModelScalingFactor
         gross_power_steamturbine *= ModelScalingFactor
         net_power_out *= ModelScalingFactor
         absorber_co2 *= ModelScalingFactor
+        solvent_storage_rich *= ModelScalingFactor
+        solvent_storage_lean *= ModelScalingFactor
         regenerator_co2 *= ModelScalingFactor
+        power_consumption_compressor *= ModelScalingFactor
+        power_consumption_absorber *= ModelScalingFactor
     end
 
     solvent_storage_output = [Array(gross_power_gasturbine);
@@ -258,9 +270,14 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
                             Array(combinedcycle_commit);
                             Array(net_power_out);
                             Array(absorber_co2);
+                            Array(power_consumption_absorber);
                             Array(absorber_commit);
+                            Array(solvent_storage_rich);
+                            Array(solvent_storage_lean);
+                            Array(power_consumption_compressor);
+                            Array(compressor_commit);
                             Array(regenerator_co2);
-                            Array(compressor_commit)]
+                            ]
 
     final_solvent_storage = permutedims(DataFrame(hcat(Array(dfCCS_SS_output), solvent_storage_output), :auto))
     CSV.write(joinpath(path,"output_CCS_SOLVENT_STORAGE.csv"), final_solvent_storage, writeheader = false)

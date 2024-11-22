@@ -1,3 +1,9 @@
+@doc raw"""
+	ccs_solvent_storage_no_commit!(EP::Model, inputs::Dict, setup::Dict)
+
+This function defines the operating constraints for ccs_solvent_storage power plants not ubject to unit commitment constraints on power plant start-ups and shut-down decision ($y \in UC$).
+We model capacity investment decisions and commitment and cycling (start-up, shut-down) of ccs_solvent_storage power plants silimar to all other no commit thermal generators.
+"""
 function ccs_solvent_storage_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
@@ -34,27 +40,27 @@ function ccs_solvent_storage_no_commit!(EP::Model, inputs::Dict, setup::Dict)
 
     ### Maximum ramp up and down between consecutive hours (Constraints #1-2)
     # rampup constraints
-    @constraint(EP,[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in 1:T],
+    @constraint(EP,[y in NO_COMMIT_CCS_SS, i in [1, 3, 4], t in 1:T],
                 EP[:vOutput_CCS_SS][y,i,t]-EP[:vOutput_CCS_SS][y,i,t-1] <= solvent_storage_dict[y, "ramp_up"][i]*EP[:eTotalCap_CCS_SS][y,i])
 
     # rampdown constraints
-    @constraint(EP,[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in 1:T],
+    @constraint(EP,[y in NO_COMMIT_CCS_SS, i in [1, 3, 4], t in 1:T],
                 EP[:vOutput_CCS_SS][y,i,t-1]-EP[:vOutput_CCS_SS][y,i,t] <= solvent_storage_dict[y, "ramp_dn"][i]*EP[:eTotalCap_CCS_SS][y,i])
 
     ### Minimum and maximum power output constraints (Constraints #3-4)
     @constraints(EP, begin
-        [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] >= solvent_storage_dict[y, "min_power"][i]*EP[:eTotalCap_CCS_SS][y,i]
-        [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]
+        [y in NO_COMMIT_CCS_SS, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] >= solvent_storage_dict[y, "min_power"][i]*EP[:eTotalCap_CCS_SS][y,i]
+        [y in NO_COMMIT_CCS_SS, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]
     end)
 
     # operational reserve  (Constraints #5)
     # operational reserve is based on the combine cycle turbine instead of the whole system
     if setup["OperationalReserves"] > 0
-        @variable(EP, vP_CCS_SS[y in CCS_SOLVENT_STORAGE, t=1:T])
-        @constraint(EP, [y in CCS_SOLVENT_STORAGE, t in 1:T], vP_CCS_SS[y,t]==EP[:eP_CCS_SS][y,t])
+        @variable(EP, vP_CCS_SS[y in NO_COMMIT_CCS_SS, t=1:T])
+        @constraint(EP, [y in NO_COMMIT_CCS_SS, t in 1:T], vP_CCS_SS[y,t]==EP[:eP_CCS_SS][y,t])
 
-        CCS_SS_REG = intersect(CCS_SOLVENT_STORAGE, inputs["REG"]) # Set of CCS_SOLVENT_STORAGE resources with regulation reserves
-        CCS_SS_RSV = intersect(CCS_SOLVENT_STORAGE, inputs["RSV"]) # Set of CCS_SOLVENT_STORAGE resources with spinning reserves
+        CCS_SS_REG = intersect(NO_COMMIT_CCS_SS, inputs["REG"]) # Set of NO_COMMIT_CCS_SS resources with regulation reserves
+        CCS_SS_RSV = intersect(NO_COMMIT_CCS_SS, inputs["RSV"]) # Set of NO_COMMIT_CCS_SS resources with spinning reserves
 
         max_power(y, t) = inputs["pP_Max"][y, t]
         
@@ -65,17 +71,17 @@ function ccs_solvent_storage_no_commit!(EP::Model, inputs::Dict, setup::Dict)
                     EP[:vRSV][y, t]<=max_power(y, t) * rsv_max(gen[y]) * (EP[:eTotalCap_CCS_SS][y, gasturbine] + EP[:eTotalCap_CCS_SS][y, steamturbine]))
     
         # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
-        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], CCS_SOLVENT_STORAGE)
+        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], NO_COMMIT_CCS_SS)
         add_similar_to_expression!(expr[CCS_SS_REG, :], -EP[:vREG][CCS_SS_REG, :])
-        @constraint(EP, cREG_CCS_SS_Min[y in CCS_SOLVENT_STORAGE, t in 1:T],
+        @constraint(EP, cREG_CCS_SS_Min[y in NO_COMMIT_CCS_SS, t in 1:T],
                     expr[y, t]>=solvent_storage_dict[y, "min_power"][gasturbine] * (EP[:eTotalCap_CCS_SS][y, gasturbine] + EP[:eTotalCap_CCS_SS][y, steamturbine]))
     
         # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
-        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], CCS_SOLVENT_STORAGE)
+        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], NO_COMMIT_CCS_SS)
         add_similar_to_expression!(expr[CCS_SS_REG, :], EP[:vREG][CCS_SS_REG, :])
         add_similar_to_expression!(expr[CCS_SS_RSV, :], EP[:vRSV][CCS_SS_RSV, :])
         @constraint(EP, 
-            [y in CCS_SOLVENT_STORAGE, t in 1:T],
+            [y in NO_COMMIT_CCS_SS, t in 1:T],
             expr[y, t]<=max_power(y, t) * (EP[:eTotalCap_CCS_SS][y, gasturbine] + EP[:eTotalCap_CCS_SS][y, steamturbine]))
     end
 end

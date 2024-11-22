@@ -11,16 +11,21 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     sco2turbine = 1
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     COMMIT_Allam = setup["UCommit"] > 0 ? ALLAM_CYCLE_LOX : Int[]   # If UCommit is 1, then ALL Allam Cycle LOX resources are committed
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
+    gasturbine, steamturbine = 1, 2
+    COMMIT_CCS_SS = setup["UCommit"] > 0 ? CCS_SOLVENT_STORAGE : Int[]
 
     # Capacity decisions
     capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["NEW_CAP"]
-        if i in inputs["COMMIT"]
+        if i in inputs["COMMIT"]    # inputs["THERM_COMMIT"]
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         elseif i in ALLAM_CYCLE_LOX
             capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine])
+        elseif i in COMMIT_CCS_SS
+            capdischarge[i] = value(EP[:vCAP_CCS_SS][i, gasturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][gasturbine] + value(EP[:vCAP_CCS_SS][i, steamturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][steamturbine]
         else
             capdischarge[i] = value(EP[:vCAP][i])
         end
@@ -28,12 +33,14 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     retcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["RET_CAP"]
-        if i in inputs["COMMIT"]
+        if i in inputs["COMMIT"] # inputs["THERM_COMMIT"]
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         elseif i in ALLAM_CYCLE_LOX
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine])
+        elseif i in COMMIT_CCS_SS
+            retcapdischarge[i] = value(EP[:vRETCAP_CCS_SS][i, gasturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][gasturbine] + value(EP[:vRETCAP_CCS_SS][i, steamturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][steamturbine]
         else
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
         end
@@ -45,6 +52,24 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
             retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i])) * cap_size(gen[i])
         else
             retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i]))
+        end
+    end
+
+    endcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+    for i in inputs["G"]
+        if i in COMMIT_CCS_SS
+            endcapdischarge[i] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
+        else
+            endcapdischarge[i] = first(value.(EP[:eTotalCap][i]))
+        end
+    end
+
+    startcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+    for i in inputs["G"]
+        if i in COMMIT_CCS_SS
+            startcapdischarge[i] = gen[i].existing_cap_mw_gasturbine + gen[i].existing_cap_mw_steamturbine
+        else
+            startcapdischarge[i] = gen[i].existing_cap_mw
         end
     end
 
@@ -92,8 +117,8 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         end
     end
 
-    startcap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen)
-    endcap = value.(EP[:eTotalCap])
+    startcap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : startcapdischarge[:]
+    endcap = (MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : startcapdischarge[:]) - retcapdischarge[:] + capdischarge[:]
     
     # for allam cycle lox, we need to use:
     # eExistingCap_AllamCycleLOX instead of eExistingCap

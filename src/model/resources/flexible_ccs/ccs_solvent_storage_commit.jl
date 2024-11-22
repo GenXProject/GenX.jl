@@ -1,3 +1,16 @@
+@doc raw"""
+	ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
+
+This function defines the operating constraints for ccs_solvent_storage power plants subject to unit commitment constraints on power plant start-ups and shut-down decision ($y \in UC$).
+
+We model capacity investment decisions and commitment and cycling (start-up, shut-down) of ccs_solvent_storage power plants silimar to all other thermal generators using the integer clustering technique developed in [Palmintier, 2011](https://pennstate.pure.elsevier.com/en/publications/impact-of-unit-commitment-constraints-on-generation-expansion-pla), [Palmintier, 2013](https://dspace.mit.edu/handle/1721.1/79147), and [Palmintier, 2014](https://ieeexplore.ieee.org/document/6684593). In a typical binary unit commitment formulation, each unit is either on or off. With the clustered unit commitment formulation, one or more cluster(s) of similar generators are clustered by type and zone (typically using heat rate and fixed O\&M cost to create clusters), and the integer commitment state variable for each cluster varies from zero to the number of units in the cluster, $\frac{\Delta^{total}_{y,z}}{\Omega^{size}_{y,z}}$. As discussed in \cite{Palmintier2014}, this approach replaces the large set of binary commitment decisions and associated constraints, which scale directly with the number of individual units, with a smaller set of integer commitment states and  constraints, one for each cluster $y$. The dimensionality of the problem thus scales with the number of units of a given type in each zone, rather than by the number of discrete units, significantly improving computational efficiency. However, this method entails the simplifying assumption that all clustered units have identical parameters (e.g., capacity size, ramp rates, heat rate) and that all committed units in a given time step $t$ are operating at the same power output per unit.
+
+Subcomponents that are turned on and off at the same time are aggregated to simplify the model
+Out of 7 sub-components in a CCS with solvent storage system, only 3 groups of unit commitment decisions are used:
+Group 1: combine cycle turbines +including gas and steam turbines
+Group 2: regenerator and compressors
+Group 3: abosorber
+"""
 function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
@@ -32,18 +45,20 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
     # i = 4 -> regenerator and compressors
     # i = 3 -> abosorber
 
-    @variable(EP, vCOMMIT_CCS_SS[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t = 1:T] >= 0)
+    @variable(EP, vCOMMIT_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T] >= 0)
     # startup event variable
-    @variable(EP, vSTART_CCS_SS[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t = 1:T] >= 0)
+    @variable(EP, vSTART_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T] >= 0)
     # shutdown event variable
-    @variable(EP, vSHUT_CCS_SS[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t = 1:T] >= 0)
+    @variable(EP, vSHUT_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T] >= 0)
 
     ## Declaration of integer/binary variables
-    for y in CCS_SOLVENT_STORAGE
-        for i in [1, 3, 4]
-            set_integer.(vCOMMIT_CCS_SS[y,i,:])
-            set_integer.(vSTART_CCS_SS[y,i,:])
-            set_integer.(vSHUT_CCS_SS[y,i,:])
+    if setup["UCommit"] == 1 # Integer UC constraints
+        for y in COMMIT_CCS_SS
+            for i in [1, 3, 4]
+                set_integer.(vCOMMIT_CCS_SS[y,i,:])
+                set_integer.(vSTART_CCS_SS[y,i,:])
+                set_integer.(vSHUT_CCS_SS[y,i,:])
+            end
         end
     end
 
@@ -67,55 +82,36 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Unit commitment constraints
     # Capacity limits on unit commitment decision variables (Constraints #1-3)
     @constraints(EP, begin
-                [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4] , t=1:T], vCOMMIT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
-                [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4] , t=1:T], vSTART_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
-                [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4] , t=1:T], vSHUT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
+                [y in COMMIT_CCS_SS, i in [1, 3, 4] , t=1:T], vCOMMIT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
+                [y in COMMIT_CCS_SS, i in [1, 3, 4] , t=1:T], vSTART_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
+                [y in COMMIT_CCS_SS, i in [1, 3, 4] , t=1:T], vSHUT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
     end)
 
     # Commitment state constraint linking startup and shutdown decisions (Constraint #4)
-    @constraints(EP, begin
-        # For Start Hours, links first time step with last time step in subperiod
-        [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in START_SUBPERIODS], vCOMMIT_CCS_SS[y,i,t] == vCOMMIT_CCS_SS[y,i,hoursbefore(p, t, 1)] + vSTART_CCS_SS[y,i,t] - vSHUT_CCS_SS[y,i,t]
-        # For all other hours, links commitment state in hour t with commitment state in prior hour + sum of start up and shut down in current hour
-        [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in INTERIOR_SUBPERIODS], vCOMMIT_CCS_SS[y,i,t] == vCOMMIT_CCS_SS[y,i,t-1] + vSTART_CCS_SS[y,i,t] - vSHUT_CCS_SS[y,i,t]
-    end)
+    @constraint(EP, cCommit_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T], 
+                EP[:vCOMMIT_CCS_SS][y,i,t] == EP[:vCOMMIT_CCS_SS][y,i,hoursbefore(p, t, 1)] + EP[:vSTART_CCS_SS][y,i,t] - EP[:vSHUT_CCS_SS][y,i,t])
 
     ### Maximum ramp up and down between consecutive hours (Constraints #5-6)
-    ## For Start Hours
-    # Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
     # rampup constraints
-    @constraint(EP,[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in START_SUBPERIODS],
+    @constraint(EP,[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T],
         EP[:vOutput_CCS_SS][y,i,t]-EP[:vOutput_CCS_SS][y,i,hoursbefore(p, t, 1)] <= solvent_storage_dict[y, "ramp_up"][i]*solvent_storage_dict[y, "cap_size"][i]*(vCOMMIT_CCS_SS[y,i,t]-vSTART_CCS_SS[y,i,t])
             + min(1,max(solvent_storage_dict[y, "min_power"][i],solvent_storage_dict[y, "ramp_up"][i]))*solvent_storage_dict[y, "cap_size"][i]*vSTART_CCS_SS[y,i,t]
             -solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vSHUT_CCS_SS[y,i,t])
 
     # rampdown constraints
-    @constraint(EP,[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in START_SUBPERIODS],
+    @constraint(EP,[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T],
         EP[:vOutput_CCS_SS][y,i,hoursbefore(p, t, 1)]-EP[:vOutput_CCS_SS][y,i,t] <=solvent_storage_dict[y, "ramp_dn"][i]*solvent_storage_dict[y, "cap_size"][i]*(vCOMMIT_CCS_SS[y,i,t]-vSTART_CCS_SS[y,i,t])
             -solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vSTART_CCS_SS[y,i,t]
             + min(1,max(solvent_storage_dict[y, "min_power"][i],solvent_storage_dict[y, "ramp_dn"][i]))*solvent_storage_dict[y, "cap_size"][i]*vSHUT_CCS_SS[y,i,t])
 
-    ## For Interior Hours
-    # rampup constraints
-    @constraint(EP,[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in INTERIOR_SUBPERIODS],
-        EP[:vOutput_CCS_SS][y,i,t]-EP[:vOutput_CCS_SS][y,i,t-1] <=solvent_storage_dict[y, "ramp_up"][i]*solvent_storage_dict[y, "cap_size"][i]*(vCOMMIT_CCS_SS[y,i,t]-vSTART_CCS_SS[y,i,t])
-            + min(1,max(solvent_storage_dict[y, "min_power"][i],solvent_storage_dict[y, "ramp_up"][i]))*solvent_storage_dict[y, "cap_size"][i]*vSTART_CCS_SS[y,i,t]
-            -solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vSHUT_CCS_SS[y,i,t])
-
-    # rampdown constraints
-    @constraint(EP,[y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t in INTERIOR_SUBPERIODS],
-        EP[:vOutput_CCS_SS][y,i,t-1]-EP[:vOutput_CCS_SS][y,i,t] <=solvent_storage_dict[y, "ramp_dn"][i]*solvent_storage_dict[y, "cap_size"][i]*(vCOMMIT_CCS_SS[y,i,t]-vSTART_CCS_SS[y,i,t])
-            -solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vSTART_CCS_SS[y,i,t]
-            +min(1,max(solvent_storage_dict[y, "min_power"][i],solvent_storage_dict[y, "ramp_dn"][i]))*solvent_storage_dict[y, "cap_size"][i]*vSHUT_CCS_SS[y,i,t])
-
     ### Minimum and maximum power output constraints (Constraints #7 & 8)
     @constraints(EP, begin
-        [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] >= solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
-        [y in CCS_SOLVENT_STORAGE, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] <= solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
+        [y in COMMIT_CCS_SS, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] >= solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
+        [y in COMMIT_CCS_SS, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] <= solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
     end)
 
     ### Minimum up and down times (Constraints #9 & 10)
-    for y in CCS_SOLVENT_STORAGE
+    for y in COMMIT_CCS_SS
         for i in [1, 3, 4]
             ## up time
             Up_Time = Int(floor(solvent_storage_dict[y, "up_time"][i]))
@@ -157,10 +153,10 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
     # operational reserve  (Constraints #11)
     # operational reserve is based on the combine cycle turbine instead of the whole system
     if setup["OperationalReserves"] > 0
-        @variable(EP, vP_CCS_SS[y in CCS_SOLVENT_STORAGE, t=1:T])
-        @constraint(EP, [y in CCS_SOLVENT_STORAGE, t in 1:T], vP_CCS_SS[y,t]==EP[:eP_CCS_SS][y,t])
-        CCS_SS_REG = intersect(CCS_SOLVENT_STORAGE, inputs["REG"]) # Set of CCS_SOLVENT_STORAGE resources with regulation reserves
-        CCS_SS_RSV = intersect(CCS_SOLVENT_STORAGE, inputs["RSV"]) # Set of CCS_SOLVENT_STORAGE resources with spinning reserves
+        @variable(EP, vP_CCS_SS[y in COMMIT_CCS_SS, t=1:T])
+        @constraint(EP, [y in COMMIT_CCS_SS, t in 1:T], vP_CCS_SS[y,t]==EP[:eP_CCS_SS][y,t])
+        CCS_SS_REG = intersect(COMMIT_CCS_SS, inputs["REG"]) # Set of COMMIT_CCS_SS resources with regulation reserves
+        CCS_SS_RSV = intersect(COMMIT_CCS_SS, inputs["RSV"]) # Set of COMMIT_CCS_SS resources with spinning reserves
 
         max_power(y, t) = inputs["pP_Max"][y, t]
         commit(y, t) = (solvent_storage_dict[y,"cap_size"][gasturbine] + solvent_storage_dict[y,"cap_size"][steamturbine]) * EP[:vCOMMIT_CCS_SS][y, gasturbine, t]
@@ -172,17 +168,17 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
             EP[:vRSV][y, t]<=max_power(y, t) * rsv_max(gen[y]) * commit(y, t))
     
         # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
-        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], CCS_SOLVENT_STORAGE)
+        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], COMMIT_CCS_SS)
         add_similar_to_expression!(expr[CCS_SS_REG, :], -EP[:vREG][CCS_SS_REG, :])
-        @constraint(EP, cREG_CCS_SS_Min[y in CCS_SOLVENT_STORAGE, t in 1:T],
+        @constraint(EP, cREG_CCS_SS_Min[y in COMMIT_CCS_SS, t in 1:T],
             expr[y, t]>=solvent_storage_dict[y, "min_power"][gasturbine] * commit(y, t))
     
         # Maximum power generated per technology "y" at hour "t"  and contribution to regulation and reserves up must be < max power
-        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], CCS_SOLVENT_STORAGE)
+        expr = extract_time_series_to_expression(EP[:vP_CCS_SS], COMMIT_CCS_SS)
         add_similar_to_expression!(expr[CCS_SS_REG, :], EP[:vREG][CCS_SS_REG, :])
         add_similar_to_expression!(expr[CCS_SS_RSV, :], EP[:vRSV][CCS_SS_RSV, :])
         @constraint(EP, 
-            [y in CCS_SOLVENT_STORAGE, t in 1:T],
+            [y in COMMIT_CCS_SS, t in 1:T],
             expr[y, t]<=max_power(y, t) * commit(y, t))
     end
 end
