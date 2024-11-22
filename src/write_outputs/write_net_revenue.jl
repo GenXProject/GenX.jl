@@ -47,6 +47,7 @@ function write_net_revenue(path::AbstractString,
         AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
         # Should read in charge asymmetric capacities
     end
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
 
     # Create a NetRevenue dataframe
     dfNetRevenue = DataFrame(region = regions,
@@ -75,6 +76,11 @@ function write_net_revenue(path::AbstractString,
                                                   dfVreStor[1:VRE_STOR_LENGTH, :NewCapWind]
         end
     end
+
+    if !isempty(CCS_SOLVENT_STORAGE)
+        dfNetRevenue.Inv_cost_MW[CCS_SOLVENT_STORAGE] += Array(value.(EP[:eCFix_CCS_SS_Plant]))
+    end
+    
     if setup["ParameterScale"] == 1
         dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Inv_cost_MW *= ModelScalingFactor # converting Million US$ to US$
@@ -123,6 +129,11 @@ function write_net_revenue(path::AbstractString,
                                                           (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE,:]).data * inputs["omega"])
         end
     end
+
+    if !isempty(CCS_SOLVENT_STORAGE)
+        dfNetRevenue.Var_OM_cost_out[CCS_SOLVENT_STORAGE] += Array(value.(EP[:eCVar_CCS_SS]))
+    end
+    
     if setup["ParameterScale"] == 1
         dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor # converting Million US$ to US$

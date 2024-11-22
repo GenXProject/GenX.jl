@@ -63,7 +63,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     has_capacity = findall(x -> x >= 1, df.Capacity)
     EXISTING = intersect(produces_power, has_capacity)
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
-    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR), EXISTING)
+    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR, CCS_SOLVENT_STORAGE), EXISTING)
     df.CapacityFactor[CF_GEN] .= (df.AnnualSum[CF_GEN] ./
                                   df.Capacity[CF_GEN]) /
                                  sum(weight)

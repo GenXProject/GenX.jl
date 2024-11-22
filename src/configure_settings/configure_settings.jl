@@ -36,7 +36,8 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1,
+        "FlexibleCCS" => 1)
 end
 
 @doc raw"""

@@ -8,11 +8,16 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     MultiStage = setup["MultiStage"]
 
+    COMMIT_CCS_SS = setup["UCommit"] > 0 ? inputs["CCS_SOLVENT_STORAGE"] : Int[]
+    gasturbine, steamturbine = 1, 2
+
     # Capacity decisions
     capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["NEW_CAP"]
         if i in inputs["COMMIT"]
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
+        elseif i in COMMIT_CCS_SS
+            capdischarge[i] = value(EP[:vCAP_CCS_SS][i, gasturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][gasturbine] + value(EP[:vCAP_CCS_SS][i, steamturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][steamturbine]
         else
             capdischarge[i] = value(EP[:vCAP][i])
         end
@@ -22,6 +27,8 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     for i in inputs["RET_CAP"]
         if i in inputs["COMMIT"]
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
+        elseif i in COMMIT_CCS_SS
+            retcapdischarge[i] = value(EP[:vRETCAP_CCS_SS][i, gasturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][gasturbine] + value(EP[:vRETCAP_CCS_SS][i, steamturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][steamturbine]
         else
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
         end
@@ -33,6 +40,24 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
             retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i])) * cap_size(gen[i])
         else
             retrocapdischarge[i] = first(value.(EP[:vRETROFITCAP][i]))
+        end
+    end
+
+    endcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+    for i in inputs["G"]
+        if i in COMMIT_CCS_SS
+            endcapdischarge[i] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
+        else
+            endcapdischarge[i] = first(value.(EP[:eTotalCap][i]))
+        end
+    end
+
+    startcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+    for i in inputs["G"]
+        if i in COMMIT_CCS_SS
+            startcapdischarge[i] = gen[i].existing_cap_mw_gasturbine + gen[i].existing_cap_mw_steamturbine
+        else
+            startcapdischarge[i] = gen[i].existing_cap_mw
         end
     end
 
@@ -82,11 +107,11 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
         Zone = zone_id.(gen),
         Retrofit_Id = retrofit_id.(gen),
-        StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen),
+        StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : startcapdischarge[:],
         RetCap = retcapdischarge[:],
         RetroCap = retrocapdischarge[:], #### Need to change later
         NewCap = capdischarge[:],
-        EndCap = value.(EP[:eTotalCap]),
+        EndCap = (MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : startcapdischarge[:]) - retcapdischarge[:] + capdischarge[:],
         CapacityConstraintDual = capacity_constraint_dual[:],
         StartEnergyCap = existingcapenergy[:],
         RetEnergyCap = retcapenergy[:],

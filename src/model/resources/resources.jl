@@ -1159,6 +1159,22 @@ existing_cap_ton_regenerator(r::AbstractResource) = get(r, :existing_cap_ton_reg
 existing_cap_ton_solventstorage_rich(r::AbstractResource) = get(r, :existing_cap_ton_solventstorage_rich, default_zero)
 existing_cap_ton_solventstorage_lean(r::AbstractResource) = get(r, :existing_cap_ton_solventstorage_lean, default_zero)
 
+max_cap_mw_gasturbine(r::AbstractResource) = get(r, :max_cap_mw_gasturbine, default_minmax_cap)
+max_cap_mw_steamturbine(r::AbstractResource) = get(r, :max_cap_mw_steamturbine, default_minmax_cap)
+max_cap_ton_absorber(r::AbstractResource) = get(r, :max_cap_ton_absorber, default_minmax_cap)
+max_cap_mw_compressor(r::AbstractResource) = get(r, :max_cap_mw_compressor, default_minmax_cap)
+max_cap_ton_regenerator(r::AbstractResource) = get(r, :max_cap_ton_regenerator, default_minmax_cap)
+max_cap_ton_solventstorage_rich(r::AbstractResource) = get(r, :max_cap_ton_solventstorage_rich, default_minmax_cap)
+max_cap_ton_solventstorage_lean(r::AbstractResource) = get(r, :max_cap_ton_solventstorage_lean, default_minmax_cap)
+
+min_cap_mw_gasturbine(r::AbstractResource) = get(r, :min_cap_mw_gasturbine, default_minmax_cap)
+min_cap_mw_steamturbine(r::AbstractResource) = get(r, :min_cap_mw_steamturbine, default_minmax_cap)
+min_cap_ton_absorber(r::AbstractResource) = get(r, :min_cap_ton_absorber, default_minmax_cap)
+min_cap_mw_compressor(r::AbstractResource) = get(r, :min_cap_mw_compressor, default_minmax_cap)
+min_cap_ton_regenerator(r::AbstractResource) = get(r, :min_cap_ton_regenerator, default_minmax_cap)
+min_cap_ton_solventstorage_rich(r::AbstractResource) = get(r, :min_cap_ton_solventstorage_rich, default_minmax_cap)
+min_cap_ton_solventstorage_lean(r::AbstractResource) = get(r, :min_cap_ton_solventstorage_lean, default_minmax_cap)
+
 ## policies
 # co-located storage
 function esr_vrestor(r::AbstractResource; tag::Int64)

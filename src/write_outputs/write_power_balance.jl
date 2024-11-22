@@ -12,6 +12,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     FUSION = ids_with(gen, :fusion)
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
     Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
         "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
         "Demand_Response", "Nonserved_Energy",
@@ -34,15 +35,12 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     powerbalance = zeros(Z * L, T) # following the same style of power/charge/storage/nse
     for z in 1:Z
         POWER_ZONE = intersect(resources_in_zone_by_rid(gen, z),
-            union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
-        powerbalance[(z - 1) * L + 1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
-        if !isempty(intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
-            STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)
-            powerbalance[(z - 1) * L + 2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]),
-                dims = 1)
-            powerbalance[(z - 1) * L + 3, :] = (-1) * sum(
-                (value.(EP[:vCHARGE][STOR_ALL_ZONE,:]).data),
-                dims = 1)
+        union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES, CCS_SOLVENT_STORAGE))
+        if isempty(intersect(resources_in_zone_by_rid(gen, z), CCS_SOLVENT_STORAGE))
+            powerbalance[(z - 1) * L + 1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
+        else
+            CCS_SS_ZONE = intersect(resources_in_zone_by_rid(gen, z), CCS_SOLVENT_STORAGE)
+            powerbalance[(z - 1) * L + 1, :] = sum(value.(Array(EP[:vP][POWER_ZONE, :])), dims = 1) - sum(value.(Array(EP[:vCHARGE_CCS_SS][CCS_SS_ZONE, :])), dims = 1)
         end
         if !isempty(intersect(resources_in_zone_by_rid(gen, z), FLEX))
             FLEX_ZONE = intersect(resources_in_zone_by_rid(gen, z), FLEX)

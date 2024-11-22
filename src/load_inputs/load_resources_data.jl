@@ -1492,6 +1492,15 @@ function add_resources_to_input_data!(inputs::Dict,
                                                   existing_cap_ton_absorber(gen[y]), existing_cap_mw_compressor(gen[y]),
                                                   existing_cap_ton_regenerator(gen[y]), existing_cap_ton_solventstorage_rich(gen[y]),
                                                   existing_cap_ton_solventstorage_lean(gen[y])
+        solvent_storage_dict[y, "max_cap"] = max_cap_mw_gasturbine(gen[y]), max_cap_mw_steamturbine(gen[y]),
+                                                  max_cap_ton_absorber(gen[y]), max_cap_mw_compressor(gen[y]),
+                                                  max_cap_ton_regenerator(gen[y]), max_cap_ton_solventstorage_rich(gen[y]),
+                                                  max_cap_ton_solventstorage_lean(gen[y])
+        solvent_storage_dict[y, "min_cap"] = min_cap_mw_gasturbine(gen[y]), min_cap_mw_steamturbine(gen[y]),
+                                                  min_cap_ton_absorber(gen[y]), min_cap_mw_compressor(gen[y]),
+                                                  min_cap_ton_regenerator(gen[y]), min_cap_ton_solventstorage_rich(gen[y]),
+                                                  min_cap_ton_solventstorage_lean(gen[y])
+
     end
     inputs["solvent_storage_dict"] = solvent_storage_dict
 

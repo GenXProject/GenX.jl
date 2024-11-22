@@ -13,6 +13,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
     ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) :
                        inputs["ELECTROLYZER"]
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
 
     cost_list = [
         "cTotal",
@@ -282,6 +283,23 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                 tempHydrogenValue -= sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
             end
             tempCTotal += tempHydrogenValue
+        end
+
+        if !isempty(CCS_SOLVENT_STORAGE)
+            Y_ZONE_CCS_SS = resources_in_zone_by_rid(gen.CCSSolventStorage, z)
+            # Fixed Costs
+            eCFix_CCS_SS_zone = sum(value.(EP[:eCFix_CCS_SS_Plant][Y_ZONE_CCS_SS]))
+            tempCFix += eCFix_CCS_SS_zone
+            # Variable Costs
+            eCVar_CCS_SS_zone = sum(value.(EP[:eCVar_CCS_SS][Y_ZONE_CCS_SS]))
+            tempCVar += eCVar_CCS_SS_zone
+            tempCTotal += eCFix_CCS_SS_zone + eCVar_CCS_SS_zone
+            if setup["UCommit"] >= 1 && !isempty(Y_ZONE_CCS_SS)
+                eCStart_CCS_SS = sum(value.(EP[:eCStart_CCS_SS][Y_ZONE_CCS_SS, :])) +
+                                 sum(value.(EP[:ePlantCFuelStart][Y_ZONE_CCS_SS, :]))
+                tempCStart += eCStart_CCS_SS
+                tempCTotal += eCStart_CCS_SS
+            end
         end
 
         tempCNSE = sum(value.(EP[:eCNSE][:, :, z]))
