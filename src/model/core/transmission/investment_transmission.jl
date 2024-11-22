@@ -28,7 +28,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     
     # Number of lines in the network
-    L_sym = inputs_nw["L_sym"]
+    L_sym = inputs["L_sym"]
     L_asym = 0 #Default number of asymmetrical lines
     if setup["asymmetrical_trans_flow_limit"] == 1
         L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
