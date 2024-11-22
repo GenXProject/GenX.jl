@@ -12,4 +12,4 @@ UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = activ
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
 EnableJuMPStringNames: true
 ComputeConflicts: 1
-FlexibleCCS: 1
+FlexibleCCS: 1  # Use of the solvent storage; 1 = allow absorber and regenerator to operate independently; 0: not allow absorber and regenerator to operate independently (emissions captured by absorber at hour h needs to be sequestrated at hour h, too.)
