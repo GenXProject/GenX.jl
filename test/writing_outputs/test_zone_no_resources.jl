@@ -18,18 +18,19 @@ function prepare_costs_test(test_path, inputs, genx_setup, EP)
 end
 
 function prepare_costs_true()
-    df = DataFrame(["cTotal" 5.177363815260002e12 4.027191550200002e12 1.1501722650599993e12;
-           "cFix" 0.0 0.0 0.0;
-           "cVar" 5.849292224195126e-8 0.0 5.849292224195126e-8;
-           "cFuel" 0.0 0.0 0.0;
-           "cNSE" 5.177363815260002e12 4.027191550200002e12 1.1501722650599993e12;
-           "cStart" 0.0 0.0 0.0;
-           "cUnmetRsv" 0.0 0.0 0.0;
-           "cNetworkExp" 0.0 0.0 0.0;
-           "cUnmetPolicyPenalty" 0.0 0.0 0.0;
-           "cCO2" 0.0 0.0 0.0
-       ], [:Costs, :Total, :Zone1, :Zone2])
-       
+    df = DataFrame(
+        ["cTotal" 5.177363815260002e12 4.027191550200002e12 1.1501722650599993e12;
+         "cFix" 0.0 0.0 0.0;
+         "cVar" 5.849292224195126e-8 0.0 5.849292224195126e-8;
+         "cFuel" 0.0 0.0 0.0;
+         "cNSE" 5.177363815260002e12 4.027191550200002e12 1.1501722650599993e12;
+         "cStart" 0.0 0.0 0.0;
+         "cUnmetRsv" 0.0 0.0 0.0;
+         "cNetworkExp" 0.0 0.0 0.0;
+         "cUnmetPolicyPenalty" 0.0 0.0 0.0;
+         "cCO2" 0.0 0.0 0.0],
+        [:Costs, :Total, :Zone1, :Zone2])
+
     df[!, :Costs] = convert(Vector{String}, df[!, :Costs])
     df[!, :Total] = convert(Vector{Float64}, df[!, :Total])
     df[!, :Zone1] = convert(Vector{Float64}, df[!, :Zone1])
