@@ -93,8 +93,8 @@ let
     @test all(EP[:large_expr][:] .== 18.0)
 
     # Test add_similar_to_expression! with AbstractArray{Number}
-    @expression(EP, eArr1[i = 1:100, j = 1:50], i*10.0+j*10.0)
-    @expression(EP, eArr2[i = 1:100, j = 1:50], -(i*10.0+j*10.0))
+    @expression(EP, eArr1[i = 1:100, j = 1:50], i * 10.0+j * 10.0)
+    @expression(EP, eArr2[i = 1:100, j = 1:50], -(i * 10.0 + j * 10.0))
     GenX.add_similar_to_expression!(EP[:eArr1], EP[:eArr2])
     @test all(EP[:eArr1][:] .== 0.0)
 
