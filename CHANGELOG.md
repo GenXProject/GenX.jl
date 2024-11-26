@@ -18,6 +18,7 @@ non-representative periods (#781).
 - The `charge.csv` and `storage.csv` files now include only resources with 
 charge and storage variables (#760 and #763).
 - Deduplicated docs on optimized scheduled maintenance for thermal resources (#745).
+- Removed the `CapRes_*` columns from `Network.csv` since they were not being used (#784).
 
 ### Fixed
 - Add constraint to ensure that electricity charged from the grid cannot exceed 
