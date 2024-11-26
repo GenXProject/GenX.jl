@@ -16,7 +16,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         if i in inputs["COMMIT"]
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
         elseif i in COMMIT_Allam
-            capdischarge[i] = value(EP[:vCAP][i]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
+            capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         else
             capdischarge[i] = value(EP[:vCAP][i])
         end
