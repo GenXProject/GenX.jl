@@ -106,6 +106,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     if setup["asymmetrical_trans_flow_limit"] == 0
         inputs["pPercent_Loss_Pos"] = inputs["pPercent_Loss_Neg"] = inputs["pPercent_Loss"]
+        inputs["pTrans_Max_Possible_Pos"] = inputs["pTrans_Max_Possible_Neg"] = inputs["pTrans_Max_Possible"]
+        inputs["pTrans_Loss_Coef_Pos"] = inputs["pTrans_Loss_Coef_Neg"] = inputs["pTrans_Loss_Coef"]
+        EP[:eAvail_Trans_Cap_Pos] = EP[:eAvail_Trans_Cap_Neg] = EP[:eAvail_Trans_Cap]
+
     end
 
     ### Variables ###
@@ -188,14 +192,14 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
         end)
 
-    if setup["asymmetrical_trans_flow_limit"] ==1
+    #if setup["asymmetrical_trans_flow_limit"] ==1
         # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
         @constraints(EP,
             begin
                 cMaxFlow_out[l = 1:L_asym, t = 1:T], vTAUX_POS[l, t] <= EP[:eAvail_Trans_Cap_Pos][l] #Change these with Auxiliary 
                 cMaxFlow_in[l = 1:L_asym, t = 1:T], vTAUX_NEG[l, t] >= -EP[:eAvail_Trans_Cap_Neg][l] #Change these with Auxiliary 
             end)
-    end
+    #end
 
     # Transmission loss related constraints - linear losses as a function of absolute value
     if TRANS_LOSS_SEGS == 1
