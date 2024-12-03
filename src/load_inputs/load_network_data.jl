@@ -98,18 +98,12 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
         if setup["asymmetrical_trans_flow_limit"] == 1
-            # Read between zone network reinforcement costs per peak MW of capacity added
-           inputs_nw["pC_Line_Reinforcement_Pos"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) /
-                                            scale_factor # convert to million $/GW/yr with objective function in millions
            # Maximum reinforcement allowed in MW
            #NOTE: values <0 indicate no expansion possible
            inputs_nw["pMax_Line_Reinforcement_Pos"] = map(x -> max(0, x),
                to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
            inputs_nw["pTrans_Max_Possible_Pos"] += inputs_nw["pMax_Line_Reinforcement_Pos"]
 
-            # Read between zone network reinforcement costs per peak MW of capacity added
-           inputs_nw["pC_Line_Reinforcement_Neg"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) /
-                                            scale_factor # convert to million $/GW/yr with objective function in millions
            # Maximum reinforcement allowed in MW
            #NOTE: values <0 indicate no expansion possible
            inputs_nw["pMax_Line_Reinforcement_Neg"] = map(x -> max(0, x),
