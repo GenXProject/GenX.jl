@@ -25,6 +25,8 @@ charge and storage variables (#760 and #763).
 the charging capacity of the storage component in VRE_STOR (#770).
 - Update `getproperty` function for vectors of resources to ensure compatibility 
 with Julia v1.11 (#785).
+- Fixed cost calculation in `write_costs.jl` when no resources are present in 
+a zone. (#796)
 
 ## [0.4.1] - 2024-08-20
 
