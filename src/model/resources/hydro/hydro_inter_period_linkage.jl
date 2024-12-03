@@ -1,5 +1,5 @@
 @doc raw"""
-	hydro_inter_period_linkage!(EP::Model, inputs::Dict)
+	hydro_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
 This function creates variables and constraints enabling modeling of long duration storage resources when modeling representative time periods.
 
 **Storage inventory balance at beginning of each representative period**
@@ -80,7 +80,7 @@ Similarly, the minimum storage content is imposed to be positive in every period
 
 Additional details on this approach are available in [Parolin et al., 2024](https://doi.org/10.48550/arXiv.2409.19079).
 """
-function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
+function hydro_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
     println("Long Duration Storage Module for Hydro Reservoir")
 
     gen = inputs["RESOURCES"]
@@ -96,6 +96,7 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
 
     MODELED_PERIODS_INDEX = 1:NPeriods
     REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period] .== MODELED_PERIODS_INDEX]
+    NON_REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period] .!= MODELED_PERIODS_INDEX]
 
     ### Variables ###
 
@@ -108,11 +109,14 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
     # Build up inventory can be positive or negative
     @variable(EP, vdSOC_HYDRO[y in STOR_HYDRO_LONG_DURATION, w = 1:REP_PERIOD])
 
-    # Maximum positive storage inventory change within subperiod
-	@variable(EP, vdSOC_maxPos_HYDRO[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD] >= 0)
+    # Additional constraints to prevent violation of SoC limits in non-representative periods
+    if setup["LDSAdditionalConstraints"] == 1
+        # Maximum positive storage inventory change within subperiod
+	    @variable(EP, vdSOC_maxPos_HYDRO[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD] >= 0)
 
-	# Maximum negative storage inventory change within subperiod
-	@variable(EP, vdSOC_maxNeg_HYDRO[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD] <= 0)	
+        # Maximum negative storage inventory change within subperiod
+        @variable(EP, vdSOC_maxNeg_HYDRO[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD] <= 0)	
+    end
 
     ### Constraints ###
 
@@ -155,26 +159,27 @@ function hydro_inter_period_linkage!(EP::Model, inputs::Dict)
         vSOC_HYDROw[y,r]==EP[:vS_HYDRO][y, hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] -
                 vdSOC_HYDRO[y, dfPeriodMap[r, :Rep_Period_Index]])
 
-    # Extract maximum storage level variation (positive) within subperiod
-    @constraint(EP, cMaxSoCVarPos_H[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
+    if setup["LDSAdditionalConstraints"] == 1
+        # Extract maximum storage level variation (positive) within subperiod
+        @constraint(EP, cMaxSoCVarPos_H[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
                     vdSOC_maxPos_HYDRO[y,w] >= EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+t] - EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1])
 
-    # Extract maximum storage level variation (negative) within subperiod
-    @constraint(EP, cMaxSoCVarNeg_H[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
-                    vdSOC_maxNeg_HYDRO[y,w] <= EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+t] - EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1])
+        # Extract maximum storage level variation (negative) within subperiod
+        @constraint(EP, cMaxSoCVarNeg_H[y in STOR_HYDRO_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
+                        vdSOC_maxNeg_HYDRO[y,w] <= EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+t] - EP[:vS_HYDRO][y,hours_per_subperiod*(w-1)+1])
 
-    # Max storage content within each modeled period cannot exceed installed energy capacity
-    @constraint(EP, cSoCLongDurationStorageMaxInt_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-        vSOC_HYDROw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
-        -EP[:vSPILL][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]
-        +inputs["pP_Max"][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]*EP[:eTotalCap][y]
-        +vdSOC_maxPos_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]] <= hydro_energy_to_power_ratio(gen[y])*EP[:eTotalCap][y])
+        # Max storage content within each modeled period cannot exceed installed energy capacity
+        @constraint(EP, cSoCLongDurationStorageMaxInt_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+            vSOC_HYDROw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+            -EP[:vSPILL][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]
+            +inputs["pP_Max"][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]*EP[:eTotalCap][y]
+            +vdSOC_maxPos_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]] <= hydro_energy_to_power_ratio(gen[y])*EP[:eTotalCap][y])
 
-    # Min storage content within each modeled period cannot be negative
-    @constraint(EP, cSoCLongDurationStorageMinInt_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
-        vSOC_HYDROw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
-        -EP[:vSPILL][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]
-        +inputs["pP_Max"][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]*EP[:eTotalCap][y]
-        +vdSOC_maxPos_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]] >= 0)     
-
+        # Min storage content within each modeled period cannot be negative
+        @constraint(EP, cSoCLongDurationStorageMinInt_H[y in STOR_HYDRO_LONG_DURATION, r in MODELED_PERIODS_INDEX],
+            vSOC_HYDROw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+            -EP[:vSPILL][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]
+            +inputs["pP_Max"][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]*EP[:eTotalCap][y]
+            +vdSOC_maxPos_HYDRO[y,dfPeriodMap[r,:Rep_Period_Index]] >= 0)     
+    end
 end
