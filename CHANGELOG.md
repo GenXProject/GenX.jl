@@ -14,6 +14,7 @@ number of concurrent Gurobi uses is limited (#783).
 - Additional long-duration storage constraints to bound state of charge in 
 non-representative periods (#781).
 - New version of `add_similar_to_expression!` to support arrays of `Number`s. (#798)
+- New settings flag `LDSAdditionalConstraints` to provide flexibility in activating new long-duration storage constraints (#781). Can be set in the GenX settings file (PR #801).
 
 ### Changed
 - The `charge.csv` and `storage.csv` files now include only resources with 
