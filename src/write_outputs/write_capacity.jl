@@ -44,7 +44,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     end
 
     endcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
-    for i in inputs["G"]
+    for i in 1:inputs["G"]
         if i in COMMIT_CCS_SS
             endcapdischarge[i] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
         else
@@ -53,11 +53,11 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     end
 
     startcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
-    for i in inputs["G"]
+    for i in 1:inputs["G"]
         if i in COMMIT_CCS_SS
-            startcapdischarge[i] = gen[i].existing_cap_mw_gasturbine + gen[i].existing_cap_mw_steamturbine
+            startcapdischarge[i] = existing_cap_mw_gasturbine(gen[i]) + existing_cap_mw_steamturbine(gen[i])
         else
-            startcapdischarge[i] = gen[i].existing_cap_mw
+            startcapdischarge[i] = existing_cap_mw(gen[i])
         end
     end
 

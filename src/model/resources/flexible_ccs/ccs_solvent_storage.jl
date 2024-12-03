@@ -249,16 +249,6 @@ function ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
     # 2.5 CO2 regenerated in the regenerator: EP[:vOutput_CCS_SS][y, regenerator, t]]
     @constraint(EP, cRegen_Compress[y in CCS_SOLVENT_STORAGE, t = 1:T],  
                 EP[:vOutput_CCS_SS][y, regenerator, t] == EP[:vOutput_CCS_SS][y, compressor, t] / gen[y].poweruserate_mwh_per_ton_co2_compressor)
-    # # 2.6 CO2 compressed and stored after the compressor: EP[:vOutput_CCS_SS[y, compressor, t]] / gen[y].poweruserate_mwh_per_ton_co2_compressor
-    # @expression(EP, ePlantCCO2Sequestration_compressor[y in CCS_SOLVENT_STORAGE],   # CO2 storage and transport costs by plant
-    #         sum(omega[t] * EP[:vOutput_CCS_SS][y, compressor, t] / gen[y].poweruserate_mwh_per_ton_co2_compressor *
-    #             ccs_disposal_cost_per_metric_ton(gen[y]) for t in 1:T))
-    # @expression(EP, eZonalCCO2Sequestration_compressor[z = 1:Z],   # CO2 storage and transport costs by zone
-    #         sum(ePlantCCO2Sequestration_compressor[y]
-    #         for y in intersect(resources_in_zone_by_rid(gen, z), CCS_SOLVENT_STORAGE)))
-    # @expression(EP, eTotaleCCO2Sequestration_compressor,
-    #         sum(eZonalCCO2Sequestration_compressor[z] for z in 1:Z))
-    # add_to_expression!(EP[:eObj], EP[:eTotaleCCO2Sequestration_compressor])
 
     # if not flexible, EP[:vOutput_CCS_SS][y, regenerator, t] == EP[:vOutput_CCS_SS][y, absorber, t]
     if setup["FlexibleCCS"] == 0
