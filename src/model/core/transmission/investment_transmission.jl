@@ -127,8 +127,8 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCNetworkExp,
             if setup["asymmetrical_trans_flow_limit"] == 1
                 sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
-                for l in EXPANSION_LINES)+sum(vNEW_TRANS_CAP_Pos[l] * inputs["pC_Line_Reinforcement_Pos"][l]
-                for l in EXPANSION_LINES_ASYM)+sum(vNEW_TRANS_CAP_Neg[l] * inputs["pC_Line_Reinforcement_Neg"][l]
+                for l in EXPANSION_LINES)+sum(vNEW_TRANS_CAP_Pos[l] * inputs["pC_Line_Reinforcement"][l]
+                for l in EXPANSION_LINES_ASYM)+sum(vNEW_TRANS_CAP_Neg[l] * inputs["pC_Line_Reinforcement"][l]
                 for l in EXPANSION_LINES_ASYM)
             else
                 sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
