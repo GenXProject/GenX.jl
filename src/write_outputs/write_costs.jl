@@ -166,7 +166,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         ELECTROLYZERS_ZONE = intersect(inputs["ELECTROLYZER"], Y_ZONE)
         CCS_ZONE = intersect(inputs["CCS"], Y_ZONE)
 
-        eCFix = sum(value.(EP[:eCFix][Y_ZONE]))
+        eCFix = sum(value.(EP[:eCFix][Y_ZONE]), init = 0.0)
         tempCFix += eCFix
         tempCTotal += eCFix
 
