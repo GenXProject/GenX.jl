@@ -19,7 +19,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["L"] = L
     L_asym  = 0 # Default number of asymmetrical lines
     if setup["asymmetrical_trans_flow_limit"] == 1
-        L_asym = length(as_vector(network_var, :Asymmetrical, :Network_Lines)) #Number of asymmetrical lines
+        L_asym = length(filtered_vector(network_var, :Asymmetrical, :Network_Lines)) #Number of asymmetrical lines
     end
     println("Number of asymmetric lines: $L_asym")
     inputs_nw["L_asym"] = L_asym
@@ -154,8 +154,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .>= 0)
         inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .< 0)
         if setup["asymmetrical_trans_flow_limit"] == 1
-            inputs_nw["EXPANSION_LINES_ASYM"] = findall((inputs_nw["pMax_Line_Reinforcement_Pos"] .> 0) || (inputs_nw["pMax_Line_Reinforcement_Neg"] .> 0))
-            inputs_nw["NO_EXPANSION_LINES_ASYM"] = findall((inputs_nw["pMax_Line_Reinforcement_Pos"] .< 0) && (inputs_nw["pMax_Line_Reinforcement_Neg"] .< 0))
+            inputs_nw["EXPANSION_LINES_ASYM"] = findall((inputs_nw["pMax_Line_Reinforcement_Pos"] .> 0) .| (inputs_nw["pMax_Line_Reinforcement_Neg"] .> 0))
+            inputs_nw["NO_EXPANSION_LINES_ASYM"] = findall((inputs_nw["pMax_Line_Reinforcement_Pos"] .< 0) .& (inputs_nw["pMax_Line_Reinforcement_Neg"] .< 0))
         end
     end
 
@@ -240,7 +240,7 @@ function network_map_matrix_format_deprecation_warning()
   """ maxlog=1
 end
 
-function as_vector(network_var::DataFrame, asym_column::Symbol, col::Symbol)
-    asym_network_var = network_var[network_var[asym_col] .== 1, :]
-    return collect(skipmissing(asym_network_var[!, col]))
+function filtered_vector(df::DataFrame, condition_col::Symbol, data_col::Symbol)
+    filtered_df = df[df[!,condition_col] .== 1, :]
+    return collect(skipmissing(filtered_df[!, data_col]))
 end
