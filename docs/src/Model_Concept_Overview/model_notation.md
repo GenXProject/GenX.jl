@@ -135,7 +135,7 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$r^{ac,cha}_{y,z,t} \in \mathbb{R}_+$ |  Upward spinning reserves contribution \[MW\] for the storage AC charge component from technology $y$ in zone $z$ at time $t$ - only applicable for co-located VRE and storage resources with a storage AC charge component, $y \in \mathcal{VS}^{sym,ac} \cup y \in \mathcal{VS}^{asym,ac,cha}$ |
 |$\alpha^{Contingency,Aux}_{y,z} \in \{0,1\}$ | Binary variable that is set to be 1 if the total installed capacity  $\Delta^{\text{total}}_{y,z} > 0$ for any generator $y \in \mathcal{UC}$ and zone $z$, and can be 0 otherwise |
 |$\Phi_{l,t} \in \mathbb{R}_+$ | Power flow in line $l$ at time step $t$ \[MWh\]|
-|$\theta_{z,t} \in \mathbb{R}$ | Volta phase angle in zone $z$ at time step $t$ \[radian\]|
+|$\theta_{z,t} \in \mathbb{R}$ | Voltage phase angle in zone $z$ at time step $t$ \[radian\]|
 |$\nu_{y,z,t}$ | Commitment state of the generation cluster $y$ in zone $z$ at time $t$|
 |$\chi_{y,z,t}$ | Number of startup decisions,  of the generation cluster $y$ in zone $z$ at time $t$|
 |$\zeta_{y,z,t}$ | Number of shutdown decisions,  of the generation cluster $y$ in zone $z$ at time $t$|
