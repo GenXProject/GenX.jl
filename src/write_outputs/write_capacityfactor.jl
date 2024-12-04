@@ -16,6 +16,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     VRE_STOR = inputs["VRE_STOR"]
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
+    gasturbine, steamturbine = 1, 2
     weight = inputs["omega"]
 
     df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
@@ -89,6 +90,17 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         @info "Capacity factor for Allam Cycle LOX resources that is included in the capacityfactor.csv file is calculated for the sCO2Turbine in an Allam Cycle LOX resource."
         @info "For the full power output, please refer to the output_allam_cycle_lox.csv file."
     end
+
+    # Capacity factor for CCS_SOLVENT_STORAGE is based on eTotalCap_CCS_SS instead of eTotalCap
+    if !isempty(CCS_SOLVENT_STORAGE)
+        for i in CCS_SOLVENT_STORAGE
+            df.Capacity[i] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
+        end
+        df.CapacityFactor[CCS_SOLVENT_STORAGE] .= (df.AnnualSum[CCS_SOLVENT_STORAGE] ./
+                                                    df.Capacity[CCS_SOLVENT_STORAGE]) /
+                                                    sum(weight)
+    end
+
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)
     return nothing
