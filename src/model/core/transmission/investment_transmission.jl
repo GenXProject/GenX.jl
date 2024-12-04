@@ -112,13 +112,13 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
                     eTransMax[l]
                 end)
             @expression(EP, eAvail_Trans_Cap_Pos[l = 1:L_asym],
-                if l in EXPANSION_LINES
+                if l in EXPANSION_LINES_ASYM
                     eTransMax_Pos[l] + vNEW_TRANS_CAP_Pos[l]
                 else
                     eTransMax_Pos[l]
                 end)
              @expression(EP, eAvail_Trans_Cap_Neg[l = 1:L_asym],
-                if l in EXPANSION_LINES
+                if l in EXPANSION_LINES_ASYM
                     eTransMax_Neg[l] + vNEW_TRANS_CAP_Neg[l]
                 else
                     eTransMax_Neg[l]
