@@ -16,6 +16,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     VRE_STOR = inputs["VRE_STOR"]
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
+    gasturbine, steamturbine = 1, 2
     weight = inputs["omega"]
 
     df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
@@ -73,6 +74,16 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         df.AnnualSum[ELECTROLYZER] .= energy_sum(:vUSE, ELECTROLYZER)
         df.CapacityFactor[ELECTROLYZER] .= (df.AnnualSum[ELECTROLYZER] ./
                                             df.Capacity[ELECTROLYZER]) /
+                                           sum(weight)
+    end
+    # Capacity factor for CCS_SOLVENT_STORAGE is based on eTotalCap_CCS_SS instead of eTotalCap
+    if !isempty(CCS_SOLVENT_STORAGE)
+        for i in CCS_SOLVENT_STORAGE
+            df.Capacity[i] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
+            # df.CapacityFactor[i] .= (df.AnnualSum[i] / df.Capacity[i]) / sum(weight)
+        end
+        df.CapacityFactor[CCS_SOLVENT_STORAGE] .= (df.AnnualSum[CCS_SOLVENT_STORAGE] ./
+                                            df.Capacity[CCS_SOLVENT_STORAGE]) /
                                            sum(weight)
     end
 
