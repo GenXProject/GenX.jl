@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 number of concurrent Gurobi uses is limited (#783).
 - Additional long-duration storage constraints to bound state of charge in 
 non-representative periods (#781).
+- New version of `add_similar_to_expression!` to support arrays of `Number`s. (#798)
 
 ### Changed
 - The `charge.csv` and `storage.csv` files now include only resources with 

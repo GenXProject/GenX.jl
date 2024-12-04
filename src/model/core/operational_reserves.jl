@@ -270,7 +270,7 @@ function operational_reserves_core!(EP::Model, inputs::Dict, setup::Dict)
     # N-1 contingency requirement is considered only if Unit Commitment is being modeled
     if UCommit >= 1 &&
        (inputs["pDynamic_Contingency"] >= 1 || inputs["pStatic_Contingency"] > 0)
-        add_to_expression!(EP[:eRsvReq], EP[:eContingencyReq])
+        add_similar_to_expression!(EP[:eRsvReq], EP[:eContingencyReq])
     end
 
     ## Objective Function Expressions ##
