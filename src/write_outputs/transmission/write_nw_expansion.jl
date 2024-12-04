@@ -9,9 +9,14 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 
     # Transmission network reinforcements
     transcap = zeros(L)
+    transcap_pos = zeros(L_asym)
+    transcap_neg = zeros(L_asym)
     for i in 1:L
         if i in inputs["EXPANSION_LINES"]
             transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
+        elseif i in inputs["EXPANSION_LINES_ASYM"]
+            transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][i])
+            transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][i])    
         end
     end
 
