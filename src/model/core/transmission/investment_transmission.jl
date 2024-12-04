@@ -1,5 +1,5 @@
 @doc raw"""
-    function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
+    investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 This function model transmission expansion and adds transmission reinforcement or construction costs to the objective function. Transmission reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction cost, $pi^{TCAP}_{l}$, times the additional transmission capacity variable, $\bigtriangleup\varphi^{cap}_{l}$. 
 For asymmetric bidirectional flows, the reinforcement costs are equal to the sum across all lines of the product between the transmission reinforcement/construction costs for the onward and return directions, $pi^{TCAP+}_{l}$ and $pi^{TCAP-}_{l}$, respectively, times the additional transmission capacity variables, $\bigtriangleup\varphi^{cap+}_{l}$ and $\bigtriangleup\varphi^{cap-}_{l}$
 ```math
