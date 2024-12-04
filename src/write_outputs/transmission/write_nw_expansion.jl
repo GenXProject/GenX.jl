@@ -3,7 +3,7 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
     L_asym = 0 #Default number of asymmetrical lines
     # Number of lines in the network
     if setup["asymmetrical_trans_flow_limit"] == 1
-        L_asym = inputs_nw["L_asym"] #Number of transmission lines with different capacities in two directions
+        L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
     end
     L = L_sym + L_asym
 
