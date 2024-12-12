@@ -10,13 +10,29 @@ function write_transmission_losses(path::AbstractString,
         L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
     end
     L = L_sym + L_asym
-    LOSS_LINES = inputs["LOSS_LINES"]
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
+        LOSS_LINES_SYM = inputs["LOSS_LINES_SYM"]
+        #println(inputs["LOSS_LINES_ASYM"])
+        #println(inputs["LOSS_LINES_SYM"])
+    else
+        LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
+    end
     # Power losses for transmission between zones at each time step
     dfTLosses = DataFrame(Line = 1:L)
     tlosses = zeros(L, T)
-    tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
-    if setup["ParameterScale"] == 1
-        tlosses[LOSS_LINES, :] *= ModelScalingFactor
+    if setup["asymmetrical_trans_flow_limit"] == 1 # Asymmetrical transmission losses # Thank you GitHub Co-Pilot
+        tlosses[LOSS_LINES_ASYM, :] = value.(EP[:vTLOSS_ASYM][LOSS_LINES_ASYM, :]) # Losses for asymmetrical lines
+        tlosses[LOSS_LINES_SYM, :] = value.(EP[:vTLOSS][LOSS_LINES_SYM, :]) # Losses for symmetrical lines
+        if setup["ParameterScale"] == 1
+            tlosses[LOSS_LINES_ASYM, :] *= ModelScalingFactor
+            tlosses[LOSS_LINES_SYM, :] *= ModelScalingFactor
+        end
+    else
+        tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
+        if setup["ParameterScale"] == 1
+            tlosses[LOSS_LINES, :] *= ModelScalingFactor
+        end
     end
 
     dfTLosses.AnnualSum = tlosses * inputs["omega"]
