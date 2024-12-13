@@ -98,15 +98,17 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
         end
     end
 
-    ### Constratints ###
+    ### Constraints ###
 
-    # Demand curtailed in each segment of curtailable demands cannot exceed maximum allowable share of demand
+    # Demand curtailed in each segment of curtailable demand cannot exceed maximum allowable share of demand
     @constraint(EP,
         cNSEPerSeg[s = 1:SEG, t = 1:T, z = 1:Z],
-        vNSE[s, t, z]<=inputs["pMax_D_Curtail"][s] * inputs["pD"][t, z])
+        vNSE[s, t, z] <= inputs["pMax_D_Curtail"][s] * inputs["pD"][t, z]
+    )
 
     # Total demand curtailed in each time step (hourly) cannot exceed total demand
     @constraint(EP,
         cMaxNSE[t = 1:T, z = 1:Z],
-        sum(vNSE[s, t, z] for s in 1:SEG)<=inputs["pD"][t, z])
+        sum(vNSE[s, t, z] for s in 1:SEG) <= inputs["pD"][t, z]
+    )
 end
