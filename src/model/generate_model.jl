@@ -71,9 +71,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    ## Start pre-solve timer
-    presolver_start_time = time()
-
     # Generate Energy Portfolio (EP) Model
     EP = Model(OPTIMIZER)
     set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
