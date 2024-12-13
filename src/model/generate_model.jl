@@ -257,8 +257,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         cPowerBalance[t = 1:T, z = 1:Z],
         EP[:ePowerBalance][t, z]==inputs["pD"][t, z])
 
-    ## Record pre-solver time
-    presolver_time = time() - presolver_start_time
     if setup["PrintModel"] == 1
         filepath = joinpath(pwd(), "YourModel.lp")
         JuMP.write_to_file(EP, filepath)

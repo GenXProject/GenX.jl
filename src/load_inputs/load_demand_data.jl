@@ -82,8 +82,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
     # Cost of non-served energy/demand curtailment
     # Cost of each segment reported as a fraction of value of non-served energy - scaled implicitly
-    inputs["pC_D_Curtail"] = as_vector(:Cost_of_Demand_Curtailment_per_MW) *
-                             inputs["Voll"][1]
+    inputs["pC_D_Curtail"] = as_vector(:Cost_of_Demand_Curtailment_per_MW) * inputs["Voll"][1]
     # Maximum hourly demand curtailable as % of the max demand (for each segment)
     inputs["pMax_D_Curtail"] = as_vector(:Max_Demand_Curtailment)
 
