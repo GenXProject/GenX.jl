@@ -1,3 +1,4 @@
+# for testing just the market model with the ability to inspect results
 using GenX
 
 genx_setup = Dict(
@@ -15,7 +16,7 @@ price_csvs = [
 ]
 
 for price_csv in price_csvs
-    cp(price_csv, market_data_path)
+    cp(price_csv, market_data_path; force=true)
     
     run_genx_case!(".")
   

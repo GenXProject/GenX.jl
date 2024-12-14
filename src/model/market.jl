@@ -16,9 +16,9 @@ The inputs for this market model have the following columns:
 """
 function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
 
-        # TODO load inputs, need anything in setup?
         T = inputs["T"]     # Number of time steps (hours)
         Z = inputs["Z"]     # Number of zones
+
         if Z != 1
             throw(ErrorException("The market model is only implemented for single zone models."))
         end
