@@ -19,6 +19,13 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
         # TODO load inputs, need anything in setup?
         T = inputs["T"]     # Number of time steps (hours)
         Z = inputs["Z"]     # Number of zones
+        if Z != 1
+            throw(ErrorException("The market model is only implemented for single zone models."))
+        end
+        if setup["TimeDomainReduction"] == 1
+            throw(ErrorException("TimeDomainReduction is not supported in the market model."))
+        end
+
         M = 4  # TODO number of markets or price tiers
 
         # TODO add purchases to the load balance equation. appears that all expressions
