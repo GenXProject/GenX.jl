@@ -244,6 +244,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         mga!(EP, inputs, setup)
     end
 
+    if setup["Market"] == 1
+        add_known_price_market_model!(EP, inputs, setup)
+    end
+
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
 

@@ -59,6 +59,10 @@ end
     @testset "Retrofit" begin
         include("test_retrofit.jl")
     end
+
+    @testset "Market" begin
+        include("test_market.jl")
+    end
 end
 
 # Test writing outputs

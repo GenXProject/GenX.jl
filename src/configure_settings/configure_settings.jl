@@ -1,5 +1,6 @@
 function default_settings()
-    Dict{Any, Any}("PrintModel" => 0,
+    Dict{Any, Any}(
+        "PrintModel" => 0,
         "OverwriteResults" => 0,
         "NetworkExpansion" => 0,
         "Trans_Loss_Segments" => 1,
@@ -37,7 +38,9 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1,
+        "Market" => 0,
+    )
 end
 
 @doc raw"""

@@ -14,18 +14,19 @@ The inputs for this market model have the following columns:
 
 
 """
-function add_known_price_market_model(EP::Model, inputs::Dict, setup::Dict)
+function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
 
         # TODO load inputs, need anything in setup?
         T = inputs["T"]     # Number of time steps (hours)
         Z = inputs["Z"]     # Number of zones
         M = 4  # TODO number of markets or price tiers
 
-        # TODO how to add to the load balance equation? appears that all expressions added to
-        # ePowerBalance must have (T, Z) indices because in generate_model.jl:
-        # @constraint(EP, cPowerBalance[t = 1:T, z = 1:Z],
-        #     EP[:ePowerBalance][t, z] == inputs["pD"][t, z]
-        # )
+        # TODO add purchases to the load balance equation. appears that all expressions
+        # added to ePowerBalance must have (T, Z) indices because in generate_model.jl:
+        # (copy/paste) @constraint(EP, cPowerBalance[t = 1:T, z = 1:Z],
+        #                   EP[:ePowerBalance][t, z] == inputs["pD"][t, z]
+        #               )
+        # Sales should NOT be in the load balance; only the objective as a benefit.
         
         @expression(EP, eMarketPurchases[t = 1:T, z = 1:Z],
             0.0
