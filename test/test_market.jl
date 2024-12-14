@@ -31,7 +31,11 @@ for price_csv in price_csvs
 
     # $30/MWh with 1 MW market limit means that every hour 1 MWh is purchased
     if endswith(price_csv, "one_tier_30.csv")
-        @test JuMP.value(EP[:eMarketPurchasesCost]) / 30 ≈ 8760.0
+        @test all(price ≈ 30.0 for price in inputs[GenX.MARKET_PRICES][1])
+        @test JuMP.value(EP[:eMarketPurchasesCost]) / inputs[GenX.MARKET_PRICES][1][1] ≈ 8760.0
+        @test all((
+            purchase ≈ inputs[GenX.MARKET_LIMITS][1] for purchase in JuMP.value.(EP[:vMarketPurchaseMW])
+        ))
     end
 
     obj_test = objective_value(EP)
