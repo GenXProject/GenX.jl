@@ -1,5 +1,5 @@
 module TestMarket
-
+# see the test/market/README.md for more details on these tests.
 using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
@@ -24,11 +24,12 @@ scenarios_path = joinpath(@__DIR__, test_path, "market_price_scenarios")
 market_data_path = joinpath(@__DIR__, test_path, "system", "Market_data.csv")
 
 price_csvs = [
-    joinpath(scenarios_path, "one_tier_30.csv")
+    joinpath(scenarios_path, "one_tier_30.csv"),
+    joinpath(scenarios_path, "two_tier_30_100.csv"),
 ]
 
 for price_csv in price_csvs
-    cp(price_csv, market_data_path)
+    cp(price_csv, market_data_path; force=true)
     
     # Run the case and get the objective value and tolerance
     EP, inputs, _ = redirect_stdout(devnull) do
@@ -49,6 +50,19 @@ for price_csv in price_csvs
         savings = sum(base_line_LMPs) - market_costs
         @test JuMP.objective_value(EP) + savings ≈ base_line_cost
     end
+
+
+    if endswith(price_csv, "two_tier_30_100.csv")
+        @test sum(JuMP.value.(EP[:vMarketPurchaseMW][:, 1])) ≈ 8760.0
+        # it's cheaper to make the gas gen bigger than buy $100/MWh energy
+        @test sum(JuMP.value.(EP[:vMarketPurchaseMW][:, 2])) ≈ 0
+        # no more prices at VoLL with the option to buy $100/MWh energy
+        n_prices_100 = sum((lmp ≈ 100.0 for lmp in LMPs))
+        @test n_prices_100 > 9
+        n_prices_VoLL = sum((lmp ≈ inputs["Voll"][1] for lmp in LMPs))
+        @test n_prices_VoLL == 0
+    end
+
    
     rm(market_data_path)
 end

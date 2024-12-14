@@ -1,18 +1,17 @@
 # for testing just the market model with the ability to inspect results
 using GenX
+using Logging
+using JuMP
 
-genx_setup = Dict(
-    "Market" => 1
-)
+# Set the log level to Debug
+global_logger(ConsoleLogger(stderr, Logging.Debug))
 
-settings = GenX.default_settings()
-merge!(settings, genx_setup)
 
 scenarios_path = joinpath(@__DIR__, "market_price_scenarios")
 market_data_path = joinpath(@__DIR__, "system", "Market_data.csv")
 
 price_csvs = [
-    joinpath(scenarios_path, "one_tier_30.csv")
+    joinpath(scenarios_path, "two_tier_30_100.csv")
 ]
 
 for price_csv in price_csvs
