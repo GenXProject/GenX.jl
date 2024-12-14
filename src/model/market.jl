@@ -12,7 +12,6 @@ The inputs for this market model have the following columns:
 
     import_limit_MW_1, ..., import_limit_MW_N, price_per_MWh_1, ..., price_per_MWh_N
 
-
 """
 function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
 
@@ -26,7 +25,7 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
             throw(ErrorException("TimeDomainReduction is not supported in the market model."))
         end
 
-        M = 4  # TODO number of markets or price tiers
+        M = length(inputs[MARKET_LIMITS])  # number of market price tiers
 
         # TODO add purchases to the load balance equation. appears that all expressions
         # added to ePowerBalance must have (T, Z) indices because in generate_model.jl:
@@ -34,15 +33,26 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
         #                   EP[:ePowerBalance][t, z] == inputs["pD"][t, z]
         #               )
         # Sales should NOT be in the load balance; only the objective as a benefit.
+
+        # the market purchases are non-negative and no greater than the MARKET_LIMITS
+        @variable(EP, 0 <= vMarketPurchaseMW[t = 1:T, m = 1:M] <= inputs[MARKET_LIMITS][m])
         
-        @expression(EP, eMarketPurchases[t = 1:T, z = 1:Z],
-            0.0
+        # TODO need the z index to follow load balance convention?
+        @expression(EP, eMarketPurchasesMWh[t = 1:T, z = 1:Z],
+            sum(vMarketPurchaseMW[t, m] for m = 1:M)
+        )
+
+        @expression(EP, eMarketPurchasesCost,
+            sum(
+                vMarketPurchaseMW[t, m] * inputs[MARKET_PRICES][m][t]
+            for t = 1:T, m = 1:M)
         )
 
         # add energy purchased to the load balance 
-        add_similar_to_expression!(EP[:ePowerBalance], eMarketPurchases)
+        add_similar_to_expression!(EP[:ePowerBalance], eMarketPurchasesMWh)
 
-        # TODO add cost of purchases to objective function
         # TODO add benefit of sales to objective function
-        # add_to_expression!(EP[:eObj], eTotalCVarOut)
+        add_to_expression!(EP[:eObj], eMarketPurchasesCost)
+
+        @debug("Market model added.")
 end

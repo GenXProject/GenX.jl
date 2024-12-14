@@ -25,8 +25,13 @@ for price_csv in price_csvs
     cp(price_csv, market_data_path)
     
     # Run the case and get the objective value and tolerance
-    EP, _, _ = redirect_stdout(devnull) do
+    EP, inputs, _ = redirect_stdout(devnull) do
         run_genx_case_testing(test_path, genx_setup)
+    end
+
+    # $30/MWh with 1 MW market limit means that every hour 1 MWh is purchased
+    if endswith(price_csv, "one_tier_30.csv")
+        @test JuMP.value(EP[:eMarketPurchasesCost]) / 30 ≈ 8760.0
     end
 
     obj_test = objective_value(EP)
