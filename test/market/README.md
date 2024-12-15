@@ -13,11 +13,15 @@ General notes on the test scenario:
 Based on the prices without the market we test a few cases:
 1. Set the market price to $30/MWh in all time steps with a purchase cap of 1 MW and test that 1 MWh
    is purchased in every hour and more.
-1. Add a $100/MWh price tier limited to 2.5 MW in all time steps and test that:
+2. Add a $100/MWh price tier limited to 2.5 MW in all time steps and test that:
     - energy is purchased in every time step from the first tier
     - no energy is purchased from the second tier
     - prices are set to $100/MWh in some time steps
     - no prices are set to the VoLL
+3. Model a two tier market with the first tier price greater than $40.7/MWh so that there is a
+   benefit to selling energy up to the limit. And set the second tier price below $40.7/MWh so that
+   there is a benefit of buying energy up to the limit. (Recall that the market tiers are proxies
+   for transmission connections so buying in one tier and selling in another is normal.)
 
 The test Market_data.csv were made like so:
 ```julia
@@ -38,5 +42,14 @@ df = DataFrame(
     price_per_MWh_2 = repeat([100.0], 8760),
 )
 CSV.write("market_price_scenarios/two_tier_30_100.csv", df)
+
+
+df = DataFrame(
+    import_limit_MW_1 = vcat([1], fill(missing, 8759)), 
+    import_limit_MW_2 = vcat([2.5], fill(missing, 8759)),
+    price_per_MWh_1 = repeat([50.0], 8760),
+    price_per_MWh_2 = repeat([30.0], 8760),
+)
+CSV.write("market_price_scenarios/two_tier_50_30.csv", df)
 
 ```

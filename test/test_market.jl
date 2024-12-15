@@ -26,6 +26,7 @@ market_data_path = joinpath(@__DIR__, test_path, "system", "Market_data.csv")
 price_csvs = [
     joinpath(scenarios_path, "one_tier_30.csv"),
     joinpath(scenarios_path, "two_tier_30_100.csv"),
+    joinpath(scenarios_path, "two_tier_50_30.csv"),
 ]
 
 for price_csv in price_csvs
@@ -49,11 +50,13 @@ for price_csv in price_csvs
         ))
         savings = sum(base_line_LMPs) - market_costs
         @test JuMP.objective_value(EP) + savings ≈ base_line_cost
+        # no sales b/c $30/MWh is less than the LMP at all times
+        @test JuMP.value(EP[:eMarketSalesBenefit]) ≈ 0
     end
 
 
     if endswith(price_csv, "two_tier_30_100.csv")
-        @test sum(JuMP.value.(EP[:vMarketPurchaseMW][:, 1])) ≈ 8760.0
+        @test sum(JuMP.value.(EP[:vMarketPurchaseMW][:, 1])) ≈ inputs[GenX.MARKET_LIMITS][1] * 8760.0
         # it's cheaper to make the gas gen bigger than buy $100/MWh energy
         @test sum(JuMP.value.(EP[:vMarketPurchaseMW][:, 2])) ≈ 0
         # no more prices at VoLL with the option to buy $100/MWh energy
@@ -61,6 +64,22 @@ for price_csv in price_csvs
         @test n_prices_100 > 9
         n_prices_VoLL = sum((lmp ≈ inputs["Voll"][1] for lmp in LMPs))
         @test n_prices_VoLL == 0
+        # no sales b/c $30/MWh is less than the LMP at all times
+        @test JuMP.value(EP[:eMarketSalesBenefit]) ≈ 0
+    end
+
+
+    if endswith(price_csv, "two_tier_50_30.csv")
+        # selling energy in every time step in tier 1
+        @test sum(JuMP.value.(EP[:vMarketSaleMW][:, 1])) ≈ inputs[GenX.MARKET_LIMITS][1] * 8760.0
+        # buying energy in every time step in tier 2
+        @test sum(JuMP.value.(EP[:vMarketPurchaseMW][:, 2])) ≈ inputs[GenX.MARKET_LIMITS][2] * 8760.0
+
+        market_costs = JuMP.value(EP[:eMarketPurchasesCost])
+        @test market_costs ≈ inputs[GenX.MARKET_LIMITS][2] * 8760.0 * inputs[GenX.MARKET_PRICES][2][1]
+
+        benefit = JuMP.value(EP[:eMarketSalesBenefit])
+        @test benefit ≈ inputs[GenX.MARKET_PRICES][1][1] * 8760.0
     end
 
    

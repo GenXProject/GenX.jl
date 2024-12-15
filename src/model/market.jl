@@ -26,18 +26,17 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
         end
 
         M = length(inputs[MARKET_LIMITS])  # number of market price tiers
-
-        # TODO add purchases to the load balance equation. appears that all expressions
-        # added to ePowerBalance must have (T, Z) indices because in generate_model.jl:
-        # (copy/paste) @constraint(EP, cPowerBalance[t = 1:T, z = 1:Z],
-        #                   EP[:ePowerBalance][t, z] == inputs["pD"][t, z]
-        #               )
-        # Sales should NOT be in the load balance; only the objective as a benefit.
+        SELL_TIER = 1  # can only sell in tier 1
 
         # the market purchases are non-negative and no greater than the MARKET_LIMITS
         @variable(EP, 0 <= vMarketPurchaseMW[t = 1:T, m = 1:M] <= inputs[MARKET_LIMITS][m])
+
+        # the market sales are non-negative and no greater than the MARKET_LIMITS for tier 1
+        # NOTE need the z index to add to load balance convention
+        @variable(EP, 0 <= vMarketSaleMW[t = 1:T, z=1:1] <= inputs[MARKET_LIMITS][SELL_TIER])
         
-        # TODO need the z index to follow load balance convention?
+        # Sum purchases across market tiers to add the purchases to the load balance
+        # NOTE need the z index to add to load balance convention
         @expression(EP, eMarketPurchasesMWh[t = 1:T, z = 1:Z],
             sum(vMarketPurchaseMW[t, m] for m = 1:M)
         )
@@ -48,11 +47,18 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
             for t = 1:T, m = 1:M)
         )
 
+        @expression(EP, eMarketSalesBenefit,
+            sum(
+                vMarketSaleMW[t] * inputs[MARKET_PRICES][SELL_TIER][t]
+            for t = 1:T)
+        )
+
         # add energy purchased to the load balance 
         add_similar_to_expression!(EP[:ePowerBalance], eMarketPurchasesMWh)
+        add_similar_to_expression!(EP[:ePowerBalance], -vMarketSaleMW)
 
-        # TODO add benefit of sales to objective function
         add_to_expression!(EP[:eObj], eMarketPurchasesCost)
+        add_to_expression!(EP[:eObj], -eMarketSalesBenefit)
 
         @debug("Market model added.")
 end
