@@ -259,8 +259,8 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     else
         @constraints(EP,
         begin
-            cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
-            cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap_Neg][l]
+            cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
+            cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
         end)
     end
     
