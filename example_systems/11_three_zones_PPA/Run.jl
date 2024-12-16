@@ -1,4 +1,4 @@
-using GenX, Gurobi
+using GenX
 
 optimizer = Gurobi.Optimizer
 
