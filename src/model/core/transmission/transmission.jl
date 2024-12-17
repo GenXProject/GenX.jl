@@ -1,6 +1,7 @@
 @doc raw"""
 	transmission!(EP::Model, inputs::Dict, setup::Dict)
-This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission losses (if modeled).
+This function establishes decisions, expressions, and constraints related to transmission power flows between model zones and associated transmission 
+losses (if modeled).
 
 Power flow and transmission loss terms are also added to the power balance constraint for each zone:
 ```math
@@ -8,15 +9,33 @@ Power flow and transmission loss terms are also added to the power balance const
 &	- \sum_{l\in \mathcal{L}}{(\varphi^{map}_{l,z} \times \Phi_{l,t})} - \frac{1}{2} \sum_{l\in \mathcal{L}}{(\varphi^{map}_{l,z} \times \beta_{l,t}(\cdot))}
 \end{aligned}
 ```
-Power flows, $\Phi_{l,t}$, on each line $l$ into or out of a zone (defined by the network map $\varphi^{map}_{l,z}$), are considered in the demand balance equation for each zone. By definition, power flows leaving their reference zone are positive, thus the minus sign is used for this term. Losses due to power flows increase demand, and one-half of losses across a line linking two zones are attributed to each connected zone. The losses function $\beta_{l,t}(\cdot)$ will depend on the configuration used to model losses (see below).
+Power flows, $\Phi_{l,t}$, on each line $l$ into or out of a zone (defined by the network map $\varphi^{map}_{l,z}$), are considered in the demand balance 
+equation for each zone. By definition, power flows leaving their reference zone are positive, thus the minus sign is used for this term. 
+Losses due to power flows increase demand, and one-half of losses across a line linking two zones are attributed to each connected zone. 
+The losses function $\beta_{l,t}(\cdot)$ will depend on the configuration used to model losses (see below).
+
 **Accounting for Transmission Between Zones**
-Power flow, $\Phi_{l,t}$, on each line (or more likely a `path' aggregating flows across multiple parallel lines) is constrained to be less than or equal to the line's power transfer capacity, $\varphi^{cap}_{l}$, plus any transmission capacity added on that line (for lines eligible for expansion in the set $\mathcal{E}$). The additional transmission capacity, $\bigtriangleup\varphi^{cap}_{l} $, is constrained by a maximum allowed reinforcement, $\overline{\bigtriangleup\varphi^{cap}_{l}}$, for each line $l \in \mathcal{E}$.
+Power flow, $\Phi_{l,t}$, on each line (or more likely a `path' aggregating flows across multiple parallel lines) is constrained to be less than or 
+equal to the line's power transfer capacity, $\varphi^{cap}_{l}$, plus any transmission capacity added on that line (for lines eligible for expansion 
+in the set $\mathcal{E}$). The additional transmission capacity, $\bigtriangleup\varphi^{cap}_{l} $, is constrained by a maximum allowed 
+reinforcement, $\overline{\bigtriangleup\varphi^{cap}_{l}}$, for each line $l \in \mathcal{E}$. For asymmetric bidirectional lines, the capacity added
+in the two directions are considered separately and are denoted as $\varphi^{cap}_{l}^{+}$ and $\varphi^{cap}_{l}^{-}$, respectively, plus any any transmission
+capacity added, denoted by $\bigtriangleup\varphi^{cap}_{l}^{+}$ and $\bigtriangleup\varphi^{cap}_{l}^{-}$, respectively.
 ```math
 \begin{aligned}
 	% trasmission constraints
 	&-\varphi^{cap}_{l} \leq  \Phi_{l,t} \leq \varphi^{cap}_{l} , &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}\\
 \end{aligned}
 ```
+
+**Accounting for Transmission Between Zones with Asymmetrical Flow Limits**
+```math
+\begin{aligned}
+	% trasmission constraints
+	&-\varphi^{cap}_{l}^{-} \leq  \Phi_{l,t} \leq \varphi^{cap}_{l}^{+} , &\quad \forall l \in \mathcal{L_{asym}},\forall t  \in \mathcal{T}\\
+\end{aligned}
+```
+
 **Accounting for Transmission Losses**
 Transmission losses due to power flows can be accounted for in three different ways. The first option is to neglect losses entirely, setting the value of the losses function to zero for all lines at all hours. The second option is to assume that losses are a fixed percentage, $\varphi^{loss}_{l}$, of the magnitude of power flow on each line, $\mid \Phi_{l,t} \mid$ (e.g., losses are a linear function of power flows). Finally, the third option is to calculate losses, $\ell_{l,t}$, by approximating a quadratic-loss function of power flow across the line using a piecewise-linear function with total number of segments equal to the size of the set $\mathcal{M}$.
 ```math
@@ -25,13 +44,23 @@ Transmission losses due to power flows can be accounted for in three different w
 	& \beta_{l,t}(\cdot) = \begin{cases} 0 & \text{if~} \text{losses.~0} \\ \\ \varphi^{loss}_{l}\times \mid \Phi_{l,t} \mid & \text{if~} \text{losses.~1} \\ \\ \ell_{l,t} &\text{if~} \text{losses.~2} \end{cases}, &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}
 \end{aligned}
 ```
+In the above, when accounting for asymmetrical lines
+
+```math
+\begin{aligned}
+%configurable losses formulation
+	& \beta_{l,t}(\cdot) = \begin{cases} 0 & \text{if~} \text{losses.~0} \\ \\ \varphi^{loss (+)}_{l} \times \Phi^{+}_{l,t}  + \varphi^{loss (-)}_{l} \times \Phi^{-}_{l,t} & \text{if~} \text{losses.~1} \\ \\ \ell^{+}_{l,t}, \ell^{+}_{l,t}, &\text{if~} \text{losses.~2} \end{cases}, &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}
+\end{aligned}
+```
+
 For the second option, an absolute value approximation is utilized to calculate the magnitude of the power flow on each line (reflecting the fact that negative power flows for a line linking nodes $i$ and $j$ represents flows from node $j$ to $i$ and causes the same magnitude of losses as an equal power flow from $i$ to $j$). This absolute value function is linearized such that the flow in the line must be equal to the subtraction of the auxiliary variable for flow in the positive direction, $\Phi^{+}_{l,t}$, and the auxiliary variable for flow in the negative direction, $\Phi^{-}_{l,t}$, of the line. Then, the magnitude of the flow is calculated as the sum of the two auxiliary variables. The sum of positive and negative directional flows are also constrained by the line flow capacity.
 ```math
 \begin{aligned}
 % trasmission losses simple
 	&\Phi_{l,t} =  \Phi^{+}_{l,t}  - \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\mid \Phi_{l,t} \mid =  \Phi^{+}_{l,t}  + \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
-	&\Phi^{+}_{l,t}  + \Phi^{-}_{l,t} \leq \varphi^{cap}_{l}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
+	&\Phi^{+}_{l,t}  + \Phi^{-}_{l,t} \leq \varphi^{cap}_{l}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
+    &\Phi^{+}_{l,t}  + \Phi^{-}_{l,t} \leq \text{min}(\varphi^{cap(+)}_{l}, \varphi^{cap(-)}_{l}) &\quad \forall l \in \mathcal{L_{asym}}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
 If discrete unit commitment decisions are modeled, ``phantom losses'' can be observed wherein the auxiliary variables for flows in both directions ($\Phi^{+}_{l,t}$ and $\Phi^{-}_{l,t}$) are both increased to produce increased losses so as to avoid cycling a thermal generator and incurring start-up costs or opportunity costs related to minimum down times. This unrealistic behavior can be eliminated via inclusion of additional constraints and a set of auxiliary binary variables, $ON^{+}_{l,t} \in {0,1} \forall l \in \mathcal{L}$. Then the following additional constraints are created:
@@ -49,7 +78,8 @@ where $TransON^{+}_{l,t}$ is a continuous variable, representing the product of 
 	TransON^{+}_{l,t} \geq \varphi^{cap}_{l} - (\overline{\varphi^{cap}_{l}} + \overline{\bigtriangleup\varphi^{cap}_{l}}) \times(1- TransON^{+}_{l,t}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
 \end{aligned}
 ```
-These constraints permit only the positive or negative auxiliary flow variables to be non-zero at a given time period, not both.
+These constraints permit only the positive or negative auxiliary flow variables to be non-zero at a given time period, not both. In case of asymmetric lines,
+there will be two sets of the equations written above, one set for ech direction, with corresponding auxiliary variables and directional transmission flow limits. 
 For the third option, losses are calculated as a piecewise-linear approximation of a quadratic function of power flows. In order to do this, we represent the absolute value of the line flow variable by the sum of positive stepwise flow variables $(\mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t})$, associated with each partition of line losses computed using the corresponding linear expressions. This can be understood as a segmentwise linear fitting (or first order approximation) of the quadratic losses function. The first constraint below computes the losses a the accumulated sum of losses for each linear stepwise segment of the approximated quadratic function, including both positive domain and negative domain segments. A second constraint ensures that the stepwise variables do not exceed the maximum size per segment. The slope and maximum size for each segment are calculated as per the method in \cite{Zhang2013}.
 ```math
 \begin{aligned}
@@ -82,6 +112,7 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 	&\mathcal{S}^{-}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{-}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
+As before, for asymmetric lines, there will be two sets of the above constraints for each direction.
 """
 function transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Transmission Module")
@@ -295,9 +326,9 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
                     # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
                     cTAuxLimit_pos[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_POS_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
-                    cTAuxLimit_neg[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
+                    vTAUX_POS_ASYM[l, t] - vTAUX_NEG_ASYM[l, t] <= min(EP[:eAvail_Trans_Cap_Pos][l], EP[:eAvail_Trans_Cap_Neg][l])
+                    #cTAuxLimit_neg[l in LOSS_LINES_ASYM, t = 1:T],
+                    #vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
                 end)
 
             if UCommit == 1
