@@ -139,14 +139,14 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     else
         LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
     end
-#=
+    #=
     if setup["asymmetrical_trans_flow_limit"] == 0
         inputs["pPercent_Loss_Pos"] = inputs["pPercent_Loss_Neg"] = inputs["pPercent_Loss"]
         inputs["pTrans_Max_Possible_Pos"] = inputs["pTrans_Max_Possible_Neg"] = inputs["pTrans_Max_Possible"]
         inputs["pTrans_Loss_Coef_Pos"] = inputs["pTrans_Loss_Coef_Neg"] = inputs["pTrans_Loss_Coef"]
         EP[:eAvail_Trans_Cap_Pos] = EP[:eAvail_Trans_Cap_Neg] = EP[:eAvail_Trans_Cap]
     end
-=#
+    =#
     ### Variables ###
 
     # Power flow on each transmission line "l" at hour "t"
@@ -293,14 +293,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
             cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
         end)
-
-    if setup["asymmetrical_trans_flow_limit"] ==1
-        # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
-        @constraints(EP,
-            begin
-                cMaxFlow_pos[l = 1:L_asym, t = 1:T], vTAUX_POS[l, t] <= EP[:eAvail_Trans_Cap_Pos][l] #Change these with Auxiliary 
-                cMaxFlow_neg[l = 1:L_asym, t = 1:T], vTAUX_NEG[l, t] >= -EP[:eAvail_Trans_Cap_Neg][l] #Change these with Auxiliary 
-            end)
     end
     
     # Transmission loss related constraints - linear losses as a function of absolute value
@@ -334,9 +326,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
                     # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
                     cTAuxLimit_pos[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_POS_ASYM[l, t] - vTAUX_NEG_ASYM[l, t] <= min(EP[:eAvail_Trans_Cap_Pos][l], EP[:eAvail_Trans_Cap_Neg][l])
-                    #cTAuxLimit_neg[l in LOSS_LINES_ASYM, t = 1:T],
-                    #vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
+                    vTAUX_POS_ASYM[l, t] + vTAUX_NEG_ASYM[l, t] <= min(EP[:eAvail_Trans_Cap_Pos][l], EP[:eAvail_Trans_Cap_Neg][l])
                 end)
 
             if UCommit == 1
