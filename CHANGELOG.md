@@ -20,6 +20,9 @@ non-representative periods (#781).
 charge and storage variables (#760 and #763).
 - Deduplicated docs on optimized scheduled maintenance for thermal resources (#745).
 - Removed the `CapRes_*` columns from `Network.csv` since they were not being used (#784).
+- Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
+`write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
+for implementing asymmetric bidirectional flows. (#789)
 
 ### Fixed
 - Add constraint to ensure that electricity charged from the grid cannot exceed 
