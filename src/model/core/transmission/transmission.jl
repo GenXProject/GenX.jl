@@ -327,8 +327,11 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                     vTAUX_POS_ASYM[l, t] - vTAUX_NEG_ASYM[l, t] == vFLOW[(l+L_sym), t]
 
                     # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
-                    cTAuxLimit_pos[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_POS_ASYM[l, t] + vTAUX_NEG_ASYM[l, t] <= min(EP[:eAvail_Trans_Cap_Pos][l], EP[:eAvail_Trans_Cap_Neg][l])
+                    #Having both these constraints will ensure that the minimum of the two RHS is the most binding constraint
+                    cTAuxLimit_1[l in LOSS_LINES_ASYM, t = 1:T],
+                    vTAUX_POS_ASYM[l, t] + vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
+                    cTAuxLimit_2[l in LOSS_LINES_ASYM, t = 1:T],
+                    vTAUX_POS_ASYM[l, t] + vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
                 end)
 
             if UCommit == 1
