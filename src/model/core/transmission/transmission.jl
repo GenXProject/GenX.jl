@@ -44,6 +44,7 @@ Transmission losses due to power flows can be accounted for in three different w
 	& \beta_{l,t}(\cdot) = \begin{cases} 0 & \text{if~} \text{losses.~0} \\ \\ \varphi^{loss}_{l}\times \mid \Phi_{l,t} \mid & \text{if~} \text{losses.~1} \\ \\ \ell_{l,t} &\text{if~} \text{losses.~2} \end{cases}, &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}
 \end{aligned}
 ```
+
 In the above, when accounting for asymmetrical lines
 
 ```math
@@ -54,6 +55,7 @@ In the above, when accounting for asymmetrical lines
 ```
 
 For the second option, an absolute value approximation is utilized to calculate the magnitude of the power flow on each line (reflecting the fact that negative power flows for a line linking nodes $i$ and $j$ represents flows from node $j$ to $i$ and causes the same magnitude of losses as an equal power flow from $i$ to $j$). This absolute value function is linearized such that the flow in the line must be equal to the subtraction of the auxiliary variable for flow in the positive direction, $\Phi^{+}_{l,t}$, and the auxiliary variable for flow in the negative direction, $\Phi^{+}_{l,t}$, of the line. Then, the magnitude of the flow is calculated as the sum of the two auxiliary variables. The sum of positive and negative directional flows are also constrained by the line flow capacity.
+
 ```math
 \begin{aligned}
 % trasmission losses simple
