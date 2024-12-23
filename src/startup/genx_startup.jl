@@ -50,6 +50,9 @@ Returns `nothing`.
 """
 function _precompile()
     @info "Running precompile script for GenX. This may take a few minutes."
+    @info "If you want to skip this step, please set the environment variable " *
+        "`GENX_PRECOMPILE` to `false` before running `using GenX`. \n" *
+        "Example: `ENV[\"GENX_PRECOMPILE\"] = \"false\"`."
     redirect_stdout(devnull) do
         warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
         with_logger(warnerror_logger) do
