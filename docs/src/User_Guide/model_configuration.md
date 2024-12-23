@@ -31,6 +31,9 @@ The following tables summarize the model settings parameters and their default/p
 |StorageVirtualDischarge | Flag to enable contributions that a storage device makes to the capacity reserve margin without generating power.|
 ||1 = activate the virtual discharge of storage resources.|
 ||0 = do not activate the virtual discharge of storage resources.|
+|LDSAdditionalConstraints | Flag to activate additional constraints for long duration storage resources to prevent violation of SoC limits in non-representative periods.|
+||1 = activate additional constraints.|
+||0 = do not activate additional constraints.|
 |HourlyMatching| Constraint to match generation from clean sources with hourly consumption.|
 ||1 = Constraint is active.|
 ||0 = Constraint is not active.|
