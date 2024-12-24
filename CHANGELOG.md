@@ -33,6 +33,8 @@ the charging capacity of the storage component in VRE_STOR (#770).
 with Julia v1.11 (#785).
 - Fixed cost calculation in `write_costs.jl` when no resources are present in 
 a zone. (#796)
+- Added `eTotalCMaxCapSlack` to calculation of `cUnmetPolicyPenalty` in 
+`write_costs.jl` (#806).
 
 ## [0.4.1] - 2024-08-20
 
