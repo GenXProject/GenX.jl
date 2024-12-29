@@ -28,7 +28,7 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
         M = length(inputs[MARKET_LIMITS])  # number of market price tiers
 
         # the market purchases are non-negative and no greater than the MARKET_LIMITS
-        @variable(EP, 0 <= vMarketPurchaseMW[t = 1:T, m = 1:M] <= inputs[MARKET_LIMITS][m])
+        @variable(EP, 0 <= vMarketPurchaseMW[t = 1:T, z = 1:Z, m = 1:M] <= inputs[MARKET_LIMITS][m])
 
         # the market sales are non-negative and no greater than the MARKET_LIMITS for tier 1
         # NOTE need the z index to add to load balance convention
@@ -37,19 +37,19 @@ function add_known_price_market_model!(EP::Model, inputs::Dict, setup::Dict)
         # Sum purchases across market tiers to add the purchases to the load balance
         # NOTE need the z index to add to load balance convention
         @expression(EP, eMarketPurchasesMWh[t = 1:T, z = 1:Z],
-            sum(vMarketPurchaseMW[t, m] for m = 1:M)
+            sum(vMarketPurchaseMW[t, z, m] for m = 1:M)
         )
 
         @expression(EP, eMarketPurchasesCost,
             sum(
-                vMarketPurchaseMW[t, m] * inputs[MARKET_PRICES][m][t]
-            for t = 1:T, m = 1:M)
+                vMarketPurchaseMW[t, z, m] * inputs[MARKET_PRICES][m][t]
+            for t = 1:T, z = 1:Z, m = 1:M)
         )
 
         @expression(EP, eMarketSalesBenefit,
             sum(
                 vMarketSaleMW[t, z] * inputs[MARKET_PRICES][SELL_TIER][t]
-            for t = 1:T, z=1:Z)
+            for t = 1:T, z = 1:Z)
         )
 
         # add energy purchased to the load balance 

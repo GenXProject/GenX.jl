@@ -13,6 +13,8 @@ the
 """
 function load_market_data!(setup::Dict, path::AbstractString, inputs::Dict)
     system_dir = joinpath(path, setup["SystemFolder"])
+    # scale_factor is 1,000 for MW to GW, etc.
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     filename = "Market_data.csv"
     df = load_dataframe(joinpath(system_dir, filename))
@@ -21,12 +23,18 @@ function load_market_data!(setup::Dict, path::AbstractString, inputs::Dict)
 
     inputs[MARKET_LIMITS] = Vector{Float64}()
     for col in limit_columns
-        push!(inputs[MARKET_LIMITS], convert(Float64, df[1, col]))
+        push!(
+            inputs[MARKET_LIMITS], 
+            convert(Float64, df[1, col]) / scale_factor
+        )
     end
 
     inputs[MARKET_PRICES] = Vector{Vector{Float64}}()
     for col in price_columns
-        push!(inputs[MARKET_PRICES], convert(Vector{Float64}, df[:, col]))
+        push!(
+            inputs[MARKET_PRICES], 
+            convert(Vector{Float64}, df[:, col]) / scale_factor
+        )
     end
 
     println(filename * " Successfully Read!")
