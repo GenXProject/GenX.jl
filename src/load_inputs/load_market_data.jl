@@ -1,6 +1,7 @@
 
 const MARKET_LIMITS = "market_import_limits_MW"
 const MARKET_PRICES = "market_prices_per_MWh"
+const SELL_TIER = 1  # can only sell in tier 1
 
 @doc raw"""
 	load_market_data!(setup::Dict, path::AbstractString, inputs::Dict)

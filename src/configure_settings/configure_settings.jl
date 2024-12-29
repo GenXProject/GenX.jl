@@ -100,7 +100,9 @@ function validate_settings!(settings::Dict{Any, Any})
 end
 
 function default_writeoutput()
-    Dict{String, Bool}("WriteCosts" => true,
+    Dict{String, Bool}(
+        "WriteAngles" => true,
+        "WriteCosts" => true,
         "WriteCapacity" => true,
         "WriteCapacityValue" => true,
         "WriteCapacityFactor" => true,
@@ -118,6 +120,7 @@ function default_writeoutput()
         "WriteFusion" => true,
         "WriteHourlyMatchingPrices" => true,
         "WriteHydrogenPrices" => true,
+        "WriteMarketResults" => true,
         "WriteMaintenance" => true,
         "WriteMaxCapReq" => true,
         "WriteMinCapReq" => true,
@@ -147,7 +150,7 @@ function default_writeoutput()
         "WriteTransmissionLosses" => true,
         "WriteVirtualDischarge" => true,
         "WriteVREStor" => true,
-        "WriteAngles" => true)
+    )
 end
 
 function configure_writeoutput(output_settings_path::String, settings::Dict)

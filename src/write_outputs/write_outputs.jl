@@ -280,6 +280,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         end
     end
 
+    if output_settings_d["WriteMarketResults"] && setup["Market"] == 1
+        elapsed_time = @elapsed write_market_results(path, inputs, setup, EP)
+        println("Time elapsed for writing market_results is")
+        println(elapsed_time)
+    end
+
     if setup["MultiStage"] == 0
         dfEnergyRevenue = DataFrame()
         dfChargingcost = DataFrame()
