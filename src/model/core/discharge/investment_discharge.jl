@@ -144,16 +144,20 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     # Cannot retire more capacity than existing capacity
     @constraint(EP,
         cMaxRetNoCommit[y in setdiff(RET_CAP, COMMIT)],
-        vRETCAP[y]<=eExistingCap[y])
+        vRETCAP[y] <= eExistingCap[y]
+    )
     @constraint(EP,
         cMaxRetCommit[y in intersect(RET_CAP, COMMIT)],
-        cap_size(gen[y]) * vRETCAP[y]<=eExistingCap[y])
+        cap_size(gen[y]) * vRETCAP[y] <= eExistingCap[y]
+    )
     @constraint(EP,
         cMaxRetroNoCommit[y in setdiff(RETROFIT_CAP, COMMIT)],
-        vRETROFITCAP[y] + vRETCAP[y]<=eExistingCap[y])
+        vRETROFITCAP[y] + vRETCAP[y] <= eExistingCap[y]
+    )
     @constraint(EP,
         cMaxRetroCommit[y in intersect(RETROFIT_CAP, COMMIT)],
-        cap_size(gen[y]) * (vRETROFITCAP[y] + vRETCAP[y])<=eExistingCap[y])
+        cap_size(gen[y]) * (vRETROFITCAP[y] + vRETCAP[y]) <= eExistingCap[y]
+    )
 
     ## Constraints on new built capacity
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
