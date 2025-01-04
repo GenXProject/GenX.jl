@@ -23,7 +23,7 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
     if OperationalReserves == 1
         storage_asymmetric_operational_reserves!(EP, inputs, setup)
     else
-        if CapacityReserveMargin > 0
+        if CapacityReserveMargin == 1
             # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
             @constraint(EP,
                 [y in STOR_ASYMMETRIC, t in 1:T],

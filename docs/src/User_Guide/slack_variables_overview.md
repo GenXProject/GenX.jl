@@ -18,7 +18,7 @@ Slack variables will only be activated when the relevant policy type is itself a
 For some policy types, slack variables are activated by providing a new input file, while for others they are activated by modifying an existing file. 
 Instructions for each policy type are listed below:
 
-## Capacity Reserve Margin
+## Capacity Reserve Margin Slack
 
 Slack variables for Capacity Reserve Margin constraints are created when GenX detects the presence of the file `Capacity_reserve_margin_slack.csv` in the Inputs folder. 
 This file should contain two columns: one titled 'CRM_Constraint' naming the individual Capacity Reserve Margin constraints in the same order in which they are listed in the first row of `Capacity_reserve_margin.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 

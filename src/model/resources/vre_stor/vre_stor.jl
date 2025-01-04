@@ -289,7 +289,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Capacity Reserve Margin Requirement
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         vre_stor_capres!(EP, inputs, setup)
     end
 
@@ -2896,7 +2896,7 @@ function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
         end
     end
 
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         for t in 1:T
             for y in DC_DISCHARGE
                 eDischargeMax[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /

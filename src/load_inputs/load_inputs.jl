@@ -38,7 +38,7 @@ function load_inputs(setup::Dict, path::AbstractString)
 
     validatetimebasis(inputs)
 
-    if setup["CapacityReserveMargin"] == 1
+    if setup["CapacityReserveMargin"] > 0
         load_cap_reserve_margin!(setup, policies_path, inputs)
         if inputs["Z"] > 1
             load_cap_reserve_margin_trans!(setup, inputs, network_var)

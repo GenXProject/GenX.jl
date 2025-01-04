@@ -1,6 +1,6 @@
 @doc raw"""
 	cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
-Instead of modeling capacity reserve margin requirement (a.k.a. capacity market or resource adequacy requirement) using an annual constraint,
+When `CapacityReserveMargin = 1` instead of modeling capacity reserve margin requirement (a.k.a. capacity market or resource adequacy requirement) using an annual constraint,
 we model each requirement with hourly constraint by simulating the activation of the capacity obligation.
 We define capacity reserve margin constraint for subsets of zones,
 $z \in \mathcal{Z}^{CRM}_{p}$, and each subset stands for a
@@ -55,32 +55,56 @@ is specified by the GenX settings parameter ```CapacityReserveMargin```
 (where this parameter should be an integer value > 0).
 The expressions establishing the capacity reserve margin contributions of each technology
 class are included in their respective technology modules.
+
+When `CapacityReserveMargin = 2` we require that the total installed capacity must be at least (1 +
+Cap_Res_X) times the peak load for each Cap_Res_X specified in the
+policies/Capacity_reserve_margin.csv. The total installed capacity includes:
+- curtailable VRE
+- hydro reservoirs
+- must run resources
+- storage
+- thermal resources
 """
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
     # capacity reserve margin constraint
     T = inputs["T"]
     NCRM = inputs["NCapacityReserveMargin"]
+    CapacityReserveMargin = setup["CapacityReserveMargin"]
     println("Capacity Reserve Margin Policies Module")
 
     # if input files are present, add capacity reserve margin slack variables
     if haskey(inputs, "dfCapRes_slack")
-        @variable(EP, vCapResSlack[res = 1:NCRM, t = 1:T]>=0)
+        @variable(EP, vCapResSlack[res = 1:NCRM, t = 1:T] >= 0)
         add_similar_to_expression!(EP[:eCapResMarBalance], vCapResSlack)
 
         @expression(EP,
             eCapResSlack_Year[res = 1:NCRM],
-            sum(EP[:vCapResSlack][res, t] * inputs["omega"][t] for t in 1:T))
+            sum(EP[:vCapResSlack][res, t] * inputs["omega"][t] for t in 1:T)
+        )
         @expression(EP,
             eCCapResSlack[res = 1:NCRM],
-            inputs["dfCapRes_slack"][res, :PriceCap]*EP[:eCapResSlack_Year][res])
+            inputs["dfCapRes_slack"][res, :PriceCap] * EP[:eCapResSlack_Year][res]
+        )
         @expression(EP, eCTotalCapResSlack, sum(EP[:eCCapResSlack][res] for res in 1:NCRM))
         add_to_expression!(EP[:eObj], eCTotalCapResSlack)
     end
 
-    @constraint(EP,
-        cCapacityResMargin[res = 1:NCRM, t = 1:T],
-        EP[:eCapResMarBalance][res,
-            t]
-        >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
-        for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+    if CapacityReserveMargin == 2  # reserve constraint applies at peak load only
+        max_demand_by_zone = maximum(inputs["pD"], dims=1)
+        @constraint(EP,
+            cCapacityResMargin[res = 1:NCRM, t = 1:1],
+            EP[:eCapResMarBalance][res, t] >= sum(
+                max_demand_by_zone[z] * (1 + inputs["dfCapRes"][z, res])
+                for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])
+            )
+        )
+    else
+        @constraint(EP,
+            cCapacityResMargin[res = 1:NCRM, t = 1:T],
+            EP[:eCapResMarBalance][res, t] >= sum(
+                inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
+                for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])
+            )
+        )
+    end
 end

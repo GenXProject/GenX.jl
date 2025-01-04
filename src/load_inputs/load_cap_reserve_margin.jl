@@ -12,6 +12,7 @@ function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dic
         inputs["dfCapRes_slack"] = df
         inputs["dfCapRes_slack"][!, :PriceCap] ./= scale_factor # Million $/GW if scaled, $/MW if not scaled
     end
+    println(filename * " Successfully Read!")
 
     filename = "Capacity_reserve_margin.csv"
     df = load_dataframe(joinpath(path, filename))

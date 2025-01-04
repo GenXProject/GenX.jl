@@ -63,6 +63,10 @@ end
     @testset "Market" begin
         include("test_market.jl")
     end
+
+    @testset "CapacityReserveMargin = 2" begin
+        include("test_capacity_reserve_2.jl")
+    end
 end
 
 # Test writing outputs

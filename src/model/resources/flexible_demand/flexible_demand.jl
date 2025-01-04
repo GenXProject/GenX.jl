@@ -71,11 +71,14 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceDemandFlex)
 
     # Capacity Reserves Margin policy
-    if setup["CapacityReserveMargin"] > 0
+    if setup["CapacityReserveMargin"] == 1
         @expression(EP,
             eCapResMarBalanceFlex[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
-            sum(derating_factor(gen[y], tag = res) *
-                (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX))
+            sum(
+                derating_factor(gen[y], tag = res) * (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) 
+                for y in FLEX
+            )
+        )
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceFlex)
     end
 

@@ -354,7 +354,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         end
 
         dfResRevenue = DataFrame()
-        if setup["CapacityReserveMargin"] == 1 && has_duals(EP)
+        if setup["CapacityReserveMargin"] > 0 && has_duals(EP)
             if output_settings_d["WriteReserveMargin"]
                 elapsed_time_reserve_margin = @elapsed write_reserve_margin(path, setup, EP)
                 println("Time elapsed for writing reserve margin is")

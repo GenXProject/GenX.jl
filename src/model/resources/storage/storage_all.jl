@@ -33,7 +33,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Energy withdrawn from grid by resource "y" at hour "t" [MWh] on zone "z"
     @variable(EP, vCHARGE[y in STOR_ALL, t = 1:T]>=0)
 
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         # Virtual discharge contributing to capacity reserves at timestep t for storage cluster y
         @variable(EP, vCAPRES_discharge[y in STOR_ALL, t = 1:T]>=0)
 
@@ -72,7 +72,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCVarIn, sum(eTotalCVarInT[t] for t in 1:T))
     add_to_expression!(EP[:eObj], eTotalCVarIn)
 
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         #Variable costs of "virtual charging" for technologies "y" during hour "t" in zone "z"
         @expression(EP,
             eCVar_in_virtual[y in STOR_ALL, t = 1:T],
@@ -99,7 +99,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Term to represent net dispatch from storage in any period
     @expression(EP, ePowerBalanceStor[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t] - EP[:vCHARGE][y, t]
-        for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)))
+        for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
+    )
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
     ### Constraints ###
@@ -148,7 +149,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     if OperationalReserves == 1
         storage_all_operational_reserves!(EP, inputs, setup)
     else
-        if CapacityReserveMargin > 0
+        if CapacityReserveMargin == 1
             # Note: maximum charge rate is also constrained by maximum charge power capacity, but as this differs by storage type,
             # this constraint is set in functions below for each storage type
 
@@ -182,7 +183,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     add_similar_to_expression!(EP[:eELOSSByZone], expr)
 
     # Capacity Reserve Margin policy
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         # Constraints governing energy held in reserve when storage makes virtual capacity reserve margin contributions:
 
         # Links energy held in reserve in first time step with decisions in last time step of each subperiod

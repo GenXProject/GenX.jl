@@ -108,10 +108,19 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroRes)
 
     # Capacity Reserves Margin policy
-    if setup["CapacityReserveMargin"] > 0
+    if setup["CapacityReserveMargin"] == 1
         @expression(EP,
             eCapResMarBalanceHydro[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
-            sum(derating_factor(gen[y], tag = res) * EP[:vP][y, t] for y in HYDRO_RES))
+            sum(derating_factor(gen[y], tag = res) * EP[:vP][y, t] for y in HYDRO_RES)
+        )
+        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
+    elseif CapacityReserveMargin == 2
+        @expression(EP,
+            eCapResMarBalanceHydro[res = 1:inputs["NCapacityReserveMargin"], t = 1:1],
+            sum(
+                derating_factor(gen[y], tag = res) * EP[:eTotalCap][y]  for y in HYDRO_RES
+            )
+        )
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
     end
 

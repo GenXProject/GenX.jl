@@ -703,9 +703,13 @@ This file contains inputs specifying CO2 emission limits policies (e.g. emission
 
 ### 2.4 Capacity\_reserve\_margin.csv
 
-This file contains the regional capacity reserve margin requirements. This file is needed if parameter CapacityReserveMargin has a non-zero value in the YAML file `genx_settings.yml`.
+This file contains the regional capacity reserve margin requirements. This file is needed if
+parameter CapacityReserveMargin is 1 or 2 in the YAML file `genx_settings.yml`.
 
-Note: this file should use the same region name as specified in the resource `.csv` file (inside the `Resource`).
+Note: this file should use the same region name as specified in the resource `.csv` file (inside the
+`Resource`).
+
+See also (Capacity Reserve Margin Slack)(@ref).
 
 ###### Table 23: Structure of the Capacity\_reserve\_margin.csv file
 ---

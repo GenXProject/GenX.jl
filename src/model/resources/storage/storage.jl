@@ -174,7 +174,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         @expression(EP,
             eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
             sum(derating_factor(gen[y], tag = res) * (EP[:vP][y, t] - EP[:vCHARGE][y, t])
@@ -188,6 +188,16 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
                 for y in STOR_ALL))
             add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
         end
+        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
+    elseif CapacityReserveMargin == 2
+        # derate * inverter capacity
+        @expression(EP,
+            eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:1],
+            sum(
+                derating_factor(gen[y], tag = res) * EP[:eTotalCap][y]
+                for y in STOR_ALL
+            )
+        )
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
     end
 end
