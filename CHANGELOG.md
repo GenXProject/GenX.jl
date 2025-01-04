@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - genx_settings.yml option `Market: 1` for including known market prices (can buy and sell energy in
   multiple price tiers) see https://github.com/NLaws/GenX.jl/pull/7 for more.
+-  genx_settings.yml option `CapacityReserveMargin: 2` for applying capacity the capacity reserve
+   constraint only at the peak load for all resources.
+
+## Unreleased
 
 ### Added
 - Fusion plant optional features for thermal plants (#743).
