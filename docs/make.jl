@@ -111,7 +111,6 @@ makedocs(;
     sitename = "GenX.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://genxproject.github.io/GenX.jl/stable",
         assets = ["assets/genx_style.css"],
         sidebar_sitename = false,
         collapselevel = 1
@@ -123,7 +122,7 @@ makedocs(;
 # ===========================
 
 deploydocs(;
-    repo = "github.com/GenXProject/GenX.jl.git",
+    repo = "github.com/NLaws/GenX.jl.git",
     target = "build",
     branch = "gh-pages",
     devbranch = "develop",

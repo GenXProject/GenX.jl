@@ -14,10 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6" # LTS (64-bit Linux)
-          - "1.7"
-          - "1.8" 
-          - "1.9" 
           - '1'  # latest stable Julia release (Linux)
         os:
           - ubuntu-latest
