@@ -94,7 +94,8 @@ pages = OrderedDict(
             "Endogenous Retirement" => "Model_Reference/Multi_Stage/endogenous_retirement.md"
         ],
         "Method of Morris" => "Model_Reference/methodofmorris.md",
-        "Utility Functions" => "Model_Reference/utility_functions.md"
+        "Market Model" => "Model_Reference/market.md",
+        "Utility Functions" => "Model_Reference/market.md"
     ],
     "Public API Reference" => [
         "Public API" => "Public_API/public_api.md"],
