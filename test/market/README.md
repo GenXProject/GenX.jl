@@ -52,4 +52,26 @@ df = DataFrame(
 )
 CSV.write("market_price_scenarios/two_tier_50_30.csv", df)
 
+# make a price differential to test storage
+hours = 1:24  # 24 hourly values
+peak = 300    # Maximum value
+min_val = 10  # Minimum value
+
+# Amplitude and vertical shift
+amplitude = (peak - min_val) / 2
+vertical_shift = (peak + min_val) / 2
+
+# Phase adjustment
+peak_hour = 17
+phase_shift = (peak_hour - 1) * 2π / 24  # Align the peak at the 17th hour
+
+# Sine function
+sin_price = vertical_shift .+ amplitude .* sin.(2π * (hours .- 1) / 24 .+ phase_shift)
+
+df = DataFrame(
+    import_limit_MW_1 = vcat([1], fill(missing, 8759)), 
+    price_per_MWh_1 = repeat(sin_price, 365)
+)
+CSV.write("market_price_scenarios/sin_price.csv", df)
+
 ```
