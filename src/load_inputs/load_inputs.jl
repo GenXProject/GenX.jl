@@ -75,6 +75,10 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_hydrogen_demand!(setup, policies_path, inputs)
     end
 
+    if setup["Market"] == 1
+        load_market_data!(setup, path, inputs)
+    end
+
     # Read in mapping of modeled periods to representative periods
     if is_period_map_necessary(inputs) && is_period_map_exist(setup, path)
         load_period_map!(setup, path, inputs)

@@ -141,6 +141,12 @@ GenX.write_vre_stor_charge
 GenX.write_vre_stor_discharge
 ```
 
+## Write Market sales and purchaes
+```@autodocs
+Modules = [GenX]
+Pages = ["write_market_results.jl"]
+```
+
 ## Write Multi-stage files
 ```@autodocs
 Modules = [GenX]

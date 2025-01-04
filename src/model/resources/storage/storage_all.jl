@@ -49,17 +49,23 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Energy losses related to technologies (increase in effective demand)
     @expression(EP,
         eELOSS[y in STOR_ALL],
-        sum(inputs["omega"][t] * EP[:vCHARGE][y, t]
-        for t in 1:T)-sum(inputs["omega"][t] *
-                          EP[:vP][y, t]
-        for t in 1:T))
+        sum(
+            inputs["omega"][t] * EP[:vCHARGE][y, t]
+            for t in 1:T
+        ) - 
+        sum(
+            inputs["omega"][t] * EP[:vP][y, t]
+            for t in 1:T
+        )
+    )
 
     ## Objective Function Expressions ##
 
     #Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
     @expression(EP,
         eCVar_in[y in STOR_ALL, t = 1:T],
-        inputs["omega"][t]*var_om_cost_per_mwh_in(gen[y])*vCHARGE[y, t])
+        inputs["omega"][t] * var_om_cost_per_mwh_in(gen[y]) * vCHARGE[y, t]
+    )
 
     # Sum individual resource contributions to variable charging costs to get total variable charging costs
     @expression(EP, eTotalCVarInT[t = 1:T], sum(eCVar_in[y, t] for y in STOR_ALL))
@@ -109,13 +115,12 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     end
     @constraint(EP,
         cSoCBalStart[t in START_SUBPERIODS, y in CONSTRAINTSET],
-        EP[:vS][y,
-            t]==
+        EP[:vS][y, t] ==
         EP[:vS][y, t + hours_per_subperiod - 1] -
-        (1 / efficiency_down(gen[y]) * EP[:vP][y, t])
-        +
-        (efficiency_up(gen[y]) * EP[:vCHARGE][y, t]) -
-        (self_discharge(gen[y]) * EP[:vS][y, t + hours_per_subperiod - 1]))
+        1 / efficiency_down(gen[y]) * EP[:vP][y, t] +
+        efficiency_up(gen[y]) * EP[:vCHARGE][y, t] -
+        self_discharge(gen[y]) * EP[:vS][y, t + hours_per_subperiod - 1]
+    )
 
     @constraints(EP,
         begin
@@ -126,8 +131,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             cSoCBalInterior[t in INTERIOR_SUBPERIODS, y in STOR_ALL],
             EP[:vS][y, t] ==
             EP[:vS][y, t - 1] - (1 / efficiency_down(gen[y]) * EP[:vP][y, t]) +
-            (efficiency_up(gen[y]) * EP[:vCHARGE][y, t]) -
-            (self_discharge(gen[y]) * EP[:vS][y, t - 1])
+            efficiency_up(gen[y]) * EP[:vCHARGE][y, t] -
+            self_discharge(gen[y]) * EP[:vS][y, t - 1]
         end)
 
     # Hourly matching constraints

@@ -15,9 +15,24 @@ Base.showerror(io::IO, e::CSVFileNotFound) = print(io, e.filefullpath, " not fou
 const results_path = "results"
 !isdir(results_path) && mkdir(results_path)
 
-function run_genx_case_testing(test_path::AbstractString,
-        test_setup::Dict,
-        optimizer::Any = HiGHS.Optimizer)
+
+"""
+    run_genx_case_testing
+
+args:
+- test_path::AbstractString
+    path to folder in the test/ directory containing GenX Inputs
+- test_setup::Dict
+    settings to merge with default settings
+- optimizer::Any = HiGHS.Optimizer
+
+return EP, inputs, OPTIMIZER
+"""
+function run_genx_case_testing(
+    test_path::AbstractString,
+    test_setup::Dict,
+    optimizer::Any = HiGHS.Optimizer
+    )
     # Merge the genx_setup with the default settings
     settings = GenX.default_settings()
     merge!(settings, test_setup)
@@ -36,9 +51,11 @@ function run_genx_case_testing(test_path::AbstractString,
     return EP, inputs, OPTIMIZER
 end
 
-function run_genx_case_conflict_testing(test_path::AbstractString,
-        test_setup::Dict,
-        optimizer::Any = HiGHS.Optimizer)
+function run_genx_case_conflict_testing(
+    test_path::AbstractString,
+    test_setup::Dict,
+    optimizer::Any = HiGHS.Optimizer
+    )
 
     # Merge the genx_setup with the default settings
     settings = GenX.default_settings()
@@ -57,9 +74,11 @@ function run_genx_case_conflict_testing(test_path::AbstractString,
     return output
 end
 
-function run_genx_case_simple_testing(test_path::AbstractString,
-        genx_setup::Dict,
-        optimizer::Any)
+function run_genx_case_simple_testing(
+    test_path::AbstractString,
+    genx_setup::Dict,
+    optimizer::Any
+    )
     # Run the case
     OPTIMIZER = configure_solver(test_path, optimizer)
     inputs = load_inputs(genx_setup, test_path)

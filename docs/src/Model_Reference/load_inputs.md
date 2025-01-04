@@ -75,6 +75,12 @@ Modules = [GenX]
 Pages = ["load_vre_stor_variability.jl"]
 ```
 
+## Market prices and limits
+```@autodocs
+Modules = [GenX]
+Pages = ["load_market_data.jl"]
+```
+
 # Functions for developers
 
 ## Standardized loading of dataframes from CSV files

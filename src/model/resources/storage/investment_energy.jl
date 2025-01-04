@@ -57,10 +57,10 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
     ## Energy storage reservoir capacity (MWh capacity) built/retired for storage with variable power to energy ratio (STOR=1 or STOR=2)
 
     # New installed energy capacity of resource "y"
-    @variable(EP, vCAPENERGY[y in NEW_CAP_ENERGY]>=0)
+    @variable(EP, vCAPENERGY[y in NEW_CAP_ENERGY] >= 0)
 
     # Retired energy capacity of resource "y" from existing capacity
-    @variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY]>=0)
+    @variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY] >= 0)
 
     if MultiStage == 1
         @variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL]>=0)
@@ -83,7 +83,8 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
             eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
         else
             eExistingCapEnergy[y]
-        end)
+        end
+    )
 
     ## Objective Function Expressions ##
 
@@ -115,33 +116,43 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
     if MultiStage == 1
         @constraint(EP,
             cExistingCapEnergy[y in STOR_ALL],
-            EP[:vEXISTINGCAPENERGY][y]==existing_cap_mwh(gen[y]))
+            EP[:vEXISTINGCAPENERGY][y]==existing_cap_mwh(gen[y])
+        )
     end
 
     ## Constraints on retirements and capacity additions
     # Cannot retire more energy capacity than existing energy capacity
     @constraint(EP,
         cMaxRetEnergy[y in RET_CAP_ENERGY],
-        vRETCAPENERGY[y]<=eExistingCapEnergy[y])
+        vRETCAPENERGY[y] <= eExistingCapEnergy[y]
+    )
 
     ## Constraints on new built energy capacity
     # Constraint on maximum energy capacity (if applicable) [set input to -1 if no constraint on maximum energy capacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is >= Max_Cap_MWh and lead to infeasabilty
     @constraint(EP,
         cMaxCapEnergy[y in intersect(ids_with_positive(gen, max_cap_mwh), STOR_ALL)],
-        eTotalCapEnergy[y]<=max_cap_mwh(gen[y]))
+        eTotalCapEnergy[y] <= max_cap_mwh(gen[y])
+    )
 
     # Constraint on minimum energy capacity (if applicable) [set input to -1 if no constraint on minimum energy apacity]
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MWh is <= Min_Cap_MWh and lead to infeasabilty
     @constraint(EP,
         cMinCapEnergy[y in intersect(ids_with_positive(gen, min_cap_mwh), STOR_ALL)],
-        eTotalCapEnergy[y]>=min_cap_mwh(gen[y]))
+        eTotalCapEnergy[y] >= min_cap_mwh(gen[y])
+    )
 
     # Max and min constraints on energy storage capacity built (as proportion to discharge power capacity)
     @constraint(EP,
         cMinCapEnergyDuration[y in STOR_ALL],
-        EP[:eTotalCapEnergy][y]>=min_duration(gen[y]) * EP[:eTotalCap][y])
+        EP[:eTotalCapEnergy][y] >= min_duration(gen[y]) * EP[:eTotalCap][y]
+    )
+
+    # NOTE for existing generators the following constraint is:
+    # Existing_Cap_MWh <= Max_Duration * Existing_Cap_MW which can be infeasible with rounding
+    # (eTotalCap is defined in investment_discharge.jl)
     @constraint(EP,
         cMaxCapEnergyDuration[y in STOR_ALL],
-        EP[:eTotalCapEnergy][y]<=max_duration(gen[y]) * EP[:eTotalCap][y])
+        EP[:eTotalCapEnergy][y] <= max_duration(gen[y]) * EP[:eTotalCap][y]
+    )
 end
