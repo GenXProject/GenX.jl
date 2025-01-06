@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.2] - 2024-12-23
+
 ### Added
 - Fusion plant optional features for thermal plants (#743).
 - Support for reusing the same Gurobi environment for multiple solves when 
@@ -31,6 +33,8 @@ the charging capacity of the storage component in VRE_STOR (#770).
 with Julia v1.11 (#785).
 - Fixed cost calculation in `write_costs.jl` when no resources are present in 
 a zone. (#796)
+- Added `eTotalCMaxCapSlack` to calculation of `cUnmetPolicyPenalty` in 
+`write_costs.jl` (#806).
 
 ## [0.4.1] - 2024-08-20
 

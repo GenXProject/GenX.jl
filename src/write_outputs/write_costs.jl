@@ -127,6 +127,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         dfCost[9, 2] += value(EP[:eTotalCMinCapSlack])
     end
 
+    if haskey(inputs, "MaxCapPriceCap")
+        dfCost[9, 2] += value(EP[:eTotalCMaxCapSlack])
+    end
+
     if haskey(inputs, "H2DemandPriceCap")
         dfCost[9, 2] += value(EP[:eTotalCH2DemandSlack])
     end
