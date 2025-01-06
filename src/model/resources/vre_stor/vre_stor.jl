@@ -927,12 +927,20 @@ The following two constraints track the state of charge of the storage resources
 \end{aligned}
 ```
 
-The last constraint limits the volume of energy stored at any time, $\Gamma_{y,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{y,z}$. 
+This constraint limits the volume of energy stored at any time, $\Gamma_{y,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{y,z}$. 
 ```math
 \begin{aligned}
 	&  \Gamma_{y,z,t} \leq \Delta^{total, energy}_{y,z} & \quad \forall y \in \mathcal{VS}^{stor}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
+
+The last constraint limits the volume of energy exported from the grid to the storage at any time, $\Pi_{y,z,t}$, to be less than the electricity charged to the energy storage component, $\Pi_{y,z,t}^{ac} + \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}}$. 
+```math
+\begin{aligned}
+    & \Pi_{y,z,t} = \Pi_{y,z,t}^{ac} + \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}}
+\end{aligned}
+```
+
 The next set of constraints only apply to symmetric storage resources (all $y \in \mathcal{VS}^{sym,dc} \cup y \in \mathcal{VS}^{sym,ac}$). 
     For storage technologies with symmetric charge and discharge capacity (all $y \in \mathcal{VS}^{sym,dc}  \cup y \in \mathcal{VS}^{sym,ac}$), 
     since storage resources generally represent a 'cluster' of multiple similar storage devices of the same type/cost in the same zone, GenX 
@@ -1131,6 +1139,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         CONSTRAINTSET = STOR
     end
 
+    # total charging expressions: total storage charge (including both AC and DC) [MWh]
+    @expression(EP, eCHARGE_VS_STOR[y in STOR, t = 1:T], JuMP.AffExpr())
+
     # SoC expressions
     @expression(EP, eSoCBalStart_VRE_STOR[y in CONSTRAINTSET, t in START_SUBPERIODS],
         vS_VRE_STOR[y,
@@ -1180,6 +1191,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                                        by_rid(y, :etainverter) for t in 1:T)
         for t in 1:T
             EP[:eInvACBalance][y, t] -= vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
+            EP[:eCHARGE_VS_STOR][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
             EP[:eInverterExport][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
         end
         for t in INTERIOR_SUBPERIODS
@@ -1204,6 +1216,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t] * vP_AC_CHARGE[y, t] for t in 1:T)
         for t in 1:T
             EP[:eInvACBalance][y, t] -= vP_AC_CHARGE[y, t]
+            EP[:eCHARGE_VS_STOR][y, t] += vP_AC_CHARGE[y, t]
         end
         for t in INTERIOR_SUBPERIODS
             eSoCBalInterior_VRE_STOR[y, t] += by_rid(y, :eff_up_ac) *
@@ -1286,6 +1299,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     if rep_periods > 1 && !isempty(VS_LDS)
         lds_vre_stor!(EP, inputs)
     end
+
+    # Constraint 4: electricity charged from the grid cannot exceed the charging capacity of the storage component in VRE_STOR
+    @constraint(EP, [y in STOR, t = 1:T], vCHARGE_VRE_STOR[y,t] <= eCHARGE_VS_STOR[y,t])
 end
 
 @doc raw"""

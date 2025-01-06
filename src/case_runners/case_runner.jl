@@ -29,6 +29,7 @@ run_genx_case!("path/to/case", Gurobi.Optimizer)
 ```
 """
 function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
+    print_genx_version() # Log the GenX version
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
     writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
     mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
@@ -65,7 +66,8 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(settings_path, optimizer)
+    solver_name = lowercase(get(mysetup, "Solver", ""))
+    OPTIMIZER = configure_solver(settings_path, optimizer; solver_name=solver_name)
 
     #### Running a case
 
@@ -137,7 +139,8 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
 
     ### Configure solver
     println("Configuring Solver")
-    OPTIMIZER = configure_solver(settings_path, optimizer)
+    solver_name = lowercase(get(mysetup, "Solver", ""))
+    OPTIMIZER = configure_solver(settings_path, optimizer; solver_name=solver_name)
 
     model_dict = Dict()
     inputs_dict = Dict()

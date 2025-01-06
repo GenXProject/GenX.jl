@@ -1,5 +1,5 @@
 @doc raw"""
-	thermal!(EP::Model, inputs::Dict, setup::Dict)
+    thermal!(EP::Model, inputs::Dict, setup::Dict)
 The thermal module creates decision variables, expressions, and constraints related to thermal power plants e.g. coal, oil or natural gas steam plants, natural gas combined cycle and combustion turbine plants, nuclear, hydrogen combustion etc.
 This module uses the following 'helper' functions in separate files: ```thermal_commit()``` for thermal resources subject to unit commitment decisions and constraints (if any) and ```thermal_no_commit()``` for thermal resources not subject to unit commitment (if any).
 """
@@ -12,6 +12,8 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
     THERM_COMMIT = inputs["THERM_COMMIT"]
     THERM_NO_COMMIT = inputs["THERM_NO_COMMIT"]
     THERM_ALL = inputs["THERM_ALL"]
+    MAINT = ids_with_maintenance(gen)
+    FUSION = ids_with(gen, fusion)
 
     if !isempty(THERM_COMMIT)
         thermal_commit!(EP, inputs, setup)
@@ -34,9 +36,18 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
             for y in THERM_ALL))
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
 
-        MAINT = ids_with_maintenance(gen)
         if !isempty(intersect(MAINT, THERM_COMMIT))
             thermal_maintenance_capacity_reserve_margin_adjustment!(EP, inputs)
+        end
+
+        if !isempty(intersect(FUSION, THERM_COMMIT))
+            fusion_capacity_reserve_margin_adjustment!(EP, inputs)
+        end
+    end
+
+    if setup["EnergyShareRequirement"] > 0
+        if !isempty(intersect(FUSION, THERM_COMMIT))
+            fusion_parasitic_power_adjust_energy_share_requirement!(EP, inputs)
         end
     end
 end

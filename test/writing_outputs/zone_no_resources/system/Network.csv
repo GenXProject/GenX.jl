@@ -1,0 +1,3 @@
+﻿,Network_zones,Network_Lines,Start_Zone,End_Zone,Line_Max_Flow_MW,transmission_path_name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr,DerateCapRes_1,CapRes_Excl_1
+MA,z1,1,1,2,2950,MA_to_CT,123.0584,0.012305837,2950,12060,0.95,0
+CT,z2,,,,,,,,,,,

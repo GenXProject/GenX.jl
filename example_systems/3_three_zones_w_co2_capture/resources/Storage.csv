@@ -1,4 +1,4 @@
-Resource,Zone,Model,New_Build,Can_Retire,Existing_Cap_MW,Existing_Cap_MWh,Max_Cap_MW,Max_Cap_MWh,Min_Cap_MW,Min_Cap_MWh,Inv_Cost_per_MWyr,Inv_Cost_per_MWhyr,Fixed_OM_Cost_per_MWyr,Fixed_OM_Cost_per_MWhyr,Var_OM_Cost_per_MWh,Var_OM_Cost_per_MWh_In,Self_Disch,Eff_Up,Eff_Down,Min_Duration,Max_Duration,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,region,cluster
-MA_battery,1,1,1,0,0,0,-1,-1,0,0,19584,22494,4895,5622,0.15,0.15,0,0.92,0.92,1,10,0,0,0,0,MA,0
-CT_battery,2,1,1,0,0,0,-1,-1,0,0,19584,22494,4895,5622,0.15,0.15,0,0.92,0.92,1,10,0,0,0,0,CT,0
-ME_battery,3,1,1,0,0,0,-1,-1,0,0,19584,22494,4895,5622,0.15,0.15,0,0.92,0.92,1,10,0,0,0,0,ME,0
+Resource,Zone,LDS,Model,New_Build,Can_Retire,Existing_Cap_MW,Existing_Cap_MWh,Max_Cap_MW,Max_Cap_MWh,Min_Cap_MW,Min_Cap_MWh,Inv_Cost_per_MWyr,Inv_Cost_per_MWhyr,Fixed_OM_Cost_per_MWyr,Fixed_OM_Cost_per_MWhyr,Var_OM_Cost_per_MWh,Var_OM_Cost_per_MWh_In,Self_Disch,Eff_Up,Eff_Down,Min_Duration,Max_Duration,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,region,cluster
+MA_battery,1,0,1,1,0,0,0,-1,-1,0,0,19584,22494,4895,5622,0.15,0.15,0,0.92,0.92,1,10,0,0,0,0,MA,0
+CT_battery,2,0,1,1,0,0,0,-1,-1,0,0,19584,22494,4895,5622,0.15,0.15,0,0.92,0.92,1,10,0,0,0,0,CT,0
+ME_battery,3,0,1,1,0,0,0,-1,-1,0,0,19584,22494,4895,5622,0.15,0.15,0,0.92,0.92,1,10,0,0,0,0,ME,0

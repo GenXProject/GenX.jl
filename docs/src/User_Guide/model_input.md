@@ -75,11 +75,11 @@ This input file contains input parameters related to: 1) definition of model zon
 |Ohms | Line resistance in Ohms (used to calculate I^2R losses)|
 |kV | Line voltage in kV (used to calculate I^2R losses)|
 |**CapacityReserveMargin > 0**||
-|CapRes\_* | Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint. * represents the number of the capacity reserve margin constraint.|
-||1 = the transmission line is eligible for adding firm capacity to the region|
-||0 = the transmission line is not eligible for adding firm capacity to the region|
-|DerateCapRes\_* | (0,1) value represents the derating of the firm transmission capacity for the capacity reserve margin constraint.|
-|CapResExcl\_* | (-1,1,0) = -1 if the designated direction of the transmission line is inbound to locational deliverability area (LDA) modeled by the capacity reserve margin constraint. = 1 if the designated direction of the transmission line is outbound from the LDA modeled by the capacity reserve margin constraint. Zero otherwise.|
+|CapResExcl\_* | {-1,1,0} Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint, as well as whether the line flow is into or out of the constraint region. * represents the number of the capacity reserve margin constraint.|
+|| 0 = the transmission line is not eligible/part of any capacity reserve constraint.|
+|| -1 = the transmission line is eligible for the capacity reserve margin constraint and the designated direction of the transmission line is **inbound** to locational deliverability area (LDA) modeled by the capacity reserve margin constraint.|
+|| 1 = the transmission line is eligible for the capacity reserve margin constraint and the designated direction of the transmission line is **outbound** from the locational deliverability area (LDA) modeled by the capacity reserve margin constraint.|
+|DerateCapRes\_* | [0,1] value represents the derating of the firm transmission capacity for the capacity reserve margin constraint. * represents the number of the capacity reserve margin constraint.|
 |**MultiStage == 1**|
 |Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for network transmission line expansion.  |
 |Line\_Max\_Flow\_Possible\_MW  |Maximum possible line flow in the current model period. Overrides Line\_Max\_Reinforcement\_MW, which is not used when performing multi-stage modeling.  |
