@@ -119,114 +119,76 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
-    L_asym = 0 #Default number of asymmetrical lines
-    # Number of lines in the network
-    if setup["asymmetrical_trans_flow_limit"] == 1
-        L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
-    end
-    L = L_sym + L_asym
+    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
+    L = inputs["L"]
 
     UCommit = setup["UCommit"]
+    NetworkExpansion = setup["NetworkExpansion"]
     CapacityReserveMargin = setup["CapacityReserveMargin"]
     EnergyShareRequirement = setup["EnergyShareRequirement"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
 
+    SYMMETRIC_LINE_INDEX = inputs["symmetric_line_index"]
+    ASYMMETRIC_LINE_INDEX = inputs["asymmetric_line_index"]
     ## sets and indices for transmission losses
     TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
-    if setup["asymmetrical_trans_flow_limit"] == 1
-        LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
-        LOSS_LINES_SYM = inputs["LOSS_LINES_SYM"]
-    else
-        LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
+    LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
+    LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
+    if NetworkExpansion == 1
+        # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
+        EXPANSION_LINES = inputs["EXPANSION_LINES"]
+        EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
+
     end
-    #=
-    if setup["asymmetrical_trans_flow_limit"] == 0
-        inputs["pPercent_Loss_Pos"] = inputs["pPercent_Loss_Neg"] = inputs["pPercent_Loss"]
-        inputs["pTrans_Max_Possible_Pos"] = inputs["pTrans_Max_Possible_Neg"] = inputs["pTrans_Max_Possible"]
-        inputs["pTrans_Loss_Coef_Pos"] = inputs["pTrans_Loss_Coef_Neg"] = inputs["pTrans_Loss_Coef"]
-        EP[:eAvail_Trans_Cap_Pos] = EP[:eAvail_Trans_Cap_Neg] = EP[:eAvail_Trans_Cap]
-    end
-    =#
+
     ### Variables ###
 
     # Power flow on each transmission line "l" at hour "t"
     @variable(EP, vFLOW[l = 1:L, t = 1:T])
 
     if (TRANS_LOSS_SEGS == 1)  #loss is a constant times absolute value of power flow
-        if setup["asymmetrical_trans_flow_limit"] == 1
-            # Positive and negative flow variables
-            @variable(EP, vTAUX_NEG_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
-            @variable(EP, vTAUX_POS_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
-            @variable(EP, vTAUX_NEG[l in LOSS_LINES_SYM, t = 1:T]>=0)
-            @variable(EP, vTAUX_POS[l in LOSS_LINES_SYM, t = 1:T]>=0)
-            if UCommit == 1
-                # Single binary variable to ensure positive or negative flows only
-                @variable(EP, vTAUX_POS_ON_ASYM[l in LOSS_LINES_ASYM, t = 1:T], Bin)
-                # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity in positive direction
-                @variable(EP, vPROD_TRANSCAP_ON_POS_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
-                # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity in negative direction
-                @variable(EP, vPROD_TRANSCAP_ON_NEG_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
-                @variable(EP, vTAUX_POS_ON[l in LOSS_LINES_SYM, t = 1:T], Bin)
-                # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity
-                @variable(EP, vPROD_TRANSCAP_ON[l in LOSS_LINES_SYM, t = 1:T]>=0)
-            end
-        else
-            # Positive and negative flow variables
-            @variable(EP, vTAUX_NEG[l in LOSS_LINES, t = 1:T]>=0)
-            @variable(EP, vTAUX_POS[l in LOSS_LINES, t = 1:T]>=0)
-
-            if UCommit == 1
-                # Single binary variable to ensure positive or negative flows only
-                @variable(EP, vTAUX_POS_ON[l in LOSS_LINES, t = 1:T], Bin)
-                # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity
-                @variable(EP, vPROD_TRANSCAP_ON[l in LOSS_LINES, t = 1:T]>=0)
-            end
+        # Positive and negative flow variables
+        @variable(EP, vTAUX_NEG_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
+        @variable(EP, vTAUX_POS_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
+        @variable(EP, vTAUX_NEG[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T]>=0)
+        @variable(EP, vTAUX_POS[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T]>=0)
+        if UCommit == 1
+            # Single binary variable to ensure positive or negative flows only
+            @variable(EP, vTAUX_POS_ON_ASYM[l in LOSS_LINES_ASYM, t = 1:T], Bin)
+            # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity in positive direction
+            @variable(EP, vPROD_TRANSCAP_ON_POS_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
+            # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity in negative direction
+            @variable(EP, vPROD_TRANSCAP_ON_NEG_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
+            @variable(EP, vTAUX_POS_ON[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T], Bin)
+            # Continuous variable representing product of binary variable (vTAUX_POS_ON) and avail transmission capacity
+            @variable(EP, vPROD_TRANSCAP_ON[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T]>=0)
         end
     else # TRANS_LOSS_SEGS>1
-        if setup["asymmetrical_trans_flow_limit"] == 1
-            # Auxiliary variables for linear piecewise interpolation of quadratic losses
-            @variable(EP, vTAUX_NEG_ASYM[l in LOSS_LINES_ASYM, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
-            @variable(EP, vTAUX_POS_ASYM[l in LOSS_LINES_ASYM, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
-            @variable(EP, vTAUX_NEG[l in LOSS_LINES_SYM, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
-            @variable(EP, vTAUX_POS[l in LOSS_LINES_SYM, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
-            if UCommit == 1
-                # Binary auxilary variables for each segment >1 to ensure segments fill in order
-                @variable(EP,
-                    vTAUX_POS_ON_ASYM[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                    Bin)
-                @variable(EP,
-                    vTAUX_NEG_ON_ASYM[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                    Bin)
-                @variable(EP,
-                    vTAUX_POS_ON[l in LOSS_LINES_SYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                    Bin)
-                @variable(EP,
-                    vTAUX_NEG_ON[l in LOSS_LINES_SYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                    Bin)
-            end
-        else
-            # Auxiliary variables for linear piecewise interpolation of quadratic losses
-            @variable(EP, vTAUX_NEG[l in LOSS_LINES, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
-            @variable(EP, vTAUX_POS[l in LOSS_LINES, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
-            if UCommit == 1
-                # Binary auxilary variables for each segment >1 to ensure segments fill in order
-                @variable(EP,
-                    vTAUX_POS_ON[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                    Bin)
-                @variable(EP,
-                    vTAUX_NEG_ON[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                    Bin)
-            end
+        # Auxiliary variables for linear piecewise interpolation of quadratic losses
+        @variable(EP, vTAUX_NEG_ASYM[l in LOSS_LINES_ASYM, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
+        @variable(EP, vTAUX_POS_ASYM[l in LOSS_LINES_ASYM, s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
+        @variable(EP, vTAUX_NEG[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
+        @variable(EP, vTAUX_POS[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 0:TRANS_LOSS_SEGS, t = 1:T]>=0)
+        if UCommit == 1
+            # Binary auxilary variables for each segment >1 to ensure segments fill in order
+            @variable(EP,
+                vTAUX_POS_ON_ASYM[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                Bin)
+            @variable(EP,
+                vTAUX_NEG_ON_ASYM[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                Bin)
+            @variable(EP,
+                vTAUX_POS_ON[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                Bin)
+            @variable(EP,
+                vTAUX_NEG_ON[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                Bin)
         end
     end
 
     # Transmission losses on each transmission line "l" at hour "t"
-    if setup["asymmetrical_trans_flow_limit"] == 1
-        @variable(EP, vTLOSS_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
-        @variable(EP, vTLOSS[l in LOSS_LINES_SYM, t = 1:T]>=0)
-    else
-        @variable(EP, vTLOSS[l in LOSS_LINES, t = 1:T]>=0)
-    end
+    @variable(EP, vTLOSS_ASYM[l in LOSS_LINES_ASYM, t = 1:T]>=0)
+    @variable(EP, vTLOSS[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T]>=0)
 
     ### Expressions ###
 
@@ -238,16 +200,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
         sum(inputs["pNet_Map"][l, z] * vFLOW[l, t] for l in 1:L))
 
     # Losses from power flows into or out of zone "z" in MW
-    if setup["asymmetrical_trans_flow_limit"] == 1
-        @expression(EP,
-            eLosses_By_Zone[z = 1:Z, t = 1:T],
-            sum(abs(inputs["pNet_Map"][l, z]) * (1 / 2) * vTLOSS[l, t] for l in LOSS_LINES_SYM)
-            + sum(abs(inputs["pNet_Map"][l, z]) * (1 / 2) * vTLOSS_ASYM[l, t] for l in LOSS_LINES_ASYM))
-    else
-        @expression(EP,
-            eLosses_By_Zone[z = 1:Z, t = 1:T],
-            sum(abs(inputs["pNet_Map"][l, z]) * (1 / 2) * vTLOSS[l, t] for l in LOSS_LINES))
-    end
+    @expression(EP,
+        eLosses_By_Zone[z = 1:Z, t = 1:T],
+        sum(abs(inputs["pNet_Map"][l, z]) * (1 / 2) * vTLOSS[l, t] for l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES); init = 0)
+        + sum(abs(inputs["pNet_Map"][l, z]) * (1 / 2) * vTLOSS_ASYM[l, t] for l in LOSS_LINES_ASYM; init = 0))
 
     ## Power Balance Expressions ##
 
@@ -276,420 +232,281 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
     
-    
-    if setup["asymmetrical_trans_flow_limit"] ==1
-        # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
-        println(EP[:eAvail_Trans_Cap_Pos])
-        @constraints(EP,
-            begin
-                cMaxFlow_out[l = 1:L_sym, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
-                cMaxFlow_in[l = 1:L_sym, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
-                cMaxFlow_out_asym[l = 1:L_asym, t = 1:T], vFLOW[(l+L_sym), t] <= EP[:eAvail_Trans_Cap_Pos][l] #Change these with Auxiliary 
-                cMaxFlow_in_asym[l = 1:L_asym, t = 1:T], vFLOW[(l+L_sym), t] >= -EP[:eAvail_Trans_Cap_Neg][l] #Change these with Auxiliary 
-            end)
-    else
-        @constraints(EP,
+    # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
+    @constraints(EP,
         begin
-            cMaxFlow_out[l = 1:L, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
-            cMaxFlow_in[l = 1:L, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
+            cMaxFlow_out[l in SYMMETRIC_LINE_INDEX, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap][l]
+            cMaxFlow_in[l in SYMMETRIC_LINE_INDEX, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap][l]
+            cMaxFlow_out_asym[l in ASYMMETRIC_LINE_INDEX, t = 1:T], vFLOW[l, t] <= EP[:eAvail_Trans_Cap_Pos][l] 
+            cMaxFlow_in_asym[l in ASYMMETRIC_LINE_INDEX, t = 1:T], vFLOW[l, t] >= -EP[:eAvail_Trans_Cap_Neg][l] 
         end)
-    end
     
     # Transmission loss related constraints - linear losses as a function of absolute value
     if TRANS_LOSS_SEGS == 1
-        if setup["asymmetrical_trans_flow_limit"] ==1
+        @constraints(EP,
+            begin
+                # Losses are alpha times absolute values
+                cTLoss[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                vTLOSS[l, t] ==
+                inputs["pPercent_Loss"][l] * ((vTAUX_POS[l, t]) + (vTAUX_NEG[l, t]))
+
+                # Power flow is sum of positive and negative components
+                cTAuxSum[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                vTAUX_POS[l, t] - vTAUX_NEG[l, t] == vFLOW[l, t]
+
+                # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
+                cTAuxLimit[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                vTAUX_POS[l, t] + vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l]
+            end)
+        @constraints(EP,
+            begin
+                # Losses are alpha times absolute values
+                cTLoss_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                vTLOSS_ASYM[l, t] ==
+                inputs["pPercent_Loss"][l] * (vTAUX_POS_ASYM[l, t]) + inputs["pPercent_Loss_Neg"][l] * (vTAUX_NEG_ASYM[l, t])
+
+                # Power flow is sum of positive and negative components
+                cTAuxSum_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                vTAUX_POS_ASYM[l, t] - vTAUX_NEG_ASYM[l, t] == vFLOW[l, t]
+
+                # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
+                #Having both these constraints will ensure that the minimum of the two RHS is the most binding constraint
+                cTAuxLimit_1[l in LOSS_LINES_ASYM, t = 1:T],
+                vTAUX_POS_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
+                cTAuxLimit_2[l in LOSS_LINES_ASYM, t = 1:T],
+                vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
+            end)
+
+        if UCommit == 1
+            # Constraints to limit phantom losses that can occur to avoid discrete cycling costs/opportunity costs due to min down
             @constraints(EP,
                 begin
-                    # Losses are alpha times absolute values
-                    cTLoss[l in LOSS_LINES_SYM, t = 1:T],
-                    vTLOSS[l, t] ==
-                    inputs["pPercent_Loss"][l] * ((vTAUX_POS[l, t]) + (vTAUX_NEG[l, t]))
+                    cTAuxPosUB[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vTAUX_POS[l, t] <= vPROD_TRANSCAP_ON[l, t]
 
-                    # Power flow is sum of positive and negative components
-                    cTAuxSum[l in LOSS_LINES_SYM, t = 1:T],
-                    vTAUX_POS[l, t] - vTAUX_NEG[l, t] == vFLOW[l, t]
+                    # Either negative or positive flows are activated, not both
+                    cTAuxNegUB[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l] - vPROD_TRANSCAP_ON[l, t]
 
-                    # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
-                    cTAuxLimit[l in LOSS_LINES_SYM, t = 1:T],
-                    vTAUX_POS[l, t] + vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l]
+                    # McCormick representation of product of continuous and binary variable
+                    # (in this case, of: vPROD_TRANSCAP_ON[l,t] = EP[:eAvail_Trans_Cap][l] * vTAUX_POS_ON[l,t])
+                    # McCormick constraint 1
+                    [l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vPROD_TRANSCAP_ON[l, t] <=
+                    inputs["pTrans_Max_Possible"][l] * vTAUX_POS_ON[l, t]
+
+                    # McCormick constraint 2
+                    [l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vPROD_TRANSCAP_ON[l, t] <= EP[:eAvail_Trans_Cap][l]
+
+                    # McCormick constraint 3
+                    [l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vPROD_TRANSCAP_ON[l, t] >=
+                    EP[:eAvail_Trans_Cap][l] -
+                    (1 - vTAUX_POS_ON[l, t]) * inputs["pTrans_Max_Possible"][l]
                 end)
+
             @constraints(EP,
                 begin
-                    # Losses are alpha times absolute values
-                    cTLoss_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTLOSS_ASYM[l, t] ==
-                    inputs["pPercent_Loss_Pos"][l] * (vTAUX_POS_ASYM[l, t]) + inputs["pPercent_Loss_Neg"][l] * (vTAUX_NEG_ASYM[l, t])
+                    cTAuxPos1UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                    vTAUX_POS_ASYM[l, t] <= vPROD_TRANSCAP_ON_POS_ASYM[l, t]
 
-                    # Power flow is sum of positive and negative components
-                    cTAuxSum_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_POS_ASYM[l, t] - vTAUX_NEG_ASYM[l, t] == vFLOW[(l+L_sym), t]
+                    # Either negative or positive flows are activated, not both
+                    cTAuxNeg1UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                    vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l] - vPROD_TRANSCAP_ON_NEG_ASYM[l, t]
 
-                    # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
-                    #Having both these constraints will ensure that the minimum of the two RHS is the most binding constraint
-                    cTAuxLimit_1[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_POS_ASYM[l, t] + vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
-                    cTAuxLimit_2[l in LOSS_LINES_ASYM, t = 1:T],
-                    vTAUX_POS_ASYM[l, t] + vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
+                    cTAuxNeg2UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                    vTAUX_NEG_ASYM[l, t] <= vPROD_TRANSCAP_ON_NEG_ASYM[l, t]
+
+                    # Either negative or positive flows are activated, not both
+                    cTAuxPos2UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                    vTAUX_POS_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l] - vPROD_TRANSCAP_ON_POS_ASYM[l, t]
+
+                    # McCormick representation of product of continuous and binary variable
+                    # (in this case, of: vPROD_TRANSCAP_ON[l,t] = EP[:eAvail_Trans_Cap][l] * vTAUX_POS_ON[l,t])
+                    # McCormick constraint 1
+                    [l in LOSS_LINES_ASYM, t = 1:T],
+                    vPROD_TRANSCAP_ON_POS_ASYM[l, t] <=
+                    inputs["pTrans_Max_Possible"][l] * vTAUX_POS_ON_ASYM[l, t]
+
+                    [l in LOSS_LINES_ASYM, t = 1:T],
+                    vPROD_TRANSCAP_ON_NEG_ASYM[l, t] <=
+                    inputs["pTrans_Max_Possible_Neg"][l] * vTAUX_NEG_ON_ASYM[l, t]
+
+                    # McCormick constraint 2
+                    [l in LOSS_LINES_ASYM, t = 1:T],
+                    vPROD_TRANSCAP_ON_POS_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
+
+                    [l in LOSS_LINES_ASYM, t = 1:T],
+                    vPROD_TRANSCAP_ON_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
+
+                    # McCormick constraint 3
+                    [l in LOSS_LINES_ASYM, t = 1:T],
+                    vPROD_TRANSCAP_ON_POS_ASYM[l, t] >=
+                    EP[:eAvail_Trans_Cap_Pos][l] -
+                    (1 - vTAUX_POS_ON_POS_ASYM[l, t]) * inputs["pTrans_Max_Possible"][l]
+
+                    [l in LOSS_LINES_ASYM, t = 1:T],
+                    vPROD_TRANSCAP_ON_NEG_ASYM[l, t] >=
+                    EP[:eAvail_Trans_Cap_Neg][l] -
+                    (1 - vTAUX_POS_ON_NEG_ASYM[l, t]) * inputs["pTrans_Max_Possible_Neg"][l]
                 end)
-
-            if UCommit == 1
-                # Constraints to limit phantom losses that can occur to avoid discrete cycling costs/opportunity costs due to min down
-                @constraints(EP,
-                    begin
-                        cTAuxPosUB[l in LOSS_LINES_SYM, t = 1:T],
-                        vTAUX_POS[l, t] <= vPROD_TRANSCAP_ON[l, t]
-
-                        # Either negative or positive flows are activated, not both
-                        cTAuxNegUB[l in LOSS_LINES_SYM, t = 1:T],
-                        vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l] - vPROD_TRANSCAP_ON[l, t]
-
-                        # McCormick representation of product of continuous and binary variable
-                        # (in this case, of: vPROD_TRANSCAP_ON[l,t] = EP[:eAvail_Trans_Cap][l] * vTAUX_POS_ON[l,t])
-                        # McCormick constraint 1
-                        [l in LOSS_LINES_SYM, t = 1:T],
-                        vPROD_TRANSCAP_ON[l, t] <=
-                        inputs["pTrans_Max_Possible_Pos"][l] * vTAUX_POS_ON[l, t]
-
-                        # McCormick constraint 2
-                        [l in LOSS_LINES_SYM, t = 1:T],
-                        vPROD_TRANSCAP_ON[l, t] <= EP[:eAvail_Trans_Cap][l]
-
-                        # McCormick constraint 3
-                        [l in LOSS_LINES_SYM, t = 1:T],
-                        vPROD_TRANSCAP_ON[l, t] >=
-                        EP[:eAvail_Trans_Cap][l] -
-                        (1 - vTAUX_POS_ON[l, t]) * inputs["pTrans_Max_Possible"][l]
-                    end)
-
-                @constraints(EP,
-                    begin
-                        cTAuxPos1UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                        vTAUX_POS_ASYM[l, t] <= vPROD_TRANSCAP_ON_POS_ASYM[l, t]
-
-                        # Either negative or positive flows are activated, not both
-                        cTAuxNeg1UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                        vTAUX_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l] - vPROD_TRANSCAP_ON_NEG_ASYM[l, t]
-
-                        cTAuxNeg2UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                        vTAUX_NEG_ASYM[l, t] <= vPROD_TRANSCAP_ON_NEG_ASYM[l, t]
-
-                        # Either negative or positive flows are activated, not both
-                        cTAuxPos2UB_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                        vTAUX_POS_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l] - vPROD_TRANSCAP_ON_POS_ASYM[l, t]
-
-                        # McCormick representation of product of continuous and binary variable
-                        # (in this case, of: vPROD_TRANSCAP_ON[l,t] = EP[:eAvail_Trans_Cap][l] * vTAUX_POS_ON[l,t])
-                        # McCormick constraint 1
-                        [l in LOSS_LINES_ASYM, t = 1:T],
-                        vPROD_TRANSCAP_ON_POS_ASYM[l, t] <=
-                        inputs["pTrans_Max_Possible_Pos"][l] * vTAUX_POS_ON_ASYM[l, t]
-
-                        [l in LOSS_LINES_ASYM, t = 1:T],
-                        vPROD_TRANSCAP_ON_NEG_ASYM[l, t] <=
-                        inputs["pTrans_Max_Possible_Neg"][l] * vTAUX_NEG_ON_ASYM[l, t]
-
-                        # McCormick constraint 2
-                        [l in LOSS_LINES_ASYM, t = 1:T],
-                        vPROD_TRANSCAP_ON_POS_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Pos][l]
-
-                        [l in LOSS_LINES_ASYM, t = 1:T],
-                        vPROD_TRANSCAP_ON_NEG_ASYM[l, t] <= EP[:eAvail_Trans_Cap_Neg][l]
-
-                        # McCormick constraint 3
-                        [l in LOSS_LINES_ASYM, t = 1:T],
-                        vPROD_TRANSCAP_ON_POS_ASYM[l, t] >=
-                        EP[:eAvail_Trans_Cap_Pos][l] -
-                        (1 - vTAUX_POS_ON_POS_ASYM[l, t]) * inputs["pTrans_Max_Possible_Pos"][l]
-
-                        [l in LOSS_LINES_ASYM, t = 1:T],
-                        vPROD_TRANSCAP_ON_NEG_ASYM[l, t] >=
-                        EP[:eAvail_Trans_Cap_Neg][l] -
-                        (1 - vTAUX_POS_ON_NEG_ASYM[l, t]) * inputs["pTrans_Max_Possible_Neg"][l]
-                    end)
-            end
-        else
-            @constraints(EP,
-                begin
-                    # Losses are alpha times absolute values
-                    cTLoss[l in LOSS_LINES, t = 1:T],
-                    vTLOSS[l, t] ==
-                    inputs["pPercent_Loss"][l] * ((vTAUX_POS[l, t]) + (vTAUX_NEG[l, t]))
-
-                    # Power flow is sum of positive and negative components
-                    cTAuxSum[l in LOSS_LINES, t = 1:T],
-                    vTAUX_POS[l, t] - vTAUX_NEG[l, t] == vFLOW[l, t]
-
-                    # Sum of auxiliary flow variables in either direction cannot exceed maximum line flow capacity
-                    cTAuxLimit[l in LOSS_LINES, t = 1:T],
-                    vTAUX_POS[l, t] + vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l]
-                end)
-
-            if UCommit == 1
-                # Constraints to limit phantom losses that can occur to avoid discrete cycling costs/opportunity costs due to min down
-                @constraints(EP,
-                    begin
-                        cTAuxPosUB[l in LOSS_LINES, t = 1:T],
-                        vTAUX_POS[l, t] <= vPROD_TRANSCAP_ON[l, t]
-
-                        # Either negative or positive flows are activated, not both
-                        cTAuxNegUB[l in LOSS_LINES, t = 1:T],
-                        vTAUX_NEG[l, t] <= EP[:eAvail_Trans_Cap][l] - vPROD_TRANSCAP_ON[l, t]
-
-                        # McCormick representation of product of continuous and binary variable
-                        # (in this case, of: vPROD_TRANSCAP_ON[l,t] = EP[:eAvail_Trans_Cap][l] * vTAUX_POS_ON[l,t])
-                        # McCormick constraint 1
-                        [l in LOSS_LINES, t = 1:T],
-                        vPROD_TRANSCAP_ON[l, t] <=
-                        inputs["pTrans_Max_Possible"][l] * vTAUX_POS_ON[l, t]
-
-                        # McCormick constraint 2
-                        [l in LOSS_LINES, t = 1:T],
-                        vPROD_TRANSCAP_ON[l, t] <= EP[:eAvail_Trans_Cap][l]
-
-                        # McCormick constraint 3
-                        [l in LOSS_LINES, t = 1:T],
-                        vPROD_TRANSCAP_ON[l, t] >=
-                        EP[:eAvail_Trans_Cap][l] -
-                        (1 - vTAUX_POS_ON[l, t]) * inputs["pTrans_Max_Possible"][l]
-                    end)
-            end
-        end # End if(TRANS_LOSS_SEGS == 1) block
-    end
+        end # End if(UCommit == 1)
+    end 
     # When number of segments is greater than 1
     if (TRANS_LOSS_SEGS > 1)
-        if setup["asymmetrical_trans_flow_limit"] ==1
-            ##***FOR SYMMETRICAL LINES***
-            ## between zone transmission loss constraints
-            # Losses are expressed as a piecewise approximation of a quadratic function of power flows across each line
-            # Eq 1: Total losses are function of loss coefficient times the sum of auxilary segment variables across all segments of piecewise approximation
-            # (Includes both positive domain and negative domain segments)
-            @constraint(EP,
-                cTLoss[l in LOSS_LINES_SYM, t = 1:T],
-                vTLOSS[l,
-                    t]==
+        ##***FOR SYMMETRICAL LINES***
+        ## between zone transmission loss constraints
+        # Losses are expressed as a piecewise approximation of a quadratic function of power flows across each line
+        # Eq 1: Total losses are function of loss coefficient times the sum of auxilary segment variables across all segments of piecewise approximation
+        # (Includes both positive domain and negative domain segments)
+        @constraint(EP,
+            cTLoss[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+            vTLOSS[l,t]==
                 (inputs["pTrans_Loss_Coef"][l] *
                 sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
                 (inputs["pTrans_Loss_Coef"][l] *
                 sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
-            # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
-            # from both positive and negative domains must total the actual power flow across the line
+        # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
+        # from both positive and negative domains must total the actual power flow across the line
+        @constraints(EP,
+            begin
+                cTAuxSumPos[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                sum(vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_POS[l, 0, t] ==
+                vFLOW[l, t]
+                cTAuxSumNeg[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                sum(vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_NEG[l, 0, t] ==
+                -vFLOW[l, t]
+            end)
+        if UCommit == 0 || UCommit == 2
+            # Eq 3: Each auxilary segment variables (s >= 1) must be less than the maximum power flow in the zone / number of segments
             @constraints(EP,
                 begin
-                    cTAuxSumPos[l in LOSS_LINES_SYM, t = 1:T],
-                    sum(vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_POS[l, 0, t] ==
-                    vFLOW[l, t]
-                    cTAuxSumNeg[l in LOSS_LINES_SYM, t = 1:T],
-                    sum(vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_NEG[l, 0, t] ==
-                    -vFLOW[l, t]
+                    cTAuxMaxPos[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                    vTAUX_POS[l, s, t] <=
+                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
+                    cTAuxMaxNeg[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                    vTAUX_NEG[l, s, t] <=
+                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
                 end)
-            if UCommit == 0 || UCommit == 2
-                # Eq 3: Each auxilary segment variables (s >= 1) must be less than the maximum power flow in the zone / number of segments
-                @constraints(EP,
-                    begin
-                        cTAuxMaxPos[l in LOSS_LINES_SYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_POS[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
-                        cTAuxMaxNeg[l in LOSS_LINES_SYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_NEG[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
-                    end)
-            else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
-                # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
-                # "fill" in order: i.e. one segment cannot be non-zero unless prior segment is at it's maximum value
-                # (These constraints are necessary to prevents phantom losses in MILP problems)
-                @constraints(EP,
-                    begin
-                        cTAuxOrderPos1[l in LOSS_LINES_SYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_POS[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_POS_ON[l, s, t]
-                        cTAuxOrderNeg1[l in LOSS_LINES_SYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_NEG[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_NEG_ON[l, s, t]
-                        cTAuxOrderPos2[l in LOSS_LINES_SYM, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
-                        vTAUX_POS[l, s, t] >=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_POS_ON[l, s + 1, t]
-                        cTAuxOrderNeg2[l in LOSS_LINES_SYM, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
-                        vTAUX_NEG[l, s, t] >=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_NEG_ON[l, s + 1, t]
-                    end)
+        else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
+            # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
+            # "fill" in order: i.e. one segment cannot be non-zero unless prior segment is at it's maximum value
+            # (These constraints are necessary to prevents phantom losses in MILP problems)
+            @constraints(EP,
+                begin
+                    cTAuxOrderPos1[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                    vTAUX_POS[l, s, t] <=
+                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_POS_ON[l, s, t]
+                    cTAuxOrderNeg1[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                    vTAUX_NEG[l, s, t] <=
+                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_NEG_ON[l, s, t]
+                    cTAuxOrderPos2[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
+                    vTAUX_POS[l, s, t] >=
+                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_POS_ON[l, s + 1, t]
+                    cTAuxOrderNeg2[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
+                    vTAUX_NEG[l, s, t] >=
+                    (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
+                    vTAUX_NEG_ON[l, s + 1, t]
+                end)
 
-                # Eq 5: Binary constraints to deal with absolute value of vFLOW.
-                @constraints(EP,
-                    begin
-                        # If flow is positive, vTAUX_POS segment 0 must be zero; If flow is negative, vTAUX_POS segment 0 must be positive
-                        # (and takes on value of the full negative flow), forcing all vTAUX_POS other segments (s>=1) to be zero
-                        cTAuxSegmentZeroPos[l in LOSS_LINES_SYM, t = 1:T],
-                        vTAUX_POS[l, 0, t] <=
-                        inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_POS_ON[l, 1, t])
+            # Eq 5: Binary constraints to deal with absolute value of vFLOW.
+            @constraints(EP,
+                begin
+                    # If flow is positive, vTAUX_POS segment 0 must be zero; If flow is negative, vTAUX_POS segment 0 must be positive
+                    # (and takes on value of the full negative flow), forcing all vTAUX_POS other segments (s>=1) to be zero
+                    cTAuxSegmentZeroPos[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vTAUX_POS[l, 0, t] <=
+                    inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_POS_ON[l, 1, t])
 
-                        # If flow is negative, vTAUX_NEG segment 0 must be zero; If flow is positive, vTAUX_NEG segment 0 must be positive
-                        # (and takes on value of the full positive flow), forcing all other vTAUX_NEG segments (s>=1) to be zero
-                        cTAuxSegmentZeroNeg[l in LOSS_LINES_SYM, t = 1:T],
-                        vTAUX_NEG[l, 0, t] <=
-                        inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_NEG_ON[l, 1, t])
-                    end)
-            end
+                    # If flow is negative, vTAUX_NEG segment 0 must be zero; If flow is positive, vTAUX_NEG segment 0 must be positive
+                    # (and takes on value of the full positive flow), forcing all other vTAUX_NEG segments (s>=1) to be zero
+                    cTAuxSegmentZeroNeg[l in intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES), t = 1:T],
+                    vTAUX_NEG[l, 0, t] <=
+                    inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_NEG_ON[l, 1, t])
+                end)
+        end
 
-            ##***FOR ASYMMETRICAL LINES***
-            ## between zone transmission loss constraints
-            # Losses are expressed as a piecewise approximation of a quadratic function of power flows across each line
-            # Eq 1: Total losses are function of loss coefficient times the sum of auxilary segment variables across all segments of piecewise approximation
-            # (Includes both positive domain and negative domain segments)
-            @constraint(EP,
-                cTLoss_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                vTLOSS_ASYM[l,
-                    t]==
-                (inputs["pTrans_Loss_Coef_Pos"][l] *
-                sum((2 * s - 1) * (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS) *
+        ##***FOR ASYMMETRICAL LINES***
+        ## between zone transmission loss constraints
+        # Losses are expressed as a piecewise approximation of a quadratic function of power flows across each line
+        # Eq 1: Total losses are function of loss coefficient times the sum of auxilary segment variables across all segments of piecewise approximation
+        # (Includes both positive domain and negative domain segments)
+        @constraint(EP,
+            cTLoss_asym[l in LOSS_LINES_ASYM, t = 1:T],
+            vTLOSS_ASYM[l,t]==
+                (inputs["pTrans_Loss_Coef"][l] *
+                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_POS_ASYM[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
                 (inputs["pTrans_Loss_Coef_Neg"][l] *
                 sum((2 * s - 1) * (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS) *
                     vTAUX_NEG_ASYM[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
-            # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
-            # from both positive and negative domains must total the actual power flow across the line
+        # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
+        # from both positive and negative domains must total the actual power flow across the line
+        @constraints(EP,
+            begin
+                cTAuxSumPos_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                sum(vTAUX_POS_ASYM[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_POS_ASYM[l, 0, t] ==
+                    vFLOW[l, t]
+                cTAuxSumNeg_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                sum(vTAUX_NEG_ASYM[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_NEG_ASYM[l, 0, t] ==
+                    -vFLOW[l, t]
+            end)
+        if UCommit == 0 || UCommit == 2
+            # Eq 3: Each auxilary segment variables (s >= 1) must be less than the maximum power flow in the zone / number of segments
             @constraints(EP,
                 begin
-                    cTAuxSumPos_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                    sum(vTAUX_POS_ASYM[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_POS_ASYM[l, 0, t] ==
-                    vFLOW[(l+L_sym), t]
-                    cTAuxSumNeg_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                    sum(vTAUX_NEG_ASYM[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_NEG_ASYM[l, 0, t] ==
-                    -vFLOW[(l+L_sym), t]
-                end)
-            if UCommit == 0 || UCommit == 2
-                # Eq 3: Each auxilary segment variables (s >= 1) must be less than the maximum power flow in the zone / number of segments
-                @constraints(EP,
-                    begin
-                        cTAuxMaxPos_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                    cTAuxMaxPos_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                         vTAUX_POS_ASYM[l, s, t] <=
-                        (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS)
-                        cTAuxMaxNeg_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
+                    cTAuxMaxNeg_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                         vTAUX_NEG_ASYM[l, s, t] <=
                         (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS)
-                    end)
-            else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
-                # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
-                # "fill" in order: i.e. one segment cannot be non-zero unless prior segment is at it's maximum value
-                # (These constraints are necessary to prevents phantom losses in MILP problems)
-                @constraints(EP,
-                    begin
-                        cTAuxOrderPos1_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                end)
+        else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
+            # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
+            # "fill" in order: i.e. one segment cannot be non-zero unless prior segment is at it's maximum value
+            # (These constraints are necessary to prevents phantom losses in MILP problems)
+            @constraints(EP,
+                begin
+                    cTAuxOrderPos1_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                         vTAUX_POS_ASYM[l, s, t] <=
-                        (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS) *
+                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                         vTAUX_POS_ON_ASYM[l, s, t]
-                        cTAuxOrderNeg1_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
+                    cTAuxOrderNeg1_asym[l in LOSS_LINES_ASYM, s = 1:TRANS_LOSS_SEGS, t = 1:T],
                         vTAUX_NEG_ASYM[l, s, t] <=
                         (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS) *
                         vTAUX_NEG_ON_ASYM[l, s, t]
-                        cTAuxOrderPos2_asym[l in LOSS_LINES_ASYM, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
+                    cTAuxOrderPos2_asym[l in LOSS_LINES_ASYM, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
                         vTAUX_POS_ASYM[l, s, t] >=
-                        (inputs["pTrans_Max_Possible_Pos"][l] / TRANS_LOSS_SEGS) *
+                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
                         vTAUX_POS_ON_ASYM[l, s + 1, t]
-                        cTAuxOrderNeg2_asym[l in LOSS_LINES_ASYM, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
+                    cTAuxOrderNeg2_asym[l in LOSS_LINES_ASYM, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
                         vTAUX_NEG_ASYM[l, s, t] >=
                         (inputs["pTrans_Max_Possible_Neg"][l] / TRANS_LOSS_SEGS) *
                         vTAUX_NEG_ON_ASYM[l, s + 1, t]
-                    end)
+                end)
 
-                # Eq 5: Binary constraints to deal with absolute value of vFLOW.
-                @constraints(EP,
-                    begin
-                        # If flow is positive, vTAUX_POS segment 0 must be zero; If flow is negative, vTAUX_POS segment 0 must be positive
-                        # (and takes on value of the full negative flow), forcing all vTAUX_POS other segments (s>=1) to be zero
-                        cTAuxSegmentZeroPos_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                        vTAUX_POS_ASYM[l, 0, t] <=
-                        inputs["pTrans_Max_Possible_Pos"][l] * (1 - vTAUX_POS_ON_ASYM[l, 1, t])
-
-                        # If flow is negative, vTAUX_NEG segment 0 must be zero; If flow is positive, vTAUX_NEG segment 0 must be positive
-                        # (and takes on value of the full positive flow), forcing all other vTAUX_NEG segments (s>=1) to be zero
-                        cTAuxSegmentZeroNeg_asym[l in LOSS_LINES_ASYM, t = 1:T],
-                        vTAUX_NEG_ASYM[l, 0, t] <=
-                        inputs["pTrans_Max_Possible_Neg"][l] * (1 - vTAUX_NEG_ON_ASYM[l, 1, t])
-                    end)
-            end
-        else
-            ## between zone transmission loss constraints
-            # Losses are expressed as a piecewise approximation of a quadratic function of power flows across each line
-            # Eq 1: Total losses are function of loss coefficient times the sum of auxilary segment variables across all segments of piecewise approximation
-            # (Includes both positive domain and negative domain segments)
-            @constraint(EP,
-                cTLoss[l in LOSS_LINES, t = 1:T],
-                vTLOSS[l,
-                    t]==
-                (inputs["pTrans_Loss_Coef"][l] *
-                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                    vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS)) +
-                (inputs["pTrans_Loss_Coef"][l] *
-                sum((2 * s - 1) * (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                    vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS)))
-            # Eq 2: Sum of auxilary segment variables (s >= 1) minus the "zero" segment (which allows values to go negative)
-            # from both positive and negative domains must total the actual power flow across the line
+            # Eq 5: Binary constraints to deal with absolute value of vFLOW.
             @constraints(EP,
                 begin
-                    cTAuxSumPos[l in LOSS_LINES, t = 1:T],
-                    sum(vTAUX_POS[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_POS[l, 0, t] ==
-                    vFLOW[l, t]
-                    cTAuxSumNeg[l in LOSS_LINES, t = 1:T],
-                    sum(vTAUX_NEG[l, s, t] for s in 1:TRANS_LOSS_SEGS) - vTAUX_NEG[l, 0, t] ==
-                    -vFLOW[l, t]
+                    # If flow is positive, vTAUX_POS segment 0 must be zero; If flow is negative, vTAUX_POS segment 0 must be positive
+                    # (and takes on value of the full negative flow), forcing all vTAUX_POS other segments (s>=1) to be zero
+                    cTAuxSegmentZeroPos_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                        vTAUX_POS_ASYM[l, 0, t] <=
+                        inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_POS_ON_ASYM[l, 1, t])
+
+                    # If flow is negative, vTAUX_NEG segment 0 must be zero; If flow is positive, vTAUX_NEG segment 0 must be positive
+                    # (and takes on value of the full positive flow), forcing all other vTAUX_NEG segments (s>=1) to be zero
+                    cTAuxSegmentZeroNeg_asym[l in LOSS_LINES_ASYM, t = 1:T],
+                        vTAUX_NEG_ASYM[l, 0, t] <=
+                        inputs["pTrans_Max_Possible_Neg"][l] * (1 - vTAUX_NEG_ON_ASYM[l, 1, t])
                 end)
-            if UCommit == 0 || UCommit == 2
-                # Eq 3: Each auxilary segment variables (s >= 1) must be less than the maximum power flow in the zone / number of segments
-                @constraints(EP,
-                    begin
-                        cTAuxMaxPos[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_POS[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
-                        cTAuxMaxNeg[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_NEG[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
-                    end)
-            else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
-                # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
-                # "fill" in order: i.e. one segment cannot be non-zero unless prior segment is at it's maximum value
-                # (These constraints are necessary to prevents phantom losses in MILP problems)
-                @constraints(EP,
-                    begin
-                        cTAuxOrderPos1[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_POS[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_POS_ON[l, s, t]
-                        cTAuxOrderNeg1[l in LOSS_LINES, s = 1:TRANS_LOSS_SEGS, t = 1:T],
-                        vTAUX_NEG[l, s, t] <=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_NEG_ON[l, s, t]
-                        cTAuxOrderPos2[l in LOSS_LINES, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
-                        vTAUX_POS[l, s, t] >=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_POS_ON[l, s + 1, t]
-                        cTAuxOrderNeg2[l in LOSS_LINES, s = 1:(TRANS_LOSS_SEGS - 1), t = 1:T],
-                        vTAUX_NEG[l, s, t] >=
-                        (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS) *
-                        vTAUX_NEG_ON[l, s + 1, t]
-                    end)
-
-                # Eq 5: Binary constraints to deal with absolute value of vFLOW.
-                @constraints(EP,
-                    begin
-                        # If flow is positive, vTAUX_POS segment 0 must be zero; If flow is negative, vTAUX_POS segment 0 must be positive
-                        # (and takes on value of the full negative flow), forcing all vTAUX_POS other segments (s>=1) to be zero
-                        cTAuxSegmentZeroPos[l in LOSS_LINES, t = 1:T],
-                        vTAUX_POS[l, 0, t] <=
-                        inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_POS_ON[l, 1, t])
-
-                        # If flow is negative, vTAUX_NEG segment 0 must be zero; If flow is positive, vTAUX_NEG segment 0 must be positive
-                        # (and takes on value of the full positive flow), forcing all other vTAUX_NEG segments (s>=1) to be zero
-                        cTAuxSegmentZeroNeg[l in LOSS_LINES, t = 1:T],
-                        vTAUX_NEG[l, 0, t] <=
-                        inputs["pTrans_Max_Possible"][l] * (1 - vTAUX_NEG_ON[l, 1, t])
-                    end)
-            end
         end
     end # End if(TRANS_LOSS_SEGS > 0) block
 

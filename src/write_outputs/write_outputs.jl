@@ -122,14 +122,14 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             println(elapsed_time_flows)
         end
 
-        if output_settings_d["WriteTransmissionLosses"]
+        #=if output_settings_d["WriteTransmissionLosses"]
             elapsed_time_losses = @elapsed write_transmission_losses(path,
                 inputs,
                 setup,
                 EP)
             println("Time elapsed for writing transmission losses is")
             println(elapsed_time_losses)
-        end
+        end=#
 
         if setup["NetworkExpansion"] == 1 && output_settings_d["WriteNWExpansion"]
             elapsed_time_expansion = @elapsed write_nw_expansion(path, inputs, setup, EP)

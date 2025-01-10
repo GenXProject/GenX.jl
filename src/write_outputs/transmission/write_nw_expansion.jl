@@ -1,23 +1,32 @@
 function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
-    L_asym = 0 #Default number of asymmetrical lines
     # Number of lines in the network
-    if setup["asymmetrical_trans_flow_limit"] == 1
-        L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
+    L_sym = inputs["L_sym"]
+    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
+    L = inputs["L"]
+
+    NetworkExpansion = setup["NetworkExpansion"]
+    MultiStage = setup["MultiStage"]
+
+    SYMMETRIC_LINE_INDEX = inputs["symmetric_line_index"]
+    ASYMMETRIC_LINE_INDEX = inputs["asymmetric_line_index"]
+
+    if NetworkExpansion == 1
+        # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
+        EXPANSION_LINES = inputs["EXPANSION_LINES"]
+        EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
+
     end
-    L = L_sym + L_asym
 
     # Transmission network reinforcements
     transcap = zeros(L)
     transcap_pos = zeros(L_asym)
     transcap_neg = zeros(L_asym)
-    for i in 1:L
-        if i in inputs["EXPANSION_LINES"]
-            transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
-        elseif i in inputs["EXPANSION_LINES_ASYM"]
-            transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][i])
-            transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][i])    
-        end
+    for i in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)
+        transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
+    end
+    for i in EXPANSION_LINES_ASYM
+        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][i])
+        transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][i])    
     end
 
     dfTransCap = DataFrame(Line = 1:L,
