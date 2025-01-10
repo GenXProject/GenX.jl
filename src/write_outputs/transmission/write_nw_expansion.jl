@@ -24,9 +24,12 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
     for i in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)
         transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
     end
-    for i in EXPANSION_LINES_ASYM
-        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][i])
-        transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][i])    
+
+    for i in eachindex(EXPANSION_LINES_ASYM)
+        println(i)
+        line_index = EXPANSION_LINES_ASYM[i]       # [4,5,6]
+        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][line_index])
+        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Neg][line_index])
     end
 
     dfTransCap = DataFrame(Line = 1:L,
@@ -39,5 +42,16 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
         dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
     end
 
-    CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
+    CSV.write(joinpath(path, "network_expansion_sym.csv"), dfTransCap)
+
+    dfTransCap_asym = DataFrame(Line = 1:L_asym,
+        New_Trans_Capacity_Pos = convert(Array{Float64}, transcap_pos),
+        New_Trans_Capacity_Neg = convert(Array{Float64}, transcap_neg))
+
+    if setup["ParameterScale"] == 1
+        dfTransCap_asym.New_Trans_Capacity_Pos *= ModelScalingFactor  # GW to MW
+        dfTransCap_asym.New_Trans_Capacity_Neg *= ModelScalingFactor  # GW to MW
+    end
+
+    CSV.write(joinpath(path, "network_expansion_asym.csv"), dfTransCap_asym)
 end
