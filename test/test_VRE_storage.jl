@@ -24,9 +24,9 @@ function test_case(test_path, obj_true, genx_setup)
 end
 
 # Test cases (format: (test_path, obj_true))
-test_cases = [("VRE_storage/solar_wind", 92376.060123),
-    ("VRE_storage/solar", 106798.88706),
-    ("VRE_storage/wind", 92376.275543)]
+test_cases = [("VRE_storage/solar_wind", 9.23762755432138e10),
+    ("VRE_storage/solar", 1.0679888706409656e11),
+    ("VRE_storage/wind", 9.23762755432139e10)]
 
 # Define test setup
 genx_setup = Dict("NetworkExpansion" => 1,

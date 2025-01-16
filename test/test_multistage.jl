@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = [79734.80032, 41630.03494, 27855.20631]
+obj_true = [7.973480032e10, 4.163003494e10, 2.785520631e10]
 test_path = joinpath(@__DIR__, "multi_stage")
 
 # Define test inputs

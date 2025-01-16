@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 3179.6244
+obj_true = 3.1796243889649606e9
 test_path = "retrofit"
 
 # Define test inputs

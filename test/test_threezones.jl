@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 6960.20855
+obj_true = 6.960208549907064e9
 test_path = "three_zones"
 
 # Define test inputs

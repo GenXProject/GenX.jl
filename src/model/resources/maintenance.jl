@@ -108,7 +108,7 @@ function maintenance_formulation!(EP::Model,
         maint_begin_cadence::Int,
         maint_dur::Int,
         maint_freq_years::Int,
-        cap::Float64,
+        cap::Union{Float64, Int64},
         vcommit::Symbol,
         ecap::Symbol,
         integer_operational_unit_commitment::Bool)

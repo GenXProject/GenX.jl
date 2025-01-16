@@ -3,7 +3,7 @@ module TestPiecewiseFuelCO2
 using Test
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 2341.82308
+obj_true = 2.3418230753008084e9
 test_path = "piecewise_fuel"
 
 # Define test inputs

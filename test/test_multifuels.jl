@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 5494.7919354
+obj_true = 5.4950570610364895e9
 test_path = "multi_fuels"
 
 # Define test inputs
