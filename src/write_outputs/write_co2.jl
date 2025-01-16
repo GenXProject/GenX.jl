@@ -22,9 +22,7 @@ function write_co2_emissions_plant(path::AbstractString,
 
     weight = inputs["omega"]
     
-
     emissions_plant = value.(EP[:eEmissionsByPlant])
-
 
     df = DataFrame(Resource = resources,
         Zone = zones,
@@ -43,14 +41,12 @@ function write_co2_capture_plant(path::AbstractString, inputs::Dict, setup::Dict
     zones = zone_id.(gen[CCS])
 
     weight = inputs["omega"]
-    
 
     df = DataFrame(Resource = resources,
         Zone = zones,
         AnnualSum = zeros(length(CCS)))
     if !isempty(CCS)
         emissions_captured_plant = value.(EP[:eEmissionsCaptureByPlant]).data
-
 
         df.AnnualSum .= emissions_captured_plant * weight
 

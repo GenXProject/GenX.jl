@@ -71,14 +71,12 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
     inputs["START_SUBPERIODS"] = 1:hours_per_subperiod:T # set of indexes for all time periods that start a subperiod (e.g. sample day/week)
     inputs["INTERIOR_SUBPERIODS"] = setdiff(1:T, inputs["START_SUBPERIODS"]) # set of indexes for all time periods that do not start a subperiod
 
-    # Demand in MW for each zone
-    
     # Max value of non-served energy
-    inputs["Voll"] = as_vector(:Voll)  # convert from $/MWh $ million/GWh (assuming objective is divided by 1000)
+    inputs["Voll"] = as_vector(:Voll)
     # Demand in MW
     inputs["pD"] = extract_matrix_from_dataframe(demand_in,
         DEMAND_COLUMN_PREFIX()[1:(end - 1)],
-        prefixseparator = 'z') 
+        prefixseparator = 'z')
 
     # Cost of non-served energy/demand curtailment
     # Cost of each segment reported as a fraction of value of non-served energy - scaled implicitly

@@ -43,6 +43,5 @@ be calculated only if `WriteShadowPrices` is activated.
 """
 function locational_marginal_price(EP::Model, inputs::Dict, setup::Dict)::Matrix{Float64}
     ω = inputs["omega"]
-    
-    return dual.(EP[:cPowerBalance]) ./ ω 
+    return dual.(EP[:cPowerBalance]) ./ ω
 end

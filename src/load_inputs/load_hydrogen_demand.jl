@@ -10,10 +10,8 @@ function load_hydrogen_demand!(setup::Dict, path::AbstractString, inputs::Dict)
     inputs["NumberOfH2DemandReqs"] = nrow(df)
     inputs["H2DemandReq"] = df[!, :Hydrogen_Demand_kt]
 
-     # Million $/kton if scaled, $/ton if not scaled
-
     if "PriceCap" in names(df)
-        inputs["H2DemandPriceCap"] = df[!, :PriceCap] 
+        inputs["H2DemandPriceCap"] = df[!, :PriceCap]
     end
     println(filename * " Successfully Read!")
 end

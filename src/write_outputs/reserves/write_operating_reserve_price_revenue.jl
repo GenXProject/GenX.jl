@@ -12,7 +12,6 @@ function write_operating_reserve_regulation_revenue(path::AbstractString,
         setup::Dict,
         EP::Model)
     
-
     gen = inputs["RESOURCES"]
     RSV = inputs["RSV"]
     REG = inputs["REG"]
@@ -60,8 +59,7 @@ This is equal to the dual variable of the regulation requirement constraint.
 
 function operating_regulation_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
     ω = inputs["omega"]
-    
-    return dual.(EP[:cReg]) ./ ω 
+    return dual.(EP[:cReg]) ./ ω
 end
 
 @doc raw"""

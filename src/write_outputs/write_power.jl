@@ -13,10 +13,8 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     
     weight = inputs["omega"]
     
-
     # Power injected by each resource in each time step
     power = value.(EP[:vP])
-
 
     df = DataFrame(Resource = resources,
         Zone = zones,

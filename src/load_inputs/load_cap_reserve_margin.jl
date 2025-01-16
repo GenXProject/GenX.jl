@@ -4,13 +4,10 @@
 Read input parameters related to planning reserve margin constraints
 """
 function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dict)
-    
-
     filename = "Capacity_reserve_margin_slack.csv"
     if isfile(joinpath(path, filename))
         df = load_dataframe(joinpath(path, filename))
         inputs["dfCapRes_slack"] = df
-
     end
 
     filename = "Capacity_reserve_margin.csv"

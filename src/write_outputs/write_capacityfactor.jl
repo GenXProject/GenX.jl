@@ -94,7 +94,6 @@ function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, se
     G_fusion = length(gen_fusion)
 
     ω = inputs["omega"]
-    
 
     df = DataFrame(Resource = resource_names,
         Zone = zone_id.(gen_fusion),
@@ -105,10 +104,10 @@ function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, se
     reactor = FusionReactorData.(gen_fusion)
     avg_power_factor = average_net_power_factor.(reactor)
 
-    gross_power = value.(EP[:vP][FUSION, :]) * ω 
+    gross_power = value.(EP[:vP][FUSION, :]) * ω
     parasitic_power = thermal_fusion_annual_parasitic_power(EP, inputs, setup)
     df.NetOutput .= gross_power - parasitic_power
-    df.NetCapacity .= value.(EP[:eTotalCap][FUSION])  .* avg_power_factor
+    df.NetCapacity .= value.(EP[:eTotalCap][FUSION]) .* avg_power_factor
 
     # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
     enough_power = findall(x -> x >= 1, df.NetOutput)

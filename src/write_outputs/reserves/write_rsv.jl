@@ -2,10 +2,9 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
     RSV = inputs["RSV"]
     
-
     resources = inputs["RESOURCE_NAMES"][RSV]
     zones = inputs["R_ZONES"][RSV]
-    rsv = value.(EP[:vRSV][RSV, :].data) 
+    rsv = value.(EP[:vRSV][RSV, :].data)
 
     dfRsv = DataFrame(Resource = resources, Zone = zones)
 
@@ -14,7 +13,7 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if setup["WriteOutputs"] == "annual"
         write_annual(joinpath(path, "reg_dn.csv"), dfRsv)
     else # setup["WriteOutputs"] == "full"
-        unmet_vec = value.(EP[:vUNMET_RSV]) 
+        unmet_vec = value.(EP[:vUNMET_RSV])
         total_unmet = sum(unmet_vec)
         dfRsv = hcat(dfRsv, DataFrame(rsv, :auto))
         auxNew_Names = [Symbol("Resource");

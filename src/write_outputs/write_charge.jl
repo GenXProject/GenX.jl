@@ -18,7 +18,6 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
 
     weight = inputs["omega"]
     
-
     charge = Matrix[]
     charge_ids = Vector{Int}[]
     if !isempty(STOR_ALL)

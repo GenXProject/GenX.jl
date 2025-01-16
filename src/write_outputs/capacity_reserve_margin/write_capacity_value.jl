@@ -29,7 +29,6 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
     MUST_RUN = inputs["MUST_RUN"]
     VRE_STOR = inputs["VRE_STOR"]
 
-    
     eTotalCap = value.(EP[:eTotalCap])
 
     minimum_plant_size = 1 # MW
@@ -165,6 +164,5 @@ function capacity_reserve_margin_price(EP::Model,
         setup::Dict,
         capres_zone::Int)::Vector{Float64}
     ω = inputs["omega"]
-    
-    return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω 
+    return dual.(EP[:cCapacityResMargin][capres_zone, :]) ./ ω
 end

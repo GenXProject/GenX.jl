@@ -8,8 +8,6 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
-    
-
     if (setup["WriteShadowPrices"] == 1 || setup["UCommit"] == 0 ||
         (setup["UCommit"] == 2 && (setup["OperationalReserves"] == 0 ||
           (setup["OperationalReserves"] > 0 && inputs["pDynamic_Contingency"] == 0)))) # fully linear model
@@ -23,8 +21,6 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                     for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap])
                         tempCO2Price[z, cap] = (-1) *
                                                dual.(EP[:cCO2Emissions_systemwide])[cap]
-                        # when scaled, The objective function is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
-
                     end
                 end
             end
@@ -107,7 +103,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
-                DataFrame(emissions_by_zone , :auto))
+                DataFrame(emissions_by_zone, :auto))
             auxNew_Names = [Symbol("Zone");
                             Symbol("AnnualSum");
                             [Symbol("t$t") for t in 1:T]]

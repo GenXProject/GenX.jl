@@ -13,7 +13,6 @@ function write_reserve_margin_revenue(path::AbstractString,
         setup::Dict,
         EP::Model)
     
-
     gen = inputs["RESOURCES"]
     regions = region.(gen)
     clusters = cluster.(gen)

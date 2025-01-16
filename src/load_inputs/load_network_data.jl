@@ -4,8 +4,6 @@
 Function for reading input parameters related to the electricity transmission network
 """
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
-    
-
     filename = "Network.csv"
     network_var = load_dataframe(joinpath(path, filename))
 
@@ -23,7 +21,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
 
     # Transmission capacity of the network (in MW)
-    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW)   # convert to GW
+    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW)
 
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows

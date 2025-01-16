@@ -12,9 +12,8 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         Zone = repeat(1:Z, inner = SEG),
         AnnualSum = zeros(SEG * Z))
     nse = zeros(SEG * Z, T)
-    
     for z in 1:Z
-        nse[((z - 1) * SEG + 1):(z * SEG), :] = value.(EP[:vNSE])[:, :, z] 
+        nse[((z - 1) * SEG + 1):(z * SEG), :] = value.(EP[:vNSE])[:, :, z]
     end
     dfNse.AnnualSum .= nse * inputs["omega"]
 

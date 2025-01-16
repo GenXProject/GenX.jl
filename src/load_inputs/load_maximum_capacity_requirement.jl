@@ -9,11 +9,8 @@ function load_maximum_capacity_requirement!(path::AbstractString, inputs::Dict, 
     inputs["NumberOfMaxCapReqs"] = nrow(df)
     inputs["MaxCapReq"] = df[!, :Max_MW]
 
-    
-
-
     if "PriceCap" in names(df)
-        inputs["MaxCapPriceCap"] = df[!, :PriceCap] 
+        inputs["MaxCapPriceCap"] = df[!, :PriceCap]
     end
     println(filename * " Successfully Read!")
 end

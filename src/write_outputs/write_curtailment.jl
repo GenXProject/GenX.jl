@@ -16,7 +16,6 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     weight = inputs["omega"]
     
-
     curtailment = zeros(G, T)
     curtailment[VRE, :] = (value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .-
                            value.(EP[:vP][VRE, :]))
@@ -47,8 +46,6 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
                                            value.(EP[:vP_WIND][SOLAR_WIND, :]).data))
         end
     end
-
-
 
     df = DataFrame(Resource = resources,
         Zone = zones,

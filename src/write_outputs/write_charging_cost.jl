@@ -17,7 +17,6 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 
     weight = inputs["omega"]
     
-
     price = locational_marginal_price(EP, inputs, setup)
 
     chargecost = zeros(G, T)
