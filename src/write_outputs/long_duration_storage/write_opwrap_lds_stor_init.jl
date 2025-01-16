@@ -42,10 +42,6 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     e_total_cap = value.(EP[:eTotalCap])
     v_charge = value.(EP[:vCHARGE])
     v_P = value.(EP[:vP])
-    if setup["ParameterScale"] == 1
-        v_charge *= ModelScalingFactor
-        v_P *= ModelScalingFactor
-    end
     if !isempty(stor_hydro_long_duration)
         v_spill = value.(EP[:vSPILL])
     end
