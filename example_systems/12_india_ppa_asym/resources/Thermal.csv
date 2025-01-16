@@ -1,0 +1,10 @@
+Resource,Zone,Model,PPA,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Up_Time,Down_Time,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,region,cluster,Fixed_OM_Cost_per_MWh_PPA,Var_OM_Cost_per_MWh_PPA
+MA_flex_coal_supercritical,1,1,0,1,0,0,-1,0,77860,29950,3.81,8.76,MA_coal,600,241,3.966,24,24,2.4,2.4,0.5,0,0.1,0,0,MA,1,1,5
+CT_flex_coal_supercritical,2,1,0,1,0,0,-1,0,77860,29950,3.81,8.76,CT_coal,600,241,3.966,24,24,2.4,2.4,0.5,0,0.1,0,0,CT,1,1,5
+ME_flex_coal_supercritical,3,1,0,1,0,0,-1,0,77860,29950,3.81,8.76,ME_coal,600,241,3.966,24,24,2.4,2.4,0.5,0,0.1,0,0,ME,1,1,5
+MA_old_large_coal_PPA,1,1,1,0,0,2500,-1,0,0,39300,3.81,9.27,MA_coal,600,266,3.966,24,24,0.6,0.6,0.55,0,0.1,0,0,MA,1,0.8,5.2
+CT_old_large_coal_PPA,2,1,1,0,0,750,-1,0,0,39300,3.81,9.27,CT_coal,600,266,3.966,24,24,0.6,0.6,0.55,0,0.1,0,0,CT,1,0.6,4.3
+ME_old_large_coal_PPA,3,1,1,0,0,300,-1,0,0,39300,3.81,9.27,ME_coal,600,266,3.966,24,24,0.6,0.6,0.55,0,0.1,0,0,ME,1,1.2,3.1
+MA_old_large_coal_PPA_InState,4,1,1,0,0,4000,-1,0,0,39300,3.81,9.27,MA_coal,600,266,3.966,24,24,0.6,0.6,0.55,0,0.1,0,0,MA,1,0.8,5.2
+CT_old_large_coal_PPA_InState,5,1,1,0,0,1000,-1,0,0,39300,3.81,9.27,CT_coal,600,266,3.966,24,24,0.6,0.6,0.55,0,0.1,0,0,CT,1,0.6,4.3
+ME_old_large_coal_PPA_InState,6,1,1,0,0,500,-1,0,0,39300,3.81,9.27,ME_coal,600,266,3.966,24,24,0.6,0.6,0.55,0,0.1,0,0,ME,1,1.2,3.1
