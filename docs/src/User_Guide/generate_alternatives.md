@@ -10,4 +10,4 @@ GenX includes a modeling to generate alternatives (MGA) package that can be used
 6. Set the `MGAAnnualGeneration` flag in the `genx_settings.yml` file to the desired MGA formulation.
 7. Solve the model using `Run.jl` file.
 
-Results from the MGA algorithm would be saved in MGA_max and MGA_min folders in the case folder.
+Results from the MGA algorithm would be saved in MGA\_max and MGA\_min folders in the case folder.
