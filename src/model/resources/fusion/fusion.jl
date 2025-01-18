@@ -483,11 +483,11 @@ end
 function thermal_fusion_annual_parasitic_power(
         EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
     gen = inputs["RESOURCES"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    
     FUSION = ids_with(gen, fusion)
 
     resource_component = resource_name.(gen[FUSION])
 
     expr = fusion_annual_parasitic_power.(Ref(EP), Ref(inputs), resource_component)
-    return scale_factor * value.(expr)
+    return value.(expr)
 end

@@ -247,52 +247,6 @@ function write_vre_stor_capacity(path::AbstractString, inputs::Dict, setup::Dict
         EndDischargeACCap = existingcapdischargeac[:] - retcapdischargeac[:] +
                             capdischargeac[:])
 
-    if setup["ParameterScale"] == 1
-        columns_to_scale = [
-            :StartCapSolar,
-            :RetCapSolar,
-            :NewCapSolar,
-            :EndCapSolar,
-            :StartCapWind,
-            :RetCapWind,
-            :NewCapWind,
-            :EndCapWind,
-            :StartCapElec,
-            :RetCapElec,
-            :NewCapElec,
-            :EndCapElec,
-            :StartCapDC,
-            :RetCapDC,
-            :NewCapDC,
-            :EndCapDC,
-            :StartCapGrid,
-            :RetCapGrid,
-            :NewCapGrid,
-            :EndCapGrid,
-            :StartEnergyCap,
-            :RetEnergyCap,
-            :NewEnergyCap,
-            :EndEnergyCap,
-            :StartChargeACCap,
-            :RetChargeACCap,
-            :NewChargeACCap,
-            :EndChargeACCap,
-            :StartChargeDCCap,
-            :RetChargeDCCap,
-            :NewChargeDCCap,
-            :EndChargeDCCap,
-            :StartDischargeDCCap,
-            :RetDischargeDCCap,
-            :NewDischargeDCCap,
-            :EndDischargeDCCap,
-            :StartDischargeACCap,
-            :RetDischargeACCap,
-            :NewDischargeACCap,
-            :EndDischargeACCap
-        ]
-        dfCap[!, columns_to_scale] .*= ModelScalingFactor
-    end
-
     total = DataFrame(Resource = "Total", Zone = "n/a", Resource_Type = "Total",
         Cluster = "n/a",
         StartCapSolar = sum(dfCap[!, :StartCapSolar]),
@@ -354,8 +308,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(DC_CHARGE)[1]))
         charge_dc = zeros(size(DC_CHARGE)[1], T)
         charge_dc = value.(EP[:vP_DC_CHARGE]).data ./
-                    etainverter.(gen[DC_CHARGE]) *
-                    (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1)
+                    etainverter.(gen[DC_CHARGE])
         dfCharge_DC.AnnualSum .= charge_dc * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_dc_charge.csv")
@@ -372,8 +325,7 @@ function write_vre_stor_charge(path::AbstractString, inputs::Dict, setup::Dict, 
             Zone = inputs["ZONES_AC_CHARGE"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(AC_CHARGE)[1]))
         charge_ac = zeros(size(AC_CHARGE)[1], T)
-        charge_ac = value.(EP[:vP_AC_CHARGE]).data *
-                    (setup["ParameterScale"] == 1 ? ModelScalingFactor : 1)
+        charge_ac = value.(EP[:vP_AC_CHARGE]).data
         dfCharge_AC.AnnualSum .= charge_ac * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_ac_charge.csv")
@@ -411,9 +363,6 @@ function write_vre_stor_discharge(path::AbstractString,
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(DC_DISCHARGE)[1]))
         power_vre_stor = value.(EP[:vP_DC_DISCHARGE]).data .*
                          etainverter.(gen[DC_DISCHARGE])
-        if setup["ParameterScale"] == 1
-            power_vre_stor *= ModelScalingFactor
-        end
         dfDischarge_DC.AnnualSum .= power_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_dc_discharge.csv")
@@ -430,9 +379,6 @@ function write_vre_stor_discharge(path::AbstractString,
             Zone = inputs["ZONES_AC_DISCHARGE"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(AC_DISCHARGE)[1]))
         power_vre_stor = value.(EP[:vP_AC_DISCHARGE]).data
-        if setup["ParameterScale"] == 1
-            power_vre_stor *= ModelScalingFactor
-        end
         dfDischarge_AC.AnnualSum .= power_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_ac_discharge.csv")
@@ -449,9 +395,6 @@ function write_vre_stor_discharge(path::AbstractString,
             Zone = inputs["ZONES_WIND"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(WIND)[1]))
         vre_vre_stor = value.(EP[:vP_WIND]).data
-        if setup["ParameterScale"] == 1
-            vre_vre_stor *= ModelScalingFactor
-        end
         dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_wind_power.csv")
@@ -468,9 +411,6 @@ function write_vre_stor_discharge(path::AbstractString,
             Zone = inputs["ZONES_ELEC"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(ELEC)[1]))
         elec_vre_stor = value.(EP[:vP_ELEC]).data
-        if setup["ParameterScale"] == 1
-            elec_vre_stor *= ModelScalingFactor
-        end
         dfVP_VRE_STOR.AnnualSum .= elec_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_elec_power_consumption.csv")
@@ -485,11 +425,7 @@ function write_vre_stor_discharge(path::AbstractString,
         dfVP_VRE_STOR = DataFrame(Resource = inputs["RESOURCE_NAMES_SOLAR"],
             Zone = inputs["ZONES_SOLAR"],
             AnnualSum = Array{Union{Missing, Float32}}(undef, size(SOLAR)[1]))
-        vre_vre_stor = value.(EP[:vP_SOLAR]).data .*
-                       etainverter.(gen[SOLAR])
-        if setup["ParameterScale"] == 1
-            vre_vre_stor *= ModelScalingFactor
-        end
+        vre_vre_stor = value.(EP[:vP_SOLAR]).data .* etainverter.(gen[SOLAR])
         dfVP_VRE_STOR.AnnualSum .= vre_vre_stor * inputs["omega"]
 
         filepath = joinpath(path, "vre_stor_solar_power.csv")

@@ -72,7 +72,7 @@ function _get_summary_map()
 end
 
 """
-    scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
+    scale_resources_data!(resource_in::DataFrame, scale_factor::Float64=1.0)
 
 Scales resources attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
 See documentation for descriptions of each column being scaled.
@@ -82,7 +82,11 @@ See documentation for descriptions of each column being scaled.
 - `scale_factor` (Float64): A scaling factor for energy and currency units.
 
 """
-function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
+function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64=1.0)
+    if scale_factor == 1.0
+        return nothing
+    end
+
     columns_to_scale = [:existing_charge_cap_mw,        # to GW
         :existing_cap_mwh,              # to GWh
         :existing_cap_mw,               # to GW
@@ -115,7 +119,7 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
 end
 
 """
-    scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
+    scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64=1.0)
 
 Scales vre_stor attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
 See documentation for descriptions of each column being scaled.
@@ -125,7 +129,7 @@ See documentation for descriptions of each column being scaled.
 - `scale_factor` (Float64): A scaling factor for energy and currency units.
 
 """
-function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
+function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64=1.0)
     columns_to_scale = [:existing_cap_inverter_mw,
         :existing_cap_solar_mw,
         :existing_cap_wind_mw,
@@ -185,7 +189,7 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
 end
 
 """
-    scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
+    scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64=1.0)
 
 Scales in-place the columns in `columns_to_scale` of a dataframe `df` by a `scale_factor`.
 
@@ -197,7 +201,10 @@ Scales in-place the columns in `columns_to_scale` of a dataframe `df` by a `scal
 """
 function scale_columns!(df::DataFrame,
         columns_to_scale::Vector{Symbol},
-        scale_factor::Float64)
+        scale_factor::Float64=1.0)
+    if scale_factor == 1.0
+        return nothing
+    end
     for column in columns_to_scale
         if string(column) in names(df)
             df[!, column] /= scale_factor
@@ -207,20 +214,20 @@ function scale_columns!(df::DataFrame,
 end
 
 """
-    load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
+    load_resource_df(path::AbstractString, resource_type::Type, scale_factor::Float64=1.0)
 
 Function to load and scale the dataframe of a given resource.
 
 # Arguments
 - `path::AbstractString`: Path to the resource dataframe.
-- `scale_factor::Float64`: Scaling factor for the resource data.
 - `resource_type::Type`: GenX type of the resource.
+- `scale_factor::Float64=1.0`: Scaling factor for the resource data.
 
 # Returns
 - `resource_in::DataFrame`: The loaded and scaled resource data.
 
 """
-function load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
+function load_resource_df(path::AbstractString, resource_type::Type, scale_factor::Float64=1.0)
     resource_in = load_dataframe(path)
     # rename columns lowercase for internal consistency
     rename!(resource_in, lowercase.(names(resource_in)))
@@ -303,7 +310,7 @@ Construct the array of resources from multiple files of different types located 
 # Arguments
 - `resource_folder::AbstractString`: The path to the folder containing the resource files.
 - `resources_info::NamedTuple`: A NamedTuple that maps a resource type to its filename and GenX type.
-- `scale_factor::Float64`: A scaling factor to adjust the attributes of the resources (default: 1.0).
+- `scale_factor::Float64=1.0`: A scaling factor to adjust the attributes of the resources (default: 1.0).
 
 # Returns
 - `Vector{<:AbstractResource}`: An array of GenX resources.
@@ -314,7 +321,7 @@ Construct the array of resources from multiple files of different types located 
 """
 function create_resource_array(resource_folder::AbstractString,
         resources_info::NamedTuple,
-        scale_factor::Float64 = 1.0)
+        scale_factor::Float64=1.0)
     resource_id_offset = 0
     resources = []
     # loop over available types and load all resources in resource_folder
@@ -322,7 +329,7 @@ function create_resource_array(resource_folder::AbstractString,
         df_path = joinpath(resource_folder, filename)
         # if file exists, load resources of a single resource_type
         if isfile(df_path)
-            resource_in = load_resource_df(df_path, scale_factor, resource_type)
+            resource_in = load_resource_df(df_path, resource_type, scale_factor)
             # compute indices for resources of a given type and add them to dataframe
             resources_indices = compute_resource_indices(resource_in, resource_id_offset)
             add_id_to_resource_df!(resource_in, resources_indices)
@@ -590,13 +597,11 @@ Function that loads and scales resources data from folder specified in resources
 
 """
 function create_resource_array(setup::Dict, resources_path::AbstractString)
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
-
     # get filename and GenX type for each type of resources available in GenX
     resources_info = _get_resource_info()
 
     # load each resource type, scale data and return array of resources
-    resources = create_resource_array(resources_path, resources_info, scale_factor)
+    resources = create_resource_array(resources_path, resources_info)
     # validate input before returning resources
     validate_resources(setup, resources)
     return resources
@@ -800,7 +805,6 @@ Reads module dataframes, loops over files and adds columns as new attributes to 
 function add_modules_to_resources!(resources::Vector{<:AbstractResource},
         setup::Dict,
         resources_path::AbstractString)
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
 
     modules = Vector{DataFrame}()
 
@@ -808,7 +812,7 @@ function add_modules_to_resources!(resources::Vector{<:AbstractResource},
     # Add multistage if multistage is activated
     if setup["MultiStage"] == 1
         filename = joinpath(resources_path, "Resource_multistage_data.csv")
-        multistage_in = load_multistage_dataframe(filename, scale_factor)
+        multistage_in = load_multistage_dataframe(filename)
         push!(modules, multistage_in)
         @info "Multistage data successfully read."
     end
@@ -944,9 +948,6 @@ function process_piecewisefuelusage!(setup::Dict,
         sort!(slope_cols, by = x -> parse(Int, split(string(x), "_")[end]))
         slope_df = DataFrame(heat_rate_mat, Symbol.(slope_cols))
         PWFU_data = hcat(slope_df, intercept_df)
-        # no need to scale sclope, but intercept should be scaled when parameterscale is on (MMBTU -> billion BTU)
-        scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-        PWFU_data[!, intercept_cols] ./= scale_factor
 
         inputs["slope_cols"] = slope_cols
         inputs["intercept_cols"] = intercept_cols

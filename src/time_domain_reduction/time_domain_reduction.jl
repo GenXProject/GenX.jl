@@ -683,16 +683,10 @@ function cluster_inputs(inpath,
     PMap_Outfile = joinpath(TimeDomainReductionFolder, "Period_map.csv")
     YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
 
-    # Define a local version of the setup so that you can modify the mysetup["ParameterScale"] value to be zero in case it is 1
-    mysetup_local = copy(mysetup)
-    # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
-    mysetup_local["ParameterScale"] = 0  # Performing cluster and report outputs in user-provided units
-
     # Define another local version of setup such that Multi-Stage Non-Concatentation TDR can iteratively read in the raw data
     mysetup_MS = copy(mysetup)
     mysetup_MS["TimeDomainReduction"] = 0
     mysetup_MS["DoNotReadPeriodMap"] = 1
-    mysetup_MS["ParameterScale"] = 0
 
     if MultiStage == 1
         model_dict = Dict()
@@ -749,7 +743,7 @@ function cluster_inputs(inpath,
         if v
             println("Not MultiStage")
         end
-        myinputs = load_inputs(mysetup_local, inpath)
+        myinputs = load_inputs(mysetup, inpath)
         RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
         RESOURCES = myinputs["RESOURCE_NAMES"]
         ZONES = myinputs["R_ZONES"]

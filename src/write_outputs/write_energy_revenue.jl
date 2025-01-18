@@ -26,9 +26,6 @@ function write_energy_revenue(path::AbstractString, inputs::Dict, setup::Dict, E
         energyrevenue[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data .*
                                  transpose(price)[zone_id.(gen[FLEX]), :]
     end
-    if setup["ParameterScale"] == 1
-        energyrevenue *= ModelScalingFactor
-    end
     dfEnergyRevenue.AnnualSum .= energyrevenue * inputs["omega"]
     write_simple_csv(joinpath(path, "EnergyRevenue.csv"), dfEnergyRevenue)
     return dfEnergyRevenue

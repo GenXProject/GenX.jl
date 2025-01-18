@@ -45,7 +45,7 @@ The following tables summarize the model settings parameters and their default/p
 
 |**Parameter** | **Description**|
 | :------------ | :-----------|
-|ParameterScale | Flag to turn on parameter scaling wherein demand, capacity and power variables defined in GW rather than MW. This flag aides in improving the computational performance of the model. |
+|AutoScaling | Flag to turn on constraint scaling wherein demand. This feature usually aides in improving the computational performance of the model. It does not affect the units of the inputs or results. The scaling can be adjusted by using the additional settings detailed [here](https://macroenergy.github.io/MacroEnergySystemsScaling.jl/stable/scaling_settings/)|
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
 |ObjScale| Parameter value to scale the objective function during optimization.|

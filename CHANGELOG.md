@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Automatic problem scaling is now available using the `MacroEnergySystemsScaling.jl` 
+package. The new `AutoScaling` setting has been introduced to replace the 
+`ParameterScale` setting and enable this feature.
+
+### Removed
+- Removed the `ParameterScale` setting. 
+
 ## [0.4.2] - 2024-12-23
 
 ### Added

@@ -14,10 +14,5 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
         Cost_Trans_Capacity = convert(Array{Float64},
             transcap .* inputs["pC_Line_Reinforcement"]))
 
-    if setup["ParameterScale"] == 1
-        dfTransCap.New_Trans_Capacity *= ModelScalingFactor  # GW to MW
-        dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
-    end
-
     CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
 end

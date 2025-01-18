@@ -97,9 +97,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
                 EP, inputs, z)
         end
     end
-    if setup["ParameterScale"] == 1
-        powerbalance *= ModelScalingFactor
-    end
     dfPowerBalance.AnnualSum .= powerbalance * inputs["omega"]
 
     if setup["WriteOutputs"] == "annual"

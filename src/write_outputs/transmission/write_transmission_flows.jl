@@ -8,9 +8,6 @@ function write_transmission_flows(path::AbstractString,
     # Power flows on transmission lines at each time step
     dfFlow = DataFrame(Line = 1:L)
     flow = value.(EP[:vFLOW])
-    if setup["ParameterScale"] == 1
-        flow *= ModelScalingFactor
-    end
 
     filepath = joinpath(path, "flow.csv")
     if setup["WriteOutputs"] == "annual"

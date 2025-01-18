@@ -97,7 +97,6 @@ genx_settings_TZ = YAML.load(open((joinpath(case,"settings/genx_settings.yml")))
     Dict{Any, Any} with 19 entries:
       "NetworkExpansion"                        => 1
       "ModelingToGenerateAlternativeIterations" => 3
-      "ParameterScale"                          => 1
       "EnergyShareRequirement"                  => 0
       "PrintModel"                              => 0
       "TimeDomainReduction"                     => 1
@@ -129,7 +128,6 @@ genx_settings_TZ ## Output settings
 ```
     Dict{Any, Any} with 13 entries:
     "NetworkExpansion"       => 1
-    "ParameterScale"         => 1
     "EnergyShareRequirement" => 0
     "TimeDomainReduction"    => 0
     "Trans_Loss_Segments"    => 1

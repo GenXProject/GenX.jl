@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = 6960.20855
+obj_true = 6.960208549907064e9
 test_path = "three_zones"
 
 # Define test inputs
@@ -13,7 +13,6 @@ genx_setup = Dict("NetworkExpansion" => 1,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
     "MinCapReq" => 1,
-    "ParameterScale" => 1,
     "UCommit" => 2)
 
 # Run the case and get the objective value and tolerance

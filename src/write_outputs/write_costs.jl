@@ -95,10 +95,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
     dfCost[!, Symbol("Total")] = total_cost
 
-    if setup["ParameterScale"] == 1
-        dfCost.Total *= ModelScalingFactor^2
-    end
-
     if setup["UCommit"] >= 1
         dfCost[6, 2] = value(EP[:eTotalCStart]) + value(EP[:eTotalCFuelStart])
     end
@@ -136,20 +132,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     end
 
     if !isempty(VRE_STOR)
-        dfCost[!, 2][11] = value(EP[:eTotalCGrid]) *
-                           (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
+        dfCost[!, 2][11] = value(EP[:eTotalCGrid])
     end
 
     if any(co2_capture_fraction.(gen) .!= 0)
         dfCost[10, 2] += value(EP[:eTotaleCCO2Sequestration])
-    end
-
-    if setup["ParameterScale"] == 1
-        dfCost[6, 2] *= ModelScalingFactor^2
-        dfCost[7, 2] *= ModelScalingFactor^2
-        dfCost[8, 2] *= ModelScalingFactor^2
-        dfCost[9, 2] *= ModelScalingFactor^2
-        dfCost[10, 2] *= ModelScalingFactor^2
     end
 
     for z in 1:Z
@@ -297,16 +284,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCTotal += tempCCO2
         end
 
-        if setup["ParameterScale"] == 1
-            tempCTotal *= ModelScalingFactor^2
-            tempCFix *= ModelScalingFactor^2
-            tempCVar *= ModelScalingFactor^2
-            tempCFuel *= ModelScalingFactor^2
-            tempCNSE *= ModelScalingFactor^2
-            tempCStart *= ModelScalingFactor^2
-            tempHydrogenValue *= ModelScalingFactor^2
-            tempCCO2 *= ModelScalingFactor^2
-        end
         temp_cost_list = [
             tempCTotal,
             tempCFix,

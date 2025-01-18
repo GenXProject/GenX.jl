@@ -96,22 +96,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         RetChargeCap = retcapcharge[:],
         NewChargeCap = capcharge[:],
         EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:])
-    if setup["ParameterScale"] == 1
-        dfCap.StartCap = dfCap.StartCap * ModelScalingFactor
-        dfCap.RetCap = dfCap.RetCap * ModelScalingFactor
-        dfCap.RetroCap = dfCap.RetroCap * ModelScalingFactor
-        dfCap.NewCap = dfCap.NewCap * ModelScalingFactor
-        dfCap.EndCap = dfCap.EndCap * ModelScalingFactor
-        dfCap.CapacityConstraintDual = dfCap.CapacityConstraintDual * ModelScalingFactor
-        dfCap.StartEnergyCap = dfCap.StartEnergyCap * ModelScalingFactor
-        dfCap.RetEnergyCap = dfCap.RetEnergyCap * ModelScalingFactor
-        dfCap.NewEnergyCap = dfCap.NewEnergyCap * ModelScalingFactor
-        dfCap.EndEnergyCap = dfCap.EndEnergyCap * ModelScalingFactor
-        dfCap.StartChargeCap = dfCap.StartChargeCap * ModelScalingFactor
-        dfCap.RetChargeCap = dfCap.RetChargeCap * ModelScalingFactor
-        dfCap.NewChargeCap = dfCap.NewChargeCap * ModelScalingFactor
-        dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
-    end
     total = DataFrame(Resource = "Total", Zone = "n/a", Retrofit_Id = "n/a",
         StartCap = sum(dfCap[!, :StartCap]), RetCap = sum(dfCap[!, :RetCap]),
         NewCap = sum(dfCap[!, :NewCap]), EndCap = sum(dfCap[!, :EndCap]),

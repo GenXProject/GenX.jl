@@ -172,14 +172,13 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
     ### Objective Function ###
     # Subtract hydrogen revenue from objective function
-    scale_factor = setup["ParameterScale"] == 1 ? 10^6 : 1  # If ParameterScale==1, costs are in millions of $
     @expression(EP, eHydrogenValue[y in ELECTROLYZERS, t in 1:T],
         omega[t] * EP[:vUSE][y, t] / hydrogen_mwh_per_tonne(gen[y]) *
-        hydrogen_price_per_tonne(gen[y])/scale_factor)
+        hydrogen_price_per_tonne(gen[y]))
     if !isempty(VS_ELEC)
         @expression(EP, eHydrogenValue_vs[y in VS_ELEC, t in 1:T],
             omega[t] * EP[:vP_ELEC][y, t] / hydrogen_mwh_per_tonne_elec(gen[y]) *
-            hydrogen_price_per_tonne_elec(gen[y])/scale_factor)
+            hydrogen_price_per_tonne_elec(gen[y]))
     end
     @expression(EP, eTotalHydrogenValueT[t in 1:T],
         if !isempty(VS_ELEC)

@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = [79734.80032, 41630.03494, 27855.20631]
+obj_true = [7.973480032e10, 4.163003494e10, 2.785520631e10]
 test_path = joinpath(@__DIR__, "multi_stage")
 
 # Define test inputs
@@ -19,7 +19,6 @@ genx_setup = Dict("Trans_Loss_Segments" => 1,
     "OperationalReserves" => 1,
     "CO2Cap" => 2,
     "StorageLosses" => 1,
-    "ParameterScale" => 1,
     "UCommit" => 2,
     "MultiStage" => 1,
     "MultiStageSettingsDict" => multistage_setup)
@@ -102,14 +101,13 @@ function test_update_cumulative_min_ret!()
     # Merge the genx_setup with the default settings
     settings = GenX.default_settings()
 
-    for ParameterScale in [0, 1]
-        genx_setup["ParameterScale"] = ParameterScale
+    for AutoScale in [0, 1]
+        genx_setup["AutoScaling"] = AutoScale
         merge!(settings, genx_setup)
 
         inputs_dict = Dict()
         true_min_retirements = Dict()
 
-        scale_factor = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
         redirect_stdout(devnull) do
             warnerror_logger = ConsoleLogger(stderr, Logging.Warn)
             with_logger(warnerror_logger) do
@@ -123,7 +121,7 @@ function test_update_cumulative_min_ret!()
                         DataFrame)
                     rename!(true_min_retirements[t],
                         lowercase.(names(true_min_retirements[t])))
-                    GenX.scale_multistage_data!(true_min_retirements[t], scale_factor)
+                    GenX.scale_multistage_data!(true_min_retirements[t])
 
                     inputs_dict[t] = Dict()
                     inputs_dict[t]["Z"] = 1

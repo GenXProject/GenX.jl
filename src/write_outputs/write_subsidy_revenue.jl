@@ -93,11 +93,6 @@ function write_subsidy_revenue(path::AbstractString, inputs::Dict, setup::Dict, 
         end
     end
 
-    if setup["ParameterScale"] == 1
-        dfSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$
-        dfRegSubRevenue.SubsidyRevenue *= ModelScalingFactor^2 #convert from Million US$ to US$
-    end
-
     CSV.write(joinpath(path, "SubsidyRevenue.csv"), dfSubRevenue)
     CSV.write(joinpath(path, "RegSubsidyRevenue.csv"), dfRegSubRevenue)
     return dfSubRevenue, dfRegSubRevenue
