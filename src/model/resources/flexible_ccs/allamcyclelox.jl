@@ -114,7 +114,7 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     
     # Constraint 1: liquid oxygen storage mass balance
     # dynamic of lox storage system
-    @constraint(EP, cStore_lox[y in ALLAM_CYCLE_LOX, t i = 1:T], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, hoursbefore(p, t, 1)] + vLOX_in[y, t] - eLOX_out[y, t])
+    @constraint(EP, cStore_lox[y in ALLAM_CYCLE_LOX,t=1:T], vOutput_AllamcycleLOX[y, lox, t] == vOutput_AllamcycleLOX[y, lox, hoursbefore(p, t, 1)] + vLOX_in[y, t] - eLOX_out[y, t])
 
     # Constraint 2: power balance
     # net power output = gross power output from sCO2 - power consumption associated with ASU - auxiliary power
