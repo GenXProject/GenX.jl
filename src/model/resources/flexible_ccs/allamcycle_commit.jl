@@ -1,5 +1,5 @@
 @doc raw"""
-allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
+    allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
 This function defines the operating constraints for allam cycle power plants subject to unit commitment constraints on power plant start-ups and shut-down decision ($y \in UC$).
 The capacity investment decisions and commitment and cycling (start-up, shut-down) of ASU and sCO2 turbine in allam cycle power systems are similar to constraints defined in thermal_commit.jl
 Operaional constraints include start-up, max ramping up/donw, max up/down time, min power level, and operational reserves.
@@ -60,19 +60,21 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, [y in COMMIT_Allam , t = 1:T], EP[:vStartFuel][y,t] == eStartFuel_Allam[y,t])
 
     ## Declaration of integer/binary variables
-    for y in ALLAM_CYCLE_LOX
-        for i in 1:2
-            set_integer.(vCOMMIT_Allam[y,i,:])
-            set_integer.(vSTART_Allam[y,i,:])
-            set_integer.(vSHUT_Allam[y,i,:])
-            if y in RET_CAP_Allam 
-                set_integer(EP[:vRETCAP_AllamCycleLOX][y,i])
-            end
-            if y in NEW_CAP_Allam
-                set_integer(EP[:vCAP_AllamCycleLOX][y,i])
+    if setup["UCommit"] == 1 # Integer UC constraints
+        for y in ALLAM_CYCLE_LOX
+            for i in 1:2
+                set_integer.(vCOMMIT_Allam[y,i,:])
+                set_integer.(vSTART_Allam[y,i,:])
+                set_integer.(vSHUT_Allam[y,i,:])
+                if y in RET_CAP_Allam 
+                    set_integer(EP[:vRETCAP_AllamCycleLOX][y,i])
+                end
+                if y in NEW_CAP_Allam
+                    set_integer(EP[:vCAP_AllamCycleLOX][y,i])
+                end
             end
         end
-    end
+    end #END unit commitment configuration
 
     ### Constraints ###
     ### Capacitated limits on unit commitment decision variables (Constraints #1-3)
