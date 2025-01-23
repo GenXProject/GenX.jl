@@ -29,8 +29,10 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
         println(i)
         line_index = EXPANSION_LINES_ASYM[i]       # [4,5,6]
         transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][line_index])
-        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Neg][line_index])
+        transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][line_index])
+        println(value.(EP[:vNEW_TRANS_CAP_Pos][line_index]), value.(EP[:vNEW_TRANS_CAP_Neg][line_index]))
     end
+    println(transcap_neg, transcap_pos)
 
     dfTransCap = DataFrame(Line = 1:L,
         New_Trans_Capacity = convert(Array{Float64}, transcap),
