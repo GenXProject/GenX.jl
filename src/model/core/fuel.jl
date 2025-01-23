@@ -232,9 +232,12 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
                 MULTI_FUELS)))
     end
 
+    RESOURCES_BY_FUEL = map(1:NUM_FUEL) do f
+        return intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)
+    end
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
-        for y in intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)))
+        for y in RESOURCES_BY_FUEL[f]))
 
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
