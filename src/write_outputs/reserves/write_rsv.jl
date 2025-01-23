@@ -30,7 +30,7 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         rename!(total, auxNew_Names)
         rename!(unmet, auxNew_Names)
         dfRsv = vcat(dfRsv, unmet, total)
-        CSV.write(joinpath(path, "reg_dn.csv"),
+        CSV.write(joinpath(path, "reserves.csv"),
             dftranspose(dfRsv, false),
             writeheader = false)
     end
