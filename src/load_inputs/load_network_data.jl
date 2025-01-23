@@ -15,24 +15,53 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Number of zones in the network
     Z = length(as_vector(:Network_zones))
     inputs_nw["Z"] = Z
-    # Number of lines in the network
     L = length(as_vector(:Network_Lines))
     inputs_nw["L"] = L
+    L_asym  = 0 # Default number of asymmetrical lines
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        L_asym = length(filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines)) #Number of asymmetrical lines
+    end
+    #println("Number of asymmetric lines: $L_asym")
+    inputs_nw["L_asym"] = L_asym
+    # Number of symmetric lines in the network
+    L_sym = L - L_asym
+    inputs_nw["L_sym"] = L_sym
 
     # Topology of the network source-sink matrix
     inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
 
-    # Transmission capacity of the network (in MW)
-    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    inputs_nw["asymmetric_line_index"] = Int64[]
+    inputs_nw["symmetric_line_index"] = convert(Array{Int64}, as_vector(:Network_Lines))
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        inputs_nw["symmetric_line_index"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 0, :Network_Lines))
+        inputs_nw["asymmetric_line_index"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines))
+    end
 
+    # Transmission capacity of the network (in MW) & Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
+    inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        # Transmission capacity of the network for asymmetrical lines; return direction(in MW)
+        inputs_nw["pTrans_Max_Possible_Neg"] = inputs_nw["pTrans_Max_Neg"] = to_floats(:Line_Max_Flow_MW_Neg) / scale_factor  # convert to GW
+    end
+
+    # Transmission line (between zone) loss coefficient (resistance/voltage^2)
+    inputs_nw["pTrans_Loss_Coef"] = zeros(Float64, L)
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
-        inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)
+        inputs_nw["pTrans_Loss_Coef"] = inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
+            inputs_nw["pTrans_Loss_Coef_Neg"] = inputs_nw["pPercent_Loss_Neg"] = to_floats(:Line_Loss_Percentage_Neg)
+        end
     elseif setup["Trans_Loss_Segments"] >= 2
         # Transmission line voltage (in kV)
         inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
         # Transmission line resistance (in Ohms) - Used when modeling quadratic transmission losses
         inputs_nw["Ohms"] = to_floats(:Line_Resistance_Ohms)
+        # If zones are connected, loss coefficient is R/V^2 where R is resistance in Ohms and V is voltage in Volts
+        inputs_nw["pTrans_Loss_Coef"] = (inputs_nw["Ohms"] / 10^6) ./
+                                        (inputs_nw["kV"] / 10^3)^2 * scale_factor # 1/GW ***
     end
 
     ## Inputs for the DC-OPF 
@@ -54,18 +83,22 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
                                      scale_factor
     end
 
-    # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
-    inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"]
-
     if setup["NetworkExpansion"] == 1
         # Read between zone network reinforcement costs per peak MW of capacity added
         inputs_nw["pC_Line_Reinforcement"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) /
-                                             scale_factor # convert to million $/GW/yr with objective function in millions
+        scale_factor # convert to million $/GW/yr with objective function in millions
         # Maximum reinforcement allowed in MW
         #NOTE: values <0 indicate no expansion possible
         inputs_nw["pMax_Line_Reinforcement"] = map(x -> max(0, x),
             to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
+        if setup["asymmetrical_trans_flow_limit"] == 1
+           # Maximum reinforcement allowed in MW
+           #NOTE: values <0 indicate no expansion possible
+           inputs_nw["pMax_Line_Reinforcement_Neg"] = map(x -> max(0, x),
+           to_floats(:Line_Max_Reinforcement_MW_Neg)) / scale_factor # convert to GW
+           inputs_nw["pTrans_Max_Possible_Neg"] += inputs_nw["pMax_Line_Reinforcement_Neg"]
+        end
     end
 
     # Multi-Stage
@@ -79,26 +112,34 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # Max Flow Possible on Each Line
         inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) /
                                                   scale_factor # Convert to GW
-    end
-
-    # Transmission line (between zone) loss coefficient (resistance/voltage^2)
-    inputs_nw["pTrans_Loss_Coef"] = zeros(Float64, L)
-    if setup["Trans_Loss_Segments"] == 1
-        inputs_nw["pTrans_Loss_Coef"] = inputs_nw["pPercent_Loss"]
-    elseif setup["Trans_Loss_Segments"] >= 2
-        # If zones are connected, loss coefficient is R/V^2 where R is resistance in Ohms and V is voltage in Volts
-        inputs_nw["pTrans_Loss_Coef"] = (inputs_nw["Ohms"] / 10^6) ./
-                                        (inputs_nw["kV"] / 10^3)^2 * scale_factor # 1/GW ***
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            #inputs_nw["pLine_Max_Flow_Possible_MW"] = convert(Array{Float64}, filtered_vector(network_var, :Asymmetrical, 0, :Line_Max_Flow_Possible_MW)) /
+                                                  #scale_factor # Convert to GW
+            #inputs_nw["pLine_Max_Flow_Possible_MW_Pos"] = convert(Array{Float64}, filtered_vector(network_var, :Asymmetrical, 1, :Line_Max_Flow_Possible_MW_Pos)) /
+                                                                                                #scale_factor # Convert to GW
+            inputs_nw["pLine_Max_Flow_Possible_MW_Neg"] = to_floats(:Line_Max_Flow_Possible_MW_Neg) /
+                                                                                                scale_factor # Convert to GW
+        end
     end
 
     ## Sets and indices for transmission losses and expansion
     inputs_nw["TRANS_LOSS_SEGS"] = setup["Trans_Loss_Segments"] # Number of segments used in piecewise linear approximations quadratic loss functions
     inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"] .!= 0) # Lines for which loss coefficients apply (are non-zero);
+    inputs_nw["LOSS_LINES_ASYM"] = []
+    if setup["asymmetrical_trans_flow_limit"] == 1
+        inputs_nw["LOSS_LINES_ASYM"] = findall((network_var.Asymmetrical.==1) .& ((inputs_nw["pTrans_Loss_Coef"] .!= 0) .| (inputs_nw["pTrans_Loss_Coef_Neg"] .!= 0))) # Lines for which loss coefficients apply (are non-zero);
+    end
 
     if setup["NetworkExpansion"] == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
-        inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .>= 0)
-        inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .< 0)
+        inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .> 0)
+        #inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .<= 0)
+        inputs_nw["EXPANSION_LINES_ASYM"] = []
+        #inputs_nw["NO_EXPANSION_LINES_ASYM"] = []
+        if setup["asymmetrical_trans_flow_limit"] == 1
+            inputs_nw["EXPANSION_LINES_ASYM"] = findall((network_var.Asymmetrical.==1) .& ((inputs_nw["pMax_Line_Reinforcement"] .> 0) .| (inputs_nw["pMax_Line_Reinforcement_Neg"] .> 0)))
+            #inputs_nw["NO_EXPANSION_LINES_ASYM"] = findall((inputs_nw["pMax_Line_Reinforcement"] .<= 0) .& (inputs_nw["pMax_Line_Reinforcement_Neg"] .<= 0))
+        end
     end
 
     println(filename * " Successfully Read!")
@@ -180,4 +221,9 @@ function network_map_matrix_format_deprecation_warning()
                    2,          1,        3,
                    3,          2,        3,
   """ maxlog=1
+end
+
+function filtered_vector(df::DataFrame, condition_col::Symbol, condition_value::Int, data_col::Symbol)
+    filtered_df = df[df[!,condition_col] .== condition_value,  data_col]
+    return collect(skipmissing(filtered_df))
 end

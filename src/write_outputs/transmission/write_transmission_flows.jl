@@ -4,7 +4,10 @@ function write_transmission_flows(path::AbstractString,
         EP::Model)
     # Transmission related values
     T = inputs["T"]     # Number of time steps (hours)
-    L = inputs["L"]     # Number of transmission lines
+    L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
+    L_asym = inputs["L_asym"] #Default number of asymmetrical lines
+    # Number of lines in the network
+    L = L_sym + L_asym
     # Power flows on transmission lines at each time step
     dfFlow = DataFrame(Line = 1:L)
     flow = value.(EP[:vFLOW])
