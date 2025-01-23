@@ -8,7 +8,8 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     MultiStage = setup["MultiStage"]
 
     sco2turbine = 1
-    COMMIT_Allam = setup["UCommit"] > 0 ? inputs["ALLAM_CYCLE_LOX"] : Int[]
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+    COMMIT_Allam = setup["UCommit"] > 0 ? ALLAM_CYCLE_LOX : Int[]   # If UCommit is 1, then ALL Allam Cycle LOX resources are committed
 
     # Capacity decisions
     capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
@@ -16,7 +17,9 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         if i in inputs["COMMIT"]
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
         elseif i in COMMIT_Allam
-            capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
+            capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
+        elseif i in ALLAM_CYCLE_LOX
+            capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine])
         else
             capdischarge[i] = value(EP[:vCAP][i])
         end
@@ -28,6 +31,8 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
+        elseif i in ALLAM_CYCLE_LOX
+            retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine])
         else
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
         end
@@ -35,7 +40,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     endcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["G"]
-        if i in COMMIT_Allam
+        if i in ALLAM_CYCLE_LOX
             endcapdischarge[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
         else
             endcapdischarge[i] = first(value.(EP[:eTotalCap][i]))
@@ -94,6 +99,15 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
             existingcapenergy[i] = existing_cap_mwh(gen[i]) # multistage functionality doesn't exist yet for VRE-storage resources
         end
     end
+    # for allam cycle lox, we need to use eTotalCap_AllamcycleLOX instead of eTotalCap
+    end_cap = Array{Float64}(undef, inputs["G"])
+    for i in inputs["G"]
+        if i in ALLAM_CYCLE_LOX
+            end_cap[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
+        else
+            end_cap[i] = value.(EP[:eTotalCap][i])
+        end
+    end
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
         Zone = zone_id.(gen),
         Retrofit_Id = retrofit_id.(gen),
@@ -101,7 +115,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         RetCap = retcapdischarge[:],
         RetroCap = retrocapdischarge[:], #### Need to change later
         NewCap = capdischarge[:],
-        EndCap = (MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen)) - retcapdischarge[:] + capdischarge[:],
+        EndCap = end_cap[:],
         CapacityConstraintDual = capacity_constraint_dual[:],
         StartEnergyCap = existingcapenergy[:],
         RetEnergyCap = retcapenergy[:],
