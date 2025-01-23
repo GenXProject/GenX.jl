@@ -38,15 +38,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         end
     end
 
-    endcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
-    for i in inputs["G"]
-        if i in ALLAM_CYCLE_LOX
-            endcapdischarge[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
-        else
-            endcapdischarge[i] = first(value.(EP[:eTotalCap][i]))
-        end
-    end
-
     retrocapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["RETROFIT_CAP"]
         if i in inputs["COMMIT"]
@@ -100,14 +91,15 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         end
     end
     # for allam cycle lox, we need to use eTotalCap_AllamcycleLOX instead of eTotalCap
-    end_cap = Array{Float64}(undef, inputs["G"])
-    for i in inputs["G"]
+    end_cap = zeros(size(inputs["RESOURCE_NAMES"]))
+    for i in 1:inputs["G"]
         if i in ALLAM_CYCLE_LOX
             end_cap[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
         else
             end_cap[i] = value.(EP[:eTotalCap][i])
         end
     end
+    
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
         Zone = zone_id.(gen),
         Retrofit_Id = retrofit_id.(gen),
