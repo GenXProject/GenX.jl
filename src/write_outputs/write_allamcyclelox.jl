@@ -36,9 +36,9 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 	end
 
 	# retired cap
-	retcapAllam_sco2turbine = zeros(size(inputs["RESOURCE_NAMES"]))
-	retcapAllam_asu = zeros(size(inputs["RESOURCE_NAMES"]))
-	retcapAllam_lox = zeros(size(inputs["RESOURCE_NAMES"]))
+	retcapAllam_sco2turbine = zeros(G)
+	retcapAllam_asu = zeros(G)
+	retcapAllam_lox = zeros(G)
 
 	for y in ALLAM_CYCLE_LOX
 		if y in COMMIT_Allam
@@ -168,15 +168,15 @@ function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP:
 		gox *= ModelScalingFactor
     end
 
-	allamoutput = [Array(gross_power_sco2turbine);
-	Array(sco2turbine_commit);
-	Array(gross_power_asu);
-	Array(asu_commit);
-	Array(net_power_out);
-	Array(lox_storage);
-	Array(lox_in);
-	Array(lox_out);
-	Array(gox)]
+    allamoutput = [Array(gross_power_sco2turbine);
+                   Array(sco2turbine_commit);
+                   Array(gross_power_asu);
+                   Array(asu_commit);
+                   Array(net_power_out);
+                   Array(lox_storage);
+                   Array(lox_in);
+                   Array(lox_out);
+                   Array(gox)]
 
 	final_allam = permutedims(DataFrame(hcat(Array(dfAllam_output), allamoutput), :auto))
     CSV.write(joinpath(path,"output_allam_cycle_lox.csv"), final_allam, writeheader = false)

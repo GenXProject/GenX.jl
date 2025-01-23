@@ -6,6 +6,7 @@ Function for writing the diferent capacities for the different generation techno
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
     MultiStage = setup["MultiStage"]
+    G = inputs["G"]
 
     sco2turbine = 1
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
@@ -91,15 +92,15 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         end
     end
     # for allam cycle lox, we need to use eTotalCap_AllamcycleLOX instead of eTotalCap
-    end_cap = zeros(size(inputs["RESOURCE_NAMES"]))
-    for i in 1:inputs["G"]
+    end_cap = zeros(G)
+    for i in 1:G
         if i in ALLAM_CYCLE_LOX
             end_cap[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
         else
             end_cap[i] = value.(EP[:eTotalCap][i])
         end
     end
-    
+
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
         Zone = zone_id.(gen),
         Retrofit_Id = retrofit_id.(gen),
