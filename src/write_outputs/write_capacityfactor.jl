@@ -63,17 +63,27 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     has_capacity = findall(x -> x >= 1, df.Capacity)
     EXISTING = intersect(produces_power, has_capacity)
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
-    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR, ALLAM_CYCLE_LOX), EXISTING)
+    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR), EXISTING)
     df.CapacityFactor[CF_GEN] .= (df.AnnualSum[CF_GEN] ./
                                   df.Capacity[CF_GEN]) /
                                  sum(weight)
-
     # Capacity factor for electrolyzers is based on vUSE variable not vP
     if !isempty(ELECTROLYZER)
         df.AnnualSum[ELECTROLYZER] .= energy_sum(:vUSE, ELECTROLYZER)
         df.CapacityFactor[ELECTROLYZER] .= (df.AnnualSum[ELECTROLYZER] ./
                                             df.Capacity[ELECTROLYZER]) /
                                            sum(weight)
+    end
+
+    if !isempty(ALLAM_CYCLE_LOX)
+        sco2turbine = 1
+        df.AnnualSum[ALLAM_CYCLE_LOX] .= energy_sum(:vP, ALLAM_CYCLE_LOX)
+        # We update the capacity for allam cycle to only include the capacity of the sco2 turbine
+        df.Capacity[ALLAM_CYCLE_LOX] .= value.(EP[:eTotalCap_AllamcycleLOX][ALLAM_CYCLE_LOX, sco2turbine]).data *
+                                            scale_factor
+        df.CapacityFactor[ALLAM_CYCLE_LOX] .= (df.AnnualSum[ALLAM_CYCLE_LOX] ./
+                                                df.Capacity[ALLAM_CYCLE_LOX]) /
+                                               sum(weight)
     end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)
