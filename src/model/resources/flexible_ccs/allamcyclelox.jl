@@ -1,5 +1,5 @@
 @doc raw"""
-allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
+    allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
 This module models the Allam cycle with or without liquid oxygen storage (LOX) tank. 
 In this module, the key components of Allam cycle w/ LOX are break down into mutiple components with independent capacity decisions. 
 
