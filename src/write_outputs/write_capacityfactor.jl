@@ -77,7 +77,6 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
 
     if !isempty(ALLAM_CYCLE_LOX)
         sco2turbine = 1
-        df.AnnualSum[ALLAM_CYCLE_LOX] .= energy_sum(:vP, ALLAM_CYCLE_LOX)
         # We update the capacity for allam cycle to only include the capacity of the sco2 turbine
         df.Capacity[ALLAM_CYCLE_LOX] .= value.(EP[:eTotalCap_AllamcycleLOX][ALLAM_CYCLE_LOX, sco2turbine]).data *
                                             scale_factor
