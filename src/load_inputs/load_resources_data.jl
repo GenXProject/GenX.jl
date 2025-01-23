@@ -562,6 +562,15 @@ function check_qualified_hydrogen_supply(r::AbstractResource)
     return WarnMsg.(warning_strings)
 end
 
+function check_allam_cycle_lox_multistage(setup::Dict, r::AbstractResource)
+    error_strings = String[]
+    if setup["MultiStage"] == 1 && isa(r, AllamCycleLOX)
+        e = string("Allam Cycle LOX resources are not supported in multistage mode.")
+        push!(error_strings, e)
+    end
+    return ErrorMsg.(error_strings)
+end
+
 function check_resource(setup::Dict, r::AbstractResource)
     e = []
     e = [e; check_LDS_applicability(r)]
@@ -571,6 +580,7 @@ function check_resource(setup::Dict, r::AbstractResource)
     e = [e; check_retrofit_resource(r)]
     e = [e; check_qualified_hydrogen_supply(r)]
     e = [e; check_hydrogen_resources(r)]
+    e = [e; check_allam_cycle_lox_multistage(setup, r)]
     return e
 end
 
