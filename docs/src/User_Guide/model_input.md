@@ -259,7 +259,7 @@ Each file contains cost and performance parameters for various generators and ot
 ||Num\_VRE\_bins = 1: using a single resource availability profile per technology per zone. 1 capacity investment decision variable and 1 generator RID tracking technology power output (and in each zone).|
 ||Num\_VRE\_bins > 1: using multiple resource availability profiles per technology per zone. Num\_VRE\_bins capacity investment decision variables and 1 generator RID used to define technology power output at each time step (and in each zone). Example: Suppose we are modeling 3 bins of wind profiles for each zone. Then include 3 rows with wind resource names as Wind\_1, Wind\_2, and Wind\_3 and a corresponding increasing sequence of RIDs. Set Num\_VRE\_bins for the generator with smallest RID, Wind\_1, to be 3 and set Num\_VRE\_bins for the other rows corresponding to Wind\_2 and Wind\_3, to be zero. By setting Num\_VRE\_bins for Wind\_2 and Wind\_3, the model eliminates the power outputs variables for these generators. The power output from the technology across all bins is reported in the power output variable for the first generator. This allows for multiple bins without significantly increasing number of model variables (adding each bin only adds one new capacity variable and no operational variables). See documentation for `curtailable_variable_renewable()` for more. |
 
-##### Table 6b: Settings-specific columns in the Vre.csv file
+##### Table 7b: Settings-specific columns in the Vre.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -269,7 +269,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 7a: Additional columns in the Hydro.csv file
+##### Table 8a: Additional columns in the Hydro.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -281,7 +281,7 @@ Each file contains cost and performance parameters for various generators and ot
 ||LDS = 0: Not part of set (default) |
 ||LDS = 1: Long duration storage resources|
 
-##### Table 7b: Settings-specific columns in the Hydro.csv file
+##### Table 8b: Settings-specific columns in the Hydro.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -291,7 +291,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 8a: Additional columns in the Storage.csv file
+##### Table 9a: Additional columns in the Storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -322,7 +322,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Fixed\_OM\_Cost\_Charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `Model = 2`. |
 |Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `Model = 2`. Otherwise 0 ($/MWh).|
 
-##### Table 8b: Settings-specific columns in the Storage.csv file
+##### Table 9b: Settings-specific columns in the Storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -332,7 +332,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 9: Additional columns in the Flex_demand.csv file
+##### Table 10: Additional columns in the Flex_demand.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -342,7 +342,7 @@ Each file contains cost and performance parameters for various generators and ot
 |**Cost parameters**|
 |Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance costs associated with flexible demand deferral. Otherwise 0 ($/MWh). |
 
-##### Table 10: Additional columns in the Electrolyzer.csv file
+##### Table 11: Additional columns in the Electrolyzer.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -356,7 +356,7 @@ Each file contains cost and performance parameters for various generators and ot
     Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
 Each co-located VRE, electrolyzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
-##### Table 11a: Additional columns in the Vre_stor.csv file
+##### Table 12a: Additional columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -463,7 +463,7 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Min\_Power\_Elec |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`.|
 |Hydrogen\_MWh\_Per\_Tonne\_Elec| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
 |Hydrogen\_Price\_Per\_Tonne\_Elec| Price (or value) of hydrogen per metric tonne ($/t)|
-##### Table 11b: Settings-specific columns in the Vre_stor.csv file
+##### Table 12b: Settings-specific columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -493,7 +493,7 @@ The following table describes the columns in each of these four files.
 
 This policy is applied when if `EnergyShareRequirement > 0` in the settings file. \* corresponds to the ith row of the file `Energy_share_requirement.csv`. 
 
-##### Table 12: Energy share requirement policy parameters in Resource\_energy\_share\_requirement.csv 
+##### Table 13: Energy share requirement policy parameters in Resource\_energy\_share\_requirement.csv 
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -508,7 +508,7 @@ This policy is applied when if `EnergyShareRequirement > 0` in the settings file
 
 This policy is applied when if `MinCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. 
 
-##### Table 13: Minimum capacity requirement policy parameters in Resource\_minimum\_capacity\_requirement.csv
+##### Table 14: Minimum capacity requirement policy parameters in Resource\_minimum\_capacity\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -521,7 +521,7 @@ This policy is applied when if `MinCapReq = 1` in the settings file. \* correspo
 
 This policy is applied when if `MaxCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.
 
-##### Table 14: Maximum capacity requirement policy parameters in Resource\_maximum\_capacity\_requirement.csv
+##### Table 15: Maximum capacity requirement policy parameters in Resource\_maximum\_capacity\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -534,7 +534,7 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
-##### Table 15: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
+##### Table 16: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -543,7 +543,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 
 This policy is applied when if `HydrogenMinimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
 
-##### Table 16: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
+##### Table 17: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -552,7 +552,7 @@ This policy is applied when if `HydrogenMinimumProduction = 1` in the settings f
 
 This policy is applied when if `HourlyMatching = 1` in the settings file.
 
-##### Table 17: Hourly matching policy parameters in Resource\_hourly\_matching.csv
+##### Table 18: Hourly matching policy parameters in Resource\_hourly\_matching.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -567,7 +567,7 @@ In addition to the files described above, the `resources` folder can contain add
 !!! warning
     The first column of each additional module file must contain the resource name corresponding to a resource in one of the resource data files described above. Note that the order of resources in these files is not important.
 
-##### Table 18: Multistage parameters
+##### Table 19: Multistage parameters
 !!! warning
     This file is mandatory if `MultiStage = 1` in the settings file.
 ---
@@ -613,7 +613,7 @@ This file contains the time-series of capacity factors / availability of each re
 1) First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 2) Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the resource `.csv` file in the   `resources` folder in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in the resource `.csv` file must be unique. Note that for Hydro reservoir resources (i.e. `Hydro.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
-###### Table 19: Structure of the Generator\_variability.csv file
+###### Table 20: Structure of the Generator\_variability.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -652,7 +652,7 @@ This file contains the time-series of capacity factors / availability of the win
 
 This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `OperationalReserves` flag is activated in the YAML file `genx_settings.yml`.
 
-###### Table 20: Structure of the Operational_reserves.csv file
+###### Table 21: Structure of the Operational_reserves.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -674,7 +674,7 @@ This file contains inputs specifying minimum energy share requirement policies, 
 
 Note: this file should use the same region name as specified in the the resource `.csv` file (inside the `Resource`).
 
-###### Table 21: Structure of the Energy\_share\_requirement.csv file
+###### Table 22: Structure of the Energy\_share\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -688,7 +688,7 @@ Note: this file should use the same region name as specified in the the resource
 
 This file contains inputs specifying CO2 emission limits policies (e.g. emissions cap and permit trading programs). This file is needed if `CO2Cap` flag is activated in the YAML file `genx_settings.yml`. `CO2Cap` flag set to 1 represents mass-based (tCO2 ) emission target. `CO2Cap` flag set to 2 is specified when emission target is given in terms of rate (tCO2/MWh) and is based on total demand met. `CO2Cap` flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
 
-###### Table 22: Structure of the CO2\_cap.csv file
+###### Table 23: Structure of the CO2\_cap.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -705,7 +705,7 @@ This file contains the regional capacity reserve margin requirements. This file 
 
 Note: this file should use the same region name as specified in the resource `.csv` file (inside the `Resource`).
 
-###### Table 23: Structure of the Capacity\_reserve\_margin.csv file
+###### Table 24: Structure of the Capacity\_reserve\_margin.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -719,7 +719,7 @@ Note: this file should use the same region name as specified in the resource `.c
 
 This file contains the minimum capacity carve-out requirement to be imposed (e.g. a storage capacity mandate or offshore wind capacity mandate). This file is needed if the `MinCapReq` flag has a non-zero value in the YAML file `genx_settings.yml`.
 
-###### Table 24: Structure of the Minimum\_capacity\_requirement.csv file
+###### Table 25: Structure of the Minimum\_capacity\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -735,7 +735,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 This contains the maximum capacity limits to be imposed (e.g. limits on total deployment of solar, wind, or batteries in the system as a whole or in certain collections of zones).
 It is required if the `MaxCapReq` flag has a non-zero value in `genx_settings.yml`.
 
-###### Table 25: Structure of the Maximum\_capacity\_requirement.csv file
+###### Table 26: Structure of the Maximum\_capacity\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -750,7 +750,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 
 This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
 
-###### Table 26: Structure of the Method\_of\_morris\_range.csv file
+###### Table 27: Structure of the Method\_of\_morris\_range.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -781,7 +781,7 @@ This file contains the settings parameters required to run the Method of Morris 
 
 This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
 
-###### Table 27: Structure of the Hydrogen\_demand.csv file
+###### Table 28: Structure of the Hydrogen\_demand.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
