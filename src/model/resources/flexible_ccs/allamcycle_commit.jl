@@ -9,8 +9,6 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
     T = inputs["T"]                                                 # Number of time steps (hours)
-    Z = inputs["Z"]                                                 # Number of zones
-    MultiStage = setup["MultiStage"]
     omega = inputs["omega"]
 
     # Load Allam Cycle related inputs 
@@ -18,7 +16,6 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     NEW_CAP_Allam = intersect(inputs["NEW_CAP"], ALLAM_CYCLE_LOX)
     RET_CAP_Allam = intersect(inputs["RET_CAP"], ALLAM_CYCLE_LOX)
     COMMIT_Allam = setup["UCommit"] > 0 ? ALLAM_CYCLE_LOX : Int[]
-    WITH_LOX = inputs["WITH_LOX"]
 
     # time related
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
@@ -32,7 +29,6 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     # get component-wise data
     allam_dict = inputs["allam_dict"]
 
-
     ## Decision variables for unit commitment
     @variable(EP, vCOMMIT_Allam[y in ALLAM_CYCLE_LOX, i in 1:2, t=1:T] >= 0)
     # startup event variable
@@ -43,7 +39,7 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     ## Objective Function Expressions ##
     # start up costs associated with sCO2 turbine and ASU
     # Startup costs for resource "y" during hour "t"   
-    @expression(EP, eCStart_Allam[y in COMMIT_Allam , t=1:T], sum(omega[t]*(allam_dict[y,"start_cost"][i]*vSTART_Allam[y,i,t]) for i in 1:2))
+    @expression(EP, eCStart_Allam[y in COMMIT_Allam , t=1:T], sum(omega[t] * allam_dict[y,"start_cost"][i] * vSTART_Allam[y,i,t] for i in 1:2))
     @expression(EP, eTotalCStart_Allam_T[t = 1:T], sum(eCStart_Allam[y,t] for y in COMMIT_Allam))
     @expression(EP, eTotalCStart_Allam, sum(eTotalCStart_Allam_T[t] for t in 1:T))
     add_to_expression!(EP[:eTotalCStart], eTotalCStart_Allam)
@@ -91,7 +87,7 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
         [y in ALLAM_CYCLE_LOX, i in 1:2, t = 1:T], vCOMMIT_Allam[y,i,t] == vCOMMIT_Allam[y,i,hoursbefore(p, t, 1)] + vSTART_Allam[y,i,t] - vSHUT_Allam[y,i,t]
     end)
 
-    ### Maximum ramp up and down between consecutive hours (Constraints #5-6
+    ### Maximum ramp up and down between consecutive hours (Constraints #5-6)
     # Links last time step with first time step, ensuring position in hour 1 is within eligible ramp of final hour position
     # rampup constraints
     @constraint(EP,[y in ALLAM_CYCLE_LOX, i in 1:2, t = 1:T],

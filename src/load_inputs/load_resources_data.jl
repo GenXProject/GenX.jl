@@ -201,44 +201,42 @@ storage coupled NGCC-CCS)
 """
 function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [
-        :existing_cap_sco2turbine,        # to GW or kt 
-        :existing_cap_asu,        # to GW or kt 
-        :existing_cap_lox,        # to GW or kt
+        :existing_cap_sco2turbine,  # to GW or kt 
+        :existing_cap_asu,          # to GW or kt 
+        :existing_cap_lox,          # to GW or kt
 
-        :cap_size_sco2turbine,                      # to GW or kt 
-        :cap_size_asu,
-        :cap_size_lox,
+        :cap_size_sco2turbine,      # to GW or kt 
+        :cap_size_asu, 
+        :cap_size_lox, 
 
-        :min_cap_sco2turbine,                  # to GW or kt 
-        :max_cap_sco2turbine,                  # to GW
-        :min_cap_asu,                  # to GW or kt 
-        :max_cap_asu,                  # to GW
-        :min_cap_lox,                  # to GW or kt 
-        :max_cap_lox,                  # to GW
+        :min_cap_sco2turbine,       # to GW or kt 
+        :max_cap_sco2turbine,       # to GW
+        :min_cap_asu,               # to GW or kt 
+        :max_cap_asu,               # to GW
+        :min_cap_lox,               # to GW or kt 
+        :max_cap_lox,               # to GW
 
-        :inv_cost_sco2turbine_per_mwyr,           # to $M/GW/yr
-        :fixed_om_cost_sco2turbine_per_mwyr,      # to $M/GW/yr
+        :inv_cost_sco2turbine_per_mwyr,         # to $M/GW/yr
+        :fixed_om_cost_sco2turbine_per_mwyr,    # to $M/GW/yr
 
-        :inv_cost_asu_per_mwyr,           # to $M/GW/yr
-        :fixed_om_cost_asu_per_mwyr,      # to $M/GW/yr
+        :inv_cost_asu_per_mwyr,         # to $M/GW/yr
+        :fixed_om_cost_asu_per_mwyr,    # to $M/GW/yr
 
-        :inv_cost_lox_per_tyr,           # to $M/GW/yr
-        :fixed_om_cost_lox_per_tyr,      # to $M/GW/yr
+        :inv_cost_lox_per_tyr,          # to $M/GW/yr
+        :fixed_om_cost_lox_per_tyr,     # to $M/GW/yr
 
-        :var_om_cost_sco2turbine_per_mwh,          # to $M/GWh
-        :var_om_cost_asu_per_mwh,          # to $M/GWh
-        :var_om_cost_lox_per_t,          # to $M/GWh
+        :var_om_cost_sco2turbine_per_mwh,   # to $M/GWh
+        :var_om_cost_asu_per_mwh,           # to $M/GWh
+        :var_om_cost_lox_per_t,             # to $M/GWh
 
-        :start_cost_sco2turbine_per_mw,           # to $M/GW
+        :start_cost_sco2turbine_per_mw,   # to $M/GW
         :start_cost_asu_per_mw,           # to $M/GW
-        :start_cost_lox_per_t           # to $M/GW
+        :start_cost_lox_per_t             # to $M/GW
     ]
 
     scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
     return nothing
 end
-
-
 
 
 """
@@ -284,7 +282,7 @@ function load_resource_df(path::AbstractString, scale_factor::Float64, resource_
     scale_resources_data!(resource_in, scale_factor)
     # scale vre_stor columns if necessary
     resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor) 
-    scale_allamcycle_data!(resource_in, scale_factor)
+    resource_type == AllamCycleLOX && scale_allamcycle_data!(resource_in, scale_factor)
     return resource_in
 end
 
@@ -1436,19 +1434,21 @@ function add_resources_to_input_data!(inputs::Dict,
     # the order must follow sCO2 turbine -> ASU -> LOX
     allam_dict = Dict()
     for y in inputs["ALLAM_CYCLE_LOX"]
-        
-        allam_dict[y, "inv_cost"] = inv_cost_sco2turbine_per_mwyr(gen[y]), inv_cost_asu_per_mwyr(gen[y]), inv_cost_lox_per_tyr(gen[y])
-        allam_dict[y, "fom_cost"] = fixed_om_cost_sco2turbine_per_mwyr(gen[y]), fixed_om_cost_asu_per_mwyr(gen[y]), fixed_om_cost_lox_per_tyr(gen[y])
-        allam_dict[y, "vom_cost"] = var_om_cost_sco2turbine_per_mwh(gen[y]), var_om_cost_asu_per_mwh(gen[y]), var_om_cost_lox_per_t(gen[y])
-        allam_dict[y, "cap_size"] = cap_size_sco2turbine(gen[y]), cap_size_asu(gen[y]), cap_size_lox(gen[y])
-        allam_dict[y, "start_cost"] = start_cost_sco2turbine_per_mw(gen[y]), start_cost_asu_per_mw(gen[y]), 0
-        allam_dict[y,"start_fuel"] = start_fuel_sco2turbine_mmbtu_per_mw(gen[y]),start_fuel_asu_mmbtu_per_mw(gen[y]),0
-        allam_dict[y, "min_power"] = min_power_sco2turbine(gen[y]), min_power_asu(gen[y]), 0
-        allam_dict[y, "up_time"] = up_time_sco2turbine(gen[y]), up_time_asu(gen[y]), 0
-        allam_dict[y, "down_time"] = down_time_sco2turbine(gen[y]), down_time_asu(gen[y]), 0
-        allam_dict[y, "ramp_up"] = ramp_up_percentage_sco2turbine(gen[y]), ramp_up_percentage_asu(gen[y]), 0
-        allam_dict[y, "ramp_dn"] = ramp_dn_percentage_sco2turbine(gen[y]), ramp_dn_percentage_asu(gen[y]), 0
-        allam_dict[y, "existing_cap"] = existing_cap_sco2turbine(gen[y]), existing_cap_asu(gen[y]), existing_cap_lox(gen[y])
+        # cost related to allam cycle lox
+        allam_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_sco2turbine_per_mwyr, default_zero), get_attr(gen[y], :inv_cost_asu_per_mwyr, default_zero), get_attr(gen[y], :inv_cost_lox_per_tyr, default_zero)
+        allam_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_sco2turbine_per_mwyr, default_zero), get_attr(gen[y], :fixed_om_cost_asu_per_mwyr, default_zero), get_attr(gen[y], :fixed_om_cost_lox_per_tyr, default_zero)
+        allam_dict[y, "vom_cost"] = get_attr(gen[y], :var_om_cost_sco2turbine_per_mwh, default_zero), get_attr(gen[y], :var_om_cost_asu_per_mwh, default_zero), get_attr(gen[y], :var_om_cost_lox_per_t, default_zero)
+        allam_dict[y, "start_cost"] = get_attr(gen[y], :start_cost_sco2turbine_per_mw, default_zero), get_attr(gen[y], :start_cost_asu_per_mw, default_zero), 0
+        # cap size of each component
+        allam_dict[y, "cap_size"] = get_attr(gen[y], :cap_size_sco2turbine, default_percent), get_attr(gen[y], :cap_size_asu, default_percent), get_attr(gen[y], :cap_size_lox, default_percent)
+        allam_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_sco2turbine, default_zero), get_attr(gen[y], :existing_cap_asu, default_zero), get_attr(gen[y], :existing_cap_lox, default_zero)
+        # unit commitment for allam cycle, only sco2 turbine and asu are subjected to unit commitment
+        allam_dict[y, "ramp_up"] = get_attr(gen[y], :ramp_up_percentage_sco2turbine, default_percent), get_attr(gen[y], :ramp_up_percentage_asu, default_percent), 0
+        allam_dict[y, "ramp_dn"] = get_attr(gen[y], :ramp_dn_percentage_sco2turbine, default_percent), get_attr(gen[y], :ramp_dn_percentage_asu, default_percent), 0
+        allam_dict[y, "up_time"] = get_attr(gen[y], :up_time_sco2turbine, default_zero), get_attr(gen[y], :up_time_asu, default_zero), 0
+        allam_dict[y, "min_power"] = get_attr(gen[y], :min_power_sco2turbine, default_zero), get_attr(gen[y], :min_power_asu, default_zero), 0
+        allam_dict[y, "down_time"] = get_attr(gen[y], :down_time_sco2turbine, default_zero), get_attr(gen[y], :down_time_asu, default_zero), 0
+        allam_dict[y, "start_fuel"] = get_attr(gen[y], :start_fuel_sco2turbine_mmbtu_per_mw, default_zero), get_attr(gen[y], :start_fuel_asu_mmbtu_per_mw, default_zero), 0
     end
     inputs["allam_dict"] = allam_dict
 

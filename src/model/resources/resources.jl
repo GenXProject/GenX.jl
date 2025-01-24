@@ -527,6 +527,61 @@ Default value for resource attributes.
 """
 const default_zero = 0
 
+# Generic function to get attribute from a resource
+"""
+    get_attr(r::AbstractResource, attr::Symbol, default_value::Real)
+
+Function to get attribute `attr` from a GenX resource `r`. If the attribute is not found, return `default_value`.
+
+# Arguments
+- `r::AbstractResource`: The resource.
+- `attr::Symbol`: The attribute to get.
+- `default_value::Real`: The default value to return if the attribute is not found.
+
+# Returns
+- `value::Real`: The value of the attribute.
+"""
+function get_attr(r::AbstractResource, attr::Symbol, default_value::Real)
+    return get(r, attr, default_value)
+end
+
+"""
+    get_attr(rs::Vector{<:AbstractResource}, attr::Symbol, default_value::Real)
+
+Function to get attribute `attr` from a vector of GenX resources `rs`.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `attr::Symbol`: The attribute to get.
+- `default_value::Real`: The default value to return if the attribute is not found in any of the resources.
+
+# Returns
+- `values::Vector{Real}`: The vector of values of the attribute.
+"""
+function get_attr(rs::Vector{<:AbstractResource}, attr::Symbol, default_value::Real)
+    return [get_attr(r, attr, default_value) for r in rs]
+end
+
+"""
+    get_attr_by_index(rs::Vector{<:AbstractResource}, index::Int64, attr::Symbol, default_value::Real)
+
+Function to get attribute `attr` from a GenX resource `r` with index `rid`.
+**Warning**: Always double check the index being passed in is correct. The index in the vector `rs` might be different from the resource ID.
+See also `by_rid_res` for getting the attribute by resource ID.
+
+# Arguments
+- `rs::Vector{<:AbstractResource}`: The vector of resources.
+- `index::Int64`: The index of the resource.
+- `attr::Symbol`: The attribute to get.
+- `default_value::Real`: The default value to return if the attribute is not found in the resource.
+
+# Returns
+- `value::Real`: The value of the attribute.
+"""
+function get_attr_by_index(rs::Vector{<:AbstractResource}, index::Int64, attr::Symbol, default_value::Real)
+    return get_attr(rs[index], attr, default_value)
+end
+
 # INTERFACE FOR ALL RESOURCES
 resource_name(r::AbstractResource) = r.resource
 resource_name(rs::Vector{T}) where {T <: AbstractResource} = resource_name.(rs)
@@ -608,7 +663,6 @@ inv_cost_per_mwyr(r::AbstractResource) = get(r, :inv_cost_per_mwyr, default_zero
 fixed_om_cost_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr, default_zero)
 var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default_zero)
 inv_cost_per_mwhyr(r::AbstractResource) = get(r, :inv_cost_per_mwhyr, default_zero)
-
 function fixed_om_cost_per_mwhyr(r::AbstractResource)
     get(r, :fixed_om_cost_per_mwhyr, default_zero)
 end
@@ -1079,53 +1133,9 @@ function is_with_lox(rs::Vector{T}) where {T <: AbstractResource}
     return findall(r -> with_lox(r) == 1, rs)
 end
 
-# cap size of each component
-cap_size_sco2turbine(r::AbstractResource) = get(r, :cap_size_sco2turbine, default_percent)
-cap_size_asu(r::AbstractResource) = get(r, :cap_size_asu, default_percent)
-cap_size_lox(r::AbstractResource) = get(r, :cap_size_lox, default_percent)
-
-#cost related to allam cycle lox
-inv_cost_sco2turbine_per_mwyr(r::AbstractResource) = get(r, :inv_cost_sco2turbine_per_mwyr, default_zero)
-inv_cost_asu_per_mwyr(r::AbstractResource) = get(r, :inv_cost_asu_per_mwyr, default_zero)
-inv_cost_lox_per_tyr(r::AbstractResource) = get(r, :inv_cost_lox_per_tyr, default_zero)
-
-fixed_om_cost_sco2turbine_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_sco2turbine_per_mwyr, default_zero)
-fixed_om_cost_asu_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_asu_per_mwyr, default_zero)
-fixed_om_cost_lox_per_tyr(r::AbstractResource) = get(r, :fixed_om_cost_lox_per_tyr, default_zero)
-
-var_om_cost_sco2turbine_per_mwh(r::AbstractResource) = get(r, :var_om_cost_sco2turbine_per_mwh, default_zero)
-var_om_cost_asu_per_mwh(r::AbstractResource) = get(r, :var_om_cost_asu_per_mwh, default_zero)
-var_om_cost_lox_per_t(r::AbstractResource) = get(r, :var_om_cost_lox_per_t, default_zero)
-
-start_cost_sco2turbine_per_mw(r::AbstractResource) = get(r, :start_cost_sco2turbine_per_mw, default_zero)
-start_cost_asu_per_mw(r::AbstractResource) = get(r, :start_cost_asu_per_mw, default_zero)
-
-start_fuel_sco2turbine_mmbtu_per_mw(r::AbstractResource) = get(r, :start_fuel_sco2turbine_mmbtu_per_mw, default_zero)
-start_fuel_asu_mmbtu_per_mw(r::AbstractResource) = get(r, :start_fuel_asu_mmbtu_per_mw, default_zero)
-
-# unit commitment for allam cycle, only sco2 turbine and asu are subjected to unit commitment
-min_power_sco2turbine(r::AbstractResource) = get(r, :min_power_sco2turbine, default_zero)
-min_power_asu(r::AbstractResource) = get(r, :min_power_asu, default_zero)
-
-ramp_up_percentage_sco2turbine(r::AbstractResource) = get(r, :ramp_up_percentage_sco2turbine, default_percent)
-ramp_up_percentage_asu(r::AbstractResource) = get(r, :ramp_up_percentage_asu, default_percent)
-
-ramp_dn_percentage_sco2turbine(r::AbstractResource) = get(r, :ramp_dn_percentage_sco2turbine, default_percent)
-ramp_dn_percentage_asu(r::AbstractResource) = get(r, :ramp_dn_percentage_asu, default_percent)
-
-up_time_sco2turbine(r::AbstractResource) = get(r, :up_time_sco2turbine, default_zero)
-up_time_asu(r::AbstractResource) = get(r, :up_time_asu, default_zero)
-
-down_time_sco2turbine(r::AbstractResource) = get(r, :down_time_sco2turbine, default_zero)
-down_time_asu(r::AbstractResource) = get(r, :down_time_asu, default_zero)
-
-
-existing_cap_sco2turbine(r::AbstractResource) = get(r, :existing_cap_sco2turbine, default_zero)
-existing_cap_asu(r::AbstractResource) = get(r, :existing_cap_asu, default_zero)
-existing_cap_lox(r::AbstractResource) = get(r, :existing_cap_lox, default_zero)
-
 # duration for lox
 lox_duration(r::AbstractResource) = get(r, :lox_duration, default_zero)
+
 
 ## policies
 # co-located storage

@@ -5,6 +5,7 @@ Function for writing the diferent capacities for the different generation techno
 """
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
+
     MultiStage = setup["MultiStage"]
     G = inputs["G"]
 

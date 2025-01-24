@@ -8,16 +8,9 @@ function allamcycle_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
     T = inputs["T"]                                                 # Number of time steps (hours)
-    Z = inputs["Z"]                                                 # Number of zones
-    MultiStage = setup["MultiStage"]
-    omega = inputs["omega"]
 
     # Load Allam Cycle related inputs 
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]                     # Set of Allam Cycle generators (indices)
-    NEW_CAP_Allam = intersect(inputs["NEW_CAP"], ALLAM_CYCLE_LOX)
-    RET_CAP_Allam = intersect(inputs["RET_CAP"], ALLAM_CYCLE_LOX)
-    NO_COMMIT_Allam = setup["UCommit"] == 0 ? ALLAM_CYCLE_LOX : Int[]
-    WITH_LOX = inputs["WITH_LOX"]
 
     # time related 
     p = inputs["hours_per_subperiod"]

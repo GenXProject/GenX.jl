@@ -174,12 +174,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         allamcyclelox!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expressions related to telectrolyzers
-    if !isempty(inputs["ELECTROLYZER"]) ||
-        (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
-         electrolyzer!(EP, inputs, setup)
-     end
-
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
     if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage!(EP, inputs, setup)
@@ -205,6 +199,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         vre_stor!(EP, inputs, setup)
     end
 
+    # Model constraints, variables, expressions related to telectrolyzers
+    if !isempty(inputs["ELECTROLYZER"]) ||
+       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+        electrolyzer!(EP, inputs, setup)
+    end
     # Policies
 
     if setup["OperationalReserves"] > 0
