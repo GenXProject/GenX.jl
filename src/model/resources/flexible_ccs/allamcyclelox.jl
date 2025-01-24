@@ -3,7 +3,7 @@
 This module models the Allam cycle with or without liquid oxygen storage (LOX) tank. 
 In this module, the key components of Allam cycle w/ LOX are break down into mutiple components with independent capacity decisions. 
 
-**Important expressions**
+## Important expressions
 
 **Power balance within an Allam Cycle resource**
 
@@ -19,34 +19,38 @@ Net power output from Allam Cycle $y$ in time $t$ (net generation - electricity 
 \end{aligned}
 ```
 
-**Important constraints**
+## Important constraints
 
 **Liquid oxygen storage mass balance**
+
 The state of the liquid oxygen storage at hour $h$ is determined by the state of the liquid oxygen storage at hour $h-1$, and of the production and consumption of liquid oxygen at hour $h$.
 
 ```math
 \begin{aligned}
-    \Gamma_{y,t} = \Gamma_{y,t-1} + \Pi_{y,asu,t} \cdot O2\_production\_rate - \frac{\Pi_{y,sco2turbine,t}}{O2\_consumption\_rate_{y}}
+    \Gamma_{y,t} = \Gamma_{y,t-1} + \Pi_{y,asu,t} \cdot {O2\_production\_rate_{y}} - \frac{\Pi_{y,sco2turbine,t}}{O2\_consumption\_rate_{y}}
 \end{aligned}
 ```
 
 **Power consumption by ASU**
+
 When the electricity prices are low, ASU can also use electricity from the grid ($\Theta_{y,z}$) to produce oxygen and the energy consumption ($\Pi_{y,aux,z}$) by ASU has to be equal or greater than $\Theta_{y,z}$.
 
 ```math
 \begin{aligned}
-    \Pi_{y,aux,t} >= \Theta_{y,t}
+    \Pi_{y,aux,t} \geq \Theta_{y,t}
 \end{aligned}
 ```
 
-**All the allam cycle output should be less than the capacity**
+**Maximum power output**
+
+All the allam cycle output should be less than the capacity
 
 ```math
 \begin{aligned}
-    \Pi_{y,sco2turbine,t} <= \Omega_{y,sco2turbine}
-    \Pi_{y,aux,t} <= \Omega_{y,aux}
-    \Theta_{y,lox,t}^{in} <= \Omega_{y,lox}
-    \Theta_{y,lox,t}^{out} <= \Omega_{y,lox}
+    \Pi_{y,sco2turbine,t} &\leq \Omega_{y,sco2turbine} \\
+    \Pi_{y,aux,t} &\leq \Omega_{y,aux} \\
+    \Theta_{y,lox,t}^{in} &\leq \Omega_{y,lox} \\
+    \Theta_{y,lox,t}^{out} &\leq \Omega_{y,lox}
 \end{aligned}
 ```
 
@@ -56,8 +60,8 @@ Charging and discharging rate of LOX is determined by the capacity ($\omega_{y,l
 
 ```math
 \begin{aligned}
-    \frac{\Omega_{y,lox}}{Duration_{y}} >= \Theta_{y,lox,t}^{in}
-    \frac{\Omega_{y,lox}}{Duration_{y}} >= \Theta_{y,lox,t}^{out}
+    \frac{\Omega_{y,lox}}{Duration_{y}} \geq \Theta_{y,lox,t}^{in} \\
+    \frac{\Omega_{y,lox}}{Duration_{y}} \geq \Theta_{y,lox,t}^{out}
 \end{aligned}
 ```
 
@@ -176,7 +180,7 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
         if y in NEW_CAP_Allam # Resources eligible for new capacity
             if y in COMMIT_Allam  # Resource eligible for Unit commitment
                 allam_dict[y,"inv_cost"][i] * allam_dict[y,"cap_size"][i] * EP[:vCAP_AllamCycleLOX][y, i]+
-                allam_dict[y,"fom_cost"][i]  * eTotalCap_AllamcycleLOX[y,i]
+                allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i]
             else
                 allam_dict[y,"inv_cost"][i] * EP[:vCAP_AllamCycleLOX][y, i]+
                 allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i]
