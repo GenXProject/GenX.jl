@@ -186,7 +186,6 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
     return nothing
 end
 
-
 """
     scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
 
@@ -237,7 +236,6 @@ function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
     scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
     return nothing
 end
-
 
 """
     scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
@@ -1424,13 +1422,12 @@ function add_resources_to_input_data!(inputs::Dict,
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
     end
 
-
     ## flexible operation of CCS
     # Allam Cycle with liquid oxygen (LOX) storage
     inputs["ALLAM_CYCLE_LOX"] = allam_cycle_lox(gen)
     inputs["WITH_LOX"] = is_with_lox(gen)
 
-    #reconstruct a dictionary to store component-wise data for Allam Cycle w/ LOX.
+    # reconstruct a dictionary to store component-wise data for Allam Cycle w/ LOX.
     # the order must follow sCO2 turbine -> ASU -> LOX
     allam_dict = Dict()
     for y in inputs["ALLAM_CYCLE_LOX"]
@@ -1472,10 +1469,6 @@ function add_resources_to_input_data!(inputs::Dict,
     inputs["RESOURCES"] = gen
     return nothing
 end
-
-
-
-
 
 """
     summary(rs::Vector{<:AbstractResource})

@@ -75,49 +75,47 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 
 	if setup["ParameterScale"] == 1
 		columns_to_scale = [
-		:StartCap_sCO2turbine_MW_gross,
-		:RetCap_sCO2turbine_MW_gross,
-		:NewCap_sCO2turbine_MW_gross,
-		:EndCap_sCO2turbine_MW_gross,
-		
-		:StartCap_ASU_MW_gross,
-		:RetCap_ASU_MW_gross,
-		:NewCap_ASU_MW_gross,
-		:EndCap_ASU_MW_gross,
+			:StartCap_sCO2turbine_MW_gross,
+			:RetCap_sCO2turbine_MW_gross,
+			:NewCap_sCO2turbine_MW_gross,
+			:EndCap_sCO2turbine_MW_gross,
+			
+			:StartCap_ASU_MW_gross,
+			:RetCap_ASU_MW_gross,
+			:NewCap_ASU_MW_gross,
+			:EndCap_ASU_MW_gross,
 
-		:StartCap_LOX_t,
-		:RetCap_LOX_t,
-		:NewCap_LOX_t,
-		:EndCap_LOX_t
+			:StartCap_LOX_t,
+			:RetCap_LOX_t,
+			:NewCap_LOX_t,
+			:EndCap_LOX_t
 		]
 
 		scale_columns!(dfCapAllam, columns_to_scale, ModelScalingFactor)
 	end
 
 	total_allam = DataFrame(
-			Resource = "Total", Zone = "n/a", 
-			StartCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:StartCap_sCO2turbine_MW_gross]), 
-			RetCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:RetCap_sCO2turbine_MW_gross]),
-			NewCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:NewCap_sCO2turbine_MW_gross]), 
-			EndCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:EndCap_sCO2turbine_MW_gross]),
+		Resource = "Total", Zone = "n/a", 
+		StartCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:StartCap_sCO2turbine_MW_gross]), 
+		RetCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:RetCap_sCO2turbine_MW_gross]),
+		NewCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:NewCap_sCO2turbine_MW_gross]), 
+		EndCap_sCO2turbine_MW_gross = sum(dfCapAllam[!,:EndCap_sCO2turbine_MW_gross]),
 
-			StartCap_ASU_MW_gross = sum(dfCapAllam[!,:StartCap_ASU_MW_gross]), 
-			RetCap_ASU_MW_gross = sum(dfCapAllam[!,:RetCap_ASU_MW_gross]),
-			NewCap_ASU_MW_gross = sum(dfCapAllam[!,:NewCap_ASU_MW_gross]), 
-			EndCap_ASU_MW_gross = sum(dfCapAllam[!,:EndCap_ASU_MW_gross]),
+		StartCap_ASU_MW_gross = sum(dfCapAllam[!,:StartCap_ASU_MW_gross]), 
+		RetCap_ASU_MW_gross = sum(dfCapAllam[!,:RetCap_ASU_MW_gross]),
+		NewCap_ASU_MW_gross = sum(dfCapAllam[!,:NewCap_ASU_MW_gross]), 
+		EndCap_ASU_MW_gross = sum(dfCapAllam[!,:EndCap_ASU_MW_gross]),
 
-			StartCap_LOX_t = sum(dfCapAllam[!,:StartCap_LOX_t]), 
-			RetCap_LOX_t = sum(dfCapAllam[!,:RetCap_LOX_t]),
-			NewCap_LOX_t = sum(dfCapAllam[!,:NewCap_LOX_t]), 
-			EndCap_LOX_t = sum(dfCapAllam[!,:EndCap_LOX_t]),
-		)
+		StartCap_LOX_t = sum(dfCapAllam[!,:StartCap_LOX_t]), 
+		RetCap_LOX_t = sum(dfCapAllam[!,:RetCap_LOX_t]),
+		NewCap_LOX_t = sum(dfCapAllam[!,:NewCap_LOX_t]), 
+		EndCap_LOX_t = sum(dfCapAllam[!,:EndCap_LOX_t]),
+	)
 
 	dfCapAllam = vcat(dfCapAllam, total_allam)
 	CSV.write(joinpath(path,"capacity_allam_cycle_lox.csv"), dfCapAllam)
 
 	# also write the vOutput_AllamcycleLOX, vLOX_in, vLOX_out
-	
-	
 end
 
 function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)

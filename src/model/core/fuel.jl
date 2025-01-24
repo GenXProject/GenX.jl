@@ -240,7 +240,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
-        for y in intersect( setdiff(resources_with_fuel(gen, fuels[f]), ALLAM_CYCLE_LOX), SINGLE_FUEL)))
+        for y in intersect(setdiff(resources_with_fuel(gen, fuels[f]), ALLAM_CYCLE_LOX), SINGLE_FUEL)))
 
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
