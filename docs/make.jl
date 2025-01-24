@@ -76,6 +76,7 @@ pages = OrderedDict(
                 "Scheduled maintenance for Thermal Commit" => "Model_Reference/Resources/maintenance.md",
                 "Fusion" => "Model_Reference/Resources/fusion.md"
             ],
+            "Allam Cycle" => "Model_Reference/Resources/allam_cycle.md",
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
             "Resource types" => "Model_Reference/Resources/resource.md"
         ],

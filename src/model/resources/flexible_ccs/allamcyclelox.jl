@@ -4,10 +4,13 @@ This module models the Allam cycle with or without liquid oxygen storage (LOX) t
 In this module, the key components of Allam cycle w/ LOX are break down into mutiple components with independent capacity decisions. 
 
 **Important expressions**
-1. power balance within an Allam Cycle resource
+
+**Power balance within an Allam Cycle resource**
+
 Consumption of electricity by Air Seperation Unit (ASU) $y, asu$ in time $t$, denoted by $\Pi_{y,asu,t}$, and auxiliary load, denoted by $\Pi_{y,aux,t}$, is subtracted from power generation from the sCO2 turbines, denoted by $\Pi_{y,sco2turbine,t}$
 
-2. power balance between an Allam Cycle resource and the grid
+**Power balance between an Allam Cycle resource and the grid**
+
 Net power output from Allam Cycle $y$ in time $t$ (net generation - electricity charged from the grid, denoted by $\Theta_{y,z}$), denoted by $\Pi_{y,z}^{net}$, is added to power balance expression `ePowerBalance`
 
 ```math
@@ -17,21 +20,27 @@ Net power output from Allam Cycle $y$ in time $t$ (net generation - electricity 
 ```
 
 **Important constraints**
-1. liquid oxygen storage mass balance: the state of the liquid oxygen storage at hour $h$ is determined by the state of the liquid oxygen storage at hour $h-1$, and of the production and consumption of liquid oxygen at hour $h$.
+
+**Liquid oxygen storage mass balance**
+The state of the liquid oxygen storage at hour $h$ is determined by the state of the liquid oxygen storage at hour $h-1$, and of the production and consumption of liquid oxygen at hour $h$.
+
 ```math
 \begin{aligned}
-    \Gamma_{y,t} =\Gamma_{y,t-1} + \Pi_{y,asu,t}\$O2_production_rate$ - \frac{\Pi_{y,sco2turbine,t}}{$O2_consumption_rate$_{y}}
+    \Gamma_{y,t} = \Gamma_{y,t-1} + \Pi_{y,asu,t} \cdot O2\_production\_rate - \frac{\Pi_{y,sco2turbine,t}}{O2\_consumption\_rate_{y}}
 \end{aligned}
 ```
 
-2. power consumption by ASU: when the electricity prices are low, ASU can also use electricity from the grid (\Theta_{y,z}) to produce oxygen and the energy consumption ($\Pi_{y,aux,z}$) by ASU has to be equal or greater than $\Theta_{y,z}$.
+**Power consumption by ASU**
+When the electricity prices are low, ASU can also use electricity from the grid ($\Theta_{y,z}$) to produce oxygen and the energy consumption ($\Pi_{y,aux,z}$) by ASU has to be equal or greater than $\Theta_{y,z}$.
+
 ```math
 \begin{aligned}
     \Pi_{y,aux,t} >= \Theta_{y,t}
 \end{aligned}
 ```
 
-3. all the allam cycle output should be less than the capacity 
+**All the allam cycle output should be less than the capacity**
+
 ```math
 \begin{aligned}
     \Pi_{y,sco2turbine,t} <= \Omega_{y,sco2turbine}
@@ -41,14 +50,18 @@ Net power output from Allam Cycle $y$ in time $t$ (net generation - electricity 
 \end{aligned}
 ```
 
-4: charging and discharging rate of LOX is determined by the capacity ($\omega_{y,lox}$) and duration ($Duration_{y}$) of LOX
+**Charging and discharging rate of LOX**
+
+Charging and discharging rate of LOX is determined by the capacity ($\omega_{y,lox}$) and duration ($Duration_{y}$) of LOX
+
 ```math
 \begin{aligned}
-    \frac{\Omega_{y,lox}{/$Duration$_{y}} >= \Theta_{y,lox,t}^{in}
-    \frac{\Omega_{y,lox}{/$Duration$_{y}} >= \Theta_{y,lox,t}^{out}
+    \frac{\Omega_{y,lox}}{Duration_{y}} >= \Theta_{y,lox,t}^{in}
+    \frac{\Omega_{y,lox}}{Duration_{y}} >= \Theta_{y,lox,t}^{out}
 \end{aligned}
 ```
-# 5: call allamcycle_commit!(EP, inputs, setup) and allamcycle_commit!(EP, inputs, setup) for specific investment and operational constraints related to unit commitment
+
+**Note**: Check [`allamcycle_commit!(EP, inputs, setup)`](@ref) and [`allamcycle_commit!(EP, inputs, setup)`](@ref) for specific investment and operational constraints related to unit commitment.
 """
 function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods

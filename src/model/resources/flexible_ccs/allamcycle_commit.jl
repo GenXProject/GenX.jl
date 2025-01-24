@@ -1,5 +1,6 @@
 @doc raw"""
     allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
+
 This function defines the operating constraints for allam cycle power plants subject to unit commitment constraints on power plant start-ups and shut-down decision ($y \in UC$).
 The capacity investment decisions and commitment and cycling (start-up, shut-down) of ASU and sCO2 turbine in allam cycle power systems are similar to constraints defined in thermal_commit.jl
 Operaional constraints include start-up, max ramping up/donw, max up/down time, min power level, and operational reserves.

@@ -188,9 +188,9 @@ end
 
 
 """
-    scale_allamcycle_data!(flexible_ccs_in::DataFrame, scale_factor::Float64)
+    scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
 
-Scales vre_stor attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
+Scales allamcycle attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
 See documentation for descriptions of each column being scaled.
 
 # Arguments
@@ -199,7 +199,6 @@ storage coupled NGCC-CCS)
 - `scale_factor` (Float64): A scaling factor for energy and currency units.
 
 """
-
 function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [
         :existing_cap_sco2turbine,        # to GW or kt 
