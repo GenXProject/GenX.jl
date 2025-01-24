@@ -247,9 +247,10 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     if setup["EnergyShareRequirement"] >= 1
         @expression(EP,
             eAllamCycleESR[ESR in 1:inputs["nESR"]],
-            sum(inputs["omega"][t] * esr(gen[y], tag = ESR) * (eP_Allam[y, t]-vCHARGE_ALLAM[y,t])
+            # we already account for the vP contribution of Allam Cycle to ESR directly in the discharge.jl
+            sum(inputs["omega"][t] * esr(gen[y], tag = ESR) * vCHARGE_ALLAM[y,t]
             for y in intersect(ALLAM_CYCLE_LOX, ids_with_policy(gen, esr, tag = ESR)), t in 1:T))
-        EP[:eESR] += eAllamCycleESR
+        EP[:eESR] -= eAllamCycleESR
     end
 
     # Maximum Capacity Requirement
