@@ -473,6 +473,58 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
+##### Table 13a: Additional columns in the Allam_Cycle_LOX.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|With_LOX | {0, 1}, Flag to indicate the availabity of liquid oxygen storage (LOX) for Allam Cycle.|
+||With_LOX = 0: LOX is not available.|
+||With_LOX = 1: LOX is available.|
+|**Existing technology capacity**|
+|Existing\_Cap\_sCO2Turbine |The existing capacity of sCO2 turbines in an Allam Cycle power plant in MW. |
+|Existing\_Cap\_ASU |The existing capacity of air separation units (ASUs) in an Allam Cycle power plant in MW. |
+|Existing\_Cap\_LOX |The existing capacity of LOX in an Allam Cycle power plant in ton. |
+|**Cost parameters**|
+|Inv\_Cost\_sCO2Turbine\_per\_MWyr | Annualized capacity investment cost of sCO2 turbines in an Allam Cycle power plant ($/MW/year).|
+|Inv\_Cost\_ASU\_per\_MWyr | Annualized capacity investment cost of ASUs in an Allam Cycle power plant ($/MW/year).|
+|Inv\_Cost\_LOX\_per\_tyr | Annualized capacity investment cost of LOX in an Allam Cycle power plant ($/ton/year).|
+|Fixed\_OM\_Cost\_sCO2Turbine\_per\_MWyr | Fixed operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_ASU\_per\_MWyr | Fixed operations and maintenance cost of ASUs in an Allam Cycle power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_LOX\_per\_tyr | Fixed operations and maintenance cost of LOX in an Allam Cycle power plant ($/ton/year).|
+|Var\_OM\_Cost\_sCO2Turbine\_per\_MWh | Variable operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant ($/MWh).|
+|Var\_OM\_Cost\_ASU\_per\_MWh | Variable operations and maintenance cost of ASUs in an Allam Cycle power plant ($/MWh).|
+|Var\_OM\_Cost\_LOX\_per\_t | Variable operations and maintenance cost of LOX in an Allam Cycle power plant ($/ton).|
+|**Technical performance parameters**|
+|Min\_Power\_sCO2turbine |[0,1], Minimum stable operating level (fraction of nameplate capacity) of sCO2 turbines in an Allam Cycle power plant.|
+|Min\_Power\_ASU |[0,1], Minimum stable operating level (fraction of nameplate capacity) of ASU in an Allam Cycle power plant.|
+|Ramp\_Up\_Percentage\_sCO2turbine |[0,1], Maximum increase in power output from sCO2 turbines in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Up\_Percentage\_ASU |[0,1], Maximum increase in power consumption from ASUs in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_sCO2turbine |[0,1], Maximum decrease in power output from sCO2 turbines in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_ASU |[0,1], Maximum decrease in power consumption from ASUs in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|HeatRate\_sCO2|Heat rate of sCO2 turbines in an Allam Cycle power plant (MMBtu/MWh).|
+|LOX\_PowerUseRate\_O2|Power consumption by ASU to produce liquid oxygen (MWh/ton).|
+|GOX\_PowerUseRate\_O2|Power consumption by ASU to produce gaseous oxygen (MWh/ton).|
+|PowerUseRate\_other|Power consumption by anxilary processes in an Allam Cycle plant (MWh/MWh electricity generated from sCO2 turbines).|
+|O2UseRate|Oxygen consumption by sCO2 turbines to produce electricity (ton/MWh).|
+|LOX_duration| Duration of LOX (Hour).|
+##### Table 13b: Settings-specific columns in the Allam_Cycle_LOX.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|**UCommit >= 1** | The following settings apply only to Allam Cycle plants with unit commitment constraints|
+|Cap\_Size\_sCO2Turbine| The average capacity size of sCO2 turbine in a clustered Allam Cycle resource (MW).|
+|Cap\_Size\_ASU| The average capacity size of ASU in a clustered Allam Cycle resource (MW).|
+|Cap\_Size\_LOX| The average capacity size of LOX in a clustered Allam Cycle resource (MW).|
+|Up\_Time\_sCO2Turbine| Minimum amount of time a sCO2 turbine in an Allam Cycle power plant has to stay in the committed state.|
+|Up\_Time\_ASU| Minimum amount of time an ASU in an Allam Cycle power plant has to stay in the committed state.|
+|Down\_Time\_sCO2Turbine |Minimum amount of time a sCO2 turbine in an Allam Cycle power plant has to remain in the shutdown state.|
+|Down\_Time\_ASU |Minimum amount of time an ASU in an Allam Cycle power plant has to remain in the shutdown state.|
+|Start\_Cost\_sCO2Turbine\_per\_MW |Cost per MW of nameplate capacity to start a sCO2 turbine in an Allam Cycle power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_ASU\_per\_MW |Cost per MW of nameplate capacity to start an ASU in an Allam Cycle power plant  ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Fuel\_sCO2Turbine\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each sCO2 turbine in an Allam Cycle power plant (MMBtu/MW per start).|
+|Start\_Fuel\_ASU\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each ASU in an Allam Cycle power plant (MMBtu/MW per start).|
+
+
 ##### Policy-related columns for all resources
 In addition to the files described above, the `resources` folder contains a folder called `policy_assignments` (the filename can be changed in the settings file) with the following files that are used to specify policy-related parameters for specific resources: 
 
