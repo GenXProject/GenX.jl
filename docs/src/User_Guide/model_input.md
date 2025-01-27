@@ -137,8 +137,9 @@ The `resources` folder contains the input files for each resource type. At the c
 4) storage resources, specified in the `Storage.csv` file,
 5) flexible demand resources, specified in the `Flex_demand.csv` file,
 6) must-run resources, specified in the `Must_run.csv` file,
-7) electrolyzers, specified in the `Electrolyzer.csv` file, and
-8) co-located VRE and storage resources, specified in the `Vre_stor.csv` file.
+7) electrolyzers, specified in the `Electrolyzer.csv` file,
+8) co-located VRE and storage resources, specified in the `Vre_stor.csv` file, and
+9) Allam Cycle LOX resources, specified in the `Allam_Cycle_LOX.csv` file.
 
 Each file contains cost and performance parameters for various generators and other resources included in the model formulation. The following table describes the mandatory columns in each of these files. Note that the column names are case insensitive.
 
@@ -473,7 +474,7 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 13a: Additional columns in the Allam_Cycle_LOX.csv file
+##### Table 13a: Additional columns in the Allam\_Cycle\_LOX.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -485,15 +486,15 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Existing\_Cap\_ASU |The existing capacity of air separation units (ASUs) in an Allam Cycle power plant in MW. |
 |Existing\_Cap\_LOX |The existing capacity of LOX in an Allam Cycle power plant in ton. |
 |**Cost parameters**|
-|Inv\_Cost\_sCO2Turbine\_per\_MWyr | Annualized capacity investment cost of sCO2 turbines in an Allam Cycle power plant ($/MW/year).|
-|Inv\_Cost\_ASU\_per\_MWyr | Annualized capacity investment cost of ASUs in an Allam Cycle power plant ($/MW/year).|
-|Inv\_Cost\_LOX\_per\_tyr | Annualized capacity investment cost of LOX in an Allam Cycle power plant ($/ton/year).|
-|Fixed\_OM\_Cost\_sCO2Turbine\_per\_MWyr | Fixed operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant ($/MW/year).|
-|Fixed\_OM\_Cost\_ASU\_per\_MWyr | Fixed operations and maintenance cost of ASUs in an Allam Cycle power plant ($/MW/year).|
-|Fixed\_OM\_Cost\_LOX\_per\_tyr | Fixed operations and maintenance cost of LOX in an Allam Cycle power plant ($/ton/year).|
-|Var\_OM\_Cost\_sCO2Turbine\_per\_MWh | Variable operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant ($/MWh).|
-|Var\_OM\_Cost\_ASU\_per\_MWh | Variable operations and maintenance cost of ASUs in an Allam Cycle power plant ($/MWh).|
-|Var\_OM\_Cost\_LOX\_per\_t | Variable operations and maintenance cost of LOX in an Allam Cycle power plant ($/ton).|
+|Inv\_Cost\_sCO2Turbine\_per\_MWyr | Annualized capacity investment cost of sCO2 turbines in an Allam Cycle power plant (\$/MW/year).|
+|Inv\_Cost\_ASU\_per\_MWyr | Annualized capacity investment cost of ASUs in an Allam Cycle power plant (\$/MW/year).|
+|Inv\_Cost\_LOX\_per\_tyr | Annualized capacity investment cost of LOX in an Allam Cycle power plant (\$/ton/year).|
+|Fixed\_OM\_Cost\_sCO2Turbine\_per\_MWyr | Fixed operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant (\$/MW/year).|
+|Fixed\_OM\_Cost\_ASU\_per\_MWyr | Fixed operations and maintenance cost of ASUs in an Allam Cycle power plant (\$/MW/year).|
+|Fixed\_OM\_Cost\_LOX\_per\_tyr | Fixed operations and maintenance cost of LOX in an Allam Cycle power plant (\$/ton/year).|
+|Var\_OM\_Cost\_sCO2Turbine\_per\_MWh | Variable operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant (\$/MWh).|
+|Var\_OM\_Cost\_ASU\_per\_MWh | Variable operations and maintenance cost of ASUs in an Allam Cycle power plant (\$/MWh).|
+|Var\_OM\_Cost\_LOX\_per\_t | Variable operations and maintenance cost of LOX in an Allam Cycle power plant (\$/ton).|
 |**Technical performance parameters**|
 |Min\_Power\_sCO2turbine |[0,1], Minimum stable operating level (fraction of nameplate capacity) of sCO2 turbines in an Allam Cycle power plant.|
 |Min\_Power\_ASU |[0,1], Minimum stable operating level (fraction of nameplate capacity) of ASU in an Allam Cycle power plant.|
@@ -519,8 +520,8 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Up\_Time\_ASU| Minimum amount of time an ASU in an Allam Cycle power plant has to stay in the committed state.|
 |Down\_Time\_sCO2Turbine |Minimum amount of time a sCO2 turbine in an Allam Cycle power plant has to remain in the shutdown state.|
 |Down\_Time\_ASU |Minimum amount of time an ASU in an Allam Cycle power plant has to remain in the shutdown state.|
-|Start\_Cost\_sCO2Turbine\_per\_MW |Cost per MW of nameplate capacity to start a sCO2 turbine in an Allam Cycle power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
-|Start\_Cost\_ASU\_per\_MW |Cost per MW of nameplate capacity to start an ASU in an Allam Cycle power plant  ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_sCO2Turbine\_per\_MW |Cost per MW of nameplate capacity to start a sCO2 turbine in an Allam Cycle power plant (\$/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_ASU\_per\_MW |Cost per MW of nameplate capacity to start an ASU in an Allam Cycle power plant (\$/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
 |Start\_Fuel\_sCO2Turbine\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each sCO2 turbine in an Allam Cycle power plant (MMBtu/MW per start).|
 |Start\_Fuel\_ASU\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each ASU in an Allam Cycle power plant (MMBtu/MW per start).|
 
