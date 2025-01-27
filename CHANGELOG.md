@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed default value of parameter scaling to 1 (#866)
+- Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
+`write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
+for implementing asymmetric bidirectional flows. (#789)
 
 ## [0.4.5] - 2025-07-07
 
@@ -69,9 +72,6 @@ settings file (PR #801).
 charge and storage variables (#760 and #763).
 - Deduplicated docs on optimized scheduled maintenance for thermal resources (#745).
 - Removed the `CapRes_*` columns from `Network.csv` since they were not being used (#784).
-- Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
-`write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
-for implementing asymmetric bidirectional flows. (#789)
 
 ### Fixed
 - Add constraint to ensure that electricity charged from the grid cannot exceed 
