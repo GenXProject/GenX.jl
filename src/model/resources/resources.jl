@@ -629,7 +629,7 @@ min_cap_mwh(r::AbstractResource) = get(r, :min_cap_mwh, default_minmax_cap)
 max_charge_cap_mw(r::AbstractResource) = get(r, :max_charge_cap_mw, default_minmax_cap)
 min_charge_cap_mw(r::AbstractResource) = get(r, :min_charge_cap_mw, default_minmax_cap)
 
-existing_cap_mw(r::AbstractResource) = r.existing_cap_mw
+existing_cap_mw(r::AbstractResource) = get(r, :existing_cap_mw, default_zero)
 existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default_zero)
 existing_charge_cap_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default_zero)
 
