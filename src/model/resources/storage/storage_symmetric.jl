@@ -16,6 +16,9 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
 
     STOR_SYMMETRIC = inputs["STOR_SYMMETRIC"]
+    eTotalCap = EP[:eTotalCap]
+    vP = EP[:vP]
+    vCHARGE = EP[:vCHARGE]
 
     ### Constraints ###
 
@@ -24,22 +27,17 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
         storage_symmetric_operational_reserves!(EP, inputs, setup)
     else
         if CapacityReserveMargin > 0
-            @constraints(EP,
-                begin
-                    # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
-                    # Max simultaneous charge and discharge cannot be greater than capacity
-                    [y in STOR_SYMMETRIC, t in 1:T],
-                    EP[:vP][y, t] + EP[:vCHARGE][y, t] + EP[:vCAPRES_discharge][y, t] +
-                    EP[:vCAPRES_charge][y, t] <= EP[:eTotalCap][y]
-                end)
+            vCAPRES_charge = EP[:vCAPRES_charge]
+            vCAPRES_discharge = EP[:vCAPRES_discharge]
+            # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
+            # Max simultaneous charge and discharge cannot be greater than capacity
+            @constraint(EP, [y in STOR_SYMMETRIC, t in 1:T],
+                vP[y, t] + vCHARGE[y, t] + vCAPRES_discharge[y, t] +
+                vCAPRES_charge[y, t] <= eTotalCap[y])
         else
-            @constraints(EP,
-                begin
-                    # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
-                    # Max simultaneous charge and discharge cannot be greater than capacity
-                    [y in STOR_SYMMETRIC, t in 1:T],
-                    EP[:vP][y, t] + EP[:vCHARGE][y, t] <= EP[:eTotalCap][y]
-                end)
+            # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
+            # Max simultaneous charge and discharge cannot be greater than capacity
+            @constraint(EP, [y in STOR_SYMMETRIC, t in 1:T], vP[y, t] + vCHARGE[y, t] <= eTotalCap[y])
         end
     end
 end

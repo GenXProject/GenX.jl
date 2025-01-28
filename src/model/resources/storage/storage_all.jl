@@ -10,6 +10,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     gen = inputs["RESOURCES"]
     OperationalReserves = setup["OperationalReserves"]
     CapacityReserveMargin = setup["CapacityReserveMargin"]
+    HourlyMatching = setup["HourlyMatching"]
 
     virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
 
@@ -18,12 +19,19 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     STOR_ALL = inputs["STOR_ALL"]
     STOR_SHORT_DURATION = inputs["STOR_SHORT_DURATION"]
+    STOR_LONG_DURATION = inputs["STOR_LONG_DURATION"]
     representative_periods = inputs["REP_PERIOD"]
 
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
     INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+    QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
 
     hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
+    weight = inputs["omega"]
+
+    eTotalCap = EP[:eTotalCap]
+    eTotalCapEnergy = EP[:eTotalCapEnergy]
+    vP = EP[:vP]
 
     ### Variables ###
 
@@ -49,9 +57,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Energy losses related to technologies (increase in effective demand)
     @expression(EP,
         eELOSS[y in STOR_ALL],
-        sum(inputs["omega"][t] * EP[:vCHARGE][y, t]
-        for t in 1:T)-sum(inputs["omega"][t] *
-                          EP[:vP][y, t]
+        sum(weight[t] * vCHARGE[y, t]
+        for t in 1:T)-sum(weight[t] * vP[y, t]
         for t in 1:T))
 
     ## Objective Function Expressions ##
@@ -59,7 +66,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     #Variable costs of "charging" for technologies "y" during hour "t" in zone "z"
     @expression(EP,
         eCVar_in[y in STOR_ALL, t = 1:T],
-        inputs["omega"][t]*var_om_cost_per_mwh_in(gen[y])*vCHARGE[y, t])
+        weight[t]*var_om_cost_per_mwh_in(gen[y])*vCHARGE[y, t])
 
     # Sum individual resource contributions to variable charging costs to get total variable charging costs
     @expression(EP, eTotalCVarInT[t = 1:T], sum(eCVar_in[y, t] for y in STOR_ALL))
@@ -70,7 +77,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         #Variable costs of "virtual charging" for technologies "y" during hour "t" in zone "z"
         @expression(EP,
             eCVar_in_virtual[y in STOR_ALL, t = 1:T],
-            inputs["omega"][t]*virtual_discharge_cost*vCAPRES_charge[y, t])
+            weight[t]*virtual_discharge_cost*vCAPRES_charge[y, t])
         @expression(EP,
             eTotalCVarInT_virtual[t = 1:T],
             sum(eCVar_in_virtual[y, t] for y in STOR_ALL))
@@ -80,7 +87,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         #Variable costs of "virtual discharging" for technologies "y" during hour "t" in zone "z"
         @expression(EP,
             eCVar_out_virtual[y in STOR_ALL, t = 1:T],
-            inputs["omega"][t]*virtual_discharge_cost*vCAPRES_discharge[y, t])
+            weight[t]*virtual_discharge_cost*vCAPRES_discharge[y, t])
         @expression(EP,
             eTotalCVarOutT_virtual[t = 1:T],
             sum(eCVar_out_virtual[y, t] for y in STOR_ALL))
@@ -92,7 +99,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     # Term to represent net dispatch from storage in any period
     @expression(EP, ePowerBalanceStor[t = 1:T, z = 1:Z],
-        sum(EP[:vP][y, t] - EP[:vCHARGE][y, t]
+        sum(vP[y, t] - vCHARGE[y, t]
         for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
@@ -102,39 +109,37 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     # Links state of charge in first time step with decisions in last time step of each subperiod
     # We use a modified formulation of this constraint (cSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
-    if representative_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+    if representative_periods > 1 && !isempty(STOR_LONG_DURATION)
         CONSTRAINTSET = STOR_SHORT_DURATION
     else
         CONSTRAINTSET = STOR_ALL
     end
     @constraint(EP,
         cSoCBalStart[t in START_SUBPERIODS, y in CONSTRAINTSET],
-        EP[:vS][y,
-            t]==
-        EP[:vS][y, t + hours_per_subperiod - 1] -
-        (1 / efficiency_down(gen[y]) * EP[:vP][y, t])
+        vS[y, t]==
+        vS[y, t + hours_per_subperiod - 1] -
+        (1 / efficiency_down(gen[y]) * vP[y, t])
         +
-        (efficiency_up(gen[y]) * EP[:vCHARGE][y, t]) -
-        (self_discharge(gen[y]) * EP[:vS][y, t + hours_per_subperiod - 1]))
+        (efficiency_up(gen[y]) * vCHARGE[y, t]) -
+        (self_discharge(gen[y]) * vS[y, t + hours_per_subperiod - 1]))
 
     @constraints(EP,
         begin
             # Maximum energy stored must be less than energy capacity
-            [y in STOR_ALL, t in 1:T], EP[:vS][y, t] <= EP[:eTotalCapEnergy][y]
+            [y in STOR_ALL, t in 1:T], vS[y, t] <= eTotalCapEnergy[y]
 
             # energy stored for the next hour
             cSoCBalInterior[t in INTERIOR_SUBPERIODS, y in STOR_ALL],
-            EP[:vS][y, t] ==
-            EP[:vS][y, t - 1] - (1 / efficiency_down(gen[y]) * EP[:vP][y, t]) +
-            (efficiency_up(gen[y]) * EP[:vCHARGE][y, t]) -
-            (self_discharge(gen[y]) * EP[:vS][y, t - 1])
+            vS[y, t] ==
+            vS[y, t - 1] - (1 / efficiency_down(gen[y]) * vP[y, t]) +
+            (efficiency_up(gen[y]) * vCHARGE[y, t]) -
+            (self_discharge(gen[y]) * vS[y, t - 1])
         end)
 
     # Hourly matching constraints
-    if setup["HourlyMatching"] == 1
-        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
+    if HourlyMatching == 1
         @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
-            -sum(EP[:vCHARGE][y, t]
+            -sum(vCHARGE[y, t]
             for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STOR_ALL)))
         add_similar_to_expression!(EP[:eHM], eHMCharge)
     end
@@ -152,19 +157,19 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             @constraints(EP,
                 begin
                     [y in STOR_ALL, t = 1:T],
-                    EP[:vP][y, t] + EP[:vCAPRES_discharge][y, t] <= EP[:eTotalCap][y]
+                    vP[y, t] + vCAPRES_discharge[y, t] <= eTotalCap[y]
                     [y in STOR_ALL, t = 1:T],
-                    EP[:vP][y, t] + EP[:vCAPRES_discharge][y, t] <=
-                    EP[:vS][y, hoursbefore(hours_per_subperiod, t, 1)] *
+                    vP[y, t] + vCAPRES_discharge[y, t] <=
+                    vS[y, hoursbefore(hours_per_subperiod, t, 1)] *
                     efficiency_down(gen[y])
                 end)
         else
             @constraints(EP,
                 begin
-                    [y in STOR_ALL, t = 1:T], EP[:vP][y, t] <= EP[:eTotalCap][y]
+                    [y in STOR_ALL, t = 1:T], vP[y, t] <= eTotalCap[y]
                     [y in STOR_ALL, t = 1:T],
-                    EP[:vP][y, t] <=
-                    EP[:vS][y, hoursbefore(hours_per_subperiod, t, 1)] *
+                    vP[y, t] <=
+                    vS[y, hoursbefore(hours_per_subperiod, t, 1)] *
                     efficiency_down(gen[y])
                 end)
         end
@@ -184,28 +189,26 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         # We use a modified formulation of this constraint (cVSoCBalLongDurationStorageStart) when operations wrapping and long duration storage are being modeled
         @constraint(EP,
             cVSoCBalStart[t in START_SUBPERIODS, y in CONSTRAINTSET],
-            EP[:vCAPRES_socinreserve][y,
+            vCAPRES_socinreserve[y,
                 t]==
-            EP[:vCAPRES_socinreserve][y, t + hours_per_subperiod - 1] +
-            (1 / efficiency_down(gen[y]) * EP[:vCAPRES_discharge][y, t])
+            vCAPRES_socinreserve[y, t + hours_per_subperiod - 1] +
+            (1 / efficiency_down(gen[y]) * vCAPRES_discharge[y, t])
             -
-            (efficiency_up(gen[y]) * EP[:vCAPRES_charge][y, t]) - (self_discharge(gen[y]) *
-             EP[:vCAPRES_socinreserve][y, t + hours_per_subperiod - 1]))
+            (efficiency_up(gen[y]) * vCAPRES_charge[y, t]) - (self_discharge(gen[y]) *
+             vCAPRES_socinreserve[y, t + hours_per_subperiod - 1]))
 
         # energy held in reserve for the next hour
         @constraint(EP,
             cVSoCBalInterior[t in INTERIOR_SUBPERIODS, y in STOR_ALL],
-            EP[:vCAPRES_socinreserve][y,
-                t]==
-            EP[:vCAPRES_socinreserve][y, t - 1] +
-            (1 / efficiency_down(gen[y]) * EP[:vCAPRES_discharge][y, t]) -
-            (efficiency_up(gen[y]) * EP[:vCAPRES_charge][y, t]) -
-            (self_discharge(gen[y]) * EP[:vCAPRES_socinreserve][y, t - 1]))
+            vCAPRES_socinreserve[y, t]== vCAPRES_socinreserve[y, t - 1] +
+            (1 / efficiency_down(gen[y]) * vCAPRES_discharge[y, t]) -
+            (efficiency_up(gen[y]) * vCAPRES_charge[y, t]) -
+            (self_discharge(gen[y]) * vCAPRES_socinreserve[y, t - 1]))
 
         # energy held in reserve acts as a lower bound on the total energy held in storage
         @constraint(EP,
             cSOCMinCapRes[t in 1:T, y in STOR_ALL],
-            EP[:vS][y, t]>=EP[:vCAPRES_socinreserve][y, t])
+            vS[y, t] >= vCAPRES_socinreserve[y, t])
     end
 end
 

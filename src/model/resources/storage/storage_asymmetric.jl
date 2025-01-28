@@ -17,6 +17,9 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
 
     STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
 
+    eTotalCapCharge = EP[:eTotalCapCharge]
+    vCHARGE = EP[:vCHARGE]
+
     ### Constraints ###
 
     # Storage discharge and charge power (and reserve contribution) related constraints for symmetric storage resources:
@@ -25,14 +28,15 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
     else
         if CapacityReserveMargin > 0
             # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
+            vCAPRES_charge = EP[:vCAPRES_charge]
             @constraint(EP,
                 [y in STOR_ASYMMETRIC, t in 1:T],
-                EP[:vCHARGE][y, t] + EP[:vCAPRES_charge][y, t]<=EP[:eTotalCapCharge][y])
+                vCHARGE[y, t] + vCAPRES_charge[y, t]<=eTotalCapCharge[y])
         else
             # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than charge power rating
             @constraint(EP,
                 [y in STOR_ASYMMETRIC, t in 1:T],
-                EP[:vCHARGE][y, t]<=EP[:eTotalCapCharge][y])
+                vCHARGE[y, t]<=eTotalCapCharge[y])
         end
     end
 end
