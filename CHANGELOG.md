@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Changed the output filename for RSV from `reg_dn.csv` to `reserves.csv`.
 
+### Fixed
+- Fixed capacity reserve margin formulation for asymmetric storage
+when OperationalReserves is on. (#818)
+
 ## [0.4.2] - 2024-12-23
 
 ### Added
