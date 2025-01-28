@@ -84,6 +84,10 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
                                                 df.Capacity[ALLAM_CYCLE_LOX]) /
                                                sum(weight)
     end
+    if !isempty(ALLAM_CYCLE_LOX)
+        @info "Capacity factor for Allam Cycle LOX resources that is included in the capacityfactor.csv file is calculated for the sCO2Turbine in an Allam Cycle LOX resource."
+        @info "For the full power output, please refer to the output_allam_cycle_lox.csv file."
+    end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)
     return nothing
