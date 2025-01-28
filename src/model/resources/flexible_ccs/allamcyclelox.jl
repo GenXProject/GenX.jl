@@ -94,7 +94,7 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
 
     # Variables
     # retired capacity of Allam cycle 
-    @variable(EP, vRET_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
+    @variable(EP, vRETCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
     # new capacity of Allam cycle
     @variable(EP, vCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
 

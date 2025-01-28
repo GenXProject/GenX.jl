@@ -42,13 +42,13 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 
 	for y in ALLAM_CYCLE_LOX
 		if y in COMMIT_Allam
-			retcapAllam_sco2turbine[y] = value.(EP[:vRET_AllamCycleLOX])[y, sco2turbine]* allam_dict[y,"cap_size"][sco2turbine]
-			retcapAllam_asu[y] = value.(EP[:vRET_AllamCycleLOX])[y, asu]* allam_dict[y,"cap_size"][asu]
-			retcapAllam_lox[y] = value.(EP[:vRET_AllamCycleLOX])[y, lox]* allam_dict[y,"cap_size"][lox]
+			retcapAllam_sco2turbine[y] = value.(EP[:vRETCAP_AllamCycleLOX])[y, sco2turbine]* allam_dict[y,"cap_size"][sco2turbine]
+			retcapAllam_asu[y] = value.(EP[:vRETCAP_AllamCycleLOX])[y, asu]* allam_dict[y,"cap_size"][asu]
+			retcapAllam_lox[y] = value.(EP[:vRETCAP_AllamCycleLOX])[y, lox]* allam_dict[y,"cap_size"][lox]
 		else
-			retcapAllam_sco2turbine[y] = value.(EP[:vRET_AllamCycleLOX])[y, sco2turbine]
-			retcapAllam_asu[y] = value.(EP[:vRET_AllamCycleLOX])[y, asu]
-			retcapAllam_lox[y] = value.(EP[:vRET_AllamCycleLOX])[y, lox]
+			retcapAllam_sco2turbine[y] = value.(EP[:vRETCAP_AllamCycleLOX])[y, sco2turbine]
+			retcapAllam_asu[y] = value.(EP[:vRETCAP_AllamCycleLOX])[y, asu]
+			retcapAllam_lox[y] = value.(EP[:vRETCAP_AllamCycleLOX])[y, lox]
 		end
 	end
 
