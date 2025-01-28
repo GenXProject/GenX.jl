@@ -157,3 +157,43 @@ This file includes the renewable/clean credit revenue earned by each generator l
 ### 2.8 SubsidyRevenue.csv
 
 This file includes subsidy revenue earned if a generator specified Min\_Cap is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is $.
+
+## 3. Resources-specific outputs
+
+This section includes the output files related to specific resource types.
+
+### 3.1 capacity\_allam\_cycle\_lox.csv
+
+This file includes the capacity output for Allam Cycle LOX resources.
+
+###### Table 3.1: Structure of the capacity\_allam\_cycle\_lox.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| Resource | Name of the Allam Cycle LOX resource | |
+| Zone | Zone of the Allam Cycle LOX resource | |
+| StartCap\_sCO2turbine\_MW\_gross | Initial power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| StartCap\_ASU\_MW\_gross | Initial power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| StartCap\_LOX\_t | Initial power capacity of the LOX in the Allam Cycle LOX resource | t |
+| RetCap\_sCO2turbine\_MW\_gross | Retired power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| RetCap\_ASU\_MW\_gross | Retired power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| RetCap\_LOX\_t | Retired power capacity of the LOX in the Allam Cycle LOX resource | t |
+| NewCap\_sCO2turbine\_MW\_gross | Installed power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| NewCap\_ASU\_MW\_gross | Installed power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| NewCap\_LOX\_t | Installed power capacity of the LOX in the Allam Cycle LOX resource | t |
+| EndCap\_sCO2turbine\_MW\_gross | Total power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| EndCap\_ASU\_MW\_gross | Total power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| EndCap\_LOX\_t | Total power capacity of the LOX in the Allam Cycle LOX resource | t |
+
+### 3.2 output\_allam\_cycle\_lox.csv
+
+This file includes the output from each component of an Allam Cycle LOX resource.
+
+###### Table 3.2: Structure of the output\_allam\_cycle\_lox.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| (resource\_name)\_sCO2Turbine\_gross\_power\_output\_MWh | Gross power output of the sCO2Turbine in the Allam Cycle LOX resource | MWh |
+| (resource\_name)\_ASU\_gross\_power\_output\_MWh | Gross power output of the ASU in the Allam Cycle LOX resource | MWh |
+| (resource\_name)\_LOX\_gross\_power\_output\_t | Gross power output of the LOX in the Allam Cycle LOX resource | t |
+
