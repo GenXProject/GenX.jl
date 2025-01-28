@@ -25,6 +25,10 @@ Reports optimal values of investment variables (except StartCap, which is an inp
 | NewChargeCap |Installed charging capacity of each resource type in each zone |MW |
 | EndChargeCap |Total charging power capacity of each resource type in each zone |MW|
 
+!!! note "Note"
+    Capacity output for **Allam Cycle LOX** resources that is included in the **capacity.csv** file is for the **sCO2Turbine** in an Allam Cycle LOX resource.
+    For the full capacity output, please refer to the **capacity\_allam\_cycle\_lox.csv** file.
+
 ### 1.2 costs.csv
 
 Reports optimal objective function value and contribution of each term by zone.

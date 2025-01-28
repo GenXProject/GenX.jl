@@ -151,5 +151,11 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     dfCap = vcat(dfCap, total)
     CSV.write(joinpath(path, "capacity.csv"), dfCap)
+
+    if !isempty(ALLAM_CYCLE_LOX)
+        @info "Capacity output for Allam Cycle LOX resources that is included in the capacity.csv file is for the sCO2Turbine in an Allam Cycle LOX resource."
+        @info "For the full capacity output, please refer to the capacity_allam_cycle_lox.csv file."
+    end
+    
     return dfCap
 end
