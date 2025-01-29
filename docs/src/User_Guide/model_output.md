@@ -27,7 +27,7 @@ Reports optimal values of investment variables (except StartCap, which is an inp
 
 !!! note "Note"
     Capacity output for **Allam Cycle LOX** resources that is included in the **capacity.csv** file is for the **sCO2Turbine** in an Allam Cycle LOX resource.
-    For the full capacity output, please refer to the **capacity\_allam\_cycle\_lox.csv** file.
+    For the full capacity output, please refer to the **capacity\_allam\_cycle\_lox.csv** file ([`GenX.write_allam_capacity`](@ref)).
 
 ### 1.2 costs.csv
 
@@ -164,7 +164,7 @@ This section includes the output files related to specific resource types.
 
 ### 3.1 capacity\_allam\_cycle\_lox.csv
 
-This file includes the capacity output for Allam Cycle LOX resources.
+This file includes the capacity output for Allam Cycle LOX resources ([`GenX.write_allam_capacity`](@ref)).
 
 ###### Table 3.1: Structure of the capacity\_allam\_cycle\_lox.csv file
 ---
@@ -187,7 +187,7 @@ This file includes the capacity output for Allam Cycle LOX resources.
 
 ### 3.2 output\_allam\_cycle\_lox.csv
 
-This file includes the output from each component of an Allam Cycle LOX resource.
+This file includes the output from each component of an Allam Cycle LOX resource ([`GenX.write_allam_output`](@ref)).
 
 ###### Table 3.2: Structure of the output\_allam\_cycle\_lox.csv file
 ---

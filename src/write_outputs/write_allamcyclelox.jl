@@ -1,8 +1,8 @@
 
 @doc raw"""
-	write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
+	write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
-Function for writing the diferent capacities for the FLECCS technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
+This function writes the different capacities for the Allam Cycle LOX technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities) to the `capacity_allam_cycle_lox.csv` file.
 """
 function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	# Capacity decisions
@@ -118,6 +118,11 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 	# also write the vOutput_AllamcycleLOX, vLOX_in, vLOX_out
 end
 
+@doc raw"""
+	write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
+This function writes the power output from each component of an Allam Cycle LOX resource to the `output_allam_cycle_lox.csv` file.
+"""
 function write_allam_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] 
 	T = inputs["T"]
