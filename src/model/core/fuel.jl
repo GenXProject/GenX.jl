@@ -7,8 +7,10 @@ natural gas, hydrogen, etc). It also has the capability to model heat rates that
 a function of load via a piecewise-linear approximation. See also the [`thermal!`](@ref) page.
 
 ***** Expressions ******
+
 Users have two options to model the fuel consumption as a function of power generation: 
 (1). Use a constant heat rate, regardless of the minimum load or maximum load; and 
+
 (2). Use the PiecewiseFuelUsage-related parameters to model the fuel consumption via a 
 piecewise-linear approximation of the heat rate curves. By using this option, users can represent 
 the fact that most generators have a decreasing heat rate as a function of load.
@@ -19,6 +21,7 @@ The fuel consumption for power generation $vFuel_{y,t}$ is determined by power g
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
 denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
 and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
+
 (2). Piecewise-linear approximation
 With this formulation, the heat rate of generators becomes a function of load.
 In reality this relationship takes a nonlinear form, but we model it
@@ -48,8 +51,8 @@ When the power output is zero, the commitment variable $U_{g,t}$ will bring the 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
 In order to run piecewise fuel consumption module,
-the unit commitment must be turned on (UC = 1 or 2), and users should provide PWFU_Slope_* and 
-PWFU_Intercept_* for at least one segment. 
+the unit commitment must be turned on (UC = 1 or 2), and users should provide _PWFU_Slope_* and 
+_PWFU_Intercept_* for at least one segment. 
 
 To enable resources to use multiple fuels during both startup and normal operational processes, three additional variables were added: 
 fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel consumption for single-fuel plants ($vStartFuel_{y,t}$); and startup fuel consumption for multi-fuel plants ($vMulStartFuel_{y,i,t}$). By making startup fuel consumption variables, the model can choose the startup fuel to meet the constraints.    
