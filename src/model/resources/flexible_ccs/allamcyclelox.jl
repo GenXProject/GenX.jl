@@ -72,7 +72,6 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     gen = inputs["RESOURCES"]
     T = inputs["T"]                                                 # Number of time steps (hours)
     Z = inputs["Z"]                                                 # Number of zones
-    MultiStage = setup["MultiStage"]
     omega = inputs["omega"]
 
     # Load Allam Cycle related inputs 
@@ -150,7 +149,7 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCap_AllamcycleLOX[y in ALLAM_CYCLE_LOX, i in 1:3],
     if y in intersect(NEW_CAP_Allam, RET_CAP_Allam) # Resources eligible for new capacity and retirements 
         if y in COMMIT_Allam
-            eExistingCap_AllamcycleLOX[y,i] +
+            eExistingCap_AllamCycleLOX[y,i] +
                 allam_dict[y,"cap_size"][i] * (EP[:vCAP_AllamCycleLOX][y,i] - EP[:vRETCAP_AllamCycleLOX][y,i])
         else
             eExistingCap_AllamCycleLOX[y, i] + EP[:vCAP_AllamCycleLOX][y, i] - EP[:vRETCAP_AllamCycleLOX][y,i]
