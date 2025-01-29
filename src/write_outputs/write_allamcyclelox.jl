@@ -56,9 +56,9 @@ function write_allam_capacity(path::AbstractString, inputs::Dict, setup::Dict, E
 	dfCapAllam = DataFrame(Resource = resource_name.(gen[ALLAM_CYCLE_LOX]),
 		Zone = zone_id.(gen[ALLAM_CYCLE_LOX]),
 		
-		StartCap_sCO2turbine_MW_gross = MultiStage == 1 ? value.(EP[:vEXISTINGCAP_AllamCycleLOX]) : [allam_dict[y, "existing_cap"][sco2turbine] for y in ALLAM_CYCLE_LOX],
-		StartCap_ASU_MW_gross = MultiStage == 1 ? value.(EP[:vEXISTINGCAP_AllamCycleLOX]) : [allam_dict[y, "existing_cap"][asu] for y in ALLAM_CYCLE_LOX],
-		StartCap_LOX_t = MultiStage == 1 ? value.(EP[:vEXISTINGCAP_AllamCycleLOX]) : [allam_dict[y, "existing_cap"][lox] for y in ALLAM_CYCLE_LOX],
+		StartCap_sCO2turbine_MW_gross = [allam_dict[y, "existing_cap"][sco2turbine] for y in ALLAM_CYCLE_LOX],
+		StartCap_ASU_MW_gross = [allam_dict[y, "existing_cap"][asu] for y in ALLAM_CYCLE_LOX],
+		StartCap_LOX_t = [allam_dict[y, "existing_cap"][lox] for y in ALLAM_CYCLE_LOX],
 		
 		NewCap_sCO2turbine_MW_gross = capAllam_sco2turbine[ALLAM_CYCLE_LOX],
 		NewCap_ASU_MW_gross = capAllam_asu[ALLAM_CYCLE_LOX],
