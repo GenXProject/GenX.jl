@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed the output filename for RSV from `reg_dn.csv` to `reserves.csv`.
+- Created link in the thermal doc page to fuels page for piecewise linear cost curve documentation
 
 ### Fixed
 - Fixed capacity reserve margin formulation for asymmetric storage
