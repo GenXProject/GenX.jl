@@ -7,7 +7,6 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     gen = inputs["RESOURCES"]
 
     MultiStage = setup["MultiStage"]
-    G = inputs["G"]
 
     sco2turbine = 1
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
@@ -92,24 +91,26 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
             existingcapenergy[i] = existing_cap_mwh(gen[i]) # multistage functionality doesn't exist yet for VRE-storage resources
         end
     end
-    # for allam cycle lox, we need to use eTotalCap_AllamcycleLOX instead of eTotalCap
-    end_cap = zeros(G)
-    for i in 1:G
-        if i in ALLAM_CYCLE_LOX
-            end_cap[i] = value(EP[:eTotalCap_AllamcycleLOX][i, sco2turbine])
-        else
-            end_cap[i] = value.(EP[:eTotalCap][i])
-        end
+
+    startcap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen)
+    endcap = value.(EP[:eTotalCap])
+    
+    # for allam cycle lox, we need to use:
+    # eExistingCap_AllamCycleLOX instead of eExistingCap
+    # eTotalCap_AllamcycleLOX instead of eTotalCap
+    for y in ALLAM_CYCLE_LOX
+        startcap[y] = value(EP[:eExistingCap_AllamCycleLOX][y, sco2turbine])
+        endcap[y] = value(EP[:eTotalCap_AllamcycleLOX][y, sco2turbine])
     end
 
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
         Zone = zone_id.(gen),
         Retrofit_Id = retrofit_id.(gen),
-        StartCap = MultiStage == 1 ? value.(EP[:vEXISTINGCAP]) : existing_cap_mw.(gen),
+        StartCap = startcap[:],
         RetCap = retcapdischarge[:],
         RetroCap = retrocapdischarge[:], #### Need to change later
         NewCap = capdischarge[:],
-        EndCap = end_cap[:],
+        EndCap = endcap[:],
         CapacityConstraintDual = capacity_constraint_dual[:],
         StartEnergyCap = existingcapenergy[:],
         RetEnergyCap = retcapenergy[:],
