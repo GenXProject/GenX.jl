@@ -38,7 +38,7 @@ function default_settings()
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
         "ObjScale" => 1,
-        "asymmetrical_trans_flow_limit" => 0
+        "AsymmetricalTransFlowLimit" => 0
         )
 end
 
