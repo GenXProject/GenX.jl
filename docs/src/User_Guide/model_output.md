@@ -193,7 +193,12 @@ This file includes the output from each component of an Allam Cycle LOX resource
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| (resource\_name)\_sCO2Turbine\_gross\_power\_output\_MWh | Gross power output of the sCO2Turbine in the Allam Cycle LOX resource | MWh |
-| (resource\_name)\_ASU\_gross\_power\_output\_MWh | Gross power output of the ASU in the Allam Cycle LOX resource | MWh |
-| (resource\_name)\_LOX\_gross\_power\_output\_t | Gross power output of the LOX in the Allam Cycle LOX resource | t |
-
+| (resource\_name)\_sCO2Turbine\_gross\_power\_output\_mw | Hourly gross power output of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| (resource\_name)\_sco2turbine\_commit | Hourly unit commit status of the sCO2Turbine in the Allam Cycle LOX resource |  |
+| (resource\_name)\_ASU\_gross\_power\_output\_mw | Hourly gross power consumption of the ASU in the Allam Cycle LOX resource | MW |
+| (resource\_name)\_asu\_commit | Hourly unit commit status of the ASU in the Allam Cycle LOX resource |  |
+| (resource\_name)\_net\_power\_output\_mw | Hourly net power output of the Allam Cycle LOX resource | MW |
+| (resource\_name)\_storage\_lox\_t | Hourly status of charge of the LOX in the Allam Cycle LOX resource | t |
+| (resource\_name)\_lox\_in\_t | Hourly amount of liquid oxygen charged into the LOX in the Allam Cycle LOX resource | t |
+| (resource\_name)\_lox\_out\_t | Hourly amount of liquid oxygen discharged from the LOX in the Allam Cycle LOX resource | t |
+| (resource\_name)\_gox\_t | Hourly amount of gaseous oxygen produced by ASU in the Allam Cycle LOX resource | t |
