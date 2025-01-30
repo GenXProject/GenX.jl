@@ -134,12 +134,12 @@ function curtailable_variable_renewable_operational_reserves!(EP::Model, inputs:
         vRSV[y, t]<=rsv_max(gen[y]) * hourly_bin_capacity(y, t))
 
     expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
-    add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
+    add_similar_to_expression!(expr[REG, :], -1.0, vREG[REG, :])
     @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t]>=0)
 
     expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
-    add_similar_to_expression!(expr[REG, :], +vREG[REG, :])
-    add_similar_to_expression!(expr[RSV, :], +vRSV[RSV, :])
+    add_similar_to_expression!(expr[REG, :], vREG[REG, :])
+    add_similar_to_expression!(expr[RSV, :], vRSV[RSV, :])
     @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t]<=hourly_bin_capacity(y, t))
 end
 

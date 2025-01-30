@@ -238,7 +238,7 @@ function hydro_res_operational_reserves!(EP::Model, inputs::Dict)
 
     S = HYDRO_RES_REG
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
-    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -vREG[S, :])
+    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -1.0, vREG[S, :])
 
     S = HYDRO_RES_RSV
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])

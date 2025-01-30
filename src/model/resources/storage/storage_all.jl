@@ -253,8 +253,8 @@ function storage_all_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum charging rate plus contribution to reserves up must be greater than zero
     # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
     expr = extract_time_series_to_expression(vCHARGE, STOR_ALL)
-    add_similar_to_expression!(expr[STOR_REG, :], -vREG_charge[STOR_REG, :])
-    add_similar_to_expression!(expr[STOR_RSV, :], -vRSV_charge[STOR_RSV, :])
+    add_similar_to_expression!(expr[STOR_REG, :], -1.0, vREG_charge[STOR_REG, :])
+    add_similar_to_expression!(expr[STOR_RSV, :], -1.0, vRSV_charge[STOR_RSV, :])
     @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t]>=0)
 
     # Maximum discharging rate and contribution to reserves down must be greater than zero

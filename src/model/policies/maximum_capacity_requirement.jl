@@ -15,7 +15,7 @@ function maximum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
     # if input files are present, add maximum capacity requirement slack variables
     if haskey(inputs, "MaxCapPriceCap")
         @variable(EP, vMaxCap_slack[maxcap = 1:NumberOfMaxCapReqs]>=0)
-        add_similar_to_expression!(EP[:eMaxCapRes], -vMaxCap_slack)
+        add_similar_to_expression!(EP[:eMaxCapRes], -1.0, vMaxCap_slack)
 
         @expression(EP,
             eCMaxCap_slack[maxcap = 1:NumberOfMaxCapReqs],

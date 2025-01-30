@@ -172,7 +172,7 @@ function thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
     expr = extract_time_series_to_expression(vP, THERM_NO_COMMIT)
-    add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
+    add_similar_to_expression!(expr[REG, :], -1.0, vREG[REG, :])
     @constraint(EP,
         [y in THERM_NO_COMMIT, t in 1:T],
         expr[y, t]>=min_power(gen[y]) * eTotalCap[y])
