@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.3] - 2025-01-29
+
 ### Changed
 - Changed the output filename for RSV from `reg_dn.csv` to `reserves.csv` (#814).
 - Created link in the thermal doc page to fuels page for piecewise linear cost curve documentation (#820).
