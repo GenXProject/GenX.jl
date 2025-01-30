@@ -163,7 +163,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                 eCapResMarBalanceTrans[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
                 sum(inputs["dfTransCapRes_excl"][l, res] *
                     inputs["dfDerateTransCapRes"][l, res] * EP[:vFLOW][l, t] for l in 1:L))
-            add_similar_to_expression!(EP[:eCapResMarBalance], -eCapResMarBalanceTrans)
+            add_similar_to_expression!(EP[:eCapResMarBalance], -1.0, eCapResMarBalanceTrans)
         end
     end
 
@@ -309,10 +309,13 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     # ESR Lossses
     if EnergyShareRequirement >= 1 && IncludeLossesInESR == 1
+        # LOOP ORDER
+        ALL_DF_ESR = map(1:inputs["nESR"]) do ESR
+            return findall(x -> x > 0, inputs["dfESR"][:, ESR])
+        end
         @expression(EP, eESRTran[ESR = 1:inputs["nESR"]],
-            sum(inputs["dfESR"][z, ESR] *
-                sum(inputs["omega"][t] * EP[:eLosses_By_Zone][z, t] for t in 1:T)
-            for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
-        add_similar_to_expression!(EP[:eESR], -eESRTran)
+            sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * EP[:eLosses_By_Zone][z, t]
+                for t in 1:T, z in ALL_DF_ESR[ESR]))
+        add_similar_to_expression!(EP[:eESR], -1.0, eESRTran)
     end
 end
