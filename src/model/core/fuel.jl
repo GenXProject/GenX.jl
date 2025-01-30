@@ -51,11 +51,13 @@ When the power output is zero, the commitment variable $U_{g,t}$ will bring the 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
 In order to run piecewise fuel consumption module,
-the unit commitment must be turned on (UC = 1 or 2), and users should provide $PWFU_{Slope_i}$ and 
-$PWFU_{Intercept_i}$ for at least one segment ($PWFU$ refers to Piece Wise Fuel Usage) (Refer to [Table 6a: Additional columns in the Thermal.csv file](@ref)). 
+the unit commitment must be turned on (UC = 1 or 2), and users should provide $PWFU_{y_0}$, $PWFU_{Slope_i}$ and 
+$PWFU_{Intercept_i}$ for at least one segment ($PWFU$ refers to Piece Wise Fuel Usage) (Refer to 
+the PWFU parameters in [Table 6a: Additional columns in the Thermal.csv file](@ref) for the corresponding entries against the above-mentioned ones). 
 
 To enable resources to use multiple fuels during both startup and normal operational processes, three additional variables were added: 
-fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel consumption for single-fuel plants ($vStartFuel_{y,t}$); and startup fuel consumption for multi-fuel plants ($vMulStartFuel_{y,i,t}$). By making startup fuel consumption variables, the model can choose the startup fuel to meet the constraints.    
+fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel consumption for single-fuel plants ($vStartFuel_{y,t}$); 
+and startup fuel consumption for multi-fuel plants ($vMulStartFuel_{y,i,t}$). By making startup fuel consumption variables, the model can choose the startup fuel to meet the constraints.    
     
 For plants using multiple fuels:
     
