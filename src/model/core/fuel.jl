@@ -6,20 +6,23 @@ This function creates expressions to account for total fuel consumption (e.g., c
 natural gas, hydrogen, etc). It also has the capability to model heat rates that are
 a function of load via a piecewise-linear approximation. See also the [`thermal!`](@ref) page.
 
-***** Expressions ******
+**Expressions**
+
 Users have two options to model the fuel consumption as a function of power generation: 
 (1). Use a constant heat rate, regardless of the minimum load or maximum load; and 
+
 (2). Use the PiecewiseFuelUsage-related parameters to model the fuel consumption via a 
 piecewise-linear approximation of the heat rate curves. By using this option, users can represent 
 the fact that most generators have a decreasing heat rate as a function of load.
 
-(1). Constant heat rate. 
+(1). Constant heat rate: 
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation 
 ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
 denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
 and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
-(2). Piecewise-linear approximation
+
+(2). Piecewise-linear approximation: 
 With this formulation, the heat rate of generators becomes a function of load.
 In reality this relationship takes a nonlinear form, but we model it
 through a piecewise-linear approximation:
@@ -35,11 +38,11 @@ Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ 
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
 are optional inputs to the resource .csv files. 
 When Unit commitment is on, if a user provides slope and intercept, the standard heat rate 
-(i.e., Heat_Rate_MMBTU_per_MWh) will not be used. When unit commitment is off, the model will 
+(i.e., Heat\_Rate\_MMBTU\_per\_MWh) will not be used. When unit commitment is off, the model will 
 always use the standard heat rate.
-The user should determine the slope and intercept parameters based on the Cap_Size of the plant. 
-For example, when a plant is operating at the full load (i.e., power output equal to the Cap_Size),
-the fuel usage determined by the effective segment divided by Cap_Size should be equal to the 
+The user should determine the slope and intercept parameters based on the Cap\_Size of the plant. 
+For example, when a plant is operating at the full load (i.e., power output equal to the Cap\_Size),
+the fuel usage determined by the effective segment divided by Cap\_Size should be equal to the 
 heat rate at full-load.
 
 Since fuel consumption and fuel costs are postive, the optimization will force the fuel usage
@@ -48,11 +51,13 @@ When the power output is zero, the commitment variable $U_{g,t}$ will bring the 
 to be zero such that the fuel consumption is zero when thermal units are offline.
 
 In order to run piecewise fuel consumption module,
-the unit commitment must be turned on (UC = 1 or 2), and users should provide PWFU_Slope_* and 
-PWFU_Intercept_* for at least one segment. 
+the unit commitment must be turned on (UC = 1 or 2), and users should provide $PWFU_{y_0}$, $PWFU_{Slope_i}$ and 
+$PWFU_{Intercept_i}$ for at least one segment ($PWFU$ refers to Piece Wise Fuel Usage) (Refer to 
+the PWFU parameters in [Table 6a: Additional columns in the Thermal.csv file](@ref) for the corresponding entries against the above-mentioned ones). 
 
 To enable resources to use multiple fuels during both startup and normal operational processes, three additional variables were added: 
-fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel consumption for single-fuel plants ($vStartFuel_{y,t}$); and startup fuel consumption for multi-fuel plants ($vMulStartFuel_{y,i,t}$). By making startup fuel consumption variables, the model can choose the startup fuel to meet the constraints.    
+fuel $i$ consumption by plant $y$ at time $t$ ($vMulFuel_{y,i,t}$); startup fuel consumption for single-fuel plants ($vStartFuel_{y,t}$); 
+and startup fuel consumption for multi-fuel plants ($vMulStartFuel_{y,i,t}$). By making startup fuel consumption variables, the model can choose the startup fuel to meet the constraints.    
     
 For plants using multiple fuels:
     
