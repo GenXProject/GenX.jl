@@ -29,8 +29,6 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps
 
     create_empty_expression!(EP, :eESR, inputs["nESR"])
-    ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
-    @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
 
     # Generation from eligible generators - ESR fraction * demand >= 0
     @expression(EP, eESRDischarge[ESR = 1:inputs["nESR"]],
@@ -61,5 +59,7 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
         add_to_expression!(EP[:eObj], eCTotalESRSlack)
     end
+    ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
+    @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
 
 end
