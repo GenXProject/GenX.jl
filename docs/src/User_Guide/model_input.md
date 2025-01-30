@@ -142,7 +142,7 @@ The `resources` folder contains the input files for each resource type. At the c
 
 Each file contains cost and performance parameters for various generators and other resources included in the model formulation. The following table describes the mandatory columns in each of these files. Note that the column names are case insensitive.
 
-##### Table 5a: Mandatory columns in all resource .csv file
+##### Table 5a: Columns in resource .csv files that are common to all resources
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -196,7 +196,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Maintenance\_Duration| (Positive integer, less than total length of simulation.) Duration of the maintenance period, in number of timesteps. Only used if `MAINT=1`.|
 |Maintenance\_Cycle\_Length\_Years| Length of scheduled maintenance cycle, in years. `1` is maintenance every year, `3` is every three years, etc. (Positive integer. Only used if `MAINT=1`.)|
 |Maintenance\_Begin\_Cadence| Cadence of timesteps in which scheduled maintenance can begin. `1` means that a maintenance period can start in any timestep, `24` means it can start only in timesteps 1, 25, 49, etc. A larger number can decrease the simulation computational cost as it limits the optimizer's choices. (Positive integer, less than total length of simulation. Only used if `MAINT=1`.)|
-|**CO2-related parameters required if any resources have nonzero CO2_Capture_Fraction**|
+|**CO2-related parameters required if any resources have nonzero CO2\_Capture\_Fraction**|
 |CO2\_Capture\_Fraction  |[0,1], The CO2 capture fraction of CCS-equipped power plants during steady state operation. This value should be 0 for generators without CCS. |
 |CO2\_Capture\_Fraction\_Startup  |[0,1], The CO2 capture fraction of CCS-equipped power plants during the startup events. This value should be 0 for generators without CCS |
 |Biomass | {0, 1}, Flag to indicate if generator uses biomass as feedstock (optional input column).|
