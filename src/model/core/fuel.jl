@@ -38,11 +38,11 @@ Where $h_{y,x}$ represents the heat rate slope for generator $y$ in segment $x$ 
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. These parameters
 are optional inputs to the resource .csv files. 
 When Unit commitment is on, if a user provides slope and intercept, the standard heat rate 
-(i.e., Heat_Rate_MMBTU_per_MWh) will not be used. When unit commitment is off, the model will 
+(i.e., Heat\_Rate\_MMBTU\_per\_MWh) will not be used. When unit commitment is off, the model will 
 always use the standard heat rate.
-The user should determine the slope and intercept parameters based on the Cap_Size of the plant. 
-For example, when a plant is operating at the full load (i.e., power output equal to the Cap_Size),
-the fuel usage determined by the effective segment divided by Cap_Size should be equal to the 
+The user should determine the slope and intercept parameters based on the Cap\_Size of the plant. 
+For example, when a plant is operating at the full load (i.e., power output equal to the Cap\_Size),
+the fuel usage determined by the effective segment divided by Cap\_Size should be equal to the 
 heat rate at full-load.
 
 Since fuel consumption and fuel costs are postive, the optimization will force the fuel usage
