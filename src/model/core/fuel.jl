@@ -4,7 +4,7 @@
 
 This function creates expressions to account for total fuel consumption (e.g., coal, 
 natural gas, hydrogen, etc). It also has the capability to model heat rates that are
-a function of load via a piecewise-linear approximation.
+a function of load via a piecewise-linear approximation. See also the [`thermal!`](@ref) page.
 
 ***** Expressions ******
 Users have two options to model the fuel consumption as a function of power generation: 
