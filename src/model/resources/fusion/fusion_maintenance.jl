@@ -27,7 +27,5 @@ function _fusion_maintenance_parasitic_power_adjustment!(
     ePassiveParasitic = from_model(fusion_parasitic_passive_name)
     vMDOWN = EP[Symbol(maintenance_down_name(resource_component))]
 
-    eReduction = -reduction * η * component_size * vMDOWN
-
-    add_similar_to_expression!(ePassiveParasitic, eReduction)
+    add_similar_to_expression!(ePassiveParasitic, -reduction * η * component_size, vMDOWN)
 end

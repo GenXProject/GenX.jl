@@ -118,6 +118,11 @@ function add_similar_to_expression!(expr1::GenericAffExpr{C, T}, expr2::V) where
     return nothing
 end
 
+function add_similar_to_expression!(expr1::GenericAffExpr{C, T}, coef::U, expr2::V) where {C, T, U <: Number, V}
+    add_to_expression!(expr1, coef, expr2)
+    return nothing
+end
+
 @doc raw"""
     add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C,T}, dim1}, expr2::AbstractArray{V, dim2}) where {C,T,V,dim1,dim2}
 
@@ -138,11 +143,33 @@ function add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C, T}, d
     return nothing
 end
 
+function add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C, T}, dim1},
+    coef::U, expr2::AbstractArray{V, dim2}) where {C, T, U<:Number, V, dim1, dim2}
+    # This is defined for Arrays of different dimensions
+    # despite the fact it will definitely throw an error
+    # because the error will tell the user / developer
+    # the dimensions of both arrays
+    check_sizes_match(expr1, expr2)
+    for i in eachindex(expr1)
+        add_to_expression!(expr1[i], coef, expr2[i])
+    end
+    return nothing
+end
+
 # If the expressions are vectors of numbers, use the += operator
 function add_similar_to_expression!(arr1::AbstractArray{T, dims},
         arr2::AbstractArray{T, dims}) where {T <: Number, dims}
     for i in eachindex(arr1)
         arr1[i] += arr2[i]
+    end
+    return nothing
+end
+
+# If the expressions are vectors of numbers, use the += operator
+function add_similar_to_expression!(arr1::AbstractArray{T, dims},
+    coef::U, arr2::AbstractArray{T, dims}) where {T <: Number, U <: Number, dims}
+    for i in eachindex(arr1)
+        arr1[i] += coef * arr2[i]
     end
     return nothing
 end

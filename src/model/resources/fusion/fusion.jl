@@ -464,7 +464,7 @@ function fusion_adjust_power_balance!(
         resource_component = resource_name(gen[y]) * component
         fusion_total_parasitic_power!(EP, inputs, resource_component, y)
         eTotalParasitic = EP[fusion_parasitic_total_name(resource_component)]
-        add_similar_to_expression!(ePowerBalance[:, z], -eTotalParasitic)
+        add_similar_to_expression!(ePowerBalance[:, z], -1.0, eTotalParasitic)
     end
 end
 
