@@ -52,7 +52,7 @@ The following tables summarize the model settings parameters and their default/p
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
-|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
+|ModelingToGenerateAlternatives | Modeling to Generate Alternatives Algorithm. For more details, see the [Modeling to Generate Alternatives](@ref) section in the **Model Reference**.|
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
