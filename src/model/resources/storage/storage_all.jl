@@ -148,7 +148,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # From CO2 Policy module
     expr = @expression(EP,
         [z = 1:Z],
-        sum(EP[:eELOSS][y] for y in intersect(STOR_ALL, resources_in_zone_by_rid(gen, z))))
+        sum(eELOSS[y] for y in intersect(STOR_ALL, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:eELOSSByZone], expr)
 
     # Capacity Reserve Margin policy
