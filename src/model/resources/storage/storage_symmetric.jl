@@ -30,7 +30,6 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
         REG = intersect(SYMMETRIC, inputs["REG"])
         RSV = intersect(SYMMETRIC, inputs["RSV"])
         vREG_charge = EP[:vREG_charge]
-        vRSV_charge = EP[:vRSV_charge]
         vREG_discharge = EP[:vREG_discharge]
         vRSV_discharge = EP[:vRSV_discharge]
         add_similar_to_expression!(expr[REG, :], vREG_charge[REG, :])

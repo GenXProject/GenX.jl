@@ -29,7 +29,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
     weight = inputs["omega"]
 
-    eTotalCap = EP[:eTotalCap]
     eTotalCapEnergy = EP[:eTotalCapEnergy]
     vP = EP[:vP]
 
