@@ -74,12 +74,15 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eExistingCapEnergy[y in STOR_ALL], existing_cap_mwh(gen[y]))
     end
 
+    NEW_AND_RET_CAP_ENERGY = intersect(NEW_CAP_ENERGY, RET_CAP_ENERGY)
+    NEW_NOT_RET_CAP_ENERGY = setdiff(NEW_CAP_ENERGY, RET_CAP_ENERGY)
+    RET_NOT_NEW_CAP_ENERGY = setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY)
     @expression(EP, eTotalCapEnergy[y in STOR_ALL],
-        if (y in intersect(NEW_CAP_ENERGY, RET_CAP_ENERGY))
+        if (y in NEW_AND_RET_CAP_ENERGY)
             eExistingCapEnergy[y] + EP[:vCAPENERGY][y] - EP[:vRETCAPENERGY][y]
-        elseif (y in setdiff(NEW_CAP_ENERGY, RET_CAP_ENERGY))
+        elseif (y in NEW_NOT_RET_CAP_ENERGY)
             eExistingCapEnergy[y] + EP[:vCAPENERGY][y]
-        elseif (y in setdiff(RET_CAP_ENERGY, NEW_CAP_ENERGY))
+        elseif (y in RET_NOT_NEW_CAP_ENERGY)
             eExistingCapEnergy[y] - EP[:vRETCAPENERGY][y]
         else
             eExistingCapEnergy[y]

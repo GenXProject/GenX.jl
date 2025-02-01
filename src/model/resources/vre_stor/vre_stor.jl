@@ -129,11 +129,13 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Note: The subtraction of the charging component can be found in STOR function
     @expression(EP, ePowerBalance_VRE_STOR[t = 1:T, z = 1:Z], JuMP.AffExpr())
+    gen_VRE_STOR_BY_ZONE = map(1:Z) do z
+        return resources_in_zone_by_rid(gen_VRE_STOR, z)
+    end
     for t in 1:T, z in 1:Z
-        if !isempty(resources_in_zone_by_rid(gen_VRE_STOR, z))
+        if !isempty(gen_VRE_STOR_BY_ZONE[z])
             ePowerBalance_VRE_STOR[t, z] += sum(EP[:vP][y, t]
-            for y in resources_in_zone_by_rid(gen_VRE_STOR,
-                z))
+            for y in gen_VRE_STOR_BY_ZONE[z])
         end
     end
 
@@ -188,7 +190,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         if IncludeLossesInESR == 1
             @expression(EP, eESRVREStorLosses[ESR = 1:inputs["nESR"]],
                 sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS_VRE_STOR][y]
-                    for y in intersect(STOR, resources_in_zone_by_rid(gen_VRE_STOR, z)))
+                    for y in intersect(STOR, gen_VRE_STOR_BY_ZONE[z]))
                 for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
             EP[:eESR] -= eESRVREStorLosses
         end
@@ -459,12 +461,15 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # 1. Total inverter capacity
+    NEW_AND_RET_CAP_DC = intersect(NEW_CAP_DC, RET_CAP_DC)
+    NEW_NOT_RET_CAP_DC = setdiff(NEW_CAP_DC, RET_CAP_DC)
+    RET_NOT_NEW_CAP_DC = setdiff(RET_CAP_DC, NEW_CAP_DC)
     @expression(EP, eTotalCap_DC[y in DC],
-        if (y in intersect(NEW_CAP_DC, RET_CAP_DC)) # Resources eligible for new capacity and retirements
+        if (y in NEW_AND_RET_CAP_DC) # Resources eligible for new capacity and retirements
             eExistingCapDC[y] + EP[:vDCCAP][y] - EP[:vRETDCCAP][y]
-        elseif (y in setdiff(NEW_CAP_DC, RET_CAP_DC)) # Resources eligible for only new capacity
+        elseif (y in NEW_NOT_RET_CAP_DC) # Resources eligible for only new capacity
             eExistingCapDC[y] + EP[:vDCCAP][y]
-        elseif (y in setdiff(RET_CAP_DC, NEW_CAP_DC)) # Resources eligible for only capacity retirements
+        elseif (y in RET_NOT_NEW_CAP_DC) # Resources eligible for only capacity retirements
             eExistingCapDC[y] - EP[:vRETDCCAP][y]
         else
             eExistingCapDC[y]
@@ -621,12 +626,15 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # 1. Total solar capacity
+    NEW_AND_RET_CAP_SOLAR = intersect(NEW_CAP_SOLAR, RET_CAP_SOLAR)
+    NEW_NOT_RET_CAP_SOLAR = setdiff(NEW_CAP_SOLAR, RET_CAP_SOLAR)
+    RET_NOT_NEW_CAP_SOLAR = setdiff(RET_CAP_SOLAR, NEW_CAP_SOLAR)
     @expression(EP, eTotalCap_SOLAR[y in SOLAR],
-        if (y in intersect(NEW_CAP_SOLAR, RET_CAP_SOLAR)) # Resources eligible for new capacity and retirements
+        if (y in NEW_AND_RET_CAP_SOLAR) # Resources eligible for new capacity and retirements
             eExistingCapSolar[y] + EP[:vSOLARCAP][y] - EP[:vRETSOLARCAP][y]
-        elseif (y in setdiff(NEW_CAP_SOLAR, RET_CAP_SOLAR)) # Resources eligible for only new capacity
+        elseif (y in NEW_NOT_RET_CAP_SOLAR) # Resources eligible for only new capacity
             eExistingCapSolar[y] + EP[:vSOLARCAP][y]
-        elseif (y in setdiff(RET_CAP_SOLAR, NEW_CAP_SOLAR)) # Resources eligible for only capacity retirements
+        elseif (y in RET_NOT_NEW_CAP_SOLAR) # Resources eligible for only capacity retirements
             eExistingCapSolar[y] - EP[:vRETSOLARCAP][y]
         else
             eExistingCapSolar[y]
@@ -798,12 +806,15 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # 1. Total wind capacity
+    NEW_AND_RET_CAP_WIND = intersect(NEW_CAP_WIND, RET_CAP_WIND)
+    NEW_NOT_RET_CAP_WIND = setdiff(NEW_CAP_WIND, RET_CAP_WIND)
+    RET_NOT_NEW_CAP_WIND = setdiff(RET_CAP_WIND, NEW_CAP_WIND)
     @expression(EP, eTotalCap_WIND[y in WIND],
-        if (y in intersect(NEW_CAP_WIND, RET_CAP_WIND)) # Resources eligible for new capacity and retirements
+        if (y in NEW_AND_RET_CAP_WIND) # Resources eligible for new capacity and retirements
             eExistingCapWind[y] + EP[:vWINDCAP][y] - EP[:vRETWINDCAP][y]
-        elseif (y in setdiff(NEW_CAP_WIND, RET_CAP_WIND)) # Resources eligible for only new capacity
+        elseif (y in NEW_NOT_RET_CAP_WIND) # Resources eligible for only new capacity
             eExistingCapWind[y] + EP[:vWINDCAP][y]
-        elseif (y in setdiff(RET_CAP_WIND, NEW_CAP_WIND)) # Resources eligible for only capacity retirements
+        elseif (y in RET_NOT_NEW_CAP_WIND) # Resources eligible for only capacity retirements
             eExistingCapWind[y] - EP[:vRETWINDCAP][y]
         else
             eExistingCapWind[y]
@@ -1075,12 +1086,15 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # 1. Total storage energy capacity
+    NEW_AND_RET_CAP_STOR = intersect(NEW_CAP_STOR, RET_CAP_STOR)
+    NEW_NOT_RET_CAP_STOR = setdiff(NEW_CAP_STOR, RET_CAP_STOR)
+    RET_NOT_NEW_CAP_STOR = setdiff(RET_CAP_STOR, NEW_CAP_STOR)
     @expression(EP, eTotalCap_STOR[y in STOR],
-        if (y in intersect(NEW_CAP_STOR, RET_CAP_STOR)) # Resources eligible for new capacity and retirements
+        if (y in NEW_AND_RET_CAP_STOR) # Resources eligible for new capacity and retirements
             eExistingCapEnergy_VS[y] + EP[:vCAPENERGY_VS][y] - EP[:vRETCAPENERGY_VS][y]
-        elseif (y in setdiff(NEW_CAP_STOR, RET_CAP_STOR)) # Resources eligible for only new capacity
+        elseif (y in NEW_NOT_RET_CAP_STOR) # Resources eligible for only new capacity
             eExistingCapEnergy_VS[y] + EP[:vCAPENERGY_VS][y]
-        elseif (y in setdiff(RET_CAP_STOR, NEW_CAP_STOR)) # Resources eligible for only capacity retirements
+        elseif (y in RET_NOT_NEW_CAP_STOR) # Resources eligible for only capacity retirements
             eExistingCapEnergy_VS[y] - EP[:vRETCAPENERGY_VS][y]
         else
             eExistingCapEnergy_VS[y]
@@ -1229,12 +1243,17 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         EP[:eGridExport][y, t] += vCHARGE_VRE_STOR[y, t]
     end
 
+    gen_VRE_STOR_BY_ZONE_AND_STOR = map(1:Z) do z
+        resources_in_zone = resources_in_zone_by_rid(gen_VRE_STOR, z)
+        if isempty(resources_in_zone)
+            return resources_in_zone
+        end
+        return intersect(resources_in_zone, STOR)
+    end
     for z in 1:Z, t in 1:T
-        if !isempty(resources_in_zone_by_rid(gen_VRE_STOR, z))
+        if !isempty(gen_VRE_STOR_BY_ZONE_AND_STOR[z])
             EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y, t]
-            for y in intersect(resources_in_zone_by_rid(gen_VRE_STOR,
-                    z),
-                STOR))
+            for y in igen_VRE_STOR_BY_ZONE_AND_STOR[z])
         end
     end
 
@@ -1243,7 +1262,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # From CO2 Policy module
     @expression(EP, eELOSSByZone_VRE_STOR[z = 1:Z],
         sum(EP[:eELOSS_VRE_STOR][y]
-        for y in intersect(resources_in_zone_by_rid(gen_VRE_STOR, z), STOR)))
+        for y in gen_VRE_STOR_BY_ZONE_AND_STOR[z]))
     add_similar_to_expression!(EP[:eELOSSByZone], eELOSSByZone_VRE_STOR)
 
     ### CONSTRAINTS ###
@@ -1405,12 +1424,15 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # 1. Total electrolyzer capacity
+    NEW_AND_RET_CAP_ELEC = intersect(NEW_CAP_ELEC, RET_CAP_ELEC)
+    NEW_NOT_RET_CAP_ELEC = setdiff(NEW_CAP_ELEC, RET_CAP_ELEC)
+    RET_NOT_NEW_CAP_ELEC = setdiff(RET_CAP_ELEC, NEW_CAP_ELEC)
     @expression(EP, eTotalCap_ELEC[y in ELEC],
-        if (y in intersect(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for new capacity and retirements
+        if (y in NEW_AND_RET_CAP_ELEC) # Resources eligible for new capacity and retirements
             eExistingCapElec[y] + EP[:vELECCAP][y] - EP[:vRETELECCAP][y]
-        elseif (y in setdiff(NEW_CAP_ELEC, RET_CAP_ELEC)) # Resources eligible for only new capacity
+        elseif (y in NEW_NOT_RET_CAP_ELEC) # Resources eligible for only new capacity
             eExistingCapElec[y] + EP[:vELECCAP][y]
-        elseif (y in setdiff(RET_CAP_ELEC, NEW_CAP_ELEC)) # Resources eligible for only capacity retirements
+        elseif (y in RET_NOT_NEW_CAP_ELEC) # Resources eligible for only capacity retirements
             eExistingCapElec[y] - EP[:vRETELECCAP][y]
         else
             eExistingCapElec[y]
@@ -1795,13 +1817,16 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end
 
         # 1. Total storage discharge DC capacity
+        NEW_AND_RET_CAP_DISCHARGE_DC = intersect(NEW_CAP_DISCHARGE_DC, RET_CAP_DISCHARGE_DC)
+        NEW_NOT_RET_CAP_DISCHARGE_DC = setdiff(NEW_CAP_DISCHARGE_DC, RET_CAP_DISCHARGE_DC)
+        RET_NOT_NEW_CAP_DISCHARGE_DC = setdiff(RET_CAP_DISCHARGE_DC, NEW_CAP_DISCHARGE_DC)
         @expression(EP, eTotalCapDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
-            if (y in intersect(NEW_CAP_DISCHARGE_DC, RET_CAP_DISCHARGE_DC))
+            if (y in NEW_AND_RET_CAP_DISCHARGE_DC)
                 eExistingCapDischargeDC[y] + EP[:vCAPDISCHARGE_DC][y] -
                 EP[:vRETCAPDISCHARGE_DC][y]
-            elseif (y in setdiff(NEW_CAP_DISCHARGE_DC, RET_CAP_DISCHARGE_DC))
+            elseif (y in NEW_NOT_RET_CAP_DISCHARGE_DC)
                 eExistingCapDischargeDC[y] + EP[:vCAPDISCHARGE_DC][y]
-            elseif (y in setdiff(RET_CAP_DISCHARGE_DC, NEW_CAP_DISCHARGE_DC))
+            elseif (y in RET_NOT_NEW_CAP_DISCHARGE_DC)
                 eExistingCapDischargeDC[y] - EP[:vRETCAPDISCHARGE_DC][y]
             else
                 eExistingCapDischargeDC[y]
@@ -1893,12 +1918,15 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end
 
         # 1. Total storage charge DC capacity
+        NEW_AND_RET_CAP_CHARGE_DC = intersect(NEW_CAP_CHARGE_DC, RET_CAP_CHARGE_DC)
+        NEW_NOT_RET_CAP_CHARGE_DC = setdiff(NEW_CAP_CHARGE_DC, RET_CAP_CHARGE_DC)
+        RET_NOT_NEW_CAP_CHARGE_DC = setdiff(RET_CAP_CHARGE_DC, NEW_CAP_CHARGE_DC)
         @expression(EP, eTotalCapCharge_DC[y in VS_ASYM_DC_CHARGE],
-            if (y in intersect(NEW_CAP_CHARGE_DC, RET_CAP_CHARGE_DC))
+            if (y in NEW_AND_RET_CAP_CHARGE_DC)
                 eExistingCapChargeDC[y] + EP[:vCAPCHARGE_DC][y] - EP[:vRETCAPCHARGE_DC][y]
-            elseif (y in setdiff(NEW_CAP_CHARGE_DC, RET_CAP_CHARGE_DC))
+            elseif (y in NEW_NOT_RET_CAP_CHARGE_DC)
                 eExistingCapChargeDC[y] + EP[:vCAPCHARGE_DC][y]
-            elseif (y in setdiff(RET_CAP_CHARGE_DC, NEW_CAP_CHARGE_DC))
+            elseif (y in RET_NOT_NEW_CAP_CHARGE_DC)
                 eExistingCapChargeDC[y] - EP[:vRETCAPCHARGE_DC][y]
             else
                 eExistingCapChargeDC[y]
@@ -1993,13 +2021,16 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end
 
         # 1. Total storage discharge AC capacity
+        NEW_AND_RET_CAP_DISCHARGE_AC = intersect(NEW_CAP_DISCHARGE_AC, RET_CAP_DISCHARGE_AC)
+        NEW_NOT_RET_CAP_DISCHARGE_AC = setdiff(NEW_CAP_DISCHARGE_AC, RET_CAP_DISCHARGE_AC)
+        RET_NOT_NEW_CAP_DISCHARGE_AC = setdiff(RET_CAP_DISCHARGE_AC, NEW_CAP_DISCHARGE_AC)
         @expression(EP, eTotalCapDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
-            if (y in intersect(NEW_CAP_DISCHARGE_AC, RET_CAP_DISCHARGE_AC))
+            if (y in NEW_AND_RET_CAP_DISCHARGE_AC)
                 eExistingCapDischargeAC[y] + EP[:vCAPDISCHARGE_AC][y] -
                 EP[:vRETCAPDISCHARGE_AC][y]
-            elseif (y in setdiff(NEW_CAP_DISCHARGE_AC, RET_CAP_DISCHARGE_AC))
+            elseif (y in NEW_NOT_RET_CAP_DISCHARGE_AC)
                 eExistingCapDischargeAC[y] + EP[:vCAPDISCHARGE_AC][y]
-            elseif (y in setdiff(RET_CAP_DISCHARGE_AC, NEW_CAP_DISCHARGE_AC))
+            elseif (y in RET_NOT_NEW_CAP_DISCHARGE_AC)
                 eExistingCapDischargeAC[y] - EP[:vRETCAPDISCHARGE_AC][y]
             else
                 eExistingCapDischargeAC[y]
@@ -2091,12 +2122,15 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end
 
         # 1. Total storage charge AC capacity
+        NEW_AND_RET_CAP_CHARGE_AC = intersect(NEW_CAP_CHARGE_AC, RET_CAP_CHARGE_AC)
+        NEW_NOT_RET_CAP_CHARGE_AC = setdiff(NEW_CAP_CHARGE_AC, RET_CAP_CHARGE_AC)
+        RET_NOT_NEW_CAP_CHARGE_AC = setdiff(RET_CAP_CHARGE_AC, NEW_CAP_CHARGE_AC)
         @expression(EP, eTotalCapCharge_AC[y in VS_ASYM_AC_CHARGE],
-            if (y in intersect(NEW_CAP_CHARGE_AC, RET_CAP_CHARGE_AC))
+            if (y in NEW_AND_RET_CAP_CHARGE_AC)
                 eExistingCapChargeAC[y] + EP[:vCAPCHARGE_AC][y] - EP[:vRETCAPCHARGE_AC][y]
-            elseif (y in setdiff(NEW_CAP_CHARGE_AC, RET_CAP_CHARGE_AC))
+            elseif (y in NEW_NOT_RET_CAP_CHARGE_AC)
                 eExistingCapChargeAC[y] + EP[:vCAPCHARGE_AC][y]
-            elseif (y in setdiff(RET_CAP_CHARGE_AC, NEW_CAP_CHARGE_AC))
+            elseif (y in RET_NOT_NEW_CAP_CHARGE_AC)
                 eExistingCapChargeAC[y] - EP[:vRETCAPCHARGE_AC][y]
             else
                 eExistingCapChargeAC[y]
