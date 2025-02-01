@@ -15,7 +15,7 @@ pages = OrderedDict(
     ],
     "Getting Started" => [
         "Running GenX" => "Getting_Started/examples_casestudies.md",
-        "Commertial solvers" => "Getting_Started/commercial_solvers.md"
+        "Commercial solvers" => "Getting_Started/commercial_solvers.md"
     ],
     "Tutorials" => [
         "Tutorials Overview" => "Tutorials/Tutorials_intro.md",

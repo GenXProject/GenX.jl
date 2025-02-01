@@ -23,7 +23,7 @@ There are nine optional parameters for fusion in this model; all can be mixed an
 Some of the properties span more than one of these domains.
 
 ### Parasitic power
-Fusion plant designs often require significant amounts of electrical energy (and instantenous power)
+Fusion plant designs often require significant amounts of electrical energy (and instantaneous power)
 
 1. to maintain the vacuum pumps, cryogenic systems, tritium plants,
 2. for heating systems, control magnet systems, target manufacturing, or lasers, 
@@ -40,7 +40,7 @@ The pulse start _power_ is used as part of the capacity reserve margin formulati
 
 Pulsed tokamaks (as opposed to steady-state tokamaks) often call for an operational cycle where the plasma is on for 30 minutes to a few hours before carefully being drawn down.
 The _maximum pulse length_ is typically limited by the engineering of the "central solenoid", one of the large magnets.
-A _dwell time_ of a few minutes to 30 minutes is taken to allow various systems to be reset and readied for the next plasma pulse; during this time there is no plasma and no fusion occuring.
+A _dwell time_ of a few minutes to 30 minutes is taken to allow various systems to be reset and readied for the next plasma pulse; during this time there is no plasma and no fusion occurring.
 Restarting the plasma may require a significant amount of parasitic power draw, described above.
 
 #### Pulses are stressful
@@ -84,7 +84,7 @@ By default these four parasitic load parameters are $0$.
 
 The `parasitic_start_energy` and `parasitic_start_power` are related, as described above.
 If starting a plasma pulse in a 1000-MW-gross plant requires a draw of 500 MW for 3 minutes, then `parasitic_start_power` would be $0.5$ and `parasitic_start_energy` would be $(500/1000) * (3/60) = 0.025$, where 60 is the number of minutes in an hour. 
-The plasma startup sequence is assumed to be shorter than an hour: while this is not checked programatically, the `parasitic_start_power` should, logically, always be equal to or larger than the `parasitic_start_energy`.
+The plasma startup sequence is assumed to be shorter than an hour: while this is not checked pragmatically, the `parasitic_start_power` should, logically, always be equal to or larger than the `parasitic_start_energy`.
 
 #### Dwell time
 The `dwell_time` parameter is expressed in fractions of an hour.
@@ -94,7 +94,7 @@ The default is $0$.
 The dwell time is counted in the same hour as the start of a plasma pulse.
 Therefore the pulse start hour may have less net generation due to the `parasitic_start_energy` as well as the dwell time.
 
-_Nota bene_: while at first blush the dwell time and `parastic_start_energy` might seem interchangeable as ways to reduce the net power output during the start hour, a dwell time does not contribute to the accumulated gross power generation as is constrained by `max_fpy_per_year`.
+_Nota bene_: while at first blush the dwell time and `parasitic_start_energy` might seem interchangeable as ways to reduce the net power output during the start hour, a dwell time does not contribute to the accumulated gross power generation as is constrained by `max_fpy_per_year`.
 
 #### Operational constraints
 The `max_up_time` constraint is activated by entering an integer denoting the length of the pulse in hours.
@@ -126,7 +126,7 @@ With a value of $0.5$ it is reduced by half, and so on.
 
 Use of the fusion module leads to two new outputs files, and changes to existing output files.
 
-- `fusion_pulse_starts`. This file is similar to `start/commit/shutdown.csv` for unit committment.
+- `fusion_pulse_starts`. This file is similar to `start/commit/shutdown.csv` for unit commitment.
 There is a column for each fusion resource component and a row for each timestep.
 Values are number of plant units (of a given resource component) starting a fusion pulse in each timestep.
 

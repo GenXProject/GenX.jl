@@ -1,7 +1,7 @@
 @doc raw"""
 	write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
 
-Function for writing the diferent capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
+Function for writing the different capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
 """
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]

@@ -26,7 +26,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
     println("Unit Commitment Module")
 
     T = inputs["T"]     # Number of time steps (hours)
-    COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Committment
+    COMMIT = inputs["COMMIT"] # For not, thermal resources are the only ones eligible for Unit Commitment
 
     ### Variables ###
 
@@ -53,7 +53,7 @@ function ucommit!(EP::Model, inputs::Dict, setup::Dict)
 
     add_to_expression!(EP[:eObj], eTotalCStart)
 
-    ### Constratints ###
+    ### Constraints ###
     ## Declaration of integer/binary variables
     if setup["UCommit"] == 1 # Integer UC constraints
         for y in COMMIT

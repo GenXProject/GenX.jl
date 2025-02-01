@@ -11,7 +11,7 @@ Scheduled maintenance is implemented **only** for thermal plants with unit commi
 A plant requires a single contiguous period of $h \ge 1$ hours of maintenance, every $y \ge 1$ years.
 For each plant, the best time to start the maintenance period is determined by the optimizer.
 
-During maintenance, the plant cannot be "commited", and therefore
+During maintenance, the plant cannot be "committed", and therefore
 
 * uses no fuel,
 * produces no power,

@@ -106,7 +106,7 @@ Now, we'll generate and solve the model using these results:
 
 
 ```julia
-## Delte Previous TDR Results
+## Delete Previous TDR Results
 if "TDR_results" in cd(readdir,case)
     rm(joinpath(case,"TDR_results"), recursive=true) 
 end
@@ -473,7 +473,7 @@ DataFrame([RT totCap_base],["Resource","Total Capacity"])
 ```
 
 
-To visualize the impact of the emmissions policies, let's group the nodes together by type and plot the data.
+To visualize the impact of the emissions policies, let's group the nodes together by type and plot the data.
 
 
 ```julia
@@ -509,11 +509,11 @@ As you can see, with no limit on emissions, GenX goes straight to using natural 
 
 ## CO2 Cap
 
-The setting `CO2Cap` specifies if the model should have a constraint on CO$_2$ emmissions, and, if so, what that constraint should look like. There are three types, mass, load-based, and generator-based.
+The setting `CO2Cap` specifies if the model should have a constraint on CO$_2$ emissions, and, if so, what that constraint should look like. There are three types, mass, load-based, and generator-based.
 
 ### Mass Cap
 
-The first type of constraint, done by setting `CO2Cap` to "1", is a mass based constraint, which simply puts a limit on the total tons of CO$_2$ able to be produced per megawatt of electricty.
+The first type of constraint, done by setting `CO2Cap` to "1", is a mass based constraint, which simply puts a limit on the total tons of CO$_2$ able to be produced per megawatt of electricity.
 
 
 ```julia
@@ -1019,11 +1019,11 @@ plot(G3,G2,size=(800,450),titlefontsize=8)
 ![svg](./files/t7_2p_mass_zero.svg)
 
 
-As you can see, the use of natural gas has been eliminated compeltely. Note that the objective value increases here as well as renewable energy tends to cost more than natural gas.
+As you can see, the use of natural gas has been eliminated completely. Note that the objective value increases here as well as renewable energy tends to cost more than natural gas.
 
 #### CO2 Slack
 
-Another thing we can do is, instead of demanding that the model 100% meet the CO$_2$ cap, we can add a penalty for if it violates the cap. This lets the system allow some CO$_2$ emmissions if it's determined the cost of the grid with some emmissions is low enough that it will offset the cost from the penalty variable. GenX will automatically incorporate this feature if a file by the name "CO2_cap_slack.csv" is in the policies folder of the directory. For more information on other types of policy slack variables in GenX, see the documentation on [Policy Slack Variables].
+Another thing we can do is, instead of demanding that the model 100% meet the CO$_2$ cap, we can add a penalty for if it violates the cap. This lets the system allow some CO$_2$ emissions if it's determined the cost of the grid with some emissions is low enough that it will offset the cost from the penalty variable. GenX will automatically incorporate this feature if a file by the name "CO2_cap_slack.csv" is in the policies folder of the directory. For more information on other types of policy slack variables in GenX, see the documentation on [Policy Slack Variables].
 
 Here, the CO$_2$ slack cap models a [carbon tax](https://en.wikipedia.org/wiki/Carbon_tax#:~:text=A%20carbon%20tax%20is%20a,like%20more%20severe%20weather%20events.of) of \$250 per ton of emissions.
 
@@ -2077,7 +2077,7 @@ plot(G7,G2,G5,G6,size=(900,900), titlefontsize=8,layout=(2,2))
 ![svg](./files/t7_4p_esr_mass_load_gen.svg)
 
 
-The Energy Share Requriement policy also has the possibiliy to be run with slack variables
+The Energy Share Requirement policy also has the possibility to be run with slack variables
 
 ## Capacity Reserve Margin
 
@@ -2342,7 +2342,7 @@ plot(G8,G7,G2,size=(900,450), titlefontsize=8,layout=(1,3))
 
 
 
-Capacity Reserve Margin also has the possibiliy to be run with slack variables.
+Capacity Reserve Margin also has the possibility to be run with slack variables.
 
 ## Minimum Capacity Requirement
 

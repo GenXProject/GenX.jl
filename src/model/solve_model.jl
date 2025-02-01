@@ -1,13 +1,13 @@
 @doc raw"""
 	fix_integers(jump_model::Model)
 
-This function fixes the iteger variables ones the model has been solved in order to calculate approximations of dual variables.
+This function fixes the integer variables ones the model has been solved in order to calculate approximations of dual variables.
 
 # Arguments
 - `jump_model::Model`: a model object containing that has been previously solved.
 
 # Returns
-nothing (modifies an existing-solved model in the memory). `solve()` must be run again to solve and getdual veriables
+nothing (modifies an existing-solved model in the memory). `solve()` must be run again to solve and getdual variables
 
 """
 function fix_integers(jump_model::Model)
@@ -16,11 +16,11 @@ function fix_integers(jump_model::Model)
     ##
     ## inputs: jump_model - a model object containing that has been previously solved.
     ##
-    ## description: fixes the iteger variables ones the model has been solved in order
+    ## description: fixes the integer variables ones the model has been solved in order
     ## to calculate approximations of dual variables
     ##
     ## returns: no result since it modifies an existing-solved model in the memory.
-    ## solve() must be run again to solve and getdual veriables
+    ## solve() must be run again to solve and getdual variables
     ##
     ################################################################################
     values = Dict(v => value(v) for v in all_variables(jump_model))
@@ -68,7 +68,7 @@ function solve_model(EP::Model, setup::Dict)
         @info "No model solution. You can try to set ComputeConflicts to 1 in the genx_settings.yml file to compute conflicting constraints."
 
     elseif setup["ComputeConflicts"] == 1
-        @info "No model solution. Trying to identify conflicting constriants..."
+        @info "No model solution. Trying to identify conflicting constraints..."
 
         try
             compute_conflict!(EP)

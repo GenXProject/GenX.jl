@@ -320,7 +320,7 @@ demands_with_TDR[!,:MW] = convert.(Float64,demands_with_TDR[!,:MW]);
 demands_with_TDR  |>
 @vlplot(mark={:line},
     x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Demand (MW)"},
-    color={"Week:n", scale={scheme="paired"},sort="decsending"}, title="MW Demand per hour with TDR Representative Weeks",
+    color={"Week:n", scale={scheme="paired"},sort="descending"}, title="MW Demand per hour with TDR Representative Weeks",
     width=845,height=400)
 ```
 ![svg](./files/t3_TDR_demand.svg)
@@ -379,13 +379,13 @@ demands_with_TDR2[!,:MW] = convert.(Float64,demands_with_TDR2[!,:MW]);
 
 
 ```julia
-# Define a new color scheme to accomodate more periods
+# Define a new color scheme to accommodate more periods
 myscheme = ["#a6cee3","#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00",
     "#cab2d6","#6a3d9a","#ffff99","#b15928","#b1ff00","#095768","#ce7e00","#b4a7d6"];
 [demands_with_TDR; demands_with_TDR2] |>
 @vlplot(mark={:line}, row="Extreme_Periods:n",
     x={:hour,title="Time Step (hours)",labels="Week:n"}, y={:MW,title="Demand (MW)"},
-    color={"Week:n", scale={scheme="paired"},sort="decsending"}, 
+    color={"Week:n", scale={scheme="paired"},sort="descending"}, 
     title="MW Demand per hour with TDR Representative Weeks, Extreme Periods Off",
     width=845,height=300)
 ```
@@ -549,14 +549,14 @@ for i in range(1,6)
     end
     println(" ")
     YAML.write_file(joinpath(case,"settings/time_domain_reduction_settings.yml"), time_domain_reduction_settings)
-    time = @elapsed include("example_systmes/1_three_zones/Run.jl")
+    time = @elapsed include("example_systems/1_three_zones/Run.jl")
     times[i] = time
 end
 ```
 
 Note that as the number of periods increases, so does the time it takes to run.
 
-Now, let's check that we have the correct Results folders and process the objecive values to plot. There should be seven results folders, including the original `results`.
+Now, let's check that we have the correct Results folders and process the objective values to plot. There should be seven results folders, including the original `results`.
 
 
 ```julia
@@ -627,10 +627,10 @@ ygrid!(:on, :dashdot, 0.1)
 
 ![svg](./files/t3_obj_vals.svg)
 
-Here, we can see that while having very few representative periods produces an objective value that differs greatly from the orignal, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `1_three_zones` decreases the run time of GenX significantly while while maintaining an objective value close to the original. 
+Here, we can see that while having very few representative periods produces an objective value that differs greatly from the original, once we reach around 12 representative periods the difference begins to taper out. Therefore, the original choice of 11 maximum periods in `1_three_zones` decreases the run time of GenX significantly while while maintaining an objective value close to the original. 
 
 
-It's important to note, however, that  the difference does not always taper out, and for some systems you'll find that the error in objective value continues to decrease as the number of representative periods increases. There also is no way to know apriori what number of periods works.
+It's important to note, however, that  the difference does not always taper out, and for some systems you'll find that the error in objective value continues to decrease as the number of representative periods increases. There also is no way to know a priori what number of periods works.
 
 Finally, let's set TDR to have 8 and 11 min/max periods again, and delete the TDR Results folder.
 

@@ -102,7 +102,7 @@ The default settings are combined with the settings you specify in `highs_settin
 
 ### Feasibility Tolerance
 
-The parameters `Feasib_Tol` and `Optimal_Tol` represent the feasibility of the primal and dual functions respectively. Without going into too much detail, a [__dual function__](https://en.wikipedia.org/wiki/Duality_(optimization)) is an analagous formulation of the original ("primal") function whose objective value acts as a lower bound to the primal function. The objective value of the primal function is then the upper bound of the dual function. HiGHS will solve the dual and primal at each time step, then terminate when the solutions of the two are within a certain tolerance range. For more information on how this works specifically in HiGHS, see the [HiGHS documentaion](https://ergo-code.github.io/HiGHS/dev/terminology). 
+The parameters `Feasib_Tol` and `Optimal_Tol` represent the feasibility of the primal and dual functions respectively. Without going into too much detail, a [__dual function__](https://en.wikipedia.org/wiki/Duality_(optimization)) is an analogous formulation of the original ("primal") function whose objective value acts as a lower bound to the primal function. The objective value of the primal function is then the upper bound of the dual function. HiGHS will solve the dual and primal at each time step, then terminate when the solutions of the two are within a certain tolerance range. For more information on how this works specifically in HiGHS, see the [HiGHS documentation](https://ergo-code.github.io/HiGHS/dev/terminology). 
 
 If we decrease the tolerance parameters, the objective value becomes closer to the "true" optimal value.
 
@@ -160,7 +160,7 @@ ygrid!(:on, :dashdot, 0.1)
 
 ### PreSolve
 
-In optimization, presolve is a stage at the beginning of the solver in which the problem is simplified to remove redunant constraints and otherwise simplify the problem before the optimization itself begins. The default for presolve in GenX is "choose", allowing the solver to use presolve only if it will reduce computation time. 
+In optimization, presolve is a stage at the beginning of the solver in which the problem is simplified to remove redundant constraints and otherwise simplify the problem before the optimization itself begins. The default for presolve in GenX is "choose", allowing the solver to use presolve only if it will reduce computation time. 
 
 Let's try setting presolve to off and on, then compare computation times.
 

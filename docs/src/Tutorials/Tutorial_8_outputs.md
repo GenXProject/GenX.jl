@@ -7,7 +7,7 @@ Once an instance of GenX is run, a series of csv files describing the outputs ar
 ### Table of Contents
 * [Power](#power)
 * [Cost and Revenue](#cost)
-* [Emmissions](#emms)
+* [Emissions](#emms)
 
 Let's get things started by running an instance of GenX using `Run.jl`. You can skip this step if you already have a results folder you would like to analyze. 
 
@@ -393,7 +393,7 @@ power_plot  |>
 @vlplot(mark={:area},
     x={:Hour,title="Time Step (hours)",labels="Resource_Type:n",axis={values=0:12:168}}, y={:MW,title="Demand (MW)",type="quantitative"},
     color={"Resource_Type:n",scale={scheme="accent"},sort="descending"},order={field="Resource_Type:n"},width=845,height=400)+
-@vlplot(mark=:line,x=:Hour,y=:Demand_Total,lables="Demand",color={datum="Demand",legend={title=nothing}},title="Resource Capacity per Hour with Demand Curve, all Zones")
+@vlplot(mark=:line,x=:Hour,y=:Demand_Total,labels="Demand",color={datum="Demand",legend={title=nothing}},title="Resource Capacity per Hour with Demand Curve, all Zones")
 ```
     
 ![svg](./files/t8_cap.svg)
@@ -414,7 +414,7 @@ groupedbar(["Zone 1", "Zone 2", "Zone 3"],[Zone1; Zone2; Zone3], bar_position = 
 
 ![svg](./files/t8_resource_allocation.svg)
 
-Below is a heatmap for the natural gas plant in Massachusetts. It is normalized by the end capacity in `capcity.csv`. To change which plant the heat map plots, change the DataFrame column in `power` when defining `power_cap` below, and the corresponding capacity.
+Below is a heatmap for the natural gas plant in Massachusetts. It is normalized by the end capacity in `capacity.csv`. To change which plant the heat map plots, change the DataFrame column in `power` when defining `power_cap` below, and the corresponding capacity.
 
 
 ```julia
@@ -480,7 +480,7 @@ StatsPlots.scatter!(xnames,netrevenue[!,"Revenue"],label="Revenue",color="black"
 
 ### Emissions
 
-The file `emmissions.csv` gives the total CO2 emmissions per zone for each hour GenX runs. The first three rows give the marginal CO2 abatement cost in $/ton CO2.
+The file `emissions.csv` gives the total CO2 emissions per zone for each hour GenX runs. The first three rows give the marginal CO2 abatement cost in $/ton CO2.
 
 
 ```julia
@@ -513,14 +513,14 @@ end
 ```julia
 emm_plot  |>
 @vlplot(mark={:line},
-    x={:Hour,title="Time Step (hours)",labels="Zone:n",axis={values=tstart:24:tend}}, y={:MW,title="Emmissions (Tons)",type="quantitative"},
-    color={"Zone:n"},width=845,height=400,title="Emmissions per Time Step by Zone")
+    x={:Hour,title="Time Step (hours)",labels="Zone:n",axis={values=tstart:24:tend}}, y={:MW,title="Emissions (Tons)",type="quantitative"},
+    color={"Zone:n"},width=845,height=400,title="Emissions per Time Step by Zone")
 ```
 
 ![svg](./files/t8_emm1.svg)
 
 
-Let's try changing the CO2 cap, as in Tutorial 7, and plotting the resulting emmissions.
+Let's try changing the CO2 cap, as in Tutorial 7, and plotting the resulting emissions.
 
 ```julia
 genx_settings_TZ = YAML.load(open((joinpath(case,"settings/genx_settings.yml"))))
@@ -802,8 +802,8 @@ end
 ```julia
 emm_plot2  |>
 @vlplot(mark={:line},
-    x={:Hour,title="Time Step (hours)",labels="Zone:n",axis={values=tstart:24:tend}}, y={:MW,title="Emmissions (Tons)",type="quantitative"},
-    color={"Zone:n"},width=845,height=400,title="Emmissions per Time Step by Zone")
+    x={:Hour,title="Time Step (hours)",labels="Zone:n",axis={values=tstart:24:tend}}, y={:MW,title="Emissions (Tons)",type="quantitative"},
+    color={"Zone:n"},width=845,height=400,title="Emissions per Time Step by Zone")
 ```
     
 ![svg](./files/t8_emm2.svg)
@@ -811,7 +811,7 @@ emm_plot2  |>
 
 
 
-We can see how the emmissions, summed over all zones, compare in the following plot:
+We can see how the emissions, summed over all zones, compare in the following plot:
 
 
 ```julia
@@ -819,8 +819,8 @@ emm1sum = sum(eachcol(emm_tot));
 emm2sum = sum(eachcol(emm_tot2));
 
 Plots.plot(collect((tstart-3):(tend-3)),emm1sum[tstart:tend],size=(800,400),label="Demand Based CO2 Cap",
-    xlabel="Time Step (Hours)",ylabel="Emmissions (Tons)",thickness_scaling = 1.1,linewidth = 1.5,
-    title="Emmisions per Time Step",xticks=tstart:72:tend)
+    xlabel="Time Step (Hours)",ylabel="Emissions (Tons)",thickness_scaling = 1.1,linewidth = 1.5,
+    title="Emissions per Time Step",xticks=tstart:72:tend)
 Plots.plot!(collect((tstart-3):(tend-3)),emm2sum[tstart:tend],label="No CO2 Cap",linewidth = 1.5)
 ```
 ![svg](./files/t8_emm_comp.svg)

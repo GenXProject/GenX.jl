@@ -105,7 +105,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
             eExistingCap[y]
         end)
 
-    ### Need editting ##
+    ### Need editing ##
     @expression(EP, eCFix[y in 1:G],
         if y in NEW_CAP # Resources eligible for new capacity (Non-Retrofit)
             if y in COMMIT
@@ -131,7 +131,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         add_to_expression!(EP[:eObj], eTotalCFix)
     end
 
-    ### Constratints ###
+    ### Constraints ###
 
     if MultiStage == 1
         # Existing capacity variable is equal to existing capacity specified in the input file
@@ -157,12 +157,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Constraints on new built capacity
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasibility
     MAX_CAP = ids_with_positive(gen, max_cap_mw)
     @constraint(EP, cMaxCap[y in MAX_CAP], eTotalCap[y]<=max_cap_mw(gen[y]))
 
     # Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasibility
     MIN_CAP = ids_with_positive(gen, min_cap_mw)
     @constraint(EP, cMinCap[y in MIN_CAP], eTotalCap[y]>=min_cap_mw(gen[y]))
 

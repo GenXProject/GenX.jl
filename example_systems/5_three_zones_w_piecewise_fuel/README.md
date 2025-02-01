@@ -1,7 +1,7 @@
 # Small New England: Three Zones with piecewise fuel consumption
 
 This is a one-year example with hourly resolution which contains zones representing Massachusetts, Connecticut, and Maine. The ten represented resources include natural gas, solar PV, wind, and lithium-ion battery storage and biomass with carbon capture and storage. 
-For natural gas ccs generator, we provide picewise fuel usage (PWFU) parameters to represent the fuel consumption at differernt load point. Please refer to the documentation for more details on PWFU parameters and corresponding data requirements. When settings["UCommit"] >= 1 and PWFU parameters are provided in `Thermal.csv`, the standard heat rate (i.e., Heat_Rate_MMBTU_per_MWh) will not be used. Instead, the heat rate will be calculated based on the PWFU parameters.
+For natural gas ccs generator, we provide piecewise fuel usage (PWFU) parameters to represent the fuel consumption at different load point. Please refer to the documentation for more details on PWFU parameters and corresponding data requirements. When settings["UCommit"] >= 1 and PWFU parameters are provided in `Thermal.csv`, the standard heat rate (i.e., Heat_Rate_MMBTU_per_MWh) will not be used. Instead, the heat rate will be calculated based on the PWFU parameters.
 
 To run the model, first navigate to the example directory:
 

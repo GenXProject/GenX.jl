@@ -17,7 +17,7 @@ the fact that most generators have a decreasing heat rate as a function of load.
 
 (1). Constant heat rate: 
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation 
-($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
+($vP_{y,t}$) multiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
 denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
 and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
@@ -45,7 +45,7 @@ For example, when a plant is operating at the full load (i.e., power output equa
 the fuel usage determined by the effective segment divided by Cap\_Size should be equal to the 
 heat rate at full-load.
 
-Since fuel consumption and fuel costs are postive, the optimization will force the fuel usage
+Since fuel consumption and fuel costs are positive, the optimization will force the fuel usage
 to be equal to the highest fuel usage segment for any given value of vP.
 When the power output is zero, the commitment variable $U_{g,t}$ will bring the intercept 
 to be zero such that the fuel consumption is zero when thermal units are offline.
@@ -67,7 +67,7 @@ During startup, heat input from multiple startup fuels are equal to startup fuel
 \sum_{i \in \mathcal{I} } vMulStartFuels_{y, i, t}= CapSize_{y} \times StartFuelMMBTUperMW_{y} \times vSTART_{y,t}
 \end{aligned}
 ```
-During normal operation, the sum of fuel consumptions from multiple fuels dividing by the correspnding heat rates, respectively, is equal to $vPower$ in plant $y$ at time $t$. 
+During normal operation, the sum of fuel consumptions from multiple fuels dividing by the corresponding heat rates, respectively, is equal to $vPower$ in plant $y$ at time $t$. 
 ```math
 \begin{aligned}
 \sum_{i \in \mathcal{I} } \frac{vMulFuels_{y, i, t}} {HeatRate_{i,y} } = vPower_{y,t}
@@ -273,7 +273,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     if !isempty(THERM_COMMIT)
         # Only apply piecewise fuel consumption to thermal generators in THERM_COMMIT_PWFU set
         THERM_COMMIT_PWFU = inputs["THERM_COMMIT_PWFU"]
-        # segemnt for piecewise fuel usage
+        # segment for piecewise fuel usage
         if !isempty(THERM_COMMIT_PWFU)
             segs = 1:inputs["PWFU_Num_Segments"]
             PWFU_data = inputs["PWFU_data"]

@@ -27,7 +27,7 @@ function load_fuels_data!(setup::Dict, path::AbstractString, inputs::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     for i in 1:length(fuels)
-        # fuel cost is in $/MMBTU w/o scaling, $/Billon BTU w/ scaling
+        # fuel cost is in $/MMBTU w/o scaling, $/Billion BTU w/ scaling
         fuel_costs[fuels[i]] = costs[:, i] / scale_factor
         # No need to scale fuel_CO2, fuel_CO2 is ton/MMBTU or kton/Billion BTU 
         fuel_CO2[fuels[i]] = CO2_content[i]

@@ -6,7 +6,7 @@ The maximum capacity requirement constraint allows for modeling maximum deployme
 \sum_{y \in \mathcal{G} } \sum_{z \in \mathcal{Z} } \left( \epsilon_{y,z,p}^{MaxCapReq} \times \Delta^{\text{total}}_{y,z} \right) \leq REQ_{p}^{MaxCapReq} \hspace{1 cm}  \forall p \in \mathcal{P}^{MaxCapReq}
 \end{aligned}
 ```
-Note that $\epsilon_{y,z,p}^{MaxCapReq}$ is the eligiblity of a generator of technology $y$ in zone $z$ of requirement $p$ and will be equal to $1$ for eligible generators and will be zero for ineligible resources. The dual value of each maximum capacity constraint can be interpreted as the required payment (e.g. subsidy) per MW per year required to ensure adequate revenue for the qualifying resources.
+Note that $\epsilon_{y,z,p}^{MaxCapReq}$ is the eligibility of a generator of technology $y$ in zone $z$ of requirement $p$ and will be equal to $1$ for eligible generators and will be zero for ineligible resources. The dual value of each maximum capacity constraint can be interpreted as the required payment (e.g. subsidy) per MW per year required to ensure adequate revenue for the qualifying resources.
 """
 function maximum_capacity_requirement!(EP::Model, inputs::Dict, setup::Dict)
     println("Maximum Capacity Requirement Module")

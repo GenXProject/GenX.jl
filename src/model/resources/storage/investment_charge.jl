@@ -45,7 +45,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
 
     MultiStage = setup["MultiStage"]
 
-    STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separte) charge/discharge capacity components
+    STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"] # Set of storage resources with asymmetric (separate) charge/discharge capacity components
 
     NEW_CAP_CHARGE = inputs["NEW_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for new charge capacity
     RET_CAP_CHARGE = inputs["RET_CAP_CHARGE"] # Set of asymmetric charge/discharge storage resources eligible for charge capacity retirements
@@ -110,7 +110,7 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
         add_to_expression!(EP[:eObj], eTotalCFixCharge)
     end
 
-    ### Constratints ###
+    ### Constraints ###
 
     if MultiStage == 1
         # Existing capacity variable is equal to existing capacity specified in the input file
@@ -128,14 +128,14 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
     #Constraints on new built capacity
 
     # Constraint on maximum charge capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasibility
     @constraint(EP,
         cMaxCapCharge[y in intersect(ids_with_positive(gen, max_charge_cap_mw),
             STOR_ASYMMETRIC)],
         eTotalCapCharge[y]<=max_charge_cap_mw(gen[y]))
 
     # Constraint on minimum charge capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasibility
     @constraint(EP,
         cMinCapCharge[y in intersect(ids_with_positive(gen, min_charge_cap_mw),
             STOR_ASYMMETRIC)],

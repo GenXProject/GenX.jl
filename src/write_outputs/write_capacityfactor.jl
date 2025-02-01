@@ -110,7 +110,7 @@ function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, se
     df.NetOutput .= gross_power - parasitic_power
     df.NetCapacity .= value.(EP[:eTotalCap][FUSION]) * scale_factor .* avg_power_factor
 
-    # We only calcualte the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
+    # We only calculate the resulted capacity factor with total capacity > 1MW and total generation > 1MWh
     enough_power = findall(x -> x >= 1, df.NetOutput)
     enough_capacity = findall(x -> x >= 1, df.NetCapacity)
     CF_GEN = intersect(enough_power, enough_capacity)

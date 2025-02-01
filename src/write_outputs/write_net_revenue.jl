@@ -173,7 +173,7 @@ function write_net_revenue(path::AbstractString,
         dfNetRevenue.Charge_cost = dfChargingcost[1:G, :AnnualSum] # Unit is confirmed to be US$
     end
 
-    # Add CO2 releated sequestration cost or credit (e.g. 45 Q) to the dataframe
+    # Add CO2 related sequestration cost or credit (e.g. 45 Q) to the dataframe
     dfNetRevenue.CO2SequestrationCost = zeros(nrow(dfNetRevenue))
     if any(co2_capture_fraction.(gen) .!= 0)
         dfNetRevenue.CO2SequestrationCost = zeros(G)

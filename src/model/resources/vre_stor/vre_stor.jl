@@ -506,11 +506,11 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
     @constraint(EP, cMaxRet_DC[y = RET_CAP_DC], vRETDCCAP[y]<=eExistingCapDC[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasibility
     @constraint(EP, cMaxCap_DC[y in ids_with_nonneg(gen_VRE_STOR, max_cap_inverter_mw)],
         eTotalCap_DC[y]<=by_rid(y, :max_cap_inverter_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasibility
     @constraint(EP, cMinCap_DC[y in ids_with_positive(gen_VRE_STOR, min_cap_inverter_mw)],
         eTotalCap_DC[y]>=by_rid(y, :min_cap_inverter_mw))
 
@@ -678,11 +678,11 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
     @constraint(EP, cMaxRet_Solar[y = RET_CAP_SOLAR], vRETSOLARCAP[y]<=eExistingCapSolar[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasibility
     @constraint(EP, cMaxCap_Solar[y in ids_with_nonneg(gen_VRE_STOR, max_cap_solar_mw)],
         eTotalCap_SOLAR[y]<=by_rid(y, :max_cap_solar_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasibility
     @constraint(EP, cMinCap_Solar[y in ids_with_positive(gen_VRE_STOR, min_cap_solar_mw)],
         eTotalCap_SOLAR[y]>=by_rid(y, :min_cap_solar_mw))
 
@@ -854,11 +854,11 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
     @constraint(EP, cMaxRet_Wind[y = RET_CAP_WIND], vRETWINDCAP[y]<=eExistingCapWind[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasibility
     @constraint(EP, cMaxCap_Wind[y in ids_with_nonneg(gen_VRE_STOR, max_cap_wind_mw)],
         eTotalCap_WIND[y]<=by_rid(y, :max_cap_wind_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasibility
     @constraint(EP, cMinCap_Wind[y in ids_with_positive(gen_VRE_STOR, min_cap_wind_mw)],
         eTotalCap_WIND[y]>=by_rid(y, :min_cap_wind_mw))
 
@@ -1261,11 +1261,11 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         cMaxRet_Stor[y = RET_CAP_STOR],
         vRETCAPENERGY_VS[y]<=eExistingCapEnergy_VS[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasibility
     @constraint(EP, cMaxCap_Stor[y in intersect(ids_with_nonneg(gen, max_cap_mwh), STOR)],
         eTotalCap_STOR[y]<=max_cap_mwh(gen[y]))
     # Constraint on minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasibility
     @constraint(EP, cMinCap_Stor[y in intersect(ids_with_positive(gen, min_cap_mwh), STOR)],
         eTotalCap_STOR[y]>=min_cap_mwh(gen[y]))
 
@@ -1334,7 +1334,7 @@ For resources where $\overline{\Omega_{y,z}^{elec}}$ and $\underline{\Omega_{y,z
         \hspace{4 cm}  \forall y \in \mathcal{VS}^{elec}, z \in \mathcal{Z}
 \end{aligned}
 ```
-Constraint 2 applies ramping constraints on electrolyzers where consumption of electricity by electrolyzer $y$ in time $t$ is denoted by $\Pi_{y,z}$ and the rampping constraints are denoated by $\kappa_{y}$.
+Constraint 2 applies ramping constraints on electrolyzers where consumption of electricity by electrolyzer $y$ in time $t$ is denoted by $\Pi_{y,z}$ and the ramping constraints are denoted by $\kappa_{y}$.
 ```math
 \begin{aligned}
 	\Pi_{y,t-1} - \Pi_{y,t} \leq \kappa_{y}^{down} \Delta^{\text{total}}_{y}, \hspace{1cm} \forall y \in \mathcal{EL}, \forall t \in \mathcal{T}
@@ -1455,11 +1455,11 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # Cannot retire more capacity than existing capacity for VRE-STOR technologies
     @constraint(EP, cMaxRet_Elec[y = RET_CAP_ELEC], vRETELECCAP[y]<=eExistingCapElec[y])
     # Constraint on maximum capacity (if applicable) [set input to -1 if no constraint on maximum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is >= Max_Cap_MW and lead to infeasibility
     @constraint(EP, cMaxCap_Elec[y in ids_with_nonneg(gen_VRE_STOR, max_cap_elec_mw)],
         eTotalCap_ELEC[y]<=by_rid(y, :max_cap_elec_mw))
     # Constraint on Minimum capacity (if applicable) [set input to -1 if no constraint on minimum capacity]
-    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
+    # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasibility
     @constraint(EP, cMinCap_Elec[y in ids_with_positive(gen_VRE_STOR, min_cap_elec_mw)],
         eTotalCap_ELEC[y]>=by_rid(y, :min_cap_elec_mw))
 
@@ -1844,12 +1844,12 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             cVreStorMaxRetDischargeDC[y in RET_CAP_DISCHARGE_DC],
             vRETCAPDISCHARGE_DC[y]<=eExistingCapDischargeDC[y])
         # Constraint on maximum discharge DC capacity (if applicable) [set input to -1 if no constraint on maximum discharge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMaxCapDischargeDC[y in MAX_DC_DISCHARGE],
             eTotalCapDischarge_DC[y]<=by_rid(y, :Max_Cap_Discharge_DC_MW))
         # Constraint on minimum discharge DC capacity (if applicable) [set input to -1 if no constraint on minimum discharge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMinCapDischargeDC[y in MIN_DC_DISCHARGE],
             eTotalCapDischarge_DC[y]>=by_rid(y, :Min_Cap_Discharge_DC_MW))
@@ -1941,12 +1941,12 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             cVreStorMaxRetChargeDC[y in RET_CAP_CHARGE_DC],
             vRETCAPCHARGE_DC[y]<=eExistingCapChargeDC[y])
         # Constraint on maximum charge DC capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMaxCapChargeDC[y in MAX_DC_CHARGE],
             eTotalCapCharge_DC[y]<=by_rid(y, :max_cap_charge_dc_mw))
         # Constraint on minimum charge DC capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMinCapChargeDC[y in MIN_DC_CHARGE],
             eTotalCapCharge_DC[y]>=by_rid(y, :min_cap_charge_dc_mw))
@@ -2042,12 +2042,12 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             cVreStorMaxRetDischargeAC[y in RET_CAP_DISCHARGE_AC],
             vRETCAPDISCHARGE_AC[y]<=eExistingCapDischargeAC[y])
         # Constraint on maximum discharge AC capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMaxCapDischargeAC[y in MAX_AC_DISCHARGE],
             eTotalCapDischarge_AC[y]<=by_rid(y, :max_cap_discharge_ac_mw))
         # Constraint on minimum discharge AC capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMinCapDischargeAC[y in MIN_AC_DISCHARGE],
             eTotalCapDischarge_AC[y]>=by_rid(y, :min_cap_discharge_ac_mw))
@@ -2139,12 +2139,12 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             cVreStorMaxRetChargeAC[y in RET_CAP_CHARGE_AC],
             vRETCAPCHARGE_AC[y]<=eExistingCapChargeAC[y])
         # Constraint on maximum charge AC capacity (if applicable) [set input to -1 if no constraint on maximum charge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is >= Max_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMaxCapChargeAC[y in MAX_AC_CHARGE],
             eTotalCapCharge_AC[y]<=by_rid(y, :max_cap_charge_ac_mw))
         # Constraint on minimum charge AC capacity (if applicable) [set input to -1 if no constraint on minimum charge capacity]
-        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasabilty
+        # DEV NOTE: This constraint may be violated in some cases where Existing_Charge_Cap_MW is <= Min_Charge_Cap_MWh and lead to infeasibility
         @constraint(EP,
             cVreStorMinCapChargeAC[y in MIN_AC_CHARGE],
             eTotalCapCharge_AC[y]>=by_rid(y, :min_cap_charge_ac_mw))
