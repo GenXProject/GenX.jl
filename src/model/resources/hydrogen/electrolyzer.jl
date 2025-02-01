@@ -85,9 +85,12 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
+    ELECTROLYZERS_BY_ZONE = map(HYDROGEN_ZONES) do z
+        return intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))
+    end
     @expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
         sum(EP[:vUSE][y, t]
-        for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))))
+        for y in ELECTROLYZERS_BY_ZONE[z]))
 
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
     EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
@@ -152,9 +155,6 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # from within the same zone as the electrolyzers are located to be >= hourly consumption from electrolyzers in the zone
     # (and any charging by qualified storage within the zone used to help increase electrolyzer utilization).
     if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 1
-        ELECTROLYZERS_BY_ZONE = map(1:Z) do z
-            return intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))
-        end
         @expression(EP, eHMElectrolyzer[t in 1:T, z in 1:Z],
             -sum(EP[:vUSE][y, t]
             for y in ELECTROLYZERS_BY_ZONE[z]))
