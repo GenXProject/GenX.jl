@@ -134,8 +134,9 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
     for t in 1:T, z in 1:Z
         if !isempty(gen_VRE_STOR_BY_ZONE[z])
-            ePowerBalance_VRE_STOR[t, z] += sum(EP[:vP][y, t]
-            for y in gen_VRE_STOR_BY_ZONE[z])
+            for y in gen_VRE_STOR_BY_ZONE[z]
+                add_to_expression!(ePowerBalance_VRE_STOR[t, z], EP[:vP][y, t])
+            end
         end
     end
 
@@ -186,13 +187,13 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             +sum(inputs["omega"][t] * esr_vrestor(gen[y], tag = ESR) * EP[:vP_WIND][y, t]
             for y in intersect(WIND, ids_with_policy(gen, esr_vrestor, tag = ESR)),
             t in 1:T))
-        EP[:eESR] += eESRVREStor
+        add_similar_to_expression!(EP[:eESR], eESRVREStor)
         if IncludeLossesInESR == 1
             @expression(EP, eESRVREStorLosses[ESR = 1:inputs["nESR"]],
                 sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS_VRE_STOR][y]
                     for y in intersect(STOR, gen_VRE_STOR_BY_ZONE[z]))
                 for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
-            EP[:eESR] -= eESRVREStorLosses
+            add_similar_to_expression!(EP[:eESR], -1.0, eESRVREStorLosses)
         end
     end
 
@@ -202,20 +203,21 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             sum(by_rid(y, :etainverter) * EP[:eTotalCap_SOLAR][y]
             for y in intersect(SOLAR,
                 ids_with_policy(gen_VRE_STOR, min_cap_solar, tag = mincap))))
-        EP[:eMinCapRes] += eMinCapResSolar
+        add_similar_to_expression!(EP[:eMinCapRes], eMinCapResSolar)
 
         @expression(EP, eMinCapResWind[mincap = 1:inputs["NumberOfMinCapReqs"]],
             sum(EP[:eTotalCap_WIND][y]
             for y in intersect(WIND,
                 ids_with_policy(gen_VRE_STOR, min_cap_wind, tag = mincap))))
-        EP[:eMinCapRes] += eMinCapResWind
+        add_similar_to_expression!(EP[:eMinCapRes], eMinCapResWind)
+
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
             @expression(EP, eMinCapResACDis[mincap = 1:inputs["NumberOfMinCapReqs"]],
                 sum(EP[:eTotalCapDischarge_AC][y]
                 for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"],
                     ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
-            EP[:eMinCapRes] += eMinCapResACDis
+            add_similar_to_expression(EP[:eMinCapRes], eMinCapResACDis)
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
@@ -223,7 +225,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 sum(EP[:eTotalCapDischarge_DC][y]
                 for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"],
                     ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
-            EP[:eMinCapRes] += eMinCapResDCDis
+            add_similar_to_expression!(EP[:eMinCapRes], eMinCapResDCDis)
         end
 
         if !isempty(inputs["VS_SYM_AC"])
@@ -231,7 +233,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 sum(by_rid(y, :power_to_energy_ac) * EP[:eTotalCap_STOR][y]
                 for y in intersect(inputs["VS_SYM_AC"],
                     ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
-            EP[:eMinCapRes] += eMinCapResACStor
+            add_similar_to_expression!(EP[:eMinCapRes], eMinCapResACStor)
         end
 
         if !isempty(inputs["VS_SYM_DC"])
@@ -239,7 +241,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 sum(by_rid(y, :power_to_energy_dc) * EP[:eTotalCap_STOR][y]
                 for y in intersect(inputs["VS_SYM_DC"],
                     ids_with_policy(gen_VRE_STOR, min_cap_stor, tag = mincap))))
-            EP[:eMinCapRes] += eMinCapResDCStor
+            add_similar_to_expression!(EP[:eMinCapRes], eMinCapResDCStor)
         end
     end
 
@@ -249,20 +251,20 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             sum(by_rid(y, :etainverter) * EP[:eTotalCap_SOLAR][y]
             for y in intersect(SOLAR,
                 ids_with_policy(gen_VRE_STOR, max_cap_solar, tag = maxcap))))
-        EP[:eMaxCapRes] += eMaxCapResSolar
+        add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResSolar)
 
         @expression(EP, eMaxCapResWind[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
             sum(EP[:eTotalCap_WIND][y]
             for y in intersect(WIND,
                 ids_with_policy(gen_VRE_STOR, max_cap_wind, tag = maxcap))))
-        EP[:eMaxCapRes] += eMaxCapResWind
+        add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResWind)
 
         if !isempty(inputs["VS_ASYM_AC_DISCHARGE"])
             @expression(EP, eMaxCapResACDis[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
                 sum(EP[:eTotalCapDischarge_AC][y]
                 for y in intersect(inputs["VS_ASYM_AC_DISCHARGE"],
                     ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
-            EP[:eMaxCapRes] += eMaxCapResACDis
+            add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResACDis)
         end
 
         if !isempty(inputs["VS_ASYM_DC_DISCHARGE"])
@@ -270,7 +272,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 sum(EP[:eTotalCapDischarge_DC][y]
                 for y in intersect(inputs["VS_ASYM_DC_DISCHARGE"],
                     ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
-            EP[:eMaxCapRes] += eMaxCapResDCDis
+            add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResDCDis)
         end
 
         if !isempty(inputs["VS_SYM_AC"])
@@ -278,7 +280,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 sum(by_rid(y, :power_to_energy_ac) * EP[:eTotalCap_STOR][y]
                 for y in intersect(inputs["VS_SYM_AC"],
                     ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
-            EP[:eMaxCapRes] += eMaxCapResACStor
+            add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResACStor)
         end
 
         if !isempty(inputs["VS_SYM_DC"])
@@ -286,7 +288,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
                 sum(by_rid(y, :power_to_energy_dc) * EP[:eTotalCap_STOR][y]
                 for y in intersect(inputs["VS_SYM_DC"],
                     ids_with_policy(gen_VRE_STOR, max_cap_stor, tag = maxcap))))
-            EP[:eMaxCapRes] += eMaxCapResDCStor
+            add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResDCStor)
         end
     end
 
@@ -301,7 +303,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Power Balance
-    EP[:ePowerBalance] += ePowerBalance_VRE_STOR
+    add_similar_to_expression!(EP[:ePowerBalance], ePowerBalance_VRE_STOR)
 
     ### CONSTRAINTS ###
 
@@ -490,9 +492,9 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCFixDC, sum(eCFixDC[y] for y in DC))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixDC / inputs["OPEXMULT"]
+        add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixDC)
     else
-        EP[:eObj] += eTotalCFixDC
+        add_to_expression!(EP[:eObj], eTotalCFixDC)
     end
 
     # 3. Inverter exports expression
@@ -653,9 +655,9 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCFixSolar, sum(eCFixSolar[y] for y in SOLAR))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixSolar / inputs["OPEXMULT"]
+        add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixSolar)
     else
-        EP[:eObj] += eTotalCFixSolar
+        add_to_expression!(EP[:eObj], eTotalCFixSolar)
     end
 
     # Variable costs of "generation" for solar resource "y" during hour "t"
@@ -663,14 +665,14 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_solar)*by_rid(y, :etainverter)*
         EP[:vP_SOLAR][y, t])
     @expression(EP, eTotalCVarOutSolar, sum(eCVarOutSolar[y, t] for y in SOLAR, t in 1:T))
-    EP[:eObj] += eTotalCVarOutSolar
+    add_to_expression!(EP[:eObj], eTotalCVarOutSolar)
 
     # 3. Inverter Balance, PV Generation Maximum
     @expression(EP, eSolarGenMaxS[y in SOLAR, t = 1:T], JuMP.AffExpr())
     for y in SOLAR, t in 1:T
-        EP[:eInvACBalance][y, t] += by_rid(y, :etainverter) * EP[:vP_SOLAR][y, t]
-        EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * EP[:vP_SOLAR][y, t]
-        eSolarGenMaxS[y, t] += EP[:vP_SOLAR][y, t]
+        add_to_expression!(EP[:eInvACBalance][y, t], by_rid(y, :etainverter), EP[:vP_SOLAR][y, t])
+        add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter), EP[:vP_SOLAR][y, t])
+        add_to_expression!(eSolarGenMaxS[y, t], EP[:vP_SOLAR][y, t])
     end
 
     ### CONSTRAINTS ###
@@ -833,9 +835,9 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCFixWind, sum(eCFixWind[y] for y in WIND))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixWind / inputs["OPEXMULT"]
+        add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixWind)
     else
-        EP[:eObj] += eTotalCFixWind
+        add_to_expression!(EP[:eObj], eTotalCFixWind)
     end
 
     # Variable costs of "generation" for wind resource "y" during hour "t"
@@ -843,13 +845,13 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         eCVarOutWind[y in WIND, t = 1:T],
         inputs["omega"][t]*by_rid(y, :var_om_cost_per_mwh_wind)*EP[:vP_WIND][y, t])
     @expression(EP, eTotalCVarOutWind, sum(eCVarOutWind[y, t] for y in WIND, t in 1:T))
-    EP[:eObj] += eTotalCVarOutWind
+    add_to_expression!(EP[:eObj], eTotalCVarOutWind)
 
     # 3. Inverter Balance, Wind Generation Maximum
     @expression(EP, eWindGenMaxW[y in WIND, t = 1:T], JuMP.AffExpr())
     for y in WIND, t in 1:T
-        EP[:eInvACBalance][y, t] += EP[:vP_WIND][y, t]
-        eWindGenMaxW[y, t] += EP[:vP_WIND][y, t]
+        add_to_expression!(EP[:eInvACBalance][y, t], EP[:vP_WIND][y, t])
+        add_to_expression!(eWindGenMaxW[y, t], EP[:vP_WIND][y, t])
     end
 
     ### CONSTRAINTS ###
@@ -1113,9 +1115,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCFixStor, sum(eCFixEnergy_VS[y] for y in STOR))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixStor / inputs["OPEXMULT"]
+        add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixStor)
     else
-        EP[:eObj] += eTotalCFixStor
+        add_to_expression!(EP[:eObj], eTotalCFixStor)
     end
 
     # Variable costs of charging DC for VRE-STOR resources "y" during hour "t"
@@ -1142,7 +1144,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         +sum(eCVar_Discharge_DC[y, t] for y in DC_DISCHARGE, t in 1:T)
         +sum(eCVar_Charge_AC[y, t] for y in AC_CHARGE, t in 1:T)
         +sum(eCVar_Discharge_AC[y, t] for y in AC_CHARGE, t in 1:T))
-    EP[:eObj] += eTotalCVarStor
+    add_to_expression!(EP[:eObj], eTotalCVarStor)
 
     # 3. Inverter & Power Balance, SoC Expressions
 
@@ -1172,75 +1174,66 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     AC_CHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, AC_CHARGE)
     for t in START_SUBPERIODS
         for y in DC_DISCHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y, t] -= EP[:vP_DC_DISCHARGE][y, t] /
-                                           by_rid(y, :eff_down_dc)
+            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], -1 / by_rid(y, :eff_down_dc), EP[:vP_DC_DISCHARGE][y, t])
         end
         for y in DC_CHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y, t] += by_rid(y, :eff_up_dc) * EP[:vP_DC_CHARGE][y, t]
+            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], 1 / by_rid(y, :eff_up_dc), EP[:vP_DC_CHARGE][y, t])
         end
         for y in AC_DISCHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y, t] -= EP[:vP_AC_DISCHARGE][y, t] /
-                                           by_rid(y, :eff_down_ac)
+            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], 11 / by_rid(y, :eff_down_ac), EP[:vP_AC_DISCHARGE][y, t])
         end
         for y in AC_CHARGE_CONSTRAINTSET
-            eSoCBalStart_VRE_STOR[y, t] += by_rid(y, :eff_up_ac) * EP[:vP_AC_CHARGE][y, t]
+            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], by_rid(y, :eff_up_ac), EP[:vP_AC_CHARGE][y, t])
         end
     end
 
     for y in DC_DISCHARGE
-        EP[:eELOSS_VRE_STOR][y] -= sum(inputs["omega"][t] * vP_DC_DISCHARGE[y, t] *
-                                       by_rid(y, :etainverter) for t in 1:T)
         for t in 1:T
-            EP[:eInvACBalance][y, t] += by_rid(y, :etainverter) * vP_DC_DISCHARGE[y, t]
-            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vP_DC_DISCHARGE[y, t]
+            add_to_expression!(EP[:eELOSS_VRE_STOR][y], -inputs["omega"][t] * by_rid(y, :etainverter), vP_DC_DISCHARGE[y, t])
+            add_to_expression!(EP[:eInvACBalance][y, t], by_rid(y, :etainverter), vP_DC_DISCHARGE[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter), vP_DC_DISCHARGE[y, t])
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y, t] -= EP[:vP_DC_DISCHARGE][y, t] /
-                                              by_rid(y, :eff_down_dc)
+            add_to_expression!(eSoCBalInterior_VRE_STOR[y, t], -1 / by_rid(y, :eff_down_dc), vP_DC_DISCHARGE[y, t])
         end
     end
 
     for y in DC_CHARGE
-        EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t] * vP_DC_CHARGE[y, t] /
-                                       by_rid(y, :etainverter) for t in 1:T)
         for t in 1:T
-            EP[:eInvACBalance][y, t] -= vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
-            EP[:eCHARGE_VS_STOR][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
-            EP[:eInverterExport][y, t] += vP_DC_CHARGE[y, t] / by_rid(y, :etainverter)
+            add_to_expression!(EP[:eELOSS_VRE_STOR][y], inputs["omega"][t] / by_rid(y, :etainverter), vP_DC_CHARGE[y, t])
+            add_to_expression!(EP[:eInvACBalance][y, t], -1 / by_rid(y, :etainverter), vP_DC_CHARGE[y, t])
+            add_to_expression!(EP[:eCHARGE_VS_STOR][y, t], 1 / by_rid(y, :etainverter), vP_DC_CHARGE[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], 1 / by_rid(y, :etainverter), vP_DC_CHARGE[y, t])
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y, t] += by_rid(y, :eff_up_dc) *
-                                              EP[:vP_DC_CHARGE][y, t]
+            add_to_expression!(eSoCBalInterior_VRE_STOR[y, t], by_rid(y, :eff_up_dc), vP_DC_CHARGE[y, t])
         end
     end
 
     for y in AC_DISCHARGE
-        EP[:eELOSS_VRE_STOR][y] -= sum(inputs["omega"][t] * vP_AC_DISCHARGE[y, t]
-        for t in 1:T)
         for t in 1:T
-            EP[:eInvACBalance][y, t] += vP_AC_DISCHARGE[y, t]
+            add_to_expression!(EP[:eELOSS_VRE_STOR][y], -inputs["omega"][t], vP_AC_DISCHARGE[y, t])
+            add_to_expression!(EP[:eInvACBalance][y, t], 1, vP_AC_DISCHARGE[y, t])
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y, t] -= EP[:vP_AC_DISCHARGE][y, t] /
-                                              by_rid(y, :eff_down_ac)
+            add_to_expression!(eSoCBalInterior_VRE_STOR[y, t], -1 / by_rid(y, :eff_down_ac), vP_AC_DISCHARGE[y, t])
         end
     end
 
     for y in AC_CHARGE
-        EP[:eELOSS_VRE_STOR][y] += sum(inputs["omega"][t] * vP_AC_CHARGE[y, t] for t in 1:T)
         for t in 1:T
-            EP[:eInvACBalance][y, t] -= vP_AC_CHARGE[y, t]
-            EP[:eCHARGE_VS_STOR][y, t] += vP_AC_CHARGE[y, t]
+            add_to_expression!(EP[:eELOSS_VRE_STOR][y], inputs["omega"][t], vP_AC_CHARGE[y, t])
+            add_to_expression!(EP[:eInvACBalance][y, t], -1, vP_AC_CHARGE[y, t])
+            add_to_expression!(EP[:eCHARGE_VS_STOR][y, t], vP_AC_CHARGE[y, t])
         end
         for t in INTERIOR_SUBPERIODS
-            eSoCBalInterior_VRE_STOR[y, t] += by_rid(y, :eff_up_ac) *
-                                              EP[:vP_AC_CHARGE][y, t]
+            add_to_expression!(eSoCBalInterior_VRE_STOR[y, t], by_rid(y, :eff_up_ac), vP_AC_CHARGE[y, t])
         end
     end
 
     for y in STOR, t in 1:T
-        EP[:eInvACBalance][y, t] += vCHARGE_VRE_STOR[y, t]
-        EP[:eGridExport][y, t] += vCHARGE_VRE_STOR[y, t]
+        add_to_expression!(EP[:eInvACBalance][y, t], vCHARGE_VRE_STOR[y, t])
+        add_to_expression!(EP[:eGridExport][y, t], vCHARGE_VRE_STOR[y, t])
     end
 
     gen_VRE_STOR_BY_ZONE_AND_STOR = map(1:Z) do z
@@ -1252,8 +1245,9 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
     for z in 1:Z, t in 1:T
         if !isempty(gen_VRE_STOR_BY_ZONE_AND_STOR[z])
-            EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y, t]
-            for y in igen_VRE_STOR_BY_ZONE_AND_STOR[z])
+            for y in igen_VRE_STOR_BY_ZONE_AND_STOR[z]
+                add_to_expression!(EP[:ePowerBalance_VRE_STOR][t, z], -1.0, vCHARGE_VRE_STOR[y, t])
+            end
         end
     end
 
@@ -1451,9 +1445,9 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCFixElec, sum(eCFixElec[y] for y in ELEC))
 
     if MultiStage == 1
-        EP[:eObj] += eTotalCFixElec / inputs["OPEXMULT"]
+        add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixElec)
     else
-        EP[:eObj] += eTotalCFixElec
+        add_to_expression!(EP[:eObj], eTotalCFixElec)
     end
 
     # No variable costs of "generation" for electrolyzer resource
@@ -1461,8 +1455,8 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     # 3. Inverter Balance, Electrolyzer Generation Maximum
     @expression(EP, eElecGenMaxE[y in ELEC, t = 1:T], JuMP.AffExpr())
     for y in ELEC, t in 1:T
-        EP[:eInvACBalance][y, t] -= EP[:vP_ELEC][y, t]
-        eElecGenMaxE[y, t] += EP[:vP_ELEC][y, t]
+        add_to_expression!(EP[:eInvACBalance][y, t], -1.0, EP[:vP_ELEC][y, t])
+        add_to_expression!(eElecGenMaxE[y, t], EP[:vP_ELEC][y, t])
     end
 
     ### CONSTRAINTS ###
@@ -1581,25 +1575,23 @@ function lds_vre_stor!(EP::Model, inputs::Dict)
     AC_CHARGE_CONSTRAINTSET = intersect(inputs["VS_STOR_AC_CHARGE"], VS_LDS)
     for w in 1:REP_PERIOD
         for y in DC_DISCHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] -= EP[:vP_DC_DISCHARGE][y,
-                hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_dc)
+            add_to_expression!(EP[:eVreStorSoCBalLongDurationStorageStart][y, w],
+                -1 / by_rid(y, :eff_down_dc), EP[:vP_DC_DISCHARGE][y, hours_per_subperiod * (w - 1) + 1])
         end
 
         for y in DC_CHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] += by_rid(y, :eff_up_dc) *
-                                                                 EP[:vP_DC_CHARGE][y,
-                hours_per_subperiod * (w - 1) + 1]
+            add_to_expression!(EP[:eVreStorSoCBalLongDurationStorageStart][y, w],
+                by_rid(y, :eff_up_dc), EP[:vP_DC_CHARGE][y, hours_per_subperiod * (w - 1) + 1])
         end
 
         for y in AC_DISCHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] -= EP[:vP_AC_DISCHARGE][y,
-                hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_ac)
+            add_to_expression!(EP[:eVreStorSoCBalLongDurationStorageStart][y, w],
+                -1 / by_rid(y, :eff_down_ac), EP[:vP_AC_DISCHARGE][y, hours_per_subperiod * (w - 1) + 1])
         end
 
         for y in AC_CHARGE_CONSTRAINTSET
-            EP[:eVreStorSoCBalLongDurationStorageStart][y, w] += by_rid(y, :eff_up_ac) *
-                                                                 EP[:vP_AC_CHARGE][y,
-                hours_per_subperiod * (w - 1) + 1]
+            add_to_expression!(EP[:eVreStorSoCBalLongDurationStorageStart][y, w],
+                by_rid(y, :eff_up_ac), EP[:vP_AC_CHARGE][y, hours_per_subperiod * (w - 1) + 1])
         end
     end
 
@@ -1849,9 +1841,9 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             sum(EP[:eCFixDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixDischarge_DC / inputs["OPEXMULT"]
+            add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixDischarge_DC)
         else
-            EP[:eObj] += eTotalCFixDischarge_DC
+            add_to_expression!(EP[:eObj], eTotalCFixDischarge_DC)
         end
 
         ### CONSTRAINTS ###
@@ -1884,7 +1876,7 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             eVreStorMaxDischargingDC[y in VS_ASYM_DC_DISCHARGE, t = 1:T],
             JuMP.AffExpr())
         for y in VS_ASYM_DC_DISCHARGE, t in 1:T
-            eVreStorMaxDischargingDC[y, t] += EP[:vP_DC_DISCHARGE][y, t]
+            add_to_expression!(eVreStorMaxDischargingDC[y, t], EP[:vP_DC_DISCHARGE][y, t])
         end
     end
 
@@ -1949,9 +1941,9 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             sum(EP[:eCFixCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixCharge_DC / inputs["OPEXMULT"]
+            add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixCharge_DC)
         else
-            EP[:eObj] += eTotalCFixCharge_DC
+            add_to_expression!(EP[:eObj], eTotalCFixCharge_DC)
         end
 
         ### CONSTRAINTS ###
@@ -1984,7 +1976,7 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             eVreStorMaxChargingDC[y in VS_ASYM_DC_CHARGE, t = 1:T],
             JuMP.AffExpr())
         for y in VS_ASYM_DC_CHARGE, t in 1:T
-            eVreStorMaxChargingDC[y, t] += EP[:vP_DC_CHARGE][y, t]
+            add_to_expression!(eVreStorMaxChargingDC[y, t], EP[:vP_DC_CHARGE][y, t])
         end
     end
 
@@ -2053,9 +2045,9 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             sum(EP[:eCFixDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixDischarge_AC / inputs["OPEXMULT"]
+            add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixDischarge_AC)
         else
-            EP[:eObj] += eTotalCFixDischarge_AC
+            add_to_expression!(EP[:eObj], eTotalCFixDischarge_AC)
         end
 
         ### CONSTRAINTS ###
@@ -2088,7 +2080,7 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             eVreStorMaxDischargingAC[y in VS_ASYM_AC_DISCHARGE, t = 1:T],
             JuMP.AffExpr())
         for y in VS_ASYM_AC_DISCHARGE, t in 1:T
-            eVreStorMaxDischargingAC[y, t] += EP[:vP_AC_DISCHARGE][y, t]
+            add_to_expression!(eVreStorMaxDischargingAC[y, t], EP[:vP_AC_DISCHARGE][y, t])
         end
     end
 
@@ -2153,9 +2145,9 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             sum(EP[:eCFixCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
 
         if MultiStage == 1
-            EP[:eObj] += eTotalCFixCharge_AC / inputs["OPEXMULT"]
+            add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixCharge_AC)
         else
-            EP[:eObj] += eTotalCFixCharge_AC
+            add_to_expression!(EP[:eObj], eTotalCFixCharge_AC)
         end
 
         ### CONSTRAINTS ###
@@ -2188,7 +2180,7 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             eVreStorMaxChargingAC[y in VS_ASYM_AC_CHARGE, t = 1:T],
             JuMP.AffExpr())
         for y in VS_ASYM_AC_CHARGE, t in 1:T
-            eVreStorMaxChargingAC[y, t] += EP[:vP_AC_CHARGE][y, t]
+            add_to_expression!(eVreStorMaxChargingAC[y, t], EP[:vP_AC_CHARGE][y, t])
         end
     end
 end
@@ -2343,82 +2335,71 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     AC_CHARGE_CONSTRAINTSET = intersect(CONSTRAINTSET, AC_CHARGE)
     for t in START_SUBPERIODS
         for y in DC_DISCHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /
-                                          by_rid(y, :eff_down_dc)
+            add_to_expression!(eVreStorVSoCBalStart[y, t], 1 / by_rid(y, :eff_down_dc), EP[:vCAPRES_DC_DISCHARGE][y, t])
         end
         for y in DC_CHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y, t] -= by_rid(y, :eff_up_dc) *
-                                          EP[:vCAPRES_DC_CHARGE][y, t]
+            add_to_expression!(eVreStorVSoCBalStart[y, t], -by_rid(y, :eff_up_dc), EP[:vCAPRES_DC_CHARGE][y, t])
         end
         for y in AC_DISCHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y, t] += EP[:vCAPRES_AC_DISCHARGE][y, t] /
-                                          by_rid(y, :eff_down_ac)
+            add_to_expression!(eVreStorVSoCBalStart[y, t], 1 / by_rid(y, :eff_down_ac), EP[:vCAPRES_AC_DISCHARGE][y, t])
         end
         for y in AC_CHARGE_CONSTRAINTSET
-            eVreStorVSoCBalStart[y, t] -= by_rid(y, :eff_up_ac) *
-                                          EP[:vCAPRES_AC_CHARGE][y, t]
+            add_to_expression!(eVreStorVSoCBalStart[y, t], -by_rid(y, :eff_up_ac), EP[:vCAPRES_AC_CHARGE][y, t])
         end
     end
 
     for t in INTERIOR_SUBPERIODS
         for y in DC_DISCHARGE
-            eVreStorVSoCBalInterior[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /
-                                             by_rid(y, :eff_down_dc)
+            add_to_expression!(eVreStorVSoCBalInterior[y, t], 1 / by_rid(y, :eff_down_dc), EP[:vCAPRES_DC_DISCHARGE][y, t])
         end
         for y in DC_CHARGE
-            eVreStorVSoCBalInterior[y, t] -= by_rid(y, :eff_up_dc) *
-                                             EP[:vCAPRES_DC_CHARGE][y, t]
+            add_to_expression!(eVreStorVSoCBalInterior[y, t], -by_rid(y, :eff_up_dc), EP[:vCAPRES_DC_CHARGE][y, t])
         end
         for y in AC_DISCHARGE
-            eVreStorVSoCBalInterior[y, t] += EP[:vCAPRES_AC_DISCHARGE][y, t] /
-                                             by_rid(y, :eff_down_ac)
+            add_to_expression!(eVreStorVSoCBalInterior[y, t], 1 / by_rid(y, :eff_down_ac), EP[:vCAPRES_AC_DISCHARGE][y, t])
         end
         for y in AC_CHARGE
-            eVreStorVSoCBalInterior[y, t] -= by_rid(y, :eff_up_ac) *
-                                             EP[:vCAPRES_AC_CHARGE][y, t]
+            add_to_expression!(eVreStorVSoCBalInterior[y, t], -by_rid(y, :eff_up_ac), EP[:vCAPRES_AC_CHARGE][y, t])
         end
     end
 
     # Inverter & grid connection export additions
     for t in 1:T
         for y in DC_DISCHARGE
-            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) *
-                                          vCAPRES_DC_DISCHARGE[y, t]
-            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vCAPRES_DC_DISCHARGE[y, t]
+            add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter), vCAPRES_DC_DISCHARGE[y, t])
+            add_to_expression!(EP[:eGridExport][y, t], by_rid(y, :etainverter), vCAPRES_DC_DISCHARGE[y, t])
         end
         for y in DC_CHARGE
-            EP[:eInverterExport][y, t] += vCAPRES_DC_CHARGE[y, t] / by_rid(y, :etainverter)
-            EP[:eGridExport][y, t] += vCAPRES_DC_CHARGE[y, t] / by_rid(y, :etainverter)
+            add_to_expression!(EP[:eInverterExport][y, t], 1 / by_rid(y, :etainverter), vCAPRES_DC_CHARGE[y, t])
+            add_to_expression!(EP[:eGridExport][y, t], 1 / by_rid(y, :etainverter), vCAPRES_DC_CHARGE[y, t])
         end
         for y in AC_DISCHARGE
-            EP[:eGridExport][y, t] += vCAPRES_AC_DISCHARGE[y, t]
+            add_to_expression!(EP[:eGridExport][y, t], vCAPRES_AC_DISCHARGE[y, t])
         end
         for y in AC_CHARGE
-            EP[:eGridExport][y, t] += vCAPRES_AC_CHARGE[y, t]
+            add_to_expression!(EP[:eGridExport][y, t], vCAPRES_AC_CHARGE[y, t])
         end
 
         # Asymmetric and symmetric storage contributions
         for y in VS_ASYM_DC_DISCHARGE
-            EP[:eVreStorMaxDischargingDC][y, t] += vCAPRES_DC_DISCHARGE[y, t]
+            add_to_expression!(EP[:eVreStorMaxDischargingDC][y, t], vCAPRES_DC_DISCHARGE[y, t])
         end
         for y in VS_ASYM_AC_DISCHARGE
-            EP[:eVreStorMaxDischargingAC][y, t] += vCAPRES_AC_DISCHARGE[y, t]
+            add_to_expression!(EP[:eVreStorMaxDischargingAC][y, t], vCAPRES_AC_DISCHARGE[y, t])
         end
         for y in VS_ASYM_DC_CHARGE
-            EP[:eVreStorMaxChargingDC][y, t] += vCAPRES_DC_CHARGE[y, t]
+            add_to_expression!(EP[:eVreStorMaxChargingDC][y, t], vCAPRES_DC_CHARGE[y, t])
         end
         for y in VS_ASYM_AC_CHARGE
-            EP[:eVreStorMaxChargingAC][y, t] += vCAPRES_AC_CHARGE[y, t]
+            add_to_expression!(EP[:eVreStorMaxChargingAC][y, t], vCAPRES_AC_CHARGE[y, t])
         end
         for y in VS_SYM_DC
-            EP[:eChargeDischargeMaxDC][y, t] += (vCAPRES_DC_DISCHARGE[y, t]
-                                                 +
-                                                 vCAPRES_DC_CHARGE[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxDC][y, t], vCAPRES_DC_DISCHARGE[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxDC][y, t], vCAPRES_DC_CHARGE[y, t])
         end
         for y in VS_SYM_AC
-            EP[:eChargeDischargeMaxAC][y, t] += (vCAPRES_AC_DISCHARGE[y, t]
-                                                 +
-                                                 vCAPRES_AC_CHARGE[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxAC][y, t], vCAPRES_AC_DISCHARGE[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxAC][y, t], vCAPRES_AC_CHARGE[y, t])
         end
     end
 
@@ -2476,7 +2457,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(eCapResMarBalanceStor_VRE_STOR,
             eCapResMarBalanceStor_VRE_STOR_Virtual)
     end
-    EP[:eCapResMarBalance] += EP[:eCapResMarBalanceStor_VRE_STOR]
+    add_to_expression!(EP[:eCapResMarBalance], EP[:eCapResMarBalanceStor_VRE_STOR])
 
     ### OBJECTIVE FUNCTION ADDITIONS ###
 
@@ -2490,7 +2471,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP,
         eTotalCVar_Charge_DC_virtual,
         sum(eTotalCVar_Charge_DC_T_virtual[t] for t in 1:T))
-    EP[:eObj] += eTotalCVar_Charge_DC_virtual
+    add_to_expression!(EP[:eObj], eTotalCVar_Charge_DC_virtual)
 
     #Variable costs of DC "virtual discharging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Discharge_DC_virtual[y in DC_DISCHARGE, t = 1:T],
@@ -2502,7 +2483,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP,
         eTotalCVar_Discharge_DC_virtual,
         sum(eTotalCVar_Discharge_DC_T_virtual[t] for t in 1:T))
-    EP[:eObj] += eTotalCVar_Discharge_DC_virtual
+    add_to_expression!(EP[:eObj], eTotalCVar_Discharge_DC_virtual)
 
     #Variable costs of AC "virtual charging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Charge_AC_virtual[y in AC_CHARGE, t = 1:T],
@@ -2513,7 +2494,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP,
         eTotalCVar_Charge_AC_virtual,
         sum(eTotalCVar_Charge_AC_T_virtual[t] for t in 1:T))
-    EP[:eObj] += eTotalCVar_Charge_AC_virtual
+    add_to_expression!(EP[:eObj], eTotalCVar_Charge_AC_virtual)
 
     #Variable costs of AC "virtual discharging" for technologies "y" during hour "t" in zone "z"
     @expression(EP, eCVar_Discharge_AC_virtual[y in AC_DISCHARGE, t = 1:T],
@@ -2524,7 +2505,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP,
         eTotalCVar_Discharge_AC_virtual,
         sum(eTotalCVar_Discharge_AC_T_virtual[t] for t in 1:T))
-    EP[:eObj] += eTotalCVar_Discharge_AC_virtual
+    add_to_expression!(EP[:eObj], eTotalCVar_Discharge_AC_virtual)
 
     ### LONG DURATION ENERGY STORAGE CAPACITY RESERVE MARGIN MODULE ###
     if rep_periods > 1 && !isempty(VS_LDS)
@@ -2562,24 +2543,20 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
         AC_CHARGE_CONSTRAINTSET = intersect(AC_CHARGE, VS_LDS)
         for w in 1:REP_PERIOD
             for y in DC_DISCHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y, w] += EP[:vCAPRES_DC_DISCHARGE][
-                    y,
-                    hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_dc)
+                add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w],
+                    1 / by_rid(y, :eff_down_dc), EP[:vCAPRES_DC_DISCHARGE][y, hours_per_subperiod * (w - 1) + 1])
             end
             for y in DC_CHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y, w] -= by_rid(y, :eff_up_dc) *
-                                                                 EP[:vCAPRES_DC_CHARGE][y,
-                    hours_per_subperiod * (w - 1) + 1]
+                add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w], -by_rid(y, :eff_up_dc),
+                    EP[:vCAPRES_DC_CHARGE][y, hours_per_subperiod * (w - 1) + 1])
             end
             for y in AC_DISCHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y, w] += EP[:vCAPRES_AC_DISCHARGE][
-                    y,
-                    hours_per_subperiod * (w - 1) + 1] / by_rid(y, :eff_down_ac)
+                add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w],
+                    1 / by_rid(y, :eff_down_ac), EP[:vCAPRES_AC_DISCHARGE][y, hours_per_subperiod * (w - 1) + 1])
             end
             for y in AC_CHARGE_CONSTRAINTSET
-                eVreStorVSoCBalLongDurationStorageStart[y, w] -= by_rid(y, :eff_up_ac) *
-                                                                 EP[:vCAPRES_AC_CHARGE][y,
-                    hours_per_subperiod * (w - 1) + 1]
+                add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w], -by_rid(y, :eff_up_ac),
+                    EP[:vCAPRES_AC_CHARGE][y, hours_per_subperiod * (w - 1) + 1])
             end
         end
 
@@ -2795,150 +2772,160 @@ function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
 
     for t in 1:T
         for y in DC_DISCHARGE
-            eDischargeDCMin[y, t] += EP[:vP_DC_DISCHARGE][y, t]
-            eDischargeMax[y, t] += EP[:vP_DC_DISCHARGE][y, t] / by_rid(y, :eff_down_dc)
+            add_to_expression!(eDischargeDCMin[y, t], EP[:vP_DC_DISCHARGE][y, t])
+            add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_dc), EP[:vP_DC_DISCHARGE][y, t])
         end
 
         for y in DC_CHARGE
-            eChargeDCMin[y, t] += EP[:vP_DC_CHARGE][y, t]
-            eChargeMax[y, t] += by_rid(y, :eff_up_dc) * EP[:vP_DC_CHARGE][y, t]
+            add_to_expression!(eChargeDCMin[y, t], EP[:vP_DC_CHARGE][y, t])
+            add_to_expression!(eChargeMax[y, t], by_rid(y, :eff_up_dc), EP[:vP_DC_CHARGE][y, t])
         end
 
         for y in AC_DISCHARGE
-            eDischargeACMin[y, t] += EP[:vP_AC_DISCHARGE][y, t]
-            eDischargeMax[y, t] += EP[:vP_AC_DISCHARGE][y, t] / by_rid(y, :eff_down_ac)
+            add_to_expression!(eDischargeACMin[y, t], EP[:vP_AC_DISCHARGE][y, t])
+            add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_ac), EP[:vP_AC_DISCHARGE][y, t])
         end
 
         for y in AC_CHARGE
-            eChargeACMin[y, t] += EP[:vP_AC_CHARGE][y, t]
-            eChargeMax[y, t] += by_rid(y, :eff_up_ac) * EP[:vP_AC_CHARGE][y, t]
+            add_to_expression!(eChargeACMin[y, t], EP[:vP_AC_CHARGE][y, t])
+            add_to_expression!(eChargeMax[y, t], by_rid(y, :eff_up_ac), EP[:vP_AC_CHARGE][y, t])
         end
 
         for y in SOLAR_REG
-            eVreStorRegOnlyBalance[y, t] += by_rid(y, :etainverter) * vREG_SOLAR[y, t]
-            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vREG_SOLAR[y, t]
-            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vREG_SOLAR[y, t]
-            EP[:eSolarGenMaxS][y, t] += vREG_SOLAR[y, t]
+            add_to_expression!(eVreStorRegOnlyBalance[y, t], by_rid(y, :etainverter), vREG_SOLAR[y, t])
+            add_to_expression!(EP[:eGridExport][y, t], by_rid(y, :etainverter), vREG_SOLAR[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter), vREG_SOLAR[y, t])
+            add_to_expression!(EP[:eSolarGenMaxS][y, t], vREG_SOLAR[y, t])
         end
         for y in SOLAR_RSV
-            eVreStorRsvOnlyBalance[y, t] += by_rid(y, :etainverter) * vRSV_SOLAR[y, t]
-            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vRSV_SOLAR[y, t]
-            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vRSV_SOLAR[y, t]
-            EP[:eSolarGenMaxS][y, t] += vRSV_SOLAR[y, t]
+            add_to_expression!(eVreStorRsvOnlyBalance[y, t], by_rid(y, :etainverter), vRSV_SOLAR[y, t])
+            add_to_expression!(EP[:eGridExport][y, t], by_rid(y, :etainverter), vRSV_SOLAR[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter), vRSV_SOLAR[y, t])
+            add_to_expression!(EP[:eSolarGenMaxS][y, t], vRSV_SOLAR[y, t])
         end
 
         for y in WIND_REG
-            eVreStorRegOnlyBalance[y, t] += vREG_WIND[y, t]
-            EP[:eGridExport][y, t] += vREG_WIND[y, t]
-            EP[:eWindGenMaxW][y, t] += vREG_WIND[y, t]
+            add_to_expression!(eVreStorRegOnlyBalance[y, t], vREG_WIND[y, t])
+            add_to_expression!(EP[:eGridExport][y, t], vREG_WIND[y, t])
+            add_to_expression!(EP[:eWindGenMaxW][y, t], vREG_WIND[y, t])
         end
         for y in WIND_RSV
-            eVreStorRsvOnlyBalance[y, t] += vRSV_WIND[y, t]
-            EP[:eGridExport][y, t] += vRSV_WIND[y, t]
-            EP[:eWindGenMaxW][y, t] += vRSV_WIND[y, t]
+            add_to_expression!(eVreStorRsvOnlyBalance[y, t], vRSV_WIND[y, t])
+            add_to_expression!(EP[:eGridExport][y, t], vRSV_WIND[y, t])
+            add_to_expression!(EP[:eWindGenMaxW][y, t], vRSV_WIND[y, t])
         end
 
         for y in DC_DISCHARGE_REG
-            eVreStorRegOnlyBalance[y, t] += by_rid(y, :etainverter) *
-                                            vREG_DC_Discharge[y, t]
-            eDischargeDCMin[y, t] -= vREG_DC_Discharge[y, t]
-            eDischargeMax[y, t] += EP[:vREG_DC_Discharge][y, t] / by_rid(y, :eff_down_dc)
-            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vREG_DC_Discharge[y, t]
-            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vREG_DC_Discharge[y, t]
+            add_to_expression!(eVreStorRegOnlyBalance[y, t], by_rid(y, :etainverter),
+                vREG_DC_Discharge[y, t])
+            add_to_expression!(eDischargeDCMin[y, t], -1.0, vREG_DC_Discharge[y, t])
+            add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_dc),
+                EP[:vREG_DC_Discharge][y, t])
+            add_to_expression!(EP[:eGridExport][y, t], by_rid(y, :etainverter),
+                vREG_DC_Discharge[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter),
+                vREG_DC_Discharge[y, t])
         end
         for y in DC_DISCHARGE_RSV
-            eVreStorRsvOnlyBalance[y, t] += by_rid(y, :etainverter) *
-                                            vRSV_DC_Discharge[y, t]
-            eDischargeMax[y, t] += EP[:vRSV_DC_Discharge][y, t] / by_rid(y, :eff_down_dc)
-            EP[:eGridExport][y, t] += by_rid(y, :etainverter) * vRSV_DC_Discharge[y, t]
-            EP[:eInverterExport][y, t] += by_rid(y, :etainverter) * vRSV_DC_Discharge[y, t]
+            add_to_expression!(eVreStorRsvOnlyBalance[y, t], by_rid(y, :etainverter),
+                vRSV_DC_Discharge[y, t])
+            add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_dc),
+                EP[:vRSV_DC_Discharge][y, t])
+            add_to_expression!(EP[:eGridExport][y, t], by_rid(y, :etainverter),
+                vRSV_DC_Discharge[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], by_rid(y, :etainverter),
+                vRSV_DC_Discharge[y, t])
         end
 
         for y in DC_CHARGE_REG
-            eVreStorRegOnlyBalance[y, t] += vREG_DC_Charge[y, t] / by_rid(y, :etainverter)
-            eChargeDCMin[y, t] -= vREG_DC_Charge[y, t]
-            eChargeMax[y, t] += by_rid(y, :eff_up_dc) * EP[:vREG_DC_Charge][y, t]
-            EP[:eGridExport][y, t] += vREG_DC_Charge[y, t] / by_rid(y, :etainverter)
-            EP[:eInverterExport][y, t] += vREG_DC_Charge[y, t] / by_rid(y, :etainverter)
+            add_to_expression!(eVreStorRegOnlyBalance[y, t], 1 / by_rid(y, :etainverter), vREG_DC_Charge[y, t])
+            add_to_expression!(eChargeDCMin[y, t], -1.0, vREG_DC_Charge[y, t])
+            add_to_expression!(eChargeMax[y, t], by_rid(y, :eff_up_dc),
+                EP[:vREG_DC_Charge][y, t])
+            add_to_expression!(EP[:eGridExport][y, t], 1 / by_rid(y, :etainverter),
+                vREG_DC_Charge[y, t])
+            add_to_expression!(EP[:eInverterExport][y, t], 1 / by_rid(y, :etainverter),
+                vREG_DC_Charge[y, t])
         end
         for y in DC_CHARGE_RSV
-            eVreStorRsvOnlyBalance[y, t] += vRSV_DC_Charge[y, t] / by_rid(y, :etainverter)
-            eChargeDCMin[y, t] -= vRSV_DC_Charge[y, t]
+            add_to_expression!(eVreStorRsvOnlyBalance[y, t], 1 / by_rid(y, :etainverter), vRSV_DC_Charge[y, t])
+            add_to_expression!(eChargeDCMin[y, t], -1.0, vRSV_DC_Charge[y, t])
         end
 
         for y in AC_DISCHARGE_REG
-            eVreStorRegOnlyBalance[y, t] += vREG_AC_Discharge[y, t]
-            eDischargeACMin[y, t] -= vREG_AC_Discharge[y, t]
-            eDischargeMax[y, t] += EP[:vREG_AC_Discharge][y, t] / by_rid(y, :eff_down_ac)
-            EP[:eGridExport][y, t] += vREG_AC_Discharge[y, t]
+            add_to_expression!(eVreStorRegOnlyBalance[y, t], vREG_AC_Discharge[y, t])
+            add_to_expression!(eDischargeACMin[y, t], -1.0, vREG_AC_Discharge[y, t])
+            add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_ac),
+                EP[:vREG_AC_Discharge][y, t])
+            add_to_expression!(EP[:eGridExport][y, t], vREG_AC_Discharge[y, t])
         end
         for y in AC_DISCHARGE_RSV
-            eVreStorRsvOnlyBalance[y, t] += vRSV_AC_Discharge[y, t]
-            eDischargeMax[y, t] += EP[:vRSV_AC_Discharge][y, t] / by_rid(y, :eff_down_ac)
-            EP[:eGridExport][y, t] += vRSV_AC_Discharge[y, t]
+            add_to_expression!(eVreStorRsvOnlyBalance[y, t], vRSV_AC_Discharge[y, t])
+            add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_ac),
+                EP[:vRSV_AC_Discharge][y, t])
+            add_to_expression!(EP[:eGridExport][y, t], vRSV_AC_Discharge[y, t])
         end
 
         for y in AC_CHARGE_REG
-            eVreStorRegOnlyBalance[y, t] += vREG_AC_Charge[y, t]
-            eChargeACMin[y, t] -= vREG_AC_Charge[y, t]
-            eChargeMax[y, t] += by_rid(y, :eff_down_ac) * EP[:vREG_AC_Charge][y, t]
-            EP[:eGridExport][y, t] += vREG_AC_Charge[y, t]
+            add_to_expression!(eVreStorRegOnlyBalance[y, t], vREG_AC_Charge[y, t])
+            add_to_expression!(eChargeACMin[y, t], -1.0, vREG_AC_Charge[y, t])
+            add_to_expression!(eChargeMax[y, t], by_rid(y, :eff_down_ac),
+                EP[:vREG_AC_Charge][y, t])
+            add_to_expression!(EP[:eGridExport][y, t], vREG_AC_Charge[y, t])
         end
         for y in AC_CHARGE_RSV
-            eVreStorRsvOnlyBalance[y, t] += vRSV_AC_Charge[y, t]
-            eChargeACMin[y, t] -= vRSV_AC_Charge[y, t]
+            add_to_expression!(eVreStorRsvOnlyBalance[y, t], vRSV_AC_Charge[y, t])
+            add_to_expression!(eChargeACMin[y, t], -1.0, vRSV_AC_Charge[y, t])
         end
 
         for y in VS_SYM_DC_REG
-            EP[:eChargeDischargeMaxDC][y, t] += (vREG_DC_Discharge[y, t]
-                                                 +
-                                                 vREG_DC_Charge[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxDC][y, t], vREG_DC_Discharge[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxDC][y, t], vREG_DC_Charge[y, t])
         end
         for y in VS_SYM_DC_RSV
-            EP[:eChargeDischargeMaxDC][y, t] += vRSV_DC_Discharge[y, t]
+            add_to_expression!(EP[:eChargeDischargeMaxDC][y, t], vRSV_DC_Discharge[y, t])
         end
 
         for y in VS_SYM_AC_REG
-            EP[:eChargeDischargeMaxAC][y, t] += (vREG_AC_Discharge[y, t]
-                                                 +
-                                                 vREG_AC_Charge[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxAC][y, t], vREG_AC_Discharge[y, t])
+            add_to_expression!(EP[:eChargeDischargeMaxAC][y, t], vREG_AC_Charge[y, t])
         end
         for y in VS_SYM_AC_RSV
-            EP[:eChargeDischargeMaxAC][y, t] += vRSV_AC_Discharge[y, t]
+            add_to_expression!(EP[:eChargeDischargeMaxAC][y, t], vRSV_AC_Discharge[y, t])
         end
 
         for y in VS_ASYM_DC_DISCHARGE_REG
-            EP[:eVreStorMaxDischargingDC][y, t] += vREG_DC_Discharge[y, t]
+            add_to_expression!(EP[:eVreStorMaxDischargingDC][y, t], vREG_DC_Discharge[y, t])
         end
         for y in VS_ASYM_DC_DISCHARGE_RSV
-            EP[:eVreStorMaxDischargingDC][y, t] += vRSV_DC_Discharge[y, t]
+            add_to_expression!(EP[:eVreStorMaxDischargingDC][y, t], vRSV_DC_Discharge[y, t])
         end
 
         for y in VS_ASYM_DC_CHARGE_REG
-            EP[:eVreStorMaxChargingDC][y, t] += vREG_DC_Charge[y, t]
+            add_to_expression!(EP[:eVreStorMaxChargingDC][y, t], vREG_DC_Charge[y, t])
         end
 
         for y in VS_ASYM_AC_DISCHARGE_REG
-            EP[:eVreStorMaxDischargingAC][y, t] += vREG_AC_Discharge[y, t]
+            add_to_expression!(EP[:eVreStorMaxDischargingAC][y, t], vREG_AC_Discharge[y, t])
         end
         for y in VS_ASYM_AC_DISCHARGE_RSV
-            EP[:eVreStorMaxDischargingAC][y, t] += vRSV_AC_Discharge[y, t]
+            add_to_expression!(EP[:eVreStorMaxDischargingAC][y, t], vRSV_AC_Discharge[y, t])
         end
 
         for y in VS_ASYM_AC_CHARGE_REG
-            EP[:eVreStorMaxChargingAC][y, t] += vREG_AC_Charge[y, t]
+            add_to_expression!(EP[:eVreStorMaxChargingAC][y, t], vREG_AC_Charge[y, t])
         end
     end
 
     if CapacityReserveMargin > 0
         for t in 1:T
             for y in DC_DISCHARGE
-                eDischargeMax[y, t] += EP[:vCAPRES_DC_DISCHARGE][y, t] /
-                                       by_rid(y, :eff_down_dc)
+                add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_dc),
+                    EP[:vCAPRES_DC_DISCHARGE][y, t])
             end
             for y in AC_DISCHARGE
-                eDischargeMax[y, t] += EP[:vCAPRES_AC_DISCHARGE][y, t] /
-                                       by_rid(y, :eff_down_ac)
+                add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_ac),
+                    EP[:vCAPRES_AC_DISCHARGE][y, t])
             end
         end
     end

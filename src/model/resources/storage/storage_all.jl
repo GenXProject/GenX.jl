@@ -75,7 +75,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCVarInT_virtual[t = 1:T],
             sum(eCVar_in_virtual[y, t] for y in STOR_ALL))
         @expression(EP, eTotalCVarIn_virtual, sum(eTotalCVarInT_virtual[t] for t in 1:T))
-        EP[:eObj] += eTotalCVarIn_virtual
+        add_to_expression!(EP[:eObj], eTotalCVarIn_virtual)
 
         #Variable costs of "virtual discharging" for technologies "y" during hour "t" in zone "z"
         @expression(EP,
@@ -85,7 +85,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCVarOutT_virtual[t = 1:T],
             sum(eCVar_out_virtual[y, t] for y in STOR_ALL))
         @expression(EP, eTotalCVarOut_virtual, sum(eTotalCVarOutT_virtual[t] for t in 1:T))
-        EP[:eObj] += eTotalCVarOut_virtual
+        add_to_expression!(EP[:eObj], eTotalCVarOut_virtual)
     end
 
     ## Power Balance Expressions ##

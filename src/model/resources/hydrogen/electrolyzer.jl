@@ -93,7 +93,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
         for y in ELECTROLYZERS_BY_ZONE[z]))
 
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
-    EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
+    add_similar_to_expression!(EP[:ePowerBalance], -1.0, ePowerBalanceElectrolyzers)
 
     ## Hydrogen production expressions ##
     @expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)],
@@ -170,7 +170,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(omega[t] * EP[:vUSE][y, t]
             for y in intersect(ELECTROLYZERS, ids_with_policy(gen, esr, tag = ESR)),
             t in 1:T))
-        EP[:eESR] -= eElectrolyzerESR
+        add_similar_to_expression!(EP[:eESR], -1.0, eElectrolyzerESR)
     end
 
     ### Objective Function ###
@@ -192,5 +192,5 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(eHydrogenValue[y, t] for y in ELECTROLYZERS; init = 0)
         end)
     @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
-    EP[:eObj] -= eTotalHydrogenValue
+    add_similar_to_expression!(EP[:eObj], -1.0, eTotalHydrogenValue)
 end
