@@ -87,6 +87,11 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
                                            sum(weight)
     end
 
+    if !isempty(CCS_SOLVENT_STORAGE)
+        @info "Capacity factor for CCS SOLVENT STORAGE resources that is included in the capacityfactor.csv file is calculated for the total generation from gas and steam turbines in an Allam Cycle LOX resource."
+        @info "For the full power output, please refer to the output_CCS_Solvent_Storage.csv file."
+    end
+
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)
     return nothing
