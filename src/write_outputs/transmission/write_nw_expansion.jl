@@ -1,6 +1,5 @@
 function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     # Number of lines in the network
-    L_sym = inputs["L_sym"]
     L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
     L = inputs["L"]
 
