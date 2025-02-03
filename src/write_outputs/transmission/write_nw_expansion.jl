@@ -24,9 +24,10 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
     for i in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)
         transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
     end
-    for i in EXPANSION_LINES_ASYM
-        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][i])
-        transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][i])    
+   for i in eachindex(EXPANSION_LINES_ASYM)
+        asym_line_index = EXPANSION_LINES_ASYM[i]
+        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][asym_line_index])
+        transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][asym_line_index])    
     end
 
     dfTransCap = DataFrame(Line = 1:L,
