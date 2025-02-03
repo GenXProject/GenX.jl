@@ -48,12 +48,6 @@ and $\overline{\bigtriangleup\varphi^{cap-}_{l}}$ respectively for asymmetric li
 function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Investment Transmission Module")
 
-    
-    # Number of lines in the network
-    L_sym = inputs["L_sym"]
-    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
-    L = inputs["L"]
-
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
 
