@@ -17,8 +17,8 @@ the fact that most generators have a decreasing heat rate as a function of load.
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation 
 ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
-denoted by $vCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
-and $cStartFuel$) multiplied by the fuel costs (\$/MMBTU)
+denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
+and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
 (2). Piecewise-linear approximation
 With this formulation, the heat rate of generators becomes a function of load.
 In reality this relationship takes a nonlinear form, but we model it
@@ -126,15 +126,15 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ### Expressions ####
-    # # Fuel consumed on start-up (MMBTU or kMMBTU (scaled)) 
-    # # if unit commitment is modelled
-    # @expression(EP, eStartFuel[y in 1:G, t = 1:T],
-    #     if y in THERM_COMMIT
-    #         (cap_size(gen[y]) * EP[:vSTART][y, t] *
-    #          start_fuel_mmbtu_per_mw(gen[y]))
-    #     else
-    #         0
-    #     end)
+    # Fuel consumed on start-up (MMBTU or kMMBTU (scaled)) 
+    # if unit commitment is modelled
+    @expression(EP, eStartFuel[y in 1:G, t = 1:T],
+        if y in THERM_COMMIT
+            (cap_size(gen[y]) * EP[:vSTART][y, t] *
+             start_fuel_mmbtu_per_mw(gen[y]))
+        else
+            0
+        end)
 
     # time-series fuel consumption by plant 
     @expression(EP, ePlantFuel_generation[y in 1:G, t = 1:T],
@@ -164,7 +164,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
                 i]+EP[:ePlantFuelConsumptionYear_multi_start][y, i])
     end
     # fuel_cost is in $/MMBTU (M$/billion BTU if scaled)
-    # vFuel and vStartFuel is MMBTU (or billion BTU if scaled)
+    # vFuel and eStartFuel is MMBTU (or billion BTU if scaled)
     # eCFuel_start or eCFuel_out is $ or Million$
 
     # Start up fuel cost
@@ -234,7 +234,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
-        sum(EP[:vFuel][y, t] + EP[:vStartFuel][y, t]
+        sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
         for y in intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)))
 
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],

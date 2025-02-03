@@ -28,7 +28,7 @@ the CO2 capture fraction, and whether the generator uses biomass.
 
 ```math
 \begin{aligned}
-eEmissionsByPlant_{g,t} = (1-Biomass_y-  CO2\_Capture\_Fraction_y) * vFuel_{y,t}  * CO2_{content} + (1-Biomass_y-  CO2\_Capture\_Fraction\_Startup_y) * vStartFuel_{y,t} * CO2_{content} 
+eEmissionsByPlant_{g,t} = (1-Biomass_y-  CO2\_Capture\_Fraction_y) * vFuel_{y,t}  * CO2_{content} + (1-Biomass_y-  CO2\_Capture\_Fraction\_Startup_y) * eStartFuel_{y,t} * CO2_{content} 
 \hspace{1cm} \forall y \in G, \forall t \in T, Biomass_y \in {{0,1}}
 \end{aligned}
 ```
@@ -44,7 +44,7 @@ times CO2 capture rate.
 
 ```math
 \begin{aligned}
-eEmissionsCaptureByPlant_{g,t} = CO2\_Capture\_Fraction_y * vFuel_{y,t}  * CO2_{content} +  CO2\_Capture\_Fraction\_Startup_y *  vStartFuel_{y,t} * CO2_{content}
+eEmissionsCaptureByPlant_{g,t} = CO2\_Capture\_Fraction_y * vFuel_{y,t}  * CO2_{content} +  CO2\_Capture\_Fraction\_Startup_y *  eStartFuel_{y,t} * CO2_{content}
 \hspace{1cm} \forall y \in G, \forall t \in T
 \end{aligned}
 ```
@@ -94,7 +94,7 @@ function co2!(EP::Model, inputs::Dict)
                     (1 - biomass(gen[y]) - co2_capture_fraction(gen[y])) * EP[:vFuel][y, t] *
                     fuel_CO2[fuel(gen[y])] +
                     (1 - biomass(gen[y]) - co2_capture_fraction_startup(gen[y])) *
-                    EP[:vStartFuel][y, t] * fuel_CO2[fuel(gen[y])]
+                    EP[:eStartFuel][y, t] * fuel_CO2[fuel(gen[y])]
                 end
             else
                 if y in CCS_SOLVENT_STORAGE
@@ -117,7 +117,7 @@ function co2!(EP::Model, inputs::Dict)
                     EP[:vOutput_CCS_SS][y, regenerator, t]
                 else
                     co2_capture_fraction(gen[y]) * EP[:vFuel][y, t] * fuel_CO2[fuel(gen[y])] +
-                    co2_capture_fraction_startup(gen[y]) * EP[:vStartFuel][y, t] *
+                    co2_capture_fraction_startup(gen[y]) * EP[:eStartFuel][y, t] *
                     fuel_CO2[fuel(gen[y])]
                 end
             else
