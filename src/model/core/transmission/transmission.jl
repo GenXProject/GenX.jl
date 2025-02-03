@@ -134,12 +134,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
     LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
     LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
-    if NetworkExpansion == 1
-        # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
-        EXPANSION_LINES = inputs["EXPANSION_LINES"]
-        EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
-
-    end
 
     ### Variables ###
 
