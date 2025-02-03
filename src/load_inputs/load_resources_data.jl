@@ -17,7 +17,7 @@ function _get_resource_info()
         electrolyzer = (filename = "Electrolyzer.csv", type = Electrolyzer),
         vre_stor = (filename = "Vre_stor.csv", type = VreStorage),
         allam_cycle_lox = (filename = "Allam_Cycle_LOX.csv", type = AllamCycleLOX),
-        ccs_solvent_storage = (filename = "CCS_Solvent_Storage.csv", type = CCSSolventStorage))
+        ccs_solvent_storage = (filename = "CCS_solvent_storage.csv", type = CCSSolventStorage))
     return resource_info
 end
 
@@ -1610,7 +1610,7 @@ function add_resources_to_input_data!(inputs::Dict,
                                                   min_cap_ton_solventstorage_lean(gen[y])
 
     end
-    
+
     inputs["solvent_storage_dict"] = solvent_storage_dict
 
     # Names of resources
