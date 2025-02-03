@@ -195,7 +195,7 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
         )
 
     dfCapCCS_SS = vcat(dfCapCCS_SS, total_solvent_storage)
-    CSV.write(joinpath(path,"capacity_CCS_SOLVENT_STORAGE.csv"), dfCapCCS_SS)
+    CSV.write(joinpath(path,"capacity_CCS_Solvent_Storage.csv"), dfCapCCS_SS)
 
     end
 
@@ -280,5 +280,5 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
                             ]
 
     final_solvent_storage = permutedims(DataFrame(hcat(Array(dfCCS_SS_output), solvent_storage_output), :auto))
-    CSV.write(joinpath(path,"output_CCS_SOLVENT_STORAGE.csv"), final_solvent_storage, writeheader = false)
+    CSV.write(joinpath(path,"output_CCS_Solvent_Storage.csv"), final_solvent_storage, writeheader = false)
 end
