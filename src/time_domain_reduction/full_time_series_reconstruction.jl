@@ -20,7 +20,7 @@ function full_time_series_reconstruction(
         TDRpath = joinpath(case, "inputs", string("inputs_p", cur_stage),
             setup["TimeDomainReductionFolder"])
     else
-        case = path[1:findlast('/', path)]
+        case = dirname(path)
         TDRpath = joinpath(case, setup["TimeDomainReductionFolder"])
     end
     # Read Period map file Period_map.csv
