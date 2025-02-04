@@ -217,7 +217,7 @@ settings dictionary.
 # Returns
 - `settings::Dict`: The multistage settings dictionary.
 """
-function configure_settings_multistage(case::AbstractString,settings_path::String)
+function configure_settings_multistage(settings_path::String)
     println("Configuring Multistage Settings")
     model_settings = isfile(settings_path) ? YAML.load(open(settings_path)) : Dict{Any, Any}()
 

@@ -263,8 +263,9 @@ function morris(EP::Model,
     Morris_range[!, :variance] = DataFrame(m.variances', :auto)[!, :x1]
 
     write_output_file(joinpath(outpath,
-            setup["WriteResultsNamesDict"]["morris"]),
-            Morris_range,filetype = setup["ResultsFileType"],
-            compression = setup["ResultsCompressionType"])
+        setup["WriteResultsNamesDict"]["morris"]),
+        Morris_range,
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
     return Morris_range
 end
