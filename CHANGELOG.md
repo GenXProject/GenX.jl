@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Add Windows OS to GitHub Actions test matrix.
+
 ### Fixed
 - Fix path manipulation crash on Windows with TDR & reconstruction (#827).
 
