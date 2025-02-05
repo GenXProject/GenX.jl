@@ -10,11 +10,11 @@ function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfReg = DataFrame(Resource = resources, Zone = zones)
     dfReg.AnnualSum = reg * inputs["omega"]
 
-    filepath = joinpath(path, "reg.csv")
+    filepath = joinpath(path,setup["WriteResultsNamesDict"]["reg"])
     if setup["WriteOutputs"] == "annual"
-        write_annual(filepath, dfReg)
+        write_annual(filepath, dfReg, setup)
     else # setup["WriteOutputs"] == "full"
-        write_fulltimeseries(filepath, reg, dfReg)
+        write_fulltimeseries(filepath, reg, dfReg, setup)
     end
     return nothing
 end

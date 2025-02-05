@@ -13,7 +13,7 @@ This is the value of the derated capacities of different types of resources mult
 - EP::Model: EnergyModel object.
 
 # Results
-- A CSV file named "CapacityValue.csv" is written to the directory specified by `path`.
+- A file named "CapacityValue" is written to the directory specified by `path`.
 """
 function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
@@ -147,7 +147,10 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
         rename!(temp_dfCapValue, auxNew_Names)
         append!(dfCapValue, temp_dfCapValue)
     end
-    write_simple_csv(joinpath(path, "CapacityValue.csv"), dfCapValue)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["capacity_value"]),
+            dfCapValue,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
 end
 
 @doc raw"""

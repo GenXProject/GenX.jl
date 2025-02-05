@@ -270,5 +270,6 @@ function write_net_revenue(path::AbstractString,
                          dfNetRevenue.CO2SequestrationCost)
     dfNetRevenue.Profit = dfNetRevenue.Revenue .- dfNetRevenue.Cost
 
-    CSV.write(joinpath(path, "NetRevenue.csv"), dfNetRevenue)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["revenue"]),dfNetRevenue, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

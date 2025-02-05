@@ -1,5 +1,5 @@
-function get_demand_dataframe(path)
-    filename = "Demand_data.csv"
+function get_demand_dataframe(path::String, setup::Dict)
+    filename = setup["demand"]
     deprecated_synonym = "Load_data.csv"
     df = load_dataframe(path, [filename, deprecated_synonym])
     # update column names
@@ -23,19 +23,23 @@ DEMAND_COLUMN_PREFIX() = "Demand_MW_z"
 DEMAND_COLUMN_PREFIX_DEPRECATED() = "Load_MW_z"
 
 @doc raw"""
-	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
+	load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict; stage::Int64 = 0)
 
 Read input parameters related to electricity demand (load)
 """
-function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
-
+function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict; stage::Int64 = 0)
     # Load related inputs
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path)
-
-    demand_in = get_demand_dataframe(my_dir)
-
+    if setup["MultiStage"] == 1
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        my_dir = get_systemfiles_path(setup, TDR_directory, path)
+        demand_in = get_demand_dataframe(my_dir, setup["WriteInputNamesDict"][string("inputs_p",stage)])
+    else
+        my_dir = get_systemfiles_path(setup, TDR_directory, path)
+        demand_in = get_demand_dataframe(my_dir, setup["WriteInputNamesDict"])
+    end
+    
     as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
 
     # Number of time steps (periods)
@@ -43,7 +47,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
     # Number of demand curtailment/lost load segments
     SEG = length(as_vector(:Demand_Segment))
 
-    ## Set indices for internal use
+    ## Set indices for internal usex
     inputs["T"] = T
     inputs["SEG"] = SEG
     Z = inputs["Z"]   # Number of zones
@@ -163,8 +167,8 @@ end
 This function prevents TimeDomainReduction from running on a case which
 already has more than one Representative Period or has more than one Sub_Weight specified.
 """
-function prevent_doubled_timedomainreduction(path::AbstractString)
-    demand_in = get_demand_dataframe(path)
+function prevent_doubled_timedomainreduction(path::AbstractString, setup::Dict)
+    demand_in = get_demand_dataframe(path, setup)
     as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
     representative_periods = convert(Int16, as_vector(:Rep_Periods)[1])
     sub_weights = as_vector(:Sub_Weights)

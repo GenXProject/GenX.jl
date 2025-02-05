@@ -262,6 +262,10 @@ function morris(EP::Model,
     #save the variance of effect of each uncertain variable on the objective function
     Morris_range[!, :variance] = DataFrame(m.variances', :auto)[!, :x1]
 
-    CSV.write(joinpath(outpath, "morris.csv"), Morris_range)
+    write_output_file(joinpath(outpath,
+        setup["WriteResultsNamesDict"]["morris"]),
+        Morris_range,
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
     return Morris_range
 end

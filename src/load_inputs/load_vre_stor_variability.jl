@@ -10,21 +10,26 @@ function load_vre_stor_variability!(setup::Dict, path::AbstractString, inputs::D
     # Hourly capacity factors
     TDR_directory = joinpath(path, setup["TimeDomainReductionFolder"])
     # if TDR is used, my_dir = TDR_directory, else my_dir = "system"
-    my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    if setup["MultiStage"] == 1
+        stage = setup["MultiStageSettingsDict"]["CurStage"]
+        my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    else
+        my_dir = get_systemfiles_path(setup, TDR_directory, path)
+    end
 
-    # Resource names
     all_resources = inputs["RESOURCE_NAMES"]
 
     # SOLAR VARIABILITY
     if !isempty(inputs["VS_SOLAR"])
-        filename = "Vre_and_stor_solar_variability.csv"
+        
+        filename = setup["WriteInputNamesDict"]["vre_stor_solar_variability"]
         filepath = joinpath(my_dir, filename)
         load_process_variability!(filepath, all_resources, inputs, "Solar")
     end
 
     # WIND VARIABILITY
     if !isempty(inputs["VS_WIND"])
-        filename = "Vre_and_stor_wind_variability.csv"
+        filename = setup["WriteInputNamesDict"]["vre_stor_wind_variability"]
         filepath = joinpath(my_dir, filename)
         load_process_variability!(filepath, all_resources, inputs, "Wind")
     end

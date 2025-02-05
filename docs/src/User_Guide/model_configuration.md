@@ -123,6 +123,21 @@ The following tables summarize the model settings parameters and their default/p
 |OverwriteResults | Flag for overwriting the output results from the previous run.|
 ||1 = overwrite the results.|
 ||0 = do not overwrite the results.|
+|ResultsFileType | File type to save the results files.|
+||Default `auto_detect` = Detect the extension from the name of the results file. In the abscence of an extension `.csv` will be used|
+||`.csv` = Save as uncompressed CSV.|
+||`.csv.gz` = Save as compressed CSV.|
+||`.json` = Save as uncompressed JSON.|
+||`.json.csv` = Save as compressed JSON.|
+||`.parquet` = Save as uncompressed parquet.|
+||`-snappy.parquet` = Save as snappy parquet.|
+||`-zstd.parquet` = Save as zstd parquet.|
+|ResultsCompressionType | Compression type to save the results files.|
+||Default `auto_detect` = Detect the compression from the name of the results file. In the abscence of a compression type, none will be used|
+||`gzip` = GZIP compression for CSV or JSON files|
+|| `snappy` = snappy compression for parquet files|
+|| `zstd` = zstd compression for parquet files|
+|| `none` = no compression|
 
 ## 6. Solver related
 

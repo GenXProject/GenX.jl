@@ -127,9 +127,13 @@ function check_for_duplicate_keys(path::AbstractString)
     end
 end
 
-function load_dataframe_from_file(path)::DataFrame
+function load_dataframe_from_file(path::AbstractString)
     check_for_duplicate_keys(path)
-    CSV.read(path, DataFrame, header = 1)
+    #CSV.read(path, DataFrame, header = 1)
+
+    # Create a duckdb connection
+    con = DBInterface.connect(DuckDB.DB, ":memory:")
+    DBInterface.execute(con, "SELECT * FROM '$path'") |> DataFrames.DataFrame
 end
 
 function find_matrix_columns_in_dataframe(df::DataFrame,

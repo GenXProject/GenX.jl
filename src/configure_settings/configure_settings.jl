@@ -37,32 +37,55 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1,
+        "ResultsFileType" => "auto_detect", 
+        "ResultsCompressionType" => "auto_detect")
 end
 
 @doc raw"""
-    configure_settings(settings_path::String, output_settings_path::String)
+    configure_settings(settings_path::String, output_settings_path::String, case::AbstractString)
 
-Reads in the settings from the `genx_settings.yml` and `output_settings.yml` YAML files and
+Reads in the settings from the `genx_settings.yml`, `output_settings.yml`, `input_settings.yml`, and `results_settings.yml` YAML files and
 merges them with the default settings. It then validates the settings and returns the
 settings dictionary.
 
 # Arguments
 - `settings_path::String`: The path to the settings YAML file.
 - `output_settings_path::String`: The path to the output settings YAML file.
+- `case::AbstractString`: The case used for this instance of GenX.
 
 # Returns
 - `settings::Dict`: The settings dictionary.
 """
-function configure_settings(settings_path::String, output_settings_path::String)
+function configure_settings(settings_path::String, output_settings_path::String, case::AbstractString)
     println("\nConfiguring Settings")
     model_settings = YAML.load(open(settings_path))
 
     settings = default_settings()
     merge!(settings, model_settings)
 
+    if settings["ResultsFileType"] ∉ ["auto_detect",".csv.gz",".parquet",".json",".json.gz","csv","parquet","json","csv.gz","json.gz"]
+        throw("Results File Type in genx_settings.yml is not accepted. Acceptable types are csv, csv.gz, parquet, json, and json.gz.")
+    end
+
     output_settings = configure_writeoutput(output_settings_path, settings)
     settings["WriteOutputsSettingsDict"] = output_settings
+ 
+    if settings["MultiStage"] == 1
+        multistage_settings = configure_settings_multistage(case,settings_path)
+        settings["WriteInputNamesDict"] = Dict{}()
+        for t in 1:multistage_settings["NumStages"]
+            subdict_name = string("inputs_p", t)
+            input_settings = configure_input_names(case,t=t)
+            settings["WriteInputNamesDict"][subdict_name] = input_settings
+        end
+    else
+        input_settings = configure_input_names(case)
+        settings["WriteInputNamesDict"] = input_settings
+    end
+
+    results_settings = configure_results_names(case)
+    settings["WriteResultsNamesDict"] = results_settings
 
     validate_settings!(settings)
     return settings
@@ -216,3 +239,163 @@ function validate_multistage_settings!(settings::Dict{Any, Any})
         settings["WriteIntermittentOutputs"] = 0
     end
 end
+
+function default_input_names(case::AbstractString)
+    Dict{Any, Any}("system_location" => joinpath(case, "system"),
+    "demand" => "Demand_data.csv",
+    "fuel" => "Fuels_data.csv",
+    "generators" => "Generators_variability.csv",
+    "network" => "Network.csv",
+    "resources_location" => joinpath(case, "resources"),
+    "storage" => "Storage.csv",
+    "thermal" => "Thermal.csv",
+    "vre" => "Vre.csv",
+    "vre_stor" => "Vre_stor.csv",
+    "vre_stor_solar_variability" => "Vre_and_stor_solar_variability.csv",
+    "vre_stor_wind_variability" => "Vre_and_stor_wind_variability.csv",
+    "hydro" => "Hydro.csv",
+    "flex_demand" => "Flex_demand.csv",
+    "must_run" => "Must_run.csv",
+    "electrolyzer" => "Electrolyzer.csv",
+    "resource_cap" => "Resource_capacity_reserve_margin.csv",
+    "resource_energy_share_requirement" => "Resource_energy_share_requirement.csv",
+    "resource_min" => "Resource_minimum_capacity_requirement.csv",
+    "resource_max" => "Resource_maximum_capacity_requirement.csv",
+    "resource_hydrogen_demand" => "Resource_hydrogen_demand.csv",
+    "resource_hourly_matching" => "Resource_hourly_matching.csv",
+    "resource_multistage_data" => "Resource_multistage_data.csv",
+    "policies_location" => joinpath(case, "policies"),
+    "period_map" => "Period_map.csv",
+    "capacity" => "Capacity_reserve_margin.csv",
+    "CRM_slack" => "Capacity_reserve_margin_slack.csv",
+    "co2_cap" => "CO2_cap.csv",
+    "co2_cap_slack" => "CO2_cap_slack.csv",
+    "esr" => "Energy_share_requirement.csv",
+    "esr_slack" => "Energy_share_requirement_slack.csv",
+    "min_cap" => "Minimum_capacity_requirement.csv",
+    "max_cap" => "Maximum_capacity_requirement.csv",
+    "operational_reserves" => "Operational_reserves.csv")
+end
+
+@doc raw"""
+    configure_input_names(case::AbstractString)
+
+Reads in the settings from the `input_settings.yml` YAML file and
+merges them with the default input settings. It then returns the
+settings dictionary.
+
+# Arguments
+- `case::AbstractString`: The case containing the settings file.
+
+# Returns
+- `names::Dict`: The input names dictionary.
+"""
+function configure_input_names(case::AbstractString; t::Int64 = 0)
+    println("Configuring Input File and Path Names")
+    input_settings_path = get_settings_path(case, "input_settings.yml")
+    input_names = isfile(input_settings_path) ? YAML.load(open(input_settings_path)) : Dict{Any, Any}()
+
+    if t > 0
+        input_folder = string("inputs_p", t)
+        names = default_input_names(joinpath(case,"inputs",input_folder))
+        merge!(names,input_names[input_folder])
+    else
+        names = default_input_names(case)
+        merge!(names,input_names)
+    end
+
+    return names
+end
+
+function default_results_names()
+   Dict{Any, Any}("angles" => "angles",
+    "capacity" => "capacity",
+    "capacity_factor" => "capacityfactor",
+    "capacity_vaue" => "CapacityValue",
+    "capacities_charge_multi_stage" => "capacities_charge_multi_stage",
+    "capacities_multi_stage" => "capacities_multi_stage",
+    "capacities_energy_multi_stage" => "capacities_energy_multi_stage",
+    "captured_emissions_plant" => "captured_emissions_plant",
+    "charge" => "charge.csv",
+    "charging_cost" => "ChargingCost",
+    "co2_prices" => "CO2_prices_and_penalties",
+    "commit" => "commit",
+    "costs" => "costs",
+    "costs_multi_stage" => "costs_multi_stage",
+    "curtail" => "curtail",
+    "dStorage" => "dStorage",
+    "emissions_plant" => "emissions_plant",
+    "emissions" => "emissions",
+    "energy_revenue" => "EnergyRevenue",
+    "esr_prices_and_penalties" => "ESR_prices_and_penalties",
+    "esr_revenue" => "ESR_Revenue",
+    "flow" => "flow",
+    "fuel_cost_plant" => "Fuel_cost_plant",
+    "fuel_consumption_plant" => "FuelConsumption_plant_MMBTU",
+    "fuel_consumption_total" => "FuelConsumtion_total_MMBTU",
+    "hourly_matching_prices" => "hourly_matching_prices",
+    "hydrogen_prices" => "hydrogen_prices",
+    "mincap" => "MinCapReq_prices_and_penalties",
+    "maxcap" => "MaxCapReq_prices_and_penalties",
+    "maint_down" => "maint_down",
+    "morris" => "morris",
+    "revenue" => "NetRevenue",
+    "network_expansion" => "network_expansion",
+    "network_expansion_multi_stage" => "network_expansion_multi_stage",
+    "nse" => "nse",
+    "power_balance" => "power_balance",
+    "power" => "power",
+    "prices" => "prices",
+    "reg_subsidy_revenue" => "RegSubsidyRevenue",
+    "reserve_margin" => "ReserveMargin",
+    "reserve_margin_revenue" => "ReserveMarginRevenue",
+    "reserve_margin_prices_and_penalties" => "ReserveMargin_prices_and_penalties",
+    "reserve_margin_w" => "ReserveMargin_w.csv",
+    "reg" => "reg",
+    "reg_dn" => "reg_dn",
+    "reliability" => "reliability",
+    "shutdown" => "shutdown",
+    "start" => "start",
+    "status" => "status",
+    "storage" => "storage",
+    "storagebal_duals" => "storagebal_duals",
+    "storage_init" => "StorageInit",
+    "storage_evol" => "StorageEvol",
+    "subsidy_revenue" => "SubsidyRevenue",
+    "time_weights" => "time_weights",
+    "tlosses" => "tlosses",
+    "virtual_discharge" => "virtual_discharge",
+    "vre_stor_dc_charge" => "vre_stor_dc_charge",
+    "vre_stor_ac_charge" => "vre_stor_ac_charge",
+    "vre_stor_dc_discharge" => "vre_stor_dc_discharge",
+    "vre_stor_ac_discharge" => "vre_stor_ac_discharge",
+    "vre_stor_elec_power_consumption" => "vre_stor_elec_power_consumption",
+    "vre_stor_wind_power" => "vre_stor_wind_power",
+    "vre_stor_solar_power" => "vre_stor_solar_power",
+    "vre_stor_capacity" => "vre_stor_capacity")
+end
+
+@doc raw"""
+    configure_results_names(case::AbstractString)
+
+Reads in the settings from the `results_settings.yml` YAML file and
+merges them with the default results settings. It then returns the
+settings dictionary.
+
+# Arguments
+- `case::AbstractString`: The case containing the settings file.
+
+# Returns
+- `names::Dict`: The results names dictionary.
+"""
+function configure_results_names(case::AbstractString)
+    println("Configuring Results File Names")
+    results_settings_path = get_settings_path(case, "results_settings.yml")
+    results_names = isfile(results_settings_path) ? YAML.load(open(results_settings_path)) : Dict{Any, Any}()
+
+    names = default_results_names()
+    merge!(names,results_names)
+
+    return names
+end
+

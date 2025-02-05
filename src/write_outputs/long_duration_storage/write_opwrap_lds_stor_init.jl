@@ -29,9 +29,10 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     dfStorageInit = hcat(dfStorageInit, DataFrame(socw, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:NPeriods]]
     rename!(dfStorageInit, auxNew_Names)
-    CSV.write(joinpath(path, "StorageInit.csv"),
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["storage_init"]),
         dftranspose(dfStorageInit, false),
-        header = false)
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
 
     # Write storage evolution over full time horizon
     hours_per_subperiod = inputs["hours_per_subperiod"];
@@ -80,6 +81,7 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     df_SOC_t = hcat(df_SOC_t, DataFrame(SOC_t, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:T_hor]]
     rename!(df_SOC_t,auxNew_Names)
-    CSV.write(joinpath(path, "StorageEvol.csv"), dftranspose(df_SOC_t, false), writeheader=false)
-
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["storage_evol"]),
+    dftranspose(df_SOC_t, false), 
+    filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
 end

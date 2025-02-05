@@ -10,4 +10,6 @@ ParameterScale: 1 # Turn on parameter scaling wherein demand, capacity and power
 WriteShadowPrices: 1 # Write shadow prices of LP or relaxed MILP; 0 = not active; 1 = active
 UCommit: 2 # Unit committment of thermal power plants; 0 = not active; 1 = active using integer clestering; 2 = active using linearized clustering
 TimeDomainReduction: 1 # Time domain reduce (i.e. cluster) inputs based on Demand_data.csv, Generators_variability.csv, and Fuels_data.csv; 0 = not active (use input data as provided); 0 = active (cluster input data, or use data that has already been clustered)
-OutputFullTimeSeries: 1
+OutputFullTimeSeries: 1 # Reconstuct all hours of the year and output in a folder called Full_TimeSeries
+ResultsFileType: "auto_detect" # Automatically detect the type of the results files from the extension name. If no extension is present, files are saved as .csv.
+ResultsCompressionType: "auto_detect" # Automatically detect the type of compression for the results files from the extension name. If no compression is present, saved as uncompressed.

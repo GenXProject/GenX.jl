@@ -22,7 +22,11 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         total = DataFrame(["Total" 0 sum(dfNse[!, :AnnualSum])],
             [:Segment, :Zone, :AnnualSum])
         dfNse = vcat(dfNse, total)
-        CSV.write(joinpath(path, "nse.csv"), dfNse)
+        #CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["nse"]), dfNse)
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["nse"]),
+                dfNse, 
+                filetype = setup["ResultsFileType"], 
+                compression = setup["ResultsCompressionType"])
     else # setup["WriteOutputs"] == "full"
         dfNse = hcat(dfNse, DataFrame(nse, :auto))
         auxNew_Names = [Symbol("Segment");
@@ -35,13 +39,25 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         total[:, 4:(T + 3)] .= sum(nse, dims = 1)
         rename!(total, auxNew_Names)
         dfNse = vcat(dfNse, total)
+        #=
+        # Maya: Cast zones as floats
+        dfNse[!,:Zone] = convert.(Float64,dfNse[!,:Zone])
 
-        CSV.write(joinpath(path, "nse.csv"), dftranspose(dfNse, false), writeheader = false)
+        dfNse = dftranspose(dfNse, false)
+        rename!(dfNse, Symbol.(Vector(dfNse[1,:])))
+        dfNse = dfNse[2:end,:]
+        dfNse[!,2:end] = convert.(Float64,dfNse[!,2:end])=#
 
-        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+        CSV.write(joinpath(path, setup["WriteResultsNamesDict"]["nse"]), dftranspose(dfNse, false), writeheader = false)
+        #=write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["nse"]),
+                dftranspose(dfNse, false), 
+                filetype = setup["ResultsFileType"], 
+                compression = setup["ResultsCompressionType"])=#
+
+       #= if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, dfNse, "nse")
             @info("Writing Full Time Series for NSE")
-        end
+        end=#
     end
     return nothing
 end

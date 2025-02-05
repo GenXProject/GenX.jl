@@ -65,6 +65,9 @@ function write_esr_revenue(path::AbstractString,
         end
     end
     dfESRRev.Total = sum(eachcol(dfESRRev[:, 6:(nESR + 5)]))
-    CSV.write(joinpath(path, "ESR_Revenue.csv"), dfESRRev)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["esr_revenue"]),
+            dfESRRev,
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
     return dfESRRev
 end

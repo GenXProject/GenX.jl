@@ -3,8 +3,9 @@ function write_minimum_capacity_requirement(path::AbstractString,
         setup::Dict,
         EP::Model)
     NumberOfMinCapReqs = inputs["NumberOfMinCapReqs"]
+    # Maya: Changed Symbol to string for CO2 Cap labels
     dfMinCapPrice = DataFrame(
-        Constraint = [Symbol("MinCapReq_$mincap")
+        Constraint = [String("MinCapReq_$mincap")
                       for mincap in 1:NumberOfMinCapReqs],
         Price = dual.(EP[:cZoneMinCapReq]))
 
@@ -18,5 +19,9 @@ function write_minimum_capacity_requirement(path::AbstractString,
         dfMinCapPrice.Slack *= scale_factor # Convert GW to MW
         dfMinCapPrice.Penalty *= scale_factor^2 # Convert Million $ to $
     end
-    CSV.write(joinpath(path, "MinCapReq_prices_and_penalties.csv"), dfMinCapPrice)
+  
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["mincap"]),
+        dfMinCapPrice,
+        filetype = setup["ResultsFileType"],
+        compression = setup["ResultsCompressionType"])
 end

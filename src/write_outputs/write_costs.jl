@@ -314,13 +314,13 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCFuel,
             tempCNSE,
             tempCStart,
-            "-",
-            "-",
-            "-",
+            missing,
+            missing,
+            missing,
             tempCCO2
         ]
         if !isempty(VRE_STOR)
-            push!(temp_cost_list, "-")
+            push!(temp_cost_list, missing)
         end
         if !isempty(ELECTROLYZER_ALL)
             push!(temp_cost_list, tempHydrogenValue)
@@ -328,5 +328,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
         dfCost[!, Symbol("Zone$z")] = temp_cost_list
     end
-    CSV.write(joinpath(path, "costs.csv"), dfCost)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["costs"]), dfCost, filetype = setup["ResultsFileType"], compression = setup["ResultsCompressionType"])
+
 end

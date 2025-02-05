@@ -12,7 +12,7 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfRsv.AnnualSum = rsv * inputs["omega"]
 
     if setup["WriteOutputs"] == "annual"
-        write_annual(joinpath(path, "reserves.csv"), dfRsv)
+        write_annual(joinpath(path, setup["WriteResultsNamesDict"]["reserves"]), dfRsv, setup)
     else # setup["WriteOutputs"] == "full"
         unmet_vec = value.(EP[:vUNMET_RSV]) * scale_factor
         total_unmet = sum(unmet_vec)
@@ -30,8 +30,9 @@ function write_rsv(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         rename!(total, auxNew_Names)
         rename!(unmet, auxNew_Names)
         dfRsv = vcat(dfRsv, unmet, total)
-        CSV.write(joinpath(path, "reserves.csv"),
+        write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["reserves"]),
             dftranspose(dfRsv, false),
-            writeheader = false)
+            filetype = setup["ResultsFileType"],
+            compression = setup["ResultsCompressionType"])
     end
 end

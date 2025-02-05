@@ -7,6 +7,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     gen = inputs["RESOURCES"]   # Resources (objects) 
     resources = inputs["RESOURCE_NAMES"]    # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     T = inputs["T"]     # Number of time steps (hours)
     STOR_ALL = inputs["STOR_ALL"]
@@ -51,6 +52,6 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         Zone = zones[charge_ids])
     df.AnnualSum = charge * weight
 
-    write_temporal_data(df, charge, path, setup, "charge")
+    write_temporal_data(df, charge, path, setup, setup["WriteResultsNamesDict"]["charge"])
     return nothing
 end

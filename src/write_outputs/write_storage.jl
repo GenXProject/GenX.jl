@@ -7,6 +7,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
     gen = inputs["RESOURCES"]   # Resources (objects)
     resources = inputs["RESOURCE_NAMES"]   # Resource names
     zones = zone_id.(gen)
+    zones = convert.(Float64,zones)
 
     T = inputs["T"]     # Number of time steps (hours)
     G = inputs["G"]
@@ -40,5 +41,5 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
         Zone = zones[stored_ids])
     df.AnnualSum = stored * weight
 
-    write_temporal_data(df, stored, path, setup, "storage")
+    write_temporal_data(df, stored, path, setup, setup["WriteResultsNamesDict"]["storage"])
 end

@@ -50,6 +50,9 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
         AnnualSum = Array{Float64}(undef, G))
     dfChargingcost.AnnualSum .= chargecost * weight
 
-    write_simple_csv(joinpath(path, "ChargingCost.csv"), dfChargingcost)
+    write_output_file(joinpath(path, setup["WriteResultsNamesDict"]["charging_cost"]), 
+                dfChargingcost, 
+                filetype = setup["ResultsFileType"], 
+                compression = setup["ResultsCompressionType"])
     return dfChargingcost
 end

@@ -1,0 +1,14 @@
+capacity: "Capacity_test.csv"
+capacity_factor: "capacityfactor.csv"
+charge: "charge.csv"
+charging_cost: "ChargingCost.csv"
+co2_prices: "CO2_prices_and_penalties.csv"
+commit: "commit.parquet"
+costs: "costs.parquet"
+curtail: "curtail.csv.gz"
+emissions_plant: "emissions_plant"
+nse: "nse.csv"
+power_balance: "power_balance.csv"
+
+
+
