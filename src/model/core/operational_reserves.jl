@@ -31,7 +31,7 @@ There are three options for the $Contingency$ expression, depending on user sett
 	2. a dynamic contingency based on installed capacity decisions, in which the largest 'installed' generator is used to determine the contingency requirement for all time periods; and
 	3. dynamic unit commitment based contingency, in which the largest 'committed' generator in any time period is used to determine the contingency requirement in that time period.
 
-Note that the two dynamic contigencies are only available if unit commitment is being modeled.
+Note that the two dynamic contingencies are only available if unit commitment is being modeled.
 
 **Static contingency**
 Option 1 (static contingency) is expressed by the following constraint:
@@ -104,8 +104,8 @@ function operational_reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
         println("Dynamic Contingency Type 2: Modeling the largest contingency as the largest largest committed generator")
         @expression(EP, eContingencyReq[t = 1:T], vLARGEST_CONTINGENCY[t])
     else
-        # Largest contingency defined fixed as user-specifed static contingency in MW
-        println("Static Contingency: Modeling the largest contingency as user-specifed static contingency")
+        # Largest contingency defined fixed as user-specified static contingency in MW
+        println("Static Contingency: Modeling the largest contingency as user-specified static contingency")
         @expression(EP, eContingencyReq[t = 1:T], inputs["pStatic_Contingency"])
     end
 
@@ -124,7 +124,7 @@ function operational_reserves_contingency!(EP::Model, inputs::Dict, setup::Dict)
             cContAux2[y in COMMIT],
             EP[:eTotalCap][y]<=inputs["pContingency_BigM"][y] * vCONTINGENCY_AUX[y])
 
-        # option 2: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest commited generator in each hour
+        # option 2: ensures vLARGEST_CONTINGENCY is greater than the capacity of the largest committed generator in each hour
     elseif UCommit == 1 && pDynamic_Contingency == 2
         @constraint(EP,
             cContingency[y in COMMIT, t = 1:T],
@@ -170,7 +170,7 @@ There is a penalty $C^{rsv}$ added to the objective function to penalize reserve
 
 **Frequency regulation requirements**
 
-Total requirements for frequency regulation (aka primary reserves) in each time step $t$ are specified as fractions of hourly demand (to reflect demand forecast errors) and variable renewable avaialblity in the time step (to reflect wind and solar forecast errors).
+Total requirements for frequency regulation (aka primary reserves) in each time step $t$ are specified as fractions of hourly demand (to reflect demand forecast errors) and variable renewable availability in the time step (to reflect wind and solar forecast errors).
 
 ```math
 \begin{aligned}
@@ -188,7 +188,7 @@ and $\epsilon^{demand}_{reg}$ and $\epsilon^{vre}_{reg}$ are parameters specifyi
 
 **Operating reserve requirements**
 
-Total requirements for operating reserves in the upward direction (aka spinning reserves or contingency reserces or secondary reserves) in each time step $t$ are specified as fractions of time step's demand (to reflect demand forecast errors) and variable renewable avaialblity in the time step (to reflect wind and solar forecast errors) plus the largest planning contingency (e.g. potential forced generation outage).
+Total requirements for operating reserves in the upward direction (aka spinning reserves or contingency reserves or secondary reserves) in each time step $t$ are specified as fractions of time step's demand (to reflect demand forecast errors) and variable renewable availability in the time step (to reflect wind and solar forecast errors) plus the largest planning contingency (e.g. potential forced generation outage).
 
 ```math
 \begin{aligned}

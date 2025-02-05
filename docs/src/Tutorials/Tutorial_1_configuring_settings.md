@@ -335,7 +335,7 @@ results = CSV.read(open("example_systems/1_three_zones/Results/capacity.csv"),Da
 As you can see, this runs without a problem! To try with your own parameters, edit the `new_params` dictionary with whatever parameters you'd like to try and run the cells again.Note: to output the results, you'll have to either delete the previous `results` folder, or input the name of the new results folder (e.g. `results_1`) when calling `CSV.read` as above.
 
 
-Finally, let's rewite `genx_settings.yml` to put the original settings in the example back: 
+Finally, let's rewrite `genx_settings.yml` to put the original settings in the example back: 
 
 
 ```julia

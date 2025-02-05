@@ -11,7 +11,7 @@ Reservoir hydro systems are governed by the storage inventory balance constraint
 &\Gamma_{y,z,t} = \Gamma_{y,z,t+\tau^{period}-1} -\frac{1}{\eta_{y,z}^{down}}\Theta_{y,z,t} - \varrho_{y,z,t} + \rho^{max}_{y,z,t} \times \Delta^{total}_{y,z}  \hspace{.1 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}^{start}
 \end{aligned}
 ```
-We implement time-wrapping to endogenize the definition of the intial state prior to the first period with the following assumption. If time step $t$ is the first time step of the year then storage inventory at $t$ is defined based on last time step of the year. Alternatively, if time step $t$ is the first time step of a representative period, then storage inventory at $t$ is defined based on the last time step of the representative period. Thus, when using representative periods, the storage balance constraint for hydro resources does not allow for energy exchange between representative periods.
+We implement time-wrapping to endogenize the definition of the initial state prior to the first period with the following assumption. If time step $t$ is the first time step of the year then storage inventory at $t$ is defined based on last time step of the year. Alternatively, if time step $t$ is the first time step of a representative period, then storage inventory at $t$ is defined based on the last time step of the representative period. Thus, when using representative periods, the storage balance constraint for hydro resources does not allow for energy exchange between representative periods.
 Note: in future updates, an option to model hydro resources with large reservoirs that can transfer energy across sample periods will be implemented, similar to the functions for modeling long duration energy storage in ```long_duration_storage.jl```.
 
 **Ramping Limits**
@@ -115,7 +115,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
     end
 
-    ### Constratints ###
+    ### Constraints ###
 
     if representative_periods > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         CONSTRAINTSET = STOR_HYDRO_SHORT_DURATION
@@ -130,7 +130,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
                 (1 / efficiency_down(gen[y]) * EP[:vP][y, t]) - vSPILL[y, t] +
                 inputs["pP_Max"][y, t] * EP[:eTotalCap][y])
 
-    ### Constraints commmon to all reservoir hydro (y in set HYDRO_RES) ###
+    ### Constraints common to all reservoir hydro (y in set HYDRO_RES) ###
     @constraints(EP,
         begin
             ### NOTE: time coupling constraints in this block do not apply to first hour in each sample period;
@@ -160,7 +160,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
             # Maximum discharging rate must be less than power rating OR available stored energy at start of hour, whichever is less
             # DEV NOTE: We do not currently account for hydro power plant outages - leave it for later to figure out if we should.
-            # DEV NOTE (CONTD): If we defin pPMax as hourly availability of the plant and define inflows as a separate parameter, then notation will be consistent with its use for other resources
+            # DEV NOTE (CONTD): If we define pPMax as hourly availability of the plant and define inflows as a separate parameter, then notation will be consistent with its use for other resources
             cHydroMaxPower[y in HYDRO_RES, t in 1:T], EP[:vP][y, t] <= EP[:eTotalCap][y]
             cHydroMaxOutflow[y in HYDRO_RES, t in 1:T],
             EP[:vP][y, t] <= EP[:vS_HYDRO][y, hoursbefore(p, t, 1)]
@@ -176,7 +176,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
         ### Reserve related constraints for reservoir hydro resources (y in HYDRO_RES), if used
         hydro_res_operational_reserves!(EP, inputs)
     end
-    ##CO2 Polcy Module Hydro Res Generation by zone
+    ##CO2 Policy Module Hydro Res Generation by zone
     @expression(EP, eGenerationByHydroRes[z = 1:Z, t = 1:T], # the unit is GW
         sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByHydroRes)
@@ -187,7 +187,7 @@ end
 This module defines the modified constraints and additional constraints needed when modeling operating reserves
 
 **Modifications when operating reserves are modeled**
-When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "updward" operating (or spinning) reserves ($r_{y,z,t}$).
+When modeling operating reserves, the constraints regarding maximum power flow limits are modified to account for procuring some of the available capacity for frequency regulation ($f_{y,z,t}$) and "upward" operating (or spinning) reserves ($r_{y,z,t}$).
 ```math
 \begin{aligned}
  \Theta_{y,z,t} + f_{y,z,t} +r_{y,z,t}  \leq  \times \Delta^{total}_{y,z}

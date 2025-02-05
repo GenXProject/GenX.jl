@@ -25,7 +25,7 @@ network = CSV.read("example_systems/1_three_zones/system/Network.csv",DataFrame,
 
 MA, CT, and ME are the abbreviations for states Massachusetts, Connecticut, and Maine. However, since the US region of New England contains other states as well, MA in this case is also used to refer to those states.
 
-Columns `Start_Zone` and `End_Zone` specify the network of the three regions. In this case, there are only two network lines, specified in the `Network_Lines` columns. The `Start_Zone` column indicates that the first node, MA, is the source of both lines as both rows have value 1. Rows `z1` and `z2` have values of 2 and 3 in `End_Zone`, which  means both nodes CT and ME recieve energy from node MA. This is also indicated in the column `transmission path name'. 
+Columns `Start_Zone` and `End_Zone` specify the network of the three regions. In this case, there are only two network lines, specified in the `Network_Lines` columns. The `Start_Zone` column indicates that the first node, MA, is the source of both lines as both rows have value 1. Rows `z1` and `z2` have values of 2 and 3 in `End_Zone`, which  means both nodes CT and ME receive energy from node MA. This is also indicated in the column `transmission path name'. 
 
 Below is a visualization of the network:
 

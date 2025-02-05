@@ -27,7 +27,7 @@ The next sections in this guide provide more details on how to perform all the s
 7. [GenX Outputs](@ref)
 
 ## Details of running a GenX case 
-This section details as to what happens in the process of running a GenX case. As a first step, the GenX package and the desired solver (is it's anyting other than the default solver, HiGHS; for instance, Gurobi) are loaded 
+This section details as to what happens in the process of running a GenX case. As a first step, the GenX package and the desired solver (is it's anything other than the default solver, HiGHS; for instance, Gurobi) are loaded 
 
 ```julia
 using GenX
@@ -39,7 +39,7 @@ The next command the user needs to run is the following:
 ```julia
 run_genx_case!("<Location_of_the_case_study_data>", optimizer)
 ```
-Contingent upon whether a single stage model or a multi-stage model is intended to be run, the above function, inturn makes calls to either of these two functions:
+Contingent upon whether a single stage model or a multi-stage model is intended to be run, the above function, in turn makes calls to either of these two functions:
 For single-stage case:
 ```julia
 run_genx_case_simple!(case, mysetup, optimizer)
@@ -63,7 +63,7 @@ For multi-stage case:
 ```julia
 run_genx_case_multistage!(case, mysetup, optimizer)
 ```
-In this case also, the TDR clustering is done in a similar way, exxcept for the fact that if TDRSettingsDict["MultiStageConcatenate"] is set to 0, the TDR clustering is done individually for each stage. Otherwise, the clustering is done for all the stages together. The next step is configuring the solver, which is done by
+In this case also, the TDR clustering is done in a similar way, except for the fact that if TDRSettingsDict["MultiStageConcatenate"] is set to 0, the TDR clustering is done individually for each stage. Otherwise, the clustering is done for all the stages together. The next step is configuring the solver, which is done by
 ```julia
 OPTIMIZER = configure_solver(settings_path, optimizer)
 ```
@@ -79,7 +79,7 @@ time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
 println("Time elapsed for model building is")
 println(time_elapsed)
 ```
-The above function call instantiates the different decision variables, constraints, and objective function expressions from the input data. It can be seen that we also keep track of the time required to build the model. Follwoing this, the solve_model function makes the call to the solver and return the results as well as the solve time. 
+The above function call instantiates the different decision variables, constraints, and objective function expressions from the input data. It can be seen that we also keep track of the time required to build the model. Following this, the solve_model function makes the call to the solver and return the results as well as the solve time. 
 ```julia
 EP, solve_time = solve_model(EP, mysetup)
 myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
@@ -89,7 +89,7 @@ For writing the results, we invoke the following function:
 outputs_path = get_default_output_folder(case)
 elapsed_time = @elapsed outputs_path = write_outputs(EP, outputs_path, mysetup, myinputs)
 ```
-The call to the write_outputs() function in turn calls a series of functions (write_capacity, write_power etc.) each of which querries the respective decision variables and creates dataframes, eventually outputting the results to separate CSV files. 
+The call to the write_outputs() function in turn calls a series of functions (write_capacity, write_power etc.) each of which queries the respective decision variables and creates dataframes, eventually outputting the results to separate CSV files. 
 
 ## Single and Multi-stage investment planning
 

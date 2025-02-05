@@ -138,7 +138,7 @@ When modeling regulation and spinning reserves, thermal units not subject to uni
 \end{aligned}
 ```
 
-Note there are multiple versions of these constraints in the code in order to avoid creation of unecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. ```Reg_Max=0``` and/or ```RSV_Max=0```).
+Note there are multiple versions of these constraints in the code in order to avoid creation of unnecessary constraints and decision variables for thermal units unable to provide regulation and/or reserves contributions due to input parameters (e.g. ```Reg_Max=0``` and/or ```RSV_Max=0```).
 """
 function thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
     println("Thermal No Commit Reserves Module")

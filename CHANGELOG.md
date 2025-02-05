@@ -185,7 +185,7 @@ to the constraint (#725).
 - The above `load` keys, which generally refer to electrical demand, are being deprecated.
   Users should update their case files.
   For now this is done in a backward-compatible manner, and @info reminders are written to the log to prompt the user to update.
-  "Load" now typically refers only to the transferrence of data from files to memory,
+  "Load" now typically refers only to the transference of data from files to memory,
   except for a few places such as the common term "value of lost load" which refers to non-served demand (#397).
 - `New_Build = -1` in `Generators_data.csv`: instead, use `New_Build = 0` and `Can_Retire = 0`.
 - The matrix-style input of the grid for Network.csv is deprecated in favor a column-style input.
@@ -273,7 +273,7 @@ to the constraint (#725).
 ### Changed
 
 - Simplified the `Simple_Test_Case` example (#414).
-- SmallNewEngland/Onezone example now uses linearized unit committment by default (#404).
+- SmallNewEngland/Onezone example now uses linearized unit commitment by default (#404).
 - Removed the unused dependency BenchmarkTools (#381).
 
 ### Removed

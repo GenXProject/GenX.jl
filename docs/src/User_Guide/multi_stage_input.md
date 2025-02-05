@@ -31,9 +31,9 @@ Instead of one set of input files, there is one directory of input files that ne
 
 |                              |                                                                   **co-located VRE-STOR resources only**                                                                  |
 |:------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
-|Min\_Retired\_Cap\_Inverter\_MW  |Minimum inverter capacity in MW AC that must retire in this plannig stage. |
-|Min\_Retired\_Cap\_Solar\_MW  |Minimum solar PV capacity in MW DC that must retire in this plannig stage. |
-|Min\_Retired\_Cap\_Wind\_MW  |Minimum wind capacity in MW AC that must retire in this plannig stage. |
+|Min\_Retired\_Cap\_Inverter\_MW  |Minimum inverter capacity in MW AC that must retire in this planing stage. |
+|Min\_Retired\_Cap\_Solar\_MW  |Minimum solar PV capacity in MW DC that must retire in this planing stage. |
+|Min\_Retired\_Cap\_Wind\_MW  |Minimum wind capacity in MW AC that must retire in this planing stage. |
 |Min\_Retired\_Cap\_Discharge_DC\_MW  |Minimum storage DC discharge capacity that must retire in this planning stage with `STOR_DC_DISCHARGE = 2`. |
 |Min\_Retired\_Cap\_Charge_DC\_MW  |Minimum storage DC charge capacity that must retire in this planning stage with `STOR_DC_CHARGE = 2`. |
 |Min\_Retired\_Cap\_Discharge_AC\_MW  |Minimum storage AC discharge capacity that must retire in this planning stage with `STOR_AC_DISCHARGE = 2`. |

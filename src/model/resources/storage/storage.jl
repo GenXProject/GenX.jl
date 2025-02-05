@@ -17,7 +17,7 @@ If a capacity reserve margin is modeled, variables for virtual charge, $\Pi^{CRM
 ```
 
 **Storage with symmetric charge and discharge capacity**
-For storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), charge rate, $\Pi_{o,z,t}$, and virtual charge rate, $\Pi^{CRM}_{o,z,t}$, are jointly constrained by the total installed power capacity, $\Omega_{o,z}$. Since storage resources generally represent a `cluster' of multiple similar storage devices of the same type/cost in the same zone, GenX permits storage resources to simultaneously charge and discharge (as some units could be charging while others discharge), with the simultaenous sum of charge, $\Pi_{o,z,t}$, discharge, $\Theta_{o,z,t}$, virtual charge, $\Pi^{CRM}_{o,z,t}$, and virtual discharge, $\Theta^{CRM}_{o,z,t}$, also limited by the total installed power capacity, $\Delta^{total}_{o,z}$. These two constraints are as follows:
+For storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), charge rate, $\Pi_{o,z,t}$, and virtual charge rate, $\Pi^{CRM}_{o,z,t}$, are jointly constrained by the total installed power capacity, $\Omega_{o,z}$. Since storage resources generally represent a `cluster' of multiple similar storage devices of the same type/cost in the same zone, GenX permits storage resources to simultaneously charge and discharge (as some units could be charging while others discharge), with the simultaneous sum of charge, $\Pi_{o,z,t}$, discharge, $\Theta_{o,z,t}$, virtual charge, $\Pi^{CRM}_{o,z,t}$, and virtual discharge, $\Theta^{CRM}_{o,z,t}$, also limited by the total installed power capacity, $\Delta^{total}_{o,z}$. These two constraints are as follows:
 ```math
 \begin{aligned}
 &  \Pi_{o,z,t} + \Pi^{CRM}_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}^{sym}, z \in \mathcal{Z}, t \in \mathcal{T}\\
@@ -91,8 +91,8 @@ The above constraints are established in ```storage_all!()``` in ```storage_all.
 If reserves are modeled, two pairs of proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources, to denote the contribution of storage resources to regulation or reserves while charging or discharging, respectively. The total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is then the sum of the proxy variables:
 ```math
 \begin{aligned}
-	&  f_{o,z,t} = f^{charge}_{o,z,t} + f^{dicharge}_{o,z,t} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}\\
-	&  r_{o,z,t} = r^{charge}_{o,z,t} + r^{dicharge}_{o,z,t} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
+	&  f_{o,z,t} = f^{charge}_{o,z,t} + f^{discharge}_{o,z,t} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}\\
+	&  r_{o,z,t} = r^{charge}_{o,z,t} + r^{discharge}_{o,z,t} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 The total storage contribution to frequency regulation ($f_{o,z,t}$) and reserves ($r_{o,z,t}$) are each limited specified fraction of installed discharge power capacity ($\upsilon^{reg}_{y,z}, \upsilon^{rsv}_{y,z}$), reflecting the maximum ramp rate for the storage resource in whatever time interval defines the requisite response time for the regulation or reserve products (e.g., 5 mins or 15 mins or 30 mins). These response times differ by system operator and reserve product, and so the user should define these parameters in a self-consistent way for whatever system context they are modeling.
@@ -161,7 +161,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
         storage_symmetric!(EP, inputs, setup)
     end
 
-    # ESR Lossses
+    # ESR Losses
     if EnergyShareRequirement >= 1
         nESR = inputs["nESR"]
         dfESR = inputs["dfESR"]

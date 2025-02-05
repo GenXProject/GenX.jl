@@ -612,7 +612,7 @@ Validate the policy files by checking if they exist in the specified folder and 
 - `setup::Dict`: Dictionary containing GenX settings.
 
 # Returns
-- warning messages if the polcies are set to 1 in settings but the files are not found in the resource_policies_path.
+- warning messages if the polices are set to 1 in settings but the files are not found in the resource_policies_path.
 !isfile(joinpath(resource_policies_path, filename))
 """
 function validate_policy_files(resource_policies_path::AbstractString, setup::Dict)
@@ -822,7 +822,7 @@ end
 function validate_piecewisefuelusage(heat_rate_mat, load_point_mat)
     # it's possible to construct piecewise fuel consumption with n of heat rate and n-1 of load point. 
     # if a user feed n of heat rate and more than n of load point, throw a error message, and then use 
-    # n of heat rate and n-1 load point to construct the piecewise fuel usage fuction  
+    # n of heat rate and n-1 load point to construct the piecewise fuel usage function  
     if size(heat_rate_mat)[2] < size(load_point_mat)[2]
         @error """ The numbers of heatrate data are less than load points, we found $(size(heat_rate_mat)[2]) of heat rate,
         and $(size(load_point_mat)[2]) of load points. We will just use $(size(heat_rate_mat)[2]) of heat rate, and $(size(heat_rate_mat)[2]-1)
@@ -891,7 +891,7 @@ function process_piecewisefuelusage!(setup::Dict,
         nonzero_rows = any(heat_rate_mat .!= 0, dims = 2)[:]
         HAS_PWFU = resource_id.(gen[nonzero_rows])
 
-        # translate the inital fuel usage, heat rate, and load points into intercept for each segment
+        # translate the initial fuel usage, heat rate, and load points into intercept for each segment
         fuel_usage_zero_load = zeros(length(gen))
         fuel_usage_zero_load[THERM] = pwfu_fuel_usage_zero_load_mmbtu_per_h.(thermal_gen)
         # construct a matrix for intercept
@@ -1077,12 +1077,12 @@ function add_resources_to_input_data!(inputs::Dict,
     ## STORAGE
     # Set of storage resources with symmetric charge/discharge capacity
     inputs["STOR_SYMMETRIC"] = symmetric_storage(gen)
-    # Set of storage resources with asymmetric (separte) charge/discharge capacity components
+    # Set of storage resources with asymmetric (separate) charge/discharge capacity components
     inputs["STOR_ASYMMETRIC"] = asymmetric_storage(gen)
     # Set of all storage resources
     inputs["STOR_ALL"] = union(inputs["STOR_SYMMETRIC"], inputs["STOR_ASYMMETRIC"])
 
-    # Set of storage resources with long duration storage capabilitites
+    # Set of storage resources with long duration storage capabilities
     inputs["STOR_HYDRO_LONG_DURATION"] = intersect(inputs["HYDRO_RES"], is_LDS(gen))
     inputs["STOR_HYDRO_SHORT_DURATION"] = intersect(inputs["HYDRO_RES"], is_SDS(gen))
     inputs["STOR_LONG_DURATION"] = intersect(inputs["STOR_ALL"], is_LDS(gen))
@@ -1101,7 +1101,7 @@ function add_resources_to_input_data!(inputs::Dict,
     inputs["MUST_RUN"] = must_run(gen)
 
     ## ELECTROLYZER
-    # Set of hydrogen electolyzer resources:
+    # Set of hydrogen electrolyzer resources:
     inputs["ELECTROLYZER"] = electrolyzer(gen)
 
     ## Operational Reserves
@@ -1135,7 +1135,7 @@ function add_resources_to_input_data!(inputs::Dict,
         # Set of thermal resources without unit commitment
         inputs["THERM_NO_COMMIT"] = inputs["THERM_ALL"]
     end
-    # For now, the only resources eligible for UC are themal resources
+    # For now, the only resources eligible for UC are thermal resources
     inputs["COMMIT"] = inputs["THERM_COMMIT"]
 
     # Set of CCS resources (optional set):

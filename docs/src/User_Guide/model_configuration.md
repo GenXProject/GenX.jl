@@ -7,7 +7,7 @@ The first step in configuring a GenX model is to specify the model settings para
 - Network related parameters specify settings related to transmission network expansion and losses.
 Note that all settings parameters are case sensitive.
 
-(Optional) The user can also select the output files that they want to export using the `output_settings.yml` file. This file containes a list of `yes/no` options for each output file, and should be located in the `settings` folder. By default, if `output_settings.yml` is not included, GenX will export all output files. 
+(Optional) The user can also select the output files that they want to export using the `output_settings.yml` file. This file contains a list of `yes/no` options for each output file, and should be located in the `settings` folder. By default, if `output_settings.yml` is not included, GenX will export all output files. 
 
 The following tables summarize the model settings parameters and their default/possible values.
 

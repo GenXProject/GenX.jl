@@ -1,7 +1,7 @@
 @doc raw"""
 	hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
 
-This policy constraints add hydrogen prodcution demand requirement for electrolyzers.
+This policy constraints add hydrogen production demand requirement for electrolyzers.
 
 The hydrogen demand requirement can be defined as a zonal limit defined in terms of annual hydrogen production (in 1,000 tonnes of hydrogen).
 

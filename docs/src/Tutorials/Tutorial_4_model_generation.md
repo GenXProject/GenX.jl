@@ -2,7 +2,7 @@
 
 [Interactive Notebook of the tutorial](https://github.com/GenXProject/GenX-Tutorials/blob/main/Tutorials/Tutorial_4_Model_Generation.ipynb)
 
-To run GenX, we use the file `Run.jl`. This file will solve the optimization problem and generate the output files as described in the documentation and previous tutorial. It does so by first generating the model, then solving the model, both according to settings described in `genx_settings.yml`. However, `Run.jl` only contains one commmand, `run_genx_case!(dirname(@__FILE__))`. This can be confusing for users viewing the files for the first time. In reality, this function signals many more functions to run, generating and solving the model. This tutorial explains how the model in GenX is generated. The next tutorial will then describe how it is solved.
+To run GenX, we use the file `Run.jl`. This file will solve the optimization problem and generate the output files as described in the documentation and previous tutorial. It does so by first generating the model, then solving the model, both according to settings described in `genx_settings.yml`. However, `Run.jl` only contains one command, `run_genx_case!(dirname(@__FILE__))`. This can be confusing for users viewing the files for the first time. In reality, this function signals many more functions to run, generating and solving the model. This tutorial explains how the model in GenX is generated. The next tutorial will then describe how it is solved.
 
 We'll start by explaining JuMP, the optimization package that GenX uses to generate and solve the model.
 
@@ -68,7 +68,7 @@ Using the JuMP function `@constraint`, we can add the constraints of the model:
 @constraint(power, non_neg_x, x >= 0) # Non-negativity constraint (can't have negative power plants!)
 @constraint(power, non_neg_y, y >= 0) # Non-negativity constraint
 
-@constraint(power, emissions, 40x + 5y <= 200) # Emisisons constraint
+@constraint(power, emissions, 40x + 5y <= 200) # Emissions constraint
 @constraint(power, construction_costs, 55x + 70y <= 1000) # Cost of constructing a new plant
 
 @constraint(power, demand, x + y >= 10) # Grid demand

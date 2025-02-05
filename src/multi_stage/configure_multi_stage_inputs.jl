@@ -1,7 +1,7 @@
 @doc raw"""
 	function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array,tech_wacc::Array)
 
-This function computes overnight capital costs incured within the model horizon, assuming that annualized costs to be paid after the model horizon are fully recoverable, and so are not included in the cost computation.
+This function computes overnight capital costs incurred within the model horizon, assuming that annualized costs to be paid after the model horizon are fully recoverable, and so are not included in the cost computation.
 
 For each resource $y \in \mathcal{G}$ with annualized investment cost $AIC_{y}$ and capital recovery period $CRP_{y}$, overnight capital costs $OCC_{y}$ are computed as follows:
 ```math
@@ -19,7 +19,7 @@ inputs:
   * tech_wacc - array object containing technology-specific weighted costs of capital.
 NOTE: The inv\_costs\_yr and crp arrays must be the same length; values with the same index in each array correspond to the same resource $y \in \mathcal{G}$.
 
-returns: array object containing overnight capital costs, the discounted sum of annual investment costs incured within the model horizon.
+returns: array object containing overnight capital costs, the discounted sum of annual investment costs incurred within the model horizon.
 """
 function compute_overnight_capital_cost(settings_d::Dict,
         inv_costs_yr::Array,
@@ -55,7 +55,7 @@ function compute_overnight_capital_cost(settings_d::Dict,
             init = 0)
     end
 
-    # 3) Return the overnight capital cost (discounted sum of annual investment costs incured within the model horizon)
+    # 3) Return the overnight capital cost (discounted sum of annual investment costs incurred within the model horizon)
     return occ
 end
 
@@ -66,9 +66,9 @@ This function overwrites input parameters read in via the load\_inputs() method 
 
 1) Overnight capital costs are computed via the compute\_overnight\_capital\_cost() method and overwrite internal model representations of annualized investment costs.
 
-2) Annualized fixed O&M costs are scaled up to represent total fixed O&M incured over the length of each model stage (specified by "StageLength" field in multi\_stage\_settings.yml).
+2) Annualized fixed O&M costs are scaled up to represent total fixed O&M incurred over the length of each model stage (specified by "StageLength" field in multi\_stage\_settings.yml).
 
-3) Internal set representations of resources eligible for capacity retirements are overwritten to ensure compatability with multi-stage modeling.
+3) Internal set representations of resources eligible for capacity retirements are overwritten to ensure compatibility with multi-stage modeling.
 
 4) When NetworkExpansion is active and there are multiple model zones, parameters related to transmission and network expansion are updated. First, annualized transmission reinforcement costs are converted into overnight capital costs. Next, the maximum allowable transmission line reinforcement parameter is overwritten by the model stage-specific value specified in the "Line\_Max\_Flow\_Possible\_MW" fields in the network\_multi\_stage.csv file. Finally, internal representations of lines eligible or not eligible for transmission expansion are overwritten based on the updated maximum allowable transmission line reinforcement parameters.
 
@@ -97,7 +97,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     inputs_d["OPEXMULT"] = OPEXMULT
 
     if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
-        # 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
+        # 1. Convert annualized investment costs incurred within the model horizon into overnight capital costs
         # NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
         gen.inv_cost_per_mwyr = compute_overnight_capital_cost(settings_d,
             inv_cost_per_mwyr.(gen),
@@ -113,7 +113,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
             tech_wacc.(gen))
 
         # 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
-        # NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
+        # NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incurred in each stage, which may be multiple years
         gen.fixed_om_cost_per_mwyr = fixed_om_cost_per_mwyr.(gen) .* OPEXMULT
         gen.fixed_om_cost_per_mwhyr = fixed_om_cost_per_mwhyr.(gen) .* OPEXMULT
         gen.fixed_om_cost_charge_per_mwyr = fixed_om_cost_charge_per_mwyr.(gen) .* OPEXMULT
@@ -207,7 +207,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     # Transmission
     if NetworkExpansion == 1 && inputs_d["Z"] > 1
         if !myopic ### Leave myopic costs in annualized form
-            # 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
+            # 1. Convert annualized transmission investment costs incurred within the model horizon into overnight capital costs
             inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,
                 inputs_d["pC_Line_Reinforcement"],
                 inputs_d["Capital_Recovery_Period_Trans"],
@@ -226,7 +226,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
                                                  (inputs_d["pMax_Line_Reinforcement"] .<=
                                                   0))
         # To-Do: Error Handling
-        # 1.) Enforce that pLine_Max_Flow_Possible_MW for the first model stage be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in inputs/inputs_p1
+        # 1.) Enforce that pLine_Max_Flow_Possible_MW for the first model stage be equal to (for transmission expansion to be disallowed) or greater (to allow transmission expansion) than pTrans_Max in inputs/inputs_p1
     end
 
     return inputs_d
@@ -235,7 +235,7 @@ end
 @doc raw"""
     validate_can_retire_multistage(inputs_dict::Dict, num_stages::Int)
 
-This function validates that all the resources do not switch from havig `can_retire = 0` to `can_retire = 1` during the multi-stage optimization.
+This function validates that all the resources do not switch from having `can_retire = 0` to `can_retire = 1` during the multi-stage optimization.
 
 # Arguments
 - `inputs_dict::Dict`: A dictionary containing the inputs for each stage.

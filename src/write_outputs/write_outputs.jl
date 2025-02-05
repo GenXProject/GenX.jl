@@ -18,7 +18,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             mkpath(path)
         end
     else
-        # Find closest unused ouput directory name and create it
+        # Find closest unused output directory name and create it
         path = choose_output_dir(path)
         mkpath(path)
     end
@@ -30,7 +30,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     # https://jump.dev/MathOptInterface.jl/v0.9.10/apireference/#MathOptInterface.TerminationStatusCode
     status = termination_status(EP)
 
-    ## Check if solved sucessfully - time out is included
+    ## Check if solved successfully - time out is included
     if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
         if status != MOI.TIME_LIMIT # Model failed to solve, so record solver status and exit
             write_status(path, inputs, setup, EP)
@@ -265,7 +265,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         println(elapsed_time_angles)
     end
 
-    # Temporary! Suppress these outputs until we know that they are compatable with multi-stage modeling
+    # Temporary! Suppress these outputs until we know that they are compatible with multi-stage modeling
     if setup["MultiStage"] == 0
         dfEnergyRevenue = DataFrame()
         dfChargingcost = DataFrame()
@@ -408,7 +408,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 inputs,
                 setup,
                 EP)
-            println("Time elapsed for writing oerating reserve and regulation revenue is")
+            println("Time elapsed for writing operating reserve and regulation revenue is")
             println(elapsed_time_op_res_rev)
         end
 

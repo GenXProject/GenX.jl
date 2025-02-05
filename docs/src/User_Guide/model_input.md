@@ -96,7 +96,7 @@ Network_Lines, Start_Zone, End_Zone,
 ```
 
 The matrix interface requires N columns labeled `z1, z2, z3 ... zN`,
-and L rows, one for each network line (or interregional path), with a `1` in the column corresponding to the 'start' zone 
+and L rows, one for each network line (or inter-regional path), with a `1` in the column corresponding to the 'start' zone 
 and a `-1` in the column corresponding to the 'end' zone for each line.
 Here is the same network map implemented as a matrix:
 ```
@@ -119,7 +119,7 @@ This file includes parameters to characterize model temporal resolution to appro
 | :------------ | :-----------|
 |**Mandatory Columns**|
 |Voll |Value of lost load (also referred to as non-served energy) in $/MWh.|
-|Demand\_Segment |Number of demand curtailment/unserved demand segments with different cost and capacity of curtailable demand for each segment. User-specified demand segments. Integer values starting with 1 in the first row. Additional segements added in subsequent rows.|
+|Demand\_Segment |Number of demand curtailment/unserved demand segments with different cost and capacity of curtailable demand for each segment. User-specified demand segments. Integer values starting with 1 in the first row. Additional segments added in subsequent rows.|
 |Cost\_of\_Demand\_Curtailment\_per\_MW |Cost of non-served energy/demand curtailment (for each segment), reported as a fraction of value of the lost load (non-served demand). If *Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length equal to the length of Demand\_Segment.|
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
 |Time\_Index |Index defining time step in the model.|
@@ -215,7 +215,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 |Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 |**PiecewiseFuelUsage-related parameters**|
-|PWFU\_Fuel\_Usage\_Zero\_Load\_MMBTU\_per\_h|The fuel usage (MMBTU/h) for the first PWFU segemnt (y-intercept) at zero load.|
+|PWFU\_Fuel\_Usage\_Zero\_Load\_MMBTU\_per\_h|The fuel usage (MMBTU/h) for the first PWFU segment (y-intercept) at zero load.|
 |PWFU\_Heat\_Rate\_MMBTU\_per\_MWh\_*i| The slope of fuel usage function of the segment i.|
 |PWFU\_Load\_Point\_MW\_*i| The end of segment i (MW).|
 |**Multi-fuel parameters**|
@@ -227,14 +227,14 @@ Each file contains cost and performance parameters for various generators and ot
 |Fuel2  |Second fuel needed for a mulit-fuel generator (MULTI_FUELS = 1). The names should match with the ones in the `Fuels_data.csv`. |
 |Heat1\_Rate\_MMBTU\_per\_MWh  |Heat rate of a multi-fuel generator (MULTI_FUELS = 1) for Fuel1. |
 |Heat2\_Rate\_MMBTU\_per\_MWh  |Heat rate of a multi-fuel generator (MULTI_FUELS = 1) for Fuel2. |
-|Fuel1\_Min\_Cofire\_Level  |The minimum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
-|Fuel1\_Min\_Cofire_Level\_Start  |The minimum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
-|Fuel1\_Max\_Cofire\_Level  |The maximum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
-|Fuel1\_Max\_Cofire_Level\_Start  |The maximum blendng level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
-|Fuel2\_Min\_Cofire\_Level  |The minimum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
-|Fuel2\_Min\_Cofire_Level\_Start  |The minimum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
-|Fuel2\_Max\_Cofire\_Level  |The maximum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
-|Fuel2\_Max\_Cofire_Level\_Start  |The maximum blendng level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel1\_Min\_Cofire\_Level  |The minimum blending level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel1\_Min\_Cofire_Level\_Start  |The minimum blending level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel1\_Max\_Cofire\_Level  |The maximum blending level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel1\_Max\_Cofire_Level\_Start  |The maximum blending level of 'Fuel1' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel2\_Min\_Cofire\_Level  |The minimum blending level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel2\_Min\_Cofire_Level\_Start  |The minimum blending level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
+|Fuel2\_Max\_Cofire\_Level  |The maximum blending level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the normal generation process. |
+|Fuel2\_Max\_Cofire_Level\_Start  |The maximum blending level of 'Fuel2' in total heat inputs of a mulit-fuel generator (MULTI_FUELS = 1) during the start-up process. |
 
 ##### Table 6b: Settings-specific columns in the Thermal.csv file
 ---
@@ -355,7 +355,7 @@ Each file contains cost and performance parameters for various generators and ot
 !!! note
     Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
-Each co-located VRE, electrolyzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
+Each co-located VRE, electrolyzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone electrolyzers, or standalone storage resource.
 ##### Table 11a: Additional columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
@@ -761,8 +761,8 @@ This file contains the settings parameters required to run the Method of Morris 
 |Parameter| Column from the resource `.csv` file (inside the `Resource`) containing uncertain parameters|
 |Group| Group the uncertain parameters that will be changed all at once while performing the sensitivity analysis. For example, if the fuel price of natural gas is uncertain, all generators consuming natural gas should be in the same group. Group name is user defined|
 |p_steps| Number of steps between upper and lower bound|
-|total\_num\_trajectory| Total number of trakectories through the design matrix|
-|num\_trajectory| Selected number of trajectories throigh the design matrix|
+|total\_num\_trajectory| Total number of trajectories through the design matrix|
+|num\_trajectory| Selected number of trajectories through the design matrix|
 |len\_design\_mat| Length of the design matrix|
 |policy| Name of the policy|
 

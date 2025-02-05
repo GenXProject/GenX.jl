@@ -1,6 +1,6 @@
 @doc raw"""
 	energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
-This function establishes constraints that can be flexibily applied to define alternative forms of policies that require generation of a minimum quantity of megawatt-hours from a set of qualifying resources, such as renewable portfolio standard (RPS) or clean electricity standard (CES) policies prevalent in different jurisdictions.
+This function establishes constraints that can be flexibly applied to define alternative forms of policies that require generation of a minimum quantity of megawatt-hours from a set of qualifying resources, such as renewable portfolio standard (RPS) or clean electricity standard (CES) policies prevalent in different jurisdictions.
 These policies usually require that the annual MWh generation from a subset of qualifying generators has to be higher than a pre-specified percentage of demand from qualifying zones.
 The implementation allows for user to define one or multiple RPS/CES style minimum energy share constraints,
 where each constraint can cover different combination of model zones to mimic real-world policy implementation (e.g. multiple state policies, multiple RPS tiers or overlapping RPS and CES policies).

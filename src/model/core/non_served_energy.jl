@@ -98,7 +98,7 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
         end
     end
 
-    ### Constratints ###
+    ### Constraints ###
 
     # Demand curtailed in each segment of curtailable demands cannot exceed maximum allowable share of demand
     @constraint(EP,
