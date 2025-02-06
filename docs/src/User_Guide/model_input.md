@@ -472,6 +472,102 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
+##### Table 14a: Additional columns in the CCS_solvent_storage.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|**Existing technology capacity**|
+|Existing\_Cap\_MW\_GasTurbine |The existing capacity of gas combustion turbines in an NGCC-CCS power plant (MW). |
+|Existing\_Cap\_MW\_SteamTurbine |The existing capacity of steam turbines in an NGCC-CCS power plant (MW). |
+|Existing\_Cap\_Ton\_Absorber |The existing capacity of absorbers in an NGCC-CCS power plant (ton). |
+|Existing\_Cap\_Ton\_Compressor |The existing capacity of compressors in an NGCC-CCS power plant (MW). |
+|Existing\_Cap\_Ton\_Regenerator |The existing capacity of regenerators in an NGCC-CCS power plant (ton). |
+|Existing\_Cap\_Ton\_SolventStorage\_Rich |The existing capacity of solvent storage (rich) in an NGCC-CCS power plant (ton). |
+|Existing\_Cap\_Ton\_SolventStorage\_Lean |The existing capacity of solvent storage (lean) in an NGCC-CCS power plant (ton). |
+
+|**Cost parameters**|
+|Inv\_Cost\_per\_MWyr\_GasTurbine | Annualized capacity investment cost of gas combustion turbines in an NGCC-CCS power plant ($/MW/year).|
+|Inv\_Cost\_per\_MWyr\_SteamTurbine | Annualized capacity investment cost of steam turbines in an NGCC-CCS power plant ($/MW/year).|
+|Inv\_Cost\_per\_Tonyr\_Absorber | Annualized capacity investment cost of absorbers in an NGCC-CCS power plant ($/MW/year).|
+|Inv\_Cost\_per\_MWyr\_Compressor | Annualized capacity investment cost of compressors in an NGCC-CCS power plant ($/MW/year).|
+|Inv\_Cost\_per\_Tonyr\_Regenerator | Annualized capacity investment cost of regenerators in an NGCC-CCS power plant ($/MW/year).|
+|Inv\_Cost\_per\_Tonyr\_SolventStorage\_Rich | Annualized capacity investment cost of solvent storage (rich) in an NGCC-CCS power plant ($/MW/year).|
+|Inv\_Cost\_per\_Tonyr\_SolventStorage\_Lean | Annualized capacity investment cost of solvent storage (lean) in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_MWyr\_GasTurbine | Fixed operations and maintenance cost of gas combustion turbines in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_MWyr\_SteamTurbine | Fixed operations and maintenance cost of steam turbines in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_Tonyr\_Absorber | Fixed operations and maintenance cost of absorbers in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_MWyr\_Compressor | Fixed operations and maintenance cost of compressors in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_Tonyr\_Regenerator| Fixed operations and maintenance cost of regenerators in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_Tonyr\_SolventStorage\_Rich| Fixed operations and maintenance cost of solvent storage (rich) in an NGCC-CCS power plant ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_Tonyr\_SolventStorage\_Lean| Fixed operations and maintenance cost of solvent storage (lean) in an NGCC-CCS power plant ($/MW/year).|
+|Var\_OM\_Cost\_per\_MWh\_GasTurbine | Variable operations and maintenance cost of gas combustion turbines in an NGCC-CCS power plant ($/MWh).|
+|Var\_OM\_Cost\_per\_MWh\_SteamTurbine | Variable operations and maintenance cost of steam turbines in an NGCC-CCS power plant ($/MWh).|
+|Var\_OM\_Cost\_per\_Ton\_Absorber | Variable operations and maintenance cost of absorbers in an NGCC-CCS power plant ($/Ton).|
+|Var\_OM\_Cost\_per\_MWh\_Compressor | Variable operations and maintenance cost of compressors in an NGCC-CCS power plant ($/MWh).|
+|Var\_OM\_Cost\_per\_Ton\_Regenerator | Variable operations and maintenance cost of regenerators in 
+an NGCC-CCS power plant ($/Ton).|
+|Var\_OM\_Cost\_per\_Ton\_SolventStorage\_Rich | Variable operations and maintenance cost of solvent storage (rich) in an NGCC-CCS power plant ($/Ton).|
+|Var\_OM\_Cost\_per\_Ton\_SolventStorage\_Lean | Variable operations and maintenance cost of solvent storage (lean) in an NGCC-CCS power plant ($/Ton).|
+|**Technical performance parameters**|
+|Min\_Power\_percentage\_GasTurbine |[0,1], Minimum stable operating level (fraction of nameplate capacity) of gas combustion turbines in an NGCC-CCS power plant.|
+|Min\_Power\_percentage\_SteamTurbine |[0,1], Minimum stable operating level (fraction of nameplate capacity) of steam turbines in an NGCC-CCS power plant.|
+|Min\_Power\_percentage\_Absorber |[0,1], Minimum stable operating level (fraction of nameplate capacity) of absorbers in an NGCC-CCS power plant.|
+|Min\_Power\_percentage\_Compressor |[0,1], Minimum stable operating level (fraction of nameplate capacity) of compressors in an NGCC-CCS power plant.|
+|Min\_Power\_percentage\_Regenerator |[0,1], Minimum stable operating level (fraction of nameplate capacity) of regenerators in an NGCC-CCS power plant.|
+|Min\_Power\_percentage\_SolventStorage\_Rich |[0,1], Minimum stable operating level (fraction of nameplate capacity) of solvent storage (rich) in an NGCC-CCS power plant.|
+|Min\_Power\_percentage\_SolventStorage\_Rich |[0,1], Minimum stable operating level (fraction of nameplate capacity) of solvent storage (lean) in an NGCC-CCS power plant.|
+|Ramp\_Up\_Percentage\_GasTurbine |[0,1], Maximum increase in power output from gas combustion turbines in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Up\_Percentage\_SteamTurbine |[0,1], Maximum increase in power output from steam turbines in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Up\_Percentage\_Absorber |[0,1], Maximum increase in power output from absorbers in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Up\_Percentage\_Compressor |[0,1], Maximum increase in power output from compressors in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Up\_Percentage\_Regenerator |[0,1], Maximum increase in power output from regenerators in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_GasTurbine |[0,1], Maximum decrease in power output from gas combustion turbines in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_SteamTurbine |[0,1], Maximum decrease in power output from steam turbines in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_Absorber |[0,1], Maximum decrease in power output from absorbers in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_Compressor |[0,1], Maximum decrease in power output from compressors in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|Ramp\_Dn\_Percentage\_Regenerator |[0,1], Maximum decrease in power output from regenerators in an NGCC-CCS power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
+|HeatRate\_MMBTU\_per\_MWh|Heat rate of gas combustion turbines in an NGCC-CCS power plant (MMBtu/MWh).|
+|HeatRate\_MMBTU\_per\_MWh\_SteamTurbine\_High|Heat rate of high pressure steam turbine cycle in an NGCC-CCS power plant (MMBtu/MWh).|
+|HeatRate\_MMBTU\_per\_MWh\_SteamTurbine\_Mid|Heat rate of intermediate pressure steam turbine cycle in an NGCC-CCS power plant (MMBtu/MWh).|
+|HeatRate\_MMBTU\_per\_MWh\_SteamTurbine\_Low|Heat rate of low pressure steam turbine cycle in an NGCC-CCS power plant (MMBtu/MWh).|
+|SteamRate\_High\_percentage|[0,1], Steam generation rate for high pressure steam from in an NGCC-CCS power plant.|
+|SteamRate\_Mid\_percentage|[0,1], Steam generation rate for intermediate pressure steam from in an NGCC-CCS power plant.|
+|SteamRate\_Low\_percentage|[0,1], Steam generation rate for low pressure steam from in an NGCC-CCS power plant.|
+|PowerUseRate\_MWh\_per\_Ton\_CO2\_Absorber| Power consumption rate for absorbers to absorb 1 ton of CO2 in an NGCC-CCS power plant (MWh/ton).|
+|PowerUseRate\_MWh\_per\_Ton\_CO2\_Compressor| Power consumption rate for compressors to compress 1 ton of CO2 in an NGCC-CCS power plant (MWh/ton).|
+|SteamUseRate\_MMBTU\_per\_Ton| Steam consumption rate for regenerators to regenerate 1 ton of CO2 in an NGCC-CCS power plant (MMBtu/ton).|
+|CO2\_Loading\_Ton\_per\_Ton\_Solvent| CO2 loading capacity of solvents (tons CO2/tons solvents/sorbents).|
+|PowerUseRate\_MWh\_per\_MMBtu\_Fuel\_Other| Power consumption rate for other auxiliary load per MMBtu fuel is used in an NGCC-CCS power plant (MWh/ton).|
+|CO2\_Capture\_Fraction\_Startup\_Max|[0,1], Maximum CO2 capture rate of total emissions during startup. |
+|CO2\_Capture\_Fraction\_Max|[0,1], Maximum CO2 capture rate of total emissions during normal operations. |
+##### Table 13b: Settings-specific columns in the Allam_Cycle_LOX.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|**UCommit >= 1** | The following settings apply only to NGCC-CCS plants with unit commitment constraints|
+|Cap\_Size\_MW\_GasTurbine| The average capacity size of gas combustion turbine in a clustered NGCC-CCS (MW).|
+|Cap\_Size\_MW\_SteamTurbine| The average capacity size of steam turbine in a clustered NGCC-CCS (MW).|
+|Cap\_Size\_Ton\_Absorber| The average capacity size of absorber in a clustered NGCC-CCS resource (ton).|
+|Cap\_Size\_MW\_Compressor| The average capacity size of compressor in a clustered NGCC-CCS (MW).|
+|Up\_Time\_GasTurbine| Minimum amount of time a gas combustion turbine in an NGCC-CCS power plant has to stay in the committed state.|
+|Cap\_Size\_Ton\_Regenerator| The average capacity size of regenerator in a clustered NGCC-CCS resource (ton).|
+|Up\_Time\_SteamTurbine| Minimum amount of time a steam turbine in an NGCC-CCS power plant has to stay in the committed state.|
+|Up\_Time\_Absorber| Minimum amount of time an absorber in an NGCC-CCS power plant has to stay in the committed state.|
+|Up\_Time\_Compressor| Minimum amount of time a compressor in an NGCC-CCS power plant has to stay in the committed state.|
+|Up\_Time\_Regenerator| Minimum amount of time a regenerator in an NGCC-CCS power plant has to stay in the committed state.|
+|Down\_Time\_GasTurbine |Minimum amount of time a gas combustion turbine in an NGCC-CCS power plant has to remain in the shutdown state.|
+|Down\_Time\_SteamTurbine |Minimum amount of time a steam turbine in an NGCC-CCS power plant has to remain in the shutdown state.|
+|Down\_Time\_Absorber |Minimum amount of time an absorber in an NGCC-CCS power plant has to remain in the shutdown state.|
+|Down\_Time\_Compressor |Minimum amount of time a compressor in an NGCC-CCS power plant has to remain in the shutdown state.|
+|Down\_Time\_Regenerator |Minimum amount of time a regenerator in an NGCC-CCS power plant has to remain in the shutdown state.|
+|Start\_Fuel\_MMBtu\_per\_MW\_GasTurbine |Fuel consumption per MW of nameplate capacity to start a gas combustion turbine in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Fuel\_MMBtu\_per\_MW\_SteamTurbine |Fuel consumption per MW of nameplate capacity to start a steam turbine in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_per\_MW\_GasTurbine |Cost per MW of nameplate capacity to start a gas combustion turbine in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_per\_MW\_SteamTurbine |Cost per MW of nameplate capacity to start a steam turbine in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_per\_Ton\_Absorber |Cost per Ton of nameplate capacity to start an absorber in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_per\_MW\_Compressor |Cost per MW of nameplate capacity to start a compressor in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_per\_Ton\_Regenerator |Cost per Ton of nameplate capacity to start a regenerator in an NGCC-CCS power plant ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+
 ##### Policy-related columns for all resources
 In addition to the files described above, the `resources` folder contains a folder called `policy_assignments` (the filename can be changed in the settings file) with the following files that are used to specify policy-related parameters for specific resources: 
 
