@@ -41,20 +41,17 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Decision variables for unit commitment
     # Subcomponents that are turned on and off at the same time are aggregated to simplify the model
-    # i = 1 -> combine cycle turbines, including gas and steam turbines
-    # i = 4 -> regenerator and compressors
-    # i = 3 -> abosorber
 
-    @variable(EP, vCOMMIT_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T] >= 0)
+    @variable(EP, vCOMMIT_CCS_SS[y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t = 1:T] >= 0)
     # startup event variable
-    @variable(EP, vSTART_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T] >= 0)
+    @variable(EP, vSTART_CCS_SS[y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t = 1:T] >= 0)
     # shutdown event variable
-    @variable(EP, vSHUT_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T] >= 0)
+    @variable(EP, vSHUT_CCS_SS[y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t = 1:T] >= 0)
 
     ## Declaration of integer/binary variables
     if setup["UCommit"] == 1 # Integer UC constraints
         for y in COMMIT_CCS_SS
-            for i in [1, 3, 4]
+            for i in [gasturbine, absorber, compressor]
                 set_integer.(vCOMMIT_CCS_SS[y,i,:])
                 set_integer.(vSTART_CCS_SS[y,i,:])
                 set_integer.(vSHUT_CCS_SS[y,i,:])
@@ -64,7 +61,15 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
 
     # costs associated with start-ups
     @expression(EP, eCStart_CCS_SS[y in COMMIT_CCS_SS , t=1:T], 
-                sum(omega[t] * (solvent_storage_dict[y, "start_cost"][i] * vSTART_CCS_SS[y,i,t]) for i in [1, 3, 4]))
+                sum(omega[t] * (solvent_storage_dict[y, "start_cost"][i] * vSTART_CCS_SS[y,i,t]) for i in [gasturbine, absorber, compressor]))
+    # add startup costs for steam turbines and regenerators
+    # steam turbines have the same unit commitment as gas turbines, regenerators have the same unit commitment as compressors
+    @expression(EP, eCStart_CCS_SS_steamturbine[y in COMMIT_CCS_SS , t=1:T], 
+                omega[t] * (solvent_storage_dict[y, "start_cost"][steamturbine] * vSTART_CCS_SS[y, gasturbine, t]) )
+    @expression(EP, eCStart_CCS_SS_regenerator[y in COMMIT_CCS_SS , t=1:T], 
+                omega[t] * (solvent_storage_dict[y, "start_cost"][regenerator] * vSTART_CCS_SS[y, gasturbine, t]) )
+    add_to_expression!(EP[:eCStart_CCS_SS], eCStart_CCS_SS_steamturbine + eCStart_CCS_SS_regenerator)
+
     @expression(EP, eTotalCStart_CCS_SS_T[t = 1:T], sum(EP[:eCStart_CCS_SS][y,t] for y in COMMIT_CCS_SS))
     @expression(EP, eTotalCStart_CCS_SS, sum(eTotalCStart_CCS_SS_T[t] for t in 1:T))
     add_to_expression!(EP[:eTotalCStart], eTotalCStart_CCS_SS)
@@ -75,44 +80,45 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
     # fuel consumption associated with start-ups, only applied to turbines
     @variable(EP, vStartFuel_CCS_SS[y in COMMIT_CCS_SS, t = 1:T] >= 0)
     @constraint(EP, cStartFuel_CCS_SS[y in COMMIT_CCS_SS, t = 1:T],
-        EP[:vStartFuel_CCS_SS][y, t] == solvent_storage_dict[y,"cap_size"][gasturbine] * EP[:vSTART_CCS_SS][y, gasturbine, t] * solvent_storage_dict[y, "start_fuel"][gasturbine])
+        EP[:vStartFuel_CCS_SS][y, t] == solvent_storage_dict[y,"cap_size"][gasturbine] * EP[:vSTART_CCS_SS][y, gasturbine, t] * solvent_storage_dict[y, "start_fuel"][gasturbine]+
+                                        solvent_storage_dict[y,"cap_size"][steamturbine] * EP[:vSTART_CCS_SS][y, gasturbine, t] * solvent_storage_dict[y, "start_fuel"][steamturbine])
     # Connect start up fuel here to vStartFuel
     @constraint(EP, [y in COMMIT_CCS_SS , t = 1:T], EP[:vStartFuel][y,t] == vStartFuel_CCS_SS[y,t])
 
     # Unit commitment constraints
     # Capacity limits on unit commitment decision variables (Constraints #1-3)
     @constraints(EP, begin
-                [y in COMMIT_CCS_SS, i in [1, 3, 4] , t=1:T], vCOMMIT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
-                [y in COMMIT_CCS_SS, i in [1, 3, 4] , t=1:T], vSTART_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
-                [y in COMMIT_CCS_SS, i in [1, 3, 4] , t=1:T], vSHUT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
+                [y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor] , t=1:T], vCOMMIT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
+                [y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor] , t=1:T], vSTART_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
+                [y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor] , t=1:T], vSHUT_CCS_SS[y,i,t] <= EP[:eTotalCap_CCS_SS][y,i]/solvent_storage_dict[y, "cap_size"][i]
     end)
 
     # Commitment state constraint linking startup and shutdown decisions (Constraint #4)
-    @constraint(EP, cCommit_CCS_SS[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T], 
+    @constraint(EP, cCommit_CCS_SS[y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t = 1:T], 
                 EP[:vCOMMIT_CCS_SS][y,i,t] == EP[:vCOMMIT_CCS_SS][y,i,hoursbefore(p, t, 1)] + EP[:vSTART_CCS_SS][y,i,t] - EP[:vSHUT_CCS_SS][y,i,t])
 
     ### Maximum ramp up and down between consecutive hours (Constraints #5-6)
     # rampup constraints
-    @constraint(EP,[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T],
+    @constraint(EP,[y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t = 1:T],
         EP[:vOutput_CCS_SS][y,i,t]-EP[:vOutput_CCS_SS][y,i,hoursbefore(p, t, 1)] <= solvent_storage_dict[y, "ramp_up"][i]*solvent_storage_dict[y, "cap_size"][i]*(vCOMMIT_CCS_SS[y,i,t]-vSTART_CCS_SS[y,i,t])
             + min(1,max(solvent_storage_dict[y, "min_power"][i],solvent_storage_dict[y, "ramp_up"][i]))*solvent_storage_dict[y, "cap_size"][i]*vSTART_CCS_SS[y,i,t]
             -solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vSHUT_CCS_SS[y,i,t])
 
     # rampdown constraints
-    @constraint(EP,[y in COMMIT_CCS_SS, i in [1, 3, 4], t = 1:T],
+    @constraint(EP,[y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t = 1:T],
         EP[:vOutput_CCS_SS][y,i,hoursbefore(p, t, 1)]-EP[:vOutput_CCS_SS][y,i,t] <=solvent_storage_dict[y, "ramp_dn"][i]*solvent_storage_dict[y, "cap_size"][i]*(vCOMMIT_CCS_SS[y,i,t]-vSTART_CCS_SS[y,i,t])
             -solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vSTART_CCS_SS[y,i,t]
             + min(1,max(solvent_storage_dict[y, "min_power"][i],solvent_storage_dict[y, "ramp_dn"][i]))*solvent_storage_dict[y, "cap_size"][i]*vSHUT_CCS_SS[y,i,t])
 
     ### Minimum and maximum power output constraints (Constraints #7 & 8)
     @constraints(EP, begin
-        [y in COMMIT_CCS_SS, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] >= solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
-        [y in COMMIT_CCS_SS, i in [1, 3, 4], t=1:T], EP[:vOutput_CCS_SS][y,i,t] <= solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
+        [y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t=1:T], EP[:vOutput_CCS_SS][y,i,t] >= solvent_storage_dict[y, "min_power"][i]*solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
+        [y in COMMIT_CCS_SS, i in [gasturbine, absorber, compressor], t=1:T], EP[:vOutput_CCS_SS][y,i,t] <= solvent_storage_dict[y, "cap_size"][i]*vCOMMIT_CCS_SS[y,i,t]
     end)
 
     ### Minimum up and down times (Constraints #9 & 10)
     for y in COMMIT_CCS_SS
-        for i in [1, 3, 4]
+        for i in [gasturbine, absorber, compressor]
             ## up time
             Up_Time = Int(floor(solvent_storage_dict[y, "up_time"][i]))
             Up_Time_HOURS = [] # Set of hours in the summation term of the maximum up time constraint for the first subperiod of each representative period
