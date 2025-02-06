@@ -540,7 +540,7 @@ an NGCC-CCS power plant ($/Ton).|
 |PowerUseRate\_MWh\_per\_MMBtu\_Fuel\_Other| Power consumption rate for other auxiliary load per MMBtu fuel is used in an NGCC-CCS power plant (MWh/ton).|
 |CO2\_Capture\_Fraction\_Startup\_Max|[0,1], Maximum CO2 capture rate of total emissions during startup. |
 |CO2\_Capture\_Fraction\_Max|[0,1], Maximum CO2 capture rate of total emissions during normal operations. |
-##### Table 13b: Settings-specific columns in the Allam_Cycle_LOX.csv file
+##### Table 13b: Settings-specific columns in the CCS_solvent_storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
