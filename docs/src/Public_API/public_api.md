@@ -20,5 +20,6 @@ GenX.mga
 GenX.configure_settings_multistage
 GenX.configure_multi_stage_inputs
 GenX.run_ddp
+GenX.run_myopic_multistage
 GenX.write_multi_stage_outputs
 ```
