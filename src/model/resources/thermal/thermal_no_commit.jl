@@ -56,9 +56,12 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
+    THERM_NO_COMMIT_BY_ZONE = map(1:Z) do z
+        return intersect(THERM_NO_COMMIT, resources_in_zone_by_rid(gen, z))
+    end
     @expression(EP, ePowerBalanceThermNoCommit[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t]
-        for y in intersect(THERM_NO_COMMIT, resources_in_zone_by_rid(gen, z))))
+        for y in THERM_NO_COMMIT_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermNoCommit)
 
     ### Constraints ###

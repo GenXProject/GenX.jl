@@ -153,9 +153,12 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ## Power Balance Expressions ##
+    THERM_COMMIT_BY_ZONE = map(1:Z) do z
+        return intersect(THERM_COMMIT, resources_in_zone_by_rid(gen, z))
+    end
     @expression(EP, ePowerBalanceThermCommit[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t]
-        for y in intersect(THERM_COMMIT, resources_in_zone_by_rid(gen, z))))
+        for y in THERM_COMMIT_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermCommit)
 
     ### Constraints ###

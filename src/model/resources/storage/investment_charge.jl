@@ -74,12 +74,15 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
             existing_charge_cap_mw(gen[y]))
     end
 
+    NEW_AND_RET_CAP_CHARGE = intersect(NEW_CAP_CHARGE, RET_CAP_CHARGE)
+    NEW_NOT_RET_CAP_CHARGE = setdiff(NEW_CAP_CHARGE, RET_CAP_CHARGE)
+    RET_NOT_NEW_CAP_CHARGE = setdiff(RET_CAP_CHARGE, NEW_CAP_CHARGE)
     @expression(EP, eTotalCapCharge[y in STOR_ASYMMETRIC],
-        if (y in intersect(NEW_CAP_CHARGE, RET_CAP_CHARGE))
+        if (y in NEW_AND_RET_CAP_CHARGE)
             eExistingCapCharge[y] + EP[:vCAPCHARGE][y] - EP[:vRETCAPCHARGE][y]
-        elseif (y in setdiff(NEW_CAP_CHARGE, RET_CAP_CHARGE))
+        elseif (y in NEW_NOT_RET_CAP_CHARGE)
             eExistingCapCharge[y] + EP[:vCAPCHARGE][y]
-        elseif (y in setdiff(RET_CAP_CHARGE, NEW_CAP_CHARGE))
+        elseif (y in RET_NOT_NEW_CAP_CHARGE)
             eExistingCapCharge[y] - EP[:vRETCAPCHARGE][y]
         else
             eExistingCapCharge[y]
