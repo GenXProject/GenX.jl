@@ -17,7 +17,7 @@ the fact that most generators have a decreasing heat rate as a function of load.
 The fuel consumption for power generation $vFuel_{y,t}$ is determined by power generation 
 ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
-denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
+denoted by $eCFuelOut_{y,t}$ and $eStartFuel$, are determined by fuel consumption ($vFuel_{y,t}$ 
 and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
 (2). Piecewise-linear approximation
 With this formulation, the heat rate of generators becomes a function of load.
