@@ -96,9 +96,17 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
         else
             fixed_om_cost_per_mwhyr(gen[y]) * eTotalCapEnergy[y]
         end)
-
+    @expression(EP, eCInvEnergy[y in STOR_ALL],
+        if y in NEW_CAP_ENERGY # Resources eligible for new capacity
+            inv_cost_per_mwhyr(gen[y]) * vCAPENERGY[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomEnergy[y in STOR_ALL], fixed_om_cost_per_mwhyr(gen[y]) * eTotalCapEnergy[y])
     # Sum individual resource contributions to fixed costs to get total fixed costs
     @expression(EP, eTotalCFixEnergy, sum(EP[:eCFixEnergy][y] for y in STOR_ALL))
+    @expression(EP, eTotalCInvEnergy, sum(EP[:eCInvEnergy][y] for y in STOR_ALL))
+    @expression(EP, eTotalCFomEnergy, sum(EP[:eCFomEnergy][y] for y in STOR_ALL))
 
     # Add term to objective function expression
     if MultiStage == 1

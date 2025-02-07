@@ -480,9 +480,17 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         else
             by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y]
         end)
-
+    @expression(EP, eCInvDC[y in DC],
+        if y in NEW_CAP_DC # Resources eligible for new capacity
+            by_rid(y, :inv_cost_inverter_per_mwyr) * vDCCAP[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomDC[y in DC], by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y])
     # Sum individual resource contributions
     @expression(EP, eTotalCFixDC, sum(eCFixDC[y] for y in DC))
+    @expression(EP, eTotalCInvDC, sum(eCInvDC[y] for y in DC))
+    @expression(EP, eTotalCFomDC, sum(eCFomDC[y] for y in DC))
 
     if MultiStage == 1
         EP[:eObj] += eTotalCFixDC / inputs["OPEXMULT"]
@@ -642,8 +650,18 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         else
             by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y]
         end)
+    @expression(EP, eCInvSolar[y in SOLAR],
+        if y in NEW_CAP_SOLAR # Resources eligible for new capacity
+            by_rid(y, :inv_cost_solar_per_mwyr) * vSOLARCAP[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomSolar[y in SOLAR],by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y])
+    # Sum individual resource contributions
     @expression(EP, eTotalCFixSolar, sum(eCFixSolar[y] for y in SOLAR))
-
+    @expression(EP, eTotalCInvSolar, sum(eCInvSolar[y] for y in SOLAR))
+    @expression(EP, eTotalCFomSolar, sum(eCFomSolar[y] for y in SOLAR))
+    
     if MultiStage == 1
         EP[:eObj] += eTotalCFixSolar / inputs["OPEXMULT"]
     else
@@ -819,7 +837,18 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         else
             by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y]
         end)
+    @expression(EP, eCInvWind[y in WIND],
+        if y in NEW_CAP_WIND # Resources eligible for new capacity
+            by_rid(y, :inv_cost_wind_per_mwyr) * vWINDCAP[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomWind[y in WIND], by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y])    
+    
+    
     @expression(EP, eTotalCFixWind, sum(eCFixWind[y] for y in WIND))
+    @expression(EP, eTotalCInvWind, sum(eCInvWind[y] for y in WIND))
+    @expression(EP, eTotalCFomWind, sum(eCFomWind[y] for y in WIND))
 
     if MultiStage == 1
         EP[:eObj] += eTotalCFixWind / inputs["OPEXMULT"]
@@ -1096,7 +1125,18 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         else
             fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y]
         end)
+    @expression(EP, eCInvEnergy_VS[y in STOR],
+        if y in NEW_CAP_STOR # Resources eligible for new capacity
+            inv_cost_per_mwhyr(gen[y]) * vCAPENERGY_VS[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomEnergy_VS[y in STOR], fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y])
+    
+    
     @expression(EP, eTotalCFixStor, sum(eCFixEnergy_VS[y] for y in STOR))
+    @expression(EP, eTotalCInvStor, sum(eCInvEnergy_VS[y] for y in STOR))
+    @expression(EP, eTotalCFomStor, sum(eCFomEnergy_VS[y] for y in STOR))
 
     if MultiStage == 1
         EP[:eObj] += eTotalCFixStor / inputs["OPEXMULT"]
@@ -1426,7 +1466,17 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         else
             by_rid(y, :fixed_om_elec_cost_per_mwyr) * eTotalCap_ELEC[y]
         end)
+    @expression(EP, eCInvElec[y in ELEC],
+        if y in NEW_CAP_ELEC # Resources eligible for new capacity
+            by_rid(y, :inv_cost_elec_per_mwyr) * vELECCAP[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomElec[y in ELEC], by_rid(y, :fixed_om_elec_cost_per_mwyr) * eTotalCap_ELEC[y])
+    
     @expression(EP, eTotalCFixElec, sum(eCFixElec[y] for y in ELEC))
+    @expression(EP, eTotalCInvElec, sum(eCInvElec[y] for y in ELEC))
+    @expression(EP, eTotalCFomElec, sum(eCFomElec[y] for y in ELEC))
 
     if MultiStage == 1
         EP[:eObj] += eTotalCFixElec / inputs["OPEXMULT"]
@@ -1817,11 +1867,24 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             else
                 by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y]
             end)
-
+        @expression(EP, eCInvDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
+            if y in NEW_CAP_DISCHARGE_DC # Resources eligible for new discharge DC capacity
+                by_rid(y, :inv_cost_discharge_dc_per_mwyr) * vCAPDISCHARGE_DC[y]
+            else
+                0
+            end)
+        @expression(EP, eCFomDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
+            by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y])            
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixDischarge_DC,
             sum(EP[:eCFixDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
+        @expression(EP,
+            eTotalCInvDischarge_DC,
+            sum(EP[:eCInvDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
+        @expression(EP,
+            eTotalCFomDischarge_DC,
+            sum(EP[:eCFomDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
 
         if MultiStage == 1
             EP[:eObj] += eTotalCFixDischarge_DC / inputs["OPEXMULT"]
@@ -1914,12 +1977,25 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             else
                 by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y]
             end)
-
+        @expression(EP, eCInvCharge_DC[y in VS_ASYM_DC_CHARGE],
+            if y in NEW_CAP_CHARGE_DC # Resources eligible for new charge DC capacity
+                by_rid(y, :inv_cost_charge_dc_per_mwyr) * vCAPCHARGE_DC[y]
+            else
+                0
+            end)
+        @expression(EP, eCFomCharge_DC[y in VS_ASYM_DC_CHARGE], 
+            by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y])
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixCharge_DC,
             sum(EP[:eCFixCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
-
+        @expression(EP,
+            eTotalCInvCharge_DC,
+            sum(EP[:eCInvCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
+        @expression(EP,
+            eTotalCFomCharge_DC,
+            sum(EP[:eCFomCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
+         
         if MultiStage == 1
             EP[:eObj] += eTotalCFixCharge_DC / inputs["OPEXMULT"]
         else
@@ -2015,12 +2091,25 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             else
                 by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y]
             end)
-
-        # Sum individual resource contributions to fixed costs to get total fixed costs
+        @expression(EP, eCInvDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
+            if y in NEW_CAP_DISCHARGE_AC # Resources eligible for new discharge AC capacity
+                by_rid(y, :inv_cost_discharge_ac_per_mwyr) * vCAPDISCHARGE_AC[y]
+            else
+                0
+            end)
+        @expression(EP, eCFomDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
+            by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y])       
+        
+            # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixDischarge_AC,
             sum(EP[:eCFixDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
-
+        @expression(EP,
+            eTotalCInvDischarge_AC,
+            sum(EP[:eCInvDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
+        @expression(EP,
+            eTotalCFomDischarge_AC,
+            sum(EP[:eCFomDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
         if MultiStage == 1
             EP[:eObj] += eTotalCFixDischarge_AC / inputs["OPEXMULT"]
         else
@@ -2112,11 +2201,24 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             else
                 by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y]
             end)
-
+        @expression(EP, eCInvCharge_AC[y in VS_ASYM_AC_CHARGE],
+            if y in NEW_CAP_CHARGE_AC # Resources eligible for new charge AC capacity
+                by_rid(y, :inv_cost_charge_ac_per_mwyr) * vCAPCHARGE_AC[y]
+            else
+                0
+            end)
+        @expression(EP, eCFomCharge_AC[y in VS_ASYM_AC_CHARGE], 
+            by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y])        
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixCharge_AC,
             sum(EP[:eCFixCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
+        @expression(EP,
+            eTotalCInvCharge_AC,
+            sum(EP[:eCInvCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
+        @expression(EP,
+            eTotalCFomCharge_AC,
+            sum(EP[:eCFomCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
 
         if MultiStage == 1
             EP[:eObj] += eTotalCFixCharge_AC / inputs["OPEXMULT"]

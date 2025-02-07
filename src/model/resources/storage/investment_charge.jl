@@ -96,10 +96,17 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
         else
             fixed_om_cost_charge_per_mwyr(gen[y]) * eTotalCapCharge[y]
         end)
-
+    @expression(EP, eCInvCharge[y in STOR_ASYMMETRIC],
+        if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
+            inv_cost_charge_per_mwyr(gen[y]) * vCAPCHARGE[y]
+        else
+            0
+        end)
+    @expression(EP, eCFomCharge[y in STOR_ASYMMETRIC],fixed_om_cost_charge_per_mwyr(gen[y]) * eTotalCapCharge[y])
     # Sum individual resource contributions to fixed costs to get total fixed costs
     @expression(EP, eTotalCFixCharge, sum(EP[:eCFixCharge][y] for y in STOR_ASYMMETRIC))
-
+    @expression(EP, eTotalCInvCharge, sum(EP[:eCInvCharge][y] for y in STOR_ASYMMETRIC))
+    @expression(EP, eTotalCFomCharge, sum(EP[:eCFomCharge][y] for y in STOR_ASYMMETRIC))
     # Add term to objective function expression
     if MultiStage == 1
         # OPEX multiplier scales fixed costs to account for multiple years between two model stages
