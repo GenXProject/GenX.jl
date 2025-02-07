@@ -1443,6 +1443,24 @@ function add_resources_to_input_data!(inputs::Dict,
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
     end
 
+    # Generic function to get attribute from a resource
+    """
+    get_attr(r::AbstractResource, attr::Symbol, default_value::Real)
+
+    Function to get attribute `attr` from a GenX resource `r`. If the attribute is not found, return `default_value`.
+
+    # Arguments
+    - `r::AbstractResource`: The resource.
+    - `attr::Symbol`: The attribute to get.
+    - `default_value::Real`: The default value to return if the attribute is not found.
+
+    # Returns
+    - `value::Real`: The value of the attribute.
+    """
+    function get_attr(r::AbstractResource, attr::Symbol, default_value::Real)
+        return get(r, attr, default_value)
+    end
+
     ## flexible operation of CCS
     # CCS with solvent storage
     inputs["CCS_SOLVENT_STORAGE"] = ccs_solvent_storage(gen)
@@ -1450,57 +1468,58 @@ function add_resources_to_input_data!(inputs::Dict,
     #reconstruct a dictionary to store component-wise data for CCS with solvent storage.
     # the order must follow gas turbine -> steam turbine -> absorber -> compressor -> regenerator -> rich solvent storage -> lean solvent storage
     solvent_storage_dict = Dict()
+    
     for y in inputs["CCS_SOLVENT_STORAGE"]
-        solvent_storage_dict[y, "inv_cost"] = inv_cost_per_mwyr_gasturbine(gen[y]), inv_cost_per_mwyr_steamturbine(gen[y]),
-                                              inv_cost_per_tonyr_absorber(gen[y]), inv_cost_per_mwyr_compressor(gen[y]),
-                                              inv_cost_per_tonyr_regenerator(gen[y]), inv_cost_per_tonyr_solventstorage_rich(gen[y]),
-                                              inv_cost_per_tonyr_solventstorage_lean(gen[y])
-        solvent_storage_dict[y, "fom_cost"] = fixed_om_cost_per_mwyr_gasturbine(gen[y]), fixed_om_cost_per_mwyr_steamturbine(gen[y]),
-                                              fixed_om_cost_per_tonyr_absorber(gen[y]), fixed_om_cost_per_mwyr_compressor(gen[y]),
-                                              fixed_om_cost_per_tonyr_regenerator(gen[y]), fixed_om_cost_per_tonyr_solventstorage_rich(gen[y]),
-                                              fixed_om_cost_per_tonyr_solventstorage_lean(gen[y])
-        solvent_storage_dict[y, "vom_cost"] = var_om_cost_per_mwh_gasturbine(gen[y]), var_om_cost_per_mwh_steamturbine(gen[y]),
-                                              var_om_cost_per_ton_absorber(gen[y]), var_om_cost_per_mwh_compressor(gen[y]),
-                                              var_om_cost_per_ton_regenerator(gen[y]), var_om_cost_per_ton_solventstorage_rich(gen[y]),
-                                              var_om_cost_per_ton_solventstorage_lean(gen[y])
-        solvent_storage_dict[y, "cap_size"] = cap_size_mw_gasturbine(gen[y]), cap_size_mw_steamturbine(gen[y]),
-                                              cap_size_ton_absorber(gen[y]), cap_size_mw_compressor(gen[y]),
-                                              cap_size_ton_regenerator(gen[y]), cap_size_ton_solventstorage_rich(gen[y]),
-                                              cap_size_ton_solventstorage_lean(gen[y])
-        solvent_storage_dict[y, "start_cost"] = start_cost_per_mw_gasturbine(gen[y]), start_cost_per_mw_steamturbine(gen[y]),
-                                                start_cost_per_ton_absorber(gen[y]), start_cost_per_mw_compressor(gen[y]),
-                                                start_cost_per_ton_regenerator(gen[y]), start_cost_per_ton_solventstorage_rich(gen[y]),
-                                                start_cost_per_ton_solventstorage_lean(gen[y])
-        solvent_storage_dict[y,"start_fuel"] = start_fuel_mmbtu_per_mw_gasturbine(gen[y]), start_fuel_mmbtu_per_mw_steamturbine(gen[y]),
+        solvent_storage_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_per_mwyr_gasturbine, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_steamturbine, default_zero), 
+                                              get_attr(gen[y], :inv_cost_per_tonyr_absorber, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_compressor, default_zero), 
+                                              get_attr(gen[y], :inv_cost_per_tonyr_regenerator, default_zero), get_attr(gen[y], :inv_cost_per_tonyr_solventstorage_rich, default_zero), 
+                                              get_attr(gen[y], :inv_cost_per_tonyr_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_per_mwyr_gasturbine, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_steamturbine, default_zero),
+                                              get_attr(gen[y], :fixed_om_cost_per_tonyr_absorber, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_compressor, default_zero),
+                                              get_attr(gen[y], :fixed_om_cost_per_tonyr_regenerator, default_zero), get_attr(gen[y], :fixed_om_cost_per_tonyr_solventstorage_rich, default_zero),
+                                              get_attr(gen[y], :fixed_om_cost_per_tonyr_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "vom_cost"] = get_attr(gen[y], :var_om_cost_per_mwh_gasturbine, default_zero), get_attr(gen[y], :var_om_cost_per_mwh_steamturbine, default_zero),
+                                              get_attr(gen[y], :var_om_cost_per_ton_absorber, default_zero), get_attr(gen[y], :var_om_cost_per_mwh_compressor, default_zero),
+                                              get_attr(gen[y], :var_om_cost_per_ton_regenerator, default_zero), get_attr(gen[y], :var_om_cost_per_ton_solventstorage_rich, default_zero),
+                                              get_attr(gen[y], :var_om_cost_per_ton_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "cap_size"] = get_attr(gen[y], :ap_size_mw_gasturbine, 1), get_attr(gen[y], :cap_size_mw_steamturbine, 1),
+                                              get_attr(gen[y], :cap_size_ton_absorber, 1), get_attr(gen[y], :cap_size_mw_compressor, 1),
+                                              get_attr(gen[y], :cap_size_ton_regenerator, 1), get_attr(gen[y], :cap_size_ton_solventstorage_rich, 1),
+                                              get_attr(gen[y], :cap_size_ton_solventstorage_lean, 1)
+        solvent_storage_dict[y, "start_cost"] = get_attr(gen[y], :start_cost_per_mw_gasturbine, default_zero), get_attr(gen[y], :start_cost_per_mw_steamturbine, default_zero),
+                                                get_attr(gen[y], :start_cost_per_ton_absorber, default_zero), get_attr(gen[y], :start_cost_per_mw_compressor, default_zero),
+                                                get_attr(gen[y], :start_cost_per_ton_regenerator, default_zero), get_attr(gen[y], :start_cost_per_ton_solventstorage_rich, default_zero),
+                                                get_attr(gen[y], :start_cost_per_ton_solventstorage_lean, default_zero)
+        solvent_storage_dict[y,"start_fuel"] = get_attr(gen[y], :start_fuel_mmbtu_per_mw_gasturbine, default_zero), get_attr(gen[y], :start_fuel_mmbtu_per_mw_steamturbine, default_zero)
                                                0, 0, 0, 0, 0
-        solvent_storage_dict[y, "min_power"] = min_power_gasturbine(gen[y]), min_power_steamturbine(gen[y]),
-                                               min_power_absorber(gen[y]), min_power_compressor(gen[y]),
-                                               min_power_regenerator(gen[y])
-        solvent_storage_dict[y, "up_time"] = up_time_gasturbine(gen[y]), up_time_steamturbine(gen[y]),
-                                             up_time_absorber(gen[y]), up_time_compressor(gen[y]),
-                                             up_time_regenerator(gen[y]), 0, 0
-        solvent_storage_dict[y, "down_time"] = dn_time_gasturbine(gen[y]), dn_time_steamturbine(gen[y]),
-                                               dn_time_absorber(gen[y]), dn_time_compressor(gen[y]),
-                                               dn_time_regenerator(gen[y]), 0, 0
-        solvent_storage_dict[y, "ramp_up"] = ramp_up_gasturbine(gen[y]), ramp_up_steamturbine(gen[y]),
-                                             ramp_up_absorber(gen[y]), ramp_up_compressor(gen[y]),
-                                             ramp_up_regenerator(gen[y]), 0, 0
-        solvent_storage_dict[y, "ramp_dn"] = ramp_dn_gasturbine(gen[y]), ramp_dn_steamturbine(gen[y]),
-                                             ramp_dn_absorber(gen[y]), ramp_dn_compressor(gen[y]),
-                                             ramp_dn_regenerator(gen[y]), 0, 0
-        solvent_storage_dict[y, "existing_cap"] = existing_cap_mw_gasturbine(gen[y]), existing_cap_mw_steamturbine(gen[y]),
-                                                  existing_cap_ton_absorber(gen[y]), existing_cap_mw_compressor(gen[y]),
-                                                  existing_cap_ton_regenerator(gen[y]), existing_cap_ton_solventstorage_rich(gen[y]),
-                                                  existing_cap_ton_solventstorage_lean(gen[y])
-        solvent_storage_dict[y, "max_cap"] = max_cap_mw_gasturbine(gen[y]), max_cap_mw_steamturbine(gen[y]),
-                                                  max_cap_ton_absorber(gen[y]), max_cap_mw_compressor(gen[y]),
-                                                  max_cap_ton_regenerator(gen[y]), max_cap_ton_solventstorage_rich(gen[y]),
-                                                  max_cap_ton_solventstorage_lean(gen[y])
-        solvent_storage_dict[y, "min_cap"] = min_cap_mw_gasturbine(gen[y]), min_cap_mw_steamturbine(gen[y]),
-                                                  min_cap_ton_absorber(gen[y]), min_cap_mw_compressor(gen[y]),
-                                                  min_cap_ton_regenerator(gen[y]), min_cap_ton_solventstorage_rich(gen[y]),
-                                                  min_cap_ton_solventstorage_lean(gen[y])
-
+        solvent_storage_dict[y, "min_power"] = get_attr(gen[y], :min_power_gasturbine, default_zero), get_attr(gen[y], :min_power_steamturbine, default_zero),
+                                               get_attr(gen[y], :min_power_absorber, default_zero), get_attr(gen[y], :min_power_compressor, default_zero),
+                                               get_attr(gen[y], :min_power_regenerator, default_zero), get_attr(gen[y], :min_power_solventstorage_rich, default_zero),
+                                               get_attr(gen[y], :min_power_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "up_time"] = get_attr(gen[y], :up_time_gasturbine, default_zero), get_attr(gen[y], :up_time_steamturbine, default_zero),
+                                             get_attr(gen[y], :up_time_absorber, default_zero), get_attr(gen[y], :up_time_compressor, default_zero),
+                                             get_attr(gen[y], :up_time_regenerator, default_zero), 0, 0
+        solvent_storage_dict[y, "down_time"] = get_attr(gen[y], :dn_time_gasturbine, default_zero), get_attr(gen[y], :dn_time_steamturbine, default_zero),
+                                               get_attr(gen[y], :dn_time_absorber, default_zero), get_attr(gen[y], :dn_time_compressor, default_zero),
+                                               get_attr(gen[y], :dn_time_regenerator, default_zero), 0, 0
+        solvent_storage_dict[y, "ramp_up"] = get_attr(gen[y], :ramp_up_gasturbine, default_percent), get_attr(gen[y], :ramp_up_steamturbine, default_percent),
+                                             get_attr(gen[y], :ramp_up_absorber, default_percent), get_attr(gen[y], :ramp_up_compressor, default_percent),
+                                             get_attr(gen[y], :ramp_up_regenerator, default_percent), 0, 0
+        solvent_storage_dict[y, "ramp_dn"] =  get_attr(gen[y], :ramp_dn_gasturbine, default_percent), get_attr(gen[y], :ramp_dn_steamturbine, default_percent),
+                                             get_attr(gen[y], :ramp_dn_absorber, default_percent), get_attr(gen[y], :ramp_dn_compressor, default_percent),
+                                             get_attr(gen[y], :ramp_dn_regenerator, default_percent), 0, 0
+        solvent_storage_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_mw_gasturbine, default_zero), get_attr(gen[y], :existing_cap_mw_steamturbine, default_zero),
+                                                  get_attr(gen[y], :existing_cap_ton_absorber, default_zero), get_attr(gen[y], :existing_cap_mw_compressor, default_zero),
+                                                  get_attr(gen[y], :existing_cap_ton_regenerator, default_zero), get_attr(gen[y], :existing_cap_ton_solventstorage_rich, default_zero),
+                                                  get_attr(gen[y], :existing_cap_ton_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "max_cap"] = get_attr(gen[y], :max_cap_mw_gasturbine, default_minmax_cap), get_attr(gen[y], :max_cap_mw_steamturbine, default_minmax_cap),
+                                             get_attr(gen[y], :max_cap_ton_absorber, default_minmax_cap), get_attr(gen[y], :max_cap_mw_compressor, default_minmax_cap),
+                                             get_attr(gen[y], :max_cap_ton_regenerator, default_minmax_cap), get_attr(gen[y], :max_cap_ton_solventstorage_rich, default_minmax_cap),
+                                             get_attr(gen[y], :max_cap_ton_solventstorage_lean, default_minmax_cap)
+        solvent_storage_dict[y, "min_cap"] = get_attr(gen[y], :min_cap_mw_gasturbine, default_minmax_cap), get_attr(gen[y], :min_cap_mw_steamturbine, default_minmax_cap),
+                                             get_attr(gen[y], :min_cap_ton_absorber, default_minmax_cap), get_attr(gen[y], :min_cap_mw_compressor, default_minmax_cap),
+                                             get_attr(gen[y], :min_cap_ton_regenerator, default_minmax_cap), get_attr(gen[y], :min_cap_ton_solventstorage_rich, default_minmax_cap),
+                                             get_attr(gen[y], :min_cap_ton_solventstorage_lean, default_minmax_cap)
     end
     inputs["solvent_storage_dict"] = solvent_storage_dict
 
