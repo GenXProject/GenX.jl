@@ -25,22 +25,41 @@ However, with 100% RPS or CES policies enacted in several jurisdictions, policy 
 """
 function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     println("Energy Share Requirement Policies Module")
+    gen = inputs["RESOURCES"]
+    T = inputs["T"]     # Number of time steps
+
+    create_empty_expression!(EP, :eESR, inputs["nESR"])
+
+    # Generation from eligible generators - ESR fraction * demand >= 0
+    @expression(EP, eESRDischarge[ESR = 1:inputs["nESR"]],
+        sum(
+            inputs["omega"][t] * esr(gen[y], tag = ESR) * EP[:vP][y, t]
+            for y in ids_with_policy(gen, esr, tag = ESR), t in 1:T
+        )
+        - sum(
+            inputs["dfESR"][z, ESR] * inputs["omega"][t] * inputs["pD"][t, z]
+            for t in 1:T, z in findall(x -> x > 0, inputs["dfESR"][:, ESR])
+        )
+    )
+    add_similar_to_expression!(EP[:eESR], eESRDischarge)
 
     # if input files are present, add energy share requirement slack variables
     if haskey(inputs, "dfESR_slack")
-        @variable(EP, vESR_slack[ESR = 1:inputs["nESR"]]>=0)
+        @variable(EP, vESR_slack[ESR = 1:inputs["nESR"]] >= 0)
         add_similar_to_expression!(EP[:eESR], vESR_slack)
 
         @expression(EP,
             eCESRSlack[ESR = 1:inputs["nESR"]],
-            inputs["dfESR_slack"][ESR, :PriceCap]*EP[:vESR_slack][ESR])
+            inputs["dfESR_slack"][ESR, :PriceCap] * EP[:vESR_slack][ESR]
+        )
         @expression(EP,
             eCTotalESRSlack,
-            sum(EP[:eCESRSlack][ESR] for ESR in 1:inputs["nESR"]))
+            sum(EP[:eCESRSlack][ESR] for ESR in 1:inputs["nESR"])
+        )
 
         add_to_expression!(EP[:eObj], eCTotalESRSlack)
     end
-
     ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
-    @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR]>=0)
+    @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR] >= 0)
+
 end
