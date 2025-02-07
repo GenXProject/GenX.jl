@@ -98,8 +98,8 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     # eExistingCap_CCS_SS[gasturbine] + eExistingCap_CCS_SS[steamturbine] instead of existing_cap_mw
     # eTotalCap_CCS_SS[gasturbine] + eTotalCap_CCS_SS[steamturbine]instead of eTotalCap
     for y in CCS_SOLVENT_STORAGE
-        startcap[y] = value(EP[:eExistingCap_CCS_SS][i, gasturbine]) + value(EP[:eExistingCap_CCS_SS][i, steamturbine])
-        endcap[y] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
+        startcap[y] = value(EP[:eExistingCap_CCS_SS][y, gasturbine]) + value(EP[:eExistingCap_CCS_SS][y, steamturbine])
+        endcap[y] = value(EP[:eTotalCap_CCS_SS][y, gasturbine]) + value(EP[:eTotalCap_CCS_SS][y, steamturbine])
     end
 
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
