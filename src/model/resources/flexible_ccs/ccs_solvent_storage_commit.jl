@@ -68,9 +68,9 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
                 omega[t] * (solvent_storage_dict[y, "start_cost"][steamturbine] * vSTART_CCS_SS[y, gasturbine, t]) )
     @expression(EP, eCStart_CCS_SS_regenerator[y in COMMIT_CCS_SS , t=1:T], 
                 omega[t] * (solvent_storage_dict[y, "start_cost"][regenerator] * vSTART_CCS_SS[y, gasturbine, t]) )
-    add_to_expression!(EP[:eCStart_CCS_SS], eCStart_CCS_SS_steamturbine + eCStart_CCS_SS_regenerator)
 
-    @expression(EP, eTotalCStart_CCS_SS_T[t = 1:T], sum(EP[:eCStart_CCS_SS][y,t] for y in COMMIT_CCS_SS))
+    @expression(EP, eTotalCStart_CCS_SS_T[t = 1:T], sum((EP[:eCStart_CCS_SS][y,t] + EP[:eCStart_CCS_SS_steamturbine][y,t] + EP[:eCStart_CCS_SS_regenerator][y,t])
+                                                        for y in COMMIT_CCS_SS))
     @expression(EP, eTotalCStart_CCS_SS, sum(eTotalCStart_CCS_SS_T[t] for t in 1:T))
     add_to_expression!(EP[:eTotalCStart], eTotalCStart_CCS_SS)
     # since start up costs only related to COMMIT (Thermal units) so we don't need to connect CStart_CCS_SS to eCStart
