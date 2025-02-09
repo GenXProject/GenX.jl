@@ -44,6 +44,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
     COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
     RETROFIT_CAP = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] # Set of allam cycle resources
 
     ### Variables ###
 
@@ -169,14 +170,14 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     if setup["MinCapReq"] == 1
         @expression(EP,
             eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, min_cap, tag = mincap)))
+            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, min_cap, tag = mincap), ALLAM_CYCLE_LOX)))
         add_similar_to_expression!(EP[:eMinCapRes], eMinCapResInvest)
     end
 
     if setup["MaxCapReq"] == 1
         @expression(EP,
             eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, max_cap, tag = maxcap)))
+            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, max_cap, tag = maxcap), ALLAM_CYCLE_LOX)))
         add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
     end
 end

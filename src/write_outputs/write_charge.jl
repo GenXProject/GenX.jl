@@ -12,6 +12,7 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] 
     VRE_STOR = inputs["VRE_STOR"]
     VS_STOR = !isempty(VRE_STOR) ? inputs["VS_STOR"] : []
     FUSION = ids_with(gen, :fusion)
@@ -41,6 +42,10 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         _, mat = prepare_fusion_parasitic_power(EP, inputs)
         push!(charge, mat)
         push!(charge_ids, FUSION)
+    end
+    if !isempty(ALLAM_CYCLE_LOX)
+        push!(charge, value.(EP[:vCHARGE_ALLAM]))
+        push!(charge_ids, ALLAM_CYCLE_LOX)
     end
     charge = reduce(vcat, charge, init = zeros(0, T))
     charge_ids = reduce(vcat, charge_ids, init = Int[])

@@ -14,6 +14,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     MUST_RUN = inputs["MUST_RUN"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     weight = inputs["omega"]
 
     df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
@@ -72,6 +73,20 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         df.CapacityFactor[ELECTROLYZER] .= (df.AnnualSum[ELECTROLYZER] ./
                                             df.Capacity[ELECTROLYZER]) /
                                            sum(weight)
+    end
+
+    if !isempty(ALLAM_CYCLE_LOX)
+        sco2turbine = 1
+        # We update the capacity for allam cycle to only include the capacity of the sco2 turbine
+        df.Capacity[ALLAM_CYCLE_LOX] .= value.(EP[:eTotalCap_AllamcycleLOX][ALLAM_CYCLE_LOX, sco2turbine]).data *
+                                            scale_factor
+        df.CapacityFactor[ALLAM_CYCLE_LOX] .= (df.AnnualSum[ALLAM_CYCLE_LOX] ./
+                                                df.Capacity[ALLAM_CYCLE_LOX]) /
+                                               sum(weight)
+    end
+    if !isempty(ALLAM_CYCLE_LOX)
+        @info "Capacity factor for Allam Cycle LOX resources that is included in the capacityfactor.csv file is calculated for the sCO2Turbine in an Allam Cycle LOX resource."
+        @info "For the full power output, please refer to the output_allam_cycle_lox.csv file."
     end
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)

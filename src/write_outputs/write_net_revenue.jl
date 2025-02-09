@@ -48,6 +48,8 @@ function write_net_revenue(path::AbstractString,
         # Should read in charge asymmetric capacities
     end
 
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+
     # Create a NetRevenue dataframe
     dfNetRevenue = DataFrame(region = regions,
         Resource = inputs["RESOURCE_NAMES"],
@@ -75,6 +77,11 @@ function write_net_revenue(path::AbstractString,
                                                   dfVreStor[1:VRE_STOR_LENGTH, :NewCapWind]
         end
     end
+
+    if !isempty(ALLAM_CYCLE_LOX)
+        dfNetRevenue.Inv_cost_MW[ALLAM_CYCLE_LOX] += Array(value.(EP[:eCFix_Allam_Plant]))
+    end
+    
     if setup["ParameterScale"] == 1
         dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Inv_cost_MW *= ModelScalingFactor # converting Million US$ to US$
@@ -121,6 +128,11 @@ function write_net_revenue(path::AbstractString,
                                                           (value.(EP[:vP_AC_DISCHARGE][AC_DISCHARGE,:]).data * inputs["omega"])
         end
     end
+
+    if !isempty(ALLAM_CYCLE_LOX)
+        dfNetRevenue.Var_OM_cost_out[ALLAM_CYCLE_LOX] += Array(value.(EP[:eCVar_Allam]))
+    end
+    
     if setup["ParameterScale"] == 1
         dfNetRevenue.Fixed_OM_cost_MW *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
