@@ -13,7 +13,7 @@ For standalone storage and co-located VRE and storage resources
 ($y \in \mathcal{O} \cup \mathcal{VS}$) the available capacity is the net injection
 into the transmission network plus the net virtual injection corresponding to charge held
 in reserve, derated by the derating factor.
-For information on how each component contributes to the capacity reserve margin formulation for co-located VRE and storage resources, see ```vre_stor_capres!()```.
+For information on how each component contributes to the capacity reserve margin formulation for co-located VRE and storage resources, see [`vre_stor_capres!()`](@ref).
 For flexible demand resources ($y \in \mathcal{DF}$), the available capacity is the net
 injection into the transmission network in time step $t$ derated by the derating factor,
 also stored in the parameter, $\epsilon_{y,z,p}^{CRM}$.

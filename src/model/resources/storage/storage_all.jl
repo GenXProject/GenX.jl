@@ -1,7 +1,7 @@
 @doc raw"""
 	storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
-Sets up variables and constraints common to all storage resources. See ```storage()``` in ```storage.jl``` for description of constraints.
+Sets up variables and constraints common to all storage resources. See [`storage!()`](@ref) in ```storage.jl``` for description of constraints.
 """
 function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Setup variables, constraints, and expressions common to all storage resources
