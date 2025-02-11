@@ -2163,7 +2163,7 @@ end
     vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
 
 This function activates capacity reserve margin constraints for co-located VRE and storage resources. The capacity reserve margin 
-    formulation for GenX is further elaborated upon in ```cap_reserve_margin!()```. For co-located resources ($y \in \mathcal{VS}$), 
+    formulation for GenX is further elaborated upon in [`cap_reserve_margin!()`](@ref). For co-located resources ($y \in \mathcal{VS}$), 
     the available capacity to contribute to the capacity reserve margin is the net injection into the transmission network (which 
     can come from the solar PV, wind, and/or storage component) plus the net virtual injection corresponding to charge held in reserve 
     (which can only come from the storage component), derated by the derating factor. If a capacity reserve margin is modeled, variables 
@@ -2184,7 +2184,7 @@ If a capacity reserve margin is modeled, then the following constraints track th
     current timestep. Unlike the regular state of charge, virtual discharge $\Theta^{CRM,dc}_{y,z,t}, \Theta^{CRM,ac}_{y,z,t}$ increases 
     $\Gamma^{CRM}_{y,z,t}$ (as more charge must be held in reserve to support more virtual discharge), and the virtual charge 
     $\Pi^{CRM,dc}_{y,z,t}, \Pi^{CRM,ac}_{y,z,t}$ reduces $\Gamma^{CRM}_{y,z,t}$. Similar to the state of charge constraints in the 
-    ```stor_vre_stor!()``` function, the first of these two constraints enforces storage inventory balance for interior time 
+    [`stor_vre_stor!()`](@ref) function, the first of these two constraints enforces storage inventory balance for interior time 
     steps $(t \in \mathcal{T}^{interior})$, while the second enforces storage balance constraint for the initial time step $(t \in \mathcal{T}^{start})$:
 ```math
 \begin{aligned}
@@ -2217,7 +2217,7 @@ The overall contribution of the co-located VRE and storage resources to the syst
 ```
 
 If long duration energy storage resources exist, a separate but similar set of variables and constraints is used to track the evolution of energy held 
-    in reserves across representative periods, which is elaborated upon in the ```long_duration_storage!()``` function. 
+    in reserves across representative periods, which is elaborated upon in the [`long_duration_storage!()`](@ref) function. 
     The main linking constraint follows (due to the capabilities of virtual DC and AC discharging and charging):
 
 ```math
