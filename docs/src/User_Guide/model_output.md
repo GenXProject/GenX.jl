@@ -25,6 +25,10 @@ Reports optimal values of investment variables (except StartCap, which is an inp
 | NewChargeCap |Installed charging capacity of each resource type in each zone |MW |
 | EndChargeCap |Total charging power capacity of each resource type in each zone |MW|
 
+!!! note "Note"
+    Capacity output for **Allam Cycle LOX** resources that is included in the **capacity.csv** file is for the **sCO2Turbine** in an Allam Cycle LOX resource.
+    For the full capacity output, please refer to the **capacity\_allam\_cycle\_lox.csv** file ([`GenX.write_allam_capacity`](@ref)).
+
 ### 1.2 costs.csv
 
 Reports optimal objective function value and contribution of each term by zone.
@@ -153,3 +157,48 @@ This file includes the renewable/clean credit revenue earned by each generator l
 ### 2.8 SubsidyRevenue.csv
 
 This file includes subsidy revenue earned if a generator specified Min\_Cap is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is $.
+
+## 3. Resources-specific outputs
+
+This section includes the output files related to specific resource types.
+
+### 3.1 capacity\_allam\_cycle\_lox.csv
+
+This file includes the capacity output for Allam Cycle LOX resources ([`GenX.write_allam_capacity`](@ref)).
+
+###### Table 3.1: Structure of the capacity\_allam\_cycle\_lox.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| Resource | Name of the Allam Cycle LOX resource | |
+| Zone | Zone of the Allam Cycle LOX resource | |
+| StartCap\_sCO2turbine\_MW\_gross | Initial power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| StartCap\_ASU\_MW\_gross | Initial power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| StartCap\_LOX\_t | Initial power capacity of the LOX in the Allam Cycle LOX resource | t |
+| RetCap\_sCO2turbine\_MW\_gross | Retired power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| RetCap\_ASU\_MW\_gross | Retired power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| RetCap\_LOX\_t | Retired power capacity of the LOX in the Allam Cycle LOX resource | t |
+| NewCap\_sCO2turbine\_MW\_gross | Installed power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| NewCap\_ASU\_MW\_gross | Installed power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| NewCap\_LOX\_t | Installed power capacity of the LOX in the Allam Cycle LOX resource | t |
+| EndCap\_sCO2turbine\_MW\_gross | Total power capacity of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| EndCap\_ASU\_MW\_gross | Total power capacity of the ASU in the Allam Cycle LOX resource | MW |
+| EndCap\_LOX\_t | Total power capacity of the LOX in the Allam Cycle LOX resource | t |
+
+### 3.2 output\_allam\_cycle\_lox.csv
+
+This file includes the output from each component of an Allam Cycle LOX resource ([`GenX.write_allam_output`](@ref)).
+
+###### Table 3.2: Structure of the output\_allam\_cycle\_lox.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| (resource\_name)\_sCO2Turbine\_gross\_power\_output\_mw | Hourly gross power output of the sCO2Turbine in the Allam Cycle LOX resource | MW |
+| (resource\_name)\_sco2turbine\_commit | Hourly unit commit status of the sCO2Turbine in the Allam Cycle LOX resource |  |
+| (resource\_name)\_ASU\_gross\_power\_output\_mw | Hourly gross power consumption of the ASU in the Allam Cycle LOX resource | MW |
+| (resource\_name)\_asu\_commit | Hourly unit commit status of the ASU in the Allam Cycle LOX resource |  |
+| (resource\_name)\_net\_power\_output\_mw | Hourly net power output of the Allam Cycle LOX resource | MW |
+| (resource\_name)\_storage\_lox\_t | Hourly status of charge of the LOX in the Allam Cycle LOX resource | t |
+| (resource\_name)\_lox\_in\_t | Hourly amount of liquid oxygen charged into the LOX in the Allam Cycle LOX resource | t |
+| (resource\_name)\_lox\_out\_t | Hourly amount of liquid oxygen discharged from the LOX in the Allam Cycle LOX resource | t |
+| (resource\_name)\_gox\_t | Hourly amount of gaseous oxygen produced by ASU in the Allam Cycle LOX resource | t |
