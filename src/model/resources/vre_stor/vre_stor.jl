@@ -1253,7 +1253,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     for z in 1:Z, t in 1:T
         if !isempty(gen_VRE_STOR_BY_ZONE_AND_STOR[z])
             EP[:ePowerBalance_VRE_STOR][t, z] -= sum(vCHARGE_VRE_STOR[y, t]
-            for y in igen_VRE_STOR_BY_ZONE_AND_STOR[z])
+            for y in gen_VRE_STOR_BY_ZONE_AND_STOR[z])
         end
     end
 
