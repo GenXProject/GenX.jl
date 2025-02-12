@@ -169,7 +169,7 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
                 sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS][y]
                     for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
                 for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
-            add_similar_to_expression!(EP[:eESR], -eESRStor)
+            add_similar_to_expression!(EP[:eESR], -1.0, eESRStor)
         end
     end
 

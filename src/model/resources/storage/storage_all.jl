@@ -75,7 +75,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCVarInT_virtual[t = 1:T],
             sum(eCVar_in_virtual[y, t] for y in STOR_ALL))
         @expression(EP, eTotalCVarIn_virtual, sum(eTotalCVarInT_virtual[t] for t in 1:T))
-        EP[:eObj] += eTotalCVarIn_virtual
+        add_to_expression!(EP[:eObj], eTotalCVarIn_virtual)
 
         #Variable costs of "virtual discharging" for technologies "y" during hour "t" in zone "z"
         @expression(EP,
@@ -85,15 +85,18 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCVarOutT_virtual[t = 1:T],
             sum(eCVar_out_virtual[y, t] for y in STOR_ALL))
         @expression(EP, eTotalCVarOut_virtual, sum(eTotalCVarOutT_virtual[t] for t in 1:T))
-        EP[:eObj] += eTotalCVarOut_virtual
+        add_to_expression!(EP[:eObj], eTotalCVarOut_virtual)
     end
 
     ## Power Balance Expressions ##
 
+    STOR_ALL_BY_ZONE = map(1:Z) do z
+        return intersect(STOR_ALL, resources_in_zone_by_rid(gen, z))
+    end
     # Term to represent net dispatch from storage in any period
     @expression(EP, ePowerBalanceStor[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t] - EP[:vCHARGE][y, t]
-        for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)))
+        for y in STOR_ALL_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
     ### Constraints ###
@@ -133,9 +136,11 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Hourly matching constraints
     if setup["HourlyMatching"] == 1
         QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
+        QUALIFIED_STOR_ALL_BY_ZONE = map(1:Z) do z
+            return intersect(QUALIFIED_SUPPLY, STOR_ALL, resources_in_zone_by_rid(gen, z))
+        end
         @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
-            -sum(EP[:vCHARGE][y, t]
-            for y in intersect(resources_in_zone_by_rid(gen, z), QUALIFIED_SUPPLY, STOR_ALL)))
+            -sum(EP[:vCHARGE][y, t] for y in QUALIFIED_STOR_ALL_BY_ZONE[z]))
         add_similar_to_expression!(EP[:eHM], eHMCharge)
     end
 
@@ -248,8 +253,8 @@ function storage_all_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum charging rate plus contribution to reserves up must be greater than zero
     # Note: when charging, reducing charge rate is contributing to upwards reserve & regulation as it drops net demand
     expr = extract_time_series_to_expression(vCHARGE, STOR_ALL)
-    add_similar_to_expression!(expr[STOR_REG, :], -vREG_charge[STOR_REG, :])
-    add_similar_to_expression!(expr[STOR_RSV, :], -vRSV_charge[STOR_RSV, :])
+    add_similar_to_expression!(expr[STOR_REG, :], -1.0, vREG_charge[STOR_REG, :])
+    add_similar_to_expression!(expr[STOR_RSV, :], -1.0, vRSV_charge[STOR_RSV, :])
     @constraint(EP, [y in STOR_ALL, t in 1:T], expr[y, t]>=0)
 
     # Maximum discharging rate and contribution to reserves down must be greater than zero

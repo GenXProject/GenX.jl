@@ -103,8 +103,11 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
+    HYDRO_RES_BY_ZONE = map(1:Z) do z
+        return intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))
+    end
     @expression(EP, ePowerBalanceHydroRes[t = 1:T, z = 1:Z],
-        sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))))
+        sum(EP[:vP][y, t] for y in HYDRO_RES_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroRes)
 
     # Capacity Reserves Margin policy
@@ -178,7 +181,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     end
     ##CO2 Polcy Module Hydro Res Generation by zone
     @expression(EP, eGenerationByHydroRes[z = 1:Z, t = 1:T], # the unit is GW
-        sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))))
+        sum(EP[:vP][y, t] for y in HYDRO_RES_BY_ZONE[z]))
     add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByHydroRes)
 end
 
@@ -235,7 +238,7 @@ function hydro_res_operational_reserves!(EP::Model, inputs::Dict)
 
     S = HYDRO_RES_REG
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
-    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -vREG[S, :])
+    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -1.0, vREG[S, :])
 
     S = HYDRO_RES_RSV
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])

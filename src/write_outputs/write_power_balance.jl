@@ -36,16 +36,16 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         POWER_ZONE = intersect(resources_in_zone_by_rid(gen, z),
             union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
         powerbalance[(z - 1) * L + 1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
-        if !isempty(intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
-            STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)
+        STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)
+        if !isempty(STOR_ALL_ZONE)
             powerbalance[(z - 1) * L + 2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]),
                 dims = 1)
             powerbalance[(z - 1) * L + 3, :] = (-1) * sum(
                 (value.(EP[:vCHARGE][STOR_ALL_ZONE,:]).data),
                 dims = 1)
         end
-        if !isempty(intersect(resources_in_zone_by_rid(gen, z), FLEX))
-            FLEX_ZONE = intersect(resources_in_zone_by_rid(gen, z), FLEX)
+        FLEX_ZONE = intersect(resources_in_zone_by_rid(gen, z), FLEX)
+        if !isempty(FLEX_ZONE)
             powerbalance[(z - 1) * L + 4, :] = sum(
                 (value.(EP[:vCHARGE_FLEX][FLEX_ZONE,:]).data),
                 dims = 1)

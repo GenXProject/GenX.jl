@@ -56,9 +56,12 @@ function thermal_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
+    THERM_NO_COMMIT_BY_ZONE = map(1:Z) do z
+        return intersect(THERM_NO_COMMIT, resources_in_zone_by_rid(gen, z))
+    end
     @expression(EP, ePowerBalanceThermNoCommit[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t]
-        for y in intersect(THERM_NO_COMMIT, resources_in_zone_by_rid(gen, z))))
+        for y in THERM_NO_COMMIT_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermNoCommit)
 
     ### Constraints ###
@@ -169,7 +172,7 @@ function thermal_no_commit_operational_reserves!(EP::Model, inputs::Dict)
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
     expr = extract_time_series_to_expression(vP, THERM_NO_COMMIT)
-    add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
+    add_similar_to_expression!(expr[REG, :], -1.0, vREG[REG, :])
     @constraint(EP,
         [y in THERM_NO_COMMIT, t in 1:T],
         expr[y, t]>=min_power(gen[y]) * eTotalCap[y])

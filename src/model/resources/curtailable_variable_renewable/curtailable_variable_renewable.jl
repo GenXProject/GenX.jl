@@ -37,8 +37,9 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Power Balance Expressions ##
 
+    VRE_BY_ZONE = [intersect(VRE, resources_in_zone_by_rid(gen, z)) for z in 1:Z]
     @expression(EP, ePowerBalanceDisp[t = 1:T, z = 1:Z],
-        sum(EP[:vP][y, t] for y in intersect(VRE, resources_in_zone_by_rid(gen, z))))
+        sum(EP[:vP][y, t] for y in VRE_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], EP[:ePowerBalanceDisp])
 
     # Capacity Reserves Margin policy
@@ -78,10 +79,9 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
         fix.(EP[:vP][y, :], 0.0, force = true)
     end
     ##CO2 Polcy Module VRE Generation by zone
-    @expression(EP, eGenerationByVRE[z = 1:Z, t = 1:T], # the unit is GW
-        sum(EP[:vP][y, t]
-        for y in intersect(inputs["VRE"], resources_in_zone_by_rid(gen, z))))
-    add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByVRE)
+    # We use the transpose here because eGenerationByZone is [1:Z, 1:T] and
+    # ePowerBalanceDisp is [1:T, 1:Z].
+    add_similar_to_expression!(EP[:eGenerationByZone], ePowerBalanceDisp')
 end
 
 @doc raw"""
@@ -134,12 +134,12 @@ function curtailable_variable_renewable_operational_reserves!(EP::Model, inputs:
         vRSV[y, t]<=rsv_max(gen[y]) * hourly_bin_capacity(y, t))
 
     expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
-    add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
+    add_similar_to_expression!(expr[REG, :], -1.0, vREG[REG, :])
     @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t]>=0)
 
     expr = extract_time_series_to_expression(vP, VRE_POWER_OUT)
-    add_similar_to_expression!(expr[REG, :], +vREG[REG, :])
-    add_similar_to_expression!(expr[RSV, :], +vRSV[RSV, :])
+    add_similar_to_expression!(expr[REG, :], vREG[REG, :])
+    add_similar_to_expression!(expr[RSV, :], vRSV[RSV, :])
     @constraint(EP, [y in VRE_POWER_OUT, t in 1:T], expr[y, t]<=hourly_bin_capacity(y, t))
 end
 

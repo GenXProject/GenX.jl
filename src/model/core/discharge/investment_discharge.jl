@@ -68,34 +68,39 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eExistingCap[y in 1:G], existing_cap_mw(gen[y]))
     end
 
+    NEW_RET_RETROFIT_CAP = intersect(NEW_CAP, RET_CAP, RETROFIT_CAP) # Resources eligible for new capacity, retirements and being retrofitted
+    RET_ONLY_CAP = intersect(setdiff(RET_CAP, NEW_CAP), setdiff(RET_CAP, RETROFIT_CAP)) # Resources eligible for only capacity retirements
+    RET_NEW_CAP = setdiff(intersect(RET_CAP, NEW_CAP), RETROFIT_CAP) # Resources eligible for retirement and new capacity
+    RET_RETROFIT_CAP = setdiff(intersect(RET_CAP, RETROFIT_CAP), NEW_CAP) # Resources eligible for retirement and retrofitting
+    NEW_ONLY_CAP = intersect(setdiff(NEW_CAP, RET_CAP), setdiff(NEW_CAP, RETROFIT_CAP))  # Resources eligible for only new capacity
     @expression(EP, eTotalCap[y in 1:G],
-        if y in intersect(NEW_CAP, RET_CAP, RETROFIT_CAP) # Resources eligible for new capacity, retirements and being retrofitted
+        if y in NEW_RET_RETROFIT_CAP
             if y in COMMIT
                 eExistingCap[y] +
                 cap_size(gen[y]) * (EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROFITCAP][y])
             else
                 eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROFITCAP][y]
             end
-        elseif y in intersect(setdiff(RET_CAP, NEW_CAP), setdiff(RET_CAP, RETROFIT_CAP)) # Resources eligible for only capacity retirements
+        elseif y in RET_ONLY_CAP
             if y in COMMIT
                 eExistingCap[y] - cap_size(gen[y]) * EP[:vRETCAP][y]
             else
                 eExistingCap[y] - EP[:vRETCAP][y]
             end
-        elseif y in setdiff(intersect(RET_CAP, NEW_CAP), RETROFIT_CAP) # Resources eligible for retirement and new capacity
+        elseif y in RET_NEW_CAP
             if y in COMMIT
                 eExistingCap[y] + cap_size(gen[y]) * (EP[:vCAP][y] - EP[:vRETCAP][y])
             else
                 eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y]
             end
-        elseif y in setdiff(intersect(RET_CAP, RETROFIT_CAP), NEW_CAP) # Resources eligible for retirement and retrofitting
+        elseif y in RET_RETROFIT_CAP
             if y in COMMIT
                 eExistingCap[y] -
                 cap_size(gen[y]) * (EP[:vRETROFITCAP][y] + EP[:vRETCAP][y])
             else
                 eExistingCap[y] - (EP[:vRETROFITCAP][y] + EP[:vRETCAP][y])
             end
-        elseif y in intersect(setdiff(NEW_CAP, RET_CAP), setdiff(NEW_CAP, RETROFIT_CAP))  # Resources eligible for only new capacity
+        elseif y in NEW_ONLY_CAP
             if y in COMMIT
                 eExistingCap[y] + cap_size(gen[y]) * EP[:vCAP][y]
             else
