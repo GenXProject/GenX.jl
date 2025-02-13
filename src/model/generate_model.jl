@@ -97,11 +97,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
             (inputs["NCapacityReserveMargin"], T))
     end
 
-    # Energy Share Requirement
-    if setup["EnergyShareRequirement"] >= 1
-        create_empty_expression!(EP, :eESR, inputs["nESR"])
-    end
-
     # Hourly Matching Requirement
     if setup["HourlyMatching"] == 1
         create_empty_expression!(EP, :eHM, (T, Z))
