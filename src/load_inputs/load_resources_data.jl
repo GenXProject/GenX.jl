@@ -1377,7 +1377,6 @@ function add_resources_to_input_data!(inputs::Dict,
 
     inputs["RESOURCES"] = gen
 
-    inputs["DERATING_FACTOR"] = [derating_factor(g, tag = res) for g in gen, res = 1:inputs["NCapacityReserveMargin"]]
     return nothing
 end
 
