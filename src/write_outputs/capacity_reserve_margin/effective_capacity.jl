@@ -33,7 +33,7 @@ function thermal_plant_effective_capacity(EP::Model,
         timesteps::Vector{Int})::Vector{Float64}
     y = r_id
     gen = inputs["RESOURCES"]
-    capresfactor = derating_factor(gen[y], tag = capres_zone)
+    capresfactor = inputs["DERATING_FACTOR"][y, capres_zone]
     eTotalCap = value.(EP[:eTotalCap][y])
 
     effective_capacity = fill(capresfactor * eTotalCap, length(timesteps))

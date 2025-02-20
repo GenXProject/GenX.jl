@@ -177,13 +177,13 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     if CapacityReserveMargin > 0
         @expression(EP,
             eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
-            sum(derating_factor(gen[y], tag = res) * (EP[:vP][y, t] - EP[:vCHARGE][y, t])
+            sum(inputs["DERATING_FACTOR"][y, res] * (EP[:vP][y, t] - EP[:vCHARGE][y, t])
             for y in STOR_ALL))
         if StorageVirtualDischarge > 0
             @expression(EP,
                 eCapResMarBalanceStorVirtual[res = 1:inputs["NCapacityReserveMargin"],
                     t = 1:T],
-                sum(derating_factor(gen[y], tag = res) *
+                sum(inputs["DERATING_FACTOR"][y, res] *
                     (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
                 for y in STOR_ALL))
             add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
