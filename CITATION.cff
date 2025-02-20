@@ -54,7 +54,7 @@ authors:
   given-names: "Qingyu"
   orcid: "https://orcid.org/0000-0003-2692-5135"
 title: "GenX"
-version: 0.4.1
+version: 0.4.4
 doi: 10.5281/zenodo.10846070
-date-released: 2024-04-26
+date-released: 2025-02-04
 url: "https://github.com/GenXProject/GenX.jl"

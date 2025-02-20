@@ -72,13 +72,13 @@ pages = OrderedDict(
             "Thermal" => [
                 "Thermal" => "Model_Reference/Resources/thermal.md",
                 "Thermal Commit" => "Model_Reference/Resources/thermal_commit.md",
-                "Thermal No Commit" => "Model_Reference/Resources/thermal_no_commit.md"
+                "Thermal No Commit" => "Model_Reference/Resources/thermal_no_commit.md",
+                "Scheduled maintenance for Thermal Commit" => "Model_Reference/Resources/maintenance.md",
+                "Fusion" => "Model_Reference/Resources/fusion.md"
             ],
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
-            "Scheduled maintenance for various resources" => "Model_Reference/Resources/maintenance.md",
             "Resource types" => "Model_Reference/Resources/resource.md"
         ],
-        "Maintenance" => "Model_Reference/maintenance_overview.md",
         "Policies" => "Model_Reference/policies.md",
         "Solver Configurations" => "Model_Reference/solver_configuration_api.md",
         "Inputs Functions" => "Model_Reference/load_inputs.md",

@@ -208,6 +208,12 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println(elapsed_time_rsv)
             end
         end
+
+        # fusion is only applicable to UCommit=1 resources
+        if output_settings_d["WriteFusion"] && has_fusion(inputs)
+            write_fusion_net_capacity_factor(path, inputs, setup, EP)
+            write_fusion_pulse_starts(path, inputs, setup, EP)
+        end
     end
 
     # Output additional variables related inter-period energy transfer via storage
@@ -249,7 +255,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     end
 
     if has_maintenance(inputs) && output_settings_d["WriteMaintenance"]
-        write_maintenance(path, inputs, EP)
+        write_maintenance(path, inputs, setup, EP)
     end
 
     #Write angles when DC_OPF is activated
@@ -484,7 +490,7 @@ end # END output()
 Internal function for writing annual outputs. 
 """
 function write_annual(fullpath::AbstractString, dfOut::DataFrame)
-    push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum])])
+    push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
     CSV.write(fullpath, dfOut)
     return nothing
 end
@@ -504,8 +510,9 @@ function write_fulltimeseries(fullpath::AbstractString,
                     Symbol("AnnualSum");
                     [Symbol("t$t") for t in 1:T]]
     rename!(dfOut, auxNew_Names)
-    total = DataFrame(["Total" 0 sum(dfOut[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
-    total[!, 4:(T + 3)] .= sum(dataOut, dims = 1)
+    total = DataFrame(
+        ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0) fill(0.0, (1, T))], auxNew_Names)
+    total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)
     dfOut = vcat(dfOut, total)
 
     CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
@@ -551,6 +558,32 @@ function write_system_env_summary(path::AbstractString)
     )
 
     YAML.write_file(joinpath(path, "system_summary.yml"), env_summary)
+end
+
+# used by ucommit. Could be used by more functions as well.
+function _create_annualsum_df(inputs::Dict, set::Vector{Int64}, data::Matrix{Float64})
+    resources = inputs["RESOURCE_NAMES"][set]
+    zones = inputs["R_ZONES"][set]
+    weight = inputs["omega"]
+    df_annual = DataFrame(Resource = resources, Zone = zones)
+    df_annual.AnnualSum = data * weight
+    return df_annual
+end
+
+function write_temporal_data(
+        df_annual, data, path::AbstractString, setup::Dict, filename::AbstractString)
+    filepath = joinpath(path, filename * ".csv")
+    if setup["WriteOutputs"] == "annual"
+        # df_annual is expected to have an AnnualSum column.
+        write_annual(filepath, df_annual)
+    else # setup["WriteOutputs"] == "full"
+        df_full = write_fulltimeseries(filepath, data, df_annual)
+        if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+            write_full_time_series_reconstruction(path, setup, df_full, filename)
+            @info("Writing Full Time Series for "*filename)
+        end
+    end
+    return nothing
 end
 
 @doc raw"""write_full_time_series_reconstruction(path::AbstractString,

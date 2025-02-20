@@ -31,6 +31,9 @@ The following tables summarize the model settings parameters and their default/p
 |StorageVirtualDischarge | Flag to enable contributions that a storage device makes to the capacity reserve margin without generating power.|
 ||1 = activate the virtual discharge of storage resources.|
 ||0 = do not activate the virtual discharge of storage resources.|
+|LDSAdditionalConstraints | Flag to activate additional constraints for long duration storage resources to prevent violation of SoC limits in non-representative periods.|
+||1 = activate additional constraints.|
+||0 = do not activate additional constraints.|
 |HourlyMatching| Constraint to match generation from clean sources with hourly consumption.|
 ||1 = Constraint is active.|
 ||0 = Constraint is not active.|
@@ -49,7 +52,7 @@ The following tables summarize the model settings parameters and their default/p
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
-|ModelingToGenerateAlternatives | Modeling to Generate Alternative Algorithm. For details, see [here](https://genxproject.github.io/GenX/dev/additional_features/#Modeling-to-Generate-Alternatives)|
+|ModelingToGenerateAlternatives | Modeling to Generate Alternatives Algorithm. For more details, see the [Modeling to Generate Alternatives](@ref) section in the **Model Reference**.|
 ||1 = Use the algorithm. |
 ||0 = Do not use the algorithm. |
 |ModelingtoGenerateAlternativeSlack | value used to define the maximum deviation from the least-cost solution as a part of Modeling to Generate Alternative Algorithm. Can take any real value between 0 and 1. |
@@ -125,6 +128,7 @@ The following tables summarize the model settings parameters and their default/p
 
 |**Parameter** | **Description**|
 | :------------ | :-----------|
+|Solver | OPTIONAL name of solver. Default is "HiGHS" effectively. It is necessary to set `Solver: "Gurobi"` when [reusing the same gurobi environment for multiple solves](https://github.com/jump-dev/Gurobi.jl?tab=readme-ov-file#reusing-the-same-gurobi-environment-for-multiple-solves).
 |EnableJuMPStringNames | Flag to enable/disable JuMP string names to improve the performance.|
 ||1 = enable JuMP string names.|
 ||0 = disable JuMP string names.|

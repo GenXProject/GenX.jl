@@ -55,7 +55,44 @@ If the capacity reserve margin constraint is enabled, a similar set of constrain
 & \frac{1}{\eta_{o,z}^{discharge}}\Theta^{CRM}_{o,z,(m-1)\times \tau^{period}+1} - \eta_{o,z}^{charge}\Pi^{CRM}_{o,z,(m-1)\times \tau^{period}+1} \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}
 \end{aligned}
 ```
-All other constraints are identical to those used to track the actual state of charge, except with the new variables $Q^{CRM}_{o,z,n}$ and $\Delta Q^{CRM}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively.
+All other constraints are identical to those used to track the actual state of charge, except with the new variables $Q^{CRM}_{o,z,n}$ and $\Delta Q^{CRM}_{o,z,n}$ used in place of $Q_{o,z,n}$ and $\Delta Q_{o,z,n}$, respectively. \
+
+**Bound storage inventory in non-representative periods**
+We need additional variables and constraints to ensure that the storage content is within zero and the installed energy capacity in non-representative periods. We introduce
+the variables $\Delta Q^{max,pos}_{o,z,m}$ and $\Delta Q^{max,neg}_{o,z,m}$ that represent the maximum positive and negative storage content variations within the representative
+period $m$, respectively, extracted as:
+
+```math
+\begin{aligned}
+& \Delta Q^{max,pos}_{o,z,m} \geq \Gamma_{o,z,(m-1)\times \tau^{period}+t } - \Gamma_{o,z,(m-1)\times \tau^{period}+1 } \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}, t \in \mathcal{T}
+& \end{aligned}
+```
+
+```math
+\begin{aligned}
+& \Delta Q^{max,neg}_{o,z,m} \leq \Gamma_{o,z,(m-1)\times \tau^{period}+t } - \Gamma_{o,z,(m-1)\times \tau^{period}+1 } \quad \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, m \in \mathcal{M}, t \in \mathcal{T}
+& \end{aligned}
+```
+
+For every input period $n \in \mathcal{N}$, the maximum storage is computed and constrained to be less than or equal to the installed energy capacity as:
+
+```math
+\begin{aligned}
+&  Q_{o,z,n} \times \left(1-\eta_{o,z}^{loss}\right) - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,(m-1)\times \tau^{period}+1} + \eta_{o,z}^{charge}\Pi_{o,z,(m-1)\times \tau^{period}+1} + \Delta Q^{max,pos}_{o,z,f(n)} \leq \Delta^{total, energy}_{o,z} \\
+& \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
+& \end{aligned}
+```
+
+Similarly, the minimum storage content is imposed to be positive in every period of the time horizon:
+
+```math
+\begin{aligned}
+&  Q_{o,z,n} \times \left(1-\eta_{o,z}^{loss}\right) - \frac{1}{\eta_{o,z}^{discharge}}\Theta_{o,z,(m-1)\times \tau^{period}+1} + \eta_{o,z}^{charge}\Pi_{o,z,(m-1)\times \tau^{period}+1} + \Delta Q^{max,neg}_{o,z,f(n)} \geq 0 \\
+& \forall o \in \mathcal{O}^{LDES}, z \in \mathcal{Z}, n \in \mathcal{N}
+& \end{aligned}
+```
+
+Additional details on this approach are available in [Parolin et al., 2024](https://doi.org/10.48550/arXiv.2409.19079).
 """
 function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
     println("Long Duration Storage Module")
@@ -75,6 +112,7 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
 
     MODELED_PERIODS_INDEX = 1:NPeriods
     REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period] .== MODELED_PERIODS_INDEX]
+    NON_REP_PERIODS_INDEX = setdiff(MODELED_PERIODS_INDEX, REP_PERIODS_INDEX)
 
     ### Variables ###
 
@@ -94,6 +132,15 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
         # Build up in storage inventory held in reserve over each representative period w
         # Build up inventory can be positive or negative
         @variable(EP, vCAPRES_dsoc[y in STOR_LONG_DURATION, w = 1:REP_PERIOD])
+    end
+
+    # Additional constraints to prevent violation of SoC limits in non-representative periods
+    if setup["LDSAdditionalConstraints"] == 1 && !isempty(NON_REP_PERIODS_INDEX)
+        # Maximum positive storage inventory change within subperiod
+        @variable(EP, vdSOC_maxPos[y in STOR_LONG_DURATION, w=1:REP_PERIOD] >= 0)
+
+        # Maximum negative storage inventory change within subperiod
+        @variable(EP, vdSOC_maxNeg[y in STOR_LONG_DURATION, w=1:REP_PERIOD] <= 0)
     end
 
     ### Constraints ###
@@ -181,4 +228,27 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
                 r in MODELED_PERIODS_INDEX],
             vSOCw[y, r]>=vCAPRES_socw[y, r])
     end
+
+    if setup["LDSAdditionalConstraints"] == 1 && !isempty(NON_REP_PERIODS_INDEX)
+        # Extract maximum storage level variation (positive) within subperiod
+        @constraint(EP, cMaxSoCVarPos[y in STOR_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
+                    vdSOC_maxPos[y,w] >= EP[:vS][y,hours_per_subperiod*(w-1)+t] - EP[:vS][y,hours_per_subperiod*(w-1)+1])
+
+        # Extract maximum storage level variation (negative) within subperiod
+        @constraint(EP, cMaxSoCVarNeg[y in STOR_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
+                    vdSOC_maxNeg[y,w] <= EP[:vS][y,hours_per_subperiod*(w-1)+t] - EP[:vS][y,hours_per_subperiod*(w-1)+1])
+
+        # Max storage content within each modeled period cannot exceed installed energy capacity
+        @constraint(EP, cSoCLongDurationStorageMaxInt[y in STOR_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
+                (1-self_discharge(gen[y]))*vSOCw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+                +(efficiency_up(gen[y])*EP[:vCHARGE][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+                +vdSOC_maxPos[y,dfPeriodMap[r,:Rep_Period_Index]] <= EP[:eTotalCapEnergy][y])
+
+        # Min storage content within each modeled period cannot be negative
+        @constraint(EP, cSoCLongDurationStorageMinInt[y in STOR_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
+                (1-self_discharge(gen[y]))*vSOCw[y,r]-(1/efficiency_down(gen[y])*EP[:vP][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+                +(efficiency_up(gen[y])*EP[:vCHARGE][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
+                +vdSOC_maxNeg[y,dfPeriodMap[r,:Rep_Period_Index]] >= 0)
+    end
 end
+

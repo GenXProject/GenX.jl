@@ -1,6 +1,6 @@
 @doc raw"""
-	thermal_plant_effective_capacity(EP::Model,
-	                                 inputs::Dict,
+    thermal_plant_effective_capacity(EP::Model,
+                                     inputs::Dict,
                                      resources::Vector{Int},
                                      capres_zone::Int,
                                      timesteps::Vector{Int})::Matrix{Float64})
@@ -44,6 +44,13 @@ function thermal_plant_effective_capacity(EP::Model,
             y,
             capres_zone,
             timesteps)
+        effective_capacity = effective_capacity .+ value.(adjustment)
+    end
+
+    if y in ids_with(gen, :fusion)
+        resource_component = resource_name(gen[y])
+        adjustment = thermal_fusion_capacity_reserve_margin_adjustment(
+            EP, inputs, resource_component, y, capres_zone, timesteps)
         effective_capacity = effective_capacity .+ value.(adjustment)
     end
 

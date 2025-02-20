@@ -213,7 +213,7 @@ function storage_all_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
     gen = inputs["RESOURCES"]
     T = inputs["T"]
     p = inputs["hours_per_subperiod"]
-    CapacityReserveMargin = setup["CapacityReserveMargin"] > 1
+    CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
 
     STOR_ALL = inputs["STOR_ALL"]
 

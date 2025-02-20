@@ -1,4 +1,4 @@
-,Network_zones,Network_Lines,z1,z2,z3,Line_Max_Flow_MW,transmission_path_name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr,DerateCapRes_1,CapRes_1,CapRes_Excl_1
-NENGREST,z1,1,1,-1,0,2950,NENGREST_to_NENG_CT,123.0584,0.012305837,2950,12060,0.95,0,0
-NENG_CT,z2,2,1,0,-1,2000,NENGREST_to_NENG_ME,196.5385,0.019653847,2000,19261,0.95,0,0
-NENG_ME,z3,,,,,,,,,,,,,
+,Network_zones,Network_Lines,z1,z2,z3,Line_Max_Flow_MW,transmission_path_name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr,DerateCapRes_1,CapRes_Excl_1
+NENGREST,z1,1,1,-1,0,2950,NENGREST_to_NENG_CT,123.0584,0.012305837,2950,12060,0.95,0
+NENG_CT,z2,2,1,0,-1,2000,NENGREST_to_NENG_ME,196.5385,0.019653847,2000,19261,0.95,0
+NENG_ME,z3,,,,,,,,,,,,

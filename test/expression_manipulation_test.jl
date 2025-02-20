@@ -92,6 +92,12 @@ let
     GenX.add_similar_to_expression!(EP[:large_expr], EP[:large_const_expr])
     @test all(EP[:large_expr][:] .== 18.0)
 
+    # Test add_similar_to_expression! with AbstractArray{Number}
+    @expression(EP, eArr1[i = 1:100, j = 1:50], i * 10.0+j * 10.0)
+    @expression(EP, eArr2[i = 1:100, j = 1:50], -(i * 10.0 + j * 10.0))
+    GenX.add_similar_to_expression!(EP[:eArr1], EP[:eArr2])
+    @test all(EP[:eArr1][:] .== 0.0)
+
     # Test add_similar_to_expression! returns an error if the dimensions don't match
     GenX.create_empty_expression!(EP, :small_expr, (2, 3))
     @test_throws ErrorException GenX.add_similar_to_expression!(EP[:large_expr],

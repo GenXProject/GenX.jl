@@ -138,6 +138,15 @@ function add_similar_to_expression!(expr1::AbstractArray{GenericAffExpr{C, T}, d
     return nothing
 end
 
+# If the expressions are vectors of numbers, use the += operator
+function add_similar_to_expression!(arr1::AbstractArray{T, dims},
+        arr2::AbstractArray{T, dims}) where {T <: Number, dims}
+    for i in eachindex(arr1)
+        arr1[i] += arr2[i]
+    end
+    return nothing
+end
+
 ###### ###### ###### ###### ###### ######
 # Element-wise addition of one term into an expression
 # Both arrays must have the same dimensions
