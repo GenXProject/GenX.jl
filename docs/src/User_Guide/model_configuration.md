@@ -129,6 +129,9 @@ The following tables summarize the model settings parameters and their default/p
 |**Parameter** | **Description**|
 | :------------ | :-----------|
 |Solver | OPTIONAL name of solver. Default is "HiGHS" effectively. It is necessary to set `Solver: "Gurobi"` when [reusing the same gurobi environment for multiple solves](https://github.com/jump-dev/Gurobi.jl?tab=readme-ov-file#reusing-the-same-gurobi-environment-for-multiple-solves).
+|EnableJuMPDirectModel | Flag to enable/disable JuMP `direct_model` to improve the performance. Solvers "HiGHS", "Gurobi", "CPLEX" and "SCIP" support direct model, but "Clp" and "Cbc" do not support it.|
+||1 = enable JuMP `direct_model`.|
+||0 = disable JuMP `direct_model`, use `Model` instead.|
 |EnableJuMPStringNames | Flag to enable/disable JuMP string names to improve the performance.|
 ||1 = enable JuMP string names.|
 ||0 = disable JuMP string names.|
