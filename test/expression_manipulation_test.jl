@@ -2,7 +2,8 @@ using JuMP
 using HiGHS
 
 function setup_sum_model()
-    EP = Model(HiGHS.Optimizer)
+    opt_instance = MOI.instantiate(HiGHS.Optimizer)
+    EP = direct_model(opt_instance) 
     @variable(EP, x[i = 1:100, j = 1:4:200]>=0)
     @variable(EP, y[i = 1:100, j = 1:50]>=0)
     @expression(EP, eX[i = 1:100, j = 1:4:200], 2.0*x[i, j]+i+10.0*j)
@@ -62,7 +63,8 @@ function sum_combo_expr()
 end
 
 let
-    EP = Model(HiGHS.Optimizer)
+    opt_instance = MOI.instantiate(HiGHS.Optimizer)
+    EP = direct_model(opt_instance) 
 
     # Test fill_with_zeros!
     small_zeros_expr = Array{AffExpr, 2}(undef, (2, 3))
