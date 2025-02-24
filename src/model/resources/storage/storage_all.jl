@@ -150,7 +150,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     # Maximum charging rate must be less than available storage capacity                                                                                                                                                                                                                           
     @constraint(EP,
                 [y in STOR_ALL, t in 1:T],
-                efficiency_up(gen[y]) * EP[:vCHARGE][y, t] <= EP[:eTotalCapEnergy][y] - EP[:vS][y, hoursbefore(hours_per_subperiod, t, 1)])
+                efficiency_up(gen[y]) * vCHARGE[y, t] <= eTotalCapEnergy[y] - vS[y, hoursbefore(hours_per_subperiod, t, 1)])
     ##Patrick Bryant's suggestion implementation - End
 
     # Storage discharge and charge power (and reserve contribution) related constraints:
