@@ -118,8 +118,8 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Transmission Module")
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
-    L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
-    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
+    #L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
+    #L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
     L = inputs["L"]
 
     UCommit = setup["UCommit"]
