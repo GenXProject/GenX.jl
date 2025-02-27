@@ -153,7 +153,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if MultiStage == 1
         # Linking constraint for existing transmission capacity
         @constraint(EP, cExistingTransCap[l in SYMMETRIC_LINE_INDEX], vTRANSMAX[l]==inputs["pTrans_Max"][l])
-        @constraint(EP, cExistingTransCapPos[l in ASYMMETRIC_LINE_INDEX], vTRANSMAX_Pos[l]==inputs["pTrans_Max_Pos"][l])
+        @constraint(EP, cExistingTransCapPos[l in ASYMMETRIC_LINE_INDEX], vTRANSMAX_Pos[l]==inputs["pTrans_Max"][l])
         @constraint(EP, cExistingTransCapNeg[l in ASYMMETRIC_LINE_INDEX], vTRANSMAX_Neg[l]==inputs["pTrans_Max_Neg"][l])
     end
 
