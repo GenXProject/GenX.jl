@@ -14,8 +14,8 @@ function write_transmission_losses(path::AbstractString,
     EnergyShareRequirement = setup["EnergyShareRequirement"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
     
-    SYMMETRIC_LINE_INDEX = inputs["symmetric_line_index"]
-    ASYMMETRIC_LINE_INDEX = inputs["asymmetric_line_index"]
+    SYMMETRIC_LINE_INDEX = inputs["SYMMETRIC_LINE_INDEX"]
+    ASYMMETRIC_LINE_INDEX = inputs["ASYMMETRIC_LINE_INDEX"]
     ## sets and indices for transmission losses
     TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
     LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);

@@ -6,8 +6,8 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
 
-    SYMMETRIC_LINE_INDEX = inputs["symmetric_line_index"]
-    ASYMMETRIC_LINE_INDEX = inputs["asymmetric_line_index"]
+    SYMMETRIC_LINE_INDEX = inputs["SYMMETRIC_LINE_INDEX"]
+    ASYMMETRIC_LINE_INDEX = inputs["ASYMMETRIC_LINE_INDEX"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
