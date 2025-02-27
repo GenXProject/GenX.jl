@@ -73,7 +73,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         
-        #if setup["asymmetrical_trans_flow_limit"] == 1
+        #if setup["AsymmetricalTransFlowLimit"] == 1
             @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
             @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
             @variable(EP, vNEW_TRANS_CAP[l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)]>=0)
@@ -125,7 +125,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         @expression(EP,
             eTotalCNetworkExp,
-            #if setup["asymmetrical_trans_flow_limit"] == 1
+            #if setup["AsymmetricalTransFlowLimit"] == 1
                 sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
                     for l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES); init = 0) + 
                 sum((vNEW_TRANS_CAP_Pos[l] + vNEW_TRANS_CAP_Neg[l]) * inputs["pC_Line_Reinforcement"][l]
@@ -162,7 +162,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Transmission network related power flow and capacity constraints
         if MultiStage == 1
             # Constrain maximum possible flow for lines eligible for expansion regardless of previous expansions
-                #if setup["asymmetrical_trans_flow_limit"] == 1
+                #if setup["AsymmetricalTransFlowLimit"] == 1
                     @constraint(EP,
                         cMaxFlowPossible[l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)],
                         eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
@@ -179,7 +179,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
                 #end
         end
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
-        #if setup["asymmetrical_trans_flow_limit"] == 1
+        #if setup["AsymmetricalTransFlowLimit"] == 1
             @constraint(EP,
                 cMaxLineReinforcement[l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)],
                 vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
