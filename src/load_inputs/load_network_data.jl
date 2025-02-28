@@ -162,6 +162,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         end
     end
 
+    inputs_nw["SYMMETRIC_LOSS_LINES"] = intersect(inputs_nw["SYMMETRIC_LINE_INDEX"], inputs_nw["LOSS_LINES"])
+
     if setup["NetworkExpansion"] == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .> 0)
@@ -177,6 +179,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             end
             #inputs_nw["NO_EXPANSION_LINES_ASYM"] = findall((inputs_nw["pMax_Line_Reinforcement"] .<= 0) .& (inputs_nw["pMax_Line_Reinforcement_Neg"] .<= 0))
         end
+
+        inputs_nw["SYMMETRIC_EXPANSION_LINES"] = intersect(inputs_nw["SYMMETRIC_LINE_INDEX"], inputs_nw["EXPANSION_LINES"])
     end
 
     println(filename * " Successfully Read!")

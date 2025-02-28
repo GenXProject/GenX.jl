@@ -56,9 +56,8 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
-        EXPANSION_LINES = inputs["EXPANSION_LINES"]
         EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
-
+        SYMMETRIC_EXPANSION_LINES = inputs["SYMMETRIC_EXPANSION_LINES"]
     end
     
 
@@ -76,7 +75,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         #if setup["AsymmetricalTransFlowLimit"] == 1
             @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
             @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
-            @variable(EP, vNEW_TRANS_CAP[l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)]>=0)
+            @variable(EP, vNEW_TRANS_CAP[l in SYMMETRIC_EXPANSION_LINES]>=0)
         #else
             #@variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
         #end
@@ -98,7 +97,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     # Total availabile maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
     if NetworkExpansion == 1
         @expression(EP, eAvail_Trans_Cap[l in SYMMETRIC_LINE_INDEX],
-            if l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)
+            if l in SYMMETRIC_EXPANSION_LINES
                 eTransMax[l] + vNEW_TRANS_CAP[l]
             else
                 eTransMax[l]
@@ -127,7 +126,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCNetworkExp,
             #if setup["AsymmetricalTransFlowLimit"] == 1
                 sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
-                    for l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES); init = 0) + 
+                    for l in SYMMETRIC_EXPANSION_LINES; init = 0) + 
                 sum((vNEW_TRANS_CAP_Pos[l] + vNEW_TRANS_CAP_Neg[l]) * inputs["pC_Line_Reinforcement"][l]
                     for l in EXPANSION_LINES_ASYM; init = 0)
             #else
@@ -164,7 +163,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             # Constrain maximum possible flow for lines eligible for expansion regardless of previous expansions
                 #if setup["AsymmetricalTransFlowLimit"] == 1
                     @constraint(EP,
-                        cMaxFlowPossible[l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)],
+                        cMaxFlowPossible[l in SYMMETRIC_EXPANSION_LINES],
                         eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
                     @constraint(EP,
                         cMaxFlowPossible_Pos[l in EXPANSION_LINES_ASYM],
@@ -181,7 +180,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
         #if setup["AsymmetricalTransFlowLimit"] == 1
             @constraint(EP,
-                cMaxLineReinforcement[l in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)],
+                cMaxLineReinforcement[l in SYMMETRIC_EXPANSION_LINES],
                 vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
             @constraint(EP,
                 cMaxLineReinforcement_Pos[l in EXPANSION_LINES_ASYM],
