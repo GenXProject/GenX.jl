@@ -38,12 +38,12 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Topology of the network source-sink matrix
     inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
 
-    inputs_nw["asymmetric_line_index"] = Int64[]
-    inputs_nw["symmetric_line_index"] = convert(Array{Int64}, as_vector(:Network_Lines))
+    inputs_nw["ASYMMETRIC_LINE_INDEX"] = Int64[]
+    inputs_nw["SYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, as_vector(:Network_Lines))
     if setup["AsymmetricalTransFlowLimit"] == 1
         try
-            inputs_nw["symmetric_line_index"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 0, :Network_Lines))
-            inputs_nw["asymmetric_line_index"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines))
+            inputs_nw["SYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 0, :Network_Lines))
+            inputs_nw["ASYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines))
         catch e
             error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Asymmetrical column. Please add this column to the file.")
         end
