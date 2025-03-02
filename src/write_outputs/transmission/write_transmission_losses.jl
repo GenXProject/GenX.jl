@@ -3,38 +3,28 @@ function write_transmission_losses(path::AbstractString,
         setup::Dict,
         EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-    L_sym = inputs["L_sym"] # Number of transmission lines with symmetrical bidirectional flow
-    L_asym = inputs["L_asym"] #Number of transmission lines with different capacities in two directions
     L = inputs["L"]
-    
-    UCommit = setup["UCommit"]
-    NetworkExpansion = setup["NetworkExpansion"]
-    CapacityReserveMargin = setup["CapacityReserveMargin"]
-    EnergyShareRequirement = setup["EnergyShareRequirement"]
-    IncludeLossesInESR = setup["IncludeLossesInESR"]
-    
-    SYMMETRIC_LINE_INDEX = inputs["SYMMETRIC_LINE_INDEX"]
-    ASYMMETRIC_LINE_INDEX = inputs["ASYMMETRIC_LINE_INDEX"]
-    ## sets and indices for transmission losses
-    TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
-    LOSS_LINES = inputs["LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
+
     LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
-    LOSS_LINES_SYM = intersect(SYMMETRIC_LINE_INDEX, LOSS_LINES) # Lines for which loss coefficients apply (are non-zero);
-    if NetworkExpansion == 1
-        # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
-        EXPANSION_LINES = inputs["EXPANSION_LINES"]
-        EXPANSION_LINES_ASYM = inputs["EXPANSION_LINES_ASYM"]
-    
-    end
+
+
+    LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
+
+    SYMMETRIC_LOSS_LINES=inputs["SYMMETRIC_LOSS_LINES"]
+
+
     # Power losses for transmission between zones at each time step
     dfTLosses = DataFrame(Line = 1:L)
     tlosses = zeros(L, T)
-    tlosses[LOSS_LINES_ASYM, :] = value.(EP[:vTLOSS_ASYM][LOSS_LINES_ASYM, :]) # Losses for asymmetrical lines
-    tlosses[LOSS_LINES_SYM, :] = value.(EP[:vTLOSS][LOSS_LINES_SYM, :]) # Losses for symmetrical lines
+    if setup["AsymmetricalTransFlowLimit"] == 1
+        tlosses[LOSS_LINES_ASYM, :] = value.(EP[:vTLOSS_ASYM][LOSS_LINES_ASYM, :]) # Losses for asymmetrical lines
+    end
+    tlosses[SYMMETRIC_LOSS_LINES, :] = value.(EP[:vTLOSS][SYMMETRIC_LOSS_LINES, :]) # Losses for symmetrical lines
     if setup["ParameterScale"] == 1
-        tlosses[LOSS_LINES_ASYM, :] *= ModelScalingFactor
-        tlosses[LOSS_LINES_SYM, :] *= ModelScalingFactor
+        if setup["AsymmetricalTransFlowLimit"] == 1
+            tlosses[LOSS_LINES_ASYM, :] *= ModelScalingFactor
+        end
+        tlosses[SYMMETRIC_LOSS_LINES, :] *= ModelScalingFactor
     end
 
     dfTLosses.AnnualSum = tlosses * inputs["omega"]
