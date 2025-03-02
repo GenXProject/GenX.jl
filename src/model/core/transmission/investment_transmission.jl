@@ -72,13 +72,10 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         
-        #if setup["AsymmetricalTransFlowLimit"] == 1
-            @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
-            @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
-            @variable(EP, vNEW_TRANS_CAP[l in SYMMETRIC_EXPANSION_LINES]>=0)
-        #else
-            #@variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
-        #end
+        
+        @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
+        @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
+        @variable(EP, vNEW_TRANS_CAP[l in SYMMETRIC_EXPANSION_LINES]>=0)
     end
 
     ### Expressions ###
@@ -124,15 +121,10 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         @expression(EP,
             eTotalCNetworkExp,
-            #if setup["AsymmetricalTransFlowLimit"] == 1
-                sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
-                    for l in SYMMETRIC_EXPANSION_LINES; init = 0) + 
-                sum((vNEW_TRANS_CAP_Pos[l] + vNEW_TRANS_CAP_Neg[l]) * inputs["pC_Line_Reinforcement"][l]
-                    for l in EXPANSION_LINES_ASYM; init = 0)
-            #else
-                #sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
-                    #for l in EXPANSION_LINES; init = 0)
-            #end
+            sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
+                for l in SYMMETRIC_EXPANSION_LINES; init = 0) + 
+            sum((vNEW_TRANS_CAP_Pos[l] + vNEW_TRANS_CAP_Neg[l]) * inputs["pC_Line_Reinforcement"][l]
+                for l in EXPANSION_LINES_ASYM; init = 0)
             )
 
         if MultiStage == 1
@@ -161,38 +153,26 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         # Transmission network related power flow and capacity constraints
         if MultiStage == 1
             # Constrain maximum possible flow for lines eligible for expansion regardless of previous expansions
-                #if setup["AsymmetricalTransFlowLimit"] == 1
-                    @constraint(EP,
-                        cMaxFlowPossible[l in SYMMETRIC_EXPANSION_LINES],
-                        eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
-                    @constraint(EP,
-                        cMaxFlowPossible_Pos[l in EXPANSION_LINES_ASYM],
-                        eAvail_Trans_Cap_Pos[l]<=inputs["pTrans_Max_Possible"][l])
-                    @constraint(EP,
-                        cMaxFlowPossible_Neg[l in EXPANSION_LINES_ASYM],
-                        eAvail_Trans_Cap_Neg[l]<=inputs["pTrans_Max_Possible_Neg"][l])
-                #else
-                    #@constraint(EP,
-                        #cMaxFlowPossible[l in EXPANSION_LINES],
-                        #eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
-                #end
+            @constraint(EP,
+                cMaxFlowPossible[l in SYMMETRIC_EXPANSION_LINES],
+                eAvail_Trans_Cap[l]<=inputs["pTrans_Max_Possible"][l])
+            @constraint(EP,
+                cMaxFlowPossible_Pos[l in EXPANSION_LINES_ASYM],
+                eAvail_Trans_Cap_Pos[l]<=inputs["pTrans_Max_Possible"][l])
+            @constraint(EP,
+                cMaxFlowPossible_Neg[l in EXPANSION_LINES_ASYM],
+                eAvail_Trans_Cap_Neg[l]<=inputs["pTrans_Max_Possible_Neg"][l])
         end
         # Constrain maximum single-stage line capacity reinforcement for lines eligible for expansion
-        #if setup["AsymmetricalTransFlowLimit"] == 1
-            @constraint(EP,
-                cMaxLineReinforcement[l in SYMMETRIC_EXPANSION_LINES],
-                vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
-            @constraint(EP,
-                cMaxLineReinforcement_Pos[l in EXPANSION_LINES_ASYM],
-                vNEW_TRANS_CAP_Pos[l]<=inputs["pMax_Line_Reinforcement"][l])
-            @constraint(EP,
-                cMaxLineReinforcement_Neg[l in EXPANSION_LINES_ASYM],
-                vNEW_TRANS_CAP_Neg[l]<=inputs["pMax_Line_Reinforcement_Neg"][l])
-        #else
-            #@constraint(EP,
-                #cMaxLineReinforcement[l in EXPANSION_LINES],
-                #vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
-        #end
+        @constraint(EP,
+            cMaxLineReinforcement[l in SYMMETRIC_EXPANSION_LINES],
+            vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
+        @constraint(EP,
+            cMaxLineReinforcement_Pos[l in EXPANSION_LINES_ASYM],
+            vNEW_TRANS_CAP_Pos[l]<=inputs["pMax_Line_Reinforcement"][l])
+        @constraint(EP,
+            cMaxLineReinforcement_Neg[l in EXPANSION_LINES_ASYM],
+            vNEW_TRANS_CAP_Neg[l]<=inputs["pMax_Line_Reinforcement_Neg"][l])
     end
     #END network expansion contraints
 
