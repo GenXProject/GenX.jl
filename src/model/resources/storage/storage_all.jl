@@ -146,12 +146,12 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
             -sum(vCHARGE[y, t] for y in QUALIFIED_STOR_ALL_BY_ZONE[z]))
         add_similar_to_expression!(EP[:eHM], eHMCharge)
     end
-    #=##Patrick Bryant's suggestion implementation - Start
+    ##Patrick Bryant's suggestion implementation - Start
     # Maximum charging rate must be less than available storage capacity                                                                                                                                                                                                                           
     @constraint(EP,
                 [y in STOR_ALL, t in 1:T],
                 efficiency_up(gen[y]) * vCHARGE[y, t] <= eTotalCapEnergy[y] - vS[y, hoursbefore(hours_per_subperiod, t, 1)])
-    ##Patrick Bryant's suggestion implementation - End=#
+    ##Patrick Bryant's suggestion implementation - End
 
     # Storage discharge and charge power (and reserve contribution) related constraints:
     storage_all_operation!(EP, inputs, setup)
