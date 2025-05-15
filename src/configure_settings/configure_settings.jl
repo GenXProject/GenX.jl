@@ -33,11 +33,13 @@ function default_settings()
         "WriteOutputs" => "full",
         "ComputeConflicts" => 0,
         "StorageVirtualDischarge" => 1,
+        "CoolingDemand" => 0,
         "ResourcesFolder" => "resources",
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1,
+        "CoolingHeatingHourlyMatching" => 0,)
 end
 
 @doc raw"""
@@ -144,7 +146,8 @@ function default_writeoutput()
         "WriteTransmissionLosses" => true,
         "WriteVirtualDischarge" => true,
         "WriteVREStor" => true,
-        "WriteAngles" => true)
+        "WriteAngles" => true,
+        "WriteUse" => true,)
 end
 
 function configure_writeoutput(output_settings_path::String, settings::Dict)

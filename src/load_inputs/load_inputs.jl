@@ -27,6 +27,11 @@ function load_inputs(setup::Dict, path::AbstractString)
         inputs["L"] = 0
     end
 
+    # Read in cooling demand data
+    if setup["CoolingDemand"] == 1
+        load_cooling_demand!(setup, path, inputs)
+    end
+    
     # Read temporal-resolved load data, and clustering information if relevant
     load_demand_data!(setup, path, inputs)
     # Read fuel cost data, including time-varying fuel costs
@@ -35,8 +40,13 @@ function load_inputs(setup::Dict, path::AbstractString)
     load_resources_data!(inputs, setup, path, resources_path)
     # Read in generator/resource availability profiles
     load_generators_variability!(setup, path, inputs)
+    # Read in cooling and heating demand data
+    if setup["CoolingDemand"] == 1
+        load_ambient_temperature!(setup, path, inputs)
+    end
 
-    validatetimebasis(inputs)
+
+    validatetimebasis(setup, inputs)
 
     if setup["CapacityReserveMargin"] == 1
         load_cap_reserve_margin!(setup, policies_path, inputs)

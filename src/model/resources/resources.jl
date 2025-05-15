@@ -13,6 +13,7 @@ Possible values:
 - :VreStorage
 - :Electrolyzer
 - :AllamCycleLox
+- :UTES
 """
 const resource_types = (:Thermal,
     :Vre,
@@ -22,7 +23,8 @@ const resource_types = (:Thermal,
     :FlexDemand,
     :VreStorage,
     :Electrolyzer,
-    :AllamCycleLOX)
+    :AllamCycleLOX,
+    :UTES)
 
 # Create composite types (structs) for each resource type in resource_types
 for r in resource_types
@@ -1136,6 +1138,13 @@ end
 # duration for lox
 lox_duration(r::AbstractResource) = get(r, :lox_duration, default_zero)
 
+# Underground thermal energy storage (UTES)
+"""
+    utes(rs::Vector{T}) where T <: AbstractResource
+
+Returns the indices of all UTES resources in the vector `rs`.
+"""
+utes(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, UTES), rs)
 
 ## policies
 # co-located storage

@@ -93,7 +93,7 @@ end
 # ensure that the length of demand data exactly matches
 # the number of subperiods times their length
 # and that the number of subperiods equals the list of provided weights
-function validatetimebasis(inputs::Dict)
+function validatetimebasis(setup, inputs::Dict)
     println("Validating time basis")
     demand_length = size(inputs["pD"], 1)
     generators_variability_length = size(inputs["pP_Max"], 2)
@@ -109,12 +109,24 @@ function validatetimebasis(inputs::Dict)
     H = inputs["H"]
     expected_length_2 = H * number_of_representative_periods
 
-    check_equal = [T,
-        demand_length,
-        generators_variability_length,
-        fuel_costs_length,
-        expected_length_1,
-        expected_length_2]
+    if setup["CoolingDemand"] == 1
+        computing_demand_length = size(inputs["pD_Computing"], 1)
+
+        check_equal = [T,
+            demand_length,
+            computing_demand_length,
+            generators_variability_length,
+            fuel_costs_length,
+            expected_length_1,
+            expected_length_2]
+    else
+        check_equal = [T,
+            demand_length,
+            generators_variability_length,
+            fuel_costs_length,
+            expected_length_1,
+            expected_length_2]
+    end
 
     allequal(x) = all(y -> y == x[1], x)
     ok = allequal(check_equal)
@@ -163,7 +175,7 @@ end
 This function prevents TimeDomainReduction from running on a case which
 already has more than one Representative Period or has more than one Sub_Weight specified.
 """
-function prevent_doubled_timedomainreduction(path::AbstractString)
+function prevent_doubled_timedomainreduction(setup::Dict, path::AbstractString)
     demand_in = get_demand_dataframe(path)
     as_vector(col::Symbol) = collect(skipmissing(demand_in[!, col]))
     representative_periods = convert(Int16, as_vector(:Rep_Periods)[1])
@@ -176,5 +188,21 @@ function prevent_doubled_timedomainreduction(path::AbstractString)
               the number of representative periods (:Rep_Period) is ($representative_periods)
               and the number of subperiod weight entries (:Sub_Weights) is ($num_sub_weights).
               Each of these must be 1: only a single period can have TimeDomainReduction applied.""")
+    end
+    if setup["CoolingDemand"] == 1
+        filename_computing = "Computing_demand_data.csv"
+        computing_demand_in = load_dataframe(path, filename_computing)
+        as_vector_cd(col::Symbol) = collect(skipmissing(computing_demand_in[!, col]))
+        representative_periods_cd = convert(Int16, as_vector_cd(:Rep_Periods)[1])
+        sub_weights_cd = as_vector_cd(:Sub_Weights)
+        num_sub_weights_cd = length(sub_weights_cd)
+        if representative_periods_cd != 1 || num_sub_weights_cd > 1
+            error("""Critical error in time series construction:
+                Time domain reduction (clustering) is being called for,
+                on data which may already be clustered. In Computing_demand_data.csv,
+                the number of representative periods (:Rep_Period) is ($representative_periods)
+                and the number of subperiod weight entries (:Sub_Weights) is ($num_sub_weights).
+                Each of these must be 1: only a single period can have TimeDomainReduction applied.""")
+        end
     end
 end

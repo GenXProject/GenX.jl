@@ -16,7 +16,8 @@ function _get_resource_info()
         must_run = (filename = "Must_run.csv", type = MustRun),
         electrolyzer = (filename = "Electrolyzer.csv", type = Electrolyzer),
         vre_stor = (filename = "Vre_stor.csv", type = VreStorage),
-        allam_cycle_lox = (filename = "Allam_Cycle_LOX.csv", type = AllamCycleLOX))  
+        allam_cycle_lox = (filename = "Allam_Cycle_LOX.csv", type = AllamCycleLOX),
+        utes = (filename = "UTES.csv", type = UTES),)
     return resource_info
 end
 
@@ -65,7 +66,8 @@ function _get_summary_map()
         :Vre => "VRE",
         :MustRun => "Must_run",
         :VreStorage => "VRE_and_storage",
-        :AllamCycleLOX => "Allam_Cycle_LOX")
+        :AllamCycleLOX => "Allam_Cycle_LOX",
+        :UTES => "UTES",)
     max_length = maximum(length.(values(names_map)))
     for (k, v) in names_map
         names_map[k] = v * repeat(" ", max_length - length(v))
@@ -200,13 +202,59 @@ storage coupled NGCC-CCS)
 """
 function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [
+        :existing_cap_mw_dry_cooler,       # to GW
+        :existing_cap_mw_chiller,          # to GW
+        :existing_cap_mw_pump_tertiary_loop,             # to GW
+        :existing_cap_mwh_thermal_storage,               # to GWh
+        :existing_cap_mw_thermal_storage_heat_exchanger, # to GW
+
+        :max_cap_mw_dry_cooler,       # to GW
+        :max_cap_mw_chiller,          # to GW
+        :max_cap_mw_pump_tertiary_loop,             # to GW
+        :max_cap_mwh_thermal_storage,               # to GWh
+        :max_cap_mw_thermal_storage_heat_exchanger, # to GW
+
+        :min_cap_mw_dry_cooler,       # to GW
+        :min_cap_mw_chiller,          # to GW
+        :min_cap_mw_pump_tertiary_loop,             # to GW
+        :min_cap_mwh_thermal_storage,               # to GWh
+        :min_cap_mw_thermal_storage_heat_exchanger, # to GW
+
+        :inv_cost_per_mwyr_dry_cooler,          # to $M/GW/yr
+        :inv_cost_per_mwyr_chiller,             # to $M/GW/yr
+        :inv_cost_per_mwyr_pump_tertiary_loop,             # to $M/GW/yr
+        :inv_cost_per_mwhyr_thermal_storage,               # to $M/GWh/yr
+        :inv_cost_per_mwyr_thermal_storage_heat_exchanger, # to $M/GW/yr
+
+        :fixed_om_cost_per_mwyr_dry_cooler,          # to $M/GW/yr
+        :fixed_om_cost_per_mwyr_chiller,             # to $M/GW/yr
+        :fixed_om_cost_per_mwyr_pump_tertiary_loop,             # to $M/GW/yr
+        :fixed_om_cost_per_mwhyr_thermal_storage,               # to $M/GWh/yr
+        :fixed_om_cost_per_mwyr_thermal_storage_heat_exchanger, # to $M/GW/yr
+
+    ]
+
+    scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
+    return nothing
+end
+
+"""
+    scale_utes_data!(utes_in::DataFrame, scale_factor::Float64)
+
+Scales utes attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
+See documentation for descriptions of each column being scaled.
+
+# Arguments
+- `utes_in` (DataFrame): A dataframe containing data for flexible ccs (e.g, AllamCycle or 
+storage coupled NGCC-CCS)
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
+"""
+function scale_utes_data!(utes_in::DataFrame, scale_factor::Float64)
+    columns_to_scale = [
         :existing_cap_sco2turbine,  # to GW or kt 
         :existing_cap_asu,          # to GW or kt 
         :existing_cap_lox,          # to GW or kt
-
-        :cap_size_sco2turbine,      # to GW or kt 
-        :cap_size_asu, 
-        :cap_size_lox, 
 
         :min_cap_sco2turbine,       # to GW or kt 
         :max_cap_sco2turbine,       # to GW
@@ -223,17 +271,9 @@ function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
 
         :inv_cost_lox_per_tyr,          # to $M/GW/yr
         :fixed_om_cost_lox_per_tyr,     # to $M/GW/yr
-
-        :var_om_cost_sco2turbine_per_mwh,   # to $M/GWh
-        :var_om_cost_asu_per_mwh,           # to $M/GWh
-        :var_om_cost_lox_per_t,             # to $M/GWh
-
-        :start_cost_sco2turbine_per_mw,   # to $M/GW
-        :start_cost_asu_per_mw,           # to $M/GW
-        :start_cost_lox_per_t             # to $M/GW
     ]
 
-    scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
+    scale_columns!(utes_in, columns_to_scale, scale_factor)
     return nothing
 end
 
@@ -281,6 +321,7 @@ function load_resource_df(path::AbstractString, scale_factor::Float64, resource_
     # scale vre_stor columns if necessary
     resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor) 
     resource_type == AllamCycleLOX && scale_allamcycle_data!(resource_in, scale_factor)
+    resource_type == UTES && scale_utes_data!(resource_in, scale_factor)
     return resource_in
 end
 
@@ -1459,6 +1500,22 @@ function add_resources_to_input_data!(inputs::Dict,
         allam_dict[y, "start_fuel"] = get_attr(gen[y], :start_fuel_sco2turbine_mmbtu_per_mw, default_zero), get_attr(gen[y], :start_fuel_asu_mmbtu_per_mw, default_zero), 0
     end
     inputs["allam_dict"] = allam_dict
+
+    # Underground Thermal Energy Storage (UTES)
+    inputs["UTES"] = utes(gen)
+    utes_dict = Dict()
+    for y in inputs["UTES"]
+        # cost related to UTES
+        utes_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_per_mwyr_dry_cooler, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_chiller, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_pump_tertiary_loop, default_zero), get_attr(gen[y], :inv_cost_per_kgyr_thermal_storage, default_zero)
+        utes_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_per_mwyr_dry_cooler, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_chiller, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_pump_tertiary_loop, default_zero), get_attr(gen[y], :fixed_om_cost_per_kgyr_thermal_storage, default_zero)
+        # capacity related to UTES
+        utes_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_mw_dry_cooler, default_zero), get_attr(gen[y], :existing_cap_mw_chiller, default_zero), get_attr(gen[y], :existing_cap_mw_pump_tertiary_loop, default_zero), get_attr(gen[y], :existing_cap_kg_thermal_storage, default_zero)
+
+        utes_dict[y, "max_cap"] = get_attr(gen[y], :max_cap_mw_dry_cooler, default_minmax_cap), get_attr(gen[y], :max_cap_mw_chiller, default_minmax_cap), get_attr(gen[y], :max_cap_mw_pump_tertiary_loop, default_minmax_cap), get_attr(gen[y], :max_cap_kg_thermal_storage, default_minmax_cap)
+        
+        utes_dict[y, "min_cap"] = get_attr(gen[y], :min_cap_mw_dry_cooler, default_zero), get_attr(gen[y], :min_cap_mw_chiller, default_zero), get_attr(gen[y], :min_cap_mw_pump_tertiary_loop, default_zero), get_attr(gen[y], :min_cap_kg_thermal_storage, default_zero)
+    end
+    inputs["utes_dict"] = utes_dict
 
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)

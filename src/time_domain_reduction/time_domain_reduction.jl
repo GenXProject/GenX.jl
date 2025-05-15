@@ -44,7 +44,7 @@ end
 Get demand, solar, wind, and other curves from the input data.
 
 """
-function parse_data(myinputs)
+function parse_data(myinputs, mysetup)
     # Assumes no missing data
     RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
     ZONES = myinputs["R_ZONES"]
@@ -90,14 +90,35 @@ function parse_data(myinputs)
             AllFuelsConst = false
         end
     end
-    all_col_names = [demand_col_names; var_col_names; fuel_col_names]
-    all_profiles = [demand_profiles..., var_profiles..., fuel_profiles...]
-    return demand_col_names,
-    var_col_names, solar_col_names, wind_col_names, fuel_col_names,
-    all_col_names,
-    demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles,
-    all_profiles,
-    col_to_zone_map, AllFuelsConst
+
+    # Cooling and heating demand
+    if mysetup["CoolingDemand"] == 1
+        cooling_demand_profiles = [myinputs["pD_Cooling"][:, l] for l in 1:size(myinputs["pD_Cooling"], 2)]
+        cooling_demand_col_names = [DEMAND_COLUMN_PREFIX() * string(l)
+                            for l in 1:size(cooling_demand_profiles)[1]]
+        heating_demand_profiles = [myinputs["pD_Heating"][:, l] for l in 1:size(myinputs["pD_Heating"], 2)]
+        heating_demand_col_names = [DEMAND_COLUMN_PREFIX() * string(l)
+                            for l in 1:size(heating_demand_profiles)[1]]
+        
+        all_col_names = [demand_col_names; var_col_names; fuel_col_names; cooling_demand_col_names; heating_demand_col_names]
+        all_profiles = [demand_profiles..., var_profiles..., fuel_profiles..., cooling_demand_profiles..., heating_demand_profiles...]
+        return demand_col_names, cooling_demand_col_names, heating_demand_col_names,
+        var_col_names, solar_col_names, wind_col_names, fuel_col_names,
+        all_col_names,
+        demand_profiles, cooling_demand_profiles, heating_demand_profiles,
+        var_profiles, solar_profiles, wind_profiles, fuel_profiles,
+        all_profiles,
+        col_to_zone_map, AllFuelsConst
+    else
+        all_col_names = [demand_col_names; var_col_names; fuel_col_names]
+        all_profiles = [demand_profiles..., var_profiles..., fuel_profiles...]
+        return demand_col_names,
+        var_col_names, solar_col_names, wind_col_names, fuel_col_names,
+        all_col_names,
+        demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles,
+        all_profiles,
+        col_to_zone_map, AllFuelsConst
+    end
 end
 
 @doc raw"""
@@ -340,7 +361,9 @@ system to be included among the extreme periods. They would select
 
 """
 function get_extreme_period(DF, GDF, profKey, typeKey, statKey,
-        ConstCols, demand_col_names, solar_col_names, wind_col_names, v = false)
+        ConstCols, demand_col_names,
+        solar_col_names, wind_col_names, mysetup, v = false,
+        cooling_demand_col_names = nothing, heating_demand_col_names = nothing)
     if v
         println(profKey, " ", typeKey, " ", statKey)
     end
@@ -360,6 +383,16 @@ function get_extreme_period(DF, GDF, profKey, typeKey, statKey,
                 statKey,
                 wind_col_names,
                 ConstCols)
+        elseif mysetup["CoolingDemand"] == 1 && profKey == "Cooling Demand"
+            (stat, group_idx) = get_integral_extreme(GDF,
+                statKey,
+                cooling_demand_col_names,
+                ConstCols)
+        elseif mysetup["CoolingDemand"] == 1 && profKey == "Heating Demand"
+            (stat, group_idx) = get_integral_extreme(GDF,
+                statKey,
+                heating_demand_col_names,
+                ConstCols)
         else
             println("Error: Profile Key ",
                 profKey,
@@ -378,6 +411,16 @@ function get_extreme_period(DF, GDF, profKey, typeKey, statKey,
                 ConstCols)
         elseif profKey == "Wind"
             (stat, group_idx) = get_absolute_extreme(DF, statKey, wind_col_names, ConstCols)
+        elseif mysetup["CoolingDemand"] == 1 && profKey == "Cooling Demand"
+            (stat, group_idx) = get_absolute_extreme(GDF,
+                statKey,
+                cooling_demand_col_names,
+                ConstCols)
+        elseif mysetup["CoolingDemand"] == 1 && profKey == "Heating Demand"
+            (stat, group_idx) = get_absolute_extreme(GDF,
+                statKey,
+                heating_demand_col_names,
+                ConstCols)
         else
             println("Error: Profile Key ",
                 profKey,
@@ -563,6 +606,214 @@ function get_demand_multipliers(ClusterOutputData,
     return demand_mults
 end
 
+@doc raw"""
+
+    get_cooling_demand_multipliers(ClusterOutputData, ModifiedData, M, W, DemandCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols)
+
+Get multipliers to linearly scale clustered demand profiles L zone-wise such that their weighted sum equals the original zonal total demand.
+Scale demand profiles later using these multipliers in order to ensure that a copy of the original demand is kept for validation.
+
+Find $k_z$ such that:
+
+```math
+\sum_{i \in I} L_{i,z} = \sum_{t \in T, m \in M} C_{t,m,z} \cdot \frac{w_m}{T} \cdot k_z   \: \: \: \forall z \in Z
+```
+
+where $Z$ is the set of zones, $I$ is the full time domain, $T$ is the length of one period (e.g., 168 for one week in hours),
+$M$ is the set of representative periods, $L_{i,z}$ is the original zonal demand profile over time (hour) index $i$, $C_{i,m,z}$ is the
+demand in timestep $i$ for representative period $m$ in zone $z$, $w_m$ is the weight of the representative period equal to the total number of
+hours that one hour in representative period $m$ represents in the original profile, and $k_z$ is the zonal demand multiplier returned by the function.
+
+"""
+function get_cooling_demand_multipliers(ClusterOutputData,
+        InputData,
+        M,
+        W,
+        CoolingDemandCols,
+        TimestepsPerRepPeriod,
+        NewColNames,
+        NClusters,
+        Ncols,
+        v = false)
+    # Compute original zonal total demands
+    zone_sums = Dict()
+    for coolingdemandcol in CoolingDemandCols
+        zone_sums[coolingdemandcol] = sum(InputData[:, coolingdemandcol])
+    end
+
+    # Compute zonal demands per representative period
+    cluster_zone_sums = Dict()
+    for m in 1:NClusters
+        clustered_lp_DF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
+        for i in 1:Ncols
+        if (Symbol(NewColNames[i]) in CoolingDemandCols)))
+        cluster_zone_sums[m] = Dict()
+        for coolingdemandcol in CoolingDemandCols
+            cluster_zone_sums[m][coolingdemandcol] = sum(clustered_lp_DF[:, coolingdemandcol])
+        end
+    end
+
+    # Use representative period weights to compute total zonal demand of the representative profile
+    # Determine multiplier to bridge the gap between original zonal demands and representative zonal demands
+    weighted_cluster_zone_sums = Dict(coolingdemandcol => 0.0 for coolingdemandcol in CoolingDemandCols)
+    coolingdemand_mults = Dict()
+    for coolingdemandcol in CoolingDemandCols
+        for m in 1:NClusters
+            weighted_cluster_zone_sums[coolingdemandcol] += (W[m] / (TimestepsPerRepPeriod)) *
+                                                     cluster_zone_sums[m][coolingdemandcol]
+        end
+        coolingdemand_mults[coolingdemandcol] = zone_sums[coolingdemandcol] /
+                                  weighted_cluster_zone_sums[coolingdemandcol]
+        if v
+            println(coolingdemandcol,
+                ": ",
+                weighted_cluster_zone_sums[coolingdemandcol],
+                " vs. ",
+                zone_sums[coolingdemandcol],
+                " => ",
+                coolingdemand_mults[coolingdemandcol])
+        end
+    end
+
+    # Zone-wise validation that scaled clustered demand equals original demand (Don't actually scale demand in this function)
+    if v
+        new_zone_sums = Dict(coolingdemandcol => 0.0 for coolingdemandcol in CoolingDemandCols)
+        for m in 1:NClusters
+            for i in 1:Ncols
+                if (NewColNames[i] in CoolingDemandCols)
+                    # Uncomment this line if we decide to scale demand here instead of later. (Also remove "demand_mults[NewColNames[i]]*" term from new_zone_sums computation)
+                    #ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] *= demand_mults[NewColNames[i]]
+                    println("   Scaling ",
+                        M[m],
+                        " (",
+                        NewColNames[i],
+                        ") : ",
+                        cluster_zone_sums[m][NewColNames[i]],
+                        " => ",
+                        coolingdemand_mults[NewColNames[i]] *
+                        sum(ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]))
+                    new_zone_sums[NewColNames[i]] += (W[m] / (TimestepsPerRepPeriod)) *
+                                                     coolingdemand_mults[NewColNames[i]] *
+                                                     sum(ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)])
+                end
+            end
+        end
+        for coolingdemandcol in CoolingDemandCols
+            println(coolingdemandcol,
+                ": ",
+                new_zone_sums[coolingdemandcol],
+                " =?= ",
+                zone_sums[coolingdemandcol])
+        end
+    end
+
+    return coolingdemand_mults
+end
+
+@doc raw"""
+
+    get_heating_demand_multipliers(ClusterOutputData, ModifiedData, M, W, DemandCols, TimestepsPerRepPeriod, NewColNames, NClusters, Ncols)
+
+Get multipliers to linearly scale clustered demand profiles L zone-wise such that their weighted sum equals the original zonal total demand.
+Scale demand profiles later using these multipliers in order to ensure that a copy of the original demand is kept for validation.
+
+Find $k_z$ such that:
+
+```math
+\sum_{i \in I} L_{i,z} = \sum_{t \in T, m \in M} C_{t,m,z} \cdot \frac{w_m}{T} \cdot k_z   \: \: \: \forall z \in Z
+```
+
+where $Z$ is the set of zones, $I$ is the full time domain, $T$ is the length of one period (e.g., 168 for one week in hours),
+$M$ is the set of representative periods, $L_{i,z}$ is the original zonal demand profile over time (hour) index $i$, $C_{i,m,z}$ is the
+demand in timestep $i$ for representative period $m$ in zone $z$, $w_m$ is the weight of the representative period equal to the total number of
+hours that one hour in representative period $m$ represents in the original profile, and $k_z$ is the zonal demand multiplier returned by the function.
+
+"""
+function get_heating_demand_multipliers(ClusterOutputData,
+        InputData,
+        M,
+        W,
+        HeatingDemandCols,
+        TimestepsPerRepPeriod,
+        NewColNames,
+        NClusters,
+        Ncols,
+        v = false)
+    # Compute original zonal total demands
+    zone_sums = Dict()
+    for heatingdemandcol in HeatingDemandCols
+        zone_sums[heatingdemandcol] = sum(InputData[:, heatingdemandcol])
+    end
+
+    # Compute zonal demands per representative period
+    cluster_zone_sums = Dict()
+    for m in 1:NClusters
+        clustered_lp_DF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
+        for i in 1:Ncols
+        if (Symbol(NewColNames[i]) in HeatingDemandCols)))
+        cluster_zone_sums[m] = Dict()
+        for heatingdemandcol in HeatingDemandCols
+            cluster_zone_sums[m][heatingdemandcol] = sum(clustered_lp_DF[:, heatingdemandcol])
+        end
+    end
+
+    # Use representative period weights to compute total zonal demand of the representative profile
+    # Determine multiplier to bridge the gap between original zonal demands and representative zonal demands
+    weighted_cluster_zone_sums = Dict(heatingdemandcol => 0.0 for heatingdemandcol in HeatingDemandCols)
+    heatingdemand_mults = Dict()
+    for heatingdemandcol in HeatingDemandCols
+        for m in 1:NClusters
+            weighted_cluster_zone_sums[heatingdemandcol] += (W[m] / (TimestepsPerRepPeriod)) *
+                                                     cluster_zone_sums[m][heatingdemandcol]
+        end
+        heatingdemand_mults[heatingdemandcol] = zone_sums[heatingdemandcol] /
+                                  weighted_cluster_zone_sums[heatingdemandcol]
+        if v
+            println(heatingdemandcol,
+                ": ",
+                weighted_cluster_zone_sums[heatingdemandcol],
+                " vs. ",
+                zone_sums[heatingdemandcol],
+                " => ",
+                heatingdemand_mults[heatingdemandcol])
+        end
+    end
+
+    # Zone-wise validation that scaled clustered demand equals original demand (Don't actually scale demand in this function)
+    if v
+        new_zone_sums = Dict(heatingdemandcol => 0.0 for heatingdemandcol in HeatingDemandCols)
+        for m in 1:NClusters
+            for i in 1:Ncols
+                if (NewColNames[i] in HeatingDemandCols)
+                    # Uncomment this line if we decide to scale demand here instead of later. (Also remove "demand_mults[NewColNames[i]]*" term from new_zone_sums computation)
+                    #ClusterOutputData[!,m][TimestepsPerRepPeriod*(i-1)+1 : TimestepsPerRepPeriod*i] *= demand_mults[NewColNames[i]]
+                    println("   Scaling ",
+                        M[m],
+                        " (",
+                        NewColNames[i],
+                        ") : ",
+                        cluster_zone_sums[m][NewColNames[i]],
+                        " => ",
+                        heatingdemand_mults[NewColNames[i]] *
+                        sum(ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]))
+                    new_zone_sums[NewColNames[i]] += (W[m] / (TimestepsPerRepPeriod)) *
+                                                     heatingdemand_mults[NewColNames[i]] *
+                                                     sum(ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)])
+                end
+            end
+        end
+        for heatingdemandcol in HeatingDemandCols
+            println(heatingdemandcol,
+                ": ",
+                new_zone_sums[heatingdemandcol],
+                " =?= ",
+                zone_sums[heatingdemandcol])
+        end
+    end
+
+    return heatingdemand_mults
+end
+
 function update_deprecated_tdr_inputs!(setup::Dict{Any, Any})
     if "LoadWeight" in keys(setup)
         setup["DemandWeight"] = setup["LoadWeight"]
@@ -682,6 +933,9 @@ function cluster_inputs(inpath,
     Fuel_Outfile = joinpath(TimeDomainReductionFolder, "Fuels_data.csv")
     PMap_Outfile = joinpath(TimeDomainReductionFolder, "Period_map.csv")
     YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
+    Cooling_Demand_Outfile = joinpath(TimeDomainReductionFolder, "Cooling_demand_data.csv")
+    Heating_Demand_Outfile = joinpath(TimeDomainReductionFolder, "Heating_demand_data.csv")
+
 
     # Define a local version of the setup so that you can modify the mysetup["ParameterScale"] value to be zero in case it is 1
     mysetup_local = copy(mysetup)
@@ -707,7 +961,7 @@ function cluster_inputs(inpath,
 
             # this prevents doubled time domain reduction in stages past
             # the first, even if the first stage is okay.
-            prevent_doubled_timedomainreduction(joinpath(inpath_sub,
+            prevent_doubled_timedomainreduction(mysetup, joinpath(inpath_sub,
                 mysetup["SystemFolder"]))
 
             inputs_dict[t] = load_inputs(mysetup_MS, inpath_sub)
@@ -743,7 +997,7 @@ function cluster_inputs(inpath,
             # TO DO LATER: Replace these with collections of col_names, profiles, zones
             demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
             demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-            col_to_zone_map, AllFuelsConst = parse_data(myinputs)
+            col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
         end
     else
         if v
@@ -755,9 +1009,15 @@ function cluster_inputs(inpath,
         ZONES = myinputs["R_ZONES"]
         # Parse input data into useful structures divided by type (demand, wind, solar, fuel, groupings thereof, etc.)
         # TO DO LATER: Replace these with collections of col_names, profiles, zones
-        demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
-        demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-        col_to_zone_map, AllFuelsConst = parse_data(myinputs)
+        if mysetup["CoolingDemand"] == 1
+            demand_col_names, cooling_demand_col_names, heating_demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names, 
+            demand_profiles, cooling_demand_profiles, heating_demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles, 
+            col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
+        else
+            demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
+            demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
+            col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
+        end
     end
     if v
         println()
@@ -862,16 +1122,31 @@ function cluster_inputs(inpath,
                                 if v
                                     print(geoKey, " ")
                                 end
-                                (stat, group_idx) = get_extreme_period(InputData,
-                                    cgdf,
-                                    profKey,
-                                    typeKey,
-                                    statKey,
-                                    ConstCols,
-                                    demand_col_names,
-                                    solar_col_names,
-                                    wind_col_names,
-                                    v)
+                                if mysetup["CoolingDemand"] == 1
+                                    (stat, group_idx) = get_extreme_period(InputData,
+                                        cgdf,
+                                        profKey,
+                                        typeKey,
+                                        statKey,
+                                        ConstCols,
+                                        demand_col_names,
+                                        solar_col_names, 
+                                        wind_col_names, 
+                                        mysetup, v,
+                                        cooling_demand_col_names, 
+                                        heating_demand_col_names)
+                                else
+                                    (stat, group_idx) = get_extreme_period(InputData,
+                                        cgdf,
+                                        profKey,
+                                        typeKey,
+                                        statKey,
+                                        ConstCols,
+                                        demand_col_names,
+                                        solar_col_names, 
+                                        wind_col_names, 
+                                        mysetup, v)
+                                end
                                 push!(ExtremeWksList, floor(Int, group_idx))
                                 if v
                                     println(group_idx, " : ", stat)
@@ -885,6 +1160,10 @@ function cluster_inputs(inpath,
                                         z_cols_type = intersect(z_cols, solar_col_names)
                                     elseif profKey == "Wind"
                                         z_cols_type = intersect(z_cols, wind_col_names)
+                                    elseif mysetup["CoolingDemand"] == 1 && profKey == "Cooling Demand"
+                                            z_cols_type = intersect(z_cols, cooling_demand_col_names)
+                                        elseif mysetup["CoolingDemand"] == 1 && profKey == "Heating Demand"
+                                            z_cols_type = intersect(z_cols, heating_demand_col_names)
                                     else
                                         z_cols_type = []
                                     end
@@ -1109,6 +1388,10 @@ function cluster_inputs(inpath,
 
     # Get Symbol-version of column names by type for later analysis
     DemandCols = Symbol.(demand_col_names)
+    if mysetup["CoolingDemand"] == 1
+        CoolingDemandCols = Symbol.(cooling_demand_col_names)
+        HeatingDemandCols = Symbol.(heating_demand_col_names)
+    end
     VarCols = [Symbol(var_col_names[i]) for i in 1:length(var_col_names)]
     FuelCols = [Symbol(fuel_col_names[i]) for i in 1:length(fuel_col_names)]
     ConstCol_Syms = [Symbol(ConstCols[i]) for i in 1:length(ConstCols)]
@@ -1134,6 +1417,8 @@ function cluster_inputs(inpath,
     rpDFs = [] # Representative Period DataFrames - All Profiles (Demand, Resource, Fuel)
     gvDFs = [] # Generators Variability DataFrames - Just Resource Profiles
     dmDFs = [] # Demand Profile DataFrames - Just Demand Profiles
+    cdmDFs = [] # Demand Profile DataFrames - Just Cooling Demand Profiles
+    hdmDFs = [] # Demand Profile DataFrames - Just Heating Demand Profiles
     fpDFs = [] # Fuel Profile DataFrames - Just Fuel Profiles
 
     for m in 1:NClusters
@@ -1149,6 +1434,12 @@ function cluster_inputs(inpath,
         end
         if !IncludeFuel
             fpDF = DataFrame(Placeholder = 1:TimestepsPerRepPeriod)
+        end
+        if mysetup["CoolingDemand"] == 1
+            cdmDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
+            for i in 1:Ncols if (Symbol(NewColNames[i]) in CoolingDemandCols)))
+            hdmDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
+            for i in 1:Ncols if (Symbol(NewColNames[i]) in HeatingDemandCols)))
         end
 
         # Add Constant Columns back in
@@ -1182,11 +1473,19 @@ function cluster_inputs(inpath,
         push!(gvDFs, gvDF)
         push!(dmDFs, dmDF)
         push!(fpDFs, fpDF)
+        if mysetup["CoolingDemand"] == 1
+            push!(cdmDFs, cdmDF)
+            push!(hdmDFs, hdmDF)
+        end
     end
     FinalOutputData = vcat(rpDFs...)  # For comparisons with input data to evaluate clustering process
     GVOutputData = vcat(gvDFs...)     # Generators Variability
     DMOutputData = vcat(dmDFs...)     # Demand Profiles
     FPOutputData = vcat(fpDFs...)     # Fuel Profiles
+    if mysetup["CoolingDemand"] == 1
+        CDMOutputData = vcat(cdmDFs...)     # Cooling Demand Profiles
+        HDMOutputData = vcat(hdmDFs...)     # Cooling Demand Profiles
+    end
 
     ##### Step 5: Evaluation
 
@@ -1544,6 +1843,59 @@ function cluster_inputs(inpath,
         end
         CSV.write(joinpath(inpath, Demand_Outfile), demand_in)
 
+        if mysetup["CoolingDemand"] == 1
+            ### TDR_Results/Cooling_demand_data.csv
+            filename = "Cooling_demand_data.csv"
+            demand_in = load_dataframe(system_path, filename)
+            demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
+            demand_in[1:length(W), :Sub_Weights] .= W
+            demand_in[!, :Rep_Periods][1] = length(W)
+            demand_in[!, :Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
+            select!(demand_in, Not(CoolingDemandCols))
+            select!(demand_in, Not(:Time_Index))
+            Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(demand_in, 1)]
+            Time_Index_M[1:size(CDMOutputData, 1)] = 1:size(CDMOutputData, 1)
+            demand_in[!, :Time_Index] .= Time_Index_M
+
+            for c in CoolingDemandCols
+                new_col = Union{Float64, Missings.Missing}[missing
+                                                        for i in 1:size(demand_in, 1)]
+                new_col[1:size(CDMOutputData, 1)] = CDMOutputData[!, c]
+                demand_in[!, c] .= new_col
+            end
+            demand_in = demand_in[1:size(CDMOutputData, 1), :]
+
+            if v
+                println("Writing cooling demand file...")
+            end
+            CSV.write(joinpath(inpath, Cooling_Demand_Outfile), demand_in)
+
+            ### TDR_Results/Heating_demand_data.csv
+            filename = "Heating_demand_data.csv"
+            demand_in = load_dataframe(system_path, filename)
+            demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
+            demand_in[1:length(W), :Sub_Weights] .= W
+            demand_in[!, :Rep_Periods][1] = length(W)
+            demand_in[!, :Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
+            select!(demand_in, Not(HeatingDemandCols))
+            select!(demand_in, Not(:Time_Index))
+            Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(demand_in, 1)]
+            Time_Index_M[1:size(HDMOutputData, 1)] = 1:size(HDMOutputData, 1)
+            demand_in[!, :Time_Index] .= Time_Index_M
+
+            for c in HeatingDemandCols
+                new_col = Union{Float64, Missings.Missing}[missing
+                                                        for i in 1:size(demand_in, 1)]
+                new_col[1:size(HDMOutputData, 1)] = HDMOutputData[!, c]
+                demand_in[!, c] .= new_col
+            end
+            demand_in = demand_in[1:size(HDMOutputData, 1), :]
+
+            if v
+                println("Writing heating demand file...")
+            end
+            CSV.write(joinpath(inpath, Heating_Demand_Outfile), demand_in)
+        end
         ### TDR_Results/Generators_variability.csv
 
         # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg

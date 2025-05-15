@@ -252,12 +252,14 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         mga!(EP, inputs, setup)
     end
 
+    ## Heating and cooling balance constraints
+    if setup["CoolingDemand"] == 1
+        utes_system!(EP, inputs, setup)
+    end
+
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
 
-    ## Power balance constraints
-    # demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
-    #          + incoming power flows - outgoing power flows - flow losses - charge of heat storage + generation from NACC
     @constraint(EP,
         cPowerBalance[t = 1:T, z = 1:Z],
         EP[:ePowerBalance][t, z]==inputs["pD"][t, z])

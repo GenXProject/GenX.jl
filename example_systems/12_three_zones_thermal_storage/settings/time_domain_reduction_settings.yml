@@ -149,3 +149,33 @@ ExtremePeriods:
          Integral:
             Max: 0
             Min: 0
+   Cooling Demand:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+      System:
+         Absolute:
+            Max: 1
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+   Heating Demand:
+      Zone:
+         Absolute:
+            Max: 0
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0
+      System:
+         Absolute:
+            Max: 1
+            Min: 0
+         Integral:
+            Max: 0
+            Min: 0

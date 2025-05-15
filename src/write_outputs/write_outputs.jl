@@ -79,6 +79,23 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         println(elapsed_time_power)
     end
 
+    if setup["CoolingDemand"] == 1
+        elapsed_time_use = @elapsed dfUse = write_capacity_utes(path, inputs, setup, EP)
+        println("Time elapsed for writing capacity (UTES) is")
+        println(elapsed_time_use)
+        if output_settings_d["WriteUse"] || output_settings_d["WriteNetRevenue"]
+            elapsed_time_use = @elapsed dfUse = write_energy_consumption_utes(path, inputs, setup, EP)
+            println("Time elapsed for writing power consumption (UTES) is")
+            println(elapsed_time_use)
+            elapsed_time_use = @elapsed dfUse = write_temperature_utes(path, inputs, setup, EP)
+            println("Time elapsed for writing temperature (UTES) is")
+            println(elapsed_time_use)
+            elapsed_time_use = @elapsed dfUse = write_status_of_charge_utes(path, inputs, setup, EP)
+            println("Time elapsed for writing status of charge (UTES) is")
+            println(elapsed_time_use)
+        end
+    end
+
     if output_settings_d["WriteCharge"]
         elapsed_time_charge = @elapsed write_charge(path, inputs, setup, EP)
         println("Time elapsed for writing charge is")
