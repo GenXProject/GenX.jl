@@ -17,6 +17,7 @@ Models running with, non-default, solvers Cbc and Clp will fail unless
 
 ### Fixed
 - Fix call to `get_retirement_stage` by casting `lifetime` to integer (#840).
+- Modify `storage_all.jl` to prevent micro-charging/discharging close to capacity (#836).
 
 ## [0.4.4] - 2025-02-04
 
