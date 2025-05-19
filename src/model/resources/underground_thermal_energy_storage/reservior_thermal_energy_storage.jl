@@ -17,8 +17,8 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     p = inputs["hours_per_subperiod"]
 
     # UTES components
-    # by default, i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> thermal storage; i = 4 -> pump in the tertiary loop; 
-    dry_cooler, chiller, storage, pump = 1, 2, 3, 4
+     # by default, i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage; 
+     dry_cooler, chiller, pump, storage = 1, 2, 3, 4
 
     # Variables
     # state of charge of the thermal storage

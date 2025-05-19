@@ -10,8 +10,8 @@ function write_capacity_utes(path::AbstractString, inputs::Dict, setup::Dict, EP
 	MultiStage = setup["MultiStage"]
 
     # UTES components
-    # by default, i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> thermal storage; i = 4 -> pump in the tertiary loop; 
-    dry_cooler, chiller, storage, pump = 1, 2, 3, 4
+     # by default, i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage; 
+     dry_cooler, chiller, pump, storage = 1, 2, 3, 4
 
     # get component-wise data
     utes_dict = inputs["utes_dict"]
