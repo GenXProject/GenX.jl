@@ -16,7 +16,7 @@ function write_status_of_charge_utes(path::AbstractString, inputs::Dict, setup::
 
     utes_resources = inputs["RESOURCE_NAMES"][UTES]
     df_output = DataFrame(Resource = 
-		[utes_resources .*"_utes_soc_MJ";
+		[utes_resources .*"_utes_soc_MWh";
          utes_resources .*"_utes_mass_flow_kg_per_s";])
 
 	status_of_charge = value.(EP[:vSOC_RTES])[UTES,:]

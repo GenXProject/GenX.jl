@@ -21,28 +21,23 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
      dry_cooler, chiller, pump, storage = 1, 2, 3, 4
 
     # Variables
-    # state of charge of the thermal storage
+    # state of charge of the thermal storage (Unit: MWh)
     @variable(EP, vSOC_RTES[y in UTES, t = 1:T] >=0) 
 
-    # mass flow in RTES
+    # mass flow in RTES (Unit: kg/s)
     @variable(EP, vMassFlow_RTES[y in UTES, t = 1:T]) # can be positive or negative, indicating flow directions 
     # absoluate value of the mass flow in RTES
     @variable(EP, vMassFlow_RTES_abs[y in UTES, t=1:T] >= 0)
 
-    # Expressions
-    # Thermal mass of RTES (Unit: MJ)
-    @expression(EP, eThermalMass_RTES[y in UTES, t =1:T],
-    EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage))
-
     # constraints
 
-    # The status of charge of the thermal storage is equal to the sum of the thermal mass and the energy input/output (Unit: MJ) 
+    # The status of charge of the thermal storage is equal to the sum of the thermal mass and the energy input/output (Unit: MWh) 
     @constraint(EP, cSOC_RTES[y in UTES, t = 1:T], 
-        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (EP[:vTemp_Chiller][y, t] - EP[:eTemp_HX_12][y, t])) # MJ/s = MW
+        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (EP[:vTemp_Chiller][y, t] - EP[:eTemp_HX_12][y, t])) 
 
     # The status of charge of the thermal storage is constrained by the thermal mass of the storage
     @constraint(EP, cSOC_RTES_ub[y in UTES, t = 1:T], 
-        vSOC_RTES[y, t] <= eThermalMass_RTES[y, t])
+        vSOC_RTES[y, t] <= EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)/3600) # devided by 3600 to convert MJ to MWh
 
     # mass flow in RTES, assuming no heat loss during the tertiary loop and the storage
     @constraint(EP, cMassFlow_RTES[y in UTES, t = 1:T], 
