@@ -104,8 +104,9 @@ function is_period_map_necessary(inputs::Dict)
     multiple_rep_periods = inputs["REP_PERIOD"] > 1
     has_stor_lds = !isempty(inputs["STOR_LONG_DURATION"])
     has_hydro_lds = !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+    has_utes_lds = !isempty(inputs["STOR_UTES_LONG_DURATION"])
     has_vre_stor_lds = !isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_LDS"])
-    multiple_rep_periods && (has_stor_lds || has_hydro_lds || has_vre_stor_lds)
+    multiple_rep_periods && (has_stor_lds || has_hydro_lds || has_utes_lds || has_vre_stor_lds)
 end
 
 function is_period_map_exist(setup::Dict, path::AbstractString)

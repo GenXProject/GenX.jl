@@ -9,12 +9,17 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     UTES = inputs["UTES"]     # Number of UTES resources
+    STOR_UTES_SHORT_DURATION = inputs["STOR_UTES_SHORT_DURATION"]
 
     dD_computing = inputs["pD_Computing"]     # Computing demand in MW
     pAmbientTemp = inputs["pAmbientTemp"]     # Ambient temprature in C
     Q = dD_computing    # Thermal rejection from the data center is assumed to be equal to computing load
     # time related 
     p = inputs["hours_per_subperiod"]
+    representative_periods = inputs["REP_PERIOD"]
+    START_SUBPERIODS = inputs["START_SUBPERIODS"]
+    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+
 
     # UTES components
      # by default, i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage; 
@@ -29,10 +34,21 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     # absoluate value of the mass flow in RTES
     @variable(EP, vMassFlow_RTES_abs[y in UTES, t=1:T] >= 0)
 
-    # constraints
+    # constraints that only apply to short duration storage
+    if representative_periods > 1 && !isempty(inputs["STOR_UTES_LONG_DURATION"])
+        CONSTRAINTSET_UTES = STOR_UTES_SHORT_DURATION
+    else
+        CONSTRAINTSET_UTES = UTES
+    end
 
     # The status of charge of the thermal storage is equal to the sum of the thermal mass and the energy input/output (Unit: MWh) 
-    @constraint(EP, cSOC_RTES[y in UTES, t = 1:T], 
+
+    # during the start period, different for long and short-duration UTES
+    @constraint(EP, cSOC_RTES_Start[y in CONSTRAINTSET_UTES, t in START_SUBPERIODS], 
+        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (EP[:vTemp_Chiller][y, t] - EP[:eTemp_HX_12][y, t])) 
+    
+    # during the interior period, same for long and short-duration UTES
+    @constraint(EP, cSOC_RTES_Interior[y in UTES, t in INTERIOR_SUBPERIODS], 
         vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (EP[:vTemp_Chiller][y, t] - EP[:eTemp_HX_12][y, t])) 
 
     # The status of charge of the thermal storage is constrained by the thermal mass of the storage

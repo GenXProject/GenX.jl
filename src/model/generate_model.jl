@@ -255,6 +255,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     ## Heating and cooling balance constraints
     if setup["CoolingDemand"] == 1
         utes_system!(EP, inputs, setup)
+        # Model constraints, variables, expression related to UTES resources with long duration storage
+        if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_UTES_LONG_DURATION"])
+            utes_inter_period_linkage!(EP, inputs, setup)
+        end
     end
 
     ## Define the objective function

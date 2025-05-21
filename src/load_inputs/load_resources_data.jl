@@ -466,13 +466,13 @@ function check_mustrun_reserve_contribution(r::AbstractResource)
 end
 
 function check_LDS_applicability(r::AbstractResource)
-    applicable_resources = Union{Storage, Hydro}
+    applicable_resources = Union{Storage, Hydro, UTES}
     error_strings = String[]
 
     not_set = default_zero
     lds_value = get(r, :lds, not_set)
 
-    # LDS is available only for Hydro and Storage
+    # LDS is available only for UTES, Hydro, and Storage
     if !isa(r, applicable_resources) && lds_value > 0
         e = string("Resource ", resource_name(r), " has :lds = ", lds_value, ".\n",
             "This setting is valid only for resources where the type is one of $applicable_resources.")
@@ -1503,6 +1503,9 @@ function add_resources_to_input_data!(inputs::Dict,
 
     # Underground Thermal Energy Storage (UTES)
     inputs["UTES"] = utes(gen)
+    inputs["STOR_UTES_LONG_DURATION"] = intersect(inputs["UTES"], is_LDS(gen))
+    inputs["STOR_UTES_SHORT_DURATION"] = intersect(inputs["UTES"], is_SDS(gen))
+
     utes_dict = Dict()
     for y in inputs["UTES"]
         # cost related to UTES
