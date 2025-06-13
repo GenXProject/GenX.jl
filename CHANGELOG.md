@@ -15,6 +15,9 @@ Models running with, non-default, solvers Cbc and Clp will fail unless
 `"EnableJuMPDirectMode"` is set to false (#835).
 - Improve `@expressions` performance by pre-processing sets (#815).
 
+### Fixed
+- Fix call to `get_retirement_stage` by casting `lifetime` to integer (#840).
+
 ## [0.4.4] - 2025-02-04
 
 ### Added
