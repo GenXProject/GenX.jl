@@ -26,12 +26,12 @@ function write_multi_stage_stats(outpath::String, stats_d::Dict)
     # Create an array of numbers 1 through total number of iterations
     iteration_count_a = collect(1:length(times_a))
 
-    realtive_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
+    relative_gap_a = (upper_bounds_a .- lower_bounds_a) ./ lower_bounds_a
 
     # Construct dataframe where first column is iteration number, second is iteration time
     header = _get_multi_stage_stats_header()
     df_stats = DataFrame(header .=>
-        [iteration_count_a, times_a, upper_bounds_a, lower_bounds_a, realtive_gap_a])
+        [iteration_count_a, times_a, upper_bounds_a, lower_bounds_a, relative_gap_a])
 
     CSV.write(joinpath(outpath, filename), df_stats)
     return nothing

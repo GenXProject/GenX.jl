@@ -180,7 +180,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
             mkdir(outpath)
         end
     else
-        # Find closest unused ouput directory name and create it
+        # Find closest unused output directory name and create it
         outpath = choose_output_dir(outpath)
         mkdir(outpath)
     end

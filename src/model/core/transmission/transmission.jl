@@ -13,7 +13,7 @@ Power flows, $\Phi_{l,t}$, on each line $l$ into or out of a zone (defined by th
 Power flow, $\Phi_{l,t}$, on each line (or more likely a `path' aggregating flows across multiple parallel lines) is constrained to be less than or equal to the line's power transfer capacity, $\varphi^{cap}_{l}$, plus any transmission capacity added on that line (for lines eligible for expansion in the set $\mathcal{E}$). The additional transmission capacity, $\bigtriangleup\varphi^{cap}_{l} $, is constrained by a maximum allowed reinforcement, $\overline{\bigtriangleup\varphi^{cap}_{l}}$, for each line $l \in \mathcal{E}$.
 ```math
 \begin{aligned}
-	% trasmission constraints
+	% transmission constraints
 	&-\varphi^{cap}_{l} \leq  \Phi_{l,t} \leq \varphi^{cap}_{l} , &\quad \forall l \in \mathcal{L},\forall t  \in \mathcal{T}\\
 \end{aligned}
 ```
@@ -28,7 +28,7 @@ Transmission losses due to power flows can be accounted for in three different w
 For the second option, an absolute value approximation is utilized to calculate the magnitude of the power flow on each line (reflecting the fact that negative power flows for a line linking nodes $i$ and $j$ represents flows from node $j$ to $i$ and causes the same magnitude of losses as an equal power flow from $i$ to $j$). This absolute value function is linearized such that the flow in the line must be equal to the subtraction of the auxiliary variable for flow in the positive direction, $\Phi^{+}_{l,t}$, and the auxiliary variable for flow in the negative direction, $\Phi^{-}_{l,t}$, of the line. Then, the magnitude of the flow is calculated as the sum of the two auxiliary variables. The sum of positive and negative directional flows are also constrained by the line flow capacity.
 ```math
 \begin{aligned}
-% trasmission losses simple
+% transmission losses simple
 	&\Phi_{l,t} =  \Phi^{+}_{l,t}  - \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\mid \Phi_{l,t} \mid =  \Phi^{+}_{l,t}  + \Phi^{-}_{l,t}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
 	&\Phi^{+}_{l,t}  + \Phi^{-}_{l,t} \leq \varphi^{cap}_{l}, &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
@@ -50,7 +50,7 @@ where $TransON^{+}_{l,t}$ is a continuous variable, representing the product of 
 \end{aligned}
 ```
 These constraints permit only the positive or negative auxiliary flow variables to be non-zero at a given time period, not both.
-For the third option, losses are calculated as a piecewise-linear approximation of a quadratic function of power flows. In order to do this, we represent the absolute value of the line flow variable by the sum of positive stepwise flow variables $(\mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t})$, associated with each partition of line losses computed using the corresponding linear expressions. This can be understood as a segmentwise linear fitting (or first order approximation) of the quadratic losses function. The first constraint below computes the losses a the accumulated sum of losses for each linear stepwise segment of the approximated quadratic function, including both positive domain and negative domain segments. A second constraint ensures that the stepwise variables do not exceed the maximum size per segment. The slope and maximum size for each segment are calculated as per the method in \cite{Zhang2013}.
+For the third option, losses are calculated as a piecewise-linear approximation of a quadratic function of power flows. In order to do this, we represent the absolute value of the line flow variable by the sum of positive stepwise flow variables $(\mathcal{S}^{+}_{m,l,t}, \mathcal{S}^{-}_{m,l,t})$, associated with each partition of line losses computed using the corresponding linear expressions. This can be understood as a segment-wise linear fitting (or first order approximation) of the quadratic losses function. The first constraint below computes the losses a the accumulated sum of losses for each linear stepwise segment of the approximated quadratic function, including both positive domain and negative domain segments. A second constraint ensures that the stepwise variables do not exceed the maximum size per segment. The slope and maximum size for each segment are calculated as per the method in \cite{Zhang2013}.
 ```math
 \begin{aligned}
 	& \ell_{l,t} = \frac{\varphi^{ohm}_{l}}{(\varphi^{volt}_{l})^2}\bigg( \sum_{m \in \mathcal{M}}( S^{+}_{m,l}\times \mathcal{S}^{+}_{m,l,t} + S^{-}_{m,l}\times \mathcal{S}^{-}_{m,l,t}) \bigg), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
@@ -71,7 +71,7 @@ Next, a constraint ensures that the sum of auxiliary segment variables ($m \geq 
 	&\sum_{m \in [1:M]} (\mathcal{S}^{-}_{m,l,t}) - \mathcal{S}^{-}_{0,l,t}  =  - \Phi_{l,t}
 \end{aligned}
 ```
-As with losses option 2, this segment-wise approximation of a quadratic loss function also permits 'phantom losses' to avoid cycling thermal units when discrete unit commitment decisions are modeled. In this case, the additional constraints below are also added to ensure that auxiliary segments variables do not exceed maximum value per segment and that they are filled in order; i.e., one segment cannot be non-zero unless prior segment is at its maximum value. Binary constraints deal with absolute value of power flow on each line. If the flow is positive, $\mathcal{S}^{+}_{0,l,t}$ must be zero; if flow is negative, $\mathcal{S}^{+}_{0,l,t}$ must be positive and takes on value of the full negative flow, forcing all $\mathcal{S}^{+}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Conversely, if the flow is negative, $\mathcal{S}^{-}_{0,l,t}$ must be zero; if flow is positive, $\mathcal{S}^{-}_{0,l,t}$ must be positive and takes on value of the full positive flow, forcing all $\mathcal{S}^{-}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Requiring segments to fill in sequential order and binary variables to ensure variables reflect the actual direction of power flows are both necessary to eliminate ``phantom losses'' from the solution. These constraints and binary decisions are ommited if the model is fully linear.
+As with losses option 2, this segment-wise approximation of a quadratic loss function also permits 'phantom losses' to avoid cycling thermal units when discrete unit commitment decisions are modeled. In this case, the additional constraints below are also added to ensure that auxiliary segments variables do not exceed maximum value per segment and that they are filled in order; i.e., one segment cannot be non-zero unless prior segment is at its maximum value. Binary constraints deal with absolute value of power flow on each line. If the flow is positive, $\mathcal{S}^{+}_{0,l,t}$ must be zero; if flow is negative, $\mathcal{S}^{+}_{0,l,t}$ must be positive and takes on value of the full negative flow, forcing all $\mathcal{S}^{+}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Conversely, if the flow is negative, $\mathcal{S}^{-}_{0,l,t}$ must be zero; if flow is positive, $\mathcal{S}^{-}_{0,l,t}$ must be positive and takes on value of the full positive flow, forcing all $\mathcal{S}^{-}_{m,l,t}$ other segments ($m \geq 1$) to be zero. Requiring segments to fill in sequential order and binary variables to ensure variables reflect the actual direction of power flows are both necessary to eliminate ``phantom losses'' from the solution. These constraints and binary decisions are omitted if the model is fully linear.
 ```math
 \begin{aligned}
 	&\mathcal{S}^{+}_{m,l,t} <=    \overline{\mathcal{S}_{m,l}} \times ON^{+}_{m,l,t}, &\quad \forall m \in [1:M], \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}\\
@@ -265,7 +265,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
                     vTAUX_NEG[l, s, t] <=
                     (inputs["pTrans_Max_Possible"][l] / TRANS_LOSS_SEGS)
                 end)
-        else # Constraints that can be ommitted if problem is convex (i.e. if not using MILP unit commitment constraints)
+        else # Constraints that can be omitted if problem is convex (i.e. if not using MILP unit commitment constraints)
             # Eqs 3-4: Ensure that auxilary segment variables do not exceed maximum value per segment and that they
             # "fill" in order: i.e. one segment cannot be non-zero unless prior segment is at it's maximum value
             # (These constraints are necessary to prevents phantom losses in MILP problems)
@@ -307,7 +307,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
         end
     end # End if(TRANS_LOSS_SEGS > 0) block
 
-    # ESR Lossses
+    # ESR Losses
     if EnergyShareRequirement >= 1 && IncludeLossesInESR == 1
         @expression(EP, eESRTran[ESR = 1:inputs["nESR"]],
             sum(inputs["dfESR"][z, ESR] *

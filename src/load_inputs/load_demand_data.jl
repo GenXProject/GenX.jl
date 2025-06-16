@@ -64,7 +64,7 @@ function load_demand_data!(setup::Dict, path::AbstractString, inputs::Dict)
         end
     end
 
-    # Create time set steps indicies
+    # Create time set steps indices
     inputs["hours_per_subperiod"] = div.(T, inputs["REP_PERIOD"]) # total number of hours per subperiod
     hours_per_subperiod = inputs["hours_per_subperiod"] # set value for internal use
 

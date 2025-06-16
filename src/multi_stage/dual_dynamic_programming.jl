@@ -125,7 +125,7 @@ end
 @doc raw"""
 	run_ddp(models_d::Dict, setup::Dict, inputs_d::Dict)
 
-This function run the dual dynamic programming (DDP) algorithm, as described in [Pereira and Pinto (1991)](https://doi.org/10.1007/BF01582895), and more recently, [Lara et al. (2018)](https://doi.org/10.1016/j.ejor.2018.05.039). Note that if the algorithm does not converge within 10,000 (currently hardcoded) iterations, this function will return models with sub-optimal solutions. However, results will still be printed as if the model is finished solving. This sub-optimal termination is noted in the output with the 'Exiting Without Covergence!' message.
+This function run the dual dynamic programming (DDP) algorithm, as described in [Pereira and Pinto (1991)](https://doi.org/10.1007/BF01582895), and more recently, [Lara et al. (2018)](https://doi.org/10.1016/j.ejor.2018.05.039). Note that if the algorithm does not converge within 10,000 (currently hardcoded) iterations, this function will return models with sub-optimal solutions. However, results will still be printed as if the model is finished solving. This sub-optimal termination is noted in the output with the 'Exiting Without Convergence!' message.
 
 inputs:
 
@@ -193,7 +193,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
 
         if (ic > 10000)
             println("***********")
-            println("Exiting Without Covergence!")
+            println("Exiting Without Convergence!")
             println(string("Upper Bound = ", z_upper))
             println(string("Lower Bound = ", z_lower))
             println("***********")
@@ -208,7 +208,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
         println("***********")
 
         # Step d) Forward pass for t = 1:num_stages
-        ## For first iteration we dont need to solve forward pass for first stage (we did that already above),
+        ## For first iteration we don't need to solve forward pass for first stage (we did that already above),
         ## but we need to update forward pass solution for the first stage for subsequent iterations
         if ic > 1
             t = 1 #  update forward pass solution for the first stage
@@ -395,8 +395,8 @@ function fix_capacity_tracking(EP_prev::Model,
     # and the associated linking constraint name (c) as a value
     for (v, c) in cap_track_d
 
-        # Tracking variables and constraints for retired capacity are named identicaly to those for newly
-        # built capacity, except have the prefex "vRET" and "cRet", accordingly
+        # Tracking variables and constraints for retired capacity are named identically to those for newly
+        # built capacity, except have the prefix "vRET" and "cRet", accordingly
         rv = Symbol("vRET", string(v)[2:end]) # Retired capacity tracking variable name (rv)
         rc = Symbol("cRet", string(c)[2:end]) # Retired capacity tracking constraint name (rc)
 
@@ -406,7 +406,7 @@ function fix_capacity_tracking(EP_prev::Model,
             # For all previous stages, set the right hand side value of the tracking constraint in the current
             # stage to the value of the tracking constraint observed in the previous stage
             for p in 1:(cur_stage - 1)
-                # Tracking newly buily capacity over all previous stages
+                # Tracking newly built capacity over all previous stages
                 JuMP.set_normalized_rhs(EP_cur[c][i, p], value(EP_prev[v][i, p]))
                 # Tracking retired capacity over all previous stages
                 JuMP.set_normalized_rhs(EP_cur[rc][i, p], value(EP_prev[rv][i, p]))

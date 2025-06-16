@@ -256,7 +256,7 @@ function morris(EP::Model,
         random)
     println(m.means)
     println(DataFrame(m.means', :auto))
-    #save the mean effect of each uncertain variable on the objective fucntion
+    #save the mean effect of each uncertain variable on the objective function
     Morris_range[!, :mean] = DataFrame(m.means', :auto)[!, :x1]
     println(DataFrame(m.variances', :auto))
     #save the variance of effect of each uncertain variable on the objective function

@@ -16,7 +16,7 @@ To create the MGA formulation, we replace the cost-minimizing objective function
 \end{aligned}
 ```
 
-where, $\beta_{z,r}$ is a random objective function coefficient betwen $[0,1]$ for MGA iteration $k$. We aggregate capacity into a new variable $P_{z,r}$ that represents total capacity from technology type $r$ in a zone $z$. 
+where, $\beta_{z,r}$ is a random objective function coefficient between $[0,1]$ for MGA iteration $k$. We aggregate capacity into a new variable $P_{z,r}$ that represents total capacity from technology type $r$ in a zone $z$. 
 
 If the users set `MGAAnnualGeneration = 1` in the genx_settings.yml file, the MGA formulation is given as:
 ```math
@@ -29,7 +29,7 @@ If the users set `MGAAnnualGeneration = 1` in the genx_settings.yml file, the MG
 	&Ax = b
 \end{aligned}
 ```
-where, $\beta_{z,r}$ is a random objective function coefficient betwen $[0,1]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. 
+where, $\beta_{z,r}$ is a random objective function coefficient between $[0,1]$ for MGA iteration $k$. $\Theta_{y,t,z,r}$ is a generation of technology $y$ in zone $z$ in time period $t$ that belongs to a resource type $r$. We aggregate $\Theta_{y,t,z,r}$ into a new variable $P_{z,r}$ that represents total generation from technology type $r$ in a zone $z$. 
 
 In the second constraint in both the above formulations, $\delta$ denote the increase in budget from the least-cost solution and $f$ represents the expression for the total system cost. The constraint $Ax = b$ represents all other constraints in the power system model. We then solve the formulation with minimization and maximization objective function to explore near optimal solution space.
 """

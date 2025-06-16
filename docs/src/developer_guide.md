@@ -275,7 +275,7 @@ const resource_types = (:Thermal,
 ```
 We encourage you to use `CamelCase` for the name of the new resource type.
 
-The lines right after the `resource_types` list automatically create a new `struct` (composite type) for the new resource type. More importantly, the new resource type will be defined as a subtype of the GenX `AbstractResource` type. This is important because it allows the code to use multiple dispach and define a common interface (behavior) for all resources in GenX. For instance, the `resource_id()` function will return the `id` of any resource in GenX, regardless of its type (and therefore will automatically work for the newly created `new_resource`).
+The lines right after the `resource_types` list automatically create a new `struct` (composite type) for the new resource type. More importantly, the new resource type will be defined as a subtype of the GenX `AbstractResource` type. This is important because it allows the code to use multiple dispatch and define a common interface (behavior) for all resources in GenX. For instance, the `resource_id()` function will return the `id` of any resource in GenX, regardless of its type (and therefore will automatically work for the newly created `new_resource`).
 
 ### Step 2: Add the filename of the new resource type to GenX
 
@@ -316,7 +316,7 @@ For example, if the input data file `New_resource.csv` contains the following da
 ```
 New_resource.csv
 
- Resource │ Zone  | Exisiting_capacity | attribute_1 | attribute_2
+ Resource │ Zone  | Existing_capacity | attribute_1 | attribute_2
  String   │ Int64 | Float64            | Float64     | Float64
 ──────────┼───────┼────────────────────┼─────────────┼────────────
  new_res1 │ 1     │ 100.0              │ 6.2         │ 0.4

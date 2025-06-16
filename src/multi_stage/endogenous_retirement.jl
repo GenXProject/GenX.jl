@@ -307,7 +307,7 @@ function endogenous_retirement_charge!(EP::Model,
         eMinRetCapTrackCharge[y in RET_CAP_CHARGE],
         cum_min_retired_charge_cap_mw(gen[y]))
 
-    ### Constratints ###
+    ### Constraints ###
 
     # Keep track of newly built capacity from previous stages
     @constraint(EP,
@@ -373,7 +373,7 @@ function endogenous_retirement_energy!(EP::Model,
         eMinRetCapTrackEnergy[y in RET_CAP_ENERGY],
         cum_min_retired_energy_cap_mw(gen[y]))
 
-    ### Constratints ###
+    ### Constraints ###
 
     # Keep track of newly built capacity from previous stages
     @constraint(EP,
@@ -692,7 +692,7 @@ function endogenous_retirement_vre_stor_stor!(
         eMinRetCapTrackEnergy_VS[y in RET_CAP_STOR],
         cum_min_retired_energy_cap_mw(gen[y]))
 
-    ### Constratints ###
+    ### Constraints ###
 
     # Keep track of newly built capacity from previous stages
     @constraint(EP,

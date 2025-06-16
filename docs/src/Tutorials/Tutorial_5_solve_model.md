@@ -44,7 +44,7 @@ power = Model(HiGHS.Optimizer)
 @constraint(power, non_neg_x, x >= 0) # Non-negativity constraint (can't have negative power plants!)
 @constraint(power, non_neg_y, y >= 0) # Non-negativity constraint
 
-@constraint(power, emissions, 40x + 5y <= 200) # Emisisons constraint
+@constraint(power, emissions, 40x + 5y <= 200) # Emissions constraint
 @constraint(power, construction_costs, 55x + 70y <= 1000) # Cost of constructing a new plant
 
 @constraint(power, demand, x + y >= 10) # Grid demand
@@ -305,7 +305,7 @@ optimize!(power)
                         0 (heuristics)
 ```
 
-In this case, the infeasibility was detected on the presovle since it's clear no solution would fit within all constraints. For information on how to debug an infeasible solution, see the [JuMP documentaion](https://jump.dev/JuMP.jl/stable/manual/solutions/#Conflicts). Some solvers, such as Gurobi, will compute what is causing the conflict, e.g. which constraints are infeasible with one another (HiGHS does not do this). 
+In this case, the infeasibility was detected on the presolve since it's clear no solution would fit within all constraints. For information on how to debug an infeasible solution, see the [JuMP documentation](https://jump.dev/JuMP.jl/stable/manual/solutions/#Conflicts). Some solvers, such as Gurobi, will compute what is causing the conflict, e.g. which constraints are infeasible with one another (HiGHS does not do this). 
 
 GenX version 0.4 has the feature `ComputeConflict` in settings. If the model does not work, try setting `ComputeConflict = 1`, and the conflicting constraints will be returned.
 

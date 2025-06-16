@@ -14,8 +14,8 @@ This file contains the settings parameters required to run the Method of Morris 
 |Parameter| Column from the `Generators_data.csv` file containing uncertain parameters|
 |Group| Group the uncertain parameters that will be changed all at once while performing the sensitivity analysis. For example, if the fuel price of natural gas is uncertain, all generators consuming natural gas should be in the same group. Group name is user defined|
 |p_steps| Number of steps between upper and lower bound|
-|total\_num\_trajectory| Total number of trakectories through the design matrix|
-|num\_trajectory| Selected number of trajectories throigh the design matrix|
+|total\_num\_trajectory| Total number of trajectories through the design matrix|
+|num\_trajectory| Selected number of trajectories through the design matrix|
 |len\_design\_mat| Length of the design matrix|
 |policy| Name of the policy|
 

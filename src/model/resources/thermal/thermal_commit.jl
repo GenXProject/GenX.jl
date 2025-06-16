@@ -41,7 +41,7 @@ where decision $\nu_{y,z,t}$ designates the commitment state of generator cluste
 
 *Commitment state constraint linking start-up and shut-down decisions*
 
-Additionally, the following constarint maintains the commitment state variable across time, $\nu_{y,z,t}$, as the sum of the commitment state in the prior, $\nu_{y,z,t-1}$, period plus the number of units started in the current period, $\chi_{y,z,t}$, less the number of units shut down in the current period, $\zeta_{y,z,t}$:
+Additionally, the following constraint maintains the commitment state variable across time, $\nu_{y,z,t}$, as the sum of the commitment state in the prior, $\nu_{y,z,t-1}$, period plus the number of units started in the current period, $\chi_{y,z,t}$, less the number of units shut down in the current period, $\zeta_{y,z,t}$:
 
 ```math
 \begin{aligned}

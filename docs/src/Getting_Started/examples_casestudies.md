@@ -100,7 +100,7 @@ MyCase
 └── Run.jl
 ```
 
-In this example, `MyCase` will define a case with `Themal`, `Storage`, `Vre`, and `Hydro` resources, the `system` folder will provide the data for the demand, fuel, generators' variability, and network, the `policies` folder will include a CO2 cap, a minimum capacity requirement, and an energy share requirement, and the `settings` folder will contain the configuration files for the model. 
+In this example, `MyCase` will define a case with `Thermal`, `Storage`, `Vre`, and `Hydro` resources, the `system` folder will provide the data for the demand, fuel, generators' variability, and network, the `policies` folder will include a CO2 cap, a minimum capacity requirement, and an energy share requirement, and the `settings` folder will contain the configuration files for the model. 
 
 The `Run.jl` file should contain the following code:
 ```julia

@@ -90,7 +90,7 @@ end
         to begin at any time step during the simulation. Instead this integer describes
         the cadence of timesteps in which maintenance can begin. Must be at least 1.
     maint_dur: Number of timesteps that maintenance takes. Must be at least 1.
-    maint_freq_years: 1 is maintenannce every year,
+    maint_freq_years: 1 is maintenance every year,
         2 is maintenance every other year, etc. Must be at least 1.
     cap: Plant electrical capacity.
     vcommit: Symbol of vCOMMIT-like variable.

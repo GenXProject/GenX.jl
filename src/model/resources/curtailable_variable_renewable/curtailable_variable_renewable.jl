@@ -62,7 +62,7 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
         # For resource for which we are modeling hourly power output
         for y in VRE_POWER_OUT
             # Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
-            # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
+            # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximum available capacity limits.
             VRE_BINS = intersect(resource_id.(gen[resource_id.(gen) .>= y]),
                 resource_id.(gen[resource_id.(gen) .<= y + num_vre_bins(gen[y]) - 1]))
 
@@ -80,7 +80,8 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     for y in VRE_NO_POWER_OUT
         fix.(EP[:vP][y, :], 0.0, force = true)
     end
-    ##CO2 Polcy Module VRE Generation by zone
+
+    ##CO2 Policy Module VRE Generation by zone
     # We use the transpose here because eGenerationByZone is [1:Z, 1:T] and
     # ePowerBalanceDisp is [1:T, 1:Z].
     add_similar_to_expression!(EP[:eGenerationByZone], ePowerBalanceDisp')

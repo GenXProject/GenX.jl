@@ -20,7 +20,7 @@ The CO2 emissions from such a generator will be assumed to be zero without CCS a
 The CO2 emissions from generator $y$ at time $t$ are determined by total fuel 
 consumption (MMBTU) multiplied by the CO2 content of the fuel (tCO2/MMBTU), and by 
 (1 - Biomass [0 or 1] - CO2 capture fraction [a fraction, between 0 - 1]). 
-The CO2 capture fraction could be differernt during the steady-state and startup events
+The CO2 capture fraction could be different during the steady-state and startup events
 (generally startup events have a lower CO2 capture fraction), so we use distinct CO2 capture fractions
 to determine the emissions. 
 In short, the CO2 emissions for a generator depend on the CO2 emission factor from fuel combustion,
@@ -83,8 +83,8 @@ function co2!(EP::Model, inputs::Dict)
             end)
     else
         @info "Using the CO2 module to determine the CO2 emissions of CCS-equipped plants"
-        # CO2_Capture_Fraction refers to the CO2 capture rate of CCS equiped power plants at a steady state 
-        # CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equiped power plants during startup events
+        # CO2_Capture_Fraction refers to the CO2 capture rate of CCS equipped power plants at a steady state 
+        # CO2_Capture_Fraction_Startup refers to the CO2 capture rate of CCS equipped power plants during startup events
 
         @expression(EP, eEmissionsByPlant[y = 1:G, t = 1:T],
             if y in SINGLE_FUEL

@@ -3,7 +3,7 @@
 
 This function defines the operating constraints for allam cycle power plants subject to unit commitment constraints on power plant start-ups and shut-down decision ($y \in UC$).
 The capacity investment decisions and commitment and cycling (start-up, shut-down) of ASU and sCO2 turbine in allam cycle power systems are similar to constraints defined in thermal_commit.jl
-Operaional constraints include start-up, max ramping up/donw, max up/down time, min power level, and operational reserves.
+Operational constraints include start-up, max ramping up/donw, max up/down time, min power level, and operational reserves.
 """
 function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
@@ -124,11 +124,11 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
                 [t in setdiff(INTERIOR_SUBPERIODS,Up_Time_HOURS)], vCOMMIT_Allam[y,i,t] >= sum(vSTART_Allam[y,i,e] for e=(t-allam_dict[y, "up_time"][i]):t)
 
                 # cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-                # cUpTimeWrap constraint equivalant to: sum(vSTART_Allam[y,e] for e=(t-((t%p)-1):t))+sum(vSTART_Allam[y,e] for e=(p_max-(allam_dict[y, "up_time"][i])-(t%p))):p_max)
+                # cUpTimeWrap constraint equivalent to: sum(vSTART_Allam[y,e] for e=(t-((t%p)-1):t))+sum(vSTART_Allam[y,e] for e=(p_max-(allam_dict[y, "up_time"][i])-(t%p))):p_max)
                 [t in Up_Time_HOURS], vCOMMIT_Allam[y,i,t] >= sum(vSTART_Allam[y,i,e] for e=(t-((t%p)-1):t))+sum(vSTART_Allam[y,i,e] for e=((t+p-(t%p))-(allam_dict[y, "up_time"][i]-(t%p))):(t+p-(t%p)))
 
                 # cUpTimeStart:
-                # NOTE: Expression t+p-(t%p) is equivalant to "p_max"
+                # NOTE: Expression t+p-(t%p) is equivalent to "p_max"
                 [t in START_SUBPERIODS], vCOMMIT_Allam[y,i,t] >= vSTART_Allam[y,i,t]+sum(vSTART_Allam[y,i,e] for e=(hoursbefore(p, t, 1)-(allam_dict[y, "up_time"][i]-1)):hoursbefore(p, t, 1))
             end)
 
@@ -146,11 +146,11 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
                 [t in setdiff(INTERIOR_SUBPERIODS,Down_Time_HOURS)], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t] >= sum(vSHUT_Allam[y,i,e] for e=(t-allam_dict[y, "down_time"][i]):t)
 
                 # cDownTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
-                # cDownTimeWrap constraint equivalant to: eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,t] >= sum(vSHUT_Allam[y,e] for e=(t-((t%p)-1):t))+sum(vSHUT_Allam[y,e] for e=(p_max-(allam_dict[y, "down_time"][i]-(t%p))):p_max)
+                # cDownTimeWrap constraint equivalent to: eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,t] >= sum(vSHUT_Allam[y,e] for e=(t-((t%p)-1):t))+sum(vSHUT_Allam[y,e] for e=(p_max-(allam_dict[y, "down_time"][i]-(t%p))):p_max)
                 [t in Down_Time_HOURS], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t] >= sum(vSHUT_Allam[y,i,e] for e=(t-((t%p)-1):t))+sum(vSHUT_Allam[y,i,e] for e=((t+p-(t%p))-(allam_dict[y, "down_time"][i]-(t%p))):(t+p-(t%p)))
 
                 # cDownTimeStart:
-                # NOTE: Expression t+p-(t%p) is equivalant to "p_max"
+                # NOTE: Expression t+p-(t%p) is equivalent to "p_max"
                 [t in START_SUBPERIODS], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t]  >= vSHUT_Allam[y,i,t]+sum(vSHUT_Allam[y,i,e] for e=(hoursbefore(p, t, 1)-(allam_dict[y, "down_time"][i]-1)):hoursbefore(p, t, 1))
             end)
         end

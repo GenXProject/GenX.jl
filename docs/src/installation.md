@@ -16,7 +16,7 @@ Once you have downloaded GenX, you can install the dependencies by following the
 2\. Type `julia --project=.` to start an instance of the `julia` kernel with the `project` set to the current folder. The flag `--project=.` indicates that Julia will activate the project environment using the `Project.toml` present in the current folder, `.`. If running on Windows, the location of Julia can also be specified as e.g., `C:\julia-1.6.0\bin\julia.exe --project=.`.
 
 !!! tip "Tip"
-    The file `Project.toml` in the parent directory lists all of the dependencies and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` or `pkg> st` on the package manager command line in the Jula REPL (for more information on the Julia package manager, read the documentation for the [Pkg.jl](https://pkgdocs.julialang.org/v1/environments/) or for the [Julia standard library](https://docs.julialang.org/en/v1/stdlib/Pkg/)).
+    The file `Project.toml` in the parent directory lists all of the dependencies and their versions needed to run GenX. You can see all of the packages installed in your Julia environment and their version numbers by running `pkg> status` or `pkg> st` on the package manager command line in the Julia REPL (for more information on the Julia package manager, read the documentation for the [Pkg.jl](https://pkgdocs.julialang.org/v1/environments/) or for the [Julia standard library](https://docs.julialang.org/en/v1/stdlib/Pkg/)).
 
 !!! tip "Tip" 
     `julia --project` is a shortcut for `julia --project=.`
@@ -31,7 +31,7 @@ Once you have downloaded GenX, you can install the dependencies by following the
 !!! note "Note for Windows users" 
     On Windows there is an issue with the prepopulated `MUMPS_seq_jll v5.5.1` that prevents compilation of the solvers. To avoid this issue type `add MUMPS_seq_jll@5.4.1` after running instantiate.
 
-5\. Type `st` to check that the dependecies have been installed. If there is no error, it has been successful.
+5\. Type `st` to check that the dependencies have been installed. If there is no error, it has been successful.
 
 !!! tip "Tip" 
     Type the back key to come back to the `julia>` prompt from the package manager.

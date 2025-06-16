@@ -630,7 +630,7 @@ In Demand_data.csv, include the following:
     If 1, this designates that the model should time domain reduce the input data
      of all model stages together. Else if 0, [still in development] the model will time domain reduce only
      the first stage and will apply the periods of each other model stage to this set
-     of representative periods by closest Eucliden distance.
+     of representative periods by closest Euclidean distance.
 
 For co-located VRE-STOR resources, all capacity factors must be in the Generators_variability.csv file in addition
 to separate Vre_and_stor_solar_variability.csv and Vre_and_stor_wind_variability.csv files. The co-located solar PV
@@ -688,7 +688,7 @@ function cluster_inputs(inpath,
     # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
     mysetup_local["ParameterScale"] = 0  # Performing cluster and report outputs in user-provided units
 
-    # Define another local version of setup such that Multi-Stage Non-Concatentation TDR can iteratively read in the raw data
+    # Define another local version of setup such that Multi-Stage Non-Concatenation TDR can iteratively read in the raw data
     mysetup_MS = copy(mysetup)
     mysetup_MS["TimeDomainReduction"] = 0
     mysetup_MS["DoNotReadPeriodMap"] = 1
@@ -818,7 +818,7 @@ function cluster_inputs(inpath,
     AnnualTSeriesNormalized = DataFrame(Dict(OldColNames[c] => normProfiles[c]
     for c in 1:length(OldColNames)))
 
-    # Optional pre-scaling of demand in order to give it more preference in clutering algorithm
+    # Optional pre-scaling of demand in order to give it more preference in clustering algorithm
     if DemandWeight != 1   # If we want to value demand more/less than capacity factors. Assume nonnegative. LW=1 means no scaling.
         for c in demand_col_names
             AnnualTSeriesNormalized[!, Symbol(c)] .= AnnualTSeriesNormalized[!,
@@ -1065,7 +1065,7 @@ function cluster_inputs(inpath,
         M_Dict[parse(Int64, string(names(ClusteringInputDF)[i]))] = M[A[i]]
     end
 
-    # Add extreme periods into the clustering result with # of occurences = 1 for each
+    # Add extreme periods into the clustering result with # of occurrences = 1 for each
     ExtremeWksList = sort(ExtremeWksList)
     if UseExtremePeriods == 1
         if v
@@ -1079,7 +1079,7 @@ function cluster_inputs(inpath,
             push!(W, 1)
             A_idx += 1
         end
-        NClusters += length(ExtremeWksList) #NClusers from this point forward is the ending number of periods
+        NClusters += length(ExtremeWksList) #NClusters from this point forward is the ending number of periods
     end
 
     # Recreate A in numeric order (as opposed to ClusterInputDF order)
@@ -1113,7 +1113,7 @@ function cluster_inputs(inpath,
     FuelCols = [Symbol(fuel_col_names[i]) for i in 1:length(fuel_col_names)]
     ConstCol_Syms = [Symbol(ConstCols[i]) for i in 1:length(ConstCols)]
 
-    # Cluster Ouput: The original data at the medoids/centers
+    # Cluster Output: The original data at the medoids/centers
     ClusterOutputData = ModifiedData[:, Symbol.(M)]
 
     # Get zone-wise demand multipliers for later scaling in order for weighted-representative-total-zonal demand to equal original total-zonal demand

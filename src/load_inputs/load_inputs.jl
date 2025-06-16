@@ -70,7 +70,7 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_vre_stor_variability!(setup, path, inputs)
     end
 
-    # Read in hydrogen damand data
+    # Read in hydrogen demand data
     if setup["HydrogenMinimumProduction"] == 1
         load_hydrogen_demand!(setup, policies_path, inputs)
     end

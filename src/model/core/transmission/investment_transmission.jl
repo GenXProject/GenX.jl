@@ -14,7 +14,7 @@ Available transmission capacity between zones is set equal to the existing line'
 ```math
 \begin{aligned}
     &\varphi^{cap}_{l} = \overline{\varphi^{cap}_{l}} , &\quad \forall l \in (\mathcal{L} \setminus \mathcal{E} ),\forall t  \in \mathcal{T}\\
-    % trasmission expansion
+    % transmission expansion
     &\varphi^{cap}_{l} = \overline{\varphi^{cap}_{l}} + \bigtriangleup\varphi^{cap}_{l} , &\quad \forall l \in \mathcal{E},\forall t  \in \mathcal{T}        
 \end{aligned}
 ```
@@ -57,7 +57,7 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ## Transmission power flow and loss related expressions:
-    # Total availabile maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
+    # Total available maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
     if NetworkExpansion == 1
         @expression(EP, eAvail_Trans_Cap[l = 1:L],
             if l in EXPANSION_LINES
@@ -110,6 +110,6 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             cMaxLineReinforcement[l in EXPANSION_LINES],
             vNEW_TRANS_CAP[l]<=inputs["pMax_Line_Reinforcement"][l])
     end
-    #END network expansion contraints
+    #END network expansion constraints
 
 end
