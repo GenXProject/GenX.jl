@@ -22,28 +22,28 @@ Instructions for each policy type are listed below:
 
 Slack variables for Capacity Reserve Margin constraints are created when GenX detects the presence of the file `Capacity_reserve_margin_slack.csv` in the Inputs folder. 
 This file should contain two columns: one titled 'CRM_Constraint' naming the individual Capacity Reserve Margin constraints in the same order in which they are listed in the first row of `Capacity_reserve_margin.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 
-The units for these thresholds are $/MW.
+The units for these thresholds are USD/MW.
 
 ## CO2 Cap
 Slack variables for CO2 Cap constraints are created when GenX detects the presence of the file `CO2_cap_slack.csv` in the Inputs folder. 
-This file should contain two columns: one titled 'CO2_Cap_Constraint' naming the individual CO2 Cap constraints in the same order in which they are listed in the first row of `CO2_Cap.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint.  The units for these thresholds are $/ton. 
+This file should contain two columns: one titled 'CO2_Cap_Constraint' naming the individual CO2 Cap constraints in the same order in which they are listed in the first row of `CO2_Cap.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint.  The units for these thresholds are USD/ton. 
 The CO2 Cap slack variable itself is always in units of tons of CO2, even if the CO2 Cap is a rate-based cap.
 
 ## Energy Share Requirement
 
 Slack variables for Energy Share Requirement constraints are created when GenX detects the presence of the file `Energy_share_requirement_slack.csv` in the Inputs folder. 
 This file should contain two columns: one titled 'ESR_Constraint' naming the individual Energy Share Requirement constraints in the same order in which they are listed in the first row of `Energy_share_requirement.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 
-The units for these thresholds are \$/MWh.
+The units for these thresholds are USD/MWh.
 
 ## Minimum Capacity Requirement
 
 Slack variables for Minimum Capacity Requirement constraints are created when GenX detects the presence of a column titled 'PriceCap' in the file `Minimum_capacity_requirement.csv`. 
-This column contains the price thresholds for each Minimum Capacity Requirement constraint, in units of \$/MW. 
+This column contains the price thresholds for each Minimum Capacity Requirement constraint, in units of USD/MW. 
 
 ## Maximum Capacity Requirement
 
 Slack variables for Maximum Capacity Requirement constraints are created when GenX detects the presence of a column titled 'PriceCap' in the file `Maximum_capacity_requirement.csv`. 
-This column contains the price thresholds for each Maximum Capacity Requirement constraint, in units of \$/MW. 
+This column contains the price thresholds for each Maximum Capacity Requirement constraint, in units of USD/MW. 
 
 ## Slack Variables Results Files
 

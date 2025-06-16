@@ -158,7 +158,7 @@ end
 
 Marginal price for capacity constraint.
 This is equal to the dual variable of the capacity constraint.
-Returns a vector, with units of $/MW
+Returns a vector, with units of USD/MW
 """
 function capacity_reserve_margin_price(EP::Model,
         inputs::Dict,

@@ -480,7 +480,7 @@ StatsPlots.scatter!(xnames,netrevenue[!,"Revenue"],label="Revenue",color="black"
 
 ### Emissions
 
-The file `emmissions.csv` gives the total CO2 emmissions per zone for each hour GenX runs. The first three rows give the marginal CO2 abatement cost in $/ton CO2.
+The file `emmissions.csv` gives the total CO2 emmissions per zone for each hour GenX runs. The first three rows give the marginal CO2 abatement cost in USD/ton CO2.
 
 
 ```julia
