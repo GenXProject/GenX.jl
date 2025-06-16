@@ -322,7 +322,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Inv\_Cost\_Charge\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `Model = 2` ($/MW/year). |
 |Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology ($/MWh/year).|
 |Fixed\_OM\_Cost\_Charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `Model = 2`. |
-|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `Model = 2`. Otherwise 0 ($/MWh).|
+|Var\_OM\_Cost\_per\_MWh\_In | Variable operations and maintenance cost of the charging aspect of a storage technology ($/MWh), applicable to either `Model = 1` or `Model = 2`.|
 
 ##### Table 9b: Settings-specific columns in the Storage.csv file
 ---
