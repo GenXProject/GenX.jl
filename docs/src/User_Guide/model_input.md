@@ -445,10 +445,10 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Fixed\_OM\_Cost\_Charge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year).|
 |Var\_OM\_Cost\_per\_MWh\_Solar | Variable operations and maintenance cost of the solar PV component (multiplied by the inverter efficiency for AC terms) ($/MWh). |
 |Var\_OM\_Cost\_per\_MWh\_Wind | Variable operations and maintenance cost of the wind component ($/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` (multiplied by the inverter efficiency for AC terms) ($/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` (divided by the inverter efficiency for AC terms) ($/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Charge_AC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE ≥ 1` (multiplied by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE ≥ 1` (divided by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE ≥ 1` ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Charge_AC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE ≥ 1` ($/MWh). |
 |**Technical performance parameters**|
 |Self\_Disch  |[0,1], The power loss of storage component of each resource per hour (fraction loss per hour). |
 |EtaInverter |[0,1], Inverter efficiency representing losses from converting DC to AC power and vice versa for each technology |
