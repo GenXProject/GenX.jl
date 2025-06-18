@@ -42,7 +42,6 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         EP[:vFLOW][l,
             t]==(inputs["pDC_OPF_coeff_lt"][l]) *
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z))
-	
 
     # Maximum power flows, power flow on each transmission line cannot exceed maximum capacity of the line at any hour "t"
     @constraints(EP,
