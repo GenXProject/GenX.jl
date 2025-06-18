@@ -17,6 +17,7 @@ If a capacity reserve margin is modeled, variables for virtual charge, $\Pi^{CRM
 ```
 
 **Storage with symmetric charge and discharge capacity**
+
 For storage technologies with symmetric charge and discharge capacity (all $o \in \mathcal{O}^{sym}$), charge rate, $\Pi_{o,z,t}$, and virtual charge rate, $\Pi^{CRM}_{o,z,t}$, are jointly constrained by the total installed power capacity, $\Omega_{o,z}$. Since storage resources generally represent a `cluster' of multiple similar storage devices of the same type/cost in the same zone, GenX permits storage resources to simultaneously charge and discharge (as some units could be charging while others discharge), with the simultaenous sum of charge, $\Pi_{o,z,t}$, discharge, $\Theta_{o,z,t}$, virtual charge, $\Pi^{CRM}_{o,z,t}$, and virtual discharge, $\Theta^{CRM}_{o,z,t}$, also limited by the total installed power capacity, $\Delta^{total}_{o,z}$. These two constraints are as follows:
 ```math
 \begin{aligned}
@@ -34,7 +35,9 @@ If reserves are modeled, the following two constraints replace those above:
 ```
 where $f^{charge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while charging, $f^{discharge}_{o,z,t}$ is the contribution of storage resources to frequency regulation while discharging, and $r^{discharge}_{o,z,t}$ is the contribution of storage resources to upward reserves while discharging. Note that as storage resources can contribute to regulation and reserves while either charging or discharging, the proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources where the total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is the sum of the proxy variables.
 These constraints are created with the function [`storage_symmetric!()`](@ref) in ```storage_symmetric.jl```.
+
 **Storage with asymmetric charge and discharge capacity**
+
 For storage technologies with asymmetric charge and discharge capacities (all $o \in \mathcal{O}^{asym}$), charge rate, $\Pi_{o,z,t}$, is constrained by the total installed charge capacity, $\Delta^{total, charge}_{o,z}$, as follows:
 ```math
 \begin{aligned}
@@ -50,7 +53,9 @@ If reserves are modeled, the above constraint is replaced by the following:
 ```
 where $f^{+}_{y=o,z,t}$ is the contribution of storage resources to frequency regulation while charging.
 These constraints are created with the function [`storage_asymmetric!()`](@ref) in ```storage_asymmetric.jl```.
+
 **All storage resources**
+
 The following constraints apply to all storage resources, $o \in \mathcal{O}$, regardless of whether the charge/discharge capacities are symmetric or asymmetric.
 The following two constraints track the state of charge of the storage resources at the end of each time period, relating the volume of energy stored at the end of the time period, $\Gamma_{o,z,t}$, to the state of charge at the end of the prior time period, $\Gamma_{o,z,t-1}$, the charge and discharge decisions in the current time period, $\Pi_{o,z,t}, \Theta_{o,z,t}$, and the self discharge rate for the storage resource (if any), $\eta_{o,z}^{loss}$.  The first of these two constraints enforces storage inventory balance for interior time steps $(t \in \mathcal{T}^{interior})$, while the second enforces storage balance constraint for the initial time step $(t \in \mathcal{T}^{start})$.
 ```math
@@ -78,16 +83,20 @@ Alternatively, when modeling the entire year with multiple representative period
 In this implementation, energy exchange between representative periods is not permitted.
 When modeling representative time periods, GenX enables modeling of long duration energy storage which tracks state of charge (and state of charge held in reserve, if a capacity reserve margin is being modeled) between representative periods enable energy to be moved throughout the year.
 If there is more than one representative period and ```LDS``` has been enabled for resources in ```Generators.csv```, this function calls [`long_duration_storage!()`](@ref) in ```long_duration_storage.jl``` to enable this feature.
+
 The next constraint limits the volume of energy stored at any time, $\Gamma_{o,z,t}$, to be less than the installed energy storage capacity, $\Delta^{total, energy}_{o,z}$.
+In addition, charge rate $\Pi_{o,z,t}$ is constrained to be not greater than the difference between the total energy storage capacity, $\Delta^{total, energy}_{o,z}$ and the state of charge at the end of the previous time period, $\Gamma_{o,z,t-1}$, while accounting for charging losses, $\eta_{o,z}^{charge}$.
 Finally, the maximum combined discharge and virtual discharge rate for storage resources, $\Pi_{o,z,t} + \Pi^{CRM}_{o,z,t}$, is constrained to be less than the discharge power capacity, $\Omega_{o,z,t}$ or the state of charge at the end of the last period, $\Gamma_{o,z,t-1}$, whichever is less.
 ```math
 \begin{aligned}
 	&  \Gamma_{o,z,t} \leq \Delta^{total, energy}_{o,z} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}\\
+    &  \eta_{o,z}^{charge}\Pi_{o,z,t} \leq \Delta^{total, energy}_{o,z} - \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T} \\
 	&  \Theta_{o,z,t} + \Theta^{CRM}_{o,z,t} \leq \Delta^{total}_{o,z} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}\\
 	&  \Theta_{o,z,t} + \Theta^{CRM}_{o,z,t} \leq \Gamma_{o,z,t-1} & \quad \forall o \in \mathcal{O}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
 The above constraints are established in [`storage_all!()`](@ref) in ```storage_all.jl```.
+
 If reserves are modeled, two pairs of proxy variables $f^{charge}_{o,z,t}, f^{discharge}_{o,z,t}$ and $r^{charge}_{o,z,t}, r^{discharge}_{o,z,t}$ are created for storage resources, to denote the contribution of storage resources to regulation or reserves while charging or discharging, respectively. The total contribution to regulation and reserves, $f_{o,z,t}, r_{o,z,t}$ is then the sum of the proxy variables:
 ```math
 \begin{aligned}
