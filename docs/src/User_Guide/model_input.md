@@ -63,8 +63,9 @@ This input file contains input parameters related to: 1) definition of model zon
 | :------------ | :-----------|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
-|Network\_Lines | Numerical index for each network line. The length of this column is counted but the actual values are not used.|
-| z* (Network map) **OR** Start_Zone, End_Zone | See below |
+|Network\_zones | Unique names for each zone in the model. **Note**: Only the number of zones (i.e., the length of the column) is used; the specific values are not referenced in the model.|
+|Network\_Lines | Numerical index for each network line. **Note**: The length of this column is counted but the actual values are not used.|
+| z* (Network map) **OR** Start\_Zone, End\_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
@@ -75,7 +76,7 @@ This input file contains input parameters related to: 1) definition of model zon
 |Ohms | Line resistance in Ohms (used to calculate I^2R losses)|
 |kV | Line voltage in kV (used to calculate I^2R losses)|
 |**CapacityReserveMargin > 0**||
-|CapResExcl\_* | {-1,1,0} Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint, as well as whether the line flow is into or out of the constraint region. * represents the number of the capacity reserve margin constraint.|
+|CapRes\_Excl\_* | {-1,1,0} Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint, as well as whether the line flow is into or out of the constraint region. * represents the number of the capacity reserve margin constraint.|
 || 0 = the transmission line is not eligible/part of any capacity reserve constraint.|
 || -1 = the transmission line is eligible for the capacity reserve margin constraint and the designated direction of the transmission line is **inbound** to locational deliverability area (LDA) modeled by the capacity reserve margin constraint.|
 || 1 = the transmission line is eligible for the capacity reserve margin constraint and the designated direction of the transmission line is **outbound** from the locational deliverability area (LDA) modeled by the capacity reserve margin constraint.|
