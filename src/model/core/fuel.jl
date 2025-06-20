@@ -100,10 +100,6 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         return resources_in_zone_by_rid(gen, z)
     end
 
-    RESOURCES_BY_ZONE = map(1:Z) do z
-        return resources_in_zone_by_rid(gen, z)
-    end
-
     fuels = inputs["fuels"]
     fuel_costs = inputs["fuel_costs"]
     omega = inputs["omega"]

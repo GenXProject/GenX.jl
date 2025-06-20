@@ -1177,10 +1177,10 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
             add_to_expression!(eSoCBalStart_VRE_STOR[y, t], -1 / by_rid(y, :eff_down_dc), EP[:vP_DC_DISCHARGE][y, t])
         end
         for y in DC_CHARGE_CONSTRAINTSET
-            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], 1 / by_rid(y, :eff_up_dc), EP[:vP_DC_CHARGE][y, t])
+            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], by_rid(y, :eff_up_dc), EP[:vP_DC_CHARGE][y, t])
         end
         for y in AC_DISCHARGE_CONSTRAINTSET
-            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], 11 / by_rid(y, :eff_down_ac), EP[:vP_AC_DISCHARGE][y, t])
+            add_to_expression!(eSoCBalStart_VRE_STOR[y, t], -1 / by_rid(y, :eff_down_ac), EP[:vP_AC_DISCHARGE][y, t])
         end
         for y in AC_CHARGE_CONSTRAINTSET
             add_to_expression!(eSoCBalStart_VRE_STOR[y, t], by_rid(y, :eff_up_ac), EP[:vP_AC_CHARGE][y, t])
