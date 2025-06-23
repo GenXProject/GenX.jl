@@ -192,5 +192,5 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(eHydrogenValue[y, t] for y in ELECTROLYZERS; init = 0)
         end)
     @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
-    add_similar_to_expression!(EP[:eObj], -1.0, eTotalHydrogenValue)
+    add_to_expression!(EP[:eObj], -1.0, eTotalHydrogenValue)
 end

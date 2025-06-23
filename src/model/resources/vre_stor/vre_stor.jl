@@ -2459,7 +2459,7 @@ function vre_stor_capres!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(eCapResMarBalanceStor_VRE_STOR,
             eCapResMarBalanceStor_VRE_STOR_Virtual)
     end
-    add_to_expression!(EP[:eCapResMarBalance], EP[:eCapResMarBalanceStor_VRE_STOR])
+    add_similar_to_expression!(EP[:eCapResMarBalance], EP[:eCapResMarBalanceStor_VRE_STOR])
 
     ### OBJECTIVE FUNCTION ADDITIONS ###
 
