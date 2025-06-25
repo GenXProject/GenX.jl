@@ -348,6 +348,40 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             end
         end
 
+        dfHMRevenue = DataFrame()
+        if setup["HourlyMatchingRequirement"] == 1 && has_duals(EP)
+            if output_settings_d["WriteHourlyMatchingPrices"]
+                elapsed_time_hourly_matching_prices = @elapsed write_hourly_matching_prices(
+                    path,
+                    inputs,
+                    setup,
+                    EP)
+                println("Time elapsed for writing hourly matching prices is")
+                println(elapsed_time_hourly_matching_prices)
+            end
+
+            if output_settings_d["WriteHourlyMatchingRevenue"] ||
+               output_settings_d["WriteNetRevenue"]
+                 elapsed_time_hm_rev = @elapsed dfHMRevenue = write_hourly_matching_revenue(
+                     path,
+                     inputs,
+                     setup,
+                     EP)
+                 println("Time elapsed for writing hourly matching revenue is")
+                 println(elapsed_time_hm_rev)
+             end
+ 
+             if haskey(inputs, "dfHM_slack") &&
+                output_settings_d["WriteHourlyMatchingSlack"]
+                 elapsed_time_hm_slack = @elapsed write_hourly_matching_slack(path,
+                     inputs,
+                     setup,
+                     EP)
+                 println("Time elapsed for writing hourly matching slack is")
+                 println(elapsed_time_hm_slack)
+             end
+        end
+        
         dfResRevenue = DataFrame()
         if setup["CapacityReserveMargin"] == 1 && has_duals(EP)
             if output_settings_d["WriteReserveMargin"]
@@ -365,14 +399,14 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println(elapsed_time_rsv_margin_w)
             end
 
-            if output_settings_d["WriteVirtualDischarge"]
-                elapsed_time_virtual_discharge = @elapsed write_virtual_discharge(path,
-                    inputs,
-                    setup,
-                    EP)
-                println("Time elapsed for writing virtual discharge is")
-                println(elapsed_time_virtual_discharge)
-            end
+            #if output_settings_d["WriteVirtualDischarge"]
+            #    elapsed_time_virtual_discharge = @elapsed write_virtual_discharge(path,
+            #        inputs,
+            #        setup,
+            #        EP)
+            #    println("Time elapsed for writing virtual discharge is")
+            #    println(elapsed_time_virtual_discharge)
+            #end
 
             if output_settings_d["WriteReserveMarginRevenue"] ||
                output_settings_d["WriteNetRevenue"]
@@ -451,17 +485,10 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println("Time elapsed for writing hydrogen prices is")
                 println(elapsed_time_hydrogen_prices)
             end
-            if setup["HourlyMatching"] == 1 &&
-               output_settings_d["WriteHourlyMatchingPrices"]
-                elapsed_time_hourly_matching_prices = @elapsed write_hourly_matching_prices(
-                    path,
-                    inputs,
-                    setup,
-                    EP)
-                println("Time elapsed for writing hourly matching prices is")
-                println(elapsed_time_hourly_matching_prices)
-            end
         end
+        
+
+
 
         if output_settings_d["WriteNetRevenue"]
             elapsed_time_net_rev = @elapsed write_net_revenue(path,
@@ -470,6 +497,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 EP,
                 dfCap,
                 dfESRRev,
+                dfHMRevenue,
                 dfResRevenue,
                 dfChargingcost,
                 dfPower,

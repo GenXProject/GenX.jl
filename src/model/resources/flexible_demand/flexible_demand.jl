@@ -84,6 +84,13 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceFlex)
     end
 
+    # Hourly matching policy
+    if setup["HourlyMatchingRequirement"] == 1
+        @expression(EP, eHMFlex[t = 1:T, HM = 1:inputs["nHM"]],
+            sum(hm(gen[y], tag = HM) * (EP[:vCHARGE_FLEX][y, t]-2*EP[:vP][y, t])
+            for y in intersect(ids_with_policy(gen, hm, tag = HM), FLEX)))
+        add_similar_to_expression!(EP[:eHM], eHMFlex)
+    end
     ## Objective Function Expressions ##
 
     # Variable costs of "charging" for technologies "y" during hour "t" in zone "z"

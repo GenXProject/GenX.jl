@@ -138,12 +138,10 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     # Hourly matching constraints
-    if HourlyMatching == 1
-        QUALIFIED_STOR_ALL_BY_ZONE = map(1:Z) do z
-            return intersect(QUALIFIED_SUPPLY, STOR_ALL, resources_in_zone_by_rid(gen, z))
-        end
-        @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
-            -sum(vCHARGE[y, t] for y in QUALIFIED_STOR_ALL_BY_ZONE[z]))
+    if setup["HourlyMatchingRequirement"] == 1
+        @expression(EP, eHMCharge[t = 1:T, HM = 1:inputs["nHM"]],
+            -sum(hm(gen[y], tag = HM) * EP[:vCHARGE][y, t]
+            for y in intersect(ids_with_policy(gen, hm, tag = HM), STOR_ALL)))
         add_similar_to_expression!(EP[:eHM], eHMCharge)
     end
     ## Patrick Bryant's suggestion implementation - Start

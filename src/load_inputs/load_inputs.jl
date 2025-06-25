@@ -62,6 +62,10 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_energy_share_requirement!(setup, policies_path, inputs)
     end
 
+    if setup["HourlyMatchingRequirement"] == 1
+        load_hourly_matching_requirement!(setup, policies_path, inputs)
+    end
+
     if setup["CO2Cap"] >= 1
         load_co2_cap!(setup, policies_path, inputs)
     end

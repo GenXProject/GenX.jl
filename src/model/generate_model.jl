@@ -108,8 +108,8 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     # Hourly Matching Requirement
-    if setup["HourlyMatching"] == 1
-        create_empty_expression!(EP, :eHM, (T, Z))
+    if setup["HourlyMatchingRequirement"] == 1
+        create_empty_expression!(EP, :eHM, (T, inputs["nHM"]))
     end
 
     if setup["MinCapReq"] == 1
@@ -231,7 +231,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     # Energy Share Requirement
-    if setup["HourlyMatching"] == 1
+    if setup["HourlyMatchingRequirement"] == 1
         hourly_matching!(EP, inputs)
     end
 
