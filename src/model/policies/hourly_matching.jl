@@ -2,12 +2,12 @@
 	hourly_matching!(EP::Model, inputs::Dict)
 
 This module defines the hourly matching policy constraint. 
-This constraint can be enabled by setting `HourlyMatching==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{Qualified}$, indicated by `Qualified_Supply==1` in the `Resource_hourly_matching.csv` files) to be >= hourly consumption from electrolyzers in the zone and any charging by qualified storage within the zone used to help increase electrolyzer utilization:
+This constraint can be enabled by setting `HourlyMatchingRequirement==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{HM\_i}$, indicated by `HM_i==1` in the `Resource_hourly_matching.csv` file) to be >= hourly consumption from specified sources of demand.
 
 ```math
 \begin{aligned}
-	\sum_{y \in \{z \cap \mathcal{Qualified}\}} \Theta_{y,t} \geq \sum_{y \in \{z \cap \mathcal{EL}\}} \Pi_{y,t} + \sum_{y \in \{z \cap \mathcal{Qualified} \cap \mathcal{STOR}\}}  \Pi_{y,t}
-	\hspace{1cm} \forall z \in \mathcal{Z}, \forall t \in \mathcal{T},
+	\sum_{y \in \mathcal{hm}} \Theta_{y,t} - \sum_{y \in \mathcal{hm}} \Pi_{y,t} \geq \sum_{} D_{hm,t}
+	\hspace{1cm} \forall hm \in \mathcal{HM}, \forall t \in \mathcal{T},
 \end{aligned}
 ```
 
