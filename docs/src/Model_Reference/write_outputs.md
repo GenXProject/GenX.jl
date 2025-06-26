@@ -121,6 +121,11 @@ Modules = [GenX]
 Pages = ["write_reserve_margin_revenue.jl"]
 ```
 
+## Write Hourly Matching Revenue
+```@docs
+GenX.write_hourly_matching_revenue
+```
+
 ## Write Energy Share Requirement Revenue
 ```@autodocs
 Modules = [GenX]

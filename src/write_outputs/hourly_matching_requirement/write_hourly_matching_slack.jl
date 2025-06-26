@@ -1,3 +1,10 @@
+@doc raw"""
+	write_hourly_matching_slack(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+
+Function for reporting the value of the slack variable for each hourly matching constraint in each timestep and the total objective function cost.
+    GenX will print this file only when an hourly matching requirement is modeled, an optional slack variable is created, and the shadow price can be obtained form the solver.
+"""
+
 function write_hourly_matching_slack(path::AbstractString,
         inputs::Dict,
         setup::Dict,

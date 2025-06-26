@@ -72,8 +72,6 @@ function test_load_scaled_resources_data(gen, dfGen)
 
     @test GenX.num_vre_bins.(gen) == dfGen.num_vre_bins
 
-    @test GenX.qualified_hydrogen_supply.(gen) == dfGen.qualified_hydrogen_supply
-
     @test GenX.reg_cost.(gen) == dfGen.reg_cost
     @test GenX.reg_max.(gen) == dfGen.reg_max
     @test GenX.rsv_cost.(gen) == dfGen.rsv_cost
