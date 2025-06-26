@@ -39,7 +39,7 @@ this output is always available; when solving a mixed integer linear program, th
 be calculated only if `WriteShadowPrices` is activated.
 
     Returns a matrix of size (T, Z).
-    Values have units of $/MWh
+    Values have units of USD/MWh
 """
 function locational_marginal_price(EP::Model, inputs::Dict, setup::Dict)::Matrix{Float64}
     ω = inputs["omega"]

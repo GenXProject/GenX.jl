@@ -27,7 +27,7 @@ The following tables summarize the model settings parameters and their default/p
 ||1 = constraints account for energy lost. |
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results there.|
 ||0 = Use the data in the main case folder; do not perform clustering.|
-|VirtualChargeDischargeCost | Hypothetical cost of charging and discharging storage resources (in $/MWh).|
+|VirtualChargeDischargeCost | Hypothetical cost of charging and discharging storage resources (in USD/MWh).|
 |StorageVirtualDischarge | Flag to enable contributions that a storage device makes to the capacity reserve margin without generating power.|
 ||1 = activate the virtual discharge of storage resources.|
 ||0 = do not activate the virtual discharge of storage resources.|

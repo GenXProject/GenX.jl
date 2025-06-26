@@ -37,15 +37,15 @@ Reports optimal objective function value and contribution of each term by zone.
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| cTotal |Total objective function value |$ |
-| cFix |Total annualized investment and fixed operating & maintainenance (FOM) costs associated with all resources |$ |
-| cVar |Total annual variable cost associated with all resources; includes fuel costs for thermal plants |$|
-| cNSE |Total annual cost of non-served energy |$|
-| cStart |Total annual cost of start-up of thermal power plants| $|
-| cUnmetRsv |Total annual cost of not meeting time-dependent operating reserve (spinning) requirements |$ |
-| cNetworkExp |Total cost of network expansion |$|
-| cEmissionsRevenue |Total and zonal emissions revenue |$ |
-| cEmissionsCost |Total an zonal emissions cost |$ |
+| cTotal |Total objective function value |USD |
+| cFix |Total annualized investment and fixed operating & maintainenance (FOM) costs associated with all resources |USD |
+| cVar |Total annual variable cost associated with all resources; includes fuel costs for thermal plants |USD |
+| cNSE |Total annual cost of non-served energy |USD |
+| cStart |Total annual cost of start-up of thermal power plants| USD |
+| cUnmetRsv |Total annual cost of not meeting time-dependent operating reserve (spinning) requirements |USD |
+| cNetworkExp |Total cost of network expansion |USD |
+| cEmissionsRevenue |Total and zonal emissions revenue |USD |
+| cEmissionsCost |Total an zonal emissions cost |USD |
 
 ### 1.3 emissions.csv
 
@@ -55,7 +55,7 @@ Reports CO2 emissions by zone at each hour; an annual sum row will be provided. 
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-|CO_2\_price |Marginal CO2 abatement cost associated with constraint on maximum annual CO2 emissions; will be same across zones if CO2 emissions constraint is applied for the entire region and not zone-wise |\$/ tonne CO2. |
+|CO_2\_price |Marginal CO2 abatement cost associated with constraint on maximum annual CO2 emissions; will be same across zones if CO2 emissions constraint is applied for the entire region and not zone-wise |USD/ tonne CO2. |
 
 ### 1.4 nse.csv
 
@@ -83,8 +83,8 @@ Reports computational performance of the model and objective function related in
 | :------------ | :-----------|:-----------|
 |Status | termination criteria (optimal, timelimit etc.).||
 |solve | Solve time including time for pre-solve |seconds |
-|Objval | Optimal objective function value |$|
-|Objbound | Best objective lower bound | $ |
+|Objval | Optimal objective function value |USD |
+|Objbound | Best objective lower bound | USD |
 |FinalMIPGap |Optimality gap at termination in case of a mixed-integer linear program (MIP gap); when using Gurobi, the lower bound and MIP gap is reported excluding constant terms (E.g. fixed cost of existing generators that cannot be retired) in the objective function and hence may not be directly usable. |Fraction|
 
 ### 1.9 NetRevenue.csv
@@ -95,23 +95,23 @@ This file summarizes the cost, revenue and profit for each generation technology
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| Fixed\_OM\_cost\_MW | Fixed Operation and Maintenance cost of the MW capacity. |$|
-| Fixed\_OM\_cost\_MWh| Fixed Operation and Maintenance cost of the MWh capacity. Only applicable to energy storage.| $ |
-| Var\_OM\_cost\_out| Variable Operation and Maintenance cost of the power generation or discharge. |$ |
-| Var\_OM\_cost\_in |Variable Operation and Maintenance cost of the power charge/pumping. Only applicable to energy storage. |$ |
-| Fuel\_cost| Fuel cost of the power generation. Only applicable to generation that burns fuel. |$ |
-| Charge\_cost |Cost of charging power (due to the payment for electricity) Only applicable to energy storage. |$|
-| EmissionsCost| Cost of buying emission credit. |$ |
-| StartCost |Cost of generator start-up. |$ |
-| Inv\_cost\_MW |Cost of building MW capacity. |$ |
-| Inv\_cost\_MWh| Cost of building MWh capacity. |$ |
-| EnergyRevenue |Revenue of generating power.| $ |
-| SubsidyRevenue| Revenue of Min\_Cap subsidy. |$ |
-| ReserveMarginRevenue| Revenue earned from capacity reserve margin constraints. |$|
-| ESRRevenue| Revenue selling renewable/clean energy credits. |$ |
-| Revenue| Total Revenue.| $ |
-| Cost| Total Cost. |$ |
-| Profit |Revenue minus Cost. |$ |
+| Fixed\_OM\_cost\_MW | Fixed Operation and Maintenance cost of the MW capacity. |USD |
+| Fixed\_OM\_cost\_MWh| Fixed Operation and Maintenance cost of the MWh capacity. Only applicable to energy storage.| USD |
+| Var\_OM\_cost\_out| Variable Operation and Maintenance cost of the power generation or discharge. |USD |
+| Var\_OM\_cost\_in |Variable Operation and Maintenance cost of the power charge/pumping. Only applicable to energy storage. |USD |
+| Fuel\_cost| Fuel cost of the power generation. Only applicable to generation that burns fuel. |USD |
+| Charge\_cost |Cost of charging power (due to the payment for electricity) Only applicable to energy storage. |USD |
+| EmissionsCost| Cost of buying emission credit. |USD |
+| StartCost |Cost of generator start-up. |USD |
+| Inv\_cost\_MW |Cost of building MW capacity. |USD |
+| Inv\_cost\_MWh| Cost of building MWh capacity. |USD |
+| EnergyRevenue |Revenue of generating power.| USD |
+| SubsidyRevenue| Revenue of Min\_Cap subsidy. |USD |
+| ReserveMarginRevenue| Revenue earned from capacity reserve margin constraints. |USD |
+| ESRRevenue| Revenue selling renewable/clean energy credits. |USD |
+| Revenue| Total Revenue.| USD |
+| Cost| Total Cost. |USD |
+| Profit |Revenue minus Cost. |USD |
 
 ## 2 Settings-specific outputs
 
@@ -123,20 +123,20 @@ This file includes the time-dependent capacity value calculated for each generat
 
 <!-- #### 2.2 ExportRevenue.csv
 
-This file includes the export revenue in $ of each zone. GenX will print this file only when a network is present and Locational Marginal Price (LMP) data is available to the GenX. The Total row includes the time-step-weighted summation of the time-dependent values shown below. For each time-step, the export revenue is calculated as the net outbound powerflow multiplied by the LMP. It is noteworthy that this export revenue is already part of the generation revenue, and the user should not double count.
+This file includes the export revenue in USD of each zone. GenX will print this file only when a network is present and Locational Marginal Price (LMP) data is available to the GenX. The Total row includes the time-step-weighted summation of the time-dependent values shown below. For each time-step, the export revenue is calculated as the net outbound powerflow multiplied by the LMP. It is noteworthy that this export revenue is already part of the generation revenue, and the user should not double count.
 
 
 #### 2.3 Importcost.csv
 
-This file includes the import cost in $ of each zone. GenX will print this file only when a network is present and Locational Marginal Price (LMP) data is available to the GenX. The Total row includes the time-step -weighted summation of the time-dependent values shown below. For each time step, the import cost is calculated as the net inbound powerflow multiplied by the LMP. It is noteworthy that this import cost is already part of the load payment, and the user should not double count. -->
+This file includes the import cost in USD of each zone. GenX will print this file only when a network is present and Locational Marginal Price (LMP) data is available to the GenX. The Total row includes the time-step -weighted summation of the time-dependent values shown below. For each time step, the import cost is calculated as the net inbound powerflow multiplied by the LMP. It is noteworthy that this import cost is already part of the load payment, and the user should not double count. -->
 
 ### 2.2 EnergyRevenue.csv
 
-This file includes the energy revenue in $ earned by each generator through injecting into the grid. Only annual sum values are available.
+This file includes the energy revenue in USD earned by each generator through injecting into the grid. Only annual sum values are available.
 
 ### 2.3 ChargingCost.csv
 
-This file includes the charging cost  in $ of earned by each generator through withdrawing from the grid. Only annual sum values are available.
+This file includes the charging cost  in USD of earned by each generator through withdrawing from the grid. Only annual sum values are available.
 
 ### 2.4 ReserveMargin.csv
 
@@ -148,15 +148,15 @@ This file includes the capacity revenue earned by each generator listed in the i
 
 ### 2.6 ESR\_prices.csv
 
-This file includes the renewable/clean energy credit price of each modeled RPS/CES constraint. GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. The unit is $/MWh.
+This file includes the renewable/clean energy credit price of each modeled RPS/CES constraint. GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. The unit is USD/MWh.
 
 ### 2.7 ESR\_Revenue.csv
 
-This file includes the renewable/clean credit revenue earned by each generator listed in the input file. GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. Each row corresponds to a generator, and each column starting from the 6th to the second last is the total revenue earned from each RPS constraint. The revenue is calculated as the total annual generation (if elgible for the corresponding constraint) multiplied by the RPS/CES price. The last column is the total revenue received from all constraint. The unit is $.
+This file includes the renewable/clean credit revenue earned by each generator listed in the input file. GenX will print this file only when RPS/CES is modeled and the shadow price can be obtained form the solver. Each row corresponds to a generator, and each column starting from the 6th to the second last is the total revenue earned from each RPS constraint. The revenue is calculated as the total annual generation (if elgible for the corresponding constraint) multiplied by the RPS/CES price. The last column is the total revenue received from all constraint. The unit is USD.
 
 ### 2.8 SubsidyRevenue.csv
 
-This file includes subsidy revenue earned if a generator specified Min\_Cap is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is $.
+This file includes subsidy revenue earned if a generator specified Min\_Cap is provided in the input file. GenX will print this file only the shadow price can be obtained form the solver. Do not confuse this with the Minimum Capacity Carveout constraint, which is for a subset of generators, and a separate revenue term will be calculated in other files. The unit is USD.
 
 ## 3. Resources-specific outputs
 

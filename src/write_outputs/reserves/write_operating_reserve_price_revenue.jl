@@ -58,7 +58,7 @@ end
 Operating regulation price for each time step.
 This is equal to the dual variable of the regulation requirement constraint.
 
-    Returns a vector, with units of $/MW
+    Returns a vector, with units of USD/MW
 """
 
 function operating_regulation_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
@@ -75,7 +75,7 @@ end
 Operating reserve price for each time step.
 This is equal to the dual variable of the reserve requirement constraint.
 
-    Returns a vector, with units of $/MW
+    Returns a vector, with units of USD/MW
 """
 
 function operating_reserve_price(EP::Model, inputs::Dict, setup::Dict)::Vector{Float64}
