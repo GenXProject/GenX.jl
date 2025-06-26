@@ -1,0 +1,4 @@
+Resource,Min_Cap_1,Min_Cap_2,Min_Cap_3
+EIC_storage_metalair_advanced_0,1,0,0
+TRE_storage_metalair_advanced_0,0,1,0
+WECC_storage_metalair_advanced_0,0,0,1

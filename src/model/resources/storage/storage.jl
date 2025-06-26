@@ -128,22 +128,37 @@ Finally, the constraints on maximum discharge rate are replaced by the following
 ```
 The above reserve related constraints are established by ```storage_all_operation!()``` in ```storage_all.jl```
 """
-function storage!(EP::Model, inputs::Dict, setup::Dict)
-    println("Storage Resources Module")
-    gen = inputs["RESOURCES"]
-    T = inputs["T"]
+function storage!(EP, inputs::Dict, setup::Dict)
+    
+    investment_storage!(EP,inputs,setup)
+    
+    operation_storage!(EP,inputs,setup)
+    
+end
+
+function investment_storage!(EP, inputs::Dict, setup::Dict)
+    println("Investment Storage Resources Module")
+
     STOR_ALL = inputs["STOR_ALL"]
-
-    p = inputs["hours_per_subperiod"]
-    rep_periods = inputs["REP_PERIOD"]
-
-    EnergyShareRequirement = setup["EnergyShareRequirement"]
-    CapacityReserveMargin = setup["CapacityReserveMargin"]
-    IncludeLossesInESR = setup["IncludeLossesInESR"]
-    StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
     if !isempty(STOR_ALL)
         investment_energy!(EP, inputs, setup)
+    end
+
+    if !isempty(inputs["STOR_ASYMMETRIC"])
+        investment_charge!(EP, inputs, setup)
+    end
+
+end
+
+function operation_storage!(EP, inputs::Dict, setup::Dict)
+    println("Operation Storage Resources Module")
+
+    STOR_ALL = inputs["STOR_ALL"]
+
+    rep_periods = inputs["REP_PERIOD"]
+
+    if !isempty(STOR_ALL)
         storage_all!(EP, inputs, setup)
 
         # Include Long Duration Storage only when modeling representative periods and long-duration storage
@@ -153,7 +168,6 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     if !isempty(inputs["STOR_ASYMMETRIC"])
-        investment_charge!(EP, inputs, setup)
         storage_asymmetric!(EP, inputs, setup)
     end
 
@@ -161,37 +175,4 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
         storage_symmetric!(EP, inputs, setup)
     end
 
-    # ESR Lossses
-    if EnergyShareRequirement >= 1
-        nESR = inputs["nESR"]
-        dfESR = inputs["dfESR"]
-        if IncludeLossesInESR == 1
-            @expression(EP,
-                eESRStor[ESR = 1:nESR],
-                sum(dfESR[z, ESR] * sum(EP[:eELOSS][y]
-                    for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
-                for z in findall(x -> x > 0, dfESR[:, ESR])))
-            add_similar_to_expression!(EP[:eESR], -eESRStor)
-        end
-    end
-
-    # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
-        vP = EP[:vP]
-        vCHARGE = EP[:vCHARGE]
-        nCRMZones = inputs["NCapacityReserveMargin"]
-        @expression(EP,
-            eCapResMarBalanceStor[res = 1:nCRMZones, t = 1:T],
-            sum(derating_factor(gen[y], tag = res) * (vP[y, t] - vCHARGE[y, t])
-            for y in STOR_ALL))
-        if StorageVirtualDischarge > 0
-            @expression(EP,
-                eCapResMarBalanceStorVirtual[res = 1:nCRMZones, t = 1:T],
-                sum(derating_factor(gen[y], tag = res) *
-                    (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
-                for y in STOR_ALL))
-            add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
-        end
-        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
-    end
 end

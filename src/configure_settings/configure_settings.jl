@@ -39,7 +39,10 @@ function default_settings()
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
         "ObjScale" => 1,
-        "CoolingHeatingHourlyMatching" => 0,)
+        "CoolingHeatingHourlyMatching" => 0,
+        "Benders"=>0,
+        "LDES_Feasible"=>1,
+        "IntegerInvestments"=>0)
 end
 
 @doc raw"""
@@ -96,6 +99,24 @@ function validate_settings!(settings::Dict{Any, Any})
     if settings["EnableJuMPStringNames"] == 0 && settings["ComputeConflicts"] == 1
         settings["EnableJuMPStringNames"] = 1
     end
+
+    if settings["EnableJuMPStringNames"] == 0 && settings["Benders"] == 1
+        settings["EnableJuMPStringNames"] = 1
+    end
+    
+    if settings["MultiStage"] == 1 && settings["Benders"] == 1
+        Base.depwarn("""Multistage and Benders are not integrated yet, deactivating Benders.""",
+            :validate_settings!, force = true)
+        settings["Benders"] = 0;
+    end
+
+    if settings["ModelingToGenerateAlternatives"] == 1 && settings["Benders"] == 1
+        Base.depwarn("""MGA and Benders are not integrated yet, deactivating Benders.""",
+            :validate_settings!, force = true)
+        settings["Benders"] = 0;
+    end
+
+
 end
 
 function default_writeoutput()

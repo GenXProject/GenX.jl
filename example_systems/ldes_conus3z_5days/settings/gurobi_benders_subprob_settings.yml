@@ -1,0 +1,6 @@
+# Gurobi Solver Parameters
+Method: 2                   # Algorithm used to solve continuous models (including MIP root relaxation). (Default -1)
+MIPGap: 1e-3                  # Relative (p.u. of optimal) mixed integer optimality tolerance for MIP problems (ignored otherwise). (Default 1e-4)
+BarConvTol: 1e-3          # Barrier convergence tolerance (determines when barrier terminates). (Default 1e-8)
+Crossover: 1                 # Barrier crossver strategy. -1=automatic, 0=off (Default -1)
+Threads: 1

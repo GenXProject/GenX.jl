@@ -35,7 +35,15 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
     mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
-        run_genx_case_simple!(case, mysetup, optimizer)
+        if mysetup["Benders"] == 0
+            run_genx_case_simple!(case, mysetup, optimizer)
+        else
+            benders_settings_path = get_settings_path(case, "benders_settings.yml")
+            mysetup_benders = configure_benders(benders_settings_path) 
+            mysetup = merge(mysetup,mysetup_benders);
+
+            run_genx_case_benders!(case, mysetup)
+        end
     else
         run_genx_case_multistage!(case, mysetup, optimizer)
     end
@@ -202,4 +210,54 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     # Step 5) Write DDP summary outputs
 
     write_multi_stage_outputs(mystats_d, outpath, mysetup, inputs_dict)
+end
+
+
+function run_genx_case_benders!(case::AbstractString, mysetup::Dict)
+    settings_path = get_settings_path(case)    
+    ### Cluster time series inputs if necessary and if specified by the user
+    if mysetup["TimeDomainReduction"] == 1
+        TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
+        system_path = joinpath(case, mysetup["SystemFolder"])
+        prevent_doubled_timedomainreduction(system_path)
+        if !time_domain_reduced_files_exist(TDRpath)
+            println("Clustering Time Series Data (Grouped)...")
+            cluster_inputs(case, settings_path, mysetup)
+        else
+            println("Time Series Data Already Clustered.")
+        end
+    end
+    mysetup["settings_path"] = settings_path;
+
+    myinputs = load_inputs(mysetup, case);
+    myinputs_decomp = separate_inputs_subperiods(myinputs);
+
+    benders_inputs = generate_benders_inputs(mysetup,myinputs,myinputs_decomp)
+
+    planning_problem, planning_sol,LB_hist,UB_hist,cpu_time,feasibility_hist  = benders(benders_inputs,mysetup);
+
+    println("Benders decomposition took $(cpu_time[end]) seconds to run")
+
+    println("Writing Output")
+
+    if mysetup["BD_Stab_Method"]=="int_level_set" 
+        outputs_path = joinpath(case, "results_benders_int_level_set")
+    else
+        outputs_path = joinpath(case, "results_benders")
+    end
+
+    if mysetup["OverwriteResults"] == 1
+		# Overwrite existing results if dir exists
+		# This is the default behaviour when there is no flag, to avoid breaking existing code
+		if !(isdir(outputs_path))
+		    mkdir(outputs_path)
+		end
+	else
+		# Find closest unused ouput directory name and create it
+		outputs_path = choose_output_dir(outputs_path)
+		mkdir(outputs_path)
+	end
+    
+    elapsed_time = @elapsed write_benders_output(LB_hist,UB_hist,cpu_time,feasibility_hist,outputs_path,mysetup,myinputs,planning_problem);
+
 end

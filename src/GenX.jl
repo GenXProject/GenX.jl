@@ -12,6 +12,7 @@ export cluster_inputs
 export mga
 export morris
 export choose_output_dir
+export restr_casefolder
 
 # Multi-stage methods
 export run_ddp
@@ -39,6 +40,10 @@ using HiGHS
 using Logging
 
 using PrecompileTools: @compile_workload
+using Distributed
+using DistributedArrays
+using ClusterManagers
+using Gurobi
 
 # Global scaling factor used when ParameterScale is on to shift values from MW to GW
 # DO NOT CHANGE THIS (Unless you do so very carefully)
@@ -46,6 +51,12 @@ using PrecompileTools: @compile_workload
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 const ModelScalingFactor = 1e+3
+
+const GRB_ENV = Ref{Gurobi.Env}()
+function __init__()
+    GRB_ENV[] = Gurobi.Env()
+    return
+end
 
 """
 An abstract type that should be subtyped for users creating GenX resources.
@@ -80,4 +91,6 @@ include_all_in_folder("additional_tools")
 
 include("startup/genx_startup.jl")
 
+include_all_in_folder("benders") 
+ 
 end

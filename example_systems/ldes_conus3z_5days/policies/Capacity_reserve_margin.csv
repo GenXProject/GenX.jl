@@ -1,0 +1,4 @@
+region,Network_zones,CapRes_1,CapRes_2,CapRes_3
+EIC,z1,0.1572,0.0,0.0
+TRE,z2,0.0,0.1375,0.0
+WECC,z3,0.0,0.0,0.1538

@@ -11,6 +11,10 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
     HourlyMatching = setup["HourlyMatching"]
 
+    EnergyShareRequirement = setup["EnergyShareRequirement"]
+    IncludeLossesInESR = setup["IncludeLossesInESR"]
+    StorageVirtualDischarge = setup["StorageVirtualDischarge"]
+    
     virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
 
     T = inputs["T"]     # Number of time steps (hours)
@@ -30,6 +34,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     eTotalCapEnergy = EP[:eTotalCapEnergy]
     vP = EP[:vP]
+
 
     ### Variables ###
 
@@ -72,6 +77,21 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
     add_to_expression!(EP[:eObj], eTotalCVarIn)
 
     if CapacityReserveMargin
+        @expression(EP,
+        eCapResMarBalanceStor[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+        sum(derating_factor(gen[y], tag = res) * (EP[:vP][y, t] - EP[:vCHARGE][y, t])
+        for y in STOR_ALL))
+        if StorageVirtualDischarge > 0
+            @expression(EP,
+                eCapResMarBalanceStorVirtual[res = 1:inputs["NCapacityReserveMargin"],
+                    t = 1:T],
+                sum(derating_factor(gen[y], tag = res) *
+                    (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
+                for y in STOR_ALL))
+            add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
+        end
+        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
+        
         #Variable costs of "virtual charging" for technologies "y" during hour "t" in zone "z"
         @expression(EP,
             eCVar_in_virtual[y in STOR_ALL, t = 1:T],
@@ -92,6 +112,23 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eTotalCVarOut_virtual, sum(eTotalCVarOutT_virtual[t] for t in 1:T))
         EP[:eObj] += eTotalCVarOut_virtual
     end
+    # ESR Lossses
+    if EnergyShareRequirement >= 1
+        if IncludeLossesInESR == 1
+            @expression(EP,
+                eESRStor[ESR = 1:inputs["nESR"]],
+                sum(inputs["dfESR"][z, ESR] * sum(EP[:eELOSS][y]
+                    for y in intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
+                for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+            add_similar_to_expression!(EP[:eESR], -eESRStor)
+        end
+    end
+
+    # From CO2 Policy module
+    expr = @expression(EP,
+        [z = 1:Z],
+        sum(EP[:eELOSS][y] for y in intersect(STOR_ALL, resources_in_zone_by_rid(gen, z))))
+    add_similar_to_expression!(EP[:eELOSSByZone], expr)
 
     ## Power Balance Expressions ##
 
@@ -142,14 +179,14 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(EP[:eHM], eHMCharge)
     end
 
-    # Storage discharge and charge power (and reserve contribution) related constraints:
-    storage_all_operation!(EP, inputs, setup)
+    # # Storage discharge and charge power (and reserve contribution) related constraints:
+    # storage_all_operation!(EP, inputs, setup)
 
-    # From CO2 Policy module
-    expr = @expression(EP,
-        [z = 1:Z],
-        sum(eELOSS[y] for y in intersect(STOR_ALL, resources_in_zone_by_rid(gen, z))))
-    add_similar_to_expression!(EP[:eELOSSByZone], expr)
+    # # From CO2 Policy module
+    # expr = @expression(EP,
+    #     [z = 1:Z],
+    #     sum(eELOSS[y] for y in intersect(STOR_ALL, resources_in_zone_by_rid(gen, z))))
+    # add_similar_to_expression!(EP[:eELOSSByZone], expr)
 
     # Capacity Reserve Margin policy
     if CapacityReserveMargin

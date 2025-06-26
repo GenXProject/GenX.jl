@@ -1,0 +1,5 @@
+BD_ConvTol: 1e-3 
+BD_MaxIter : 3000
+BD_MaxCpuTime: 172800
+BD_Stab_Method: "int_level_set" #options: int_level_set, off
+BD_StabParam: 0.5
