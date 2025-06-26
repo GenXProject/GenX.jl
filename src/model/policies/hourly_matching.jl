@@ -3,10 +3,13 @@
 
 This module defines the hourly matching policy constraint. 
 This constraint can be enabled by setting `HourlyMatchingRequirement==1` in `genx_settings.yml`) requires generation from qualified resources ($y \in \mathcal{HM\_i}$, indicated by `HM_i==1` in the `Resource_hourly_matching.csv` file) to be >= hourly consumption from specified sources of demand.
+Hourly demand for each constraint is specified as an absolute value time series via the `Hourly_matching_requirement.csv` input file, or as a fraction of total hourly demand in each zone via the optional `Hourly_matching_requirement_zonal.csv` input file.
+An hourly matching target percentage for each constraint is specified in the first row of `Hourly_matching_requirement.csv`.
+If the `Hourly_matching_requirement_slack.csv` file is present, it will be used to define a slack variable for each constraint, which can be used to further relax the constraint at a penalty to the objective function. 
 
 ```math
 \begin{aligned}
-	\sum_{y \in \mathcal{hm}} \Theta_{y,t} - \sum_{y \in \mathcal{hm}} \Pi_{y,t} \geq \sum_{} D_{hm,t}
+	\sum_{y \in \mathcal{hm}} \Theta_{y,t} - \sum_{y \in \mathcal{hm}} \Pi_{y,t} \geq \sum_{} D_{hm,t} + \sum_{} \mathcal{Shortfall}_{hm,t}
 	\hspace{1cm} \forall hm \in \mathcal{HM}, \forall t \in \mathcal{T},
 \end{aligned}
 ```

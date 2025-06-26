@@ -14,10 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Models running with, non-default, solvers Cbc and Clp will fail unless
 `"EnableJuMPDirectMode"` is set to false (#835).
 - Improve `@expressions` performance by pre-processing sets (#815).
+- A generalized hourly matching policy module (#855).
 
 ### Fixed
 - Fix call to `get_retirement_stage` by casting `lifetime` to integer (#840).
 - Modify `storage_all.jl` to prevent micro-charging/discharging close to capacity (#836).
+- Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
 
 ### Changed
 - Replace `+=` and `-=` with `add_to_expression!` and `add_similar_to_expression!`
