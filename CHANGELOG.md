@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Rename `Transmission_NetExport` to `Transmission_NetImport` in `power_balance.csv` (#853).
+
 ## [0.4.5] - 2025-07-07
 
 ### Added
