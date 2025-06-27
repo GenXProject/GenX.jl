@@ -2,3 +2,4 @@ Resource,HM_1
 solar_pv,1
 onshore_wind,0
 battery_for_electrolyzer,1
+electrolyzer,1

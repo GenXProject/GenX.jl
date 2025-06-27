@@ -33,7 +33,7 @@ optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 
 # Test all the results
 ## Test loading functions and api for hourly matching constraint
-@test GenX.hm.(inputs["RESOURCES"], tag = 1) == [0, 1, 1, 0, 1, 1]
+@test GenX.hm.(inputs["RESOURCES"], tag = 1) == [0, 1, 0, 0, 1, 1]
 
 ## Test the objective value
 test_result = @test obj_test≈obj_true atol=optimal_tol
