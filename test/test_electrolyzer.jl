@@ -12,8 +12,7 @@ genx_setup = Dict("Trans_Loss_Segments" => 1,
     "UCommit" => 2,
     "StorageLosses" => 1,
     "ParameterScale" => 1,
-    "HourlyMatching" => 1,
-    "HydrogenHourlyMatching" => 1,
+    "HourlyMatchingRequirement" => 1,
     "HydrogenMinimumProduction" => 1
 )
 settings = GenX.default_settings()
