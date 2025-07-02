@@ -25,7 +25,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         "cUnmetRsv",
         "cNetworkExp",
         "cUnmetPolicyPenalty",
-        "cCO2"
+        "cCO2",
+        "cInv",
+        "cFom"
     ]
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
@@ -41,13 +43,24 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     cFix = value(EP[:eTotalCFix]) +
            (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) +
            (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-
+    cInv = value(EP[:eTotalCInv]) +
+           (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0.0) +
+           (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCInvCharge]) : 0.0)
+    cFom = value(EP[:eTotalCFom]) +
+           (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFomEnergy]) : 0.0) +
+           (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFomCharge]) : 0.0)
     cFuel = value.(EP[:eTotalCFuelOut])
 
     if !isempty(VRE_STOR)
         cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) +
                  (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) +
                  (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
+        cInv += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCInvDC]) : 0.0) +
+                 (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCInvSolar]) : 0.0) +
+                 (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCInvWind]) : 0.0))
+        cFom += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFomDC]) : 0.0) +
+                 (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFomSolar]) : 0.0) +
+                 (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFomWind]) : 0.0))
         cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) +
                  (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
         if !isempty(inputs["VS_STOR"])
@@ -60,6 +73,25 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                       value(EP[:eTotalCFixCharge_AC]) : 0.0) +
                      (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ?
                       value(EP[:eTotalCFixDischarge_AC]) : 0.0))
+            cInv += ((!isempty(inputs["VS_STOR"]) ? 
+                        value(EP[:eTotalCInvStor]) : 0.0) +
+                      (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ?
+                        value(EP[:eTotalCInvCharge_DC]) : 0.0) +
+                      (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ?
+                        value(EP[:eTotalCInvDischarge_DC]) : 0.0) +
+                      (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ?
+                        value(EP[:eTotalCInvCharge_AC]) : 0.0) +
+                      (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ?
+                        value(EP[:eTotalCInvDischarge_AC]) : 0.0))
+            cFom += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFomStor]) : 0.0) +
+                       (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ?
+                        value(EP[:eTotalCFomCharge_DC]) : 0.0) +
+                       (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ?
+                        value(EP[:eTotalCFomDischarge_DC]) : 0.0) +
+                       (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ?
+                        value(EP[:eTotalCFomCharge_AC]) : 0.0) +
+                       (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ?
+                        value(EP[:eTotalCFomDischarge_AC]) : 0.0))
             cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
         end
         total_cost = [
@@ -73,6 +105,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
+            cInv,
+            cFom,
             0.0
         ]
     else
@@ -86,7 +120,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
-            0.0
+            0.0,
+            cInv,
+            cFom
         ]
     end
 
@@ -95,10 +131,6 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     end
 
     dfCost[!, Symbol("Total")] = total_cost
-
-    if setup["ParameterScale"] == 1
-        dfCost.Total *= ModelScalingFactor^2
-    end
 
     if setup["UCommit"] >= 1
         dfCost[6, 2] = value(EP[:eTotalCStart]) + value(EP[:eTotalCFuelStart])
@@ -137,20 +169,16 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     end
 
     if !isempty(VRE_STOR)
-        dfCost[!, 2][11] = value(EP[:eTotalCGrid]) *
-                           (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
+        dfCost[13, 2] = value(EP[:eTotalCGrid])
     end
 
     if any(co2_capture_fraction.(gen) .!= 0)
         dfCost[10, 2] += value(EP[:eTotaleCCO2Sequestration])
     end
 
+    #
     if setup["ParameterScale"] == 1
-        dfCost[6, 2] *= ModelScalingFactor^2
-        dfCost[7, 2] *= ModelScalingFactor^2
-        dfCost[8, 2] *= ModelScalingFactor^2
-        dfCost[9, 2] *= ModelScalingFactor^2
-        dfCost[10, 2] *= ModelScalingFactor^2
+        dfCost.Total *= ModelScalingFactor^2
     end
 
     for z in 1:Z
@@ -162,6 +190,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         tempCNSE = 0.0
         tempHydrogenValue = 0.0
         tempCCO2 = 0.0
+        tempCInv = 0.0
+        tempCFom = 0.0
 
         Y_ZONE = resources_in_zone_by_rid(gen, z)
         STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
@@ -173,6 +203,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
         eCFix = sum(value.(EP[:eCFix][Y_ZONE]), init = 0.0)
         tempCFix += eCFix
+        eCInv = sum(value.(EP[:eCInv][Y_ZONE]), init = 0.0)
+        tempCInv+= eCInv
+        eCFom = sum(value.(EP[:eCFom][Y_ZONE]), init = 0.0)
+        tempCFom += eCFom
+
         tempCTotal += eCFix
 
         tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE, :]))
@@ -186,11 +221,20 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCVar += eCVar_in
             eCFixEnergy = sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
             tempCFix += eCFixEnergy
+            eCInvEnergy = sum(value.(EP[:eCInvEnergy][STOR_ALL_ZONE]))
+            tempCInv += eCInvEnergy
+            eCFomEnergy = sum(value.(EP[:eCFomEnergy][STOR_ALL_ZONE]))
+            tempCFom += eCFomEnergy
+
             tempCTotal += eCVar_in + eCFixEnergy
         end
         if !isempty(STOR_ASYMMETRIC_ZONE)
             eCFixCharge = sum(value.(EP[:eCFixCharge][STOR_ASYMMETRIC_ZONE]))
             tempCFix += eCFixCharge
+            eCInvCharge = sum(value.(EP[:eCInvCharge][STOR_ASYMMETRIC_ZONE]))
+            tempCInv += eCInvCharge
+            eCFomCharge = sum(value.(EP[:eCFomCharge][STOR_ASYMMETRIC_ZONE]))
+            tempCFom += eCFomCharge
             tempCTotal += eCFixCharge
         end
         if !isempty(FLEX_ZONE)
@@ -246,6 +290,68 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             end
             tempCFix += eCFix_VRE_STOR
 
+            # Investment Costs
+            eCInv_VRE_STOR = 0.0
+            if !isempty(SOLAR_ZONE_VRE_STOR)
+                eCInv_VRE_STOR += sum(value.(EP[:eCInvSolar][SOLAR_ZONE_VRE_STOR]))
+            end
+            if !isempty(WIND_ZONE_VRE_STOR)
+                eCInv_VRE_STOR += sum(value.(EP[:eCInvWind][WIND_ZONE_VRE_STOR]))
+            end
+            if !isempty(ELEC_ZONE_VRE_STOR)
+                eCInv_VRE_STOR += sum(value.(EP[:eCInvElec][ELEC_ZONE_VRE_STOR]))
+            end
+            if !isempty(DC_ZONE_VRE_STOR)
+                eCInv_VRE_STOR += sum(value.(EP[:eCInvDC][DC_ZONE_VRE_STOR]))
+            end
+            if !isempty(STOR_ALL_ZONE_VRE_STOR)
+                eCInv_VRE_STOR += sum(value.(EP[:eCInvEnergy_VS][STOR_ALL_ZONE_VRE_STOR]))
+                if !isempty(DC_CHARGE_ALL_ZONE_VRE_STOR)
+                    eCInv_VRE_STOR += sum(value.(EP[:eCInvCharge_DC][DC_CHARGE_ALL_ZONE_VRE_STOR]))
+                end
+                if !isempty(DC_DISCHARGE_ALL_ZONE_VRE_STOR)
+                    eCInv_VRE_STOR += sum(value.(EP[:eCInvDischarge_DC][DC_DISCHARGE_ALL_ZONE_VRE_STOR]))
+                end
+                if !isempty(AC_DISCHARGE_ALL_ZONE_VRE_STOR)
+                    eCInv_VRE_STOR += sum(value.(EP[:eCInvDischarge_AC][AC_DISCHARGE_ALL_ZONE_VRE_STOR]))
+                end
+                if !isempty(AC_CHARGE_ALL_ZONE_VRE_STOR)
+                    eCInv_VRE_STOR += sum(value.(EP[:eCInvCharge_AC][AC_CHARGE_ALL_ZONE_VRE_STOR]))
+                end
+            end
+            tempCInv += eCInv_VRE_STOR
+
+            # Fom Costs
+            eCFom_VRE_STOR = 0.0
+            if !isempty(SOLAR_ZONE_VRE_STOR)
+                eCFom_VRE_STOR += sum(value.(EP[:eCFomSolar][SOLAR_ZONE_VRE_STOR]))
+            end
+            if !isempty(WIND_ZONE_VRE_STOR)
+                eCFom_VRE_STOR += sum(value.(EP[:eCFomWind][WIND_ZONE_VRE_STOR]))
+            end
+            if !isempty(ELEC_ZONE_VRE_STOR)
+                eCFom_VRE_STOR += sum(value.(EP[:eCFomElec][ELEC_ZONE_VRE_STOR]))
+            end
+            if !isempty(DC_ZONE_VRE_STOR)
+                eCFom_VRE_STOR += sum(value.(EP[:eCFomDC][DC_ZONE_VRE_STOR]))
+            end
+            if !isempty(STOR_ALL_ZONE_VRE_STOR)
+                eCFom_VRE_STOR += sum(value.(EP[:eCFomEnergy_VS][STOR_ALL_ZONE_VRE_STOR]))
+                if !isempty(DC_CHARGE_ALL_ZONE_VRE_STOR)
+                    eCFom_VRE_STOR += sum(value.(EP[:eCFomCharge_DC][DC_CHARGE_ALL_ZONE_VRE_STOR]))
+                end
+                if !isempty(DC_DISCHARGE_ALL_ZONE_VRE_STOR)
+                    eCFom_VRE_STOR += sum(value.(EP[:eCFomDischarge_DC][DC_DISCHARGE_ALL_ZONE_VRE_STOR]))
+                end
+                if !isempty(AC_DISCHARGE_ALL_ZONE_VRE_STOR)
+                    eCFom_VRE_STOR += sum(value.(EP[:eCFomDischarge_AC][AC_DISCHARGE_ALL_ZONE_VRE_STOR]))
+                end
+                if !isempty(AC_CHARGE_ALL_ZONE_VRE_STOR)
+                    eCFom_VRE_STOR += sum(value.(EP[:eCFomCharge_AC][AC_CHARGE_ALL_ZONE_VRE_STOR]))
+                end
+            end
+            tempCFom += eCFom_VRE_STOR
+            
             # Variable Costs
             eCVar_VRE_STOR = 0.0
             if !isempty(SOLAR_ZONE_VRE_STOR)
@@ -326,6 +432,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCStart *= ModelScalingFactor^2
             tempHydrogenValue *= ModelScalingFactor^2
             tempCCO2 *= ModelScalingFactor^2
+            tempCInv *= ModelScalingFactor^2
+            tempCFom *= ModelScalingFactor^2
         end
         temp_cost_list = [
             tempCTotal,
@@ -337,7 +445,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             "-",
             "-",
             "-",
-            tempCCO2
+            tempCCO2,
+            tempCInv,
+            tempCFom
         ]
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")
