@@ -79,8 +79,8 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
         end
     end
 
-    dfCapCCS_SS = DataFrame(Resource = gen.resource[CCS_SOLVENT_STORAGE],
-        Zone = gen.zone[CCS_SOLVENT_STORAGE],
+    dfCapCCS_SS = DataFrame(Resource = inputs["RESOURCE_NAMES"][CCS_SOLVENT_STORAGE],
+        Zone = zone_id.(gen)[CCS_SOLVENT_STORAGE],
         
         StartCap_GasTrubine_MW = MultiStage == 1 ? value.(EP[:vEXISTINGCAP_CCS_SS]) : [solvent_storage_dict[y, "existing_cap"][gasturbine] for y in CCS_SOLVENT_STORAGE],
         StartCap_SteamTrubine_MW = MultiStage == 1 ? value.(EP[:vEXISTINGCAP_CCS_SS]) : [solvent_storage_dict[y, "existing_cap"][steamturbine] for y in CCS_SOLVENT_STORAGE],
@@ -196,10 +196,9 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
 
     dfCapCCS_SS = vcat(dfCapCCS_SS, total_solvent_storage)
     CSV.write(joinpath(path,"capacity_CCS_Solvent_Storage.csv"), dfCapCCS_SS)
+end
 
-    end
-
-    function write_ccs_ss_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_ccs_ss_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"] 
     T = inputs["T"]
     # CCS_SOLVENT_STORAGE components

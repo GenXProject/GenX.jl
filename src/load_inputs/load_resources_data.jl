@@ -195,8 +195,9 @@ Scales allamcycle attributes in-place if necessary. Generally, these scalings co
 See documentation for descriptions of each column being scaled.
 
 # Arguments
-- `allamcycle_in` (DataFrame): A dataframe containing data for flexible ccs (e.g, AllamCycle or 
-    scale_ccssolventstorage_data!(ccs_solvent_storage_in::DataFrame, scale_factor::Float64)
+- `allamcycle_in` (DataFrame): A dataframe containing data for Allam Cycle LOX resources.
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
 """
 function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
     columns_to_scale = [
@@ -1523,24 +1524,6 @@ function add_resources_to_input_data!(inputs::Dict,
         inputs["ZONES_AC_DISCHARGE"] = zone_id(gen[storage_ac_discharge(gen)])
         inputs["ZONES_DC_CHARGE"] = zone_id(gen[storage_dc_charge(gen)])
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
-    end
-
-    # Generic function to get attribute from a resource
-    """
-    get_attr(r::AbstractResource, attr::Symbol, default_value::Real)
-
-    Function to get attribute `attr` from a GenX resource `r`. If the attribute is not found, return `default_value`.
-
-    # Arguments
-    - `r::AbstractResource`: The resource.
-    - `attr::Symbol`: The attribute to get.
-    - `default_value::Real`: The default value to return if the attribute is not found.
-
-    # Returns
-    - `value::Real`: The value of the attribute.
-    """
-    function get_attr(r::AbstractResource, attr::Symbol, default_value::Real)
-        return get(r, attr, default_value)
     end
 
     ## flexible operation of CCS

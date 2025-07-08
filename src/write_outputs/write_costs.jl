@@ -401,6 +401,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                 # Fixed Costs
                 eCFix_CCS_SS_zone = sum(value.(EP[:eCFix_CCS_SS_Plant][Y_ZONE_CCS_SS]))
                 tempCFix += eCFix_CCS_SS_zone
+                # Investment Costs
+                eCInv_CCS_SS_zone = sum(value.(EP[:eCInv_CCS_SS_Plant][Y_ZONE_CCS_SS]))
+                tempCInv += eCInv_CCS_SS_zone
+                # Fom Costs
+                eCFom_CCS_SS_zone = sum(value.(EP[:eCFom_CCS_SS_Plant][Y_ZONE_CCS_SS]))
+                tempCFom += eCFom_CCS_SS_zone
                 # Variable Costs
                 eCVar_CCS_SS_zone = sum(value.(EP[:eCVar_CCS_SS][Y_ZONE_CCS_SS]))
                 tempCVar += eCVar_CCS_SS_zone

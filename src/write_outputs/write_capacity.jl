@@ -18,7 +18,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     # Capacity decisions
     capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["NEW_CAP"]
-        if i in inputs["COMMIT"]    # inputs["THERM_COMMIT"]
+        if i in inputs["COMMIT"]    # THERM_COMMIT
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
@@ -35,7 +35,7 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     retcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["RET_CAP"]
-        if i in inputs["COMMIT"] # inputs["THERM_COMMIT"]
+        if i in inputs["COMMIT"] # THERM_COMMIT
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]

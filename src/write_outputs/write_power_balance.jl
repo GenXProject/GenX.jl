@@ -44,11 +44,11 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         # Subtract charging power for allam cycle and ccs with solvent storage resources
         ALLAM_ZONE = intersect(resources_in_zone_by_rid(gen, z), ALLAM_CYCLE_LOX)
         if !isempty(ALLAM_ZONE)
-            powerbalance[(z - 1) * L + 1, :] -= sum(value.(Array(EP[:vCHARGE_ALLAM][ALLAM_ZONE, :])), dims = 1)
+            powerbalance[(z - 1) * L + 1, :] -= vec(sum(value.(Array(EP[:vCHARGE_ALLAM][ALLAM_ZONE, :])), dims = 1))
         end
         CCS_SOLVENT_STORAGE_ZONE = intersect(resources_in_zone_by_rid(gen, z), CCS_SOLVENT_STORAGE)
         if !isempty(CCS_SOLVENT_STORAGE_ZONE)
-            powerbalance[(z - 1) * L + 1, :] -= sum(value.(Array(EP[:vCHARGE_CCS_SS][CCS_SOLVENT_STORAGE_ZONE, :])), dims = 1)
+            powerbalance[(z - 1) * L + 1, :] -= vec(sum(value.(Array(EP[:vCHARGE_CCS_SS][CCS_SOLVENT_STORAGE_ZONE, :])), dims = 1))
         end
         
         STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)

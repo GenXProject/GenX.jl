@@ -20,8 +20,9 @@ The fuel consumption for power generation $vFuel_{y,t}$ is determined by power g
 ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
 denoted by $eCFuelOut_{y,t}$ and $eStartFuel$, are determined by fuel consumption ($vFuel_{y,t}$ 
-and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
-(2). Piecewise-linear approximation
+and $eStartFuel$) multiplied by the fuel costs (USD/MMBTU)
+
+(2). Piecewise-linear approximation: 
 With this formulation, the heat rate of generators becomes a function of load.
 In reality this relationship takes a nonlinear form, but we model it
 through a piecewise-linear approximation:
@@ -94,7 +95,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
-    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"] # Set of flexible ccs: NGCC + solvent storage
 
     RESOURCES_BY_ZONE = map(1:Z) do z
         return resources_in_zone_by_rid(gen, z)
@@ -243,7 +244,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     RESOURCES_BY_SINGLE_FUEL = map(1:NUM_FUEL) do f
-        return intersect(setdiff(resources_with_fuel(gen, fuels[f]), union(ALLAM_CYCLE_LOX, CCS_SOLVENT_STORAGE)), SINGLE_FUEL)
+        return intersect(setdiff(resources_with_fuel(gen, fuels[f]), ALLAM_CYCLE_LOX), SINGLE_FUEL)
     end
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
@@ -264,7 +265,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP,
         cFuelCalculation_single[
-            y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, union(THERM_COMMIT, ALLAM_CYCLE_LOX, CCS_SOLVENT_STORAGE)))
+            y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, union(THERM_COMMIT, ALLAM_CYCLE_LOX, CCS_SOLVENT_STORAGE))),
             t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y])==0)
 

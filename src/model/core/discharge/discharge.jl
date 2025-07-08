@@ -19,7 +19,7 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
     T = inputs["T"]     # Number of time steps
     Z = inputs["Z"]     # Number of zones
 
-    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]    # Set of Allam Cycle generators (indices)
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
 
     ### Variables ###
 

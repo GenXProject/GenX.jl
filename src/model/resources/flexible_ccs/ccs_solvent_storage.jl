@@ -1,5 +1,5 @@
 @doc raw"""
-ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
+    ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
 This module models the flexible ccs with solvent storage tank. 
 In this module, the key components of a flexible CCS gas plant are break down into mutiple components with independent capacity decisions:
  - gas turbines
@@ -113,7 +113,7 @@ function ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
     if MultiStage == 1
         @expression(EP, eExistingCap_CCS_SS[y in CCS_SOLVENT_STORAGE, i = 1:7], vEXISTINGCAP_CCS_SS[y,i])
                 # Existing capacity variable is equal to existing capacity specified in the input file
-        @constraint(EP, cExistingCap_CCS_SS[y in CCS_SOLVENT_STORAGE, i in 1:7], EP[:vEXISTINGCAP_CCS_SS][y,i]== CCS_SS_dict[y, "existing_cap"][i])
+        @constraint(EP, cExistingCap_CCS_SS[y in CCS_SOLVENT_STORAGE, i in 1:7], EP[:vEXISTINGCAP_CCS_SS][y,i] == solvent_storage_dict[y, "existing_cap"][i])
 
     else
         @expression(EP, eExistingCap_CCS_SS[y in CCS_SOLVENT_STORAGE, i = 1:7], solvent_storage_dict[y, "existing_cap"][i])
@@ -153,25 +153,50 @@ function ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
         end
     end
 
-    # Fixed cost of each component in CCS_SOLVENT_STORAGE
-    @expression(EP, eCFix_CCS_SS[y in CCS_SOLVENT_STORAGE, i in 1:7],
+    # Investment cost of each component in CCS_SOLVENT_STORAGE - only applies to resources eligible for new capacity
+    @expression(EP, eCInv_CCS_SS[y in CCS_SOLVENT_STORAGE, i in 1:7],
         if y in NEW_CAP_CCS_SS # Resources eligible for new capacity
             if y in COMMIT_CCS_SS  # Resource eligible for Unit commitment
-                solvent_storage_dict[y,"inv_cost"][i] * solvent_storage_dict[y,"cap_size"][i] * EP[:vCAP_CCS_SS][y, i]+
-                solvent_storage_dict[y,"fom_cost"][i]  * eTotalCap_CCS_SS[y,i]
+                solvent_storage_dict[y,"inv_cost"][i] * solvent_storage_dict[y,"cap_size"][i] * EP[:vCAP_CCS_SS][y, i]
             else
-                solvent_storage_dict[y,"inv_cost"][i] * EP[:vCAP_CCS_SS][y, i]+
-                solvent_storage_dict[y,"fom_cost"][i] * eTotalCap_CCS_SS[y,i]
+                solvent_storage_dict[y,"inv_cost"][i] * EP[:vCAP_CCS_SS][y, i]
             end
         else
-            solvent_storage_dict[y,"fom_cost"][i] * eTotalCap_CCS_SS[y,i]
+            0
+        end)
+
+    # Fixed O&M cost of each component in CCS_SOLVENT_STORAGE
+    @expression(EP, eCFom_CCS_SS[y in CCS_SOLVENT_STORAGE, i in 1:7],
+        solvent_storage_dict[y,"fom_cost"][i] * eTotalCap_CCS_SS[y,i])
+
+    # Total fixed cost expression - combines investment and fixed O&M costs
+    @expression(EP, eCFix_CCS_SS[y in CCS_SOLVENT_STORAGE, i in 1:7],
+        if y in NEW_CAP_CCS_SS
+            # For resources with new capacity: investment cost + fixed O&M cost
+            EP[:eCInv_CCS_SS][y, i] + EP[:eCFom_CCS_SS][y, i]
+        else
+            # For existing resources: only fixed O&M cost
+            EP[:eCFom_CCS_SS][y, i]
         end)
 
     # connect eCFix_CCS_SS_Plant to eCFix
     @expression(EP, eCFix_CCS_SS_Plant[y in CCS_SOLVENT_STORAGE], sum(EP[:eCFix_CCS_SS][y,i] for i in 1:7))
     @expression(EP, eTotalCFix_CCS_SS, sum(EP[:eCFix_CCS_SS_Plant][y] for y in CCS_SOLVENT_STORAGE))
+    
+    # connect eCInv_CCS_SS_Plant to eCInv
+    @expression(EP, eCInv_CCS_SS_Plant[y in CCS_SOLVENT_STORAGE], sum(EP[:eCInv_CCS_SS][y,i] for i in 1:7))
+    @expression(EP, eTotalCInv_CCS_SS, sum(EP[:eCInv_CCS_SS_Plant][y] for y in CCS_SOLVENT_STORAGE))
+    
+    # connect eCFom_CCS_SS_Plant to eCFom
+    @expression(EP, eCFom_CCS_SS_Plant[y in CCS_SOLVENT_STORAGE], sum(EP[:eCFom_CCS_SS][y,i] for i in 1:7))
+    @expression(EP, eTotalCFom_CCS_SS, sum(EP[:eCFom_CCS_SS_Plant][y] for y in CCS_SOLVENT_STORAGE))
+    
     # add this to eTotalCFix
     add_to_expression!(EP[:eTotalCFix], eTotalCFix_CCS_SS)
+    # add this to eTotalCInv
+    add_to_expression!(EP[:eTotalCInv], eTotalCInv_CCS_SS)
+    # add this to eTotalCFom
+    add_to_expression!(EP[:eTotalCFom], eTotalCFom_CCS_SS)
 
     # add to Obj
     if MultiStage == 1
