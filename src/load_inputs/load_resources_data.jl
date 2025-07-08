@@ -1259,16 +1259,6 @@ function add_resources_to_input_data!(inputs::Dict,
     inputs["NEW_CAP_CHARGE"] = new_cap_charge
     inputs["RET_CAP_CHARGE"] = ret_cap_charge
 
-    ### Hourly matching - qualified supply
-    ## this validations are for backward compatibility with previous version of the hourly matching constraint
-    # if HydrogenHourlyMatching is enabled, warn that this setting is deprecated.
-    # if setup["HydrogenHourlyMatching"]
-    #     Base.depwarn(
-    #         """The HydrogenHourlyMatching setting is deprecated. Please instead include electrolyzers in the relevant hourly matching constraint via the HM tag.""",
-    #         :add_resources_to_input_data!, force = true)
-    #     setup["HourlyMatching"] = 1
-    # end
-
     ## Co-located resources
     # VRE and storage
     inputs["VRE_STOR"] = vre_stor(gen)

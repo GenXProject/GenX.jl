@@ -38,7 +38,7 @@ The units for these thresholds are USD/MWh.
 ## Hourly Matching Requirement
 
 Slack variables for Hourly Matching Requirement constraints are created when GenX detects the presence of the file `Hourly_matching_requirement_slack.csv` in the Inputs folder. 
-This file should contain two columns: one titled 'HM_Constraint' naming the individual Energy Share Requirement constraints in the same order in which they are listed in the first row of `Hourly_matching_requirement.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 
+This file should contain two columns: one titled 'HM_Constraint' naming the individual Hourly Matching Requirement constraints in the same order in which they are listed in the first row of `Hourly_matching_requirement.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 
 The units for these thresholds are USD/MWh.
 
 ## Minimum Capacity Requirement

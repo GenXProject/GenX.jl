@@ -1,8 +1,0 @@
-Resource,Qualified_Supply
-CT_solar_pv,1
-MA_solar_pv,1
-CT_onshore_wind,1
-MA_battery_for_electrolyzer,1
-CT_battery_for_electrolyzer,1
-ME_battery_for_electrolyzer,1
-ME_onshore_wind,1

@@ -399,14 +399,14 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println(elapsed_time_rsv_margin_w)
             end
 
-            #if output_settings_d["WriteVirtualDischarge"]
-            #    elapsed_time_virtual_discharge = @elapsed write_virtual_discharge(path,
-            #        inputs,
-            #        setup,
-            #        EP)
-            #    println("Time elapsed for writing virtual discharge is")
-            #    println(elapsed_time_virtual_discharge)
-            #end
+            if output_settings_d["WriteVirtualDischarge"]
+               elapsed_time_virtual_discharge = @elapsed write_virtual_discharge(path,
+                   inputs,
+                   setup,
+                   EP)
+               println("Time elapsed for writing virtual discharge is")
+               println(elapsed_time_virtual_discharge)
+            end
 
             if output_settings_d["WriteReserveMarginRevenue"] ||
                output_settings_d["WriteNetRevenue"]

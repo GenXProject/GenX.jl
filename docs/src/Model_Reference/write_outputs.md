@@ -123,7 +123,9 @@ Pages = ["write_reserve_margin_revenue.jl"]
 
 ## Write Hourly Matching Revenue
 ```@docs
+GenX.write_hourly_matching_prices
 GenX.write_hourly_matching_revenue
+GenX.write_hourly_matching_slack
 ```
 
 ## Write Energy Share Requirement Revenue

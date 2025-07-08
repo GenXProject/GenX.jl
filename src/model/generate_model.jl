@@ -230,7 +230,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         energy_share_requirement!(EP, inputs, setup)
     end
 
-    # Energy Share Requirement
+    # Hourly Matching Requirement
     if setup["HourlyMatchingRequirement"] == 1
         hourly_matching!(EP, inputs)
     end
