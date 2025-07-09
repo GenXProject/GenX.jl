@@ -354,7 +354,7 @@ function ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
             eCCS_SS_ESR[ESR in 1:inputs["nESR"]],
             sum(inputs["omega"][t] * esr(gen[y], tag = ESR) * (eP_CCS_SS[y, t] - vCHARGE_CCS_SS[y,t])
             for y in intersect(CCS_SOLVENT_STORAGE, ids_with_policy(gen, esr, tag = ESR)), t in 1:T))
-        EP[:eESR] += eCCS_SS_ESR
+        add_similar_to_expression!(EP[:eESR], eCCS_SS_ESR)
     end
 
     # Maximum Capacity Requirement
