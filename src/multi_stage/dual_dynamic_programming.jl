@@ -31,6 +31,12 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
         start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
     end
 
+    ##** If the network expansion is enabled, we need to add the asymmetric transmission capacity expressions: Need to refine**##
+    if setup["NetworkExpansion"] == 1 && inputs["Z"] > 1 && !isempty(inputs["ASYMMETRIC_LINE_INDEX"])
+        start_cap_d[Symbol("eAvail_Trans_Cap_Pos")] = Symbol("cExistingTransCapPos")
+        start_cap_d[Symbol("eAvail_Trans_Cap_Neg")] = Symbol("cExistingTransCapNeg")
+    end
+
     if !isempty(inputs["VRE_STOR"])
         if !isempty(inputs["VS_DC"])
             start_cap_d[Symbol("eTotalCap_DC")] = Symbol("cExistingCapDC")
@@ -337,6 +343,10 @@ function fix_initial_investments(EP_prev::Model,
         for y in keys(EP_cur[c])
             # Set the right hand side value of the linking initial capacity constraint in the current stage to the value of the available capacity variable solved for in the previous stages
             if c == :cExistingTransCap
+                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+            elseif c == :cExistingTransCapPos
+                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
+            elseif c == :cExistingTransCapNeg
                 set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
             else
                 if y[1] in ALL_CAP # extract resource integer index value from key

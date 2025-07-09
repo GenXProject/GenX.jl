@@ -67,12 +67,13 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         @variable(EP, vTRANSMAX[l in SYMMETRIC_LINE_INDEX]>=0)
         @variable(EP, vTRANSMAX_Pos[l in ASYMMETRIC_LINE_INDEX]>=0)
         @variable(EP, vTRANSMAX_Neg[l in ASYMMETRIC_LINE_INDEX]>=0)
+        #@variable(EP, vTRANSMAX[l in SYMMETRIC_EXPANSION_LINES]>=0)
+        #@variable(EP, vTRANSMAX_Pos[l in EXPANSION_LINES_ASYM]>=0)
+        #@variable(EP, vTRANSMAX_Neg[l in EXPANSION_LINES_ASYM]>=0)
     end
 
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
-        
-        
         @variable(EP, vNEW_TRANS_CAP_Pos[l in EXPANSION_LINES_ASYM]>=0)
         @variable(EP, vNEW_TRANS_CAP_Neg[l in EXPANSION_LINES_ASYM]>=0)
         @variable(EP, vNEW_TRANS_CAP[l in SYMMETRIC_EXPANSION_LINES]>=0)
