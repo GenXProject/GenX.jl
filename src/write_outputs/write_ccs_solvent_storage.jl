@@ -1,7 +1,7 @@
 @doc raw"""
 	write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
 
-Function for writing the diferent capacities for the CCS_SOLVENT_STORAGE technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
+Function for writing the different capacities for the `CCSSolventStorage` technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
 """
 function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     # Capacity decisions
@@ -198,6 +198,11 @@ function write_ccs_ss_capacity(path::AbstractString, inputs::Dict, setup::Dict, 
     CSV.write(joinpath(path,"capacity_CCS_Solvent_Storage.csv"), dfCapCCS_SS)
 end
 
+@doc raw"""
+	write_ccs_ss_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
+
+Function for writing the power outputs for each component of the `CCSSolventStorage` technologies.
+"""
 function write_ccs_ss_output(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"] 
     T = inputs["T"]

@@ -527,7 +527,7 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Start\_Fuel\_sCO2Turbine\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each sCO2 turbine in an Allam Cycle power plant (MMBtu/MW per start).|
 |Start\_Fuel\_ASU\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each ASU in an Allam Cycle power plant (MMBtu/MW per start).|
 
-##### Table 14a: Additional columns in the CCS_solvent_storage.csv file
+##### Table 14a: Additional columns in the CCS\_solvent\_storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -539,7 +539,6 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Existing\_Cap\_Ton\_Regenerator |The existing capacity of regenerators in an NGCC-CCS power plant (ton). |
 |Existing\_Cap\_Ton\_SolventStorage\_Rich |The existing capacity of solvent storage (rich) in an NGCC-CCS power plant (ton). |
 |Existing\_Cap\_Ton\_SolventStorage\_Lean |The existing capacity of solvent storage (lean) in an NGCC-CCS power plant (ton). |
-
 |**Cost parameters**|
 |Inv\_Cost\_per\_MWyr\_GasTurbine | Annualized capacity investment cost of gas combustion turbines in an NGCC-CCS power plant ($/MW/year).|
 |Inv\_Cost\_per\_MWyr\_SteamTurbine | Annualized capacity investment cost of steam turbines in an NGCC-CCS power plant ($/MW/year).|
@@ -596,7 +595,7 @@ an NGCC-CCS power plant ($/Ton).|
 |CO2\_Capture\_Fraction\_Startup\_Max|[0,1], Maximum CO2 capture rate of total emissions during startup. |
 |CO2\_Capture\_Fraction\_Max|[0,1], Maximum CO2 capture rate of total emissions during normal operations. |
 
-##### Table 14b: Settings-specific columns in the CCS_solvent_storage.csv file
+##### Table 14b: Settings-specific columns in the CCS\_solvent\_storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|

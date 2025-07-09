@@ -78,6 +78,7 @@ pages = OrderedDict(
             ],
             "Allam Cycle" => "Model_Reference/Resources/allam_cycle.md",
             "Hydrogen Electrolyzers" => "Model_Reference/Resources/electrolyzers.md",
+            "CCS Solvent Storage" => "Model_Reference/Resources/ccs_solvent_storage.md",
             "Resource types" => "Model_Reference/Resources/resource.md"
         ],
         "Policies" => "Model_Reference/policies.md",

@@ -179,3 +179,9 @@ GenX.write_settings_file
 GenX.write_allam_capacity
 GenX.write_allam_output
 ```
+
+## Write Outputs Specific to CCS Solvent Storage
+```@docs
+GenX.write_ccs_ss_capacity
+GenX.write_ccs_ss_output
+```

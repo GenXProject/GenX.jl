@@ -209,7 +209,7 @@ This file includes the output from each component of an Allam Cycle LOX resource
 
 ### 3.3 capacity\_CCS\_Solvent\_Storage.csv
 
-This file includes the capacity output for CCS with solvent storage resources ([`GenX.write_ccs_solvent_storage`](@ref)).
+This file includes the capacity output for CCS with solvent storage resources ([`GenX.write_ccs_ss_capacity`](@ref)).
 
 ###### Table 3.3: Structure of the capacity\_CCS\_Solvent\_Storage.csv file
 ---

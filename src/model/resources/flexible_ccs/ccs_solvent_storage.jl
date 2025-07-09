@@ -11,10 +11,11 @@ In this module, the key components of a flexible CCS gas plant are break down in
  - lean solvent storage tank 
 
 In this module, we track the flow of fuel, CO2, steam, and power in the system
-More detailed processes can be found at Cheng et al. (2022) (https://www.sciencedirect.com/science/article/abs/pii/S1750583622001049)
+More detailed processes can be found at [Cheng et al. (2022)](https://www.sciencedirect.com/science/article/abs/pii/S1750583622001049).
 
-**Important constraints**
-1. fuel balance: fuels consumed by the gas turbine is the total fuel consumption of the system
+## Important constraints
+### 1\. Fuel balance
+Fuels consumed by the gas turbine is the total fuel consumption of the system
 ```math
 \begin{aligned}
 vFuel_{y,t} >= vP_{y,t} * h_{y} + U_{y,t}* f_{y}
@@ -25,7 +26,7 @@ Where $h_{y}$ represents the heat rate for generator $y$,
  $f_{y}$ represents the heat rate intercept (startup fuel, MMBTU) for a generator $y$,
 and $U_{y,t}$ represents the commitment status of a generator $y$ at time $t$. 
 
-2. CO2 balance: 
+### 2\. CO2 balance
 CO2 released by plant $y$ at time $t$ equals to emissions from fuel burning - CO2 capured by the absorber
 ```math
 \begin{aligned}
@@ -41,22 +42,23 @@ eEmissionsCaptureByPlant_{y,t} = CO2_{y, regenerator}
 \end{aligned}
 ```
 
-3. Steam balance: steam used to generate electricity equals to steam produced by steam turbines - steam used by regenerators to regenerate CO2
+### 3\. Steam balance
+Steam used to generate electricity equals to steam produced by steam turbines - steam used by regenerators to regenerate CO2
 ```math
 \begin{aligned}
-    Steam_net_{y,t} == vFuel_{y,t} * Steam_fraction_{y, high} + vFuel_{y,t} * Steam_fraction_{y, mid} + vFuel_{y,t} * Steam_fraction_{y, low} - eEmissionsCaptureByPlant_{y,t} * Steam_use_{y, regenerator}
+    Steam\_net_{y,t} == vFuel_{y,t} * Steam\_fraction_{y, high} + vFuel_{y,t} * Steam\_fraction_{y, mid} + vFuel_{y,t} * Steam\_fraction_{y, low} - eEmissionsCaptureByPlant_{y,t} * Steam\_use_{y, regenerator}
 \end{aligned}
 ```
 
-4. power balance 
+### 4\. Power balance 
 ```math
 \begin{aligned}
     \Pi_{y,t} == \Pi_{y,gasturbine,t} + \Pi_{y,steamturbine,t} - eEmissionsCaptureByPlant_{y,t} * (PowerUseRate_{y, absorber} + PowerUseRate_{y, compressor})
-    \Pi_{y,steamturbine,t} = vFuel_{y,t} * Steam_fraction_{y, high} / HeatRate_{y, steamtubine, high} + vFuel_{y,t} * Steam_fraction_{y, mid} / HeatRate_{y, steamtubine, mid} + (vFuel_{y,t} * Steam_fraction_{y, low} - eEmissionsCaptureByPlant_{y,t} * Steam_use_{y, regenerator}) / HeatRate_{y, steamtubine, low}
+    \Pi_{y,steamturbine,t} = vFuel_{y,t} * Steam\_fraction_{y, high} / HeatRate_{y, steamtubine, high} + vFuel_{y,t} * Steam\_fraction_{y, mid} / HeatRate_{y, steamtubine, mid} + (vFuel_{y,t} * Steam\_fraction_{y, low} - eEmissionsCaptureByPlant_{y,t} * Steam\_use_{y, regenerator}) / HeatRate_{y, steamtubine, low}
 \end{aligned}
 ```
 
-# 5: call ccs_solvent_storage_commit!(EP, inputs, setup) and ccs_solvent_storage_commit!(EP, inputs, setup) for specific investment and operational constraints related to unit commitment
+**Note:** Call [`ccs_solvent_storage_commit!(EP, inputs, setup)`](@ref) and [`ccs_solvent_storage_commit!(EP, inputs, setup)`](@ref) for specific investment and operational constraints related to unit commitment
 """
 function ccs_solvent_storage!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
