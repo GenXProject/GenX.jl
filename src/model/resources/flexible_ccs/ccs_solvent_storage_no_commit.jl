@@ -8,14 +8,9 @@ function ccs_solvent_storage_no_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
     T = inputs["T"]                                                 # Number of time steps (hours)
-    Z = inputs["Z"]                                                 # Number of zones
-    MultiStage = setup["MultiStage"]
-    omega = inputs["omega"]
 
     # Load CCS with SOLVENT STORAGE related inputs 
     CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]             # Set of CCS_Solvent_Storage generators (indices)
-    NEW_CAP_CCS_SS = intersect(inputs["NEW_CAP"], CCS_SOLVENT_STORAGE)  # SS stands for solvent storage
-    RET_CAP_CCS_SS = intersect(inputs["RET_CAP"], CCS_SOLVENT_STORAGE)
     NO_COMMIT_CCS_SS = setup["UCommit"] == 0 ? CCS_SOLVENT_STORAGE : Int[]
 
     # time related 

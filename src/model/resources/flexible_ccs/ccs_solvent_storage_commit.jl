@@ -15,8 +15,6 @@ function ccs_solvent_storage_commit!(EP::Model, inputs::Dict, setup::Dict)
     # Load generators dataframe, sets, and time periods
     gen = inputs["RESOURCES"]
     T = inputs["T"]                                                 # Number of time steps (hours)
-    Z = inputs["Z"]                                                 # Number of zones
-    MultiStage = setup["MultiStage"]
     omega = inputs["omega"]
 
     # Load CCS with SOLVENT STORAGE related inputs 
