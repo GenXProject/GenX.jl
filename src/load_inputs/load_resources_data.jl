@@ -669,6 +669,16 @@ function check_allam_cycle_lox_retrofit(r::AbstractResource)
     return ErrorMsg.(error_strings)
 end
 
+function check_ccs_solvent_storage_retrofit(r::AbstractResource)
+    error_strings = String[]
+    if (can_retrofit(r) == true || is_retrofit_option(r) == true) && isa(r, CCSSolventStorage)
+        e = string("Resource ", resource_name(r), " is a CCS Solvent Storage resource but has :can_retrofit = ", can_retrofit(r), " and :retrofit = ", is_retrofit_option(r), ".")
+        e *= "\nHowever, CCS Solvent Storage resources are not eligible for retrofitting, so they should have both :can_retrofit = 0 and :retrofit = 0."
+        push!(error_strings, e)
+    end
+    return ErrorMsg.(error_strings)
+end
+
 function check_resource(setup::Dict, r::AbstractResource)
     e = []
     e = [e; check_LDS_applicability(r)]
@@ -679,7 +689,9 @@ function check_resource(setup::Dict, r::AbstractResource)
     e = [e; check_qualified_hydrogen_supply(r)]
     e = [e; check_hydrogen_resources(r)]
     e = [e; check_allam_cycle_lox_multistage(setup, r)]
+    e = [e; check_ccs_solvent_storage_multistage(setup, r)]
     e = [e; check_allam_cycle_lox_retrofit(r)]
+    e = [e; check_ccs_solvent_storage_retrofit(r)]
     return e
 end
 
