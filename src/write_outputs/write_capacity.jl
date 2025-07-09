@@ -11,16 +11,23 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     sco2turbine = 1
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     COMMIT_Allam = setup["UCommit"] > 0 ? ALLAM_CYCLE_LOX : Int[]   # If UCommit is 1, then ALL Allam Cycle LOX resources are committed
+    gasturbine, steamturbine = 1, 2
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
+    COMMIT_CCS_SS = setup["UCommit"] > 0 ? CCS_SOLVENT_STORAGE : Int[]   # If UCommit is 1, then ALL CCS with solvent storage resources are committed
 
     # Capacity decisions
     capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["NEW_CAP"]
-        if i in inputs["COMMIT"]
+        if i in inputs["COMMIT"]    # THERM_COMMIT
             capdischarge[i] = value(EP[:vCAP][i]) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         elseif i in ALLAM_CYCLE_LOX
             capdischarge[i] = value(EP[:vCAP_AllamCycleLOX][i, sco2turbine])
+        elseif i in COMMIT_CCS_SS
+            capdischarge[i] = value(EP[:vCAP_CCS_SS][i, gasturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][gasturbine] + value(EP[:vCAP_CCS_SS][i, steamturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][steamturbine]
+        elseif i in CCS_SOLVENT_STORAGE
+            capdischarge[i] = value(EP[:vCAP_CCS_SS][i, gasturbine]) + value(EP[:vCAP_CCS_SS][i, steamturbine])
         else
             capdischarge[i] = value(EP[:vCAP][i])
         end
@@ -28,12 +35,16 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 
     retcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
     for i in inputs["RET_CAP"]
-        if i in inputs["COMMIT"]
+        if i in inputs["COMMIT"] # THERM_COMMIT
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i])) * cap_size(gen[i])
         elseif i in COMMIT_Allam
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i,"cap_size"][sco2turbine]
         elseif i in ALLAM_CYCLE_LOX
             retcapdischarge[i] = value(EP[:vRETCAP_AllamCycleLOX][i, sco2turbine])
+        elseif i in COMMIT_CCS_SS
+            retcapdischarge[i] = value(EP[:vRETCAP_CCS_SS][i, gasturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][gasturbine] + value(EP[:vRETCAP_CCS_SS][i, steamturbine]) * inputs["solvent_storage_dict"][i,"cap_size"][steamturbine]
+        elseif i in CCS_SOLVENT_STORAGE
+            retcapdischarge[i] = value(EP[:vRETCAP_CCS_SS][i, gasturbine]) + value(EP[:vRETCAP_CCS_SS][i, steamturbine])
         else
             retcapdischarge[i] = first(value.(EP[:vRETCAP][i]))
         end
@@ -102,6 +113,14 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         startcap[y] = value(EP[:eExistingCap_AllamCycleLOX][y, sco2turbine])
         endcap[y] = value(EP[:eTotalCap_AllamcycleLOX][y, sco2turbine])
     end
+    
+    # for NGCC-CCS, we need to use:
+    # eExistingCap_CCS_SS[gasturbine] + eExistingCap_CCS_SS[steamturbine] instead of existing_cap_mw
+    # eTotalCap_CCS_SS[gasturbine] + eTotalCap_CCS_SS[steamturbine]instead of eTotalCap
+    for y in CCS_SOLVENT_STORAGE
+        startcap[y] = value(EP[:eExistingCap_CCS_SS][y, gasturbine]) + value(EP[:eExistingCap_CCS_SS][y, steamturbine])
+        endcap[y] = value(EP[:eTotalCap_CCS_SS][y, gasturbine]) + value(EP[:eTotalCap_CCS_SS][y, steamturbine])
+    end
 
     dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
         Zone = zone_id.(gen),
@@ -158,5 +177,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
         @info "For the full capacity output, please refer to the capacity_allam_cycle_lox.csv file."
     end
     
+    if !isempty(CCS_SOLVENT_STORAGE)
+        @info "Capacity output for CCS with solvent storage resources that is included in the capacity.csv file is the capacity of gas turbine + capacity of steam turbine in a CCS with solvent storage resource."
+        @info "For the full capacity output, please refer to the capacity_CCS_Solvent_Storage.csv file."
+    end
+
     return dfCap
 end

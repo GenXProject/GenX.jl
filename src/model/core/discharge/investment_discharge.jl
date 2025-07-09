@@ -45,6 +45,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
     RETROFIT_CAP = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] # Set of allam cycle resources
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"] # Set of flexible ccs: NGCC + solvent storage
 
     ### Variables ###
 
@@ -193,14 +194,14 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     if setup["MinCapReq"] == 1
         @expression(EP,
             eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, min_cap, tag = mincap), ALLAM_CYCLE_LOX)))
+            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, min_cap, tag = mincap), union(ALLAM_CYCLE_LOX, CCS_SOLVENT_STORAGE))))
         add_similar_to_expression!(EP[:eMinCapRes], eMinCapResInvest)
     end
 
     if setup["MaxCapReq"] == 1
         @expression(EP,
             eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, max_cap, tag = maxcap), ALLAM_CYCLE_LOX)))
+            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, max_cap, tag = maxcap), union(ALLAM_CYCLE_LOX, CCS_SOLVENT_STORAGE))))
         add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
     end
 end

@@ -16,7 +16,8 @@ function _get_resource_info()
         must_run = (filename = "Must_run.csv", type = MustRun),
         electrolyzer = (filename = "Electrolyzer.csv", type = Electrolyzer),
         vre_stor = (filename = "Vre_stor.csv", type = VreStorage),
-        allam_cycle_lox = (filename = "Allam_Cycle_LOX.csv", type = AllamCycleLOX))  
+        allam_cycle_lox = (filename = "Allam_Cycle_LOX.csv", type = AllamCycleLOX),
+        ccs_solvent_storage = (filename = "CCS_solvent_storage.csv", type = CCSSolventStorage))
     return resource_info
 end
 
@@ -65,7 +66,8 @@ function _get_summary_map()
         :Vre => "VRE",
         :MustRun => "Must_run",
         :VreStorage => "VRE_and_storage",
-        :AllamCycleLOX => "Allam_Cycle_LOX")
+        :AllamCycleLOX => "Allam_Cycle_LOX",
+        :CCSSolventStorage => "CCS_Solvent_Storage")
     max_length = maximum(length.(values(names_map)))
     for (k, v) in names_map
         names_map[k] = v * repeat(" ", max_length - length(v))
@@ -193,8 +195,7 @@ Scales allamcycle attributes in-place if necessary. Generally, these scalings co
 See documentation for descriptions of each column being scaled.
 
 # Arguments
-- `allamcycle_in` (DataFrame): A dataframe containing data for flexible ccs (e.g, AllamCycle or 
-storage coupled NGCC-CCS)
+- `allamcycle_in` (DataFrame): A dataframe containing data for Allam Cycle LOX resources.
 - `scale_factor` (Float64): A scaling factor for energy and currency units.
 
 """
@@ -234,6 +235,88 @@ function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
     ]
 
     scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
+    return nothing
+end
+
+"""
+    scale_ccs_solvent_storage_data!(ccs_solvent_storage_in::DataFrame, scale_factor::Float64)
+
+Scales ccs_solvent_storage attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
+See documentation for descriptions of each column being scaled.
+
+# Arguments
+- `ccs_solvent_storage_in` (DataFrame): A dataframe containing data for flexible ccs (e.g, AllamCycle or 
+storage coupled NGCC-CCS)
+- `scale_factor` (Float64): A scaling factor for energy and currency units.
+
+"""
+function scale_ccs_solvent_storage_data!(ccs_solvent_storage_in::DataFrame, scale_factor::Float64)
+    columns_to_scale = [
+        :existing_cap_mw_gasturbine,              # to GW
+        :existing_cap_mw_steamturbine,            # to GW
+        :existing_cap_ton_absorber,               # to kt
+        :existing_cap_mw_compressor,              # to GW
+        :existing_cap_ton_regenerator,            # to kt
+        :existing_cap_ton_solventstorage_rich,    # to kt
+        :existing_cap_ton_solventstorage_lean,    # to kt
+
+        :cap_size_mw_gasturbine,
+        :cap_size_mw_steamturbine,
+        :cap_size_ton_absorber,
+        :cap_size_mw_compressor,
+        :cap_size_ton_regenerator,
+        :cap_size_ton_solventstorage_rich,
+        :cap_size_ton_solventstorage_lean,
+
+        :min_cap_gasturbine,
+        :max_cap_gasturbine,
+        :min_cap_steamturbine,
+        :max_cap_steamturbine,
+        :min_ton_absorber,
+        :max_ton_absorber,
+        :min_mw_compressor,
+        :max_mw_compressor,
+        :min_ton_regenerator,
+        :max_ton_regenerator,
+        :min_ton_solventstorage_rich,
+        :max_ton_solventstorage_rich,
+        :min_ton_solventstorage_lean,
+        :max_ton_solventstorage_lean,
+
+        :inv_cost_per_mwyr_gasturbine,           # to $M/GW/yr
+        :inv_cost_per_mwyr_steamturbine,         # to $M/GW/yr
+        :inv_cost_per_tonyr_absorber,            # to $M/kt/yr
+        :inv_cost_per_mwyr_compressor,           # to $M/GW/yr
+        :inv_cost_per_tonyr_regenerator,         # to $M/kt/yr
+        :inv_cost_per_tonyr_solventstorage_rich, # to $M/kt/yr
+        :inv_cost_per_tonyr_solventstorage_lean, # to $M/kt/yr
+
+        :fixed_om_cost_per_mwyr_gasturbine,
+        :fixed_om_cost_per_mwyr_steamturbine,
+        :fixed_om_cost_per_tonyr_absorber,
+        :fixed_om_cost_per_mwyr_compressor,
+        :fixed_om_cost_per_tonyr_regenerator,
+        :fixed_om_cost_per_tonyr_solventstorage_rich,
+        :fixed_om_cost_per_tonyr_solventstorage_lean,
+
+        :var_om_cost_per_mwh_gasturbine,          # to $M/GWh
+        :var_om_cost_per_mwh_steamturbine,        # to $M/GWh
+        :var_om_cost_per_ton_absorber,            # to $M/kt
+        :var_om_cost_per_mwh_compressor,          # to $M/GWh
+        :var_om_cost_per_ton_regenerator,         # to $M/kt
+        :var_om_cost_per_ton_solventstorage_rich, # to $M/kt
+        :var_om_cost_per_ton_solventstorage_lean, # to $M/kt
+
+        :start_cost_per_mw_gasturbine,            # to $M/GW
+        :start_cost_per_mw_steamturbine,          # to $M/GW
+        :start_cost_per_ton_absorber,             # to $M/kt
+        :start_cost_per_mw_compressor,            # to $M/GW
+        :start_cost_per_ton_regenerator,          # to $M/kt
+        :start_cost_per_ton_solventstorage_rich,  # to $M/kt
+        :start_cost_per_ton_solventstorage_lean,  # to $M/kt
+    ]
+
+    scale_columns!(ccs_solvent_storage_in, columns_to_scale, scale_factor)
     return nothing
 end
 
@@ -281,6 +364,7 @@ function load_resource_df(path::AbstractString, scale_factor::Float64, resource_
     # scale vre_stor columns if necessary
     resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor) 
     resource_type == AllamCycleLOX && scale_allamcycle_data!(resource_in, scale_factor)
+    resource_type == CCSSolventStorage && scale_ccs_solvent_storage_data!(resource_in, scale_factor)
     return resource_in
 end
 
@@ -566,11 +650,30 @@ function check_allam_cycle_lox_multistage(setup::Dict, r::AbstractResource)
     return ErrorMsg.(error_strings)
 end
 
+function check_ccs_solvent_storage_multistage(setup::Dict, r::AbstractResource)
+    error_strings = String[]
+    if setup["MultiStage"] == 1 && isa(r, CCSSolventStorage)
+        e = string("CCS Solvent Storage resources are not supported in multistage mode.")
+        push!(error_strings, e)
+    end
+    return ErrorMsg.(error_strings)
+end
+
 function check_allam_cycle_lox_retrofit(r::AbstractResource)
     error_strings = String[]
     if (can_retrofit(r) == true || is_retrofit_option(r) == true) && isa(r, AllamCycleLOX)
         e = string("Resource ", resource_name(r), " is an Allam Cycle LOX resource but has :can_retrofit = ", can_retrofit(r), " and :retrofit = ", is_retrofit_option(r), ".")
         e *= "\nHowever, Allam Cycle LOX resources are not eligible for retrofitting, so they should have both :can_retrofit = 0 and :retrofit = 0."
+        push!(error_strings, e)
+    end
+    return ErrorMsg.(error_strings)
+end
+
+function check_ccs_solvent_storage_retrofit(r::AbstractResource)
+    error_strings = String[]
+    if (can_retrofit(r) == true || is_retrofit_option(r) == true) && isa(r, CCSSolventStorage)
+        e = string("Resource ", resource_name(r), " is a CCS Solvent Storage resource but has :can_retrofit = ", can_retrofit(r), " and :retrofit = ", is_retrofit_option(r), ".")
+        e *= "\nHowever, CCS Solvent Storage resources are not eligible for retrofitting, so they should have both :can_retrofit = 0 and :retrofit = 0."
         push!(error_strings, e)
     end
     return ErrorMsg.(error_strings)
@@ -586,7 +689,9 @@ function check_resource(setup::Dict, r::AbstractResource)
     e = [e; check_qualified_hydrogen_supply(r)]
     e = [e; check_hydrogen_resources(r)]
     e = [e; check_allam_cycle_lox_multistage(setup, r)]
+    e = [e; check_ccs_solvent_storage_multistage(setup, r)]
     e = [e; check_allam_cycle_lox_retrofit(r)]
+    e = [e; check_ccs_solvent_storage_retrofit(r)]
     return e
 end
 
@@ -1459,6 +1564,68 @@ function add_resources_to_input_data!(inputs::Dict,
         allam_dict[y, "start_fuel"] = get_attr(gen[y], :start_fuel_sco2turbine_mmbtu_per_mw, default_zero), get_attr(gen[y], :start_fuel_asu_mmbtu_per_mw, default_zero), 0
     end
     inputs["allam_dict"] = allam_dict
+
+    # CCS with solvent storage
+    inputs["CCS_SOLVENT_STORAGE"] = ccs_solvent_storage(gen)
+
+    # reconstruct a dictionary to store component-wise data for CCS with solvent storage.
+    # the order must follow gas turbine -> steam turbine -> absorber -> compressor -> regenerator -> rich solvent storage -> lean solvent storage
+    solvent_storage_dict = Dict()
+    
+    for y in inputs["CCS_SOLVENT_STORAGE"]
+        solvent_storage_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_per_mwyr_gasturbine, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_steamturbine, default_zero), 
+                                              get_attr(gen[y], :inv_cost_per_tonyr_absorber, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_compressor, default_zero), 
+                                              get_attr(gen[y], :inv_cost_per_tonyr_regenerator, default_zero), get_attr(gen[y], :inv_cost_per_tonyr_solventstorage_rich, default_zero), 
+                                              get_attr(gen[y], :inv_cost_per_tonyr_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_per_mwyr_gasturbine, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_steamturbine, default_zero),
+                                              get_attr(gen[y], :fixed_om_cost_per_tonyr_absorber, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_compressor, default_zero),
+                                              get_attr(gen[y], :fixed_om_cost_per_tonyr_regenerator, default_zero), get_attr(gen[y], :fixed_om_cost_per_tonyr_solventstorage_rich, default_zero),
+                                              get_attr(gen[y], :fixed_om_cost_per_tonyr_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "vom_cost"] = get_attr(gen[y], :var_om_cost_per_mwh_gasturbine, default_zero), get_attr(gen[y], :var_om_cost_per_mwh_steamturbine, default_zero),
+                                              get_attr(gen[y], :var_om_cost_per_ton_absorber, default_zero), get_attr(gen[y], :var_om_cost_per_mwh_compressor, default_zero),
+                                              get_attr(gen[y], :var_om_cost_per_ton_regenerator, default_zero), get_attr(gen[y], :var_om_cost_per_ton_solventstorage_rich, default_zero),
+                                              get_attr(gen[y], :var_om_cost_per_ton_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "cap_size"] = get_attr(gen[y], :ap_size_mw_gasturbine, 1), get_attr(gen[y], :cap_size_mw_steamturbine, 1),
+                                              get_attr(gen[y], :cap_size_ton_absorber, 1), get_attr(gen[y], :cap_size_mw_compressor, 1),
+                                              get_attr(gen[y], :cap_size_ton_regenerator, 1), get_attr(gen[y], :cap_size_ton_solventstorage_rich, 1),
+                                              get_attr(gen[y], :cap_size_ton_solventstorage_lean, 1)
+        solvent_storage_dict[y, "start_cost"] = get_attr(gen[y], :start_cost_per_mw_gasturbine, default_zero), get_attr(gen[y], :start_cost_per_mw_steamturbine, default_zero),
+                                                get_attr(gen[y], :start_cost_per_ton_absorber, default_zero), get_attr(gen[y], :start_cost_per_mw_compressor, default_zero),
+                                                get_attr(gen[y], :start_cost_per_ton_regenerator, default_zero), get_attr(gen[y], :start_cost_per_ton_solventstorage_rich, default_zero),
+                                                get_attr(gen[y], :start_cost_per_ton_solventstorage_lean, default_zero)
+        solvent_storage_dict[y,"start_fuel"] = get_attr(gen[y], :start_fuel_mmbtu_per_mw_gasturbine, default_zero), get_attr(gen[y], :start_fuel_mmbtu_per_mw_steamturbine, default_zero)
+                                               0, 0, 0, 0, 0
+        solvent_storage_dict[y, "min_power"] = get_attr(gen[y], :min_power_gasturbine, default_zero), get_attr(gen[y], :min_power_steamturbine, default_zero),
+                                               get_attr(gen[y], :min_power_absorber, default_zero), get_attr(gen[y], :min_power_compressor, default_zero),
+                                               get_attr(gen[y], :min_power_regenerator, default_zero), get_attr(gen[y], :min_power_solventstorage_rich, default_zero),
+                                               get_attr(gen[y], :min_power_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "up_time"] = get_attr(gen[y], :up_time_gasturbine, default_zero), get_attr(gen[y], :up_time_steamturbine, default_zero),
+                                             get_attr(gen[y], :up_time_absorber, default_zero), get_attr(gen[y], :up_time_compressor, default_zero),
+                                             get_attr(gen[y], :up_time_regenerator, default_zero), 0, 0
+        solvent_storage_dict[y, "down_time"] = get_attr(gen[y], :dn_time_gasturbine, default_zero), get_attr(gen[y], :dn_time_steamturbine, default_zero),
+                                               get_attr(gen[y], :dn_time_absorber, default_zero), get_attr(gen[y], :dn_time_compressor, default_zero),
+                                               get_attr(gen[y], :dn_time_regenerator, default_zero), 0, 0
+        solvent_storage_dict[y, "ramp_up"] = get_attr(gen[y], :ramp_up_gasturbine, default_percent), get_attr(gen[y], :ramp_up_steamturbine, default_percent),
+                                             get_attr(gen[y], :ramp_up_absorber, default_percent), get_attr(gen[y], :ramp_up_compressor, default_percent),
+                                             get_attr(gen[y], :ramp_up_regenerator, default_percent), 0, 0
+        solvent_storage_dict[y, "ramp_dn"] =  get_attr(gen[y], :ramp_dn_gasturbine, default_percent), get_attr(gen[y], :ramp_dn_steamturbine, default_percent),
+                                             get_attr(gen[y], :ramp_dn_absorber, default_percent), get_attr(gen[y], :ramp_dn_compressor, default_percent),
+                                             get_attr(gen[y], :ramp_dn_regenerator, default_percent), 0, 0
+        solvent_storage_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_mw_gasturbine, default_zero), get_attr(gen[y], :existing_cap_mw_steamturbine, default_zero),
+                                                  get_attr(gen[y], :existing_cap_ton_absorber, default_zero), get_attr(gen[y], :existing_cap_mw_compressor, default_zero),
+                                                  get_attr(gen[y], :existing_cap_ton_regenerator, default_zero), get_attr(gen[y], :existing_cap_ton_solventstorage_rich, default_zero),
+                                                  get_attr(gen[y], :existing_cap_ton_solventstorage_lean, default_zero)
+        solvent_storage_dict[y, "max_cap"] = get_attr(gen[y], :max_cap_mw_gasturbine, default_minmax_cap), get_attr(gen[y], :max_cap_mw_steamturbine, default_minmax_cap),
+                                             get_attr(gen[y], :max_cap_ton_absorber, default_minmax_cap), get_attr(gen[y], :max_cap_mw_compressor, default_minmax_cap),
+                                             get_attr(gen[y], :max_cap_ton_regenerator, default_minmax_cap), get_attr(gen[y], :max_cap_ton_solventstorage_rich, default_minmax_cap),
+                                             get_attr(gen[y], :max_cap_ton_solventstorage_lean, default_minmax_cap)
+        solvent_storage_dict[y, "min_cap"] = get_attr(gen[y], :min_cap_mw_gasturbine, default_minmax_cap), get_attr(gen[y], :min_cap_mw_steamturbine, default_minmax_cap),
+                                             get_attr(gen[y], :min_cap_ton_absorber, default_minmax_cap), get_attr(gen[y], :min_cap_mw_compressor, default_minmax_cap),
+                                             get_attr(gen[y], :min_cap_ton_regenerator, default_minmax_cap), get_attr(gen[y], :min_cap_ton_solventstorage_rich, default_minmax_cap),
+                                             get_attr(gen[y], :min_cap_ton_solventstorage_lean, default_minmax_cap)
+    end
+
+    inputs["solvent_storage_dict"] = solvent_storage_dict
 
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)

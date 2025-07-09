@@ -13,6 +13,7 @@ Possible values:
 - :VreStorage
 - :Electrolyzer
 - :AllamCycleLox
+- :CCSSolventStorage
 """
 const resource_types = (:Thermal,
     :Vre,
@@ -22,7 +23,8 @@ const resource_types = (:Thermal,
     :FlexDemand,
     :VreStorage,
     :Electrolyzer,
-    :AllamCycleLOX)
+    :AllamCycleLOX,
+    :CCSSolventStorage)
 
 # Create composite types (structs) for each resource type in resource_types
 for r in resource_types
@@ -683,6 +685,12 @@ function heat_rate_mmbtu_per_mwh(r::AbstractResource)
     get(r, :heat_rate_mmbtu_per_mwh, default_zero)
 end
 co2_capture_fraction(r::AbstractResource) = get(r, :co2_capture_fraction, default_zero)
+function co2_capture_fraction_max(r::AbstractResource)
+    get(r, :co2_capture_fraction_max, default_zero)
+end
+function co2_capture_fraction_startup_max(r::AbstractResource)
+    get(r, :co2_capture_fraction_startup_max, default_zero)
+end
 function co2_capture_fraction_startup(r::AbstractResource)
     get(r, :co2_capture_fraction_startup, default_zero)
 end
@@ -1135,6 +1143,13 @@ end
 
 # duration for lox
 lox_duration(r::AbstractResource) = get(r, :lox_duration, default_zero)
+
+# Flexible CCS with solvent storage
+"""
+    ccs_solvent_storage(rs::Vector{T}) where T <: AbstractResource
+Returns the indices of all CCS_SOLVENT_STORAGE resources in the vector `rs`.
+"""
+ccs_solvent_storage(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, CCSSolventStorage), rs)
 
 
 ## policies

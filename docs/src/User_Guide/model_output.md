@@ -29,6 +29,10 @@ Reports optimal values of investment variables (except StartCap, which is an inp
     Capacity output for **Allam Cycle LOX** resources that is included in the **capacity.csv** file is for the **sCO2Turbine** in an Allam Cycle LOX resource.
     For the full capacity output, please refer to the **capacity\_allam\_cycle\_lox.csv** file ([`GenX.write_allam_capacity`](@ref)).
 
+!!! note "Note"
+    Capacity output for **CCS with solvent storage** resources that is included in the **capacity.csv** file is the sum of the **gas combustion turbine** and **steam turbine**in an NGCC-CCS resource.
+    For the full capacity output, please refer to the **capacity\_ccs\_solvent\_storage.csv** file ([`GenX.write_ccs_ss_capacity`](@ref)).
+
 ### 1.2 costs.csv
 
 Reports optimal objective function value and contribution of each term by zone.
@@ -202,3 +206,62 @@ This file includes the output from each component of an Allam Cycle LOX resource
 | (resource\_name)\_lox\_in\_t | Hourly amount of liquid oxygen charged into the LOX in the Allam Cycle LOX resource | t |
 | (resource\_name)\_lox\_out\_t | Hourly amount of liquid oxygen discharged from the LOX in the Allam Cycle LOX resource | t |
 | (resource\_name)\_gox\_t | Hourly amount of gaseous oxygen produced by ASU in the Allam Cycle LOX resource | t |
+
+### 3.3 capacity\_CCS\_Solvent\_Storage.csv
+
+This file includes the capacity output for CCS with solvent storage resources ([`GenX.write_ccs_ss_capacity`](@ref)).
+
+###### Table 3.3: Structure of the capacity\_CCS\_Solvent\_Storage.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| Resource | Name of the NGCC CCS with solvent storage resource | |
+| Zone | Zone of the NGCC CCS with solvent storage resource | |
+| StartCap\_GasTurbine\_MW | Initial power capacity of the gas combustion turbine in the NGCC CCS with solvent storage resource | MW |
+| StartCap\_SteamTurbine\_MW | Initial power capacity of the steam turbine in the NGCC CCS with solvent storage resource | MW |
+| StartCap\_Absorber\_t | Initial power capacity of the absorber in the NGCC CCS with solvent storage resource | t |
+| StartCap\_Compressor\_MW | Initial power capacity of the compressor in the NGCC CCS with solvent storage resource | MW |
+| StartCap\_Regenerator\_t | Initial power capacity of the regenerator in the NGCC CCS with solvent storage resource | t |
+| StartCap\_SolventStorageRich\_t | Initial power capacity of the solvent storage (rich) in the NGCC CCS with solvent storage resource | t |
+| StartCap\_SolventStorageLean\_t | Initial power capacity of the solvent storage (lean) in the NGCC CCS with solvent storage resource | t |
+| RetCap\_GasTurbine\_MW | Retired power capacity of the gas combustion turbine in the NGCC CCS with solvent storage resource | MW |
+| RetCap\_SteamTurbine\_MW | Retired power capacity of the steam turbine in the NGCC CCS with solvent storage resource | MW |
+| RetCap\_Absorber\_t | Retired power capacity of the absorber in the NGCC CCS with solvent storage resource | t |
+| RetCap\_Compressor\_MW | Retired power capacity of the compressor in the NGCC CCS with solvent storage resource | MW |
+| RetCap\_Regenerator\_t | Retired power capacity of the regenerator in the NGCC CCS with solvent storage resource | t |
+| RetCap\_SolventStorageRich\_t | Retired power capacity of the solvent storage (rich) in the NGCC CCS with solvent storage resource | t |
+| RetCap\_SolventStorageLean\_t | Retired power capacity of the solvent storage (lean) in the NGCC CCS with solvent storage resource | t |
+| NewCap\_GasTurbine\_MW | Installed power capacity of the gas combustion turbine in the NGCC CCS with solvent storage resource | MW |
+| NewCap\_SteamTurbine\_MW | Installed power capacity of the steam turbine in the NGCC CCS with solvent storage resource | MW |
+| NewCap\_Absorber\_t | Installed power capacity of the absorber in the NGCC CCS with solvent storage resource | t |
+| NewCap\_Compressor\_MW | Installed power capacity of the compressor in the NGCC CCS with solvent storage resource | MW |
+| NewCap\_Regenerator\_t | Installed power capacity of the regenerator in the NGCC CCS with solvent storage resource | t |
+| NewCap\_SolventStorageRich\_t | Installed power capacity of the solvent storage (rich) in the NGCC CCS with solvent storage resource | t |
+| NewCap\_SolventStorageLean\_t | Installed power capacity of the solvent storage (lean) in the NGCC CCS with solvent storage resource | t |
+| EndCap\_GasTurbine\_MW | Total power capacity of the gas combustion turbine in the NGCC CCS with solvent storage resource | MW |
+| EndCap\_SteamTurbine\_MW | Total power capacity of the steam turbine in the NGCC CCS with solvent storage resource | MW |
+| EndCap\_Absorber\_t | Total power capacity of the absorber in the NGCC CCS with solvent storage resource | t |
+| EndCap\_Compressor\_MW | Total power capacity of the compressor in the NGCC CCS with solvent storage resource | MW |
+| EndCap\_Regenerator\_t | Total power capacity of the regenerator in the NGCC CCS with solvent storage resource | t |
+| EndCap\_SolventStorageRich\_t | Total power capacity of the solvent storage (rich) in the NGCC CCS with solvent storage resource | t |
+| EndCap\_SolventStorageLean\_t | Total power capacity of the solvent storage (lean) in the NGCC CCS with solvent storage resource | t |
+
+### 3.4 output\_CCS\_Solvent\_Storage.csv
+
+This file includes the output from each component of an NGCC CCS with solvent storage resource ([`GenX.write_ccs_ss_output`](@ref)).
+
+###### Table 3.4: Structure of the output\_CCS\_Solvent\_Storage.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| (resource\_name)\_gasturbine\_power\_mwh | Hourly power output of the gas combustion turbine in the NGCC CCS with solvent storage resource | MWh |
+| (resource\_name)\_combinedcycle\_commit | Hourly unit commit status of the gas combustion turbine and steam turbine in the NGCC CCS with solvent storage resource |  |
+| (resource\_name)\_net\_power\_output\_mwh | Hourly net power output of the NGCC CCS with solvent storage resource | MWh |
+| (resource\_name)\_absorber\_CO2\_t | Hourly amount of CO2 captured by the absorber of the NGCC CCS with solvent storage resource | t |
+| (resource\_name)\_absorber\_mwh | Hourly power consumption by the absorber of the NGCC CCS with solvent storage resource | MWh |
+| (resource\_name)\_absorber\_commit | Hourly unit commit status of the absorber in the NGCC CCS with solvent storage resource |  |
+| (resource\_name)\_solvent\_storage\_rich\_t | Hourly amount of rich solvent stored in the tank | t |
+| (resource\_name)\_solvent\_storage\_lean\_t | Hourly amount of lean solvent stored in the tank | t |
+| (resource\_name)\_compressor\_mwh | Hourly power consumption by the compressor of the NGCC CCS with solvent storage resource | MWh |
+| (resource\_name)\_compressor\_commit | Hourly unit commit status of the compressor in the NGCC CCS with solvent storage resource |  |
+| (resource\_name)\_regenerator\_CO2\_t | Hourly amount of CO2 regenerated and compressed by the regenerator and compressor of the NGCC CCS with solvent storage resource | t |

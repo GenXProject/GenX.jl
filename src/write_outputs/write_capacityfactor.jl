@@ -15,6 +15,8 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
+    gasturbine, steamturbine = 1, 2
     weight = inputs["omega"]
 
     df = DataFrame(Resource = inputs["RESOURCE_NAMES"],
@@ -63,7 +65,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
     has_capacity = findall(x -> x >= 1, df.Capacity)
     EXISTING = intersect(produces_power, has_capacity)
     # We calculate capacity factor for thermal, vre, hydro and must run. Not for storage and flexible demand
-    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR), EXISTING)
+    CF_GEN = intersect(union(THERM_ALL, VRE, HYDRO_RES, MUST_RUN, VRE_STOR, CCS_SOLVENT_STORAGE), EXISTING)
     df.CapacityFactor[CF_GEN] .= (df.AnnualSum[CF_GEN] ./
                                   df.Capacity[CF_GEN]) /
                                  sum(weight)
@@ -88,6 +90,22 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         @info "Capacity factor for Allam Cycle LOX resources that is included in the capacityfactor.csv file is calculated for the sCO2Turbine in an Allam Cycle LOX resource."
         @info "For the full power output, please refer to the output_allam_cycle_lox.csv file."
     end
+
+    # Capacity factor for CCS_SOLVENT_STORAGE is based on eTotalCap_CCS_SS instead of eTotalCap
+    if !isempty(CCS_SOLVENT_STORAGE)
+        for i in CCS_SOLVENT_STORAGE
+            df.Capacity[i] = value(EP[:eTotalCap_CCS_SS][i, gasturbine]) + value(EP[:eTotalCap_CCS_SS][i, steamturbine])
+        end
+        df.CapacityFactor[CCS_SOLVENT_STORAGE] .= (df.AnnualSum[CCS_SOLVENT_STORAGE] ./
+                                                    df.Capacity[CCS_SOLVENT_STORAGE]) /
+                                                    sum(weight)
+    end
+
+    if !isempty(CCS_SOLVENT_STORAGE)
+        @info "Capacity factor for CCS SOLVENT STORAGE resources that is included in the capacityfactor.csv file is calculated for the total generation from gas and steam turbines in an Allam Cycle LOX resource."
+        @info "For the full power output, please refer to the output_CCS_Solvent_Storage.csv file."
+    end
+
 
     CSV.write(joinpath(path, "capacityfactor.csv"), df)
     return nothing

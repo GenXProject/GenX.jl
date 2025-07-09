@@ -47,6 +47,7 @@ function write_net_revenue(path::AbstractString,
         AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
         # Should read in charge asymmetric capacities
     end
+    CCS_SOLVENT_STORAGE = inputs["CCS_SOLVENT_STORAGE"]
 
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
 
@@ -80,6 +81,10 @@ function write_net_revenue(path::AbstractString,
 
     if !isempty(ALLAM_CYCLE_LOX)
         dfNetRevenue.Inv_cost_MW[ALLAM_CYCLE_LOX] += Array(value.(EP[:eCFix_Allam_Plant]))
+    end
+    
+    if !isempty(CCS_SOLVENT_STORAGE)
+        dfNetRevenue.Inv_cost_MW[CCS_SOLVENT_STORAGE] += Array(value.(EP[:eCFix_CCS_SS_Plant]))
     end
     
     if setup["ParameterScale"] == 1
@@ -131,6 +136,10 @@ function write_net_revenue(path::AbstractString,
 
     if !isempty(ALLAM_CYCLE_LOX)
         dfNetRevenue.Var_OM_cost_out[ALLAM_CYCLE_LOX] += Array(value.(EP[:eCVar_Allam]))
+    end
+    
+    if !isempty(CCS_SOLVENT_STORAGE)
+        dfNetRevenue.Var_OM_cost_out[CCS_SOLVENT_STORAGE] += Array(value.(EP[:eCVar_CCS_SS]))
     end
     
     if setup["ParameterScale"] == 1
