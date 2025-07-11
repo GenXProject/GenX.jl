@@ -11,7 +11,7 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
     println("Storage Resources with Symmetric Charge/Discharge Capacity Module")
 
     OperationalReserves = setup["OperationalReserves"] == 1
-    CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
+    CapacityReserveMargin = setup["CapacityReserveMargin"] 
 
     T = inputs["T"]     # Number of time steps (hours)
 
@@ -37,7 +37,7 @@ function storage_symmetric!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(expr[RSV, :], vRSV_discharge[RSV, :])
     end
 
-    if CapacityReserveMargin
+    if CapacityReserveMargin == 1
         # Maximum charging rate (including virtual charging to move energy held in reserve back to available storage) must be less than symmetric power rating
         vCAPRES_charge = EP[:vCAPRES_charge]
         vCAPRES_discharge = EP[:vCAPRES_discharge]

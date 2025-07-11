@@ -293,8 +293,13 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Capacity Reserve Margin Requirement
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         vre_stor_capres!(EP, inputs, setup)
+    elseif CapacityReserveMargin == 2
+        @expression(EP, eCapResMarBalanceStor_VRE_STOR[capres in 1:ncapres],
+            sum(capresfactor[y, capres] * EP[:eTotalCap][y]
+            for y in VRE_STOR))
+        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor_VRE_STOR)
     end
 
     # Operational Reserves Requirement
@@ -2919,7 +2924,7 @@ function vre_stor_operational_reserves!(EP::Model, inputs::Dict, setup::Dict)
         end
     end
 
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         for t in 1:T
             for y in DC_DISCHARGE
                 add_to_expression!(eDischargeMax[y, t], 1 / by_rid(y, :eff_down_dc),

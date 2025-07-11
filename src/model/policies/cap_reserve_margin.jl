@@ -64,12 +64,23 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 
     # if input files are present, add capacity reserve margin slack variables
     if haskey(inputs, "dfCapRes_slack")
-        @variable(EP, vCapResSlack[res = 1:NCRM, t = 1:T]>=0)
+        if setup["CapacityReserveMargin"] == 1
+            @variable(EP, vCapResSlack[res = 1:NCRM, t = 1:T]>=0)
+        elseif setup["CapacityReserveMargin"] == 2
+            @variable(EP, vCapResSlack[res = 1:NCRM] >= 0)
+        end
+
         add_similar_to_expression!(EP[:eCapResMarBalance], vCapResSlack)
 
-        @expression(EP,
-            eCapResSlack_Year[res = 1:NCRM],
-            sum(EP[:vCapResSlack][res, t] * inputs["omega"][t] for t in 1:T))
+        if setup["CapacityReserveMargin"] == 1
+            @expression(EP,
+                eCapResSlack_Year[res = 1:NCRM],
+                sum(EP[:vCapResSlack][res, t] * inputs["omega"][t] for t in 1:T))
+        elseif setup["CapacityReserveMargin"] == 2
+            @expression(EP,
+                eCapResSlack_Year[res = 1:NCRM],
+                EP[:vCapResSlack][res])
+        end
         @expression(EP,
             eCCapResSlack[res = 1:NCRM],
             inputs["dfCapRes_slack"][res, :PriceCap]*EP[:eCapResSlack_Year][res])
@@ -77,10 +88,17 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
         add_to_expression!(EP[:eObj], eCTotalCapResSlack)
     end
 
-    @constraint(EP,
-        cCapacityResMargin[res = 1:NCRM, t = 1:T],
-        EP[:eCapResMarBalance][res,
-            t]
-        >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
-        for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+    if setup["CapacityReserveMargin"] == 1
+        @constraint(EP,
+            cCapacityResMargin[res = 1:NCRM, t = 1:T],
+            EP[:eCapResMarBalance][res,
+                t]
+            >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
+            for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+    elseif setup["CapacityReserveMargin"] == 2
+        @constraint(EP,
+            cCapacityResMargin[res = 1:NCRM],
+            EP[:eCapResMarBalance][res]
+            >= inputs["dfCapRes"][1, res])
+    end
 end

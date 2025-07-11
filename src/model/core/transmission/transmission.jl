@@ -157,12 +157,18 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)
 
     # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
-        if Z > 1
+    if Z > 1
+        if CapacityReserveMargin == 1
             @expression(EP,
                 eCapResMarBalanceTrans[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
                 sum(inputs["dfTransCapRes_excl"][l, res] *
                     inputs["dfDerateTransCapRes"][l, res] * EP[:vFLOW][l, t] for l in 1:L))
+            add_similar_to_expression!(EP[:eCapResMarBalance], -1.0, eCapResMarBalanceTrans)
+        elseif CapacityReserveMargin == 2
+            @expression(EP,
+                eCapResMarBalanceTrans[res = 1:inputs["NCapacityReserveMargin"]],
+                sum(inputs["dfTransCapRes_excl"][l, res] *
+                    inputs["dfDerateTransCapRes"][l, res] * EP[:eAvail_Trans_Cap][l] for l in 1:L))
             add_similar_to_expression!(EP[:eCapResMarBalance], -1.0, eCapResMarBalanceTrans)
         end
     end

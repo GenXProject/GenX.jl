@@ -77,10 +77,16 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
     if setup["CapacityReserveMargin"] > 0
         nCRMZones = inputs["NCapacityReserveMargin"]
         capresfactor = inputs["DERATING_FACTOR"]
-        @expression(EP,
-            eCapResMarBalanceFlex[res = 1:nCRMZones, t = 1:T],
-            sum(capresfactor[y, res] *
-                (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX))
+        if setup["CapacityReserveMargin"] == 1
+            @expression(EP,
+                eCapResMarBalanceFlex[res = 1:nCRMZones, t = 1:T],
+                sum(capresfactor[y, res] *
+                    (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX))
+        elseif setup["CapacityReserveMargin"] == 2
+            @expression(EP,
+                eCapResMarBalanceFlex[res = 1:nCRMZones],
+                sum(capresfactor[y, res] * EP[:eTotalCap][y] for y in FLEX))
+        end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceFlex)
     end
 

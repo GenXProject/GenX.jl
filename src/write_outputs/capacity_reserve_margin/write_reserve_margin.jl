@@ -3,7 +3,11 @@ function write_reserve_margin(path::AbstractString, setup::Dict, EP::Model)
     if setup["ParameterScale"] == 1
         temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
     end
-    dfResMar = DataFrame(temp_ResMar, :auto)
+    if setup["CapacityReserveMargin"] == 1
+        dfResMar = DataFrame(temp_ResMar, :auto)
+    elseif setup["CapacityReserveMargin"] == 2
+        dfResMar = DataFrame(Value = temp_ResMar)
+    end
     CSV.write(joinpath(path, "ReserveMargin.csv"), dfResMar)
     return nothing
 end

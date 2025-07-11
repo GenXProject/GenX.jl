@@ -383,14 +383,14 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         end
         
         dfResRevenue = DataFrame()
-        if setup["CapacityReserveMargin"] == 1 && has_duals(EP)
+        if setup["CapacityReserveMargin"] > 0 && has_duals(EP)
             if output_settings_d["WriteReserveMargin"]
                 elapsed_time_reserve_margin = @elapsed write_reserve_margin(path, setup, EP)
                 println("Time elapsed for writing reserve margin is")
                 println(elapsed_time_reserve_margin)
             end
 
-            if output_settings_d["WriteReserveMarginWithWeights"]
+            if setup["CapacityReserveMargin"] == 1 && output_settings_d["WriteReserveMarginWithWeights"]
                 elapsed_time_rsv_margin_w = @elapsed write_reserve_margin_w(path,
                     inputs,
                     setup,
@@ -399,7 +399,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println(elapsed_time_rsv_margin_w)
             end
 
-            if output_settings_d["WriteVirtualDischarge"]
+            if setup["CapacityReserveMargin"] == 1 && output_settings_d["WriteVirtualDischarge"]
                elapsed_time_virtual_discharge = @elapsed write_virtual_discharge(path,
                    inputs,
                    setup,
@@ -429,7 +429,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                 println(elapsed_time_rsv_slack)
             end
 
-            if output_settings_d["WriteCapacityValue"]
+            if setup["CapacityReserveMargin"] == 1 && output_settings_d["WriteCapacityValue"]
                 elapsed_time_cap_value = @elapsed write_capacity_value(path,
                     inputs,
                     setup,

@@ -36,18 +36,26 @@ function thermal!(EP::Model, inputs::Dict, setup::Dict)
     if setup["CapacityReserveMargin"] > 0
         capresfactor = inputs["DERATING_FACTOR"]
         ncapres = inputs["NCapacityReserveMargin"]
-        @expression(EP, eCapResMarBalanceThermal[capres in 1:ncapres, t in 1:T],
-            sum(capresfactor[y, capres] * EP[:eTotalCap][y]
-            for y in THERM_ALL))
+        if setup["CapacityReserveMargin"] == 1
+            @expression(EP, eCapResMarBalanceThermal[capres in 1:ncapres, t in 1:T],
+                sum(capresfactor[y, capres] * EP[:eTotalCap][y]
+                for y in THERM_ALL))
+            
+
+            if !isempty(intersect(MAINT, THERM_COMMIT))
+                thermal_maintenance_capacity_reserve_margin_adjustment!(EP, inputs)
+            end
+
+            if !isempty(intersect(FUSION, THERM_COMMIT))
+                fusion_capacity_reserve_margin_adjustment!(EP, inputs)
+            end
+        
+        elseif setup["CapacityReserveMargin"] == 2
+            @expression(EP, eCapResMarBalanceThermal[capres in 1:ncapres],
+                sum(capresfactor[y, capres] * EP[:eTotalCap][y]
+                for y in THERM_ALL))
+        end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceThermal)
-
-        if !isempty(intersect(MAINT, THERM_COMMIT))
-            thermal_maintenance_capacity_reserve_margin_adjustment!(EP, inputs)
-        end
-
-        if !isempty(intersect(FUSION, THERM_COMMIT))
-            fusion_capacity_reserve_margin_adjustment!(EP, inputs)
-        end
     end
 
     if setup["EnergyShareRequirement"] > 0

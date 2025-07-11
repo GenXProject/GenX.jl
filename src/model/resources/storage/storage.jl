@@ -190,17 +190,23 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
         vCHARGE = EP[:vCHARGE]
         nCRMZones = inputs["NCapacityReserveMargin"]
         capresfactor = inputs["DERATING_FACTOR"]
-        @expression(EP,
-            eCapResMarBalanceStor[res = 1:nCRMZones, t = 1:T],
-            sum(capresfactor[y, res] * (vP[y, t] - vCHARGE[y, t])
-            for y in STOR_ALL))
-        if StorageVirtualDischarge > 0
+        if CapacityReserveMargin == 1
             @expression(EP,
-                eCapResMarBalanceStorVirtual[res = 1:nCRMZones, t = 1:T],
-                sum(capresfactor[y, res] *
-                    (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
+                eCapResMarBalanceStor[res = 1:nCRMZones, t = 1:T],
+                sum(capresfactor[y, res] * (vP[y, t] - vCHARGE[y, t])
                 for y in STOR_ALL))
-            add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
+            if StorageVirtualDischarge > 0
+                @expression(EP,
+                    eCapResMarBalanceStorVirtual[res = 1:nCRMZones, t = 1:T],
+                    sum(capresfactor[y, res] *
+                        (EP[:vCAPRES_discharge][y, t] - EP[:vCAPRES_charge][y, t])
+                    for y in STOR_ALL))
+                add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
+            end
+        elseif CapacityReserveMargin == 2
+            @expression(EP, 
+                eCapResMarBalanceStor[res = 1:nCRMZones],
+                sum(capresfactor[y, res] * EP[:eTotalCap][y] for y in STOR_ALL))
         end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
     end

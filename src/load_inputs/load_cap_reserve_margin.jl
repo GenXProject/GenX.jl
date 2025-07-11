@@ -18,7 +18,10 @@ function load_cap_reserve_margin!(setup::Dict, path::AbstractString, inputs::Dic
 
     mat = extract_matrix_from_dataframe(df, "CapRes")
     inputs["dfCapRes"] = mat
-    inputs["NCapacityReserveMargin"] = size(mat, 2)
+    if setup["CapacityReserveMargin"] == 2
+        inputs["dfCapRes"] = inputs["dfCapRes"] ./ scale_factor 
+    end
+        inputs["NCapacityReserveMargin"] = size(mat, 2)
 
     gen = inputs["RESOURCES"]
     res = 1:inputs["NCapacityReserveMargin"]

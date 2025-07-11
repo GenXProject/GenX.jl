@@ -11,7 +11,7 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
     println("Storage Resources with Asmymetric Charge/Discharge Capacity Module")
 
     OperationalReserves = setup["OperationalReserves"] == 1
-    CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
+    CapacityReserveMargin = setup["CapacityReserveMargin"] 
 
     T = inputs["T"]     # Number of time steps (hours)
 
@@ -31,7 +31,7 @@ function storage_asymmetric!(EP::Model, inputs::Dict, setup::Dict)
         add_similar_to_expression!(expr[STOR_ASYM_REG, :], vREG_charge[STOR_ASYM_REG, :])
     end
 
-    if CapacityReserveMargin
+    if CapacityReserveMargin == 1
         vCAPRES_charge = EP[:vCAPRES_charge]
         add_similar_to_expression!(expr[ASYMMETRIC, :], vCAPRES_charge[ASYMMETRIC, :])
     end

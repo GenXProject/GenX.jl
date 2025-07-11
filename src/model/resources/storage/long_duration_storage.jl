@@ -130,7 +130,7 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
     # Build up inventory can be positive or negative
     @variable(EP, vdSOC[y in STOR_LONG_DURATION, w = 1:REP_PERIOD])
 
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         # State of charge held in reserve for storage at beginning of each modeled period n
         @variable(EP, vCAPRES_socw[y in STOR_LONG_DURATION, n in MODELED_PERIODS_INDEX]>=0)
 
@@ -188,7 +188,7 @@ function long_duration_storage!(EP::Model, inputs::Dict, setup::Dict)
                 vdSOC[y, dfPeriodMap[r, :Rep_Period_Index]])
 
     # Capacity Reserve Margin policy
-    if CapacityReserveMargin > 0
+    if CapacityReserveMargin == 1
         vCAPRES_charge = EP[:vCAPRES_charge]
         vCAPRES_discharge = EP[:vCAPRES_discharge]
         vCAPRES_socinreserve = EP[:vCAPRES_socinreserve]

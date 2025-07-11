@@ -13,7 +13,7 @@ function write_reserve_margin_slack(path::AbstractString,
         dfResMar_slack.Penalty .*= ModelScalingFactor^2 # Convert Million $ to $
     end
 
-    if setup["WriteOutputs"] == "annual"
+    if setup["WriteOutputs"] == "annual" || setup["CapacityReserveMargin"] == 2
         CSV.write(joinpath(path, "ReserveMargin_slack_and_penalties.csv"), dfResMar_slack)
     else     # setup["WriteOutputs"] == "full"
         temp_ResMar_slack = value.(EP[:vCapResSlack])

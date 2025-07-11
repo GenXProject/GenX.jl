@@ -242,9 +242,15 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     if setup["CapacityReserveMargin"] > 0
         nCRMZones = inputs["NCapacityReserveMargin"]
         capresfactor = inputs["DERATING_FACTOR"]
-        @expression(EP,
-            eCapResMarBalanceAllam[res = 1:nCRMZones, t = 1:T],
-            sum(capresfactor[y, res] * (eP_Allam[y, t]-vCHARGE_ALLAM[y,t]) for y in ALLAM_CYCLE_LOX))
+        if setup["CapacityReserveMargin"] == 1
+            @expression(EP,
+                eCapResMarBalanceAllam[res = 1:nCRMZones, t = 1:T],
+                sum(capresfactor[y, res] * (eP_Allam[y, t]-vCHARGE_ALLAM[y,t]) for y in ALLAM_CYCLE_LOX))
+        elseif setup["CapacityReserveMargin"] == 2
+            @expression(EP,
+                eCapResMarBalanceAllam[res = 1:nCRMZones],
+                sum(capresfactor[y, res] * eTotalCap_AllamcycleLOX[y, sco2turbine] for y in ALLAM_CYCLE_LOX))
+        end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceAllam)
     end
 

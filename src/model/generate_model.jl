@@ -96,10 +96,14 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     create_empty_expression!(EP, :eELOSSByZone, Z)
 
     # Initialize Capacity Reserve Margin Expression
-    if setup["CapacityReserveMargin"] > 0
+    if setup["CapacityReserveMargin"] == 1
         create_empty_expression!(EP,
             :eCapResMarBalance,
             (inputs["NCapacityReserveMargin"], T))
+    elseif setup["CapacityReserveMargin"] == 2
+        create_empty_expression!(EP,
+            :eCapResMarBalance,
+            (inputs["NCapacityReserveMargin"]))
     end
 
     # Energy Share Requirement

@@ -46,10 +46,16 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     if CapacityReserveMargin > 0
         nCRMZones = inputs["NCapacityReserveMargin"]
         capresfactor = inputs["DERATING_FACTOR"]
-        @expression(EP,
-            eCapResMarBalanceVRE[res = 1:nCRMZones, t = 1:T],
-            sum(capresfactor[y, res] * EP[:eTotalCap][y] *
-                inputs["pP_Max"][y, t] for y in VRE))
+        if CapacityReserveMargin == 1
+            @expression(EP,
+                eCapResMarBalanceVRE[res = 1:nCRMZones, t = 1:T],
+                sum(capresfactor[y, res] * EP[:eTotalCap][y] *
+                    inputs["pP_Max"][y, t] for y in VRE))
+        elseif CapacityReserveMargin == 2
+            @expression(EP,
+                eCapResMarBalanceVRE[res = 1:nCRMZones],
+                sum(capresfactor[y, res] * EP[:eTotalCap][y] for y in VRE))
+        end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceVRE)
     end
 
