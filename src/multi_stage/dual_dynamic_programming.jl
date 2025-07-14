@@ -317,7 +317,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
 
     return models_d, stats_d, inputs_d
 end
-
+using Infiltrator
 @doc raw"""
 	fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
 
@@ -341,7 +341,11 @@ function fix_initial_investments(EP_prev::Model,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
+            @infiltrate # Use Infiltrator to inspect the keys of the constraint
             # Set the right hand side value of the linking initial capacity constraint in the current stage to the value of the available capacity variable solved for in the previous stages
+            if length(EP_prev[e]) != length(EP_cur[c]) # Check if the previous stage has a value for the variable
+                @error "The lengths of the dictionary EP_prev and EP_cur should be the same" # Skip if there is no value for the variable in the previous stage
+            end
             if c == :cExistingTransCap
                 set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
             elseif c == :cExistingTransCapPos
