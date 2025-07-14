@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Add `eCFom` and `eCInv` to track FOM and investment costs separately (#809).
+
 ### Changed
 - Rename `Transmission_NetExport` to `Transmission_NetImport` in `power_balance.csv` (#853).
 
@@ -19,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Models running with, non-default, solvers Cbc and Clp will fail unless
 `"EnableJuMPDirectMode"` is set to false (#835).
 - Improve `@expressions` performance by pre-processing sets (#815).
-- Add `eCFom` and `eCInv` to track FOM and investment costs separately (#809).
 
 ### Fixed
 - Fix call to `get_retirement_stage` by casting `lifetime` to integer (#840).
