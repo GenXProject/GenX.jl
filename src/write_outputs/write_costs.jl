@@ -401,6 +401,10 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                 # Fixed Costs
                 eCFix_Allam = sum(value.(EP[:eCFix_Allam_Plant][Y_ZONE_ALLAM_CYCLE_LOX]))
                 tempCFix += eCFix_Allam
+                eCInv_Allam = sum(value.(EP[:eCInv_Allam_Plant][Y_ZONE_ALLAM_CYCLE_LOX]))
+                tempCInv += eCInv_Allam
+                eCFom_Allam = sum(value.(EP[:eCFom_Allam_Plant][Y_ZONE_ALLAM_CYCLE_LOX]))
+                tempCFom += eCFom_Allam
                 # Variable Costs
                 eCVar_Allam = sum(value.(EP[:eCVar_Allam][Y_ZONE_ALLAM_CYCLE_LOX]))
                 tempCVar += eCVar_Allam

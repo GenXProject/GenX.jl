@@ -172,27 +172,48 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
 
     # LOX storage tank capacity -> if they are not in WITH_LOX
     @constraint(EP, [y in setdiff(ALLAM_CYCLE_LOX, WITH_LOX)], eTotalCap_AllamcycleLOX[y,lox] == 0 )
-    # Fixed cost of each component in Allam Cycle w/ LOX
-    # Set of generator eligible for new sCO2 turbine
-    # Allam Cycle is eligible for unit commitment  
-    @expression(EP, eCFix_Allam[y in ALLAM_CYCLE_LOX, i in 1:3],
+    
+    ## Objective Function Expressions ##
+
+    # Annuitized investment cost expression - only applies to resources eligible for new capacity
+    @expression(EP, eCInv_Allam[y in ALLAM_CYCLE_LOX, i in 1:3],
         if y in NEW_CAP_Allam # Resources eligible for new capacity
             if y in COMMIT_Allam  # Resource eligible for Unit commitment
-                allam_dict[y,"inv_cost"][i] * allam_dict[y,"cap_size"][i] * EP[:vCAP_AllamCycleLOX][y, i]+
-                allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i]
+                allam_dict[y,"inv_cost"][i] * allam_dict[y,"cap_size"][i] * EP[:vCAP_AllamCycleLOX][y, i]
             else
-                allam_dict[y,"inv_cost"][i] * EP[:vCAP_AllamCycleLOX][y, i]+
-                allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i]
+                allam_dict[y,"inv_cost"][i] * EP[:vCAP_AllamCycleLOX][y, i]
             end
         else
-            allam_dict[y,"fom_cost"][i]  * eTotalCap_AllamcycleLOX[y,i]
+            0
+        end)
+    
+    # Fixed O&M cost expression - applies to all resources
+    @expression(EP, eCFom_Allam[y in ALLAM_CYCLE_LOX, i in 1:3], 
+        allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i])
+    
+    # Total fixed cost expression - combines investment and fixed O&M costs
+    @expression(EP, eCFix_Allam[y in ALLAM_CYCLE_LOX, i in 1:3],
+        if y in NEW_CAP_Allam # Resources eligible for new capacity
+            # For resources with new capacity: investment cost + fixed O&M cost
+            EP[:eCInv_Allam][y,i] + EP[:eCFom_Allam][y,i]
+        else
+            # For existing resources: only fixed O&M cost
+            EP[:eCFom_Allam][y,i]
         end)
 
-    # connect eCFix_Allam_Plant to eCFix
+    # Sum individual resource contributions to fixed costs to get total fixed costs
     @expression(EP, eCFix_Allam_Plant[y in ALLAM_CYCLE_LOX], sum(EP[:eCFix_Allam][y,i] for i in 1:3))
+    @expression(EP, eCInv_Allam_Plant[y in ALLAM_CYCLE_LOX], sum(EP[:eCInv_Allam][y,i] for i in 1:3))
+    @expression(EP, eCFom_Allam_Plant[y in ALLAM_CYCLE_LOX], sum(EP[:eCFom_Allam][y,i] for i in 1:3))
+
     @expression(EP, eTotalCFix_Allam, sum(EP[:eCFix_Allam_Plant][y] for y in  ALLAM_CYCLE_LOX ))
-    # add this to eTotalCFix
+    @expression(EP, eTotalCInv_Allam, sum(EP[:eCInv_Allam_Plant][y] for y in ALLAM_CYCLE_LOX))
+    @expression(EP, eTotalCFom_Allam, sum(EP[:eCFom_Allam_Plant][y] for y in ALLAM_CYCLE_LOX))
+    
+    # add this to eTotalCFix, eTotalCInv, and eTotalCFom
     add_to_expression!(EP[:eTotalCFix], eTotalCFix_Allam)
+    add_to_expression!(EP[:eTotalCInv], eTotalCInv_Allam)
+    add_to_expression!(EP[:eTotalCFom], eTotalCFom_Allam)
 
     # add to Obj
     add_to_expression!(EP[:eObj], eTotalCFix_Allam)
