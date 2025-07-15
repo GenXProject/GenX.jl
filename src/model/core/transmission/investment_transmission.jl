@@ -75,7 +75,8 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP,
             eTotalCNetworkExp,
             sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
-            for l in EXPANSION_LINES))
+            for l in EXPANSION_LINES)+sum(eAvail_Trans_Cap[l] * inputs["pTrans_Hurdles"][l]
+            for l in 1:L))
 
         if MultiStage == 1
             # OPEX multiplier to count multiple years between two model stages
@@ -85,6 +86,11 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
         else
             add_to_expression!(EP[:eObj], eTotalCNetworkExp)
         end
+    else
+        # If no network expansion, we only add the hurdle costs to the objective function
+        @expression(EP, eTotalCNetworkExp,
+            sum(inputs["pTrans_Hurdles"][l] * eAvail_Trans_Cap[l] for l in 1:L))
+        add_to_expression!(EP[:eObj], eTotalCNetworkExp)    
     end
 
     ## End Objective Function Expressions ##

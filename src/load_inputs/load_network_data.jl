@@ -25,6 +25,15 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Transmission capacity of the network (in MW)
     inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
 
+    # Transmission line Hurdle rates (in $/MW)
+    # This is the cost of using the transmission line, which is added to the cost of
+    # the generator at the start zone of the line.
+    # It is used in the objective function to calculate the total cost of the system.
+    inputs_nw["pTrans_Hurdles"] = zeros(Float64, L)
+    if :Line_Hurdle_Rate in names(network_var)
+        inputs_nw["pTrans_Hurdles"] = to_floats(:Line_Hurdle_Rate) .* scale_factor # convert to million $/GW
+    end
+
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
         inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)
