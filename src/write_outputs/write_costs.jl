@@ -13,6 +13,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
     ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) :
                        inputs["ELECTROLYZER"]
+    UTES = inputs["UTES"]
 
     cost_list = [
         "cTotal",
@@ -268,6 +269,17 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
             # Total Added Costs
             tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR)
+        end
+
+        if !isempty(UTES)
+            Y_ZONE_UTES = resources_in_zone_by_rid(gen.UTES, z)
+            if !isempty(Y_ZONE_UTES)
+                # Fixed Costs
+                eCFix_UTES = sum(value.(EP[:eCFix_UTES_System][Y_ZONE_UTES]))
+                tempCFix += eCFix_UTES
+                # No Variable Costs for UTES
+                tempCTotal += eCFix_UTES
+            end
         end
 
         if setup["UCommit"] >= 1 && !isempty(COMMIT_ZONE)
