@@ -13,6 +13,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     FUSION = ids_with(gen, :fusion)
+    UTES = inputs["UTES"]
     Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
         "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
         "Demand_Response", "Nonserved_Energy",
@@ -27,6 +28,10 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     end
     if !isempty(FUSION)
         push!(Com_list, "Fusion_parasitic_power")
+    end
+    if !isempty(UTES)
+        push!(Com_list, "Data_Center_Computing_Demand")
+        push!(Com_list, "Data_Center_Cooling_Consumption")
     end
     L = length(Com_list)
     dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z),
@@ -102,6 +107,28 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
             powerbalance[(z - 1) * L + idx, :] = -fusion_total_parasitic_power_unscaled(
                 EP, inputs, z)
         end
+
+        UTES_ZONE = intersect(resources_in_zone_by_rid(gen, z), UTES)
+        if !isempty(UTES_ZONE)
+            # this index-modification strategy is becoming unsustainable. We should just use
+            # a dataframe with named columns or something else.
+            idx = 11
+            if !isempty(ELECTROLYZER)
+                idx += 1
+            end
+            if !isempty(VRE_STOR)
+                idx += 2
+            end
+            if !isempty(FUSION)
+                idx += 1
+            end
+            powerbalance[(z - 1) * L + idx, :] = (-1) * inputs["pD_Computing"][:,z]
+            powerbalance[(z - 1) * L + idx + 1, :] = (-1) * (
+                sum(value.(EP[:eElec_Chiller][UTES_ZONE,:].data), dims = 1) + 
+                sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1) + 
+                sum(value.(EP[:eElec_RTES][UTES_ZONE,:].data), dims = 1))
+        end
+
     end
     if setup["ParameterScale"] == 1
         powerbalance *= ModelScalingFactor
