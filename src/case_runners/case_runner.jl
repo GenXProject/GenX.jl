@@ -219,7 +219,7 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict)
     if mysetup["TimeDomainReduction"] == 1
         TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
         system_path = joinpath(case, mysetup["SystemFolder"])
-        prevent_doubled_timedomainreduction(system_path)
+        prevent_doubled_timedomainreduction(mysetup, system_path)
         if !time_domain_reduced_files_exist(TDRpath)
             println("Clustering Time Series Data (Grouped)...")
             cluster_inputs(case, settings_path, mysetup)
