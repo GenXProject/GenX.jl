@@ -42,9 +42,36 @@ function write_benders_output(LB_hist::Vector{Float64}, UB_hist::Vector{Float64}
 	CSV.write(joinpath(outpath, "benders_convergence.csv"),dfConv)
 	YAML.write_file(joinpath(outpath, "run_settings.yml"),setup)
 
+    write_co2_emissions_plant(outpath, inputs, setup,
+        collect_distributed_expressions(:eEmissionsByPlant, subproblems))
+
 	write_power(outpath, inputs, setup, collect_distributed_expressions(:vP, subproblems))
 end
 
+function write_co2_emissions_plant(path::AbstractString,
+	inputs::Dict,
+	setup::Dict,
+	emissions_plant::Array)
+
+	gen = inputs["RESOURCES"]  # Resources (objects)
+	resources = inputs["RESOURCE_NAMES"] # Resource names
+	zones = zone_id.(gen)
+
+	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+
+	weight = inputs["omega"]
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+	emissions_plant *= scale_factor
+
+	df = DataFrame(Resource = resources,
+		Zone = zones,
+		AnnualSum = zeros(G))
+	df.AnnualSum .= emissions_plant * weight
+
+	write_temporal_data(df, emissions_plant, path, setup, "emissions_plant")
+	return nothing
+end
 
 
 function write_power(path::AbstractString, inputs::Dict, setup::Dict, power::Matrix)
