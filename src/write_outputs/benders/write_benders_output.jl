@@ -41,6 +41,33 @@ function write_benders_output(LB_hist::Vector{Float64}, UB_hist::Vector{Float64}
 	planning_problem)
 	CSV.write(joinpath(outpath, "benders_convergence.csv"),dfConv)
 	YAML.write_file(joinpath(outpath, "run_settings.yml"),setup)
+
+	write_power(outpath, inputs, setup, collect_distributed_expressions(:vP, subproblems))
+end
+
+
+
+function write_power(path::AbstractString, inputs::Dict, setup::Dict, power::Matrix)
+    gen = inputs["RESOURCES"]   # Resources (objects)
+    resources = inputs["RESOURCE_NAMES"]    # Resource names
+    zones = zone_id.(gen)
+
+    G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
+    T = inputs["T"]     # Number of time steps (hours)
+    
+    weight = inputs["omega"]
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+    # Power injected by each resource in each time step
+    power *= scale_factor
+
+    df = DataFrame(Resource = resources,
+        Zone = zones,
+        AnnualSum = zeros(G))
+    df.AnnualSum .= power * weight
+
+    write_temporal_data(df, power, path, setup, "power")
+    return df
 end
 
 function collect_distributed_expressions(expr_name::Symbol, subproblems)
