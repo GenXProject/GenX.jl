@@ -47,6 +47,7 @@ function benders(benders_inputs::Dict{Any,Any},setup::Dict)
 	feasibility_hist = Float64[];
 
 	planning_sol_best = deepcopy(planning_sol);
+	subop_sol_best = Dict{Any,Any}()
 
     #### Run Benders iterations
     for k = 0:MaxIter
@@ -61,6 +62,7 @@ function benders(benders_inputs::Dict{Any,Any},setup::Dict)
 		UBnew = sum((subop_sol[w].theta_coeff==0 ? Inf : subop_sol[w].op_cost) for w in keys(subop_sol))+planning_sol.inv_cost;
 		if UBnew < UB
 			planning_sol_best = deepcopy(planning_sol);
+			subop_sol_best = deepcopy(subop_sol);
 			UB = UBnew;
 		end
 
@@ -141,7 +143,7 @@ function benders(benders_inputs::Dict{Any,Any},setup::Dict)
 
     end
 
-	return (planning_problem=planning_problem,planning_sol = planning_sol_best,LB_hist = LB_hist,UB_hist = UB_hist,cpu_time = cpu_time,feasibility_hist = feasibility_hist)
+	return (planning_problem=planning_problem, planning_sol = planning_sol_best, subop_sol = subop_sol_best, LB_hist = LB_hist, UB_hist = UB_hist, cpu_time = cpu_time,feasibility_hist = feasibility_hist)
 end
 
 function update_planning_problem_multi_cuts!(EP::Model,subop_sol::Dict,planning_sol::NamedTuple,planning_variables_sub::Dict)

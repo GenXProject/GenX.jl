@@ -234,7 +234,7 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict)
 
     benders_inputs = generate_benders_inputs(mysetup,myinputs,myinputs_decomp)
 
-    planning_problem, planning_sol,LB_hist,UB_hist,cpu_time,feasibility_hist  = benders(benders_inputs,mysetup);
+    planning_problem, planning_sol, subop_sol, LB_hist, UB_hist, cpu_time, feasibility_hist  = benders(benders_inputs,mysetup);
 
     println("Benders decomposition took $(cpu_time[end]) seconds to run")
 
