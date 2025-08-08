@@ -1,4 +1,4 @@
-function write_benders_output(LB_hist::Vector{Float64},UB_hist::Vector{Float64},cpu_time::Vector{Float64},feasibility_hist::Vector{Float64},outpath::AbstractString, setup::Dict,inputs::Dict,planning_problem::Model)
+function write_benders_output(LB_hist::Vector{Float64}, UB_hist::Vector{Float64}, cpu_time::Vector{Float64}, feasibility_hist::Vector{Float64}, outpath::AbstractString, setup::Dict, inputs::Dict, planning_problem::Model, subproblems::Union{Vector{Dict{Any, Any}},DistributedArrays.DArray})
 	println("Running with crossover on")
 	set_attribute(planning_problem, "Crossover", 1)
 	optimize!(planning_problem)
@@ -43,3 +43,27 @@ function write_benders_output(LB_hist::Vector{Float64},UB_hist::Vector{Float64},
 	YAML.write_file(joinpath(outpath, "run_settings.yml"),setup)
 end
 
+function collect_distributed_expressions(expr_name::Symbol, subproblems)
+    p_id = workers()
+    np_id = length(p_id)
+    flow_df = Vector{Array}(undef, np_id)
+    @sync for i in 1:np_id
+        @async flow_df[i] = @fetchfrom p_id[i] get_local_expressions(
+            expr_name, DistributedArrays.localpart(subproblems))
+    end
+    return reduce(hcat, flow_df)
+end
+
+function get_local_expressions(expr_name::Symbol, subproblems_local::Vector{Dict{Any, Any}})
+    n_local_subprob = length(subproblems_local)
+    expr_subprob = Vector{Array}(undef, n_local_subprob)
+    for s in eachindex(subproblems_local)
+        EP = subproblems_local[s]["Model"]
+        if !haskey(EP, expr_name)
+            @warn "Expression $expr_name not found in subproblem $s"
+            continue
+        end
+        expr_subprob[s] = value.(EP[expr_name])
+    end
+	reduce(vcat, expr_subprob)
+end

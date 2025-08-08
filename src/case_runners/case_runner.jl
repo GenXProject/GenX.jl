@@ -257,7 +257,9 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict)
 		outputs_path = choose_output_dir(outputs_path)
 		mkdir(outputs_path)
 	end
+
+    subproblems = benders_inputs["subproblems"];
     
-    elapsed_time = @elapsed write_benders_output(LB_hist,UB_hist,cpu_time,feasibility_hist,outputs_path,mysetup,myinputs,planning_problem);
+    elapsed_time = @elapsed write_benders_output(LB_hist, UB_hist, cpu_time, feasibility_hist, outputs_path, mysetup, myinputs, planning_problem, subproblems);
 
 end
