@@ -271,7 +271,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR)
         end
 
-        if !isempty(UTES)
+        if !isempty(UTES) && setup["CoolingDemand"] > 0
             Y_ZONE_UTES = resources_in_zone_by_rid(gen.UTES, z)
             if !isempty(Y_ZONE_UTES)
                 # Fixed Costs

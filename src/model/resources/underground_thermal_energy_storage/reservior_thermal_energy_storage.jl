@@ -79,4 +79,34 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     # Added to the power balance
     EP[:ePowerBalance] -= ePowerBalance_RTES
 
+    if CapacityReserveMargin > 0
+        use_chiller = Dict((y, t) => pAmbientTemp[gen[y].zone, t] + gen[y].temp_lift_chiller_c + gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c > 0
+        for y in UTES, t = 1:T)
+
+        use_dry_cooler = Dict((y, t) => pAmbientTemp[gen[y].zone, t] < gen[y].switch_temp_c
+        for y in UTES, t = 1:T)
+
+        nCRMZones = inputs["NCapacityReserveMargin"]
+        @variable(EP, vCRM_RTES[y in UTES, t = 1:T]) # CRM contribution from RTES
+        @expression(EP, eCRM_RTES_thermal[y in UTES, t = 1:T], 
+             -EP[:vMassFlow_RTES][y, t] * gen[y].thermal_capacity_tertiary_loop * ((gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)))
+
+        @expression(EP, eCRM_Chiller[y in UTES, t = 1:T],
+            use_chiller[(y, t)] ? 
+            ((EP[:eCRM_RTES_thermal][y, t]/EP[:eCOP_Chiller_plus_Pump][y, t]) + EP[:eElec_Chiller_Fan][y,t]) : 0)
+
+        @expression(EP, eCRM_DC[y in UTES, t = 1:T],
+            use_dry_cooler[(y, t)] ? 
+            EP[:eCRM_RTES_thermal][y, t]/EP[:eCOP_DC][y, t] : 0)
+
+        @constraint(EP, cCRM_RTES_electric[y in UTES, t = 1:T],
+            vCRM_RTES[y, t] == EP[:eCRM_Chiller][y, t] + EP[:eCRM_DC][y, t]
+             - EP[:eElec_RTES][y, t])
+        
+        @expression(EP,
+            eCapResMarBalanceRTES[res = 1:nCRMZones, t = 1:T],
+            sum(derating_factor(gen[y], tag = res) * EP[:vCRM_RTES][y, t] for y in UTES))
+        add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceRTES)
+    end
+
 end
