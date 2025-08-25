@@ -183,6 +183,15 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         write_allam_output(path, inputs, setup, EP)
     end
 
+    if !isempty(inputs["HYDRO_RES"])
+        elapsed_time_hydro_spill = @elapsed dfHydroSpill = write_hydro_spill(path,
+            inputs,
+            setup,
+            EP)
+        println("Time elapsed for writing hydro spill is")
+        println(elapsed_time_hydro_spill)
+    end
+
     if has_duals(EP) == 1
         if output_settings_d["WriteReliability"]
             elapsed_time_reliability = @elapsed write_reliability(path, inputs, setup, EP)
