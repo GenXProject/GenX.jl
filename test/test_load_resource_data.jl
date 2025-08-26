@@ -242,6 +242,35 @@ function test_resource_specific_attributes(gen, dfGen, inputs)
           dfGen[rs, :hydro_energy_to_power_ratio]
 end
 
+function test_min_power_deprecation(gen, dfGen)
+    hydro_res = GenX.hydro(gen)
+    # 1. min_power should still work
+    @test GenX.min_power.(gen[hydro_res]) == dfGen[hydro_res, :min_power]
+    @test GenX.min_power.(gen[hydro_res]) == [0.117, 0.18, 0.402]
+    # 2. min_power should throw a deprecation warning
+    @test_logs (:warn, "`min_power(r::Hydro)` is deprecated, use `min_flow(r::Hydro)` instead.") GenX.min_power(gen[hydro_res[1]])
+    # 3. min_flow should work with old column name
+    @test GenX.min_flow.(gen[hydro_res]) == [0.117, 0.18, 0.402]
+    # 4. min_flow should be the same as min_power with old column name
+    @test GenX.min_flow.(gen[hydro_res]) == GenX.min_power.(gen[hydro_res])
+    # 5. min_flow should be using the new column name
+    test_hydro = GenX.Hydro(Dict(:resource => "test_hydro", 
+                                    :min_flow => 10.0))
+    @test GenX.min_flow(test_hydro) == 10.0
+    @test GenX.min_power(test_hydro) == 0.0
+    # 6. min_flow has the priority over min_power with old column name
+    test_hydro = GenX.Hydro(Dict(:resource => "test_hydro", 
+                                    :min_flow => 10.0, 
+                                    :min_power => 5.0))
+    @test GenX.min_flow(test_hydro) == 10.0
+    @test GenX.min_power(test_hydro) == 5.0
+    # 7. default is zero
+    @test GenX.min_flow(GenX.Hydro(Dict(:resource => "test_hydro"))) == 0.0
+    # 8. resources that are not Hydro, Electrolyzer, or Thermal should throw a method error
+    vre_res = GenX.vre(gen)
+    @test_throws MethodError GenX.min_flow(gen[vre_res[1]])
+end
+
 function test_load_resources_data()
     setup = Dict("ParameterScale" => 0,
         "OperationalReserves" => 1,
@@ -289,6 +318,11 @@ function test_load_resources_data()
     # Test that the resource-specific attributes are correctly set
     @testset "resource-specific attributes" begin
         test_resource_specific_attributes(gen, dfGen, inputs)
+    end
+
+    # Test that min_flow deprecation works
+    @testset "Min power deprecation" begin
+        test_min_power_deprecation(gen, dfGen)
     end
 end
 
