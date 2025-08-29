@@ -66,8 +66,8 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     
     # energy consumption by RTES (i.e., pump)
     @expression(EP, eElec_RTES[y in UTES, t = 1:T],
-        EP[:vMassFlow_RTES_abs][y, t] * gen[y].gravity_m_s2 * gen[y].depth_well_m / gen[y].efficiency_rtes_pump / 1000000 # convert to MW
-    )
+        EP[:vMassFlow_RTES_abs][y, t] * gen[y].pump_total_pressure_drop_bar * (1/1000) * 100000 / gen[y].efficiency_rtes_pump / 1000000 # convert to MW
+    ) # 1000 is the water density and 100000 is the unit conversion from bar to Pa.
     # energy consumption by RTES (i.e., pump) is cinstrained by the pumping capacity
     @constraint(EP, cElec_RTES_ub[y in UTES, t = 1:T], 
     eElec_RTES[y, t] <= EP[:eTotalCap_UTES][y, pump])
