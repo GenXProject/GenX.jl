@@ -1,7 +1,7 @@
 function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     # Setup variables, constraints, and expressions common to all storage resources
     println("Underground Thermal Energy Storage Module")
-
+    MultiStage = setup["MultiStage"]
     gen = inputs["RESOURCES"]
     CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
     HourlyMatching = setup["HourlyMatching"]
@@ -26,6 +26,10 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     @variable(EP, vRETCAP_UTES[y in UTES, i = 1:4]  >= 0)
     # new capacity of UTES
     @variable(EP, vCAP_UTES[y in UTES, i = 1:4]  >= 0)
+
+    if MultiStage == 1
+        @variable(EP, vEXISTING_UTES[y in UTES, i = 1:4]>=0)
+    end
 
     # Expressions and constraints related to UTES costs
     # capacity expressions
@@ -104,7 +108,15 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     # Chiller
     chiller!(EP, inputs, setup)
     # Thermal storage
-    rtes!(EP, inputs, setup)
+    if setup["withUTES"] == 1
+        rtes!(EP, inputs, setup)
+    end
+
+    if MultiStage == 1
+        @constraint(EP,
+            cExistingCap_UTES[y in UTES, i in 1:4],
+            EP[:vEXISTING_UTES][y, i] == utes_dict[y, "existing_cap"][i])
+    end
 end
 
 function enforce_cooling_logic!(EP, gen, inputs, cooling_mode)
@@ -131,7 +143,7 @@ function enforce_cooling_logic!(EP, gen, inputs, cooling_mode)
         # elseif !mode.use_chiller
         else
             # If neither is active, fix vTemp_DC
-            @constraint(EP, vTemp_DC[y,t] == gen[y].temp_data_center_out)
+            @constraint(EP, vTemp_DC[y,t] == gen[y].temp_data_center_out_c)
         end
     end
 end

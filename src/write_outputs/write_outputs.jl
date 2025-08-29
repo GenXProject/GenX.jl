@@ -90,9 +90,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             elapsed_time_use = @elapsed dfUse = write_temperature_utes(path, inputs, setup, EP)
             println("Time elapsed for writing temperature (UTES) is")
             println(elapsed_time_use)
-            elapsed_time_use = @elapsed dfUse = write_status_of_charge_utes(path, inputs, setup, EP)
-            println("Time elapsed for writing status of charge (UTES) is")
-            println(elapsed_time_use)
+            if setup["withUTES"] == 1
+                elapsed_time_use = @elapsed dfUse = write_status_of_charge_utes(path, inputs, setup, EP)
+                println("Time elapsed for writing status of charge (UTES) is")
+                println(elapsed_time_use)
+            end
         end
     end
 

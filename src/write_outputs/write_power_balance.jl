@@ -123,10 +123,16 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
                 idx += 1
             end
             powerbalance[(z - 1) * L + idx, :] = (-1) * inputs["pD_Computing"][:,z]
-            powerbalance[(z - 1) * L + idx + 1, :] = (-1) * (
-                sum(value.(EP[:eElec_Chiller][UTES_ZONE,:].data), dims = 1) + 
-                sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1) + 
-                sum(value.(EP[:eElec_RTES][UTES_ZONE,:].data), dims = 1))
+            if setup["withUTES"] == 1
+                powerbalance[(z - 1) * L + idx + 1, :] = (-1) * (
+                    sum(value.(EP[:eElec_Chiller][UTES_ZONE,:].data), dims = 1) + 
+                    sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1) + 
+                    sum(value.(EP[:eElec_RTES][UTES_ZONE,:].data), dims = 1))
+            else
+                powerbalance[(z - 1) * L + idx + 1, :] = (-1) * (
+                    sum(value.(EP[:eElec_Chiller][UTES_ZONE,:].data), dims = 1) + 
+                    sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1))
+            end
         end
 
     end

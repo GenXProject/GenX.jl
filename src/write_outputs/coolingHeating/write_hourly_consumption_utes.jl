@@ -19,13 +19,21 @@ function write_energy_consumption_utes(path::AbstractString, inputs::Dict, setup
 		[utes_resources .*"_dry_cooler_consumption_mw";
          utes_resources .*"_chiller_consumption_power_mw";
          utes_resources .*"_thermal_storage_consumption_power_mw";
-         utes_resources .*"_CRM_contribution_mw";])
+         utes_resources .*"_CRM_contribution_mw";
+         utes_resources .*"_coverage_chiller";],)
 
 	power_dry_cooler = value.(EP[:eElec_DC])[UTES,:]
     power_chiller = value.(EP[:eElec_Chiller])[UTES,:]
-    power_thermal_storage = value.(EP[:eElec_RTES])[UTES,:]
+    if setup["withUTES"] == 1
+        power_thermal_storage = value.(EP[:eElec_RTES])[UTES,:]
+        crm = value.(EP[:vCRM_RTES])[UTES,:]
+    else
+        power_thermal_storage = zeros(length(UTES), T)
+        crm = zeros(length(UTES), T)
+    end
 
-    crm = value.(EP[:vCRM_RTES])[UTES,:]
+    coverage_chiller = value.(EP[:eCoverage_Chiller])[UTES,:]
+
     if setup["ParameterScale"] == 1
         power_chiller *= ModelScalingFactor
         power_dry_cooler *= ModelScalingFactor
@@ -35,7 +43,8 @@ function write_energy_consumption_utes(path::AbstractString, inputs::Dict, setup
     output = [Array(power_dry_cooler);
               Array(power_chiller);
               Array(power_thermal_storage);
-              Array(crm);]
+              Array(crm);
+              Array(coverage_chiller);]
 
 	final_output = permutedims(DataFrame(hcat(Array(df_output), output), :auto))
     CSV.write(joinpath(path,"UTES_hourly_consumption.csv"), final_output, writeheader = false)
