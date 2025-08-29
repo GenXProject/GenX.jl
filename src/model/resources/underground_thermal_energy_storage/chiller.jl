@@ -26,10 +26,30 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
     # Precompute a boolean mask (true if chiller should be used)
     use_chiller = Dict((y, t) => pAmbientTemp[gen[y].zone, t] + gen[y].temp_lift_chiller_c + gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c > 0
         for y in UTES, t = 1:T)
+    # Precompute a boolean mask (true if cooler should be used)
+    use_dry_cooler = Dict((y, t) => pAmbientTemp[gen[y].zone, t] < gen[y].switch_temp_c
+        for y in UTES, t = 1:T)
 
     # thermal power of the chiller
     @expression(EP, eThermalPower_Chiller[y in UTES, t =1:T],
         gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (vTemp_DC[y,t] - vTemp_Chiller[y,t]))
+
+    # calculate the fraction of cooling that could be provided by the dry cooler at each timestep this is only used to determine the operating level of the chiller, which will differ between the UTES operations (where it could operate at 100% at all times) and non-UTES operations
+    if setup["withUTES"] == 0
+        @expression(EP, eCoverage_DC[y in UTES, t = 1:T],
+            use_dry_cooler[(y, t)] ? min(
+                4.58/(EP[:eMassFlow_Sec_Loop][y,t]*gen[y].thermal_capacity_second_loop*(gen[y].temp_data_center_out_c - max(gen[y].temp_max_data_center_in_c, pAmbientTemp[gen[y].zone, t]))/EP[:eCOP_DC][y,t]), 
+                1.0) : 0
+        )
+    else
+        @expression(EP, eCoverage_DC[y in UTES, t = 1:T],
+            0.0
+        )
+    end
+
+    @expression(EP, eCoverage_Chiller[y in UTES, t = 1:T],
+        use_chiller[(y, t)] ? 1.0 - eCoverage_DC[y,t] : 1.0
+    )
 
     # efficiency of the chiller
     # assuming that chiller output temperatures-chiller output temperatures>T^evap 
@@ -39,21 +59,12 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
     )
 
     @expression(EP, eCOP_Chiller_plus_Pump[y in UTES, t=1:T],
-        Q[t, gen[y].zone]/(Q[t, gen[y].zone]/eCOP_Chiller[y,t] + gen[y].chiller_pump_load_mw)
+        max(0.001, Q[t, gen[y].zone] * eCoverage_Chiller[y,t]/(Q[t, gen[y].zone] * eCoverage_Chiller[y,t]/eCOP_Chiller[y,t] + gen[y].chiller_pump_load_mw))
     )
-
 
     @expression(EP, eElec_Chiller_Fan[y in UTES, t=1:T],
         eThermalPower_Chiller[y,t]*(1+1/eCOP_Chiller[y,t]) * (gen[y].fractional_pressure_chiller_fan * gen[y].ambient_pressure_pa)/(1.013 * gen[y].temp_lift_chiller_c * 1.2 * gen[y].fan_coefficient_chiller*1000)
     )
-
-    # for y in UTES, t in 1:T
-    #     if use_chiller[(y, t)]
-    #         @constraint(EP, vTemp_Chiller[y,t]<= EP[:vTemp_DC][y,t])
-    #     else
-    #         @constraint(EP, vTemp_Chiller[y,t] == EP[:vTemp_DC][y,t])
-    #     end
-    # end
 
     @expression(EP, eElec_Chiller[y in UTES, t = 1:T],
             use_chiller[(y, t)] ? eThermalPower_Chiller[y,t]/eCOP_Chiller_plus_Pump[y,t] + eElec_Chiller_Fan[y,t] : 0)
