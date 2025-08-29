@@ -36,16 +36,16 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
 
     # mass flow of the second loop is determined by the heat rejection from the data center.
     @expression(EP, eMassFlow_Sec_Loop[y in UTES, t = 1:T],
-        Q[t, gen[y].zone]/(gen[y].thermal_capacity_second_loop * (gen[y].temp_data_center_out-eTemp_HX_12[y,t]))
+        Q[t, gen[y].zone]/(gen[y].thermal_capacity_second_loop * (gen[y].temp_data_center_out_c-eTemp_HX_12[y,t]))
     )
 
     # thermal power of the dry cooler
     @expression(EP, eThermalPower_DC[y in UTES, t =1:T],
-        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (gen[y].temp_data_center_out-vTemp_DC[y,t]))
+        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (gen[y].temp_data_center_out_c-vTemp_DC[y,t]))
 
     # efficiency of the dry cooler
     @expression(EP, eCOP_DC[y in UTES, t = 1:T],
-        1000*1.2*gen[y].fan_coefficient_dry_cooler * 1.013 * (gen[y].temp_data_center_out - gen[y].approach_temp_dry_cooler - pAmbientTemp[gen[y].zone, t])/(gen[y].fractional_pressure_dry_cooler_fan * gen[y].ambient_pressure_pa)
+        1000*1.2*gen[y].fan_coefficient_dry_cooler * 1.013 * (gen[y].temp_data_center_out_c - gen[y].approach_temp_dry_cooler - pAmbientTemp[gen[y].zone, t])/(gen[y].fractional_pressure_dry_cooler_fan * gen[y].ambient_pressure_pa)
     )
 
     # Precompute a boolean mask (true if cooler should be used)
@@ -71,14 +71,6 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
                 vTemp_DC[y,t]<=gen[y].max_working_fluid_temp_second_loop)
     @constraint(EP, cTemp_DC_min[y in UTES, t = 1:T],
                 vTemp_DC[y,t]>=gen[y].min_working_fluid_temp_second_loop)
-
-    # for y in UTES, t in 1:T
-    #     if use_dry_cooler[(y, t)]
-    #         @constraint(EP, vTemp_DC[y,t] >= pAmbientTemp[gen[y].zone, t] + gen[y].approach_temp_dry_cooler)
-    #     else
-    #         @constraint(EP, vTemp_DC[y,t] == gen[y].temp_data_center_out)
-    #     end
-    # end
 
     # Energy consumption by dry cooler must be possitive
     @constraint(EP, cElec_DC_pos[y in UTES, t = 1:T],
