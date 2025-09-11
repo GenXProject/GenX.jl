@@ -135,6 +135,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) /
                                                   scale_factor # Convert to GW
         if setup["AsymmetricalTransFlowLimit"] == 1
+            @warn("The Asymmetric flow for multistage capacity expansion still has bugs and you might not be getting correct results")
             try
                 inputs_nw["pLine_Max_Flow_Possible_Neg_MW"] = to_floats(:Line_Max_Flow_Possible_Neg_MW) /
                                                                                                     scale_factor # Convert to GW
