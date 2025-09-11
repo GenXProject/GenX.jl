@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Changed default value of parameter scaling to 1 (#
+
 ## [0.4.5] - 2025-07-07
 
 ### Added
