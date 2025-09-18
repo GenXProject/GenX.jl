@@ -84,9 +84,13 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     ## Inputs for the DC-OPF 
     if setup["DC_OPF"] == 1
-        if setup["NetworkExpansion"] == 1
-            @warn("Because the DC_OPF flag is active, GenX will not allow any transmission capacity expansion. Set the DC_OPF flag to 0 if you want to optimize tranmission capacity expansion.")
+        try
+            if setup["NetworkExpansion"] == 1
+                error("DC-OPF is incompatible with transmission capacity expansion. Please set DC_OPF to 0 if you want to optimize transmission capacity expansion, or set NetworkExpansion to 0 to use DC-OPF.")
+            end
+        catch e
             setup["NetworkExpansion"] = 0
+            rethrow(e)
         end
         println("Reading DC-OPF values...")
         # Transmission line voltage (in kV)
@@ -135,12 +139,19 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) /
                                                   scale_factor # Convert to GW
         if setup["AsymmetricalTransFlowLimit"] == 1
-            @warn("The Asymmetric flow for multistage capacity expansion still has bugs and you might not be getting correct results")
             try
+                # Validate that asymmetric flow implementation is ready for multistage
+                if haskey(setup, "MultiStage") && setup["MultiStage"] == 1
+                    error("Asymmetric transmission flow limits are not fully supported with multistage capacity expansion and may produce incorrect results. Please use symmetric transmission flow limits or disable multistage expansion.")
+                end
                 inputs_nw["pLine_Max_Flow_Possible_Neg_MW"] = to_floats(:Line_Max_Flow_Possible_Neg_MW) /
                                                                                                     scale_factor # Convert to GW
             catch e
-                error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Flow_Possible_Neg_MW column. Please add this column to the file.")
+                if isa(e, BoundsError) || occursin("Line_Max_Flow_Possible_Neg_MW", string(e))
+                    error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Flow_Possible_Neg_MW column. Please add this column to the file.")
+                else
+                    rethrow(e)
+                end
             end
         end
     end
