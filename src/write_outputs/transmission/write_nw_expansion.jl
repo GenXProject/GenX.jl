@@ -36,9 +36,10 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 
     if L_asym > 0
         # Extract reinforcement costs for asymmetric lines only
-        asym_costs = inputs["pC_Line_Reinforcement"][ASYMMETRIC_LINE_INDEX]
+        #asym_costs = inputs["pC_Line_Reinforcement"][ASYMMETRIC_LINE_INDEX]
+        asym_costs = inputs["pC_Line_Reinforcement"][EXPANSION_LINES_ASYM]
         
-        dfTransCap_asym = DataFrame(Line = ASYMMETRIC_LINE_INDEX,
+        dfTransCap_asym = DataFrame(Line = EXPANSION_LINES_ASYM,
             New_Trans_Capacity_Pos = convert(Array{Float64}, transcap_pos),
             New_Trans_Capacity_Neg = convert(Array{Float64}, transcap_neg),
             Cost_Trans_Capacity_Pos = convert(Array{Float64},
