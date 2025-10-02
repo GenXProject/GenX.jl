@@ -34,6 +34,20 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
         Cost_Trans_Capacity = convert(Array{Float64},
             transcap .* inputs["pC_Line_Reinforcement"]))
 
+    if L_asym > 0
+        # Extract reinforcement costs for asymmetric lines only
+        asym_costs = inputs["pC_Line_Reinforcement"][ASYMMETRIC_LINE_INDEX]
+        
+        dfTransCap_asym = DataFrame(Line = ASYMMETRIC_LINE_INDEX,
+            New_Trans_Capacity_Pos = convert(Array{Float64}, transcap_pos),
+            New_Trans_Capacity_Neg = convert(Array{Float64}, transcap_neg),
+            Cost_Trans_Capacity_Pos = convert(Array{Float64},
+                transcap_pos .* asym_costs),
+            Cost_Trans_Capacity_Neg = convert(Array{Float64},
+                transcap_neg .* asym_costs))
+        dfTransCap = leftjoin(dfTransCap, dfTransCap_asym, on = :Line)
+    end
+
     if setup["ParameterScale"] == 1
         dfTransCap.New_Trans_Capacity *= ModelScalingFactor  # GW to MW
         dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
