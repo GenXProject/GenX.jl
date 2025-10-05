@@ -18,15 +18,17 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 
     # Transmission network reinforcements
     transcap = zeros(L)
-    transcap_pos = zeros(L_asym)
-    transcap_neg = zeros(L_asym)
+    transcap_pos = zeros(L)
+    transcap_neg = zeros(L)
     for i in intersect(SYMMETRIC_LINE_INDEX, EXPANSION_LINES)
         transcap[i] = value.(EP[:vNEW_TRANS_CAP][i])
     end
    for i in eachindex(EXPANSION_LINES_ASYM)
         asym_line_index = EXPANSION_LINES_ASYM[i]
-        transcap_pos[i] = value.(EP[:vNEW_TRANS_CAP_Pos][asym_line_index])
-        transcap_neg[i] = value.(EP[:vNEW_TRANS_CAP_Neg][asym_line_index])    
+        println("Asym line index: ", asym_line_index)
+        println("i Index: ", i)
+        transcap_pos[asym_line_index] = value.(EP[:vNEW_TRANS_CAP_Pos][asym_line_index])
+        transcap_neg[asym_line_index] = value.(EP[:vNEW_TRANS_CAP_Neg][asym_line_index])    
     end
 
     dfTransCap = DataFrame(Line = 1:L,
@@ -35,11 +37,16 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
             transcap .* inputs["pC_Line_Reinforcement"]))
 
     if L_asym > 0
+        asym_costs = zeros(L)
+        for i in eachindex(EXPANSION_LINES_ASYM)
+            asym_line_index = EXPANSION_LINES_ASYM[i]
+            asym_costs[asym_line_index] = inputs["pC_Line_Reinforcement"][asym_line_index]
+        end
         # Extract reinforcement costs for asymmetric lines only
         #asym_costs = inputs["pC_Line_Reinforcement"][ASYMMETRIC_LINE_INDEX]
-        asym_costs = inputs["pC_Line_Reinforcement"][EXPANSION_LINES_ASYM]
+        #asym_costs = inputs["pC_Line_Reinforcement"][EXPANSION_LINES_ASYM]
         
-        dfTransCap_asym = DataFrame(Line = EXPANSION_LINES_ASYM,
+        dfTransCap_asym = DataFrame(Line = EXPANSION_LINES,
             New_Trans_Capacity_Pos = convert(Array{Float64}, transcap_pos),
             New_Trans_Capacity_Neg = convert(Array{Float64}, transcap_neg),
             Cost_Trans_Capacity_Pos = convert(Array{Float64},
