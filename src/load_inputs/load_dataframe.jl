@@ -6,6 +6,7 @@ end
     file_exists(dir::AbstractString, basenames::Vector{String})::Bool
 
 Checks that a file exists in a directory under (at least) one of a list of 'aliases'.
+Now also checks for .csv.gz and .parquet alternatives.
 """
 function file_exists(dir, basenames::Vector{String})::Bool
     if !isdir(dir)
@@ -18,6 +19,15 @@ function file_exists(dir, basenames::Vector{String})::Bool
     end
 
     FILENOTFOUND = filenotfoundconstant()
+    
+    # Try to find the file with different extensions if the basename ends with .csv
+    if endswith(best_basename, ".csv")
+        basename_without_ext = best_basename[1:end-4]
+        found_file = find_file_with_extension(dir, basename_without_ext)
+        if found_file != FILENOTFOUND
+            return true
+        end
+    end
 
     for base in basenames
         target = look_for_file_with_alternate_case(dir, base)
@@ -54,15 +64,28 @@ end
 function load_dataframe(dir::AbstractString, basenames::Vector{String})::DataFrame
     best_basename = popfirst!(basenames)
     best_path = joinpath(dir, best_basename)
+    
+    # First try exact match
     if isfile(best_path)
         return load_dataframe_from_file(best_path)
     end
-
+    
     FILENOTFOUND = filenotfoundconstant()
-
-    for base in basenames
-        target = look_for_file_with_alternate_case(dir, base)
-        # admonish
+    
+    # Try to find the file with different extensions if the basename ends with .csv
+    if endswith(best_basename, ".csv")
+        basename_without_ext = best_basename[1:end-4]  # Remove .csv extension
+        found_file = find_file_with_extension(dir, basename_without_ext)
+        if found_file != FILENOTFOUND
+            if found_file != best_basename
+                # Warn if using a different extension
+                @info "Using file '$found_file' instead of '$best_basename'"
+            end
+            return load_dataframe_from_file(joinpath(dir, found_file))
+        end
+    else
+        # If basename doesn't end with .csv, try case-insensitive match
+        target = look_for_file_with_alternate_case(dir, best_basename)
         if target != FILENOTFOUND
             Base.depwarn(
                 """The filename '$target' is deprecated. '$best_basename' is preferred.""",
@@ -71,7 +94,19 @@ function load_dataframe(dir::AbstractString, basenames::Vector{String})::DataFra
             return load_dataframe_from_file(joinpath(dir, target))
         end
     end
-
+    
+    # Try alternative basenames (deprecated names)
+    for base in basenames
+        target = look_for_file_with_alternate_case(dir, base)
+        if target != FILENOTFOUND
+            Base.depwarn(
+                """The filename '$target' is deprecated. '$best_basename' is preferred.""",
+                :load_dataframe,
+                force = true)
+            return load_dataframe_from_file(joinpath(dir, target))
+        end
+    end
+    
     throw_filenotfound_error(dir, best_basename)
 end
 
@@ -81,6 +116,34 @@ function throw_filenotfound_error(dir, base)
                  Try checking the spelling.
                  The files in the directory are $files_in_dir."""
     error(err_str)
+end
+
+"""
+    find_file_with_extension(dir::AbstractString, basename_without_ext::AbstractString)::String
+
+Find a file in the directory with one of the supported extensions (.csv, .csv.gz, .parquet).
+Returns the filename if found, or FILENOTFOUND constant if not found.
+"""
+function find_file_with_extension(dir::AbstractString, basename_without_ext::AbstractString)::String
+    FILENOTFOUND = filenotfoundconstant()
+    
+    # Try different extensions in order of preference
+    extensions = [".csv", ".csv.gz", ".parquet"]
+    
+    for ext in extensions
+        candidate = basename_without_ext * ext
+        if isfile(joinpath(dir, candidate))
+            return candidate
+        end
+        
+        # Also try case-insensitive match
+        target = look_for_file_with_alternate_case(dir, candidate)
+        if target != FILENOTFOUND
+            return target
+        end
+    end
+    
+    return FILENOTFOUND
 end
 
 function look_for_file_with_alternate_case(dir, base)::String
@@ -101,11 +164,26 @@ function look_for_file_with_alternate_case(dir, base)::String
     return target
 end
 
-function csv_header(path::AbstractString)
-    f = open(path, "r")
-    header = readline(f)
-    close(f)
-    header
+"""
+    get_column_names(path::AbstractString)
+
+Get column names from a file using DuckDB's DESCRIBE functionality.
+Supports CSV, gzipped CSV (.csv.gz), and Parquet files.
+"""
+function get_column_names(path::AbstractString)
+    # Use DuckDB to describe the file and get column names
+    db = DuckDB.DB()
+    try
+        # DuckDB can automatically detect file type
+        desc_query = "DESCRIBE SELECT * FROM read_csv_auto('$path')"
+        if endswith(path, ".parquet")
+            desc_query = "DESCRIBE SELECT * FROM '$path'"
+        end
+        result = DuckDB.execute(db, desc_query) |> DataFrame
+        return result.column_name
+    finally
+        DuckDB.close(db)
+    end
 end
 
 function keep_duplicated_entries!(s, uniques)
@@ -116,20 +194,37 @@ function keep_duplicated_entries!(s, uniques)
 end
 
 function check_for_duplicate_keys(path::AbstractString)
-    header = csv_header(path)
-    keys = split(header, ',')
-    uniques = unique(keys)
-    if length(keys) > length(uniques)
-        dupes = keep_duplicated_entries!(keys, uniques)
+    column_names = get_column_names(path)
+    uniques = unique(column_names)
+    if length(column_names) > length(uniques)
+        dupes = keep_duplicated_entries!(column_names, uniques)
         @error """Some duplicate column names detected in the header of $path: $dupes.
         Duplicate column names may cause errors, as only the first is used.
         """
     end
 end
 
+"""
+    load_dataframe_from_file(path)::DataFrame
+
+Load a dataframe from a file using DuckDB.
+Supports CSV, gzipped CSV (.csv.gz), and Parquet files.
+"""
 function load_dataframe_from_file(path)::DataFrame
     check_for_duplicate_keys(path)
-    CSV.read(path, DataFrame, header = 1)
+    
+    # Use DuckDB to read the file
+    db = DuckDB.DB()
+    try
+        # DuckDB automatically detects file type and handles CSV, CSV.GZ, and Parquet
+        query = "SELECT * FROM read_csv_auto('$path')"
+        if endswith(path, ".parquet")
+            query = "SELECT * FROM '$path'"
+        end
+        return DuckDB.execute(db, query) |> DataFrame
+    finally
+        DuckDB.close(db)
+    end
 end
 
 function find_matrix_columns_in_dataframe(df::DataFrame,
