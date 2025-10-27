@@ -180,7 +180,7 @@ function get_column_names(path::AbstractString)
             desc_query = "DESCRIBE SELECT * FROM '$path'"
         end
         result = DuckDB.execute(db, desc_query) |> DataFrame
-        return result.column_name
+        return String.(result.column_name)
     finally
         DuckDB.close(db)
     end
@@ -195,10 +195,26 @@ end
 
 function check_for_duplicate_keys(path::AbstractString)
     column_names = get_column_names(path)
-    uniques = unique(column_names)
-    if length(column_names) > length(uniques)
-        dupes = keep_duplicated_entries!(column_names, uniques)
-        @error """Some duplicate column names detected in the header of $path: $dupes.
+    
+    # DuckDB automatically renames duplicate columns (e.g., Name -> Name_1)
+    # Check if any column names end with _N where N is a number, which indicates a duplicate
+    duplicate_pattern = r"(.+)_(\d+)$"
+    potential_dupes = String[]
+    
+    for col in column_names
+        m = match(duplicate_pattern, col)
+        if !isnothing(m)
+            # Found a column with _N suffix, check if base name exists
+            base_name = m.captures[1]
+            if base_name in column_names
+                push!(potential_dupes, col)
+            end
+        end
+    end
+    
+    if !isempty(potential_dupes)
+        @error """Some duplicate column names detected in the header of $path: $potential_dupes.
+        DuckDB has automatically renamed them by appending _N suffixes.
         Duplicate column names may cause errors, as only the first is used.
         """
     end
