@@ -174,10 +174,13 @@ function get_column_names(path::AbstractString)
     # Use DuckDB to describe the file and get column names
     db = DuckDB.DB()
     try
+        # Escape single quotes in path for SQL safety
+        escaped_path = replace(path, "'" => "''")
+        
         # DuckDB can automatically detect file type
-        desc_query = "DESCRIBE SELECT * FROM read_csv_auto('$path')"
+        desc_query = "DESCRIBE SELECT * FROM read_csv_auto('$escaped_path')"
         if endswith(path, ".parquet")
-            desc_query = "DESCRIBE SELECT * FROM '$path'"
+            desc_query = "DESCRIBE SELECT * FROM '$escaped_path'"
         end
         result = DuckDB.execute(db, desc_query) |> DataFrame
         return String.(result.column_name)
@@ -232,10 +235,13 @@ function load_dataframe_from_file(path)::DataFrame
     # Use DuckDB to read the file
     db = DuckDB.DB()
     try
+        # Escape single quotes in path for SQL safety
+        escaped_path = replace(path, "'" => "''")
+        
         # DuckDB automatically detects file type and handles CSV, CSV.GZ, and Parquet
-        query = "SELECT * FROM read_csv_auto('$path')"
+        query = "SELECT * FROM read_csv_auto('$escaped_path')"
         if endswith(path, ".parquet")
-            query = "SELECT * FROM '$path'"
+            query = "SELECT * FROM '$escaped_path'"
         end
         return DuckDB.execute(db, query) |> DataFrame
     finally

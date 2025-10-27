@@ -79,13 +79,19 @@ gzip -k Thermal.csv  # Creates Thermal.csv.gz, keeps original
 gzip Thermal.csv  # Creates Thermal.csv.gz, removes original
 ```
 
-Users can create Parquet files using DuckDB:
+Users can create Parquet files using DuckDB (note: file paths are properly escaped internally):
 ```julia
 using DuckDB
 db = DuckDB.DB()
+# GenX internally escapes file paths for SQL safety
+# Users can do the same for their own code:
+csv_path = "Thermal.csv"
+parquet_path = "Thermal.parquet"
+escaped_csv = replace(csv_path, "'" => "''")
+escaped_parquet = replace(parquet_path, "'" => "''")
 DuckDB.execute(db, """
-    COPY (SELECT * FROM read_csv_auto('Thermal.csv')) 
-    TO 'Thermal.parquet' (FORMAT PARQUET)
+    COPY (SELECT * FROM read_csv_auto('$escaped_csv')) 
+    TO '$escaped_parquet' (FORMAT PARQUET)
 """)
 DuckDB.close(db)
 ```
