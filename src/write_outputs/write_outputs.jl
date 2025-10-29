@@ -490,24 +490,51 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 end # END output()
 
 """
-	write_annual(fullpath::AbstractString, dfOut::DataFrame)
+	write_annual(fullpath::AbstractString, dfOut::DataFrame, format::AbstractString="csv")
 
-Internal function for writing annual outputs. 
+Internal function for writing annual outputs in specified format (csv, gzip, or parquet).
 """
-function write_annual(fullpath::AbstractString, dfOut::DataFrame)
+function write_annual(fullpath::AbstractString, dfOut::DataFrame, format::AbstractString="csv")
     push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
-    CSV.write(fullpath, dfOut)
+    
+    if format == "gzip"
+        # Write gzipped CSV using DuckDB
+        db = DuckDB.DB()
+        try
+            escaped_path = replace(fullpath, "'" => "''")
+            # Create a temporary table and export as gzipped CSV
+            DuckDB.register_data_frame(db, dfOut, "temp_table")
+            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT CSV, HEADER TRUE, COMPRESSION GZIP)")
+        finally
+            DuckDB.close(db)
+        end
+    elseif format == "parquet"
+        # Write Parquet using DuckDB
+        db = DuckDB.DB()
+        try
+            escaped_path = replace(fullpath, "'" => "''")
+            DuckDB.register_data_frame(db, dfOut, "temp_table")
+            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT PARQUET)")
+        finally
+            DuckDB.close(db)
+        end
+    else
+        # Default CSV format
+        CSV.write(fullpath, dfOut)
+    end
     return nothing
 end
 
 """
-	write_fulltimeseries(fullpath::AbstractString, dataOut::Matrix{Float64}, dfOut::DataFrame)
+	write_fulltimeseries(fullpath::AbstractString, dataOut::Matrix{Float64}, dfOut::DataFrame, format::AbstractString="csv")
 
-Internal function for writing full time series outputs. This function wraps the instructions for creating the full time series output files. 
+Internal function for writing full time series outputs in specified format (csv, gzip, or parquet).
+This function wraps the instructions for creating the full time series output files. 
 """
 function write_fulltimeseries(fullpath::AbstractString,
         dataOut::Matrix{Float64},
-        dfOut::DataFrame)
+        dfOut::DataFrame,
+        format::AbstractString="csv")
     T = size(dataOut, 2)
     dfOut = hcat(dfOut, DataFrame(dataOut, :auto))
     auxNew_Names = [Symbol("Resource");
@@ -520,7 +547,34 @@ function write_fulltimeseries(fullpath::AbstractString,
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)
     dfOut = vcat(dfOut, total)
 
-    CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
+    # Transpose the dataframe for writing
+    dfOut_transposed = dftranspose(dfOut, false)
+    
+    if format == "gzip"
+        # Write gzipped CSV using DuckDB
+        db = DuckDB.DB()
+        try
+            escaped_path = replace(fullpath, "'" => "''")
+            DuckDB.register_data_frame(db, dfOut_transposed, "temp_table")
+            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT CSV, HEADER FALSE, COMPRESSION GZIP)")
+        finally
+            DuckDB.close(db)
+        end
+    elseif format == "parquet"
+        # Write Parquet using DuckDB
+        db = DuckDB.DB()
+        try
+            escaped_path = replace(fullpath, "'" => "''")
+            DuckDB.register_data_frame(db, dfOut_transposed, "temp_table")
+            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT PARQUET)")
+        finally
+            DuckDB.close(db)
+        end
+    else
+        # Default CSV format
+        CSV.write(fullpath, dfOut_transposed, writeheader = false)
+    end
+    
     return dfOut
 end
 
@@ -577,14 +631,27 @@ end
 
 function write_temporal_data(
         df_annual, data, path::AbstractString, setup::Dict, filename::AbstractString)
-    filepath = joinpath(path, filename * ".csv")
+    # Determine output format from setup
+    output_format = get(setup, "TemporalOutputFormat", "csv")
+    
+    # Determine file extension based on format
+    file_extension = if output_format == "gzip"
+        ".csv.gz"
+    elseif output_format == "parquet"
+        ".parquet"
+    else
+        ".csv"
+    end
+    
+    filepath = joinpath(path, filename * file_extension)
+    
     if setup["WriteOutputs"] == "annual"
         # df_annual is expected to have an AnnualSum column.
-        write_annual(filepath, df_annual)
+        write_annual(filepath, df_annual, output_format)
     else # setup["WriteOutputs"] == "full"
-        df_full = write_fulltimeseries(filepath, data, df_annual)
+        df_full = write_fulltimeseries(filepath, data, df_annual, output_format)
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-            write_full_time_series_reconstruction(path, setup, df_full, filename)
+            write_full_time_series_reconstruction(path, setup, df_full, filename, output_format)
             @info("Writing Full Time Series for "*filename)
         end
     end
@@ -594,7 +661,8 @@ end
 @doc raw"""write_full_time_series_reconstruction(path::AbstractString,
                             setup::Dict,
                             DF::DataFrame,
-                            name::String)
+                            name::String,
+                            format::AbstractString="csv")
 Create a DataFrame with all 8,760 hours of the year from the reduced output.
 
 This function calls `full_time_series_reconstruction()``, which uses Period_map.csv to create a new DataFrame with 8,760 time steps, as well as other pre-existing rows such as "Zone".
@@ -610,14 +678,51 @@ This function is called when output files with time series data (e.g. power.csv,
 - `path` (AbstractString): Path input to the results folder
 - `setup` (Dict): Case setup
 - `DF` (DataFrame): DataFrame to be reconstructed
-- `name` (String): Name desired for the .csv file
+- `name` (String): Name desired for the output file
+- `format` (AbstractString): Output format - "csv", "gzip", or "parquet" (default: "csv")
 
 """
 function write_full_time_series_reconstruction(
-        path::AbstractString, setup::Dict, DF::DataFrame, name::String)
+        path::AbstractString, setup::Dict, DF::DataFrame, name::String, format::AbstractString="csv")
     FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
     output_path = joinpath(path, FullTimeSeriesFolder)
     dfOut_full = full_time_series_reconstruction(path, setup, dftranspose(DF, false))
-    CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
+    
+    # Determine file extension based on format
+    file_extension = if format == "gzip"
+        ".csv.gz"
+    elseif format == "parquet"
+        ".parquet"
+    else
+        ".csv"
+    end
+    
+    output_file = joinpath(output_path, "$name$file_extension")
+    
+    if format == "gzip"
+        # Write gzipped CSV using DuckDB
+        db = DuckDB.DB()
+        try
+            escaped_path = replace(output_file, "'" => "''")
+            DuckDB.register_data_frame(db, dfOut_full, "temp_table")
+            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT CSV, HEADER FALSE, COMPRESSION GZIP)")
+        finally
+            DuckDB.close(db)
+        end
+    elseif format == "parquet"
+        # Write Parquet using DuckDB
+        db = DuckDB.DB()
+        try
+            escaped_path = replace(output_file, "'" => "''")
+            DuckDB.register_data_frame(db, dfOut_full, "temp_table")
+            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT PARQUET)")
+        finally
+            DuckDB.close(db)
+        end
+    else
+        # Default CSV format
+        CSV.write(output_file, dfOut_full, header = false)
+    end
+    
     return nothing
 end
