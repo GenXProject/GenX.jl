@@ -490,38 +490,13 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 end # END output()
 
 """
-	write_annual(fullpath::AbstractString, dfOut::DataFrame, format::AbstractString="csv")
+	write_annual(fullpath::AbstractString, dfOut::DataFrame)
 
-Internal function for writing annual outputs in specified format (csv, gzip, or parquet).
+Internal function for writing annual outputs. Always writes in CSV format.
 """
-function write_annual(fullpath::AbstractString, dfOut::DataFrame, format::AbstractString="csv")
+function write_annual(fullpath::AbstractString, dfOut::DataFrame)
     push!(dfOut, ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0)])
-    
-    if format == "gzip"
-        # Write gzipped CSV using DuckDB
-        db = DuckDB.DB()
-        try
-            escaped_path = replace(fullpath, "'" => "''")
-            # Create a temporary table and export as gzipped CSV
-            DuckDB.register_data_frame(db, dfOut, "temp_table")
-            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT CSV, HEADER TRUE, COMPRESSION GZIP)")
-        finally
-            DuckDB.close(db)
-        end
-    elseif format == "parquet"
-        # Write Parquet using DuckDB
-        db = DuckDB.DB()
-        try
-            escaped_path = replace(fullpath, "'" => "''")
-            DuckDB.register_data_frame(db, dfOut, "temp_table")
-            DuckDB.execute(db, "COPY temp_table TO '$escaped_path' (FORMAT PARQUET)")
-        finally
-            DuckDB.close(db)
-        end
-    else
-        # Default CSV format
-        CSV.write(fullpath, dfOut)
-    end
+    CSV.write(fullpath, dfOut)
     return nothing
 end
 
@@ -631,24 +606,25 @@ end
 
 function write_temporal_data(
         df_annual, data, path::AbstractString, setup::Dict, filename::AbstractString)
-    # Determine output format from setup
-    output_format = get(setup, "TemporalOutputFormat", "csv")
-    
-    # Determine file extension based on format
-    file_extension = if output_format == "gzip"
-        ".csv.gz"
-    elseif output_format == "parquet"
-        ".parquet"
-    else
-        ".csv"
-    end
-    
-    filepath = joinpath(path, filename * file_extension)
     
     if setup["WriteOutputs"] == "annual"
-        # df_annual is expected to have an AnnualSum column.
-        write_annual(filepath, df_annual, output_format)
+        # Annual outputs are always written as CSV
+        filepath = joinpath(path, filename * ".csv")
+        write_annual(filepath, df_annual)
     else # setup["WriteOutputs"] == "full"
+        # Determine output format from setup for full time series
+        output_format = get(setup, "TemporalOutputFormat", "csv")
+        
+        # Determine file extension based on format
+        file_extension = if output_format == "gzip"
+            ".csv.gz"
+        elseif output_format == "parquet"
+            ".parquet"
+        else
+            ".csv"
+        end
+        
+        filepath = joinpath(path, filename * file_extension)
         df_full = write_fulltimeseries(filepath, data, df_annual, output_format)
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, df_full, filename, output_format)
