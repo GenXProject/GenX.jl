@@ -736,7 +736,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
         "h2_demand", "qualified_supply",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
          for type in ("", "_stor", "_solar", "_wind")]...,
-        "itc", "ptc"]
+        "inv_incentive", "prod_incentive"]
 
     # Check that all policy columns have names in accepted_cols
     if !all(x -> replace(x, r"(_*|_*\d*)$" => "") in accepted_cols, cols)

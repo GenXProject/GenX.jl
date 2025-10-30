@@ -8,17 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- Investment Tax Credit (ITC) and Production Tax Credit (PTC) policy modules to track and report tax credit benefits for eligible resources.
-  - New input files: `Investment_tax_credits.csv` and `Production_tax_credits.csv` in the policies folder.
-  - Resource eligibility specified via policy assignment files: `Resource_investment_tax_credits.csv` and `Resource_production_tax_credits.csv`.
-  - ITC provides upfront capital cost reduction based on investment costs of new capacity.
-  - PTC provides ongoing production subsidies based on energy generation.
-  - Tax credit benefits are subtracted from the objective function and reported in output files.
-  - New output files: `investment_tax_credits.csv` and `production_tax_credits.csv`.
-  - Tax credit benefits included in the `costs.csv` output file.
+- Investment Incentive and Production Incentive policy modules to model financial incentives for eligible resources.
+  - New input files: `Investment_incentive.csv` and `Production_incentive.csv` in the policies folder.
+  - Resource eligibility specified via policy assignment files: `Resource_investment_incentive.csv` and `Resource_production_incentive.csv`.
+  - Investment incentives provide upfront capital cost reduction based on investment costs of new capacity.
+  - Production incentives provide ongoing subsidies based on energy generation ($/MWh) or CO₂ captured ($/tonne).
+  - Production incentives support both energy-based and CO₂ capture-based calculations using the `ProdIncentive_Type` column.
+  - Incentive benefits are subtracted from the objective function and reported in output files.
+  - New output files: `investment_incentive.csv` and `production_incentive.csv`.
+  - Incentive benefits included in the `costs.csv` output file.
   - Documentation added to `model_input.md` and `model_output.md`.
-  - Settings flags: `InvestmentTaxCredit` and `ProductionTaxCredit` to enable/disable policies (default: 0).
-  - Test case added to validate tax credit functionality.
+  - Settings flags: `InvestmentIncentive` and `ProductionIncentive` to enable/disable policies (default: 0).
+  - Test case added to validate incentive functionality.
 
 ## [0.4.5] - 2025-07-07
 

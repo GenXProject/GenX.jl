@@ -66,12 +66,12 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_co2_cap!(setup, policies_path, inputs)
     end
 
-    if setup["InvestmentTaxCredit"] == 1
-        load_investment_tax_credits!(policies_path, inputs, setup)
+    if setup["InvestmentIncentive"] == 1
+        load_investment_incentive!(policies_path, inputs, setup)
     end
 
-    if setup["ProductionTaxCredit"] == 1
-        load_production_tax_credits!(policies_path, inputs, setup)
+    if setup["ProductionIncentive"] == 1
+        load_production_incentive!(policies_path, inputs, setup)
     end
 
     if !isempty(inputs["VRE_STOR"])
