@@ -26,6 +26,16 @@ Modules = [GenX]
 Pages = ["maximum_capacity_requirement.jl"]
 ```
 
+## Investment Incentive
+```@docs
+GenX.investment_incentive!
+```
+
+## Production Incentive
+```@docs
+GenX.production_incentive!
+```
+
 ## Hydrogen Production Demand Requirement (Electrolyzer)
 ```@docs
 GenX.hydrogen_demand!
