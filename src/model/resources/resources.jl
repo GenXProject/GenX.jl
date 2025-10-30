@@ -511,7 +511,9 @@ function ids_with_policy(rs::Vector{T},
         f = getfield(GenX, name)
         return ids_with_policy(rs, f, tag = tag)
     end
-    return findall(r -> getproperty(r, Symbol(string(name, "_$tag"))) > 0, rs)
+    # Use get_attr to safely access the attribute with a default value of 0
+    attr_name = Symbol(string(name, "_$tag"))
+    return findall(r -> get_attr(r, attr_name, default_zero) > 0, rs)
 end
 
 function ids_with_policy(rs::Vector{T},
