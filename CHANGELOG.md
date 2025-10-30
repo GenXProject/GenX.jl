@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Support for reading input files in CSV, gzipped CSV (.csv.gz), and Parquet (.parquet) formats with automatic format detection.
+- New setting `TemporalOutputFormat` to allow users to write full time series temporal output files in CSV, gzipped CSV, or Parquet formats for storage reduction.
+
+### Changed
+- Input file loading now uses DuckDB instead of CSV.jl, enabling support for compressed and Parquet formats.
+- Full time series temporal outputs can now be written in compressed formats based on the `TemporalOutputFormat` setting (annual outputs always remain CSV).
+
 ## [0.4.5] - 2025-07-07
 
 ### Added
