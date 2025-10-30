@@ -20,16 +20,19 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 </ol>
 ```
  
-Additionally, the user may need to specify eight more **settings-specific** input files based on model configuration and type of scenarios of interest:
+Additionally, the user may need to specify ten more **settings-specific** input files based on model configuration and type of scenarios of interest:
 1. Operational\_reserves.csv: specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.
 2. Energy\_share\_requirement.csv: specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.
 3. CO2\_cap.csv: specify regional CO2 emission limits.
 4. Capacity\_reserve\_margin.csv: specify regional capacity reserve margin requirements.
 5. Minimum\_capacity\_requirement.csv: specify regional minimum technology capacity deployment requirements.
-6. Vre\_and\_stor\_data.csv: specify cost and performance data for co-located VRE and storage resources.
-7. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
-8. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
-9. Hydrogen\_demand.csv: specify regional hydrogen production requirements.
+6. Investment\_tax\_credits.csv: specify investment tax credit policies that reduce upfront capital costs for eligible resources.
+7. Production\_tax\_credits.csv: specify production tax credit policies that provide ongoing subsidies based on energy generation.
+8. Vre\_and\_stor\_data.csv: specify cost and performance data for co-located VRE and storage resources.
+9. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
+10. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
+11. Hydrogen\_demand.csv: specify regional hydrogen production requirements.
+
 
 
 !!! note "Note"
@@ -586,9 +589,27 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 |Max\_Cap\_Wind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms).
 |Max\_Cap\_Stor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms).|
 
+This policy is applied when if `InvestmentTaxCredit = 1` in the settings file. \* corresponds to the ith row of the file `Investment_tax_credits.csv`.
+
+##### Table 17: Investment tax credit policy parameters in Resource\_investment\_tax\_credits.csv
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource| Resource name corresponding to a resource in one of the resource data files described above.|
+|ITC\_*| Flag to indicate which resources are eligible for the Investment Tax Credit policy. Resources flagged with 1 receive the ITC rate specified in the corresponding row of `Investment_tax_credits.csv`, applied to their annualized capital investment costs.|
+
+This policy is applied when if `ProductionTaxCredit = 1` in the settings file. \* corresponds to the ith row of the file `Production_tax_credits.csv`.
+
+##### Table 18: Production tax credit policy parameters in Resource\_production\_tax\_credits.csv
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource| Resource name corresponding to a resource in one of the resource data files described above.|
+|PTC\_*| Flag to indicate which resources are eligible for the Production Tax Credit policy. Resources flagged with 1 receive the PTC rate (in $/MWh) specified in the corresponding row of `Production_tax_credits.csv`, applied to their energy generation.|
+
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
-##### Table 17: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
+##### Table 19: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -597,7 +618,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 
 This policy is applied when if `HydrogenMinimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
 
-##### Table 18: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
+##### Table 20: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -606,7 +627,7 @@ This policy is applied when if `HydrogenMinimumProduction = 1` in the settings f
 
 This policy is applied when if `HourlyMatching = 1` in the settings file.
 
-##### Table 19: Hourly matching policy parameters in Resource\_hourly\_matching.csv
+##### Table 21: Hourly matching policy parameters in Resource\_hourly\_matching.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|

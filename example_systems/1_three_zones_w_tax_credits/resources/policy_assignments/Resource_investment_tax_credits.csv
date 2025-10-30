@@ -1,0 +1,5 @@
+Resource,ITC_1,ITC_2
+MA_solar_pv,1,0
+CT_onshore_wind,0,1
+CT_solar_pv,1,0
+ME_onshore_wind,0,1

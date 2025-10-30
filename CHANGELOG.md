@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Investment Tax Credit (ITC) and Production Tax Credit (PTC) policy modules to track and report tax credit benefits for eligible resources.
+  - New input files: `Investment_tax_credits.csv` and `Production_tax_credits.csv` in the policies folder.
+  - Resource eligibility specified via policy assignment files: `Resource_investment_tax_credits.csv` and `Resource_production_tax_credits.csv`.
+  - ITC provides upfront capital cost reduction based on investment costs of new capacity.
+  - PTC provides ongoing production subsidies based on energy generation.
+  - Tax credit benefits are subtracted from the objective function and reported in output files.
+  - New output files: `investment_tax_credits.csv` and `production_tax_credits.csv`.
+  - Tax credit benefits included in the `costs.csv` output file.
+  - Documentation added to `model_input.md` and `model_output.md`.
+
 ## [0.4.5] - 2025-07-07
 
 ### Added

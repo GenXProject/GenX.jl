@@ -248,6 +248,16 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         maximum_capacity_requirement!(EP, inputs, setup)
     end
 
+    # Investment Tax Credits
+    if setup["InvestmentTaxCredit"] == 1
+        investment_tax_credits!(EP, inputs, setup)
+    end
+
+    # Production Tax Credits
+    if setup["ProductionTaxCredit"] == 1
+        production_tax_credits!(EP, inputs, setup)
+    end
+
     # Hydrogen demand limits
     if setup["HydrogenMinimumProduction"] > 0
         hydrogen_demand!(EP, inputs, setup)

@@ -33,6 +33,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(ELECTROLYZER_ALL)
         push!(cost_list, "cHydrogenRevenue")
     end
+    if setup["InvestmentTaxCredit"] == 1
+        push!(cost_list, "cITCBenefit")
+    end
+    if setup["ProductionTaxCredit"] == 1
+        push!(cost_list, "cPTCBenefit")
+    end
     dfCost = DataFrame(Costs = cost_list)
 
     cVar = value(EP[:eTotalCVarOut]) +
@@ -92,6 +98,14 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
     if !isempty(ELECTROLYZER_ALL)
         push!(total_cost, -1 * value(EP[:eTotalHydrogenValue]))
+    end
+    
+    if setup["InvestmentTaxCredit"] == 1
+        push!(total_cost, -1 * value(EP[:eTotalITCBenefit]))
+    end
+    
+    if setup["ProductionTaxCredit"] == 1
+        push!(total_cost, -1 * value(EP[:eTotalPTCBenefit]))
     end
 
     dfCost[!, Symbol("Total")] = total_cost

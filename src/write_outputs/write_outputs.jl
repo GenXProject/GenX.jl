@@ -442,6 +442,13 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             println(elapsed_time_max_cap_req)
         end
 
+        if (setup["InvestmentTaxCredit"] == 1 || setup["ProductionTaxCredit"] == 1) &&
+           output_settings_d["WriteTaxCredits"]
+            elapsed_time_tax_credits = @elapsed write_tax_credits(path, inputs, setup, EP)
+            println("Time elapsed for writing tax credits is")
+            println(elapsed_time_tax_credits)
+        end
+
         if setup["HydrogenMinimumProduction"] == 1 && has_duals(EP)
             if output_settings_d["WriteHydrogenPrices"]
                 elapsed_time_hydrogen_prices = @elapsed write_hydrogen_prices(path,
