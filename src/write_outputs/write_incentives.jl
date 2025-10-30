@@ -30,7 +30,7 @@ function write_investment_incentive(path::AbstractString,
     NumberOfInvIncentive = inputs["NumberOfInvIncentive"]
     
     # Create DataFrame for investment incentive benefits
-    dfInvIncentive = DataFrame(InvIncentive_Policy = 1:NumberOfInvIncentive)
+    dfInvIncentive = DataFrame(InvIncentive_Policy = string.(1:NumberOfInvIncentive))
     
     # Calculate investment incentive benefits for each policy
     inv_incentive_benefits = zeros(NumberOfInvIncentive)
@@ -70,7 +70,7 @@ function write_production_incentive(path::AbstractString,
     NumberOfProdIncentive = inputs["NumberOfProdIncentive"]
     
     # Create DataFrame for production incentive benefits
-    dfProdIncentive = DataFrame(ProdIncentive_Policy = 1:NumberOfProdIncentive,
+    dfProdIncentive = DataFrame(ProdIncentive_Policy = string.(1:NumberOfProdIncentive),
                                 ProdIncentive_Type = inputs["ProdIncentive_Type"])
     
     # Calculate production incentive benefits for each policy
