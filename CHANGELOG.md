@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New output files: `investment_tax_credits.csv` and `production_tax_credits.csv`.
   - Tax credit benefits included in the `costs.csv` output file.
   - Documentation added to `model_input.md` and `model_output.md`.
+  - Settings flags: `InvestmentTaxCredit` and `ProductionTaxCredit` to enable/disable policies (default: 0).
+  - Test case added to validate tax credit functionality.
 
 ## [0.4.5] - 2025-07-07
 
