@@ -109,6 +109,13 @@ Modules = [GenX]
 Pages = ["write_subsidy_revenue.jl"]
 ```
 
+## Write Incentives
+```@docs
+GenX.write_incentives
+GenX.write_investment_incentive
+GenX.write_production_incentive
+```
+
 ## Write Operating Reserve and Regulation Revenue
 ```@autodocs
 Modules = [GenX]

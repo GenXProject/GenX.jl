@@ -63,6 +63,16 @@ Pages = ["load_energy_share_requirement.jl"]
 GenX.load_hydrogen_demand!
 ```
 
+## Investment Incentive
+```@docs
+GenX.load_investment_incentive!
+```
+
+## Production Incentive
+```@docs
+GenX.load_production_incentive!
+```
+
 ## Mapping Representative Time Periods
 ```@autodocs
 Modules = [GenX]
