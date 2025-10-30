@@ -111,7 +111,6 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
             eExistingCap[y]
         end)
 
-    ### Need editting ##
     @expression(EP, eCFix[y in 1:G],
         if y in NEW_CAP # Resources eligible for new capacity (Non-Retrofit)
             if y in COMMIT
@@ -124,8 +123,24 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         else
             fixed_om_cost_per_mwyr(gen[y]) * eTotalCap[y]
         end)
+
+    # Investment Tax Credit (ITC) - reduces upfront investment costs
+    @expression(EP, eInvestmentTaxCredit[y in 1:G],
+        if y in NEW_CAP
+            if y in COMMIT
+                investment_tax_credit_fraction(gen[y]) * inv_cost_per_mwyr(gen[y]) * cap_size(gen[y]) * vCAP[y]
+            else
+                investment_tax_credit_fraction(gen[y]) * inv_cost_per_mwyr(gen[y]) * vCAP[y]
+            end
+        else
+            0
+        end)
+
     # Sum individual resource contributions to fixed costs to get total fixed costs
     @expression(EP, eTotalCFix, sum(EP[:eCFix][y] for y in 1:G))
+
+    # Sum investment tax credits (benefits, reduce costs)
+    @expression(EP, eTotalInvestmentTaxCredit, sum(EP[:eInvestmentTaxCredit][y] for y in 1:G))
 
     # Add term to objective function expression
     if MultiStage == 1
@@ -133,8 +148,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         # We divide by OPEXMULT since we are going to multiply the entire objective function by this term later,
         # and we have already accounted for multiple years between stages for fixed costs.
         add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFix)
+        # Subtract investment tax credits (benefits)
+        add_to_expression!(EP[:eObj], -1 / inputs["OPEXMULT"], eTotalInvestmentTaxCredit)
     else
         add_to_expression!(EP[:eObj], eTotalCFix)
+        # Subtract investment tax credits (benefits)
+        add_to_expression!(EP[:eObj], -1, eTotalInvestmentTaxCredit)
     end
 
     ### Constratints ###

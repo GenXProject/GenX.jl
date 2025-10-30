@@ -36,8 +36,18 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eTotalCVarOutT[t = 1:T], sum(eCVar_out[y, t] for y in 1:G))
     @expression(EP, eTotalCVarOut, sum(eTotalCVarOutT[t] for t in 1:T))
 
+    # Production Tax Credit (PTC) - reduces operational costs per MWh generated
+    @expression(EP,
+        eProductionTaxCredit[y = 1:G, t = 1:T],
+        (inputs["omega"][t]*(production_tax_credit_per_mwh(gen[y]) * vP[y, t])))
+    # Sum individual resource contributions to production tax credits
+    @expression(EP, eTotalProductionTaxCreditT[t = 1:T], sum(eProductionTaxCredit[y, t] for y in 1:G))
+    @expression(EP, eTotalProductionTaxCredit, sum(eTotalProductionTaxCreditT[t] for t in 1:T))
+
     # Add total variable discharging cost contribution to the objective function
     add_to_expression!(EP[:eObj], eTotalCVarOut)
+    # Subtract production tax credits (benefits)
+    add_to_expression!(EP[:eObj], -1, eTotalProductionTaxCredit)
 
     # ESR Policy
     if setup["EnergyShareRequirement"] >= 1

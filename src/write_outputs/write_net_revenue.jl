@@ -62,6 +62,9 @@ function write_net_revenue(path::AbstractString,
     dfNetRevenue.Inv_cost_MWh = inv_cost_per_mwhyr.(gen) .* dfCap[1:G, :NewEnergyCap]
     dfNetRevenue.Inv_cost_charge_MW = inv_cost_charge_per_mwyr.(gen) .*
                                       dfCap[1:G, :NewChargeCap]
+
+    # Add investment tax credit to the dataframe
+    dfNetRevenue.Investment_Tax_Credit = value.(EP[:eInvestmentTaxCredit]).data
     if !isempty(VRE_STOR)
         # Doesn't include charge capacities
         if !isempty(SOLAR)
@@ -86,6 +89,7 @@ function write_net_revenue(path::AbstractString,
         dfNetRevenue.Inv_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Inv_cost_MW *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Inv_cost_charge_MW *= ModelScalingFactor # converting Million US$ to US$
+        dfNetRevenue.Investment_Tax_Credit *= ModelScalingFactor # converting Million US$ to US$
     end
 
     # Add operations and maintenance cost to the dataframe
@@ -138,6 +142,12 @@ function write_net_revenue(path::AbstractString,
         dfNetRevenue.Fixed_OM_cost_MWh *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Fixed_OM_cost_charge_MW *= ModelScalingFactor # converting Million US$ to US$
         dfNetRevenue.Var_OM_cost_out *= ModelScalingFactor # converting Million US$ to US$
+    end
+
+    # Add production tax credit to the dataframe
+    dfNetRevenue.Production_Tax_Credit = vec(sum(value.(EP[:eProductionTaxCredit]).data, dims = 2))
+    if setup["ParameterScale"] == 1
+        dfNetRevenue.Production_Tax_Credit *= ModelScalingFactor^2 # converting Million US$ to US$
     end
 
     # Add fuel cost to the dataframe
@@ -269,11 +279,13 @@ function write_net_revenue(path::AbstractString,
 
     dfNetRevenue.Cost = (dfNetRevenue.Inv_cost_MW .+
                          dfNetRevenue.Inv_cost_MWh .+
-                         dfNetRevenue.Inv_cost_charge_MW .+
+                         dfNetRevenue.Inv_cost_charge_MW .-
+                         dfNetRevenue.Investment_Tax_Credit .+
                          dfNetRevenue.Fixed_OM_cost_MW .+
                          dfNetRevenue.Fixed_OM_cost_MWh .+
                          dfNetRevenue.Fixed_OM_cost_charge_MW .+
-                         dfNetRevenue.Var_OM_cost_out .+
+                         dfNetRevenue.Var_OM_cost_out .-
+                         dfNetRevenue.Production_Tax_Credit .+
                          dfNetRevenue.Var_OM_cost_in .+
                          dfNetRevenue.Fuel_cost .+
                          dfNetRevenue.Charge_cost .+

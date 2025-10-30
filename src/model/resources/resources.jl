@@ -663,6 +663,10 @@ inv_cost_per_mwyr(r::AbstractResource) = get(r, :inv_cost_per_mwyr, default_zero
 fixed_om_cost_per_mwyr(r::AbstractResource) = get(r, :fixed_om_cost_per_mwyr, default_zero)
 var_om_cost_per_mwh(r::AbstractResource) = get(r, :var_om_cost_per_mwh, default_zero)
 inv_cost_per_mwhyr(r::AbstractResource) = get(r, :inv_cost_per_mwhyr, default_zero)
+
+# Tax credits
+investment_tax_credit_fraction(r::AbstractResource) = get(r, :investment_tax_credit_fraction, default_zero)
+production_tax_credit_per_mwh(r::AbstractResource) = get(r, :production_tax_credit_per_mwh, default_zero)
 function fixed_om_cost_per_mwhyr(r::AbstractResource)
     get(r, :fixed_om_cost_per_mwhyr, default_zero)
 end
