@@ -45,39 +45,63 @@ Reports optimal objective function value and contribution of each term by zone.
 | cUnmetRsv |Total annual cost of not meeting time-dependent operating reserve (spinning) requirements |USD |
 | cNetworkExp |Total cost of network expansion |USD |
 | cEmissionsRevenue |Total and zonal emissions revenue |USD |
-| cEmissionsCost |Total an zonal emissions cost |USD |
+| cEmissionsCost |Total and zonal emissions cost |USD |
+| cITCBenefit |Total annual benefit from investment tax credits (ITCs) - appears as negative cost |USD |
+| cPTCBenefit |Total annual benefit from production tax credits (PTCs) - appears as negative cost |USD |
 
-### 1.3 emissions.csv
+### 1.3 investment\_tax\_credits.csv
+
+Reports the total investment tax credit benefits by policy. This file is only generated if `InvestmentTaxCredit = 1` in the settings file.
+
+###### Table 17: Structure of the investment\_tax\_credits.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| ITC\_Policy |Investment tax credit policy number (corresponds to row in Investment\_tax\_credits.csv input file) | - |
+| ITC\_Benefit |Total investment tax credit benefit for the policy (applied to new capacity investments) |USD |
+
+### 1.4 production\_tax\_credits.csv
+
+Reports the total production tax credit benefits by policy. This file is only generated if `ProductionTaxCredit = 1` in the settings file.
+
+###### Table 18: Structure of the production\_tax\_credits.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| PTC\_Policy |Production tax credit policy number (corresponds to row in Production\_tax\_credits.csv input file) | - |
+| PTC\_Benefit |Total production tax credit benefit for the policy (applied to energy generation) |USD |
+
+### 1.5 emissions.csv
 
 Reports CO2 emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.
 
-###### Table 17: Structure of emission prices in the emissions.csv file
+###### Table 19: Structure of emission prices in the emissions.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
 |CO_2\_price |Marginal CO2 abatement cost associated with constraint on maximum annual CO2 emissions; will be same across zones if CO2 emissions constraint is applied for the entire region and not zone-wise |USD/ tonne CO2. |
 
-### 1.4 nse.csv
+### 1.6 nse.csv
 
 Reports non-served energy for every model zone, time step and cost-segment.
 
-### 1.5 power.csv
+### 1.7 power.csv
 
 Reports power discharged by each resource (generation, storage, demand response) in each model time step.
 
-### 1.6 reliability.csv
+### 1.8 reliability.csv
 
 Reports dual variable of maximum non-served energy constraint (shadow price of reliability constraint) for each model zone and time step.
 
-### 1.7 prices.csv
+### 1.9 prices.csv
 
 Reports marginal electricity price for each model zone and time step. Marginal electricity price is equal to the dual variable of the load balance constraint. If GenX is configured as a mixed integer linear program, then this output is only generated if `WriteShadowPrices` flag is activated. If configured as a linear program (i.e. linearized unit commitment or economic dispatch) then output automatically available.
 
-### 1.8 status.csv
+### 1.10 status.csv
 
 Reports computational performance of the model and objective function related information.
 
-###### Table 18: Structure of the status.csv file
+###### Table 20: Structure of the status.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
@@ -87,11 +111,11 @@ Reports computational performance of the model and objective function related in
 |Objbound | Best objective lower bound | USD |
 |FinalMIPGap |Optimality gap at termination in case of a mixed-integer linear program (MIP gap); when using Gurobi, the lower bound and MIP gap is reported excluding constant terms (E.g. fixed cost of existing generators that cannot be retired) in the objective function and hence may not be directly usable. |Fraction|
 
-### 1.9 NetRevenue.csv
+### 1.11 NetRevenue.csv
 
 This file summarizes the cost, revenue and profit for each generation technology for each region.
 
-###### Table 19: Stucture of the NetRevenue.csv file
+###### Table 21: Stucture of the NetRevenue.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
