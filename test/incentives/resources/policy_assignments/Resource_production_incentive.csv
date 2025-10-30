@@ -1,0 +1,5 @@
+Resource,Prod_Incentive_1,Prod_Incentive_2
+MA_solar_pv,1,0
+CT_onshore_wind,0,1
+CT_solar_pv,1,0
+ME_onshore_wind,0,1

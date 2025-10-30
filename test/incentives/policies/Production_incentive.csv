@@ -1,0 +1,3 @@
+ProdIncentive_Policy,PolicyDescription,ProdIncentive_Rate,ProdIncentive_Type
+1,Solar_PTC,15.0,energy
+2,Wind_PTC,12.0,energy
