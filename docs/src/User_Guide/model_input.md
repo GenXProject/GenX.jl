@@ -26,8 +26,8 @@ Additionally, the user may need to specify ten more **settings-specific** input 
 3. CO2\_cap.csv: specify regional CO2 emission limits.
 4. Capacity\_reserve\_margin.csv: specify regional capacity reserve margin requirements.
 5. Minimum\_capacity\_requirement.csv: specify regional minimum technology capacity deployment requirements.
-6. Investment\_tax\_credits.csv: specify investment tax credit policies that reduce upfront capital costs for eligible resources.
-7. Production\_tax\_credits.csv: specify production tax credit policies that provide ongoing subsidies based on energy generation.
+6. Investment\_incentive.csv: specify investment incentive policies that reduce upfront capital costs for eligible resources.
+7. Production\_incentive.csv: specify production incentive policies that provide ongoing subsidies based on energy generation or CO₂ captured.
 8. Vre\_and\_stor\_data.csv: specify cost and performance data for co-located VRE and storage resources.
 9. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
 10. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
@@ -589,23 +589,23 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 |Max\_Cap\_Wind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms).
 |Max\_Cap\_Stor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms).|
 
-This policy is applied when if `InvestmentTaxCredit = 1` in the settings file. \* corresponds to the ith row of the file `Investment_tax_credits.csv`.
+This policy is applied when if `InvestmentIncentive = 1` in the settings file. \* corresponds to the ith row of the file `Investment_incentive.csv`.
 
-##### Table 17: Investment tax credit policy parameters in Resource\_investment\_tax\_credits.csv
+##### Table 17: Investment incentive policy parameters in Resource\_investment\_incentive.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|ITC\_*| Flag to indicate which resources are eligible for the Investment Tax Credit policy. Resources flagged with 1 receive the ITC rate specified in the corresponding row of `Investment_tax_credits.csv`, applied to their annualized capital investment costs.|
+|Inv\_Incentive\_*| Flag to indicate which resources are eligible for the Investment Incentive policy. Resources flagged with 1 receive the investment incentive rate specified in the corresponding row of `Investment_incentive.csv`, applied to their annualized capital investment costs.|
 
-This policy is applied when if `ProductionTaxCredit = 1` in the settings file. \* corresponds to the ith row of the file `Production_tax_credits.csv`.
+This policy is applied when if `ProductionIncentive = 1` in the settings file. \* corresponds to the ith row of the file `Production_incentive.csv`.
 
-##### Table 18: Production tax credit policy parameters in Resource\_production\_tax\_credits.csv
+##### Table 18: Production incentive policy parameters in Resource\_production\_incentive.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|PTC\_*| Flag to indicate which resources are eligible for the Production Tax Credit policy. Resources flagged with 1 receive the PTC rate (in $/MWh) specified in the corresponding row of `Production_tax_credits.csv`, applied to their energy generation.|
+|Prod\_Incentive\_*| Flag to indicate which resources are eligible for the Production Incentive policy. Resources flagged with 1 receive the production incentive rate specified in the corresponding row of `Production_incentive.csv`, applied to their energy generation ($/MWh) or CO₂ captured ($/tonne), depending on the `ProdIncentive_Type` specified for that policy.|
 
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 

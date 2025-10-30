@@ -46,30 +46,31 @@ Reports optimal objective function value and contribution of each term by zone.
 | cNetworkExp |Total cost of network expansion |USD |
 | cEmissionsRevenue |Total and zonal emissions revenue |USD |
 | cEmissionsCost |Total and zonal emissions cost |USD |
-| cITCBenefit |Total annual benefit from investment tax credits (ITCs) - appears as negative cost |USD |
-| cPTCBenefit |Total annual benefit from production tax credits (PTCs) - appears as negative cost |USD |
+| cInvIncentiveBenefit |Total annual benefit from investment incentives - appears as negative cost |USD |
+| cProdIncentiveBenefit |Total annual benefit from production incentives - appears as negative cost |USD |
 
-### 1.3 investment\_tax\_credits.csv
+### 1.3 investment\_incentive.csv
 
-Reports the total investment tax credit benefits by policy. This file is only generated if `InvestmentTaxCredit = 1` in the settings file.
+Reports the total investment incentive benefits by policy. This file is only generated if `InvestmentIncentive = 1` in the settings file.
 
-###### Table 17: Structure of the investment\_tax\_credits.csv file
+###### Table 17: Structure of the investment\_incentive.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| ITC\_Policy |Investment tax credit policy number (corresponds to row in Investment\_tax\_credits.csv input file) | - |
-| ITC\_Benefit |Total investment tax credit benefit for the policy (applied to new capacity investments) |USD |
+| InvIncentive\_Policy |Investment incentive policy number (corresponds to row in Investment\_incentive.csv input file) | - |
+| InvIncentive\_Benefit |Total investment incentive benefit for the policy (applied to new capacity investments) |USD |
 
-### 1.4 production\_tax\_credits.csv
+### 1.4 production\_incentive.csv
 
-Reports the total production tax credit benefits by policy. This file is only generated if `ProductionTaxCredit = 1` in the settings file.
+Reports the total production incentive benefits by policy. This file is only generated if `ProductionIncentive = 1` in the settings file.
 
-###### Table 18: Structure of the production\_tax\_credits.csv file
+###### Table 18: Structure of the production\_incentive.csv file
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| PTC\_Policy |Production tax credit policy number (corresponds to row in Production\_tax\_credits.csv input file) | - |
-| PTC\_Benefit |Total production tax credit benefit for the policy (applied to energy generation) |USD |
+| ProdIncentive\_Policy |Production incentive policy number (corresponds to row in Production\_incentive.csv input file) | - |
+| ProdIncentive\_Type |Type of production incentive: "energy" for MWh-based or "co2" for CO₂ capture-based | - |
+| ProdIncentive\_Benefit |Total production incentive benefit for the policy (applied to energy generation or CO₂ captured) |USD |
 
 ### 1.5 emissions.csv
 
