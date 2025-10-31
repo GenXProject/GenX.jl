@@ -1,6 +1,6 @@
 # GenX Inputs
 
-All input files are in CSV format. Running the GenX model requires a minimum of four **mandatory input files** and one folder, which consists of CSV files for generating resources:
+All input files are in CSV format, but can also be provided as gzipped CSV (.csv.gz) or Parquet (.parquet) files. GenX will automatically detect and read any of these formats. Running the GenX model requires a minimum of four **mandatory input files** and one folder, which consists of CSV files for generating resources:
 
 ```@raw html
 <ol>
@@ -34,6 +34,9 @@ Additionally, the user may need to specify eight more **settings-specific** inpu
 
 !!! note "Note"
     Names of the input files are case sensitive.
+
+!!! tip "Input File Formats"
+    Input files can be provided in CSV (.csv), gzipped CSV (.csv.gz), or Parquet (.parquet) formats. GenX will automatically detect and read the appropriate format. To use compressed or Parquet formats, simply use the same filename stem (e.g., `Demand_data.csv.gz` or `Demand_data.parquet` instead of `Demand_data.csv`). This can significantly reduce storage requirements for large input files without requiring any changes to settings files.
 
 
 ## 1 Mandatory input data

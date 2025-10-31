@@ -14,6 +14,10 @@ if VERSION ≥ v"1.7"
     end
 end
 
+@testset "DuckDB File Loading" begin
+    include("test_duckdb_file_loading.jl")
+end
+
 # Test GenX modules
 @testset verbose=true "GenX modules" begin
     @testset "Three zones" begin

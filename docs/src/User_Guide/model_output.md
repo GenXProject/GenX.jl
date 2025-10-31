@@ -2,6 +2,14 @@
 
 The table below summarizes the units of each output variable reported as part of the various CSV files produced after each model run. The reported units are also provided. If a result file includes time-dependent values, the value will not include the hour weight in it. An annual sum ("AnnualSum") column/row will be provided whenever it is possible (e.g., `emissions.csv`).
 
+!!! tip "Temporal Output File Formats"
+    For full time series temporal outputs (when `WriteOutputs: "full"`), users can specify the output format using the `TemporalOutputFormat` setting in `genx_settings.yml`. Supported formats are:
+    - `"csv"` (default): Standard CSV format
+    - `"gzip"`: Gzipped CSV format (.csv.gz) for 50-70% storage reduction
+    - `"parquet"`: Apache Parquet format (.parquet) for 80-90% storage reduction
+    
+    This setting affects files like power.csv, charge.csv, storage.csv, curtailment.csv, and other time series outputs. Annual outputs (when `WriteOutputs: "annual"`) are always written in CSV format.
+
 ## 1 Default output files
 
 ### 1.1 capacity.csv
