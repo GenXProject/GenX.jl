@@ -32,6 +32,7 @@ function default_settings()
         "HydrogenHourlyMatching" => 0,
         "DC_OPF" => 0,
         "WriteOutputs" => "full",
+        "TemporalOutputFormat" => "csv",
         "ComputeConflicts" => 0,
         "StorageVirtualDischarge" => 1,
         "ResourcesFolder" => "resources",
@@ -76,6 +77,14 @@ function validate_settings!(settings::Dict{Any, Any})
     # make WriteOutputs setting lowercase and check for valid value
     settings["WriteOutputs"] = lowercase(settings["WriteOutputs"])
     @assert settings["WriteOutputs"] ∈ ["annual", "full"]
+    
+    # make TemporalOutputFormat setting lowercase and check for valid value
+    if haskey(settings, "TemporalOutputFormat")
+        settings["TemporalOutputFormat"] = lowercase(settings["TemporalOutputFormat"])
+        @assert settings["TemporalOutputFormat"] ∈ ["csv", "gzip", "parquet"] "TemporalOutputFormat must be one of: csv, gzip, parquet"
+    else
+        settings["TemporalOutputFormat"] = "csv"  # default to CSV for backward compatibility
+    end
 
     if "OperationWrapping" in keys(settings)
         @warn """The behavior of the TimeDomainReduction and OperationWrapping
