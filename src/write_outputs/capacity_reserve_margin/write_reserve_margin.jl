@@ -1,9 +1,9 @@
 function write_reserve_margin(path::AbstractString, setup::Dict, EP::Model)
-    temp_ResMar = dual.(EP[:cCapacityResMargin])
+    temp_ResMar_Price = dual.(EP[:cCapacityResMargin])
     if setup["ParameterScale"] == 1
-        temp_ResMar = temp_ResMar * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
+        temp_ResMar_Price = temp_ResMar_Price * ModelScalingFactor # Convert from MillionUS$/GWh to US$/MWh
     end
-    dfResMar = DataFrame(temp_ResMar, :auto)
-    CSV.write(joinpath(path, "ReserveMargin.csv"), dfResMar)
+    dfResMarPrice = DataFrame(temp_ResMar_Price, :auto)
+    CSV.write(joinpath(path, "ReserveMarginPrice.csv"), dfResMarPrice)
     return nothing
 end
