@@ -23,7 +23,7 @@ function _run_incentives_case()
         "InvestmentIncentive" => 1,
         "ProductionIncentive" => 1,
         "ParameterScale" => 1,
-        "UCommit" => 2,
+        "UCommit" => 2
     )
     EP, inputs, _ = redirect_stdout(devnull) do
         run_genx_case_testing(test_path, genx_setup)
@@ -73,7 +73,7 @@ function test_production_incentive_benefits(EP, inputs)
                     inputs["omega"][t] *
                     inputs["ProdIncentive_Rate"][3] *
                     JuMP.value(EP[:eEmissionsCaptureByPlant][y, t])
-                    for y in ccs_eligible, t in 1:T
+                for y in ccs_eligible, t in 1:T
                 )
                 actual_co2_incentive = JuMP.value(EP[:eProdIncentiveBenefit][3])
                 @test isapprox(actual_co2_incentive, expected_co2_incentive, rtol = 1e-6)
@@ -106,7 +106,7 @@ function test_invalid_prod_incentive_type()
             ProdIncentive_Policy = [1],
             PolicyDescription = ["Invalid_Test"],
             ProdIncentive_Rate = [10.0],
-            ProdIncentive_Type = ["invalid_type"],
+            ProdIncentive_Type = ["invalid_type"]
         )
         CSV.write(joinpath(temp_test_path, "policies", "Production_incentive.csv"), invalid_df)
         @test_throws ErrorException begin
@@ -125,13 +125,14 @@ function test_missing_prod_incentive_type_column()
         missing_df = DataFrame(
             ProdIncentive_Policy = [1],
             PolicyDescription = ["Missing_Type_Test"],
-            ProdIncentive_Rate = [5.0],
+            ProdIncentive_Rate = [5.0]
         )
         CSV.write(joinpath(temp_missing_path, "policies", "Production_incentive.csv"), missing_df)
         @test_throws ErrorException begin
             setup_missing = Dict("ProductionIncentive" => 1)
             inputs_missing = Dict{String, Any}()
-            GenX.load_production_incentive!(joinpath(temp_missing_path, "policies"), inputs_missing, setup_missing)
+            GenX.load_production_incentive!(
+                joinpath(temp_missing_path, "policies"), inputs_missing, setup_missing)
         end
         rm(temp_missing_path, recursive = true)
     end

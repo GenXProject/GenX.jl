@@ -35,50 +35,51 @@ subsidy revenue.
 """
 function production_incentive!(EP::Model, inputs::Dict, setup::Dict)
     println("Production Incentive Module")
-    
+
     gen = inputs["RESOURCES"]
     G = inputs["G"]
     T = inputs["T"]  # Number of time steps
     NumberOfProdIncentive = inputs["NumberOfProdIncentive"]
     CCS = inputs["CCS"]  # Resources with carbon capture
-    
+
     # Create expression for production incentive benefits by resource and policy
-    @expression(EP, eProdIncentiveBenefitByResource[y = 1:G, incentive = 1:NumberOfProdIncentive],
+    @expression(EP,
+        eProdIncentiveBenefitByResource[y = 1:G, incentive = 1:NumberOfProdIncentive],
         if y in ids_with_policy(gen, :prod_incentive, tag = incentive)
             # Energy-based incentives
             if inputs["ProdIncentive_Type"][incentive] == "mwh"
                 sum(
-                    inputs["omega"][t] * 
-                    inputs["ProdIncentive_Rate"][incentive] * 
+                    inputs["omega"][t] *
+                    inputs["ProdIncentive_Rate"][incentive] *
                     EP[:vP][y, t]
-                    for t in 1:T
+                for t in 1:T
                 )
-            # CO₂ capture-based incentives
-            elseif inputs["ProdIncentive_Type"][incentive] == "tonne_co2" && y in CCS && haskey(EP.obj_dict, :eEmissionsCaptureByPlant)
+                # CO₂ capture-based incentives
+            elseif inputs["ProdIncentive_Type"][incentive] == "tonne_co2" && y in CCS &&
+                   haskey(EP.obj_dict, :eEmissionsCaptureByPlant)
                 sum(
-                    inputs["omega"][t] * 
-                    inputs["ProdIncentive_Rate"][incentive] * 
+                    inputs["omega"][t] *
+                    inputs["ProdIncentive_Rate"][incentive] *
                     EP[:eEmissionsCaptureByPlant][y, t]
-                    for t in 1:T
+                for t in 1:T
                 )
             else
                 0.0
             end
         else
             0.0
-        end
-    )
-    
+        end)
+
     # Create expression for total production incentive benefits for each policy
-    @expression(EP, eProdIncentiveBenefit[incentive = 1:NumberOfProdIncentive], 
-        sum(EP[:eProdIncentiveBenefitByResource][y, incentive] for y in 1:G)
-    )
-    
+    @expression(EP, eProdIncentiveBenefit[incentive = 1:NumberOfProdIncentive],
+        sum(EP[:eProdIncentiveBenefitByResource][y, incentive] for y in 1:G))
+
     # Total production incentive benefits across all policies
-    @expression(EP, eTotalProdIncentiveBenefit, sum(EP[:eProdIncentiveBenefit][incentive] for incentive in 1:NumberOfProdIncentive))
-    
+    @expression(EP, eTotalProdIncentiveBenefit,
+        sum(EP[:eProdIncentiveBenefit][incentive] for incentive in 1:NumberOfProdIncentive))
+
     # Subtract production incentive benefits from the objective function (credits reduce costs)
     add_to_expression!(EP[:eObj], -1 * eTotalProdIncentiveBenefit)
-    
+
     return EP
 end
