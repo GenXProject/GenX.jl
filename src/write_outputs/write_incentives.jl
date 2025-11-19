@@ -21,7 +21,7 @@ end
     write_investment_incentive(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing investment incentive benefits to output files.
-Outputs per-resource investment incentive benefits for each policy.
+Outputs both per-resource and per-policy investment incentive benefits.
 """
 function write_investment_incentive(path::AbstractString,
         inputs::Dict,
@@ -31,7 +31,7 @@ function write_investment_incentive(path::AbstractString,
     G = inputs["G"]
     NumberOfInvIncentive = inputs["NumberOfInvIncentive"]
 
-    # Initialize vectors to store data
+    # Initialize vectors to store per-resource data
     regions = String[]
     resources = String[]
     zones = Int[]
@@ -56,7 +56,7 @@ function write_investment_incentive(path::AbstractString,
         end
     end
 
-    # Create DataFrame
+    # Create per-resource DataFrame
     dfInvIncentive = DataFrame(
         Region = regions,
         Resource = resources,
@@ -65,8 +65,25 @@ function write_investment_incentive(path::AbstractString,
         AnnualSum = benefits
     )
 
-    # Write to CSV
+    # Write per-resource CSV
     CSV.write(joinpath(path, "InvestmentIncentive.csv"), dfInvIncentive)
+
+    # Create per-policy summary DataFrame
+    policy_benefits = zeros(NumberOfInvIncentive)
+    for incentive in 1:NumberOfInvIncentive
+        policy_benefits[incentive] = value(EP[:eInvIncentiveBenefit][incentive]) * scale_factor
+    end
+
+    dfInvIncentivePolicy = DataFrame(
+        InvIncentive_Policy = 1:NumberOfInvIncentive,
+        AnnualSum = policy_benefits
+    )
+
+    # Add total row
+    push!(dfInvIncentivePolicy, (InvIncentive_Policy = 0, AnnualSum = sum(policy_benefits)))
+
+    # Write per-policy summary CSV
+    CSV.write(joinpath(path, "InvestmentIncentivePolicy.csv"), dfInvIncentivePolicy)
 
     return sum(benefits)
 end
@@ -75,7 +92,7 @@ end
     write_production_incentive(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing production incentive benefits to output files.
-Outputs per-resource production incentive benefits for each policy.
+Outputs both per-resource and per-policy production incentive benefits.
 """
 function write_production_incentive(path::AbstractString,
         inputs::Dict,
@@ -96,7 +113,7 @@ function write_production_incentive(path::AbstractString,
         end
     end
 
-    # Initialize vectors to store data
+    # Initialize vectors to store per-resource data
     regions = String[]
     resources = String[]
     zones = Int[]
@@ -123,7 +140,7 @@ function write_production_incentive(path::AbstractString,
         end
     end
 
-    # Create DataFrame
+    # Create per-resource DataFrame
     dfProdIncentive = DataFrame(
         Region = regions,
         Resource = resources,
@@ -133,8 +150,26 @@ function write_production_incentive(path::AbstractString,
         AnnualSum = benefits
     )
 
-    # Write to CSV
+    # Write per-resource CSV
     CSV.write(joinpath(path, "ProductionIncentive.csv"), dfProdIncentive)
+
+    # Create per-policy summary DataFrame
+    policy_benefits = zeros(NumberOfProdIncentive)
+    for incentive in 1:NumberOfProdIncentive
+        policy_benefits[incentive] = value(EP[:eProdIncentiveBenefit][incentive]) * scale_factor
+    end
+
+    dfProdIncentivePolicy = DataFrame(
+        ProdIncentive_Policy = 1:NumberOfProdIncentive,
+        ProdIncentive_Type = display_types,
+        AnnualSum = policy_benefits
+    )
+
+    # Add total row
+    push!(dfProdIncentivePolicy, (ProdIncentive_Policy = 0, ProdIncentive_Type = "All", AnnualSum = sum(policy_benefits)))
+
+    # Write per-policy summary CSV
+    CSV.write(joinpath(path, "ProductionIncentivePolicy.csv"), dfProdIncentivePolicy)
 
     return sum(benefits)
 end
