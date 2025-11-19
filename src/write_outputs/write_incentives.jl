@@ -21,52 +21,67 @@ end
     write_investment_incentive(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing investment incentive benefits to output files.
+Outputs per-resource investment incentive benefits for each policy.
 """
 function write_investment_incentive(path::AbstractString,
         inputs::Dict,
         setup::Dict,
         EP::Model)
     gen = inputs["RESOURCES"]
+    G = inputs["G"]
     NumberOfInvIncentive = inputs["NumberOfInvIncentive"]
     
-    # Create DataFrame for investment incentive benefits
-    dfInvIncentive = DataFrame(InvIncentive_Policy = string.(1:NumberOfInvIncentive))
+    # Initialize vectors to store data
+    regions = String[]
+    resources = String[]
+    zones = Int[]
+    policies = Int[]
+    benefits = Float64[]
     
-    # Calculate investment incentive benefits for each policy
-    inv_incentive_benefits = zeros(NumberOfInvIncentive)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1.0
+    
+    # Iterate through each policy and each resource
     for incentive in 1:NumberOfInvIncentive
-        inv_incentive_benefits[incentive] = value(EP[:eInvIncentiveBenefit][incentive])
+        eligible_resources = ids_with_policy(gen, :inv_incentive, tag = incentive)
+        
+        for y in eligible_resources
+            benefit = value(EP[:eInvIncentiveBenefitByResource][y, incentive]) * scale_factor
+            
+            push!(regions, string(region(gen[y])))
+            push!(resources, resource_name(gen[y]))
+            push!(zones, zone_id(gen[y]))
+            push!(policies, incentive)
+            push!(benefits, benefit)
+        end
     end
     
-    # Scale back if parameter scaling is on
-    if setup["ParameterScale"] == 1
-        inv_incentive_benefits *= ModelScalingFactor^2  # Convert from million $ to $
-    end
-    
-    dfInvIncentive[!, :InvIncentive_Benefit] = inv_incentive_benefits
-    
-    # Calculate total investment incentive benefit
-    total_inv_incentive = sum(inv_incentive_benefits)
-    
-    # Add total row
-    push!(dfInvIncentive, (InvIncentive_Policy = "Total", InvIncentive_Benefit = total_inv_incentive))
+    # Create DataFrame
+    dfInvIncentive = DataFrame(
+        Region = regions,
+        Resource = resources,
+        Zone = zones,
+        InvIncentive_Policy = policies,
+        AnnualSum = benefits
+    )
     
     # Write to CSV
-    CSV.write(joinpath(path, "investment_incentive.csv"), dfInvIncentive)
+    CSV.write(joinpath(path, "InvestmentIncentive.csv"), dfInvIncentive)
     
-    return total_inv_incentive
+    return sum(benefits)
 end
 
 @doc raw"""
     write_production_incentive(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing production incentive benefits to output files.
+Outputs per-resource production incentive benefits for each policy.
 """
 function write_production_incentive(path::AbstractString,
         inputs::Dict,
         setup::Dict,
         EP::Model)
     gen = inputs["RESOURCES"]
+    G = inputs["G"]
     NumberOfProdIncentive = inputs["NumberOfProdIncentive"]
     
     # Map normalized internal values to display format
@@ -80,31 +95,44 @@ function write_production_incentive(path::AbstractString,
         end
     end
     
-    # Create DataFrame for production incentive benefits
-    dfProdIncentive = DataFrame(ProdIncentive_Policy = string.(1:NumberOfProdIncentive),
-                                ProdIncentive_Type = display_types)
+    # Initialize vectors to store data
+    regions = String[]
+    resources = String[]
+    zones = Int[]
+    policies = Int[]
+    types = String[]
+    benefits = Float64[]
     
-    # Calculate production incentive benefits for each policy
-    prod_incentive_benefits = zeros(NumberOfProdIncentive)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1.0
+    
+    # Iterate through each policy and each resource
     for incentive in 1:NumberOfProdIncentive
-        prod_incentive_benefits[incentive] = value(EP[:eProdIncentiveBenefit][incentive])
+        eligible_resources = ids_with_policy(gen, :prod_incentive, tag = incentive)
+        
+        for y in eligible_resources
+            benefit = value(EP[:eProdIncentiveBenefitByResource][y, incentive]) * scale_factor
+            
+            push!(regions, string(region(gen[y])))
+            push!(resources, resource_name(gen[y]))
+            push!(zones, zone_id(gen[y]))
+            push!(policies, incentive)
+            push!(types, display_types[incentive])
+            push!(benefits, benefit)
+        end
     end
     
-    # Scale back if parameter scaling is on
-    if setup["ParameterScale"] == 1
-        prod_incentive_benefits *= ModelScalingFactor^2  # Convert from million $ to $
-    end
-    
-    dfProdIncentive[!, :ProdIncentive_Benefit] = prod_incentive_benefits
-    
-    # Calculate total production incentive benefit
-    total_prod_incentive = sum(prod_incentive_benefits)
-    
-    # Add total row
-    push!(dfProdIncentive, (ProdIncentive_Policy = "Total", ProdIncentive_Type = "All", ProdIncentive_Benefit = total_prod_incentive))
+    # Create DataFrame
+    dfProdIncentive = DataFrame(
+        Region = regions,
+        Resource = resources,
+        Zone = zones,
+        ProdIncentive_Policy = policies,
+        ProdIncentive_Type = types,
+        AnnualSum = benefits
+    )
     
     # Write to CSV
-    CSV.write(joinpath(path, "production_incentive.csv"), dfProdIncentive)
+    CSV.write(joinpath(path, "ProductionIncentive.csv"), dfProdIncentive)
     
-    return total_prod_incentive
+    return sum(benefits)
 end

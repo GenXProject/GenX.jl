@@ -29,17 +29,24 @@ function investment_incentive!(EP::Model, inputs::Dict, setup::Dict)
     println("Investment Incentive Module")
     
     gen = inputs["RESOURCES"]
+    G = inputs["G"]
     NumberOfInvIncentive = inputs["NumberOfInvIncentive"]
     
-    # Create expression for total investment incentive benefits for each policy
-    @expression(EP, eInvIncentiveBenefit[incentive = 1:NumberOfInvIncentive], 
-        sum(
+    # Create expression for investment incentive benefits by resource and policy
+    @expression(EP, eInvIncentiveBenefitByResource[y = 1:G, incentive = 1:NumberOfInvIncentive],
+        if y in ids_with_policy(gen, :inv_incentive, tag = incentive)
             inputs["InvIncentive_Rate"][incentive] * 
             inv_cost_per_mwyr(gen[y]) * 
             cap_size(gen[y]) * 
             EP[:vCAP][y]
-            for y in ids_with_policy(gen, :inv_incentive, tag = incentive)
-        )
+        else
+            0.0
+        end
+    )
+    
+    # Create expression for total investment incentive benefits for each policy
+    @expression(EP, eInvIncentiveBenefit[incentive = 1:NumberOfInvIncentive], 
+        sum(EP[:eInvIncentiveBenefitByResource][y, incentive] for y in 1:G)
     )
     
     # Total investment incentive benefits across all policies

@@ -37,31 +37,41 @@ function production_incentive!(EP::Model, inputs::Dict, setup::Dict)
     println("Production Incentive Module")
     
     gen = inputs["RESOURCES"]
+    G = inputs["G"]
     T = inputs["T"]  # Number of time steps
     NumberOfProdIncentive = inputs["NumberOfProdIncentive"]
     CCS = inputs["CCS"]  # Resources with carbon capture
     
-    # Create expression for total production incentive benefits for each policy
-    @expression(EP, eProdIncentiveBenefit[incentive = 1:NumberOfProdIncentive], 
-        # Energy-based incentives
-        if inputs["ProdIncentive_Type"][incentive] == "mwh"
-            sum(
-                inputs["omega"][t] * 
-                inputs["ProdIncentive_Rate"][incentive] * 
-                EP[:vP][y, t]
-                for y in ids_with_policy(gen, :prod_incentive, tag = incentive), t in 1:T
-            )
-        # CO₂ capture-based incentives
-        elseif inputs["ProdIncentive_Type"][incentive] == "tonne_co2" && !isempty(CCS) && haskey(EP.obj_dict, :eEmissionsCaptureByPlant)
-            sum(
-                inputs["omega"][t] * 
-                inputs["ProdIncentive_Rate"][incentive] * 
-                EP[:eEmissionsCaptureByPlant][y, t]
-                for y in intersect(ids_with_policy(gen, :prod_incentive, tag = incentive), CCS), t in 1:T
-            )
+    # Create expression for production incentive benefits by resource and policy
+    @expression(EP, eProdIncentiveBenefitByResource[y = 1:G, incentive = 1:NumberOfProdIncentive],
+        if y in ids_with_policy(gen, :prod_incentive, tag = incentive)
+            # Energy-based incentives
+            if inputs["ProdIncentive_Type"][incentive] == "mwh"
+                sum(
+                    inputs["omega"][t] * 
+                    inputs["ProdIncentive_Rate"][incentive] * 
+                    EP[:vP][y, t]
+                    for t in 1:T
+                )
+            # CO₂ capture-based incentives
+            elseif inputs["ProdIncentive_Type"][incentive] == "tonne_co2" && y in CCS && haskey(EP.obj_dict, :eEmissionsCaptureByPlant)
+                sum(
+                    inputs["omega"][t] * 
+                    inputs["ProdIncentive_Rate"][incentive] * 
+                    EP[:eEmissionsCaptureByPlant][y, t]
+                    for t in 1:T
+                )
+            else
+                0.0
+            end
         else
             0.0
         end
+    )
+    
+    # Create expression for total production incentive benefits for each policy
+    @expression(EP, eProdIncentiveBenefit[incentive = 1:NumberOfProdIncentive], 
+        sum(EP[:eProdIncentiveBenefitByResource][y, incentive] for y in 1:G)
     )
     
     # Total production incentive benefits across all policies
