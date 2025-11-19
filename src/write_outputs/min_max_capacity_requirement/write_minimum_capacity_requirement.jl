@@ -18,5 +18,5 @@ function write_minimum_capacity_requirement(path::AbstractString,
         dfMinCapPrice.Slack *= scale_factor # Convert GW to MW
         dfMinCapPrice.Penalty *= scale_factor^2 # Convert Million $ to $
     end
-    CSV.write(joinpath(path, "MinCapReq_prices_and_penalties.csv"), dfMinCapPrice)
+    CSV.write(joinpath(path, "MinCapReqPricesAndPenalties.csv"), dfMinCapPrice)
 end
