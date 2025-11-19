@@ -1,3 +1,4 @@
 ProdIncentive_Policy,PolicyDescription,ProdIncentive_Rate,ProdIncentive_Type
-1,Wind_Incentive,26.0,energy
-2,Solar_Incentive,13.0,energy
+1,Wind_Incentive,26.0,MWh
+2,Solar_Incentive,13.0,MWh
+3,CCS_Incentive,85.0,Tonne_CO2

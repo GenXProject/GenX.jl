@@ -69,9 +69,20 @@ function write_production_incentive(path::AbstractString,
     gen = inputs["RESOURCES"]
     NumberOfProdIncentive = inputs["NumberOfProdIncentive"]
     
+    # Map normalized internal values to display format
+    display_types = map(inputs["ProdIncentive_Type"]) do type
+        if type == "mwh"
+            "MWh"
+        elseif type == "tonne_co2"
+            "Tonne_CO2"
+        else
+            type  # Fallback, should not happen with validation
+        end
+    end
+    
     # Create DataFrame for production incentive benefits
     dfProdIncentive = DataFrame(ProdIncentive_Policy = string.(1:NumberOfProdIncentive),
-                                ProdIncentive_Type = inputs["ProdIncentive_Type"])
+                                ProdIncentive_Type = display_types)
     
     # Calculate production incentive benefits for each policy
     prod_incentive_benefits = zeros(NumberOfProdIncentive)

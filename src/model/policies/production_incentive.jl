@@ -7,7 +7,7 @@ energy produced (e.g., $/MWh) or per unit of CO₂ captured (e.g., $/tonne).
 
 For each production incentive policy $p \in \mathcal{P}^{ProdIncentive}$, the credit value is calculated based on the incentive type:
 
-**Energy-based incentives:**
+**Energy-based incentives (ProdIncentive_Type = "MWh"):**
 ```math
 \begin{aligned}
     \text{ProdIncentive\_Value}_p = \sum_{y \in \mathcal{G}} \sum_{z \in \mathcal{Z}} \sum_{t \in \mathcal{T}}
@@ -15,7 +15,7 @@ For each production incentive policy $p \in \mathcal{P}^{ProdIncentive}$, the cr
 \end{aligned}
 ```
 
-**CO₂ capture-based incentives:**
+**CO₂ capture-based incentives (ProdIncentive_Type = "Tonne_CO2"):**
 ```math
 \begin{aligned}
     \text{ProdIncentive\_Value}_p = \sum_{y \in \mathcal{CCS}} \sum_{t \in \mathcal{T}}
@@ -44,7 +44,7 @@ function production_incentive!(EP::Model, inputs::Dict, setup::Dict)
     # Create expression for total production incentive benefits for each policy
     @expression(EP, eProdIncentiveBenefit[incentive = 1:NumberOfProdIncentive], 
         # Energy-based incentives
-        if inputs["ProdIncentive_Type"][incentive] == "energy"
+        if inputs["ProdIncentive_Type"][incentive] == "mwh"
             sum(
                 inputs["omega"][t] * 
                 inputs["ProdIncentive_Rate"][incentive] * 
@@ -52,7 +52,7 @@ function production_incentive!(EP::Model, inputs::Dict, setup::Dict)
                 for y in ids_with_policy(gen, :prod_incentive, tag = incentive), t in 1:T
             )
         # CO₂ capture-based incentives
-        elseif inputs["ProdIncentive_Type"][incentive] == "co2" && !isempty(CCS) && haskey(EP.obj_dict, :eEmissionsCaptureByPlant)
+        elseif inputs["ProdIncentive_Type"][incentive] == "tonne_co2" && !isempty(CCS) && haskey(EP.obj_dict, :eEmissionsCaptureByPlant)
             sum(
                 inputs["omega"][t] * 
                 inputs["ProdIncentive_Rate"][incentive] * 

@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Settings flags: `InvestmentIncentive` and `ProductionIncentive` to enable/disable policies (default: 0).
   - Test case added to validate incentive functionality.
 
+### Changed
+- Updated `ProdIncentive_Type` accepted values in `Production_incentive.csv`:
+  - Old values: `"energy"` (for MWh-based), `"co2"` (for CO₂ capture-based)
+  - New values: `"MWh"` (for energy-based incentives), `"Tonne_CO2"` (preferred, for CO₂ capture-based incentives)
+  - Also accepts `"ton_CO2"` as an alias for `"Tonne_CO2"`
+  - All values are case-insensitive (e.g., `"mwh"`, `"MWH"`, `"tonne_co2"` are all accepted)
+  - Invalid values now raise descriptive error messages during input loading
+  - Output files normalize display to `"MWh"` and `"Tonne_CO2"` regardless of input case
+
 ## [0.4.5] - 2025-07-07
 
 ### Added

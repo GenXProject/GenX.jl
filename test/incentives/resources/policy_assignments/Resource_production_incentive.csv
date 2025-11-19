@@ -1,5 +1,6 @@
-Resource,Prod_Incentive_1,Prod_Incentive_2
-MA_solar_pv,1,0
-CT_onshore_wind,0,1
-CT_solar_pv,1,0
-ME_onshore_wind,0,1
+Resource,Prod_Incentive_1,Prod_Incentive_2,Prod_Incentive_3
+MA_natural_gas_combined_cycle,0,0,1
+MA_solar_pv,1,0,0
+CT_onshore_wind,0,1,0
+CT_solar_pv,1,0,0
+ME_onshore_wind,0,1,0
