@@ -18,5 +18,5 @@ function write_maximum_capacity_requirement(path::AbstractString,
         dfMaxCapPrice.Slack *= scale_factor # Convert GW to MW
         dfMaxCapPrice.Penalty *= scale_factor^2 # Convert Million $ to $
     end
-    CSV.write(joinpath(path, "MaxCapReq_prices_and_penalties.csv"), dfMaxCapPrice)
+    CSV.write(joinpath(path, "MaxCapReqPricesAndPenalties.csv"), dfMaxCapPrice)
 end
