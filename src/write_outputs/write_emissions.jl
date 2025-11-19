@@ -55,7 +55,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                      :AnnualSum])
             end
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
+            CSV.write(joinpath(path, "Emissions.csv"), dfEmissions)
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
                 DataFrame(emissions_by_zone * scale_factor, :auto))
@@ -106,7 +106,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
         if setup["WriteOutputs"] == "annual"
             total = DataFrame(["Total" sum(dfEmissions.AnnualSum)], [:Zone; :AnnualSum])
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"), dfEmissions)
+            CSV.write(joinpath(path, "Emissions.csv"), dfEmissions)
         else# setup["WriteOutputs"] == "full"
             dfEmissions = hcat(dfEmissions,
                 DataFrame(emissions_by_zone * scale_factor, :auto))
@@ -121,7 +121,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"),
+            CSV.write(joinpath(path, "Emissions.csv"),
                 dftranspose(dfEmissions, false),
                 writeheader = false)
 
