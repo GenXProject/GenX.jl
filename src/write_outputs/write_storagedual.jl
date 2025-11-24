@@ -76,13 +76,13 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
     rename!(dfStorageDual,
         [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]])
 
-    CSV.write(joinpath(path, "storagebal_duals.csv"),
+    CSV.write(joinpath(path, "StoragebalDuals.csv"),
         dftranspose(dfStorageDual, false),
         header = false)
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(
-            path, setup, dfStorageDual, "storagebal_duals")
+            path, setup, dfStorageDual, "StoragebalDuals")
         @info("Writing Full Time Series for Storage Duals")
     end
 end
