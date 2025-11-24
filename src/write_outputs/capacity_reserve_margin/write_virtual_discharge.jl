@@ -17,7 +17,7 @@ function write_virtual_discharge(path::AbstractString, inputs::Dict, setup::Dict
                          value.(EP[:vCAPRES_charge][STOR_ALL, :].data)) * scale_factor
 
     dfVirtualDischarge = DataFrame(Resource = resources, Zone = zones)
-    dfVirtualDischarge.AnnualSum .= virtual_discharge * inputs["omega"]
+    dfVirtualDischarge.AnnualSum = virtual_discharge * inputs["omega"]
 
     filepath = joinpath(path, "virtual_discharge.csv")
     if setup["WriteOutputs"] == "annual"
