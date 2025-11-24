@@ -89,7 +89,7 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         @info "For the full power output, please refer to the output_allam_cycle_lox.csv file."
     end
 
-    CSV.write(joinpath(path, "capacityfactor.csv"), df)
+    CSV.write(joinpath(path, "CapacityFactor.csv"), df)
     return nothing
 end
 
@@ -131,6 +131,6 @@ function write_fusion_net_capacity_factor(path::AbstractString, inputs::Dict, se
     CF_GEN = intersect(enough_power, enough_capacity)
     df.NetCapacityFactor[CF_GEN] .= (df.NetOutput[CF_GEN] ./ df.NetCapacity[CF_GEN]) / sum(ω)
 
-    CSV.write(joinpath(path, "fusion_net_capacity_factor.csv"), df)
+    CSV.write(joinpath(path, "FusionNetCapacityFactor.csv"), df)
     return nothing
 end
