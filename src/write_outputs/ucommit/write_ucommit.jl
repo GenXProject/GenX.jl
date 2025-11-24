@@ -1,13 +1,13 @@
 function write_start(path, inputs, setup, EP)
-    _write_ucommit_var(path, inputs, setup, EP, :vSTART, "start")
+    _write_ucommit_var(path, inputs, setup, EP, :vSTART, "Start")
 end
 
 function write_commit(path, inputs, setup, EP)
-    _write_ucommit_var(path, inputs, setup, EP, :vCOMMIT, "commit")
+    _write_ucommit_var(path, inputs, setup, EP, :vCOMMIT, "Commit")
 end
 
 function write_shutdown(path, inputs, setup, EP)
-    _write_ucommit_var(path, inputs, setup, EP, :vSHUT, "shutdown")
+    _write_ucommit_var(path, inputs, setup, EP, :vSHUT, "Shutdown")
 end
 
 function _write_ucommit_var(path, inputs, setup, EP, var, filename)

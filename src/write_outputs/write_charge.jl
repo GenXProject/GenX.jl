@@ -56,6 +56,6 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
         Zone = zones[charge_ids])
     df.AnnualSum = charge * weight
 
-    write_temporal_data(df, charge, path, setup, "charge")
+    write_temporal_data(df, charge, path, setup, "Charge")
     return nothing
 end

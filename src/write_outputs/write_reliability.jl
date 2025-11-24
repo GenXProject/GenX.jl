@@ -17,12 +17,12 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
     auxNew_Names = [Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
     rename!(dfReliability, auxNew_Names)
 
-    CSV.write(joinpath(path, "reliability.csv"),
+    CSV.write(joinpath(path, "Reliability.csv"),
         dftranspose(dfReliability, false),
         header = false)
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
-        write_full_time_series_reconstruction(path, setup, dfReliability, "reliability")
+        write_full_time_series_reconstruction(path, setup, dfReliability, "Reliability")
         @info("Writing Full Time Series for Reliability")
     end
 end

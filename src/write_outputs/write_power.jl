@@ -23,6 +23,6 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         AnnualSum = zeros(G))
     df.AnnualSum .= power * weight
 
-    write_temporal_data(df, power, path, setup, "power")
+    write_temporal_data(df, power, path, setup, "Power")
     return df
 end

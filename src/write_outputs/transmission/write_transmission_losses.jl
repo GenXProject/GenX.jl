@@ -18,7 +18,7 @@ function write_transmission_losses(path::AbstractString,
     if setup["WriteOutputs"] == "annual"
         total = DataFrame(["Total" sum(dfTLosses.AnnualSum)], [:Line, :AnnualSum])
         dfTLosses = vcat(dfTLosses, total)
-        CSV.write(joinpath(path, "tlosses.csv"), dfTLosses)
+        CSV.write(joinpath(path, "TLosses.csv"), dfTLosses)
     else
         dfTLosses = hcat(dfTLosses, DataFrame(tlosses, :auto))
         auxNew_Names = [Symbol("Line"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
@@ -27,7 +27,7 @@ function write_transmission_losses(path::AbstractString,
             auxNew_Names)
         total[:, 3:(T + 2)] .= sum(tlosses, dims = 1)
         dfTLosses = vcat(dfTLosses, total)
-        CSV.write(joinpath(path, "tlosses.csv"),
+        CSV.write(joinpath(path, "TLosses.csv"),
             dftranspose(dfTLosses, false),
             writeheader = false)
 

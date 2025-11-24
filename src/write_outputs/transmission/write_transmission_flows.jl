@@ -12,7 +12,7 @@ function write_transmission_flows(path::AbstractString,
         flow *= ModelScalingFactor
     end
 
-    filepath = joinpath(path, "flow.csv")
+    filepath = joinpath(path, "Flow.csv")
     if setup["WriteOutputs"] == "annual"
         dfFlow.AnnualSum = flow * inputs["omega"]
         total = DataFrame(["Total" sum(dfFlow.AnnualSum)], [:Line, :AnnualSum])
