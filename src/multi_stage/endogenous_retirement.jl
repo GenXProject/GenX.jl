@@ -11,7 +11,7 @@ inputs:
 
 returns: An Int representing the model stage in before which the resource must retire due to endogenous lifetime retirements.
 """
-function get_retirement_stage(cur_stage::Int, lifetime::Int, stage_lens::Array{Int, 1})
+function get_retirement_stage(cur_stage::Int, lifetime, stage_lens::Array{Int, 1})
     years_from_start = sum(stage_lens[1:cur_stage]) # Years from start from the END of the current stage
     ret_years = years_from_start - lifetime # Difference between end of current stage and technology lifetime
     ret_stage = 0 # Compute the stage before which all newly built capacity must be retired by the end of the current stage
@@ -158,6 +158,10 @@ function endogenous_retirement!(EP::Model, inputs::Dict, setup::Dict)
                 stage_lens)
         end
     end
+
+    # if !isempty(inputs["UTES"])
+    #     endogenous_retirement_utes!(EP, inputs, num_stages, cur_stage, stage_lens)
+    # end
 end
 
 @doc raw"""
@@ -982,4 +986,50 @@ function endogenous_retirement_vre_stor_charge_ac!(EP::Model,
     @constraint(EP,
         cLifetimeRetChargeAC[y in RET_CAP_CHARGE_AC],
         eNewCapTrackChargeAC[y] + eMinRetCapTrackChargeAC[y]<=eRetCapTrackChargeAC[y])
+end
+
+function endogenous_retirement_utes!(EP::Model,
+        inputs::Dict,
+        num_stages::Int,
+        cur_stage::Int,
+        stage_lens::Array{Int, 1})
+    println("Endogenous Retirement (UTES) Module")
+
+    gen = inputs["RESOURCES"]
+    UTES = inputs["UTES"]
+
+    NEW_CAP_UTES = intersect(inputs["NEW_CAP"], UTES)
+    RET_CAP_UTES = intersect(inputs["RET_CAP"], UTES)
+
+    for i in 1:4 # 1: dry cooler, 2: chiller, 3: pump, 4: storage
+        # variables
+         @variable(EP, vCAPTRACK_UTES[y in RET_CAP_UTES, p = 1:num_stages], lower_bound=0, base_name = "vCAPTRACK_UTES$(i)")
+         @variable(EP, vRETCAPTRACK_UTES[y in RET_CAP_UTES, p = 1:num_stages], lower_bound=0, base_name = "vRETCAPTRACK_UTES$(i)")
+
+        # expressions
+        eNewCap_UTES = @expression(EP, [y in RET_CAP_UTES], y in NEW_CAP_UTES ? EP[:vCAP_UTES][y, i] : 0)
+        eRetCap_UTES = @expression(EP, [y in RET_CAP_UTES], EP[:vRETCAP_UTES][y, i])
+
+        # Construct and add the endogenous retirement constraint expressions
+        eRetCapTrack_UTES = @expression(EP, [y in RET_CAP_UTES], sum(vRETCAPTRACK_UTES[y, p] for p in 1:cur_stage))
+        eNewCapTrack_UTES = @expression(EP, [y in RET_CAP_UTES], sum(vCAPTRACK_UTES[y, p] for p in 1:get_retirement_stage(cur_stage, Int(gen[y].lifetime_utes[i]), stage_lens)))
+        eMinRetCapTrack_UTES = @expression(EP, [y in RET_CAP_UTES], 0)
+
+        # Constraints
+        @constraint(EP, # Symbol("cCapTrackNew_UTES", i)
+            [y in RET_CAP_UTES],
+            eNewCap_UTES[y] == vCAPTRACK_UTES[y, cur_stage])
+        @constraint(EP, #Symbol("cCapTrack_UTES", i)
+            [y in RET_CAP_UTES, p = 1:(cur_stage - 1)],
+            vCAPTRACK_UTES[y, p] == 0)
+        @constraint(EP, #Symbol("cRetCapTrackNew_UTES", i)
+            [y in RET_CAP_UTES],
+            eRetCap_UTES[y] == vRETCAPTRACK_UTES[y, cur_stage])
+        @constraint(EP, #Symbol("cRetCapTrack_UTES", i)
+            [y in RET_CAP_UTES, p = 1:(cur_stage - 1)],
+            vRETCAPTRACK_UTES[y, p] == 0)
+        @constraint(EP, #Symbol("cLifetimeRet_UTES", i)
+            [y in RET_CAP_UTES],
+            eNewCapTrack_UTES[y] + eMinRetCapTrack_UTES[y] <= eRetCapTrack_UTES[y])
+    end
 end

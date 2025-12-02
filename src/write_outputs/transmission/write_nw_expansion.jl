@@ -12,7 +12,8 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
     dfTransCap = DataFrame(Line = 1:L,
         New_Trans_Capacity = convert(Array{Float64}, transcap),
         Cost_Trans_Capacity = convert(Array{Float64},
-            transcap .* inputs["pC_Line_Reinforcement"]))
+            transcap .* inputs["pC_Line_Reinforcement"]),
+        Marginal_Trans_Capacity = convert(Array{Float64}, -dual.(EP[:cMaxLineReinforcement])))
 
     if setup["ParameterScale"] == 1
         dfTransCap.New_Trans_Capacity *= ModelScalingFactor  # GW to MW

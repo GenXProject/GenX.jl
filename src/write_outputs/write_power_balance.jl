@@ -109,7 +109,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
         end
 
         UTES_ZONE = intersect(resources_in_zone_by_rid(gen, z), UTES)
-        if !isempty(UTES_ZONE)
+        if !isempty(UTES_ZONE) & setup["CoolingDemand"] == 1
             # this index-modification strategy is becoming unsustainable. We should just use
             # a dataframe with named columns or something else.
             idx = 11
@@ -128,10 +128,13 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
                     sum(value.(EP[:eElec_Chiller][UTES_ZONE,:].data), dims = 1) + 
                     sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1) + 
                     sum(value.(EP[:eElec_RTES][UTES_ZONE,:].data), dims = 1))
-            else
+            elseif setup["withUTES"] == 2
                 powerbalance[(z - 1) * L + idx + 1, :] = (-1) * (
                     sum(value.(EP[:eElec_Chiller][UTES_ZONE,:].data), dims = 1) + 
-                    sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1))
+                    sum(value.(EP[:eElec_DC][UTES_ZONE,:].data), dims = 1) + 
+                    sum(value.(EP[:eElec_pump][UTES_ZONE,:].data), dims = 1) + 
+                    sum(value.(EP[:eElec_Aux_Chiller][UTES_ZONE,:].data), dims = 1) + 
+                    sum(value.(EP[:eElec_Aux_DC][UTES_ZONE,:].data), dims = 1))
             end
         end
 

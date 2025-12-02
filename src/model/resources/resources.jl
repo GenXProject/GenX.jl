@@ -780,6 +780,13 @@ function ids_with_multifuels(rs::Vector{T}) where {T <: AbstractResource}
     findall(r -> multi_fuels(r) == 1, rs)
 end
 
+function is_cf_ub(rs::Vector{T}) where {T <: AbstractResource}
+    findall(r -> get(r, :capacity_factor_ub, default_percent) < 1, rs)
+end
+function is_cf_lb(rs::Vector{T}) where {T <: AbstractResource}
+    findall(r -> get(r, :capacity_factor_lb, default_zero) > 0, rs)
+end
+
 function is_buildable(rs::Vector{T}) where {T <: AbstractResource}
     findall(r -> new_build(r) == true, rs)
 end
@@ -1145,6 +1152,8 @@ lox_duration(r::AbstractResource) = get(r, :lox_duration, default_zero)
 Returns the indices of all UTES resources in the vector `rs`.
 """
 utes(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, UTES), rs)
+thermal_capacity_second_loop(r::UTES) = r.thermal_capacity_second_loop
+self_discharge(r::UTES) = r.self_disch
 
 ## policies
 # co-located storage

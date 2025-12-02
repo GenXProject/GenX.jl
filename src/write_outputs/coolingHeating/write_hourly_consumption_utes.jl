@@ -18,21 +18,39 @@ function write_energy_consumption_utes(path::AbstractString, inputs::Dict, setup
     df_output = DataFrame(Resource = 
 		[utes_resources .*"_dry_cooler_consumption_mw";
          utes_resources .*"_chiller_consumption_power_mw";
+         utes_resources .*"_chiller_fan_consumption_power_mw";
          utes_resources .*"_thermal_storage_consumption_power_mw";
-         utes_resources .*"_CRM_contribution_mw";
-         utes_resources .*"_coverage_chiller";],)
+         utes_resources .*"_auxillary_dry_cooler_power_mw";
+         utes_resources .*"_auxillary_chiller_power_mw";
+         utes_resources .*"_auxillary_thermal_mw";
+         utes_resources .*"_COP_dry_cooler";
+         utes_resources .*"_COP_chiller";
+         utes_resources .*"_CRM_contribution_mw";],)
 
 	power_dry_cooler = value.(EP[:eElec_DC])[UTES,:]
     power_chiller = value.(EP[:eElec_Chiller])[UTES,:]
+    power_chiller_fan = value.(EP[:eElec_Chiller_Fan])[UTES,:]
+    cop_chiller = value.(EP[:eCOP_Chiller_plus_Pump])[UTES,:]
+    cop_DC = value.(EP[:eCOP_DC])[UTES,:]
     if setup["withUTES"] == 1
         power_thermal_storage = value.(EP[:eElec_RTES])[UTES,:]
-        crm = value.(EP[:vCRM_RTES])[UTES,:]
-    else
-        power_thermal_storage = zeros(length(UTES), T)
+        
+        power_aux_chiller = zeros(length(UTES), T)
+        power_aux_DC = zeros(length(UTES), T)
+        aux_thermal = zeros(length(UTES), T)
+        # if setup["CapacityReserveMargin"] > 0
+        #     crm = value.(EP[:vCRM_RTES])[UTES,:]
+        # else
+        #     crm = zeros(length(UTES), T)
+        # end
         crm = zeros(length(UTES), T)
+    elseif setup["withUTES"] == 2
+        power_thermal_storage = value.(EP[:eElec_pump])[UTES,:]
+        crm = zeros(length(UTES), T)
+        power_aux_chiller = value.(EP[:eElec_Aux_Chiller])[UTES, :]
+        power_aux_DC = value.(EP[:eElec_Aux_DC])[UTES, :]
+        aux_thermal = value.(EP[:eAux])[UTES, :]
     end
-
-    coverage_chiller = value.(EP[:eCoverage_Chiller])[UTES,:]
 
     if setup["ParameterScale"] == 1
         power_chiller *= ModelScalingFactor
@@ -42,9 +60,14 @@ function write_energy_consumption_utes(path::AbstractString, inputs::Dict, setup
 
     output = [Array(power_dry_cooler);
               Array(power_chiller);
+              Array(power_chiller_fan);
               Array(power_thermal_storage);
-              Array(crm);
-              Array(coverage_chiller);]
+              Array(power_aux_DC);
+              Array(power_aux_chiller);
+              Array(aux_thermal);
+              Array(cop_DC);
+              Array(cop_chiller);
+              Array(crm);]
 
 	final_output = permutedims(DataFrame(hcat(Array(df_output), output), :auto))
     CSV.write(joinpath(path,"UTES_hourly_consumption.csv"), final_output, writeheader = false)

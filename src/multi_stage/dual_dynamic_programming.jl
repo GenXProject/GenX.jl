@@ -69,6 +69,12 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
         end
     end
 
+    if !isempty(inputs["UTES"])
+        for i in 1:4 # i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage
+            start_cap_d[Symbol("eTotalCap_UTES", i)] = Symbol("cExistingCap_UTES", i)
+        end
+    end
+
     # This dictionary contains the endogenous retirement constraint name as a key,
     # and a tuple consisting of the associated tracking array constraint and variable as the value
     cap_track_d = Dict([(Symbol("vCAPTRACK"), Symbol("cCapTrack"))])
@@ -116,6 +122,12 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
         if !isempty(inputs["VS_ASYM_AC_CHARGE"])
             cap_track_d[Symbol("vCAPTRACKCHARGEAC")] = Symbol("cCapTrackChargeAC")
+        end
+    end
+
+    if !isempty(inputs["UTES"])
+        for i in 1:4 # i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage
+            cap_track_d[Symbol("vCAPTRACK_UTES", i)] = Symbol("cCapTrack_UTES", i)
         end
     end
 

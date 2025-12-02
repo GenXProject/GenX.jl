@@ -1,0 +1,77 @@
+function write_opwrap_lds_stor_init_utes(path::AbstractString,
+        inputs::Dict,
+        setup::Dict,
+        EP::Model)
+    ## Extract data frames from input dictionary
+    gen = inputs["RESOURCES"]
+    zones = zone_id.(gen)
+
+    G = inputs["G"]
+
+    # Initial level of storage in each modeled period
+    NPeriods = size(inputs["Period_Map"])[1]
+    dfStorageInit = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
+    socw = zeros(G, NPeriods)
+    for i in 1:G
+        if i in inputs["STOR_UTES_LONG_DURATION"]
+            socw[i, :] = value.(EP[:vSOC_UTESw])[i, :]
+        end
+    end
+    if setup["ParameterScale"] == 1
+        socw *= ModelScalingFactor
+    end
+
+    dfStorageInit = hcat(dfStorageInit, DataFrame(socw, :auto))
+    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:NPeriods]]
+    rename!(dfStorageInit, auxNew_Names)
+    CSV.write(joinpath(path, "StorageInit_UTES.csv"),
+        dftranspose(dfStorageInit, false),
+        header = false)
+
+    # Write storage evolution over full time horizon
+    hours_per_subperiod = inputs["hours_per_subperiod"];
+    t_interior = 2:hours_per_subperiod
+    T_hor = hours_per_subperiod*NPeriods # total number of time steps in time horizon
+    SOC_t = zeros(G, T_hor)
+    stor_long_duration = inputs["STOR_UTES_LONG_DURATION"]
+    period_map = inputs["Period_Map"].Rep_Period_Index
+    v_charge = value.(EP[:vCHARGE])
+    v_P = value.(EP[:vP])
+    if setup["ParameterScale"] == 1
+        v_charge *= ModelScalingFactor
+        v_P *= ModelScalingFactor
+    end
+
+    for r in 1:NPeriods
+        w = period_map[r]
+        t_r = hours_per_subperiod * (r - 1) + 1
+        t_start_w = hours_per_subperiod * (w - 1) + 1
+        t_interior = 2:hours_per_subperiod
+        eMassFlow_Sec_Loop = value.(EP[:eMassFlow_Sec_Loop])
+        vTemp_Chiller = value.(EP[:vTemp_Chiller])
+        eTemp_HX_12 = value.(EP[:eTemp_HX_12])
+
+        if !isempty(stor_long_duration)
+
+            SOC_t[stor_long_duration, t_r] = socw[stor_long_duration, r] .* (1 .- self_discharge.(gen[stor_long_duration])) .+ thermal_capacity_second_loop.(gen[stor_long_duration]) .* eMassFlow_Sec_Loop[stor_long_duration, t_start_w] .* (.- vTemp_Chiller[stor_long_duration, t_start_w] .+ eTemp_HX_12[stor_long_duration, t_start_w])
+
+            # SOC_t[stor_long_duration, t_r] = socw[stor_long_duration, r] .* (1 .- self_discharge.(gen[stor_long_duration])) .+ efficiency_up.(gen[stor_long_duration]) .* v_charge[stor_long_duration, t_start_w] .- 1 ./ efficiency_down.(gen[stor_long_duration]) .* v_P[stor_long_duration, t_start_w]
+
+
+            for t_int in t_interior
+                t = hours_per_subperiod * (w - 1) + t_int
+
+                SOC_t[stor_long_duration, t_r + t_int - 1] = SOC_t[stor_long_duration, t_r + t_int - 2] .* (1 .- self_discharge.(gen[stor_long_duration])) .+ thermal_capacity_second_loop.(gen[stor_long_duration]) .* eMassFlow_Sec_Loop[stor_long_duration, t] .* (.- vTemp_Chiller[stor_long_duration, t] .+ eTemp_HX_12[stor_long_duration, t])
+
+                # SOC_t[stor_long_duration, t_r + t_int - 1] = SOC_t[stor_long_duration, t_r + t_int - 2] .* (1 .- self_discharge.(gen[stor_long_duration])) .+ efficiency_up.(gen[stor_long_duration]) .* v_charge[stor_long_duration, t] .- 1 ./ efficiency_down.(gen[stor_long_duration]) .* v_P[stor_long_duration, t]
+            end
+        end
+
+    end
+    df_SOC_t = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
+    df_SOC_t = hcat(df_SOC_t, DataFrame(SOC_t, :auto))
+    auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:T_hor]]
+    rename!(df_SOC_t,auxNew_Names)
+    CSV.write(joinpath(path, "StorageEvol_UTES.csv"), dftranspose(df_SOC_t, false), writeheader=false)
+
+end

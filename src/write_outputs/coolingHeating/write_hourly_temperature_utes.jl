@@ -15,15 +15,25 @@ function write_temperature_utes(path::AbstractString, inputs::Dict, setup::Dict,
     df_output = DataFrame(Resource = 
 		[utes_resources .*"_temp_dry_cooler_c";
          utes_resources .*"_temp_chiller_c";
-         utes_resources .*"_temp_heat_exchanger_12_c";])
+         utes_resources .*"_temp_heat_exchanger_12_c";
+         utes_resources .*"_temp_hot_well_c";
+         utes_resources .*"_temp_cold_well_c"])
 
 	temp_dry_cooler = value.(EP[:vTemp_DC])[UTES,:]
     temp_chiller = value.(EP[:vTemp_Chiller])[UTES,:]
     temp_heat_exchanger = value.(EP[:eTemp_HX_12])[UTES,:]
-
+    if setup["withUTES"] == 2
+        temp_hot = value.(EP[:vTemp_Hot])[UTES,:]
+        temp_cold = value.(EP[:vTemp_Cold])[UTES,:]
+    else
+        temp_hot = zeros(length(UTES), T)
+        temp_cold = zeros(length(UTES), T)
+    end
     output = [Array(temp_dry_cooler);
               Array(temp_chiller);
-              Array(temp_heat_exchanger);]
+              Array(temp_heat_exchanger);
+              Array(temp_hot);
+              Array(temp_cold);]
 
 	final_output = permutedims(DataFrame(hcat(Array(df_output), output), :auto))
     CSV.write(joinpath(path,"UTES_hourly_temperature.csv"), final_output, writeheader = false)

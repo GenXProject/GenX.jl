@@ -110,6 +110,8 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     # Thermal storage
     if setup["withUTES"] == 1
         rtes!(EP, inputs, setup)
+    elseif setup["withUTES"] == 2
+        ates!(EP, inputs, setup)
     end
 
     if MultiStage == 1

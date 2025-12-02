@@ -96,7 +96,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
             :eCapResMarBalance,
             (inputs["NCapacityReserveMargin"], T))
     end
-
+  
     # Energy Share Requirement
     if setup["EnergyShareRequirement"] >= 1
         create_empty_expression!(EP, :eESR, inputs["nESR"])
@@ -125,6 +125,9 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     non_served_energy!(EP, inputs, setup)
 
     investment_discharge!(EP, inputs, setup)
+
+    # capacity factor requirement
+    capacity_factor_requirement!(EP, inputs, setup)
 
     if setup["UCommit"] > 0
         ucommit!(EP, inputs, setup)
@@ -209,8 +212,12 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if setup["CoolingDemand"] == 1
         utes_system!(EP, inputs, setup)
         # Model constraints, variables, expression related to UTES resources with long duration storage
-        if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_UTES_LONG_DURATION"]) && setup["withUTES"] == 1
-            utes_inter_period_linkage!(EP, inputs, setup)
+        if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_UTES_LONG_DURATION"])
+            if  setup["withUTES"] == 1
+                utes_inter_period_linkage!(EP, inputs, setup)
+            elseif setup["withUTES"] == 2
+                ates_inter_period_linkage!(EP, inputs, setup)
+            end
         end
     end
 

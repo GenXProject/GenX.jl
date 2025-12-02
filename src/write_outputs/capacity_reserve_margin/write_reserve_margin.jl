@@ -5,5 +5,8 @@ function write_reserve_margin(path::AbstractString, setup::Dict, EP::Model)
     end
     dfResMar = DataFrame(temp_ResMar, :auto)
     CSV.write(joinpath(path, "ReserveMargin.csv"), dfResMar)
+    temp_capBalance = value.(EP[:eCapResMarBalance])
+    dfCapBalance = DataFrame(temp_capBalance, :auto)
+    CSV.write(joinpath(path, "CapacityReserveMargin_Balance.csv"), dfCapBalance)
     return nothing
 end

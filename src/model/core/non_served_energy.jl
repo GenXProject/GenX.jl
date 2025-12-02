@@ -63,6 +63,10 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
     # Non-served energy/curtailed demand in the segment "s" at hour "t" in zone "z"
     @variable(EP, vNSE[s = 1:SEG, t = 1:T, z = 1:Z]>=0)
 
+    @variable(EP, vOverProduction[s = 1:SEG, t = 1:T, z = 1:Z] >= 0)
+    @expression(EP, eTotalOverProductionCost, sum(inputs["omega"][t]*inputs["pC_D_Curtail"][s]*vOverProduction[s, t, z] for s in 1:SEG for t in 1:T for z in 1:Z))
+    @expression(EP, eOverProductionBalance[t = 1:T, z = 1:Z], -sum(vOverProduction[s, t, z] for s in 1:SEG))
+
     ### Expressions ###
 
     ## Objective Function Expressions ##
@@ -80,12 +84,14 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
 
     # Add total cost contribution of non-served energy/curtailed demand to the objective function
     add_to_expression!(EP[:eObj], eTotalCNSE)
+    add_to_expression!(EP[:eObj], eTotalOverProductionCost)
 
     ## Power Balance Expressions ##
     @expression(EP, ePowerBalanceNse[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 1:SEG))
 
     # Add non-served energy/curtailed demand contribution to power balance expression
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNse)
+    add_similar_to_expression!(EP[:ePowerBalance], eOverProductionBalance)
 
     # Capacity Reserves Margin policy
     if setup["CapacityReserveMargin"] > 0

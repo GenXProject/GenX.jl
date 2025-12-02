@@ -60,6 +60,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
     # capacity reserve margin constraint
     T = inputs["T"]
     NCRM = inputs["NCapacityReserveMargin"]
+    gen = inputs["RESOURCES"]
     println("Capacity Reserve Margin Policies Module")
 
     # if input files are present, add capacity reserve margin slack variables
@@ -77,10 +78,35 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
         add_to_expression!(EP[:eObj], eCTotalCapResSlack)
     end
 
-    @constraint(EP,
-        cCapacityResMargin[res = 1:NCRM, t = 1:T],
-        EP[:eCapResMarBalance][res,
-            t]
-        >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
-        for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+    if setup["CoolingDemand"] == 0
+        @constraint(EP,
+            cCapacityResMargin[res = 1:NCRM, t = 1:T],
+            EP[:eCapResMarBalance][res,
+                t]
+            >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
+            for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
+    else
+        # CRM applies to demand + computing load + cooling load
+        UTES = inputs["UTES"] 
+        if setup["withUTES"] == 1 # RTES
+            @constraint(EP,
+                cCapacityResMargin[res = 1:NCRM, t = 1:T],
+                EP[:eCapResMarBalance][res,
+                    t]
+                >=sum((inputs["pD"][t, z]+
+                    inputs["pD_Computing"][t, z]) * (1 + inputs["dfCapRes"][z, res])
+                    for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])) + 
+                    sum(derating_factor(gen[y], tag = res) * (EP[:eElec_DC][y, t] + EP[:eElec_Chiller][y, t] + EP[:eElec_RTES][y, t]) * (1+inputs["dfCapRes"][zone_id(gen[y]), res]) for y in UTES)) # derating factor used here to account for CRM contribution from RTES in specific CRM zones. Derate factor at one should be used.
+        elseif setup["withUTES"] == 2 # ATES
+            @constraint(EP,
+                cCapacityResMargin[res = 1:NCRM, t = 1:T],
+                EP[:eCapResMarBalance][res,
+                    t]
+                >=sum((inputs["pD"][t, z]+
+                    inputs["pD_Computing"][t, z]) * (1 + inputs["dfCapRes"][z, res])
+                    for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])) +
+                    sum(derating_factor(gen[y], tag = res) * (EP[:eElec_pump][y, t] + EP[:eElec_Aux_Chiller][y, t] + EP[:eElec_Aux_DC][y, t]) * (1+inputs["dfCapRes"][zone_id(gen[y]), res]) for y in UTES))
+        end
+        
+    end
 end

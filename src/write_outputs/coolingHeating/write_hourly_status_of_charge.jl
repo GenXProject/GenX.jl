@@ -15,22 +15,52 @@ function write_status_of_charge_utes(path::AbstractString, inputs::Dict, setup::
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 
     utes_resources = inputs["RESOURCE_NAMES"][UTES]
-    df_output = DataFrame(Resource = 
-		[utes_resources .*"_utes_soc_MWh";
-         utes_resources .*"_utes_mass_flow_kg_per_s";])
 
-	status_of_charge = value.(EP[:vSOC_RTES])[UTES,:]
-    mass_flow = value.(EP[:vMassFlow_RTES])[UTES,:]
+    if setup["withUTES"] == 1
+        df_output = DataFrame(Resource = 
+            [utes_resources .*"_utes_soc_MWh";
+            utes_resources .*"_utes_mass_flow_kg_per_s";
+            utes_resources .*"_utes_mass_flow_kg_per_s_abs";])
 
-    if setup["ParameterScale"] == 1
-        status_of_charge *= ModelScalingFactor
-        mass_flow *= ModelScalingFactor
+        status_of_charge = value.(EP[:vSOC_RTES])[UTES,:]
+        mass_flow = value.(EP[:vMassFlow_RTES])[UTES,:]
+        mass_flow_abs = value.(EP[:vMassFlow_RTES_abs])[UTES,:]
+
+        if setup["ParameterScale"] == 1
+            status_of_charge *= ModelScalingFactor
+            mass_flow *= ModelScalingFactor
+        end
+
+        output = [Array(status_of_charge);
+                Array(mass_flow);
+                Array(mass_flow_abs);]
+
+    elseif setup["withUTES"] == 2
+        df_output = DataFrame(Resource = [
+            utes_resources .*"_utes_Q_cold";
+            utes_resources .*"_utes_Q_hot";
+            utes_resources .*"_eThermalPower_DC_final_MW";
+            utes_resources .*"_eThermalPower_Chiller_final_MW";
+            utes_resources .*"_eAux_MW";])
+
+        heat_to_cold = value.(EP[:vQ_Cold])[UTES,:]
+        heat_to_hot = value.(EP[:vQ_Hot])[UTES,:]
+        therm_DC = value.(EP[:eThermalPower_DC_final])[UTES,:]
+        therm_Chiller = value.(EP[:eThermalPower_Chiller_final])[UTES,:]
+        aux_thermal = value.(EP[:eAux])[UTES, :]    
+
+        output = [Array(heat_to_cold);
+                  Array(heat_to_hot);
+                  Array(therm_DC);
+                  Array(therm_Chiller);
+                  Array(aux_thermal);]
     end
-
-    output = [Array(status_of_charge);
-              Array(mass_flow);]
 
 	final_output = permutedims(DataFrame(hcat(Array(df_output), output), :auto))
     CSV.write(joinpath(path,"UTES_hourly_status_of_charge.csv"), final_output, writeheader = false)
+    # if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
+    #     write_full_time_series_reconstruction(path, setup, final_output, "RTES_hourly_status_of_charge")
+    #     @info("Writing Full Time Series for RTES Status of Charge")
+    # end
 
 end
