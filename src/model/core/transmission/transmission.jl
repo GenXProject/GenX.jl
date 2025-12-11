@@ -362,17 +362,17 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             @expression(EP, eTotalCTransHurdle,
                 sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
                     (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
-                    for l in HURDLE_RATE_LOSS_LINES, t in 1:T) +
+                    for l in HURDLE_RATE_LOSS_LINES, t in 1:T, init=0.0) +
                 sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
                     (vTAUX_POS_HURDLE[l, t] + vTAUX_NEG_HURDLE[l, t])
-                    for l in HURDLE_RATE_NO_LOSS_LINES, t in 1:T)
+                    for l in HURDLE_RATE_NO_LOSS_LINES, t in 1:T, init=0.0)
             )
         elseif TRANS_LOSS_SEGS == 1
             # All hurdle rate lines are also loss lines
             @expression(EP, eTotalCTransHurdle,
                 sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
                     (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
-                    for l in HURDLE_RATE_LINES, t in 1:T)
+                    for l in HURDLE_RATE_LINES, t in 1:T, init=0.0)
             )
         else
             # For TRANS_LOSS_SEGS > 1 or == 0, create auxiliary variables for all hurdle rate lines
@@ -392,7 +392,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             @expression(EP, eTotalCTransHurdle,
                 sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
                     (vTAUX_POS_HURDLE[l, t] + vTAUX_NEG_HURDLE[l, t])
-                    for l in HURDLE_RATE_LINES, t in 1:T)
+                    for l in HURDLE_RATE_LINES, t in 1:T, init=0.0)
             )
         end
         
