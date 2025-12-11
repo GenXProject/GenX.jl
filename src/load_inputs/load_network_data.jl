@@ -105,8 +105,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions 
     # between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and 
     # flows on interconnectors. (These 'frictions' are not real costs, but by imposing a variable cost, it 
-    # will constraint flows to periods when the difference in locational price on either side of the path are 
-    # larger than this variable cost.) This is a common practive to represent imperfect coordination between 
+    # will constrain flows to periods when the difference in locational price on either side of the path are 
+    # larger than this variable cost.) This is a common practice to represent imperfect coordination between 
     # balancing authorities/areas/jurisdictions. This cost is added to the objective function.
     if "Line_Hurdle_Rates" in names(network_var)
         inputs_nw["pLine_Hurdle_Rate"] = to_floats(:Line_Hurdle_Rates) / scale_factor # convert to $/GWh or million $/TWh

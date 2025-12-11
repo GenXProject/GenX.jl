@@ -83,7 +83,7 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 \end{aligned}
 ```
 **Accounting for Transmission Hurdle Rates**
-Transmission hurdle rates represent variable costs per unit of flow (e.g., \$/MWh) that can be applied to transmission lines. This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and flows on interconnectors. These 'frictions' are not real costs, but by imposing a variable cost, it will constraint flows to periods when the difference in locational price on either side of the path are larger than this variable cost. This is a common practive to represent imperfect coordination between balancing authorities/areas/jurisdictions. 
+Transmission hurdle rates represent variable costs per unit of flow (e.g., \$/MWh) that can be applied to transmission lines. This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and flows on interconnectors. These 'frictions' are not real costs, but by imposing a variable cost, it will constrain flows to periods when the difference in locational price on either side of the path are larger than this variable cost. This is a common practice to represent imperfect coordination between balancing authorities/areas/jurisdictions. 
 
 The hurdle rate cost is calculated as the product of the hurdle rate, $h_l$, and the absolute value of the flow on each line, $|\Phi_{l,t}|$, summed across all time steps and weighted by the time step weight, $\omega_t$:
 ```math
