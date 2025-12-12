@@ -37,6 +37,8 @@ function _get_policyfile_info()
     max_cap_filenames = ["Resource_maximum_capacity_requirement.csv"]
     h2_demand_filenames = ["Resource_hydrogen_demand.csv"]
     hourly_matching_filenames = ["Resource_hourly_matching.csv"]
+    inv_incentive_filenames = ["Resource_investment_incentive.csv"]
+    prod_incentive_filenames = ["Resource_production_incentive.csv"]
 
     policyfile_info = (
         esr = (filenames = esr_filenames, setup_param = "EnergyShareRequirement"),
@@ -46,7 +48,11 @@ function _get_policyfile_info()
         h2_demand = (
             filenames = h2_demand_filenames, setup_param = "HydrogenMinimumProduction"),
         hourly_matching = (
-            filenames = hourly_matching_filenames, setup_param = "HourlyMatching")
+            filenames = hourly_matching_filenames, setup_param = "HourlyMatching"),
+        inv_incentive = (
+            filenames = inv_incentive_filenames, setup_param = "InvestmentIncentive"),
+        prod_incentive = (
+            filenames = prod_incentive_filenames, setup_param = "ProductionIncentive")
     )
     return policyfile_info
 end
@@ -735,7 +741,8 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     accepted_cols = ["derating_factor", "esr", "esr_vrestor",
         "h2_demand", "qualified_supply",
         [string(cap, type) for cap in ["min_cap", "max_cap"]
-         for type in ("", "_stor", "_solar", "_wind")]...]
+         for type in ("", "_stor", "_solar", "_wind")]...,
+        "inv_incentive", "prod_incentive"]
 
     # Check that all policy columns have names in accepted_cols
     if !all(x -> replace(x, r"(_*|_*\d*)$" => "") in accepted_cols, cols)

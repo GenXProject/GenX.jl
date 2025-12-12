@@ -59,6 +59,10 @@ end
     @testset "Retrofit" begin
         include("test_retrofit.jl")
     end
+
+    @testset "Incentives" begin
+        include("test_incentives_system.jl")
+    end
 end
 
 # Test writing outputs

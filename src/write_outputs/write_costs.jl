@@ -33,6 +33,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(ELECTROLYZER_ALL)
         push!(cost_list, "cHydrogenRevenue")
     end
+    if setup["InvestmentIncentive"] == 1
+        push!(cost_list, "cInvIncentiveBenefit")
+    end
+    if setup["ProductionIncentive"] == 1
+        push!(cost_list, "cProdIncentiveBenefit")
+    end
     dfCost = DataFrame(Costs = cost_list)
 
     cVar = value(EP[:eTotalCVarOut]) +
@@ -68,12 +74,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             cVar,
             cFuel,
             value(EP[:eTotalCNSE]),
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
+            0.0,  # cStart (updated later if UCommit >= 1)
+            0.0,  # cUnmetRsv
+            0.0,  # cNetworkExp
+            0.0,  # cUnmetPolicyPenalty
+            0.0,  # cCO2
+            0.0   # cGridConnection
         ]
     else
         total_cost = [
@@ -82,16 +88,24 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             cVar,
             cFuel,
             value(EP[:eTotalCNSE]),
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
+            0.0,  # cStart (updated later if UCommit >= 1)
+            0.0,  # cUnmetRsv
+            0.0,  # cNetworkExp
+            0.0,  # cUnmetPolicyPenalty
+            0.0   # cCO2
         ]
     end
 
     if !isempty(ELECTROLYZER_ALL)
         push!(total_cost, -1 * value(EP[:eTotalHydrogenValue]))
+    end
+    
+    if setup["InvestmentIncentive"] == 1
+        push!(total_cost, -1 * value(EP[:eTotalInvIncentiveBenefit]))
+    end
+    
+    if setup["ProductionIncentive"] == 1
+        push!(total_cost, -1 * value(EP[:eTotalProdIncentiveBenefit]))
     end
 
     dfCost[!, Symbol("Total")] = total_cost
@@ -344,6 +358,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         end
         if !isempty(ELECTROLYZER_ALL)
             push!(temp_cost_list, tempHydrogenValue)
+        end
+        if setup["InvestmentIncentive"] == 1
+            push!(temp_cost_list, "-")  # Investment incentives are not zone-specific
+        end
+        if setup["ProductionIncentive"] == 1
+            push!(temp_cost_list, "-")  # Production incentives are not zone-specific
         end
 
         dfCost[!, Symbol("Zone$z")] = temp_cost_list

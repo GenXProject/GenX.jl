@@ -20,16 +20,19 @@ All input files are in CSV format. Running the GenX model requires a minimum of 
 </ol>
 ```
  
-Additionally, the user may need to specify eight more **settings-specific** input files based on model configuration and type of scenarios of interest:
+Additionally, the user may need to specify ten more **settings-specific** input files based on model configuration and type of scenarios of interest:
 1. Operational\_reserves.csv: specify operational reserve requirements as a function of demand and renewables generation and penalty for not meeting these requirements.
 2. Energy\_share\_requirement.csv: specify regional renewable portfolio standard and clean energy standard style policies requiring minimum energy generation from qualifying resources.
 3. CO2\_cap.csv: specify regional CO2 emission limits.
 4. Capacity\_reserve\_margin.csv: specify regional capacity reserve margin requirements.
 5. Minimum\_capacity\_requirement.csv: specify regional minimum technology capacity deployment requirements.
-6. Vre\_and\_stor\_data.csv: specify cost and performance data for co-located VRE and storage resources.
-7. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
-8. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
-9. Hydrogen\_demand.csv: specify regional hydrogen production requirements.
+6. Investment\_incentive.csv: specify investment incentive policies that reduce upfront capital costs for eligible resources.
+7. Production\_incentive.csv: specify production incentive policies that provide ongoing subsidies based on energy generation or CO₂ captured.
+8. Vre\_and\_stor\_data.csv: specify cost and performance data for co-located VRE and storage resources.
+9. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
+10. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
+11. Hydrogen\_demand.csv: specify regional hydrogen production requirements.
+
 
 
 !!! note "Note"
@@ -586,9 +589,27 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 |Max\_Cap\_Wind\_*| Eligibility of resources with a wind component to participate in Maximum Technology Carveout constraint (AC terms).
 |Max\_Cap\_Stor\_*| Eligibility of resources with a storage component to participate in Maximum Technology Carveout constraint (discharge capacity in AC terms).|
 
+This policy is applied when if `InvestmentIncentive = 1` in the settings file. \* corresponds to the ith row of the file `Investment_incentive.csv`.
+
+##### Table 17: Investment incentive policy parameters in Resource\_investment\_incentive.csv
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource| Resource name corresponding to a resource in one of the resource data files described above.|
+|Inv\_Incentive\_*| Flag to indicate which resources are eligible for the Investment Incentive policy. Resources flagged with 1 receive the investment incentive rate specified in the corresponding row of `Investment_incentive.csv`, applied to their annualized capital investment costs.|
+
+This policy is applied when if `ProductionIncentive = 1` in the settings file. \* corresponds to the ith row of the file `Production_incentive.csv`.
+
+##### Table 18: Production incentive policy parameters in Resource\_production\_incentive.csv
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Resource| Resource name corresponding to a resource in one of the resource data files described above.|
+|Prod\_Incentive\_*| Flag to indicate which resources are eligible for the Production Incentive policy. Resources flagged with 1 receive the production incentive rate specified in the corresponding row of `Production_incentive.csv`, applied to their energy generation ($/MWh) or CO₂ captured ($/tonne CO₂), depending on the `Production_Type` specified for that policy (see Section 2.8).|
+
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
-##### Table 17: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
+##### Table 19: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -597,7 +618,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 
 This policy is applied when if `HydrogenMinimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
 
-##### Table 18: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
+##### Table 20: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -606,7 +627,7 @@ This policy is applied when if `HydrogenMinimumProduction = 1` in the settings f
 
 This policy is applied when if `HourlyMatching = 1` in the settings file.
 
-##### Table 19: Hourly matching policy parameters in Resource\_hourly\_matching.csv
+##### Table 21: Hourly matching policy parameters in Resource\_hourly\_matching.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -800,7 +821,48 @@ It is required if the `MaxCapReq` flag has a non-zero value in `genx_settings.ym
 
 Some of the columns specified in the input files in Section 2.2 and 2.1 are not used in the GenX model formulation. These columns are necessary for interpreting the model outputs and used in the output module of the GenX.
 
-### 2.7 Method\_of\_morris\_range.csv
+### 2.7 Investment\_incentive.csv
+
+This file contains investment incentive policies that reduce upfront capital costs for eligible resources. This file is needed if `InvestmentIncentive = 1` in the YAML file `genx_settings.yml`.
+
+###### Table 27a: Structure of the Investment\_incentive.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Policy\_ID | Unique policy identifier (integer) corresponding to the column suffix in `Resource_investment_incentive.csv`|
+|PolicyDescription | Description of the investment incentive policy (text)|
+|Value | Investment incentive rate as a fraction of annualized capital costs (e.g., 0.30 for 30% credit)|
+
+!!! note "Column Names"
+    Column names are case-insensitive. For example, `Policy_ID`, `policy_id`, and `POLICY_ID` are all accepted.
+
+Resources eligible for each policy are specified in `resources/policy_assignments/Resource_investment_incentive.csv` using the `Inv_Incentive_*` columns (see Table 17).
+
+### 2.8 Production\_incentive.csv
+
+This file contains production incentive policies that provide ongoing subsidies based on energy generation or CO₂ captured. This file is needed if `ProductionIncentive = 1` in the YAML file `genx_settings.yml`.
+
+###### Table 27b: Structure of the Production\_incentive.csv file
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Policy\_ID | Unique policy identifier (integer) corresponding to the column suffix in `Resource_production_incentive.csv`|
+|PolicyDescription | Description of the production incentive policy (text)|
+|Value | Production incentive rate in $/MWh (for energy-based) or $/tonne CO₂ (for CO₂ capture-based)|
+|Production\_Type | Type of production incentive. Accepted values (case-insensitive): `"MWh"` for energy-based incentives, `"Tonne_CO2"` (preferred) or `"ton_CO2"` (alias) for CO₂ capture-based incentives|
+
+!!! note "Column Names"
+    Column names are case-insensitive. For example, `Production_Type`, `production_type`, and `PRODUCTION_TYPE` are all accepted. The `Production_Type` values are also case-insensitive.
+
+Resources eligible for each policy are specified in `resources/policy_assignments/Resource_production_incentive.csv` using the `Prod_Incentive_*` columns (see Table 18).
+
+!!! note "Production Incentive Types"
+    - **MWh**: Incentive applied to energy generation (discharge) from eligible resources
+    - **Tonne_CO2**: Incentive applied to CO₂ captured by eligible resources with carbon capture capability (requires `CO2_Capture_Fraction > 0` in resource data)
+    - Values are case-insensitive; both `"Tonne_CO2"` and `"ton_CO2"` are accepted as aliases
+    - The `Production_Type` column specifies which type applies to each policy
+
+### 2.9 Method\_of\_morris\_range.csv
 
 This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
 
@@ -831,7 +893,7 @@ This file contains the settings parameters required to run the Method of Morris 
     8. Higher number of num\_trajectory and len_design_mat would lead to higher accuracy
     9. Upper and lower bounds should be specified for all the resources included in the resource `.csv` file (inside the `Resource`). If a parameter related to a particular resource is not uncertain, specify upper bound = lower bound = 0.
 
-### 2.8 Hydrogen\_demand.csv
+### 2.10 Hydrogen\_demand.csv
 
 This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
 

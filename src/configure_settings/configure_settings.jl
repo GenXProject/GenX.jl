@@ -12,6 +12,8 @@ function default_settings()
         "VirtualChargeDischargeCost" => 1,  # $/MWh
         "MinCapReq" => 0,
         "MaxCapReq" => 0,
+        "InvestmentIncentive" => 0,
+        "ProductionIncentive" => 0,
         "ParameterScale" => 0,
         "WriteShadowPrices" => 0,
         "UCommit" => 0,
@@ -140,6 +142,7 @@ function default_writeoutput()
         "WriteStorage" => true,
         "WriteStorageDual" => true,
         "WriteSubsidyRevenue" => true,
+        "WriteIncentives" => true,
         "WriteTimeWeights" => true,
         "WriteTransmissionFlows" => true,
         "WriteTransmissionLosses" => true,

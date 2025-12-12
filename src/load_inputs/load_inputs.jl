@@ -66,6 +66,14 @@ function load_inputs(setup::Dict, path::AbstractString)
         load_co2_cap!(setup, policies_path, inputs)
     end
 
+    if setup["InvestmentIncentive"] == 1
+        load_investment_incentive!(policies_path, inputs, setup)
+    end
+
+    if setup["ProductionIncentive"] == 1
+        load_production_incentive!(policies_path, inputs, setup)
+    end
+
     if !isempty(inputs["VRE_STOR"])
         load_vre_stor_variability!(setup, path, inputs)
     end
