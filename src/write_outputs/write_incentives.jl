@@ -61,7 +61,7 @@ function write_investment_incentive(path::AbstractString,
         Region = regions,
         Resource = resources,
         Zone = zones,
-        InvIncentive_Policy = policies,
+        Policy_ID = policies,
         AnnualSum = benefits
     )
 
@@ -75,12 +75,12 @@ function write_investment_incentive(path::AbstractString,
     end
 
     dfInvIncentivePolicy = DataFrame(
-        InvIncentive_Policy = 1:NumberOfInvIncentive,
+        Policy_ID = 1:NumberOfInvIncentive,
         AnnualSum = policy_benefits
     )
 
     # Add total row
-    push!(dfInvIncentivePolicy, (InvIncentive_Policy = 0, AnnualSum = sum(policy_benefits)))
+    push!(dfInvIncentivePolicy, (Policy_ID = 0, AnnualSum = sum(policy_benefits)))
 
     # Write per-policy summary CSV
     CSV.write(joinpath(path, "InvestmentIncentivePolicy.csv"), dfInvIncentivePolicy)
@@ -145,8 +145,8 @@ function write_production_incentive(path::AbstractString,
         Region = regions,
         Resource = resources,
         Zone = zones,
-        ProdIncentive_Policy = policies,
-        ProdIncentive_Type = types,
+        Policy_ID = policies,
+        Production_Type = types,
         AnnualSum = benefits
     )
 
@@ -160,13 +160,13 @@ function write_production_incentive(path::AbstractString,
     end
 
     dfProdIncentivePolicy = DataFrame(
-        ProdIncentive_Policy = 1:NumberOfProdIncentive,
-        ProdIncentive_Type = display_types,
+        Policy_ID = 1:NumberOfProdIncentive,
+        Production_Type = display_types,
         AnnualSum = policy_benefits
     )
 
     # Add total row
-    push!(dfProdIncentivePolicy, (ProdIncentive_Policy = 0, ProdIncentive_Type = "All", AnnualSum = sum(policy_benefits)))
+    push!(dfProdIncentivePolicy, (Policy_ID = 0, Production_Type = "All", AnnualSum = sum(policy_benefits)))
 
     # Write per-policy summary CSV
     CSV.write(joinpath(path, "ProductionIncentivePolicy.csv"), dfProdIncentivePolicy)

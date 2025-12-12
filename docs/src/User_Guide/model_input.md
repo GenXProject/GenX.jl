@@ -605,7 +605,7 @@ This policy is applied when if `ProductionIncentive = 1` in the settings file. \
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|Prod\_Incentive\_*| Flag to indicate which resources are eligible for the Production Incentive policy. Resources flagged with 1 receive the production incentive rate specified in the corresponding row of `Production_incentive.csv`, applied to their energy generation ($/MWh) or CO₂ captured ($/tonne CO₂), depending on the `ProdIncentive_Type` specified for that policy (see Section 2.8).|
+|Prod\_Incentive\_*| Flag to indicate which resources are eligible for the Production Incentive policy. Resources flagged with 1 receive the production incentive rate specified in the corresponding row of `Production_incentive.csv`, applied to their energy generation ($/MWh) or CO₂ captured ($/tonne CO₂), depending on the `Production_Type` specified for that policy (see Section 2.8).|
 
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
@@ -829,9 +829,12 @@ This file contains investment incentive policies that reduce upfront capital cos
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|InvIncentive\_Policy | Unique policy identifier (integer) corresponding to the column suffix in `Resource_investment_incentive.csv`|
+|Policy\_ID | Unique policy identifier (integer) corresponding to the column suffix in `Resource_investment_incentive.csv`|
 |PolicyDescription | Description of the investment incentive policy (text)|
-|InvIncentive\_Rate | Investment incentive rate as a fraction of annualized capital costs (e.g., 0.30 for 30% credit)|
+|Value | Investment incentive rate as a fraction of annualized capital costs (e.g., 0.30 for 30% credit)|
+
+!!! note "Column Names"
+    Column names are case-insensitive. For example, `Policy_ID`, `policy_id`, and `POLICY_ID` are all accepted.
 
 Resources eligible for each policy are specified in `resources/policy_assignments/Resource_investment_incentive.csv` using the `Inv_Incentive_*` columns (see Table 17).
 
@@ -843,10 +846,13 @@ This file contains production incentive policies that provide ongoing subsidies 
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
-|ProdIncentive\_Policy | Unique policy identifier (integer) corresponding to the column suffix in `Resource_production_incentive.csv`|
+|Policy\_ID | Unique policy identifier (integer) corresponding to the column suffix in `Resource_production_incentive.csv`|
 |PolicyDescription | Description of the production incentive policy (text)|
-|ProdIncentive\_Rate | Production incentive rate in $/MWh (for energy-based) or $/tonne CO₂ (for CO₂ capture-based)|
-|ProdIncentive\_Type | Type of production incentive. Accepted values (case-insensitive): `"MWh"` for energy-based incentives, `"Tonne_CO2"` (preferred) or `"ton_CO2"` (alias) for CO₂ capture-based incentives|
+|Value | Production incentive rate in $/MWh (for energy-based) or $/tonne CO₂ (for CO₂ capture-based)|
+|Production\_Type | Type of production incentive. Accepted values (case-insensitive): `"MWh"` for energy-based incentives, `"Tonne_CO2"` (preferred) or `"ton_CO2"` (alias) for CO₂ capture-based incentives|
+
+!!! note "Column Names"
+    Column names are case-insensitive. For example, `Production_Type`, `production_type`, and `PRODUCTION_TYPE` are all accepted. The `Production_Type` values are also case-insensitive.
 
 Resources eligible for each policy are specified in `resources/policy_assignments/Resource_production_incentive.csv` using the `Prod_Incentive_*` columns (see Table 18).
 
@@ -854,6 +860,7 @@ Resources eligible for each policy are specified in `resources/policy_assignment
     - **MWh**: Incentive applied to energy generation (discharge) from eligible resources
     - **Tonne_CO2**: Incentive applied to CO₂ captured by eligible resources with carbon capture capability (requires `CO2_Capture_Fraction > 0` in resource data)
     - Values are case-insensitive; both `"Tonne_CO2"` and `"ton_CO2"` are accepted as aliases
+    - The `Production_Type` column specifies which type applies to each policy
 
 ### 2.9 Method\_of\_morris\_range.csv
 

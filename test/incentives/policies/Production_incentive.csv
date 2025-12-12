@@ -1,4 +1,4 @@
-ProdIncentive_Policy,PolicyDescription,ProdIncentive_Rate,ProdIncentive_Type
+Policy_ID,PolicyDescription,Value,Production_Type
 1,Solar_PTC,15.0,MWh
 2,Wind_PTC,12.0,MWh
 3,CCS_Incentive,85.0,Tonne_CO2

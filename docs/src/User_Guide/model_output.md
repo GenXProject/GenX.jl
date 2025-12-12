@@ -57,8 +57,8 @@ Reports the total investment incentive benefits by policy. This file is only gen
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| InvIncentive\_Policy |Investment incentive policy number (corresponds to row in Investment\_incentive.csv input file) | - |
-| InvIncentive\_Benefit |Total investment incentive benefit for the policy (applied to new capacity investments) |USD |
+| Policy\_ID |Investment incentive policy number (corresponds to row in Investment\_incentive.csv input file) | - |
+| AnnualSum |Total investment incentive benefit for the policy (applied to new capacity investments) |USD |
 
 ### 1.4 production\_incentive.csv
 
@@ -68,9 +68,9 @@ Reports the total production incentive benefits by policy. This file is only gen
 ---
 |**Output** |**Description** |**Units** |
 | :------------ | :-----------|:-----------|
-| ProdIncentive\_Policy |Production incentive policy number (corresponds to row in Production\_incentive.csv input file) | - |
-| ProdIncentive\_Type |Type of production incentive: `"MWh"` for energy-based or `"Tonne_CO2"` for CO₂ capture-based | - |
-| ProdIncentive\_Benefit |Total production incentive benefit for the policy (applied to energy generation or CO₂ captured) |USD |
+| Policy\_ID |Production incentive policy number (corresponds to row in Production\_incentive.csv input file) | - |
+| Production\_Type |Type of production incentive: `"MWh"` for energy-based or `"Tonne_CO2"` for CO₂ capture-based | - |
+| AnnualSum |Total production incentive benefit for the policy (applied to energy generation or CO₂ captured) |USD |
 
 ### 1.5 emissions.csv
 

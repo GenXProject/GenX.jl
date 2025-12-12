@@ -87,7 +87,7 @@ function test_output_type_normalization(test_path)
         output_path = joinpath(test_path, "results", "production_incentive.csv")
         if isfile(output_path)
             df = CSV.read(output_path, DataFrame)
-            for type_val in df.ProdIncentive_Type
+            for type_val in df.Production_Type
                 if type_val != "Total" && type_val != "All"
                     @test type_val in ["MWh", "Tonne_CO2"]
                 end
@@ -103,10 +103,10 @@ function test_invalid_prod_incentive_type()
         mkpath(joinpath(temp_test_path, "system"))
         mkpath(joinpath(temp_test_path, "resources"))
         invalid_df = DataFrame(
-            ProdIncentive_Policy = [1],
+            Policy_ID = [1],
             PolicyDescription = ["Invalid_Test"],
-            ProdIncentive_Rate = [10.0],
-            ProdIncentive_Type = ["invalid_type"]
+            Value = [10.0],
+            Production_Type = ["invalid_type"]
         )
         CSV.write(joinpath(temp_test_path, "policies", "Production_incentive.csv"), invalid_df)
         @test_throws ErrorException begin
@@ -123,9 +123,9 @@ function test_missing_prod_incentive_type_column()
         temp_missing_path = mktempdir()
         mkpath(joinpath(temp_missing_path, "policies"))
         missing_df = DataFrame(
-            ProdIncentive_Policy = [1],
+            Policy_ID = [1],
             PolicyDescription = ["Missing_Type_Test"],
-            ProdIncentive_Rate = [5.0]
+            Value = [5.0]
         )
         CSV.write(joinpath(temp_missing_path, "policies", "Production_incentive.csv"), missing_df)
         @test_throws ErrorException begin

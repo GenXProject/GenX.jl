@@ -19,7 +19,7 @@ Three production incentive policies are defined in `policies/Production_incentiv
 
 Resource eligibility is specified in `resources/policy_assignments/Resource_production_incentive.csv`.
 
-The `ProdIncentive_Type` column in `Production_incentive.csv` specifies the incentive basis:
+The `Production_Type` column in `Production_incentive.csv` specifies the incentive basis:
 - `"MWh"` for energy-based incentives ($/MWh)
 - `"Tonne_CO2"` for CO₂ capture-based incentives ($/tonne CO₂)
 
@@ -29,18 +29,18 @@ Values are case-insensitive and `"ton_CO2"` is accepted as an alias for `"Tonne_
 
 **Investment Incentives:**
 - Applied to the annualized capital investment cost of new capacity
-- Calculated as: InvIncentive_Rate × Investment_Cost × New_Capacity
+- Calculated as: Value × Investment_Cost × New_Capacity
 - Reduces the effective upfront cost of new capacity investments
 - Reflected in the objective function as a credit (negative cost)
 
 **Production Incentives:**
 - Applied to energy generation or CO₂ captured on an annual basis
-- For energy-based incentives (type `"MWh"`): ProdIncentive_Rate × Energy_Generated × Hours
-- For CO₂ capture-based incentives (type `"Tonne_CO2"`): ProdIncentive_Rate × CO₂_Captured × Hours
+- For energy-based incentives (type `"MWh"`): Value × Energy_Generated × Hours
+- For CO₂ capture-based incentives (type `"Tonne_CO2"`): Value × CO₂_Captured × Hours
 - Provides ongoing subsidy for production from qualifying resources
 - Reflected in the objective function as a credit (negative cost)
 
-The `ProdIncentive_Type` column in `Production_incentive.csv` specifies whether an incentive is `"MWh"` (energy-based) or `"Tonne_CO2"` (CO₂ capture-based). Input values are case-insensitive.
+The `Production_Type` column in `Production_incentive.csv` specifies whether an incentive is `"MWh"` (energy-based) or `"Tonne_CO2"` (CO₂ capture-based). Input values are case-insensitive.
 
 ## Running the Example
 
@@ -77,5 +77,5 @@ Once the model has completed, results will write to the `results` directory.
 
 When incentives are enabled, the following additional outputs are generated:
 - `results/investment_incentive.csv`: Shows investment incentive benefits by policy
-- `results/production_incentive.csv`: Shows production incentive benefits by policy (includes ProdIncentive_Type column)
+- `results/production_incentive.csv`: Shows production incentive benefits by policy (includes Production_Type column)
 - `results/costs.csv`: Includes `cInvIncentiveBenefit` and `cProdIncentiveBenefit` rows showing total incentive benefits
