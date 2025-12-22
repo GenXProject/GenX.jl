@@ -8,4 +8,4 @@ Method: ipm             #HiGHS-specific solver settings # Solver option: "simple
 
 # run the crossover routine for ipx
 # [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
-run_crossover: "off"
+run_crossover: "on"
