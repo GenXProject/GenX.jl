@@ -478,18 +478,33 @@ function inverter_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     # 2. Objective function additions
-
-    # Fixed costs for inverter component (if resource is not eligible for new inverter capacity, fixed costs are only O&M costs)
-    @expression(EP, eCFixDC[y in DC],
-        if y in NEW_CAP_DC # Resources eligible for new capacity
-            by_rid(y, :inv_cost_inverter_per_mwyr) * vDCCAP[y] +
-            by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y]
+    
+    # Annuitized investment cost expression for DC capacity - only applies to resources eligible for new DC capacity
+    @expression(EP, eCInvDC[y in DC],
+        if y in NEW_CAP_DC
+            by_rid(y, :inv_cost_inverter_per_mwyr) * vDCCAP[y]
         else
-            by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y]
+            0
         end)
-
+    
+    # Fixed O&M cost expression for DC capacity - applies to all resources
+    @expression(EP, eCFomDC[y in DC], 
+        by_rid(y, :fixed_om_inverter_cost_per_mwyr) * eTotalCap_DC[y])
+    
+    # Total fixed cost expression for DC capacity - combines investment and fixed O&M costs
+    @expression(EP, eCFixDC[y in DC],
+        if y in NEW_CAP_DC
+            # For resources with new DC capacity: investment cost + fixed O&M cost
+            EP[:eCInvDC][y] + EP[:eCFomDC][y]
+        else
+            # For existing resources: only fixed O&M cost
+            EP[:eCFomDC][y]
+        end)
+    
     # Sum individual resource contributions
     @expression(EP, eTotalCFixDC, sum(eCFixDC[y] for y in DC))
+    @expression(EP, eTotalCInvDC, sum(eCInvDC[y] for y in DC))
+    @expression(EP, eTotalCFomDC, sum(eCFomDC[y] for y in DC))
 
     if MultiStage == 1
         add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixDC)
@@ -644,16 +659,33 @@ function solar_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # 2. Objective function additions
 
-    # Fixed costs for solar resources (if resource is not eligible for new solar capacity, fixed costs are only O&M costs)
-    @expression(EP, eCFixSolar[y in SOLAR],
-        if y in NEW_CAP_SOLAR # Resources eligible for new capacity
-            by_rid(y, :inv_cost_solar_per_mwyr) * vSOLARCAP[y] +
-            by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y]
+    # Annuitized investment cost expression for solar capacity - only applies to resources eligible for new solar capacity
+    @expression(EP, eCInvSolar[y in SOLAR],
+        if y in NEW_CAP_SOLAR
+            by_rid(y, :inv_cost_solar_per_mwyr) * vSOLARCAP[y]
         else
-            by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y]
+            0
         end)
+    
+    # Fixed O&M cost expression for solar capacity - applies to all resources
+    @expression(EP, eCFomSolar[y in SOLAR], 
+        by_rid(y, :fixed_om_solar_cost_per_mwyr) * eTotalCap_SOLAR[y])
+    
+    # Total fixed cost expression for solar capacity - combines investment and fixed O&M costs
+    @expression(EP, eCFixSolar[y in SOLAR],
+        if y in NEW_CAP_SOLAR
+            # For resources with new solar capacity: investment cost + fixed O&M cost
+            EP[:eCInvSolar][y] + EP[:eCFomSolar][y]
+        else
+            # For existing resources: only fixed O&M cost
+            EP[:eCFomSolar][y]
+        end)
+    
+    # Sum individual resource contributions
     @expression(EP, eTotalCFixSolar, sum(eCFixSolar[y] for y in SOLAR))
-
+    @expression(EP, eTotalCInvSolar, sum(eCInvSolar[y] for y in SOLAR))
+    @expression(EP, eTotalCFomSolar, sum(eCFomSolar[y] for y in SOLAR))
+    
     if MultiStage == 1
         add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixSolar)
     else
@@ -823,16 +855,32 @@ function wind_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     # 2. Objective function additions
-
-    # Fixed costs for wind resources (if resource is not eligible for new wind capacity, fixed costs are only O&M costs)
-    @expression(EP, eCFixWind[y in WIND],
-        if y in NEW_CAP_WIND # Resources eligible for new capacity
-            by_rid(y, :inv_cost_wind_per_mwyr) * vWINDCAP[y] +
-            by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y]
+    
+    # Annuitized investment cost expression for wind capacity - only applies to resources eligible for new wind capacity
+    @expression(EP, eCInvWind[y in WIND],
+        if y in NEW_CAP_WIND
+            by_rid(y, :inv_cost_wind_per_mwyr) * vWINDCAP[y]
         else
-            by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y]
+            0
         end)
+    # Fixed O&M cost expression for wind capacity - applies to all resources
+    @expression(EP, eCFomWind[y in WIND], 
+        by_rid(y, :fixed_om_wind_cost_per_mwyr) * eTotalCap_WIND[y])
+    
+    # Total fixed cost expression for wind capacity - combines investment and fixed O&M costs
+    @expression(EP, eCFixWind[y in WIND],
+        if y in NEW_CAP_WIND
+            # For resources with new wind capacity: investment cost + fixed O&M cost
+            EP[:eCInvWind][y] + EP[:eCFomWind][y]
+        else
+            # For existing resources: only fixed O&M cost
+            EP[:eCFomWind][y]
+        end)
+    
+    # Sum individual resource contributions
     @expression(EP, eTotalCFixWind, sum(eCFixWind[y] for y in WIND))
+    @expression(EP, eTotalCInvWind, sum(eCInvWind[y] for y in WIND))
+    @expression(EP, eTotalCFomWind, sum(eCFomWind[y] for y in WIND))
 
     if MultiStage == 1
         add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixWind)
@@ -1104,15 +1152,27 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # 2. Objective function additions
 
-    # Fixed costs for storage resources (if resource is not eligible for new energy capacity, fixed costs are only O&M costs)
-    @expression(EP, eCFixEnergy_VS[y in STOR],
-        if y in NEW_CAP_STOR # Resources eligible for new capacity
-            inv_cost_per_mwhyr(gen[y]) * vCAPENERGY_VS[y] +
-            fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y]
+    # Annuitized investment cost expression for storage energy capacity - only applies to resources eligible for new storage capacity
+    @expression(EP, eCInvEnergy_VS[y in STOR],
+        if y in NEW_CAP_STOR
+            inv_cost_per_mwhyr(gen[y]) * vCAPENERGY_VS[y]
         else
-            fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y]
+            0
         end)
+    # Fixed O&M cost expression for storage energy capacity - applies to all resources based on total storage capacity
+    @expression(EP, eCFomEnergy_VS[y in STOR],
+        fixed_om_cost_per_mwhyr(gen[y]) * eTotalCap_STOR[y])
+    # Total fixed cost expression for storage energy capacity - combines investment and fixed O&M costs
+    @expression(EP, eCFixEnergy_VS[y in STOR],
+        if y in NEW_CAP_STOR
+            EP[:eCInvEnergy_VS][y] + EP[:eCFomEnergy_VS][y]
+        else
+            EP[:eCFomEnergy_VS][y]
+        end)
+    
     @expression(EP, eTotalCFixStor, sum(eCFixEnergy_VS[y] for y in STOR))
+    @expression(EP, eTotalCInvStor, sum(eCInvEnergy_VS[y] for y in STOR))
+    @expression(EP, eTotalCFomStor, sum(eCFomEnergy_VS[y] for y in STOR))
 
     if MultiStage == 1
         add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixStor)
@@ -1434,15 +1494,27 @@ function elec_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # 2. Objective function additions
 
-    # Fixed costs for electrolyzer resources (if resource is not eligible for new electrolyzer capacity, fixed costs are only O&M costs)
-    @expression(EP, eCFixElec[y in ELEC],
-        if y in NEW_CAP_ELEC # Resources eligible for new capacity
-            by_rid(y, :inv_cost_elec_per_mwyr) * vELECCAP[y] +
-            by_rid(y, :fixed_om_elec_cost_per_mwyr) * eTotalCap_ELEC[y]
+    # Annuitized investment cost expression for electrolyzer capacity - only applies to resources eligible for new electrolyzer capacity
+    @expression(EP, eCInvElec[y in ELEC],
+        if y in NEW_CAP_ELEC
+            by_rid(y, :inv_cost_elec_per_mwyr) * vELECCAP[y]
         else
-            by_rid(y, :fixed_om_elec_cost_per_mwyr) * eTotalCap_ELEC[y]
+            0
         end)
+    # Fixed O&M cost expression for electrolyzer capacity - applies to all resources based on total electrolyzer capacity
+    @expression(EP, eCFomElec[y in ELEC],
+        by_rid(y, :fixed_om_elec_cost_per_mwyr) * eTotalCap_ELEC[y])
+    # Total fixed cost expression for electrolyzer capacity - combines investment and fixed O&M costs
+    @expression(EP, eCFixElec[y in ELEC],
+        if y in NEW_CAP_ELEC
+            EP[:eCInvElec][y] + EP[:eCFomElec][y]
+        else
+            EP[:eCFomElec][y]
+        end)
+    
     @expression(EP, eTotalCFixElec, sum(eCFixElec[y] for y in ELEC))
+    @expression(EP, eTotalCInvElec, sum(eCInvElec[y] for y in ELEC))
+    @expression(EP, eTotalCFomElec, sum(eCFomElec[y] for y in ELEC))
 
     if MultiStage == 1
         add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixElec)
@@ -1826,19 +1898,36 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # 2. Objective Function Additions
 
-        # If resource is not eligible for new discharge DC capacity, fixed costs are only O&M costs
-        @expression(EP, eCFixDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
+        # Annuitized investment cost expression for storage discharge DC capacity - only applies to resources eligible for new capacity
+        @expression(EP, eCInvDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
             if y in NEW_CAP_DISCHARGE_DC # Resources eligible for new discharge DC capacity
-                by_rid(y, :inv_cost_discharge_dc_per_mwyr) * vCAPDISCHARGE_DC[y] +
-                by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y]
+                by_rid(y, :inv_cost_discharge_dc_per_mwyr) * vCAPDISCHARGE_DC[y]
             else
-                by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y]
+                0
             end)
 
+        # Fixed O&M cost expression for storage discharge DC capacity - applies to all resources
+        @expression(EP, eCFomDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
+            by_rid(y, :fixed_om_cost_discharge_dc_per_mwyr) * eTotalCapDischarge_DC[y])
+        
+        # Total fixed cost expression for storage discharge DC capacity - combines investment and fixed O&M costs
+        @expression(EP, eCFixDischarge_DC[y in VS_ASYM_DC_DISCHARGE],
+            if y in NEW_CAP_DISCHARGE_DC
+                EP[:eCInvDischarge_DC][y] + EP[:eCFomDischarge_DC][y]
+            else
+                EP[:eCFomDischarge_DC][y]
+            end)
+          
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixDischarge_DC,
             sum(EP[:eCFixDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
+        @expression(EP,
+            eTotalCInvDischarge_DC,
+            sum(EP[:eCInvDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
+        @expression(EP,
+            eTotalCFomDischarge_DC,
+            sum(EP[:eCFomDischarge_DC][y] for y in VS_ASYM_DC_DISCHARGE))
 
         if MultiStage == 1
             add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixDischarge_DC)
@@ -1926,20 +2015,37 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # 2. Objective Function Additions
 
-        # If resource is not eligible for new charge DC capacity, fixed costs are only O&M costs
-        @expression(EP, eCFixCharge_DC[y in VS_ASYM_DC_CHARGE],
-            if y in NEW_CAP_CHARGE_DC # Resources eligible for new charge DC capacity
-                by_rid(y, :inv_cost_charge_dc_per_mwyr) * vCAPCHARGE_DC[y] +
-                by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y]
+        # Annuitized investment cost expression for storage charge DC capacity - only applies to resources eligible for new capacity
+        @expression(EP, eCInvCharge_DC[y in VS_ASYM_DC_CHARGE],
+            if y in NEW_CAP_CHARGE_DC
+                by_rid(y, :inv_cost_charge_dc_per_mwyr) * vCAPCHARGE_DC[y]
             else
-                by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y]
+                0
+            end)
+
+        # Fixed O&M cost expression for storage charge DC capacity - applies to all resources
+        @expression(EP, eCFomCharge_DC[y in VS_ASYM_DC_CHARGE], 
+            by_rid(y, :fixed_om_cost_charge_dc_per_mwyr) * eTotalCapCharge_DC[y])
+
+        # Total fixed cost expression for storage charge DC capacity - combines investment and fixed O&M costs
+        @expression(EP, eCFixCharge_DC[y in VS_ASYM_DC_CHARGE],
+            if y in NEW_CAP_CHARGE_DC
+                EP[:eCInvCharge_DC][y] + EP[:eCFomCharge_DC][y]
+            else
+                EP[:eCFomCharge_DC][y]
             end)
 
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixCharge_DC,
             sum(EP[:eCFixCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
-
+        @expression(EP,
+            eTotalCInvCharge_DC,
+            sum(EP[:eCInvCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
+        @expression(EP,
+            eTotalCFomCharge_DC,
+            sum(EP[:eCFomCharge_DC][y] for y in VS_ASYM_DC_CHARGE))
+         
         if MultiStage == 1
             add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixCharge_DC)
         else
@@ -2030,20 +2136,36 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # 2. Objective Function Additions
 
-        # If resource is not eligible for new discharge AC capacity, fixed costs are only O&M costs
-        @expression(EP, eCFixDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
-            if y in NEW_CAP_DISCHARGE_AC # Resources eligible for new discharge AC capacity
-                by_rid(y, :inv_cost_discharge_ac_per_mwyr) * vCAPDISCHARGE_AC[y] +
-                by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y]
+        # Annuitized investment cost expression for storage discharge AC capacity - only applies to resources eligible for new capacity
+        @expression(EP, eCInvDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
+            if y in NEW_CAP_DISCHARGE_AC
+                by_rid(y, :inv_cost_discharge_ac_per_mwyr) * vCAPDISCHARGE_AC[y]
             else
-                by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y]
+                0
+            end)
+
+        # Fixed O&M cost expression for storage discharge AC capacity - applies to all resources
+        @expression(EP, eCFomDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
+            by_rid(y, :fixed_om_cost_discharge_ac_per_mwyr) * eTotalCapDischarge_AC[y])       
+
+        # Total fixed cost expression for storage discharge AC capacity - combines investment and fixed O&M costs
+        @expression(EP, eCFixDischarge_AC[y in VS_ASYM_AC_DISCHARGE],
+            if y in NEW_CAP_DISCHARGE_AC
+                EP[:eCInvDischarge_AC][y] + EP[:eCFomDischarge_AC][y]
+            else
+                EP[:eCFomDischarge_AC][y]
             end)
 
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixDischarge_AC,
             sum(EP[:eCFixDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
-
+        @expression(EP,
+            eTotalCInvDischarge_AC,
+            sum(EP[:eCInvDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
+        @expression(EP,
+            eTotalCFomDischarge_AC,
+            sum(EP[:eCFomDischarge_AC][y] for y in VS_ASYM_AC_DISCHARGE))
         if MultiStage == 1
             add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixDischarge_AC)
         else
@@ -2130,19 +2252,36 @@ function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         # 2. Objective Function Additions
 
-        # If resource is not eligible for new charge AC capacity, fixed costs are only O&M costs
-        @expression(EP, eCFixCharge_AC[y in VS_ASYM_AC_CHARGE],
+        # Annuitized investment cost expression for storage charge AC capacity - only applies to resources eligible for new capacity
+        @expression(EP, eCInvCharge_AC[y in VS_ASYM_AC_CHARGE],
             if y in NEW_CAP_CHARGE_AC # Resources eligible for new charge AC capacity
-                by_rid(y, :inv_cost_charge_ac_per_mwyr) * vCAPCHARGE_AC[y] +
-                by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y]
+                by_rid(y, :inv_cost_charge_ac_per_mwyr) * vCAPCHARGE_AC[y]
             else
-                by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y]
+                0
             end)
 
+        # Fixed O&M cost expression for storage charge AC capacity - applies to all resources
+        @expression(EP, eCFomCharge_AC[y in VS_ASYM_AC_CHARGE], 
+            by_rid(y, :fixed_om_cost_charge_ac_per_mwyr) * eTotalCapCharge_AC[y])        
+
+        # Total fixed cost expression for storage charge AC capacity - combines investment and fixed O&M costs
+        @expression(EP, eCFixCharge_AC[y in VS_ASYM_AC_CHARGE],
+            if y in NEW_CAP_CHARGE_AC
+                EP[:eCInvCharge_AC][y] + EP[:eCFomCharge_AC][y]
+            else
+                EP[:eCFomCharge_AC][y]
+            end)
+        
         # Sum individual resource contributions to fixed costs to get total fixed costs
         @expression(EP,
             eTotalCFixCharge_AC,
             sum(EP[:eCFixCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
+        @expression(EP,
+            eTotalCInvCharge_AC,
+            sum(EP[:eCInvCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
+        @expression(EP,
+            eTotalCFomCharge_AC,
+            sum(EP[:eCFomCharge_AC][y] for y in VS_ASYM_AC_CHARGE))
 
         if MultiStage == 1
             add_to_expression!(EP[:eObj], 1 / inputs["OPEXMULT"], eTotalCFixCharge_AC)

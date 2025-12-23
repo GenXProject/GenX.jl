@@ -16,7 +16,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     Com_list = ["Generation", "Storage_Discharge", "Storage_Charge",
         "Flexible_Demand_Defer", "Flexible_Demand_Stasify",
         "Demand_Response", "Nonserved_Energy",
-        "Transmission_NetExport", "Transmission_Losses",
+        "Transmission_NetImport", "Transmission_Losses",
         "Demand"]
     if !isempty(ELECTROLYZER)
         push!(Com_list, "Electrolyzer_Consumption")

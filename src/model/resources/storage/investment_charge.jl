@@ -89,20 +89,33 @@ function investment_charge!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     ## Objective Function Expressions ##
-
-    # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
-    # If resource is not eligible for new charge capacity, fixed costs are only O&M costs
-    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
-        if y in NEW_CAP_CHARGE # Resources eligible for new charge capacity
-            inv_cost_charge_per_mwyr(gen[y]) * vCAPCHARGE[y] +
-            fixed_om_cost_charge_per_mwyr(gen[y]) * eTotalCapCharge[y]
+    
+    # Annuitized investment cost expression for charge capacity - only applies to resources eligible for new charge capacity
+    @expression(EP, eCInvCharge[y in STOR_ASYMMETRIC],
+        if y in NEW_CAP_CHARGE
+            inv_cost_charge_per_mwyr(gen[y]) * vCAPCHARGE[y]
         else
-            fixed_om_cost_charge_per_mwyr(gen[y]) * eTotalCapCharge[y]
+            0
         end)
-
+    
+    # Fixed O&M cost expression for charge capacity - applies to all resources
+    @expression(EP, eCFomCharge[y in STOR_ASYMMETRIC], 
+        fixed_om_cost_charge_per_mwyr(gen[y]) * eTotalCapCharge[y])
+    
+    # Total fixed cost expression for charge capacity - combines investment and fixed O&M costs
+    @expression(EP, eCFixCharge[y in STOR_ASYMMETRIC],
+        if y in NEW_CAP_CHARGE
+            # For resources with new charge capacity: investment cost + fixed O&M cost
+            EP[:eCInvCharge][y] + EP[:eCFomCharge][y]
+        else
+            # For existing resources: only fixed O&M cost
+            EP[:eCFomCharge][y]
+        end)
+    
     # Sum individual resource contributions to fixed costs to get total fixed costs
     @expression(EP, eTotalCFixCharge, sum(EP[:eCFixCharge][y] for y in STOR_ASYMMETRIC))
-
+    @expression(EP, eTotalCInvCharge, sum(EP[:eCInvCharge][y] for y in STOR_ASYMMETRIC))
+    @expression(EP, eTotalCFomCharge, sum(EP[:eCFomCharge][y] for y in STOR_ASYMMETRIC))
     # Add term to objective function expression
     if MultiStage == 1
         # OPEX multiplier scales fixed costs to account for multiple years between two model stages

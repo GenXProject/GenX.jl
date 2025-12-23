@@ -40,12 +40,17 @@ Reports optimal objective function value and contribution of each term by zone.
 | cTotal |Total objective function value |USD |
 | cFix |Total annualized investment and fixed operating & maintainenance (FOM) costs associated with all resources |USD |
 | cVar |Total annual variable cost associated with all resources; includes fuel costs for thermal plants |USD |
+| cFuel |System level total fuel cost |USD |
 | cNSE |Total annual cost of non-served energy |USD |
 | cStart |Total annual cost of start-up of thermal power plants| USD |
 | cUnmetRsv |Total annual cost of not meeting time-dependent operating reserve (spinning) requirements |USD |
 | cNetworkExp |Total cost of network expansion |USD |
-| cEmissionsRevenue |Total and zonal emissions revenue |USD |
-| cEmissionsCost |Total an zonal emissions cost |USD |
+| cUnmetPolicyPenalty |Total annual cost of not meeting policy-based requirements (e.g. ESR, Capacity Reserve Margin, CO2 emissions, etc.) |USD |
+| cCO2 |Total annual cost of CO2 sequestration |USD |
+| cInv |Total annualized investment costs associated with all resources |USD |
+| cFom |Total annual fixed operating & maintainenance (FOM) costs associated with all resources |USD |
+| cGridConnection |Total annual cost of grid connection for VRE-storage resources |USD |
+| cHydrogenRevenue |Total annual revenue from hydrogen sales |USD |
 
 ### 1.3 emissions.csv
 
