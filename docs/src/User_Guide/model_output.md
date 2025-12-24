@@ -202,3 +202,81 @@ This file includes the output from each component of an Allam Cycle LOX resource
 | (resource\_name)\_lox\_in\_t | Hourly amount of liquid oxygen charged into the LOX in the Allam Cycle LOX resource | t |
 | (resource\_name)\_lox\_out\_t | Hourly amount of liquid oxygen discharged from the LOX in the Allam Cycle LOX resource | t |
 | (resource\_name)\_gox\_t | Hourly amount of gaseous oxygen produced by ASU in the Allam Cycle LOX resource | t |
+
+### 3.3 vre\_stor\_capacity.csv
+
+Reports optimal values of investment variables (except StartCap, which is an input) for co-located VRE and storage resources
+
+###### Table 3.3: Structure of the vre\_stor\_capacity.csv file
+---
+|**Output** |**Description** |**Units** |
+| :------------ | :-----------|:-----------|
+| StartCapSolar |Initial solar PV capacity of each resource type in each zone; this is an input |MW DC|
+| RetCapSolar |Retired solar PV capacity of each resource type in each zone |MW DC|
+| NewCapSolar |Installed solar PV capacity of each resource type in each zone |MW DC|
+| EndCapSolar| Total solar PV capacity of each resource type in each zone |MW DC|
+| StartCapWind |Initial wind capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapWind |Retired wind capacity of each resource type in each zone |MW AC|
+| NewCapWind |Installed wind capacity of each resource type in each zone |MW AC|
+| EndCapWind| Total wind capacity of each resource type in each zone |MW AC|
+| StartCapElec |Initial electrolyzer capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapElec |Retired electrolyzer capacity of each resource type in each zone |MW AC|
+| NewCapElec |Installed electrolyzer capacity of each resource type in each zone |MW AC|
+| EndCapElec| Total electrolyzer capacity of each resource type in each zone |MW AC|
+| StartCapDC |Initial inverter capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapDC |Retired inverter capacity of each resource type in each zone |MW AC|
+| NewCapDC |Installed inverter capacity of each resource type in each zone |MW AC|
+| EndCapDC| Total inverter capacity of each resource type in each zone |MW AC|
+| StartCapGrid |Initial grid connection capacity of each resource type in each zone; this is an input |MW AC|
+| RetCapGrid |Retired grid connection capacity of each resource type in each zone |MW AC|
+| NewCapGrid |Installed grid connection capacity of each resource type in each zone |MW AC|
+| EndCapGrid| Total gri connection capacity of each resource type in each zone |MW AC|
+| StartEnergyCap |Initial energy capacity of each resource type in each zone; this is an input and applies only to storage tech.| MWh |
+| RetEnergyCap |Retired energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
+| NewEnergyCap| Installed energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
+| EndEnergyCap |Total installed energy capacity of each resource type in each zone; applies only to storage tech. |MWh |
+| StartChargeACCap| Initial charging AC power capacity of `STOR_AC_CHARGE = 2` resource type in each zone; this is an input |MW AC|
+| RetChargeACCap |Retired charging AC power capacity of `STOR_AC_CHARGE = 2` resource type in each zone |MW AC|
+| NewChargeACCap |Installed charging AC capacity of each resource type in each zone |MW AC|
+| EndChargeACCap |Total charging power AC capacity of each resource type in each zone |MW AC|
+| StartChargeDCCap| Initial charging DC power capacity of `STOR_DC_CHARGE = 2` resource type in each zone; this is an input |MW DC|
+| RetChargeDCCap |Retired charging DC power capacity of `STOR_DC_CHARGE = 2` resource type in each zone |MW DC|
+| NewChargeDCCap |Installed charging DC capacity of each resource type in each zone |MW DC|
+| EndChargeDCCap |Total charging power DC capacity of each resource type in each zone |MW DC|
+| StartDischargeACCap| Initial discharging AC power capacity of `STOR_AC_DISCHARGE = 2` resource type in each zone; this is an input |MW AC|
+| RetDischargeACCap |Retired discharging AC power capacity of `STOR_AC_DISCHARGE = 2` resource type in each zone |MW AC|
+| NewDischargeACCap |Installed discharging AC capacity of each resource type in each zone |MW AC|
+| EndDischargeACCap |Total discharging power AC capacity of each resource type in each zone |MW AC|
+| StartDischargeDCCap| Initial discharging DC power capacity of `STOR_DC_DISCHARGE = 2` resource type in each zone; this is an input |MW DC|
+| RetDischargeDCCap |Retired discharging DC power capacity of `STOR_DC_DISCHARGE = 2` resource type in each zone |MW DC|
+| NewDischargeDCCap |Installed discharging DC capacity of each resource type in each zone |MW DC|
+| EndDischargeDCCap |Total discharging power DC capacity of each resource type in each zone |MW DC|
+
+### 3.4 vre\_stor\_dc\_charge.csv
+
+Reports DC charging by each co-located VRE and storage resource (could include grid or BTM charging) in each model time step.
+
+### 3.5 vre\_stor\_ac\_charge.csv
+
+Reports AC charging by each co-located VRE and storage resource (could include grid or BTM charging) in each model time step.
+
+### 3.6 vre\_stor\_dc\_discharge.csv
+
+Reports storage DC discharging by each co-located VRE and storage resource in each model time step.
+
+### 3.7 vre\_stor\_ac\_discharge.csv
+
+Reports storage AC discharging charging by each co-located VRE and storage resource in each model time step.
+
+
+### 3.8 vre\_stor\_solar\_power.csv
+
+Reports solar PV generation in AC terms by each co-located VRE and storage resource in each model time step.
+
+### 3.9 vre\_stor\_wind\_power.csv
+
+Reports wind generation in AC terms by each co-located VRE and storage resource in each model time step.
+
+### 3.10 vre\_stor\_elec\_power\_consumption.csv
+
+Reports electrolyzer consumption in AC terms by each co-located VRE and storage resource in each model time step.

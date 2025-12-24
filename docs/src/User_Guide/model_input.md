@@ -427,6 +427,7 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for the co-located storage resource (USD/MW/year)|
 |Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the grid connection (USD/MW/year).|
 |Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of the co-located storage resource. (USD/MWh/year). |
+|Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost pertaining to the AC generation sent to the grid from the entire site. (USD/MWh). |
 |Inv\_Cost\_Inverter\_per\_MWyr | Annualized capacity investment cost of the inverter component (USD/MW-AC/year). |
 |Inv\_Cost\_Solar\_per\_MWyr | Annualized capacity investment cost of the solar PV component (USD/MW-DC/year). |
 |Inv\_Cost\_Wind\_per\_MWyr | Annualized capacity investment cost of the wind component (USD/MW-AC/year). |
@@ -552,7 +553,7 @@ This policy is applied when if `EnergyShareRequirement > 0` in the settings file
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint.|
+|ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint. Note that this flag must be 0 for co-located VRE-STOR resources (see below).|
 ||1- included|
 ||0- excluded|
 |**co-located VRE-STOR resources only**|
