@@ -93,6 +93,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     CapacityReserveMargin = setup["CapacityReserveMargin"]
     EnergyShareRequirement = setup["EnergyShareRequirement"]
     IncludeLossesInESR = setup["IncludeLossesInESR"]
+    omega = inputs["omega"]
 
     ## sets and indices for transmission losses
     TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -315,4 +316,12 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             for z in findall(x -> x > 0, inputs["dfESR"][:, ESR])))
         add_similar_to_expression!(EP[:eESR], -eESRTran)
     end
-end
+    
+    ## Add hurdle rates to objective function ##
+    # Add abs value for vFLOW
+    @variable(EP, vFLOW_abs[l = 1: L, t = 1:T] >=0)
+    @constraint(EP, cFLOW_pos[l = 1:L, t =  1:T], EP[:vFLOW_abs][l, t] >= EP[:vFLOW][l, t])
+    @constraint(EP, cFLOW_neg[l = 1:L, t =  1:T], EP[:vFLOW_abs][l, t] >= -EP[:vFLOW][l, t])
+    @expression(EP, eTotalHurdleCosts, sum(omega[t] * EP[:vFLOW_abs][l,t] * inputs["pTrans_Hurdles"][l] for l in 1:L for t in 1:T))
+    add_to_expression!(EP[:eObj], eTotalHurdleCosts)
+    end

@@ -25,6 +25,17 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Transmission capacity of the network (in MW)
     inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
 
+    # Transmission line Hurdle rates (in $/MWh)
+    # This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and flows on interconnectors. 
+    # (These 'frictions' are not real costs, but by imposing a variable cost, it will constraint flows to periods when the difference in locational price on either side of the path are larger than this variable cost.) 
+    # This is a common practive to represent imperfect coordination between balancing authorities/areas.
+    # This cost is added to the objective function.
+    inputs_nw["pTrans_Hurdles"] = zeros(Float64, L)
+    if "Line_Hurdle_Rate" in names(network_var)
+        inputs_nw["pTrans_Hurdles"] = to_floats(:Line_Hurdle_Rate) .* scale_factor # convert to million $/GWh
+        print(inputs_nw["pTrans_Hurdles"])
+    end
+
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
         inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)

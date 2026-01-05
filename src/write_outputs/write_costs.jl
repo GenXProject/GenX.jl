@@ -25,7 +25,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         "cUnmetRsv",
         "cNetworkExp",
         "cUnmetPolicyPenalty",
-        "cCO2"
+        "cCO2",
+        "cHurdle"
     ]
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
@@ -43,6 +44,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
            (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
 
     cFuel = value.(EP[:eTotalCFuelOut])
+
+    cHurdle = value(EP[:eTotalHurdleCosts])
 
     if !isempty(VRE_STOR)
         cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) +
@@ -73,7 +76,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
-            0.0
+            0.0,
+            cHurdle
         ]
     else
         total_cost = [
@@ -86,7 +90,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
-            0.0
+            0.0,
+            cHurdle
         ]
     end
 
@@ -137,7 +142,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     end
 
     if !isempty(VRE_STOR)
-        dfCost[!, 2][11] = value(EP[:eTotalCGrid]) *
+        dfCost[!, 2][12] = value(EP[:eTotalCGrid]) *
                            (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
     end
 
@@ -151,6 +156,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         dfCost[8, 2] *= ModelScalingFactor^2
         dfCost[9, 2] *= ModelScalingFactor^2
         dfCost[10, 2] *= ModelScalingFactor^2
+        dfCost[11, 2] *= ModelScalingFactor^2
     end
 
     for z in 1:Z
@@ -329,7 +335,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             "-",
             "-",
             "-",
-            tempCCO2
+            tempCCO2,
+            "-",
         ]
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")
