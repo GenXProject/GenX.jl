@@ -5,10 +5,7 @@ function write_transmission_losses(path::AbstractString,
     T = inputs["T"]     # Number of time steps (hours)
     L = inputs["L"]
 
-    LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
-
-
-    LOSS_LINES_ASYM = inputs["LOSS_LINES_ASYM"] # Lines for which loss coefficients apply (are non-zero);
+    ASYMMETRIC_LOSS_LINES = inputs["ASYMMETRIC_LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
 
     SYMMETRIC_LOSS_LINES=inputs["SYMMETRIC_LOSS_LINES"]
 
@@ -17,12 +14,12 @@ function write_transmission_losses(path::AbstractString,
     dfTLosses = DataFrame(Line = 1:L)
     tlosses = zeros(L, T)
     if setup["AsymmetricalTransFlowLimit"] == 1
-        tlosses[LOSS_LINES_ASYM, :] = value.(EP[:vTLOSS_ASYM][LOSS_LINES_ASYM, :]) # Losses for asymmetrical lines
+        tlosses[ASYMMETRIC_LOSS_LINES, :] = value.(EP[:vTLOSS_ASYM][ASYMMETRIC_LOSS_LINES, :]) # Losses for asymmetrical lines
     end
     tlosses[SYMMETRIC_LOSS_LINES, :] = value.(EP[:vTLOSS][SYMMETRIC_LOSS_LINES, :]) # Losses for symmetrical lines
     if setup["ParameterScale"] == 1
         if setup["AsymmetricalTransFlowLimit"] == 1
-            tlosses[LOSS_LINES_ASYM, :] *= ModelScalingFactor
+            tlosses[ASYMMETRIC_LOSS_LINES, :] *= ModelScalingFactor
         end
         tlosses[SYMMETRIC_LOSS_LINES, :] *= ModelScalingFactor
     end

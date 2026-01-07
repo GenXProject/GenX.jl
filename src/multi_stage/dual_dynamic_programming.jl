@@ -29,12 +29,10 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
     if setup["NetworkExpansion"] == 1 && inputs["Z"] > 1
         start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
-    end
-
-    ##** If the network expansion is enabled, we need to add the asymmetric transmission capacity expressions: Need to refine**##
-    if setup["NetworkExpansion"] == 1 && inputs["Z"] > 1 && !isempty(inputs["ASYMMETRIC_LINE_INDEX"])
-        start_cap_d[Symbol("eAvail_Trans_Cap_Pos")] = Symbol("cExistingTransCapPos")
-        start_cap_d[Symbol("eAvail_Trans_Cap_Neg")] = Symbol("cExistingTransCapNeg")
+        if !isempty(inputs["ASYMMETRIC_LINE_INDEX"])
+            start_cap_d[Symbol("eAvail_Trans_Cap_Pos")] = Symbol("cExistingTransCapPos")
+            start_cap_d[Symbol("eAvail_Trans_Cap_Neg")] = Symbol("cExistingTransCapNeg")
+        end
     end
 
     if !isempty(inputs["VRE_STOR"])
@@ -317,7 +315,7 @@ function run_ddp(outpath::AbstractString, models_d::Dict, setup::Dict, inputs_d:
 
     return models_d, stats_d, inputs_d
 end
-using Infiltrator
+
 @doc raw"""
 	fix_initial_investments(EP_prev::Model, EP_cur::Model, start_cap_d::Dict)
 
@@ -341,21 +339,11 @@ function fix_initial_investments(EP_prev::Model,
     # and the associated linking constraint name (c) as a value
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
-            @infiltrate # Use Infiltrator to inspect the keys of the constraint
             # Set the right hand side value of the linking initial capacity constraint in the current stage to the value of the available capacity variable solved for in the previous stages
-            if length(EP_prev[e]) != length(EP_cur[c]) # Check if the previous stage has a value for the variable
-                @error "The lengths of the dictionary EP_prev and EP_cur should be the same" # Skip if there is no value for the variable in the previous stage
-            end
-            if c == :cExistingTransCap
+            if c == :cExistingTransCap || c == :cExistingTransCapPos || c == :cExistingTransCapNeg
                 set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-            elseif c == :cExistingTransCapPos
+            elseif y[1] in ALL_CAP # extract resource integer index value from key
                 set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-            elseif c == :cExistingTransCapNeg
-                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-            else
-                if y[1] in ALL_CAP # extract resource integer index value from key
-                    set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-                end
             end
         end
     end

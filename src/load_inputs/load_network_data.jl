@@ -15,18 +15,14 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     # Number of zones in the network
     Z = length(as_vector(:Network_zones))
     inputs_nw["Z"] = Z
+    # Number of lines in the network (total, symmetric and asymmetric)
     L = length(as_vector(:Network_Lines))
     inputs_nw["L"] = L
     L_asym  = 0 # Default number of asymmetrical lines
     if setup["AsymmetricalTransFlowLimit"] == 1
-        try
-            L_asym = length(filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines)) #Number of asymmetrical lines
-        catch e
-            error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Asymmetrical column. Please add this column to the file.")
-        end
-        if L_asym == 0
-            error("The asymmetrical transmission flow limit flag is active, but no asymmetrical lines were found in the Network.csv file. Please check the file.")
-        end
+        hasproperty(network_var, :Asymmetrical) || error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Asymmetrical column. Please add this column to the file.")
+        L_asym = length(filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines)) #Number of asymmetrical lines
+        L_asym == 0 && error("The asymmetrical transmission flow limit flag is active, but no asymmetrical lines were found in the Network.csv file. Please check the file.")
     end
     inputs_nw["L_asym"] = L_asym
     # Number of symmetric lines in the network
@@ -39,24 +35,17 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["ASYMMETRIC_LINE_INDEX"] = Int64[]
     inputs_nw["SYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, as_vector(:Network_Lines))
     if setup["AsymmetricalTransFlowLimit"] == 1
-        try
-            inputs_nw["SYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 0, :Network_Lines))
-            inputs_nw["ASYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines))
-        catch e
-            error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Asymmetrical column. Please add this column to the file.")
-        end
+        inputs_nw["SYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 0, :Network_Lines))
+        inputs_nw["ASYMMETRIC_LINE_INDEX"] = convert(Array{Int64}, filtered_vector(network_var, :Asymmetrical, 1, :Network_Lines))
     end
 
     # Transmission capacity of the network (in MW) & Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
     inputs_nw["pTrans_Max_Possible"] = inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
 
     if setup["AsymmetricalTransFlowLimit"] == 1
-        try
-            # Transmission capacity of the network for asymmetrical lines; return direction(in MW)
-            inputs_nw["pTrans_Max_Possible_Neg"] = inputs_nw["pTrans_Max_Neg"] = to_floats(:Line_Max_Flow_Neg_MW) / scale_factor  # convert to GW
-        catch e
-            error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Flow_Neg_MW column. Please add this column to the file.")
-        end
+        hasproperty(network_var, :Line_Max_Flow_Neg_MW) || error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Flow_Neg_MW column. Please add this column to the file.")
+        # Transmission capacity of the network for asymmetrical lines; return direction(in MW)
+        inputs_nw["pTrans_Max_Possible_Neg"] = inputs_nw["pTrans_Max_Neg"] = to_floats(:Line_Max_Flow_Neg_MW) / scale_factor  # convert to GW
     end
 
     # Transmission line (between zone) loss coefficient (resistance/voltage^2)
@@ -65,12 +54,9 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
         inputs_nw["pTrans_Loss_Coef"] = inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)
         if setup["AsymmetricalTransFlowLimit"] == 1
-            try
-                # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
-                inputs_nw["pTrans_Loss_Coef_Neg"] = inputs_nw["pPercent_Loss_Neg"] = to_floats(:Line_Loss_Percentage_Neg)
-            catch e
-                error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Loss_Percentage_Neg column. Please add this column to the file.")
-            end
+            hasproperty(network_var, :Line_Loss_Percentage_Neg) || error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Loss_Percentage_Neg column. Please add this column to the file.")
+            # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
+            inputs_nw["pTrans_Loss_Coef_Neg"] = inputs_nw["pPercent_Loss_Neg"] = to_floats(:Line_Loss_Percentage_Neg)
         end
     elseif setup["Trans_Loss_Segments"] >= 2
         # Transmission line voltage (in kV)
@@ -84,13 +70,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     ## Inputs for the DC-OPF 
     if setup["DC_OPF"] == 1
-        try
-            if setup["NetworkExpansion"] == 1
-                error("DC-OPF is incompatible with transmission capacity expansion. Please set DC_OPF to 0 if you want to optimize transmission capacity expansion, or set NetworkExpansion to 0 to use DC-OPF.")
-            end
-        catch e
-            setup["NetworkExpansion"] = 0
-            rethrow(e)
+        if setup["NetworkExpansion"] == 1
+            error("DC-OPF is incompatible with transmission capacity expansion. Please set DC_OPF to 0 if you want to optimize transmission capacity expansion, or set NetworkExpansion to 0 to use DC-OPF.")
         end
         println("Reading DC-OPF values...")
         # Transmission line voltage (in kV)
@@ -108,22 +89,19 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     if setup["NetworkExpansion"] == 1
         # Read between zone network reinforcement costs per peak MW of capacity added
         inputs_nw["pC_Line_Reinforcement"] = to_floats(:Line_Reinforcement_Cost_per_MWyr) /
-        scale_factor # convert to million $/GW/yr with objective function in millions
+                                             scale_factor # convert to million $/GW/yr with objective function in millions
         # Maximum reinforcement allowed in MW
         #NOTE: values <0 indicate no expansion possible
         inputs_nw["pMax_Line_Reinforcement"] = map(x -> max(0, x),
             to_floats(:Line_Max_Reinforcement_MW)) / scale_factor # convert to GW
         inputs_nw["pTrans_Max_Possible"] += inputs_nw["pMax_Line_Reinforcement"]
         if setup["AsymmetricalTransFlowLimit"] == 1
-            try
-                # Maximum reinforcement allowed in MW
-                #NOTE: values <0 indicate no expansion possible
-                inputs_nw["pMax_Line_Reinforcement_Neg"] = map(x -> max(0, x),
+            hasproperty(network_var, :Line_Max_Reinforcement_Neg_MW) || error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Reinforcement_Neg_MW column. Please add this column to the file.")
+            # Maximum reinforcement allowed in MW
+            #NOTE: values <0 indicate no expansion possible
+            inputs_nw["pMax_Line_Reinforcement_Neg"] = map(x -> max(0, x),
                 to_floats(:Line_Max_Reinforcement_Neg_MW)) / scale_factor # convert to GW
-                inputs_nw["pTrans_Max_Possible_Neg"] += inputs_nw["pMax_Line_Reinforcement_Neg"]
-            catch e
-                error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Reinforcement_Neg_MW column. Please add this column to the file.")
-            end
+            inputs_nw["pTrans_Max_Possible_Neg"] += inputs_nw["pMax_Line_Reinforcement_Neg"]
         end
     end
 
@@ -139,33 +117,17 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["pLine_Max_Flow_Possible_MW"] = to_floats(:Line_Max_Flow_Possible_MW) /
                                                   scale_factor # Convert to GW
         if setup["AsymmetricalTransFlowLimit"] == 1
-            try
-                # Validate that asymmetric flow implementation is ready for multistage
-                if haskey(setup, "MultiStage") && setup["MultiStage"] == 1
-                    error("Asymmetric transmission flow limits are not fully supported with multistage capacity expansion and may produce incorrect results. Please use symmetric transmission flow limits or disable multistage expansion.")
-                end
-                inputs_nw["pLine_Max_Flow_Possible_Neg_MW"] = to_floats(:Line_Max_Flow_Possible_Neg_MW) /
-                                                                                                    scale_factor # Convert to GW
-            catch e
-                if isa(e, BoundsError) || occursin("Line_Max_Flow_Possible_Neg_MW", string(e))
-                    error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Flow_Possible_Neg_MW column. Please add this column to the file.")
-                else
-                    rethrow(e)
-                end
-            end
+            hasproperty(network_var, :Line_Max_Flow_Possible_Neg_MW) || error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Line_Max_Flow_Possible_Neg_MW column. Please add this column to the file.")
+            inputs_nw["pLine_Max_Flow_Possible_Neg_MW"] = to_floats(:Line_Max_Flow_Possible_Neg_MW) / scale_factor # Convert to GW
         end
     end
 
     ## Sets and indices for transmission losses and expansion
     inputs_nw["TRANS_LOSS_SEGS"] = setup["Trans_Loss_Segments"] # Number of segments used in piecewise linear approximations quadratic loss functions
     inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"] .!= 0) # Lines for which loss coefficients apply (are non-zero);
-    inputs_nw["LOSS_LINES_ASYM"] = []
+    inputs_nw["ASYMMETRIC_LOSS_LINES"] = []
     if setup["AsymmetricalTransFlowLimit"] == 1
-        try
-            inputs_nw["LOSS_LINES_ASYM"] = findall((network_var.Asymmetrical.==1) .& ((inputs_nw["pTrans_Loss_Coef"] .!= 0) .| (inputs_nw["pTrans_Loss_Coef_Neg"] .!= 0))) # Lines for which loss coefficients apply (are non-zero);
-        catch e
-            error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Asymmetrical column. Please add this column to the file.")
-        end
+        inputs_nw["ASYMMETRIC_LOSS_LINES"] = findall((network_var.Asymmetrical.==1) .& ((inputs_nw["pTrans_Loss_Coef"] .!= 0) .| (inputs_nw["pTrans_Loss_Coef_Neg"] .!= 0))) # Lines for which loss coefficients apply (are non-zero);
     end
 
     inputs_nw["SYMMETRIC_LOSS_LINES"] = intersect(inputs_nw["SYMMETRIC_LINE_INDEX"], inputs_nw["LOSS_LINES"])
@@ -173,13 +135,9 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     if setup["NetworkExpansion"] == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .> 0)
-        inputs_nw["EXPANSION_LINES_ASYM"] = []
+        inputs_nw["ASYMMETRIC_EXPANSION_LINES"] = []
         if setup["AsymmetricalTransFlowLimit"] == 1
-            try
-                inputs_nw["EXPANSION_LINES_ASYM"] = findall((network_var.Asymmetrical.==1) .& ((inputs_nw["pMax_Line_Reinforcement"] .> 0) .| (inputs_nw["pMax_Line_Reinforcement_Neg"] .> 0)))
-            catch e
-                error("The asymmetrical transmission flow limit flag is active, but the Network.csv file does not contain the Asymmetrical column. Please add this column to the file.")
-            end
+            inputs_nw["ASYMMETRIC_EXPANSION_LINES"] = findall((network_var.Asymmetrical.==1) .& ((inputs_nw["pMax_Line_Reinforcement"] .> 0) .| (inputs_nw["pMax_Line_Reinforcement_Neg"] .> 0)))
         end
 
         inputs_nw["SYMMETRIC_EXPANSION_LINES"] = intersect(inputs_nw["SYMMETRIC_LINE_INDEX"], inputs_nw["EXPANSION_LINES"])

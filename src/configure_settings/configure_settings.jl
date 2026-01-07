@@ -40,7 +40,7 @@ function default_settings()
         "PoliciesFolder" => "policies",
         "ObjScale" => 1,
         "AsymmetricalTransFlowLimit" => 0
-        )
+    )
 end
 
 @doc raw"""
