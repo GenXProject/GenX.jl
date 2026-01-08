@@ -50,11 +50,13 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 
     if setup["ParameterScale"] == 1
         dfTransCap.New_Trans_Capacity *= ModelScalingFactor  # GW to MW
-        dfTransCap.New_Trans_Capacity_Pos *= ModelScalingFactor  # GW to MW
-        dfTransCap.New_Trans_Capacity_Neg *= ModelScalingFactor  # GW to MW
         dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
-        dfTransCap.Cost_Trans_Capacity_Pos *= ModelScalingFactor^2  # MUSD to USD
-        dfTransCap.Cost_Trans_Capacity_Neg *= ModelScalingFactor^2  # MUSD to USD
+        if L_asym > 0
+            dfTransCap.New_Trans_Capacity_Pos *= ModelScalingFactor  # GW to MW
+            dfTransCap.New_Trans_Capacity_Neg *= ModelScalingFactor  # GW to MW
+            dfTransCap.Cost_Trans_Capacity_Pos *= ModelScalingFactor^2  # MUSD to USD
+            dfTransCap.Cost_Trans_Capacity_Neg *= ModelScalingFactor^2  # MUSD to USD
+        end
     end
 
     CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)

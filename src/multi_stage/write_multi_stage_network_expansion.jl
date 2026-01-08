@@ -24,8 +24,13 @@ function write_multi_stage_network_expansion(outpath::String, settings_d::Dict)
     # Store new transmission capacities for all stages
     for p in 1:num_stages
         df_trans_cap[!, Symbol("New_Trans_Capacity_p$p")] = trans_capacities_d[p][!, :New_Trans_Capacity]
-        df_trans_cap[!, Symbol("New_Trans_Capacity_Pos_p$p")] = trans_capacities_d[p][!, :New_Trans_Capacity_Pos]
-        df_trans_cap[!, Symbol("New_Trans_Capacity_Neg_p$p")] = trans_capacities_d[p][!, :New_Trans_Capacity_Neg]
+        # Handle asymmetric transmission flow limit case
+        if hasproperty(trans_capacities_d[p], :New_Trans_Capacity_Pos)
+            df_trans_cap[!, Symbol("New_Trans_Capacity_Pos_p$p")] = trans_capacities_d[p][!, :New_Trans_Capacity_Pos]
+        end
+        if hasproperty(trans_capacities_d[p], :New_Trans_Capacity_Neg)
+            df_trans_cap[!, Symbol("New_Trans_Capacity_Neg_p$p")] = trans_capacities_d[p][!, :New_Trans_Capacity_Neg]
+        end
     end
 
     CSV.write(joinpath(outpath, "network_expansion_multi_stage.csv"), df_trans_cap)
