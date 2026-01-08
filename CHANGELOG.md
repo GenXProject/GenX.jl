@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed default value of parameter scaling to 1 (#866)
+- Deprecate HYDRO `min_power` in favour of `min_flow` (#864).
 
 ## [0.4.5] - 2025-07-07
 
