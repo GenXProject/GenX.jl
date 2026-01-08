@@ -19,8 +19,8 @@ Power flow, $\Phi_{l,t}$, on each line (or more likely a `path' aggregating flow
 equal to the line's power transfer capacity, $\varphi^{cap}_{l}$, plus any transmission capacity added on that line (for lines eligible for expansion 
 in the set $\mathcal{E}$). The additional transmission capacity, $\bigtriangleup\varphi^{cap}_{l} $, is constrained by a maximum allowed 
 reinforcement, $\overline{\bigtriangleup\varphi^{cap}_{l}}$, for each line $l \in \mathcal{E}$. For asymmetric bidirectional lines, the capacity added
-in the two directions are considered separately and are denoted as $\varphi^{cap}_{l}^{+}$ and $\varphi^{cap}_{l}^{-}$, respectively, plus any any transmission
-capacity added, denoted by $\bigtriangleup\varphi^{cap}_{l}^{+}$ and $\bigtriangleup\varphi^{cap}_{l}^{-}$, respectively.
+in the two directions are considered separately and are denoted as $\varphi^{cap, +}_{l}$ and $\varphi^{cap, -}_{l}$, respectively, plus any any transmission
+capacity added, denoted by $\bigtriangleup\varphi^{cap, +}_{l}$ and $\bigtriangleup\varphi^{cap, -}_{l}$, respectively.
 ```math
 \begin{aligned}
 	% trasmission constraints
@@ -32,7 +32,7 @@ capacity added, denoted by $\bigtriangleup\varphi^{cap}_{l}^{+}$ and $\bigtriang
 ```math
 \begin{aligned}
 	% trasmission constraints
-	&-\varphi^{cap}_{l}^{-} \leq  \Phi_{l,t} \leq \varphi^{cap}_{l}^{+} , &\quad \forall l \in \mathcal{L_{asym}},\forall t  \in \mathcal{T}\\
+	&-\varphi^{cap, -}_{l} \leq  \Phi_{l,t} \leq \varphi^{cap, +}_{l} , &\quad \forall l \in \mathcal{L_{asym}},\forall t  \in \mathcal{T}\\
 \end{aligned}
 ```
 
@@ -73,7 +73,7 @@ If discrete unit commitment decisions are modeled, ``phantom losses'' can be obs
 where $TransON^{+}_{l,t}$ is a continuous variable, representing the product of the binary variable $ON^{+}_{l,t}$ and the expression, $\varphi^{cap}_{l}$. This product cannot be defined explicitly, since it will lead to a bilinear expression involving two variables. Instead, we enforce this definition via the Glover's Linearization as shown below (also referred McCormick Envelopes constraints for bilinear expressions, which is exact when one of the variables is binary).
 ```math
 \begin{aligned}
-	TransON^{+}_{l,t} \leq  (\overline{varphi^{cap}_{l}} + \overline{\bigtriangleup\varphi^{cap}_{l}}) \times TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
+	TransON^{+}_{l,t} \leq  (\overline{\varphi^{cap}_{l}} + \overline{\bigtriangleup\varphi^{cap}_{l}}) \times TransON^{+}_{l,t},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
 	TransON^{+}_{l,t} \leq  \varphi^{cap}_{l},  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
 	TransON^{+}_{l,t} \geq \varphi^{cap}_{l} - (\overline{\varphi^{cap}_{l}} + \overline{\bigtriangleup\varphi^{cap}_{l}}) \times(1- TransON^{+}_{l,t}),  &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T} \\
 \end{aligned}
