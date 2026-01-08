@@ -7,7 +7,6 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
     MultiStage = setup["MultiStage"]
 
     SYMMETRIC_LINE_INDEX = inputs["SYMMETRIC_LINE_INDEX"]
-    ASYMMETRIC_LINE_INDEX = inputs["ASYMMETRIC_LINE_INDEX"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
@@ -51,7 +50,11 @@ function write_nw_expansion(path::AbstractString, inputs::Dict, setup::Dict, EP:
 
     if setup["ParameterScale"] == 1
         dfTransCap.New_Trans_Capacity *= ModelScalingFactor  # GW to MW
+        dfTransCap.New_Trans_Capacity_Pos *= ModelScalingFactor  # GW to MW
+        dfTransCap.New_Trans_Capacity_Neg *= ModelScalingFactor  # GW to MW
         dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2  # MUSD to USD
+        dfTransCap.Cost_Trans_Capacity_Pos *= ModelScalingFactor^2  # MUSD to USD
+        dfTransCap.Cost_Trans_Capacity_Neg *= ModelScalingFactor^2  # MUSD to USD
     end
 
     CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
