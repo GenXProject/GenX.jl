@@ -24,3 +24,23 @@ It's also possible for GenX perform clustering separately from the optimization 
 |DemandWeight| Default = 1, a multiplier on demand columns to optionally prioritize better fits for demand profiles over resource capacity factor or fuel price profiles.|
 |WeightTotal |Default = 8760, the sum to which the relative weights of representative periods will be scaled.|
 |ClusterFuelPrices| Either 1 or 0, whether or not to use the fuel price time series in `Fuels_data.csv` in the clustering process. If 'no', this function will still write `Fuels_data.csv` in the TimeDomainReductionFolder with reshaped fuel prices based on the number and size of the representative periods but will not use the fuel price time series for selection of representative periods.|
+
+## Input File Hash Verification
+
+GenX automatically tracks changes to time-series input files and TDR settings to ensure that clustered data remains valid. When time-domain reduction is performed, GenX computes SHA256 hashes of the following files and stores them in `tdr_input_hashes.yml` within the TDR results folder:
+
+- `Demand_data.csv` (or `Load_data.csv`)
+- `Generators_variability.csv`
+- `Fuels_data.csv`
+- `time_domain_reduction_settings.yml`
+
+On subsequent runs, GenX checks these hashes against the current input files. If any file has changed, GenX will automatically re-run the time-domain reduction to ensure the clustered data reflects the updated inputs. This prevents users from accidentally using stale clustered data when input files or TDR settings have been modified.
+
+**Behavior:**
+- If the TDR results folder doesn't exist, GenX performs time-domain reduction
+- If the TDR results folder exists but the hash file is missing, GenX performs time-domain reduction
+- If the TDR results folder and hash file exist, GenX compares stored hashes with current input files:
+  - If hashes match, GenX uses the existing clustered data
+  - If any hash differs, GenX prints a message and re-runs time-domain reduction
+
+This feature is automatic and requires no user configuration. To force a re-run of time-domain reduction, simply delete the TDR results folder as before.
