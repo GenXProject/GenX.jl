@@ -1364,6 +1364,14 @@ function cluster_inputs(inpath,
                 end
                 YAML.write_file(joinpath(inpath, "inputs", Stage_Outfiles[per]["YAML"]),
                     myTDRsetup)
+                
+                ### Save hash file for input validation (once per stage)
+                if v
+                    println("Writing hash file for input validation...")
+                end
+                input_hashes = compute_tdr_input_hashes_multistage(inpath, mysetup, per)
+                stage_tdr_path = joinpath(inpath, "inputs", "inputs_p$per", TimeDomainReductionFolder)
+                save_tdr_hash_file(stage_tdr_path, input_hashes)
             end
 
         else
@@ -1511,6 +1519,14 @@ function cluster_inputs(inpath,
             YAML.write_file(
                 joinpath(inpath, "inputs", input_stage_directory, YAML_Outfile),
                 myTDRsetup)
+            
+            ### Save hash file for input validation
+            if v
+                println("Writing hash file for input validation...")
+            end
+            input_hashes = compute_tdr_input_hashes_multistage(inpath, mysetup, stage_id)
+            stage_tdr_path = joinpath(inpath, "inputs", input_stage_directory, TimeDomainReductionFolder)
+            save_tdr_hash_file(stage_tdr_path, input_hashes)
         end
     else
         if v
@@ -1623,6 +1639,13 @@ function cluster_inputs(inpath,
             println("Writing .yml settings...")
         end
         YAML.write_file(joinpath(inpath, YAML_Outfile), myTDRsetup)
+        
+        ### Save hash file for input validation
+        if v
+            println("Writing hash file for input validation...")
+        end
+        input_hashes = compute_tdr_input_hashes(inpath, mysetup)
+        save_tdr_hash_file(joinpath(inpath, TimeDomainReductionFolder), input_hashes)
     end
 
     return Dict("OutputDF" => FinalOutputData,

@@ -38,6 +38,7 @@ using RecursiveArrayTools
 using Statistics
 using HiGHS
 using Logging
+using SHA
 
 using PrecompileTools: @compile_workload
 
@@ -72,6 +73,7 @@ include_all_in_folder("load_inputs")
 include_all_in_folder("model")
 include_all_in_folder("write_outputs")
 
+include("time_domain_reduction/tdr_hash_utils.jl")
 include("time_domain_reduction/time_domain_reduction.jl")
 include("time_domain_reduction/precluster.jl")
 include("time_domain_reduction/full_time_series_reconstruction.jl")

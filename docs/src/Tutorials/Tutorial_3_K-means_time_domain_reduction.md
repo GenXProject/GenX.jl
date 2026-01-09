@@ -5,6 +5,9 @@
 
 A good tool to reduce computation time of GenX is to use [Time-domain reduction](@ref). Time-domain Reduction is a method that selects a smaller set of time steps from the data in a way that reduces computation time while still capturing the main information of the model. In this tutorial, we go over how TDR works in GenX and how it uses K-means clustering to choose the optimal time steps. For more information on TDR in capacity expansion models, see [Mallapragada et al](https://www.sciencedirect.com/science/article/pii/S0360544218315238).
 
+!!! note "Automatic Input File Validation"
+    GenX automatically tracks changes to time-series input files and TDR settings. When time-domain reduction is performed, GenX saves SHA256 hashes of the input files. On subsequent runs, if any input file or TDR setting has changed, GenX will automatically re-run the time-domain reduction to ensure clustered data remains valid. This prevents accidentally using stale clustered data when inputs have been modified. For more details, see the [Time-domain reduction](@ref) documentation.
+
 ### Table of Contents
 * [Time Domain Reduction](#TDR)
 * [K-Means Clustering](#Kmeans)
