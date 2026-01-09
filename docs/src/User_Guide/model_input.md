@@ -30,7 +30,8 @@ Additionally, the user may need to specify eight more **settings-specific** inpu
 7. Vre\_and\_stor\_solar\_variability.csv: specify time-series of capacity factor/availability for each solar PV resource that exists for every co-located VRE and storage resource (in DC terms).
 8. Vre\_and\_stor\_wind\_variability.csv: specify time-series of capacity factor/availability for each wind resource that exists for every co-located VRE and storage resource (in AC terms).
 9. Hydrogen\_demand.csv: specify regional hydrogen production requirements.
-
+10. Hourly\_matching\_requirement.csv: specify hourly matching policies requiring minimum generation from qualifying resources in each model timestep. The second row specifies the hourly matching target percentage for each hourly matching constraint, and the remaining rows specify the participating demand to be matched in each timestep.
+11. Hourly\_matching\_requirement\_zonal.csv: Optional. Specify demand participating in hourly matching requirements as a fraction of total demand in each model region.
 
 !!! note "Note"
     Names of the input files are case sensitive.
@@ -353,9 +354,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Hydrogen\_Price\_Per\_Tonne| Price (or value) of hydrogen per metric tonne (USD/t)|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`.|
 |Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
-|Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
-!!! note
-    Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
+|Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.
 
 Each co-located VRE, electrolyzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
 ##### Table 12a: Additional columns in the Vre_stor.csv file
@@ -536,7 +535,7 @@ In addition to the files described above, the `resources` folder contains a fold
 3) `Resource_maximum_capacity_requirement.csv`
 4) `Resource_capacity_reserve_margin.csv`
 5) `Resource_hydrogen_demand.csv`
-6) `Resource_hourly_matching.csv`
+6) `Resource_hourly_matching_requirement.csv`
 
 !!! note
     These files are optional and can be omitted if no policy-related settings are specified in the `genx_settings.yml` file. Also, not all the resources need to be included in these files, only those for which the policy applies.
@@ -605,14 +604,13 @@ This policy is applied when if `HydrogenMinimumProduction = 1` in the settings f
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
 |H2\_Demand\_*| Flag to indicate which resources are considered for the Hydrogen Demand constraint.|
 
-This policy is applied when if `HourlyMatching = 1` in the settings file.
 
-##### Table 19: Hourly matching policy parameters in Resource\_hourly\_matching.csv
+##### Table 19: Hourly matching policy parameters in Resource\_hourly\_matching\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|Qualified\_Supply| Flag to indicate which resources are eligible to supply the generation in the same zone.|
+|HM\_*| Flag to indicate which resources are eligible to contribute toward a given hourly matching constraint.|
 
 ##### Additional module-related columns for all resources
 In addition to the files described above, the `resources` folder can contain additional files that are used to specify attributes for specific resources and modules. Currently, the following files are supported:

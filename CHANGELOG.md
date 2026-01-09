@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- A generalized hourly matching policy module (#855).
+
+### Fixed
+- Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+
 ## [0.4.6] - 2026-01-06
 
 ### Fixed

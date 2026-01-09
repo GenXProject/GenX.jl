@@ -50,14 +50,10 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Hourly Matching Policy
-    if setup["HourlyMatching"] == 1
-        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
-        QUALIFIED_SUPPLY_BY_ZONE = map(1:Z) do z
-            return intersect(QUALIFIED_SUPPLY, resources_in_zone_by_rid(gen, z))
-        end
-        @expression(EP, eHMDischarge[t = 1:T, z = 1:Z],
-            sum(EP[:vP][y, t]
-            for y in QUALIFIED_SUPPLY_BY_ZONE[z]))
+    if setup["HourlyMatchingRequirement"] == 1
+        @expression(EP, eHMDischarge[t = 1:T, HM = 1:inputs["nHM"]],
+            sum(hm(gen[y], tag = HM) * EP[:vP][y, t]
+            for y in ids_with_policy(gen, hm, tag = HM)))
         add_similar_to_expression!(EP[:eHM], eHMDischarge)
     end
 end

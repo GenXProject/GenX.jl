@@ -35,6 +35,12 @@ Slack variables for Energy Share Requirement constraints are created when GenX d
 This file should contain two columns: one titled 'ESR_Constraint' naming the individual Energy Share Requirement constraints in the same order in which they are listed in the first row of `Energy_share_requirement.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 
 The units for these thresholds are USD/MWh.
 
+## Hourly Matching Requirement
+
+Slack variables for Hourly Matching Requirement constraints are created when GenX detects the presence of the file `Hourly_matching_requirement_slack.csv` in the Inputs folder. 
+This file should contain two columns: one titled 'HM_Constraint' naming the individual Hourly Matching Requirement constraints in the same order in which they are listed in the first row of `Hourly_matching_requirement.csv`, and a second titled 'PriceCap' containing the price thresholds for each constraint. 
+The units for these thresholds are USD/MWh.
+
 ## Minimum Capacity Requirement
 
 Slack variables for Minimum Capacity Requirement constraints are created when GenX detects the presence of a column titled 'PriceCap' in the file `Minimum_capacity_requirement.csv`. 
@@ -48,8 +54,10 @@ This column contains the price thresholds for each Maximum Capacity Requirement 
 ## Slack Variables Results Files
 
 By default, a policy type's result files include the shadow prices for each policy constraint. 
-When slack variables are activated, outputs also include the final values of the slack variables (i.e. the amount by which the policy constraint was violated), and the total costs associated with those slack variables. 
+When slack variables are activated for policies that do not create constraints in each timestep (all except Capacity Reserve Margin and Hourly Matching), these outputs also include the final values of the slack variables (i.e. the amount by which the policy constraint was violated), and the total costs associated with those slack variables. 
 These files are named using the convention `X_prices_and_penalties.csv`, where `X` is the name of the relevant policy type.
+
+For Capacity Reserve Margin and Hourly Matching constraints, which have slack variables for each timestep, GenX will create a separate output file using the naming convention `X_slack_and_penalties.csv`, where `X` is the name of the relevant policy type.
 
 GenX will also print the total cost associated with each activated slack variable type in the file `costs.csv`.
 

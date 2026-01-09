@@ -642,10 +642,6 @@ function hydro_energy_to_power_ratio(r::AbstractResource)
     get(r, :hydro_energy_to_power_ratio, default_zero)
 end
 
-function qualified_hydrogen_supply(r::AbstractResource)
-    get(r, :qualified_hydrogen_supply, default_zero)
-end
-
 retrofit_id(r::AbstractResource)::String = get(r, :retrofit_id, "None")
 function retrofit_efficiency(r::AbstractResource)
     is_retrofit_option(r) && return get(r, :retrofit_efficiency, 1.0)
@@ -723,8 +719,8 @@ ramp_up_fraction(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
 ramp_down_fraction(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)
 
 # Retirement - Multistage
-lifetime(r::Storage) = get(r, :lifetime, 15)
-lifetime(r::AbstractResource) = get(r, :lifetime, 30)
+lifetime(r::Storage)::Int64 = get(r, :lifetime, 15)
+lifetime(r::AbstractResource)::Int64 = get(r, :lifetime, 30)
 capital_recovery_period(r::Storage) = get(r, :capital_recovery_period, 15)
 capital_recovery_period(r::AbstractResource) = get(r, :capital_recovery_period, 30)
 tech_wacc(r::AbstractResource) = get(r, :wacc, default_zero)
@@ -744,13 +740,11 @@ mga(r::AbstractResource) = get(r, :mga, default_zero)
 
 # policies
 esr(r::AbstractResource; tag::Int64) = get(r, Symbol("esr_$tag"), default_zero)
+hm(r::AbstractResource; tag::Int64) = get(r, Symbol("hm_$tag"), default_zero)
 min_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_$tag"), default_zero)
 max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), default_zero)
 function derating_factor(r::AbstractResource; tag::Int64)
     get(r, Symbol("derating_factor_$tag"), default_zero)
-end
-function qualified_supply(r::AbstractResource; tag::Int64)
-    get(r, Symbol("qualified_supply_$tag"), default_zero)
 end
 
 # write_outputs

@@ -9,6 +9,7 @@ function write_net_revenue(path::AbstractString,
         EP::Model,
         dfCap::DataFrame,
         dfESRRev::DataFrame,
+        dfHMRevenue::DataFrame,
         dfResRevenue::DataFrame,
         dfChargingcost::DataFrame,
         dfPower::DataFrame,
@@ -203,7 +204,7 @@ function write_net_revenue(path::AbstractString,
         dfNetRevenue.SubsidyRevenue = dfSubRevenue[1:G, :SubsidyRevenue] # Unit is confirmed to be US$
     end
 
-    # Add energy and subsidy revenue to the dataframe
+    # Add operating reserves revenue to the dataframe
     dfNetRevenue.OperatingReserveRevenue = zeros(nrow(dfNetRevenue))
     dfNetRevenue.OperatingRegulationRevenue = zeros(nrow(dfNetRevenue))
     if setup["OperationalReserves"] > 0 && has_duals(EP)
@@ -221,6 +222,12 @@ function write_net_revenue(path::AbstractString,
     dfNetRevenue.ESRRevenue = zeros(nrow(dfNetRevenue))
     if setup["EnergyShareRequirement"] > 0 && has_duals(EP) # The unit is confirmed to be $
         dfNetRevenue.ESRRevenue = dfESRRev[1:G, :Total]
+    end
+
+    # Add hourly matching revenue to the dataframe
+    dfNetRevenue.HMRevenue = zeros(nrow(dfNetRevenue))
+    if setup["HourlyMatchingRequirement"] > 0 && has_duals(EP) # The unit is confirmed to be $
+        dfNetRevenue.HMRevenue = dfHMRevenue[1:G, :AnnualSum]
     end
 
     # Calculate emissions cost
@@ -259,13 +266,14 @@ function write_net_revenue(path::AbstractString,
         dfNetRevenue.RegSubsidyRevenue = dfRegSubRevenue[1:G, :SubsidyRevenue]
     end
 
-    dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue
-    .+dfNetRevenue.SubsidyRevenue
-    .+dfNetRevenue.ReserveMarginRevenue
-    .+dfNetRevenue.ESRRevenue
-    .+dfNetRevenue.RegSubsidyRevenue
-    .+dfNetRevenue.OperatingReserveRevenue
-    .+dfNetRevenue.OperatingRegulationRevenue
+    dfNetRevenue.Revenue = (dfNetRevenue.EnergyRevenue .+
+                            dfNetRevenue.SubsidyRevenue .+
+                            dfNetRevenue.ReserveMarginRevenue .+
+                            dfNetRevenue.ESRRevenue .+
+                            dfNetRevenue.HMRevenue .+
+                            dfNetRevenue.RegSubsidyRevenue .+
+                            dfNetRevenue.OperatingReserveRevenue .+
+                            dfNetRevenue.OperatingRegulationRevenue)
 
     dfNetRevenue.Cost = (dfNetRevenue.Inv_cost_MW .+
                          dfNetRevenue.Inv_cost_MWh .+

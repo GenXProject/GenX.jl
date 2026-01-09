@@ -17,6 +17,7 @@ $z \in \mathcal{Z}$ | where $z$ denotes a zone and $\mathcal{Z}$ is the set of z
 |$\mathcal{VRE} \subseteq \mathcal{G}$ | where $\mathcal{VRE}$ is the subset of curtailable Variable Renewable Energy (VRE) resources|
 |$\overline{\mathcal{VRE}}^{y,z}$ | set of VRE resource bins for VRE technology type $y \in \mathcal{VRE}$ in zone $z$ |
 |$\mathcal{CE} \subseteq \mathcal{G}$ | where $\mathcal{CE}$ is the subset of resources qualifying for the clean energy standard policy constraint|
+|$\mathcal{HM} \subseteq \mathcal{G}$ | where $\mathcal{HM}$ is the subset of resources qualifying for the hourly matching policy constraint|
 |$\mathcal{UC} \subseteq \mathcal{H}$ | where $\mathcal{UC}$ is the subset of thermal resources subject to unit commitment constraints|
 |$s \in \mathcal{S}$ | where $s$ denotes a segment and $\mathcal{S}$ is the set of consumers segments for price-responsive demand curtailment|
 |$\mathcal{O} \subseteq \mathcal{G}$ | where $\mathcal{O}$ is the subset of storage resources excluding heat storage and hydro storage |
@@ -151,7 +152,6 @@ $\mathcal{W} \subseteq \mathcal{G}$ | where $\mathcal{W}$ set of hydroelectric g
 |$\Pi^{CRM,ac}_{y,z,t} \in \mathbb{R}_+$ | "Virtual" energy withdrawn by a storage AC component from the grid by technology $y$ at time step $t$ in zone $z$ - only applicable for co-located VRE and storage resources with activated capacity reserve margin policies, $y \in \mathcal{VS}^{stor}$ \[MWh]|
 |$\Gamma^{CRM}_{y,z,t} \in \mathbb{R}_+$ | Total "virtual" state of charge being held in reserves for technology $y$ at time step $t$ in zone $z$ - only applicable for standalone storage and co-located VRE and storage resources with activated capacity reserve margin policies, $y \in \mathcal{O} \cup y \in \mathcal{VS}^{stor}$ \[MWh]|
 ---
-
 
 ## Parameters
 ---

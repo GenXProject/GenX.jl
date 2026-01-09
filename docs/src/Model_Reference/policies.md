@@ -32,7 +32,7 @@ GenX.hydrogen_demand!
 ```
 
 ## Hourly clean supply matching constraint
-```@autodocs
-Modules = [GenX]
-Pages = ["hourly_matching.jl"]
+```@docs
+GenX.load_hourly_matching_requirement!
+GenX.hourly_matching!
 ```
