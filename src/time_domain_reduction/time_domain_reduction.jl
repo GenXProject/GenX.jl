@@ -1369,9 +1369,8 @@ function cluster_inputs(inpath,
                 if v
                     println("Writing hash file for input validation...")
                 end
-                stage_case_path = joinpath(inpath, "inputs", "inputs_p$per")
-                input_hashes = compute_tdr_input_hashes(stage_case_path, mysetup)
-                stage_tdr_path = joinpath(stage_case_path, TimeDomainReductionFolder)
+                input_hashes = compute_tdr_input_hashes_multistage(inpath, mysetup, per)
+                stage_tdr_path = joinpath(inpath, "inputs", "inputs_p$per", TimeDomainReductionFolder)
                 save_tdr_hash_file(stage_tdr_path, input_hashes)
             end
 
@@ -1525,9 +1524,8 @@ function cluster_inputs(inpath,
             if v
                 println("Writing hash file for input validation...")
             end
-            stage_case_path = joinpath(inpath, "inputs", input_stage_directory)
-            input_hashes = compute_tdr_input_hashes(stage_case_path, mysetup)
-            stage_tdr_path = joinpath(stage_case_path, TimeDomainReductionFolder)
+            input_hashes = compute_tdr_input_hashes_multistage(inpath, mysetup, stage_id)
+            stage_tdr_path = joinpath(inpath, "inputs", input_stage_directory, TimeDomainReductionFolder)
             save_tdr_hash_file(stage_tdr_path, input_hashes)
         end
     else

@@ -175,6 +175,40 @@ function compute_tdr_input_hashes(case_path::AbstractString, setup::Dict)
 end
 
 @doc raw"""
+    compute_tdr_input_hashes_multistage(case_path::AbstractString, setup::Dict, stage_id::Int)
+
+Compute hashes for all TDR input files in a multi-stage planning stage.
+
+# Arguments
+- `case_path::AbstractString`: Path to the case directory
+- `setup::Dict`: GenX settings dictionary
+- `stage_id::Int`: Stage identifier for multi-stage problems
+
+# Returns
+- Dict{String, String}: Dictionary mapping file keys to their hash values
+
+# Example
+```julia
+hashes = compute_tdr_input_hashes_multistage("/path/to/case", setup, 1)
+```
+"""
+function compute_tdr_input_hashes_multistage(case_path::AbstractString, 
+                                             setup::Dict, 
+                                             stage_id::Int)
+    files = get_tdr_input_files_multistage(case_path, setup, stage_id)
+    hashes = Dict{String, String}()
+    
+    for (key, filepath) in files
+        hash = compute_file_hash(filepath)
+        if !isnothing(hash)
+            hashes[key] = hash
+        end
+    end
+    
+    return hashes
+end
+
+@doc raw"""
     save_tdr_hash_file(tdr_results_path::AbstractString, hashes::Dict)
 
 Save computed hashes to a YAML file in the TDR_Results folder.
