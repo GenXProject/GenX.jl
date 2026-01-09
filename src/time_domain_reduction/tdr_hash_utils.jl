@@ -12,7 +12,8 @@ using Dates
 @doc raw"""
     compute_file_hash(filepath::AbstractString)
 
-Compute SHA256 hash of a file.
+Compute SHA256 hash of a file. Works with both text files (CSV, YAML) 
+and binary files (Parquet, gzipped files).
 
 # Arguments
 - `filepath::AbstractString`: Path to the file to hash
@@ -23,15 +24,16 @@ Compute SHA256 hash of a file.
 # Example
 ```julia
 hash = compute_file_hash("path/to/file.csv")
+hash_parquet = compute_file_hash("path/to/file.parquet")
+hash_gzip = compute_file_hash("path/to/file.csv.gz")
 ```
 """
 function compute_file_hash(filepath::AbstractString)
     if !isfile(filepath)
         return nothing
     end
-    open(filepath, "r") do file
-        return bytes2hex(sha256(file))
-    end
+    # Read file in binary mode to handle both text and binary files (parquet, gzip, etc.)
+    return bytes2hex(sha256(read(filepath)))
 end
 
 @doc raw"""
