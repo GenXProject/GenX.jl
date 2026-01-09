@@ -83,6 +83,10 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
     regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
 
+    # precompute min flow values for all hydro resources for efficiency
+    # Note: this will print the deprecation warning only once for each resource
+    min_flow_values = map(y -> min_flow(gen[y]), HYDRO_RES)
+
     if setup["OperationalReserves"] > 0
         HYDRO_RES_REG = intersect(HYDRO_RES, inputs["REG"]) # Set of reservoir hydro resources with regulation reserves
         HYDRO_RES_RSV = intersect(HYDRO_RES, inputs["RSV"]) # Set of reservoir hydro resources with spinning reserves
@@ -160,7 +164,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
             ramp_down_fraction(gen[y]) * EP[:eTotalCap][y]
             # Minimum streamflow running requirements (power generation and spills must be >= min value) in all hours
             cHydroMinFlow[y in HYDRO_RES, t in 1:T],
-            EP[:vP][y, t] + EP[:vSPILL][y, t] >= min_power(gen[y]) * EP[:eTotalCap][y]
+            EP[:vP][y, t] + EP[:vSPILL][y, t] >= min_flow_values[y] * EP[:eTotalCap][y]
             # DEV NOTE: When creating new hydro inputs, should rename Min_Power with Min_flow or similar for clarity since this includes spilled water as well
 
             # Maximum discharging rate must be less than power rating OR available stored energy at start of hour, whichever is less

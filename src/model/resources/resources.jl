@@ -713,8 +713,8 @@ function efficiency_down(r::T) where {T <: Union{Hydro, Storage}}
 end
 
 # Ramp up and down
+min_power(r::Union{Electrolyzer, Thermal}) = get(r, :min_power, default_zero)
 const VarPower = Union{Electrolyzer, Hydro, Thermal}
-min_power(r::VarPower) = get(r, :min_power, default_zero)
 ramp_up_fraction(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
 ramp_down_fraction(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)
 
@@ -847,6 +847,26 @@ end
 Returns the indices of all hydro resources in the vector `rs`.
 """
 hydro(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, Hydro), rs)
+# deprecate min_power(r::Hydro) in favor of min_flow(r::Hydro)
+# TODO: remove this in the next breaking release
+function min_power(r::Hydro)
+    Base.depwarn("`min_power(r::Hydro)` is deprecated, use `min_flow(r::Hydro)` instead.", :min_power, force = true)
+    return get(r, :min_power, default_zero)
+end
+function min_flow(r::Hydro)
+    if haskey(r, :min_flow) && haskey(r, :min_power)
+        @warn "Both `min_flow` and `min_power` are defined for resource $(resource_name(r)). Using `min_flow`."
+        return r.min_flow
+    elseif haskey(r, :min_flow) 
+        return r.min_flow
+    # if only min_power is defined, use it and warn the user
+    elseif haskey(r, :min_power)
+        @warn "Column `min_power` is deprecated, column `min_flow` will replace it soon, please update your input data."
+        return r.min_power
+    else
+        return default_zero
+    end
+end
 
 # THERMAL interface
 """
