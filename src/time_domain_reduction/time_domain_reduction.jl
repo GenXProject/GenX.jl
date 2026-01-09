@@ -682,6 +682,11 @@ function cluster_inputs(inpath,
     Fuel_Outfile = joinpath(TimeDomainReductionFolder, "Fuels_data.csv")
     PMap_Outfile = joinpath(TimeDomainReductionFolder, "Period_map.csv")
     YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
+    
+    HourlyMatching = mysetup["HourlyMatchingRequirement"]
+    if HourlyMatching == 1
+        HM_Outfile = joinpath(TimeDomainReductionFolder, "Hourly_matching_requirement.csv")
+    end
 
     # Define a local version of the setup so that you can modify the mysetup["ParameterScale"] value to be zero in case it is 1
     mysetup_local = copy(mysetup)
@@ -1135,6 +1140,7 @@ function cluster_inputs(inpath,
     gvDFs = [] # Generators Variability DataFrames - Just Resource Profiles
     dmDFs = [] # Demand Profile DataFrames - Just Demand Profiles
     fpDFs = [] # Fuel Profile DataFrames - Just Fuel Profiles
+    hmDFs = [] # Hourly Matching DataFrames - Optional, if Hourly Matching is required
 
     for m in 1:NClusters
         rpDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
@@ -1182,11 +1188,21 @@ function cluster_inputs(inpath,
         push!(gvDFs, gvDF)
         push!(dmDFs, dmDF)
         push!(fpDFs, fpDF)
+
+        # Process Hourly Matching profiles if needed
+        if mysetup["HourlyMatchingRequirement"] == 1
+            hmDF = DataFrame(Dict(myinputs["HMCols"][i] => myinputs["dfHM_absolute"][(TimestepsPerRepPeriod * (M[m]-1) + 1):(TimestepsPerRepPeriod * M[m]), i] for i in 1:length(myinputs["HMCols"])))
+            push!(hmDFs, hmDF)
+        end
     end
     FinalOutputData = vcat(rpDFs...)  # For comparisons with input data to evaluate clustering process
     GVOutputData = vcat(gvDFs...)     # Generators Variability
     DMOutputData = vcat(dmDFs...)     # Demand Profiles
     FPOutputData = vcat(fpDFs...)     # Fuel Profiles
+
+    if mysetup["HourlyMatchingRequirement"] == 1
+        HMOutputData = vcat(hmDFs...)
+    end
 
     ##### Step 5: Evaluation
 
@@ -1243,6 +1259,9 @@ function cluster_inputs(inpath,
                 Stage_Outfiles[per]["Fuel"] = joinpath("inputs_p$per", Fuel_Outfile)
                 Stage_Outfiles[per]["PMap"] = joinpath("inputs_p$per", PMap_Outfile)
                 Stage_Outfiles[per]["YAML"] = joinpath("inputs_p$per", YAML_Outfile)
+                if mysetup["HourlyMatchingRequirement"] == 1
+                    Stage_Outfiles[per]["HM"] = joinpath("inputs_p$per", HM_Outfile)
+                end
                 if !isempty(inputs_dict[per]["VRE_STOR"])
                     Stage_Outfiles[per]["GSolar"] = joinpath("inputs_p$per",
                         SolarVar_Outfile)
@@ -1350,6 +1369,24 @@ function cluster_inputs(inpath,
                 end
                 CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["Fuel"]),
                     NewFuelOutput)
+
+                if mysetup["HourlyMatchingRequirement"] == 1
+                    hm_in = load_dataframe(joinpath(inpath,
+                        "inputs",
+                        "inputs_p$per",
+                        mysetup["PoliciesFolder"],
+                        "Hourly_matching_requirement.csv"))
+                    select!(hm_in, Not(:Time_Index))
+                    SepFirstRow = DataFrame(hm_in[1, :])
+                    NewHMOutput = vcat(SepFirstRow, HMOutputData)
+                    rename!(NewHMOutput, myinputs["HMCols"])
+                    insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
+                    if v
+                        println("Writing hourly matching profiles...")
+                    end
+                    CSV.write(joinpath(inpath,"inputs", Stage_Outfiles[per]["HM"]),
+                        NewHMOutput)
+                end
 
                 ### TDR_Results/Period_map.csv
                 if v
@@ -1497,6 +1534,28 @@ function cluster_inputs(inpath,
             CSV.write(joinpath(inpath, "inputs", input_stage_directory, Fuel_Outfile),
                 NewFuelOutput)
 
+            if mysetup["HourlyMatchingRequirement"] == 1
+                ### TDR_Results/HM_data.csv
+                hm_in = load_dataframe(joinpath(inpath,
+                    "inputs",
+                    input_stage_directory,
+                    mysetup["PoliciesFolder"],
+                    "Hourly_matching_requirement.csv"))
+                select!(hm_in, Not(:Time_Index))
+                SepFirstRow = DataFrame(hm_in[1, :])
+                NewHMOutput = vcat(SepFirstRow, HMOutputData)
+                rename!(NewHMOutput, myinputs["HMCols"])
+                insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
+                if v
+                    println("Writing hourly matching profiles...")
+                end
+                CSV.write(joinpath(inpath,
+                    "inputs",
+                    input_stage_directory,
+                    HM_Outfile),
+                    NewHMOutput)
+            end
+
             ### Period_map.csv
             if v
                 println("Writing period map...")
@@ -1611,6 +1670,22 @@ function cluster_inputs(inpath,
             println("Writing fuel profiles...")
         end
         CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
+
+        if mysetup["HourlyMatchingRequirement"] == 1
+            ### TDR_Results/HM_data.csv
+            hm_in = load_dataframe(joinpath(inpath,
+                mysetup["PoliciesFolder"],
+                "Hourly_matching_requirement.csv"))
+            select!(hm_in, Not(:Time_Index))
+            SepFirstRow = DataFrame(hm_in[1, :])
+            NewHMOutput = vcat(SepFirstRow, HMOutputData)
+            rename!(NewHMOutput, myinputs["HMCols"])
+            insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
+            if v
+                println("Writing hourly matching profiles...")
+            end
+            CSV.write(joinpath(inpath,HM_Outfile), NewHMOutput)
+        end
 
         ### TDR_Results/Period_map.csv
         if v

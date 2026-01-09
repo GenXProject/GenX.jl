@@ -9,7 +9,7 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     gen = inputs["RESOURCES"]
     CapacityReserveMargin = setup["CapacityReserveMargin"] > 0
-    HourlyMatching = setup["HourlyMatching"]
+    HourlyMatching = setup["HourlyMatchingRequirement"] > 0
 
     virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
 
@@ -23,7 +23,6 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
 
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
     INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-    QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
 
     hours_per_subperiod = inputs["hours_per_subperiod"] #total number of hours per subperiod
     weight = inputs["omega"]
@@ -138,12 +137,10 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         end)
 
     # Hourly matching constraints
-    if HourlyMatching == 1
-        QUALIFIED_STOR_ALL_BY_ZONE = map(1:Z) do z
-            return intersect(QUALIFIED_SUPPLY, STOR_ALL, resources_in_zone_by_rid(gen, z))
-        end
-        @expression(EP, eHMCharge[t = 1:T, z = 1:Z],
-            -sum(vCHARGE[y, t] for y in QUALIFIED_STOR_ALL_BY_ZONE[z]))
+    if HourlyMatching
+        @expression(EP, eHMCharge[t = 1:T, HM = 1:inputs["nHM"]],
+            -sum(hm(gen[y], tag = HM) * EP[:vCHARGE][y, t]
+            for y in intersect(ids_with_policy(gen, hm, tag = HM), STOR_ALL)))
         add_similar_to_expression!(EP[:eHM], eHMCharge)
     end
     ## Patrick Bryant's suggestion implementation - Start

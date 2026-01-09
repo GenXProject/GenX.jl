@@ -12,8 +12,7 @@ genx_setup = Dict("Trans_Loss_Segments" => 1,
     "UCommit" => 2,
     "StorageLosses" => 1,
     "ParameterScale" => 1,
-    "HourlyMatching" => 1,
-    "HydrogenHourlyMatching" => 1,
+    "HourlyMatchingRequirement" => 1,
     "HydrogenMinimumProduction" => 1
 )
 settings = GenX.default_settings()
@@ -33,8 +32,7 @@ optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
 
 # Test all the results
 ## Test loading functions and api for hourly matching constraint
-@test GenX.qualified_supply.(inputs["RESOURCES"], tag = 1) == [0, 1, 0, 0, 1, 0]
-@test inputs["QUALIFIED_SUPPLY"] == [2, 5]
+@test GenX.hm.(inputs["RESOURCES"], tag = 1) == [0, 1, 0, 0, 1, 1]
 
 ## Test the objective value
 test_result = @test obj_test≈obj_true atol=optimal_tol
