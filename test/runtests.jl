@@ -24,6 +24,10 @@ end
         include("test_time_domain_reduction.jl")
     end
 
+    @testset "TDR Hash Verification" begin
+        include("test_tdr_hash_verification.jl")
+    end
+
     @testset "Piecewise Fuel" begin
         include("test_piecewisefuel.jl")
     end

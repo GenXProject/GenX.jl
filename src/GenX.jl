@@ -38,6 +38,7 @@ using RecursiveArrayTools
 using Statistics
 using HiGHS
 using Logging
+using SHA
 
 using PrecompileTools: @compile_workload
 
