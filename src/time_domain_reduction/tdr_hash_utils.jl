@@ -6,6 +6,8 @@ used in Time Domain Reduction (TDR) to detect when input data has changed.
 """
 
 using SHA
+using YAML
+using Dates
 
 @doc raw"""
     compute_file_hash(filepath::AbstractString)
