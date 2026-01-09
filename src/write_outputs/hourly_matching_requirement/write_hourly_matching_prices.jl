@@ -2,10 +2,9 @@
 	write_hourly_matching_prices(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the shadow price of each hourly matching constraint in each timestep.
-    GenX will print this file only when an hourly matching requirement is modeled and the shadow price can be obtained form the solver.
-    Each column corresponds to an hourly matching constraint, and each row corresponds to a timestep.
+GenX will print this file only when an hourly matching requirement is modeled and the shadow price can be obtained form the solver.
+Each column corresponds to an hourly matching constraint, and each row corresponds to a timestep.
 """
-
 function write_hourly_matching_prices(path::AbstractString,
         inputs::Dict,
         setup::Dict,

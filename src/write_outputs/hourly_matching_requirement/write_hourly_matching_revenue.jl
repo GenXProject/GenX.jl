@@ -2,10 +2,10 @@
 	write_hourly_matching_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the hourly matching revenue earned by each generator listed in the input file.
-    GenX will print this file only when an hourly matching requirement is modeled and the shadow price can be obtained form the solver.
-    Each row corresponds to a generator, and each column starting from the is the total revenue from each hourly matching constraint.
-    The revenue is calculated as the net generation in each time step multiplied by the shadow price, and then the sum is taken over all modeled time steps.
-    The last column is the total revenue received from all hourly matching constraints.
+GenX will print this file only when an hourly matching requirement is modeled and the shadow price can be obtained form the solver.
+Each row corresponds to a generator, and each column starting from the is the total revenue from each hourly matching constraint.
+The revenue is calculated as the net generation in each time step multiplied by the shadow price, and then the sum is taken over all modeled time steps.
+The last column is the total revenue received from all hourly matching constraints.
 """
 function write_hourly_matching_revenue(path::AbstractString,
         inputs::Dict,
