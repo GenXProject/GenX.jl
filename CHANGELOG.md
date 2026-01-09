@@ -8,22 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- A generalized hourly matching policy module (#855).
+
+### Fixed
+- Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+
+### Changed
+- Changed default value of parameter scaling to 1 (#866)
+
+## [0.4.5] - 2025-07-07
+
+### Added
 - New resource type: Allam Cycle with Oxygen Storage (#772).
 - Caching of `derating_factor` to improve performance in model generation (#834).
 - Default option, `"EnableJuMPDirectMode"`, to build the model more efficiently.
 Models running with, non-default, solvers Cbc and Clp will fail unless
 `"EnableJuMPDirectMode"` is set to false (#835).
 - Improve `@expressions` performance by pre-processing sets (#815).
-- A generalized hourly matching policy module (#855).
 
 ### Fixed
 - Fix call to `get_retirement_stage` by casting `lifetime` to integer (#840).
 - Modify `storage_all.jl` to prevent micro-charging/discharging close to capacity (#836).
-- Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+- Got rid of brodcast operator src/write_outputs/capacity_reserve_margin/write_virtual_discharge.jl for preventing error with Julia 1.6 (#885)
 
 ### Changed
 - Replace `+=` and `-=` with `add_to_expression!` and `add_similar_to_expression!`
 in several modules to improve performance (#826).
+- Separate myopic logic and DDP logic in the GenX multi-stage code into distinct 
+functions (#810).
 
 ## [0.4.4] - 2025-02-04
 

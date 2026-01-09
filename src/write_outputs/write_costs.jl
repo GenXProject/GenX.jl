@@ -13,6 +13,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
     ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) :
                        inputs["ELECTROLYZER"]
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
 
     cost_list = [
         "cTotal",
@@ -286,6 +287,25 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                 tempHydrogenValue -= sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
             end
             tempCTotal += tempHydrogenValue
+        end
+
+        if !isempty(ALLAM_CYCLE_LOX)
+            Y_ZONE_ALLAM_CYCLE_LOX = resources_in_zone_by_rid(gen.AllamCycleLOX, z)
+            if !isempty(Y_ZONE_ALLAM_CYCLE_LOX)
+                # Fixed Costs
+                eCFix_Allam = sum(value.(EP[:eCFix_Allam_Plant][Y_ZONE_ALLAM_CYCLE_LOX]))
+                tempCFix += eCFix_Allam
+                # Variable Costs
+                eCVar_Allam = sum(value.(EP[:eCVar_Allam][Y_ZONE_ALLAM_CYCLE_LOX]))
+                tempCVar += eCVar_Allam
+                tempCTotal += eCFix_Allam + eCVar_Allam
+                if setup["UCommit"] >= 1 && !isempty(Y_ZONE_ALLAM_CYCLE_LOX)
+                    eCStart_Allam = sum(value.(EP[:eCStart_Allam][Y_ZONE_ALLAM_CYCLE_LOX, :])) +
+                                    sum(value.(EP[:ePlantCFuelStart][Y_ZONE_ALLAM_CYCLE_LOX, :]))
+                    tempCStart += eCStart_Allam
+                    tempCTotal += eCStart_Allam
+                end
+            end
         end
 
         tempCNSE = sum(value.(EP[:eCNSE][:, :, z]))

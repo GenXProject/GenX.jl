@@ -12,7 +12,7 @@ function default_settings()
         "VirtualChargeDischargeCost" => 1,  # $/MWh
         "MinCapReq" => 0,
         "MaxCapReq" => 0,
-        "ParameterScale" => 0,
+        "ParameterScale" => 1,
         "WriteShadowPrices" => 0,
         "UCommit" => 0,
         "TimeDomainReduction" => 0,

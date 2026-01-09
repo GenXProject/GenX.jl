@@ -10,6 +10,7 @@ test_path = "DCOPF"
 # Define test inputs
 genx_setup = Dict("Trans_Loss_Segments" => 0,
     "StorageLosses" => 0,
+    "ParameterScale" => 0,
     "DC_OPF" => 1)
 
 # Run the case and get the objective value and tolerance
