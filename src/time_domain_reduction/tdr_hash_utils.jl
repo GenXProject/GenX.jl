@@ -232,6 +232,10 @@ function load_tdr_hash_file(tdr_results_path::AbstractString)
     
     try
         hash_data = YAML.load_file(hash_file_path)
+        if !haskey(hash_data, "file_hashes")
+            @warn "TDR hash file missing 'file_hashes' key"
+            return nothing
+        end
         return hash_data["file_hashes"]
     catch e
         @warn "Failed to load TDR hash file: $e"
