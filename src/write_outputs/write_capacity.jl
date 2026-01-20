@@ -1,7 +1,7 @@
 @doc raw"""
 	write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model))
 
-Function for writing the diferent capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
+Function for writing the different capacities for the different generation technologies (starting capacities or, existing capacities, retired capacities, and new-built capacities).
 """
 function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     gen = inputs["RESOURCES"]
@@ -49,8 +49,10 @@ function write_capacity(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
     end
 
     capacity_constraint_dual = zeros(size(inputs["RESOURCE_NAMES"]))
-    for y in ids_with_positive(gen, max_cap_mw)
-        capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
+    if has_duals(EP)
+        for y in ids_with_positive(gen, max_cap_mw)
+            capacity_constraint_dual[y] = -dual.(EP[:cMaxCap][y])
+        end
     end
 
     capcharge = zeros(size(inputs["RESOURCE_NAMES"]))
