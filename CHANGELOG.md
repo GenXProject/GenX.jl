@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
 `write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
 for implementing asymmetric bidirectional flows. (#789)
+### Added
+- A generalized hourly matching policy module (#855).
+
+### Fixed
+- Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+
+## [0.4.6] - 2026-01-06
+
+### Fixed
+
+- Got rid of brodcast operator in `src/write_outputs/capacity_reserve_margin/write_virtual_discharge.jl` for preventing error with Julia 1.6 (#885)
 
 ## [0.4.5] - 2025-07-07
 
@@ -26,8 +37,6 @@ Models running with, non-default, solvers Cbc and Clp will fail unless
 ### Fixed
 - Fix call to `get_retirement_stage` by casting `lifetime` to integer (#840).
 - Modify `storage_all.jl` to prevent micro-charging/discharging close to capacity (#836).
-- Got rid of brodcast operator src/write_outputs/capacity_reserve_margin/write_virtual_discharge.jl for preventing error with Julia 1.6 (#885)
-
 
 ### Changed
 - Replace `+=` and `-=` with `add_to_expression!` and `add_similar_to_expression!`

@@ -106,7 +106,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     end
 
     # Multi-Stage
-    if setup["MultiStage"] == 1
+    if setup["MultiStage"] == 1 
         # Weighted Average Cost of Capital for Transmission Expansion
         if setup["NetworkExpansion"] >= 1
             inputs_nw["transmission_WACC"] = to_floats(:WACC)
