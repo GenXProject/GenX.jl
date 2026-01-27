@@ -279,11 +279,10 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     # Hourly matching constraints
-    if setup["HourlyMatching"] == 1
-        QUALIFIED_SUPPLY = inputs["QUALIFIED_SUPPLY"]   # Resources that are qualified to contribute to hourly matching constraint
-        @expression(EP, eHMAllam[t = 1:T, z = 1:Z],
-            -sum(EP[:vCHARGE_ALLAM][y,t] 
-            for y in intersect(resources_in_zone_by_rid(gen,z), QUALIFIED_SUPPLY, ALLAM_CYCLE_LOX)))
+    if setup["HourlyMatchingRequirement"] == 1
+        @expression(EP, eHMAllam[t = 1:T, HM = 1:inputs["nHM"]],
+            -sum(hm(gen[y], tag = HM) * vCHARGE_ALLAM[y,t] 
+            for y in intersect(ids_with_policy(gen, hm, tag = HM), ALLAM_CYCLE_LOX)))
         add_similar_to_expression!(EP[:eHM], eHMAllam)
     end
 end

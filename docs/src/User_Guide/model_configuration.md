@@ -34,12 +34,6 @@ The following tables summarize the model settings parameters and their default/p
 |LDSAdditionalConstraints | Flag to activate additional constraints for long duration storage resources to prevent violation of SoC limits in non-representative periods.|
 ||1 = activate additional constraints.|
 ||0 = do not activate additional constraints.|
-|HourlyMatching| Constraint to match generation from clean sources with hourly consumption.|
-||1 = Constraint is active.|
-||0 = Constraint is not active.|
-|HydrogenHourlyMatching | Flag to allow hydrogen production to contribute to the hourly clean supply matching constraint.|
-||1 = Hydrogen production contributes to the hourly clean supply matching constraint.|
-||0 = Hydrogen production does not contribute to the hourly clean supply matching constraint.|
 
 ## 2. Solution strategy
 
@@ -87,6 +81,9 @@ The following tables summarize the model settings parameters and their default/p
 |HydrogenMinimumProduction | Hydrogen production requirements from electrolyzers.|
 |1 = Constraint is active.|
 ||0 = Constraint is not active.| 
+|HourlyMatchingRequirement| Constraint to match generation from clean sources with hourly consumption.|
+||1 = Constraint is active.|
+||0 = Constraint is not active.|
 
 ## 4. Network related
 
