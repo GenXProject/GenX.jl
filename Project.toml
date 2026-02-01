@@ -1,7 +1,7 @@
 name = "GenX"
 uuid = "5d317b1e-30ec-4ed6-a8ce-8d2d88d7cfac"
-authors = ["Bonaldo, Luca", "Chakrabarti, Sambuddha", "Cheng, Fangwei", "Ding, Yifu", "Jenkins, Jesse D.", "Luo, Qian", "Macdonald, Ruaridh", "Mallapragada, Dharik", "Manocha, Aneesha", "Mantegna, Gabe ", "Morris, Jack", "Patankar, Neha", "Pecci, Filippo", "Schwartz, Aaron", "Schwartz, Jacob", "Schivley, Greg", "Sepulveda, Nestor", "Xu, Qingyu", "Zhou, Justin"]
 version = "0.4.6"
+authors = ["Bonaldo, Luca", "Chakrabarti, Sambuddha", "Cheng, Fangwei", "Ding, Yifu", "Jenkins, Jesse D.", "Luo, Qian", "Macdonald, Ruaridh", "Mallapragada, Dharik", "Manocha, Aneesha", "Mantegna, Gabe ", "Morris, Jack", "Patankar, Neha", "Pecci, Filippo", "Schwartz, Aaron", "Schwartz, Jacob", "Schivley, Greg", "Sepulveda, Nestor", "Xu, Qingyu", "Zhou, Justin"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -36,7 +36,7 @@ HiGHS = "1.1.4"
 JuMP = "1.1.1"
 LinearAlgebra = "1"
 MathOptInterface = "1.6.1"
-NearestNeighbors = "0.4.0 - 0.4.22"
+NearestNeighbors = "0.4.0 - 0.4.22, 0.4"
 PrecompileTools = "1"
 RecursiveArrayTools = "2.31.2, 3"
 Statistics = "1.4.0"
