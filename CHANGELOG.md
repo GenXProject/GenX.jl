@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Hash-based validation of Time Domain Reduction (TDR) input files to automatically detect changes. GenX now stores SHA256 hashes of time series input files (`Demand_data.csv`, `Generators_variability.csv`, `Fuels_data.csv`) and TDR settings in `tdr_input_hashes.yml`. When TDR results exist, GenX compares stored hashes with current files and automatically re-runs TDR if any changes are detected, eliminating the need to manually delete the TDR_Results folder (#844).
+
 ## [0.4.5] - 2025-07-07
 
 ### Added
