@@ -188,7 +188,7 @@ GenX prioritizes **modularity and extensibility**. Each resource/policy module i
 - Add test file in `test/` matching `src/` structure
 - Use `@testset` blocks for organization
 - Include in `test/runtests.jl` if needed
-- Tests should be written as functions within each test file
+- Tests should be written as functions within each test file. Use the **test-writer** agent to create or modify tests.
 
 ### 4. PR Template Checklist
 Complete all items in `.github/PULL_REQUEST_TEMPLATE.md`:
