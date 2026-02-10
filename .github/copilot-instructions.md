@@ -198,11 +198,6 @@ Complete all items in `.github/PULL_REQUEST_TEMPLATE.md`:
 - [ ] CHANGELOG.md updated
 - [ ] GPL consent given
 
-### 5. Code Style Requirements
-- Run `JuliaFormatter.format("path", SciMLStyle())` before committing
-- CI will check style compliance
-- Format entire files, not just changed lines
-
 ### 6. Common PR Patterns
 
 #### Adding New Resource Type
