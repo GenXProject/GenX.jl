@@ -76,6 +76,19 @@ Test.@testset "Zero demand multiplier" begin
         1,
         1)
     Test.@test demand_mults[:Demand_MW_z1] == 1.0
+
+    input_data = DataFrames.DataFrame(Demand_MW_z1 = [1.0, 2.0])
+    cluster_output = DataFrames.DataFrame(Symbol(1) => [0.5, 0.5])
+    demand_mults = GenX.get_demand_multipliers(cluster_output,
+        input_data,
+        [1],
+        [2.0],
+        [:Demand_MW_z1],
+        2,
+        [:Demand_MW_z1, :GrpWeight],
+        1,
+        1)
+    Test.@test demand_mults[:Demand_MW_z1] == 3.0
 end
 
 end # module TestTDR
