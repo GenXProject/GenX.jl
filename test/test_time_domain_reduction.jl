@@ -92,6 +92,7 @@ Test.@testset "Zero demand multiplier" begin
         [:Demand_MW_z1, :GrpWeight],
         1,
         1)
+    # Mirror the demand multiplier formula to validate expected scaling.
     expected_multiplier = sum(input_data.Demand_MW_z1) /
                           ((weights[1] / timesteps) *
                            sum(cluster_output[!, Symbol(1)]))
