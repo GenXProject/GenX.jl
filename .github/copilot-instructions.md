@@ -44,7 +44,6 @@ GenX follows a **five-stage workflow** executed by `run_genx_case!()`:
 ## Development Conventions
 
 ### Style & Formatting
-- **Follow SciMLStyle**: Run `JuliaFormatter.format("path", SciMLStyle())` before commits
 - Use `CamelCase` for type names (e.g., `NewResource`), `snake_case` for functions/variables
 - Functions modifying model: `function_name!(EP::Model, ...)` (note the `!`)
 
