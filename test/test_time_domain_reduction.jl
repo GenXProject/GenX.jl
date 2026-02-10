@@ -78,7 +78,6 @@ Test.@testset "Zero demand multiplier" begin
         1,
         1)
     Test.@test demand_mults[:Demand_MW_z1] == 1.0
-    Test.@test !isnan(demand_mults[:Demand_MW_z1])
 
     input_data = DataFrames.DataFrame(Demand_MW_z1 = [1.0, 2.0])
     cluster_output = DataFrames.DataFrame(Symbol(1) => [0.5, 0.5])
