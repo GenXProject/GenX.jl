@@ -517,6 +517,7 @@ function get_demand_multipliers(ClusterOutputData,
         end
         if iszero(weighted_cluster_zone_sums[demandcol]) &&
            iszero(zone_sums[demandcol])
+            @debug "Zero demand detected; using neutral demand multiplier." demandcol
             demand_mults[demandcol] = 1.0
         else
             demand_mults[demandcol] = zone_sums[demandcol] /

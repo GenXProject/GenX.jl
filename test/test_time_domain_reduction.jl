@@ -66,12 +66,14 @@ end
 Test.@testset "Zero demand multiplier" begin
     input_data = DataFrames.DataFrame(Demand_MW_z1 = zeros(2))
     cluster_output = DataFrames.DataFrame(Symbol(1) => zeros(2))
+    weights = [2.0]
+    timesteps = 2
     demand_mults = GenX.get_demand_multipliers(cluster_output,
         input_data,
         [1],
-        [2.0],
+        weights,
         [:Demand_MW_z1],
-        2,
+        timesteps,
         [:Demand_MW_z1, :GrpWeight],
         1,
         1)
@@ -80,17 +82,20 @@ Test.@testset "Zero demand multiplier" begin
 
     input_data = DataFrames.DataFrame(Demand_MW_z1 = [1.0, 2.0])
     cluster_output = DataFrames.DataFrame(Symbol(1) => [0.5, 0.5])
+    weights = [2.0]
+    timesteps = 2
     demand_mults = GenX.get_demand_multipliers(cluster_output,
         input_data,
         [1],
-        [2.0],
+        weights,
         [:Demand_MW_z1],
-        2,
+        timesteps,
         [:Demand_MW_z1, :GrpWeight],
         1,
         1)
     expected_multiplier = sum(input_data.Demand_MW_z1) /
-                          ((2.0 / 2) * sum(cluster_output[!, Symbol(1)]))
+                          ((weights[1] / timesteps) *
+                           sum(cluster_output[!, Symbol(1)]))
     Test.@test demand_mults[:Demand_MW_z1] == expected_multiplier
 end
 
