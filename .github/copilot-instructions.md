@@ -57,7 +57,7 @@ GenX follows a **five-stage workflow** executed by `run_genx_case!()`:
 ### Adding New Resources
 1. Add type to `resource_types` in `src/model/resources/resources.jl`
 2. Add filename mapping in `_get_resource_info()` in `src/load_inputs/load_resources_data.jl`
-3. Create getter functions using `@interface` macro (e.g., `@interface(attribute_1, 0.0, NewResource)`)
+3. Create getter functions for resource attributes
 4. Add resource-specific constraints in `src/model/resources/new_resource/` folder
 5. Register module in `generate_model.jl` to call during model building
 
