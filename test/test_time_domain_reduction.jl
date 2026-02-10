@@ -63,7 +63,7 @@ for file in filter(endswith(".csv"), readdir(TDR_Results_true))
     Test.@test cmp_csv(joinpath(TDR_Results_test, file), joinpath(TDR_Results_true, file))
 end
 
-Test.@testset "Zero demand multiplier" begin
+Test.@testset "Demand multiplier edge cases" begin
     input_data = DataFrames.DataFrame(Demand_MW_z1 = zeros(2))
     cluster_output = DataFrames.DataFrame(Symbol(1) => zeros(2))
     weights = [2.0]
