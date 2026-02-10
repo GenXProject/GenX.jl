@@ -73,6 +73,7 @@ GenX follows a **five-stage workflow** executed by `run_genx_case!()`:
 ```julia
 using GenX
 run_genx_case!("path/to/case")  # Uses HiGHS by default
+using Gurobi
 run_genx_case!("path/to/case", Gurobi.Optimizer)  # With Gurobi
 ```
 
