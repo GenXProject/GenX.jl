@@ -515,8 +515,13 @@ function get_demand_multipliers(ClusterOutputData,
             weighted_cluster_zone_sums[demandcol] += (W[m] / (TimestepsPerRepPeriod)) *
                                                      cluster_zone_sums[m][demandcol]
         end
-        demand_mults[demandcol] = zone_sums[demandcol] /
-                                  weighted_cluster_zone_sums[demandcol]
+        if iszero(weighted_cluster_zone_sums[demandcol]) &&
+           iszero(zone_sums[demandcol])
+            demand_mults[demandcol] = 1.0
+        else
+            demand_mults[demandcol] = zone_sums[demandcol] /
+                                      weighted_cluster_zone_sums[demandcol]
+        end
         if v
             println(demandcol,
                 ": ",
