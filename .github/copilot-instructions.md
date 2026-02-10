@@ -81,7 +81,7 @@ run_genx_case!("path/to/case", Gurobi.Optimizer)  # With Gurobi
 ```
 case_folder/
 ├── resources/        # Resource input CSVs (Thermal.csv, Vre.csv, Storage.csv, etc.)
-├── system/           # System data (Load_data.csv, Generators_variability.csv, Fuels_data.csv)
+├── system/           # System data (Demand_data.csv, Generators_variability.csv, Fuels_data.csv)
 ├── policies/         # Policy constraints (CO2_cap.csv, Energy_share_requirement.csv, etc.)
 ├── settings/         # YAML configurations (genx_settings.yml, output_settings.yml)
 └── Run.jl           # Entry point
