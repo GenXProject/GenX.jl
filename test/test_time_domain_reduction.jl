@@ -76,6 +76,7 @@ Test.@testset "Zero demand multiplier" begin
         1,
         1)
     Test.@test demand_mults[:Demand_MW_z1] == 1.0
+    Test.@test !isnan(demand_mults[:Demand_MW_z1])
 
     input_data = DataFrames.DataFrame(Demand_MW_z1 = [1.0, 2.0])
     cluster_output = DataFrames.DataFrame(Symbol(1) => [0.5, 0.5])
@@ -88,7 +89,9 @@ Test.@testset "Zero demand multiplier" begin
         [:Demand_MW_z1, :GrpWeight],
         1,
         1)
-    Test.@test demand_mults[:Demand_MW_z1] == 3.0
+    expected_multiplier = sum(input_data.Demand_MW_z1) /
+                          ((2.0 / 2) * sum(cluster_output[!, Symbol(1)]))
+    Test.@test demand_mults[:Demand_MW_z1] == expected_multiplier
 end
 
 end # module TestTDR
