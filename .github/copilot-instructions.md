@@ -24,7 +24,7 @@ GenX follows a **five-stage workflow** executed by `run_genx_case!()`:
 - **`policies/`**: Policy constraints (CO2 caps, capacity reserve margins, energy share requirements, min/max capacity)
 
 ### Resource System
-**All resources inherit from `AbstractResource`** with automatic type generation. Key concepts:
+**All resources inherit from `AbstractResource`**. Key concepts:
 - Resource types defined in `resource_types` tuple: `:Thermal`, `:Vre`, `:Hydro`, `:Storage`, `:FlexDemand`, `:VreStorage`, `:Electrolyzer`, etc.
 - Input files auto-discovered via `load_resource_data.jl` (e.g., `Thermal.csv` → `Thermal` type)
 - **Each CSV row creates a resource instance**; columns become attributes
