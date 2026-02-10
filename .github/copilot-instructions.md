@@ -198,7 +198,7 @@ Complete all items in `.github/PULL_REQUEST_TEMPLATE.md`:
 - [ ] CHANGELOG.md updated
 - [ ] GPL consent given
 
-### 6. Common PR Patterns
+### 5. Common PR Patterns
 
 #### Adding New Resource Type
 1. Update `resource_types` in `src/model/resources/resources.jl`
