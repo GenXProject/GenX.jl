@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Changed default value of parameter scaling to 1 (#866)
+- Modified `transmission.jl`, `investment_transmission.jl`, `load_network_data.jl`, 
+`write_transmission_flows.jl`, `write_transmision_losses.jl`, and `write_network_expansion.jl`
+for implementing asymmetric bidirectional flows. (#789)
 ### Added
 - A generalized hourly matching policy module (#855).
 

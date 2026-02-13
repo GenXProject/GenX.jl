@@ -3,14 +3,25 @@ function write_transmission_losses(path::AbstractString,
         setup::Dict,
         EP::Model)
     T = inputs["T"]     # Number of time steps (hours)
-    L = inputs["L"]     # Number of transmission lines
-    LOSS_LINES = inputs["LOSS_LINES"]
+    L = inputs["L"]
+
+    ASYMMETRIC_LOSS_LINES = inputs["ASYMMETRIC_LOSS_LINES"] # Lines for which loss coefficients apply (are non-zero);
+
+    SYMMETRIC_LOSS_LINES=inputs["SYMMETRIC_LOSS_LINES"]
+
+
     # Power losses for transmission between zones at each time step
     dfTLosses = DataFrame(Line = 1:L)
     tlosses = zeros(L, T)
-    tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
+    if setup["AsymmetricalTransFlowLimit"] == 1
+        tlosses[ASYMMETRIC_LOSS_LINES, :] = value.(EP[:vTLOSS_ASYM][ASYMMETRIC_LOSS_LINES, :]) # Losses for asymmetrical lines
+    end
+    tlosses[SYMMETRIC_LOSS_LINES, :] = value.(EP[:vTLOSS][SYMMETRIC_LOSS_LINES, :]) # Losses for symmetrical lines
     if setup["ParameterScale"] == 1
-        tlosses[LOSS_LINES, :] *= ModelScalingFactor
+        if setup["AsymmetricalTransFlowLimit"] == 1
+            tlosses[ASYMMETRIC_LOSS_LINES, :] *= ModelScalingFactor
+        end
+        tlosses[SYMMETRIC_LOSS_LINES, :] *= ModelScalingFactor
     end
 
     dfTLosses.AnnualSum = tlosses * inputs["omega"]

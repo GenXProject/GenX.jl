@@ -29,6 +29,10 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
 
     if setup["NetworkExpansion"] == 1 && inputs["Z"] > 1
         start_cap_d[Symbol("eAvail_Trans_Cap")] = Symbol("cExistingTransCap")
+        if !isempty(inputs["ASYMMETRIC_LINE_INDEX"])
+            start_cap_d[Symbol("eAvail_Trans_Cap_Pos")] = Symbol("cExistingTransCapPos")
+            start_cap_d[Symbol("eAvail_Trans_Cap_Neg")] = Symbol("cExistingTransCapNeg")
+        end
     end
 
     if !isempty(inputs["VRE_STOR"])
@@ -336,12 +340,10 @@ function fix_initial_investments(EP_prev::Model,
     for (e, c) in start_cap_d
         for y in keys(EP_cur[c])
             # Set the right hand side value of the linking initial capacity constraint in the current stage to the value of the available capacity variable solved for in the previous stages
-            if c == :cExistingTransCap
+            if c == :cExistingTransCap || c == :cExistingTransCapPos || c == :cExistingTransCapNeg
                 set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-            else
-                if y[1] in ALL_CAP # extract resource integer index value from key
-                    set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
-                end
+            elseif y[1] in ALL_CAP # extract resource integer index value from key
+                set_normalized_rhs(EP_cur[c][y], value(EP_prev[e][y]))
             end
         end
     end

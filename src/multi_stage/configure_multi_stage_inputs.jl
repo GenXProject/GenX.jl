@@ -217,14 +217,27 @@ function configure_multi_stage_inputs(inputs_d::Dict,
         # Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment stage
         inputs_d["pTrans_Max_Possible"] = inputs_d["pLine_Max_Flow_Possible_MW"]
 
+        if haskey(inputs_d, "pLine_Max_Flow_Possible_Neg_MW")
+            inputs_d["pTrans_Max_Possible_Neg"] = inputs_d["pLine_Max_Flow_Possible_Neg_MW"]
+        end
+
         # Network lines and zones that are expandable have greater maximum possible line flow than the available capacity of the previous stage as well as available line reinforcement
-        inputs_d["EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .>
-                                               inputs_d["pTrans_Max"]) .&
+        inputs_d["EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .> inputs_d["pTrans_Max"]) .&
                                               (inputs_d["pMax_Line_Reinforcement"] .> 0))
-        inputs_d["NO_EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .<=
-                                                  inputs_d["pTrans_Max"]) .|
-                                                 (inputs_d["pMax_Line_Reinforcement"] .<=
-                                                  0))
+        inputs_d["NO_EXPANSION_LINES"] = findall((inputs_d["pLine_Max_Flow_Possible_MW"] .<= inputs_d["pTrans_Max"]) .|
+                                                 (inputs_d["pMax_Line_Reinforcement"] .<= 0))
+        
+        inputs_d["ASYMMETRIC_EXPANSION_LINES"] = []
+        if haskey(inputs_d, "pLine_Max_Flow_Possible_Neg_MW")
+            ASYMMETRIC_EXPANSION_LINES_POS = intersect(inputs_d["ASYMMETRIC_LINE_INDEX"], inputs_d["EXPANSION_LINES"])
+            EXPANSION_LINES_NEG = findall((inputs_d["pLine_Max_Flow_Possible_Neg_MW"] .> inputs_d["pTrans_Max_Neg"]) .&
+                                                     (inputs_d["pMax_Line_Reinforcement_Neg"] .> 0))
+            ASYMMETRIC_EXPANSION_LINES_NEG = intersect(inputs_d["ASYMMETRIC_LINE_INDEX"], EXPANSION_LINES_NEG)
+            inputs_d["ASYMMETRIC_EXPANSION_LINES"] = union(ASYMMETRIC_EXPANSION_LINES_POS, ASYMMETRIC_EXPANSION_LINES_NEG)
+        end
+
+        inputs_d["SYMMETRIC_EXPANSION_LINES"] = intersect(inputs_d["SYMMETRIC_LINE_INDEX"], inputs_d["EXPANSION_LINES"])
+
         # To-Do: Error Handling
         # 1.) Enforce that pLine_Max_Flow_Possible_MW for the first model stage be equal to (for transmission expansion to be disalowed) or greater (to allow transmission expansion) than pTrans_Max in inputs/inputs_p1
     end
