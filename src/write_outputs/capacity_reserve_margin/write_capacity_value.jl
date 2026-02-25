@@ -144,7 +144,7 @@ function write_capacity_value(path::AbstractString, inputs::Dict, setup::Dict, E
                         Symbol("Zone");
                         Symbol("Reserve");
                         [Symbol("t$t") for t in 1:T]]
-        rename!(temp_dfCapValue, auxNew_Names)
+        DataFrames.rename!(temp_dfCapValue, auxNew_Names)
         append!(dfCapValue, temp_dfCapValue)
     end
     write_simple_csv(joinpath(path, "CapacityValue.csv"), dfCapValue)

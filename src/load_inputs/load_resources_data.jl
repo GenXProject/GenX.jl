@@ -49,6 +49,24 @@ function _get_policyfile_info()
     return policyfile_info
 end
 
+function get_genx_type end 
+
+function get_genx_type(t::SupplyTechnology{PSY.ThermalStandard})
+    return GenX.Thermal
+end
+
+function get_genx_type(t::SupplyTechnology{PSY.RenewableDispatch})
+    return GenX.Vre
+end
+
+function get_genx_type(t::SupplyTechnology{PSY.RenewableNonDispatch})
+    return GenX.MustRun
+end
+
+function get_genx_type(t::StorageTechnology)
+    return GenX.Storage
+end
+
 """
     _get_summary_map()
 
@@ -111,6 +129,38 @@ function scale_resources_data!(resource_in::DataFrame, scale_factor::Float64)
     ]
 
     scale_columns!(resource_in, columns_to_scale, scale_factor)
+    return nothing
+end
+
+function scale_resources_data!(resource_in::Dict, scale_factor::Float64)
+    columns_to_scale = [:existing_charge_cap_mw,        # to GW
+        :existing_cap_mwh,              # to GWh
+        :existing_cap_mw,               # to GW
+        :cap_size,                      # to GW
+        :min_cap_mw,                    # to GW
+        :min_cap_mwh,                   # to GWh
+        :min_charge_cap_mw,             # to GWh
+        :max_cap_mw,                    # to GW
+        :max_cap_mwh,                   # to GWh
+        :max_charge_cap_mw,             # to GW
+        :inv_cost_per_mwyr,             # to $M/GW/yr
+        :inv_cost_per_mwhyr,            # to $M/GWh/yr
+        :inv_cost_charge_per_mwyr,      # to $M/GW/yr
+        :fixed_om_cost_per_mwyr,        # to $M/GW/yr
+        :fixed_om_cost_per_mwhyr,       # to $M/GWh/yr
+        :fixed_om_cost_charge_per_mwyr, # to $M/GW/yr
+        :var_om_cost_per_mwh,           # to $M/GWh
+        :var_om_cost_per_mwh_in,        # to $M/GWh
+        :reg_cost,                      # to $M/GW
+        :rsv_cost,                      # to $M/GW
+        :min_retired_cap_mw,            # to GW
+        :min_retired_charge_cap_mw,     # to GW
+        :min_retired_energy_cap_mw,     # to GW
+        :start_cost_per_mw,             # to $M/GW
+        :ccs_disposal_cost_per_metric_ton, :hydrogen_mwh_per_tonne       # to GWh/t
+    ]
+
+    scale_dict!(resource_in, columns_to_scale, scale_factor)
     return nothing
 end
 
@@ -257,6 +307,17 @@ function scale_columns!(df::DataFrame,
     return nothing
 end
 
+function scale_dict!(d::Dict,
+        keys_to_scale::Vector{Symbol},
+        scale_factor::Float64)
+    for key in keys_to_scale
+        if haskey(d, key)
+            d[key] /= scale_factor
+        end
+    end
+    return nothing
+end
+
 """
     load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
 
@@ -274,7 +335,7 @@ Function to load and scale the dataframe of a given resource.
 function load_resource_df(path::AbstractString, scale_factor::Float64, resource_type::Type)
     resource_in = load_dataframe(path)
     # rename columns lowercase for internal consistency
-    rename!(resource_in, lowercase.(names(resource_in)))
+    DataFrames.rename!(resource_in, lowercase.(names(resource_in)))
     scale_resources_data!(resource_in, scale_factor)
     # scale vre_stor columns if necessary
     resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor) 
@@ -347,6 +408,123 @@ function create_resources_sametype(resource_in::DataFrame, ResourceType)
     return resources
 end
 
+function default_resource_dict(p::Portfolio, t::ResourceTechnology, i = 1)
+    return Dict(
+        :resource => resource_name(t),
+        :zone => zone_id(region(t)[i]),
+        :new_build => Int(new_build(t)),
+        :can_retire => can_retire(t),
+        :existing_cap_mw => existing_cap_mw(p, t),
+        :retrofit => 0,   #TODO: set to zero for now
+        :retrofit_id => nothing,
+        :id => resource_id(t),
+        :region => region(t)[i],
+        :cluster => nothing,
+        :max_cap_mw => max_cap_mw(t),
+        :min_cap_mw => min_cap_mw(t),
+        :inv_cost_per_mwyr => inv_cost_per_mwyr(t),
+        :fixed_om_cost_per_mwyr => fixed_om_cost_per_mwyr(t),
+        :var_om_cost_per_mwh => var_om_cost_per_mwh(t)
+    )
+end
+
+function translate_resource_dict(p::Portfolio, t::SupplyTechnology{PSY.ThermalStandard}, i = 1)
+    default_attributes = default_resource_dict(p, t, i)
+    return merge(default_attributes,
+        Dict(
+            :model => 1,    #TODO: uc for now 
+            :heat_rate_mmbtu_per_mwh => heat_rate_mmbtu_per_mwh(t),
+            :cap_size => cap_size(t),
+            :min_power => min_power(t),
+            :ramp_up_percentage => ramp_up_fraction(t),
+            :ramp_dn_percentage => ramp_down_fraction(t),
+            :up_time => up_time(t),
+            :down_time => down_time(t),
+            :start_fuel_mmbtu_per_mw => start_fuel_mmbtu_per_mw(t),
+            :fuel_costs => fuel_costs(t),
+            :start_cost_per_mw => start_cost_per_mw(t)
+        )
+    )
+end
+
+function translate_resource_dict(p::Portfolio, s::StorageTechnology, i = 1)
+    default_attributes = default_resource_dict(p, s, i)
+    # a storage technology is asymmetric if:
+    #   1. has a charge cost (inv_cost_charge_per_mwyr > 0), or
+    #   2. has an existing charge capacity (existing_charge_cap_mw > 0)
+    model = (!isnothing(get_capital_costs_charge(s)) || !isnothing(existing_charge_cap_mw(s))) ? 2 : 1    # 1: symmetric, 2: asymmetric
+    return merge(default_attributes,
+        Dict(
+            :model => model,
+            :inv_cost_per_mwhyr => inv_cost_per_mwhyr(s),
+            # :inv_cost_charge_per_mwyr => inv_cost_charge_per_mwyr(s),
+            :fixed_om_cost_per_mwhyr => fixed_om_cost_per_mwhyr(s),
+            # :fixed_om_cost_charge_per_mwyr => fixed_om_cost_charge_per_mwyr(s),
+            :var_om_cost_per_mwh_in => var_om_cost_per_mwh_in(s),
+            :existing_cap_mwh => existing_cap_mwh(p, s),
+            # :existing_charge_cap_mw => existing_charge_cap_mw(s),
+            :max_cap_mwh => max_cap_mwh(s),
+            # :max_charge_cap_mw => max_charge_cap_mw(s),
+            :min_cap_mwh => min_cap_mwh(s),
+            # :min_charge_cap_mw => min_charge_cap_mw(s),
+            :eff_up => efficiency_up(s),
+            :eff_down => efficiency_down(s),
+            :min_duration => min_duration(s),
+            :max_duration => max_duration(s),
+            :self_disch => self_discharge(s)
+        )
+    )
+end
+
+function translate_resource_dict(p::Portfolio, t::SupplyTechnology{PSY.RenewableDispatch}, i = 1)
+    default_attributes = default_resource_dict(p, t, i)
+    return merge(default_attributes,
+        Dict(
+            :vre_bins => 1
+        )
+    )
+end
+
+function translate_resource_dict(p::Portfolio, t::SupplyTechnology{PSY.RenewableNonDispatch}, i = 1)
+    default_attributes = default_resource_dict(p, t, i)
+    return merge(default_attributes,
+        Dict(
+            :vre_bins => 1
+        )
+    )
+end
+
+"""
+    create_resources_sametype_from_portfolio(p::Portfolio, PortfolioType, scale_factor::Float64)
+
+This function takes a PSIP Portfolio and converts SupplyTechnologies and StorageTechnologies to an array of AbstractResource of the corresponding GenX ResourceTypes.
+
+# Arguments
+- `p::Portfolio`: Portfolio which contains the resource and technology data
+- `PortfolioType`: The type of technology as defined in PowerSystemsInvestmentsPortfolios
+- `scale_factor::Float64`: : Scaling factor for the resource data.
+
+# Returns
+- `resources::Vector{ResourceType}`: An array of resources of the specified type.
+"""
+# function create_resources_sametype(p::Portfolio,
+#         psip_type::Type{<:PSIP.Technology},
+#         genx_type::Type{<:AbstractResource},
+#         scale_factor::Float64
+# )
+#     techs = collect(get_technologies(psip_type, p))
+
+#     tech_data = Vector{Dict{Symbol, Any}}(undef, length(techs))
+#     for (i, t) in enumerate(techs)
+#         tech_data[i] = translate_resource_dict(p, t)
+#     end
+
+#     scale_resources_data!(tech_data, scale_factor)
+
+#     resources::Vector{ResourceType} = ResourceType.(tech_data)
+#     return resources
+# end
+
 """
     create_resource_array(resource_folder::AbstractString, resources_info::NamedTuple, scale_factor::Float64=1.0)
 
@@ -390,6 +568,74 @@ function create_resource_array(resource_folder::AbstractString,
     return reduce(vcat, resources)
 end
 
+function set_fuel_name!(r::AbstractResource, fuel_name::String)
+    r.fuel = fuel_name
+end
+
+function update_fuel_costs!(resources::Vector{T}, inputs::Dict) where T <: AbstractResource
+    rid_fuel_name_map = inputs["rid_fuel_name_map"]
+    for r in resources
+        if isa(r, Thermal) && haskey(rid_fuel_name_map, resource_id(r))
+            fuel_name = rid_fuel_name_map[resource_id(r)]
+            set_fuel_name!(r, fuel_name)
+        end
+    end
+end
+
+function create_resource_array(inputs::Dict,
+        p::Portfolio,
+        scale_factor::Float64 = 1.0)
+
+    technologies = [i for i in get_technologies(ResourceTechnology, p) if !(occursin("SYNC_COND", i.name))]
+    
+    technology_to_index = Dict{Int, Int}()
+    index_to_technology = Dict{Int, Int}()
+    
+    for (i, t) in enumerate(technologies)
+        technology_to_index[t.id] = i
+        index_to_technology[i] = t.id
+    end
+
+    region_to_index = inputs["region_to_index"]
+    inputs["technology_to_index"] = technology_to_index
+    inputs["index_to_technology"] = index_to_technology
+
+    resources = []
+    # for (psip_type, genx_type) in resource_type_mapping
+    for t in technologies
+        # if typeof(t) == SupplyTechnology{PSY.RenewableNonDispatch}
+        #     continue
+        # end
+        if occursin("SYNC_COND", t.name)
+            continue
+        end
+        resource = translate_resource_dict(p, t)
+        scale_resources_data!(resource, scale_factor)
+        genx_type = get_genx_type(t)
+        new_resource = genx_type(resource)
+        old_zone = parent(new_resource)[:zone]
+        parent(new_resource)[:zone] = region_to_index[old_zone]
+        old_tech_id = parent(new_resource)[:id]
+        parent(new_resource)[:id] = technology_to_index[old_tech_id]
+        push!(resources, new_resource)
+        #@info resource_name(t) * " Successfully Read."
+    end
+    isempty(resources) &&
+        error("No resources data found. Check data path or configuration file \"genx_settings.yml\" inside Settings.")
+
+    resources = reduce(vcat, resources)
+
+    old_rid_fuel_name_map = inputs["rid_fuel_name_map"]
+    new_rid_fuel_name_map = Dict{Int, String}()
+    for key in keys(old_rid_fuel_name_map)
+        new_rid = technology_to_index[key]
+        new_rid_fuel_name_map[new_rid] = old_rid_fuel_name_map[key]
+    end
+    inputs["rid_fuel_name_map"] = new_rid_fuel_name_map
+
+    update_fuel_costs!(resources, inputs)
+    return resources
+end
 @doc raw"""
 	check_mustrun_reserve_contribution(r::AbstractResource)
 
@@ -692,7 +938,7 @@ function validate_policy_dataframe!(filename::AbstractString, policy_in::DataFra
     end
     # if the single column attribute does not have a tag number, add a tag number of 1
     if n_cols == 2 && cols[2][(end - 1):end] != "_1"
-        rename!(policy_in, Symbol.(cols[2]) => Symbol.(cols[2], "_1"))
+        DataFrames.rename!(policy_in, Symbol.(cols[2]) => Symbol.(cols[2], "_1"))
     end
     # get policy column names
     cols = lowercase.(names(policy_in))
@@ -751,7 +997,7 @@ Adds the data contained in a `DataFrame` to a vector of resources. Each row in t
 """
 function add_df_to_resources!(resources::Vector{<:AbstractResource}, module_in::DataFrame)
     # rename columns lowercase to ensure consistency with resources
-    rename!(module_in, lowercase.(names(module_in)))
+    DataFrames.rename!(module_in, lowercase.(names(module_in)))
     # extract columns of module. They will be added as new attributes to resources
     new_sym = Symbol.(filter(x -> x ≠ "resource", names(module_in)))
     # loop oper rows of module and add new attributes to resources
@@ -810,6 +1056,33 @@ function add_policies_to_resources!(resources::Vector{<:AbstractResource},
         end
     end
     return nothing
+end
+
+function add_policies_to_resources_from_portfolio!(resources::Vector{<:AbstractResource},
+        p::Portfolio)
+    policies = collect(get_requirements(Requirements, p))
+    resource_policies = [pol for pol in policies if hasproperty(pol, :eligible_resources)]
+
+    # get vector of resources
+    eligible_resources = [PSIP.get_eligible_resources(pol) for pol in resource_policies]
+    eligible_resources = unique(reduce(vcat, eligible_resources))
+
+    for pol in resource_policies
+        policy_id = PSIP.get_name(pol)
+        sym = Symbol(policy_id)
+        for r in resources
+            name = r.resource
+            if name in PSIP.get_eligible_resources(pol)
+                value = 1
+                # add attribute to resource
+                setproperty!(r, sym, value)
+            elseif name in eligible_resources
+                value = 0
+                # add attribute to resource
+                setproperty!(r, sym, value)
+            end
+        end
+    end
 end
 
 """
@@ -1259,6 +1532,27 @@ function add_resources_to_input_data!(inputs::Dict,
     inputs["NEW_CAP_CHARGE"] = new_cap_charge
     inputs["RET_CAP_CHARGE"] = ret_cap_charge
 
+    ### Hourly matching - qualified supply
+    inputs["QUALIFIED_SUPPLY"] = ids_with_policy(gen, qualified_supply, tag = 1)
+    ## this validations are for backward compatibility with previous version of the hourly matching constraint
+    # if HydrogenHourlyMatching is enabled, but HourlyMatching is not, enable HourlyMatching 
+    if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 0
+        Base.depwarn(
+            """HydrogenHourlyMatching is enabled, but HourlyMatching is not.
+            Switching HourlyMatching to 1 to enable backward compatibility with previous versions of constraint.""",
+            :add_resources_to_input_data!, force = true)
+        setup["HourlyMatching"] = 1
+    end
+    # if qualified_supply is empty but qualified_hydrogen_supply is not, use qualified_hydrogen_supply
+    if isempty(inputs["QUALIFIED_SUPPLY"]) &&
+       !isempty(ids_with(gen, qualified_hydrogen_supply))
+        Base.depwarn("""The column name :qualified_hydrogen_supply is deprecated. 
+        Please use the `Resource_hourly_matching.csv` instead. The resource attribute 
+        :qualified_hydrogen_supply will be removed in the future release.""",
+            :add_resources_to_input_data!, force = true)
+        inputs["QUALIFIED_SUPPLY"] = ids_with(gen, qualified_hydrogen_supply)
+    end
+
     ## Co-located resources
     # VRE and storage
     inputs["VRE_STOR"] = vre_stor(gen)
@@ -1495,6 +1789,7 @@ function load_resources_data!(inputs::Dict,
 
     # print summary of resources
     summary(resources)
+    print("Resource data from CSVs read!")
 
     return nothing
 end
@@ -1538,4 +1833,31 @@ function load_multi_fuels_data!(inputs::Dict,
     if haskey(inputs, "THERM_COMMIT_PWFU") && !isempty(inputs["THERM_COMMIT_PWFU"])
         error("Multi-fuel option is not available when piece-wise heat rates are used. Please remove multi fuels to avoid this error.")
     end
+end
+
+function create_resource_array(inputs::Dict, setup::Dict, p::Portfolio)
+    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1.0
+    resources = create_resource_array(inputs, p, scale_factor)
+    # sort resources by ID
+    sort!(resources, by = r -> resource_id(r))
+    validate_resources(setup, resources)
+    return resources
+end
+
+function load_resources_data!(inputs::Dict,
+    setup::Dict,
+    case_path::AbstractString,
+    p::Portfolio
+)
+    # create vector of resources from dataframes
+    resources = create_resource_array(inputs, setup, p)
+
+    # add resources information to inputs dict
+    add_resources_to_input_data!(inputs, setup, case_path, resources)
+
+    # print summary of resources
+    summary(resources)
+    print("Resource data from portfolio read!")
+
+    return nothing
 end

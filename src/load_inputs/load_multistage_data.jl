@@ -5,7 +5,7 @@ function load_multistage_dataframe(filepath::AbstractString, scale_factor::Float
 
     multistage_in = load_dataframe(filepath)
     # rename columns lowercase for internal consistency
-    rename!(multistage_in, lowercase.(names(multistage_in)))
+    DataFrames.rename!(multistage_in, lowercase.(names(multistage_in)))
     scale_multistage_data!(multistage_in, scale_factor)
 
     validate_multistage_data!(multistage_in)

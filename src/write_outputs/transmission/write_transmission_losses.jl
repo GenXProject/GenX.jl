@@ -22,7 +22,7 @@ function write_transmission_losses(path::AbstractString,
     else
         dfTLosses = hcat(dfTLosses, DataFrame(tlosses, :auto))
         auxNew_Names = [Symbol("Line"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
-        rename!(dfTLosses, auxNew_Names)
+        DataFrames.rename!(dfTLosses, auxNew_Names)
         total = DataFrame(["Total" sum(dfTLosses.AnnualSum) fill(0.0, (1, T))],
             auxNew_Names)
         total[:, 3:(T + 2)] .= sum(tlosses, dims = 1)

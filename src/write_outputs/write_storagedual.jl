@@ -73,7 +73,7 @@ function write_storagedual(path::AbstractString, inputs::Dict, setup::Dict, EP::
     end
 
     dfStorageDual = hcat(dfStorageDual, DataFrame(dual_values, :auto))
-    rename!(dfStorageDual,
+    DataFrames.rename!(dfStorageDual,
         [Symbol("Resource"); Symbol("Zone"); [Symbol("t$t") for t in 1:T]])
 
     CSV.write(joinpath(path, "storagebal_duals.csv"),

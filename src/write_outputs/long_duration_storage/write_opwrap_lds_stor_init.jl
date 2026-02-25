@@ -28,7 +28,7 @@ function write_opwrap_lds_stor_init(path::AbstractString,
 
     dfStorageInit = hcat(dfStorageInit, DataFrame(socw, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:NPeriods]]
-    rename!(dfStorageInit, auxNew_Names)
+    DataFrames.rename!(dfStorageInit, auxNew_Names)
     CSV.write(joinpath(path, "StorageInit.csv"),
         dftranspose(dfStorageInit, false),
         header = false)
@@ -79,7 +79,7 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     df_SOC_t = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
     df_SOC_t = hcat(df_SOC_t, DataFrame(SOC_t, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:T_hor]]
-    rename!(df_SOC_t,auxNew_Names)
+    DataFrames.rename!(df_SOC_t,auxNew_Names)
     CSV.write(joinpath(path, "StorageEvol.csv"), dftranspose(df_SOC_t, false), writeheader=false)
 
 end

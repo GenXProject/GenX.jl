@@ -37,7 +37,14 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "ObjScale" => 1, 
+        "Benders" => 0, 
+        "IntegerInvestments" => 0,
+        "LDES_Feasible" => 1, 
+        "bilinear" => 0, 
+        "ptdf" => 0, 
+        "HydrogenHourlyMatching" => 0
+    )
 end
 
 @doc raw"""

@@ -21,7 +21,7 @@ function write_hourly_matching_prices(path::AbstractString,
         DataFrame(transpose(price), :auto))
 
     auxNew_Names = [Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
-    rename!(dfHourlyMatchPrices, auxNew_Names)
+    DataFrames.rename!(dfHourlyMatchPrices, auxNew_Names)
 
     CSV.write(joinpath(path, "hourly_matching_prices.csv"),
         dftranspose(dfHourlyMatchPrices, false), writeheader = false)

@@ -12,6 +12,7 @@ export cluster_inputs
 export mga
 export morris
 export choose_output_dir
+export operation_model!
 
 # Multi-stage methods
 export run_ddp
@@ -25,6 +26,7 @@ export run_timedomainreduction!
 
 using JuMP # used for mathematical programming
 using DataFrames #This package allows put together data into a matrix
+using TimeSeries
 using CSV
 using StatsBase
 using LinearAlgebra
@@ -37,7 +39,20 @@ using Random
 using RecursiveArrayTools
 using Statistics
 using HiGHS
+using Distributed
+using DistributedArrays
+using ClusterManagers
+using PowerNetworkMatrices
+using SparseArrays
 using Logging
+import PowerSystems
+import InfrastructureSystems
+using PowerSystemsInvestmentsPortfolios
+const PSIP=PowerSystemsInvestmentsPortfolios
+const IS=InfrastructureSystems
+const PSY=PowerSystems
+const TS=TimeSeries
+const PNM = PowerNetworkMatrices
 
 using PrecompileTools: @compile_workload
 

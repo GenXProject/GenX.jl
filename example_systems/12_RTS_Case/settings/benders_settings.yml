@@ -1,0 +1,10 @@
+BD_Mode: "distributed" # full = full operational subproblem, serial = decomposed operational subproblem (solved  in series), distributed = distributed operational subproblem (solved in parallel)
+BD_ConvTol: 1e-3 
+BD_MaxIter : 180
+BD_MaxCpuTime: 64800
+BD_Stab_Method: "off" #"int_level_set" # off, centre_point, centre_point_dynamic,in_out
+BD_StabParam: 0.5
+BD_NumberOfBatches: 1
+BD_TrustRegion: 0
+BD_BranchAndCut: 0
+BD_integer_routine: 1

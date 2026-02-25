@@ -1,6 +1,7 @@
 using GenX
 using Test
 using Logging
+using DataFrames
 
 include("utilities.jl")
 
@@ -58,6 +59,10 @@ end
 
     @testset "Retrofit" begin
         include("test_retrofit.jl")
+    end
+
+    @testset "Allam Cycle" begin
+        include("test_allam_cycle.jl")
     end
 end
 

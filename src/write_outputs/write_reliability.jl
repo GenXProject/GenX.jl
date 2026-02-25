@@ -15,7 +15,7 @@ function write_reliability(path::AbstractString, inputs::Dict, setup::Dict, EP::
         DataFrame(transpose(dual.(EP[:cMaxNSE]) ./ inputs["omega"] * scale_factor), :auto))
 
     auxNew_Names = [Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
-    rename!(dfReliability, auxNew_Names)
+    DataFrames.rename!(dfReliability, auxNew_Names)
 
     CSV.write(joinpath(path, "reliability.csv"),
         dftranspose(dfReliability, false),

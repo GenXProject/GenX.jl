@@ -121,7 +121,7 @@ function test_update_cumulative_min_ret!()
                             "resources",
                             "Resource_multistage_data.csv"),
                         DataFrame)
-                    rename!(true_min_retirements[t],
+                    DataFrames.rename!(true_min_retirements[t],
                         lowercase.(names(true_min_retirements[t])))
                     GenX.scale_multistage_data!(true_min_retirements[t], scale_factor)
 

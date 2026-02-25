@@ -849,7 +849,7 @@ function cluster_inputs(inpath,
     # Group by period (e.g., week)
     cgdf = combine(groupby(InputData, :Group), [c .=> sum for c in OldColNames])
     cgdf = cgdf[setdiff(1:end, NumDataPoints + 1), :]
-    rename!(cgdf, [:Group; Symbol.(OldColNames)])
+    DataFrames.rename!(cgdf, [:Group; Symbol.(OldColNames)])
 
     # Extreme period identification based on user selection in time_domain_reduction_settings.yml
     DemandExtremePeriod = false        # Used when deciding whether or not to scale demand curves to equal original total demand
@@ -1362,7 +1362,7 @@ function cluster_inputs(inpath,
                 select!(fuel_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(fuel_in[1, :])
                 NewFuelOutput = vcat(SepFirstRow, FPOutputData)
-                rename!(NewFuelOutput, FuelCols)
+                DataFrames.rename!(NewFuelOutput, FuelCols)
                 insertcols!(NewFuelOutput, 1, :Time_Index => 0:(size(NewFuelOutput, 1) - 1))
                 if v
                     println("Writing fuel profiles...")
@@ -1379,7 +1379,7 @@ function cluster_inputs(inpath,
                     select!(hm_in, Not(:Time_Index))
                     SepFirstRow = DataFrame(hm_in[1, :])
                     NewHMOutput = vcat(SepFirstRow, HMOutputData)
-                    rename!(NewHMOutput, myinputs["HMCols"])
+                    DataFrames.rename!(NewHMOutput, myinputs["HMCols"])
                     insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
                     if v
                         println("Writing hourly matching profiles...")
@@ -1526,7 +1526,7 @@ function cluster_inputs(inpath,
             select!(fuel_in, Not(:Time_Index))
             SepFirstRow = DataFrame(fuel_in[1, :])
             NewFuelOutput = vcat(SepFirstRow, FPOutputData)
-            rename!(NewFuelOutput, FuelCols)
+            DataFrames.rename!(NewFuelOutput, FuelCols)
             insertcols!(NewFuelOutput, 1, :Time_Index => 0:(size(NewFuelOutput, 1) - 1))
             if v
                 println("Writing fuel profiles...")
@@ -1544,7 +1544,7 @@ function cluster_inputs(inpath,
                 select!(hm_in, Not(:Time_Index))
                 SepFirstRow = DataFrame(hm_in[1, :])
                 NewHMOutput = vcat(SepFirstRow, HMOutputData)
-                rename!(NewHMOutput, myinputs["HMCols"])
+                DataFrames.rename!(NewHMOutput, myinputs["HMCols"])
                 insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
                 if v
                     println("Writing hourly matching profiles...")
@@ -1664,7 +1664,7 @@ function cluster_inputs(inpath,
         select!(fuel_in, Not(:Time_Index))
         SepFirstRow = DataFrame(fuel_in[1, :])
         NewFuelOutput = vcat(SepFirstRow, FPOutputData)
-        rename!(NewFuelOutput, FuelCols)
+        DataFrames.rename!(NewFuelOutput, FuelCols)
         insertcols!(NewFuelOutput, 1, :Time_Index => 0:(size(NewFuelOutput, 1) - 1))
         if v
             println("Writing fuel profiles...")
@@ -1679,7 +1679,7 @@ function cluster_inputs(inpath,
             select!(hm_in, Not(:Time_Index))
             SepFirstRow = DataFrame(hm_in[1, :])
             NewHMOutput = vcat(SepFirstRow, HMOutputData)
-            rename!(NewHMOutput, myinputs["HMCols"])
+            DataFrames.rename!(NewHMOutput, myinputs["HMCols"])
             insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
             if v
                 println("Writing hourly matching profiles...")

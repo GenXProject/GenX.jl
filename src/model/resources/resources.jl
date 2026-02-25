@@ -592,6 +592,7 @@ resource_type_mga(r::AbstractResource) = r.resource_type
 
 zone_id(r::AbstractResource) = r.zone
 zone_id(rs::Vector{T}) where {T <: AbstractResource} = zone_id.(rs)
+zone_id(node::Node) = node.id
 
 # getter for boolean attributes (true or false) with validation
 function new_build(r::AbstractResource)
@@ -629,7 +630,7 @@ min_cap_mwh(r::AbstractResource) = get(r, :min_cap_mwh, default_minmax_cap)
 max_charge_cap_mw(r::AbstractResource) = get(r, :max_charge_cap_mw, default_minmax_cap)
 min_charge_cap_mw(r::AbstractResource) = get(r, :min_charge_cap_mw, default_minmax_cap)
 
-existing_cap_mw(r::AbstractResource) = get(r, :existing_cap_mw, default_zero)
+existing_cap_mw(r::AbstractResource) = r.existing_cap_mw
 existing_cap_mwh(r::AbstractResource) = get(r, :existing_cap_mwh, default_zero)
 existing_charge_cap_mw(r::AbstractResource) = get(r, :existing_charge_cap_mw, default_zero)
 
@@ -640,6 +641,10 @@ num_vre_bins(r::Vre) = get(r, :num_vre_bins, 1)
 
 function hydro_energy_to_power_ratio(r::AbstractResource)
     get(r, :hydro_energy_to_power_ratio, default_zero)
+end
+
+function qualified_hydrogen_supply(r::AbstractResource)
+    get(r, :qualified_hydrogen_supply, default_zero)
 end
 
 retrofit_id(r::AbstractResource)::String = get(r, :retrofit_id, "None")
@@ -745,6 +750,9 @@ min_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("min_cap_$tag"), defaul
 max_cap(r::AbstractResource; tag::Int64) = get(r, Symbol("max_cap_$tag"), default_zero)
 function derating_factor(r::AbstractResource; tag::Int64)
     get(r, Symbol("derating_factor_$tag"), default_zero)
+end
+function qualified_supply(r::AbstractResource; tag::Int64)
+    get(r, Symbol("qualified_supply_$tag"), default_zero)
 end
 
 # write_outputs
@@ -860,6 +868,7 @@ down_time(r::Thermal) = get(r, :down_time, default_zero)
 function pwfu_fuel_usage_zero_load_mmbtu_per_h(r::Thermal)
     get(r, :pwfu_fuel_usage_zero_load_mmbtu_per_h, default_zero)
 end
+fuel_costs(r::Thermal) = get(r, :fuel_costs, default_zero)
 
 # VRE interface
 """

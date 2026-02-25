@@ -4,6 +4,7 @@ using Test
 using GenX
 using JLD2
 using Logging, LoggingExtras
+using DataFrames
 import DataFrames: rename!
 
 struct InputsTrue
@@ -35,7 +36,7 @@ function prepare_inputs_true(test_path::AbstractString,
     inputs_filename = in_filenames.inputs_filename
     dfGen = GenX.load_dataframe(joinpath(test_path, gen_filename))
     scale_factor = setup["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
-    GenX.rename!(dfGen, lowercase.(names(dfGen)))
+    DataFrames.rename!(dfGen, lowercase.(names(dfGen)))
     GenX.scale_resources_data!(dfGen, scale_factor)
     dfGen[!, :r_id] = 1:size(dfGen, 1)
     inputs_true = load(joinpath(test_path, inputs_filename))
@@ -192,7 +193,7 @@ function test_inputs_keys(inputs, inputs_true)
         @test string.(inputs["intercept_cols"]) ==
               lowercase.(string.(inputs_true["intercept_cols"]))
         @test inputs["PWFU_data"] ==
-              rename!(inputs_true["PWFU_data"], lowercase.(names(inputs_true["PWFU_data"])))
+              DataFrames.rename!(inputs_true["PWFU_data"], lowercase.(names(inputs_true["PWFU_data"])))
         @test inputs["PWFU_Num_Segments"] == inputs_true["PWFU_Num_Segments"]
         @test inputs["THERM_COMMIT_PWFU"] == inputs_true["THERM_COMMIT_PWFU"]
     end
@@ -305,7 +306,7 @@ function test_load_VRE_STOR_data()
     dfGen, inputs_true = prepare_inputs_true(test_path, input_true_filenames, settings)
 
     dfVRE_STOR = GenX.load_dataframe(joinpath(test_path, "Vre_and_stor_data.csv"))
-    dfVRE_STOR = GenX.rename!(dfVRE_STOR, lowercase.(names(dfVRE_STOR)))
+    dfVRE_STOR = DataFrames.rename!(dfVRE_STOR, lowercase.(names(dfVRE_STOR)))
     scale_factor = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor : 1.0
     GenX.scale_vre_stor_data!(dfVRE_STOR, scale_factor)
 

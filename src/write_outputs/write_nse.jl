@@ -29,11 +29,11 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                         Symbol("Zone");
                         Symbol("AnnualSum");
                         [Symbol("t$t") for t in 1:T]]
-        rename!(dfNse, auxNew_Names)
+        DataFrames.rename!(dfNse, auxNew_Names)
 
         total = DataFrame(["Total" 0 sum(dfNse[!, :AnnualSum]) fill(0.0, (1, T))], :auto)
         total[:, 4:(T + 3)] .= sum(nse, dims = 1)
-        rename!(total, auxNew_Names)
+        DataFrames.rename!(total, auxNew_Names)
         dfNse = vcat(dfNse, total)
 
         CSV.write(joinpath(path, "nse.csv"), dftranspose(dfNse, false), writeheader = false)

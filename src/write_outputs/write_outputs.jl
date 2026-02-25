@@ -542,7 +542,7 @@ function write_fulltimeseries(fullpath::AbstractString,
                     Symbol("Zone");
                     Symbol("AnnualSum");
                     [Symbol("t$t") for t in 1:T]]
-    rename!(dfOut, auxNew_Names)
+    DataFrames.rename!(dfOut, auxNew_Names)
     total = DataFrame(
         ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0) fill(0.0, (1, T))], auxNew_Names)
     total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)

@@ -34,7 +34,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             auxNew_Names = [Symbol("Zone");
                             [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
                             Symbol("AnnualSum")]
-            rename!(dfEmissions, auxNew_Names)
+            DataFrames.rename!(dfEmissions, auxNew_Names)
         else
             dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Float64}(undef, Z))
         end
@@ -64,7 +64,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                                 [Symbol("CO2_Price_$cap") for cap in 1:inputs["NCO2Cap"]];
                                 Symbol("AnnualSum");
                                 [Symbol("t$t") for t in 1:T]]
-                rename!(dfEmissions, auxNew_Names)
+                DataFrames.rename!(dfEmissions, auxNew_Names)
                 total = DataFrame(
                     ["Total" zeros(1, inputs["NCO2Cap"]) sum(dfEmissions[!,
                         :AnnualSum]) fill(0.0, (1, T))],
@@ -77,7 +77,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                 auxNew_Names = [Symbol("Zone");
                                 Symbol("AnnualSum");
                                 [Symbol("t$t") for t in 1:T]]
-                rename!(dfEmissions, auxNew_Names)
+                DataFrames.rename!(dfEmissions, auxNew_Names)
                 total = DataFrame(
                     ["Total" sum(dfEmissions[!, :AnnualSum]) fill(0.0,
                         (1, T))],
@@ -86,7 +86,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
                     total[:, t + 2] .= sum(dfEmissions[:, Symbol("t$t")][1:Z])
                 end
             end
-            rename!(total, auxNew_Names)
+            DataFrames.rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
             CSV.write(joinpath(path, "emissions.csv"),
                 dftranspose(dfEmissions, false),
@@ -113,13 +113,13 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             auxNew_Names = [Symbol("Zone");
                             Symbol("AnnualSum");
                             [Symbol("t$t") for t in 1:T]]
-            rename!(dfEmissions, auxNew_Names)
+            DataFrames.rename!(dfEmissions, auxNew_Names)
             total = DataFrame(["Total" sum(dfEmissions[!, :AnnualSum]) fill(0.0, (1, T))],
                 :auto)
             for t in 1:T
                 total[:, t + 2] .= sum(dfEmissions[:, Symbol("t$t")][1:Z])
             end
-            rename!(total, auxNew_Names)
+            DataFrames.rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
             CSV.write(joinpath(path, "emissions.csv"),
                 dftranspose(dfEmissions, false),

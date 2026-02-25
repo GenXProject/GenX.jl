@@ -21,7 +21,7 @@ function write_transmission_flows(path::AbstractString,
     else # setup["WriteOutputs"] == "full" 
         dfFlow = hcat(dfFlow, DataFrame(flow, :auto))
         auxNew_Names = [Symbol("Line"); [Symbol("t$t") for t in 1:T]]
-        rename!(dfFlow, auxNew_Names)
+        DataFrames.rename!(dfFlow, auxNew_Names)
         CSV.write(filepath, dftranspose(dfFlow, false), writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1

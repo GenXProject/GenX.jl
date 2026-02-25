@@ -15,7 +15,7 @@ function write_price(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfPrice = hcat(dfPrice, DataFrame(transpose(price), :auto))
 
     auxNew_Names = [Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
-    rename!(dfPrice, auxNew_Names)
+    DataFrames.rename!(dfPrice, auxNew_Names)
 
     ## Linear configuration final output
     CSV.write(joinpath(path, "prices.csv"),
