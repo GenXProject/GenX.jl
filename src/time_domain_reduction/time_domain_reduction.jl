@@ -66,7 +66,8 @@ function parse_data(myinputs)
     for r in 1:length(RESOURCE_ZONES)
         if occursin("PV", RESOURCE_ZONES[r]) || occursin("pv", RESOURCE_ZONES[r]) ||
            occursin("Pv", RESOURCE_ZONES[r]) || occursin("Solar", RESOURCE_ZONES[r]) ||
-           occursin("SOLAR", RESOURCE_ZONES[r]) || occursin("solar", RESOURCE_ZONES[r])
+           occursin("SOLAR", RESOURCE_ZONES[r]) || occursin("solar", RESOURCE_ZONES[r]) ||
+           occursin("CSP", RESOURCE_ZONES[r])
             push!(solar_col_names, RESOURCE_ZONES[r])
             push!(solar_profiles, myinputs["pP_Max"][r, :])
         elseif occursin("Wind", RESOURCE_ZONES[r]) || occursin("WIND", RESOURCE_ZONES[r]) ||
@@ -140,7 +141,7 @@ function parse_multi_stage_data(inputs_dict)
     for r in 1:length(RESOURCE_ZONES)
         if occursin("PV", RESOURCE_ZONES[r]) || occursin("pv", RESOURCE_ZONES[r]) ||
            occursin("Pv", RESOURCE_ZONES[r]) || occursin("Solar", RESOURCE_ZONES[r]) ||
-           occursin("SOLAR", RESOURCE_ZONES[r]) || occursin("solar", RESOURCE_ZONES[r])
+           occursin("SOLAR", RESOURCE_ZONES[r]) || occursin("solar", RESOURCE_ZONES[r]) || occursin("CSP", RESOURCE_ZONES[r])
             push!(solar_col_names, RESOURCE_ZONES[r])
             pv_all_stages = []
             for t in 1:length(keys(inputs_dict))
@@ -490,7 +491,8 @@ function get_demand_multipliers(ClusterOutputData,
         v = false)
     # Compute original zonal total demands
     zone_sums = Dict()
-    for demandcol in DemandCols
+    DemandColsNonConstant = [demandcol for demandcol in DemandCols if String(demandcol) in names(InputData)]
+    for demandcol in DemandColsNonConstant
         zone_sums[demandcol] = sum(InputData[:, demandcol])
     end
 
@@ -499,9 +501,9 @@ function get_demand_multipliers(ClusterOutputData,
     for m in 1:NClusters
         clustered_lp_DF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
         for i in 1:Ncols
-        if (Symbol(NewColNames[i]) in DemandCols)))
+        if (Symbol(NewColNames[i]) in DemandColsNonConstant)))
         cluster_zone_sums[m] = Dict()
-        for demandcol in DemandCols
+        for demandcol in DemandColsNonConstant
             cluster_zone_sums[m][demandcol] = sum(clustered_lp_DF[:, demandcol])
         end
     end
@@ -510,7 +512,7 @@ function get_demand_multipliers(ClusterOutputData,
     # Determine multiplier to bridge the gap between original zonal demands and representative zonal demands
     weighted_cluster_zone_sums = Dict(demandcol => 0.0 for demandcol in DemandCols)
     demand_mults = Dict()
-    for demandcol in DemandCols
+    for demandcol in DemandColsNonConstant
         for m in 1:NClusters
             weighted_cluster_zone_sums[demandcol] += (W[m] / (TimestepsPerRepPeriod)) *
                                                      cluster_zone_sums[m][demandcol]
@@ -642,7 +644,9 @@ function cluster_inputs(inpath,
         mysetup,
         stage_id = -99,
         v = false;
-        random = true)
+        random = true,
+        inputs = nothing, 
+        TDR_params = Dict())
     if v
         println(now())
     end
@@ -655,15 +659,15 @@ function cluster_inputs(inpath,
     update_deprecated_tdr_inputs!(myTDRsetup)
 
     # Accept model parameters from the settings file time_domain_reduction_settings.yml
-    TimestepsPerRepPeriod = myTDRsetup["TimestepsPerRepPeriod"]
-    ClusterMethod = myTDRsetup["ClusterMethod"]
-    ScalingMethod = myTDRsetup["ScalingMethod"]
-    MinPeriods = myTDRsetup["MinPeriods"]
-    MaxPeriods = myTDRsetup["MaxPeriods"]
-    UseExtremePeriods = myTDRsetup["UseExtremePeriods"]
-    ExtPeriodSelections = myTDRsetup["ExtremePeriods"]
-    Iterate = myTDRsetup["IterativelyAddPeriods"]
-    IterateMethod = myTDRsetup["IterateMethod"]
+    TimestepsPerRepPeriod = haskey(TDR_params, "TimeStepsPerRepPeriod") ? TDR_params["TimeStepsPerRepPeriod"] : myTDRsetup["TimestepsPerRepPeriod"]
+    ClusterMethod = haskey(TDR_params, "ClusterMethod") ? TDR_params["ClusterMethod"] : myTDRsetup["ClusterMethod"]
+    ScalingMethod = haskey(TDR_params, "ScalingMethod") ? TDR_params["ScalingMethod"] : myTDRsetup["ScalingMethod"]
+    MinPeriods = haskey(TDR_params, "MinPeriods") ? TDR_params["MinPeriods"] : myTDRsetup["MinPeriods"]
+    MaxPeriods = haskey(TDR_params, "MaxPeriods") ? TDR_params["MaxPeriods"] : myTDRsetup["MaxPeriods"]
+    UseExtremePeriods = haskey(TDR_params, "UseExtremePeriods") ? TDR_params["UseExtremePeriods"] : myTDRsetup["UseExtremePeriods"]
+    ExtPeriodSelections = haskey(TDR_params, "ExtremePeriods") ? TDR_params["ExtremePeriods"] : myTDRsetup["ExtremePeriods"]
+    Iterate = haskey(TDR_params, "IterativelyAddPeriods") ? TDR_params["IterativelyAddPeriods"] : myTDRsetup["IterativelyAddPeriods"]
+    IterateMethod = haskey(TDR_params, "IterateMethod") ? TDR_params["IterateMethod"] : myTDRsetup["IterateMethod"]
     Threshold = myTDRsetup["Threshold"]
     nReps = myTDRsetup["nReps"]
     DemandWeight = myTDRsetup["DemandWeight"]
@@ -754,7 +758,11 @@ function cluster_inputs(inpath,
         if v
             println("Not MultiStage")
         end
-        myinputs = load_inputs(mysetup_local, inpath)
+        if !isnothing(inputs) 
+            myinputs = inputs
+        else
+            myinputs = load_inputs(mysetup_local, inpath)
+        end
         RESOURCE_ZONES = myinputs["RESOURCE_ZONES"]
         RESOURCES = myinputs["RESOURCE_NAMES"]
         ZONES = myinputs["R_ZONES"]
@@ -1217,6 +1225,9 @@ function cluster_inputs(inpath,
         if v
             print("Outputs: MultiStage")
         end
+        if !isnothing(inputs)
+            error("TDR with portfolios and multistage problems is not yet supported")
+        end
         if MultiStageConcatenate == 1
             if v
                 println(" with Concatenation")
@@ -1329,6 +1340,7 @@ function cluster_inputs(inpath,
                            occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) ||
                            occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) ||
                            occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) ||
+                           occursin("CSP", RESOURCE_ZONES_VRE_STOR[r]) ||
                            occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
                             push!(solar_col_names, r)
                         end
@@ -1480,6 +1492,7 @@ function cluster_inputs(inpath,
                        occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) ||
                        occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) ||
                        occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) ||
+                       occursin("CSP", RESOURCE_ZONES_VER_STOR[r]) ||
                        occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
                         push!(solar_col_names, r)
                     end
@@ -1572,132 +1585,195 @@ function cluster_inputs(inpath,
                 myTDRsetup)
         end
     else
-        if v
-            println("Outputs: Single-Stage")
-        end
-        mkpath(joinpath(inpath, TimeDomainReductionFolder))
+        if !isnothing(inputs)
+            # update subweights, omega
+            # update timesteps per rep period
 
-        ### TDR_Results/Demand_data.csv
-        system_path = joinpath(inpath, mysetup["SystemFolder"])
-        demand_in = get_demand_dataframe(system_path)
-        demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
-        demand_in[1:length(W), :Sub_Weights] .= W
-        demand_in[!, :Rep_Periods][1] = length(W)
-        demand_in[!, :Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
-        select!(demand_in, Not(DemandCols))
-        select!(demand_in, Not(:Time_Index))
-        Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(demand_in, 1)]
-        Time_Index_M[1:size(DMOutputData, 1)] = 1:size(DMOutputData, 1)
-        demand_in[!, :Time_Index] .= Time_Index_M
+            inputs["REP_PERIOD"] = length(W)
+            inputs["H"] = TimestepsPerRepPeriod
+            total_subperiods = sum(W)
+            inputs["hours_per_subperiod"] = TimestepsPerRepPeriod
+            inputs["INTERIOR_SUBPERIODS"] = [i for i in 2:myinputs["hours_per_subperiod"]]
+            #total length = 8784
 
-        for c in DemandCols
-            new_col = Union{Float64, Missings.Missing}[missing
-                                                       for i in 1:size(demand_in, 1)]
-            new_col[1:size(DMOutputData, 1)] = DMOutputData[!, c]
-            demand_in[!, c] .= new_col
-        end
-        demand_in = demand_in[1:size(DMOutputData, 1), :]
-
-        if v
-            println("Writing demand file...")
-        end
-        CSV.write(joinpath(inpath, Demand_Outfile), demand_in)
-
-        ### TDR_Results/Generators_variability.csv
-
-        # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
-        GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i]
-        for i in 1:length(myinputs["RESOURCE_NAMES"]))
-        GVColMap["Time_Index"] = "Time_Index"
-        GVOutputData = GVOutputData[!, Symbol.(RESOURCE_ZONES)]
-        insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData, 1))
-        NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
-        if v
-            println("Writing resource file...")
-        end
-        CSV.write(joinpath(inpath, GVar_Outfile), GVOutputData, header = NewGVColNames)
-
-        # Break up VRE-storage components if needed
-        if !isempty(myinputs["VRE_STOR"])
-            gen_var = load_dataframe(joinpath(inpath, GVar_Outfile))
-
-            # Find which indexes have solar PV/wind names
-            RESOURCE_ZONES_VRE_STOR = NewGVColNames
-            solar_col_names = []
-            wind_col_names = []
-            for r in 1:length(RESOURCE_ZONES_VRE_STOR)
-                if occursin("PV", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("pv", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("Pv", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
-                    push!(solar_col_names, r)
+            new_weights = Float64[]
+            for w in 1:inputs["REP_PERIOD"]
+                for h in 1:inputs["H"]
+                    t = inputs["H"] * (w - 1) + h
+                    inputs["omega"][t] = Nhours / inputs["H"] / total_subperiods * W[w]  #inputs["Weights"][w] / inputs["H"]
                 end
-                if occursin("Wind", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("WIND", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("wind", RESOURCE_ZONES_VRE_STOR[r]) ||
-                   occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
-                    push!(wind_col_names, r)
-                end
+                new_weight = Nhours / total_subperiods * W[w]
+                push!(new_weights, new_weight)
+            end
+            inputs["Weights"] = new_weights
+
+            # Update demand data in inputs dictionary
+            inputs["pD"] = inputs["pD"][1:size(DMOutputData)[1], :]
+
+            for (i, col) in enumerate(DemandCols)
+                inputs["pD"][:, i] .= DMOutputData[!, col]
+            end
+            # Demands: 
+                # use DMOutputData for pD
+                # set pd by DemandCols
+                # cut out everything less than it; 
+            #update inputs
+            #return inputs
+
+            # update generator variability data
+            GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i] for i in 1:length(inputs["RESOURCE_NAMES"]))
+            GVColMap_rev = Dict(RESOURCES[i] => RESOURCE_ZONES[i] for i in 1:length(inputs["RESOURCE_NAMES"]))
+
+            inputs["pP_Max"] = inputs["pP_Max"][:, 1:size(GVOutputData)[1]]
+            resource_names = [GenX.resource_name(r) for r in inputs["RESOURCES"]]
+            for (i, name) in enumerate(resource_names)
+                col = GVColMap_rev[name]
+                inputs["pP_Max"][i, :] = GVOutputData[!, col]
+            end
+            
+            # save period map to inputs
+            inputs["Period_Map"] = PeriodMap
+            if !AllFuelsConst
+                error("TDR for portfolios currently only supports constant fuels")
+            end
+            total_tdr_length = TimestepsPerRepPeriod * length(W)
+            for k in keys(inputs["fuel_costs"])
+                inputs["fuel_costs"][k] = inputs["fuel_costs"][k][1:total_tdr_length] 
             end
 
-            # Index into dataframe and output them
-            solar_var = gen_var[!, solar_col_names]
-            solar_var[!, :Time_Index] = 1:size(solar_var, 1)
-            wind_var = gen_var[!, wind_col_names]
-            wind_var[!, :Time_Index] = 1:size(wind_var, 1)
+            myinputs["T"] = total_tdr_length
+            inputs["omega"] = inputs["omega"][1:total_tdr_length]
 
-            SolarVar_Outfile = joinpath(TimeDomainReductionFolder,
-                "Vre_and_stor_solar_variability.csv")
-            WindVar_Outfile = joinpath(TimeDomainReductionFolder,
-                "Vre_and_stor_wind_variability.csv")
-            CSV.write(joinpath(inpath, SolarVar_Outfile), solar_var)
-            CSV.write(joinpath(inpath, WindVar_Outfile), wind_var)
-        end
-
-        ### TDR_Results/Fuels_data.csv
-        system_path = joinpath(inpath, mysetup["SystemFolder"])
-        fuel_in = load_dataframe(joinpath(system_path, "Fuels_data.csv"))
-        ensure_column!(fuel_in, "None", 0.0)
-        select!(fuel_in, Not(:Time_Index))
-        SepFirstRow = DataFrame(fuel_in[1, :])
-        NewFuelOutput = vcat(SepFirstRow, FPOutputData)
-        DataFrames.rename!(NewFuelOutput, FuelCols)
-        insertcols!(NewFuelOutput, 1, :Time_Index => 0:(size(NewFuelOutput, 1) - 1))
-        if v
-            println("Writing fuel profiles...")
-        end
-        CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
-
-        if mysetup["HourlyMatchingRequirement"] == 1
-            ### TDR_Results/HM_data.csv
-            hm_in = load_dataframe(joinpath(inpath,
-                mysetup["PoliciesFolder"],
-                "Hourly_matching_requirement.csv"))
-            select!(hm_in, Not(:Time_Index))
-            SepFirstRow = DataFrame(hm_in[1, :])
-            NewHMOutput = vcat(SepFirstRow, HMOutputData)
-            DataFrames.rename!(NewHMOutput, myinputs["HMCols"])
-            insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
+            return nothing# GVOutputData, GVColMap,  PeriodMap, FPOutputData, DMOutputData, DemandCols
+        else
             if v
-                println("Writing hourly matching profiles...")
+                println("Outputs: Single-Stage")
             end
-            CSV.write(joinpath(inpath,HM_Outfile), NewHMOutput)
-        end
+            mkpath(joinpath(inpath, TimeDomainReductionFolder))
 
-        ### TDR_Results/Period_map.csv
-        if v
-            println("Writing period map...")
-        end
-        CSV.write(joinpath(inpath, PMap_Outfile), PeriodMap)
+            ### TDR_Results/Demand_data.csv
+            system_path = joinpath(inpath, mysetup["SystemFolder"])
+            demand_in = get_demand_dataframe(system_path)
+            demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
+            demand_in[1:length(W), :Sub_Weights] .= W
+            demand_in[!, :Rep_Periods][1] = length(W)
+            demand_in[!, :Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
+            select!(demand_in, Not(DemandCols))
+            select!(demand_in, Not(:Time_Index))
+            Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(demand_in, 1)]
+            Time_Index_M[1:size(DMOutputData, 1)] = 1:size(DMOutputData, 1)
+            demand_in[!, :Time_Index] .= Time_Index_M
 
-        ### TDR_Results/time_domain_reduction_settings.yml
-        if v
-            println("Writing .yml settings...")
+            for c in DemandCols
+                new_col = Union{Float64, Missings.Missing}[missing
+                                                        for i in 1:size(demand_in, 1)]
+                new_col[1:size(DMOutputData, 1)] = DMOutputData[!, c]
+                demand_in[!, c] .= new_col
+            end
+            demand_in = demand_in[1:size(DMOutputData, 1), :]
+
+            if v
+                println("Writing demand file...")
+            end
+            CSV.write(joinpath(inpath, Demand_Outfile), demand_in)
+
+            ### TDR_Results/Generators_variability.csv
+
+            # Reset column ordering, add time index, and solve duplicate column name trouble with CSV.write's header kwarg
+            GVColMap = Dict(RESOURCE_ZONES[i] => RESOURCES[i]
+            for i in 1:length(myinputs["RESOURCE_NAMES"]))
+            GVColMap["Time_Index"] = "Time_Index"
+            GVOutputData = GVOutputData[!, Symbol.(RESOURCE_ZONES)]
+            insertcols!(GVOutputData, 1, :Time_Index => 1:size(GVOutputData, 1))
+            NewGVColNames = [GVColMap[string(c)] for c in names(GVOutputData)]
+            if v
+                println("Writing resource file...")
+            end
+            CSV.write(joinpath(inpath, GVar_Outfile), GVOutputData, header = NewGVColNames)
+
+            # Break up VRE-storage components if needed
+            if !isempty(myinputs["VRE_STOR"])
+                gen_var = load_dataframe(joinpath(inpath, GVar_Outfile))
+
+                # Find which indexes have solar PV/wind names
+                RESOURCE_ZONES_VRE_STOR = NewGVColNames
+                solar_col_names = []
+                wind_col_names = []
+                for r in 1:length(RESOURCE_ZONES_VRE_STOR)
+                    if occursin("PV", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("pv", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("Pv", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("Solar", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("SOLAR", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("solar", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("CSP", RESOURCE_ZONES_VRE_STOR[r])
+                    occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                        push!(solar_col_names, r)
+                    end
+                    if occursin("Wind", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("WIND", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("wind", RESOURCE_ZONES_VRE_STOR[r]) ||
+                    occursin("Time", RESOURCE_ZONES_VRE_STOR[r])
+                        push!(wind_col_names, r)
+                    end
+                end
+
+                # Index into dataframe and output them
+                solar_var = gen_var[!, solar_col_names]
+                solar_var[!, :Time_Index] = 1:size(solar_var, 1)
+                wind_var = gen_var[!, wind_col_names]
+                wind_var[!, :Time_Index] = 1:size(wind_var, 1)
+
+                SolarVar_Outfile = joinpath(TimeDomainReductionFolder,
+                    "Vre_and_stor_solar_variability.csv")
+                WindVar_Outfile = joinpath(TimeDomainReductionFolder,
+                    "Vre_and_stor_wind_variability.csv")
+                CSV.write(joinpath(inpath, SolarVar_Outfile), solar_var)
+                CSV.write(joinpath(inpath, WindVar_Outfile), wind_var)
+            end
+            
+            ### TDR_Results/Fuels_data.csv
+            system_path = joinpath(inpath, mysetup["SystemFolder"])
+            fuel_in = load_dataframe(joinpath(system_path, "Fuels_data.csv"))
+            ensure_column!(fuel_in, "None", 0.0)
+            select!(fuel_in, Not(:Time_Index))
+            SepFirstRow = DataFrame(fuel_in[1, :])
+            NewFuelOutput = vcat(SepFirstRow, FPOutputData)
+            DataFrames.rename!(NewFuelOutput, FuelCols)
+            insertcols!(NewFuelOutput, 1, :Time_Index => 0:(size(NewFuelOutput, 1) - 1))
+            if v
+                println("Writing fuel profiles...")
+            end
+            CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
+
+            if mysetup["HourlyMatchingRequirement"] == 1
+                ### TDR_Results/HM_data.csv
+                hm_in = load_dataframe(joinpath(inpath,
+                    mysetup["PoliciesFolder"],
+                    "Hourly_matching_requirement.csv"))
+                select!(hm_in, Not(:Time_Index))
+                SepFirstRow = DataFrame(hm_in[1, :])
+                NewHMOutput = vcat(SepFirstRow, HMOutputData)
+                DataFrames.rename!(NewHMOutput, myinputs["HMCols"])
+                insertcols!(NewHMOutput, 1, :Time_Index => 0:(size(NewHMOutput, 1) - 1))
+                if v
+                    println("Writing hourly matching profiles...")
+                end
+                CSV.write(joinpath(inpath,HM_Outfile), NewHMOutput)
+            end
+
+            ### TDR_Results/Period_map.csv
+            if v
+                println("Writing period map...")
+            end
+            CSV.write(joinpath(inpath, PMap_Outfile), PeriodMap)
+
+            ### TDR_Results/time_domain_reduction_settings.yml
+            if v
+                println("Writing .yml settings...")
+            end
+            YAML.write_file(joinpath(inpath, YAML_Outfile), myTDRsetup)
         end
-        YAML.write_file(joinpath(inpath, YAML_Outfile), myTDRsetup)
     end
 
     return Dict("OutputDF" => FinalOutputData,

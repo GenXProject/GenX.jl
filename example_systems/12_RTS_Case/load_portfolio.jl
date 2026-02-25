@@ -19,8 +19,6 @@ function load_rts(case_name::AbstractString)
     """
 
     # Define the database file path
-    database_filepath = joinpath(case_name, "sys_DA_update_costs.sqlite")
-    database_filepath = joinpath(case_name, "sys_DA.sqlite")
     database_filepath = joinpath(case_name, "rts_psy5_updated.sqlite")
 
     # Define the portfolio parameters
