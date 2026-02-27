@@ -144,8 +144,12 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     if Z > 1
-        investment_transmission!(EP, inputs, setup)
-        transmission!(EP, inputs, setup)
+        if setup["DC_OPF"] == 1 && setup["NetworkExpansion"] == 1
+            investment_transmission!(EP, inputs, setup)
+        else
+            investment_transmission!(EP, inputs, setup)
+            transmission!(EP, inputs, setup)
+        end
     end
 
     if Z > 1 && setup["DC_OPF"] != 0

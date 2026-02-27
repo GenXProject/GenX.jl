@@ -106,6 +106,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict, 
         # MW = (kV)^2/Ohms 
         inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
                                     scale_factor
+                                    
         if candidate_flag
             # Transmission line voltage (in kV)
             line_voltage_kV_cand = to_floats_cand(:Line_Voltage_kV)
@@ -313,6 +314,7 @@ function load_network_data!(setup::Dict, p::Portfolio, inputs::Dict)
         error("No transmission technologies found in portfolio. Check if your portfolio has network data loaded.")
     end
 
+    lines = [l for l in lines if PSY.has_supplemental_attributes(l, ExistingCapacity)]
     # Number of zones in the network
     Z = length(regions)
     inputs["Z"] = Z
