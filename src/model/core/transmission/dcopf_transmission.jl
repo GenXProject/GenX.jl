@@ -525,6 +525,18 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
                 cCAN_RETIRE_LOWER_LIMIT[l in CAN_RETIRE_LINES, t = 1:T], EP[:vFLOW][l, t] >= -BigM[l] * (1 - EP[:vNEW_TRANS_CAP_DECISION_INT][existing_to_cand_map[l]])
             )
         end
+        EXISTING_LINES = inputs["EXISTING_LINES"]
+        @expression(EP,
+            eNet_Export_Flows[z = 1:Z, t = 1:T],
+            sum(inputs["pNet_Map"][l, z] * EP[:vFLOW][l, t] for l in EXISTING_LINES))
 
+        # Export and import expressions
+        @expression(EP, ePowerBalanceNetExportFlows[t = 1:T, z = 1:Z],
+            -eNet_Export_Flows[z, t])
+        @expression(EP, ePowerBalanceCandExportFlows[t = 1:T, z = 1:Z],
+            -eNet_Export_Cand_Flows[z, t])
+
+        add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceCandExportFlows)
+        add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceNetExportFlows)
     end
 end

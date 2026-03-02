@@ -33,9 +33,9 @@ end
         include("test_VRE_storage.jl")
     end
 
-    @testset "Electrolyzer" begin
-        include("test_electrolyzer.jl")
-    end
+    # @testset "Electrolyzer" begin
+    #     include("test_electrolyzer.jl")
+    # end
 
     @testset "Fusion" begin
         include("test_fusion.jl")

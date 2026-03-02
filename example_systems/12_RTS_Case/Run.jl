@@ -50,34 +50,18 @@ mysetup["Benders"] = 0
 mysetup["DC_OPF"] = 1
 myinputs = GenX.load_inputs(mysetup, case, p)
 
-load_candidates_base(myinputs, 24)
+load_candidates_base(myinputs, 24, use_official_lengths = true)
 
 mysetup["ptdf"] = 0
 mysetup["bilinear"] = 0
 mysetup["unfix_slacks"] = 0
-
+mysetup["DC_OPF"] = 1
 mysetup["settings_path"] = settings_path;
 mysetup["NetworkExpansion"] = 1
 mysetup["BD_integer_routine"] = 1
 mysetup["BD_MaxCpuTime"] = 3600
 optimizer = optimizer_with_attributes(HiGHS.Optimizer, "output_flag" => true, "time_limit" => 120.)
+
 m = GenX.generate_model(mysetup, myinputs, optimizer)
 
 optimize!(m)
-
-var_names = name.(all_variables(m))
-
-
-using JLD2
-abc = load((@__DIR__)*"/name_vector.jld2")["var_names"]
-
-xyz = setdiff(var_names, abc)
-
-xyz_new = unique(replace.(xyz, r"\[.*" => ""))
-var_names_new = unique(replace.(var_names, r"\[.*" => ""))
-
-# benders code
-# generate_model split into operation and planning
-# capacity_decisions file
-# add allam to operations model
-#   

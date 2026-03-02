@@ -153,12 +153,9 @@ function thermal_commit!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ## Power Balance Expressions ##
-    THERM_COMMIT_BY_ZONE = map(1:Z) do z
-        return intersect(THERM_COMMIT, resources_in_zone_by_rid(gen, z))
-    end
     @expression(EP, ePowerBalanceThermCommit[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t]
-        for y in THERM_COMMIT_BY_ZONE[z]))
+        for y in intersect(THERM_COMMIT, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceThermCommit)
 
     ### Constraints ###
@@ -337,7 +334,7 @@ function thermal_commit_operational_reserves!(EP::Model, inputs::Dict)
 
     # Minimum stable power generated per technology "y" at hour "t" and contribution to regulation must be > min power
     expr = extract_time_series_to_expression(vP, THERM_COMMIT)
-    add_similar_to_expression!(expr[REG, :], -1.0, vREG[REG, :])
+    add_similar_to_expression!(expr[REG, :], -vREG[REG, :])
     @constraint(EP,
         [y in THERM_COMMIT, t in 1:T],
         expr[y, t]>=min_power(gen[y]) * commit(y, t))
@@ -424,7 +421,7 @@ function thermal_maintenance_capacity_reserve_margin_adjustment(EP::Model,
         t)
     gen = inputs["RESOURCES"]
     resource_component = resource_name(gen[y])
-    capresfactor = inputs["DERATING_FACTOR"][y, capres]
+    capresfactor = derating_factor(gen[y], tag = capres)
     cap = cap_size(gen[y])
     down_var = EP[Symbol(maintenance_down_name(resource_component))]
     return -capresfactor * down_var[t] * cap
