@@ -28,16 +28,30 @@ run_genx_case!("path/to/case", HiGHS.Optimizer)
 run_genx_case!("path/to/case", Gurobi.Optimizer)
 ```
 """
-function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
+function run_genx_case!(case::AbstractString; optimizer::Any = HiGHS.Optimizer, portfolio::Portfolio = Portfolio(0.0), tight_bigM = false)
     print_genx_version() # Log the GenX version
     genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
     writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
     mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
-        run_genx_case_simple!(case, mysetup, optimizer)
+        if mysetup["Benders"] == 0
+            run_genx_case_simple!(case, mysetup, optimizer, portfolio)
+        #elseif mysetup["PresetMGA"] == 1
+         #   benders_settings_path = get_settings_path(case, "benders_settings.yml")
+          #  mysetup_benders = configure_benders(benders_settings_path) 
+           # mysetup = merge(mysetup,mysetup_benders);
+
+            #run_genx_case_preset_mga!(case,mysetup)
+        else
+            benders_settings_path = get_settings_path(case, "benders_settings.yml")
+            mysetup_benders = configure_benders(benders_settings_path) 
+            mysetup = merge(mysetup,mysetup_benders);
+
+            return run_genx_case_benders!(case, mysetup, portfolio)
+        end
     else
-        run_genx_case_multistage!(case, mysetup, optimizer)
+        run_genx_case_multistage!(case, mysetup, optimizer, portfolio)
     end
 end
 
@@ -48,7 +62,7 @@ function time_domain_reduced_files_exist(tdrpath)
     return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 
-function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any)
+function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any, portfolio::Portfolio)
     settings_path = get_settings_path(case)
 
     ### Cluster time series inputs if necessary and if specified by the user
@@ -69,20 +83,31 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     solver_name = lowercase(get(mysetup, "Solver", ""))
     OPTIMIZER = configure_solver(settings_path, optimizer; solver_name=solver_name)
 
-    #### Running a case
 
+    if !(haskey(mysetup, "ptdf"))
+        mysetup["ptdf"] = 0
+    end
+    if !(haskey(mysetup, "disaggregate"))
+        mysetup["disaggregate"] = 0
+    end
+    if !(haskey(mysetup, "bilinear"))
+        mysetup["bilinear"] = 0
+    end
     ### Load inputs
     println("Loading Inputs")
-    myinputs = load_inputs(mysetup, case)
+    myinputs = load_inputs(mysetup, case, portfolio)
 
     println("Generating the Optimization Model")
-    time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    time_elapsed = 0# @elapsed 
+    EP = generate_model(mysetup, myinputs, OPTIMIZER)
     println("Time elapsed for model building is")
     println(time_elapsed)
+    #set_optimizer_attribute(EP, "TimeLimit", 5)
 
     println("Solving Model")
     EP, solve_time = solve_model(EP, mysetup)
     myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
+    return EP, myinputs
 
     # Run MGA if the MGA flag is set to 1 else only save the least cost solution
     if has_values(EP)
@@ -106,7 +131,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     end
 end
 
-function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::Any)
+function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimizer::Any, portfolio::Portfolio)
     settings_path = get_settings_path(case)
     multistage_settings = get_settings_path(case, "multi_stage_settings.yml") # Multi stage settings YAML file path
     # merge default settings with those specified in the YAML file
@@ -153,7 +178,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         # Step 1) Load Inputs
         inpath_sub = joinpath(case, "inputs", string("inputs_p", t))
 
-        inputs_dict[t] = load_inputs(mysetup, inpath_sub)
+        inputs_dict[t] = load_inputs(mysetup, inpath_sub, portfolio)
         inputs_dict[t] = configure_multi_stage_inputs(inputs_dict[t],
             mysetup["MultiStageSettingsDict"],
             mysetup["NetworkExpansion"])
@@ -166,6 +191,9 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     # check that resources do not switch from can_retire = 0 to can_retire = 1 between stages
     validate_can_retire_multistage(
         inputs_dict, mysetup["MultiStageSettingsDict"]["NumStages"])
+
+    ### Solve model
+    println("Solving Model")
 
     # Prepare folder for results    
     outpath = get_default_output_folder(case)
@@ -182,16 +210,9 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         mkdir(outpath)
     end
 
-    ### Solve model
-    println("Solving Model")
-
-    # Step 3) Run DDP Algorithm or Myopic single pass
-    if mysetup["MultiStageSettingsDict"]["Myopic"] == 1
-        mystats_d = Dict()  # mystats_d is for DDP iteration metadata
-        model_dict, inputs_dict = run_myopic_multistage(outpath, model_dict, mysetup, inputs_dict)
-    else
-        model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
-    end
+    # Step 3) Run DDP Algorithm
+    ## Solve Model
+    model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
 
     # Step 4) Write final outputs from each stage
     if mysetup["MultiStageSettingsDict"]["Myopic"] == 0 ||
@@ -206,4 +227,224 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     # Step 5) Write DDP summary outputs
 
     write_multi_stage_outputs(mystats_d, outpath, mysetup, inputs_dict)
+end
+
+
+function run_genx_case_benders!(case::AbstractString, mysetup::Dict)
+    settings_path = get_settings_path(case)    
+    ### Cluster time series inputs if necessary and if specified by the user
+    if mysetup["TimeDomainReduction"] == 1
+        TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
+        system_path = joinpath(case, mysetup["SystemFolder"])
+        prevent_doubled_timedomainreduction(system_path)
+        if !time_domain_reduced_files_exist(TDRpath)
+            println("Clustering Time Series Data (Grouped)...")
+            cluster_inputs(case, settings_path, mysetup)
+        else
+            println("Time Series Data Already Clustered.")
+        end
+    end
+    mysetup["settings_path"] = settings_path;
+
+    if !(haskey(mysetup, "ptdf"))
+        mysetup["ptdf"] = 0
+    end
+    if !(haskey(mysetup, "disaggregate"))
+        mysetup["disaggregate"] = 0
+    end
+    if !(haskey(mysetup, "bilinear"))
+        mysetup["bilinear"] = 0
+    end
+
+    myinputs = load_inputs(mysetup, case);
+    myinputs_decomp = separate_inputs_subperiods(myinputs);
+    
+    benders_inputs = generate_benders_inputs(mysetup,myinputs,myinputs_decomp)
+    println(mysetup)
+
+    planning_problem, planning_sol,operational_sol, LB_hist,UB_hist,cpu_time,feasibility_hist, build_decisions  = benders(benders_inputs,mysetup,myinputs);
+    opt_stats = (cpu_time=cpu_time, UB_hist = UB_hist)
+    println("Benders decomposition took $(cpu_time[end]) seconds to run")
+
+    """ MGA Functionality """
+    if mysetup["ModelingToGenerateAlternatives"] == 1
+        # Write least-cost solution into DF for MGA results
+        dfResults = make_benders_results_df(planning_sol,operational_sol,case,mysetup,myinputs,myinputs_decomp)
+        println("Running Modelling to Generate Alternatives with Cutting-Plane Algorithm")
+        # Run MGA
+        benders_inputs["mga_vectors"] = generate_vecs(myinputs, mysetup)
+        results, sumtime_df = run_benders_mga(benders_inputs,mysetup, myinputs, opt_stats)
+        write_benders_mga_results!(dfResults, results, case, mysetup, myinputs, myinputs_decomp, sumtime_df)
+    end
+
+    println("Writing Output")
+    return benders_inputs, (build_decisions, UB_hist, LB_hist)
+
+    if mysetup["BD_Stab_Method"]=="int_level_set" 
+        outputs_path = joinpath(case, "results_benders_int_level_set")
+    else
+        outputs_path = joinpath(case, "results_benders")
+    end
+
+    if mysetup["OverwriteResults"] == 1
+		# Overwrite existing results if dir exists
+		# This is the default behaviour when there is no flag, to avoid breaking existing code
+		if !(isdir(outputs_path))
+		    mkdir(outputs_path)
+		end
+	else
+		# Find closest unused ouput directory name and create it
+		outputs_path = choose_output_dir(outputs_path)
+		mkdir(outputs_path)
+	end
+    
+    elapsed_time = @elapsed write_benders_output(LB_hist,UB_hist,cpu_time,feasibility_hist,outputs_path,mysetup,myinputs,planning_problem);
+
+end
+
+
+function run_genx_case_preset_mga!(case,mysetup)
+
+    settings_path = get_settings_path(case)    
+    ### Cluster time series inputs if necessary and if specified by the user
+    if mysetup["TimeDomainReduction"] == 1
+        TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
+        system_path = joinpath(case, mysetup["SystemFolder"])
+        prevent_doubled_timedomainreduction(system_path)
+        if !time_domain_reduced_files_exist(TDRpath)
+            println("Clustering Time Series Data (Grouped)...")
+            cluster_inputs(case, settings_path, mysetup)
+        else
+            println("Time Series Data Already Clustered.")
+        end
+    end
+    mysetup["settings_path"] = settings_path;
+
+    myinputs = load_inputs(mysetup, case);
+    myinputs_decomp = separate_inputs_subperiods(myinputs);
+
+    benders_inputs = generate_benders_inputs(mysetup,myinputs,myinputs_decomp)
+        
+    # Write least-cost solution into DF for MGA results
+    dfResults = make_benders_results_df(planning_sol,operational_sol,case,mysetup,myinputs,myinputs_decomp)
+    println("Running Modelling to Generate Alternatives with Cutting-Plane Algorithm")
+    # Run MGA
+    TechTypes = unique(myinputs["dfGen"][myinputs["dfGen"][!, :MGA] .== 1, :Resource_Type])
+    results, sumtime_df = run_benders_mga(benders_inputs,mysetup)
+    write_benders_mga_results!(dfResults, results, case, setup, inputs, inputs_decomp, sumtime_df)
+
+end
+
+
+function get_settings_path(case::AbstractString)
+    return joinpath(case, "settings")
+end
+
+function get_settings_path(case::AbstractString, filename::AbstractString)
+    return joinpath(get_settings_path(case), filename)
+end
+
+function get_default_output_folder(case::AbstractString)
+    return joinpath(case, "results")
+end
+
+@doc raw"""
+    run_genx_case!(case::AbstractString, optimizer::Any=HiGHS.Optimizer)
+
+Run a GenX case with the specified optimizer. The optimizer can be any solver supported by MathOptInterface.
+
+# Arguments
+- `case::AbstractString`: the path to the case folder
+- `optimizer::Any`: the optimizer instance to be used in the optimization model
+
+# Example
+```julia
+run_genx_case!("path/to/case", HiGHS.Optimizer)
+```
+
+```julia
+run_genx_case!("path/to/case", Gurobi.Optimizer)
+```
+"""
+function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
+    genx_settings = get_settings_path(case, "genx_settings.yml") # Settings YAML file path
+    writeoutput_settings = get_settings_path(case, "output_settings.yml") # Write-output settings YAML file path
+    mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
+
+    if mysetup["MultiStage"] == 0
+        if mysetup["Benders"] == 0
+            run_genx_case_simple!(case, mysetup, optimizer)
+        #elseif mysetup["PresetMGA"] == 1
+         #   benders_settings_path = get_settings_path(case, "benders_settings.yml")
+          #  mysetup_benders = configure_benders(benders_settings_path) 
+           # mysetup = merge(mysetup,mysetup_benders);
+
+            #run_genx_case_preset_mga!(case,mysetup)
+        else
+            benders_settings_path = get_settings_path(case, "benders_settings.yml")
+            mysetup_benders = configure_benders(benders_settings_path) 
+            mysetup = merge(mysetup,mysetup_benders);
+
+            run_genx_case_benders!(case, mysetup)
+        end
+    else
+        run_genx_case_multistage!(case, mysetup, optimizer)
+    end
+end
+
+function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::Any)
+    settings_path = get_settings_path(case)
+
+    ### Cluster time series inputs if necessary and if specified by the user
+    if mysetup["TimeDomainReduction"] == 1
+        TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
+        system_path = joinpath(case, mysetup["SystemFolder"])
+        prevent_doubled_timedomainreduction(system_path)
+        if !time_domain_reduced_files_exist(TDRpath)
+            println("Clustering Time Series Data (Grouped)...")
+            cluster_inputs(case, settings_path, mysetup)
+        else
+            println("Time Series Data Already Clustered.")
+        end
+    end
+
+    ### Configure solver
+    println("Configuring Solver")
+    OPTIMIZER = configure_solver(settings_path, optimizer)
+
+    #### Running a case
+
+    ### Load inputs
+    println("Loading Inputs")
+    myinputs = load_inputs(mysetup, case)
+
+    println("Generating the Optimization Model")
+    time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
+    println("Time elapsed for model building is")
+    println(time_elapsed)
+
+    println("Solving Model")
+    EP, solve_time = solve_model(EP, mysetup)
+    myinputs["solve_time"] = solve_time # Store the model solve time in myinputs
+
+    # Run MGA if the MGA flag is set to 1 else only save the least cost solution
+    if has_values(EP)
+        println("Writing Output")
+        outputs_path = get_default_output_folder(case)
+        elapsed_time = @elapsed outputs_path = write_outputs(EP,
+            outputs_path,
+            mysetup,
+            myinputs)
+        println("Time elapsed for writing is")
+        println(elapsed_time)
+        if mysetup["ModelingToGenerateAlternatives"] == 1
+            println("Starting Model to Generate Alternatives (MGA) Iterations")
+            mga(EP, case, mysetup, myinputs)
+        end
+
+        if mysetup["MethodofMorris"] == 1
+            println("Starting Global sensitivity analysis with Method of Morris")
+            morris(EP, case, mysetup, myinputs, outputs_path, OPTIMIZER)
+        end
+    end
 end

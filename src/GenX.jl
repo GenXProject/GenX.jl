@@ -41,6 +41,7 @@ using Statistics
 using HiGHS
 using Distributed
 using DistributedArrays
+using Gurobi
 using ClusterManagers
 using PowerNetworkMatrices
 using SparseArrays
@@ -62,6 +63,12 @@ using PrecompileTools: @compile_workload
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 const ModelScalingFactor = 1e+3
+
+const GRB_ENV = Ref{Gurobi.Env}()
+function __init__()
+    GRB_ENV[] = Gurobi.Env()
+    return
+end
 
 """
 An abstract type that should be subtyped for users creating GenX resources.
@@ -93,6 +100,7 @@ include("time_domain_reduction/full_time_series_reconstruction.jl")
 
 include_all_in_folder("multi_stage")
 include_all_in_folder("additional_tools")
+include_all_in_folder("benders")
 
 include("startup/genx_startup.jl")
 
