@@ -177,55 +177,21 @@ function transmission_capacity_decisions!(EP, inputs::Dict, setup::Dict)
         if setup["IntegerInvestments"] == 1 && setup["DC_OPF"] == 0
             # Transmission network capacity reinforcements per line, integer
             @variable(EP, vNEW_TRANS_LINES[l in CANDIDATE_LINES], Int, lower_bound=0)
-        elseif setup["DC_OPF"] == 1
-            if setup["SOS1"] == 1
-                @variable(EP, vZ_SOS1_VAR[l in CANDIDATE_LINES, i in 1:(1+inputs["Max_Trans_Cap"][l])] in Parameter(0)) #SOS1 variable
-	            @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in CANDIDATE_LINES] in Parameter(0))
-                REINFORCEMENT_CAP_SIZE = inputs["Line_Reinforcement_Cap_Size"]
-                MAX_TRANS_EXPANSION_LIMIT=inputs["Max_Trans_Cap"]
-                EXPANSION_LEVELS=Dict{Int,Vector{Float64}}()
-                for l in CANDIDATE_LINES
-                    EXPANSION_LEVELS[l] = (0:1:MAX_TRANS_EXPANSION_LIMIT[l]) #-Might not need multiplication of this part -->* REINFORCEMENT_CAP_SIZE[l]
-                end
-                inputs["EXPANSION_LEVELS"] = EXPANSION_LEVELS
-                @variable(EP, vNEW_TRANS_CAP[l in CANDIDATE_LINES]>=0)
-            # elseif setup["ptdf"] == 1
-            #     REINFORCEMENT_CAP_SIZE = inputs["Line_Reinforcement_Cap_Size"]
-            #     MAX_TRANS_EXPANSION_LIMIT=inputs["Max_Trans_Cap"]
-            #     EXPANSION_LEVELS=Dict{Int,Vector{Float64}}()
-            #     for l in CANDIDATE_LINES
-            #         EXPANSION_LEVELS[l] = (0:1:MAX_TRANS_EXPANSION_LIMIT[l]) #-Might not need multiplication of this part -->* REINFORCEMENT_CAP_SIZE[l]
-            #     end
-            #     inputs["EXPANSION_LEVELS"] = EXPANSION_LEVELS
-            #     @variable(EP, vZ_BUILD[l in CANDIDATE_LINES] in Parameter(0)) #PTDF variable
+        elseif setup["DC_OPF"] == 1 && setup["NetworkExpansion"] == 1
+            @variable(EP, vRECONDUCTOR_SLACK_LOW[l in RECONDUCTOR_LINES] >= 0)
+            @variable(EP, vRECONDUCTOR_SLACK_HIGH[l in RECONDUCTOR_LINES] >= 0)
+            @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in CANDIDATE_LINES] in Parameter(0))
+            REINFORCEMENT_CAP_SIZE = inputs["Line_Reinforcement_Cap_Size"]
+            MAX_TRANS_EXPANSION_LIMIT=inputs["Max_Trans_Cap"]
+            EXPANSION_LEVELS=Dict{Int,Vector{Float64}}()
+            for l in CANDIDATE_LINES
+                EXPANSION_LEVELS[l] = (0:1:MAX_TRANS_EXPANSION_LIMIT[l]) 
+            end
+            inputs["EXPANSION_LEVELS"] = EXPANSION_LEVELS
 
-                
-            # elseif setup["bilinear"] == 1
-            #         REINFORCEMENT_CAP_SIZE = inputs["Line_Reinforcement_Cap_Size"]
-            #     MAX_TRANS_EXPANSION_LIMIT=inputs["Max_Trans_Cap"]
-            #     EXPANSION_LEVELS=Dict{Int,Vector{Float64}}()
-            #     for l in CANDIDATE_LINES
-            #         EXPANSION_LEVELS[l] = (0:1:MAX_TRANS_EXPANSION_LIMIT[l]) #-Might not need multiplication of this part -->* REINFORCEMENT_CAP_SIZE[l]
-            #     end
-            #     inputs["EXPANSION_LEVELS"] = EXPANSION_LEVELS
-            #     @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in CANDIDATE_LINES, i in ] in Parameter(0))
-            else
-                @variable(EP, vRECONDUCTOR_SLACK_LOW[l in RECONDUCTOR_LINES] >= 0)
-                @variable(EP, vRECONDUCTOR_SLACK_HIGH[l in RECONDUCTOR_LINES] >= 0)
-                @variable(EP, vNEW_TRANS_CAP_DECISION_INT[l in CANDIDATE_LINES] in Parameter(0))
-                REINFORCEMENT_CAP_SIZE = inputs["Line_Reinforcement_Cap_Size"]
-                MAX_TRANS_EXPANSION_LIMIT=inputs["Max_Trans_Cap"]
-                EXPANSION_LEVELS=Dict{Int,Vector{Float64}}()
-                for l in CANDIDATE_LINES
-                    EXPANSION_LEVELS[l] = (0:1:MAX_TRANS_EXPANSION_LIMIT[l]) #-Might not need multiplication of this part -->* REINFORCEMENT_CAP_SIZE[l]
-                end
-                inputs["EXPANSION_LEVELS"] = EXPANSION_LEVELS
-                #@variable(EP, vNEW_TRANS_CAP[l in CANDIDATE_LINES]>=0)
-
-                for l in RECONDUCTOR_LINES
-                    set_upper_bound(vRECONDUCTOR_SLACK_LOW[l], 0.1 * inputs["pTrans_Max"][l])
-                    set_upper_bound(vRECONDUCTOR_SLACK_HIGH[l], 0.15 * inputs["pTrans_Max"][l])
-                end
+            for l in RECONDUCTOR_LINES
+                set_upper_bound(vRECONDUCTOR_SLACK_LOW[l], 0.1 * inputs["pTrans_Max"][l])
+                set_upper_bound(vRECONDUCTOR_SLACK_HIGH[l], 0.15 * inputs["pTrans_Max"][l])
             end
         else
             # Transmission network capacity reinforcements per line
@@ -246,46 +212,22 @@ function transmission_capacity_decisions!(EP, inputs::Dict, setup::Dict)
             else
                 eTransMax[l]
             end)
-        elseif setup["DC_OPF"] == 1
-            if setup["SOS1"] == 1
-                @expression(EP, eAvail_Trans_Cap[l = 1:L],
+        elseif setup["DC_OPF"] == 1 && setup["NetworkExpansion"] == 1
+            @expression(EP, eAvail_Trans_Cap[l = 1:L],
                 if l in CANDIDATE_LINES
-                    eTransMax[l] + vNEW_TRANS_CAP_DECISION_INT[l]*inputs["Line_Reinforcement_Cap_Size"][l]
-                else
-                    eTransMax[l]
-                end)
-            # elseif setup["ptdf"] == 1
-            #     @expression(EP, eAvail_Trans_Cap[l = 1:L],
-            #         if l in CANDIDATE_LINES
-            #             eTransMax[l] + sum(vZ_BUILD[l]) * inputs["Line_Reinforcement_Cap_Size"][l] #TODO: Make sure this "l" is the correct index
-            #         else
-            #             eTransMax[l]
-            #         end
-            #     )
-            # elseif setup["bilinear"] == 1
-            #     @expression(EP, eAvail_Trans_Cap[l = 1:L],
-            #     if l in CANDIDATE_LINES
-            #         eTransMax[l] + vNEW_TRANS_CAP_DECISION_INT[l]*inputs["Line_Reinforcement_Cap_Size"][l]
-            #     else
-            #         eTransMax[l]
-            #     end)    
-            else
-                @expression(EP, eAvail_Trans_Cap[l = 1:L],
-                    if l in CANDIDATE_LINES
-                        if l in RECONDUCTOR_LINES
-                            eTransMax[l] + sum(vNEW_TRANS_CAP_DECISION_INT[l])*inputs["Line_Reinforcement_Cap_Size"][l] + vRECONDUCTOR_SLACK_LOW[l] + vRECONDUCTOR_SLACK_HIGH[l]
-                        else
-                            eTransMax[l] + sum(vNEW_TRANS_CAP_DECISION_INT[l])*inputs["Line_Reinforcement_Cap_Size"][l]
-                        end
+                    if l in RECONDUCTOR_LINES
+                        eTransMax[l] + sum(vNEW_TRANS_CAP_DECISION_INT[l])*inputs["Line_Reinforcement_Cap_Size"][l] + vRECONDUCTOR_SLACK_LOW[l] + vRECONDUCTOR_SLACK_HIGH[l]
                     else
-                        if l in RECONDUCTOR_LINES
-                            eTransMax[l] + vRECONDUCTOR_SLACK_LOW[l] + vRECONDUCTOR_SLACK_HIGH[l]
-                        else
-                            eTransMax[l]
-                        end
+                        eTransMax[l] + sum(vNEW_TRANS_CAP_DECISION_INT[l])*inputs["Line_Reinforcement_Cap_Size"][l]
                     end
-                )
-            end                
+                else
+                    if l in RECONDUCTOR_LINES
+                        eTransMax[l] + vRECONDUCTOR_SLACK_LOW[l] + vRECONDUCTOR_SLACK_HIGH[l]
+                    else
+                        eTransMax[l]
+                    end
+                end
+            )
         else 
             @expression(EP, eAvail_Trans_Cap[l = 1:L],
                 if l in CANDIDATE_LINES

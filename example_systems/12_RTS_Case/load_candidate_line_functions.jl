@@ -3,6 +3,19 @@ line_names = line_data[!, "Name"]
 line_lengths = line_data[!, "Length_for_multiplier"]
 line_length_mapping = Dict([line_names[i] => line_lengths[i] for i in 1:length(line_names)])
 
+function build_network_adjacency_list(adj_mat::Matrix)
+    adj_list = Vector{Vector{Int}}()
+    num_lines = size(adj_mat, 1)
+
+    for i in 1:num_lines
+        src = findfirst(x -> x == -1, adj_mat[i, :])
+        dst = findfirst(x -> x == 1, adj_mat[i, :])
+        push!(adj_list, [src, dst])
+    end
+
+    return adj_list
+end
+    
 function load_candidates_base(myinputs, T=168; demand_scale = 2, add_new_corridors = false, use_official_lengths = false)
     myinputs["pTrans_Max"] .*= 1
     L = myinputs["L"]
@@ -371,99 +384,274 @@ function update_fuel_and_investment_costs(myinputs)
     end
 end
 
-# for t in techs
-#     if has_time_series(t) && !(has_supplemental_attributes(t))
-#         tkeys = get_time_series_keys(t)
-#         vom_key = [""]
-#         for k in tkeys
-#             if occursin("fom", k.name) || occursin("ixed", k.name)
-#             # if occursin("vom", k.name) || occursin("Var", k.name)
-#                 vom_key[1] = k.name
-#                 break
-#             end
-#         end
-#         if vom_key[1] == ""
-#             println()
-#             println()
-#             println(t.name, "    ", length(tkeys), "   ", tkeys)
-#             println()
-#             println()
-            
-#         else
-#             tvalues = get_time_series_values(SingleTimeSeries, t, vom_key[1])
-#             vom_val = tvalues[16]
-#             println(t.name, "   ", vom_val)
-#             if vom_val == 0
-#                 println("ZERO VALUE FOR ", t.name)
-#             end
-#             push!(voms, vom_val)
-#         end
-        
-#     end
-# end
-columns_to_scale = [:existing_charge_cap_mw,        # to GW
-        :existing_cap_mwh,              # to GWh
-        :existing_cap_mw,               # to GW
-        :cap_size,                      # to GW
-        :min_cap_mw,                    # to GW
-        :min_cap_mwh,                   # to GWh
-        :min_charge_cap_mw,             # to GWh
-        :max_cap_mw,                    # to GW
-        :max_cap_mwh,                   # to GWh
-        :max_charge_cap_mw,             # to GW
-        :inv_cost_per_mwyr,             # to $M/GW/yr
-        :inv_cost_per_mwhyr,            # to $M/GWh/yr
-        :inv_cost_charge_per_mwyr,      # to $M/GW/yr
-        :fixed_om_cost_per_mwyr,        # to $M/GW/yr
-        :fixed_om_cost_per_mwhyr,       # to $M/GWh/yr
-        :fixed_om_cost_charge_per_mwyr, # to $M/GW/yr
-        :var_om_cost_per_mwh,           # to $M/GWh
-        :var_om_cost_per_mwh_in,        # to $M/GWh
-        :reg_cost,                      # to $M/GW
-        :rsv_cost,                      # to $M/GW
-        :min_retired_cap_mw,            # to GW
-        :min_retired_charge_cap_mw,     # to GW
-        :min_retired_energy_cap_mw,     # to GW
-        :start_cost_per_mw,             # to $M/GW
-        :ccs_disposal_cost_per_metric_ton, :hydrogen_mwh_per_tonne       # to GWh/t
-    ]
-function scale_resource(resource, scale_factor)
-    
-    resource_dict = parent(resource)
-    for col in columns_to_scale
-        if haskey(resource_dict, col)
-            resource_dict[col] /= scale_factor
-        end
+function map_generator_to_node(inputs::Dict, node_to_zone_map::Dict, num_zones::Int)
+    # node_to_zone_map is a node index to zone index
+    resources = inputs["RESOURCES"]
+    zone_to_generator_map = Dict{Int, Vector{Int}}()
+    generator_to_zone_map = Dict{Int, Int}()
+    generator_to_node_map = Dict{Int, Int}()
+    for i in 1:num_zones
+        zone_to_generator_map[i] = Int[]
+    end 
+    for r in resources
+        r_dict = parent(r)
+        zone = node_to_zone_map[r_dict[:zone]]
+        push!(zone_to_generator_map[zone], r_dict[:id])
+        generator_to_zone_map[r_dict[:id]] = zone
+        generator_to_node_map[r_dict[:id]] = r_dict[:zone]
     end
+
+    return generator_to_zone_map, zone_to_generator_map, generator_to_node_map
 end
 
 
-function scale_inputs(inputs::Dict, scale_factor = GenX.ModelScalingFactor)
-    keys_to_scale = ["pD", "pC_D_curtail", "pTrans_Max_Possible", "pMax_Line_Reinforcement", "pMax_D_Curtail", "pC_Line_Reconductor_High", "pC_Line_Reconductor_Low", "pC_Line_Reinforcement", "Line_Reinforcement_Cap_Size", "pTrans_Max", "C_Start"]
-    
-    for k in keys_to_scale
-        if haskey(inputs, k)
-            inputs[k] ./= scale_factor
+function build_nodal_adjacency_matrix(adj_mat::Matrix, node_to_zone_map::Dict, node_to_node_map::Dict, zone::Int)
+    adj_list = build_network_adjacency_list(adj_mat)
+
+    #shortened_adj_list = Vector{Vector{Int}}()
+    new_adj_list = Vector{Vector{Int}}()
+    line_to_line_map = Dict{Int, Int}()
+    line_list = Vector{Int}()
+
+    for (i, edge) in enumerate(adj_list)
+        src, dst = edge
+        src_zone = node_to_zone_map[src]
+        dst_zone = node_to_zone_map[dst]
+
+        if src_zone == zone && dst_zone == zone
+            #push!(shortened_adj_list, edge)
+            new_edge = [node_to_node_map[src], node_to_node_map[dst]]
+            push!(new_adj_list, new_edge)
+            push!(line_list, i)
+            line_to_line_map[i] = length(new_adj_list)
         end
     end
 
-    for k in keys(inputs["fuel_costs"])
-        inputs["fuel_costs"][k] ./= scale_factor
+    new_adj_mat = zeros(Int, length(new_adj_list), length(node_to_node_map))
+    for (i, edge) in enumerate(new_adj_list)
+        new_adj_mat[i, edge[1]] = -1
+        new_adj_mat[i, edge[2]] = 1
     end
 
-    for r in inputs["RESOURCES"]
-        scale_resource(r, scale_factor)
+    return new_adj_mat, new_adj_list, line_list, line_to_line_map
+end
+
+function build_single_nodal_input(inputs::Dict, node_to_zone_map::Dict, zone::Int, zone_to_generator_map::Dict, node_to_node_map::Dict)
+    nodal_inputs = deepcopy(inputs)
+    nodes_in_zone = sort(collect(keys(node_to_node_map))) #index of original node numbers
+    num_nodes = length(node_to_node_map)
+    nodal_inputs["N"] = num_nodes
+    nodal_inputs["nodes_in_zone"] = nodes_in_zone
+    nodal_inputs["n2n_map"] = node_to_node_map
+
+    resources = nodal_inputs["RESOURCES"]
+    resource_names = nodal_inputs["RESOURCE_NAMES"]
+    nodal_resources = Vector{GenX.AbstractResource}()
+    gen_to_gen_map = Dict{Int, Int}() # maps original generator id to new generator id
+
+    nodal_resource_names = Vector{String}()
+    nodal_resource_zones = Vector{String}()
+    nodal_r_zones = Vector()
+    generator_list = zone_to_generator_map[zone]
+    nodal_inputs["G"] = length(generator_list)
+    pP_Max = inputs["pP_Max"]
+    new_pP_Max_data = zeros(nodal_inputs["G"], size(pP_Max, 2))
+    g2n_map = Dict()
+    n2g_map = Dict()
+    for (i, g_idx) in enumerate(generator_list)
+        next_resource = resources[g_idx]
+        resource_name = resource_names[g_idx]
+        g_dict = parent(next_resource)
+        original_node = g_dict[:zone]
+        original_id = g_dict[:id]
+        gen_to_gen_map[original_id] = i
+        new_zone = node_to_node_map[original_node]
+        g_dict[:zone] = new_zone
+        g_dict[:id] = i
+
+        new_pP_Max_data[i, :] .= pP_Max[original_id, :]
+        g2n_map[g_idx] = i
+        n2g_map[i] = g_idx
+        push!(nodal_resources, next_resource)
+        push!(nodal_resource_names, resource_name)
+        push!(nodal_resource_zones, resource_name * "_z" * string(new_zone))
+        push!(nodal_r_zones, new_zone)
     end
-    # "pC_D_Curtail"
-# "pTrans_Max_Possible" #only used for losses and multistage; not necessary for now; not loaded properly for now
-# "pMax_Line_Reinforcement" # only used for the non DCOPF, integer case
-# "pMax_D_Curtail" - I don't think we need this one, but probably should check its role
-# "MinCapReq
-# "pC_Line_Reconductor_High"
-# "pC_Line_Reconductor_Low"
-# "fuel_costs"
-# "pC_Line_Reinforcement"
-# "Line_Reinforcement_Cap_Size
-# "pTrans_Max"
-# "RESOURCES"
+    nodal_inputs["g2n_map"] = g2n_map
+    nodal_inputs["n2g_map"] = n2g_map
+    nodal_inputs["RESOURCES"] = nodal_resources
+    nodal_inputs["RESOURCE_NAMES"] = nodal_resource_names
+    nodal_inputs["RESOURCE_ZONES"] = nodal_resource_zones
+    nodal_inputs["R_ZONES"] = nodal_r_zones
+    nodal_inputs["Z"] = num_nodes
+    nodal_inputs["pP_Max"] = new_pP_Max_data
+    old_generator_indices = sort(collect(keys(gen_to_gen_map)))
+
+    # these keys are all vectors of generator indices
+    generator_data_keys = [
+        "THERM_NO_COMMIT",
+        "COMMIT",
+        "THERM_ALL",
+        "THERM_COMMIT",
+        "THERM_COMMIT_PWFU",
+        "MUST_RUN",
+        "HAS_FUEL",
+        "MULTI_FUELS",
+        "SINGLE_FUEL",
+        "FLEX",
+        "CCS",
+        "STOR_ALL",
+        "STOR_SHORT_DURATION",
+        "STOR_LONG_DURATION",
+        "STOR_SYMMETRIC",
+        "STOR_ASYMMETRIC",
+        "STOR_HYDRO_SHORT_DURATION",
+        "STOR_HYDRO_LONG_DURATION",
+        "HYDRO_RES",
+        "VRE_STOR",
+        "VRE",
+        "ELECTROLYZER",
+        "HYDRO_RES_KNOWN_CAP",
+        "RETROFIT_CAP",
+        "RET_CAP",
+        "NEW_CAP",
+        "NEW_CAP_ENERGY",
+        "RET_CAP_ENERGY",
+        "RET_CAP_CHARGE",
+        "NEW_CAP_CHARGE"
+    ]
+
+    for key in generator_data_keys
+        if haskey(inputs, key)
+            generator_data = inputs[key]
+            new_generator_data = Vector{Int}()
+            for g in generator_data
+                if g in keys(gen_to_gen_map)
+                    push!(new_generator_data, gen_to_gen_map[g])
+                end
+            end
+            nodal_inputs[key] = new_generator_data
+        end
+    end
+
+    # these keys are matrices
+    generator_matrix_keys = [
+        "C_Start"
+    ]
+
+    for key in generator_matrix_keys
+        if haskey(inputs, key)
+            generator_matrix = inputs[key]
+
+            new_generator_matrix = generator_matrix[old_generator_indices, :]
+            nodal_inputs[key] = new_generator_matrix
+        end
+    end
+
+    new_adj_mat, new_adj_list, line_list, l2l_map = build_nodal_adjacency_matrix(inputs["pNet_Map"], node_to_zone_map, node_to_node_map, zone)
+
+    nodal_inputs["pNet_Map"] = new_adj_mat
+    nodal_inputs["pNet_Adj_List"] = new_adj_list
+    nodal_inputs["line_list"] = line_list
+    nodal_inputs["l2l_map"] = l2l_map
+    nodal_inputs["L"] = length(new_adj_list)
+    
+    line_keys = [ "pPercent_Loss", "pTrans_Loss_Coeff", "pTrans_Max", "pDC_OPF_coeff", "Line_Angle_Limit", "pDC_OPF_coeff_cand", "Line_Angle_Limit_cand", "Line_Reinforcement_Cap_Size", "pC_Line_Reinforcement", "Max_Trans_Cap", "BigM"] # "pTrans_Max_Possible",
+
+    for key in line_keys
+        if haskey(inputs, key)
+            new_data = Real[]
+            for i in line_list
+                push!(new_data, inputs[key][i])
+            end
+            nodal_inputs[key] = new_data
+        end
+    end
+
+    
+    nodal_inputs["pD"] = inputs["pD"][:, nodes_in_zone]
+
+    EXISTING_LINES = Int[]
+    CANDIDATE_LINES = Int[]
+    RECONDUCTOR_LINES = Int[]
+    CANNOT_RETIRE_LINES = Int[]
+    CAN_RETIRE_LINES = Int[]
+    existing_to_cand_map = Dict()
+
+    l2l_map_rev = Dict()
+    for i in keys(l2l_map)
+        l2l_map_rev[l2l_map[i]] = i
+    end
+    nodal_inputs["l2l_map_rev"] = l2l_map_rev
+
+    for l in sort(collect(keys(l2l_map_rev)))
+        old_line = l2l_map_rev[l]
+        if old_line in inputs["EXISTING_LINES"]
+            push!(EXISTING_LINES, l)
+        end
+        if old_line in inputs["CANDIDATE_LINES"]
+            push!(CANDIDATE_LINES, l)
+        end
+        if old_line in inputs["RECONDUCTOR_LINES"]
+            push!(RECONDUCTOR_LINES, l)
+        end
+        if old_line in inputs["CANNOT_RETIRE_LINES"]
+            push!(CANNOT_RETIRE_LINES, l)
+            if haskey(inputs["existing_to_cand_map"], old_line)
+                old_cand_line = inputs["existing_to_cand_map"][old_line]
+                cand_line_replacement = l2l_map[old_cand_line]
+                existing_to_cand_map[l] = cand_line_replacement
+            end
+        end
+        if old_line in inputs["CAN_RETIRE_LINES"]
+            push!(CAN_RETIRE_LINES, l)
+            old_cand_line = inputs["existing_to_cand_map"][old_line]
+            cand_line_replacement = l2l_map[old_cand_line]
+            existing_to_cand_map[l] = cand_line_replacement
+        end
+    end
+
+    nodal_inputs["EXISTING_LINES"] = EXISTING_LINES
+    nodal_inputs["CANDIDATE_LINES"] = CANDIDATE_LINES
+    nodal_inputs["RECONDUCTOR_LINES"] = RECONDUCTOR_LINES
+    nodal_inputs["CANNOT_RETIRE_LINES"] = CANNOT_RETIRE_LINES
+    nodal_inputs["CAN_RETIRE_LINES"] = CAN_RETIRE_LINES
+    nodal_inputs["existing_to_cand_map"] = existing_to_cand_map
+    nodal_inputs["L_exist"] = length(EXISTING_LINES)
+    nodal_inputs["L_cand"] = length(CANDIDATE_LINES)
+    nodal_inputs["L"] = length(EXISTING_LINES) + length(CANDIDATE_LINES)
+
+    @assert nodal_inputs["L"] == size(nodal_inputs["pNet_Map"], 1)
+
+    return nodal_inputs
+end
+
+function build_nodal_inputs(inputs::Dict, node_to_zone_map::Dict, num_zones::Int)
+    g2z_map, z2g_map, g2n_map = map_generator_to_node(inputs, node_to_zone_map, num_zones)
+
+    zone_to_node_map = Dict{Int, Vector{Int}}() # map each zone to the vector of its nodes
+    node_to_node_map_by_zone = Dict{Int, Dict{Int, Int}}()
+    for i in 1:num_zones
+        zone_to_node_map[i] = Int[]
+    end
+    for (node, zone) in node_to_zone_map
+        push!(zone_to_node_map[zone], node)
+    end
+    for zone in keys(zone_to_node_map)
+        node_to_node_map = Dict{Int, Int}() # maps the original node index to the NEW node index
+        z2n_vector = sort(zone_to_node_map[zone]) # sorted vector of nodes in the zone
+        zone_to_node_map[zone] = z2n_vector # reset value to be sorted
+
+        for (i, idx) in enumerate(z2n_vector)
+            node_to_node_map[idx] = i
+        end
+        node_to_node_map_by_zone[zone] = node_to_node_map
+    end
+    nodal_inputs = Dict{Int, Dict}()
+
+    for i in 1:num_zones
+        nodal_inputs[i] = build_single_nodal_input(inputs, node_to_zone_map, i, z2g_map, node_to_node_map_by_zone[i])
+    end
+
+    return nodal_inputs
 end
