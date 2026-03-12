@@ -36,20 +36,21 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
 
     # mass flow of the second loop is determined by the heat rejection from the data center.
     @expression(EP, eMassFlow_Sec_Loop[y in UTES, t = 1:T],
-        Q[t, gen[y].zone]/(gen[y].thermal_capacity_second_loop * (gen[y].temp_data_center_out_c-eTemp_HX_12[y,t]))
+        Q[t, gen[y].zone]/(gen[y].thermal_capacity_second_loop * max(1e-6, gen[y].temp_data_center_out_c-eTemp_HX_12[y,t]))
     )
 
     # thermal power of the dry cooler
     @expression(EP, eThermalPower_DC[y in UTES, t =1:T],
         gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (gen[y].temp_data_center_out_c-vTemp_DC[y,t]))
 
-    # efficiency of the dry cooler
-    @expression(EP, eCOP_DC[y in UTES, t = 1:T],
-        1000*1.2*gen[y].fan_coefficient_dry_cooler * 1.013 * (gen[y].temp_data_center_out_c - gen[y].approach_temp_dry_cooler - pAmbientTemp[gen[y].zone, t])/(gen[y].fractional_pressure_dry_cooler_fan * gen[y].ambient_pressure_pa)
-    )
+    # efficiency of the dry cooler (pre-computed from lookup table or default equation)
+    COP_DC = inputs["COP_DC"]
+    @expression(EP, eCOP_DC[y in UTES, t = 1:T], COP_DC[y][t])
 
     # Precompute a boolean mask (true if cooler should be used)
-    use_dry_cooler = Dict((y, t) => pAmbientTemp[gen[y].zone, t] < gen[y].switch_temp_c
+    # Use dry cooler if its COP is higher than or equal to the Chiller's COP
+    COP_Chiller = inputs["COP_Chiller"]
+    use_dry_cooler = Dict((y, t) => COP_DC[y][t] >= COP_Chiller[y][t]
         for y in UTES, t = 1:T)
 
     # Use ternary operator in the expression

@@ -1,3 +1,34 @@
+@doc raw"""
+    chiller!(EP::Model, inputs::Dict, setup::Dict)
+
+This module models the chiller component of the Underground Thermal Energy Storage (UTES) system. 
+The chiller is one of the main components alongside dry cooler, pump, and thermal storage for dissipating 
+heat generated from data centers.
+
+## Key Features
+
+The module computes the electrical power consumption of chillers based on:
+- Thermal power load from the secondary cooling loop
+- Coefficient of Performance (COP) of the chiller
+- Pump load for circulating working fluid
+- Fan power consumption
+
+## External COP File Support
+
+When an external COP file (UTES_COP.csv) is provided via the `use_external_cop` flag:
+- **`eCOP_Chiller_plus_Pump`** is set equal to `COP_Chiller[y][t]`, representing the **entire system COP** 
+  including both chiller compressor and pump losses. The external COP value already accounts for all component losses.
+- **`eElec_Chiller_Fan`** is set to 0, assuming fan power losses are already included in the external COP values.
+
+When external COP is not used (default):
+- `eCOP_Chiller_plus_Pump` is calculated as the combined COP of the chiller and pump separately
+- `eElec_Chiller_Fan` is calculated based on thermodynamic fan power requirements
+
+## Chiller Operating Logic
+
+The chiller is selected over the dry cooler when its COP is strictly higher than the dry cooler's COP 
+for a given time step. This ensures the model uses the most efficient cooling component.
+"""
 function chiller!(EP::Model, inputs::Dict, setup::Dict)
     # Setup variables, constraints, and expressions common to all storage resources
     println("Underground Thermal Energy Storage (Chiller) Module")
@@ -24,28 +55,32 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
     vTemp_DC = EP[:vTemp_DC]
 
     # Precompute a boolean mask (true if chiller should be used)
-    use_chiller = Dict((y, t) => pAmbientTemp[gen[y].zone, t] + gen[y].temp_lift_chiller_c + gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c > 0
+    # Use chiller if its COP is strictly higher than the Dry Cooler's COP
+    COP_DC = inputs["COP_DC"]
+    COP_Chiller = inputs["COP_Chiller"]
+    use_chiller = Dict((y, t) => COP_Chiller[y][t] > COP_DC[y][t]
         for y in UTES, t = 1:T)
     # Precompute a boolean mask (true if cooler should be used)
-    use_dry_cooler = Dict((y, t) => pAmbientTemp[gen[y].zone, t] < gen[y].switch_temp_c
+    use_dry_cooler = Dict((y, t) => COP_DC[y][t] >= COP_Chiller[y][t]
         for y in UTES, t = 1:T)
 
     # thermal power of the chiller
     @expression(EP, eThermalPower_Chiller[y in UTES, t =1:T],
         gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (vTemp_DC[y,t] - vTemp_Chiller[y,t]))
 
-    # efficiency of the chiller
-    # assuming that chiller output temperatures-chiller output temperatures>T^evap 
+    # efficiency of the chiller (pre-computed from lookup table or default equation)
+    COP_Chiller = inputs["COP_Chiller"]
+    @expression(EP, eCOP_Chiller[y in UTES, t=1:T], COP_Chiller[y][t])
 
-    @expression(EP, eCOP_Chiller[y in UTES, t=1:T],
-        gen[y].irreversibility_factor_chiller * (gen[y].temp_evaporator_chiller_c+273.15)/(pAmbientTemp[gen[y].zone, t]+ gen[y].temp_lift_chiller_c + gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c)
-    )
+    # Check if external COP file (UTES_COP.csv) is being used
+    cop_lookup = get(inputs, "UTES_COP_Lookup", nothing)
+    use_external_cop = cop_lookup !== nothing && cop_lookup["chiller"] !== nothing
 
     @expression(EP, eCOP_Chiller_plus_Pump[y in UTES, t=1:T],
-        max(0.001, Q[t, gen[y].zone]/(Q[t, gen[y].zone]/eCOP_Chiller[y,t] + gen[y].chiller_pump_load_mw)))
+        use_external_cop ? COP_Chiller[y][t] : max(0.001, Q[t, gen[y].zone]/(Q[t, gen[y].zone]/eCOP_Chiller[y,t] + gen[y].chiller_pump_load_mw)))
 
     @expression(EP, eElec_Chiller_Fan[y in UTES, t=1:T],
-        eThermalPower_Chiller[y,t]*(1+1/eCOP_Chiller[y,t]) * (gen[y].fractional_pressure_chiller_fan * gen[y].ambient_pressure_pa)/(1.013 * gen[y].temp_lift_chiller_c * 1.2 * gen[y].fan_coefficient_chiller*1000)
+        use_external_cop ? 0 : eThermalPower_Chiller[y,t]*(1+1/eCOP_Chiller[y,t]) * (gen[y].fractional_pressure_chiller_fan * gen[y].ambient_pressure_pa)/(1.013 * gen[y].temp_lift_chiller_c * 1.2 * gen[y].fan_coefficient_chiller*1000)
     )
 
     @expression(EP, eElec_Chiller[y in UTES, t = 1:T],
@@ -68,6 +103,5 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
 
     # Chillers are characterized by their thermal capacity
     @constraint(EP, cChillerTempDrop_ub[y in UTES, t=1:T],
-        vTemp_DC[y,t] - vTemp_Chiller[y,t] <= EP[:eTotalCap_UTES][y, chiller]/(gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t]))
-
+        vTemp_DC[y,t] - vTemp_Chiller[y,t] <= EP[:eTotalCap_UTES][y, chiller]/(gen[y].thermal_capacity_second_loop * max(1e-6, EP[:eMassFlow_Sec_Loop][y, t])))
 end

@@ -146,11 +146,14 @@ function utes_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
                                     vdSOC_UTES[y, dfPeriodMap[r, :Rep_Period_Index]])
 
     # Storage at beginning of each modeled period cannot exceed installed energy capacity
+    # @constraint(EP,
+    #     cUTESLongDurationStorageUpper[y in STOR_UTES_LONG_DURATION,
+    #         r in MODELED_PERIODS_INDEX],
+    #     vSOC_UTESw[y, r]<=EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)/3600)
     @constraint(EP,
         cUTESLongDurationStorageUpper[y in STOR_UTES_LONG_DURATION,
             r in MODELED_PERIODS_INDEX],
-        vSOC_UTESw[y, r]<=EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)/3600)
-
+        vSOC_UTESw[y, r]<=EP[:eTotalCap_UTES][y, chiller] * gen[y].hours_storage)
     # Initial storage level for representative periods must also adhere to sub-period storage inventory balance
     # Initial storage = Final storage - change in storage inventory across representative period
     @constraint(EP,
@@ -171,7 +174,7 @@ function utes_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
         # Max storage content within each modeled period cannot exceed installed energy capacity
         @constraint(EP, cSoCLongDurationStorageMaxInt_UTES[y in STOR_UTES_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
         vSOC_UTESw[y,r] + (1 - gen[y].self_disch) * EP[:vSOC_RTES][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] +
-        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] * (- EP[:vTemp_Chiller][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] + EP[:eTemp_HX_12][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]) <= EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)/3600)
+        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] * (- EP[:vTemp_Chiller][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] + EP[:eTemp_HX_12][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]) <= EP[:eTotalCap_UTES][y, chiller] * gen[y].hours_storage)
 
         # Min storage content within each modeled period cannot be negative
         @constraint(EP, cSoCLongDurationStorageMinInt_UTES[y in STOR_UTES_LONG_DURATION, r in NON_REP_PERIODS_INDEX],

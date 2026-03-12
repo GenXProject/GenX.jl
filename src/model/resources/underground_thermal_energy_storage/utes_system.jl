@@ -23,20 +23,20 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
 
     # Variables
     # retired capacity of UTES 
-    @variable(EP, vRETCAP_UTES[y in UTES, i = 1:4]  >= 0)
+    @variable(EP, vRETCAP_UTES[y in UTES, i = 1:3]  >= 0)
     # new capacity of UTES
-    @variable(EP, vCAP_UTES[y in UTES, i = 1:4]  >= 0)
+    @variable(EP, vCAP_UTES[y in UTES, i = 1:3]  >= 0)
 
     if MultiStage == 1
-        @variable(EP, vEXISTING_UTES[y in UTES, i = 1:4]>=0)
+        @variable(EP, vEXISTING_UTES[y in UTES, i = 1:3]>=0)
     end
 
     # Expressions and constraints related to UTES costs
     # capacity expressions
-    @expression(EP, eExistingCap_UTES[y in UTES, i = 1:4], utes_dict[y, "existing_cap"][i])
+    @expression(EP, eExistingCap_UTES[y in UTES, i = 1:3], utes_dict[y, "existing_cap"][i])
 
     # Note: UTES is not compatiable with RETRO for now.
-    @expression(EP, eTotalCap_UTES[y in UTES, i in 1:4],
+    @expression(EP, eTotalCap_UTES[y in UTES, i in 1:3],
     if y in intersect(NEW_CAP_UTES, RET_CAP_UTES) # Resources eligible for new capacity and retirements 
         eExistingCap_UTES[y, i] + EP[:vCAP_UTES][y, i] - EP[:vRETCAP_UTES][y,i]
 
@@ -49,19 +49,19 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     end)
 
      # maximum capacity constraints
-     for y in UTES, i in 1:4
+     for y in UTES, i in 1:3
         maxcap = utes_dict[y, "max_cap"][i]
         mincap = utes_dict[y, "min_cap"][i]
         if maxcap >= 0
             @constraint(EP, eTotalCap_UTES[y, i] <= maxcap)
         end
         if mincap >= 0
-            @constraint(EP, eTotalCap_UTES[y, i] >= maxcap)
+            @constraint(EP, eTotalCap_UTES[y, i] >= mincap)
         end
     end
 
     # investment costs expressions
-    @expression(EP, eCFix_UTES[y in UTES, i in 1:4],
+    @expression(EP, eCFix_UTES[y in UTES, i in 1:3],
     if y in NEW_CAP_UTES # Resources eligible for new capacity
         utes_dict[y,"inv_cost"][i] * EP[:vCAP_UTES][y, i]+
         utes_dict[y,"fom_cost"][i] * eTotalCap_UTES[y,i]
@@ -70,7 +70,7 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     end)
 
     # connect eCFix_UTES_System to eCFix
-    @expression(EP, eCFix_UTES_System[y in UTES], sum(EP[:eCFix_UTES][y,i] for i in 1:4))
+    @expression(EP, eCFix_UTES_System[y in UTES], sum(EP[:eCFix_UTES][y,i] for i in 1:3))
     @expression(EP, eTotalCFix_UTES, sum(EP[:eCFix_UTES_System][y] for y in UTES))
     # add this to eTotalCFix
     add_to_expression!(EP[:eTotalCFix], eTotalCFix_UTES)
@@ -90,12 +90,13 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
     EP[:ePowerBalance] -= ePowerBalance_Computing
 
     # detailed operational constraints for UTES components
-    # determine cooling mode based on ambient temperature
+    # determine cooling mode based on COP comparison (endogenous calculation)
+    COP_DC = inputs["COP_DC"]
+    COP_Chiller = inputs["COP_Chiller"]
     cooling_mode = Dict(
         (y, t) => (
-            use_chiller = pAmbientTemp[gen[y].zone, t] + gen[y].temp_lift_chiller_c +
-                          gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c > 0,
-            use_dry_cooler = pAmbientTemp[gen[y].zone, t] < gen[y].switch_temp_c
+            use_chiller = COP_Chiller[y][t] > COP_DC[y][t],
+            use_dry_cooler = COP_DC[y][t] >= COP_Chiller[y][t]
         )
         for y in UTES, t in 1:T
     )
@@ -116,7 +117,7 @@ function utes_system!(EP::Model, inputs::Dict, setup::Dict)
 
     if MultiStage == 1
         @constraint(EP,
-            cExistingCap_UTES[y in UTES, i in 1:4],
+            cExistingCap_UTES[y in UTES, i in 1:3],
             EP[:vEXISTING_UTES][y, i] == utes_dict[y, "existing_cap"][i])
     end
 end

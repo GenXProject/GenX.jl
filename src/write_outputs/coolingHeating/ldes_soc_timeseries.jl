@@ -8,14 +8,32 @@ function write_opwrap_lds_stor_init_utes(path::AbstractString,
 
     G = inputs["G"]
 
+    # Check if Time Domain Reduction is enabled
+    TDR_enabled = setup["TimeDomainReduction"] == 1
+    
     # Initial level of storage in each modeled period
-    NPeriods = size(inputs["Period_Map"])[1]
+    if TDR_enabled
+        NPeriods = size(inputs["Period_Map"])[1]
+        hours_per_subperiod = inputs["hours_per_subperiod"]
+        period_map = inputs["Period_Map"].Rep_Period_Index
+    else
+        NPeriods = 1
+        hours_per_subperiod = inputs["T"]  # All hours in single period
+        period_map = [1]
+    end
+    
     dfStorageInit = DataFrame(Resource = inputs["RESOURCE_NAMES"], Zone = zones)
     socw = zeros(G, NPeriods)
-    for i in 1:G
-        if i in inputs["STOR_UTES_LONG_DURATION"]
-            socw[i, :] = value.(EP[:vSOC_UTESw])[i, :]
+    
+    if TDR_enabled
+        for i in 1:G
+            if i in inputs["STOR_UTES_LONG_DURATION"]
+                socw[i, :] = value.(EP[:vSOC_UTESw])[i, :]
+            end
         end
+    else
+        # Without TDR, initialize with zero (no inter-period linkage in single period model)
+        # socw remains zeros as initialized above
     end
     if setup["ParameterScale"] == 1
         socw *= ModelScalingFactor
@@ -29,12 +47,10 @@ function write_opwrap_lds_stor_init_utes(path::AbstractString,
         header = false)
 
     # Write storage evolution over full time horizon
-    hours_per_subperiod = inputs["hours_per_subperiod"];
     t_interior = 2:hours_per_subperiod
     T_hor = hours_per_subperiod*NPeriods # total number of time steps in time horizon
     SOC_t = zeros(G, T_hor)
     stor_long_duration = inputs["STOR_UTES_LONG_DURATION"]
-    period_map = inputs["Period_Map"].Rep_Period_Index
     v_charge = value.(EP[:vCHARGE])
     v_P = value.(EP[:vP])
     if setup["ParameterScale"] == 1

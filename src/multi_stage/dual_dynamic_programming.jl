@@ -70,7 +70,7 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
     end
 
     if !isempty(inputs["UTES"])
-        for i in 1:4 # i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage
+        for i in 1:3 # i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage
             start_cap_d[Symbol("eTotalCap_UTES", i)] = Symbol("cExistingCap_UTES", i)
         end
     end
@@ -126,7 +126,7 @@ function configure_ddp_dicts(setup::Dict, inputs::Dict)
     end
 
     if !isempty(inputs["UTES"])
-        for i in 1:4 # i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage
+        for i in 1:3 # i = 1 -> dry cooler; i = 2 -> chiller; i = 3 -> pump in the tertiary loop; i = 4 -> thermal storage
             cap_track_d[Symbol("vCAPTRACK_UTES", i)] = Symbol("cCapTrack_UTES", i)
         end
     end

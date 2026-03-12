@@ -1509,14 +1509,14 @@ function add_resources_to_input_data!(inputs::Dict,
     utes_dict = Dict()
     for y in inputs["UTES"]
         # cost related to UTES
-        utes_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_per_mwyr_dry_cooler, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_chiller, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_pump_tertiary_loop, default_zero), get_attr(gen[y], :inv_cost_per_kgyr_thermal_storage, default_zero)
-        utes_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_per_mwyr_dry_cooler, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_chiller, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_pump_tertiary_loop, default_zero), get_attr(gen[y], :fixed_om_cost_per_kgyr_thermal_storage, default_zero)
+        utes_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_per_mwyr_dry_cooler, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_chiller, default_zero), get_attr(gen[y], :inv_cost_per_mwyr_pump_tertiary_loop, default_zero) #, get_attr(gen[y], :inv_cost_per_kgyr_thermal_storage, default_zero)
+        utes_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_per_mwyr_dry_cooler, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_chiller, default_zero), get_attr(gen[y], :fixed_om_cost_per_mwyr_pump_tertiary_loop, default_zero) #, get_attr(gen[y], :fixed_om_cost_per_kgyr_thermal_storage, default_zero)
         # capacity related to UTES
-        utes_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_mw_dry_cooler, default_zero), get_attr(gen[y], :existing_cap_mw_chiller, default_zero), get_attr(gen[y], :existing_cap_mw_pump_tertiary_loop, default_zero), get_attr(gen[y], :existing_cap_kg_thermal_storage, default_zero)
+        utes_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_mw_dry_cooler, default_zero), get_attr(gen[y], :existing_cap_mw_chiller, default_zero), get_attr(gen[y], :existing_cap_mw_pump_tertiary_loop, default_zero) #, get_attr(gen[y], :existing_cap_kg_thermal_storage, default_zero)
 
-        utes_dict[y, "max_cap"] = get_attr(gen[y], :max_cap_mw_dry_cooler, default_minmax_cap), get_attr(gen[y], :max_cap_mw_chiller, default_minmax_cap), get_attr(gen[y], :max_cap_mw_pump_tertiary_loop, default_minmax_cap), get_attr(gen[y], :max_cap_kg_thermal_storage, default_minmax_cap)
+        utes_dict[y, "max_cap"] = get_attr(gen[y], :max_cap_mw_dry_cooler, default_minmax_cap), get_attr(gen[y], :max_cap_mw_chiller, default_minmax_cap), get_attr(gen[y], :max_cap_mw_pump_tertiary_loop, default_minmax_cap) #, get_attr(gen[y], :max_cap_kg_thermal_storage, default_minmax_cap)
         
-        utes_dict[y, "min_cap"] = get_attr(gen[y], :min_cap_mw_dry_cooler, default_zero), get_attr(gen[y], :min_cap_mw_chiller, default_zero), get_attr(gen[y], :min_cap_mw_pump_tertiary_loop, default_zero), get_attr(gen[y], :min_cap_kg_thermal_storage, default_zero)
+        utes_dict[y, "min_cap"] = get_attr(gen[y], :min_cap_mw_dry_cooler, default_zero), get_attr(gen[y], :min_cap_mw_chiller, default_zero), get_attr(gen[y], :min_cap_mw_pump_tertiary_loop, default_zero) #, get_attr(gen[y], :min_cap_kg_thermal_storage, default_zero)
     end
     inputs["utes_dict"] = utes_dict
 

@@ -52,9 +52,12 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
         vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (- EP[:vTemp_Chiller][y, t] + EP[:eTemp_HX_12][y, t])) 
 
     # The status of charge of the thermal storage is constrained by the thermal mass of the storage
+    # @constraint(EP, cSOC_RTES_ub[y in UTES, t = 1:T], 
+    #     vSOC_RTES[y, t] <= EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)/3600) # devided by 3600 to convert MJ to MWh
+    
+    # The state of charge of the thermal storage is constrained by the hours of storage and chiller capacity
     @constraint(EP, cSOC_RTES_ub[y in UTES, t = 1:T], 
-        vSOC_RTES[y, t] <= EP[:eTotalCap_UTES][y, storage] * gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)/3600) # devided by 3600 to convert MJ to MWh
-
+        vSOC_RTES[y, t] <= EP[:eTotalCap_UTES][y, chiller] * gen[y].hours_storage)
     # mass flow in RTES, assuming no heat loss during the tertiary loop and the storage
     @constraint(EP, cMassFlow_RTES[y in UTES, t = 1:T], 
         EP[:vMassFlow_RTES][y, t] == EP[:eMassFlow_Sec_Loop][y, t] * gen[y].thermal_capacity_second_loop * (- EP[:vTemp_Chiller][y, t] + EP[:eTemp_HX_12][y, t])/(gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)))
@@ -68,9 +71,28 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eElec_RTES[y in UTES, t = 1:T],
         EP[:vMassFlow_RTES_abs][y, t] * gen[y].pump_total_pressure_drop_bar * (1/1000) * 100000 / gen[y].efficiency_rtes_pump / 1000000 # convert to MW
     ) # 1000 is the water density and 100000 is the unit conversion from bar to Pa.
-    # energy consumption by RTES (i.e., pump) is cinstrained by the pumping capacity
+    
+    # Maximum pump capacity calculated dynamically from physical parameters
+    # Based on maximum mass flow in the secondary loop, which is proportional to computing demand Q
+    # max_mass_flow_RTES = eMassFlow_Sec_Loop * thermal_capacity_SL * (temp_HX_12 - temp_Chiller) / 
+    #                      (thermal_capacity_TL * (temp_hot - temp_cold))
+    # At maximum, (temp_HX_12 - temp_Chiller) = (temp_data_center_out - temp_max_data_center_in) 
+    # when the chiller cools to the maximum inlet temperature
+    # If Max_Cap_kg_Thermal_Storage is 0, set eMaxPumpCapacity to 0
+    utes_dict = inputs["utes_dict"]
+    @expression(EP, eMaxPumpCapacity[y in UTES, t = 1:T],
+        # Maximum pump power based on current secondary loop mass flow and temperature differentials
+        # Set to 0 if thermal storage max capacity is 0
+        # utes_dict[y, "max_cap"][storage] == 0 ? 0.0 :
+        EP[:eMassFlow_Sec_Loop][y, t] * gen[y].thermal_capacity_second_loop * 
+        max(1e-6, gen[y].temp_data_center_out_c - gen[y].temp_max_data_center_in_c) /
+        (gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)) *
+        gen[y].pump_total_pressure_drop_bar * (1/1000) * 100000 / gen[y].efficiency_rtes_pump / 1000000
+    )
+    
+    # energy consumption by RTES (i.e., pump) is constrained by the dynamically calculated pumping capacity
     @constraint(EP, cElec_RTES_ub[y in UTES, t = 1:T], 
-    eElec_RTES[y, t] <= EP[:eTotalCap_UTES][y, pump])
+        eElec_RTES[y, t] <= eMaxPumpCapacity[y, t])
 
     @expression(EP, ePowerBalance_RTES[t in 1:T, z in 1:Z],
         sum(EP[:eElec_RTES][y, t]

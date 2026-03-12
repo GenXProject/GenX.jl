@@ -1001,7 +1001,7 @@ function endogenous_retirement_utes!(EP::Model,
     NEW_CAP_UTES = intersect(inputs["NEW_CAP"], UTES)
     RET_CAP_UTES = intersect(inputs["RET_CAP"], UTES)
 
-    for i in 1:4 # 1: dry cooler, 2: chiller, 3: pump, 4: storage
+    for i in 1:3 # 1: dry cooler, 2: chiller, 3: pump, 4: storage
         # variables
          @variable(EP, vCAPTRACK_UTES[y in RET_CAP_UTES, p = 1:num_stages], lower_bound=0, base_name = "vCAPTRACK_UTES$(i)")
          @variable(EP, vRETCAPTRACK_UTES[y in RET_CAP_UTES, p = 1:num_stages], lower_bound=0, base_name = "vRETCAPTRACK_UTES$(i)")

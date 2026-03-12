@@ -22,6 +22,7 @@ function ates!(EP::Model, inputs::Dict, setup::Dict)
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
     INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 
+    #TODO: #899 determine if use chiller or dry cooler based on these equations or an external COP file.
     use_chiller = Dict((y, t) => pAmbientTemp[gen[y].zone, t] + gen[y].temp_lift_chiller_c + gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c > 0
         for y in UTES, t = 1:T)
 

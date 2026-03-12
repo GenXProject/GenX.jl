@@ -525,6 +525,24 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Start\_Fuel\_sCO2Turbine\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each sCO2 turbine in an Allam Cycle power plant (MMBtu/MW per start).|
 |Start\_Fuel\_ASU\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each ASU in an Allam Cycle power plant (MMBtu/MW per start).|
 
+##### Table 14: UTES COP lookup table (UTES\_COP.csv)
+
+This optional file provides Coefficient of Performance (COP) lookup tables for Underground Thermal Energy Storage (UTES) dry coolers and chillers. If provided, COP values are determined via linear interpolation based on ambient temperature. If this file is not provided, or if a technology type is missing from the file, the default equation-based COP calculation is used.
+
+!!! note
+    This file is optional. If omitted, COP values are calculated using built-in equations based on thermodynamic parameters specified in the UTES resource file.
+
+---
+|**Column Name** | **Description**|
+| :------------ | :-----------|
+|Technology | Technology type: `dry_cooler` or `chiller`. Case-insensitive; also accepts `dry-cooler`, `dry cooler`, `Dry_Cooler`, etc.|
+|Deg\_Celsius | Ambient temperature in degrees Celsius at which the COP value applies.|
+|Efficiency | Coefficient of Performance (COP) value at the specified temperature. Must be positive.|
+|Resource | *(Optional)* Resource name corresponding to a UTES resource. If this column is present, COP values are specified per-resource and **all** UTES resources must be listed for each technology. If omitted, the same COP lookup applies to all UTES resources.|
+
+!!! warning
+    If ambient temperatures during simulation fall outside the range specified in the lookup table, COP values are clamped to the nearest boundary value and a warning is issued (once per technology).
+
 
 ##### Policy-related columns for all resources
 In addition to the files described above, the `resources` folder contains a folder called `policy_assignments` (the filename can be changed in the settings file) with the following files that are used to specify policy-related parameters for specific resources: 

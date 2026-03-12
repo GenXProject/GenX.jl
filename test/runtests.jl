@@ -14,6 +14,10 @@ if VERSION ≥ v"1.7"
     end
 end
 
+@testset "UTES COP" begin
+    include("test_utes_cop.jl")
+end
+
 # Test GenX modules
 @testset verbose=true "GenX modules" begin
     @testset "Three zones" begin

@@ -43,6 +43,9 @@ function load_inputs(setup::Dict, path::AbstractString)
     # Read in cooling and heating demand data
     if setup["CoolingDemand"] == 1
         load_ambient_temperature!(setup, path, inputs)
+        # Load optional UTES COP lookup table and pre-compute COP values
+        load_utes_cop!(setup, resources_path, inputs)
+        compute_utes_cop!(inputs, setup)
     end
 
 
