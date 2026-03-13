@@ -1,93 +1,65 @@
-@doc raw"""
-    load_utes_cop!(setup::Dict, resources_path::AbstractString, inputs::Dict)
+const UTES_COP_VALID_TECHNOLOGIES = ["dry_cooler", "chiller"]
+const UTES_COP_PURPOSES = ["data_center", "reservoir"]
+const UTES_COP_PURPOSE_FILENAMES = Dict(
+    "data_center" => "UTES_COP_Data_Center.csv",
+    "reservoir" => "UTES_COP_Reservoir.csv",
+)
 
-Load optional UTES COP (Coefficient of Performance) lookup table from `UTES_COP.csv` in the resources folder.
-If the file exists, it is used to determine COP values for dry coolers and/or chillers via linear interpolation.
-If the file does not exist, or if a technology type is missing from the file, the default equation-based COP calculation is used.
+function normalize_utes_cop_technology(tech)
+    normalized = lowercase(string(tech))
+    normalized = replace(normalized, "-" => "_")
+    normalized = replace(normalized, " " => "_")
+    return normalized
+end
 
-The CSV file must contain the following columns:
-- `Technology`: Either "dry_cooler" or "chiller" (case-insensitive, accepts "dry-cooler", "dry cooler" as alternatives)
-- `Deg_Celsius`: Ambient temperature in degrees Celsius
-- `Efficiency`: COP value at that temperature (must be positive)
-
-Optional column:
-- `Resource`: Resource name. If present, COP values are specified per-resource and all UTES resources must be listed.
-"""
-function load_utes_cop!(setup::Dict, resources_path::AbstractString, inputs::Dict)
-    cop_file = joinpath(resources_path, "UTES_COP.csv")
-    
-    if !isfile(cop_file)
-        inputs["UTES_COP_Lookup"] = nothing
-        return nothing
-    end
-    
-    # Load the COP data
-    cop_df = load_dataframe(cop_file)
-    
-    # Validate required columns
+function validate_and_parse_utes_cop!(cop_df, filename::AbstractString, inputs::Dict)
     required_cols = ["Technology", "Deg_Celsius", "Efficiency"]
     for col in required_cols
         if col ∉ names(cop_df)
-            error("UTES_COP.csv is missing required column: $col")
+            error("$(filename) is missing required column: $col")
         end
     end
-    
-    # Validate all Efficiency values are positive
+
     if any(cop_df.Efficiency .<= 0)
-        error("UTES_COP.csv contains non-positive Efficiency values. All COP values must be positive.")
+        error("$(filename) contains non-positive Efficiency values. All COP values must be positive.")
     end
-    
-    # Normalize Technology column: lowercase, replace "-" and " " with "_"
+
     cop_df.Technology = map(cop_df.Technology) do tech
-        normalized = lowercase(string(tech))
-        normalized = replace(normalized, "-" => "_")
-        normalized = replace(normalized, " " => "_")
-        return normalized
+        normalize_utes_cop_technology(tech)
     end
-    
-    # Validate Technology values
-    valid_technologies = ["dry_cooler", "chiller"]
+
     for tech in unique(cop_df.Technology)
-        if tech ∉ valid_technologies
-            error("UTES_COP.csv contains invalid Technology value: '$tech'. Valid values are: $valid_technologies (case-insensitive, 'dry-cooler' and 'dry cooler' are also accepted)")
+        if tech ∉ UTES_COP_VALID_TECHNOLOGIES
+            error("$(filename) contains invalid Technology value: '$tech'. Valid values are: $(UTES_COP_VALID_TECHNOLOGIES)")
         end
     end
-    
-    # Check if Resource column exists
+
     has_resource_col = "Resource" in names(cop_df)
-    
-    # If Resource column exists, validate all UTES resources are present
     if has_resource_col && haskey(inputs, "RESOURCES") && haskey(inputs, "UTES")
         gen = inputs["RESOURCES"]
         UTES = inputs["UTES"]
         utes_resource_names = Set(resource_name(gen[y]) for y in UTES)
         csv_resource_names = Set(cop_df.Resource)
-        
+
         missing_resources = setdiff(utes_resource_names, csv_resource_names)
         if !isempty(missing_resources)
-            error("UTES_COP.csv has a Resource column but is missing entries for UTES resources: $(collect(missing_resources))")
+            error("$(filename) has a Resource column but is missing entries for UTES resources: $(collect(missing_resources))")
         end
     end
-    
-    # Parse and store lookup tables
-    # Structure: Dict("dry_cooler" => Dict(resource_name => (temps, cops)), ...)
-    # If no Resource column: Dict("dry_cooler" => (temps, cops), ...)
+
     lookup = Dict{String, Any}()
-    
-    for tech in valid_technologies
+    for tech in UTES_COP_VALID_TECHNOLOGIES
         tech_df = filter(row -> row.Technology == tech, cop_df)
-        
+
         if nrow(tech_df) == 0
             lookup[tech] = nothing
             continue
         end
-        
+
         if has_resource_col
-            # Per-resource lookup
             resource_lookup = Dict{String, Tuple{Vector{Float64}, Vector{Float64}}}()
             for resource in unique(tech_df.Resource)
                 res_df = filter(row -> row.Resource == resource, tech_df)
-                # Sort by temperature
                 sort!(res_df, :Deg_Celsius)
                 temps = collect(Float64, res_df.Deg_Celsius)
                 cops = collect(Float64, res_df.Efficiency)
@@ -95,16 +67,60 @@ function load_utes_cop!(setup::Dict, resources_path::AbstractString, inputs::Dic
             end
             lookup[tech] = resource_lookup
         else
-            # Global lookup for all resources
             sort!(tech_df, :Deg_Celsius)
             temps = collect(Float64, tech_df.Deg_Celsius)
             cops = collect(Float64, tech_df.Efficiency)
             lookup[tech] = (temps, cops)
         end
     end
-    
-    inputs["UTES_COP_Lookup"] = lookup
-    println("UTES_COP.csv Successfully Read!")
+
+    return lookup
+end
+
+function maybe_load_utes_cop_lookup(file_path::AbstractString, inputs::Dict)
+    if !isfile(file_path)
+        return nothing
+    end
+
+    cop_df = load_dataframe(file_path)
+    lookup = validate_and_parse_utes_cop!(cop_df, basename(file_path), inputs)
+    println("$(basename(file_path)) Successfully Read!")
+    return lookup
+end
+
+@doc raw"""
+    load_utes_cop!(setup::Dict, resources_path::AbstractString, inputs::Dict)
+
+Load optional UTES COP (Coefficient of Performance) lookup tables from the resources folder.
+
+Supported files:
+- `UTES_COP.csv`: legacy lookup used for both direct data center cooling and reservoir cooling
+- `UTES_COP_Data_Center.csv`: purpose-specific lookup for direct data center cooling
+- `UTES_COP_Reservoir.csv`: purpose-specific lookup for reservoir / tertiary-loop cooling
+
+The CSV files must contain the following columns:
+- `Technology`: Either "dry_cooler" or "chiller" (case-insensitive, accepts "dry-cooler", "dry cooler" as alternatives)
+- `Deg_Celsius`: Ambient temperature in degrees Celsius
+- `Efficiency`: COP value at that temperature (must be positive)
+
+Optional column:
+- `Resource`: Resource name. If present, COP values are specified per-resource and all UTES resources must be listed.
+
+Purpose-specific files take precedence over `UTES_COP.csv`. If a purpose-specific file is absent,
+the legacy lookup is used for that purpose. This preserves legacy behavior when only `UTES_COP.csv`
+is present or when direct and reservoir COP values are identical.
+"""
+function load_utes_cop!(setup::Dict, resources_path::AbstractString, inputs::Dict)
+    legacy_lookup = maybe_load_utes_cop_lookup(joinpath(resources_path, "UTES_COP.csv"), inputs)
+    data_center_lookup = maybe_load_utes_cop_lookup(joinpath(resources_path, UTES_COP_PURPOSE_FILENAMES["data_center"]), inputs)
+    reservoir_lookup = maybe_load_utes_cop_lookup(joinpath(resources_path, UTES_COP_PURPOSE_FILENAMES["reservoir"]), inputs)
+
+    inputs["UTES_COP_Lookup"] = legacy_lookup
+    inputs["UTES_COP_Lookups"] = Dict(
+        "data_center" => data_center_lookup === nothing ? legacy_lookup : data_center_lookup,
+        "reservoir" => reservoir_lookup === nothing ? legacy_lookup : reservoir_lookup,
+    )
+
     return nothing
 end
 
@@ -170,8 +186,9 @@ end
     compute_utes_cop!(inputs::Dict, setup::Dict)
 
 Pre-compute COP values for all UTES resources and time steps.
-Uses lookup table interpolation if available, otherwise uses default equations.
-Stores results in `inputs["COP_DC"]` and `inputs["COP_Chiller"]` as Dict{Int, Vector{Float64}}.
+Uses purpose-specific lookup table interpolation if available, otherwise uses default equations.
+Stores results in legacy keys `inputs["COP_DC"]` and `inputs["COP_Chiller"]` for backward compatibility,
+and also stores purpose-specific keys for direct data center and reservoir cooling.
 
 # Arguments
 - `inputs`: Dictionary containing input data including UTES resources and ambient temperature
@@ -188,140 +205,132 @@ function compute_utes_cop!(inputs::Dict, setup::Dict)
     UTES = inputs["UTES"]
     pAmbientTemp = inputs["pAmbientTemp"]
     
-    lookup = get(inputs, "UTES_COP_Lookup", nothing)
-    
-    # Determine which method to use for each technology
-    use_lookup_dc = false
-    use_lookup_chiller = false
-    
-    if lookup !== nothing
-        use_lookup_dc = lookup["dry_cooler"] !== nothing
-        use_lookup_chiller = lookup["chiller"] !== nothing
+    lookups_by_purpose = get(inputs, "UTES_COP_Lookups", Dict(
+        "data_center" => get(inputs, "UTES_COP_Lookup", nothing),
+        "reservoir" => get(inputs, "UTES_COP_Lookup", nothing),
+    ))
+
+    function uses_lookup(purpose::String, technology::String)
+        lookup = get(lookups_by_purpose, purpose, nothing)
+        return lookup !== nothing && get(lookup, technology, nothing) !== nothing
     end
-    
-    # Print status messages
-    if use_lookup_dc
-        println("Dry cooler COP: using lookup table from UTES_COP.csv")
-    else
-        println("Dry cooler COP: using default equation")
+
+    for purpose in UTES_COP_PURPOSES
+        if uses_lookup(purpose, "dry_cooler")
+            println("Dry cooler $(purpose) COP: using lookup table")
+        else
+            println("Dry cooler $(purpose) COP: using default equation")
+        end
+
+        if uses_lookup(purpose, "chiller")
+            println("Chiller $(purpose) COP: using lookup table")
+        else
+            println("Chiller $(purpose) COP: using default equation")
+        end
     end
-    
-    if use_lookup_chiller
-        println("Chiller COP: using lookup table from UTES_COP.csv")
-    else
-        println("Chiller COP: using default equation")
-    end
-    
-    # Initialize storage
+
     COP_DC = Dict{Int, Vector{Float64}}()
     COP_Chiller = Dict{Int, Vector{Float64}}()
-    
-    # Warning flags (one per technology, not per resource)
-    warned_dc_low = Ref(false)
-    warned_dc_high = Ref(false)
-    warned_chiller_low = Ref(false)
-    warned_chiller_high = Ref(false)
+    COP_DC_Data_Center = Dict{Int, Vector{Float64}}()
+    COP_DC_Reservoir = Dict{Int, Vector{Float64}}()
+    COP_Chiller_Data_Center = Dict{Int, Vector{Float64}}()
+    COP_Chiller_Reservoir = Dict{Int, Vector{Float64}}()
+
+    warning_flags = Dict(
+        (purpose, technology, bound) => Ref(false)
+        for purpose in UTES_COP_PURPOSES,
+            technology in UTES_COP_VALID_TECHNOLOGIES,
+            bound in ("low", "high")
+    )
+
+    function get_lookup_tuple(purpose::String, technology::String, resource_nm::String)
+        lookup = get(lookups_by_purpose, purpose, nothing)
+        if lookup === nothing
+            return nothing
+        end
+
+        tech_lookup = get(lookup, technology, nothing)
+        if tech_lookup === nothing
+            return nothing
+        elseif tech_lookup isa Dict
+            return get(tech_lookup, resource_nm, nothing)
+        else
+            return tech_lookup
+        end
+    end
+
+    function compute_default_cop(y, ambient_temp::Float64, technology::String)
+        if technology == "dry_cooler"
+            dc_numerator = gen[y].temp_data_center_out_c - gen[y].approach_temp_dry_cooler - ambient_temp
+            if dc_numerator > 0
+                return 1000 * 1.2 * gen[y].fan_coefficient_dry_cooler * 1.013 *
+                    dc_numerator /
+                    (gen[y].fractional_pressure_dry_cooler_fan * gen[y].ambient_pressure_pa)
+            end
+            return 1e-6
+        end
+
+        denominator = ambient_temp + gen[y].temp_lift_chiller_c +
+            gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c
+        if denominator > 0
+            return gen[y].irreversibility_factor_chiller *
+                (gen[y].temp_evaporator_chiller_c + 273.15) / denominator
+        end
+        return 1e-6
+    end
+
+    function compute_cop_series(y, resource_nm::String, zone::Int, purpose::String, technology::String)
+        cop_vec = Vector{Float64}(undef, T)
+        lookup_tuple = get_lookup_tuple(purpose, technology, resource_nm)
+
+        for t in 1:T
+            ambient_temp = pAmbientTemp[zone, t]
+            if lookup_tuple !== nothing
+                temps, cops = lookup_tuple
+                warned = Ref(warning_flags[(purpose, technology, "low")][] || warning_flags[(purpose, technology, "high")][])
+                cop_vec[t] = interpolate_cop(ambient_temp, temps, cops, warned, "$(technology)_$(purpose)")
+                if warned[] && !warning_flags[(purpose, technology, "low")][] && !warning_flags[(purpose, technology, "high")][]
+                    if ambient_temp < temps[1]
+                        warning_flags[(purpose, technology, "low")][] = true
+                    else
+                        warning_flags[(purpose, technology, "high")][] = true
+                    end
+                end
+            else
+                cop_vec[t] = compute_default_cop(y, ambient_temp, technology)
+            end
+        end
+
+        if any(cop_vec .<= 0)
+            error("Computed $(technology) COP contains non-positive values for resource $resource_nm and purpose $purpose. Check input parameters or lookup tables.")
+        end
+
+        return cop_vec
+    end
     
     for y in UTES
         resource_nm = resource_name(gen[y])
         zone = gen[y].zone
         
-        cop_dc_vec = Vector{Float64}(undef, T)
-        cop_chiller_vec = Vector{Float64}(undef, T)
-        
-        # Get lookup tables for this resource if available
-        dc_lookup = nothing
-        chiller_lookup = nothing
-        
-        if use_lookup_dc
-            dc_data = lookup["dry_cooler"]
-            if dc_data isa Dict  # Per-resource lookup
-                dc_lookup = get(dc_data, resource_nm, nothing)
-            else  # Global lookup
-                dc_lookup = dc_data
-            end
-        end
-        
-        if use_lookup_chiller
-            chiller_data = lookup["chiller"]
-            if chiller_data isa Dict  # Per-resource lookup
-                chiller_lookup = get(chiller_data, resource_nm, nothing)
-            else  # Global lookup
-                chiller_lookup = chiller_data
-            end
-        end
-        
-        for t in 1:T
-            ambient_temp = pAmbientTemp[zone, t]
-            
-            # Compute dry cooler COP
-            if dc_lookup !== nothing
-                temps, cops = dc_lookup
-                # Use combined warning ref for both low and high
-                warned_dc = Ref(warned_dc_low[] || warned_dc_high[])
-                cop_dc_vec[t] = interpolate_cop(ambient_temp, temps, cops, warned_dc, "dry_cooler")
-                if warned_dc[] && !warned_dc_low[] && !warned_dc_high[]
-                    if ambient_temp < temps[1]
-                        warned_dc_low[] = true
-                    else
-                        warned_dc_high[] = true
-                    end
-                end
-            else
-                # Default equation from dry_cooler.jl
-                # Calculate numerator for COP check
-                dc_numerator = gen[y].temp_data_center_out_c - gen[y].approach_temp_dry_cooler - ambient_temp
-                if dc_numerator > 0
-                    cop_dc_vec[t] = 1000 * 1.2 * gen[y].fan_coefficient_dry_cooler * 1.013 * 
-                        dc_numerator / 
-                        (gen[y].fractional_pressure_dry_cooler_fan * gen[y].ambient_pressure_pa)
-                else
-                    # Dry cooler cannot operate given constraints (Effective COP -> 0)
-                    cop_dc_vec[t] = 1e-6
-                end
-            end
-            
-            # Compute chiller COP
-            if chiller_lookup !== nothing
-                temps, cops = chiller_lookup
-                warned_chiller = Ref(warned_chiller_low[] || warned_chiller_high[])
-                cop_chiller_vec[t] = interpolate_cop(ambient_temp, temps, cops, warned_chiller, "chiller")
-                if warned_chiller[] && !warned_chiller_low[] && !warned_chiller_high[]
-                    if ambient_temp < temps[1]
-                        warned_chiller_low[] = true
-                    else
-                        warned_chiller_high[] = true
-                    end
-                end
-            else
-                # Default equation from chiller.jl
-                denominator = ambient_temp + gen[y].temp_lift_chiller_c + 
-                    gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c
-                if denominator > 0
-                    cop_chiller_vec[t] = gen[y].irreversibility_factor_chiller * 
-                        (gen[y].temp_evaporator_chiller_c + 273.15) / denominator
-                else
-                    # Chiller not needed or in invalid range (Low ambient)
-                    # Set to epsilon so Dry Cooler (with high COP) wins
-                    cop_chiller_vec[t] = 1e-6
-                end
-            end
-        end
-        
-        # Validate COP values are positive
-        if any(cop_dc_vec .<= 0)
-            error("Computed dry cooler COP contains non-positive values for resource $resource_nm. Check input parameters or lookup table.")
-        end
-        if any(cop_chiller_vec .<= 0)
-            error("Computed chiller COP contains non-positive values for resource $resource_nm. Check input parameters or lookup table.")
-        end
-        
-        COP_DC[y] = cop_dc_vec
-        COP_Chiller[y] = cop_chiller_vec
+        cop_dc_data_center_vec = compute_cop_series(y, resource_nm, zone, "data_center", "dry_cooler")
+        cop_dc_reservoir_vec = compute_cop_series(y, resource_nm, zone, "reservoir", "dry_cooler")
+        cop_chiller_data_center_vec = compute_cop_series(y, resource_nm, zone, "data_center", "chiller")
+        cop_chiller_reservoir_vec = compute_cop_series(y, resource_nm, zone, "reservoir", "chiller")
+
+        COP_DC[y] = copy(cop_dc_data_center_vec)
+        COP_Chiller[y] = copy(cop_chiller_data_center_vec)
+        COP_DC_Data_Center[y] = cop_dc_data_center_vec
+        COP_DC_Reservoir[y] = cop_dc_reservoir_vec
+        COP_Chiller_Data_Center[y] = cop_chiller_data_center_vec
+        COP_Chiller_Reservoir[y] = cop_chiller_reservoir_vec
     end
     
     inputs["COP_DC"] = COP_DC
     inputs["COP_Chiller"] = COP_Chiller
+    inputs["COP_DC_Data_Center"] = COP_DC_Data_Center
+    inputs["COP_DC_Reservoir"] = COP_DC_Reservoir
+    inputs["COP_Chiller_Data_Center"] = COP_Chiller_Data_Center
+    inputs["COP_Chiller_Reservoir"] = COP_Chiller_Reservoir
     
     return nothing
 end

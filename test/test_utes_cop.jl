@@ -373,6 +373,81 @@ using Logging
         rm(temp_dir, recursive=true)
     end
 
+    @testset "load_utes_cop! - purpose-specific files override legacy" begin
+        temp_dir = mktempdir()
+
+        CSV.write(joinpath(temp_dir, "UTES_COP.csv"), DataFrame(
+            Technology=["dry_cooler", "chiller"],
+            Deg_Celsius=[10.0, 10.0],
+            Efficiency=[5.0, 6.0]
+        ))
+
+        CSV.write(joinpath(temp_dir, "UTES_COP_Data_Center.csv"), DataFrame(
+            Technology=["dry_cooler", "chiller"],
+            Deg_Celsius=[10.0, 10.0],
+            Efficiency=[7.0, 8.0]
+        ))
+
+        inputs = Dict()
+        setup = Dict("CoolingDemand" => 1)
+
+        @test GenX.load_utes_cop!(setup, temp_dir, inputs) === nothing
+        @test inputs["UTES_COP_Lookup"]["dry_cooler"][2][1] == 5.0
+        @test inputs["UTES_COP_Lookups"]["data_center"]["dry_cooler"][2][1] == 7.0
+        @test inputs["UTES_COP_Lookups"]["reservoir"]["dry_cooler"][2][1] == 5.0
+
+        rm(temp_dir, recursive=true)
+    end
+
+    @testset "compute_utes_cop! - legacy lookup populates both purposes" begin
+        struct MockUTESBranch <: GenX.AbstractResource
+            data::Dict{Symbol, Any}
+        end
+
+        Base.parent(r::MockUTESBranch) = r.data
+
+        resource = MockUTESBranch(Dict{Symbol, Any}(
+            :resource => "UTES_1",
+            :zone => 1,
+            :fan_coefficient_dry_cooler => 0.5,
+            :temp_data_center_out_c => 50.0,
+            :approach_temp_dry_cooler => 5.0,
+            :fractional_pressure_dry_cooler_fan => 0.1,
+            :ambient_pressure_pa => 101300.0,
+            :irreversibility_factor_chiller => 0.4,
+            :temp_evaporator_chiller_c => 5.0,
+            :temp_lift_chiller_c => 8.0,
+            :temp_approach_chiller_c => 2.0,
+        ))
+        inputs = Dict(
+            "UTES" => [1],
+            "RESOURCES" => [resource],
+            "T" => 2,
+            "pAmbientTemp" => fill(10.0, 1, 2),
+            "UTES_COP_Lookup" => Dict(
+                "dry_cooler" => ([0.0, 20.0], [6.0, 4.0]),
+                "chiller" => ([0.0, 20.0], [3.0, 2.0]),
+            ),
+            "UTES_COP_Lookups" => Dict(
+                "data_center" => Dict(
+                    "dry_cooler" => ([0.0, 20.0], [6.0, 4.0]),
+                    "chiller" => ([0.0, 20.0], [3.0, 2.0]),
+                ),
+                "reservoir" => Dict(
+                    "dry_cooler" => ([0.0, 20.0], [6.0, 4.0]),
+                    "chiller" => ([0.0, 20.0], [3.0, 2.0]),
+                ),
+            ),
+        )
+        setup = Dict("CoolingDemand" => 1)
+
+        @test GenX.compute_utes_cop!(inputs, setup) === nothing
+        @test inputs["COP_DC"][1] == inputs["COP_DC_Data_Center"][1]
+        @test inputs["COP_DC_Data_Center"][1] == inputs["COP_DC_Reservoir"][1]
+        @test inputs["COP_Chiller"][1] == inputs["COP_Chiller_Data_Center"][1]
+        @test inputs["COP_Chiller_Data_Center"][1] == inputs["COP_Chiller_Reservoir"][1]
+    end
+
 end
 
 end # module

@@ -17,21 +17,37 @@ function write_energy_consumption_utes(path::AbstractString, inputs::Dict, setup
     utes_resources = inputs["RESOURCE_NAMES"][UTES]
     df_output = DataFrame(Resource = 
 		[utes_resources .*"_dry_cooler_consumption_mw";
+                 utes_resources .*"_dry_cooler_data_center_consumption_mw";
+                 utes_resources .*"_dry_cooler_reservoir_consumption_mw";
          utes_resources .*"_chiller_consumption_power_mw";
+                 utes_resources .*"_chiller_data_center_consumption_mw";
+                 utes_resources .*"_chiller_reservoir_consumption_mw";
          utes_resources .*"_chiller_fan_consumption_power_mw";
          utes_resources .*"_thermal_storage_consumption_power_mw";
          utes_resources .*"_auxillary_dry_cooler_power_mw";
          utes_resources .*"_auxillary_chiller_power_mw";
          utes_resources .*"_auxillary_thermal_mw";
          utes_resources .*"_COP_dry_cooler";
+                 utes_resources .*"_COP_dry_cooler_data_center";
+                 utes_resources .*"_COP_dry_cooler_reservoir";
          utes_resources .*"_COP_chiller";
+                 utes_resources .*"_COP_chiller_data_center";
+                 utes_resources .*"_COP_chiller_reservoir";
          utes_resources .*"_CRM_contribution_mw";],)
 
 	power_dry_cooler = value.(EP[:eElec_DC])[UTES,:]
+        power_dry_cooler_data_center = value.(EP[:eElec_DC_Data_Center])[UTES,:]
+        power_dry_cooler_reservoir = value.(EP[:eElec_DC_Reservoir])[UTES,:]
     power_chiller = value.(EP[:eElec_Chiller])[UTES,:]
+        power_chiller_data_center = value.(EP[:eElec_Chiller_Data_Center])[UTES,:]
+        power_chiller_reservoir = value.(EP[:eElec_Chiller_Reservoir])[UTES,:]
     power_chiller_fan = value.(EP[:eElec_Chiller_Fan])[UTES,:]
     cop_chiller = value.(EP[:eCOP_Chiller_plus_Pump])[UTES,:]
     cop_DC = value.(EP[:eCOP_DC])[UTES,:]
+        cop_chiller_data_center = value.(EP[:eCOP_Chiller_plus_Pump_Data_Center])[UTES,:]
+        cop_chiller_reservoir = value.(EP[:eCOP_Chiller_plus_Pump_Reservoir])[UTES,:]
+        cop_DC_data_center = value.(EP[:eCOP_DC_Data_Center])[UTES,:]
+        cop_DC_reservoir = value.(EP[:eCOP_DC_Reservoir])[UTES,:]
     if setup["withUTES"] == 1
         power_thermal_storage = value.(EP[:eElec_RTES])[UTES,:]
         
@@ -54,19 +70,31 @@ function write_energy_consumption_utes(path::AbstractString, inputs::Dict, setup
 
     if setup["ParameterScale"] == 1
         power_chiller *= ModelScalingFactor
+        power_chiller_data_center *= ModelScalingFactor
+        power_chiller_reservoir *= ModelScalingFactor
         power_dry_cooler *= ModelScalingFactor
+        power_dry_cooler_data_center *= ModelScalingFactor
+        power_dry_cooler_reservoir *= ModelScalingFactor
         power_thermal_storage *= ModelScalingFactor
     end
 
     output = [Array(power_dry_cooler);
+              Array(power_dry_cooler_data_center);
+              Array(power_dry_cooler_reservoir);
               Array(power_chiller);
+              Array(power_chiller_data_center);
+              Array(power_chiller_reservoir);
               Array(power_chiller_fan);
               Array(power_thermal_storage);
               Array(power_aux_DC);
               Array(power_aux_chiller);
               Array(aux_thermal);
               Array(cop_DC);
+              Array(cop_DC_data_center);
+              Array(cop_DC_reservoir);
               Array(cop_chiller);
+              Array(cop_chiller_data_center);
+              Array(cop_chiller_reservoir);
               Array(crm);]
 
 	final_output = permutedims(DataFrame(hcat(Array(df_output), output), :auto))

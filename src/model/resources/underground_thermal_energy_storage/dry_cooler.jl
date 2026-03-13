@@ -45,7 +45,11 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
 
     # efficiency of the dry cooler (pre-computed from lookup table or default equation)
     COP_DC = inputs["COP_DC"]
+    COP_DC_Data_Center = get(inputs, "COP_DC_Data_Center", COP_DC)
+    COP_DC_Reservoir = get(inputs, "COP_DC_Reservoir", COP_DC)
     @expression(EP, eCOP_DC[y in UTES, t = 1:T], COP_DC[y][t])
+    @expression(EP, eCOP_DC_Data_Center[y in UTES, t = 1:T], COP_DC_Data_Center[y][t])
+    @expression(EP, eCOP_DC_Reservoir[y in UTES, t = 1:T], COP_DC_Reservoir[y][t])
 
     # Precompute a boolean mask (true if cooler should be used)
     # Use dry cooler if its COP is higher than or equal to the Chiller's COP
@@ -53,10 +57,27 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
     use_dry_cooler = Dict((y, t) => COP_DC[y][t] >= COP_Chiller[y][t]
         for y in UTES, t = 1:T)
 
-    # Use ternary operator in the expression
+    # Signed reservoir cooling is positive when charging RTES and negative when RTES discharges.
+    @expression(EP, eThermalPower_UTES_Reservoir[y in UTES, t = 1:T],
+        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (eTemp_HX_12[y, t] - EP[:vTemp_Chiller][y, t]))
+
+    @expression(EP, eThermalPower_DC_Data_Center[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_DC_Total[y, t] - eThermalPower_DC_Reservoir[y, t] : 0)
+
+    @expression(EP, eThermalPower_DC_Reservoir[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_UTES_Reservoir[y, t] : 0)
+
+    @expression(EP, eThermalPower_DC_Total[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_DC[y, t] : 0)
+
+    @expression(EP, eElec_DC_Data_Center[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_DC_Data_Center[y, t] / eCOP_DC_Data_Center[y, t] : 0)
+
+    @expression(EP, eElec_DC_Reservoir[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_DC_Reservoir[y, t] / eCOP_DC_Reservoir[y, t] : 0)
+
     @expression(EP, eElec_DC[y in UTES, t = 1:T],
-    use_dry_cooler[(y, t)] ? eThermalPower_DC[y,t] / eCOP_DC[y,t] : 0
-    )
+        eElec_DC_Data_Center[y, t] + eElec_DC_Reservoir[y, t])
 
     @expression(EP, ePowerBalance_DC[t = 1:T, z = 1:Z],
         sum(EP[:eElec_DC][y, t]

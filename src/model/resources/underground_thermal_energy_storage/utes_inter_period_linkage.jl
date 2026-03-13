@@ -133,8 +133,7 @@ function utes_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
             y in STOR_UTES_LONG_DURATION],
         EP[:vSOC_RTES][y,
             hours_per_subperiod * (w - 1) + 1]==(1 - gen[y].self_disch) * (EP[:vSOC_RTES][y, hours_per_subperiod * w] - vdSOC_UTES[y, w]) + 
-                                                gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, hours_per_subperiod * (w - 1) + 1] * 
-                                                (- EP[:vTemp_Chiller][y, hours_per_subperiod * (w - 1) + 1] + EP[:eTemp_HX_12][y, hours_per_subperiod * (w - 1) + 1]))
+                                                EP[:eThermalPower_UTES_Reservoir][y, hours_per_subperiod * (w - 1) + 1])
     # Storage at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     ## Multiply storage build up term from prior period with corresponding weight
     # add self discharge??????
@@ -174,11 +173,11 @@ function utes_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
         # Max storage content within each modeled period cannot exceed installed energy capacity
         @constraint(EP, cSoCLongDurationStorageMaxInt_UTES[y in STOR_UTES_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
         vSOC_UTESw[y,r] + (1 - gen[y].self_disch) * EP[:vSOC_RTES][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] +
-        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] * (- EP[:vTemp_Chiller][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] + EP[:eTemp_HX_12][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]) <= EP[:eTotalCap_UTES][y, chiller] * gen[y].hours_storage)
+        EP[:eThermalPower_UTES_Reservoir][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] <= EP[:eTotalCap_UTES][y, chiller] * gen[y].hours_storage)
 
         # Min storage content within each modeled period cannot be negative
         @constraint(EP, cSoCLongDurationStorageMinInt_UTES[y in STOR_UTES_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
         vSOC_UTESw[y,r] + (1 - gen[y].self_disch) * EP[:vSOC_RTES][y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] +
-        gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] * (- EP[:vTemp_Chiller][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] + EP[:eTemp_HX_12][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1]) >= 0)     
+        EP[:eThermalPower_UTES_Reservoir][y, hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1] >= 0)     
     end
 end

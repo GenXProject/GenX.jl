@@ -18,6 +18,11 @@ end
     include("test_utes_cop.jl")
 end
 
+@testset "UTES Cooling Models" begin
+    include("test_dry_cooler_model.jl")
+    include("test_chiller_model.jl")
+end
+
 # Test GenX modules
 @testset verbose=true "GenX modules" begin
     @testset "Three zones" begin

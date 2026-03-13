@@ -70,21 +70,51 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
 
     # efficiency of the chiller (pre-computed from lookup table or default equation)
     COP_Chiller = inputs["COP_Chiller"]
+    COP_Chiller_Data_Center = get(inputs, "COP_Chiller_Data_Center", COP_Chiller)
+    COP_Chiller_Reservoir = get(inputs, "COP_Chiller_Reservoir", COP_Chiller)
     @expression(EP, eCOP_Chiller[y in UTES, t=1:T], COP_Chiller[y][t])
+    @expression(EP, eCOP_Chiller_Data_Center[y in UTES, t=1:T], COP_Chiller_Data_Center[y][t])
+    @expression(EP, eCOP_Chiller_Reservoir[y in UTES, t=1:T], COP_Chiller_Reservoir[y][t])
 
-    # Check if external COP file (UTES_COP.csv) is being used
-    cop_lookup = get(inputs, "UTES_COP_Lookup", nothing)
-    use_external_cop = cop_lookup !== nothing && cop_lookup["chiller"] !== nothing
+    # Check if any external COP lookup is being used for the chiller.
+    lookups_by_purpose = get(inputs, "UTES_COP_Lookups", Dict{String, Any}())
+    legacy_lookup = get(inputs, "UTES_COP_Lookup", nothing)
+    use_external_cop = (legacy_lookup !== nothing && get(legacy_lookup, "chiller", nothing) !== nothing) ||
+        any(begin
+            lookup = get(lookups_by_purpose, purpose, nothing)
+            lookup !== nothing && get(lookup, "chiller", nothing) !== nothing
+        end for purpose in ("data_center", "reservoir"))
 
     @expression(EP, eCOP_Chiller_plus_Pump[y in UTES, t=1:T],
         use_external_cop ? COP_Chiller[y][t] : max(0.001, Q[t, gen[y].zone]/(Q[t, gen[y].zone]/eCOP_Chiller[y,t] + gen[y].chiller_pump_load_mw)))
+
+    @expression(EP, eCOP_Chiller_plus_Pump_Data_Center[y in UTES, t=1:T],
+        use_external_cop ? COP_Chiller_Data_Center[y][t] : max(0.001, Q[t, gen[y].zone]/(Q[t, gen[y].zone]/eCOP_Chiller_Data_Center[y,t] + gen[y].chiller_pump_load_mw)))
+
+    @expression(EP, eCOP_Chiller_plus_Pump_Reservoir[y in UTES, t=1:T],
+        use_external_cop ? COP_Chiller_Reservoir[y][t] : max(0.001, Q[t, gen[y].zone]/(Q[t, gen[y].zone]/eCOP_Chiller_Reservoir[y,t] + gen[y].chiller_pump_load_mw)))
 
     @expression(EP, eElec_Chiller_Fan[y in UTES, t=1:T],
         use_external_cop ? 0 : eThermalPower_Chiller[y,t]*(1+1/eCOP_Chiller[y,t]) * (gen[y].fractional_pressure_chiller_fan * gen[y].ambient_pressure_pa)/(1.013 * gen[y].temp_lift_chiller_c * 1.2 * gen[y].fan_coefficient_chiller*1000)
     )
 
+    @expression(EP, eThermalPower_Chiller_Reservoir[y in UTES, t = 1:T],
+        use_chiller[(y, t)] ? EP[:eThermalPower_UTES_Reservoir][y, t] : 0)
+
+    @expression(EP, eThermalPower_Chiller_Total[y in UTES, t = 1:T],
+        use_chiller[(y, t)] ? eThermalPower_Chiller[y, t] : 0)
+
+    @expression(EP, eThermalPower_Chiller_Data_Center[y in UTES, t = 1:T],
+        use_chiller[(y, t)] ? eThermalPower_Chiller_Total[y, t] - eThermalPower_Chiller_Reservoir[y, t] : 0)
+
+    @expression(EP, eElec_Chiller_Data_Center[y in UTES, t = 1:T],
+        use_chiller[(y, t)] ? eThermalPower_Chiller_Data_Center[y,t] / eCOP_Chiller_plus_Pump_Data_Center[y,t] : 0)
+
+    @expression(EP, eElec_Chiller_Reservoir[y in UTES, t = 1:T],
+        use_chiller[(y, t)] ? eThermalPower_Chiller_Reservoir[y,t] / eCOP_Chiller_plus_Pump_Reservoir[y,t] : 0)
+
     @expression(EP, eElec_Chiller[y in UTES, t = 1:T],
-            use_chiller[(y, t)] ? eThermalPower_Chiller[y,t]/eCOP_Chiller_plus_Pump[y,t] + eElec_Chiller_Fan[y,t] : 0)
+            eElec_Chiller_Data_Center[y,t] + eElec_Chiller_Reservoir[y,t] + (use_chiller[(y, t)] ? eElec_Chiller_Fan[y,t] : 0))
 
 
     @expression(EP, ePowerBalance_Chiller[t in 1:T, z in 1:Z],

@@ -45,11 +45,11 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
 
     # during the start period, different for long and short-duration UTES
     @constraint(EP, cSOC_RTES_Start[y in CONSTRAINTSET_UTES, t in START_SUBPERIODS], 
-        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (- EP[:vTemp_Chiller][y, t] + EP[:eTemp_HX_12][y, t])) 
+        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + EP[:eThermalPower_UTES_Reservoir][y, t]) 
     
     # during the interior period, same for long and short-duration UTES
     @constraint(EP, cSOC_RTES_Interior[y in UTES, t in INTERIOR_SUBPERIODS], 
-        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (- EP[:vTemp_Chiller][y, t] + EP[:eTemp_HX_12][y, t])) 
+        vSOC_RTES[y, t] == (1 - gen[y].self_disch) * vSOC_RTES[y, hoursbefore(p, t, 1)] + EP[:eThermalPower_UTES_Reservoir][y, t]) 
 
     # The status of charge of the thermal storage is constrained by the thermal mass of the storage
     # @constraint(EP, cSOC_RTES_ub[y in UTES, t = 1:T], 
@@ -60,7 +60,7 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
         vSOC_RTES[y, t] <= EP[:eTotalCap_UTES][y, chiller] * gen[y].hours_storage)
     # mass flow in RTES, assuming no heat loss during the tertiary loop and the storage
     @constraint(EP, cMassFlow_RTES[y in UTES, t = 1:T], 
-        EP[:vMassFlow_RTES][y, t] == EP[:eMassFlow_Sec_Loop][y, t] * gen[y].thermal_capacity_second_loop * (- EP[:vTemp_Chiller][y, t] + EP[:eTemp_HX_12][y, t])/(gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)))
+        EP[:vMassFlow_RTES][y, t] == EP[:eThermalPower_UTES_Reservoir][y, t]/(gen[y].thermal_capacity_tertiary_loop * (gen[y].temp_hot_thermal_storage - gen[y].temp_cold_thermal_storage)))
 
     @constraint(EP, [y in UTES, t in 1:T],
         vMassFlow_RTES_abs[y, t] >=  EP[:vMassFlow_RTES][y, t])
