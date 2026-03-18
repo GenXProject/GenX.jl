@@ -113,8 +113,10 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eElec_Chiller_Reservoir[y in UTES, t = 1:T],
         use_chiller[(y, t)] ? eThermalPower_Chiller_Reservoir[y,t] / eCOP_Chiller_plus_Pump_Reservoir[y,t] : 0)
 
+    # Keep the aggregate electricity expression identical to legacy behavior so
+    # decomposition does not perturb optimization when branch COPs are identical.
     @expression(EP, eElec_Chiller[y in UTES, t = 1:T],
-            eElec_Chiller_Data_Center[y,t] + eElec_Chiller_Reservoir[y,t] + (use_chiller[(y, t)] ? eElec_Chiller_Fan[y,t] : 0))
+        use_chiller[(y, t)] ? eThermalPower_Chiller[y, t] / eCOP_Chiller_plus_Pump[y, t] + eElec_Chiller_Fan[y, t] : 0)
 
 
     @expression(EP, ePowerBalance_Chiller[t in 1:T, z in 1:Z],

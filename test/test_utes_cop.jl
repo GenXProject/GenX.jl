@@ -404,7 +404,7 @@ using Logging
             data::Dict{Symbol, Any}
         end
 
-        Base.parent(r::MockUTESBranch) = r.data
+        Base.parent(r::MockUTESBranch) = getfield(r, :data)
 
         resource = MockUTESBranch(Dict{Symbol, Any}(
             :resource => "UTES_1",

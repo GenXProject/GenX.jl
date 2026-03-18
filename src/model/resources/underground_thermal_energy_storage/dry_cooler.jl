@@ -61,14 +61,14 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eThermalPower_UTES_Reservoir[y in UTES, t = 1:T],
         gen[y].thermal_capacity_second_loop * EP[:eMassFlow_Sec_Loop][y, t] * (eTemp_HX_12[y, t] - EP[:vTemp_Chiller][y, t]))
 
-    @expression(EP, eThermalPower_DC_Data_Center[y in UTES, t = 1:T],
-        use_dry_cooler[(y, t)] ? eThermalPower_DC_Total[y, t] - eThermalPower_DC_Reservoir[y, t] : 0)
+    @expression(EP, eThermalPower_DC_Total[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_DC[y, t] : 0)
 
     @expression(EP, eThermalPower_DC_Reservoir[y in UTES, t = 1:T],
         use_dry_cooler[(y, t)] ? eThermalPower_UTES_Reservoir[y, t] : 0)
 
-    @expression(EP, eThermalPower_DC_Total[y in UTES, t = 1:T],
-        use_dry_cooler[(y, t)] ? eThermalPower_DC[y, t] : 0)
+    @expression(EP, eThermalPower_DC_Data_Center[y in UTES, t = 1:T],
+        use_dry_cooler[(y, t)] ? eThermalPower_DC_Total[y, t] - eThermalPower_DC_Reservoir[y, t] : 0)
 
     @expression(EP, eElec_DC_Data_Center[y in UTES, t = 1:T],
         use_dry_cooler[(y, t)] ? eThermalPower_DC_Data_Center[y, t] / eCOP_DC_Data_Center[y, t] : 0)
@@ -76,8 +76,10 @@ function dry_cooler!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, eElec_DC_Reservoir[y in UTES, t = 1:T],
         use_dry_cooler[(y, t)] ? eThermalPower_DC_Reservoir[y, t] / eCOP_DC_Reservoir[y, t] : 0)
 
+    # Keep the aggregate electricity expression identical to legacy behavior so
+    # decomposition does not perturb optimization when branch COPs are identical.
     @expression(EP, eElec_DC[y in UTES, t = 1:T],
-        eElec_DC_Data_Center[y, t] + eElec_DC_Reservoir[y, t])
+        use_dry_cooler[(y, t)] ? eThermalPower_DC[y, t] / eCOP_DC[y, t] : 0)
 
     @expression(EP, ePowerBalance_DC[t = 1:T, z = 1:Z],
         sum(EP[:eElec_DC][y, t]

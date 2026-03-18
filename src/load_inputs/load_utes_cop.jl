@@ -243,7 +243,7 @@ function compute_utes_cop!(inputs::Dict, setup::Dict)
             bound in ("low", "high")
     )
 
-    function get_lookup_tuple(purpose::String, technology::String, resource_nm::String)
+    function get_lookup_tuple(purpose::String, technology::String, resource_nm::AbstractString)
         lookup = get(lookups_by_purpose, purpose, nothing)
         if lookup === nothing
             return nothing
@@ -253,7 +253,7 @@ function compute_utes_cop!(inputs::Dict, setup::Dict)
         if tech_lookup === nothing
             return nothing
         elseif tech_lookup isa Dict
-            return get(tech_lookup, resource_nm, nothing)
+            return get(tech_lookup, String(resource_nm), nothing)
         else
             return tech_lookup
         end
@@ -279,7 +279,7 @@ function compute_utes_cop!(inputs::Dict, setup::Dict)
         return 1e-6
     end
 
-    function compute_cop_series(y, resource_nm::String, zone::Int, purpose::String, technology::String)
+    function compute_cop_series(y, resource_nm::AbstractString, zone::Int, purpose::String, technology::String)
         cop_vec = Vector{Float64}(undef, T)
         lookup_tuple = get_lookup_tuple(purpose, technology, resource_nm)
 

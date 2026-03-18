@@ -13,7 +13,7 @@ struct MockUTESResource <: GenX.AbstractResource
 end
 
 # Implement Base.parent so GenX.AbstractResource getproperty works
-Base.parent(r::MockUTESResource) = r.data
+Base.parent(r::MockUTESResource) = getfield(r, :data)
 
 @testset "Chiller External COP Logic" begin
     # Defines
@@ -32,7 +32,7 @@ Base.parent(r::MockUTESResource) = r.data
         :ambient_pressure_pa => 101325.0,
         :temp_lift_chiller_c => 10.0,
         :fan_coefficient_chiller => 0.05,
-        :thermal_capacity_second_loop => 100.0,
+        :thermal_capacity_second_loop => 1.0,
         :max_working_fluid_temp_second_loop => 85.0,
         :min_working_fluid_temp_second_loop => 5.0
     )
@@ -121,16 +121,16 @@ Base.parent(r::MockUTESResource) = r.data
         cop_val = inputs["COP_Chiller"][1][t]
         
         # Check if values match
-        @test eCOP[idx] == cop_val
-        @test eCOP_plus[idx] == cop_val
-        @test eCOP_plus_data_center[idx] == cop_val
-        @test eCOP_plus_reservoir[idx] == cop_val
-        @test eFan[idx] == 0
-        @test value(eThermalTotal[idx]) ≈ 11.5 atol=1e-8
-        @test value(eThermalDirect[idx]) ≈ 10.0 atol=1e-8
-        @test value(eThermalReservoir[idx]) ≈ 1.5 atol=1e-8
-        @test value(eElec_data_center[idx]) ≈ 2.0 atol=1e-8
-        @test value(eElec_reservoir[idx]) ≈ 0.3 atol=1e-8
+        @test eCOP[idx...] == cop_val
+        @test eCOP_plus[idx...] == cop_val
+        @test eCOP_plus_data_center[idx...] == cop_val
+        @test eCOP_plus_reservoir[idx...] == cop_val
+        @test eFan[idx...] == 0
+        @test value(eThermalTotal[idx...]) ≈ 11.5 atol=1e-8
+        @test value(eThermalDirect[idx...]) ≈ 10.0 atol=1e-8
+        @test value(eThermalReservoir[idx...]) ≈ 1.5 atol=1e-8
+        @test value(eElec_data_center[idx...]) ≈ 2.0 atol=1e-8
+        @test value(eElec_reservoir[idx...]) ≈ 0.3 atol=1e-8
     end
 end
 

@@ -10,7 +10,7 @@ struct MockUTESResource <: GenX.AbstractResource
     data::Dict{Symbol, Any}
 end
 
-Base.parent(r::MockUTESResource) = r.data
+Base.parent(r::MockUTESResource) = getfield(r, :data)
 
 @testset "Dry Cooler Branch COP Logic" begin
     T = 2
