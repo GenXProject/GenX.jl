@@ -31,7 +31,7 @@ p.internal.ext["hours_per_subperiod"] = 168
 p.internal.ext["sub_weights"] = [8784 for i in 1:p.internal.ext["Rep_Periods"]] 
 add_om_costs(p)
 
-techs = collect(get_technologies(SupplyTechnology, p))
+techs = collect(get_technologies(SupplyTechnology, p));
 
 bilinear_bool = parse(Bool, ARGS[1])
 sampling_number = parse(Int, ARGS[2])
@@ -154,13 +154,13 @@ else
 end
 CANDIDATE_LINES = myinputs["CANDIDATE_LINES"]
 RECONDUCTOR_LINES = myinputs["RECONDUCTOR_LINES"]
-lines_to_keep = sample(CANDIDATE_LINES, 80, replace=false, ordered=true)
+lines_to_keep = sample(CANDIDATE_LINES, 40, replace=false, ordered=true)
 
 println("LINES TO KEEP ARE: ")
 sort!(lines_to_keep)
 println(lines_to_keep)
 
-lines_to_keep_reconductor = sample(RECONDUCTOR_LINES, 30, replace=false, ordered=true)
+lines_to_keep_reconductor = sample(RECONDUCTOR_LINES, 15, replace=false, ordered=true)
 myinputs["RECONDUCTOR_LINES"] = lines_to_keep_reconductor
 
 GenX.filter_candidate_lines(myinputs, lines_to_keep)
