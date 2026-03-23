@@ -20,6 +20,9 @@ function validate_and_parse_utes_cop!(cop_df, filename::AbstractString, inputs::
         end
     end
 
+    # Drop blank rows (e.g. trailing empty rows in the CSV)
+    dropmissing!(cop_df, required_cols)
+
     if any(cop_df.Efficiency .<= 0)
         error("$(filename) contains non-positive Efficiency values. All COP values must be positive.")
     end
