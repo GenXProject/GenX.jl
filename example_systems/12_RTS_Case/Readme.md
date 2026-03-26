@@ -26,6 +26,23 @@ Pkg.activate("<insert_path_to_GenX.jl_directory_here>")
 Pkg.instantiate()
 ```
 
+### Note on Setup Parameters
+
+While GenX is generally set up to use case runners (e.g., a user calls a function and interacts with the cod primarily through CSV and YAML files), this case study is designed to call GenX's internal functions and operate directly in the julia file, rather than through YAML settings files.
+
+This also means that the settings dictionary that contains the settings files is modified directly in the `run_...` script. A brief explanation of these setup parameters may be helpful. These include: 
+ * `DC_OPF` - whether to use DCOPF constraints
+ * `bilinear` - whether to use the bilinear implementation rather than the big M implementation for the DCOPF constraints
+ * `unfix_slacks` - used for running the transport model. The DCOPF model is "relaxed" into the transport model by setting this parameter to 1. This is the method used for hot-starting. Slacks are added to the flow constraints such that the flow is unconstrained by the voltage phase angles. To "turn off" the transport model without rebuilding the problem, these slacks are fixed to zero so that the DCOPF constraints are reapplied. This value is set to 1 when using the "warmstart" (hot-starting) setting so that the transport model is run first. 
+ * `BD_warmstart_bigM` - whether to hot-start the linear DCOPF problem (the big M implementation). `unfix_slacks` should be set to 1 and `bilinear` should be set to 0. 
+ * `BD_warmstart_bilinear` - whether to hot-start the bilinear DCOPF problem. `unfix_slacks` should be set to 1 and `bilinear` should be set to 0. Benders will run the hot-starting to optimality (which is an LP without bilinear constraints), and then the subproblems will be recreated with the bilinear formulation and without slacks. 
+ * `BD_integer_routine` - whether to solve with an LP relaxation before running the integer problem. If `BD_warmstart_bigM` or `BD_warmstart_bilinear` are 0, then this will apply to the DCOPF problem. 
+ * `BD_post_warmstart_integer_routine` - used if the user wants to do the LP relaxation on the DCOPF constrained problem AFTER doing the integer routine on the transport model as well. 
+ * `BD_Stab_Method` - whether to use regularization (options are `"off"` or `"int_level_set"`). 
+ * `BD_regularization_switch` - whether to turn regularization to `"off"` after the hot-starting and LP steps are finished. 
+ * `BD_post_warmstart_ConvTol` - convergence tolerance for the final step after hot-starting and LP relaxation steps are finished. 
+
+
 ## Acknowledgement
 
 We'd like to give a special thanks to the Sienna team at the National Laboratory of the Rockies, especially Drs. Jose Daniel lara, Rodrigo Henriquez-Auba, Pedro Sanchez, and Jerry Potts. 
