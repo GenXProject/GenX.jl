@@ -21,6 +21,7 @@ end
 @testset "UTES Cooling Models" begin
     include("test_dry_cooler_model.jl")
     include("test_chiller_model.jl")
+    include("test_rtes_model.jl")
 end
 
 # Test GenX modules

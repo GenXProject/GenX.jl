@@ -46,6 +46,7 @@ function load_inputs(setup::Dict, path::AbstractString)
         # Load optional UTES COP lookup table and pre-compute COP values
         load_utes_cop!(setup, resources_path, inputs)
         compute_utes_cop!(inputs, setup)
+        load_utes_charge_capacity!(setup, resources_path, inputs)
     end
 
 

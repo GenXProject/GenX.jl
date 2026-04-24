@@ -133,7 +133,23 @@ function chiller!(EP::Model, inputs::Dict, setup::Dict)
     @constraint(EP, cTemp_Chiller_min[y in UTES, t = 1:T],
                 vTemp_Chiller[y,t]>=gen[y].min_working_fluid_temp_second_loop)
 
-    # Chillers are characterized by their thermal capacity
+    # Chillers are characterized by their thermal capacity.
+    # When UTES_charge_capacity.csv is provided, the effective capacity is Q + MaxChargePower[y][t]
+    # (spare capacity above DC load), expressed as a temperature-drop bound on the secondary loop.
+    # This allows vTemp_Chiller to drop below T_HX12 to charge the reservoir.
+    # When the file is absent, fall back to the static Cap_chiller from UTES.csv.
+    max_charge_power = get(inputs, "MaxChargePower", nothing)
     @constraint(EP, cChillerTempDrop_ub[y in UTES, t=1:T],
-        vTemp_DC[y,t] - vTemp_Chiller[y,t] <= EP[:eTotalCap_UTES][y, chiller]/(gen[y].thermal_capacity_second_loop * max(1e-6, EP[:eMassFlow_Sec_Loop][y, t])))
+        vTemp_DC[y,t] - vTemp_Chiller[y,t] <= begin
+            if max_charge_power !== nothing && haskey(max_charge_power, y)
+                # Pre-computed scalar RHS: (Q + MaxChargePower) * ΔT_dc / Q
+                z  = gen[y].zone
+                temp_drop_dc = max(1e-6, gen[y].temp_data_center_out_c - gen[y].temp_max_data_center_in_c)
+                q  = Q[t, z]
+                q > 0 ? (q + max_charge_power[y][t]) * temp_drop_dc / q : temp_drop_dc
+            else
+                EP[:eTotalCap_UTES][y, chiller] /
+                    (gen[y].thermal_capacity_second_loop * max(1e-6, EP[:eMassFlow_Sec_Loop][y, t]))
+            end
+        end)
 end

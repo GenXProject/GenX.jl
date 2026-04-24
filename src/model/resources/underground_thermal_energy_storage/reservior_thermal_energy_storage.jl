@@ -101,6 +101,17 @@ function rtes!(EP::Model, inputs::Dict, setup::Dict)
     # Added to the power balance
     EP[:ePowerBalance] -= ePowerBalance_RTES
 
+    # Bound reservoir charging by the temperature-dependent spare thermal capacity.
+    # MaxChargePower[y][t] (MWth) is pre-computed from UTES_charge_capacity.csv. It represents
+    # the capacity available above the DC cooling load Q. When positive, vTemp_Chiller can drop
+    # below T_HX12 (charging); cChillerTempDrop_ub in chiller.jl is widened accordingly.
+    # Without the file this constraint is omitted and Cap_chiller from UTES.csv governs.
+    max_charge_power = get(inputs, "MaxChargePower", nothing)
+    if max_charge_power !== nothing
+        @constraint(EP, cRTES_MaxChargePower[y in intersect(UTES, keys(max_charge_power)), t in 1:T],
+            EP[:eThermalPower_UTES_Reservoir][y, t] <= max_charge_power[y][t])
+    end
+
     # if CapacityReserveMargin > 0
     #     use_chiller = Dict((y, t) => pAmbientTemp[gen[y].zone, t] + gen[y].temp_lift_chiller_c + gen[y].temp_approach_chiller_c - gen[y].temp_evaporator_chiller_c > 0
     #     for y in UTES, t = 1:T)

@@ -20,20 +20,24 @@ function write_status_of_charge_utes(path::AbstractString, inputs::Dict, setup::
         df_output = DataFrame(Resource = 
             [utes_resources .*"_utes_soc_MWh";
             utes_resources .*"_utes_mass_flow_kg_per_s";
-            utes_resources .*"_utes_mass_flow_kg_per_s_abs";])
+            utes_resources .*"_utes_mass_flow_kg_per_s_abs";
+            utes_resources .*"_utes_reservoir_thermal_charge_MWth";])
 
         status_of_charge = value.(EP[:vSOC_RTES])[UTES,:]
         mass_flow = value.(EP[:vMassFlow_RTES])[UTES,:]
         mass_flow_abs = value.(EP[:vMassFlow_RTES_abs])[UTES,:]
+        reservoir_thermal_charge = value.(EP[:eThermalPower_UTES_Reservoir])[UTES,:]
 
         if setup["ParameterScale"] == 1
             status_of_charge *= ModelScalingFactor
             mass_flow *= ModelScalingFactor
+            reservoir_thermal_charge *= ModelScalingFactor
         end
 
         output = [Array(status_of_charge);
                 Array(mass_flow);
-                Array(mass_flow_abs);]
+                Array(mass_flow_abs);
+                Array(reservoir_thermal_charge);]
 
     elseif setup["withUTES"] == 2
         df_output = DataFrame(Resource = [
