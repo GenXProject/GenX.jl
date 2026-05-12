@@ -83,8 +83,9 @@ function write_fuel_consumption_ts(path::AbstractString,
     end
     dfPlantFuel_TS = hcat(dfPlantFuel_TS,
         DataFrame(tempts, [Symbol("t$t") for t in 1:T]))
-    CSV.write(joinpath(path, "FuelConsumption_plant_MMBTU.csv"),
-        dftranspose(dfPlantFuel_TS, false), header = false)
+    write_transposed_csv(joinpath(path, "FuelConsumption_plant_MMBTU.csv"),
+        dfPlantFuel_TS,
+        header = false)
 
     if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
         write_full_time_series_reconstruction(

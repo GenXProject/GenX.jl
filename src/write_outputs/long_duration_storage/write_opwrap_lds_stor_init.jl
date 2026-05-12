@@ -29,8 +29,8 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     dfStorageInit = hcat(dfStorageInit, DataFrame(socw, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:NPeriods]]
     rename!(dfStorageInit, auxNew_Names)
-    CSV.write(joinpath(path, "StorageInit.csv"),
-        dftranspose(dfStorageInit, false),
+    write_transposed_csv(joinpath(path, "StorageInit.csv"),
+        dfStorageInit,
         header = false)
 
     # Write storage evolution over full time horizon
@@ -80,6 +80,6 @@ function write_opwrap_lds_stor_init(path::AbstractString,
     df_SOC_t = hcat(df_SOC_t, DataFrame(SOC_t, :auto))
     auxNew_Names = [Symbol("Resource"); Symbol("Zone"); [Symbol("n$t") for t in 1:T_hor]]
     rename!(df_SOC_t,auxNew_Names)
-    CSV.write(joinpath(path, "StorageEvol.csv"), dftranspose(df_SOC_t, false), writeheader=false)
+    write_transposed_csv(joinpath(path, "StorageEvol.csv"), df_SOC_t, writeheader = false)
 
 end

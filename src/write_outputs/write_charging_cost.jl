@@ -1,4 +1,17 @@
-function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+@doc raw"""
+	write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP::Model,
+	    cache::OutputCache = build_output_cache(EP, inputs, setup))
+
+Function for writing charging cost from storage, flexible demand, electrolyzers,
+and co-located VRE-storage resources.
+The optional `cache` argument allows callers to reuse extracted model outputs across
+multiple write functions to reduce memory allocations.
+"""
+function write_charging_cost(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model,
+    cache::OutputCache = build_output_cache(EP, inputs, setup))
     gen = inputs["RESOURCES"]  # Resources (objects)
     resources = inputs["RESOURCE_NAMES"] # Resource names
 
@@ -7,7 +20,6 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     zones = zone_id.(gen)
 
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"]     # Number of time steps (hours)
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
@@ -16,32 +28,33 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
     FUSION = ids_with(gen, :fusion)
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    price = isnothing(cache.price) ? locational_marginal_price(EP, inputs, setup) :
+            cache.price
 
-    price = locational_marginal_price(EP, inputs, setup)
-
-    chargecost = zeros(G, T)
+    chargecost = resource_time_scratch!(cache)
     if !isempty(STOR_ALL)
-        chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .*
+        chargecost[STOR_ALL, :] .= cache.vCHARGE .*
                                    transpose(price)[zone_id.(gen.Storage), :]
     end
     if !isempty(FLEX)
-        chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .*
+        chargecost[FLEX, :] .= cache.vP[FLEX, :] .*
                                transpose(price)[zone_id.(gen.FlexDemand), :]
     end
     if !isempty(ELECTROLYZER)
-        chargecost[ELECTROLYZER, :] .= (value.(EP[:vUSE][ELECTROLYZER, :]).data) .*
+        chargecost[ELECTROLYZER, :] .= cache.vUSE .*
                                        transpose(price)[zone_id.(gen.Electrolyzer), :]
     end
     if !isempty(VS_STOR)
-        chargecost[VS_STOR, :] .= value.(EP[:vCHARGE_VRE_STOR][VS_STOR, :].data) .*
+        chargecost[VS_STOR, :] .= cache.vCHARGE_VRE_STOR .*
                                   transpose(price)[zone_id.(gen[VS_STOR]), :]
     end
     if !isempty(FUSION)
         _, mat = prepare_fusion_parasitic_power(EP, inputs)
-        chargecost[FUSION, :] = mat
+        chargecost[FUSION, :] .= mat
     end
-    chargecost *= scale_factor
+    if cache.scale_factor != 1
+        rmul!(chargecost, cache.scale_factor)
+    end
 
     dfChargingcost = DataFrame(Region = regions,
         Resource = resources,

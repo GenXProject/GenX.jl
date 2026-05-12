@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+- Reduce output-writing memory spikes by caching extracted model values, reusing large scratch arrays, and avoiding copy-heavy transposed DataFrame writes (#908).
 
 ## [0.4.6] - 2026-01-06
 

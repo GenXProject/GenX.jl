@@ -1,9 +1,16 @@
 @doc raw"""
-	write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model,
+        cache::OutputCache = build_output_cache(EP, inputs, setup))
 
 Function for reporting non-served energy for every model zone, time step and cost-segment.
+The optional `cache` argument allows callers to reuse extracted model outputs across
+multiple write functions to reduce memory allocations.
 """
-function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_nse(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model,
+    cache::OutputCache = build_output_cache(EP, inputs, setup))
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
     SEG = inputs["SEG"] # Number of demand curtailment segments
@@ -11,10 +18,12 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfNse = DataFrame(Segment = repeat(1:SEG, outer = Z),
         Zone = repeat(1:Z, inner = SEG),
         AnnualSum = zeros(SEG * Z))
-    nse = zeros(SEG * Z, T)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+    nse = zeros(SEG * Z, T)
+    nse_values = isnothing(cache.vNSE) ? Array{Float64, 3}(Array(value.(EP[:vNSE]))) :
+                 cache.vNSE
     for z in 1:Z
-        nse[((z - 1) * SEG + 1):(z * SEG), :] = value.(EP[:vNSE])[:, :, z] * scale_factor
+        nse[((z - 1) * SEG + 1):(z * SEG), :] .= nse_values[:, :, z] * scale_factor
     end
     dfNse.AnnualSum .= nse * inputs["omega"]
 
@@ -36,7 +45,7 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         rename!(total, auxNew_Names)
         dfNse = vcat(dfNse, total)
 
-        CSV.write(joinpath(path, "nse.csv"), dftranspose(dfNse, false), writeheader = false)
+        write_transposed_csv(joinpath(path, "nse.csv"), dfNse, writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1
             write_full_time_series_reconstruction(path, setup, dfNse, "nse")

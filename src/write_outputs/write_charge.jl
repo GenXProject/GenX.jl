@@ -1,9 +1,16 @@
 @doc raw"""
-	write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model,
+        cache::OutputCache = build_output_cache(EP, inputs, setup))
 
 Function for writing the charging energy values of the different storage technologies.
+The optional `cache` argument allows callers to reuse extracted model outputs across
+multiple write functions to reduce memory allocations.
 """
-function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_charge(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model,
+    cache::OutputCache = build_output_cache(EP, inputs, setup))
     gen = inputs["RESOURCES"]   # Resources (objects) 
     resources = inputs["RESOURCE_NAMES"]    # Resource names
     zones = zone_id.(gen)
@@ -18,39 +25,38 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     FUSION = ids_with(gen, :fusion)
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-
-    charge = Matrix[]
+    charge = Matrix{Float64}[]
     charge_ids = Vector{Int}[]
     if !isempty(STOR_ALL)
-        push!(charge, value.(EP[:vCHARGE]))
+        push!(charge, cache.vCHARGE)
         push!(charge_ids, STOR_ALL)
     end
     if !isempty(FLEX)
-        push!(charge, value.(EP[:vCHARGE_FLEX]))
+        push!(charge, cache.vCHARGE_FLEX)
         push!(charge_ids, FLEX)
     end
     if (setup["HydrogenMinimumProduction"] > 0) & (!isempty(ELECTROLYZER))
-        push!(charge, value.(EP[:vUSE]))
+        push!(charge, cache.vUSE)
         push!(charge_ids, ELECTROLYZER)
     end
     if !isempty(VS_STOR)
-        push!(charge, value.(EP[:vCHARGE_VRE_STOR]))
+        push!(charge, cache.vCHARGE_VRE_STOR)
         push!(charge_ids, VS_STOR)
     end
     if !isempty(FUSION)
         _, mat = prepare_fusion_parasitic_power(EP, inputs)
-        push!(charge, mat)
+        push!(charge, Matrix{Float64}(mat))
         push!(charge_ids, FUSION)
     end
     if !isempty(ALLAM_CYCLE_LOX)
-        push!(charge, value.(EP[:vCHARGE_ALLAM]))
+        push!(charge, cache.vCHARGE_ALLAM)
         push!(charge_ids, ALLAM_CYCLE_LOX)
     end
-    charge = reduce(vcat, charge, init = zeros(0, T))
-    charge_ids = reduce(vcat, charge_ids, init = Int[])
+    charge, charge_ids = materialize_output_blocks(charge, charge_ids, T)
 
-    charge *= scale_factor
+    if cache.scale_factor != 1
+        charge .*= cache.scale_factor
+    end
 
     df = DataFrame(Resource = resources[charge_ids],
         Zone = zones[charge_ids])

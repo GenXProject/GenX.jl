@@ -1,10 +1,17 @@
 @doc raw"""
-	write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model,
+        cache::OutputCache = build_output_cache(EP, inputs, setup))
 
 Function for writing the curtailment values of the different variable renewable resources (both standalone and 
 	co-located).
+The optional `cache` argument allows callers to reuse extracted model outputs across
+multiple write functions to reduce memory allocations.
 """
-function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_curtailment(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model,
+    cache::OutputCache = build_output_cache(EP, inputs, setup))
     gen = inputs["RESOURCES"]  # Resources (objects)
     resources = inputs["RESOURCE_NAMES"] # Resource names
     zones = zone_id.(gen)
@@ -15,11 +22,9 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
     VRE_STOR = inputs["VRE_STOR"]
 
     weight = inputs["omega"]
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-
-    curtailment = zeros(G, T)
-    curtailment[VRE, :] = (value.(EP[:eTotalCap][VRE]) .* inputs["pP_Max"][VRE, :] .-
-                           value.(EP[:vP][VRE, :]))
+    curtailment = resource_time_scratch!(cache)
+    curtailment[VRE, :] .= cache.eTotalCap[VRE] .* inputs["pP_Max"][VRE, :] .-
+                           cache.vP[VRE, :]
 
     if !isempty(VRE_STOR)
         SOLAR = setdiff(inputs["VS_SOLAR"], inputs["VS_WIND"])
@@ -48,7 +53,9 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         end
     end
 
-    curtailment *= scale_factor
+    if cache.scale_factor != 1
+        rmul!(curtailment, cache.scale_factor)
+    end
 
     df = DataFrame(Resource = resources,
         Zone = zones,

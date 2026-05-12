@@ -59,6 +59,10 @@ end
     @testset "Retrofit" begin
         include("test_retrofit.jl")
     end
+
+    @testset "Output cache and transpose" begin
+        include("test_output_cache.jl")
+    end
 end
 
 # Test writing outputs
