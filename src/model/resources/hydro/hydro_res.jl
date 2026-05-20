@@ -79,6 +79,16 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     START_SUBPERIODS = inputs["START_SUBPERIODS"]
     INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 
+    if setup["CascadeHydro"] >= 1
+        if isempty(inputs["HYDRO_IDS"]) || isempty(inputs["RESERVOIR_IDS"])
+            error("CascadeHydro is enabled but HYDRO_IDS or RESERVOIR_IDS are not defined for all reservoir hydro resources. Please define these parameters in the Hydro.csv input file.")
+        end
+        HYDRO_IDS = inputs["HYDRO_IDS"]
+        RESERVOIR_IDS = inputs["RESERVOIR_IDS"]
+        SPILLS_TO = inputs["HYDRO_SPILL_TO"] # Dictionary that returns reservoir y that spills to key reservoir
+        DISCHARGES_TO = inputs["HYDRO_DISCHARGE_TO"] # Dictionary that returns reservoir y that discharges to key reservoir
+        PUMPS_TO = inputs["HYDRO_PUMP_TO"] # Dictionary that returns reservoir y that pumps to key reservoir
+        end
     # These variables are used in the ramp-up and ramp-down expressions
     reserves_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
     regulation_term = @expression(EP, [y in HYDRO_RES, t in 1:T], 0)
@@ -103,20 +113,15 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
-    HYDRO_RES_BY_ZONE = map(1:Z) do z
-        return intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))
-    end
     @expression(EP, ePowerBalanceHydroRes[t = 1:T, z = 1:Z],
-        sum(EP[:vP][y, t] for y in HYDRO_RES_BY_ZONE[z]))
+        sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroRes)
 
     # Capacity Reserves Margin policy
     if setup["CapacityReserveMargin"] > 0
-        nCRMZones = inputs["NCapacityReserveMargin"]
-        capresfactor = inputs["DERATING_FACTOR"]
         @expression(EP,
-            eCapResMarBalanceHydro[res = 1:nCRMZones, t = 1:T],
-            sum(capresfactor[y, res] * EP[:vP][y, t] for y in HYDRO_RES))
+            eCapResMarBalanceHydro[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+            sum(derating_factor(gen[y], tag = res) * EP[:vP][y, t] for y in HYDRO_RES))
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceHydro)
     end
 
@@ -128,12 +133,17 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
         CONSTRAINTSET = HYDRO_RES
     end
 
+    # Linking start and end reservoir levels for each representative period
     @constraint(EP,
         cHydroReservoirStart[y in CONSTRAINTSET, t in START_SUBPERIODS],
-        EP[:vS_HYDRO][y,
-            t]==EP[:vS_HYDRO][y, hoursbefore(p, t, 1)] -
+        EP[:vS_HYDRO][y,t]==EP[:vS_HYDRO][y, hoursbefore(p, t, 1)] -
                 (1 / efficiency_down(gen[y]) * EP[:vP][y, t]) - vSPILL[y, t] +
-                inputs["pP_Max"][y, t] * EP[:eTotalCap][y])
+                inputs["pP_Max"][y, t] * EP[:eTotalCap][y]         
+                #+ (haskey(SPILLS_TO, gen[y].reservoir_id) ?        # Add inflows from upstream reservoir spills  
+                #vSPILL[SPILLS_TO[gen[y].reservoir_id], t] : 0)     
+                #+(haskey(DISCHARGES_TO, gen[y].reservoir_id) ?     # Add inflows from upstream reservoir discharges
+                #1 / efficiency_down(gen[y]) * EP[:vP][DISCHARGES_TO[gen[y].reservoir_id], t] : 0)
+                )
 
     ### Constraints commmon to all reservoir hydro (y in set HYDRO_RES) ###
     @constraints(EP,
@@ -146,9 +156,15 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
             # Constraints for reservoir hydro
             cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS],
             EP[:vS_HYDRO][y, t] == (EP[:vS_HYDRO][y, hoursbefore(p, t, 1)] -
-             (1 / efficiency_down(gen[y]) * EP[:vP][y, t]) - vSPILL[y, t] +
-             inputs["pP_Max"][y, t] * EP[:eTotalCap][y])
-
+                (1 / efficiency_down(gen[y]) * EP[:vP][y, t]) - vSPILL[y, t] +
+                inputs["pP_Max"][y, t] * EP[:eTotalCap][y] +        
+                (haskey(SPILLS_TO, gen[y].reservoir_id) ?           # Add inflows from upstream reservoir spills
+                vSPILL[SPILLS_TO[gen[y].reservoir_id], t] : 0) +    
+                (haskey(DISCHARGES_TO, gen[y].reservoir_id) ?       # Add inflows from upstream reservoir discharges    
+                1/efficiency_down(gen[y]) *
+                EP[:vP][DISCHARGES_TO[gen[y].reservoir_id], t] : 0)
+                )
+            
             # Maximum ramp up and down
             cRampUp[y in HYDRO_RES, t in 1:T],
             EP[:vP][y, t] + regulation_term[y, t] + reserves_term[y, t] -
@@ -165,7 +181,8 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
             # Maximum discharging rate must be less than power rating OR available stored energy at start of hour, whichever is less
             # DEV NOTE: We do not currently account for hydro power plant outages - leave it for later to figure out if we should.
-            # DEV NOTE (CONTD): If we defin pPMax as hourly availability of the plant and define inflows as a separate parameter, then notation will be consistent with its use for other resources
+            # DEV NOTE (CONTD): If we define pPMax as hourly availability of the plant and define inflows as a separate parameter, then notation will be consistent with its use for other resources
+            # DEV NOTE (CONTD CONTD): Inflow is now in unit Mm3/h, no longer a function of installed cap MW
             cHydroMaxPower[y in HYDRO_RES, t in 1:T], EP[:vP][y, t] <= EP[:eTotalCap][y]
             cHydroMaxOutflow[y in HYDRO_RES, t in 1:T],
             EP[:vP][y, t] <= EP[:vS_HYDRO][y, hoursbefore(p, t, 1)]
@@ -183,7 +200,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
     end
     ##CO2 Polcy Module Hydro Res Generation by zone
     @expression(EP, eGenerationByHydroRes[z = 1:Z, t = 1:T], # the unit is GW
-        sum(EP[:vP][y, t] for y in HYDRO_RES_BY_ZONE[z]))
+        sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:eGenerationByZone], eGenerationByHydroRes)
 end
 
@@ -240,7 +257,7 @@ function hydro_res_operational_reserves!(EP::Model, inputs::Dict)
 
     S = HYDRO_RES_REG
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
-    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -1.0, vREG[S, :])
+    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -vREG[S, :])
 
     S = HYDRO_RES_RSV
     add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])

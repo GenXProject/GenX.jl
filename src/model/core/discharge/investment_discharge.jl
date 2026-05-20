@@ -44,7 +44,6 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     RET_CAP = inputs["RET_CAP"] # Set of all resources eligible for capacity retirements
     COMMIT = inputs["COMMIT"] # Set of all resources eligible for unit commitment
     RETROFIT_CAP = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
-    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] # Set of allam cycle resources
 
     ### Variables ###
 
@@ -69,39 +68,34 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         @expression(EP, eExistingCap[y in 1:G], existing_cap_mw(gen[y]))
     end
 
-    NEW_RET_RETROFIT_CAP = intersect(NEW_CAP, RET_CAP, RETROFIT_CAP) # Resources eligible for new capacity, retirements and being retrofitted
-    RET_ONLY_CAP = intersect(setdiff(RET_CAP, NEW_CAP), setdiff(RET_CAP, RETROFIT_CAP)) # Resources eligible for only capacity retirements
-    RET_NEW_CAP = setdiff(intersect(RET_CAP, NEW_CAP), RETROFIT_CAP) # Resources eligible for retirement and new capacity
-    RET_RETROFIT_CAP = setdiff(intersect(RET_CAP, RETROFIT_CAP), NEW_CAP) # Resources eligible for retirement and retrofitting
-    NEW_ONLY_CAP = intersect(setdiff(NEW_CAP, RET_CAP), setdiff(NEW_CAP, RETROFIT_CAP))  # Resources eligible for only new capacity
     @expression(EP, eTotalCap[y in 1:G],
-        if y in NEW_RET_RETROFIT_CAP
+        if y in intersect(NEW_CAP, RET_CAP, RETROFIT_CAP) # Resources eligible for new capacity, retirements and being retrofitted
             if y in COMMIT
                 eExistingCap[y] +
                 cap_size(gen[y]) * (EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROFITCAP][y])
             else
                 eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROFITCAP][y]
             end
-        elseif y in RET_ONLY_CAP
+        elseif y in intersect(setdiff(RET_CAP, NEW_CAP), setdiff(RET_CAP, RETROFIT_CAP)) # Resources eligible for only capacity retirements
             if y in COMMIT
                 eExistingCap[y] - cap_size(gen[y]) * EP[:vRETCAP][y]
             else
                 eExistingCap[y] - EP[:vRETCAP][y]
             end
-        elseif y in RET_NEW_CAP
+        elseif y in setdiff(intersect(RET_CAP, NEW_CAP), RETROFIT_CAP) # Resources eligible for retirement and new capacity
             if y in COMMIT
                 eExistingCap[y] + cap_size(gen[y]) * (EP[:vCAP][y] - EP[:vRETCAP][y])
             else
                 eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y]
             end
-        elseif y in RET_RETROFIT_CAP
+        elseif y in setdiff(intersect(RET_CAP, RETROFIT_CAP), NEW_CAP) # Resources eligible for retirement and retrofitting
             if y in COMMIT
                 eExistingCap[y] -
                 cap_size(gen[y]) * (EP[:vRETROFITCAP][y] + EP[:vRETCAP][y])
             else
                 eExistingCap[y] - (EP[:vRETROFITCAP][y] + EP[:vRETCAP][y])
             end
-        elseif y in NEW_ONLY_CAP
+        elseif y in intersect(setdiff(NEW_CAP, RET_CAP), setdiff(NEW_CAP, RETROFIT_CAP))  # Resources eligible for only new capacity
             if y in COMMIT
                 eExistingCap[y] + cap_size(gen[y]) * EP[:vCAP][y]
             else
@@ -175,14 +169,14 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     if setup["MinCapReq"] == 1
         @expression(EP,
             eMinCapResInvest[mincap = 1:inputs["NumberOfMinCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, min_cap, tag = mincap), ALLAM_CYCLE_LOX)))
+            sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, min_cap, tag = mincap)))
         add_similar_to_expression!(EP[:eMinCapRes], eMinCapResInvest)
     end
 
     if setup["MaxCapReq"] == 1
         @expression(EP,
             eMaxCapResInvest[maxcap = 1:inputs["NumberOfMaxCapReqs"]],
-            sum(EP[:eTotalCap][y] for y in setdiff(ids_with_policy(gen, max_cap, tag = maxcap), ALLAM_CYCLE_LOX)))
+            sum(EP[:eTotalCap][y] for y in ids_with_policy(gen, max_cap, tag = maxcap)))
         add_similar_to_expression!(EP[:eMaxCapRes], eMaxCapResInvest)
     end
 end

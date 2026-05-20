@@ -75,12 +75,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     presolver_start_time = time()
 
     # Generate Energy Portfolio (EP) Model
-    EP = if Bool(setup["EnableJuMPDirectModel"])
-        opt_instance = MOI.instantiate(OPTIMIZER)
-        direct_model(opt_instance)
-    else
-        Model(OPTIMIZER)
-    end
+    EP = Model(OPTIMIZER)
     set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
 
     # Initialize Power Balance Expression
@@ -172,11 +167,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Model constraints, variables, expression related to reservoir hydropower resources
     if !isempty(inputs["HYDRO_RES"])
         hydro_res!(EP, inputs, setup)
-    end
-
-    # Allam Cycle LOX
-    if !isempty(inputs["ALLAM_CYCLE_LOX"])
-        allamcyclelox!(EP, inputs, setup)
     end
 
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage

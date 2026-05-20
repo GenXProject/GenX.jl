@@ -45,7 +45,7 @@ Additionally, the user may need to specify eight more **settings-specific** inpu
 
 • **Second row:** The second row specifies the CO2 emissions intensity of each fuel in tons/MMBtu (million British thermal units). Note that by convention, tons correspond to metric tonnes and not short tons (although as long as the user is internally consistent in their application of units, either can be used).
 
-• **Remaining rows:** Rest of the rows in this input file specify the time-series for prices for each fuel in USD/MMBtu. A constant price can be specified by entering the same value for all hours.
+• **Remaining rows:** Rest of the rows in this input file specify the time-series for prices for each fuel in $/MMBtu. A constant price can be specified by entering the same value for all hours.
 
 * ** First column:** The first column in this file denotes, Time\_index, represents the index of time steps in a model instance.
 
@@ -63,9 +63,8 @@ This input file contains input parameters related to: 1) definition of model zon
 | :------------ | :-----------|
 |**Settings-specific Columns**|
 |**Multiple zone model**||
-|Network\_zones | Unique names for each zone in the model. **Note**: Only the number of zones (i.e., the length of the column) is used; the specific values are not referenced in the model.|
-|Network\_Lines | Numerical index for each network line. **Note**: The length of this column is counted but the actual values are not used.|
-| z* (Network map) **OR** Start\_Zone, End\_Zone | See below |
+|Network\_Lines | Numerical index for each network line. The length of this column is counted but the actual values are not used.|
+| z* (Network map) **OR** Start_Zone, End_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
 |Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
@@ -76,7 +75,7 @@ This input file contains input parameters related to: 1) definition of model zon
 |Ohms | Line resistance in Ohms (used to calculate I^2R losses)|
 |kV | Line voltage in kV (used to calculate I^2R losses)|
 |**CapacityReserveMargin > 0**||
-|CapRes\_Excl\_* | {-1,1,0} Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint, as well as whether the line flow is into or out of the constraint region. * represents the number of the capacity reserve margin constraint.|
+|CapResExcl\_* | {-1,1,0} Eligibility of the transmission line for adding firm capacity to the capacity reserve margin constraint, as well as whether the line flow is into or out of the constraint region. * represents the number of the capacity reserve margin constraint.|
 || 0 = the transmission line is not eligible/part of any capacity reserve constraint.|
 || -1 = the transmission line is eligible for the capacity reserve margin constraint and the designated direction of the transmission line is **inbound** to locational deliverability area (LDA) modeled by the capacity reserve margin constraint.|
 || 1 = the transmission line is eligible for the capacity reserve margin constraint and the designated direction of the transmission line is **outbound** from the locational deliverability area (LDA) modeled by the capacity reserve margin constraint.|
@@ -119,7 +118,7 @@ This file includes parameters to characterize model temporal resolution to appro
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**Mandatory Columns**|
-|Voll |Value of lost load (also referred to as non-served energy) in USD/MWh.|
+|Voll |Value of lost load (also referred to as non-served energy) in $/MWh.|
 |Demand\_Segment |Number of demand curtailment/unserved demand segments with different cost and capacity of curtailable demand for each segment. User-specified demand segments. Integer values starting with 1 in the first row. Additional segements added in subsequent rows.|
 |Cost\_of\_Demand\_Curtailment\_per\_MW |Cost of non-served energy/demand curtailment (for each segment), reported as a fraction of value of the lost load (non-served demand). If *Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length equal to the length of Demand\_Segment.|
 |Max\_Demand\_Curtailment| Maximum time-dependent demand curtailable in each segment, reported as % of the demand in each zone and each period. *If Demand\_Segment = 1*, then this parameter is a scalar and equal to one. In general this parameter is a vector of length given by length of Demand\_segment.|
@@ -138,9 +137,8 @@ The `resources` folder contains the input files for each resource type. At the c
 4) storage resources, specified in the `Storage.csv` file,
 5) flexible demand resources, specified in the `Flex_demand.csv` file,
 6) must-run resources, specified in the `Must_run.csv` file,
-7) electrolyzers, specified in the `Electrolyzer.csv` file,
-8) co-located VRE and storage resources, specified in the `Vre_stor.csv` file, and
-9) Allam Cycle LOX resources, specified in the `Allam_Cycle_LOX.csv` file.
+7) electrolyzers, specified in the `Electrolyzer.csv` file, and
+8) co-located VRE and storage resources, specified in the `Vre_stor.csv` file.
 
 Each file contains cost and performance parameters for various generators and other resources included in the model formulation. The following table describes the mandatory columns in each of these files. Note that the column names are case insensitive.
 
@@ -163,9 +161,9 @@ Each file contains cost and performance parameters for various generators and ot
 |Max\_Cap\_MW |-1 (default) – no limit on maximum discharge capacity of the resource. If non-negative, represents maximum allowed discharge capacity (in MW) of the resource. Note that for co-located VRE-STOR resources, this capacity represents the maximum AC grid connection capacity in MW. |
 |Min\_Cap\_MW |-1 (default) – no limit on minimum discharge capacity of the resource. If non-negative, represents minimum allowed discharge capacity (in MW) of the resource. Note that for co-located VRE-STOR resources, this capacity represents the minimum AC grid connection capacity in MW. |
 |**Cost parameters**|
-|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of a technology (USD/MW/year). Note that for co-located VRE-STOR resources, this annualized capacity investment cost pertains to the grid connection.|
-|Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of a technology (USD/MW/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost pertains to the grid connection.|
-|Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology (USD/MWh). Note that for co-located VRE-STOR resources, these costs apply to the AC generation sent to the grid from the entire site. |
+|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this annualized capacity investment cost pertains to the grid connection.|
+|Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of a technology ($/MW/year). Note that for co-located VRE-STOR resources, this fixed operations and maintenance cost pertains to the grid connection.|
+|Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost of a technology ($/MWh). Note that for co-located VRE-STOR resources, these costs apply to the AC generation sent to the grid from the entire site. |
 |**Technical performance parameters**|
 |Heat\_Rate\_MMBTU\_per\_MWh  |Heat rate of a generator or MMBtu of fuel consumed per MWh of electricity generated for export (net of on-site consumption). The heat rate is the inverse of the efficiency: a lower heat rate is better. Should be consistent with fuel prices in terms of reporting on higher heating value (HHV) or lower heating value (LHV) basis. |
 |Fuel  |Fuel needed for a generator. The names should match with the ones in the `Fuels_data.csv`. |
@@ -204,7 +202,7 @@ Each file contains cost and performance parameters for various generators and ot
 |Biomass | {0, 1}, Flag to indicate if generator uses biomass as feedstock (optional input column).|
 ||Biomass = 0: Not part of set (default). |
 ||Biomass = 1: Uses biomass as fuel.|
-|CCS\_Disposal\_Cost\_per\_Metric_Ton | Cost associated with CCS disposal (USD/tCO2), including pipeline, injection and storage costs of CCS-equipped generators.|
+|CCS\_Disposal\_Cost\_per\_Metric_Ton | Cost associated with CCS disposal ($/tCO2), including pipeline, injection and storage costs of CCS-equipped generators.|
 
 ##### Table 6a: Additional columns in the Thermal.csv file
 |**Column Name** | **Description**|
@@ -245,11 +243,11 @@ Each file contains cost and performance parameters for various generators and ot
 |**UCommit >= 1** | The following settings apply only to thermal plants with unit commitment constraints|
 |Up\_Time| Minimum amount of time a resource has to stay in the committed state.|
 |Down\_Time |Minimum amount of time a resource has to remain in the shutdown state.|
-|Start\_Cost\_per\_MW |Cost per MW of nameplate capacity to start a generator (USD/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
+|Start\_Cost\_per\_MW |Cost per MW of nameplate capacity to start a generator ($/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
 |Start\_Fuel\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each generator (MMBtu/MW per start).|
 |**OperationalReserves = 1** | |
-|Reg\_Cost |Cost of providing regulation reserves (USD/MW per time step/hour).|
-|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves (USD/MW per time step/hour).|
+|Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
+|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
@@ -261,17 +259,17 @@ Each file contains cost and performance parameters for various generators and ot
 ||Num\_VRE\_bins = 1: using a single resource availability profile per technology per zone. 1 capacity investment decision variable and 1 generator RID tracking technology power output (and in each zone).|
 ||Num\_VRE\_bins > 1: using multiple resource availability profiles per technology per zone. Num\_VRE\_bins capacity investment decision variables and 1 generator RID used to define technology power output at each time step (and in each zone). Example: Suppose we are modeling 3 bins of wind profiles for each zone. Then include 3 rows with wind resource names as Wind\_1, Wind\_2, and Wind\_3 and a corresponding increasing sequence of RIDs. Set Num\_VRE\_bins for the generator with smallest RID, Wind\_1, to be 3 and set Num\_VRE\_bins for the other rows corresponding to Wind\_2 and Wind\_3, to be zero. By setting Num\_VRE\_bins for Wind\_2 and Wind\_3, the model eliminates the power outputs variables for these generators. The power output from the technology across all bins is reported in the power output variable for the first generator. This allows for multiple bins without significantly increasing number of model variables (adding each bin only adds one new capacity variable and no operational variables). See documentation for `curtailable_variable_renewable()` for more. |
 
-##### Table 7b: Settings-specific columns in the Vre.csv file
+##### Table 6b: Settings-specific columns in the Vre.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**OperationalReserves = 1** | |
-|Reg\_Cost |Cost of providing regulation reserves (USD/MW per time step/hour).|
-|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves (USD/MW per time step/hour).|
+|Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
+|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 8a: Additional columns in the Hydro.csv file
+##### Table 7a: Additional columns in the Hydro.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -283,17 +281,17 @@ Each file contains cost and performance parameters for various generators and ot
 ||LDS = 0: Not part of set (default) |
 ||LDS = 1: Long duration storage resources|
 
-##### Table 8b: Settings-specific columns in the Hydro.csv file
+##### Table 7b: Settings-specific columns in the Hydro.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**OperationalReserves = 1** | |
-|Reg\_Cost |Cost of providing regulation reserves (USD/MW per time step/hour).|
-|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves (USD/MW per time step/hour).|
+|Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
+|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 9a: Additional columns in the Storage.csv file
+##### Table 8a: Additional columns in the Storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -318,23 +316,23 @@ Each file contains cost and performance parameters for various generators and ot
 |Min\_Cap\_MWh| -1 (default) – no limit on minimum energy capacity of the resource. If non-negative, represents minimum allowed energy capacity (in MWh) of the resource with `Model = 1` or `Model = 2`.|
 |Min\_Charge\_Cap\_MW |-1 (default) – no limit on minimum charge capacity of the resource. If non-negative, represents minimum allowed charge capacity (in MW) of the resource with `Model = 2`.|
 |**Cost parameters**|
-|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for a storage technology (USD/MW/year), applicable to either `Model = 1` or `Model = 2`. |
-|Inv\_Cost\_Charge\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `Model = 2` (USD/MW/year). |
-|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology (USD/MWh/year).|
-|Fixed\_OM\_Cost\_Charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `Model = 2` (USD/MW/year). |
-|Var\_OM\_Cost\_per\_MWh\_In | Variable operations and maintenance cost of the charging aspect of a storage technology (USD/MWh), applicable to either `Model = 1` or `Model = 2`.|
+|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for a storage technology ($/MW/year), applicable to either `Model = 1` or `Model = 2`. |
+|Inv\_Cost\_Charge\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `Model = 2` ($/MW/year). |
+|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of a storage technology ($/MWh/year).|
+|Fixed\_OM\_Cost\_Charge\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology of type `Model = 2`. |
+|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance cost of the charging aspect of a storage technology with `Model = 2`. Otherwise 0 ($/MWh).|
 
-##### Table 9b: Settings-specific columns in the Storage.csv file
+##### Table 8b: Settings-specific columns in the Storage.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**OperationalReserves = 1** | |
-|Reg\_Cost |Cost of providing regulation reserves (USD/MW per time step/hour).|
-|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves (USD/MW per time step/hour).|
+|Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
+|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
 
-##### Table 10: Additional columns in the Flex_demand.csv file
+##### Table 9: Additional columns in the Flex_demand.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -342,15 +340,15 @@ Each file contains cost and performance parameters for various generators and ot
 |Max\_Flexible\_Demand\_Advance  |Maximum number of hours that demand can be scheduled in advance of the original schedule (hours). |
 |Flexible\_Demand\_Energy\_Eff  |[0,1], Energy efficiency associated with time shifting demand. Represents energy losses due to time shifting (or 'snap back' effect of higher consumption due to delay in use) that may apply to some forms of flexible demand (hours). For example, one may need to pre-cool a building more than normal to advance demand. |
 |**Cost parameters**|
-|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance costs associated with flexible demand deferral. Otherwise 0 (USD/MWh). |
+|Var\_OM\_Cost\_per\_MWhIn | Variable operations and maintenance costs associated with flexible demand deferral. Otherwise 0 ($/MWh). |
 
-##### Table 11: Additional columns in the Electrolyzer.csv file
+##### Table 10: Additional columns in the Electrolyzer.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Hydrogen\_MWh\_Per\_Tonne| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
 |Electrolyzer\_Min\_kt| Minimum annual quantity of hydrogen that must be produced by electrolyzer in kilotonnes (kt)|
-|Hydrogen\_Price\_Per\_Tonne| Price (or value) of hydrogen per metric tonne (USD/t)|
+|Hydrogen\_Price\_Per\_Tonne| Price (or value) of hydrogen per metric tonne ($/t)|
 |Min\_Power |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`.|
 |Ramp\_Up\_Percentage |[0,1], Maximum increase in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 |Ramp\_Dn\_Percentage |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
@@ -358,7 +356,7 @@ Each file contains cost and performance parameters for various generators and ot
     Check `Qualified_Hydrogen_Supply` column in table 5a if electrolyzers are included in the model. This column is used to indicate which resources are eligible to supply electrolyzers in the same zone (used for hourly clean supply constraint).
 
 Each co-located VRE, electrolyzer, and storage resource can be easily configured to contain either a co-located VRE-ELEC-storage resource, standalone VRE resource (either wind, solar PV, or both), standalone eletrolyzers, or standalone storage resource.
-##### Table 12a: Additional columns in the Vre_stor.csv file
+##### Table 11a: Additional columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -423,33 +421,32 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Min\_Cap\_Discharge\_AC\_MW |-1 (default) – no limit on minimum AC discharge capacity of the resource. If non-negative, represents minimum allowed AC discharge capacity (in MW AC) of the resource with `STOR_AC_DISCHARGE = 2`.|
 |Min\_Cap\_Charge\_AC\_MW |-1 (default) – no limit on minimum AC charge capacity of the resource. If non-negative, represents minimum allowed AC charge capacity (in MW AC) of the resource with `STOR_AC_CHARGE = 2`.|
 |**Cost parameters**|
-|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of the grid connection (USD/MW/year).|
-|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for the co-located storage resource (USD/MW/year)|
-|Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the grid connection (USD/MW/year).|
-|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of the co-located storage resource. (USD/MWh/year). |
-|Var\_OM\_Cost\_per\_MWh | Variable operations and maintenance cost pertaining to the AC generation sent to the grid from the entire site. (USD/MWh). |
-|Inv\_Cost\_Inverter\_per\_MWyr | Annualized capacity investment cost of the inverter component (USD/MW-AC/year). |
-|Inv\_Cost\_Solar\_per\_MWyr | Annualized capacity investment cost of the solar PV component (USD/MW-DC/year). |
-|Inv\_Cost\_Wind\_per\_MWyr | Annualized capacity investment cost of the wind component (USD/MW-AC/year). |
-|Inv\_Cost\_Elec\_per\_MWyr | Annualized capacity investment cost of the electrolyzer component (USD/MW-AC/year). |
-|Inv\_Cost\_Discharge\_DC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_DC_DISCHARGE = 2` (USD/MW-DC/year). |
-|Inv\_Cost\_Charge\_DC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_DC_CHARGE = 2` (USD/MW-DC/year). |
-|Inv\_Cost\_Discharge\_AC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_AC_DISCHARGE = 2` (USD/MW-AC/year). |
-|Inv\_Cost\_Charge\_AC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_AC_CHARGE = 2` (USD/MW-AC/year). |
-|Fixed\_OM\_Inverter\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the inverter component (USD/MW-AC/year).|
-|Fixed\_OM\_Solar\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the solar PV component (USD/MW-DC/year).|
-|Fixed\_OM\_Wind\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the wind component (USD/MW-AC/year).|
-|Fixed\_OM\_Elec\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the electrolyzer component (USD/MW-AC/year).|
-|Fixed\_OM\_Cost\_Discharge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` (USD/MW-DC/year).|
-|Fixed\_OM\_Cost\_Charge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` (USD/MW-DC/year).|
-|Fixed\_OM\_Cost\_Discharge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` (USD/MW-AC/year).|
-|Fixed\_OM\_Cost\_Charge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` (USD/MW-AC/year).|
-|Var\_OM\_Cost\_per\_MWh\_Solar | Variable operations and maintenance cost of the solar PV component (multiplied by the inverter efficiency for AC terms) (USD/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Wind | Variable operations and maintenance cost of the wind component (USD/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE ≥ 1` (multiplied by the inverter efficiency for AC terms) (USD/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE ≥ 1` (divided by the inverter efficiency for AC terms) (USD/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE ≥ 1` (USD/MWh). |
-|Var\_OM\_Cost\_per\_MWh\_Charge_AC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE ≥ 1` (USD/MWh). |
+|Inv\_Cost\_per\_MWyr | Annualized capacity investment cost of the grid connection ($/MW/year).|
+|Inv\_Cost\_per\_MWhyr | Annualized investment cost of the energy capacity for the co-located storage resource ($/MW/year)|
+|Fixed\_OM\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the grid connection ($/MW/year).|
+|Fixed\_OM\_Cost\_per\_MWhyr | Fixed operations and maintenance cost of the energy component of the co-located storage resource. ($/MWh/year). |
+|Inv\_Cost\_Inverter\_per\_MWyr | Annualized capacity investment cost of the inverter component ($/MW-AC/year). |
+|Inv\_Cost\_Solar\_per\_MWyr | Annualized capacity investment cost of the solar PV component ($/MW-DC/year). |
+|Inv\_Cost\_Wind\_per\_MWyr | Annualized capacity investment cost of the wind component ($/MW-AC/year). |
+|Inv\_Cost\_Elec\_per\_MWyr | Annualized capacity investment cost of the electrolyzer component ($/MW-AC/year). |
+|Inv\_Cost\_Discharge\_DC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_DC_DISCHARGE = 2` ($/MW-DC/year). |
+|Inv\_Cost\_Charge\_DC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_DC_CHARGE = 2` ($/MW-DC/year). |
+|Inv\_Cost\_Discharge\_AC\_per\_MWyr | Annualized capacity investment cost for the discharging portion of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MW-AC/year). |
+|Inv\_Cost\_Charge\_AC\_per\_MWyr | Annualized capacity investment cost for the charging portion of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year). |
+|Fixed\_OM\_Inverter\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the inverter component ($/MW-AC/year).|
+|Fixed\_OM\_Solar\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the solar PV component ($/MW-DC/year).|
+|Fixed\_OM\_Wind\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the wind component ($/MW-AC/year).|
+|Fixed\_OM\_Elec\_Cost\_per\_MWyr | Fixed operations and maintenance cost of the electrolyzer component ($/MW-AC/year).|
+|Fixed\_OM\_Cost\_Discharge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` ($/MW-DC/year).|
+|Fixed\_OM\_Cost\_Charge\_DC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` ($/MW-DC/year).|
+|Fixed\_OM\_Cost\_Discharge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MW-AC/year).|
+|Fixed\_OM\_Cost\_Charge\_AC\_per\_MWyr | Fixed operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MW-AC/year).|
+|Var\_OM\_Cost\_per\_MWh\_Solar | Variable operations and maintenance cost of the solar PV component (multiplied by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Wind | Variable operations and maintenance cost of the wind component ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Discharge_DC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_DC_DISCHARGE = 2` (multiplied by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Charge_DC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_DC_CHARGE = 2` (divided by the inverter efficiency for AC terms) ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Discharge_AC | Variable operations and maintenance cost of the discharging component of a storage technology with `STOR_AC_DISCHARGE = 2` ($/MWh). |
+|Var\_OM\_Cost\_per\_MWh\_Charge_AC | Variable operations and maintenance cost of the charging component of a storage technology with `STOR_AC_CHARGE = 2` ($/MWh). |
 |**Technical performance parameters**|
 |Self\_Disch  |[0,1], The power loss of storage component of each resource per hour (fraction loss per hour). |
 |EtaInverter |[0,1], Inverter efficiency representing losses from converting DC to AC power and vice versa for each technology |
@@ -465,68 +462,16 @@ Each co-located VRE, electrolyzer, and storage resource can be easily configured
 |Ramp\_Dn\_Percentage\_Elec |[0,1], Maximum decrease in power output from between two periods (typically hours), reported as a fraction of nameplate capacity.|
 |Min\_Power\_Elec |[0,1], The minimum generation level for a unit as a fraction of total capacity. This value cannot be higher than the smallest time-dependent CF value for a resource in `Generators_variability.csv`.|
 |Hydrogen\_MWh\_Per\_Tonne\_Elec| Electrolyzer efficiency in megawatt-hours (MWh) of electricity per metric tonne of hydrogen produced (MWh/t)|
-|Hydrogen\_Price\_Per\_Tonne\_Elec| Price (or value) of hydrogen per metric tonne (USD/t)|
-##### Table 12b: Settings-specific columns in the Vre_stor.csv file
+|Hydrogen\_Price\_Per\_Tonne\_Elec| Price (or value) of hydrogen per metric tonne ($/t)|
+##### Table 11b: Settings-specific columns in the Vre_stor.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |**OperationalReserves = 1** | |
-|Reg\_Cost |Cost of providing regulation reserves (USD/MW per time step/hour).|
-|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves (USD/MW per time step/hour).|
+|Reg\_Cost |Cost of providing regulation reserves ($/MW per time step/hour).|
+|Rsv\_Cost |Cost of providing upwards spinning or contingency reserves ($/MW per time step/hour).|
 |Reg\_Max |[0,1], Fraction of nameplate capacity that can committed to provided regulation reserves. .|
 |Rsv\_Max |[0,1], Fraction of nameplate capacity that can committed to provided upwards spinning or contingency reserves.|
-
-##### Table 13a: Additional columns in the Allam\_Cycle\_LOX.csv file
----
-|**Column Name** | **Description**|
-| :------------ | :-----------|
-|With_LOX | {0, 1}, Flag to indicate the availabity of liquid oxygen storage (LOX) for Allam Cycle.|
-||With_LOX = 0: LOX is not available.|
-||With_LOX = 1: LOX is available.|
-|**Existing technology capacity**|
-|Existing\_Cap\_sCO2Turbine |The existing capacity of sCO2 turbines in an Allam Cycle power plant in MW. |
-|Existing\_Cap\_ASU |The existing capacity of air separation units (ASUs) in an Allam Cycle power plant in MW. |
-|Existing\_Cap\_LOX |The existing capacity of LOX in an Allam Cycle power plant in ton. |
-|**Cost parameters**|
-|Inv\_Cost\_sCO2Turbine\_per\_MWyr | Annualized capacity investment cost of sCO2 turbines in an Allam Cycle power plant (USD/MW/year).|
-|Inv\_Cost\_ASU\_per\_MWyr | Annualized capacity investment cost of ASUs in an Allam Cycle power plant (USD/MW/year).|
-|Inv\_Cost\_LOX\_per\_tyr | Annualized capacity investment cost of LOX in an Allam Cycle power plant (USD/ton/year).|
-|Fixed\_OM\_Cost\_sCO2Turbine\_per\_MWyr | Fixed operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant (USD/MW/year).|
-|Fixed\_OM\_Cost\_ASU\_per\_MWyr | Fixed operations and maintenance cost of ASUs in an Allam Cycle power plant (USD/MW/year).|
-|Fixed\_OM\_Cost\_LOX\_per\_tyr | Fixed operations and maintenance cost of LOX in an Allam Cycle power plant (USD/ton/year).|
-|Var\_OM\_Cost\_sCO2Turbine\_per\_MWh | Variable operations and maintenance cost of sCO2 turbines in an Allam Cycle power plant (USD/MWh).|
-|Var\_OM\_Cost\_ASU\_per\_MWh | Variable operations and maintenance cost of ASUs in an Allam Cycle power plant (USD/MWh).|
-|Var\_OM\_Cost\_LOX\_per\_t | Variable operations and maintenance cost of LOX in an Allam Cycle power plant (USD/ton).|
-|**Technical performance parameters**|
-|Min\_Power\_sCO2turbine |[0,1], Minimum stable operating level (fraction of nameplate capacity) of sCO2 turbines in an Allam Cycle power plant.|
-|Min\_Power\_ASU |[0,1], Minimum stable operating level (fraction of nameplate capacity) of ASU in an Allam Cycle power plant.|
-|Ramp\_Up\_Percentage\_sCO2turbine |[0,1], Maximum increase in power output from sCO2 turbines in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
-|Ramp\_Up\_Percentage\_ASU |[0,1], Maximum increase in power consumption from ASUs in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
-|Ramp\_Dn\_Percentage\_sCO2turbine |[0,1], Maximum decrease in power output from sCO2 turbines in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
-|Ramp\_Dn\_Percentage\_ASU |[0,1], Maximum decrease in power consumption from ASUs in an Allam Cycle power plant between two periods (typically hours), reported as a fraction of nameplate capacity.|
-|HeatRate\_sCO2|Heat rate of sCO2 turbines in an Allam Cycle power plant (MMBtu/MWh).|
-|LOX\_PowerUseRate\_O2|Power consumption by ASU to produce liquid oxygen (MWh/ton).|
-|GOX\_PowerUseRate\_O2|Power consumption by ASU to produce gaseous oxygen (MWh/ton).|
-|PowerUseRate\_other|Power consumption by anxilary processes in an Allam Cycle plant (MWh/MWh electricity generated from sCO2 turbines).|
-|O2UseRate|Oxygen consumption by sCO2 turbines to produce electricity (ton/MWh).|
-|LOX_duration| Duration of LOX (Hour).|
-##### Table 13b: Settings-specific columns in the Allam_Cycle_LOX.csv file
----
-|**Column Name** | **Description**|
-| :------------ | :-----------|
-|**UCommit >= 1** | The following settings apply only to Allam Cycle plants with unit commitment constraints|
-|Cap\_Size\_sCO2Turbine| The average capacity size of sCO2 turbine in a clustered Allam Cycle resource (MW).|
-|Cap\_Size\_ASU| The average capacity size of ASU in a clustered Allam Cycle resource (MW).|
-|Cap\_Size\_LOX| The average capacity size of LOX in a clustered Allam Cycle resource (MW).|
-|Up\_Time\_sCO2Turbine| Minimum amount of time a sCO2 turbine in an Allam Cycle power plant has to stay in the committed state.|
-|Up\_Time\_ASU| Minimum amount of time an ASU in an Allam Cycle power plant has to stay in the committed state.|
-|Down\_Time\_sCO2Turbine |Minimum amount of time a sCO2 turbine in an Allam Cycle power plant has to remain in the shutdown state.|
-|Down\_Time\_ASU |Minimum amount of time an ASU in an Allam Cycle power plant has to remain in the shutdown state.|
-|Start\_Cost\_sCO2Turbine\_per\_MW |Cost per MW of nameplate capacity to start a sCO2 turbine in an Allam Cycle power plant (USD/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
-|Start\_Cost\_ASU\_per\_MW |Cost per MW of nameplate capacity to start an ASU in an Allam Cycle power plant (USD/MW per start). Multiplied by the number of generation units (each with a pre-specified nameplate capacity) that is turned on.|
-|Start\_Fuel\_sCO2Turbine\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each sCO2 turbine in an Allam Cycle power plant (MMBtu/MW per start).|
-|Start\_Fuel\_ASU\_MMBTU\_per\_MW |Startup fuel use per MW of nameplate capacity of each ASU in an Allam Cycle power plant (MMBtu/MW per start).|
-
 
 ##### Policy-related columns for all resources
 In addition to the files described above, the `resources` folder contains a folder called `policy_assignments` (the filename can be changed in the settings file) with the following files that are used to specify policy-related parameters for specific resources: 
@@ -548,12 +493,12 @@ The following table describes the columns in each of these four files.
 
 This policy is applied when if `EnergyShareRequirement > 0` in the settings file. \* corresponds to the ith row of the file `Energy_share_requirement.csv`. 
 
-##### Table 14: Energy share requirement policy parameters in Resource\_energy\_share\_requirement.csv 
+##### Table 12: Energy share requirement policy parameters in Resource\_energy\_share\_requirement.csv 
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |Resource| Resource name corresponding to a resource in one of the resource data files described above.|
-|ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint. Note that this flag must be 0 for co-located VRE-STOR resources (see below).|
+|ESR\_*| Flag to indicate which resources are considered for the Energy Share Requirement constraint.|
 ||1- included|
 ||0- excluded|
 |**co-located VRE-STOR resources only**|
@@ -563,7 +508,7 @@ This policy is applied when if `EnergyShareRequirement > 0` in the settings file
 
 This policy is applied when if `MinCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Minimum_capacity_requirement.csv`. 
 
-##### Table 15: Minimum capacity requirement policy parameters in Resource\_minimum\_capacity\_requirement.csv
+##### Table 13: Minimum capacity requirement policy parameters in Resource\_minimum\_capacity\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -576,7 +521,7 @@ This policy is applied when if `MinCapReq = 1` in the settings file. \* correspo
 
 This policy is applied when if `MaxCapReq = 1` in the settings file. \* corresponds to the ith row of the file `Maximum_capacity_requirement.csv`.
 
-##### Table 16: Maximum capacity requirement policy parameters in Resource\_maximum\_capacity\_requirement.csv
+##### Table 14: Maximum capacity requirement policy parameters in Resource\_maximum\_capacity\_requirement.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -589,7 +534,7 @@ This policy is applied when if `MaxCapReq = 1` in the settings file. \* correspo
 
 This policy is applied when if `CapacityReserveMargin > 0` in the settings file. \* corresponds to the ith row of the file `Capacity_reserve_margin.csv`.
 
-##### Table 17: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
+##### Table 15: Capacity reserve margin policy parameters in Resource\_capacity\_reserve\_margin.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -598,7 +543,7 @@ This policy is applied when if `CapacityReserveMargin > 0` in the settings file.
 
 This policy is applied when if `HydrogenMinimumProduction = 1` in the settings file. \* corresponds to the ith row of the file `Hydrogen_demand.csv`.
 
-##### Table 18: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
+##### Table 16: Hydrogen demand policy parameters in Resource\_hydrogen\_demand.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -607,7 +552,7 @@ This policy is applied when if `HydrogenMinimumProduction = 1` in the settings f
 
 This policy is applied when if `HourlyMatching = 1` in the settings file.
 
-##### Table 19: Hourly matching policy parameters in Resource\_hourly\_matching.csv
+##### Table 17: Hourly matching policy parameters in Resource\_hourly\_matching.csv
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -622,7 +567,7 @@ In addition to the files described above, the `resources` folder can contain add
 !!! warning
     The first column of each additional module file must contain the resource name corresponding to a resource in one of the resource data files described above. Note that the order of resources in these files is not important.
 
-##### Table 20: Multistage parameters
+##### Table 18: Multistage parameters
 !!! warning
     This file is mandatory if `MultiStage = 1` in the settings file.
 ---
@@ -668,7 +613,7 @@ This file contains the time-series of capacity factors / availability of each re
 1) First column: The first column contains the time index of each row (starting in the second row) from 1 to N.
 2) Second column onwards: Resources are listed from the second column onward with headers matching each resource name in the resource `.csv` file in the   `resources` folder in any order. The availability for each resource at each time step is defined as a fraction of installed capacity and should be between 0 and 1. Note that for this reason, resource names specified in the resource `.csv` file must be unique. Note that for Hydro reservoir resources (i.e. `Hydro.csv`), values in this file correspond to inflows (in MWhs) to the hydro reservoir as a fraction of installed power capacity, rather than hourly capacity factor. Note that for co-located VRE and storage resources, solar PV and wind resource profiles should not be located in this file but rather in separate variability files (these variabilities can be in the `Generators_variability.csv` if time domain reduction functionalities will be utilized because the time domain reduction functionalities will separate the files after the clustering is completed).
 
-###### Table 21: Structure of the Generator\_variability.csv file
+###### Table 19: Structure of the Generator\_variability.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -707,7 +652,7 @@ This file contains the time-series of capacity factors / availability of the win
 
 This file includes parameter inputs needed to model time-dependent procurement of regulation and spinning reserves. This file is needed if `OperationalReserves` flag is activated in the YAML file `genx_settings.yml`.
 
-###### Table 22: Structure of the Operational_reserves.csv file
+###### Table 20: Structure of the Operational_reserves.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -715,7 +660,7 @@ This file includes parameter inputs needed to model time-dependent procurement o
 |Reg\_Req\_Percent\_VRE |[0,1], Regulation requirement as a percent of time-dependent wind and solar generation (summed across all model zones).|
 |Rsv\_Req\_Percent\_Demand [0,1], |Spinning up or contingency reserve requirement as a percent of time-dependent demand (which is summed across all zones).|
 |Rsv\_Req\_Percent\_VRE |[0,1], Spinning up or contingency reserve requirement as a percent of time-dependent wind and solar generation (which is summed across all zones).|
-|Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement (USD/MW per time step).|
+|Unmet\_Rsv\_Penalty\_Dollar\_per\_MW |Penalty for not meeting time-dependent spinning reserve requirement ($/MW per time step).|
 |Dynamic\_Contingency |Flags to include capacity (generation or transmission) contingency to be added to the spinning reserve requirement.|
 |Dynamic\_Contingency |= 1: contingency set to be equal to largest installed thermal unit (only applied when `UCommit = 1`).|
 ||= 2: contingency set to be equal to largest committed thermal unit each time period (only applied when `UCommit = 1`).|
@@ -729,7 +674,7 @@ This file contains inputs specifying minimum energy share requirement policies, 
 
 Note: this file should use the same region name as specified in the the resource `.csv` file (inside the `Resource`).
 
-###### Table 23: Structure of the Energy\_share\_requirement.csv file
+###### Table 21: Structure of the Energy\_share\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -743,7 +688,7 @@ Note: this file should use the same region name as specified in the the resource
 
 This file contains inputs specifying CO2 emission limits policies (e.g. emissions cap and permit trading programs). This file is needed if `CO2Cap` flag is activated in the YAML file `genx_settings.yml`. `CO2Cap` flag set to 1 represents mass-based (tCO2 ) emission target. `CO2Cap` flag set to 2 is specified when emission target is given in terms of rate (tCO2/MWh) and is based on total demand met. `CO2Cap` flag set to 3 is specified when emission target is given in terms of rate (tCO2 /MWh) and is based on total generation.
 
-###### Table 24: Structure of the CO2\_cap.csv file
+###### Table 22: Structure of the CO2\_cap.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -760,7 +705,7 @@ This file contains the regional capacity reserve margin requirements. This file 
 
 Note: this file should use the same region name as specified in the resource `.csv` file (inside the `Resource`).
 
-###### Table 25: Structure of the Capacity\_reserve\_margin.csv file
+###### Table 23: Structure of the Capacity\_reserve\_margin.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -774,7 +719,7 @@ Note: this file should use the same region name as specified in the resource `.c
 
 This file contains the minimum capacity carve-out requirement to be imposed (e.g. a storage capacity mandate or offshore wind capacity mandate). This file is needed if the `MinCapReq` flag has a non-zero value in the YAML file `genx_settings.yml`.
 
-###### Table 26: Structure of the Minimum\_capacity\_requirement.csv file
+###### Table 24: Structure of the Minimum\_capacity\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -790,7 +735,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 This contains the maximum capacity limits to be imposed (e.g. limits on total deployment of solar, wind, or batteries in the system as a whole or in certain collections of zones).
 It is required if the `MaxCapReq` flag has a non-zero value in `genx_settings.yml`.
 
-###### Table 27: Structure of the Maximum\_capacity\_requirement.csv file
+###### Table 25: Structure of the Maximum\_capacity\_requirement.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -805,7 +750,7 @@ Some of the columns specified in the input files in Section 2.2 and 2.1 are not 
 
 This file contains the settings parameters required to run the Method of Morris algorithm in GenX. This file is needed if the `MethodofMorris` flag is ON in the YAML file `genx_settings.yml`.
 
-###### Table 28: Structure of the Method\_of\_morris\_range.csv file
+###### Table 26: Structure of the Method\_of\_morris\_range.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
@@ -836,11 +781,11 @@ This file contains the settings parameters required to run the Method of Morris 
 
 This file contains inputs specifying regional hydrogen production requirements. This file is needed if `electrolyzer.csv` is included in the resources folder or there are electrolyzer components in `Vre_stor.csv`.
 
-###### Table 29: Structure of the Hydrogen\_demand.csv file
+###### Table 27: Structure of the Hydrogen\_demand.csv file
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
 |H2DemandConstraint| Index of the hydrogen demand constraint.|
 |Constraint\_Description| Names of hydrogen demand constraints; not to be read by model, but used as a helpful notation to the model user. |
 |Hydrogen\_Demand\_kt| Hydrogen production requirements in 1,000 tons|
-|PriceCap| Price of hydrogen per metric ton (USD/t)|
+|PriceCap| Price of hydrogen per metric ton ($/t)|

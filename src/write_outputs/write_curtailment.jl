@@ -48,6 +48,13 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         end
     end
 
+    # Hydro spillage as hydro curtailment. :vSPILL is defined for all hydro resources. 
+    if !isempty(inputs["HYDRO_RES"]) && haskey(EP, :vSPILL)
+        for g in inputs["HYDRO_RES"]
+            curtailment[g, :] = value.(EP[:vSPILL][g, :])
+        end
+    end
+
     curtailment *= scale_factor
 
     df = DataFrame(Resource = resources,
