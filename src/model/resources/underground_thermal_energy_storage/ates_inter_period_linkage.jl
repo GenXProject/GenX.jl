@@ -141,7 +141,7 @@ function ates_inter_period_linkage!(EP::Model, inputs::Dict, setup::Dict)
         cUTESLongDurationStorageSub_hot[y in STOR_UTES_LONG_DURATION,
             r in REP_PERIODS_INDEX],
         vSOC_UTESw_hot[y,r]==EP[:vSOC_UTES_hot][y, hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] -
-                vdSOC_UTES_cold[y, dfPeriodMap[r, :Rep_Period_Index]])
+                vdSOC_UTES_hot[y, dfPeriodMap[r, :Rep_Period_Index]])
 
     if setup["LDSAdditionalConstraints"] == 1 && !isempty(NON_REP_PERIODS_INDEX)
         # Extract maximum storage level variation (positive) within subperiod
