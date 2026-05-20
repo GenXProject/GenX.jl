@@ -31,6 +31,7 @@ function write_status_of_charge_utes(path::AbstractString, inputs::Dict, setup::
         if setup["ParameterScale"] == 1
             status_of_charge *= ModelScalingFactor
             mass_flow *= ModelScalingFactor
+            mass_flow_abs *= ModelScalingFactor
             reservoir_thermal_charge *= ModelScalingFactor
         end
 
