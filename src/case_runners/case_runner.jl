@@ -41,10 +41,20 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
     end
 end
 
-function time_domain_reduced_files_exist(tdrpath)
+function time_domain_reduced_files_exist(tdrpath, setup::Union{Nothing, Dict} = nothing)
+    has_nontrivial_file(path, min_bytes = 64) = isfile(path) && filesize(path) > min_bytes
+
     tdr_demand = file_exists(tdrpath, ["Demand_data.csv", "Load_data.csv"])
-    tdr_genvar = isfile(joinpath(tdrpath, "Generators_variability.csv"))
-    tdr_fuels = isfile(joinpath(tdrpath, "Fuels_data.csv"))
+    tdr_genvar = has_nontrivial_file(joinpath(tdrpath, "Generators_variability.csv"))
+    tdr_fuels = has_nontrivial_file(joinpath(tdrpath, "Fuels_data.csv"))
+    if !isnothing(setup) && get(setup, "CoolingDemand", 0) == 1
+        tdr_computing_demand = has_nontrivial_file(
+            joinpath(tdrpath, "Computing_demand_data.csv"))
+        tdr_ambient_temp = has_nontrivial_file(
+            joinpath(tdrpath, "Ambient_temperature_data.csv"))
+        return (tdr_demand && tdr_genvar && tdr_fuels && tdr_computing_demand &&
+                tdr_ambient_temp)
+    end
     return (tdr_demand && tdr_genvar && tdr_fuels)
 end
 
@@ -56,7 +66,7 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
         TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
         system_path = joinpath(case, mysetup["SystemFolder"])
         prevent_doubled_timedomainreduction(mysetup, system_path)
-        if !time_domain_reduced_files_exist(TDRpath)
+        if !time_domain_reduced_files_exist(TDRpath, mysetup)
             println("Clustering Time Series Data (Grouped)...")
             cluster_inputs(case, settings_path, mysetup)
         else
@@ -121,7 +131,7 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         TDRpath = joinpath(first_stage_path, mysetup["TimeDomainReductionFolder"])
         system_path = joinpath(first_stage_path, mysetup["SystemFolder"])
         prevent_doubled_timedomainreduction(mysetup, system_path)
-        if !time_domain_reduced_files_exist(TDRpath)
+        if !time_domain_reduced_files_exist(TDRpath, mysetup)
             if (mysetup["MultiStage"] == 1) &&
                (TDRSettingsDict["MultiStageConcatenate"] == 0)
                 println("Clustering Time Series Data (Individually)...")

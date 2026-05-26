@@ -38,6 +38,9 @@ function rmse_score(y_true, y_pred)
     return rmse
 end
 
+COMPUTING_DEMAND_COLUMN_PREFIX() = "Computing_Demand_MW_z"
+AMBIENT_TEMPERATURE_COLUMN_PREFIX() = "Ambient_temperature_z"
+
 @doc raw"""
     parse_data(myinputs)
 
@@ -91,21 +94,30 @@ function parse_data(myinputs, mysetup)
         end
     end
 
-    # Cooling and heating demand
+    # Computing demand and ambient temperature
     if mysetup["CoolingDemand"] == 1
-        cooling_demand_profiles = [myinputs["pD_Cooling"][:, l] for l in 1:size(myinputs["pD_Cooling"], 2)]
-        cooling_demand_col_names = [DEMAND_COLUMN_PREFIX() * string(l)
-                            for l in 1:size(cooling_demand_profiles)[1]]
-        heating_demand_profiles = [myinputs["pD_Heating"][:, l] for l in 1:size(myinputs["pD_Heating"], 2)]
-        heating_demand_col_names = [DEMAND_COLUMN_PREFIX() * string(l)
-                            for l in 1:size(heating_demand_profiles)[1]]
-        
-        all_col_names = [demand_col_names; var_col_names; fuel_col_names; cooling_demand_col_names; heating_demand_col_names]
-        all_profiles = [demand_profiles..., var_profiles..., fuel_profiles..., cooling_demand_profiles..., heating_demand_profiles...]
-        return demand_col_names, cooling_demand_col_names, heating_demand_col_names,
+        computing_demand_profiles = [myinputs["pD_Computing"][:, l]
+                                     for l in 1:size(myinputs["pD_Computing"], 2)]
+        computing_demand_col_names = [COMPUTING_DEMAND_COLUMN_PREFIX() * string(l)
+                                      for l in 1:size(computing_demand_profiles)[1]]
+        ambient_temp_profiles = [myinputs["pAmbientTemp"][l, :]
+                                 for l in 1:size(myinputs["pAmbientTemp"], 1)]
+        ambient_temp_col_names = [AMBIENT_TEMPERATURE_COLUMN_PREFIX() * string(l)
+                                  for l in 1:size(ambient_temp_profiles)[1]]
+
+        for l in 1:length(computing_demand_col_names)
+            col_to_zone_map[computing_demand_col_names[l]] = l
+        end
+        for l in 1:length(ambient_temp_col_names)
+            col_to_zone_map[ambient_temp_col_names[l]] = l
+        end
+
+        all_col_names = [demand_col_names; var_col_names; fuel_col_names; computing_demand_col_names; ambient_temp_col_names]
+        all_profiles = [demand_profiles..., var_profiles..., fuel_profiles..., computing_demand_profiles..., ambient_temp_profiles...]
+        return demand_col_names, computing_demand_col_names, ambient_temp_col_names,
         var_col_names, solar_col_names, wind_col_names, fuel_col_names,
         all_col_names,
-        demand_profiles, cooling_demand_profiles, heating_demand_profiles,
+        demand_profiles, computing_demand_profiles, ambient_temp_profiles,
         var_profiles, solar_profiles, wind_profiles, fuel_profiles,
         all_profiles,
         col_to_zone_map, AllFuelsConst
@@ -363,7 +375,7 @@ system to be included among the extreme periods. They would select
 function get_extreme_period(DF, GDF, profKey, typeKey, statKey,
         ConstCols, demand_col_names,
         solar_col_names, wind_col_names, mysetup, v = false,
-        cooling_demand_col_names = nothing, heating_demand_col_names = nothing)
+    computing_demand_col_names = nothing)
     if v
         println(profKey, " ", typeKey, " ", statKey)
     end
@@ -383,15 +395,17 @@ function get_extreme_period(DF, GDF, profKey, typeKey, statKey,
                 statKey,
                 wind_col_names,
                 ConstCols)
-        elseif mysetup["CoolingDemand"] == 1 && profKey == "Cooling Demand"
+        elseif mysetup["CoolingDemand"] == 1 &&
+               (profKey == "Cooling Demand" || profKey == "Computing Demand")
             (stat, group_idx) = get_integral_extreme(GDF,
                 statKey,
-                cooling_demand_col_names,
+                computing_demand_col_names,
                 ConstCols)
         elseif mysetup["CoolingDemand"] == 1 && profKey == "Heating Demand"
+            @warn "Heating Demand extreme-period selection requested, but no separate heating demand time series exists. Reusing computing demand profiles."
             (stat, group_idx) = get_integral_extreme(GDF,
                 statKey,
-                heating_demand_col_names,
+                computing_demand_col_names,
                 ConstCols)
         else
             println("Error: Profile Key ",
@@ -411,15 +425,17 @@ function get_extreme_period(DF, GDF, profKey, typeKey, statKey,
                 ConstCols)
         elseif profKey == "Wind"
             (stat, group_idx) = get_absolute_extreme(DF, statKey, wind_col_names, ConstCols)
-        elseif mysetup["CoolingDemand"] == 1 && profKey == "Cooling Demand"
+        elseif mysetup["CoolingDemand"] == 1 &&
+               (profKey == "Cooling Demand" || profKey == "Computing Demand")
             (stat, group_idx) = get_absolute_extreme(GDF,
                 statKey,
-                cooling_demand_col_names,
+                computing_demand_col_names,
                 ConstCols)
         elseif mysetup["CoolingDemand"] == 1 && profKey == "Heating Demand"
+            @warn "Heating Demand extreme-period selection requested, but no separate heating demand time series exists. Reusing computing demand profiles."
             (stat, group_idx) = get_absolute_extreme(GDF,
                 statKey,
-                heating_demand_col_names,
+                computing_demand_col_names,
                 ConstCols)
         else
             println("Error: Profile Key ",
@@ -445,12 +461,17 @@ summed over the period.
 
 """
 function get_integral_extreme(GDF, statKey, col_names, ConstCols)
+    target_cols = setdiff(col_names, ConstCols)
+    if isempty(target_cols)
+        return (0.0, 0)
+    end
+
     if statKey == "Max"
         (stat, stat_idx) = findmax(sum([GDF[!, Symbol(c)]
-                                        for c in setdiff(col_names, ConstCols)]))
+                                        for c in target_cols]))
     elseif statKey == "Min"
         (stat, stat_idx) = findmin(sum([GDF[!, Symbol(c)]
-                                        for c in setdiff(col_names, ConstCols)]))
+                                        for c in target_cols]))
     else
         println("Error: Statistic Key ", statKey, " is invalid. Choose `Max' or `Min'.")
     end
@@ -465,13 +486,18 @@ Get the period index of the single timestep with the minimum or maximum demand o
 
 """
 function get_absolute_extreme(DF, statKey, col_names, ConstCols)
+    target_cols = setdiff(col_names, ConstCols)
+    if isempty(target_cols)
+        return (0.0, 0)
+    end
+
     if statKey == "Max"
         (stat, stat_idx) = findmax(sum([DF[!, Symbol(c)]
-                                        for c in setdiff(col_names, ConstCols)]))
+                                        for c in target_cols]))
         group_idx = DF.Group[stat_idx]
     elseif statKey == "Min"
         (stat, stat_idx) = findmin(sum([DF[!, Symbol(c)]
-                                        for c in setdiff(col_names, ConstCols)]))
+                                        for c in target_cols]))
         group_idx = DF.Group[stat_idx]
     else
         println("Error: Statistic Key ", statKey, " is invalid. Choose `Max' or `Min'.")
@@ -933,12 +959,13 @@ function cluster_inputs(inpath,
     Fuel_Outfile = joinpath(TimeDomainReductionFolder, "Fuels_data.csv")
     PMap_Outfile = joinpath(TimeDomainReductionFolder, "Period_map.csv")
     YAML_Outfile = joinpath(TimeDomainReductionFolder, "time_domain_reduction_settings.yml")
-    Cooling_Demand_Outfile = joinpath(TimeDomainReductionFolder, "Cooling_demand_data.csv")
-    Heating_Demand_Outfile = joinpath(TimeDomainReductionFolder, "Heating_demand_data.csv")
+    Computing_Demand_Outfile = joinpath(TimeDomainReductionFolder, "Computing_demand_data.csv")
+    Ambient_Temp_Outfile = joinpath(TimeDomainReductionFolder, "Ambient_temperature_data.csv")
 
 
     # Define a local version of the setup so that you can modify the mysetup["ParameterScale"] value to be zero in case it is 1
     mysetup_local = copy(mysetup)
+    mysetup_local["TimeDomainReduction"] = 0
     # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
     mysetup_local["ParameterScale"] = 0  # Performing cluster and report outputs in user-provided units
 
@@ -995,9 +1022,15 @@ function cluster_inputs(inpath,
             ZONES = myinputs["R_ZONES"]
             # Parse input data into useful structures divided by type (demand, wind, solar, fuel, groupings thereof, etc.)
             # TO DO LATER: Replace these with collections of col_names, profiles, zones
-            demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
-            demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
-            col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
+            if mysetup["CoolingDemand"] == 1
+                demand_col_names, computing_demand_col_names, ambient_temp_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
+                demand_profiles, computing_demand_profiles, ambient_temp_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
+                col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
+            else
+                demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
+                demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
+                col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
+            end
         end
     else
         if v
@@ -1010,8 +1043,8 @@ function cluster_inputs(inpath,
         # Parse input data into useful structures divided by type (demand, wind, solar, fuel, groupings thereof, etc.)
         # TO DO LATER: Replace these with collections of col_names, profiles, zones
         if mysetup["CoolingDemand"] == 1
-            demand_col_names, cooling_demand_col_names, heating_demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names, 
-            demand_profiles, cooling_demand_profiles, heating_demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles, 
+            demand_col_names, computing_demand_col_names, ambient_temp_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
+            demand_profiles, computing_demand_profiles, ambient_temp_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
             col_to_zone_map, AllFuelsConst = parse_data(myinputs, mysetup)
         else
             demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
@@ -1133,8 +1166,7 @@ function cluster_inputs(inpath,
                                         solar_col_names, 
                                         wind_col_names, 
                                         mysetup, v,
-                                        cooling_demand_col_names, 
-                                        heating_demand_col_names)
+                                        computing_demand_col_names)
                                 else
                                     (stat, group_idx) = get_extreme_period(InputData,
                                         cgdf,
@@ -1147,9 +1179,13 @@ function cluster_inputs(inpath,
                                         wind_col_names, 
                                         mysetup, v)
                                 end
-                                push!(ExtremeWksList, floor(Int, group_idx))
-                                if v
-                                    println(group_idx, " : ", stat)
+                                if group_idx > 0
+                                    push!(ExtremeWksList, floor(Int, group_idx))
+                                    if v
+                                        println(group_idx, " : ", stat)
+                                    end
+                                elseif v
+                                    println("Skipping ", profKey, " extreme-period request because no matching time series were available.")
                                 end
                             elseif geoKey == "Zone"
                                 for z in sort(unique(ZONES))
@@ -1160,10 +1196,12 @@ function cluster_inputs(inpath,
                                         z_cols_type = intersect(z_cols, solar_col_names)
                                     elseif profKey == "Wind"
                                         z_cols_type = intersect(z_cols, wind_col_names)
-                                    elseif mysetup["CoolingDemand"] == 1 && profKey == "Cooling Demand"
-                                            z_cols_type = intersect(z_cols, cooling_demand_col_names)
-                                        elseif mysetup["CoolingDemand"] == 1 && profKey == "Heating Demand"
-                                            z_cols_type = intersect(z_cols, heating_demand_col_names)
+                                    elseif mysetup["CoolingDemand"] == 1 &&
+                                           (profKey == "Cooling Demand" ||
+                                            profKey == "Computing Demand" ||
+                                            profKey == "Heating Demand")
+                                        z_cols_type = intersect(z_cols,
+                                            computing_demand_col_names)
                                     else
                                         z_cols_type = []
                                     end
@@ -1183,10 +1221,15 @@ function cluster_inputs(inpath,
                                             z_cols_type,
                                             z_cols_type,
                                             z_cols_type,
+                                            mysetup,
                                             v)
-                                        push!(ExtremeWksList, floor(Int, group_idx))
-                                        if v
-                                            println(group_idx, " : ", stat, "(", z, ")")
+                                        if group_idx > 0
+                                            push!(ExtremeWksList, floor(Int, group_idx))
+                                            if v
+                                                println(group_idx, " : ", stat, "(", z, ")")
+                                            end
+                                        elseif v
+                                            println("Skipping ", profKey, " extreme-period request in zone ", z, " because no matching time series were available.")
                                         end
                                     else
                                         if v
@@ -1389,8 +1432,8 @@ function cluster_inputs(inpath,
     # Get Symbol-version of column names by type for later analysis
     DemandCols = Symbol.(demand_col_names)
     if mysetup["CoolingDemand"] == 1
-        CoolingDemandCols = Symbol.(cooling_demand_col_names)
-        HeatingDemandCols = Symbol.(heating_demand_col_names)
+        ComputingDemandCols = Symbol.(computing_demand_col_names)
+        AmbientTempCols = Symbol.(ambient_temp_col_names)
     end
     VarCols = [Symbol(var_col_names[i]) for i in 1:length(var_col_names)]
     FuelCols = [Symbol(fuel_col_names[i]) for i in 1:length(fuel_col_names)]
@@ -1417,8 +1460,8 @@ function cluster_inputs(inpath,
     rpDFs = [] # Representative Period DataFrames - All Profiles (Demand, Resource, Fuel)
     gvDFs = [] # Generators Variability DataFrames - Just Resource Profiles
     dmDFs = [] # Demand Profile DataFrames - Just Demand Profiles
-    cdmDFs = [] # Demand Profile DataFrames - Just Cooling Demand Profiles
-    hdmDFs = [] # Demand Profile DataFrames - Just Heating Demand Profiles
+    cmdDFs = [] # Demand Profile DataFrames - Just Computing Demand Profiles
+    atDFs = [] # Ambient Temperature Profile DataFrames
     fpDFs = [] # Fuel Profile DataFrames - Just Fuel Profiles
 
     for m in 1:NClusters
@@ -1436,10 +1479,17 @@ function cluster_inputs(inpath,
             fpDF = DataFrame(Placeholder = 1:TimestepsPerRepPeriod)
         end
         if mysetup["CoolingDemand"] == 1
-            cdmDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
-            for i in 1:Ncols if (Symbol(NewColNames[i]) in CoolingDemandCols)))
-            hdmDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
-            for i in 1:Ncols if (Symbol(NewColNames[i]) in HeatingDemandCols)))
+            cmdDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
+            for i in 1:Ncols if (Symbol(NewColNames[i]) in ComputingDemandCols)))
+            if ncol(cmdDF) == 0
+                cmdDF = DataFrame(Placeholder = 1:TimestepsPerRepPeriod)
+            end
+
+            atDF = DataFrame(Dict(NewColNames[i] => ClusterOutputData[!, m][(TimestepsPerRepPeriod * (i - 1) + 1):(TimestepsPerRepPeriod * i)]
+            for i in 1:Ncols if (Symbol(NewColNames[i]) in AmbientTempCols)))
+            if ncol(atDF) == 0
+                atDF = DataFrame(Placeholder = 1:TimestepsPerRepPeriod)
+            end
         end
 
         # Add Constant Columns back in
@@ -1451,10 +1501,22 @@ function cluster_inputs(inpath,
                 fpDF[!, Symbol(ConstCols[c])] .= ConstData[c][1]
             elseif Symbol(ConstCols[c]) in DemandCols
                 dmDF[!, Symbol(ConstCols[c])] .= ConstData[c][1]
+            elseif mysetup["CoolingDemand"] == 1 && Symbol(ConstCols[c]) in ComputingDemandCols
+                cmdDF[!, Symbol(ConstCols[c])] .= ConstData[c][1]
+            elseif mysetup["CoolingDemand"] == 1 && Symbol(ConstCols[c]) in AmbientTempCols
+                atDF[!, Symbol(ConstCols[c])] .= ConstData[c][1]
             end
         end
         if !IncludeFuel
             select!(fpDF, Not(:Placeholder))
+        end
+        if mysetup["CoolingDemand"] == 1
+            if :Placeholder in names(cmdDF)
+                select!(cmdDF, Not(:Placeholder))
+            end
+            if :Placeholder in names(atDF)
+                select!(atDF, Not(:Placeholder))
+            end
         end
 
         # Scale Demand using previously identified multipliers
@@ -1474,8 +1536,8 @@ function cluster_inputs(inpath,
         push!(dmDFs, dmDF)
         push!(fpDFs, fpDF)
         if mysetup["CoolingDemand"] == 1
-            push!(cdmDFs, cdmDF)
-            push!(hdmDFs, hdmDF)
+            push!(cmdDFs, cmdDF)
+            push!(atDFs, atDF)
         end
     end
     FinalOutputData = vcat(rpDFs...)  # For comparisons with input data to evaluate clustering process
@@ -1483,8 +1545,8 @@ function cluster_inputs(inpath,
     DMOutputData = vcat(dmDFs...)     # Demand Profiles
     FPOutputData = vcat(fpDFs...)     # Fuel Profiles
     if mysetup["CoolingDemand"] == 1
-        CDMOutputData = vcat(cdmDFs...)     # Cooling Demand Profiles
-        HDMOutputData = vcat(hdmDFs...)     # Cooling Demand Profiles
+        CMDOutputData = vcat(cmdDFs...)     # Computing Demand Profiles
+        ATOutputData = vcat(atDFs...)     # Ambient Temperature Profiles
     end
 
     ##### Step 5: Evaluation
@@ -1844,57 +1906,42 @@ function cluster_inputs(inpath,
         CSV.write(joinpath(inpath, Demand_Outfile), demand_in)
 
         if mysetup["CoolingDemand"] == 1
-            ### TDR_Results/Cooling_demand_data.csv
-            filename = "Cooling_demand_data.csv"
+            ### TDR_Results/Computing_demand_data.csv
+            filename = "Computing_demand_data.csv"
             demand_in = load_dataframe(system_path, filename)
+            computing_file_cols = Symbol.(DEMAND_COLUMN_PREFIX() .* string.(1:length(ComputingDemandCols)))
             demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
             demand_in[1:length(W), :Sub_Weights] .= W
             demand_in[!, :Rep_Periods][1] = length(W)
             demand_in[!, :Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
-            select!(demand_in, Not(CoolingDemandCols))
+            select!(demand_in, Not(computing_file_cols))
             select!(demand_in, Not(:Time_Index))
             Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(demand_in, 1)]
-            Time_Index_M[1:size(CDMOutputData, 1)] = 1:size(CDMOutputData, 1)
+            Time_Index_M[1:size(CMDOutputData, 1)] = 1:size(CMDOutputData, 1)
             demand_in[!, :Time_Index] .= Time_Index_M
 
-            for c in CoolingDemandCols
+            for (idx, c) in enumerate(computing_file_cols)
                 new_col = Union{Float64, Missings.Missing}[missing
                                                         for i in 1:size(demand_in, 1)]
-                new_col[1:size(CDMOutputData, 1)] = CDMOutputData[!, c]
+                new_col[1:size(CMDOutputData, 1)] = CMDOutputData[!, ComputingDemandCols[idx]]
                 demand_in[!, c] .= new_col
             end
-            demand_in = demand_in[1:size(CDMOutputData, 1), :]
+            demand_in = demand_in[1:size(CMDOutputData, 1), :]
 
             if v
-                println("Writing cooling demand file...")
+                println("Writing computing demand file...")
             end
-            CSV.write(joinpath(inpath, Cooling_Demand_Outfile), demand_in)
+            CSV.write(joinpath(inpath, Computing_Demand_Outfile), demand_in)
 
-            ### TDR_Results/Heating_demand_data.csv
-            filename = "Heating_demand_data.csv"
-            demand_in = load_dataframe(system_path, filename)
-            demand_in[!, :Sub_Weights] = demand_in[!, :Sub_Weights] * 1.0
-            demand_in[1:length(W), :Sub_Weights] .= W
-            demand_in[!, :Rep_Periods][1] = length(W)
-            demand_in[!, :Timesteps_per_Rep_Period][1] = TimestepsPerRepPeriod
-            select!(demand_in, Not(HeatingDemandCols))
-            select!(demand_in, Not(:Time_Index))
-            Time_Index_M = Union{Int64, Missings.Missing}[missing for i in 1:size(demand_in, 1)]
-            Time_Index_M[1:size(HDMOutputData, 1)] = 1:size(HDMOutputData, 1)
-            demand_in[!, :Time_Index] .= Time_Index_M
-
-            for c in HeatingDemandCols
-                new_col = Union{Float64, Missings.Missing}[missing
-                                                        for i in 1:size(demand_in, 1)]
-                new_col[1:size(HDMOutputData, 1)] = HDMOutputData[!, c]
-                demand_in[!, c] .= new_col
+            ### TDR_Results/Ambient_temperature_data.csv
+            ambient_temp_out = DataFrame(Time_Index = 1:size(ATOutputData, 1))
+            for z in 1:length(AmbientTempCols)
+                ambient_temp_out[!, Symbol("z" * string(z))] = ATOutputData[!, AmbientTempCols[z]]
             end
-            demand_in = demand_in[1:size(HDMOutputData, 1), :]
-
             if v
-                println("Writing heating demand file...")
+                println("Writing ambient temperature file...")
             end
-            CSV.write(joinpath(inpath, Heating_Demand_Outfile), demand_in)
+            CSV.write(joinpath(inpath, Ambient_Temp_Outfile), ambient_temp_out)
         end
         ### TDR_Results/Generators_variability.csv
 
