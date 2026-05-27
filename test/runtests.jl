@@ -32,6 +32,7 @@ end
 
     @testset "TDR" begin
         include("test_time_domain_reduction.jl")
+        include("test_tdr_utes_integration.jl")
     end
 
     @testset "Piecewise Fuel" begin

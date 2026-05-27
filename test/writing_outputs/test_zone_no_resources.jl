@@ -28,7 +28,8 @@ function prepare_costs_true()
          "cUnmetRsv" 0.0 0.0 0.0;
          "cNetworkExp" 0.0 0.0 0.0;
          "cUnmetPolicyPenalty" 0.0 0.0 0.0;
-         "cCO2" 0.0 0.0 0.0],
+         "cCO2" 0.0 0.0 0.0;
+         "cHurdle" 0.0 0.0 0.0],
         [:Costs, :Total, :Zone1, :Zone2])
 
     df[!, :Costs] = convert(Vector{String}, df[!, :Costs])
