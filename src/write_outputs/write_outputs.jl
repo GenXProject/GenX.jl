@@ -79,6 +79,18 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         println(elapsed_time_cascade_pumping)
     end
 
+    if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_pumping = @elapsed write_cascade_pumping_reversible(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade reversible pumping is")
+        println(elapsed_time_cascade_pumping)
+    end
+
+        if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_pumping = @elapsed write_cascade_pumping_reversible_power(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade reversible pumping power is")
+        println(elapsed_time_cascade_pumping)
+    end
+
     if output_settings_d["WriteCosts"]
         elapsed_time_costs = @elapsed write_costs(path, inputs, setup, EP)
         println("Time elapsed for writing costs is")

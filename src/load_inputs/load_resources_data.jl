@@ -1079,15 +1079,23 @@ Returns a dictionary mapping hydro resource IDs to their bypass_to reservoir IDs
 
 """
 function hydro_bypass_to(gens::Vector{<:AbstractResource})
-    bypass = Dict{Int, Int}()
+    bypass_to_dict = Dict{Int, Vector{Int}}()
     for r in gens
         if haskey(r, :bypass_to) && r.bypass_to != 0
+            # Get receiving reservoir's generator ID
             to_key = reservoir_id_to_gen_id(r.bypass_to, gens)
-            from_value = r.id
-            bypass[to_key] = from_value
+            # Get sending reservoir's generator ID  
+            from_value = reservoir_id_to_gen_id(r.reservoir_id, gens)
+            
+            # Initialize vector if key doesn't exist
+            if !haskey(bypass_to_dict, to_key)
+                bypass_to_dict[to_key] = Int[]
+            end
+            # Add sending reservoir to vector
+            push!(bypass_to_dict[to_key], from_value)
         end
     end
-    return bypass
+    return bypass_to_dict
 end
 
 """
@@ -1103,15 +1111,23 @@ Returns a dictionary mapping hydro generator IDs
 """
 
 function hydro_discharge_to(gens::Vector{<:AbstractResource})
-    discharge = Dict{Int, Int}()
+    discharge_to_dict = Dict{Int, Vector{Int}}()
     for r in gens
         if haskey(r, :discharge_to) && r.discharge_to != 0
-            to_key =     reservoir_id_to_gen_id(r.discharge_to, gens)            
-            from_value = r.id
-            discharge[to_key] = from_value
+            # Get receiving reservoir's generator ID
+            to_key = reservoir_id_to_gen_id(r.discharge_to, gens)
+            # Get sending reservoir's generator ID
+            from_value = reservoir_id_to_gen_id(r.reservoir_id, gens)
+            
+            # Initialize vector if key doesn't exist
+            if !haskey(discharge_to_dict, to_key)
+                discharge_to_dict[to_key] = Int[]
+            end
+            # Add sending reservoir to vector
+            push!(discharge_to_dict[to_key], from_value)
         end
     end
-    return discharge
+    return discharge_to_dict
 end
 
 """
@@ -1125,15 +1141,23 @@ end
 """
 
 function hydro_pump_to(gens::Vector{<:AbstractResource})
-    pump_to = Dict{Int, Int}()
+    pump_to_dict = Dict{Int, Vector{Int}}()
     for r in gens
         if haskey(r, :pump_to) && r.pump_to != 0
+            # Get receiving reservoir's generator ID
             to_key = reservoir_id_to_gen_id(r.pump_to, gens)
-            from_value = r.id
-            pump_to[to_key] = from_value
+            # Get sending reservoir's generator ID
+            from_value = r.id  # Use pump's ID directly since it's the sending unit
+            
+            # Initialize vector if key doesn't exist
+            if !haskey(pump_to_dict, to_key)
+                pump_to_dict[to_key] = Int[]
+            end
+            # Add sending pump to vector
+            push!(pump_to_dict[to_key], from_value)
         end
     end
-    return pump_to
+    return pump_to_dict
 end
 
 # function hydro_pump_from(gens::Vector{<:AbstractResource})

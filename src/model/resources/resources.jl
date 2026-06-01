@@ -674,7 +674,7 @@ min_flow(r::AbstractResource) = r.min_flow_mm3_per_h
 
 
 # Ramp up and down
-const VarPower = Union{Electrolyzer, Hydro, Thermal}
+const VarPower = Union{Electrolyzer, Hydro, Thermal, Pump}
 min_power(r::VarPower) = get(r, :min_power, default_zero)
 ramp_up_fraction(r::VarPower) = get(r, :ramp_up_percentage, default_percent)
 ramp_down_fraction(r::VarPower) = get(r, :ramp_dn_percentage, default_percent)

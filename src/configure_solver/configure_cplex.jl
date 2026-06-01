@@ -91,6 +91,7 @@ function configure_cplex(solver_settings_path::String, optimizer::Any)
         "BarConvTol" => 1e-8,
         "NumericFocus" => 0,
         "BarObjRng" => 1e+75,
+        "Threads" => 4,
         "SolutionType" => 2)
 
     attributes = merge(default_settings, solver_settings)
@@ -106,7 +107,8 @@ function configure_cplex(solver_settings_path::String, optimizer::Any)
         "BarConvTol" => "CPX_PARAM_BAREPCOMP",
         "NumericFocus" => "CPX_PARAM_NUMERICALEMPHASIS",
         "BarObjRng" => "CPX_PARAM_BAROBJRNG",
-        "SolutionType" => "CPX_PARAM_SOLUTIONTYPE")
+        "SolutionType" => "CPX_PARAM_SOLUTIONTYPE",
+        "Threads" => "CPX_PARAM_THREADS")
     attributes = rename_keys(attributes, key_replacement)
 
     attributes::Dict{String, Any}
