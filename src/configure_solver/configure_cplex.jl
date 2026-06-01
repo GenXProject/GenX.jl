@@ -91,7 +91,7 @@ function configure_cplex(solver_settings_path::String, optimizer::Any)
         "BarConvTol" => 1e-8,
         "NumericFocus" => 0,
         "BarObjRng" => 1e+75,
-        "Threads" => 4,
+        "Threads" => 8,
         "SolutionType" => 2)
 
     attributes = merge(default_settings, solver_settings)
