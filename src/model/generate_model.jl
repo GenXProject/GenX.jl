@@ -126,6 +126,14 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     investment_discharge!(EP, inputs, setup)
 
+    #### Move up hydro for faster debugging. Cannot go above investment_discharge! ####
+    # Model constraints, variables, expression related to reservoir hydropower resources
+    if setup["CascadeHydro"] >= 1
+        hydro_cascade!(EP, inputs, setup)
+    elseif !isempty(inputs["HYDRO_RES"]) # If no cascade hydro, but there are aggregated hydro resources
+        hydro_res!(EP, inputs, setup)
+    end
+
     if setup["UCommit"] > 0
         ucommit!(EP, inputs, setup)
     end
@@ -164,10 +172,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         storage!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expression related to reservoir hydropower resources
-    if !isempty(inputs["HYDRO_RES"])
-        hydro_res!(EP, inputs, setup)
-    end
+    #### Hydro module goes here ####
 
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
     if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])

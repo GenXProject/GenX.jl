@@ -232,43 +232,43 @@ r_{y,z, t} \leq \upsilon^{rsv}_{y,z}\times \Delta^{total}_{y,z}
 \hspace{4 cm}  \forall y \in \mathcal{W}, z \in \mathcal{Z}, t \in \mathcal{T}
 \end{aligned}
 ```
-"""
-function hydro_res_operational_reserves!(EP::Model, inputs::Dict)
-    println("Hydro Reservoir Operational Reserves Module")
+# """
+# function hydro_res_operational_reserves!(EP::Model, inputs::Dict)
+#     println("Hydro Reservoir Operational Reserves Module")
 
-    gen = inputs["RESOURCES"]
+#     gen = inputs["RESOURCES"]
 
-    T = inputs["T"]     # Number of time steps (hours)
+#     T = inputs["T"]     # Number of time steps (hours)
 
-    HYDRO_RES = inputs["HYDRO_RES"]
-    REG = inputs["REG"]
-    RSV = inputs["RSV"]
+#     HYDRO_RES = inputs["HYDRO_RES"]
+#     REG = inputs["REG"]
+#     RSV = inputs["RSV"]
 
-    HYDRO_RES_REG = intersect(HYDRO_RES, REG) # Set of reservoir hydro resources with regulation reserves
-    HYDRO_RES_RSV = intersect(HYDRO_RES, RSV) # Set of reservoir hydro resources with spinning reserves
+#     HYDRO_RES_REG = intersect(HYDRO_RES, REG) # Set of reservoir hydro resources with regulation reserves
+#     HYDRO_RES_RSV = intersect(HYDRO_RES, RSV) # Set of reservoir hydro resources with spinning reserves
 
-    vP = EP[:vP]
-    vREG = EP[:vREG]
-    vRSV = EP[:vRSV]
-    eTotalCap = EP[:eTotalCap]
+#     vP = EP[:vP]
+#     vREG = EP[:vREG]
+#     vRSV = EP[:vRSV]
+#     eTotalCap = EP[:eTotalCap]
 
-    max_up_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
-    max_dn_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
+#     max_up_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
+#     max_dn_reserves_lhs = extract_time_series_to_expression(vP, HYDRO_RES)
 
-    S = HYDRO_RES_REG
-    add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
-    add_similar_to_expression!(max_dn_reserves_lhs[S, :], -vREG[S, :])
+#     S = HYDRO_RES_REG
+#     add_similar_to_expression!(max_up_reserves_lhs[S, :], vREG[S, :])
+#     add_similar_to_expression!(max_dn_reserves_lhs[S, :], -vREG[S, :])
 
-    S = HYDRO_RES_RSV
-    add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])
+#     S = HYDRO_RES_RSV
+#     add_similar_to_expression!(max_up_reserves_lhs[S, :], vRSV[S, :])
 
-    @constraint(EP, [y in HYDRO_RES, t in 1:T], max_up_reserves_lhs[y, t]<=eTotalCap[y])
-    @constraint(EP, [y in HYDRO_RES, t in 1:T], max_dn_reserves_lhs[y, t]>=0)
+#     @constraint(EP, [y in HYDRO_RES, t in 1:T], max_up_reserves_lhs[y, t]<=eTotalCap[y])
+#     @constraint(EP, [y in HYDRO_RES, t in 1:T], max_dn_reserves_lhs[y, t]>=0)
 
-    @constraint(EP,
-        [y in HYDRO_RES_REG, t in 1:T],
-        vREG[y, t]<=reg_max(gen[y]) * eTotalCap[y])
-    @constraint(EP,
-        [y in HYDRO_RES_RSV, t in 1:T],
-        vRSV[y, t]<=rsv_max(gen[y]) * eTotalCap[y])
-end
+#     @constraint(EP,
+#         [y in HYDRO_RES_REG, t in 1:T],
+#         vREG[y, t]<=reg_max(gen[y]) * eTotalCap[y])
+#     @constraint(EP,
+#         [y in HYDRO_RES_RSV, t in 1:T],
+#         vRSV[y, t]<=rsv_max(gen[y]) * eTotalCap[y])
+# end

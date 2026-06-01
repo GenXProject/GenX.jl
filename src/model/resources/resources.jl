@@ -664,6 +664,9 @@ hydro_id(r::AbstractResource) = r.hydro_id
 hydro_id(rs::Vector{T}) where {T <: AbstractResource} = hydro_id.(rs)
 reservoir_id(r::AbstractResource) = r.reservoir_id
 reservoir_id(rs::Vector{T}) where {T <: AbstractResource} = reservoir_id.(rs)
+reservoir_cap(r::AbstractResource) = r.reservoir_cap_mm3 # Given in Mm3
+e_equivalent(r::AbstractResource) = r.e_equvalent * 1000 # Energy equivalent factor in kWh/m3 (GWh/Mm3). Convert to MWh/Mm3.
+min_flow(r::AbstractResource) = r.min_flow
 
 # Ramp up and down
 const VarPower = Union{Electrolyzer, Hydro, Thermal}

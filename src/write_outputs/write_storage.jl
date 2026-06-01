@@ -24,7 +24,7 @@ function write_storage(path::AbstractString, inputs::Dict, setup::Dict, EP::Mode
         push!(stored, value.(EP[:vS]))
     end
     if !isempty(HYDRO_RES)
-        push!(stored, value.(EP[:vS_HYDRO]))
+        push!(stored, value.(EP[:vS_HYDRO]*0.001)) # Hydro Mm3 avoid scale_factor
     end
     if !isempty(FLEX)
         push!(stored, value.(EP[:vS_FLEX]))

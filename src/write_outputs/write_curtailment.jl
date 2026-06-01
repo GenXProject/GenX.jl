@@ -48,10 +48,10 @@ function write_curtailment(path::AbstractString, inputs::Dict, setup::Dict, EP::
         end
     end
 
-    # Hydro spillage as hydro curtailment. :vSPILL is defined for all hydro resources. 
+    # Hydro spillage as hydro curtailment in Mm3. :vSPILL is defined for all hydro resources. 
     if !isempty(inputs["HYDRO_RES"]) && haskey(EP, :vSPILL)
         for g in inputs["HYDRO_RES"]
-            curtailment[g, :] = value.(EP[:vSPILL][g, :])
+            curtailment[g, :] = value.(EP[:vSPILL][g, :]*0.001) # Cancel out scale_factor multiplication for Mm3
         end
     end
 

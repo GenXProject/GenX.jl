@@ -1042,7 +1042,7 @@ function update_retrofit_id(r::AbstractResource)
 end
 
 """
-    reservoir_id_to_rid(res_id::Int, gen::Vector{<:AbstractResource})
+    reservoir_id_to_gen_id(res_id::Int, gen::Vector{<:AbstractResource})
 
 Returns the resource ID of a hydro resource given its reservoir ID.
 
@@ -1053,55 +1053,58 @@ Returns the resource ID of a hydro resource given its reservoir ID.
 # Returns
 - `rid (Int)`: The resource ID of the hydro resource
 """
-function reservoir_id_to_rid(res_id::Int, gen::Vector{<:AbstractResource})
-    for r in gen
-        if haskey(r, :reservoir_id) && r.reservoir_id == res_id
-            return r.id
+function reservoir_id_to_gen_id(target_reservoir_id::Int, gens::Vector{<:AbstractResource})
+    gen_id = Int[]
+    for r in gens
+        if haskey(r, :reservoir_id) && r.reservoir_id == target_reservoir_id
+            gen_id = r.id
         end
     end
+    return gen_id
     error("No hydro resource found with reservoir_id = $res_id")
 end
 
 """
-    hydro_spill_to(gen::Vector{<:AbstractResource})
+    hydro_bypass_to(gens::Vector{<:AbstractResource})
 
-Returns a dictionary mapping hydro resource IDs to their spill_to reservoir IDs.
+Returns a dictionary mapping hydro resource IDs to their bypass_to reservoir IDs.
 
 # Arguments
-- `gen::Vector{<:AbstractResource}`: Array of GenX resources.
+- `gens::Vector{<:AbstractResource}`: Array of GenX resources.
 
 # Returns
-- `spill_to (Dict{Int, Int})`: Dictionary where keys are spill_to reservoir IDs and values are hydro resource IDs. 
+- `bypass_to (Dict{Int, Int})`: Dictionary where keys are generator IDs and values are generator IDs. 
 
 """
-function hydro_spill_to(gen::Vector{<:AbstractResource})
-    spill_to_dict = Dict{Int, Int}()
-    for r in gen
-        if haskey(r, :spill_to) && r.spill_to != 0
-            spill_to_dict[reservoir_id_to_rid(r.spill_to, gen)] =
-            reservoir_id_to_rid(r.reservoir_id, gen)
+function hydro_bypass_to(gens::Vector{<:AbstractResource})
+    bypass_to_dict = Dict{Int, Int}()
+    for r in gens
+        if haskey(r, :bypass_to) && r.bypass_to != 0
+            bypass_to_dict[reservoir_id_to_gen_id(r.bypass_to, gens)] =
+            reservoir_id_to_gen_id(r.reservoir_id, gens)
         end
     end
-    return spill_to_dict
+    return bypass_to_dict
 end
 
 """
-    hydro_discharge_to(gen::Vector{<:AbstractResource})
+    hydro_discharge_to(gens::Vector{<:AbstractResource})
 
-Returns a dictionary mapping hydro unit IDs to their discharge_to hydro unit ID.
+Returns a dictionary mapping hydro generator IDs
 
 # Arguments
-- `gen::Vector{<:AbstractResource}`: Array of GenX resources.
+- `gens::Vector{<:AbstractResource}`: Array of GenX resources.
 
 # Returns
-- `discharge_to (Dict{Int, Int})`: Dictionary where keys are hydro unit IDs
+- `discharge_to (Dict{Int, Int})`: Dictionary where keys are generator IDs and values are generator IDs. 
 """
 
-function hydro_discharge_to(gen::Vector{<:AbstractResource})
+function hydro_discharge_to(gens::Vector{<:AbstractResource})
     discharge_to_dict = Dict{Int, Int}()
-    for r in gen
+    for r in gens
         if haskey(r, :discharge_to) && r.discharge_to != 0
-            discharge_to_dict[reservoir_id_to_rid(r.discharge_to, gen)] = reservoir_id_to_rid(r.reservoir_id, gen)
+            discharge_to_dict[reservoir_id_to_gen_id(r.discharge_to, gens)] =
+            reservoir_id_to_gen_id(r.reservoir_id, gens)
         end
     end
     return discharge_to_dict
@@ -1111,17 +1114,18 @@ end
     hydro_pump_to(gen::Vector{<:AbstractResource})
 
 # Arguments
-- `gen::Vector{<:AbstractResource}`: Array of GenX resources.
+- `gens::Vector{<:AbstractResource}`: Array of GenX resources.
 
 # Returns
-- `pump_to (Dict{Int, Int})`: Dictionary where keys are pump_to IDs and keys are hydro resource IDs. 
+- `pump_to (Dict{Int, Int})`: Dictionary where keys generator IDs and values are generator IDs. 
 """
 
-function hydro_pump_to(gen::Vector{<:AbstractResource})
+function hydro_pump_to(gens::Vector{<:AbstractResource})
     pump_to_dict = Dict{Int, Int}()
-    for r in gen
+    for r in gens
         if haskey(r, :pump_to) && r.pump_to != 0
-            pump_to_dict[reservoir_id_to_rid(r.pump_to, gen)] = reservoir_id_to_rid(r.reservoir_id, gen)
+            pump_to_dict[reservoir_id_to_gen_id(r.pump_to, gens)] =
+            reservoir_id_to_gen_id(r.reservoir_id, gens)
         end
     end
     return pump_to_dict
@@ -1160,12 +1164,12 @@ function add_resources_to_input_data!(inputs::Dict,
             ids_with_positive(gen, hydro_energy_to_power_ratio))
     end
 
-    # Set of cascade hydro links between reservoirs
+    # Set of cascade hydro resources
     if setup["CascadeHydro"] >= 1
         inputs["HYDRO_IDS"] = hydro_id.(gen[inputs["HYDRO_RES"]]) # Extract hydro_id for hydro resources
         inputs["RESERVOIR_IDS"] = reservoir_id.(gen[inputs["HYDRO_RES"]]) # Extract reservoir_ids for hydro resources
         # Cascade Hydro Links
-        inputs["HYDRO_SPILL_TO"] = hydro_spill_to(gen)
+        inputs["HYDRO_BYPASS_TO"] = hydro_bypass_to(gen)
         inputs["HYDRO_DISCHARGE_TO"] = hydro_discharge_to(gen)
         inputs["HYDRO_PUMP_TO"] = hydro_pump_to(gen)
     end
