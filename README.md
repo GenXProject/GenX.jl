@@ -7,6 +7,10 @@
 [![CI](https://github.com/GenXProject/GenX/actions/workflows/ci.yml/badge.svg)](https://github.com/GenXProject/GenX/actions/workflows/ci.yml) [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle) [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 
 ## Overview
+***
+Private branch made by me, Erik Seeger Bjørnerem, during my PhD work at NTNU to expand the hydropower formulation to include cascaded hydropower. All other credit is to be given to the developers of the GenX model. 
+***
+
 GenX is a highly-configurable, [open source](https://github.com/GenXProject/GenX/blob/main/LICENSE) electricity resource capacity expansion model 
 that incorporates several state-of-the-art practices in electricity system planning to offer improved decision support for a changing electricity landscape. 
 
@@ -40,7 +44,7 @@ The 'main' branch is the current master branch of GenX. The various subdirectori
 
 ## Requirements
 
-GenX (v0.4.6) runs on Julia v1.6 through v1.9, with a minimum version of the package JuMP v1.1.1. Julia v1.10 and v1.11 are also supported. However, we recently noticed a decline in performance with Julia v1.10, which is currently under investigation. Therefore, **we recommend using Julia v1.9**, particularly for very large cases.
+GenX (v0.4.4) runs on Julia v1.6 through v1.9, with a minimum version of the package JuMP v1.1.1. Julia v1.10 and v1.11 are also supported. However, we recently noticed a decline in performance with Julia v1.10, which is currently under investigation. Therefore, **we recommend using Julia v1.9**, particularly for very large cases.
 We recommend the users to either stick to a particular version of Julia to run GenX. If however, the users decide to switch between versions, it's very important to delete the old `Manifest.toml` file and do a fresh build of GenX when switching between Julia versions.
 
 There is also an older version of GenX, which is also currently maintained and runs on Julia 1.3.x and 1.4.x series.

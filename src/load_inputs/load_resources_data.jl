@@ -9,14 +9,14 @@ Internal function to get resource information (filename and GenX type) for each 
 """
 function _get_resource_info()
     resource_info = (hydro = (filename = "Hydro.csv", type = Hydro),
+        hydro_pump = (filename = "Hydro_Pump.csv", type = Pump),
         thermal = (filename = "Thermal.csv", type = Thermal),
         vre = (filename = "Vre.csv", type = Vre),
         storage = (filename = "Storage.csv", type = Storage),
         flex_demand = (filename = "Flex_demand.csv", type = FlexDemand),
         must_run = (filename = "Must_run.csv", type = MustRun),
         electrolyzer = (filename = "Electrolyzer.csv", type = Electrolyzer),
-        vre_stor = (filename = "Vre_stor.csv", type = VreStorage),
-        allam_cycle_lox = (filename = "Allam_Cycle_LOX.csv", type = AllamCycleLOX))  
+        vre_stor = (filename = "Vre_stor.csv", type = VreStorage))
     return resource_info
 end
 
@@ -60,12 +60,12 @@ function _get_summary_map()
     names_map = Dict{Symbol, String}(:Electrolyzer => "Electrolyzer",
         :FlexDemand => "Flexible_demand",
         :Hydro => "Hydro",
+        :Pump => "Hydro_pump",
         :Storage => "Storage",
         :Thermal => "Thermal",
         :Vre => "VRE",
         :MustRun => "Must_run",
-        :VreStorage => "VRE_and_storage",
-        :AllamCycleLOX => "Allam_Cycle_LOX")
+        :VreStorage => "VRE_and_storage")
     max_length = maximum(length.(values(names_map)))
     for (k, v) in names_map
         names_map[k] = v * repeat(" ", max_length - length(v))
@@ -187,57 +187,6 @@ function scale_vre_stor_data!(vre_stor_in::DataFrame, scale_factor::Float64)
 end
 
 """
-    scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
-
-Scales allamcycle attributes in-place if necessary. Generally, these scalings converts energy and power units from MW to GW  and \$/MW to \$M/GW. Both are done by dividing the values by 1000.
-See documentation for descriptions of each column being scaled.
-
-# Arguments
-- `allamcycle_in` (DataFrame): A dataframe containing data for flexible ccs (e.g, AllamCycle or 
-storage coupled NGCC-CCS)
-- `scale_factor` (Float64): A scaling factor for energy and currency units.
-
-"""
-function scale_allamcycle_data!(allamcycle_in::DataFrame, scale_factor::Float64)
-    columns_to_scale = [
-        :existing_cap_sco2turbine,  # to GW or kt 
-        :existing_cap_asu,          # to GW or kt 
-        :existing_cap_lox,          # to GW or kt
-
-        :cap_size_sco2turbine,      # to GW or kt 
-        :cap_size_asu, 
-        :cap_size_lox, 
-
-        :min_cap_sco2turbine,       # to GW or kt 
-        :max_cap_sco2turbine,       # to GW
-        :min_cap_asu,               # to GW or kt 
-        :max_cap_asu,               # to GW
-        :min_cap_lox,               # to GW or kt 
-        :max_cap_lox,               # to GW
-
-        :inv_cost_sco2turbine_per_mwyr,         # to $M/GW/yr
-        :fixed_om_cost_sco2turbine_per_mwyr,    # to $M/GW/yr
-
-        :inv_cost_asu_per_mwyr,         # to $M/GW/yr
-        :fixed_om_cost_asu_per_mwyr,    # to $M/GW/yr
-
-        :inv_cost_lox_per_tyr,          # to $M/GW/yr
-        :fixed_om_cost_lox_per_tyr,     # to $M/GW/yr
-
-        :var_om_cost_sco2turbine_per_mwh,   # to $M/GWh
-        :var_om_cost_asu_per_mwh,           # to $M/GWh
-        :var_om_cost_lox_per_t,             # to $M/GWh
-
-        :start_cost_sco2turbine_per_mw,   # to $M/GW
-        :start_cost_asu_per_mw,           # to $M/GW
-        :start_cost_lox_per_t             # to $M/GW
-    ]
-
-    scale_columns!(allamcycle_in, columns_to_scale, scale_factor)
-    return nothing
-end
-
-"""
     scale_columns!(df::DataFrame, columns_to_scale::Vector{Symbol}, scale_factor::Float64)
 
 Scales in-place the columns in `columns_to_scale` of a dataframe `df` by a `scale_factor`.
@@ -279,8 +228,7 @@ function load_resource_df(path::AbstractString, scale_factor::Float64, resource_
     rename!(resource_in, lowercase.(names(resource_in)))
     scale_resources_data!(resource_in, scale_factor)
     # scale vre_stor columns if necessary
-    resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor) 
-    resource_type == AllamCycleLOX && scale_allamcycle_data!(resource_in, scale_factor)
+    resource_type == VreStorage && scale_vre_stor_data!(resource_in, scale_factor)
     return resource_in
 end
 
@@ -557,25 +505,6 @@ function check_qualified_hydrogen_supply(r::AbstractResource)
     return WarnMsg.(warning_strings)
 end
 
-function check_allam_cycle_lox_multistage(setup::Dict, r::AbstractResource)
-    error_strings = String[]
-    if setup["MultiStage"] == 1 && isa(r, AllamCycleLOX)
-        e = string("Allam Cycle LOX resources are not supported in multistage mode.")
-        push!(error_strings, e)
-    end
-    return ErrorMsg.(error_strings)
-end
-
-function check_allam_cycle_lox_retrofit(r::AbstractResource)
-    error_strings = String[]
-    if (can_retrofit(r) == true || is_retrofit_option(r) == true) && isa(r, AllamCycleLOX)
-        e = string("Resource ", resource_name(r), " is an Allam Cycle LOX resource but has :can_retrofit = ", can_retrofit(r), " and :retrofit = ", is_retrofit_option(r), ".")
-        e *= "\nHowever, Allam Cycle LOX resources are not eligible for retrofitting, so they should have both :can_retrofit = 0 and :retrofit = 0."
-        push!(error_strings, e)
-    end
-    return ErrorMsg.(error_strings)
-end
-
 function check_resource(setup::Dict, r::AbstractResource)
     e = []
     e = [e; check_LDS_applicability(r)]
@@ -585,8 +514,6 @@ function check_resource(setup::Dict, r::AbstractResource)
     e = [e; check_retrofit_resource(r)]
     e = [e; check_qualified_hydrogen_supply(r)]
     e = [e; check_hydrogen_resources(r)]
-    e = [e; check_allam_cycle_lox_multistage(setup, r)]
-    e = [e; check_allam_cycle_lox_retrofit(r)]
     return e
 end
 
@@ -1117,6 +1044,135 @@ function update_retrofit_id(r::AbstractResource)
 end
 
 """
+    reservoir_id_to_gen_id(res_id::Int, gen::Vector{<:AbstractResource})
+
+Returns the resource ID of a hydro resource given its reservoir ID.
+
+# Arguments
+- `res_id::Int`: The reservoir ID.
+- `gen::Vector{<:AbstractResource}`: Array of GenX resources.
+
+# Returns
+- `rid (Int)`: The resource ID of the hydro resource
+"""
+function reservoir_id_to_gen_id(target_reservoir_id::Int, gens::Vector{<:AbstractResource})
+    gen_id = Int[]
+    for r in gens
+        if haskey(r, :reservoir_id) && r.reservoir_id == target_reservoir_id && r.lds == 1
+            gen_id = r.id
+        end
+    end
+    return gen_id
+    error("No hydro resource found with reservoir_id = $res_id")
+end
+
+"""
+    hydro_bypass_to(gens::Vector{<:AbstractResource})
+
+Returns a dictionary mapping hydro resource IDs to their bypass_to reservoir IDs.
+
+# Arguments
+- `gens::Vector{<:AbstractResource}`: Array of GenX resources.
+
+# Returns
+- `bypass_to (Dict{Int, Int})`: Dictionary where keys are generator IDs and values are generator IDs. 
+
+"""
+function hydro_bypass_to(gens::Vector{<:AbstractResource})
+    bypass_to_dict = Dict{Int, Vector{Int}}()
+    for r in gens
+        if haskey(r, :bypass_to) && r.bypass_to != 0
+            # Get receiving reservoir's generator ID
+            to_key = reservoir_id_to_gen_id(r.bypass_to, gens)
+            # Get sending reservoir's generator ID  
+            from_value = reservoir_id_to_gen_id(r.reservoir_id, gens)
+            
+            # Initialize vector if key doesn't exist
+            if !haskey(bypass_to_dict, to_key)
+                bypass_to_dict[to_key] = Int[]
+            end
+            # Add sending reservoir to vector
+            push!(bypass_to_dict[to_key], from_value)
+        end
+    end
+    return bypass_to_dict
+end
+
+"""
+    hydro_discharge_to(gens::Vector{<:AbstractResource})
+
+Returns a dictionary mapping hydro generator IDs
+
+# Arguments
+- `gens::Vector{<:AbstractResource}`: Array of GenX resources.
+
+# Returns
+- `discharge_to (Dict{Int, Int})`: Dictionary where keys are generator IDs and values are generator IDs. 
+"""
+
+function hydro_discharge_to(gens::Vector{<:AbstractResource})
+    discharge_to_dict = Dict{Int, Vector{Int}}()
+    for r in gens
+        if haskey(r, :discharge_to) && r.discharge_to != 0
+            # Get receiving reservoir's generator ID
+            to_key = reservoir_id_to_gen_id(r.discharge_to, gens)
+            # Get sending reservoir's generator ID
+            from_value = reservoir_id_to_gen_id(r.reservoir_id, gens)
+            
+            # Initialize vector if key doesn't exist
+            if !haskey(discharge_to_dict, to_key)
+                discharge_to_dict[to_key] = Int[]
+            end
+            # Add sending reservoir to vector
+            push!(discharge_to_dict[to_key], from_value)
+        end
+    end
+    return discharge_to_dict
+end
+
+"""
+    hydro_pump_to(gen::Vector{<:AbstractResource})
+
+# Arguments
+- `gens::Vector{<:AbstractResource}`: Array of GenX resources.
+
+# Returns
+- `pump_to (Dict{Int, Int})`: Dictionary where keys generator IDs and values are generator IDs. 
+"""
+
+function hydro_pump_to(gens::Vector{<:AbstractResource})
+    pump_to_dict = Dict{Int, Vector{Int}}()
+    for r in gens
+        if haskey(r, :pump_to) && r.pump_to != 0
+            # Get receiving reservoir's generator ID
+            to_key = reservoir_id_to_gen_id(r.pump_to, gens)
+            # Get sending reservoir's generator ID
+            from_value = r.id  # Use pump's ID directly since it's the sending unit
+            
+            # Initialize vector if key doesn't exist
+            if !haskey(pump_to_dict, to_key)
+                pump_to_dict[to_key] = Int[]
+            end
+            # Add sending pump to vector
+            push!(pump_to_dict[to_key], from_value)
+        end
+    end
+    return pump_to_dict
+end
+
+# function hydro_pump_from(gens::Vector{<:AbstractResource})
+#     pump_from = Dict{Int, Int}()
+#     for r in gens
+#         if haskey(r, :pump_from) && r.pump_from != 0
+#             from_key = reservoir_id_to_gen_id(r.pump_from, gens)
+#             to_value = r.id
+#             pump_from[to_value] = from_key
+#         end
+#     end
+#     return pump_from
+# end
+
+"""
     add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
 
 Adds resources to the `inputs` `Dict` with the key "RESOURCES" together with sevaral sets of resource indices that are used inside GenX to construct the optimization problem. The `inputs` `Dict` is modified in-place.
@@ -1143,10 +1199,22 @@ function add_resources_to_input_data!(inputs::Dict,
     ## HYDRO
     # Set of all reservoir hydro resources
     inputs["HYDRO_RES"] = hydro(gen)
+    inputs["HYDRO_PUMPS"] = hydro_pumps(gen)
     # Set of hydro resources modeled with known reservoir energy capacity
     if !isempty(inputs["HYDRO_RES"])
         inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"],
             ids_with_positive(gen, hydro_energy_to_power_ratio))
+    end
+
+    # Set of cascade hydro resources
+    if setup["CascadeHydro"] >= 1
+        inputs["HYDRO_IDS"] = hydro_id.(gen[inputs["HYDRO_RES"]]) # Extract hydro_id for hydro resources. Hydro_ids are synonymous to "cascade id" or "river id". 
+        inputs["RESERVOIR_IDS"] = reservoir_id.(gen[inputs["HYDRO_RES"]]) # Extract reservoir_ids for hydro resources
+  
+        # Cascade Hydro Links
+        inputs["HYDRO_BYPASS_TO"] = hydro_bypass_to(gen)
+        inputs["HYDRO_DISCHARGE_TO"] = hydro_discharge_to(gen)
+        inputs["HYDRO_PUMP_TO"] = hydro_pump_to(gen)
     end
 
     ## STORAGE
@@ -1432,33 +1500,6 @@ function add_resources_to_input_data!(inputs::Dict,
         inputs["ZONES_DC_CHARGE"] = zone_id(gen[storage_dc_charge(gen)])
         inputs["ZONES_AC_CHARGE"] = zone_id(gen[storage_ac_charge(gen)])
     end
-
-    ## flexible operation of CCS
-    # Allam Cycle with liquid oxygen (LOX) storage
-    inputs["ALLAM_CYCLE_LOX"] = allam_cycle_lox(gen)
-    inputs["WITH_LOX"] = is_with_lox(gen)
-
-    # reconstruct a dictionary to store component-wise data for Allam Cycle w/ LOX.
-    # the order must follow sCO2 turbine -> ASU -> LOX
-    allam_dict = Dict()
-    for y in inputs["ALLAM_CYCLE_LOX"]
-        # cost related to allam cycle lox
-        allam_dict[y, "inv_cost"] = get_attr(gen[y], :inv_cost_sco2turbine_per_mwyr, default_zero), get_attr(gen[y], :inv_cost_asu_per_mwyr, default_zero), get_attr(gen[y], :inv_cost_lox_per_tyr, default_zero)
-        allam_dict[y, "fom_cost"] = get_attr(gen[y], :fixed_om_cost_sco2turbine_per_mwyr, default_zero), get_attr(gen[y], :fixed_om_cost_asu_per_mwyr, default_zero), get_attr(gen[y], :fixed_om_cost_lox_per_tyr, default_zero)
-        allam_dict[y, "vom_cost"] = get_attr(gen[y], :var_om_cost_sco2turbine_per_mwh, default_zero), get_attr(gen[y], :var_om_cost_asu_per_mwh, default_zero), get_attr(gen[y], :var_om_cost_lox_per_t, default_zero)
-        allam_dict[y, "start_cost"] = get_attr(gen[y], :start_cost_sco2turbine_per_mw, default_zero), get_attr(gen[y], :start_cost_asu_per_mw, default_zero), 0
-        # cap size of each component
-        allam_dict[y, "cap_size"] = get_attr(gen[y], :cap_size_sco2turbine, default_percent), get_attr(gen[y], :cap_size_asu, default_percent), get_attr(gen[y], :cap_size_lox, default_percent)
-        allam_dict[y, "existing_cap"] = get_attr(gen[y], :existing_cap_sco2turbine, default_zero), get_attr(gen[y], :existing_cap_asu, default_zero), get_attr(gen[y], :existing_cap_lox, default_zero)
-        # unit commitment for allam cycle, only sco2 turbine and asu are subjected to unit commitment
-        allam_dict[y, "ramp_up"] = get_attr(gen[y], :ramp_up_percentage_sco2turbine, default_percent), get_attr(gen[y], :ramp_up_percentage_asu, default_percent), 0
-        allam_dict[y, "ramp_dn"] = get_attr(gen[y], :ramp_dn_percentage_sco2turbine, default_percent), get_attr(gen[y], :ramp_dn_percentage_asu, default_percent), 0
-        allam_dict[y, "up_time"] = get_attr(gen[y], :up_time_sco2turbine, default_zero), get_attr(gen[y], :up_time_asu, default_zero), 0
-        allam_dict[y, "min_power"] = get_attr(gen[y], :min_power_sco2turbine, default_zero), get_attr(gen[y], :min_power_asu, default_zero), 0
-        allam_dict[y, "down_time"] = get_attr(gen[y], :down_time_sco2turbine, default_zero), get_attr(gen[y], :down_time_asu, default_zero), 0
-        allam_dict[y, "start_fuel"] = get_attr(gen[y], :start_fuel_sco2turbine_mmbtu_per_mw, default_zero), get_attr(gen[y], :start_fuel_asu_mmbtu_per_mw, default_zero), 0
-    end
-    inputs["allam_dict"] = allam_dict
 
     # Names of resources
     inputs["RESOURCE_NAMES"] = resource_name(gen)

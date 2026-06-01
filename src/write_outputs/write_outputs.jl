@@ -61,6 +61,36 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         optimize!(EP)
     end
 
+    if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_hydro = @elapsed write_cascade_hydro(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade hydro is")
+        println(elapsed_time_cascade_hydro)
+    end
+
+    if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_bypass = @elapsed write_cascade_bypass(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade bypass is")
+        println(elapsed_time_cascade_bypass)
+    end
+
+    if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_pumping = @elapsed write_cascade_pumping(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade pumping is")
+        println(elapsed_time_cascade_pumping)
+    end
+
+    if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_pumping = @elapsed write_cascade_pumping_reversible(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade reversible pumping is")
+        println(elapsed_time_cascade_pumping)
+    end
+
+        if setup["CascadeHydro"]>= 1
+        elapsed_time_cascade_pumping = @elapsed write_cascade_pumping_reversible_power(path, inputs, setup, EP)
+        println("Time elapsed for writing cascade reversible pumping power is")
+        println(elapsed_time_cascade_pumping)
+    end
+
     if output_settings_d["WriteCosts"]
         elapsed_time_costs = @elapsed write_costs(path, inputs, setup, EP)
         println("Time elapsed for writing costs is")
@@ -159,11 +189,6 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     else
         VS_LDS = []
         VS_STOR = []
-    end
-
-    if !isempty(inputs["ALLAM_CYCLE_LOX"])
-        write_allam_capacity(path, inputs, setup, EP)
-        write_allam_output(path, inputs, setup, EP)
     end
 
     if has_duals(EP) == 1

@@ -167,6 +167,9 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     validate_can_retire_multistage(
         inputs_dict, mysetup["MultiStageSettingsDict"]["NumStages"])
 
+    ### Solve model
+    println("Solving Model")
+
     # Prepare folder for results    
     outpath = get_default_output_folder(case)
 
@@ -182,16 +185,9 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
         mkdir(outpath)
     end
 
-    ### Solve model
-    println("Solving Model")
-
-    # Step 3) Run DDP Algorithm or Myopic single pass
-    if mysetup["MultiStageSettingsDict"]["Myopic"] == 1
-        mystats_d = Dict()  # mystats_d is for DDP iteration metadata
-        model_dict, inputs_dict = run_myopic_multistage(outpath, model_dict, mysetup, inputs_dict)
-    else
-        model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
-    end
+    # Step 3) Run DDP Algorithm
+    ## Solve Model
+    model_dict, mystats_d, inputs_dict = run_ddp(outpath, model_dict, mysetup, inputs_dict)
 
     # Step 4) Write final outputs from each stage
     if mysetup["MultiStageSettingsDict"]["Myopic"] == 0 ||

@@ -65,21 +65,16 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
-    FLEX_BY_ZONE = map(1:Z) do z
-        return intersect(FLEX, resources_in_zone_by_rid(gen, z))
-    end
     @expression(EP, ePowerBalanceDemandFlex[t = 1:T, z = 1:Z],
         sum(-EP[:vP][y, t] + EP[:vCHARGE_FLEX][y, t]
-        for y in FLEX_BY_ZONE[z]))
+        for y in intersect(FLEX, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceDemandFlex)
 
     # Capacity Reserves Margin policy
     if setup["CapacityReserveMargin"] > 0
-        nCRMZones = inputs["NCapacityReserveMargin"]
-        capresfactor = inputs["DERATING_FACTOR"]
         @expression(EP,
-            eCapResMarBalanceFlex[res = 1:nCRMZones, t = 1:T],
-            sum(capresfactor[y, res] *
+            eCapResMarBalanceFlex[res = 1:inputs["NCapacityReserveMargin"], t = 1:T],
+            sum(derating_factor(gen[y], tag = res) *
                 (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX))
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceFlex)
     end

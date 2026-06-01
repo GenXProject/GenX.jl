@@ -20,7 +20,7 @@ The fuel consumption for power generation $vFuel_{y,t}$ is determined by power g
 ($vP_{y,t}$) mutiplied by the corresponding heat rate ($Heat\_Rate_y$). 
 The fuel costs for power generation and start fuel for a plant $y$ at time $t$, 
 denoted by $eCFuelOut_{y,t}$ and $eFuelStart$, are determined by fuel consumption ($vFuel_{y,t}$ 
-and $eStartFuel$) multiplied by the fuel costs (USD/MMBTU)
+and $eStartFuel$) multiplied by the fuel costs (\$/MMBTU)
 
 (2). Piecewise-linear approximation: 
 With this formulation, the heat rate of generators becomes a function of load.
@@ -94,11 +94,6 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
     HAS_FUEL = inputs["HAS_FUEL"]
     MULTI_FUELS = inputs["MULTI_FUELS"]
     SINGLE_FUEL = inputs["SINGLE_FUEL"]
-    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
-
-    RESOURCES_BY_ZONE = map(1:Z) do z
-        return resources_in_zone_by_rid(gen, z)
-    end
 
     fuels = inputs["fuels"]
     fuel_costs = inputs["fuel_costs"]
@@ -199,7 +194,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         sum(omega[t] * EP[:eCFuelStart][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelStart[z = 1:Z],
-        sum(EP[:ePlantCFuelStart][y] for y in RESOURCES_BY_ZONE[z]))
+        sum(EP[:ePlantCFuelStart][y] for y in resources_in_zone_by_rid(gen, z)))
 
     # Fuel cost for power generation
     # for multi-fuel resources
@@ -223,7 +218,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
         sum(omega[t] * EP[:eCFuelOut][y, t] for t in 1:T))
     # zonal level total fuel cost for output
     @expression(EP, eZonalCFuelOut[z = 1:Z],
-        sum(EP[:ePlantCFuelOut][y] for y in RESOURCES_BY_ZONE[z]))
+        sum(EP[:ePlantCFuelOut][y] for y in resources_in_zone_by_rid(gen, z)))
 
     # system level total fuel cost for output
     @expression(EP, eTotalCFuelOut, sum(eZonalCFuelOut[z] for z in 1:Z))
@@ -242,12 +237,9 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
                 MULTI_FUELS)))
     end
 
-    RESOURCES_BY_SINGLE_FUEL = map(1:NUM_FUEL) do f
-        return intersect(setdiff(resources_with_fuel(gen, fuels[f]), ALLAM_CYCLE_LOX), SINGLE_FUEL)
-    end
     @expression(EP, eFuelConsumption_single[f in 1:NUM_FUEL, t in 1:T],
         sum(EP[:vFuel][y, t] + EP[:eStartFuel][y, t]
-        for y in RESOURCES_BY_SINGLE_FUEL[f]))
+        for y in intersect(resources_with_fuel(gen, fuels[f]), SINGLE_FUEL)))
 
     @expression(EP, eFuelConsumption[f in 1:NUM_FUEL, t in 1:T],
         if !isempty(MULTI_FUELS)
@@ -264,7 +256,7 @@ function fuel!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP,
         cFuelCalculation_single[
-            y in intersect(SINGLE_FUEL, setdiff(setdiff(HAS_FUEL, THERM_COMMIT),ALLAM_CYCLE_LOX)),
+            y in intersect(SINGLE_FUEL, setdiff(HAS_FUEL, THERM_COMMIT)),
             t = 1:T],
         EP[:vFuel][y, t] - EP[:vP][y, t] * heat_rate_mmbtu_per_mwh(gen[y])==0)
 

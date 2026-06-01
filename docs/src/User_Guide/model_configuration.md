@@ -27,7 +27,7 @@ The following tables summarize the model settings parameters and their default/p
 ||1 = constraints account for energy lost. |
 |TimeDomainReduction | 1 = Use time domain reduced inputs available in the folder with the name defined by settings parameter `TimeDomainReductionFolder`. If such a folder does not exist or it is empty, time domain reduction will reduce the input data and save the results there.|
 ||0 = Use the data in the main case folder; do not perform clustering.|
-|VirtualChargeDischargeCost | Hypothetical cost of charging and discharging storage resources (in USD/MWh).|
+|VirtualChargeDischargeCost | Hypothetical cost of charging and discharging storage resources (in $/MWh).|
 |StorageVirtualDischarge | Flag to enable contributions that a storage device makes to the capacity reserve margin without generating power.|
 ||1 = activate the virtual discharge of storage resources.|
 ||0 = do not activate the virtual discharge of storage resources.|
@@ -129,9 +129,6 @@ The following tables summarize the model settings parameters and their default/p
 |**Parameter** | **Description**|
 | :------------ | :-----------|
 |Solver | OPTIONAL name of solver. Default is "HiGHS" effectively. It is necessary to set `Solver: "Gurobi"` when [reusing the same gurobi environment for multiple solves](https://github.com/jump-dev/Gurobi.jl?tab=readme-ov-file#reusing-the-same-gurobi-environment-for-multiple-solves).
-|EnableJuMPDirectModel | Flag to enable/disable JuMP `direct_model` to improve the performance. Solvers "HiGHS", "Gurobi", "CPLEX" and "SCIP" support direct model, but "Clp" and "Cbc" do not support it.|
-||1 = enable JuMP `direct_model`.|
-||0 = disable JuMP `direct_model`, use `Model` instead.|
 |EnableJuMPStringNames | Flag to enable/disable JuMP string names to improve the performance.|
 ||1 = enable JuMP string names.|
 ||0 = disable JuMP string names.|

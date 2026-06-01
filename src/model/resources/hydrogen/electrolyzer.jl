@@ -85,15 +85,12 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     ### Expressions ###
 
     ## Power Balance Expressions ##
-    ELECTROLYZERS_BY_ZONE = map(1:Z) do z
-        return intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))
-    end
     @expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
         sum(EP[:vUSE][y, t]
-        for y in ELECTROLYZERS_BY_ZONE[z]))
+        for y in intersect(ELECTROLYZERS, resources_in_zone_by_rid(gen, z))))
 
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
-    add_similar_to_expression!(EP[:ePowerBalance], -1.0, ePowerBalanceElectrolyzers)
+    EP[:ePowerBalance] -= ePowerBalanceElectrolyzers
 
     ## Hydrogen production expressions ##
     @expression(EP, eH2Production[y in union(ELECTROLYZERS, VS_ELEC)],
@@ -157,7 +154,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     if setup["HydrogenHourlyMatching"] == 1 && setup["HourlyMatching"] == 1
         @expression(EP, eHMElectrolyzer[t in 1:T, z in 1:Z],
             -sum(EP[:vUSE][y, t]
-            for y in ELECTROLYZERS_BY_ZONE[z]))
+            for y in intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZERS)))
         add_similar_to_expression!(EP[:eHM], eHMElectrolyzer)
     end
 
@@ -170,7 +167,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(omega[t] * EP[:vUSE][y, t]
             for y in intersect(ELECTROLYZERS, ids_with_policy(gen, esr, tag = ESR)),
             t in 1:T))
-        add_similar_to_expression!(EP[:eESR], -1.0, eElectrolyzerESR)
+        EP[:eESR] -= eElectrolyzerESR
     end
 
     ### Objective Function ###
@@ -192,5 +189,5 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(eHydrogenValue[y, t] for y in ELECTROLYZERS; init = 0)
         end)
     @expression(EP, eTotalHydrogenValue, sum(eTotalHydrogenValueT[t] for t in 1:T))
-    add_to_expression!(EP[:eObj], -1.0, eTotalHydrogenValue)
+    EP[:eObj] -= eTotalHydrogenValue
 end

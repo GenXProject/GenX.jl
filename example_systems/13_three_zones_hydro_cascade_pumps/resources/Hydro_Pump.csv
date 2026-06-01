@@ -1,0 +1,3 @@
+Resource;Zone;New_Build;Can_Retire;Existing_Cap_MW;Max_Cap_MW;Min_Cap_MW;Inv_Cost_per_MWyr;Fixed_OM_Cost_per_MWyr;Var_OM_Cost_per_MWh;Heat_Rate_MMBTU_per_MWh;Fuel;region;cluster;Ramp_Up_Percentage;Ramp_Dn_Percentage;e_equivalent;e_equivalent_reversible;LDS;Reg_Cost;Rsv_Cost;Reg_Max;hydro_ID;reservoir_id;pump_to
+ME_pump_mid;3;1;0;100;1000;0;149000;1809;0.32;9.12;None;ME;1;0.5;0.5;1.8;1.5;0;0.006916667;0.013833333;0;1;2;3
+ME_pump_bot;3;1;0;250;2000;0;149000;1809;0.32;9.12;None;ME;1;0.5;0.5;1.3;1;0;0.006916667;0.013833333;0;1;1;2

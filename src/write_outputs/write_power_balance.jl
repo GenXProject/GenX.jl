@@ -9,7 +9,6 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     HYDRO_RES = inputs["HYDRO_RES"]
     STOR_ALL = inputs["STOR_ALL"]
     FLEX = inputs["FLEX"]
-    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
     ELECTROLYZER = inputs["ELECTROLYZER"]
     VRE_STOR = inputs["VRE_STOR"]
     FUSION = ids_with(gen, :fusion)
@@ -35,23 +34,18 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     powerbalance = zeros(Z * L, T) # following the same style of power/charge/storage/nse
     for z in 1:Z
         POWER_ZONE = intersect(resources_in_zone_by_rid(gen, z),
-            union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES, ALLAM_CYCLE_LOX))
-        ALLAM_ZONE = intersect(resources_in_zone_by_rid(gen, z), ALLAM_CYCLE_LOX)
-        if isempty(ALLAM_ZONE)
-            powerbalance[(z - 1) * L + 1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
-        else
-            powerbalance[(z - 1) * L + 1, :] = sum(value.(Array(EP[:vP][POWER_ZONE, :])), dims = 1) - sum(value.(Array(EP[:vCHARGE_ALLAM][ALLAM_ZONE, :])), dims = 1)
-        end
-        STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)
-        if !isempty(STOR_ALL_ZONE)
+            union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES))
+        powerbalance[(z - 1) * L + 1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
+        if !isempty(intersect(resources_in_zone_by_rid(gen, z), STOR_ALL))
+            STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)
             powerbalance[(z - 1) * L + 2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]),
                 dims = 1)
             powerbalance[(z - 1) * L + 3, :] = (-1) * sum(
                 (value.(EP[:vCHARGE][STOR_ALL_ZONE,:]).data),
                 dims = 1)
         end
-        FLEX_ZONE = intersect(resources_in_zone_by_rid(gen, z), FLEX)
-        if !isempty(FLEX_ZONE)
+        if !isempty(intersect(resources_in_zone_by_rid(gen, z), FLEX))
+            FLEX_ZONE = intersect(resources_in_zone_by_rid(gen, z), FLEX)
             powerbalance[(z - 1) * L + 4, :] = sum(
                 (value.(EP[:vCHARGE_FLEX][FLEX_ZONE,:]).data),
                 dims = 1)
