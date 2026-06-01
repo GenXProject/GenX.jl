@@ -7,6 +7,7 @@ Possible values:
 - :Thermal
 - :Vre
 - :Hydro
+- :Pump
 - :Storage
 - :MustRun
 - :FlexDemand
@@ -16,6 +17,7 @@ Possible values:
 const resource_types = (:Thermal,
     :Vre,
     :Hydro,
+    :Pump,
     :Storage,
     :MustRun,
     :FlexDemand,
@@ -664,9 +666,12 @@ hydro_id(r::AbstractResource) = r.hydro_id
 hydro_id(rs::Vector{T}) where {T <: AbstractResource} = hydro_id.(rs)
 reservoir_id(r::AbstractResource) = r.reservoir_id
 reservoir_id(rs::Vector{T}) where {T <: AbstractResource} = reservoir_id.(rs)
-reservoir_cap(r::AbstractResource) = r.reservoir_cap_mm3 # Given in Mm3
-e_equivalent(r::AbstractResource) = r.e_equvalent * 1000 # Energy equivalent factor in kWh/m3 (GWh/Mm3). Convert to MWh/Mm3.
-min_flow(r::AbstractResource) = r.min_flow
+reservoir_cap(r::AbstractResource) = r.reservoir_cap_mm3 
+e_equivalent(r::AbstractResource) = r.e_equvalent # Energy equivalent factor in kWh/m3 (GWh/Mm3). EP[vP] is scaled to GW!!!!
+min_flow(r::AbstractResource) = r.min_flow_mm3_per_h 
+
+# For pumps 
+
 
 # Ramp up and down
 const VarPower = Union{Electrolyzer, Hydro, Thermal}
@@ -805,6 +810,8 @@ end
 Returns the indices of all hydro resources in the vector `rs`.
 """
 hydro(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, Hydro), rs)
+
+hydro_pumps(rs::Vector{T}) where {T <: AbstractResource} = findall(r -> isa(r, Pump), rs)
 
 # THERMAL interface
 """

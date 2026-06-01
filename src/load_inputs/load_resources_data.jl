@@ -9,6 +9,7 @@ Internal function to get resource information (filename and GenX type) for each 
 """
 function _get_resource_info()
     resource_info = (hydro = (filename = "Hydro.csv", type = Hydro),
+        hydro_pump = (filename = "Hydro_Pump.csv", type = Pump),
         thermal = (filename = "Thermal.csv", type = Thermal),
         vre = (filename = "Vre.csv", type = Vre),
         storage = (filename = "Storage.csv", type = Storage),
@@ -59,6 +60,7 @@ function _get_summary_map()
     names_map = Dict{Symbol, String}(:Electrolyzer => "Electrolyzer",
         :FlexDemand => "Flexible_demand",
         :Hydro => "Hydro",
+        :Pump => "Hydro_pump",
         :Storage => "Storage",
         :Thermal => "Thermal",
         :Vre => "VRE",
@@ -1056,7 +1058,7 @@ Returns the resource ID of a hydro resource given its reservoir ID.
 function reservoir_id_to_gen_id(target_reservoir_id::Int, gens::Vector{<:AbstractResource})
     gen_id = Int[]
     for r in gens
-        if haskey(r, :reservoir_id) && r.reservoir_id == target_reservoir_id
+        if haskey(r, :reservoir_id) && r.reservoir_id == target_reservoir_id && r.lds == 1
             gen_id = r.id
         end
     end
@@ -1077,14 +1079,15 @@ Returns a dictionary mapping hydro resource IDs to their bypass_to reservoir IDs
 
 """
 function hydro_bypass_to(gens::Vector{<:AbstractResource})
-    bypass_to_dict = Dict{Int, Int}()
+    bypass = Dict{Int, Int}()
     for r in gens
         if haskey(r, :bypass_to) && r.bypass_to != 0
-            bypass_to_dict[reservoir_id_to_gen_id(r.bypass_to, gens)] =
-            reservoir_id_to_gen_id(r.reservoir_id, gens)
+            to_key = reservoir_id_to_gen_id(r.bypass_to, gens)
+            from_value = r.id
+            bypass[to_key] = from_value
         end
     end
-    return bypass_to_dict
+    return bypass
 end
 
 """
@@ -1100,14 +1103,15 @@ Returns a dictionary mapping hydro generator IDs
 """
 
 function hydro_discharge_to(gens::Vector{<:AbstractResource})
-    discharge_to_dict = Dict{Int, Int}()
+    discharge = Dict{Int, Int}()
     for r in gens
         if haskey(r, :discharge_to) && r.discharge_to != 0
-            discharge_to_dict[reservoir_id_to_gen_id(r.discharge_to, gens)] =
-            reservoir_id_to_gen_id(r.reservoir_id, gens)
+            to_key =     reservoir_id_to_gen_id(r.discharge_to, gens)            
+            from_value = r.id
+            discharge[to_key] = from_value
         end
     end
-    return discharge_to_dict
+    return discharge
 end
 
 """
@@ -1121,15 +1125,28 @@ end
 """
 
 function hydro_pump_to(gens::Vector{<:AbstractResource})
-    pump_to_dict = Dict{Int, Int}()
+    pump_to = Dict{Int, Int}()
     for r in gens
         if haskey(r, :pump_to) && r.pump_to != 0
-            pump_to_dict[reservoir_id_to_gen_id(r.pump_to, gens)] =
-            reservoir_id_to_gen_id(r.reservoir_id, gens)
+            to_key = reservoir_id_to_gen_id(r.pump_to, gens)
+            from_value = r.id
+            pump_to[to_key] = from_value
         end
     end
-    return pump_to_dict
+    return pump_to
 end
+
+# function hydro_pump_from(gens::Vector{<:AbstractResource})
+#     pump_from = Dict{Int, Int}()
+#     for r in gens
+#         if haskey(r, :pump_from) && r.pump_from != 0
+#             from_key = reservoir_id_to_gen_id(r.pump_from, gens)
+#             to_value = r.id
+#             pump_from[to_value] = from_key
+#         end
+#     end
+#     return pump_from
+# end
 
 """
     add_resources_to_input_data!(inputs::Dict, setup::Dict, case_path::AbstractString, gen::Vector{<:AbstractResource})
@@ -1158,6 +1175,7 @@ function add_resources_to_input_data!(inputs::Dict,
     ## HYDRO
     # Set of all reservoir hydro resources
     inputs["HYDRO_RES"] = hydro(gen)
+    inputs["HYDRO_PUMPS"] = hydro_pumps(gen)
     # Set of hydro resources modeled with known reservoir energy capacity
     if !isempty(inputs["HYDRO_RES"])
         inputs["HYDRO_RES_KNOWN_CAP"] = intersect(inputs["HYDRO_RES"],
@@ -1168,10 +1186,12 @@ function add_resources_to_input_data!(inputs::Dict,
     if setup["CascadeHydro"] >= 1
         inputs["HYDRO_IDS"] = hydro_id.(gen[inputs["HYDRO_RES"]]) # Extract hydro_id for hydro resources
         inputs["RESERVOIR_IDS"] = reservoir_id.(gen[inputs["HYDRO_RES"]]) # Extract reservoir_ids for hydro resources
+        #inputs["HYDRO_PUMPS"] 
         # Cascade Hydro Links
         inputs["HYDRO_BYPASS_TO"] = hydro_bypass_to(gen)
         inputs["HYDRO_DISCHARGE_TO"] = hydro_discharge_to(gen)
         inputs["HYDRO_PUMP_TO"] = hydro_pump_to(gen)
+        #inputs["HYDRO_PUMP_FROM"]= hydro_pump_from(gen)
     end
 
     ## STORAGE
