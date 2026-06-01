@@ -48,7 +48,7 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     ### Variables ###
-
+    
     # Reservoir hydro storage level of resource "y" at hour "t" on zone "z" - unbounded [Mm^3]
     @variable(EP, vS_HYDRO[y in HYDRO_RES, t = 1:T]>=0)
 
@@ -63,26 +63,29 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
     
     # Hydro pump water intake (Mm^3/h) to unit y at hour t
     @variable(EP, vPUMP[y in HYDRO_PUMPS, t = 1:T]>=0)
-    @variable(EP, vPUMP_DISCHARGE[y in HYDRO_PUMPS, t = 1:T]>=0) # For reversible pump-turbine units, discharge when operating in turbine mode
+    @variable(EP, vPUMP_DISCHARGE[y in HYDRO_PUMPS, t = 1:T]>=0) # For reversible pump-turbine units, discharge [Mm3/h] when operating in turbine mode
     
     # Pump discharge variable for reversible pump-turbine units [GW]
     @variable(EP, vP_PUMP_DISCHARGE[y in HYDRO_PUMPS, t = 1:T]>=0)
 
-    # Binary pump mode variable
+    # Binary pump mode variable to avoid pumping and discharging at the same time
     # @variable(EP, vPUMP_MODE[y in HYDRO_PUMPS, t = 1:T], Bin)
     
+
     ### Expressions ###
 
     ## Power Balance Expressions ##
+    # Hydropower from turbines
     @expression(EP, ePowerBalanceHydroRes[t = 1:T, z = 1:Z],
         sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroRes)
 
+    # Power consumed by pumps
     @expression(EP, ePowerBalanceHydroPumps[t = 1:T, z = 1:Z],
         sum(EP[:vP_PUMP_DISCHARGE][y,t] - EP[:vP][y, t] for y in intersect(HYDRO_PUMPS, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceHydroPumps)    # Negative for pumping operation
 
-    # Extra cost expression for pumping discharge (outside of discharge.jl setup). Similar to storage vCharge
+    # Extra cost expression for pumping discharge (outside of discharge.jl setup). Similar to storage vCharge additional expression
     @expression(EP,
         eCVar_pump[y in HYDRO_PUMPS, t = 1:T],
         inputs["omega"][t]*var_om_cost_per_mwh(gen[y])*vP_PUMP_DISCHARGE[y, t])
@@ -128,9 +131,9 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
     @constraints(EP,
         begin
             ### NOTE: time coupling constraints in this block do not apply to first hour in each sample period;
-            # Energy stored in reservoir at end of each other hour is equal to energy at end of prior hour less generation and spill and + inflows in the current hour
-             
+            
             # Constraints for reservoir hydro
+            # Energy stored in reservoir at end of each other hour is equal to energy at end of prior hour less generation and spill and + inflows in the current hour
             cHydroReservoirInterior[y in HYDRO_RES, t in INTERIOR_SUBPERIODS],
             EP[:vS_HYDRO][y, t] == EP[:vS_HYDRO][y, hoursbefore(p, t, 1)] -
                 EP[:vDISCHARGE][y, t] - 
@@ -147,14 +150,15 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
                 (haskey(PUMP_TO, gen[y].id) ? # Does any unit pump to this reservoir
                     sum(EP[:vPUMP_DISCHARGE][from_id, t] for from_id in PUMP_TO[gen[y].id]) : 0) +          # subtract outgoing discharge from connected reversible pumps
                 sum(EP[:vPUMP_DISCHARGE][pump, hoursbefore(p, t, 1)] for pump in HYDRO_PUMPS if gen[pump].reservoir_id == gen[y].reservoir_id) # Add pump discharge inflows from upper reservoirs 
-                # Formulation to be improved! 
+                # This formulation could probably be written in an easier way! 
 
             # Reservoir limits for each reservoir
             cHydroReservoirLimits[y in HYDRO_RES, t in 1:T],
             EP[:vS_HYDRO][y, t] <= reservoir_cap(gen[y])
 
-            cHydroReservoirLower[y in HYDRO_RES, t in 1:T],
-            EP[:vS_HYDRO][y, t] >= 0.2 * reservoir_cap(gen[y])  # Minimum reservoir level at 20% of capacity to avoid emptying reservoirs
+            # Hard coded lower reservoir limit. This could be an input in Hydro.csv
+            #cHydroReservoirLower[y in HYDRO_RES, t in 1:T],
+            #EP[:vS_HYDRO][y, t] >= 0.2 * reservoir_cap(gen[y])  # Minimum reservoir level at 20% of capacity to avoid emptying reservoirs
 
             # Hydro Power Generation from water discharge for hydro resources
             cHydroGenerationConversion[y in HYDRO_RES, t in 1:T],
@@ -169,24 +173,22 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
             EP[:vP_PUMP_DISCHARGE][y,t] == EP[:vPUMP_DISCHARGE][y,t] * gen[y].e_equivalent_reversible
 
             # DEVNOTE: This should be a function of max discharge, i.e. 1.5-2.0 times q_max
-            # Bypass limits
+            # Bypass limits to avoid crazy scheduling
             # cBypassLimit[y in HYDRO_RES, t in 1:T],
             # vBYPASS[y, t] <= 2
             # # Spillage limits
             # cSpillLimit[y in HYDRO_RES, t in 1:T],
             # vSPILL[y, t] <= 5
 
-            
-
             # Initial timestep bypass and pump constraints
             cBypassLimitInitial[y in HYDRO_RES, t in 1:T],  # Needed to avoid "free" water in first timestep
             EP[:vBYPASS][y, 1] == 0
-            cPumpInitial[y in HYDRO_PUMPS, t in 1:T],
+            cPumpInitial[y in HYDRO_PUMPS, t in 1:T],       # Needed to avoid "free" water in first timestep
             EP[:vPUMP][y, 1] == 0
-            cPumpRevInitial[y in HYDRO_PUMPS, t in 1:T],
+            cPumpRevInitial[y in HYDRO_PUMPS, t in 1:T],    # Needed to avoid "free" water in first timestep
             EP[:vP_PUMP_DISCHARGE][y, 1] == 0
 
-            # DEVNOTE: Redundant?
+            # DEVNOTE: Redundant for large hydro reservoirs?
             # Max outflow constraints (discharge + spill + bypass <= storage level at prior time step)
             cHydroMaxOutflow[y in HYDRO_RES, t in 1:T],
             EP[:vDISCHARGE][y, t]+ EP[:vSPILL][y,t]+ EP[:vBYPASS][y,t] <=
@@ -194,7 +196,7 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
 
             # Minimum flow constraints [Mm3/h]
             # cHydroMinFlow[y in HYDRO_RES, t in 1:T],
-            # EP[:vDISCHARGE][y, t] + EP[:vSPILL][y, t] + EP[:vBYPASS] >= min_flow(gen[y])  # Min flow in Mm3/h
+            # EP[:vDISCHARGE][y, t] + EP[:vSPILL][y, t] + EP[:vBYPASS] >= min_flow(gen[y])  # Minimum streamflow in Mm3/h (defined in Hydro.csv)
 
             # Equations regarding Power
             # Maximum ramp up and down
@@ -208,6 +210,7 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
             ramp_down_fraction(gen[y]) * EP[:eTotalCap][y]
 
             # TODO: Add regulation and reserves for pumps
+            # Pumps ramping
             cRampUpPump[y in HYDRO_PUMPS, t in 1:T],
             EP[:vP][y, t] -
             EP[:vP][y, hoursbefore(p, t, 1)] <=
@@ -220,7 +223,7 @@ function hydro_cascade!(EP::Model, inputs::Dict, setup::Dict)
             cHydroMaxPower[y in HYDRO_RES, t in 1:T], EP[:vP][y, t] <= EP[:eTotalCap][y]
             cHydroPumpMaxPower[y in HYDRO_PUMPS, t in 1:T], EP[:vP][y, t] <= EP[:eTotalCap][y] # Max power when operating in pump mode
             cHydroPumpReversibleMaxPower[y in HYDRO_PUMPS, t in 1:T], EP[:vP_PUMP_DISCHARGE][y, t] <= EP[:eTotalCap][y] # Max power when operating in turbine mode
-            end)
+        end)
 
     ### Constraints to limit maximum energy in storage based on known limits on reservoir energy capacity (only for HYDRO_RES_KNOWN_CAP)
     # Maximum water stored in each reservoir must be less than the reservoir caponly applied to HYDRO_RES_KNOWN_CAP

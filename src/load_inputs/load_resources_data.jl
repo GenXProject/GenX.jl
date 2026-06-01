@@ -1208,14 +1208,13 @@ function add_resources_to_input_data!(inputs::Dict,
 
     # Set of cascade hydro resources
     if setup["CascadeHydro"] >= 1
-        inputs["HYDRO_IDS"] = hydro_id.(gen[inputs["HYDRO_RES"]]) # Extract hydro_id for hydro resources
+        inputs["HYDRO_IDS"] = hydro_id.(gen[inputs["HYDRO_RES"]]) # Extract hydro_id for hydro resources. Hydro_ids are synonymous to "cascade id" or "river id". 
         inputs["RESERVOIR_IDS"] = reservoir_id.(gen[inputs["HYDRO_RES"]]) # Extract reservoir_ids for hydro resources
-        #inputs["HYDRO_PUMPS"] 
+  
         # Cascade Hydro Links
         inputs["HYDRO_BYPASS_TO"] = hydro_bypass_to(gen)
         inputs["HYDRO_DISCHARGE_TO"] = hydro_discharge_to(gen)
         inputs["HYDRO_PUMP_TO"] = hydro_pump_to(gen)
-        #inputs["HYDRO_PUMP_FROM"]= hydro_pump_from(gen)
     end
 
     ## STORAGE
