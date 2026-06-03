@@ -1,0 +1,9 @@
+# Gurobi settings for the Benders planning problem.
+
+Feasib_Tol: 1.0e-6
+Optimal_Tol: 1.0e-6
+Method: 2
+BarConvTol: 1.0e-6
+Crossover: 0
+MIPGap: 1.0e-3
+NumericFocus: 0

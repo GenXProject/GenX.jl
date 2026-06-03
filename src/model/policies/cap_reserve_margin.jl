@@ -79,8 +79,7 @@ function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
 
     @constraint(EP,
         cCapacityResMargin[res = 1:NCRM, t = 1:T],
-        EP[:eCapResMarBalance][res,
-            t]
-        >=sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
+        EP[:eCapResMarBalance][res, t]
+        >= sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res])
         for z in findall(x -> x != 0, inputs["dfCapRes"][:, res])))
 end

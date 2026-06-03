@@ -37,6 +37,7 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
+        "Benders" => 0,
         "ObjScale" => 1)
 end
 

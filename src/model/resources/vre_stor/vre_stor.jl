@@ -90,7 +90,7 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     Z = inputs["Z"]                                                 # Number of zones
 
     # Load VRE-storage inputs
-    VRE_STOR = inputs["VRE_STOR"]                                 # Set of VRE-STOR generators (indices)
+    VRE_STOR = inputs["VRE_STOR"]                                   # Set of VRE-STOR generators (indices)
     gen_VRE_STOR = gen.VreStorage                                   # Set of VRE-STOR generators (objects)
     SOLAR = inputs["VS_SOLAR"]                                      # Set of VRE-STOR generators with solar-component
     DC = inputs["VS_DC"]                                            # Set of VRE-STOR generators with inverter-component
