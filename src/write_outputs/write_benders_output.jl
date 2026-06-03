@@ -374,9 +374,10 @@ function write_power_balance_benders(path::AbstractString, inputs::Dict, setup::
 		POWER_ZONE = intersect(resources_in_zone_by_rid(gen, z), union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES, ALLAM_CYCLE_LOX))
 		ALLAM_ZONE = intersect(resources_in_zone_by_rid(gen, z), ALLAM_CYCLE_LOX)
 
-		powerbalance[(z - 1) * Lcomp + 1, :] = sum(benders_bundle.power[POWER_ZONE, :], dims = 1)
 		if !isempty(ALLAM_ZONE)
-			powerbalance[(z - 1) * Lcomp + 1, :] .-= sum(benders_bundle.charge_allam[ALLAM_ZONE, :], dims = 1)
+			powerbalance[(z - 1) * Lcomp + 1, :] = sum(benders_bundle.power[POWER_ZONE, :], dims = 1) - sum(benders_bundle.charge_allam[ALLAM_ZONE, :], dims = 1)
+		else
+			powerbalance[(z - 1) * Lcomp + 1, :] = sum(benders_bundle.power[POWER_ZONE, :], dims = 1)
 		end
 
 		STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)

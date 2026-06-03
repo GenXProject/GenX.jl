@@ -129,6 +129,8 @@ function discharge_capacity_decisions!(EP, inputs::Dict, setup::Dict)
             eExistingCap[y] + EP[:vZERO]
         end)
 
+        
+
 end
 
 function storage_capacity_decisions!(EP, inputs::Dict, setup::Dict)

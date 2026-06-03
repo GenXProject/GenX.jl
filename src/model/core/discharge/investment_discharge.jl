@@ -140,10 +140,10 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         WITH_LOX = inputs["WITH_LOX"]     
         # Allam cycle specific. By default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
         # Retired capacity of Allam cycle 
-        @variable(EP, vRETCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
+        @variable(EP, vRETCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3] >= 0)
 
         # New capacity of Allam cycle
-        @variable(EP, vCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
+        @variable(EP, vCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3] >= 0)
 
         # Expressions and constraints related to Allam Cycle costs
         @expression(EP, eExistingCap_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3], allam_dict[y, "existing_cap"][i])
@@ -199,8 +199,6 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
         # add this to eTotalCFix
         add_to_expression!(EP[:eTotalCFix], eTotalCFix_Allam)
 
-        # add to Obj
-        add_to_expression!(EP[:eObj], eTotalCFix_Allam)
         # system capacity equal to sCO2 turbine capacity
         @constraint(EP, [y in ALLAM_CYCLE_LOX], EP[:vCAP][y] == EP[:vCAP_AllamCycleLOX][y, sco2turbine])
     end

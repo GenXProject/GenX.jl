@@ -152,17 +152,10 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
     if !isempty(STOR_ALL)
-        investment_energy!(EP, inputs, setup)#TODO: probably remove this...
         storage_all!(EP, inputs, setup)
-
-        # Include Long Duration Storage only when modeling representative periods and long-duration storage
-        if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
-            long_duration_storage!(EP, inputs, setup) #TODO: decide if we need this of the long_duration_storage_subperiod! function; the _subperiod function doesn't exist in current code; also, there is a _planning function that is also not in current version. Need to decide when and where these should get called :(
-        end
     end
 
     if !isempty(inputs["STOR_ASYMMETRIC"])
-        investment_charge!(EP, inputs, setup) #TODO: probably remove this too...
         storage_asymmetric!(EP, inputs, setup)
     end
 
