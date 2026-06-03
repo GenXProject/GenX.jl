@@ -138,12 +138,8 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
         investment_transmission!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expression related to energy storage modeling
-    # NOTE: For non-Benders, storage investment (investment_energy!, investment_charge!)
-    # is handled inside storage!() which is called from operation_model!.
-    # For Benders, investment_storage! (a Benders-specific wrapper) is called here instead.
-    if setup["Benders"] == 1 && !isempty(inputs["STOR_ALL"])
-        investment_storage!(EP, inputs, setup) #NEW: Benders-only storage investment wrapper
+    if !isempty(inputs["STOR_ALL"])
+        investment_storage!(EP, inputs, setup)
     end
 
     # Model constraints, variables, expression related to retrofit technologies
@@ -283,26 +279,16 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
 
     # Model constraints, variables, expression related to energy storage modeling
     if !isempty(inputs["STOR_ALL"])
+        storage!(EP, inputs, setup)
         if setup["Benders"] == 1
-            #NEW: For Benders, storage investment was handled in planning_model! so we
-            # only add the operational constraints here, using subperiod-specific LDS.
-            storage_all!(EP, inputs, setup)
-
             if !isempty(inputs["STOR_LONG_DURATION"])
                 long_duration_storage_subperiod!(EP, inputs, setup)
             end
-
-            if !isempty(inputs["STOR_ASYMMETRIC"])
-                storage_asymmetric!(EP, inputs, setup)
-            end
-
-            if !isempty(inputs["STOR_SYMMETRIC"])
-                storage_symmetric!(EP, inputs, setup)
-            end
         else
-            # Non-Benders: storage!() handles investment + operations in one call,
-            # identical to the original generate_model.jl.
-            storage!(EP, inputs, setup)
+            # Include Long Duration Storage only when modeling representative periods and long-duration storage
+            if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+                long_duration_storage!(EP, inputs, setup)
+            end
         end
     end
 
