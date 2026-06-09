@@ -616,6 +616,11 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     if !isempty(VS_SYM_AC)
+        VS_ASYM_DC_CHARGE = inputs["VS_ASYM_DC_CHARGE"]
+        VS_ASYM_AC_CHARGE = inputs["VS_ASYM_AC_CHARGE"]
+        VS_ASYM_DC_DISCHARGE = inputs["VS_ASYM_DC_DISCHARGE"]
+        VS_ASYM_AC_DISCHARGE = inputs["VS_ASYM_AC_DISCHARGE"]
+
         # Constraint 4: Charging + Discharging AC Maximum: see main module because capacity reserve margin/operating reserves may alter constraint
         @expression(EP, eChargeDischargeMaxAC[y in VS_SYM_AC, t = 1:T],
             EP[:vP_AC_DISCHARGE][y, t]+EP[:vP_AC_CHARGE][y, t])

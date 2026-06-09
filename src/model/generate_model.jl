@@ -142,6 +142,16 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
         investment_storage!(EP, inputs, setup)
     end
 
+    if !isempty(inputs["VRE_STOR"])
+        investment_discharge_vre_stor!(EP, inputs, setup)
+        if setup["Benders"] == 1
+            lds_vre_stor_planning!(EP, inputs)
+            if setup["CapacityReserveMargin"] > 0
+                lds_vre_stor_capres_planning!(EP, inputs)
+            end
+        end
+    end
+
     # Model constraints, variables, expression related to retrofit technologies
     if !isempty(inputs["RETROFIT_OPTIONS"])
         EP = retrofit(EP, inputs)
@@ -320,20 +330,18 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
         thermal!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expression related to retrofit technologies
-    # (non-Benders only; Benders errors in planning_model! if RETROFIT_OPTIONS non-empty)
-    # Already called in planning_model! for non-Benders, so skipped here.
-
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
     # (Benders case with VRE_STOR already errored at generate_model entry point)
     if !isempty(inputs["VRE_STOR"])
+        if setup["Benders"] == 1
+            vre_stor_lds_slack!(EP, inputs, setup)
+        end
         vre_stor!(EP, inputs, setup)
     end
 
     # Model constraints, variables, expressions related to electrolyzers.
     # Also active for VRE-STOR cases that embed an electrolyzer (VS_ELEC).
-    if !isempty(inputs["ELECTROLYZER"]) ||
-       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+    if !isempty(inputs["ELECTROLYZER"]) || (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
         electrolyzer!(EP, inputs, setup)
     end
 
