@@ -60,13 +60,26 @@ function write_planning_problem_costs(path::AbstractString, inputs::Dict, setup:
         STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
         STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
 
-        tempCFix += sum(value.(val_fn, EP[:eCFix][y]) for y in Y_ZONE)
+        # println("TESTING 0 ")
+        # println(Y_ZONE)
+        # println(val_fn)
+        # println(EP[:eCFix])
+        # for y in Y_ZONE
+        #     println("TESTING 0.1 ")
+        #     println(y)
+        #     println(EP[:eCFix][y])
+        # end
+        tempCFix += sum(value.(val_fn, EP[:eCFix][y]) for y in Y_ZONE; init = 0.0)
 
         if !isempty(STOR_ALL_ZONE) && haskey(EP.obj_dict, :eCFixEnergy)
-            tempCFix += sum(value.(val_fn, EP[:eCFixEnergy][y]) for y in STOR_ALL_ZONE)
+            # println("TESTING 1 ")
+            # println(sum(value.(val_fn, EP[:eCFixEnergy][y]) for y in STOR_ALL_ZONE))
+            tempCFix += sum(value.(val_fn, EP[:eCFixEnergy][y]) for y in STOR_ALL_ZONE; init = 0.0)
         end
         if !isempty(STOR_ASYMMETRIC_ZONE) && haskey(EP.obj_dict, :eCFixCharge)
-            tempCFix += sum(value.(val_fn, EP[:eCFixCharge][y]) for y in STOR_ASYMMETRIC_ZONE)
+            # println("TESTING 2 ")
+            # println(sum(value.(val_fn, EP[:eCFixCharge][y]) for y in STOR_ASYMMETRIC_ZONE))
+            tempCFix += sum(value.(val_fn, EP[:eCFixCharge][y]) for y in STOR_ASYMMETRIC_ZONE; init = 0.0)
         end
 
         if setup["ParameterScale"] == 1

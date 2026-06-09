@@ -9,9 +9,7 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
     # eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
     @variable(EP, vZERO==0)
 
-	if !isempty(inputs["VRE_STOR"])
-		error("Benders not yet supported with VRE-STOR")
-	elseif !isempty(inputs["RETROFIT_OPTIONS"])
+	if !isempty(inputs["RETROFIT_OPTIONS"])
 		error("Benders not yet supported with retrofits")
 	elseif setup["MultiStage"] > 0
 		error("Multistage and Benders are not integrated yet.")

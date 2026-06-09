@@ -1,9 +1,9 @@
 @doc raw"""
-    lds_slack!(EP::Model, inputs::Dict,setup::Dict)
+    lds_slack!(EP::Model, inputs::Dict, setup::Dict)
 
     Adds slack variables to all LDES constraints and penalizes them in the objective function.
 """
-function lds_slack!(EP::Model, inputs::Dict,setup::Dict)
+function lds_slack!(EP::Model, inputs::Dict, setup::Dict)
 
     println("Including slacks for all LDES constraints")
 
@@ -22,6 +22,34 @@ function lds_slack!(EP::Model, inputs::Dict,setup::Dict)
     if setup["LDES_Feasible"]==1
         println("Fixing slacks for all LDES constraints to zero")
         fix.(vLDS_SLACK_MAX,0.0,force=true)
+    end
+end
+
+@doc raw"""
+    vre_stor_lds_slack!(EP::Model, inputs::Dict, setup::Dict)
+
+    Adds slack variables to all LDES constraints for VRE_STOR module 
+    and penalizes them in the objective function.
+"""
+function vre_stor_lds_slack!(EP::Model, inputs::Dict, setup::Dict)
+
+    println("Including slacks for all LDES constraints")
+
+    @variable(EP,vVRE_STOR_LDS_SLACK_MAX[w in 1:inputs["REP_PERIOD"]]);
+
+	@constraint(EP,cVreStorPosSlack[w in 1:inputs["REP_PERIOD"]],vVRE_STOR_LDS_SLACK_MAX[w]>=0)
+    
+    PenaltyValue = 100*(inputs["Weights"]/inputs["H"])*inputs["Voll"][1] ;
+    println("LDES slack penalty value is:")
+    println(PenaltyValue)
+
+	@expression(EP,eObjSlack,sum(PenaltyValue[w]*vVRE_STOR_LDS_SLACK_MAX[w] for w in 1:inputs["REP_PERIOD"]))
+    
+    EP[:eObj] += eObjSlack
+
+    if setup["LDES_Feasible"]==1
+        println("Fixing slacks for all LDES constraints to zero")
+        fix.(vVRE_STOR_LDS_SLACK_MAX,0.0,force=true)
     end
 
 end
