@@ -35,6 +35,7 @@ pages = OrderedDict(
         "Model Inputs" => "User_Guide/model_input.md",
         "Time-domain Reduction Inputs" => "User_Guide/TDR_input.md",
         "Running the Time-domain Reduction" => "User_Guide/running_TDR.md",
+        "Benders Decompositiion" => "User_Guide/benders_decomposition.md",
         "MGA package" => "User_Guide/generate_alternatives.md",
         "Multi-stage Model" => "User_Guide/multi_stage_input.md",
         "Slack Variables for Policies" => "User_Guide/slack_variables_overview.md",
@@ -47,6 +48,7 @@ pages = OrderedDict(
         "Notation" => "Model_Concept_Overview/model_notation.md",
         "Objective Function" => "Model_Concept_Overview/objective_function.md",
         "Power Balance" => "Model_Concept_Overview/power_balance.md"
+        "Benders Model Overview" => "Model_Concept_Overview/benders_math_overview.md"
     ],
     "Model Reference" => [
         "Core" => "Model_Reference/core.md",

@@ -14,7 +14,9 @@ The available examples are:
 - [5\_three\_zones\_w\_piecewise\_fuel](https://github.com/GenXProject/GenX/tree/main/example_systems/5_three_zones_w_piecewise_fuel)
 - [6\_three\_zones\_w\_multistage](https://github.com/GenXProject/GenX/tree/main/example_systems/6_three_zones_w_multistage)
 - [7\_three\_zones\_w\_colocated\_VRE\_storage](https://github.com/GenXProject/GenX/tree/main/example_systems/7_three_zones_w_colocated_VRE_storage)
-- [IEEE\_9\_bus\_DC\_OPF](https://github.com/GenXProject/GenX/tree/main/example_systems/IEEE_9_bus_DC_OPF)
+- [8\_three\_zones\_w\_colocated\_VRE\_storage\_electrolyzers](https://github.com/GenXProject/GenX/tree/main/example_systems/8_three_zones_w_colocated_VRE_storage_electrolyzers)
+- [9\_three\_zones\_w\_retrofit](https://github.com/GenXProject/GenX/tree/main/example_systems/9_three_zones_w_retrofit)
+- [10_IEEE\_9\_bus\_DC\_OPF](https://github.com/GenXProject/GenX/tree/main/example_systems/10_IEEE_9_bus_DC_OPF)
 
 !!! note "Note"
     The following instructions assume that you have already installed GenX and its dependencies. If you haven't, please follow the instructions in the [Installation Guide](@ref).
@@ -163,3 +165,35 @@ Here, `/path/to/env` is the path to the environment where GenX is installed.
 
 !!! note "Note"
     The environment variable `GENX_PRECOMPILE` must be set before loading GenX for the first time. However, to force recompilation of GenX, you can delete the `~/.julia/compiled/vZ.Y/GenX/*.ji` binaries (where vZ.Y is the version of Julia being used, e.g., v1.9), set the environment variable `GENX_PRECOMPILE` to the desired value, and then reload the package. If GenX was imported via `Pkg.develop` or `] dev`, modifying any of the package files will also force recompilation.
+
+## Solving a Case with Benders Decomposition
+
+To solve a case using Benders decomposition, you need to enable it in the `genx_settings.yml` file and provide specific settings files for the Benders planning (master) and subproblems.
+
+1.  **Enable Benders Decomposition:** In your `genx_settings.yml` file, set the `Benders` flag to `1`.
+
+    ```yaml
+    # genx_settings.yml
+    Benders: 1
+    ```
+
+2.  **Provide Benders and Solver Settings:** You must create a benders settings yaml file and two specific solver settings files in the `settings` directory:
+    * `benders_settings.yml`: contains Benders specific settings, such as the number of iterations or a convergence tolerance. See [Benders Decomposition](@ref) for a list and explanation of settings.   
+    * `[solver_name]_benders_planning_settings.yml`: Contains the solver settings for the master (planning) problem.
+    *   `[solver_name]_benders_subprob_settings.yml`: Contains the solver settings for the operational subproblems.
+
+    Replace `[solver_name]` with the name of the solver you are using (e.g., `gurobi`, `cplex`, `highs`).
+
+The directory structure for a case using Benders with Gurobi would look like this:
+
+```
+MyCase
+│ 
+├── settings
+│   ├── genx_settings.yml                    # GenX settings
+│   ├── gurobi_benders_planning_settings.yml # Benders master problem settings
+│   └── gurobi_benders_subprob_settings.yml  # Benders subproblem settings
+...
+```
+
+For more details on Benders Decomposition, see the [Benders Decomposition](@ref) documentation.

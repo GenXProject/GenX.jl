@@ -365,3 +365,12 @@ DocTestSetup = nothing
 Modules = [GenX]
 Pages = ["model/expression_manipulation.jl"]
 ```
+
+## Benders Decomposition Code Structure
+To support Benders decomposition, several design decisions were made to the GenX source code, which we outline here. 
+
+The algorithm itself is accessed through the package [MacroEnergySolvers.jl](https://github.com/macroenergy/MacroEnergySolvers.jl/tree/main). This package applies Benders decomposition through the function `benders` on a user supplied planning model and a distributed vector of one or more subproblems. For this function to work properly, the complicating variables (variables on the master problem that will be fixed in the subproblems) must have identical names between the master and subproblems. 
+
+GenX performs the model generation in two primary modules or functions: `planning_model!` and `operation_model!`. When solving without Benders decomposition, these functions are called on the same JuMP Model object. In Benders decomposition, these functions are are called separately, one on the planning level JuMP Model and the other on each of the subproblem Models. The script `src/model/capacity_decisions.jl` is Benders specific and is called on the operations level problem if Benders is being used. This file adds copies of all of the complicating variables to the subproblem. This is essential as the GenX source code often assumes these variables already exist. MacroEnergySolvers will detect the complicating variables by matching the names of the variables on the master (i.e., planning) model with the subproblem(s). 
+
+Several scripts are available in the `src/benders` directory for running Benders. These include a file for constructing the planning problem and the subproblems, and functions for updating the inputs data to work with Benders.

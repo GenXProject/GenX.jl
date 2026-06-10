@@ -43,6 +43,9 @@ The following tables summarize the model settings parameters and their default/p
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
 |ObjScale| Parameter value to scale the objective function during optimization.|
+|Benders| Flag on whether to use [Benders Decomposition](https://en.wikipedia.org/wiki/Benders_decomposition) or not |
+|| 0 = Monolithic formulation for solving model|
+|| 1 = Benders Decomposition applied to solve the model |
 |MultiStage | Model multiple planning stages |
 ||1 = Model multiple planning stages as specified in `multi_stage_settings.yml` |
 ||0 = Model single planning stage |
