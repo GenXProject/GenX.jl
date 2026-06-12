@@ -144,12 +144,6 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
 
     if !isempty(inputs["VRE_STOR"])
         investment_discharge_vre_stor!(EP, inputs, setup)
-        if setup["Benders"] == 1
-            lds_vre_stor_planning!(EP, inputs)
-            if setup["CapacityReserveMargin"] > 0
-                lds_vre_stor_capres_planning!(EP, inputs)
-            end
-        end
     end
 
     # Model constraints, variables, expression related to retrofit technologies
@@ -158,12 +152,12 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     #NEW: Benders-only long-duration storage planning constraints (cross-period state-of-charge)
-    if setup["Benders"] == 1 && inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+    if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["STOR_LONG_DURATION"])
         long_duration_storage_planning!(EP, inputs, setup)
     end
 
     #NEW: Benders-only hydro inter-period linkage planning constraints
-    if setup["Benders"] == 1 && inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+    if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage_planning!(EP, inputs)
     end
 
@@ -202,7 +196,7 @@ end
 # original monolithic generate_model. For Benders runs it uses subperiod-specific variants
 # of certain constraints to allow decomposition across representative periods.
 function operation_model!(EP::Model, setup::Dict, inputs::Dict)
-
+    println("OPERATION MODEL")
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
@@ -262,6 +256,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     if Z > 1
+        println("ENTERING TRANSMISSION")
         transmission!(EP, inputs, setup)
     end
 
@@ -269,7 +264,6 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
         dcopf_transmission!(EP, inputs, setup)
     end
 
-    #NEW: lds_slack! adds slack variables used by Benders to relax long-duration storage
     # inter-period linkage constraints within each subproblem.
     if (setup["Benders"] == 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))) ||
        (inputs["REP_PERIOD"] > 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"])))
@@ -333,7 +327,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
     # (Benders case with VRE_STOR already errored at generate_model entry point)
     if !isempty(inputs["VRE_STOR"])
-        if setup["Benders"] == 1
+        if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index")
             vre_stor_lds_slack!(EP, inputs, setup)
         end
         vre_stor!(EP, inputs, setup)

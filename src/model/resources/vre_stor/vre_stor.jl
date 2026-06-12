@@ -1,51 +1,17 @@
 @doc raw"""
-	vre_stor!(EP::Model, inputs::Dict, setup::Dict)
+    vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
-This module enables the modeling of 1) co-located VRE and energy storage technologies, 
-and 2) optimized interconnection sizing for VREs. Utility-scale solar PV and/or wind VRE technologies 
-can be modeled at the same site with or without storage technologies. Storage resources 
-can be charged/discharged behind the meter through the inverter (DC) and through AC charging/discharging 
-capabilities. Each resource can be configured to have any combination of the following components: 
-solar PV, wind, DC discharging/charging storage, and AC discharging/charging storage resources. For 
-storage resources, both long duration energy storage and short-duration energy storage can be modeled, 
-via asymmetric or symmetric charging and discharging options. Each resource connects 
-to the grid via a grid connection component, which is the only required decision variable 
-that each resource must have. If the configured resource has either solar PV and/or DC discharging/charging 
-storage capabilities, an inverter decision variable is also created. The full module with the decision 
-variables and interactions can be found below. 
+Operational-stage coordinator for the VRE-STOR module.
 
-![Configurable Co-located VRE and Storage Module Interactions and Decision Variables](../../assets/vre_stor_module.png)
-*Figure. Configurable Co-located VRE and Storage Module Interactions and Decision Variables*
+Builds and links component operational blocks (`inverter_vre_stor!`, `solar_vre_stor!`,
+`wind_vre_stor!`, `stor_vre_stor!`, `elec_vre_stor!`) and enforces module-level
+constraints using planning capacities from investment functions.
 
-This module is split such that functions are called for each configurable component of a co-located resource: 
-    ```inverter_vre_stor()```, ```solar_vre_stor!()```, ```wind_vre_stor!()```, ```stor_vre_stor!()```, ```lds_vre_stor!()```, 
-    and ```investment_charge_vre_stor!()```. The function ```vre_stor!()``` specifically ensures 
-    that all necessary functions are called to activate the appropriate constraints, creates constraints that apply to 
-    multiple components (i.e. inverter and grid connection balances and maximums), and activates all of the policies 
-    that have been created (minimum capacity requirements, maximum capacity requirements, capacity reserve margins, operating reserves, and
-    energy share requirements can all be turned on for this module). Note that not all of these variables are indexed by each co-located VRE and storage resource (for example, some co-located resources 
-    may only have a solar PV component and battery technology or just a wind component). Thus, the function ```vre_stor!()``` 
-    ensures indexing issues do not arise across the various potential configurations of co-located VRE and storage 
-    module but showcases all constraints as if each decision variable (that may be only applicable to certain components) 
-    is indexed by each $y \in \mathcal{VS}$ for readability. 
-
-The first constraint is created with the function ```vre_stor!()``` and exists for all resources, 
-    regardless of the VRE and storage components that each resource contains and regardless of the policies 
-    invoked for the module. This constraint represents the energy balance, ensuring net DC power (discharge 
-    of battery, PV generation, and charge of battery) and net AC power (discharge of battery, wind generation, 
-    and charge of battery) are equal to the technology's total discharging to and charging from the grid:
+Core constraints include AC-balance dispatch and grid-interface limits:
 
 ```math
-\begin{aligned}
-    & \Theta_{y,z,t} - \Pi_{y,z,t} = \Theta_{y,z,t}^{wind} + \Theta_{y,z,t}^{ac} - \Pi_{y,z,t}^{ac} + \eta^{inverter}_{y,z} \times (\Theta_{y,z,t}^{pv} + \Theta_{y,z,t}^{dc}) - \frac{\Pi^{dc}_{y,z,t}}{\eta^{inverter}_{y,z}} \\
-    & \forall y \in \mathcal{VS}, \forall z \in \mathcal{Z}, \forall t \in \mathcal{T}
-\end{aligned}
+vP_{y,t} = eInvACBalance_{y,t}
 ```
-
-The second constraint is also created with the function ```vre_stor!()``` and exists for all resources, 
-    regardless of the VRE and storage components that each resource contains. However, this constraint changes 
-    when either or both capacity reserve margins and operating reserves are activated. The following constraint 
-    enforces that the maximum grid exports and imports must be less than the grid connection capacity (without any policies):
 
 ```math
 \begin{aligned}
@@ -616,6 +582,12 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     end
 
     if !isempty(VS_SYM_AC)
+        # Constraint 4: Charging + Discharging AC Maximum: see main module because capacity reserve margin/operating reserves may alter constraint
+        @expression(EP, eChargeDischargeMaxAC[y in VS_SYM_AC, t = 1:T],
+            EP[:vP_AC_DISCHARGE][y, t]+EP[:vP_AC_CHARGE][y, t])
+    end
+
+    if !isempty(inputs["VS_ASYM"])
         VS_ASYM_DC_CHARGE = inputs["VS_ASYM_DC_CHARGE"]
         VS_ASYM_AC_CHARGE = inputs["VS_ASYM_AC_CHARGE"]
         VS_ASYM_DC_DISCHARGE = inputs["VS_ASYM_DC_DISCHARGE"]
