@@ -43,9 +43,9 @@ function vre_stor_lds_slack!(EP::Model, inputs::Dict, setup::Dict)
     println("LDES slack penalty value is:")
     println(PenaltyValue)
 
-	@expression(EP,eObjSlack,sum(PenaltyValue[w]*vVRE_STOR_LDS_SLACK_MAX[w] for w in 1:inputs["REP_PERIOD"]))
+	@expression(EP,eObjSlackVreStor,sum(PenaltyValue[w]*vVRE_STOR_LDS_SLACK_MAX[w] for w in 1:inputs["REP_PERIOD"]))
     
-    EP[:eObj] += eObjSlack
+    EP[:eObj] += eObjSlackVreStor
 
     if setup["LDES_Feasible"]==1
         println("Fixing slacks for all LDES constraints to zero")

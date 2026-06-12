@@ -1,6 +1,42 @@
 @doc raw"""
-	investment_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
-This function defines the expressions and constraints keeping track of total available power generation/discharge capacity across 
+    investment_discharge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
+
+Planning-stage VRE-STOR capacity formulation.
+
+This function creates investment/retirement variables, total-capacity expressions, fixed and
+investment cost terms, and planning-side bounds for the VRE-STOR module components:
+grid connection, inverter, solar, wind, storage energy, and electrolyzer.
+
+For each component $k \in \{\text{grid},\text{dc},\text{solar},\text{wind},\text{stor},\text{elec}\}$,
+the total installed capacity is represented with the same pattern:
+
+```math
+\Delta^{\text{tot},k}_{y} = \overline{\Delta}^{k}_{y} + \Omega^{k}_{y} - \Delta^{\text{ret},k}_{y}
+```
+
+with the appropriate subset logic when a resource is only eligible for build or retirement.
+
+The objective includes component-level investment and fixed O&M terms, e.g.
+
+```math
+\sum_y \left(\pi^{\text{INV},k}_{y}\,\Omega^{k}_{y} + \pi^{\text{FOM},k}_{y}\,\Delta^{\text{tot},k}_{y}\right)
+```
+
+(scaled by `1/OPEXMULT` in multi-stage mode for O&M terms as implemented).
+
+The function also enforces:
+
+```math
+\Delta^{\text{ret},k}_{y} \le \overline{\Delta}^{k}_{y},
+\qquad
+\underline{\Delta}^{k}_{y} \le \Delta^{\text{tot},k}_{y} \le \overline{\Delta}^{k}_{y}
+```
+
+whenever min/max bounds are provided in inputs, plus inverter-ratio constraints for solar and wind.
+
+Finally, it adds VRE-STOR contributions to minimum/maximum capacity requirement policy
+expressions and, when Benders planning is enabled with representative periods and LDS resources,
+activates `lds_vre_stor_planning!()`.
 """
 function investment_discharge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     println("Investment VRE Storage Module")
@@ -396,6 +432,9 @@ function investment_discharge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
         if rep_periods > 1 && !isempty(VS_LDS) && setup["Benders"] == 1
             lds_vre_stor_planning!(EP, inputs)
+            if setup["CapacityReserveMargin"] > 0
+                lds_vre_stor_capres_planning!(EP, inputs)
+            end
         end
     end
 
@@ -575,126 +614,39 @@ end
 @doc raw"""
     investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
-This function activates the decision variables and constraints for asymmetric storage resources (independent charge
-    and discharge power capacities (any STOR flag = 2)). For asymmetric storage resources, the function is enabled so charging 
-    and discharging can occur either through DC or AC capabilities. For example, a storage resource can be asymmetrically charged 
-    and discharged via DC capabilities or a storage resource could be charged via AC capabilities and discharged through DC capabilities. 
-    This module is configured such that both AC and DC charging (or discharging) cannot simultaneously occur.
+This planning-stage helper creates asymmetric storage charge/discharge capacity build and
+retirement variables and associated total-capacity expressions for:
 
-The total charge/discharge DC and AC capacities of each resource are defined as the sum of the existing charge/discharge DC and AC capacities plus 
-    the newly invested charge/discharge DC and AC capacities minus any retired charge/discharge DC and AC capacities:
+- DC discharge (`eTotalCapDischarge_DC`)
+- DC charge (`eTotalCapCharge_DC`)
+- AC discharge (`eTotalCapDischarge_AC`)
+- AC charge (`eTotalCapCharge_AC`)
+
+For each direction $k$ in this set, the model uses:
 
 ```math
-\begin{aligned}
-    & \Delta^{total,dc,dis}_{y,z} =(\overline{\Delta^{dc,dis}_{y,z}}+\Omega^{dc,dis}_{y,z}-\Delta^{dc,dis}_{y,z}) \quad \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z} \\
-    & \Delta^{total,dc,cha}_{y,z} =(\overline{\Delta^{dc,cha}_{y,z}}+\Omega^{dc,cha}_{y,z}-\Delta^{dc,cha}_{y,z}) \quad \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z} \\
-    & \Delta^{total,ac,dis}_{y,z} =(\overline{\Delta^{ac,dis}_{y,z}}+\Omega^{ac,dis}_{y,z}-\Delta^{ac,dis}_{y,z}) \quad \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z} \\
-    & \Delta^{total,ac,cha}_{y,z} =(\overline{\Delta^{ac,cha}_{y,z}}+\Omega^{ac,cha}_{y,z}-\Delta^{ac,cha}_{y,z}) \quad \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z}
-\end{aligned}
+\Delta^{\text{tot},k}_{y} = \overline{\Delta}^{k}_{y} + \Omega^{k}_{y} - \Delta^{\text{ret},k}_{y}
 ```
 
-One cannot retire more capacity than existing capacity:
+with subset-specific logic when a resource is only eligible for new build or only retirement.
+
+The objective contribution for each direction follows:
+
 ```math
-\begin{aligned}
-    &\Delta^{dc,dis}_{y,z} \leq \overline{\Delta^{dc,dis}_{y,z}}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z} \\
-    &\Delta^{dc,cha}_{y,z} \leq \overline{\Delta^{dc,cha}_{y,z}}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z} \\
-    &\Delta^{ac,dis}_{y,z} \leq \overline{\Delta^{ac,dis}_{y,z}}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z} \\
-    &\Delta^{ac,cha}_{y,z} \leq \overline{\Delta^{ac,cha}_{y,z}}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z}
-\end{aligned}
+\sum_y \left(\pi^{\text{INV},k}_{y}\,\Omega^{k}_{y} + \pi^{\text{FOM},k}_{y}\,\Delta^{\text{tot},k}_{y}\right)
 ```
 
-For resources where $\overline{\Omega_{y,z}^{dc,dis}}, \overline{\Omega_{y,z}^{dc,cha}}, \overline{\Omega_{y,z}^{ac,dis}}, \overline{\Omega_{y,z}^{ac,cha}}$ 
-    and $\underline{\Omega_{y,z}^{dc,dis}}, \underline{\Omega_{y,z}^{dc,cha}}, \underline{\Omega_{y,z}^{ac,dis}}, \underline{\Omega_{y,z}^{ac, cha}}$ are defined, 
-    then we impose constraints on minimum and maximum charge/discharge DC and AC power capacity:
+with O&M scaling by `1/OPEXMULT` in multi-stage mode, matching the implementation.
+
+Capacity bounds enforced when provided:
+
 ```math
-\begin{aligned}
-    & \Delta^{total,dc,dis}_{y,z} \leq \overline{\Omega}^{dc,dis}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z} \\
-    & \Delta^{total,dc,dis}_{y,z}  \geq \underline{\Omega}^{dc,dis}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z} \\
-    & \Delta^{total,dc,cha}_{y,z} \leq \overline{\Omega}^{dc,cha}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z} \\
-    & \Delta^{total,dc,cha}_{y,z}  \geq \underline{\Omega}^{dc,cha}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z} \\
-    & \Delta^{total,ac,dis}_{y,z} \leq \overline{\Omega}^{ac,dis}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z} \\
-    & \Delta^{total,ac,dis}_{y,z}  \geq \underline{\Omega}^{ac,dis}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z} \\
-    & \Delta^{total,ac,cha}_{y,z} \leq \overline{\Omega}^{ac,cha}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z} \\
-    & \Delta^{total,ac,cha}_{y,z}  \geq \underline{\Omega}^{ac,cha}_{y,z}
-        \hspace{4 cm}  \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z} \\
-\end{aligned}
+\Delta^{\text{ret},k}_{y} \le \overline{\Delta}^{k}_{y},
+\qquad
+\underline{\Delta}^{k}_{y} \le \Delta^{\text{tot},k}_{y} \le \overline{\Delta}^{k}_{y}
 ```
 
-Furthermore, for storage technologies with asymmetric charge and discharge capacities (all $y \in \mathcal{VS}^{asym,dc,dis}, 
-    y \in \mathcal{VS}^{asym,dc,cha}, y \in \mathcal{VS}^{asym,ac,dis}, y \in \mathcal{VS}^{asym,ac,cha}$), the charge rate, 
-    $\Pi^{dc}_{y,z,t}, \Pi^{ac}_{y,z,t}$, is constrained by the total installed charge capacity, $\Delta^{total,dc,cha}_{y,z}, 
-    \Delta^{total,ac,cha}_{y,z}$. Similarly the discharge rate, $\Theta^{dc}_{y,z,t}, \Theta^{ac}_{y,z,t}$, is constrained by the 
-    total installed discharge capacity, $\Delta^{total,dc,dis}_{y,z}, \Delta^{total,ac,dis}_{y,z}$. Without any activated 
-    capacity reserve margin policies or operating reserves, the constraints are as follows:
-```math
-\begin{aligned}
-    &  \Theta^{dc}_{y,z,t} \leq \Delta^{total,dc,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{dc}_{y,z,t} \leq \Delta^{total,dc,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \Theta^{ac}_{y,z,t} \leq \Delta^{total,ac,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{ac}_{y,z,t} \leq \Delta^{total,ac,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-\end{aligned}
-```
-
-Adding only the capacity reserve margin constraints, the asymmetric charge and discharge DC and AC rates plus the 'virtual' charge and discharge DC and AC rates are 
-    constrained by the total installed charge and discharge DC and AC capacities:
-```math
-\begin{aligned}
-    &  \Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t} \leq \Delta^{total,dc,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t} \leq \Delta^{total,dc,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t} \leq \Delta^{total,ac,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t} \leq \Delta^{total,ac,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-\end{aligned}
-```
-
-Adding only the operating reserve constraints, the asymmetric charge and discharge DC and AC rates plus the contributions to frequency regulation and operating reserves (both DC and AC) are 
-    constrained by the total installed charge and discharge DC and AC capacities:
-```math
-\begin{aligned}
-    &  \Theta^{dc}_{y,z,t} + f^{dc,dis}_{y,z,t} + r^{dc,dis}_{y,z,t} \leq \Delta^{total,dc,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{dc}_{y,z,t} + f^{dc,cha}_{y,z,t} \leq \Delta^{total,dc,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \Theta^{ac}_{y,z,t} + f^{ac,dis}_{y,z,t} + r^{ac,dis}_{y,z,t} \leq \Delta^{total,ac,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{ac}_{y,z,t} + f^{ac,cha}_{y,z,t} \leq \Delta^{total,ac,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-\end{aligned}
-```
-
-With both capacity reserve margin and operating reserve constraints, the asymmetric charge and discharge DC and AC rate constraints follow: 
-```math
-\begin{aligned}
-    &  \Theta^{dc}_{y,z,t} + \Theta^{CRM,dc}_{y,z,t} + f^{dc,dis}_{y,z,t} + r^{dc,dis}_{y,z,t} \leq \Delta^{total,dc,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{dc}_{y,z,t} + \Pi^{CRM,dc}_{y,z,t} + f^{dc,cha}_{y,z,t} \leq \Delta^{total,dc,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,dc,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-    &  \Theta^{ac}_{y,z,t} + \Theta^{CRM,ac}_{y,z,t} + f^{ac,dis}_{y,z,t} + r^{ac,dis}_{y,z,t} \leq \Delta^{total,ac,dis}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,dis}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-	&  \Pi^{ac}_{y,z,t} + \Pi^{CRM,ac}_{y,z,t} + f^{ac,cha}_{y,z,t} \leq \Delta^{total,ac,cha}_{y,z} \quad \forall y \in \mathcal{VS}^{asym,ac,cha}, z \in \mathcal{Z}, t \in \mathcal{T} \\
-\end{aligned}
-```
-
-In addition, this function adds investment and fixed O&M costs related to charge/discharge AC and DC capacities to the objective function:
-```math
-\begin{aligned}
-    & 	\sum_{y \in \mathcal{VS}^{asym,dc,dis} } \sum_{z \in \mathcal{Z}}
-        \left( (\pi^{INVEST,dc,dis}_{y,z} \times \Omega^{dc,dis}_{y,z})
-        + (\pi^{FOM,dc,dis}_{y,z} \times \Delta^{total,dc,dis}_{y,z})\right) \\
-    & 	+ \sum_{y \in \mathcal{VS}^{asym,dc,cha} } \sum_{z \in \mathcal{Z}}
-        \left( (\pi^{INVEST,dc,cha}_{y,z} \times \Omega^{dc,cha}_{y,z})
-        + (\pi^{FOM,dc,cha}_{y,z} \times \Delta^{total,dc,cha}_{y,z})\right) \\
-    & 	+ \sum_{y \in \mathcal{VS}^{asym,ac,dis} } \sum_{z \in \mathcal{Z}}
-        \left( (\pi^{INVEST,ac,dis}_{y,z} \times \Omega^{ac,dis}_{y,z})
-        + (\pi^{FOM,ac,dis}_{y,z} \times \Delta^{total,ac,dis}_{y,z})\right) \\
-    & 	+ \sum_{y \in \mathcal{VS}^{asym,ac,cha} } \sum_{z \in \mathcal{Z}}
-        \left( (\pi^{INVEST,ac,cha}_{y,z} \times \Omega^{ac,cha}_{y,z})
-        + (\pi^{FOM,ac,cha}_{y,z} \times \Delta^{total,ac,cha}_{y,z})\right)
-\end{aligned}
-```
+where existing-capacity equalities are also added for multi-stage mode.
 """
 function investment_charge_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
     println("VRE-STOR Charge Investment Module")

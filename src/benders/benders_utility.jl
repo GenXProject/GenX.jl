@@ -21,6 +21,12 @@ function separate_inputs_subperiods(inputs::Dict)
         for ks in keys(inputs["fuel_costs"])
             inputs_all[w]["fuel_costs"][ks] = inputs["fuel_costs"][ks][Tw];
         end
+        if haskey(inputs, "pP_Max_Wind")
+            inputs_all[w]["pP_Max_Wind"] = inputs["pP_Max_Wind"][:,Tw];
+        end
+        if haskey(inputs, "pP_Max_Solar")
+            inputs_all[w]["pP_Max_Solar"] = inputs["pP_Max_Solar"][:,Tw];
+        end
         inputs_all[w]["Weights"] = [inputs["Weights"][w]];
         inputs_all[w]["pD"] = inputs["pD"][Tw,:];
         if haskey(inputs, "C_Start")
@@ -51,8 +57,6 @@ function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict,
 	benders_inputs["planning_variables_sub"] = planning_variables_sub;
 
     return benders_inputs
-
-
 end
 
 function check_negative_capacities(EP::Model)

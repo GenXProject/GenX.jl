@@ -83,6 +83,17 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     println("Loading Inputs")
     myinputs = load_inputs(mysetup, case)
 
+    println()
+    println()
+    println()
+    println()
+    println("CHECKING INPUTS: ")
+    println(haskey(myinputs, "Period_Map"))
+    println()
+    println()
+    println()
+    println()
+
     println("Generating the Optimization Model")
     time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
     println("Time elapsed for model building is")
@@ -234,6 +245,9 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
 
     myinputs = load_inputs(mysetup, case);
 
+    println("CHECKING INPUTS: ")
+    println(haskey(myinputs, "Period_Map"))
+
     # SPLIT BENDERS IF NOT USING TDR
 
     myinputs_decomp = separate_inputs_subperiods(myinputs);
@@ -245,14 +259,8 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
 
     results  = MacroEnergySolvers.benders(planning_problem, subproblems, planning_variables_sub, mysetup)
 
-    # update_with_planning_solution!(planning_problem, results.planning_sol.values)
-    # #TODO: Decide if this function call is necessary
-
-    @info "Perform a final solve of the subproblems to extract the operational decisions corresponding to the best planning solution."
-
     update_with_subproblem_solutions!(subproblems, results)
 
-    
     println("Writing Output")
 
     outputs_path = joinpath(case, "results_benders")
@@ -268,5 +276,6 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
 		outputs_path = choose_output_dir(outputs_path)
 		mkdir(outputs_path)
 	end
-        elapsed_time = @elapsed write_benders_output(results, outputs_path, mysetup, myinputs, planning_problem, subproblems);
+    
+    elapsed_time = @elapsed write_benders_output(results, outputs_path, mysetup, myinputs, planning_problem, subproblems);
 end

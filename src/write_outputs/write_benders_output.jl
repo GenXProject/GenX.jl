@@ -1110,8 +1110,9 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 				storagedual_subprob[s][VS_STOR, INTERIOR_LOCAL] .= Matrix{Float64}(raw_vs_interior.data) ./ omega_local[INTERIOR_LOCAL]'
 			end
 			if haskey(EP, :cSoCBalStart_VRE_STOR)
-				raw_vs_start = dual.(EP[:cSoCBalStart_VRE_STOR][VS_STOR, START_LOCAL])
-				storagedual_subprob[s][VS_STOR, START_LOCAL] .= Matrix{Float64}(raw_vs_start.data) ./ omega_local[START_LOCAL]'
+				VS_NONLDS = haskey(inputs, "VS_nonLDS") ? inputs["VS_nonLDS"] : setdiff(VS_STOR, inputs["VS_LDS"])
+				raw_vs_start = dual.(EP[:cSoCBalStart_VRE_STOR][VS_NONLDS, START_LOCAL])
+				storagedual_subprob[s][VS_NONLDS, START_LOCAL] .= Matrix{Float64}(raw_vs_start.data) ./ omega_local[START_LOCAL]'
 			end
 		end
 

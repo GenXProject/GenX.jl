@@ -1,6 +1,5 @@
 
 function generate_operation_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes)
-
     ## Start pre-solve timer
     presolver_start_time = time()
     EP = Model(OPTIMIZER)
@@ -22,12 +21,9 @@ function generate_operation_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI
     presolver_time = time() - presolver_start_time
 
     return EP
-
-
 end
 
 function init_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes,planning_variables::Vector{String})
-
     EP = generate_operation_subproblem(setup, inputs, OPTIMIZER)
 
     set_silent(EP)
