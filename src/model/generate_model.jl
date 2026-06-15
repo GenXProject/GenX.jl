@@ -196,7 +196,6 @@ end
 # original monolithic generate_model. For Benders runs it uses subperiod-specific variants
 # of certain constraints to allow decomposition across representative periods.
 function operation_model!(EP::Model, setup::Dict, inputs::Dict)
-    println("OPERATION MODEL")
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
@@ -256,7 +255,6 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     if Z > 1
-        println("ENTERING TRANSMISSION")
         transmission!(EP, inputs, setup)
     end
 
@@ -327,7 +325,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
     # (Benders case with VRE_STOR already errored at generate_model entry point)
     if !isempty(inputs["VRE_STOR"])
-        if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index")
+        if (setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["VS_LDS"])) || (inputs["REP_PERIOD"] > 1 && !isempty(inputs["VS_LDS"]))
             vre_stor_lds_slack!(EP, inputs, setup)
         end
         vre_stor!(EP, inputs, setup)
