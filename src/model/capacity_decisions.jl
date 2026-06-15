@@ -12,7 +12,6 @@ function capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
 
     if inputs["Z"]>1
         transmission_capacity_decisions!(EP, inputs, setup)
-        println("ADDED TRANSMISSION CAPACITY DECISIONS? ")
     end
 
 end

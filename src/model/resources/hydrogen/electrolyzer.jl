@@ -70,7 +70,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     ELECTROLYZERS = inputs["ELECTROLYZER"]  # Set of electrolyzers connected to the grid (indices)
     VRE_STOR = inputs["VRE_STOR"]           # Set of VRE-STOR generators (indices)
     VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]    # Set of VRE-STOR co-located electrolyzers (indices)
-
+    println("CHECKPOINT 1")
     HYDROGEN_ZONES = unique(zone_id(gen[ELECTROLYZERS]))
     if !isempty(VS_ELEC)
         HYDROGEN_ZONES = unique(union(HYDROGEN_ZONES, zone_id(gen[VS_ELEC])))
@@ -81,6 +81,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
 
     # Electrical energy consumed by electrolyzer resource "y" at hour "t"
     @variable(EP, vUSE[y = ELECTROLYZERS, t in 1:T]>=0)
+    println("CHECKPOINT 2")
 
     ### Expressions ###
 
@@ -91,6 +92,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, ePowerBalanceElectrolyzers[t in 1:T, z in 1:Z],
         sum(EP[:vUSE][y, t]
         for y in ELECTROLYZERS_BY_ZONE[z]))
+    println("CHECKPOINT 3")
 
     # Electrolyzers consume electricity so their vUSE is subtracted from power balance
     add_similar_to_expression!(EP[:ePowerBalance], -1.0, ePowerBalanceElectrolyzers)
@@ -103,11 +105,20 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             sum(omega[t] * EP[:vP_ELEC][y, t] / hydrogen_mwh_per_tonne_elec(gen[y])
             for t in 1:T)
         end)
+    println("CHECKPOINT 4")
 
     if setup["HydrogenMinimumProduction"] == 1
+        println("CHECK", haskey(EP, :eH2Production))
+        println(haskey(EP, :eH2DemandRes))
+        println(haskey(inputs, "NumberOfH2DemandReqs"))
+        println(inputs["NumberOfH2DemandReqs"])
+        println(EP[:eH2Production])
+        println(ids_with_policy(gen, h2_demand, tag = 1))
+        println(typeof(EP[:eH2DemandRes]))
         @expression(EP, eH2ProductionRes[h2demand = 1:inputs["NumberOfH2DemandReqs"]],
             sum(EP[:eH2Production][y]
             for y in ids_with_policy(gen, h2_demand, tag = h2demand)))
+        println("DONE")
         add_similar_to_expression!(EP[:eH2DemandRes], eH2ProductionRes)
     end
 
@@ -115,6 +126,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     # Electrolyzers currently do not contribute to capacity reserve margin. Could allow them to contribute as a curtailable demand in future.
     
     ### Constraints ###
+    println("CHECKPOINT 5")
 
     ## Maximum ramp up and down between consecutive hours (Constraints #1-2)
     @constraints(EP,
@@ -149,6 +161,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
     @constraints(EP, begin
         [y in ELECTROLYZERS, t in 1:T], EP[:vP][y, t] == 0
     end)
+    println("CHECKPOINT 6")
 
     ### Hydrogen Hourly Supply Matching Constraint ###
     # Adds electrolyzer power consumption to an hourly matching constraint, requiring that it be met with generation from resources
@@ -171,6 +184,7 @@ function electrolyzer!(EP::Model, inputs::Dict, setup::Dict)
             t in 1:T))
         add_similar_to_expression!(EP[:eESR], -1.0, eElectrolyzerESR)
     end
+    println("CHECKPOINT 7")
 
     ### Objective Function ###
     # Subtract hydrogen revenue from objective function

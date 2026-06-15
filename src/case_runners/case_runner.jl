@@ -83,17 +83,6 @@ function run_genx_case_simple!(case::AbstractString, mysetup::Dict, optimizer::A
     println("Loading Inputs")
     myinputs = load_inputs(mysetup, case)
 
-    println()
-    println()
-    println()
-    println()
-    println("CHECKING INPUTS: ")
-    println(haskey(myinputs, "Period_Map"))
-    println()
-    println()
-    println()
-    println()
-
     println("Generating the Optimization Model")
     time_elapsed = @elapsed EP = generate_model(mysetup, myinputs, OPTIMIZER)
     println("Time elapsed for model building is")
@@ -244,9 +233,6 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
     mysetup["settings_path"] = settings_path;
 
     myinputs = load_inputs(mysetup, case);
-
-    println("CHECKING INPUTS: ")
-    println(haskey(myinputs, "Period_Map"))
 
     # SPLIT BENDERS IF NOT USING TDR
 

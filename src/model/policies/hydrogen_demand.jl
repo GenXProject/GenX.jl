@@ -50,7 +50,7 @@ function hydrogen_demand_planning!(EP::Model, inputs::Dict, setup::Dict)
     kt_to_t = 10^3
     NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
 
-    @variable(EP, vH2DemandBudget[w=1:inputs["REP_PERIOD"], h2demand = 1:NumberOfH2DemandReqs]>=0)
+    @variable(EP, vH2DemandBudget[w=1:inputs["REP_PERIOD"], h2demand = 1:NumberOfH2DemandReqs])#>=0)
 
     @constraint(EP,
         cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],

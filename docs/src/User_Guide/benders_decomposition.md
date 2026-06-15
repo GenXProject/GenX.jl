@@ -13,6 +13,7 @@ Benders decomposition is accessed by setting `Benders: 1` in the `genx_settings.
 | MaxCpuTime | $\ge 0$ | Wall-clock time limit in seconds|
 | ConvTol | $\in (0, 1]$|  Relative optimality-gap convergence tolerance (\|UB - LB\| / \|UB\| ≤ BD_ConvTol → converged) |
 | StabParam | $\in [0, 1]$ | Level-set stabilisation parameter; 0.0 = disabled  |
+| ThetaLB | $\in \mathbb{R}$ | Lower Bound on a subproblem objective; default is zero, but should be set to lower value if subproblems can have negative objectives |
 | StabDynamic | $\{true, false\}$ | Dynamic (Magnanti–Wong / in-out) stabilisation; false = disabled |
 | IntegerInvestment | $\{true, false\}$ | Investment variable type; false = continuous (LP relaxation), true = integer (MILP master problem)|
 | Distributed | $\{true, false\}$ | Whether to distribute subproblems to remote workers |

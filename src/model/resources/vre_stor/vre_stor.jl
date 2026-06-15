@@ -1251,6 +1251,7 @@ function lds_vre_stor_capres!(EP::Model, inputs::Dict)
     NPeriods = size(inputs["Period_Map"])[1] # Number of modeled periods
     MODELED_PERIODS_INDEX = 1:NPeriods
     REP_PERIODS_INDEX = MODELED_PERIODS_INDEX[dfPeriodMap[!, :Rep_Period] .== MODELED_PERIODS_INDEX]
+    NON_REP_PERIODS_INDEX = setdiff(MODELED_PERIODS_INDEX, REP_PERIODS_INDEX)
 
     T = inputs["T"]
     gen = inputs["RESOURCES"]
@@ -1287,6 +1288,13 @@ function lds_vre_stor_capres!(EP::Model, inputs::Dict)
             vCAPCONTRSTOR_VdSOC_VRE_STOR[y in VS_LDS, w = 1:REP_PERIOD]
         end)
 
+    @variable(EP, vVRESTOR_CAPRES_LDS_Start_slack[w = 1:REP_PERIOD, y in VS_LDS])
+    @variable(EP, vVRESTOR_CAPRES_LDS_Sub_slack[y in VS_LDS, r in REP_PERIODS_INDEX])
+    @constraint(EP,cVRESTOR_CAPRES_SlackLDS_Start_Up[w = 1:REP_PERIOD, y in VS_LDS],vVRESTOR_CAPRES_LDS_Start_slack[w,y] <= EP[:vVRE_STOR_LDS_SLACK_MAX][1])
+    @constraint(EP,cVRESTOR_CAPRES_SlackLDS_Start_Lo[w = 1:REP_PERIOD, y in VS_LDS],-vVRESTOR_CAPRES_LDS_Start_slack[w,y]<= EP[:vVRE_STOR_LDS_SLACK_MAX][1])
+    @constraint(EP,cVRESTOR_CAPRES_SlackLDS_Sub_Up[y in VS_LDS, r in REP_PERIODS_INDEX],vVRESTOR_CAPRES_LDS_Sub_slack[y,r]<= EP[:vVRE_STOR_LDS_SLACK_MAX][1])
+    @constraint(EP,cVRESTOR_CAPRES_SlackLDS_Sub_Lo[y in VS_LDS, r in REP_PERIODS_INDEX],-vVRESTOR_CAPRES_LDS_Sub_slack[y,r]<= EP[:vVRE_STOR_LDS_SLACK_MAX][1])
+
     ### EXPRESSIONS ###
 
     @expression(EP,
@@ -1320,6 +1328,16 @@ function lds_vre_stor_capres!(EP::Model, inputs::Dict)
 
     ### CONSTRAINTS ###
 
+    # # Additional constraints to prevent violation of SoC limits in non-representative periods
+    # if setup["LDSAdditionalConstraints"] == 1 && !isempty(NON_REP_PERIODS_INDEX)
+    #     # Maximum positive storage inventory change within subperiod
+    #     @variable(EP, vCAPCONTRSTOR_VSOCw_VRE_STOR[y in VS_LDS, w=1:REP_PERIOD] >= 0)
+
+    #     # Maximum negative storage inventory change within subperiod
+    #     @variable(EP, vCAPCONTRSTOR_VdSOC_VRE_STOR[y in VS_LDS, w=1:REP_PERIOD] <= 0)
+    # end
+
+
     # Constraint 1: Links last time step with first time step, ensuring position in hour 1 is within eligible change from final hour position
     # Modified initial virtual state of storage for long duration storage - initialize wth value carried over from last period
     # Alternative to cVSoCBalStart constraint which is included when modeling multiple representative periods and long duration storage
@@ -1327,7 +1345,7 @@ function lds_vre_stor_capres!(EP::Model, inputs::Dict)
     @constraint(EP,
         cVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w = 1:REP_PERIOD],
         EP[:vCAPRES_VS_VRE_STOR][y,
-            hours_per_subperiod * (w - 1) + 1]==eVreStorVSoCBalLongDurationStorageStart[y, w])
+            hours_per_subperiod * (w - 1) + 1]==eVreStorVSoCBalLongDurationStorageStart[y, w] + vVRESTOR_CAPRES_LDS_Start_slack[w, y])
 
     # Constraint 2: Storage held in reserve at beginning of period w = storage at beginning of period w-1 + storage built up in period w (after n representative periods)
     # Multiply storage build up term from prior period with corresponding weight
@@ -1344,7 +1362,7 @@ function lds_vre_stor_capres!(EP::Model, inputs::Dict)
         cVreStorVSoCBalLongDurationStorageSub[y in VS_LDS, r in REP_PERIODS_INDEX],
         vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r]==EP[:vCAPRES_VS_VRE_STOR][y,
             hours_per_subperiod * dfPeriodMap[r, :Rep_Period_Index]] -
-                vCAPCONTRSTOR_VdSOC_VRE_STOR[y, dfPeriodMap[r, :Rep_Period_Index]])
+                vCAPCONTRSTOR_VdSOC_VRE_STOR[y, dfPeriodMap[r, :Rep_Period_Index]] + vVRESTOR_CAPRES_LDS_Sub_slack[y, r])
 
     # Constraint 4: Energy held in reserve at the beginning of each modeled period acts as a lower bound on the total energy held in storage
     @constraint(EP,
@@ -1361,9 +1379,9 @@ Builds reserve-SOC start/end linking constraints for the active subperiod and in
 bounded slack variables used to preserve decomposition feasibility.
 """
 function lds_vre_stor_capres_subperiod!(EP::Model, inputs::Dict)
+    println("VRE-STOR LDS Subperiod Capacity Reserve Margin Module")
     ### LOAD DATA ###
     w = inputs["SubPeriod"];
-
 	r = inputs["SubPeriod_Index"]
 
     REP_PERIOD = inputs["REP_PERIOD"]  # Number of representative periods
@@ -1393,15 +1411,16 @@ function lds_vre_stor_capres_subperiod!(EP::Model, inputs::Dict)
 
     virtual_discharge_cost = inputs["VirtualChargeDischargeCost"]
 
-    ### VARIABLES ###
+    by_rid(rid, sym) = by_rid_res(rid, sym, gen_VRE_STOR)
 
+    ### VARIABLES ###
     @variables(EP,
         begin
             # State of charge held in reserve for storage at beginning of each modeled period n
-            vCAPCONTRSTOR_VSOCw_VRE_STOR[y in VS_LDS, n in MODELED_PERIODS_INDEX] >= 0
+            vCAPCONTRSTOR_VSOCw_VRE_STOR[y in VS_LDS, [r]] >= 0
 
             # Build up in storage inventory held in reserve over each representative period w (can be pos or neg)
-            vCAPCONTRSTOR_VdSOC_VRE_STOR[y in VS_LDS, w = 1:REP_PERIOD]
+            vCAPCONTRSTOR_VdSOC_VRE_STOR[y in VS_LDS, [w]]
         end)
 
     @variable(EP, vVRESTOR_CAPRES_LDS_Start_slack[[w], y in VS_LDS])
@@ -1413,32 +1432,30 @@ function lds_vre_stor_capres_subperiod!(EP::Model, inputs::Dict)
     ### EXPRESSIONS ###
 
     @expression(EP,
-        eVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, w = 1:REP_PERIOD],
+        eVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, [w]],
         (1 -
-            self_discharge(gen[y]))*(EP[:vCAPRES_VS_VRE_STOR][y, hours_per_subperiod * w] -
+            self_discharge(gen[y]))*(EP[:vCAPRES_VS_VRE_STOR][y, hours_per_subperiod] -
                                     vCAPCONTRSTOR_VdSOC_VRE_STOR[y, w]))
 
     DC_DISCHARGE_CONSTRAINTSET = intersect(DC_DISCHARGE, VS_LDS)
     DC_CHARGE_CONSTRAINTSET = intersect(DC_CHARGE, VS_LDS)
     AC_DISCHARGE_CONSTRAINTSET = intersect(AC_DISCHARGE, VS_LDS)
     AC_CHARGE_CONSTRAINTSET = intersect(AC_CHARGE, VS_LDS)
-    for w in 1:REP_PERIOD
-        for y in DC_DISCHARGE_CONSTRAINTSET
-            add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w],
-                1 / by_rid(y, :eff_down_dc), EP[:vCAPRES_DC_DISCHARGE][y, 1])
-        end
-        for y in DC_CHARGE_CONSTRAINTSET
-            add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w], -by_rid(y, :eff_up_dc),
-                EP[:vCAPRES_DC_CHARGE][y, 1])
-        end
-        for y in AC_DISCHARGE_CONSTRAINTSET
-            add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w],
-                1 / by_rid(y, :eff_down_ac), EP[:vCAPRES_AC_DISCHARGE][y, 1])
-        end
-        for y in AC_CHARGE_CONSTRAINTSET
-            add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w], -by_rid(y, :eff_up_ac),
-                EP[:vCAPRES_AC_CHARGE][y, 1])
-        end
+    for y in DC_DISCHARGE_CONSTRAINTSET
+        add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w],
+            1 / by_rid(y, :eff_down_dc), EP[:vCAPRES_DC_DISCHARGE][y, 1])
+    end
+    for y in DC_CHARGE_CONSTRAINTSET
+        add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w], -by_rid(y, :eff_up_dc),
+            EP[:vCAPRES_DC_CHARGE][y, 1])
+    end
+    for y in AC_DISCHARGE_CONSTRAINTSET
+        add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w],
+            1 / by_rid(y, :eff_down_ac), EP[:vCAPRES_AC_DISCHARGE][y, 1])
+    end
+    for y in AC_CHARGE_CONSTRAINTSET
+        add_to_expression!(eVreStorVSoCBalLongDurationStorageStart[y, w], -by_rid(y, :eff_up_ac),
+            EP[:vCAPRES_AC_CHARGE][y, 1])
     end
 
     ### CONSTRAINTS ###
@@ -1449,7 +1466,7 @@ function lds_vre_stor_capres_subperiod!(EP::Model, inputs::Dict)
     # Note: tw_min = hours_per_subperiod*(w-1)+1; tw_max = hours_per_subperiod*w
     @constraint(EP,
         cVreStorVSoCBalLongDurationStorageStart[y in VS_LDS, [w]],
-        EP[:vCAPRES_VS_VRE_STOR][y, 1]==eVreStorVSoCBalLongDurationStorageStart[y, w] + vCAPRES_LDS_Start_slack[w, y])
+        EP[:vCAPRES_VS_VRE_STOR][y, 1]==eVreStorVSoCBalLongDurationStorageStart[y, w] + vVRESTOR_CAPRES_LDS_Start_slack[w, y])
 
     # Constraint 2: Initial reserve storage level for representative periods must also adhere to sub-period storage inventory balance
     # Initial storage = Final storage - change in storage inventory across representative period
@@ -1457,7 +1474,7 @@ function lds_vre_stor_capres_subperiod!(EP::Model, inputs::Dict)
         cVreStorVSoCBalLongDurationStorageSub[y in VS_LDS, [r]],
         vCAPCONTRSTOR_VSOCw_VRE_STOR[y,r]==EP[:vCAPRES_VS_VRE_STOR][y,
             hours_per_subperiod] -
-                vCAPCONTRSTOR_VdSOC_VRE_STOR[y, w] + vCAPRES_LDS_Sub_slack[y, r])
+                vCAPCONTRSTOR_VdSOC_VRE_STOR[y, w] + vVRESTOR_CAPRES_LDS_Sub_slack[y, r])
 end
 
 @doc raw"""

@@ -61,6 +61,18 @@ end
     end
 end
 
+@testset "Benders decomposition" begin
+    include("test_benders.jl")
+end
+
+@testset "Benders output parity" begin
+    include("test_benders_output_parity.jl")
+end
+
+@testset "Benders vs Monolithic" begin
+    include("test_benders_vs_monolithic.jl")
+end
+
 # Test writing outputs
 @testset "Writing outputs " begin
     for test_file in filter!(x -> endswith(x, ".jl"), readdir("writing_outputs"))
