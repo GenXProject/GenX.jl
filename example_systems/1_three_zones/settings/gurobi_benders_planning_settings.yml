@@ -15,3 +15,4 @@ Crossover: 0               # Disable crossover — barrier solution is sufficien
 MIPGap: 1.0e-3             # MIP optimality gap (only relevant when
                            # BD_IntegerInvestment: 1)
 NumericFocus: 0            # Numerical precision emphasis (0 = balanced)
+OutputFlag: 0              # Suppress Gurobi output; set to 1 to enable

@@ -14,3 +14,4 @@ run_crossover: "off"         # Disable crossover — barrier solution is suffici
                              # for the master (LP duals are not used here)
 mip_rel_gap: 1.0e-3          # MIP relative optimality gap (only relevant when
                              # IntegerInvestment: true)
+output_flag: false            # Suppress HiGHS output; set to true to enable

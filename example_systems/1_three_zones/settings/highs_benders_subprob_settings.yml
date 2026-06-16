@@ -14,3 +14,4 @@ ipm_optimality_tolerance: 1.0e-6  # IPM convergence tolerance
 run_crossover: "on"          # Enable crossover — accurate dual variables are
                              # required for valid Benders cuts
 threads: 1                   # Single thread per subproblem worker
+output_flag: false            # Suppress HiGHS output from subproblems
