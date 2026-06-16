@@ -1,11 +1,18 @@
 ###############################################################################
-# Run Example 3 (Three Zones with CO2 capture) using Benders decomposition
-# with Gurobi.
+# Run Example 3 (Three Zones with CO2 capture) using Benders decomposition.
+# Uses Gurobi if available, otherwise falls back to HiGHS.
 ###############################################################################
 
-using Revise
-using Gurobi
 using GenX
+
+const _OPTIMIZER = try
+    using Gurobi
+    Gurobi.Optimizer
+catch
+    @warn "Gurobi is not available; using HiGHS instead."
+    using HiGHS
+    HiGHS.Optimizer
+end
 
 const _CASE = dirname(@__FILE__)
 const _SETTINGS_DIR = joinpath(_CASE, "settings")
@@ -17,7 +24,7 @@ cp(_MAIN_SETTINGS, _BACKUP; force = true)
 cp(_BENDERS_SETTINGS, _MAIN_SETTINGS; force = true)
 
 try
-	run_genx_case!(_CASE, Gurobi.Optimizer)
+	run_genx_case!(_CASE, _OPTIMIZER)
 finally
 	cp(_BACKUP, _MAIN_SETTINGS; force = true)
 	rm(_BACKUP; force = true)

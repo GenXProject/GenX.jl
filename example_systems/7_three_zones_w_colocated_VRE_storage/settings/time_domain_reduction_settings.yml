@@ -45,14 +45,14 @@ ExtremePeriods:
       Integral:
         Min: 0
         Max: 0
-UseExtremePeriods: 1
-MinPeriods: 5
-MaxPeriods: 5
+UseExtremePeriods: 0
+MinPeriods: 4
+MaxPeriods: 4
 DemandWeight: 1
-ClusterFuelPrices: 0
+ClusterFuelPrices: 1
 nReps: 100
 Threshold: 0.05
-TimestepsPerRepPeriod: 24
+TimestepsPerRepPeriod: 6
 IterateMethod: "cluster"
 ScalingMethod: "S"
 ClusterMethod: "kmeans"

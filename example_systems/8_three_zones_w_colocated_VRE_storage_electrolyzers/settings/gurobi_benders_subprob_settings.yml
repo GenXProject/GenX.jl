@@ -1,9 +1,0 @@
-# Gurobi settings for the Benders operational subproblems.
-
-Feasib_Tol: 1.0e-6
-Optimal_Tol: 1.0e-6
-Method: 2
-BarConvTol: 1.0e-6
-Crossover: 1
-Threads: 1
-NumericFocus: 0

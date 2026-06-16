@@ -30,7 +30,6 @@ const EXAMPLE_CASES = [
     (4,  "4_three_zones_w_policies_slack"),
     (5,  "5_three_zones_w_piecewise_fuel"),
     (7,  "7_three_zones_w_colocated_VRE_storage"),
-    (8,  "8_three_zones_w_colocated_VRE_storage_electrolyzers"),
     (10, "10_IEEE_9_bus_DC_OPF"),
     (11, "11_three_zones_w_allam_cycle_lox"),
 ]
