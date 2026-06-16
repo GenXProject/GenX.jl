@@ -62,7 +62,7 @@ end
 end
 
 @testset "Benders decomposition" begin
-    include("test_benders.jl")
+    include("test_benders_vs_monolithic.jl")
 end
 
 @testset "Benders output parity" begin

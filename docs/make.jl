@@ -26,7 +26,7 @@ pages = OrderedDict(
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
         "Tutorial 6: Solver Settings" => "Tutorials/Tutorial_6_solver_settings.md",
         "Tutorial 7: Policy Constraints" => "Tutorials/Tutorial_7_setup.md",
-        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md"
+        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",
@@ -41,14 +41,14 @@ pages = OrderedDict(
         "Slack Variables for Policies" => "User_Guide/slack_variables_overview.md",
         "Method of Morris Inputs" => "User_Guide/methodofmorris_input.md",
         "Running the Model" => "User_Guide/running_model.md",
-        "Model Outputs" => "User_Guide/model_output.md"
+        "Model Outputs" => "User_Guide/model_output.md",
     ],
     "Model Concept and Overview" => [
         "Model Introduction" => "Model_Concept_Overview/model_introduction.md",
         "Notation" => "Model_Concept_Overview/model_notation.md",
         "Objective Function" => "Model_Concept_Overview/objective_function.md",
-        "Power Balance" => "Model_Concept_Overview/power_balance.md"
-        "Benders Model Overview" => "Model_Concept_Overview/benders_math_overview.md"
+        "Power Balance" => "Model_Concept_Overview/power_balance.md",
+        "Benders Model Overview" => "Model_Concept_Overview/benders_math_overview.md",
     ],
     "Model Reference" => [
         "Core" => "Model_Reference/core.md",
