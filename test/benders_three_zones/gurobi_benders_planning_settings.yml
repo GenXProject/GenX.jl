@@ -1,8 +1,0 @@
-# Gurobi settings for the Benders *planning* (master) problem.
-# The master problem is a continuous LP in this test (BD_IntegerInvestment: 0),
-# so the barrier method without crossover gives fast, accurate duals.
-
-Method: 2         # Barrier (interior-point) algorithm
-MIPGap: 1.0e-3    # MIP optimality gap (relevant if integer investments are used)
-BarConvTol: 1.0e-4  # Barrier convergence tolerance
-Crossover: 0      # Disable crossover for speed (LP barrier solution is sufficient)
