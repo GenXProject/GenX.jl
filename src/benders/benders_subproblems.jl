@@ -1,4 +1,15 @@
 
+@doc raw"""
+	generate_operation_subproblem(setup, inputs, OPTIMIZER)
+
+Build and return a single Benders operational (subproblem) JuMP model for one
+representative period.
+
+Calls `operation_model!` to add all operational variables and constraints, then sets
+the objective to minimize operational cost scaled by `setup["ObjScale"]`.  The
+planning/linking variables are left free at this stage; bounds and objective
+coefficients are removed in `init_subproblem`.
+"""
 function generate_operation_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes)
     ## Start pre-solve timer
     presolver_start_time = time()
@@ -23,6 +34,17 @@ function generate_operation_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI
     return EP
 end
 
+@doc raw"""
+	init_subproblem(setup, inputs, OPTIMIZER, planning_variables)
+
+Initialize a single Benders subproblem and return `(EP, planning_variables_sub)`.
+
+Builds the operational model, then strips bounds and zeros out the objective coefficient
+for every variable whose name appears in `planning_variables`.  This makes those
+variables pure parameters (fixed by the master each iteration) rather than degrees of
+freedom of the subproblem.  Returns the modified model and the subset of
+`planning_variables` that are actually present in this subproblem.
+"""
 function init_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes,planning_variables::Vector{String})
     EP = generate_operation_subproblem(setup, inputs, OPTIMIZER)
 
@@ -43,6 +65,16 @@ function init_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWith
     return EP, planning_variables_sub
 end
 
+@doc raw"""
+	init_local_subproblems!(setup, inputs_local, subproblems_local, planning_variables, OPTIMIZER)
+
+Initialize a set of Benders subproblems in-place on a single worker.
+
+Iterates over `inputs_local` (one entry per representative subperiod assigned to this
+worker), calls `init_subproblem` for each, and stores the resulting JuMP model,
+linking variable names, and subperiod index into the corresponding entry of
+`subproblems_local`.  Mutates `subproblems_local` directly; returns nothing.
+"""
 function init_local_subproblems!(setup::Dict,inputs_local::Vector{Dict{Any,Any}},subproblems_local::Vector{Dict{Any,Any}},planning_variables::Vector{String},OPTIMIZER::MOI.OptimizerWithAttributes)
 
     nW = length(inputs_local)
@@ -55,6 +87,18 @@ function init_local_subproblems!(setup::Dict,inputs_local::Vector{Dict{Any,Any}}
     end
 end
 
+@doc raw"""
+	init_dist_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+
+Initialize all Benders subproblems as a `DistributedArrays.DArray` across available workers.
+
+Distributes subperiod inputs across workers, spawning `init_local_subproblems!` on each
+worker with only that worker's slice of `inputs_decomp` (avoiding serialisation of the
+full dataset to every worker).  After initialisation, collects the per-subperiod
+linking variable names into a merged `Dict` and returns
+`(subproblems_all, planning_variables_sub)` where `planning_variables_sub` maps
+subperiod index to the linking variable names present in that subproblem.
+"""
 function init_dist_subproblems(setup::Dict, inputs_decomp::Dict, planning_variables::Vector{String}, optimizer::Any)
 
     ##### Initialize a distributed arrays of JuMP models
@@ -108,10 +152,11 @@ function init_dist_subproblems(setup::Dict, inputs_decomp::Dict, planning_variab
 
 end
 
-"""
+@doc raw"""
     configure_benders_subprob_solver(solver_settings_path, optimizer)
 
 Return a solver `OptimizerWithAttributes` for Benders operational subproblems.
+
 Looks first for `{solver}_benders_subprob_settings.yml` in `solver_settings_path`,
 falling back to `{solver}_settings.yml`.
 """
@@ -124,6 +169,15 @@ function configure_benders_subprob_solver(solver_settings_path::String, optimize
     return _benders_configure_solver(settings_file, optimizer, solver_name)
 end
 
+@doc raw"""
+	get_local_planning_variables(subproblems_local)
+
+Return a `Dict` mapping each subperiod index to its linking variable name vector.
+
+Iterates over the local subproblem entries on a worker and collects the
+`:linking_variables_sub` field stored by `init_local_subproblems!`, keyed by
+`:subproblem_index`.
+"""
 function get_local_planning_variables(subproblems_local::Vector{Dict{Any,Any}})
 
     local_variables=Dict();
@@ -138,6 +192,16 @@ function get_local_planning_variables(subproblems_local::Vector{Dict{Any,Any}})
 
 end
 
+@doc raw"""
+	update_with_subproblem_solutions!(subproblems, results)
+
+Solve all subproblems with the current planning solution and store results.
+
+Delegates to `MacroEnergySolvers.solve_subproblems` using the planning variable values
+in `results.planning_sol`, appending the subproblem solution as `subop_sol` in the
+returned `results` NamedTuple.  Operates on either a local `Vector{Dict}` or a
+distributed `DArray` of subproblem dicts.
+"""
 function update_with_subproblem_solutions!(subproblems::Union{Vector{Dict{Any, Any}},DistributedArrays.DArray}, results::NamedTuple)
 
     subop_sol = MacroEnergySolvers.solve_subproblems(subproblems, results.planning_sol, true)

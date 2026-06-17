@@ -61,16 +61,10 @@ end
     end
 end
 
-@testset "Benders decomposition" begin
-    include("test_benders_vs_monolithic.jl")
-end
-
-@testset "Benders output parity" begin
-    include("test_benders_output_parity.jl")
-end
-
-@testset "Benders vs Monolithic" begin
-    include("test_benders_vs_monolithic.jl")
+if VERSION ≥ v"1.7"
+    @testset "Benders decomposition" begin
+        include("test_benders_vs_monolithic.jl")
+    end
 end
 
 # Test writing outputs

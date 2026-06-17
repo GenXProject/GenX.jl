@@ -1,4 +1,15 @@
 
+@doc raw"""
+	separate_inputs_subperiods(inputs)
+
+Decompose the full-year `inputs` dictionary into per-representative-period sub-dictionaries.
+
+Returns a `Dict` keyed by subperiod index `w = 1:REP_PERIOD`, where each entry is a deep
+copy of `inputs` with time-indexed arrays (demand `pD`, capacity factors `pP_Max`,
+fuel costs, start costs, time weights `omega`, etc.) sliced to the hours belonging to
+subperiod `w`.  Each sub-dictionary also carries `REP_PERIOD = 1` and a `SubPeriod` field
+with its index, making it self-contained for building a single operational subproblem.
+"""
 function separate_inputs_subperiods(inputs::Dict)
 
     inputs_all=Dict();
@@ -43,6 +54,18 @@ function separate_inputs_subperiods(inputs::Dict)
 
 end
 
+@doc raw"""
+	generate_benders_inputs(setup, inputs, inputs_decomp, optimizer)
+
+Build and return the complete set of Benders decomposition inputs as a `Dict`.
+
+Initializes the planning (master) problem and all distributed operational subproblems,
+then assembles them into a single `benders_inputs` dictionary with fields:
+- `"planning_problem"`: the master JuMP model
+- `"planning_variables"`: names of first-stage decision variables
+- `"subproblems"`: `DArray` of operational subproblem dicts (one per representative period)
+- `"planning_variables_sub"`: per-subperiod mapping of linking variable names
+"""
 function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict, optimizer::Any)
 
     planning_problem, planning_variables = init_planning_problem(setup, inputs, optimizer);
@@ -59,6 +82,15 @@ function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict,
     return benders_inputs
 end
 
+@doc raw"""
+	check_negative_capacities(EP)
+
+Return `true` if any installed capacity expression in the planning model `EP` takes a
+value below `-1e-8`, indicating a numerically infeasible or degenerate solution.
+
+Checks `eTotalCap`, and optionally `eTotalCapEnergy`, `eTotalCapCharge`, and
+`eAvail_Trans_Cap` when those keys are present in the model.
+"""
 function check_negative_capacities(EP::Model)
 
 	neg_cap_bool = false;

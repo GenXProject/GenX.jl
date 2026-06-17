@@ -1,3 +1,14 @@
+@doc raw"""
+	write_planning_problem_costs(path, inputs, setup, benders_results, planning_problem)
+
+Write fixed and network expansion costs from the Benders planning problem to `planning_problem_costs.csv`.
+
+Evaluates all cost expressions against the best Benders planning solution stored in
+`benders_results.planning_sol` (no re-solve required) and writes a cost table with rows
+for total cost (`cTotal`), total fixed cost (`cFix`), network expansion cost
+(`cNetworkExp`), and unmet planning policy penalty (`cUnmetPlanningPolicyPenalty`).
+Per-zone fixed costs are appended as additional columns when multiple zones exist.
+"""
 function write_planning_problem_costs(path::AbstractString, inputs::Dict, setup::Dict, benders_results::NamedTuple, planning_problem::Model)
     gen = inputs["RESOURCES"]
     Z = inputs["Z"]

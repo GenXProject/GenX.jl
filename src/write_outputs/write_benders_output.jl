@@ -1,3 +1,19 @@
+@doc raw"""
+	write_benders_output(benders_results, outpath, setup, inputs, planning_problem, subproblems)
+
+Write all Benders decomposition outputs to `outpath`.
+
+Orchestrates the full output pipeline: convergence history, capacity, network expansion,
+policy requirements, costs, operational time series (power, charge, storage, curtailment,
+NSE, power balance, emissions, fuel consumption, transmission), capacity factors,
+shadow-price-based outputs (LMPs, reliability prices, storage duals, energy revenue,
+charging costs), unit commitment decisions, and planning problem duals.  Each output
+is guarded by the corresponding key in `setup["WriteOutputsSettingsDict"]`; outputs
+default to enabled when the key is absent.
+
+If the planning problem has no solver values (e.g. the algorithm did not converge),
+only the status file and convergence CSV are written and the function returns early.
+"""
 function write_benders_output(benders_results::NamedTuple, outpath::AbstractString, setup::Dict, inputs::Dict, planning_problem::Model, subproblems::Union{Vector{Dict{Any, Any}},DistributedArrays.DArray})
 	output_settings_d = get(setup, "WriteOutputsSettingsDict", Dict{String, Bool}())
 	if setup["OutputFullTimeSeries"] == 1
@@ -189,6 +205,15 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 	end
 end
 
+@doc raw"""
+	write_co2_emissions_plant(path, inputs, setup, emissions_plant)
+
+Write per-plant annual CO2 emissions to `emissions_plant.csv`.
+
+`emissions_plant` is a `(G × T)` matrix of unscaled emissions values.  Scale factor is
+applied before computing the annual weighted sum.  Time-series columns are written when
+`setup["WriteOutputs"] != "annual"`.
+"""
 function write_co2_emissions_plant(path::AbstractString,
 	inputs::Dict,
 	setup::Dict,
@@ -215,6 +240,15 @@ function write_co2_emissions_plant(path::AbstractString,
 end
 
 
+@doc raw"""
+	write_power(path, inputs, setup, power)
+
+Write per-resource power output to `power.csv`.
+
+`power` is a `(G × T)` matrix of unscaled dispatch values.  The scale factor is applied,
+annual weighted sums are computed, and time-series columns are included when
+`setup["WriteOutputs"] != "annual"`.
+"""
 function write_power(path::AbstractString, inputs::Dict, setup::Dict, power::Matrix)
     gen = inputs["RESOURCES"]   # Resources (objects)
     resources = inputs["RESOURCE_NAMES"]    # Resource names
@@ -238,6 +272,13 @@ function write_power(path::AbstractString, inputs::Dict, setup::Dict, power::Mat
     return df
 end
 
+@doc raw"""
+	write_charge(path, inputs, setup, charge, charge_ids)
+
+Write charging power to `charge.csv` for the subset of resources indexed by `charge_ids`.
+
+`charge` is a `(length(charge_ids) × T)` matrix of unscaled values.
+"""
 function write_charge(path::AbstractString, inputs::Dict, setup::Dict, charge::Matrix, charge_ids::Vector{Int})
     gen = inputs["RESOURCES"]   # Resources (objects) 
     resources = inputs["RESOURCE_NAMES"]    # Resource names
@@ -256,6 +297,13 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, charge::M
     return nothing
 end
 
+@doc raw"""
+	write_storage_benders(path, inputs, setup, stored, stored_ids)
+
+Write state-of-charge values to `storage.csv` for resources indexed by `stored_ids`.
+
+`stored` is a `(length(stored_ids) × T)` matrix of unscaled state-of-charge values.
+"""
 function write_storage_benders(path::AbstractString, inputs::Dict, setup::Dict, stored::Matrix, stored_ids::Vector{Int})
 	gen = inputs["RESOURCES"]
 	resources = inputs["RESOURCE_NAMES"]
@@ -274,6 +322,14 @@ function write_storage_benders(path::AbstractString, inputs::Dict, setup::Dict, 
 	return nothing
 end
 
+@doc raw"""
+	write_curtailment_benders(path, inputs, setup, curtailment)
+
+Write VRE curtailment to `curtailment.csv`.
+
+`curtailment` is a `(G × T)` matrix of unscaled curtailment values (available generation
+minus dispatched generation for VRE resources, zero for others).
+"""
 function write_curtailment_benders(path::AbstractString, inputs::Dict, setup::Dict, curtailment::Matrix)
 	gen = inputs["RESOURCES"]
 	resources = inputs["RESOURCE_NAMES"]
@@ -294,6 +350,14 @@ function write_curtailment_benders(path::AbstractString, inputs::Dict, setup::Di
 	return nothing
 end
 
+@doc raw"""
+	write_nse_benders(path, inputs, setup, nse)
+
+Write non-served energy (NSE) by segment and zone to `nse.csv`.
+
+`nse` is a `(SEG*Z × T)` matrix laid out as segments cycling within zones.
+Annual or time-series output is selected by `setup["WriteOutputs"]`.
+"""
 function write_nse_benders(path::AbstractString, inputs::Dict, setup::Dict, nse::Matrix)
 	T = inputs["T"]
 	Z = inputs["Z"]
@@ -332,6 +396,16 @@ function write_nse_benders(path::AbstractString, inputs::Dict, setup::Dict, nse:
 	return nothing
 end
 
+@doc raw"""
+	write_power_balance_benders(path, inputs, setup, benders_bundle)
+
+Write the zonal power balance decomposition to `power_balance.csv`.
+
+Assembles the `(Lcomp*Z × T)` power-balance matrix from the operational time series
+stored in `benders_bundle`, covering generation, storage discharge/charge, flexible
+demand, NSE, transmission net exports and losses, demand, and optional electrolyzer,
+VRE-storage, and fusion components.
+"""
 function write_power_balance_benders(path::AbstractString, inputs::Dict, setup::Dict, benders_bundle::NamedTuple)
 	gen = inputs["RESOURCES"]
 	T = inputs["T"]
@@ -453,6 +527,14 @@ function write_power_balance_benders(path::AbstractString, inputs::Dict, setup::
 	return nothing
 end
 
+@doc raw"""
+	write_transmission_flows_benders(path, inputs, setup, flow)
+
+Write line-level power flows to `flow.csv`.
+
+`flow` is a `(L × T)` matrix of unscaled flow values.  Annual or time-series output
+is selected by `setup["WriteOutputs"]`.
+"""
 function write_transmission_flows_benders(path::AbstractString, inputs::Dict, setup::Dict, flow::Matrix)
 	T = inputs["T"]
 	L = inputs["L"]
@@ -482,6 +564,14 @@ function write_transmission_flows_benders(path::AbstractString, inputs::Dict, se
 	return nothing
 end
 
+@doc raw"""
+	write_transmission_losses_benders(path, inputs, setup, tlosses)
+
+Write line-level transmission losses to `tlosses.csv`.
+
+`tlosses` is a `(L × T)` matrix of unscaled loss values.  Annual or time-series output
+is selected by `setup["WriteOutputs"]`.
+"""
 function write_transmission_losses_benders(path::AbstractString, inputs::Dict, setup::Dict, tlosses::Matrix)
 	T = inputs["T"]
 	L = inputs["L"]
@@ -514,6 +604,14 @@ function write_transmission_losses_benders(path::AbstractString, inputs::Dict, s
 	return nothing
 end
 
+@doc raw"""
+	write_emissions_benders(path, inputs, setup, emissions_by_zone)
+
+Write total CO2 emissions aggregated by zone to `emissions.csv`.
+
+`emissions_by_zone` is a `(Z × T)` matrix of unscaled zone-level emissions.  Annual or
+time-series output is selected by `setup["WriteOutputs"]`.
+"""
 function write_emissions_benders(path::AbstractString, inputs::Dict, setup::Dict, emissions_by_zone::Matrix)
 	T = inputs["T"]
 	Z = inputs["Z"]
@@ -550,6 +648,14 @@ function write_emissions_benders(path::AbstractString, inputs::Dict, setup::Dict
 	return nothing
 end
 
+@doc raw"""
+	write_fuel_consumption_benders(path, inputs, setup, benders_bundle)
+
+Write all fuel consumption outputs.
+
+Calls `write_fuel_consumption_plant_benders`, `write_fuel_consumption_ts_benders`
+(when time-series output is requested), and `write_fuel_consumption_tot_benders`.
+"""
 function write_fuel_consumption_benders(path::AbstractString, inputs::Dict, setup::Dict, benders_bundle::NamedTuple)
 	write_fuel_consumption_plant_benders(path, inputs, setup, benders_bundle)
 	if setup["WriteOutputs"] != "annual"
@@ -558,6 +664,13 @@ function write_fuel_consumption_benders(path::AbstractString, inputs::Dict, setu
 	write_fuel_consumption_tot_benders(path, inputs, setup, benders_bundle)
 end
 
+@doc raw"""
+	write_fuel_consumption_plant_benders(path, inputs, setup, benders_bundle)
+
+Write per-plant annual fuel costs and heat input to `Fuel_cost_plant.csv`.
+
+Includes multi-fuel breakdown columns when `inputs["MULTI_FUELS"]` is non-empty.
+"""
 function write_fuel_consumption_plant_benders(path::AbstractString, inputs::Dict, setup::Dict, benders_bundle::NamedTuple)
 	gen = inputs["RESOURCES"]
 	HAS_FUEL = inputs["HAS_FUEL"]
@@ -586,6 +699,14 @@ function write_fuel_consumption_plant_benders(path::AbstractString, inputs::Dict
 	CSV.write(joinpath(path, "Fuel_cost_plant.csv"), dfPlantFuel)
 end
 
+@doc raw"""
+	write_fuel_consumption_ts_benders(path, inputs, setup, benders_bundle)
+
+Write per-plant hourly fuel consumption time series to `FuelConsumption_plant_MMBTU.csv`.
+
+Only called when `setup["WriteOutputs"] != "annual"`.  Optionally reconstructs the full
+time series when `OutputFullTimeSeries` is enabled.
+"""
 function write_fuel_consumption_ts_benders(path::AbstractString, inputs::Dict, setup::Dict, benders_bundle::NamedTuple)
 	T = inputs["T"]
 	HAS_FUEL = inputs["HAS_FUEL"]
@@ -601,6 +722,11 @@ function write_fuel_consumption_ts_benders(path::AbstractString, inputs::Dict, s
 	end
 end
 
+@doc raw"""
+	write_fuel_consumption_tot_benders(path, inputs, setup, benders_bundle)
+
+Write total annual fuel consumption aggregated by fuel type to `FuelConsumption_total_MMBTU.csv`.
+"""
 function write_fuel_consumption_tot_benders(path::AbstractString, inputs::Dict, setup::Dict, benders_bundle::NamedTuple)
 	fuel_types = inputs["fuels"]
 	fuel_number = length(fuel_types)
@@ -609,7 +735,7 @@ function write_fuel_consumption_tot_benders(path::AbstractString, inputs::Dict, 
 	CSV.write(joinpath(path, "FuelConsumption_total_MMBTU.csv"), dfFuel)
 end
 
-"""
+@doc raw"""
     write_price_benders(path, inputs, setup, price)
 
 Write locational marginal prices (LMPs) from Benders subproblem duals.
@@ -629,7 +755,7 @@ function write_price_benders(path::AbstractString, inputs::Dict, setup::Dict, pr
     return nothing
 end
 
-"""
+@doc raw"""
     write_reliability_benders(path, inputs, setup, reliability)
 
 Write reliability prices (shadow prices on NSE capacity constraints) from Benders subproblem duals.
@@ -649,7 +775,7 @@ function write_reliability_benders(path::AbstractString, inputs::Dict, setup::Di
     return nothing
 end
 
-"""
+@doc raw"""
     write_storagedual_benders(path, inputs, setup, storagedual)
 
 Write storage state-of-charge balance duals from Benders subproblem LPs.
@@ -680,7 +806,7 @@ function write_storagedual_benders(path::AbstractString, inputs::Dict, setup::Di
     return nothing
 end
 
-"""
+@doc raw"""
     write_energy_revenue_benders(path, inputs, setup, benders_bundle)
 
 Write annual energy revenue for each generator using subproblem LMPs.
@@ -714,7 +840,7 @@ function write_energy_revenue_benders(path::AbstractString, inputs::Dict, setup:
     return dfEnergyRevenue
 end
 
-"""
+@doc raw"""
     write_charging_cost_benders(path, inputs, setup, benders_bundle)
 
 Write annual charging costs for storage and flexible demand resources using subproblem LMPs.
@@ -755,7 +881,7 @@ function write_charging_cost_benders(path::AbstractString, inputs::Dict, setup::
     return dfChargingcost
 end
 
-"""
+@doc raw"""
     write_capacityfactor_benders(path, inputs, setup, benders_bundle, planning_problem)
 
 Write capacity factors using power output from subproblems and installed capacity from the planning problem.
@@ -793,7 +919,7 @@ function write_capacityfactor_benders(path::AbstractString, inputs::Dict, setup:
     return nothing
 end
 
-"""
+@doc raw"""
     write_ucommit_benders(path, inputs, setup, data, filename)
 
 Write unit commitment, startup, or shutdown decisions (generic helper).
@@ -812,7 +938,7 @@ function write_ucommit_benders(path::AbstractString, inputs::Dict, setup::Dict,
     return nothing
 end
 
-"""
+@doc raw"""
     write_co2_cap_benders(path, inputs, setup, planning_problem)
 
 Write CO2 prices from the Benders planning problem (constraint `cCO2Emissions_systemwide_planning`).
@@ -828,6 +954,14 @@ function write_co2_cap_benders(path::AbstractString, inputs::Dict, setup::Dict, 
     return nothing
 end
 
+@doc raw"""
+	collect_benders_output_bundle(inputs, setup, subproblems)
+
+Collect all operational output arrays from solved subproblems into a single `NamedTuple`.
+
+Dispatches to `collect_distributed_output_bundle` when `subproblems` is a `DArray`
+(multi-worker run) or `get_local_output_bundle` otherwise.
+"""
 function collect_benders_output_bundle(inputs::Dict, setup::Dict, subproblems::Union{Vector{Dict{Any, Any}},DistributedArrays.DArray})
 	if subproblems isa DistributedArrays.DArray
 		return collect_distributed_output_bundle(inputs, setup, subproblems)
@@ -836,6 +970,16 @@ function collect_benders_output_bundle(inputs::Dict, setup::Dict, subproblems::U
 	return get_local_output_bundle(inputs, setup, subproblems)
 end
 
+@doc raw"""
+	collect_distributed_output_bundle(inputs, setup, subproblems)
+
+Collect and concatenate output bundles from all workers into a single `NamedTuple`.
+
+Fetches `get_local_output_bundle` from each worker in parallel, then reduces each
+time-series field with `hcat` (concatenating representative periods along the time axis)
+and each scalar/annual field with `+`.  Returns a single bundle with the same structure
+as `get_local_output_bundle`.
+"""
 function collect_distributed_output_bundle(inputs::Dict, setup::Dict, subproblems::DistributedArrays.DArray)
 	p_id = workers()
 	np_id = length(p_id)
@@ -928,6 +1072,16 @@ function collect_distributed_output_bundle(inputs::Dict, setup::Dict, subproblem
 	)
 end
 
+@doc raw"""
+	_as_time_matrix(data, nrows, ncols, name)
+
+Coerce `data` into a `(nrows × ncols)` `Matrix{Float64}`, transposing if needed.
+
+Accepts vectors (reshaped to a single row or column depending on which dimension
+matches), matrices in either orientation, or any `Array`-convertible type.  Raises
+`DimensionMismatch` if the data cannot be unambiguously mapped to the target shape.
+`name` is used only in error messages.
+"""
 function _as_time_matrix(data, nrows::Int, ncols::Int, name::AbstractString)
 	matrix = Array(data)
 
@@ -952,6 +1106,15 @@ function _as_time_matrix(data, nrows::Int, ncols::Int, name::AbstractString)
 	return Matrix{Float64}(matrix)
 end
 
+@doc raw"""
+	_subproblem_time_columns(inputs, subproblem, local_T)
+
+Return the global time-step range corresponding to a single subproblem.
+
+Uses `subproblem[:subproblem_index]` and `inputs["hours_per_subperiod"]` to map local
+time indices `1:local_T` to their position in the full annual time series.  Returns
+`1:local_T` when either field is absent (single-period or non-decomposed case).
+"""
 function _subproblem_time_columns(inputs::Dict, subproblem::Dict{Any, Any}, local_T::Int)
 	if !haskey(subproblem, :subproblem_index) || !haskey(inputs, "hours_per_subperiod")
 		return 1:local_T
@@ -963,11 +1126,34 @@ function _subproblem_time_columns(inputs::Dict, subproblem::Dict{Any, Any}, loca
 	return start_t:end_t
 end
 
+@doc raw"""
+	_slice_time_series(data, time_columns)
+
+Slice `data` along its time axis using `time_columns`.
+
+For a 1-D array returns `data[time_columns]`; for a 2-D array returns
+`data[:, time_columns]`.  Converts to a plain `Array` first to handle JuMP
+`DenseAxisArray` inputs.
+"""
 function _slice_time_series(data, time_columns)
 	matrix = Array(data)
 	return ndims(matrix) == 1 ? matrix[time_columns] : matrix[:, time_columns]
 end
 
+@doc raw"""
+	get_local_output_bundle(inputs, setup, subproblems_local)
+
+Extract and assemble all output arrays from the subproblems on a single worker.
+
+Iterates over `subproblems_local`, extracting power dispatch, emissions, charge, storage,
+curtailment, NSE, transmission flows and losses, fuel consumption, dual-based prices,
+storage duals, and unit commitment decisions from each solved JuMP model.  Time-series
+arrays are concatenated along the time axis (representative periods ordered by
+`subproblem_index`) to produce full-year matrices.
+
+Returns a `NamedTuple` with all operational output arrays needed by the write functions,
+plus `has_subproblem_duals` indicating whether LP duals were available.
+"""
 function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::Vector{Dict{Any, Any}})
 	gen = inputs["RESOURCES"]   # Resources (objects) 
 

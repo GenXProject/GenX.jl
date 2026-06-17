@@ -1,3 +1,17 @@
+@doc raw"""
+	generate_planning_problem(setup, inputs, OPTIMIZER)
+
+Build and return the Benders master (planning) JuMP model.
+
+Calls `planning_model!` to add capacity expansion variables and constraints, then adds one
+recourse-value variable `vTHETA[w]` per representative period and minimizes total fixed cost
+plus the sum of those recourse approximations.  Also constructs the expression
+`eAvailableCapacity` (scalar sum over all installed capacity variables) used by
+the Benders algorithm.
+
+Raises an error if retrofits or multi-stage planning are enabled, as these are not yet
+compatible with Benders decomposition.
+"""
 function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes)
 
     ## Start pre-solve timer
@@ -45,6 +59,16 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
     return EP
 end
 
+@doc raw"""
+	init_planning_problem(setup, inputs, optimizer)
+
+Initialize the Benders master problem and return `(EP, varnames)`.
+
+Configures the planning solver via `configure_benders_planning_solver`, builds the model
+with `generate_planning_problem`, and returns the JuMP model together with the names of all
+decision variables except `vZERO` and `vTHETA` (i.e., the linking/planning variables that
+will be fixed in subproblems).
+"""
 function init_planning_problem(setup::Dict, inputs::Dict, optimizer::Any)
 
     OPTIMIZER = configure_benders_planning_solver(setup["settings_path"], optimizer);
@@ -59,10 +83,11 @@ function init_planning_problem(setup::Dict, inputs::Dict, optimizer::Any)
 
 end
 
-"""
+@doc raw"""
     configure_benders_planning_solver(solver_settings_path, optimizer)
 
 Return a solver `OptimizerWithAttributes` for the Benders planning (master) problem.
+
 Looks first for `{solver}_benders_planning_settings.yml` in `solver_settings_path`,
 falling back to `{solver}_settings.yml`. Supports any solver that GenX's
 `configure_solver` infrastructure supports (HiGHS, Gurobi, CPLEX, Clp, Cbc, SCIP).
@@ -86,6 +111,13 @@ const _BENDERS_CONFIGURE_FUNCTIONS = Dict{String, Function}(
     "scip"   => configure_scip,
 )
 
+@doc raw"""
+	_benders_configure_solver(settings_file, optimizer, solver_name)
+
+Private helper: look up `solver_name` in `_BENDERS_CONFIGURE_FUNCTIONS` and call the
+matching solver-specific configure function with `settings_file` and `optimizer`.
+Raises an error listing supported solvers if `solver_name` is not recognised.
+"""
 function _benders_configure_solver(settings_file::String, optimizer::Any, solver_name::String)
     configure_fn = get(_BENDERS_CONFIGURE_FUNCTIONS, solver_name, nothing)
     if isnothing(configure_fn)
@@ -95,6 +127,14 @@ function _benders_configure_solver(settings_file::String, optimizer::Any, solver
     return configure_fn(settings_file, optimizer)
 end
 
+@doc raw"""
+	update_with_planning_solution!(planning_problem, planning_variable_values)
+
+Fix every planning variable in `planning_problem` to the value supplied in
+`planning_variable_values` (a `Dict` mapping variable name → value), then re-solve
+the model.  Used after Benders convergence to recover dual information from the
+planning problem with the optimal first-stage solution fixed.
+"""
 function update_with_planning_solution!(planning_problem::JuMP.Model, planning_variable_values::Dict)
 	# fix planning_variables
 	all_vars = all_variables(planning_problem)

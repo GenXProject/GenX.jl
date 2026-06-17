@@ -23,6 +23,10 @@ const _BENDERS_OPTIMIZER = _GUROBI_AVAILABLE ? Gurobi.Optimizer : HiGHS.Optimize
 # Relative optimality-gap tolerance for comparing Benders UB to monolithic objective.
 const OBJECTIVE_RTOL = 1e-3
 
+# Test TDR settings file (4 × 6-hour periods).
+const TEST_TDR_SETTINGS        = joinpath(@__DIR__, "benders", "test_tdr_settings.yml")
+const TEST_TDR_FOLDER          = "TDR_results"
+
 # Example systems to test (number => folder name).
 const EXAMPLE_CASES = [
     (1,  "1_three_zones"),
@@ -35,6 +39,12 @@ const EXAMPLE_CASES = [
     (11, "11_three_zones_w_allam_cycle_lox"),
 ]
 
+# Cases that ship with pre-built short-horizon system data in test/benders/<case_name>/.
+# These cases skip TDR entirely (data is already small enough to solve directly).
+const _CASES_SHORT_HORIZON = Dict{Int, String}(
+    10 => joinpath(@__DIR__, "benders", "10_IEEE_9_bus_DC_OPF"),
+)
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -43,6 +53,17 @@ const EXAMPLE_CASES = [
 function _copy_dir(src::AbstractString, dst::AbstractString)
     for item in readdir(src; join = false)
         cp(joinpath(src, item), joinpath(dst, item); force = true)
+    end
+end
+
+"""
+Overwrite system CSV files in `dst_dir/system/` with pre-built short-horizon
+versions from `src_dir`, if they exist.
+"""
+function _inject_short_horizon_data!(dst_dir::AbstractString, src_dir::AbstractString)
+    system_dst = joinpath(dst_dir, "system")
+    for filename in readdir(src_dir; join = false)
+        cp(joinpath(src_dir, filename), joinpath(system_dst, filename); force = true)
     end
 end
 
@@ -66,9 +87,11 @@ If `genx_benders_settings.yml` exists in the example, it is used as the
 base `genx_settings.yml` for both runs so that the model configuration is
 identical and the only difference is whether Benders decomposition is active.
 """
-function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OBJECTIVE_RTOL)
+function run_benders_comparison(case_num::Int, case_name::String, optimizer; rtol::Float64 = OBJECTIVE_RTOL)
     base_path = Base.dirname(Base.dirname(pathof(GenX)))
     example_path = joinpath(base_path, "example_systems", case_name)
+    short_horizon_src = get(_CASES_SHORT_HORIZON, case_num, nothing)
+    use_tdr = isnothing(short_horizon_src)
 
     mono_dir    = mktempdir()
     benders_dir = mktempdir()
@@ -88,6 +111,16 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
         # ------------------------------------------------------------------
         _copy_dir(example_path, mono_dir)
 
+        if !isnothing(short_horizon_src)
+            _inject_short_horizon_data!(mono_dir, short_horizon_src)
+        end
+
+        # Overwrite TDR settings with the fast test configuration (4 × 6-hour periods).
+        cp(TEST_TDR_SETTINGS,
+           joinpath(mono_dir, "settings", "time_domain_reduction_settings.yml"); force = true)
+        # Remove any pre-existing TDR results so clustering always uses our settings.
+        rm(joinpath(mono_dir, TEST_TDR_FOLDER); recursive = true, force = true)
+
         mono_settings = joinpath(mono_dir, "settings", "genx_settings.yml")
         if has_benders_genx
             cp(joinpath(example_path, "settings", "genx_benders_settings.yml"),
@@ -96,7 +129,8 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
         _set_yaml_key!(mono_settings, "Benders", 0)
         _set_yaml_key!(mono_settings, "OverwriteResults", 1)
         _set_yaml_key!(mono_settings, "PrintModel", 0)
-        println(mono_settings)
+        _set_yaml_key!(mono_settings, "TimeDomainReduction", use_tdr ? 1 : 0)
+        _set_yaml_key!(mono_settings, "TimeDomainReductionFolder", TEST_TDR_FOLDER)
 
         redirect_stdout(devnull) do
             run_genx_case!(mono_dir, optimizer)
@@ -114,6 +148,22 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
         # ------------------------------------------------------------------
         _copy_dir(example_path, benders_dir)
 
+        if !isnothing(short_horizon_src)
+            _inject_short_horizon_data!(benders_dir, short_horizon_src)
+        end
+
+        # Overwrite TDR settings and remove stale TDR results.
+        cp(TEST_TDR_SETTINGS,
+           joinpath(benders_dir, "settings", "time_domain_reduction_settings.yml"); force = true)
+        rm(joinpath(benders_dir, TEST_TDR_FOLDER); recursive = true, force = true)
+
+        # Copy the TDR results produced by the monolithic run into the Benders directory
+        # so both solves use identical clustered time series data.
+        mono_tdr_path = joinpath(mono_dir, TEST_TDR_FOLDER)
+        if isdir(mono_tdr_path)
+            cp(mono_tdr_path, joinpath(benders_dir, TEST_TDR_FOLDER); force = true)
+        end
+
         benders_settings = joinpath(benders_dir, "settings", "genx_settings.yml")
         if has_benders_genx
             cp(joinpath(example_path, "settings", "genx_benders_settings.yml"),
@@ -122,8 +172,8 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
         _set_yaml_key!(benders_settings, "Benders", 1)
         _set_yaml_key!(benders_settings, "OverwriteResults", 1)
         _set_yaml_key!(benders_settings, "PrintModel", 0)
-        println(benders_settings)
-
+        _set_yaml_key!(benders_settings, "TimeDomainReduction", use_tdr ? 1 : 0)
+        _set_yaml_key!(benders_settings, "TimeDomainReductionFolder", TEST_TDR_FOLDER)
 
         redirect_stdout(devnull) do
             run_genx_case!(benders_dir, optimizer)
@@ -157,8 +207,18 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
             parity_ok)
 
     finally
-        rm(mono_dir;    recursive = true, force = true)
-        rm(benders_dir; recursive = true, force = true)
+        # On Windows, solver processes may briefly hold file locks after returning.
+        # Retry a few times before giving up so the test doesn't error on cleanup.
+        for dir in (mono_dir, benders_dir)
+            for attempt in 1:5
+                try
+                    rm(dir; recursive = true, force = true)
+                    break
+                catch
+                    attempt < 5 ? sleep(1) : @warn "Could not remove temp dir $dir — it will be cleaned up by the OS"
+                end
+            end
+        end
     end
 end
 
@@ -169,7 +229,7 @@ end
 @testset "Benders vs Monolithic" begin
     for (case_num, case_name) in EXAMPLE_CASES
         @testset "Example $case_num: $case_name" begin
-            run_benders_comparison(case_name, _BENDERS_OPTIMIZER)
+            run_benders_comparison(case_num, case_name, _BENDERS_OPTIMIZER)
         end
     end
 end
