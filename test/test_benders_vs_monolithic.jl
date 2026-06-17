@@ -3,6 +3,7 @@ module TestBendersVsMonolithic
 using Test
 using GenX
 using CSV, DataFrames
+using YAML
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
@@ -45,16 +46,11 @@ function _copy_dir(src::AbstractString, dst::AbstractString)
     end
 end
 
-"""
-Append a key-value pair to a YAML file as a new top-level key.
-
-Julia's YAML.load keeps the **last** occurrence of a duplicate key, so
-appending safely overrides any value that was already in the file.
-"""
+"""Set a top-level key in a YAML file, overwriting any existing value."""
 function _set_yaml_key!(filepath::AbstractString, key::AbstractString, value)
-    open(filepath, "a") do io
-        println(io, "$key: $value")
-    end
+    d = isfile(filepath) ? YAML.load_file(filepath) : Dict{Any,Any}()
+    d[key] = value
+    YAML.write_file(filepath, d)
 end
 
 # ---------------------------------------------------------------------------
@@ -100,6 +96,7 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
         _set_yaml_key!(mono_settings, "Benders", 0)
         _set_yaml_key!(mono_settings, "OverwriteResults", 1)
         _set_yaml_key!(mono_settings, "PrintModel", 0)
+        println(mono_settings)
 
         redirect_stdout(devnull) do
             run_genx_case!(mono_dir, optimizer)
@@ -125,6 +122,8 @@ function run_benders_comparison(case_name::String, optimizer; rtol::Float64 = OB
         _set_yaml_key!(benders_settings, "Benders", 1)
         _set_yaml_key!(benders_settings, "OverwriteResults", 1)
         _set_yaml_key!(benders_settings, "PrintModel", 0)
+        println(benders_settings)
+
 
         redirect_stdout(devnull) do
             run_genx_case!(benders_dir, optimizer)
@@ -176,3 +175,4 @@ end
 end
 
 end # module TestBendersVsMonolithic
+
