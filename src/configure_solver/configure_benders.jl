@@ -15,7 +15,8 @@ default values. The returned dictionary uses `Symbol` keys.
 | `StabDynamic`              | `false`  | Enable Magnanti–Wong / in-out dynamic stabilisation |
 | `ExpectFeasibleSubproblems`| `false`  | Skip feasibility cuts (assumes subproblems always feasible) |
 | `IntegerInvestment`        | `false`  | Use integer (MILP) investment variables in the planning problem |
-| `Distributed`              | `false`  | Distribute subproblems to remote workers |
+| `Distributed`              | `false`  | Distribute subproblems to remote workers. When `true`, GenX will automatically add worker processes up to `NWorkers` if fewer are currently running. |
+| `NWorkers`                 | `0`      | Target number of Julia worker processes for parallel subproblem solving. Only used when `Distributed: true`. A value of `0` means no automatic worker management. |
 | `ThetaLB`                  | `0.0`    | Lower bound on the subproblem objective |
 """
 function configure_benders(settings_path::String)
@@ -33,6 +34,7 @@ function configure_benders(settings_path::String)
         :ExpectFeasibleSubproblems => false,
         :IntegerInvestment         => false,
         :Distributed               => false,
+        :NWorkers                  => 0,
         :ThetaLB                   => 0.0,
     )
 

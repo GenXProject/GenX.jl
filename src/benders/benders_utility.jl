@@ -59,24 +59,34 @@ end
 
 Build and return the complete set of Benders decomposition inputs as a `Dict`.
 
-Initializes the planning (master) problem and all distributed operational subproblems,
-then assembles them into a single `benders_inputs` dictionary with fields:
+Initializes the planning (master) problem and all operational subproblems, then assembles
+them into a single `benders_inputs` dictionary with fields:
 - `"planning_problem"`: the master JuMP model
 - `"planning_variables"`: names of first-stage decision variables
-- `"subproblems"`: `DArray` of operational subproblem dicts (one per representative period)
+- `"subproblems"`: operational subproblem dicts — a `Vector{Dict}` when running with a
+  single Julia process (`nworkers() == 1`), or a `DArray` across multiple workers otherwise
 - `"planning_variables_sub"`: per-subperiod mapping of linking variable names
+
+Using a `Vector{Dict}` when only one process is available avoids routing every subproblem
+solve through Julia's distributed message-passing infrastructure (`@fetchfrom 1 / @spawnat 1`),
+which can deadlock when the solver (e.g. HiGHS IPM) spawns OpenMP threads that interfere
+with Julia's cooperative task scheduler on the single OS thread.
 """
 function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict, optimizer::Any)
 
     planning_problem, planning_variables = init_planning_problem(setup, inputs, optimizer);
 
-    subproblems_dist, planning_variables_sub = init_dist_subproblems(setup, inputs_decomp, planning_variables, optimizer);
+    if nworkers() == 1
+        subproblems, planning_variables_sub = init_sequential_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+    else
+        subproblems, planning_variables_sub = init_dist_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+    end
 
     benders_inputs = Dict();
 	benders_inputs["planning_problem"] = planning_problem;
 	benders_inputs["planning_variables"] = planning_variables;
 
-    benders_inputs["subproblems"] = subproblems_dist;
+    benders_inputs["subproblems"] = subproblems;
 	benders_inputs["planning_variables_sub"] = planning_variables_sub;
 
     return benders_inputs

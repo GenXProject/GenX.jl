@@ -16,8 +16,42 @@ Benders decomposition is accessed by setting `Benders: 1` in the `genx_settings.
 | ThetaLB | $\in \mathbb{R}$ | Lower Bound on a subproblem objective; default is zero, but should be set to lower value if subproblems can have negative objectives |
 | StabDynamic | $\{true, false\}$ | Dynamic (Magnanti–Wong / in-out) stabilisation; false = disabled |
 | IntegerInvestment | $\{true, false\}$ | Investment variable type; false = continuous (LP relaxation), true = integer (MILP master problem)|
-| Distributed | $\{true, false\}$ | Whether to distribute subproblems to remote workers |
+| Distributed | $\{true, false\}$ | Whether to distribute subproblems to remote workers. When `true` and `NWorkers > 1`, GenX will automatically launch the required worker processes. |
+| NWorkers | $\in \mathbb{Z}_+$, $> 1$ | Number of Julia worker processes to use for parallel subproblem solving. Only used when `Distributed: true`. Must be greater than 1 to enable parallel execution. |
 | ExpectFeasibleSubproblems | $\{true, false\}$ | # If true, skip feasibility cuts (assumes subproblems are always feasible); safe to leave false|
+
+### Running Benders in Parallel
+
+By default, GenX runs Benders with a single Julia process: all representative-period subproblems are solved sequentially on the main process. To enable parallel subproblem solving, set `Distributed: true` and `NWorkers: N` (where `N > 1`) in `benders_settings.yml`:
+
+```yaml
+Distributed: true
+NWorkers: 4
+```
+
+When these settings are present, GenX will automatically launch the required number of worker processes before the Benders run begins. No changes to your run script are needed:
+
+```julia
+using GenX
+using HiGHS
+
+run_genx_case!("path/to/case", HiGHS.Optimizer)
+```
+
+If you prefer to manage workers manually (for example, when using a cluster scheduler), you can add workers yourself before calling `run_genx_case!`. GenX will detect that enough workers are already running and skip the automatic launch:
+
+```julia
+using Distributed
+addprocs(4)
+@everywhere using GenX
+using HiGHS
+
+run_genx_case!("path/to/case", HiGHS.Optimizer)
+```
+
+The number of workers should generally match (or be a divisor of) the number of representative periods so that each worker receives a roughly equal share of subproblems.
+
+> **Note:** Parallel execution is enabled automatically whenever `Distributed.nworkers() > 1` at the time `run_genx_case!` is called, regardless of the `Distributed` or `NWorkers` settings. The automatic worker launch only fires when `Distributed: true` and `NWorkers > 1` and fewer workers than requested are currently running.
 
 Note that the stabilization/regularization scheme used in MacroEnergySolvers.jl is turned on when when StabParam is greater than zero. For the regularization scheme to work, the planning problem solver must use an interior point method without crossover. Stabilization is a process in Benders where the master problem can choose less extreme solutions that are on the interior of the feasible set (see [Pecci and Jenkins](https://ieeexplore.ieee.org/abstract/document/10829583)). A challenge of Benders is that, especially at early iterations, the master problem chooses solutions that result in high costs in the subproblems (e.g., at the first iteration, Benders typically chooses to build nothing in the planning level because it is trying to minimize cost without knowledge of the operations) which results in poor cuts. The stabilization scheme generally allows the master to choose solutions that are less extreme and can result in stronger cuts early on.
 

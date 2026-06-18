@@ -14,3 +14,4 @@ run_crossover: "off"         # Disable crossover — barrier solution is suffici
                              # for the master (LP duals are not used here)
 mip_rel_gap: 1.0e-3          # MIP relative optimality gap (only relevant when
                              # IntegerInvestment: true)
+threads: 1                   # Single thread — prevents IPM OpenMP threads from deadlocking Julia's task scheduler in single-process runs

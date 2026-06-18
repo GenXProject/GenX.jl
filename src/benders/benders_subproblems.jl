@@ -88,6 +88,42 @@ function init_local_subproblems!(setup::Dict,inputs_local::Vector{Dict{Any,Any}}
 end
 
 @doc raw"""
+	init_sequential_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+
+Initialize all Benders subproblems as a plain `Vector{Dict}` on the current process.
+
+Used when `nworkers() == 1` (no extra Julia workers are available).  Avoids routing every
+subproblem solve through Julia's distributed message-passing infrastructure
+(`@fetchfrom 1 / @spawnat 1`), which can deadlock when the LP solver (e.g. HiGHS IPM)
+spawns OpenMP threads that interfere with Julia's cooperative task scheduler.
+
+Returns `(subproblems, planning_variables_sub)` with the same semantics as
+`init_dist_subproblems`: `subproblems` is a `Vector{Dict}` accepted by the
+`solve_subproblems(::Vector{Dict}, ...)` method in `MacroEnergySolvers`, and
+`planning_variables_sub` is a `Dict` mapping subperiod index to its linking variable names.
+"""
+function init_sequential_subproblems(setup::Dict, inputs_decomp::Dict, planning_variables::Vector{String}, optimizer::Any)
+
+    subproblem_generation_time = time()
+
+    SUBPROB_OPTIMIZER = configure_benders_subprob_solver(setup["settings_path"], optimizer)
+
+    # Build an ordered list of per-subperiod inputs matching DArray index order (1..n).
+    inputs_list = [inputs_decomp[w] for w in sort(collect(keys(inputs_decomp)))]
+    n = length(inputs_list)
+    subproblems = [Dict{Any,Any}() for _ in 1:n]
+
+    init_local_subproblems!(setup, inputs_list, subproblems, planning_variables, SUBPROB_OPTIMIZER)
+
+    planning_variables_sub = get_local_planning_variables(subproblems)
+
+    subproblem_generation_time = time() - subproblem_generation_time
+    println("Sequential operational subproblems generation took $subproblem_generation_time seconds")
+
+    return subproblems, planning_variables_sub
+end
+
+@doc raw"""
 	init_dist_subproblems(setup, inputs_decomp, planning_variables, optimizer)
 
 Initialize all Benders subproblems as a `DistributedArrays.DArray` across available workers.
