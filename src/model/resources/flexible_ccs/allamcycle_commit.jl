@@ -125,7 +125,8 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
 
                 # cUpTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
                 # cUpTimeWrap constraint equivalant to: sum(vSTART_Allam[y,e] for e=(t-((t%p)-1):t))+sum(vSTART_Allam[y,e] for e=(p_max-(allam_dict[y, "up_time"][i])-(t%p))):p_max)
-                [t in Up_Time_HOURS], vCOMMIT_Allam[y,i,t] >= sum(vSTART_Allam[y,i,e] for e=(t-((t%p)-1):t))+sum(vSTART_Allam[y,i,e] for e=((t+p-(t%p))-(allam_dict[y, "up_time"][i]-(t%p))):(t+p-(t%p)))
+                # mod1(t,p) replaces t%p to correctly map the last hour of each period to p instead of 0
+                [t in Up_Time_HOURS], vCOMMIT_Allam[y,i,t] >= sum(vSTART_Allam[y,i,e] for e=(t-(mod1(t,p)-1):t))+sum(vSTART_Allam[y,i,e] for e=((t+p-mod1(t,p))-(allam_dict[y, "up_time"][i]-mod1(t,p))):(t+p-mod1(t,p)))
 
                 # cUpTimeStart:
                 # NOTE: Expression t+p-(t%p) is equivalant to "p_max"
@@ -147,7 +148,8 @@ function allamcycle_commit!(EP::Model, inputs::Dict, setup::Dict)
 
                 # cDownTimeWrap: If n is greater than the number of subperiods left in the period, constraint wraps around to first hour of time series
                 # cDownTimeWrap constraint equivalant to: eTotalCap_AllamcycleLOX[y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,t] >= sum(vSHUT_Allam[y,e] for e=(t-((t%p)-1):t))+sum(vSHUT_Allam[y,e] for e=(p_max-(allam_dict[y, "down_time"][i]-(t%p))):p_max)
-                [t in Down_Time_HOURS], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t] >= sum(vSHUT_Allam[y,i,e] for e=(t-((t%p)-1):t))+sum(vSHUT_Allam[y,i,e] for e=((t+p-(t%p))-(allam_dict[y, "down_time"][i]-(t%p))):(t+p-(t%p)))
+                # mod1(t,p) replaces t%p to correctly map the last hour of each period to p instead of 0
+                [t in Down_Time_HOURS], EP[:eTotalCap_AllamcycleLOX][y,i]/allam_dict[y, "cap_size"][i]-vCOMMIT_Allam[y,i,t] >= sum(vSHUT_Allam[y,i,e] for e=(t-(mod1(t,p)-1):t))+sum(vSHUT_Allam[y,i,e] for e=((t+p-mod1(t,p))-(allam_dict[y, "down_time"][i]-mod1(t,p))):(t+p-mod1(t,p)))
 
                 # cDownTimeStart:
                 # NOTE: Expression t+p-(t%p) is equivalant to "p_max"

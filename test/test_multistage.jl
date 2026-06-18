@@ -32,6 +32,9 @@ obj_test = objective_value.(EP[i] for i in 1:multistage_setup["NumStages"])
 optimal_tol_rel = get_attribute.((EP[i] for i in 1:multistage_setup["NumStages"]),
     "ipm_optimality_tolerance")
 optimal_tol = optimal_tol_rel .* obj_test  # Convert to absolute tolerance
+println()
+println(obj_test)
+println()
 
 # Test the objective value
 test_result = @test all(obj_true .- optimal_tol .<= obj_test .<= obj_true .+ optimal_tol)
