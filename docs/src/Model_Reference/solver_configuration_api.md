@@ -40,3 +40,9 @@ Pages = ["configure_cbc.jl"]
 Modules = [GenX]
 Pages = ["configure_scip.jl"]
 ```
+
+## Configuring Benders Settings
+```@autodocs
+Modules = [GenX]
+Pages = ["configure_benders.jl"]
+```

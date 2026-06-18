@@ -186,3 +186,9 @@ GenX.write_settings_file
 GenX.write_allam_capacity
 GenX.write_allam_output
 ```
+
+## Write Benders Decomposition Outputs
+```@autodocs
+Modules = [GenX]
+Pages = ["write_benders_output.jl", "write_planning_problem_costs.jl"]
+```
