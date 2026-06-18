@@ -49,8 +49,8 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
                     if current < target
                         n_to_add = target - current
                         @info "Benders: adding $n_to_add worker process(es) to reach $target total workers."
-                        addprocs(n_to_add)
-                        @everywhere using GenX
+                        addprocs(n_to_add; exeflags=["--project=$(Base.active_project())"])
+                        Distributed.remotecall_eval(Main, workers(), :(using GenX))
                     elseif current > target
                         @warn "Benders: $current workers are already running but NWorkers=$target was requested. Proceeding with $current workers."
                     else
