@@ -9,4 +9,4 @@ ipm_optimality_tolerance: 1e-04
 
 # run the crossover routine for ipm to get a basic feasible solution with dual values
 # [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
-run_crossover: "on"
+run_crossover: "off"
