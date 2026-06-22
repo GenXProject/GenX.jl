@@ -60,8 +60,6 @@ function test_case()
         @warn "zone_no_resources: HiGHS returned 0 solutions (status=$ts) on $(Sys.MACHINE) Julia $VERSION. Skipping test."
         @test_broken result_count(EP) > 0
         
-        # Remove the costs file
-        rm(joinpath(test_path, "costs.csv"))
         return nothing
     end
     obj_test = objective_value(EP)
