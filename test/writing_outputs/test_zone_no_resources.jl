@@ -40,7 +40,7 @@ end
 
 function test_case()
     test_path = joinpath(@__DIR__, "zone_no_resources")
-    obj_true = 5.1773638153e6
+    obj_true = 5.1773638153e12
     costs_true = prepare_costs_true()
 
     # Define test setup
@@ -49,8 +49,7 @@ function test_case()
         "UCommit" => 2,
         "CO2Cap" => 2,
         "StorageLosses" => 1,
-        "WriteShadowPrices" => 1, 
-        "ParameterScale" => 1)
+        "WriteShadowPrices" => 1)
 
     # Run the case and get the objective value and tolerance
     EP, inputs, _ = redirect_stdout(devnull) do
