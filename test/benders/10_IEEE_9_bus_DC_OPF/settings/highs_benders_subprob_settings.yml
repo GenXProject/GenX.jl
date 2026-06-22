@@ -1,17 +1,14 @@
 # HiGHS settings for the Benders *operational subproblems*.
 #
 # Subproblems are LPs whose dual variables form the Benders optimality cuts.
-# Crossover MUST be enabled so that the IPM solution is mapped to a vertex
-# (basic feasible solution) with well-defined simplex dual variables.
-#
-# Each subproblem runs on its own distributed worker, so thread count is set
-# to 1 to prevent contention across workers.
+# Simplex is used instead of IPM to avoid the LAPACK/OpenBLAS thread pool
+# that IPM creates; in Julia < 1.10 those foreign threads are not tracked by
+# Julia's GC safepoint mechanism and can cause deadlocks.  Simplex already
+# terminates at a vertex (basic feasible) solution, so dual variables are
+# well-defined without a crossover step.
 
 Feasib_Tol: 1.0e-8          # Primal feasibility tolerance
 Optimal_Tol: 1.0e-8         # Dual feasibility tolerance
-Method: ipm                  # Algorithm: ipm = interior-point (barrier)
-ipm_optimality_tolerance: 1.0e-8  # IPM convergence tolerance
-run_crossover: "on"          # Enable crossover — accurate dual variables are
-                             # required for valid Benders cuts
+Method: simplex              # Algorithm: simplex (avoids IPM's LAPACK threads)
 threads: 1                   # Single thread per subproblem worker
 output_flag: false            # Suppress HiGHS output from subproblems

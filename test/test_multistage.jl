@@ -11,7 +11,7 @@ test_path = joinpath(@__DIR__, "multi_stage")
 multistage_setup = Dict("NumStages" => 3,
     "StageLengths" => [10, 10, 10],
     "WACC" => 0.045,
-    "ConvergenceTolerance" => 0.01,
+    "ConvergenceTolerance" => 0.001,
     "Myopic" => 0,
     "WriteIntermittentOutputs" => 0)
 
@@ -29,9 +29,10 @@ EP, _, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 obj_test = objective_value.(EP[i] for i in 1:multistage_setup["NumStages"])
-optimal_tol_rel = get_attribute.((EP[i] for i in 1:multistage_setup["NumStages"]),
-    "ipm_optimality_tolerance")
-optimal_tol = optimal_tol_rel .* obj_test  # Convert to absolute tolerance
+# Use the Benders convergence tolerance as the comparison bound — the IPM solver
+# tolerance is far tighter than what Benders guarantees across different HiGHS versions.
+benders_tol_rel = multistage_setup["ConvergenceTolerance"]
+optimal_tol = benders_tol_rel .* abs.(obj_true)
 println()
 println(obj_test)
 println()
