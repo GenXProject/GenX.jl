@@ -1,17 +1,17 @@
-# HiGHS settings for the Benders *planning* (master) problem.
+# HiGHS settings for the Benders *planning* (master) problem — case 7.
 #
-# The master problem is a continuous LP when IntegerInvestment: false (the
-# default).  The IPM algorithm without crossover solves the LP quickly and
-# still provides the accurate primal solution needed to fix investment
-# variables in the subproblems.  If IntegerInvestment: true is set the master
-# becomes a MILP; the mip_rel_gap entry below controls that tolerance.
+# The master is a continuous LP (IntegerInvestment: false).
+# IPM without crossover solves it efficiently; master LP duals are not used
+# for Benders cuts (only subproblem duals are), so crossover is unnecessary.
+# Tight tolerances ensure the planning solution passed to subproblems is
+# accurate, avoiding errors in the fixed first-stage variable values.
 
-Feasib_Tol: 1.0e-6          # Primal feasibility tolerance
-Optimal_Tol: 1.0e-6         # Dual feasibility tolerance
-Method: ipm                  # Algorithm: ipm = interior-point (barrier)
-ipm_optimality_tolerance: 1.0e-6  # IPM convergence tolerance
-run_crossover: "off"         # Disable crossover — barrier solution is sufficient
-                             # for the master (LP duals are not used here)
-mip_rel_gap: 1.0e-3          # MIP relative optimality gap (only relevant when
-                             # IntegerInvestment: true)
-threads: 1                   # Single thread — prevents IPM OpenMP threads from deadlocking Julia's task scheduler in single-process runs
+Feasib_Tol: 1.0e-9          # Primal feasibility tolerance
+Optimal_Tol: 1.0e-9         # Dual feasibility tolerance
+Pre_Solve: "on"              # Presolve improves conditioning before IPM
+Method: ipm                  # IPM for the master LP
+ipm_optimality_tolerance: 1.0e-9  # IPM convergence tolerance
+run_crossover: "off"         # No crossover needed — master LP duals unused
+mip_rel_gap: 1.0e-4          # MIP gap (only if IntegerInvestment: true)
+output_flag: false
+threads: 1

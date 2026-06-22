@@ -7,10 +7,11 @@
 # Each subproblem runs on its own distributed worker, so thread count is set
 # to 1 to prevent contention across workers.
 
-Feasib_Tol: 1.0e-6          # Primal feasibility tolerance
-Optimal_Tol: 1.0e-6         # Dual feasibility tolerance
+Feasib_Tol: 1.0e-8          # Primal feasibility tolerance
+Optimal_Tol: 1.0e-8         # Dual feasibility tolerance
 Method: ipm                  # Algorithm: ipm = interior-point (barrier)
-ipm_optimality_tolerance: 1.0e-6  # IPM convergence tolerance
+ipm_optimality_tolerance: 1.0e-8  # IPM convergence tolerance
 run_crossover: "on"          # Enable crossover — accurate dual variables are
                              # required for valid Benders cuts
 threads: 1                   # Single thread per subproblem worker
+output_flag: false            # Suppress HiGHS output from subproblems
