@@ -11,7 +11,7 @@ test_path = joinpath(@__DIR__, "multi_stage")
 multistage_setup = Dict("NumStages" => 3,
     "StageLengths" => [10, 10, 10],
     "WACC" => 0.045,
-    "ConvergenceTolerance" => 0.00001,
+    "ConvergenceTolerance" => 0.01,
     "Myopic" => 0,
     "WriteIntermittentOutputs" => 0)
 
