@@ -101,6 +101,15 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .< 0)
     end
 
+    if setup["IntegerInvestments"] == 1
+        if "Discrete_Build" in names(network_var)
+            discrete_vals = collect(skipmissing(network_var[!, :Discrete_Build]))
+            inputs_nw["DISCRETE_BUILD_LINES"] = findall(x -> x == 1, discrete_vals)
+        else
+            inputs_nw["DISCRETE_BUILD_LINES"] = Int[]
+        end
+    end
+
     println(filename * " Successfully Read!")
 
     return network_var
