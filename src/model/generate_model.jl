@@ -86,13 +86,13 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Initialize Objective Function Expression
     EP[:eObj] = AffExpr(0.0)
 
-    #NEW: Guard against unsupported Benders + VRE-STOR combination
+    # Guard against unsupported Benders + VRE-STOR combination
     if setup["Benders"] == 1 
         if setup["LDSAdditionalConstraints"] == 1
             @warn "LDSAdditionalConstraints=1 applies to problems with non-representative periods and is not supported in the current Benders implementation. Benders will proceed as if LDSAdditionalConstraints=0"
         end
     end
-    #NEW: Delegate to planning_model! and operation_model! helper functions.
+    # Delegate to planning_model! and operation_model! helper functions.
     # planning_model! handles all investment/capacity decisions and must run first
     # so that investment variables exist when operation_model! references them.
     planning_model!(EP, setup, inputs)
@@ -116,7 +116,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     return EP
 end
 
-#NEW: planning_model! contains all investment/capacity decisions. These are separated
+# planning_model! contains all investment/capacity decisions. These are separated
 # from operational decisions to support Benders decomposition, where investment
 # (first-stage) variables must be fixed before solving operational (second-stage) subproblems.
 # For non-Benders runs (setup["Benders"]==0) this produces an identical model to the
@@ -151,12 +151,12 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
         EP = retrofit(EP, inputs)
     end
 
-    #NEW: Benders-only long-duration storage planning constraints (cross-period state-of-charge)
+    # Benders-only long-duration storage planning constraints (cross-period state-of-charge)
     if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["STOR_LONG_DURATION"])
         long_duration_storage_planning!(EP, inputs, setup)
     end
 
-    #NEW: Benders-only hydro inter-period linkage planning constraints
+    # Benders-only hydro inter-period linkage planning constraints
     if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage_planning!(EP, inputs)
     end
@@ -176,12 +176,12 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
         maximum_capacity_requirement!(EP, inputs, setup)
     end
 
-    #NEW: Benders-only planning-phase CO2 cap constraints (annual budget on investment)
+    # Benders-only planning-phase CO2 cap constraints (annual budget on investment)
     if setup["CO2Cap"] > 0 && setup["Benders"] == 1
         co2_cap_planning!(EP, inputs, setup)
     end
 
-    #NEW: Benders-only planning-phase energy share requirement constraints
+    # Benders-only planning-phase energy share requirement constraints
     if setup["EnergyShareRequirement"] >= 1 && setup["Benders"] == 1
         energy_share_requirement_planning!(EP, inputs, setup)
     end
@@ -191,7 +191,7 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 end
 
-#NEW: operation_model! contains all operational constraints, variables, and technology modules.
+# operation_model! contains all operational constraints, variables, and technology modules.
 # For non-Benders runs (setup["Benders"]==0) this produces an identical model to the
 # original monolithic generate_model. For Benders runs it uses subperiod-specific variants
 # of certain constraints to allow decomposition across representative periods.
@@ -231,7 +231,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
 
     # Infrastructure
 
-    #NEW: capacity_decisions! creates capacity variables needed by Benders subproblems.
+    # capacity_decisions! creates capacity variables needed by Benders subproblems.
     # The haskey guard prevents double-registration when planning_model! already set up
     # eTotalCap (e.g. via investment_discharge!).
     if setup["Benders"] == 1
@@ -306,7 +306,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
 
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
     if setup["Benders"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
-        #NEW: Benders uses subperiod variant of hydro inter-period linkage
+        # Benders uses subperiod variant of hydro inter-period linkage
         hydro_inter_period_linkage_subperiod!(EP, inputs)
     elseif inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage!(EP, inputs, setup)
@@ -346,7 +346,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     # CO2 emissions limits
     if setup["CO2Cap"] > 0
         if setup["Benders"] == 1
-            #NEW: Benders uses subperiod-scaled CO2 cap for each operational subproblem
+            # Benders uses subperiod-scaled CO2 cap for each operational subproblem
             co2_cap_subperiod!(EP, inputs, setup)
         else
             co2_cap!(EP, inputs, setup)
@@ -356,7 +356,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     # Energy Share Requirement
     if setup["EnergyShareRequirement"] >= 1
         if setup["Benders"] == 1
-            #NEW: Benders uses subperiod-scaled ESR for each operational subproblem
+            # Benders uses subperiod-scaled ESR for each operational subproblem
             energy_share_requirement_subperiod!(EP, inputs, setup)
         else
             energy_share_requirement!(EP, inputs, setup)
@@ -385,12 +385,6 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     ## Power balance constraints
     # demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
     #          + incoming power flows - outgoing power flows - flow losses - charge of heat storage + generation from NACC
-
-    # @variable(EP, overproduction[t = 1:T, z = 1:Z] >= 0)
-    # add_to_expression!(EP[:eObj], 1e8 * sum(overproduction))
-    # @constraint(EP,
-    #     cPowerBalance[t = 1:T, z = 1:Z],
-        # EP[:ePowerBalance][t, z] + overproduction[t, z]==inputs["pD"][t, z])
     @constraint(EP,
         cPowerBalance[t = 1:T, z = 1:Z],
         EP[:ePowerBalance][t, z]==inputs["pD"][t, z])
