@@ -363,6 +363,10 @@ function write_nse_benders(path::AbstractString, inputs::Dict, setup::Dict, nse:
 	Z = inputs["Z"]
 	SEG = inputs["SEG"]
 
+	# Match the monolithic writer: convert model units (GW under ParameterScale) to MW.
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+	nse = nse .* scale_factor
+
 	dfNse = DataFrame(Segment = repeat(1:SEG, outer = Z),
 		Zone = repeat(1:Z, inner = SEG),
 		AnnualSum = zeros(SEG * Z))
