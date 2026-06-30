@@ -365,7 +365,7 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
 
     # Hourly Matching Requirement
     if setup["HourlyMatchingRequirement"] == 1
-        hourly_matching!(EP, inputs) #TODO: Handle this with Benders too
+        hourly_matching!(EP, inputs)
     end
 
     # Capacity Reserve Margin
