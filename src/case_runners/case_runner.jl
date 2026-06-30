@@ -266,6 +266,10 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
 
     update_with_subproblem_solutions!(subproblems, results)
 
+    # Note: the planning problem is intentionally NOT re-solved/realigned here. All first-stage
+    # outputs (capacity, network expansion, planning costs) are read directly from the incumbent
+    # results.planning_sol inside write_benders_output, so they reflect the same solution as the
+    # subproblem dispatch without depending on the planning-problem model's post-Benders state.
     println("Writing Output")
 
     outputs_path = joinpath(case, "results_benders")

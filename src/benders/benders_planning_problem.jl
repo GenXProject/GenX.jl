@@ -132,19 +132,45 @@ end
 
 Fix every planning variable in `planning_problem` to the value supplied in
 `planning_variable_values` (a `Dict` mapping variable name → value), then re-solve
-the model.  Used after Benders convergence to recover dual information from the
-planning problem with the optimal first-stage solution fixed.
+the model.  Used after Benders convergence to realign the planning problem with a
+specific first-stage solution (e.g. the best incumbent) so that capacity and
+dual-based outputs are read from that solution rather than the last master solve.
+
+If the fixed re-solve does not yield a primal solution (e.g. a numerically infeasible
+fixing), the fixings are reverted and the model is re-solved unfixed so that the
+caller is left with a usable solution instead of an empty one. Returns `true` when the
+planning problem holds a primal solution at the requested values, `false` otherwise.
 """
 function update_with_planning_solution!(planning_problem::JuMP.Model, planning_variable_values::Dict)
-	# fix planning_variables
-	all_vars = all_variables(planning_problem)
-	for var in all_vars
+	# Fix the planning variables, remembering their prior lower bounds so the fixing can
+	# be cleanly reverted if the re-solve fails.
+	fixed_vars = JuMP.VariableRef[]
+	prior_lower_bounds = Dict{JuMP.VariableRef, Union{Nothing, Float64}}()
+	for var in all_variables(planning_problem)
 		var_name = name(var)
 		if haskey(planning_variable_values, var_name)
-			fix(var, planning_variable_values[var_name], force=true)
+			prior_lower_bounds[var] = has_lower_bound(var) ? lower_bound(var) : nothing
+			fix(var, planning_variable_values[var_name], force = true)
+			push!(fixed_vars, var)
 		end
 	end
 
 	optimize!(planning_problem)
-	return nothing
+
+	if has_values(planning_problem)
+		return true
+	end
+
+	# Realignment failed: revert the fixings and recover the unfixed solution so that
+	# downstream output writing still has a valid (if not incumbent-aligned) solution.
+	@warn "update_with_planning_solution!: fixed re-solve returned no primal solution " *
+		  "(status: $(termination_status(planning_problem))). Reverting fixings and " *
+		  "re-solving unfixed; capacity/dual outputs will reflect the last master solve."
+	for var in fixed_vars
+		unfix(var)
+		lb = prior_lower_bounds[var]
+		isnothing(lb) || set_lower_bound(var, lb)
+	end
+	optimize!(planning_problem)
+	return false
 end

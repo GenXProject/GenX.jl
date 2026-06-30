@@ -35,46 +35,40 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 	end
 	
 
-	if !has_values(planning_problem)
-		if get(output_settings_d, "WriteStatus", true)
-			write_status(outpath, inputs, setup, planning_problem)
-		end
-		@warn "Benders planning problem has no solver values in the model object; skipping detailed output files. Use benders_results fields for algorithm diagnostics."
-		return nothing
-	end
-
-	#TODO: Check that Benders converged; 
-	
-	#write_planning_solution(outpath, inputs, setup, planning_problem)
-
+	# Planning (first-stage) outputs are read directly from the incumbent solution
+	# (benders_results.planning_sol) rather than from the planning-problem model state. They
+	# are written before the has_values gate and are correct regardless of the model's
+	# post-Benders solve status. Dual-based planning outputs (min/max capacity requirement,
+	# subsidy revenue, CO2 cap prices) are intentionally not written for Benders: their shadow
+	# prices are not available from planning_sol and are not reliably recoverable from the
+	# cut-laden master problem.
 	if get(output_settings_d, "WriteCapacity", true) || get(output_settings_d, "WriteNetRevenue", true)
-		elapsed_time_capacity = @elapsed dfCap = write_capacity(outpath, inputs, setup, planning_problem)
+		elapsed_time_capacity = @elapsed dfCap = write_capacity_benders(outpath, inputs, setup, planning_problem, benders_results.planning_sol)
 		println("Time elapsed for writing capacity is")
 		println(elapsed_time_capacity)
 	end
 
-	
 	if inputs["Z"] > 1
 		if setup["NetworkExpansion"] == 1 && get(output_settings_d, "WriteNWExpansion", true)
-			elapsed_time_expansion = @elapsed write_nw_expansion(outpath, inputs, setup, planning_problem)
+			elapsed_time_expansion = @elapsed write_nw_expansion_benders(outpath, inputs, setup, planning_problem, benders_results.planning_sol)
 			println("Time elapsed for writing network expansion is")
 			println(elapsed_time_expansion)
 		end
-	end
-	if setup["MinCapReq"] == 1 && has_duals(planning_problem) == 1 && get(output_settings_d, "WriteMinCapReq", true)
-		elapsed_time_min_cap_req = @elapsed write_minimum_capacity_requirement(outpath,inputs,setup,planning_problem)
-		println("Time elapsed for writing minimum capacity requirement is")
-		println(elapsed_time_min_cap_req)
-	end
-	if setup["MaxCapReq"] == 1 && has_duals(planning_problem) == 1 && get(output_settings_d, "WriteMaxCapReq", true)
-		elapsed_time_max_cap_req = @elapsed write_maximum_capacity_requirement(outpath,inputs,setup,planning_problem)
-		println("Time elapsed for writing maximum capacity requirement is")
-		println(elapsed_time_max_cap_req)
 	end
 
 	if get(output_settings_d, "WriteCosts", true)
 		write_planning_problem_costs(outpath, inputs, setup, benders_results, planning_problem)
 	end
+
+	if !has_values(planning_problem)
+		if get(output_settings_d, "WriteStatus", true)
+			write_status(outpath, inputs, setup, planning_problem)
+		end
+		@warn "Benders planning problem has no solver values in the model object; skipping detailed (operational) output files. Use benders_results fields for algorithm diagnostics."
+		return nothing
+	end
+
+	#TODO: Check that Benders converged;
 
     CSV.write(joinpath(outpath, "benders_convergence.csv"),dfConv)
 
@@ -190,19 +184,207 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 		end
 	end
 
-	# Planning problem dual outputs
-	if has_duals(planning_problem)
-		if setup["MultiStage"] == 0 && get(output_settings_d, "WriteSubsidyRevenue", true)
-			elapsed = @elapsed write_subsidy_revenue(outpath, inputs, setup, planning_problem)
-			println("Time elapsed for writing subsidy revenue is")
-			println(elapsed)
-		end
-		if setup["CO2Cap"] > 0 && haskey(planning_problem, :cCO2Emissions_systemwide_planning) && get(output_settings_d, "WriteCO2Cap", true)
-			elapsed = @elapsed write_co2_cap_benders(outpath, inputs, setup, planning_problem)
-			println("Time elapsed for writing CO2 cap prices is")
-			println(elapsed)
+	# Planning-problem dual outputs (subsidy revenue, CO2 cap prices) are intentionally not
+	# written for Benders: these shadow prices are not available from the incumbent planning
+	# solution and are not reliably recoverable from the cut-laden master problem. They can be
+	# reintroduced once a trustworthy planning dual is available.
+end
+
+@doc raw"""
+	write_nw_expansion_benders(path, inputs, setup, planning_problem, planning_sol)
+
+Write `network_expansion.csv` for a Benders run using the incumbent planning solution.
+
+Transmission reinforcement (`vNEW_TRANS_CAP`) is a first-stage variable, so its value is read
+from `planning_sol` by substituting the incumbent variable values into the planning-problem
+variable (`value(v -> planning_sol.values[name(v)], ...)`) — no solved model state required.
+Mirrors the monolithic `write_nw_expansion`.
+"""
+function write_nw_expansion_benders(path::AbstractString, inputs::Dict, setup::Dict,
+	planning_problem::Model, planning_sol::NamedTuple)
+	L = inputs["L"]
+
+	pv(x) = value(v -> planning_sol.values[name(v)], x)
+
+	transcap = zeros(L)
+	for i in 1:L
+		if i in inputs["EXPANSION_LINES"]
+			transcap[i] = pv(planning_problem[:vNEW_TRANS_CAP][i])
 		end
 	end
+
+	dfTransCap = DataFrame(Line = 1:L,
+		New_Trans_Capacity = convert(Array{Float64}, transcap),
+		Cost_Trans_Capacity = convert(Array{Float64},
+			transcap .* inputs["pC_Line_Reinforcement"]))
+
+	if setup["ParameterScale"] == 1
+		dfTransCap.New_Trans_Capacity *= ModelScalingFactor       # GW to MW
+		dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2    # MUSD to USD
+	end
+
+	CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
+	return nothing
+end
+
+@doc raw"""
+	write_capacity_benders(path, inputs, setup, planning_problem, planning_sol)
+
+Write `capacity.csv` for a Benders run using the incumbent planning solution directly.
+
+Capacity quantities are evaluated by substituting the best-incumbent variable values from
+`planning_sol.values` into the planning-problem variables and capacity expressions
+(`value(v -> planning_sol.values[name(v)], ...)`), so the output reflects the same
+first-stage solution as the dispatch outputs regardless of the planning-problem model's
+post-Benders solve state. This mirrors the monolithic `write_capacity` column-for-column
+except that `CapacityConstraintDual` is omitted: that column is a shadow price, which is not
+available from `planning_sol` (and is not reliably recoverable from the cut-laden master).
+It can be reintroduced once a trustworthy planning dual is available.
+"""
+function write_capacity_benders(path::AbstractString, inputs::Dict, setup::Dict,
+	planning_problem::Model, planning_sol::NamedTuple)
+	gen = inputs["RESOURCES"]
+	G = inputs["G"]
+
+	sco2turbine = 1
+	ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+	COMMIT_Allam = setup["UCommit"] > 0 ? ALLAM_CYCLE_LOX : Int[]
+
+	# Evaluate a planning variable or expression at the incumbent solution by substituting
+	# variable values from planning_sol. No solved model state is required.
+	pv(x) = value(v -> planning_sol.values[name(v)], x)
+
+	# Capacity decisions (discharge)
+	capdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+	for i in inputs["NEW_CAP"]
+		if i in inputs["COMMIT"]
+			capdischarge[i] = pv(planning_problem[:vCAP][i]) * cap_size(gen[i])
+		elseif i in COMMIT_Allam
+			capdischarge[i] = pv(planning_problem[:vCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i, "cap_size"][sco2turbine]
+		elseif i in ALLAM_CYCLE_LOX
+			capdischarge[i] = pv(planning_problem[:vCAP_AllamCycleLOX][i, sco2turbine])
+		else
+			capdischarge[i] = pv(planning_problem[:vCAP][i])
+		end
+	end
+
+	retcapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+	for i in inputs["RET_CAP"]
+		if i in inputs["COMMIT"]
+			retcapdischarge[i] = pv(planning_problem[:vRETCAP][i]) * cap_size(gen[i])
+		elseif i in COMMIT_Allam
+			retcapdischarge[i] = pv(planning_problem[:vRETCAP_AllamCycleLOX][i, sco2turbine]) * inputs["allam_dict"][i, "cap_size"][sco2turbine]
+		elseif i in ALLAM_CYCLE_LOX
+			retcapdischarge[i] = pv(planning_problem[:vRETCAP_AllamCycleLOX][i, sco2turbine])
+		else
+			retcapdischarge[i] = pv(planning_problem[:vRETCAP][i])
+		end
+	end
+
+	retrocapdischarge = zeros(size(inputs["RESOURCE_NAMES"]))
+	for i in inputs["RETROFIT_CAP"]
+		if i in inputs["COMMIT"]
+			retrocapdischarge[i] = pv(planning_problem[:vRETROFITCAP][i]) * cap_size(gen[i])
+		else
+			retrocapdischarge[i] = pv(planning_problem[:vRETROFITCAP][i])
+		end
+	end
+
+	# CapacityConstraintDual intentionally omitted for Benders (see docstring).
+
+	capcharge = zeros(size(inputs["RESOURCE_NAMES"]))
+	retcapcharge = zeros(size(inputs["RESOURCE_NAMES"]))
+	existingcapcharge = zeros(size(inputs["RESOURCE_NAMES"]))
+	for i in inputs["STOR_ASYMMETRIC"]
+		if i in inputs["NEW_CAP_CHARGE"]
+			capcharge[i] = pv(planning_problem[:vCAPCHARGE][i])
+		end
+		if i in inputs["RET_CAP_CHARGE"]
+			retcapcharge[i] = pv(planning_problem[:vRETCAPCHARGE][i])
+		end
+		existingcapcharge[i] = existing_charge_cap_mw(gen[i])
+	end
+
+	capenergy = zeros(size(inputs["RESOURCE_NAMES"]))
+	retcapenergy = zeros(size(inputs["RESOURCE_NAMES"]))
+	existingcapenergy = zeros(size(inputs["RESOURCE_NAMES"]))
+	for i in inputs["STOR_ALL"]
+		if i in inputs["NEW_CAP_ENERGY"]
+			capenergy[i] = pv(planning_problem[:vCAPENERGY][i])
+		end
+		if i in inputs["RET_CAP_ENERGY"]
+			retcapenergy[i] = pv(planning_problem[:vRETCAPENERGY][i])
+		end
+		existingcapenergy[i] = existing_cap_mwh(gen[i])
+	end
+	if !isempty(inputs["VRE_STOR"])
+		for i in inputs["VS_STOR"]
+			if i in inputs["NEW_CAP_STOR"]
+				capenergy[i] = pv(planning_problem[:vCAPENERGY_VS][i])
+			end
+			if i in inputs["RET_CAP_STOR"]
+				retcapenergy[i] = pv(planning_problem[:vRETCAPENERGY_VS][i])
+			end
+			existingcapenergy[i] = existing_cap_mwh(gen[i])
+		end
+	end
+
+	startcap = existing_cap_mw.(gen)
+	endcap = [pv(planning_problem[:eTotalCap][y]) for y in 1:G]
+
+	# Allam cycle LOX uses the sCO2 turbine existing/total capacity
+	for y in ALLAM_CYCLE_LOX
+		startcap[y] = pv(planning_problem[:eExistingCap_AllamCycleLOX][y, sco2turbine])
+		endcap[y] = pv(planning_problem[:eTotalCap_AllamcycleLOX][y, sco2turbine])
+	end
+
+	dfCap = DataFrame(Resource = inputs["RESOURCE_NAMES"],
+		Zone = zone_id.(gen),
+		Retrofit_Id = retrofit_id.(gen),
+		StartCap = startcap[:],
+		RetCap = retcapdischarge[:],
+		RetroCap = retrocapdischarge[:],
+		NewCap = capdischarge[:],
+		EndCap = endcap[:],
+		StartEnergyCap = existingcapenergy[:],
+		RetEnergyCap = retcapenergy[:],
+		NewEnergyCap = capenergy[:],
+		EndEnergyCap = existingcapenergy[:] - retcapenergy[:] + capenergy[:],
+		StartChargeCap = existingcapcharge[:],
+		RetChargeCap = retcapcharge[:],
+		NewChargeCap = capcharge[:],
+		EndChargeCap = existingcapcharge[:] - retcapcharge[:] + capcharge[:])
+	if setup["ParameterScale"] == 1
+		dfCap.StartCap = dfCap.StartCap * ModelScalingFactor
+		dfCap.RetCap = dfCap.RetCap * ModelScalingFactor
+		dfCap.RetroCap = dfCap.RetroCap * ModelScalingFactor
+		dfCap.NewCap = dfCap.NewCap * ModelScalingFactor
+		dfCap.EndCap = dfCap.EndCap * ModelScalingFactor
+		dfCap.StartEnergyCap = dfCap.StartEnergyCap * ModelScalingFactor
+		dfCap.RetEnergyCap = dfCap.RetEnergyCap * ModelScalingFactor
+		dfCap.NewEnergyCap = dfCap.NewEnergyCap * ModelScalingFactor
+		dfCap.EndEnergyCap = dfCap.EndEnergyCap * ModelScalingFactor
+		dfCap.StartChargeCap = dfCap.StartChargeCap * ModelScalingFactor
+		dfCap.RetChargeCap = dfCap.RetChargeCap * ModelScalingFactor
+		dfCap.NewChargeCap = dfCap.NewChargeCap * ModelScalingFactor
+		dfCap.EndChargeCap = dfCap.EndChargeCap * ModelScalingFactor
+	end
+	total = DataFrame(Resource = "Total", Zone = "n/a", Retrofit_Id = "n/a",
+		StartCap = sum(dfCap[!, :StartCap]), RetCap = sum(dfCap[!, :RetCap]),
+		NewCap = sum(dfCap[!, :NewCap]), EndCap = sum(dfCap[!, :EndCap]),
+		RetroCap = sum(dfCap[!, :RetroCap]),
+		StartEnergyCap = sum(dfCap[!, :StartEnergyCap]),
+		RetEnergyCap = sum(dfCap[!, :RetEnergyCap]),
+		NewEnergyCap = sum(dfCap[!, :NewEnergyCap]),
+		EndEnergyCap = sum(dfCap[!, :EndEnergyCap]),
+		StartChargeCap = sum(dfCap[!, :StartChargeCap]),
+		RetChargeCap = sum(dfCap[!, :RetChargeCap]),
+		NewChargeCap = sum(dfCap[!, :NewChargeCap]),
+		EndChargeCap = sum(dfCap[!, :EndChargeCap]))
+
+	dfCap = vcat(dfCap, total)
+	CSV.write(joinpath(path, "capacity.csv"), dfCap)
+	return dfCap
 end
 
 @doc raw"""
@@ -680,7 +862,11 @@ function write_fuel_consumption_plant_benders(path::AbstractString, inputs::Dict
 	HAS_FUEL = inputs["HAS_FUEL"]
 	MULTI_FUELS = inputs["MULTI_FUELS"]
 
-	annual_costs = benders_bundle.fuel_cost_out + benders_bundle.fuel_cost_start
+	# Match the monolithic writer's ParameterScale handling: heat input (MMBtu) scales by
+	# ModelScalingFactor, while costs scale by ModelScalingFactor^2 (price x quantity).
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
+	annual_costs = (benders_bundle.fuel_cost_out + benders_bundle.fuel_cost_start) .* scale_factor^2
 
 	dfPlantFuel = DataFrame(Resource = inputs["RESOURCE_NAMES"][HAS_FUEL],
 		Fuel = fuel.(gen[HAS_FUEL]),
@@ -693,10 +879,10 @@ function write_fuel_consumption_plant_benders(path::AbstractString, inputs::Dict
 		dfPlantFuel.Multi_Fuels = multi_fuels.(gen[HAS_FUEL])
 		for i in 1:max_fuels
 			dfPlantFuel[!, fuel_cols_num[i]] = fuel_cols.(gen[HAS_FUEL], tag = i)
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_HeatInput_Generation_MMBtu"))] = benders_bundle.multi_fuel_generation[:, i]
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_HeatInput_Start_MMBtu"))] = benders_bundle.multi_fuel_start[:, i]
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_HeatInput_Total_MMBtu"))] = benders_bundle.multi_fuel_total[:, i]
-			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_Cost"))] = benders_bundle.multi_fuel_cost[:, i]
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_HeatInput_Generation_MMBtu"))] = benders_bundle.multi_fuel_generation[:, i] .* scale_factor
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_HeatInput_Start_MMBtu"))] = benders_bundle.multi_fuel_start[:, i] .* scale_factor
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_HeatInput_Total_MMBtu"))] = benders_bundle.multi_fuel_total[:, i] .* scale_factor
+			dfPlantFuel[!, Symbol(string(fuel_cols_num[i], "_AnnualSum_Fuel_Cost"))] = benders_bundle.multi_fuel_cost[:, i] .* scale_factor^2
 		end
 	end
 
@@ -715,8 +901,11 @@ function write_fuel_consumption_ts_benders(path::AbstractString, inputs::Dict, s
 	T = inputs["T"]
 	HAS_FUEL = inputs["HAS_FUEL"]
 
+	# Match the monolithic writer: convert model units (kMMBtu under ParameterScale) to MMBtu.
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
+
 	dfPlantFuel_TS = DataFrame(Resource = inputs["RESOURCE_NAMES"][HAS_FUEL])
-	tempts = benders_bundle.fuel_ts[HAS_FUEL, :]
+	tempts = benders_bundle.fuel_ts[HAS_FUEL, :] .* scale_factor
 	dfPlantFuel_TS = hcat(dfPlantFuel_TS, DataFrame(tempts, [Symbol("t$t") for t in 1:T]))
 	CSV.write(joinpath(path, "FuelConsumption_plant_MMBTU.csv"), dftranspose(dfPlantFuel_TS, false), header = false)
 
@@ -734,8 +923,10 @@ Write total annual fuel consumption aggregated by fuel type to `FuelConsumption_
 function write_fuel_consumption_tot_benders(path::AbstractString, inputs::Dict, setup::Dict, benders_bundle::NamedTuple)
 	fuel_types = inputs["fuels"]
 	fuel_number = length(fuel_types)
+	# Match the monolithic writer: convert model units (billion MMBtu under ParameterScale) to MMBtu.
+	scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
 	dfFuel = DataFrame(Fuel = fuel_types, AnnualSum = zeros(fuel_number))
-	dfFuel.AnnualSum .+= benders_bundle.fuel_total
+	dfFuel.AnnualSum .+= benders_bundle.fuel_total .* scale_factor
 	CSV.write(joinpath(path, "FuelConsumption_total_MMBTU.csv"), dfFuel)
 end
 
@@ -908,6 +1099,36 @@ function write_capacityfactor_benders(path::AbstractString, inputs::Dict, setup:
     df.AnnualSum .= benders_bundle.power * weight .* scale_factor
     df.Capacity .= value.(planning_problem[:eTotalCap]) .* scale_factor
 
+    # Co-located VRE-storage: report the VRE component capacity factor (solar/wind generation
+    # over solar/wind capacity), matching the monolithic write_capacityfactor. The aggregate
+    # vP/eTotalCap above describe the grid connection, not the renewable component, so we
+    # override those rows here. Generation comes from the subproblems (bundle), sub-component
+    # capacities from the planning problem.
+    if !isempty(VRE_STOR) && haskey(planning_problem, :eTotalCap_SOLAR) && haskey(planning_problem, :eTotalCap_WIND)
+        VS_SOLAR = inputs["VS_SOLAR"]
+        VS_WIND = inputs["VS_WIND"]
+        SOLAR = setdiff(VS_SOLAR, VS_WIND)
+        WIND = setdiff(VS_WIND, VS_SOLAR)
+        SOLAR_WIND = intersect(VS_SOLAR, VS_WIND)
+        solar_gen = benders_bundle.vre_stor_solar
+        wind_gen = benders_bundle.vre_stor_wind
+        if !isempty(SOLAR)
+            df.AnnualSum[SOLAR] .= solar_gen[SOLAR, :] * weight .* scale_factor
+            df.Capacity[SOLAR] .= value.(planning_problem[:eTotalCap_SOLAR][SOLAR]).data .* scale_factor
+        end
+        if !isempty(WIND)
+            df.AnnualSum[WIND] .= wind_gen[WIND, :] * weight .* scale_factor
+            df.Capacity[WIND] .= value.(planning_problem[:eTotalCap_WIND][WIND]).data .* scale_factor
+        end
+        if !isempty(SOLAR_WIND)
+            inverter_efficiency = etainverter.(gen[SOLAR_WIND])
+            df.AnnualSum[SOLAR_WIND] .= (wind_gen[SOLAR_WIND, :] * weight .* scale_factor) +
+                                        (solar_gen[SOLAR_WIND, :] * weight .* scale_factor) .* inverter_efficiency
+            df.Capacity[SOLAR_WIND] .= (value.(planning_problem[:eTotalCap_WIND][SOLAR_WIND]).data .* scale_factor) +
+                                       (value.(planning_problem[:eTotalCap_SOLAR][SOLAR_WIND]).data .* scale_factor) .* inverter_efficiency
+        end
+    end
+
     # Electrolyzer uses consumption (vUSE) rather than power output
     if !isempty(ELECTROLYZER)
         df.AnnualSum[ELECTROLYZER] .= benders_bundle.use_electrolyzer[ELECTROLYZER, :] * weight .* scale_factor
@@ -1019,6 +1240,8 @@ function collect_distributed_output_bundle(inputs::Dict, setup::Dict, subproblem
 	charge_storage_chunks = [b.charge_storage for b in bundles]
 	charge_flex_chunks = [b.charge_flex for b in bundles]
 	charge_vre_stor_chunks = [b.charge_vre_stor for b in bundles]
+	vre_stor_solar_chunks = [b.vre_stor_solar for b in bundles]
+	vre_stor_wind_chunks = [b.vre_stor_wind for b in bundles]
 	charge_allam_chunks = [b.charge_allam for b in bundles]
 	use_electrolyzer_chunks = [b.use_electrolyzer for b in bundles]
 	fusion_parasitic_chunks = [b.fusion_parasitic for b in bundles]
@@ -1061,6 +1284,8 @@ function collect_distributed_output_bundle(inputs::Dict, setup::Dict, subproblem
 		charge_storage = reduce(hcat, charge_storage_chunks; init=zeros(inputs["G"], 0)),
 		charge_flex = reduce(hcat, charge_flex_chunks; init=zeros(inputs["G"], 0)),
 		charge_vre_stor = reduce(hcat, charge_vre_stor_chunks; init=zeros(inputs["G"], 0)),
+		vre_stor_solar = reduce(hcat, vre_stor_solar_chunks; init=zeros(inputs["G"], 0)),
+		vre_stor_wind = reduce(hcat, vre_stor_wind_chunks; init=zeros(inputs["G"], 0)),
 		charge_allam = reduce(hcat, charge_allam_chunks; init=zeros(inputs["G"], 0)),
 		use_electrolyzer = reduce(hcat, use_electrolyzer_chunks; init=zeros(inputs["G"], 0)),
 		fusion_parasitic = reduce(hcat, fusion_parasitic_chunks; init=zeros(inputs["G"], 0)),
@@ -1184,6 +1409,8 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 	charge_storage_subprob = Vector{Matrix}(undef, n_local_subprob)
 	charge_flex_subprob = Vector{Matrix}(undef, n_local_subprob)
 	charge_vre_stor_subprob = Vector{Matrix}(undef, n_local_subprob)
+	vre_stor_solar_subprob = Vector{Matrix}(undef, n_local_subprob)
+	vre_stor_wind_subprob = Vector{Matrix}(undef, n_local_subprob)
 	charge_allam_subprob = Vector{Matrix}(undef, n_local_subprob)
 	use_electrolyzer_subprob = Vector{Matrix}(undef, n_local_subprob)
 	fusion_parasitic_subprob = Vector{Matrix}(undef, n_local_subprob)
@@ -1250,6 +1477,8 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 		charge_storage_subprob[s] = zeros(G, local_T)
 		charge_flex_subprob[s] = zeros(G, local_T)
 		charge_vre_stor_subprob[s] = zeros(G, local_T)
+		vre_stor_solar_subprob[s] = zeros(G, local_T)
+		vre_stor_wind_subprob[s] = zeros(G, local_T)
 		charge_allam_subprob[s] = zeros(G, local_T)
 		use_electrolyzer_subprob[s] = zeros(G, local_T)
 		fusion_parasitic_subprob[s] = zeros(G, local_T)
@@ -1424,6 +1653,26 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 			end
 		end
 
+		# Per-component VRE-storage generation for capacity-factor reporting.
+		# vP_SOLAR is DC solar output (inverter efficiency applied in the writer);
+		# vP_WIND is AC wind output. Stored raw (model units), indexed by resource.
+		if !isempty(VRE_STOR) && haskey(EP, :vP_SOLAR)
+			if !isempty(SOLAR)
+				vre_stor_solar_subprob[s][SOLAR, :] = value.(EP[:vP_SOLAR][SOLAR, :]).data
+			end
+			if !isempty(SOLAR_WIND)
+				vre_stor_solar_subprob[s][SOLAR_WIND, :] = value.(EP[:vP_SOLAR][SOLAR_WIND, :]).data
+			end
+		end
+		if !isempty(VRE_STOR) && haskey(EP, :vP_WIND)
+			if !isempty(WIND)
+				vre_stor_wind_subprob[s][WIND, :] = value.(EP[:vP_WIND][WIND, :]).data
+			end
+			if !isempty(SOLAR_WIND)
+				vre_stor_wind_subprob[s][SOLAR_WIND, :] = value.(EP[:vP_WIND][SOLAR_WIND, :]).data
+			end
+		end
+
 		charge_subprob[s] = reduce(vcat, charge, init = zeros(0, local_T))
 		charge_ids_subprob[s] = reduce(vcat, charge_ids, init = Int[])
 		storage_subprob[s] = reduce(vcat, storage, init = zeros(0, local_T))
@@ -1448,6 +1697,8 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 	charge_storage = reduce(hcat, charge_storage_subprob)
 	charge_flex = reduce(hcat, charge_flex_subprob)
 	charge_vre_stor = reduce(hcat, charge_vre_stor_subprob)
+	vre_stor_solar = reduce(hcat, vre_stor_solar_subprob)
+	vre_stor_wind = reduce(hcat, vre_stor_wind_subprob)
 	charge_allam = reduce(hcat, charge_allam_subprob)
 	use_electrolyzer = reduce(hcat, use_electrolyzer_subprob)
 	fusion_parasitic = reduce(hcat, fusion_parasitic_subprob)
@@ -1492,6 +1743,8 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 		charge_storage = charge_storage,
 		charge_flex = charge_flex,
 		charge_vre_stor = charge_vre_stor,
+		vre_stor_solar = vre_stor_solar,
+		vre_stor_wind = vre_stor_wind,
 		charge_allam = charge_allam,
 		use_electrolyzer = use_electrolyzer,
 		fusion_parasitic = fusion_parasitic,
