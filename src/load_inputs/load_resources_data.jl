@@ -1405,11 +1405,11 @@ function add_resources_to_input_data!(inputs::Dict,
     end
     inputs["allam_dict"] = allam_dict
 
-    # Set of resources eligible for discrete (integer) capacity builds
+    # Set of resources eligible for integer capacity builds
     if setup["IntegerInvestments"] == 1
-        inputs["DISCRETE_BUILD"] = ids_with_positive(gen, discrete_build)
+        inputs["NEW_CAP_INTEGER_BUILD"] = ids_with_positive(gen, integer_build)
     else
-        inputs["DISCRETE_BUILD"] = Int[]
+        inputs["NEW_CAP_INTEGER_BUILD"] = Int[]
     end
 
     # Names of resources

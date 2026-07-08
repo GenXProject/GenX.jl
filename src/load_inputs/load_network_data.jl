@@ -9,6 +9,16 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     filename = "Network.csv"
     network_var = load_dataframe(joinpath(path, filename))
 
+    # If there are any integer-build lines, rebuild the network_var dataframe so that each
+    # discrete new line becomes its own row (with its own flow variable downstream). Everything
+    # below derives per-line inputs positionally from network_var, so this expansion propagates
+    # to the whole model with no further changes required here.
+    if setup["IntegerInvestments"] == 1 && "Integer_Build" in names(network_var) && any(skipmissing(network_var.Integer_Build) .== 1)
+        # LINE_MAP_ORIGINAL maps each expanded line index => the original CSV line index, so that
+        # per-line results (e.g. flows) can be summed back to the user-provided corridors.
+        network_var, inputs_nw["LINE_MAP_ORIGINAL"] = expand_integer_build_lines(network_var)
+    end
+
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
     to_floats(col::Symbol) = convert(Array{Float64}, as_vector(col))
 
@@ -98,21 +108,138 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     if setup["NetworkExpansion"] == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .>= 0)
-        inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .< 0)
-    end
 
-    if setup["IntegerInvestments"] == 1
-        if "Discrete_Build" in names(network_var)
-            discrete_vals = collect(skipmissing(network_var[!, :Discrete_Build]))
-            inputs_nw["DISCRETE_BUILD_LINES"] = findall(x -> x == 1, discrete_vals)
-        else
-            inputs_nw["DISCRETE_BUILD_LINES"] = Int[]
+        if setup["IntegerInvestments"] == 1
+            if "Integer_Build" in names(network_var)
+                integer_vals = collect(skipmissing(network_var[!, :Integer_Build]))
+                inputs_nw["LINES_INTEGER_BUILD"] = findall(x -> x == 1, integer_vals)
+            else
+                inputs_nw["LINES_INTEGER_BUILD"] = Int[]
+            end
         end
     end
 
     println(filename * " Successfully Read!")
 
     return network_var
+end
+
+@doc raw"""
+    expand_integer_build_lines(network_var::DataFrame)
+
+Rebuild the transmission network dataframe so that discrete new lines each become their own row.
+
+Returns a tuple `(df, line_map)` where `df` is the rebuilt dataframe and `line_map` is a
+`Dict{Int, Int}` mapping each new (expanded) line index `1:new_L` to the original line index it was
+derived from. Downstream results (e.g. `write_transmission_flows`) are written one row per expanded
+line index, so `line_map` lets those results be summed back to the original user-provided corridors.
+It is the dictionary form of the `Original_Line_Index` column.
+
+For every line with `Integer_Build == 1`, the number of discrete new lines is
+`floor(Line_Max_Reinforcement_MW / New_Line_Cap_Size_MW)`, treating `Line_Max_Reinforcement_MW` as
+the *additional* capacity allowed on top of the existing `Line_Max_Flow_MW`. Each new line is a
+copy of the original line's row except:
+  - `Line_Max_Flow_MW` is set to 0 (no pre-existing capacity),
+  - `Line_Max_Reinforcement_MW` is set to `New_Line_Cap_Size_MW` (its own discrete size),
+  - `Integer_Build` stays 1 (marking it as a discrete buildable line).
+
+The residual "existing" line row keeps its `Line_Max_Flow_MW`, has `Integer_Build` reset to 0, and
+has `Line_Max_Reinforcement_MW` set negative so it is excluded from continuous expansion (all new
+capacity comes from the discrete lines instead).
+
+An `Original_Line_Index` column is added so the corridor a row belongs to can be recovered later.
+
+The dataframe mixes zone-indexed columns (the leading label column and `Network_zones`, length Z)
+with line-indexed columns (length L); only the line rows are expanded, leaving each zone column's
+`skipmissing` sequence unchanged.
+"""
+function expand_integer_build_lines(network_var::DataFrame)
+    cols = names(network_var)
+
+    # Line-indexed rows are those with a non-missing Network_Lines entry.
+    line_rows = findall(!ismissing, network_var[!, :Network_Lines])
+    L_orig = length(line_rows)
+
+    # The leading (label) column and Network_zones are zone-indexed; everything else is
+    # line-indexed and gets expanded.
+    zone_cols = Set{String}([cols[1], "Network_zones"])
+    line_cols = [c for c in cols if !(c in zone_cols)]
+
+    # Per-line values (indexed 1:L_orig) for the columns that drive the split.
+    lineval(col) = [network_var[r, col] for r in line_rows]
+    ib_vals = lineval(:Integer_Build)
+    reinf_vals = lineval(:Line_Max_Reinforcement_MW)
+    size_vals = "New_Line_Cap_Size_MW" in cols ? lineval(:New_Line_Cap_Size_MW) :
+                fill(missing, L_orig)
+
+    is_int_build(p) = !ismissing(ib_vals[p]) && ib_vals[p] == 1
+
+    # Build the expanded ordering as (source_line, role) pairs, with the existing line immediately
+    # followed by its discrete new lines.
+    order = Tuple{Int, Symbol}[]
+    for p in 1:L_orig
+        push!(order, (p, :existing))
+        is_int_build(p) || continue
+        sz = size_vals[p]
+        if ismissing(sz) || sz <= 0
+            error("Network line $(p) has Integer_Build = 1 but a missing or non-positive " *
+                  "New_Line_Cap_Size_MW. A positive discrete line size is required.")
+        end
+        # Line_Max_Reinforcement_MW is the additional capacity allowed on top of the existing
+        # Line_Max_Flow_MW, so the number of discrete new lines is that amount divided by the size.
+        additional_mw = reinf_vals[p]
+        n_new = additional_mw <= 0 ? 0 : floor(Int, additional_mw / sz)
+        if n_new > 0 && !isapprox(n_new * sz, additional_mw)
+            @warn "Network line $(p): additional reinforcement ($(additional_mw) MW) is not an " *
+                  "integer multiple of New_Line_Cap_Size_MW ($(sz) MW); building $(n_new) " *
+                  "discrete line(s) totaling $(n_new * sz) MW."
+        end
+        for _ in 1:n_new
+            push!(order, (p, :new))
+        end
+    end
+    new_L = length(order)
+
+    # Rebuild each line column by copying the source line's value for every emitted row.
+    new_line_data = Dict{String, Vector}()
+    for c in line_cols
+        src = [network_var[r, c] for r in line_rows]
+        new_line_data[c] = [src[p] for (p, _) in order]
+    end
+    orig_index = [p for (p, _) in order]
+
+    # Per-role overrides.
+    for (i, (p, role)) in enumerate(order)
+        if role == :new
+            new_line_data["Line_Max_Flow_MW"][i] = 0
+            new_line_data["Line_Max_Reinforcement_MW"][i] = size_vals[p]
+            new_line_data["Integer_Build"][i] = 1
+        elseif is_int_build(p) # residual existing line of an integer-build corridor
+            new_line_data["Integer_Build"][i] = 0
+            # Disable continuous expansion on the existing line; all new capacity now comes from
+            # the discrete lines (excluded from EXPANSION_LINES since reinforcement < 0).
+            new_line_data["Line_Max_Reinforcement_MW"][i] = -1
+        end
+    end
+    # Renumber Network_Lines sequentially so the values stay 1..new_L.
+    new_line_data["Network_Lines"] = collect(1:new_L)
+
+    # Assemble the rebuilt dataframe. Line columns occupy the first new_L rows; zone columns keep
+    # their original values. Pad the shorter dimension with missing.
+    Z = length(collect(skipmissing(network_var[!, :Network_zones])))
+    nrows = max(new_L, Z)
+    pad(v) = vcat(v, fill(missing, nrows - length(v)))
+
+    df = DataFrame()
+    for c in cols
+        df[!, c] = c in zone_cols ? pad(collect(network_var[!, c])) : pad(new_line_data[c])
+    end
+    df[!, :Original_Line_Index] = pad(orig_index)
+
+    # Dictionary form of the mapping: new (expanded) line index => original line index.
+    line_map = Dict{Int, Int}(i => orig_index[i] for i in 1:new_L)
+
+    return df, line_map
 end
 
 @doc raw"""

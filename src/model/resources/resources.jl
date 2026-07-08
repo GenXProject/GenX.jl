@@ -619,7 +619,7 @@ function can_contribute_min_retirement(r::AbstractResource)
     return Bool(get(r, :contribute_min_retirement, true))
 end
 
-discrete_build(r::AbstractResource) = get(r, :discrete_build, default_zero)
+integer_build(r::AbstractResource) = get(r, :integer_build, default_zero)
 
 const default_minmax_cap = -1.0
 max_cap_mw(r::AbstractResource) = get(r, :max_cap_mw, default_minmax_cap)
