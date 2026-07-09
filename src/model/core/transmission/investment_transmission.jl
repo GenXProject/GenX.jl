@@ -31,10 +31,14 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     L = inputs["L"]     # Number of transmission lines
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
+    IntegerInvestments = setup["IntegerInvestments"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
+        if setup["IntegerInvestments"] == 1
+            INTEGER_BUILD_LINES = inputs["INTEGER_BUILD_LINES"]
+        end
     end
 
     ### Variables ###
@@ -46,6 +50,9 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         @variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
+        if IntegerInvestments == 1
+            @variable(EP, vNEW_TRANS_LINES[l in INTEGER_BUILD_LINES], Bin)
+        end
     end
 
     ### Expressions ###
@@ -65,6 +72,11 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             else
                 eTransMax[l]
             end)
+        if IntegerInvestments == 1
+            for l in INTEGER_BUILD_LINES
+                add_to_expression!(eAvail_Trans_Cap[l], vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l])
+            end
+        end
     else
         @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
     end
@@ -76,6 +88,12 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCNetworkExp,
             sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
             for l in EXPANSION_LINES))
+
+        if IntegerInvestments == 1
+            for l in INTEGER_BUILD_LINES
+                add_to_expression!(eTotalCNetworkExp, vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l] * inputs["pC_Line_Reinforcement"][l])
+            end
+        end
 
         if MultiStage == 1
             # OPEX multiplier to count multiple years between two model stages

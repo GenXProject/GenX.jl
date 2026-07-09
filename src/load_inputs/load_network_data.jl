@@ -16,7 +16,9 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     if setup["IntegerInvestments"] == 1 && "Integer_Build" in names(network_var) && any(skipmissing(network_var.Integer_Build) .== 1)
         # LINE_MAP_ORIGINAL maps each expanded line index => the original CSV line index, so that
         # per-line results (e.g. flows) can be summed back to the user-provided corridors.
-        network_var, inputs_nw["LINE_MAP_ORIGINAL"] = expand_integer_build_lines(network_var)
+        # INTEGER_BUILD_LINE_GROUPS lists the discrete new-line indices for each corridor with more
+        # than one new line, for build-order (symmetry-breaking) constraints.
+        network_var, inputs_nw["LINE_MAP_ORIGINAL"], inputs_nw["INTEGER_BUILD_LINE_GROUPS"] = expand_integer_build_lines(network_var)
     end
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
@@ -116,6 +118,18 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             else
                 inputs_nw["LINES_INTEGER_BUILD"] = Int[]
             end
+
+            if "New_Line_Cap_Size_MW" in names(network_var)
+                inputs_nw["Line_Reinforcement_Cap_Size"] = to_floats(:New_Line_Cap_Size_MW) / scale_factor # convert to GW
+            else
+                error("Network.csv is missing the New_Line_Cap_Size_MW column, which is required when IntegerInvestments = 1.")
+            end
+
+            if "BigM" in names(network_var)
+                inputs_nw["BigM"] = to_floats(:BigM) / scale_factor # convert to GW
+            else
+                inputs_nw["BigM"] = inputs_nw["Line_Reinforcement_Cap_Size"] * 10 # default BigM value if not provided
+            end
         end
     end
 
@@ -129,11 +143,16 @@ end
 
 Rebuild the transmission network dataframe so that discrete new lines each become their own row.
 
-Returns a tuple `(df, line_map)` where `df` is the rebuilt dataframe and `line_map` is a
-`Dict{Int, Int}` mapping each new (expanded) line index `1:new_L` to the original line index it was
-derived from. Downstream results (e.g. `write_transmission_flows`) are written one row per expanded
-line index, so `line_map` lets those results be summed back to the original user-provided corridors.
-It is the dictionary form of the `Original_Line_Index` column.
+Returns a tuple `(df, line_map, line_groups)`:
+  - `df` is the rebuilt dataframe.
+  - `line_map` is a `Dict{Int, Int}` mapping each new (expanded) line index `1:new_L` to the
+    original line index it was derived from. Downstream results (e.g. `write_transmission_flows`)
+    are written one row per expanded line index, so `line_map` lets those results be summed back to
+    the original user-provided corridors. It is the dictionary form of the `Original_Line_Index`
+    column.
+  - `line_groups` is a `Vector{Vector{Int}}` listing the discrete new-line indices for each corridor
+    that produced more than one new line (e.g. `[[10, 11, 12, 13]]`). Used later to impose a
+    build-order constraint on identical parallel lines to remove degenerate (symmetric) solutions.
 
 For every line with `Integer_Build == 1`, the number of discrete new lines is
 `floor(Line_Max_Reinforcement_MW / New_Line_Cap_Size_MW)`, treating `Line_Max_Reinforcement_MW` as
@@ -239,7 +258,19 @@ function expand_integer_build_lines(network_var::DataFrame)
     # Dictionary form of the mapping: new (expanded) line index => original line index.
     line_map = Dict{Int, Int}(i => orig_index[i] for i in 1:new_L)
 
-    return df, line_map
+    # Group the discrete new-line indices by original corridor, keeping only corridors that
+    # produced more than one new line. Each entry is the list of expanded line indices for one
+    # corridor (e.g. [10, 11, 12, 13]). Used later to impose a build-order constraint on these
+    # identical parallel lines to remove degenerate (symmetric) solutions.
+    new_by_orig = Dict{Int, Vector{Int}}()
+    for (i, (p, role)) in enumerate(order)
+        role == :new || continue
+        push!(get!(new_by_orig, p, Int[]), i)
+    end
+    line_groups = [new_by_orig[p]
+                   for p in 1:L_orig if haskey(new_by_orig, p) && length(new_by_orig[p]) > 1]
+
+    return df, line_map, line_groups
 end
 
 @doc raw"""
