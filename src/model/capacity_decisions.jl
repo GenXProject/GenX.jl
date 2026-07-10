@@ -240,7 +240,7 @@ function transmission_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
                 eTransMax[l] + EP[:vZERO]
             end)
 
-        if setup["IntegerInvestments"]
+        if IntegerInvestments == 1
             for l in INTEGER_BUILD_LINES
                 add_to_expression!(eAvail_Trans_Cap[l], vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l])
             end

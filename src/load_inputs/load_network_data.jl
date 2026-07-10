@@ -47,12 +47,8 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["Ohms"] = to_floats(:Line_Resistance_Ohms)
     end
 
-    ## Inputs for the DC-OPF 
+    ## Inputs for the DC-OPF
     if setup["DC_OPF"] == 1
-        if setup["NetworkExpansion"] == 1
-            @warn("Because the DC_OPF flag is active, GenX will not allow any transmission capacity expansion. Set the DC_OPF flag to 0 if you want to optimize tranmission capacity expansion.")
-            setup["NetworkExpansion"] = 0
-        end
         println("Reading DC-OPF values...")
         # Transmission line voltage (in kV)
         line_voltage_kV = to_floats(:Line_Voltage_kV)
@@ -108,15 +104,15 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"] .!= 0) # Lines for which loss coefficients apply (are non-zero);
 
     if setup["NetworkExpansion"] == 1
-        # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
-        inputs_nw["EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .>= 0)
-
+        # Discrete integer-build lines get their own binary build variable (vNEW_TRANS_LINES), so
+        # they must be identified before EXPANSION_LINES and then excluded from it - otherwise they
+        # would also receive a continuous vNEW_TRANS_CAP and be double-counted in eAvail_Trans_Cap.
         if setup["IntegerInvestments"] == 1
             if "Integer_Build" in names(network_var)
                 integer_vals = collect(skipmissing(network_var[!, :Integer_Build]))
-                inputs_nw["LINES_INTEGER_BUILD"] = findall(x -> x == 1, integer_vals)
+                inputs_nw["INTEGER_BUILD_LINES"] = findall(x -> x == 1, integer_vals)
             else
-                inputs_nw["LINES_INTEGER_BUILD"] = Int[]
+                inputs_nw["INTEGER_BUILD_LINES"] = Int[]
             end
 
             if "New_Line_Cap_Size_MW" in names(network_var)
@@ -130,7 +126,18 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             else
                 inputs_nw["BigM"] = inputs_nw["Line_Reinforcement_Cap_Size"] * 10 # default BigM value if not provided
             end
+        else
+            inputs_nw["INTEGER_BUILD_LINES"] = Int[]
         end
+
+        # Network lines eligible for continuous reinforcement have non-negative maximum reinforcement
+        # inputs; discrete integer-build lines are handled separately and excluded here. The raw
+        # (unclamped) reinforcement column is used for the eligibility test so that lines flagged with
+        # a negative value - including the residual rows of a from-zero integer-build corridor - are
+        # genuinely excluded (pMax_Line_Reinforcement clamps negatives to 0, which would include them).
+        inputs_nw["EXPANSION_LINES"] = setdiff(
+            findall(to_floats(:Line_Max_Reinforcement_MW) .>= 0),
+            inputs_nw["INTEGER_BUILD_LINES"])
     end
 
     println(filename * " Successfully Read!")

@@ -207,26 +207,11 @@ Mirrors the monolithic `write_nw_expansion`.
 """
 function write_nw_expansion_benders(path::AbstractString, inputs::Dict, setup::Dict,
 	planning_problem::Model, planning_sol::NamedTuple)
-	L = inputs["L"]
-
 	pv(x) = value(v -> planning_sol.values[name(v)], x)
 
-	transcap = zeros(L)
-	for i in 1:L
-		if i in inputs["EXPANSION_LINES"]
-			transcap[i] = pv(planning_problem[:vNEW_TRANS_CAP][i])
-		end
-	end
-
-	dfTransCap = DataFrame(Line = 1:L,
-		New_Trans_Capacity = convert(Array{Float64}, transcap),
-		Cost_Trans_Capacity = convert(Array{Float64},
-			transcap .* inputs["pC_Line_Reinforcement"]))
-
-	if setup["ParameterScale"] == 1
-		dfTransCap.New_Trans_Capacity *= ModelScalingFactor       # GW to MW
-		dfTransCap.Cost_Trans_Capacity *= ModelScalingFactor^2    # MUSD to USD
-	end
+	dfTransCap = network_expansion_dataframe(inputs, setup;
+		cont_value = l -> pv(planning_problem[:vNEW_TRANS_CAP][l]),
+		disc_value = l -> pv(planning_problem[:vNEW_TRANS_LINES][l]))
 
 	CSV.write(joinpath(path, "network_expansion.csv"), dfTransCap)
 	return nothing

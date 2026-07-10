@@ -6,12 +6,15 @@ function write_transmission_losses(path::AbstractString,
     L = inputs["L"]     # Number of transmission lines
     LOSS_LINES = inputs["LOSS_LINES"]
     # Power losses for transmission between zones at each time step
-    dfTLosses = DataFrame(Line = 1:L)
     tlosses = zeros(L, T)
     tlosses[LOSS_LINES, :] = value.(EP[:vTLOSS][LOSS_LINES, :])
     if setup["ParameterScale"] == 1
         tlosses[LOSS_LINES, :] *= ModelScalingFactor
     end
+
+    # Fold expanded lines back to original corridors (identity when no integer-build rebuild).
+    corridors, tlosses = fold_lines_to_corridors(inputs, tlosses)
+    dfTLosses = DataFrame(Line = corridors)
 
     dfTLosses.AnnualSum = tlosses * inputs["omega"]
 

@@ -18,6 +18,10 @@ default values. The returned dictionary uses `Symbol` keys.
 | `Distributed`              | `false`  | Distribute subproblems to remote workers. When `true`, GenX will automatically launch worker processes (see `NWorkers`) if fewer are currently running. |
 | `NWorkers`                 | `-1`     | Target number of Julia worker processes for parallel subproblem solving. Only used when `Distributed: true`. `-1` (the default) sizes the pool automatically from the Slurm/LSF allocation, or from `min(n_subproblems, Sys.CPU_THREADS)` on a local machine; a value `> 1` requests that many workers explicitly; `0` or `1` disables parallel solving. |
 | `ThetaLB`                  | `0.0`    | Lower bound on the subproblem objective |
+| `run_transport_model`                  | false    | Only for DCOPF expansion case: run transport model to generate initial cuts |
+| `LP_transport_hotstart`                  | false    | Only for DCOPF expansion case with `run_transport_model` = true; does an LP relaxation of planning problem before turning on integer builds; runs DCOPF after transport model solves |
+| `LP_DCOPF_hotstart`                  | false    | Only for DCOPF expansion case; does an LP relaxation of planning problem before turning on integer builds |
+| `regularization_post_LP`                  | false    | Only for DCOPF expansion case with `LP_DCOPF_hotstart` = true; turns off regularization after the LP_DCOPF hotstarting step is run |
 """
 function configure_benders(settings_path::String)
 
@@ -36,6 +40,10 @@ function configure_benders(settings_path::String)
         :Distributed               => false,
         :NWorkers                  => -1,
         :ThetaLB                   => 0.0,
+        :run_transport_model       => false,
+        :LP_transport_hotstart     => false,
+        :LP_DCOPF_hotstart         => false,
+        :regularization_post_LP    => false
     )
 
     merge!(default_settings, settings)

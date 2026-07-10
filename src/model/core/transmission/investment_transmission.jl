@@ -66,17 +66,20 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     ## Transmission power flow and loss related expressions:
     # Total availabile maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
     if NetworkExpansion == 1
+        # Continuous-expansion lines (EXPANSION_LINES) add a continuous reinforcement variable;
+        # discrete integer-build lines (INTEGER_BUILD_LINES, disjoint from EXPANSION_LINES) instead
+        # add a binary build variable times the discrete line size. Folding the binary term into the
+        # expression keeps eAvail_Trans_Cap an affine expression for those lines (a bare eTransMax[l]
+        # would be a Float64, which add_to_expression! cannot mutate).
         @expression(EP, eAvail_Trans_Cap[l = 1:L],
             if l in EXPANSION_LINES
                 eTransMax[l] + vNEW_TRANS_CAP[l]
+            elseif IntegerInvestments == 1 && l in INTEGER_BUILD_LINES
+                eTransMax[l] +
+                vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l]
             else
                 eTransMax[l]
             end)
-        if IntegerInvestments == 1
-            for l in INTEGER_BUILD_LINES
-                add_to_expression!(eAvail_Trans_Cap[l], vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l])
-            end
-        end
     else
         @expression(EP, eAvail_Trans_Cap[l = 1:L], eTransMax[l])
     end
