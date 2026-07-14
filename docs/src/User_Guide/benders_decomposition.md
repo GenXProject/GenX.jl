@@ -19,6 +19,72 @@ Benders decomposition is accessed by setting `Benders: 1` in the `genx_settings.
 | Distributed | $\{true, false\}$ | Whether to distribute subproblems to remote workers. When `true`, GenX will automatically launch the required worker processes. |
 | NWorkers | $-1$ or $\in \mathbb{Z}_+$ | Number of Julia worker processes to use for parallel subproblem solving. Only used when `Distributed: true`. `-1` (the default) sizes the worker pool automatically; a value greater than 1 requests that many workers explicitly; `0` or `1` disables parallel execution. |
 | ExpectFeasibleSubproblems | $\{true, false\}$ | # If true, skip feasibility cuts (assumes subproblems are always feasible); safe to leave false|
+| RunTransportModel | $\{true, false\}$ | Only for DC-OPF expansion. Solve the transport relaxation first and reuse its cuts as a warm start. Requires `DC_OPF: 1`. |
+| LPTransportHotstart | $\{true, false\}$ | Only with `RunTransportModel: true`. LP-relax the planning problem's integer/binary variables for the transport pass, then restore them and run it again. |
+| LPDCOPFHotstart | $\{true, false\}$ | Only for DC-OPF expansion. LP-relax the planning problem's integer/binary variables for the DC-OPF pass, then restore them and run it again. |
+| RegularizationPostHotstart | $\{true, false\}$ | If true, keep level-set regularization (`StabParam`) on for the final pass. If false, `StabParam` is forced to 0 once the hot-start passes are done. |
+
+### Benders for DC-OPF with Transmission Expansion
+
+When transmission expansion is combined with DC-OPF (see [DC-OPF and Transmission Expansion](@ref)),
+the line-build decisions live in the planning problem while the DC-OPF angle constraints live in the
+subproblems. That combination converges poorly on its own: the master is a MILP, and the subproblems
+are infeasible for most early planning solutions, so the first iterations produce little more than a
+stream of feasibility cuts.
+
+The four settings above stage the solve to get around this. GenX runs a sequence of `benders` passes
+over the *same* planning problem, so cuts accumulate across passes:
+
+1. **Transport pass** (`RunTransportModel: true`). The subproblems are built **without** the DC-OPF
+   flow–angle constraints, i.e. as a transport model. Because the transport model is a *relaxation*
+   of DC-OPF on the same system, the optimality cuts it generates are valid underestimators of the
+   true DC-OPF recourse cost. They therefore remain valid when DC-OPF is switched on, and the
+   planning problem is carried over as-is — a warm start with a populated cut pool. The transport
+   model is far cheaper to solve, so these cuts are bought at a large discount.
+2. **DC-OPF pass**. The subproblems gain the DC-OPF constraints and Benders continues against the
+   warm-started planning problem.
+3. **LP hot-starts** (`LPTransportHotstart`, `LPDCOPFHotstart`). Each of the above passes can be
+   preceded by a pass in which the planning problem's integer and binary variables are relaxed. The
+   LP relaxation is driven to convergence, generating cuts cheaply, and integrality is then restored
+   and the pass re-run against the accumulated cuts. This avoids paying for branch-and-bound on a
+   planning problem that has barely any cuts in it yet.
+4. **Regularization** (`RegularizationPostHotstart`). Level-set regularization (`StabParam > 0`)
+   helps most in the early, cut-poor iterations. By default GenX turns it off (`StabParam = 0`) once
+   the hot-start passes are complete, on the theory that the final MILP pass is better served by
+   plain Benders. Set `RegularizationPostHotstart: true` to keep it on throughout.
+
+A typical configuration:
+
+```yaml
+DC_OPF: 1                         # in genx_settings.yml
+NetworkExpansion: 1               # in genx_settings.yml
+DiscreteInvestments: 1            # in genx_settings.yml
+
+# benders_settings.yml
+RunTransportModel: true
+LPTransportHotstart: true
+LPDCOPFHotstart: true
+RegularizationPostHotstart: false
+StabParam: 0.5
+ExpectFeasibleSubproblems: false
+```
+
+!!! warning "`IntegerInvestment` and the LP hot-starts are mutually exclusive"
+    `IntegerInvestment: true` asks *MacroEnergySolvers* to run its own integer routine: it relaxes
+    the planning problem's integer variables on entry to `benders` and restores them once the
+    relaxation has converged. `LPTransportHotstart` / `LPDCOPFHotstart` do the same thing, at the
+    level of a whole `benders` pass. Running both is not just redundant, it is wrong: because the
+    hot-start has already driven the relaxation to convergence, MacroEnergySolvers' inner routine
+    immediately observes a (numerically negative) zero gap and terminates *before* restoring
+    integrality — silently returning the LP relaxation as the final answer.
+
+    GenX detects this combination, warns, and forces `IntegerInvestment: false`. If you want
+    MacroEnergySolvers to own the integer relaxation instead, set both hot-start flags to `false`.
+
+!!! note "`ExpectFeasibleSubproblems` must be `false` here"
+    With network expansion, a planning solution that under-builds the network genuinely produces
+    infeasible operational subproblems. Feasibility cuts are what teach the master to stop proposing
+    them, so leave `ExpectFeasibleSubproblems: false`.
 
 ### Running Benders in Parallel
 

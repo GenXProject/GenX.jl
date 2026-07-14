@@ -187,6 +187,17 @@ GenX.write_allam_capacity
 GenX.write_allam_output
 ```
 
+## Write Transmission Outputs
+When discrete new lines are present (`DiscreteInvestments = 1`), `load_network_data!` gives each
+candidate line its own row, so the solved model has more lines than the user's `Network.csv`. These
+writers fold the expanded lines back onto the original corridors using
+`inputs["LINE_MAP_ORIGINAL"]`, so the outputs are indexed by the corridors the user supplied. See
+[DC-OPF and Transmission Expansion](@ref).
+```@autodocs
+Modules = [GenX]
+Pages = ["write_transmission_flows.jl", "write_transmission_losses.jl", "write_nw_expansion.jl"]
+```
+
 ## Write Benders Decomposition Outputs
 ```@autodocs
 Modules = [GenX]
