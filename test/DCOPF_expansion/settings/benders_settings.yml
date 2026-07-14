@@ -1,0 +1,20 @@
+# Benders settings for the DC-OPF + network-expansion test case.
+#
+# NOTE: test_DCOPF_expansion.jl rewrites this file once per Benders testset and restores it
+# afterwards. The values here are the defaults for anyone running the case by hand; they match the
+# "with LP hot-starts" testset.
+
+ConvTol: 1.0e-3                   # Relative optimality-gap convergence tolerance
+MaxIter: 300                      # Maximum Benders iterations per pass
+MaxCpuTime: 7200                  # Wall-clock limit (s)
+StabParam: 0.5                    # Level-set stabilisation parameter; 0.0 = disabled
+StabDynamic: false                # Dynamic (in-out) stabilisation
+ExpectFeasibleSubproblems: false  # false = generate feasibility cuts (needed here)
+
+# DC-OPF expansion passes. IntegerInvestment is deliberately omitted (defaults to false): the LP
+# hot-starts below do the integer relaxation themselves, and MacroEnergySolvers' own integer routine
+# must not also run. run_genx_case! forces IntegerInvestment off if both are requested.
+RunTransportModel: true           # Warm-start the cuts with a transport (no-angle) relaxation
+LPTransportHotstart: true         # LP-relax the planning problem for the transport pass
+LPDCOPFHotstart: true             # LP-relax the planning problem for the DC-OPF pass
+RegularizationPostHotstart: true  # Keep level-set regularisation on after the hot-start passes

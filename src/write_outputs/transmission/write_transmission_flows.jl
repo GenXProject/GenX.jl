@@ -4,8 +4,8 @@
 Fold a per-line quantity from the (possibly expanded) solved network back to the original
 user-provided corridors by summing the rows that belong to each corridor.
 
-When discrete integer-build lines are present, `load_network_data!` rebuilds the network so each
-discrete new line is its own row (see `expand_integer_build_lines`), giving the solved model more
+When discrete-build lines are present, `load_network_data!` rebuilds the network so each
+discrete new line is its own row (see `expand_discrete_build_lines`), giving the solved model more
 lines than the user's `Network.csv`. `LINE_MAP_ORIGINAL` maps each expanded line index back to its
 original corridor; all the expanded lines of a corridor share the same orientation
 (`Start_Zone`/`End_Zone` are copied), so summing them yields the corridor total. When no rebuild
@@ -46,7 +46,7 @@ function write_transmission_flows(path::AbstractString,
         flow *= ModelScalingFactor
     end
 
-    # Fold expanded lines back to original corridors (identity when no integer-build rebuild).
+    # Fold expanded lines back to original corridors (identity when no discrete-build rebuild).
     corridors, flow = fold_lines_to_corridors(inputs, flow)
     dfFlow = DataFrame(Line = corridors)
 

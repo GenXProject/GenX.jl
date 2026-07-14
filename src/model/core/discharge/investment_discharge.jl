@@ -54,11 +54,11 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     # New installed capacity of resource "y"
     @variable(EP, vCAP[y in NEW_CAP]>=0)
 
-    if setup["IntegerInvestments"] == 1
-        NEW_CAP_INTEGER_BUILD = inputs["NEW_CAP_INTEGER_BUILD"]
-        JuMP.set_integer.(vCAP[NEW_CAP_INTEGER_BUILD])
-        RET_CAP_INTEGER_BUILD = intersect(RET_CAP, NEW_CAP_INTEGER_BUILD)
-        JuMP.set_integer.(vRETCAP[RET_CAP_INTEGER_BUILD])
+    if setup["DiscreteInvestments"] == 1
+        NEW_CAP_DISCRETE_BUILD = inputs["NEW_CAP_DISCRETE_BUILD"]
+        JuMP.set_integer.(vCAP[NEW_CAP_DISCRETE_BUILD])
+        RET_CAP_DISCRETE_BUILD = intersect(RET_CAP, NEW_CAP_DISCRETE_BUILD)
+        JuMP.set_integer.(vRETCAP[RET_CAP_DISCRETE_BUILD])
     end
 
     create_empty_expression!(EP, :eTotalCFix)

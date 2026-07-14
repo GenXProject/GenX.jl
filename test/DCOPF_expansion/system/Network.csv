@@ -1,4 +1,4 @@
-,Network_zones,Network_Lines,Start_Zone,End_Zone,Line_Max_Flow_MW,transmission_path_name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr,DerateCapRes_1,CapRes_Excl_1,Angle_Limit_Rad,Line_Voltage_kV,Line_Resistance_Ohms,Line_Reactance_Ohms,Integer_Build,New_Line_Cap_Size_MW,BigM
+,Network_zones,Network_Lines,Start_Zone,End_Zone,Line_Max_Flow_MW,transmission_path_name,distance_mile,Line_Loss_Percentage,Line_Max_Reinforcement_MW,Line_Reinforcement_Cost_per_MWyr,DerateCapRes_1,CapRes_Excl_1,Angle_Limit_Rad,Line_Voltage_kV,Line_Resistance_Ohms,Line_Reactance_Ohms,Discrete_Build,New_Line_Cap_Size_MW,BigM
 BUS1,z1,1,1,4,100,BUS1_to_BUS4,0.5,0.015,300,1000,0.95,0,0.785398,345,0,68.5584,0,0,0
 BUS2,z2,2,4,5,100,BUS4_to_BUS5,0.5,0.015,300,1000,0.95,0,0.785398,345,20.23425,109.503,1,100,1500
 BUS3,z3,3,5,6,100,BUS5_to_BUS6,0.5,0.015,300,1000,0.95,0,0.785398,345,46.41975,202.3425,0,0,0

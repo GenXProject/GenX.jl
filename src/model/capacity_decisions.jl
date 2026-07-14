@@ -36,11 +36,11 @@ function discharge_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
     # New installed capacity of resource "y"
     @variable(EP, vCAP[y in NEW_CAP]>=0)
 
-    if setup["IntegerInvestments"] == 1
-        NEW_CAP_INTEGER_BUILD = inputs["NEW_CAP_INTEGER_BUILD"]
-        JuMP.set_integer.(vCAP[NEW_CAP_INTEGER_BUILD])
-        RET_CAP_INTEGER_BUILD = intersect(RET_CAP, NEW_CAP_INTEGER_BUILD)
-        JuMP.set_integer.(vRETCAP[RET_CAP_INTEGER_BUILD])
+    if setup["DiscreteInvestments"] == 1
+        NEW_CAP_DISCRETE_BUILD = inputs["NEW_CAP_DISCRETE_BUILD"]
+        JuMP.set_integer.(vCAP[NEW_CAP_DISCRETE_BUILD])
+        RET_CAP_DISCRETE_BUILD = intersect(RET_CAP, NEW_CAP_DISCRETE_BUILD)
+        JuMP.set_integer.(vRETCAP[RET_CAP_DISCRETE_BUILD])
     end
 
     # Allam cycle specific. By default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
@@ -207,13 +207,13 @@ end
 function transmission_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
     L = inputs["L"]     # Number of transmission lines
     NetworkExpansion = setup["NetworkExpansion"]
-    IntegerInvestments = setup["IntegerInvestments"]
+    DiscreteInvestments = setup["DiscreteInvestments"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
-        if IntegerInvestments == 1
-            INTEGER_BUILD_LINES = inputs["INTEGER_BUILD_LINES"]
+        if DiscreteInvestments == 1
+            DISCRETE_BUILD_LINES = inputs["DISCRETE_BUILD_LINES"]
         end
     end
 
@@ -222,8 +222,8 @@ function transmission_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         @variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
-        if IntegerInvestments == 1
-            @variable(EP, vNEW_TRANS_LINES[l in INTEGER_BUILD_LINES], Bin)
+        if DiscreteInvestments == 1
+            @variable(EP, vNEW_TRANS_LINES[l in DISCRETE_BUILD_LINES], Bin)
         end
     end
 
@@ -240,8 +240,8 @@ function transmission_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
                 eTransMax[l] + EP[:vZERO]
             end)
 
-        if IntegerInvestments == 1
-            for l in INTEGER_BUILD_LINES
+        if DiscreteInvestments == 1
+            for l in DISCRETE_BUILD_LINES
                 add_to_expression!(eAvail_Trans_Cap[l], vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l])
             end
         end

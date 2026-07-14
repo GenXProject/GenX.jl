@@ -12,7 +12,7 @@ function write_transmission_losses(path::AbstractString,
         tlosses[LOSS_LINES, :] *= ModelScalingFactor
     end
 
-    # Fold expanded lines back to original corridors (identity when no integer-build rebuild).
+    # Fold expanded lines back to original corridors (identity when no discrete-build rebuild).
     corridors, tlosses = fold_lines_to_corridors(inputs, tlosses)
     dfTLosses = DataFrame(Line = corridors)
 

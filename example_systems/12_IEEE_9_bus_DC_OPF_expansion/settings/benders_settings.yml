@@ -1,7 +1,10 @@
 ConvTol: 1.0e-3       # Relative optimality-gap convergence tolerance (|UB - LB| / |UB| ≤ BD_ConvTol → converged)
 MaxIter: 300           # Maximum number of Benders iterations
 MaxCpuTime: 86400      # Wall-clock time limit in seconds (24 h)
-StabParam: 0.0         # Level-set stabilisation parameter; 0.0 = disabled
+StabParam: 0.5         # Level-set stabilisation parameter; 0.0 = disabled
 StabDynamic: false     # Dynamic (Magnanti–Wong / in-out) stabilisation; false = disabled
 ExpectFeasibleSubproblems: false  # If true, skip feasibility cuts (assumes subproblems are always feasible); safe to leave false
-IntegerInvestment: false   # Investment variable type; false = continuous (LP relaxation), true = integer (MILP master problem)
+RunTransportModel: true
+LPTransportHotstart: true
+LPDCOPFHotstart: true
+RegularizationPostHotstart: false

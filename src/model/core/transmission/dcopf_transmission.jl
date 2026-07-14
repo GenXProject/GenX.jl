@@ -3,16 +3,16 @@
 
 Adds the DC optimal power flow (DC-OPF) constraints that relate line flows to the voltage phase
 angles ``\theta_{z,t}`` of each zone. This function supports both a fixed transmission network and
-**discrete integer transmission expansion** (when `NetworkExpansion` and `IntegerInvestments` are
-both active and integer-build lines are present).
+**discrete integer transmission expansion** (when `NetworkExpansion` and `DiscreteInvestments` are
+both active and discrete-build lines are present).
 
 **Line sets.** The lines ``\mathcal{L}`` are partitioned into three disjoint sets:
 - ``\mathcal{F}`` (`FIXED_LINES`) — physically-present lines that always satisfy the exact DC-OPF
   coupling. When there is no integer expansion this is all of ``\mathcal{L}``.
-- ``\mathcal{B}`` (`INTEGER_BUILD_LINES`) — candidate discrete lines, each with a binary build
+- ``\mathcal{B}`` (`DISCRETE_BUILD_LINES`) — candidate discrete lines, each with a binary build
   decision ``x_l \in \{0,1\}`` (`vNEW_TRANS_LINES`).
 - ``\mathcal{P}`` (`PHANTOM_LINES`) — the zero-capacity residual rows of a from-zero (greenfield)
-  integer-build corridor. No physical line exists on them until a parallel discrete line is built.
+  discrete-build corridor. No physical line exists on them until a parallel discrete line is built.
 
 Note that the flow magnitude limits ``|\Phi_{l,t}| \leq \varphi^{cap}_{l}`` are imposed in
 `transmission!` (via `eAvail_Trans_Cap`) and are therefore not repeated here.
@@ -27,7 +27,7 @@ times the angle difference across the line, and the angle difference is bounded 
 \end{aligned}
 ```
 
-**Candidate (integer-build) lines** (``l \in \mathcal{B}``). The flow–angle coupling on these lines
+**Candidate (discrete-build) lines** (``l \in \mathcal{B}``). The flow–angle coupling on these lines
 is imposed with one of two formulations, selected by the `Bilinear_DC_OPF` setting.
 
 *Big-M relaxation* (`Bilinear_DC_OPF = 0`, the default). The coupling is relaxed through a big-M
@@ -91,7 +91,7 @@ x_{g_{i-1}} \geq x_{g_{i}} \quad \forall i \geq 2
 \end{aligned}
 ```
 
-When there are no integer builds (`IntegerInvestments = 0`, no integer-build lines, or
+When there are no integer builds (`DiscreteInvestments = 0`, no discrete-build lines, or
 `NetworkExpansion = 0`), ``\mathcal{B}`` and ``\mathcal{P}`` are empty, ``\mathcal{F} = \mathcal{L}``,
 and the formulation reduces to the standard DC-OPF over all lines.
 """
@@ -102,33 +102,33 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
     Z = inputs["Z"]     # Number of zones
     L = inputs["L"]     # Number of transmission lines
 
-    IntegerInvestments = setup["IntegerInvestments"]
+    DiscreteInvestments = setup["DiscreteInvestments"]
     NetworkExpansion = setup["NetworkExpansion"]
 
     ### Line sets ###
 
-    # Discrete integer-build (candidate) lines. Only populated when integer network expansion is
+    # Discrete discrete-build (candidate) lines. Only populated when integer network expansion is
     # active; empty otherwise, so the plain DC-OPF path is unaffected.
-    INTEGER_BUILD_LINES = get(inputs, "INTEGER_BUILD_LINES", Int[])
-    integer_build_expansion = length(INTEGER_BUILD_LINES) > 0 && NetworkExpansion == 1
+    DISCRETE_BUILD_LINES = get(inputs, "DISCRETE_BUILD_LINES", Int[])
+    discrete_build_expansion = length(DISCRETE_BUILD_LINES) > 0 && NetworkExpansion == 1
 
-    # "Phantom" lines are the zero-capacity residual rows of a from-zero integer-build corridor: they
+    # "Phantom" lines are the zero-capacity residual rows of a from-zero discrete-build corridor: they
     # have no existing capacity and are not eligible for continuous expansion, so no physical line
     # exists on them until a parallel discrete line is built. They are excluded from the
     # flow = coeff * angle-difference relation and from the angle-difference limits; otherwise their
     # forced-zero flow (from transmission!) would pin the corridor's angle difference and prevent any
-    # newly-built parallel discrete line from carrying power. Only relevant for integer-build
+    # newly-built parallel discrete line from carrying power. Only relevant for discrete-build
     # expansion; empty otherwise so the plain / continuous-expansion DC-OPF cases are unchanged.
     EXPANSION_LINES = get(inputs, "EXPANSION_LINES", Int[])
-    PHANTOM_LINES = integer_build_expansion ?
+    PHANTOM_LINES = discrete_build_expansion ?
                     [l for l in 1:L
                      if inputs["pTrans_Max"][l] == 0 &&
                         !(l in EXPANSION_LINES) &&
-                        !(l in INTEGER_BUILD_LINES)] : Int[]
+                        !(l in DISCRETE_BUILD_LINES)] : Int[]
 
     # Fixed lines are the physically-present lines that always satisfy the exact DC-OPF coupling. In
     # the plain / continuous-expansion cases this is every line (1:L).
-    FIXED_LINES = setdiff(1:L, INTEGER_BUILD_LINES, PHANTOM_LINES)
+    FIXED_LINES = setdiff(1:L, DISCRETE_BUILD_LINES, PHANTOM_LINES)
 
     ### DC-OPF variables ###
 
@@ -163,18 +163,7 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         EP[:vFLOW][l, t]==inputs["pDC_OPF_coeff"][l] *
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z))
 
-    if integer_build_expansion
-        # When there are identical lines, we can enforce that they are built in a certain order to reduce symmetry in the solution space. This is done by enforcing that if line i is built, then line i-1 must also be built.
-        if haskey(inputs, "INTEGER_BUILD_LINE_GROUPS")
-            INTEGER_BUILD_LINE_GROUPS = inputs["INTEGER_BUILD_LINE_GROUPS"]
-            for g in INTEGER_BUILD_LINE_GROUPS
-                if length(g) > 1
-                    for i in 2:length(g)
-                        @constraint(EP, EP[:vNEW_TRANS_LINES][g[i-1]] >= EP[:vNEW_TRANS_LINES][g[i]])
-                    end
-                end
-            end
-        end
+    if discrete_build_expansion
         # Angle-difference limits on the candidate lines, enforced only when the line is built.
         # All parallel lines on a corridor share the same angle difference, so building any one of
         # them activates the corridor's limit. This is the ONLY angle limit for a from-zero (phantom)
@@ -185,10 +174,10 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         M_angle = sum(inputs["Line_Angle_Limit"])
         @constraints(EP,
             begin
-                cANGLE_BUILD_ub[l in INTEGER_BUILD_LINES, t = 1:T],
+                cANGLE_BUILD_ub[l in DISCRETE_BUILD_LINES, t = 1:T],
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <=
                 inputs["Line_Angle_Limit"][l] + M_angle * (1 - EP[:vNEW_TRANS_LINES][l])
-                cANGLE_BUILD_lb[l in INTEGER_BUILD_LINES, t = 1:T],
+                cANGLE_BUILD_lb[l in DISCRETE_BUILD_LINES, t = 1:T],
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >=
                 -inputs["Line_Angle_Limit"][l] - M_angle * (1 - EP[:vNEW_TRANS_LINES][l])
             end)
@@ -196,7 +185,7 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         if setup["Bilinear_DC_OPF"] == 1
             # Set DC_OPF constraints on the new (candidate) lines using a bilinear formulation
             @constraint(EP,
-                cPOWER_FLOW_BUILD[l in INTEGER_BUILD_LINES, t = 1:T],
+                cPOWER_FLOW_BUILD[l in DISCRETE_BUILD_LINES, t = 1:T],
                     EP[:vFLOW][l,t] == inputs["pDC_OPF_coeff"][l] *
                             sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) * EP[:vNEW_TRANS_LINES][l])
 
@@ -204,8 +193,8 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             # if line is not built, vFLOW must be zero
             @constraints(EP,
                 begin
-                    cMaxFlow_out_new[l in INTEGER_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] <= inputs["Line_Reinforcement_Cap_Size"][l]
-                    cMaxFlow_in_new[l in INTEGER_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] >= -inputs["Line_Reinforcement_Cap_Size"][l]
+                    cMaxFlow_out_new[l in DISCRETE_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] <= inputs["Line_Reinforcement_Cap_Size"][l]
+                    cMaxFlow_in_new[l in DISCRETE_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] >= -inputs["Line_Reinforcement_Cap_Size"][l]
                 end
             )
         else
@@ -214,11 +203,11 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             # If the line is not built (vNEW_TRANS_LINES == 0) the relation is relaxed and the flow is
             # forced to zero by cMaxFlow_*_new; if built, the exact coupling is enforced.
             @constraint(EP,
-                cPOWER_FLOW_BUILD_FORWARD[l in INTEGER_BUILD_LINES, t = 1:T],
+                cPOWER_FLOW_BUILD_FORWARD[l in DISCRETE_BUILD_LINES, t = 1:T],
                     EP[:vFLOW][l,t]-inputs["pDC_OPF_coeff"][l] *
                             sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <= BigM[l]*(1-EP[:vNEW_TRANS_LINES][l]))
             @constraint(EP,
-                cPOWER_FLOW_BUILD_REVERSE[l in INTEGER_BUILD_LINES, t = 1:T],
+                cPOWER_FLOW_BUILD_REVERSE[l in DISCRETE_BUILD_LINES, t = 1:T],
                     EP[:vFLOW][l,t]-inputs["pDC_OPF_coeff"][l] *
                             sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >= -BigM[l]*(1-EP[:vNEW_TRANS_LINES][l]))
 
@@ -226,8 +215,8 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             # if line is not built, vFLOW must be zero
             @constraints(EP,
                 begin
-                    cMaxFlow_out_new[l in INTEGER_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] <= EP[:vNEW_TRANS_LINES][l]*inputs["Line_Reinforcement_Cap_Size"][l]
-                    cMaxFlow_in_new[l in INTEGER_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] >= -EP[:vNEW_TRANS_LINES][l]*inputs["Line_Reinforcement_Cap_Size"][l]
+                    cMaxFlow_out_new[l in DISCRETE_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] <= EP[:vNEW_TRANS_LINES][l]*inputs["Line_Reinforcement_Cap_Size"][l]
+                    cMaxFlow_in_new[l in DISCRETE_BUILD_LINES, t = 1:T], EP[:vFLOW][l, t] >= -EP[:vNEW_TRANS_LINES][l]*inputs["Line_Reinforcement_Cap_Size"][l]
                 end
             )
         end

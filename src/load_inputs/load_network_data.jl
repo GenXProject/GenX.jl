@@ -9,16 +9,16 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     filename = "Network.csv"
     network_var = load_dataframe(joinpath(path, filename))
 
-    # If there are any integer-build lines, rebuild the network_var dataframe so that each
+    # If there are any discrete-build lines, rebuild the network_var dataframe so that each
     # discrete new line becomes its own row (with its own flow variable downstream). Everything
     # below derives per-line inputs positionally from network_var, so this expansion propagates
     # to the whole model with no further changes required here.
-    if setup["IntegerInvestments"] == 1 && "Integer_Build" in names(network_var) && any(skipmissing(network_var.Integer_Build) .== 1)
+    if setup["DiscreteInvestments"] == 1 && "Discrete_Build" in names(network_var) && any(skipmissing(network_var.Discrete_Build) .== 1)
         # LINE_MAP_ORIGINAL maps each expanded line index => the original CSV line index, so that
         # per-line results (e.g. flows) can be summed back to the user-provided corridors.
-        # INTEGER_BUILD_LINE_GROUPS lists the discrete new-line indices for each corridor with more
+        # DISCRETE_BUILD_LINE_GROUPS lists the discrete new-line indices for each corridor with more
         # than one new line, for build-order (symmetry-breaking) constraints.
-        network_var, inputs_nw["LINE_MAP_ORIGINAL"], inputs_nw["INTEGER_BUILD_LINE_GROUPS"] = expand_integer_build_lines(network_var)
+        network_var, inputs_nw["LINE_MAP_ORIGINAL"], inputs_nw["DISCRETE_BUILD_LINE_GROUPS"] = expand_discrete_build_lines(network_var)
     end
 
     as_vector(col::Symbol) = collect(skipmissing(network_var[!, col]))
@@ -104,21 +104,21 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["LOSS_LINES"] = findall(inputs_nw["pTrans_Loss_Coef"] .!= 0) # Lines for which loss coefficients apply (are non-zero);
 
     if setup["NetworkExpansion"] == 1
-        # Discrete integer-build lines get their own binary build variable (vNEW_TRANS_LINES), so
+        # Discrete discrete-build lines get their own binary build variable (vNEW_TRANS_LINES), so
         # they must be identified before EXPANSION_LINES and then excluded from it - otherwise they
         # would also receive a continuous vNEW_TRANS_CAP and be double-counted in eAvail_Trans_Cap.
-        if setup["IntegerInvestments"] == 1
-            if "Integer_Build" in names(network_var)
-                integer_vals = collect(skipmissing(network_var[!, :Integer_Build]))
-                inputs_nw["INTEGER_BUILD_LINES"] = findall(x -> x == 1, integer_vals)
+        if setup["DiscreteInvestments"] == 1
+            if "Discrete_Build" in names(network_var)
+                integer_vals = collect(skipmissing(network_var[!, :Discrete_Build]))
+                inputs_nw["DISCRETE_BUILD_LINES"] = findall(x -> x == 1, integer_vals)
             else
-                inputs_nw["INTEGER_BUILD_LINES"] = Int[]
+                inputs_nw["DISCRETE_BUILD_LINES"] = Int[]
             end
 
             if "New_Line_Cap_Size_MW" in names(network_var)
                 inputs_nw["Line_Reinforcement_Cap_Size"] = to_floats(:New_Line_Cap_Size_MW) / scale_factor # convert to GW
             else
-                error("Network.csv is missing the New_Line_Cap_Size_MW column, which is required when IntegerInvestments = 1.")
+                error("Network.csv is missing the New_Line_Cap_Size_MW column, which is required when DiscreteInvestments = 1.")
             end
 
             if "BigM" in names(network_var)
@@ -127,17 +127,17 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
                 inputs_nw["BigM"] = inputs_nw["Line_Reinforcement_Cap_Size"] * 10 # default BigM value if not provided
             end
         else
-            inputs_nw["INTEGER_BUILD_LINES"] = Int[]
+            inputs_nw["DISCRETE_BUILD_LINES"] = Int[]
         end
 
         # Network lines eligible for continuous reinforcement have non-negative maximum reinforcement
-        # inputs; discrete integer-build lines are handled separately and excluded here. The raw
+        # inputs; discrete discrete-build lines are handled separately and excluded here. The raw
         # (unclamped) reinforcement column is used for the eligibility test so that lines flagged with
-        # a negative value - including the residual rows of a from-zero integer-build corridor - are
+        # a negative value - including the residual rows of a from-zero discrete-build corridor - are
         # genuinely excluded (pMax_Line_Reinforcement clamps negatives to 0, which would include them).
         inputs_nw["EXPANSION_LINES"] = setdiff(
             findall(to_floats(:Line_Max_Reinforcement_MW) .>= 0),
-            inputs_nw["INTEGER_BUILD_LINES"])
+            inputs_nw["DISCRETE_BUILD_LINES"])
     end
 
     println(filename * " Successfully Read!")
@@ -146,7 +146,7 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 end
 
 @doc raw"""
-    expand_integer_build_lines(network_var::DataFrame)
+    expand_discrete_build_lines(network_var::DataFrame)
 
 Rebuild the transmission network dataframe so that discrete new lines each become their own row.
 
@@ -161,15 +161,15 @@ Returns a tuple `(df, line_map, line_groups)`:
     that produced more than one new line (e.g. `[[10, 11, 12, 13]]`). Used later to impose a
     build-order constraint on identical parallel lines to remove degenerate (symmetric) solutions.
 
-For every line with `Integer_Build == 1`, the number of discrete new lines is
+For every line with `Discrete_Build == 1`, the number of discrete new lines is
 `floor(Line_Max_Reinforcement_MW / New_Line_Cap_Size_MW)`, treating `Line_Max_Reinforcement_MW` as
 the *additional* capacity allowed on top of the existing `Line_Max_Flow_MW`. Each new line is a
 copy of the original line's row except:
   - `Line_Max_Flow_MW` is set to 0 (no pre-existing capacity),
   - `Line_Max_Reinforcement_MW` is set to `New_Line_Cap_Size_MW` (its own discrete size),
-  - `Integer_Build` stays 1 (marking it as a discrete buildable line).
+  - `Discrete_Build` stays 1 (marking it as a discrete buildable line).
 
-The residual "existing" line row keeps its `Line_Max_Flow_MW`, has `Integer_Build` reset to 0, and
+The residual "existing" line row keeps its `Line_Max_Flow_MW`, has `Discrete_Build` reset to 0, and
 has `Line_Max_Reinforcement_MW` set negative so it is excluded from continuous expansion (all new
 capacity comes from the discrete lines instead).
 
@@ -179,7 +179,7 @@ The dataframe mixes zone-indexed columns (the leading label column and `Network_
 with line-indexed columns (length L); only the line rows are expanded, leaving each zone column's
 `skipmissing` sequence unchanged.
 """
-function expand_integer_build_lines(network_var::DataFrame)
+function expand_discrete_build_lines(network_var::DataFrame)
     cols = names(network_var)
 
     # Line-indexed rows are those with a non-missing Network_Lines entry.
@@ -193,22 +193,22 @@ function expand_integer_build_lines(network_var::DataFrame)
 
     # Per-line values (indexed 1:L_orig) for the columns that drive the split.
     lineval(col) = [network_var[r, col] for r in line_rows]
-    ib_vals = lineval(:Integer_Build)
+    ib_vals = lineval(:Discrete_Build)
     reinf_vals = lineval(:Line_Max_Reinforcement_MW)
     size_vals = "New_Line_Cap_Size_MW" in cols ? lineval(:New_Line_Cap_Size_MW) :
                 fill(missing, L_orig)
 
-    is_int_build(p) = !ismissing(ib_vals[p]) && ib_vals[p] == 1
+    is_discrete_build(p) = !ismissing(ib_vals[p]) && ib_vals[p] == 1
 
     # Build the expanded ordering as (source_line, role) pairs, with the existing line immediately
     # followed by its discrete new lines.
     order = Tuple{Int, Symbol}[]
     for p in 1:L_orig
         push!(order, (p, :existing))
-        is_int_build(p) || continue
+        is_discrete_build(p) || continue
         sz = size_vals[p]
         if ismissing(sz) || sz <= 0
-            error("Network line $(p) has Integer_Build = 1 but a missing or non-positive " *
+            error("Network line $(p) has Discrete_Build = 1 but a missing or non-positive " *
                   "New_Line_Cap_Size_MW. A positive discrete line size is required.")
         end
         # Line_Max_Reinforcement_MW is the additional capacity allowed on top of the existing
@@ -239,9 +239,9 @@ function expand_integer_build_lines(network_var::DataFrame)
         if role == :new
             new_line_data["Line_Max_Flow_MW"][i] = 0
             new_line_data["Line_Max_Reinforcement_MW"][i] = size_vals[p]
-            new_line_data["Integer_Build"][i] = 1
-        elseif is_int_build(p) # residual existing line of an integer-build corridor
-            new_line_data["Integer_Build"][i] = 0
+            new_line_data["Discrete_Build"][i] = 1
+        elseif is_discrete_build(p) # residual existing line of an discrete-build corridor
+            new_line_data["Discrete_Build"][i] = 0
             # Disable continuous expansion on the existing line; all new capacity now comes from
             # the discrete lines (excluded from EXPANSION_LINES since reinforcement < 0).
             new_line_data["Line_Max_Reinforcement_MW"][i] = -1

@@ -18,9 +18,9 @@ function load_inputs(setup::Dict, path::AbstractString)
     resources_path = joinpath(path, setup["ResourcesFolder"])
     policies_path = joinpath(path, setup["PoliciesFolder"])
 
-    # Warn if IntegerInvestments is on but any present input file is missing Integer_Build column
-    if setup["IntegerInvestments"] == 1
-        _check_integer_build_columns(system_path, resources_path)
+    # Warn if DiscreteInvestments is on but any present input file is missing Discrete_Build column
+    if setup["DiscreteInvestments"] == 1
+        _check_discrete_build_columns(system_path, resources_path)
     end
 
     ## Declare Dict (dictionary) object used to store parameters
@@ -151,35 +151,35 @@ struct WarnMsg <: AbstractLogMsg
 end
 
 """
-    _check_integer_build_columns(system_path, resources_path)
+    _check_discrete_build_columns(system_path, resources_path)
 
-When `IntegerInvestments == 1`, warn for each present resource CSV and Network.csv
-that is missing a `Integer_Build` column header. Reading only the first line of each
+When `DiscreteInvestments == 1`, warn for each present resource CSV and Network.csv
+that is missing a `Discrete_Build` column header. Reading only the first line of each
 file keeps this check fast.
 """
-function _check_integer_build_columns(system_path::AbstractString,
+function _check_discrete_build_columns(system_path::AbstractString,
         resources_path::AbstractString)
-    col_name = "Integer_Build"
+    col_name = "Discrete_Build"
     col_lower = lowercase(col_name)
 
-    function _has_integer_build(filepath::AbstractString)::Bool
+    function _has_discrete_build(filepath::AbstractString)::Bool
         header = csv_header(filepath)
         any(strip(lowercase(c)) == col_lower for c in split(header, ','))
     end
 
     # Check Network.csv
     network_file = joinpath(system_path, "Network.csv")
-    if isfile(network_file) && !_has_integer_build(network_file)
-        @warn "IntegerInvestments is set to 1, but \"$col_name\" column not found in Network.csv. " *
-              "No transmission lines will be treated as integer-build."
+    if isfile(network_file) && !_has_discrete_build(network_file)
+        @warn "DiscreteInvestments is set to 1, but \"$col_name\" column not found in Network.csv. " *
+              "No transmission lines will be treated as discrete-build."
     end
 
     # Check each resource CSV
     for (filename, _) in values(_get_resource_info())
         filepath = joinpath(resources_path, filename)
-        if isfile(filepath) && !_has_integer_build(filepath)
-            @warn "IntegerInvestments is set to 1, but \"$col_name\" column not found in $filename. " *
-                  "Resources in this file will not be treated as integer-build."
+        if isfile(filepath) && !_has_discrete_build(filepath)
+            @warn "DiscreteInvestments is set to 1, but \"$col_name\" column not found in $filename. " *
+                  "Resources in this file will not be treated as discrete-build."
         end
     end
     return nothing

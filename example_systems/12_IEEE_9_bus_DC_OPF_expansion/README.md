@@ -16,13 +16,13 @@ investments, making it a **MILP** in which the transmission topology itself is a
 |----------------------------------------|:-------:|:-------:|
 | `DC_OPF`                               | 1       | 1       |
 | `NetworkExpansion`                     | 0       | **1**   |
-| `IntegerInvestments`                   | 0 (n/a) | **1**   |
+| `DiscreteInvestments`                   | 0 (n/a) | **1**   |
 | `WriteShadowPrices`                    | 1       | 0 (MILP)|
 
 The **input data also differs** — this is not case 10 with a couple of flags flipped:
 
 - **`system/Network.csv`** carries three extra columns used only by the integer-expansion path:
-  `Integer_Build`, `New_Line_Cap_Size_MW`, and `BigM`. Existing line capacities are lower than in
+  `Discrete_Build`, `New_Line_Cap_Size_MW`, and `BigM`. Existing line capacities are lower than in
   case 10 (mostly 100 MW, some 0), the per-line reinforcement limit is 300 MW (200 MW on line 5)
   rather than 500 MW, and the reinforcement cost is \$1,000/MW-yr rather than \$12,000/MW-yr — all
   chosen so that expansion is economic and both the continuous and discrete build paths are
@@ -36,10 +36,10 @@ The **input data also differs** — this is not case 10 with a couple of flags f
 
 The ten corridors split into two expansion modes:
 
-- **Continuous reinforcement** — the six corridors with `Integer_Build = 0` (lines 1, 3, 5, 6, 9,
+- **Continuous reinforcement** — the six corridors with `Discrete_Build = 0` (lines 1, 3, 5, 6, 9,
   10). Each may add any amount of capacity from 0 up to its `Line_Max_Reinforcement_MW` limit
   (300 MW, or 200 MW on line 5) through the standard `NetworkExpansion` variable.
-- **Discrete / integer builds** — the **four** corridors flagged `Integer_Build = 1`: line 2
+- **Discrete / integer builds** — the **four** corridors flagged `Discrete_Build = 1`: line 2
   (`BUS4_to_BUS5`), line 4 (`BUS3_to_BUS6`), line 7 (`BUS8_to_BUS2`), and line 8 (`BUS8_to_BUS9`).
   Each has `New_Line_Cap_Size_MW = 100`, so at load time GenX expands the corridor into up to
   `floor(300 / 100) = 3` parallel 100 MW candidate lines, each governed by a **binary** build

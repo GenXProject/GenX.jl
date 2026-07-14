@@ -40,7 +40,7 @@ function default_settings()
         "Benders" => 0,
         "ObjScale" => 1,
         "LDES_Feasible" => 0,
-        "IntegerInvestments" => 0,
+        "DiscreteInvestments" => 0,
         "Bilinear_DC_OPF" => 0)
 end
 
