@@ -152,6 +152,19 @@ This is exact and needs no big-M, but the model becomes mixed-integer **nonlinea
 solver that handles bilinear terms (e.g. Gurobi). Setting `Bilinear_DC_OPF: 1` with `DC_OPF: 0` is
 contradictory; GenX warns and forces `DC_OPF: 1`.
 
+!!! warning "`Bilinear_DC_OPF: 1` requires a QCP-capable solver"
+    The bilinear coupling makes the constraints quadratic, so the resulting problem is a
+    quadratically-constrained program (QCP) rather than an LP/MILP. You must use a solver that
+    can handle quadratic constraints, and (for Benders) one that can return **dual values** for them:
+
+    - Monolithic solves need a QCP-capable solver such as Gurobi.
+    - Benders solves make the operational subproblems QCPs whose duals form the optimality
+      cuts. The solver must therefore produce QCP duals. Use a nonlinear solver like **Ipopt**, or
+      Gurobi with `QCPDual` set to `1` (Gurobi does not compute QCP duals unless this is
+      enabled). Without QCP duals the Benders cuts cannot be generated.
+
+    Be aware that this approach can suffer from numerical issues as Gurobi sometimes struggles to return QCPDuals even if it is enabled in settings. However, initial tests suggest that the QCP may return stronger cuts than are achieved via the big M formulation (see [this paper](https://arxiv.org/abs/2603.29867)).
+
 
 ## 4. The five corridor scenarios in `Network.csv`
 
