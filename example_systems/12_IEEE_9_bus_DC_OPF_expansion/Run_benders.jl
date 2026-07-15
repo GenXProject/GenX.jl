@@ -1,5 +1,5 @@
 ###############################################################################
-# Run Example 10 (IEEE 9-bus DC OPF) using Benders decomposition.
+# Run Example 12 (IEEE 9-bus DC OPF) using Benders decomposition.
 # Uses Gurobi if available, otherwise falls back to HiGHS.
 ###############################################################################
 
