@@ -47,6 +47,19 @@ the Benders transport hot-start described in [Section 6](#6-benders-decompositio
 `NetworkExpansion: 1` turns on transmission expansion. GenX supports two mutually
 mechanisms, chosen and mutually exclusive **per line** via the `Discrete_Build` column of `Network.csv`.
 
+!!! note "Multiple lines on the same corridor"
+    Every row of `Network.csv` is an independent line: all per-line inputs are read positionally, and
+    nothing requires the `Start_Zone`/`End_Zone` pair to be unique. You can therefore place several
+    rows on the same corridor — the same pair of zones — to model parallel circuits explicitly.
+    This is useful when the parallel lines are not identical: for example two existing lines between
+    the same buses with different susceptances (`Line_Reactance_Ohms`), capacities, or loss factors,
+    each of which then contributes its own flow, flow–angle coupling, and angle limit under DC-OPF.
+
+    This is a different mechanism from `Discrete_Build = 1` corridor
+    (below), which generates several *identical* candidate lines from a single row. Use manually
+    authored rows when you need parallel lines with **different** electrical properties; use
+    `Discrete_Build` when you want several interchangeable fixed-size copies of the same new line.
+
 ### Continuous Reinforcement (`Discrete_Build = 0`)
 
 The classic GenX behavior. Each eligible line gets a continuous variable
