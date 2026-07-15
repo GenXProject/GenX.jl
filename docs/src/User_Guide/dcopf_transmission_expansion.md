@@ -105,6 +105,9 @@ imposes a build order on each group of more than one identical candidate line
 x_{g_{i-1}} \geq x_{g_{i}} \qquad \forall i \geq 2
 ```
 
+!!! note "User discretion recommended in setting transmission costs"
+    Because GenX now supports both continuous and discrete line expansion, users will want to be deliberate in how they define this data, perhaps especially in costs. For instance, continuous reinforcement could be thougth of as reconductoring, which may be cheaper than building a new line. In this way, both reconductoring and new line constructions are both supported in GenX, but the use will need to set data deliberately to handle these cases. 
+
 ### Required `Network.csv` columns when `DiscreteInvestments: 1`
 
 | Column | Description |
