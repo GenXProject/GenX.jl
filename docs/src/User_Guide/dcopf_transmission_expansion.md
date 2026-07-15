@@ -1,7 +1,7 @@
 # DC-OPF and Transmission Expansion
 
 GenX can represent the transmission network in two ways, and can expand it in two ways (note that if the problem has no transmission network, then it is run as a "copper plate"). This page
-explains both, how they interact, and the modeling traps to avoid when they are combined.
+explains both, how they interact, and the modeling traps to avoid when they are combined. Note that the user must set `NetworkExpansion = 1` to enable these expansion capabilities. In addition, we refer to any expansion or new build as "network expansion" in the documentation.
 
 ## 1. Transport Model vs. DC-OPF
 
@@ -32,7 +32,7 @@ $\mathcal{B}_{l} = \mathrm{kV}_l^2 / X_l$, with $X_l$ the line reactance in Ohms
 
 Because DC-OPF constrains *how* power flows rather than just how much, a DC-OPF solution is always at
 least as expensive as the transport solution on the same system. That relationship is exploited by
-the Benders transport hot-start described in [Section 5](#5-benders-decomposition-with-dc-opf-and-expansion).
+the Benders transport hot-start described in [Section 6](#6-benders-decomposition-with-dc-opf-and-expansion).
 
 ### Required `Network.csv` Columns when `DC_OPF: 1`
 
@@ -79,26 +79,12 @@ This represents *building physical new circuits*, where you either build a new l
 ```
 n_new = floor(Line_Max_Reinforcement_MW / New_Line_Cap_Size_MW)
 ```
-
-new-line rows are emitted, each a full copy of the corridor (same `Start_Zone`/`End_Zone`, same
-reactance, same angle limit, same cost) but with `Line_Max_Flow_MW = 0` and
-`Line_Max_Reinforcement_MW = New_Line_Cap_Size_MW`. The original row is kept as the *residual
-existing line*: it keeps its `Line_Max_Flow_MW`, has `Discrete_Build` reset to `0`, and has
-`Line_Max_Reinforcement_MW` set to `-1` so it is excluded from `EXPANSION_LINES` and receives no
-continuous reinforcement variable.
-
-The consequence is worth stating plainly: **`Line_Max_Reinforcement_MW` on a discrete corridor is
-consumed entirely by the discrete lines.** A corridor cannot be both continuously reinforced and
+If there is existing capacity defined in the network CSV, this is treated as its own line which cannot have continuous expansion. Lines marked with `Discrete_Build = 1` are not able to expand continuously. A corridor cannot be both continuously reinforced and
 discretely expanded. If `Line_Max_Reinforcement_MW` is not an integer multiple of
 `New_Line_Cap_Size_MW`, GenX warns and rounds down.
 
-Because each discrete new line becomes its own row, it gets its own `vFLOW`, its own row in
-`pNet_Map`, and its own row in the transmission outputs. `inputs["LINE_MAP_ORIGINAL"]` maps expanded
-line indices back to the original CSV corridor, and the output writers use it to fold results back to
-user-facing corridors.
-
-**Symmetry breaking.** Parallel candidate lines on the same corridor are identical, so any subset of
-size $k$ is an equivalent solution — a degeneracy that badly slows down branch-and-bound. GenX
+**Symmetry breaking for discrete new lines.** Parallel candidate lines on the same corridor (i.e., generated from the same line of the `Network.csv`) are identical, so any subset of
+size $k$ is an equivalent solution — a degeneracy that could slow down branch-and-bound. GenX
 imposes a build order on each group of more than one identical candidate line
 (`DISCRETE_BUILD_LINE_GROUPS`):
 
@@ -117,6 +103,8 @@ x_{g_{i-1}} \geq x_{g_{i}} \qquad \forall i \geq 2
 `DiscreteInvestments: 1` also enables integer capacity builds for *resources*, via a `Discrete_Build`
 column in the resource CSVs (e.g. `Thermal.csv`). GenX warns for each input file that is missing the
 column when the setting is on.
+
+
 
 ## 3. Combining DC-OPF with discrete builds
 
@@ -164,56 +152,122 @@ This is exact and needs no big-M, but the model becomes mixed-integer **nonlinea
 solver that handles bilinear terms (e.g. Gurobi). Setting `Bilinear_DC_OPF: 1` with `DC_OPF: 0` is
 contradictory; GenX warns and forces `DC_OPF: 1`.
 
-## 4. Warnings and recommended usage
+
+## 4. The five corridor scenarios in `Network.csv`
+
+Every corridor you can express falls into one of five cases. The cases are determined by
+three columns — `Line_Max_Flow_MW` (does a line exist today?), `Line_Max_Reinforcement_MW` (may it
+grow, and by how much?), and `Discrete_Build` (does it grow continuously or in whole circuits?).
+Assume `NetworkExpansion: 1` throughout, and `DiscreteInvestments: 1` for the discrete cases.
+
+| # | Scenario | `Line_Max_Flow_MW` | `Line_Max_Reinforcement_MW` | `Discrete_Build` | `New_Line_Cap_Size_MW` |
+|:--|:--|:--|:--|:--|:--|
+| 1 | Existing line, no expansion | `100` | `-1` | `0` | — |
+| 2 | Existing line, continuous expansion | `100` | `300` | `0` | — |
+| 3 | Existing line, discrete expansion | `100` | `300` | `1` | `100` |
+| 4 | New corridor, continuous expansion ⚠️ | `0` | `300` | `0` | — |
+| 5 | New corridor, discrete expansion | `0` | `300` | `1` | `100` |
+
+The key to reading this table is that **eligibility for continuous expansion is
+`Line_Max_Reinforcement_MW >= 0`**. Any negative value (`-1` by convention) prevents any expansion.
+
+### 1. Existing line, no expansion
+
+`Line_Max_Flow_MW = 100`, `Line_Max_Reinforcement_MW = -1`.
+
+The line is fixed at 100 MW and no investment variable is created
+
+(Setting `Line_Max_Reinforcement_MW = 0` instead gives the same physical result, but still creates a
+`vNEW_TRANS_CAP` variable with an upper bound of zero. Use `-1` to keep it out of the model.)
+
+### 2. Existing line, continuous expansion
+
+`Line_Max_Flow_MW = 100`, `Line_Max_Reinforcement_MW = 300`, `Discrete_Build = 0`.
+
+The line gets a continuous variable $\bigtriangleup\varphi^{cap}_{l} \in [0, 300]$, so its capacity
+is $100 + \bigtriangleup\varphi^{cap}_{l} \in [100, 400]$ MW. If `DC_OPF = 1`, the
+angle limit constraint is always active. When `DC_OPF = 1`, this can be thought of as reconductoring an existing corridor.
+
+### 3. Existing line, discrete expansion
+
+`Line_Max_Flow_MW = 100`, `Line_Max_Reinforcement_MW = 300`, `Discrete_Build = 1`,
+`New_Line_Cap_Size_MW = 100`.
+
+Internally, GenX rewrites this row into four separate lines:
+
+| Internal row | Capacity | Role |
+|:--|:--|:--|
+| residual existing | 100 MW fixed | `FIXED_LINE` — real line, angle limit always on |
+| candidate 1 | 0 or 100 MW | `DISCRETE_BUILD_LINE`, binary $x_1$ |
+| candidate 2 | 0 or 100 MW | `DISCRETE_BUILD_LINE`, binary $x_2$ |
+| candidate 3 | 0 or 100 MW | `DISCRETE_BUILD_LINE`, binary $x_3$ |
+
+$\lfloor 300 / 100 \rfloor = 3$ candidate lines are created. Total corridor capacity is therefore
+$100 + 100\sum_i x_i$, i.e. one of {100, 200, 300, 400} MW — the same range as scenario 2, but
+reachable only in whole 100 MW circuits, where each new line has identical data to the existing line (e.g., susceptance, costs). The residual existing row has its
+`Line_Max_Reinforcement_MW` internally set to `-1`, so it receives **no** continuous reinforcement:
+the 300 MW budget is spent entirely on the discrete candidates. Symmetry breaking forces
+$x_1 \geq x_2 \geq x_3$.
+
+### 4. New corridor, continuous expansion ⚠️
+
+`Line_Max_Flow_MW = 0`, `Line_Max_Reinforcement_MW = 300`, `Discrete_Build = 0`.
+
+Capacity is $0 + \bigtriangleup\varphi^{cap}_{l} \in [0, 300]$ MW. Under the **transport model this is
+perfectly fine** and is the normal way to offer a greenfield corridor.
+
+Under **DC-OPF it can overconstrain line angle limits** because ts coupling and angle limit are on in
+every hour regardless of what is built. If the optimizer builds nothing, then
+$|\Phi_{l,t}| \leq \varphi^{cap}_{l} = 0$ forces $\Phi_{l,t} = 0$, and the coupling
+$\Phi_{l,t} = \mathcal{B}_l \Delta\theta_{l,t}$ then forces $\Delta\theta_{l,t} = 0$: the two zones
+are pinned to *identical phase angles*, as though joined by a zero-impedance tie that carries no
+power. That is a fictitious constraint on the rest of the meshed network, and it can distort flows
+throughout the model. It is recommended to use discrete new line corridors in this case instead.
+
+### 5. New corridor, discrete expansion
+
+`Line_Max_Flow_MW = 0`, `Line_Max_Reinforcement_MW = 300`, `Discrete_Build = 1`,
+`New_Line_Cap_Size_MW = 100`.
+
+When `DC_OPF = `, this avoids the challenge of unintentionally enforced angle limits:
+
+| Internal row | Capacity | Role |
+|:--|:--|:--|
+| residual existing | 0 MW | `PHANTOM_LINE` — **no** coupling, **no** angle limit |
+| candidate 1–3 | 0 or 100 MW each | `DISCRETE_BUILD_LINE`, binary $x_i$ |
+
+Because the residual row has zero capacity, is not expandable, and is not itself a candidate, GenX
+classifies it as a *phantom* line and exempts it from both the flow–angle coupling and the angle
+limit. That is precisely what prevents the scenario-4 failure: nothing pins $\Delta\theta$ while the
+corridor is unbuilt. The candidate lines carry build-gated coupling and angle limits, so the corridor
+imposes DC-OPF physics exactly when — and only when — at least one circuit is actually built.
+
+## 5. Warnings and recommended usage
 
 !!! warning "Greenfield corridors under DC-OPF should be discrete builds"
+    This is scenario 4 vs. scenario 5 above.
+
     If a corridor has **no existing line** (`Line_Max_Flow_MW = 0`) and you expand it with
     **continuous** reinforcement under `DC_OPF: 1`, the corridor's angle-difference limit
-    is enforced *for all hours regardless of whether any capacity is built*. Continuous
-    expansion lines are `FIXED_LINES`: their flow–angle coupling and their
+    is enforced *for all hours regardless of whether any capacity is built*. Their flow–angle coupling and their
     $\pm\Delta\theta^{\max}_{l}$ angle limit are always on. So a line that does not exist still
-    constrains the phase angles of the two zones it would have connected — an entirely fictitious
-    constraint that can distort flows across the rest of the network and, in a meshed system, make
-    the model infeasible or silently more expensive.
+    constrains the phase angles of the two zones it would have connected.
 
-    **Recommendation:** any new corridor built from zero under DC-OPF should use
-    `Discrete_Build = 1`. Discrete candidate lines have build-gated angle limits, so an unbuilt
-    corridor imposes nothing. This is also why `PHANTOM_LINES` exists: the zero-capacity residual row
-    of a greenfield discrete corridor is deliberately excluded from both the coupling and the angle
-    limit, so it cannot pin the corridor's angle difference and choke a newly-built parallel line down
-    to zero flow.
-
-    Continuous reinforcement remains perfectly appropriate under DC-OPF for corridors that
-    **already have an existing line** — the physics are real in that case, and the angle limit should
-    be on.
-
-!!! warning "Discrete builds do not change the corridor's susceptance"
-    Building a parallel circuit on a real corridor halves its effective reactance. GenX does **not**
-    model this: each discrete line carries its own flow with its own (unchanged) susceptance, and the
-    corridor's aggregate behavior is the sum of the parallel lines' flows. This is the standard
-    linear-DC approximation used in transmission expansion planning, but it means the model does not
-    capture the reactance change from adding circuits to an existing corridor.
+    Continuous reinforcement can still be applied under DC-OPF for corridors that already have an existing line.
 
 !!! warning "Choose `BigM` carefully"
-    With `Bilinear_DC_OPF: 0`, `BigM` must be large enough to be non-binding when the line *is* built
-    ($M_l$ must exceed the largest possible value of $|\Phi_{l,t} - \mathcal{B}_l \Delta\theta_l|$)
-    and as small as possible otherwise. The default (`10 × New_Line_Cap_Size_MW`) is a heuristic, not
-    a guarantee. A `BigM` that is too small silently cuts off valid solutions; one that is too large
-    makes the MILP slow. If a discrete corridor is never built despite looking economic, suspect
-    `BigM` first.
+    With `Bilinear_DC_OPF: 0`, `BigM` must be large enough that it does not create an unintended constraint if a line is not built since $\mathcal{B}_l \Delta\theta_l$ is constrained by $M_l$ in this case. However, its size can impact numerical performance of both the monolithic and Benders solves. The default (`10 × New_Line_Cap_Size_MW`) is a heuristic, not a guarantee. A `BigM` that is too small can silently cut off valid solutions; one that is too large
+    can make the MILP slow.
 
 !!! note "`DiscreteInvestments` makes the model a MILP"
-    Binary line builds (and integer resource builds) turn what may have been an LP into a MILP.
-    Expect substantially longer solve times, and set a sensible `MIPGap` in your solver settings.
+    Binary line builds (and integer resource builds) result in a MILP instead of an LP and can increase solution time. Consider using Benders decomposition if the model struggles with tractability, and/or set a consider what `MIPGap` your problem requires.
 
-## 5. Benders decomposition with DC-OPF and expansion
+## 6. Benders decomposition with DC-OPF and expansion
 
 Under Benders, the line-build decisions ($x_l$, $\bigtriangleup\varphi^{cap}_{l}$) live in the
-planning problem while the DC-OPF angle constraints live in the operational subproblems. This is a
-hard combination: the subproblems are infeasible for many early planning solutions (an unbuilt
-network cannot serve demand), and the master is a MILP.
+planning problem while the DC-OPF angle constraints live in the operational subproblems. The subproblems can be infeasible for many early planning solutions (an unbuilt network cannot serve demand), and the discrete nature of the problem can result in long solves times and weak cuts.
 
-GenX provides four settings in `benders_settings.yml` to make it tractable. They are described in
+GenX provides four settings in `benders_settings.yml` to assist with tractability. They are described in
 detail on the [Benders Decomposition](@ref) page; in summary:
 
 | Setting | Effect |
@@ -227,6 +281,6 @@ The key idea is that the **transport model is a relaxation of DC-OPF on the same
 generated against transport subproblems are therefore valid underestimators of the DC-OPF recourse
 cost, so GenX can solve the (much easier) transport problem first, keep the accumulated cuts as a
 warm start, then switch the subproblems to DC-OPF and continue. Each pass is additionally hot-started
-by first solving its LP relaxation to convergence before restoring integrality.
+by first solving its LP relaxation to convergence before restoring integrality. These ideas are outlined in the manuscript available [here](https://arxiv.org/abs/2603.29867).
 
 A complete worked example is `example_systems/12_IEEE_9_bus_DC_OPF_expansion`.

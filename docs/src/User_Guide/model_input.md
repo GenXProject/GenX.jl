@@ -197,6 +197,10 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
+|**DiscreteInvestments = 1**||
+|Discrete\_Build|{0,1}, Indicates if a resource should be built in discrete quantities| 
+| |Discrete\_Build = 1: requires new capacity and retired capacity to be in increments of the unit's `Cap_Size` (default of 1 MW if not defined by user). Results in a mixed-integer program. Useful for high resolution spacial models| 
+|||Discrete\_Build = 0: new and retired capacity decisions are continuous for the given unit|
 |**ModelingToGenerateAlternatives = 1**||
 |MGA |Eligibility of the technology for Modeling To Generate Alternative (MGA) run. |
 ||1 = Technology is available for the MGA run.|
