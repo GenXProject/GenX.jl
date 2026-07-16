@@ -93,44 +93,47 @@ function run_benders_dcopf_expansion(settings::Dict)
     return (UB = ub, LB = lb, gap = abs(ub - lb) / max(abs(ub), 1.0), iterations = nrow(df))
 end
 
-# Shared Benders configuration.
-#   StabParam > 0        — level-set regularization, so RegularizationPostHotstart has something to
-#                          keep switched on after the hot-start passes.
-#   ExpectFeasibleSubproblems = false — generate feasibility cuts; the subproblems really are
-#                          infeasible for some of the early transmission builds.
-#   IntegerInvestment    — deliberately absent (defaults to false). GenX's LP hot-starts perform the
-#                          integer relaxation themselves; MacroEnergySolvers' own integer routine
-#                          must not also run. run_genx_case! forces it off when hot-starts are on.
-benders_settings = Dict{String, Any}("ConvTol" => 1.0e-3,
-    "MaxIter" => 300,
-    "MaxCpuTime" => 7200,
-    "StabParam" => 0.0,
-    "StabDynamic" => false,
-    "ExpectFeasibleSubproblems" => false,
-    "RunTransportModel" => true,
-    "LPTransportHotstart" => true,
-    "LPDCOPFHotstart" => true,
-    "RegularizationPostHotstart" => false)
+# MacroEnergySolvers does not work well on Julia 1.6
+if VERSION ≥ v"1.7"
+    # Shared Benders configuration.
+    #   StabParam > 0        — level-set regularization, so RegularizationPostHotstart has something to
+    #                          keep switched on after the hot-start passes.
+    #   ExpectFeasibleSubproblems = false — generate feasibility cuts; the subproblems really are
+    #                          infeasible for some of the early transmission builds.
+    #   IntegerInvestment    — deliberately absent (defaults to false). GenX's LP hot-starts perform the
+    #                          integer relaxation themselves; MacroEnergySolvers' own integer routine
+    #                          must not also run. run_genx_case! forces it off when hot-starts are on.
+    benders_settings = Dict{String, Any}("ConvTol" => 1.0e-3,
+        "MaxIter" => 300,
+        "MaxCpuTime" => 7200,
+        "StabParam" => 0.0,
+        "StabDynamic" => false,
+        "ExpectFeasibleSubproblems" => false,
+        "RunTransportModel" => true,
+        "LPTransportHotstart" => true,
+        "LPDCOPFHotstart" => true,
+        "RegularizationPostHotstart" => false)
 
-@testset "Benders with LP hot-starts" begin
-    res = run_benders_dcopf_expansion(benders_settings)
+    @testset "Benders with LP hot-starts" begin
+        res = run_benders_dcopf_expansion(benders_settings)
 
-    @test res !== nothing
-    if res !== nothing
-        # Converged to the Benders tolerance...
-        converged = @test res.gap≤benders_settings["ConvTol"]
-        # ...and to the same optimum as the monolithic MILP.
-        rel_diff = abs(res.UB - obj_true) / abs(obj_true)
-        parity = @test rel_diff ≤ BENDERS_RTOL
+        @test res !== nothing
+        if res !== nothing
+            # Converged to the Benders tolerance...
+            converged = @test res.gap≤benders_settings["ConvTol"]
+            # ...and to the same optimum as the monolithic MILP.
+            rel_diff = abs(res.UB - obj_true) / abs(obj_true)
+            parity = @test rel_diff ≤ BENDERS_RTOL
 
-        write_testlog(BENDERS_PATH,
-            "hotstart | UB=$(res.UB) LB=$(res.LB) gap=$(round(res.gap; sigdigits = 3)) " *
-            "iters=$(res.iterations) | monolithic=$obj_true rel_diff=$(round(rel_diff; sigdigits = 3))",
-            parity)
+            write_testlog(BENDERS_PATH,
+                "hotstart | UB=$(res.UB) LB=$(res.LB) gap=$(round(res.gap; sigdigits = 3)) " *
+                "iters=$(res.iterations) | monolithic=$obj_true rel_diff=$(round(rel_diff; sigdigits = 3))",
+                parity)
+        end
     end
-end
 
-rm(joinpath(BENDERS_PATH, "results_benders"); recursive = true, force = true)
-write(BENDERS_SETTINGS_FILE, BENDERS_SETTINGS_ORIGINAL)
+    rm(joinpath(BENDERS_PATH, "results_benders"); recursive = true, force = true)
+    write(BENDERS_SETTINGS_FILE, BENDERS_SETTINGS_ORIGINAL)
+end
 
 end # module TestDCOPFExpansion
