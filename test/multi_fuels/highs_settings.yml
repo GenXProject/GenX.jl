@@ -2,7 +2,10 @@
 # Common solver settings
 Feasib_Tol: 1.0e-05        # Primal feasibility tolerance # [type: double, advanced: false, range: [1e-10, inf], default: 1e-07]
 TimeLimit: 1.0e23             # Time limit # [type: double, advanced: false, range: [0, inf], default: inf]
-Pre_Solve: off          # "off" avoids a Windows HiGHS quirk where a presolve-solved LP returns 0 retrievable solutions. Presolve option: "off", "choose" or "on" # [type: string, advanced: false, default: "choose"]
-Method: simplex             #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
-# Kept for the tolerance calculation in test_multifuels.jl (simplex ignores this).
+Pre_Solve: on          # Presolve option: "off", "choose" or "on" # [type: string, advanced: false, default: "choose"]
+Method: ipm             #HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
 ipm_optimality_tolerance: 1e-04
+
+# run the crossover routine for ipx
+# [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
+run_crossover: "on"

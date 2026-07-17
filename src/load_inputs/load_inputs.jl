@@ -161,11 +161,13 @@ function _check_discrete_build_columns(system_path::AbstractString,
         resources_path::AbstractString)
     col_name = "Discrete_Build"
     col_lower = lowercase(col_name)
+    cap_size_lower = "cap_size"
 
-    function _has_discrete_build(filepath::AbstractString)::Bool
+    function _has_column(filepath::AbstractString, target_lower::AbstractString)::Bool
         header = csv_header(filepath)
-        any(strip(lowercase(c)) == col_lower for c in split(header, ','))
+        any(strip(lowercase(c)) == target_lower for c in split(header, ','))
     end
+    _has_discrete_build(filepath) = _has_column(filepath, col_lower)
 
     # Check Network.csv
     network_file = joinpath(system_path, "Network.csv")
@@ -177,9 +179,16 @@ function _check_discrete_build_columns(system_path::AbstractString,
     # Check each resource CSV
     for (filename, _) in values(_get_resource_info())
         filepath = joinpath(resources_path, filename)
-        if isfile(filepath) && !_has_discrete_build(filepath)
+        isfile(filepath) || continue
+        if !_has_discrete_build(filepath)
             @warn "DiscreteInvestments is set to 1, but \"$col_name\" column not found in $filename. " *
                   "Resources in this file will not be treated as discrete-build."
+        elseif !_has_column(filepath, cap_size_lower)
+            # Integer capacity builds scale vCAP by Cap_Size, so a discrete-build
+            # resource without a Cap_Size column is almost certainly a mistake.
+            @warn "$filename has a \"$col_name\" column but no \"Cap_Size\" column. " *
+                  "Discrete-build resources scale capacity by Cap_Size; without it " *
+                  "all resources default to a capacity size of 1 MW."
         end
     end
     return nothing
