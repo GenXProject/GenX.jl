@@ -23,7 +23,7 @@ EP, _, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 @show termination_status(EP), primal_status(EP), result_count(EP)
-using Pkg; @show [(p.name, p.version) for p in values(Pkg.dependencies()) if p.name in ("HiGHS", "HiGHS_jll")]
+@show pkgversion(HiGHS) pkgversion(HiGHS.HiGHS_jll)
 obj_test = objective_value(EP)
 optimal_tol_rel = get_attribute(EP, "ipm_optimality_tolerance")
 optimal_tol = optimal_tol_rel * obj_test  # Convert to absolute tolerance
