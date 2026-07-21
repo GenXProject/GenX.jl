@@ -39,7 +39,7 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*(EP[:eObj]+sum(vTHETA)))
 
-		@expression(EP, eAvailableCapacity, sum(EP[:eTotalCap]))
+	@expression(EP, eAvailableCapacity, sum(EP[:eTotalCap]))
 	if haskey(EP, :eTotalCap_AllamcycleLOX)
 		add_to_expression!(EP[:eAvailableCapacity], sum(EP[:eTotalCap_AllamcycleLOX]))
 	end
