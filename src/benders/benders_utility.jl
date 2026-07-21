@@ -16,7 +16,6 @@ function separate_inputs_subperiods(inputs::Dict)
     number_periods = inputs["REP_PERIOD"];
     hours_per_subperiod = inputs["hours_per_subperiod"];
     
-    ####### entries_to_be_changed = ["omega","REP_PERIOD",","INTERIOR_SUBPERIODS","START_SUBPERIODS","pP_Max","T","fuel_costs","Weights","pD","C_Start"];
 
     for w in 1:number_periods
         inputs_all[w] = deepcopy(inputs);
