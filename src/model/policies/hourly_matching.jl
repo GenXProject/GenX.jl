@@ -61,7 +61,7 @@ end
 
 function hourly_matching_planning!(EP::Model, inputs::Dict)
     nHM = inputs["nHM"]
-    t = inputs["T"] # includes all time points of system
+    T = inputs["T"] # includes all time points of system
 
     # Construct hourly matching demand by adding absolute profiles with zonal percentages, if applicable
     @expression(EP, eHMDemand[t = 1:T, hm = 1:nHM],
