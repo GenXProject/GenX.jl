@@ -257,4 +257,55 @@ with_logger(ConsoleLogger(stderr, Logging.Error)) do
     test_can_retire_validation()
 end
 
+function test_myopic_stage_solution_guard()
+    @testset "Myopic run stops at a stage without a solution" begin
+        stage_1 = Model(HiGHS.Optimizer)
+        set_silent(stage_1)
+        @variable(stage_1, x)
+        @constraint(stage_1, x >= 1)
+        @constraint(stage_1, x <= 0)
+        @expression(stage_1, eObj, x)
+
+        models = Dict(1 => stage_1, 2 => Model(HiGHS.Optimizer))
+        setup = Dict(
+            "ComputeConflicts" => 0,
+            "NetworkExpansion" => 0,
+            "MultiStageSettingsDict" => Dict(
+                "Myopic" => 1,
+                "NumStages" => 2,
+                "WriteIntermittentOutputs" => 0
+            )
+        )
+        stage_1_inputs = Dict(
+            "STOR_ALL" => Int[],
+            "STOR_ASYMMETRIC" => Int[],
+            "VRE_STOR" => Int[],
+            "Z" => 1
+        )
+        inputs = Dict(1 => stage_1_inputs, 2 => Dict{String, Any}())
+
+        caught_error = try
+            with_logger(ConsoleLogger(stderr, Logging.Error)) do
+                redirect_stdout(devnull) do
+                    run_myopic_multistage("", models, setup, inputs)
+                end
+            end
+            nothing
+        catch error
+            error
+        end
+
+        @test caught_error isa ErrorException
+        if caught_error isa ErrorException
+            message = sprint(showerror, caught_error)
+            @test occursin("Myopic multistage stage 1 has no primal solution", message)
+            @test occursin("termination_status=INFEASIBLE", message)
+            @test occursin("primal_status=NO_SOLUTION", message)
+            @test occursin("raw_status=", message)
+        end
+    end
+end
+
+test_myopic_stage_solution_guard()
+
 end # module TestMultiStage
