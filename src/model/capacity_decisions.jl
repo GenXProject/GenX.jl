@@ -241,10 +241,6 @@ function vre_stor_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
     # Make sure to set total cap vars
     gen = inputs["RESOURCES"]
 
-    G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
-    T = inputs["T"] # Number of time steps (hours)
-    Z = inputs["Z"] # Number of zones
-
     gen_VRE_STOR = gen.VreStorage
 
     # Load VRE-storage inputs
@@ -270,28 +266,6 @@ function vre_stor_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
     NEW_CAP_ELEC = inputs["NEW_CAP_ELEC"]
     RET_CAP_ELEC = inputs["RET_CAP_ELEC"]
 
-    # Policy flags
-    EnergyShareRequirement = setup["EnergyShareRequirement"]
-    CapacityReserveMargin = setup["CapacityReserveMargin"]
-    MinCapReq = setup["MinCapReq"]
-    MaxCapReq = setup["MaxCapReq"]
-    IncludeLossesInESR = setup["IncludeLossesInESR"]
-    OperationalReserves = setup["OperationalReserves"]
-
-    DC_DISCHARGE = inputs["VS_STOR_DC_DISCHARGE"]
-    DC_CHARGE = inputs["VS_STOR_DC_CHARGE"]
-    AC_DISCHARGE = inputs["VS_STOR_AC_DISCHARGE"]
-    AC_CHARGE = inputs["VS_STOR_AC_CHARGE"]
-    VS_SYM_DC = inputs["VS_SYM_DC"]
-    VS_SYM_AC = inputs["VS_SYM_AC"]
-    VS_LDS = inputs["VS_LDS"]
-
-    START_SUBPERIODS = inputs["START_SUBPERIODS"]
-    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
-    hours_per_subperiod = inputs["hours_per_subperiod"]     # total number of hours per subperiod
-    rep_periods = inputs["REP_PERIOD"]
-
-    MultiStage = setup["MultiStage"]
     if !isempty(DC)
         ### INVERTER VARIABLES ###
         @variables(EP, begin
@@ -481,7 +455,6 @@ function charge_vre_stor_capacity_decisions!(EP::Model, inputs::Dict, setup::Dic
     gen = inputs["RESOURCES"]
     gen_VRE_STOR = gen.VreStorage
 
-    T = inputs["T"]
     VS_ASYM_DC_CHARGE = inputs["VS_ASYM_DC_CHARGE"]
     VS_ASYM_AC_CHARGE = inputs["VS_ASYM_AC_CHARGE"]
     VS_ASYM_DC_DISCHARGE = inputs["VS_ASYM_DC_DISCHARGE"]
@@ -659,9 +632,9 @@ function charge_vre_stor_capacity_decisions!(EP::Model, inputs::Dict, setup::Dic
         end)
 
         # DEV NOTES: Uncomment when adding Multistage support
-        if MultiStage == 1
-            @variable(EP, vEXISTINGCAPCHARGEAC[y in VS_ASYM_AC_CHARGE]>=0)
-        end
+        # if MultiStage == 1
+        #     @variable(EP, vEXISTINGCAPCHARGEAC[y in VS_ASYM_AC_CHARGE]>=0)
+        # end
 
         ### EXPRESSIONS ###
         # DEV NOTES: Uncomment when adding Multistage support

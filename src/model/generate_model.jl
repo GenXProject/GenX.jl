@@ -86,12 +86,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Initialize Objective Function Expression
     EP[:eObj] = AffExpr(0.0)
 
-    # Guard against unsupported Benders + VRE-STOR combination
-    if setup["Benders"] == 1 
-        if setup["LDSAdditionalConstraints"] == 1
-            @warn "LDSAdditionalConstraints=1 applies to problems with non-representative periods and is not supported in the current Benders implementation. Benders will proceed as if LDSAdditionalConstraints=0"
-        end
-    end
     # Delegate to planning_model! and operation_model! helper functions.
     # planning_model! handles all investment/capacity decisions and must run first
     # so that investment variables exist when operation_model! references them.
@@ -199,6 +193,12 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
+    if setup["Benders"] == 1 
+        if setup["LDSAdditionalConstraints"] == 1
+            @warn "LDSAdditionalConstraints=1 applies to problems with non-representative periods and is not supported in the current Benders implementation. Benders will proceed as if LDSAdditionalConstraints=0"
+        end
+    end
+
     # Initialize Power Balance Expression
     # Expression for "baseline" power balance constraint
     create_empty_expression!(EP, :ePowerBalance, (T, Z))
@@ -263,8 +263,8 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     # inter-period linkage constraints within each subproblem.
-    if (setup["Benders"] == 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))) ||
-       (inputs["REP_PERIOD"] > 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"])))
+    if setup["LDES_Feasible"] == 0 && ((setup["Benders"] == 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))) ||
+       (inputs["REP_PERIOD"] > 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))))
         lds_slack!(EP, inputs, setup)
     end
 
@@ -323,9 +323,8 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
-    # (Benders case with VRE_STOR already errored at generate_model entry point)
     if !isempty(inputs["VRE_STOR"])
-        if (setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["VS_LDS"])) || (inputs["REP_PERIOD"] > 1 && !isempty(inputs["VS_LDS"]))
+        if setup["LDES_Feasible"] == 0 && ((setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["VS_LDS"])) || ((inputs["REP_PERIOD"] > 1) && !isempty(inputs["VS_LDS"])))
             vre_stor_lds_slack!(EP, inputs, setup)
         end
         vre_stor!(EP, inputs, setup)
@@ -388,217 +387,4 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     @constraint(EP,
         cPowerBalance[t = 1:T, z = 1:Z],
         EP[:ePowerBalance][t, z]==inputs["pD"][t, z])
-end
-
-
-
-function generate_model_legacy(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithAttributes)
-    T = inputs["T"]     # Number of time steps (hours)
-    Z = inputs["Z"]     # Number of zones
-
-    ## Start pre-solve timer
-    presolver_start_time = time()
-
-    # Generate Energy Portfolio (EP) Model
-    EP = if Bool(setup["EnableJuMPDirectModel"])
-        opt_instance = MOI.instantiate(OPTIMIZER)
-        direct_model(opt_instance)
-    else
-        Model(OPTIMIZER)
-    end
-    set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
-
-    # Initialize Power Balance Expression
-    # Expression for "baseline" power balance constraint
-    create_empty_expression!(EP, :ePowerBalance, (T, Z))
-
-    # Initialize Objective Function Expression
-    EP[:eObj] = AffExpr(0.0)
-
-    create_empty_expression!(EP, :eGenerationByZone, (Z, T))
-
-    # Energy losses related to technologies
-    create_empty_expression!(EP, :eELOSSByZone, Z)
-
-    # Initialize Capacity Reserve Margin Expression
-    if setup["CapacityReserveMargin"] > 0
-        create_empty_expression!(EP,
-            :eCapResMarBalance,
-            (inputs["NCapacityReserveMargin"], T))
-    end
-
-    # Energy Share Requirement
-    if setup["EnergyShareRequirement"] >= 1
-        create_empty_expression!(EP, :eESR, inputs["nESR"])
-    end
-
-    # Hourly Matching Requirement
-    if setup["HourlyMatchingRequirement"] == 1
-        create_empty_expression!(EP, :eHM, (T, inputs["nHM"]))
-    end
-
-    if setup["MinCapReq"] == 1
-        create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
-    end
-
-    if setup["MaxCapReq"] == 1
-        create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
-    end
-
-    if setup["HydrogenMinimumProduction"] > 0
-        create_empty_expression!(EP, :eH2DemandRes, inputs["NumberOfH2DemandReqs"])
-    end
-
-    # Infrastructure
-    discharge!(EP, inputs, setup)
-
-    non_served_energy!(EP, inputs, setup)
-
-    investment_discharge!(EP, inputs, setup)
-
-    if setup["UCommit"] > 0
-        ucommit!(EP, inputs, setup)
-    end
-
-    fuel!(EP, inputs, setup)
-
-    co2!(EP, inputs)
-
-    if setup["OperationalReserves"] > 0
-        operational_reserves!(EP, inputs, setup)
-    end
-
-    if Z > 1
-        investment_transmission!(EP, inputs, setup)
-        transmission!(EP, inputs, setup)
-    end
-
-    if Z > 1 && setup["DC_OPF"] != 0
-        dcopf_transmission!(EP, inputs, setup)
-    end
-
-    # Technologies
-    # Model constraints, variables, expression related to dispatchable renewable resources
-
-    if !isempty(inputs["VRE"])
-        curtailable_variable_renewable!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to non-dispatchable renewable resources
-    if !isempty(inputs["MUST_RUN"])
-        must_run!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to energy storage modeling
-    if !isempty(inputs["STOR_ALL"])
-        storage!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to reservoir hydropower resources
-    if !isempty(inputs["HYDRO_RES"])
-        hydro_res!(EP, inputs, setup)
-    end
-
-    # Allam Cycle LOX
-    if !isempty(inputs["ALLAM_CYCLE_LOX"])
-        allamcyclelox!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
-    if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
-        hydro_inter_period_linkage!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to demand flexibility resources
-    if !isempty(inputs["FLEX"])
-        flexible_demand!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to thermal resource technologies
-    if !isempty(inputs["THERM_ALL"])
-        thermal!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expression related to retrofit technologies
-    if !isempty(inputs["RETROFIT_OPTIONS"])
-        EP = retrofit(EP, inputs)
-    end
-
-    # Model constraints, variables, expressions related to the co-located VRE-storage resources
-    if !isempty(inputs["VRE_STOR"])
-        vre_stor!(EP, inputs, setup)
-    end
-
-    # Model constraints, variables, expressions related to telectrolyzers
-    if !isempty(inputs["ELECTROLYZER"]) ||
-       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
-        electrolyzer!(EP, inputs, setup)
-    end
-    # Policies
-
-    if setup["OperationalReserves"] > 0
-        operational_reserves_constraints!(EP, inputs)
-    end
-
-    # CO2 emissions limits
-    if setup["CO2Cap"] > 0
-        co2_cap!(EP, inputs, setup)
-    end
-
-    # Endogenous Retirements
-    if setup["MultiStage"] > 0
-        endogenous_retirement!(EP, inputs, setup)
-    end
-
-    # Energy Share Requirement
-    if setup["EnergyShareRequirement"] >= 1
-        energy_share_requirement!(EP, inputs, setup)
-    end
-
-    # Hourly Matching Requirement
-    if setup["HourlyMatchingRequirement"] == 1
-        hourly_matching!(EP, inputs)
-    end
-
-    #Capacity Reserve Margin
-    if setup["CapacityReserveMargin"] > 0
-        cap_reserve_margin!(EP, inputs, setup)
-    end
-
-    if (setup["MinCapReq"] == 1)
-        minimum_capacity_requirement!(EP, inputs, setup)
-    end
-
-    if setup["MaxCapReq"] == 1
-        maximum_capacity_requirement!(EP, inputs, setup)
-    end
-
-    # Hydrogen demand limits
-    if setup["HydrogenMinimumProduction"] > 0
-        hydrogen_demand!(EP, inputs, setup)
-    end
-
-    if setup["ModelingToGenerateAlternatives"] == 1
-        mga!(EP, inputs, setup)
-    end
-
-    ## Define the objective function
-    @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
-
-    ## Power balance constraints
-    # demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
-    #          + incoming power flows - outgoing power flows - flow losses - charge of heat storage + generation from NACC
-    @constraint(EP,
-        cPowerBalance[t = 1:T, z = 1:Z],
-        EP[:ePowerBalance][t, z]==inputs["pD"][t, z])
-
-    ## Record pre-solver time
-    presolver_time = time() - presolver_start_time
-    if setup["PrintModel"] == 1
-        filepath = joinpath(pwd(), "YourModel.lp")
-        JuMP.write_to_file(EP, filepath)
-        println("Model Printed")
-    end
-
-    return EP
 end

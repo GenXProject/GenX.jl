@@ -56,5 +56,20 @@ The number of workers should generally match (or be a divisor of) the number of 
 Note that the stabilization/regularization scheme used in MacroEnergySolvers.jl is turned on when StabParam is greater than zero. For the regularization scheme to work, the planning problem solver must use an interior point method without crossover. Stabilization is a process in Benders where the master problem can choose less extreme solutions that are on the interior of the feasible set (see [Pecci and Jenkins](https://ieeexplore.ieee.org/abstract/document/10829583)). A challenge of Benders is that, especially at early iterations, the master problem chooses solutions that result in high costs in the subproblems (e.g., at the first iteration, Benders typically chooses to build nothing in the planning level because it is trying to minimize cost without knowledge of the operations) which results in poor cuts. The stabilization scheme generally allows the master to choose solutions that are less extreme and can result in stronger cuts early on.
 
 
+### Long-Duration Energy Storage (LDES) Feasibility Slacks
+
+When the problem is decomposed in time, the inter-period linkage that couples the storage state-of-charge across representative periods is handled at the master level, while each subproblem only sees a single representative period. Given the storage boundary conditions passed down from the master, an individual subproblem can be infeasible which would break the generation of optimality cuts and force the algorithm to rely on feasibility cuts. To guarantee that every subproblem is always feasible (relatively complete recourse), GenX adds penalized slack variables to the LDES constraints via the `lds_slack!` function.
+
+For each representative period `w`, `lds_slack!` introduces a non-negative slack variable and penalizes it in the objective with a large penalty (`100 × (Weights / H) × Voll`), so the slack is only ever used when a period would otherwise be infeasible. The companion function `vre_stor_lds_slack!` does the same for the long-duration storage constraints of the co-located VRE-storage module (`VS_LDS`).
+
+Whether these slacks are added is controlled by the `LDES_Feasible` setting in `genx_settings.yml`:
+
+| **Setting** | **Default** | **Behavior** |
+| :------------ | :-----------|:-----------|
+| `LDES_Feasible: 0` | Yes (default) | Slack variables **are** added to the LDES constraints (both the traditional LDES module and the VRE-storage module), guaranteeing subproblem feasibility. |
+| `LDES_Feasible: 1` | | **No** slack variables are added to the LDES constraints in either the traditional LDES module or the VRE-storage module. |
+
+In other words, the slacks are only introduced when `LDES_Feasible == 0` (the default). Setting `LDES_Feasible: 1` asserts that the LDES subproblems are always feasible without slacks and removes them entirely; this should only be used when you are confident the subproblems cannot become infeasible, since a genuinely infeasible subproblem will then stall the Benders algorithm rather than being absorbed by a penalized slack. Note that this behavior also applies outside Benders whenever representative periods are used (`REP_PERIOD > 1`) together with long-duration storage.
+
 ### Note on Convergence
 How well Benders Decomposition solves a problem is dependent on many factors, and there are several ongoing research projects around the world to improve the performance of Benders Decomposition. There is no guarantee on the number of iterations it will take to reach a specific tolerance. Algorithm performance is driven by many things, and modeling decisions can strongly impact convergence speed. Generally speaking, Benders Decomposition may or may not outperform solving the monolithic problem, and it is generally best when the monolithic is becoming very slow or intractable to solve.

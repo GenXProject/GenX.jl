@@ -253,8 +253,6 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
 
     myinputs = load_inputs(mysetup, case);
 
-    # SPLIT BENDERS IF NOT USING TDR
-
     myinputs_decomp = separate_inputs_subperiods(myinputs);
 
     benders_inputs = generate_benders_inputs(mysetup, myinputs, myinputs_decomp, optimizer)

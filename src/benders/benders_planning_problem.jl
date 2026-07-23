@@ -5,9 +5,9 @@ Build and return the Benders master (planning) JuMP model.
 
 Calls `planning_model!` to add capacity expansion variables and constraints, then adds one
 recourse-value variable `vTHETA[w]` per representative period and minimizes total fixed cost
-plus the sum of those recourse approximations.  Also constructs the expression
-`eAvailableCapacity` (scalar sum over all installed capacity variables) used by
-the Benders algorithm.
+plus the sum of those recourse approximations.  Also constructs the dictionary 
+`eAvailableCapacity` (mapping of all new capacity variables) used by
+the Benders algorithm in MacroEnergySolvers.jl.
 
 Raises an error if retrofits or multi-stage planning are enabled, as these are not yet
 compatible with Benders decomposition.
@@ -18,7 +18,10 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
     presolver_start_time = time()
     EP = Model(OPTIMIZER)
 
-    #set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
+	if setup["EnableJuMPStringNames"] == 0
+		@warn "Benders decomposition is not compatible with EnableJuMPStringNames == 0. Setting EnableJuMPStringNames = 1."
+	end
+
     # Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
     # eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
     @variable(EP, vZERO==0)
@@ -27,6 +30,10 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
 		error("Benders not yet supported with retrofits")
 	elseif setup["MultiStage"] > 0
 		error("Multistage and Benders are not integrated yet.")
+	elseif setup["ModelingToGenerateAlternatives"] > 0
+		error("MGA and Benders are not integrated yet.") 
+	elseif setup["UCommit"] == 1
+		error("User has set UCommit to 1. Benders decomposition is not compatible with UCommit == 1 because the subproblems will have binary variables. Please set UCommit to 0 or 2 to use Benders. ")
 	end
 
     # Initialize Objective Function Expression
@@ -39,18 +46,44 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
     ## Define the objective function
     @objective(EP, Min, setup["ObjScale"]*(EP[:eObj]+sum(vTHETA)))
 
-	@expression(EP, eAvailableCapacity, sum(EP[:eTotalCap]))
+	# eAvailableCapacity maps an integer index to each individual capacity decision variable
+	# appearing in the total-capacity expressions. MacroEnergySolvers consumes it via
+	# values(EP[:eAvailableCapacity]) to detect/clamp negative capacities (benders/planning.jl).
+	EP[:eAvailableCapacity] = Dict()
+
+	# eTotalCap[y] is an affine expression per resource; keys(cap_exp.terms) are the capacity
+	# variables in it (e.g. vCAP, vRETCAP). Register every variable across all resources.
+	for cap_exp in EP[:eTotalCap]
+		for v in keys(cap_exp.terms)
+			EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
+		end
+	end
 	if haskey(EP, :eTotalCap_AllamcycleLOX)
-		add_to_expression!(EP[:eAvailableCapacity], sum(EP[:eTotalCap_AllamcycleLOX]))
+		for cap_exp in EP[:eTotalCap_AllamcycleLOX]
+			for v in keys(cap_exp.terms)
+				EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
+			end
+		end
 	end
 	if haskey(EP, :eTotalCapCharge)
-		add_to_expression!(EP[:eAvailableCapacity], sum(EP[:eTotalCapCharge]))
+		for cap_exp in EP[:eTotalCapCharge]
+			for v in keys(cap_exp.terms)
+				EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
+			end
+		end
 	end
 	if haskey(EP, :eTotalCapEnergy)
-		add_to_expression!(EP[:eAvailableCapacity], sum(EP[:eTotalCapEnergy]))
+		for cap_exp in EP[:eTotalCapEnergy]
+			for v in keys(cap_exp.terms)
+				EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
+			end
+		end
 	end
+	# vNEW_TRANS_CAP is already a container of variables, so register them directly.
 	if haskey(EP, :vNEW_TRANS_CAP)
-		add_to_expression!(EP[:eAvailableCapacity], sum(EP[:vNEW_TRANS_CAP]))
+		for v in EP[:vNEW_TRANS_CAP]
+			EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
+		end
 	end
 
     ## Record pre-solver time

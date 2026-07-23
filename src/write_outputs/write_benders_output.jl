@@ -34,6 +34,11 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 		dfConv.Status = vcat([string(benders_results.termination_status)], fill("", max(length(LB_hist) - 1, 0)))
 	end
 	
+	@warn """
+	Planning-problem dual outputs (subsidy revenue, CO2 cap prices) are not written for Benders.
+	These shadow prices from the incumbent planning solution may not be reliably recoverable
+	from the master problem. If you have questions or comments regarding this, please open an issue.
+	"""
 
 	# Planning (first-stage) outputs are read directly from the incumbent solution
 	# (benders_results.planning_sol) rather than from the planning-problem model state. They
@@ -56,13 +61,14 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 		end
 	end
 
-	if get(output_settings_d, "WriteCosts", true)
-		write_planning_problem_costs(outpath, inputs, setup, benders_results, planning_problem)
-	end
-
 	if !has_values(planning_problem)
 		if get(output_settings_d, "WriteStatus", true)
 			write_status(outpath, inputs, setup, planning_problem)
+		end
+		# Operational costs require solved subproblems, which are not collected on this path;
+		# write the first-stage-only cost breakdown so a cost file still exists.
+		if get(output_settings_d, "WriteCosts", true)
+			write_planning_problem_costs(outpath, inputs, setup, benders_results, planning_problem)
 		end
 		@warn "Benders planning problem has no solver values in the model object; skipping detailed (operational) output files. Use benders_results fields for algorithm diagnostics."
 		return nothing
@@ -73,6 +79,11 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
     CSV.write(joinpath(outpath, "benders_convergence.csv"),dfConv)
 
 	benders_bundle = collect_benders_output_bundle(inputs, setup, subproblems)
+
+	# Full cost breakdown (first-stage from planning_sol + operational from the subproblem bundle).
+	if get(output_settings_d, "WriteCosts", true)
+		write_planning_problem_costs(outpath, inputs, setup, benders_results, planning_problem, benders_bundle)
+	end
 
 	if get(output_settings_d, "WriteCO2", true)
 		write_co2_emissions_plant(outpath, inputs, setup, benders_bundle.emissions_plant)
@@ -183,11 +194,6 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 			println(elapsed)
 		end
 	end
-
-	# Planning-problem dual outputs (subsidy revenue, CO2 cap prices) are intentionally not
-	# written for Benders: these shadow prices are not available from the incumbent planning
-	# solution and are not reliably recoverable from the cut-laden master problem. They can be
-	# reintroduced once a trustworthy planning dual is available.
 end
 
 @doc raw"""
@@ -1180,6 +1186,115 @@ function write_co2_cap_benders(path::AbstractString, inputs::Dict, setup::Dict, 
 end
 
 @doc raw"""
+	_vre_stor_zonal_var_om(EP, inputs, z)
+
+Zone-`z` variable O&M for co-located VRE+storage resources in a subproblem `EP`.
+
+Mirrors the VRE-storage block of the monolithic `write_costs` per-zone loop: solar/wind output
+VOM (`eCVarOutSolar`/`eCVarOutWind`) plus asymmetric DC/AC charge/discharge VOM. Returns raw
+model units; empty when the model has no VRE-storage resources.
+"""
+function _vre_stor_zonal_var_om(EP::Model, inputs::Dict, z::Int)
+	gen = inputs["RESOURCES"]
+	Y_ZONE_VRE_STOR = resources_in_zone_by_rid(gen.VreStorage, z)
+	c = 0.0
+	SOLAR_ZONE = intersect(Y_ZONE_VRE_STOR, inputs["VS_SOLAR"])
+	if !isempty(SOLAR_ZONE) && haskey(EP, :eCVarOutSolar)
+		c += sum(value.(EP[:eCVarOutSolar][SOLAR_ZONE, :]); init = 0.0)
+	end
+	WIND_ZONE = intersect(Y_ZONE_VRE_STOR, inputs["VS_WIND"])
+	if !isempty(WIND_ZONE) && haskey(EP, :eCVarOutWind)
+		c += sum(value.(EP[:eCVarOutWind][WIND_ZONE, :]); init = 0.0)
+	end
+	STOR_ZONE = intersect(inputs["VS_STOR"], Y_ZONE_VRE_STOR)
+	if !isempty(STOR_ZONE)
+		vom_map = Dict(intersect(inputs["VS_ASYM_DC_CHARGE"], Y_ZONE_VRE_STOR) => :eCVar_Charge_DC,
+			intersect(inputs["VS_ASYM_DC_DISCHARGE"], Y_ZONE_VRE_STOR) => :eCVar_Discharge_DC,
+			intersect(inputs["VS_ASYM_AC_DISCHARGE"], Y_ZONE_VRE_STOR) => :eCVar_Discharge_AC,
+			intersect(inputs["VS_ASYM_AC_CHARGE"], Y_ZONE_VRE_STOR) => :eCVar_Charge_AC)
+		for (set, sym) in vom_map
+			if !isempty(set) && haskey(EP, sym)
+				c += sum(value.(EP[sym][set, :]); init = 0.0)
+			end
+		end
+	end
+	return c
+end
+
+@doc raw"""
+	_subproblem_zonal_operational_costs(EP, inputs, setup)
+
+Compute per-zone operational costs from a solved subproblem `EP`, as three `Z`-length vectors
+`(cvar, cnse, cstart)` in raw model units (scaling applied by the cost writer).
+
+Mirrors the per-zone loop of the monolithic `write_costs`:
+- `cvar`   — generation/discharge (`eCVar_out`), storage charging (`eCVar_in`), flexible demand
+             (`eCVarFlex_in`), co-located VRE+storage, and Allam-cycle (`eCVar_Allam`) VOM.
+- `cnse`   — non-served energy (`eCNSE[:, :, z]`).
+- `cstart` — non-fuel startup O&M (`eCStart`, `eCStart_Allam`). Startup **fuel** is excluded here
+             and added by the cost writer from the per-plant `fuel_cost_start`.
+
+Each per-zone sum is over the subproblem's time slice; summing across subproblems yields the
+annual per-zone value. Component sets absent from the model contribute zero.
+"""
+function _subproblem_zonal_operational_costs(EP::Model, inputs::Dict, setup::Dict)
+	gen = inputs["RESOURCES"]
+	Z = inputs["Z"]
+	STOR_ALL = inputs["STOR_ALL"]
+	FLEX = inputs["FLEX"]
+	COMMIT = inputs["COMMIT"]
+	VRE_STOR = inputs["VRE_STOR"]
+	ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+
+	cvar = zeros(Z)
+	cnse = zeros(Z)
+	cstart = zeros(Z)
+
+	for z in 1:Z
+		Y_ZONE = resources_in_zone_by_rid(gen, z)
+
+		if haskey(EP, :eCVar_out)
+			cvar[z] += sum(value.(EP[:eCVar_out][Y_ZONE, :]); init = 0.0)
+		end
+
+		STOR_ALL_ZONE = intersect(STOR_ALL, Y_ZONE)
+		if !isempty(STOR_ALL_ZONE) && haskey(EP, :eCVar_in)
+			cvar[z] += sum(value.(EP[:eCVar_in][STOR_ALL_ZONE, :]); init = 0.0)
+		end
+
+		FLEX_ZONE = intersect(FLEX, Y_ZONE)
+		if !isempty(FLEX_ZONE) && haskey(EP, :eCVarFlex_in)
+			cvar[z] += sum(value.(EP[:eCVarFlex_in][FLEX_ZONE, :]); init = 0.0)
+		end
+
+		if !isempty(VRE_STOR)
+			cvar[z] += _vre_stor_zonal_var_om(EP, inputs, z)
+		end
+
+		if haskey(EP, :eCNSE)
+			cnse[z] += sum(value.(EP[:eCNSE][:, :, z]); init = 0.0)
+		end
+
+		COMMIT_ZONE = intersect(COMMIT, Y_ZONE)
+		if setup["UCommit"] >= 1 && !isempty(COMMIT_ZONE) && haskey(EP, :eCStart)
+			cstart[z] += sum(value.(EP[:eCStart][COMMIT_ZONE, :]); init = 0.0)
+		end
+
+		if !isempty(ALLAM_CYCLE_LOX)
+			Y_ZONE_ALLAM = resources_in_zone_by_rid(gen.AllamCycleLOX, z)
+			if !isempty(Y_ZONE_ALLAM)
+				haskey(EP, :eCVar_Allam) && (cvar[z] += sum(value.(EP[:eCVar_Allam][Y_ZONE_ALLAM]); init = 0.0))
+				if setup["UCommit"] >= 1 && haskey(EP, :eCStart_Allam)
+					cstart[z] += sum(value.(EP[:eCStart_Allam][Y_ZONE_ALLAM, :]); init = 0.0)
+				end
+			end
+		end
+	end
+
+	return (cvar = cvar, cnse = cnse, cstart = cstart)
+end
+
+@doc raw"""
 	collect_benders_output_bundle(inputs, setup, subproblems)
 
 Collect all operational output arrays from solved subproblems into a single `NamedTuple`.
@@ -1231,6 +1346,9 @@ function collect_distributed_output_bundle(inputs::Dict, setup::Dict, subproblem
 	emissions_zone_chunks = [b.emissions_zone for b in bundles]
 	fuel_cost_out_chunks = [b.fuel_cost_out for b in bundles]
 	fuel_cost_start_chunks = [b.fuel_cost_start for b in bundles]
+	var_om_cost_zone_chunks = [b.var_om_cost_zone for b in bundles]
+	nse_cost_zone_chunks = [b.nse_cost_zone for b in bundles]
+	start_om_cost_zone_chunks = [b.start_om_cost_zone for b in bundles]
 	fuel_ts_chunks = [b.fuel_ts for b in bundles]
 	fuel_total_chunks = [b.fuel_total for b in bundles]
 	multi_fuel_generation_chunks = [b.multi_fuel_generation for b in bundles]
@@ -1275,6 +1393,9 @@ function collect_distributed_output_bundle(inputs::Dict, setup::Dict, subproblem
 		emissions_zone = reduce(hcat, emissions_zone_chunks; init=zeros(inputs["Z"], 0)),
 		fuel_cost_out = reduce(+, fuel_cost_out_chunks; init=zeros(inputs["G"])),
 		fuel_cost_start = reduce(+, fuel_cost_start_chunks; init=zeros(inputs["G"])),
+		var_om_cost_zone = reduce(+, var_om_cost_zone_chunks; init=zeros(inputs["Z"])),
+		nse_cost_zone = reduce(+, nse_cost_zone_chunks; init=zeros(inputs["Z"])),
+		start_om_cost_zone = reduce(+, start_om_cost_zone_chunks; init=zeros(inputs["Z"])),
 		fuel_ts = reduce(hcat, fuel_ts_chunks; init=zeros(inputs["G"], 0)),
 		fuel_total = reduce(+, fuel_total_chunks; init=zeros(length(inputs["fuels"]))),
 		multi_fuel_generation = reduce(+, multi_fuel_generation_chunks; init=zeros(length(inputs["HAS_FUEL"]), get(inputs, "MAX_NUM_FUELS", 0))),
@@ -1400,6 +1521,12 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 	emissions_zone_subprob = Vector{Matrix}(undef, n_local_subprob)
 	fuel_cost_out_subprob = Vector{Vector{Float64}}(undef, n_local_subprob)
 	fuel_cost_start_subprob = Vector{Vector{Float64}}(undef, n_local_subprob)
+	# Per-zone operational cost vectors, per subproblem (summed across subproblems below).
+	# Fuel cost is already captured per-plant in fuel_cost_out/fuel_cost_start and is aggregated
+	# to zones in the cost writer; start O&M here excludes startup fuel (added there too).
+	var_om_cost_zone_subprob = Vector{Vector{Float64}}(undef, n_local_subprob)
+	nse_cost_zone_subprob = Vector{Vector{Float64}}(undef, n_local_subprob)
+	start_om_cost_zone_subprob = Vector{Vector{Float64}}(undef, n_local_subprob)
 	fuel_ts_subprob = Vector{Matrix}(undef, n_local_subprob)
 	fuel_total_subprob = Vector{Vector{Float64}}(undef, n_local_subprob)
 	multi_fuel_generation_subprob = Vector{Matrix}(undef, n_local_subprob)
@@ -1464,6 +1591,12 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 		emissions_zone_subprob[s] = haskey(EP, :eEmissionsByZone) ? _as_time_matrix(value.(EP[:eEmissionsByZone]), Z, local_T, "eEmissionsByZone") : zeros(Z, local_T)
 		fuel_cost_out_subprob[s] = haskey(EP, :ePlantCFuelOut) ? value.(EP[:ePlantCFuelOut]) : zeros(G)
 		fuel_cost_start_subprob[s] = haskey(EP, :ePlantCFuelStart) ? value.(EP[:ePlantCFuelStart]) : zeros(G)
+		# Per-zone operational costs (raw model units; scaled in the cost writer). Mirrors how the
+		# monolithic write_costs assembles per-zone cVar, cNSE, and cStart (non-fuel startup).
+		zonal_op_costs = _subproblem_zonal_operational_costs(EP, inputs, setup)
+		var_om_cost_zone_subprob[s] = zonal_op_costs.cvar
+		nse_cost_zone_subprob[s] = zonal_op_costs.cnse
+		start_om_cost_zone_subprob[s] = zonal_op_costs.cstart
 		if haskey(EP, :ePlantFuel_generation) && haskey(EP, :ePlantFuel_start)
 			fuel_ts_subprob[s] = _as_time_matrix(value.(EP[:ePlantFuel_generation] + EP[:ePlantFuel_start]), G, local_T, "plant fuel time series")
 		else
@@ -1689,6 +1822,9 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 	fuel_ts_subprob = reduce(hcat, fuel_ts_subprob)
 	fuel_cost_out = reduce(+, fuel_cost_out_subprob; init=zeros(G))
 	fuel_cost_start = reduce(+, fuel_cost_start_subprob; init=zeros(G))
+	var_om_cost_zone = reduce(+, var_om_cost_zone_subprob; init=zeros(Z))
+	nse_cost_zone = reduce(+, nse_cost_zone_subprob; init=zeros(Z))
+	start_om_cost_zone = reduce(+, start_om_cost_zone_subprob; init=zeros(Z))
 	fuel_total = reduce(+, fuel_total_subprob; init=zeros(FUEL_COUNT))
 	multi_fuel_generation = reduce(+, multi_fuel_generation_subprob; init=zeros(length(HAS_FUEL), MAX_NUM_FUELS))
 	multi_fuel_start = reduce(+, multi_fuel_start_subprob; init=zeros(length(HAS_FUEL), MAX_NUM_FUELS))
@@ -1734,6 +1870,9 @@ function get_local_output_bundle(inputs::Dict, setup::Dict, subproblems_local::V
 		tlosses = tloss_subprob,
 		fuel_cost_out = fuel_cost_out,
 		fuel_cost_start = fuel_cost_start,
+		var_om_cost_zone = var_om_cost_zone,
+		nse_cost_zone = nse_cost_zone,
+		start_om_cost_zone = start_om_cost_zone,
 		fuel_ts = fuel_ts_subprob,
 		fuel_total = fuel_total,
 		multi_fuel_generation = multi_fuel_generation,

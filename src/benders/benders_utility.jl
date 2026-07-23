@@ -18,7 +18,7 @@ function separate_inputs_subperiods(inputs::Dict)
     
 
     for w in 1:number_periods
-        inputs_all[w] = deepcopy(inputs);
+        inputs_all[w] = Dict()
         Tw = (w-1)*hours_per_subperiod+1:w*hours_per_subperiod;
         inputs_all[w]["omega"] = inputs["omega"][Tw];
         inputs_all[w]["REP_PERIOD"]=1;
@@ -28,6 +28,7 @@ function separate_inputs_subperiods(inputs::Dict)
         inputs_all[w]["START_SUBPERIODS"] = STARTS;
         inputs_all[w]["pP_Max"] = inputs["pP_Max"][:,Tw];
         inputs_all[w]["T"] = hours_per_subperiod;
+        inputs_all[w]["fuel_costs"] = Dict();
         for ks in keys(inputs["fuel_costs"])
             inputs_all[w]["fuel_costs"][ks] = inputs["fuel_costs"][ks][Tw];
         end
@@ -46,7 +47,14 @@ function separate_inputs_subperiods(inputs::Dict)
 		if haskey(inputs,"Period_Map")
 			inputs_all[w]["SubPeriod_Index"] = inputs["Period_Map"].Rep_Period[findfirst(inputs["Period_Map"].Rep_Period_Index.==w)];
 		end
-
+        if haskey(inputs, "dfHM_absolute")
+            inputs_all[w]["dfHM_absolute"] = inputs["dfHM_absolute"][Tw,:];
+        end
+        for k in keys(inputs)
+            if !haskey(inputs_all[w],k)
+                inputs_all[w][k] = inputs[k];
+            end
+        end
     end
 
     return inputs_all
@@ -66,10 +74,10 @@ them into a single `benders_inputs` dictionary with fields:
   single Julia process (`nworkers() == 1`), or a `DArray` across multiple workers otherwise
 - `"planning_variables_sub"`: per-subperiod mapping of linking variable names
 
-Using a `Vector{Dict}` when only one process is available avoids routing every subproblem
-solve through Julia's distributed message-passing infrastructure (`@fetchfrom 1 / @spawnat 1`),
-which can deadlock when the solver (e.g. HiGHS IPM) spawns OpenMP threads that interfere
-with Julia's cooperative task scheduler on the single OS thread.
+The "subproblems" entry of the dictionary uses a `Vector{Dict}` when only one process is 
+available to avoid routing every subproblem solve through Julia's distributed message-passing
+infrastructure (`@fetchfrom 1 / @spawnat 1`), which can deadlock when the solver (e.g. HiGHS IPM) 
+spawns OpenMP threads that interfere with Julia's cooperative task scheduler on the single OS thread. 
 """
 function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict, optimizer::Any)
 
@@ -89,36 +97,4 @@ function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict,
 	benders_inputs["planning_variables_sub"] = planning_variables_sub;
 
     return benders_inputs
-end
-
-@doc raw"""
-	check_negative_capacities(EP)
-
-Return `true` if any installed capacity expression in the planning model `EP` takes a
-value below `-1e-8`, indicating a numerically infeasible or degenerate solution.
-
-Checks `eTotalCap`, and optionally `eTotalCapEnergy`, `eTotalCapCharge`, and
-`eAvail_Trans_Cap` when those keys are present in the model.
-"""
-function check_negative_capacities(EP::Model)
-
-	neg_cap_bool = false;
-	tol = -1e-8;
-	if any(value.(EP[:eTotalCap]).< tol) 
-			neg_cap_bool = true;
-	elseif haskey(EP,:eTotalCapEnergy)
-		if any(value.(EP[:eTotalCapEnergy]).< tol)
-			neg_cap_bool = true;
-		end
-	elseif haskey(EP,:eTotalCapCharge)
-		if any(value.(EP[:eTotalCapCharge]).< tol)
-			neg_cap_bool = true;
-		end
-	elseif haskey(EP,:eAvail_Trans_Cap)
-		if any(value.(EP[:eAvail_Trans_Cap]).< tol)
-			neg_cap_bool = true;
-		end
-	end
-	return neg_cap_bool
-	
 end

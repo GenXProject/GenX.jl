@@ -41,7 +41,6 @@ using Logging
 using MacroEnergySolvers
 using Distributed
 using DistributedArrays
-using ClusterManagers
 
 using PrecompileTools: @compile_workload
 

@@ -27,11 +27,8 @@ const OBJECTIVE_RTOL = 1e-3
 # monolithic solves. Benders UB must match within OBJECTIVE_RTOL.
 const KNOWN_OPTIMA = Dict(
     1  => 4975.3803,
-    2  => 16649.3118,
-    3  => 7247.99606,
     4  => 4871.46029,
     5  => 5155.24455,
-    7  => 2249.26153,
     10 => 40270.88422,
 )
 
@@ -39,11 +36,8 @@ const KNOWN_OPTIMA = Dict(
 # Pre-clustered TDR data lives in test/benders/<case_name>/TDR_results/.
 const EXAMPLE_CASES = [
     (1,  "1_three_zones"),
-    # (2,  "2_three_zones_w_electrolyzer_and_hourly_matching"),
-    # (3,  "3_three_zones_w_co2_capture"),
     (4,  "4_three_zones_w_policies_slack"),
     (5,  "5_three_zones_w_piecewise_fuel"),
-    # (7,  "7_three_zones_w_colocated_VRE_storage"),
     (10, "10_IEEE_9_bus_DC_OPF"),
 ]
 

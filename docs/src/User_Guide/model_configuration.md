@@ -34,6 +34,9 @@ The following tables summarize the model settings parameters and their default/p
 |LDSAdditionalConstraints | Flag to activate additional constraints for long duration storage resources to prevent violation of SoC limits in non-representative periods.|
 ||1 = activate additional constraints.|
 ||0 = do not activate additional constraints.|
+|LDES_Feasible | Flag controlling whether penalized slack variables are added to the long-duration energy storage (LDES) inter-period constraints to guarantee subproblem feasibility. Applies to both the traditional LDES module and the co-located VRE-storage module, and is relevant when representative periods are used (`REP_PERIOD > 1`) and/or under Benders decomposition. See the [Benders Decomposition](@ref) section for details.|
+||0 = (default) add slack variables to the LDES constraints, guaranteeing feasibility.|
+||1 = do **not** add any slack variables to the LDES constraints in either the traditional LDES module or the VRE-storage module.|
 
 ## 2. Solution strategy
 
@@ -43,7 +46,7 @@ The following tables summarize the model settings parameters and their default/p
 ||1 = Scaling is activated. |
 ||0 = Scaling is not activated. |
 |ObjScale| Parameter value to scale the objective function during optimization.|
-|Benders| Flag on whether to use [Benders Decomposition](https://en.wikipedia.org/wiki/Benders_decomposition) or not |
+|Benders| Flag on whether to use [Benders Decomposition](https://en.wikipedia.org/wiki/Benders_decomposition) or not. When enabled, the algorithm is configured through a separate `benders_settings.yml` file (documented in the [Benders Decomposition](@ref) section), not in `genx_settings.yml`. |
 || 0 = Monolithic formulation for solving model|
 || 1 = Benders Decomposition applied to solve the model |
 |MultiStage | Model multiple planning stages |

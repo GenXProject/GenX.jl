@@ -15,7 +15,6 @@ function generate_operation_subproblem(setup::Dict, inputs::Dict, OPTIMIZER::MOI
     presolver_start_time = time()
     EP = Model(OPTIMIZER)
 
-    #set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
     # Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,
     # eTotalCapCharge, eTotalCapEnergy and eAvail_Trans_Cap all have a JuMP variable
     @variable(EP, vZERO==0)
