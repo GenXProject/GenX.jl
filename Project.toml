@@ -57,7 +57,7 @@ SlurmClusterManager = "1"
 Statistics = "1.4.0"
 StatsBase = "0.33.21, 0.34"
 YAML = "0.4.7"
-julia = "1"
+julia = "1.9"
 
 [extras]
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
