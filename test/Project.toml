@@ -13,4 +13,9 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
+# Cap HiGHS for the TEST ENVIRONMENT ONLY. HiGHS.jl >= 1.21 (julia >= 1.10)
+# bundles HiGHS_jll >= 1.13, which hangs the Benders solves on Linux (no
+# thread-default workaround as on Windows; see ERGO-Code/HiGHS#1257). Capping
+# at 1.20 pins HiGHS_jll 1.12.0 on all Julia versions, matching the passing
+# Julia 1.9 run. The package's own `HiGHS = "1.1.4"` compat is left unchanged.
 HiGHS = "1.1.4 - 1.20"
