@@ -6,6 +6,16 @@ function infer_solver(optimizer::Any)
     return lowercase(string(parentmodule(optimizer)))
 end
 
+# Private helper: dispatch to the appropriate solver-specific configure function.
+const _SOLVER_CONFIGURE_FUNCTIONS = Dict{String, Function}(
+    "highs"  => configure_highs,
+    "gurobi" => configure_gurobi,
+    "cplex"  => configure_cplex,
+    "clp"    => configure_clp,
+    "cbc"    => configure_cbc,
+    "scip"   => configure_scip,
+)
+
 @doc raw"""
 	configure_solver(solver_settings_path::String, optimizer::Any)
 
@@ -25,14 +35,7 @@ function configure_solver(solver_settings_path::String, optimizer::Any; solver_n
     end
     path = joinpath(solver_settings_path, solver_name * "_settings.yml")
 
-    configure_functions = Dict("highs" => configure_highs,
-        "gurobi" => configure_gurobi,
-        "cplex" => configure_cplex,
-        "clp" => configure_clp,
-        "cbc" => configure_cbc,
-        "scip" => configure_scip)
-
-    return configure_functions[solver_name](path, optimizer)
+    return _SOLVER_CONFIGURE_FUNCTIONS[solver_name](path, optimizer)
 end
 
 @doc raw"""

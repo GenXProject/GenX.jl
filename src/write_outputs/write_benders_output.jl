@@ -23,7 +23,7 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 	write_settings_file(outpath, setup)
 	write_system_env_summary(outpath)
 	if get(output_settings_d, "WriteStatus", true)
-		write_status(outpath, inputs, setup, planning_problem)
+		write_status_benders(outpath, inputs, setup, benders_results)
 	end
 	LB_hist = benders_results.LB_hist
 	UB_hist = benders_results.UB_hist
@@ -61,10 +61,13 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 		end
 	end
 
+	if gap_hist[end] > setup[:ConvTol]
+		@warn "Benders decomposition did not converge to the requested tolerance $(setup[:ConvTol]). Final gap was: $(gap_hist[end])"
+	end
+
+	CSV.write(joinpath(outpath, "benders_convergence.csv"), dfConv)
+
 	if !has_values(planning_problem)
-		if get(output_settings_d, "WriteStatus", true)
-			write_status(outpath, inputs, setup, planning_problem)
-		end
 		# Operational costs require solved subproblems, which are not collected on this path;
 		# write the first-stage-only cost breakdown so a cost file still exists.
 		if get(output_settings_d, "WriteCosts", true)
@@ -73,10 +76,6 @@ function write_benders_output(benders_results::NamedTuple, outpath::AbstractStri
 		@warn "Benders planning problem has no solver values in the model object; skipping detailed (operational) output files. Use benders_results fields for algorithm diagnostics."
 		return nothing
 	end
-
-	#TODO: Check that Benders converged;
-
-    CSV.write(joinpath(outpath, "benders_convergence.csv"),dfConv)
 
 	benders_bundle = collect_benders_output_bundle(inputs, setup, subproblems)
 

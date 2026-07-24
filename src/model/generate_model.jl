@@ -183,6 +183,10 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
     if setup["HydrogenMinimumProduction"] > 0 && setup["Benders"] == 1
         hydrogen_demand_planning!(EP, inputs, setup)
     end
+
+    if setup["HourlyMatchingRequirement"] == 1 && setup["Benders"] == 1
+        hourly_matching_planning!(EP, inputs)
+    end
 end
 
 # operation_model! contains all operational constraints, variables, and technology modules.
@@ -364,7 +368,11 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
 
     # Hourly Matching Requirement
     if setup["HourlyMatchingRequirement"] == 1
-        hourly_matching!(EP, inputs)
+        if setup["Benders"] == 1
+            hourly_matching_subperiod!(EP, inputs)
+        else
+            hourly_matching!(EP, inputs)
+        end
     end
 
     # Capacity Reserve Margin

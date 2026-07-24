@@ -224,25 +224,4 @@ function get_local_planning_variables(subproblems_local::Vector{Dict{Any,Any}})
 
     return local_variables
 
-
-end
-
-@doc raw"""
-	update_with_subproblem_solutions!(subproblems, results)
-
-Solve all subproblems with the current planning solution and store results.
-
-Delegates to `MacroEnergySolvers.solve_subproblems` using the planning variable values
-in `results.planning_sol`, appending the subproblem solution as `subop_sol` in the
-returned `results` NamedTuple.  Operates on either a local `Vector{Dict}` or a
-distributed `DArray` of subproblem dicts.
-"""
-function update_with_subproblem_solutions!(subproblems::Union{Vector{Dict{Any, Any}},DistributedArrays.DArray}, results::NamedTuple)
-
-    subop_sol = MacroEnergySolvers.solve_subproblems(subproblems, results.planning_sol, true)
-
-    results = (; results..., subop_sol = subop_sol)
-
-    return nothing
-    
 end

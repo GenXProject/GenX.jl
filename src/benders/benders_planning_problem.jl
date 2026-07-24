@@ -134,27 +134,17 @@ function configure_benders_planning_solver(solver_settings_path::String, optimiz
     return _benders_configure_solver(settings_file, optimizer, solver_name)
 end
 
-# Private helper: dispatch to the appropriate solver-specific configure function.
-const _BENDERS_CONFIGURE_FUNCTIONS = Dict{String, Function}(
-    "highs"  => configure_highs,
-    "gurobi" => configure_gurobi,
-    "cplex"  => configure_cplex,
-    "clp"    => configure_clp,
-    "cbc"    => configure_cbc,
-    "scip"   => configure_scip,
-)
-
 @doc raw"""
 	_benders_configure_solver(settings_file, optimizer, solver_name)
 
-Private helper: look up `solver_name` in `_BENDERS_CONFIGURE_FUNCTIONS` and call the
+Private helper: look up `solver_name` in `_SOLVER_CONFIGURE_FUNCTIONS` and call the
 matching solver-specific configure function with `settings_file` and `optimizer`.
 Raises an error listing supported solvers if `solver_name` is not recognised.
 """
 function _benders_configure_solver(settings_file::String, optimizer::Any, solver_name::String)
-    configure_fn = get(_BENDERS_CONFIGURE_FUNCTIONS, solver_name, nothing)
+    configure_fn = get(_SOLVER_CONFIGURE_FUNCTIONS, solver_name, nothing)
     if isnothing(configure_fn)
-        supported = join(sort(collect(keys(_BENDERS_CONFIGURE_FUNCTIONS))), ", ")
+        supported = join(sort(collect(keys(_SOLVER_CONFIGURE_FUNCTIONS))), ", ")
         error("Solver '$solver_name' is not supported for Benders decomposition. Supported solvers: $supported")
     end
     return configure_fn(settings_file, optimizer)

@@ -41,6 +41,7 @@ using Logging
 using MacroEnergySolvers
 using Distributed
 using DistributedArrays
+using SlurmClusterManager
 
 using PrecompileTools: @compile_workload
 
