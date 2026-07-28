@@ -174,10 +174,10 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
         M_angle = sum(inputs["Line_Angle_Limit"])
         @constraints(EP,
             begin
-                cANGLE_BUILD_ub[l in DISCRETE_BUILD_LINES, t = 1:T],
+                cANGLE_BUILD_ub[l in PHANTOM_LINES, t = 1:T],
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <=
                 inputs["Line_Angle_Limit"][l] + M_angle * (1 - EP[:vNEW_TRANS_LINES][l])
-                cANGLE_BUILD_lb[l in DISCRETE_BUILD_LINES, t = 1:T],
+                cANGLE_BUILD_lb[l in PHANTOM_LINES, t = 1:T],
                 sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >=
                 -inputs["Line_Angle_Limit"][l] - M_angle * (1 - EP[:vNEW_TRANS_LINES][l])
             end)
