@@ -428,27 +428,5 @@ function long_duration_storage_planning!(EP::Model, inputs::Dict, setup::Dict)
                 r in MODELED_PERIODS_INDEX],
             vSOCw[y, r]>=vCAPRES_socw[y, r])
     end
-
-    # if setup["LDSAdditionalConstraints"] == 1 && !isempty(NON_REP_PERIODS_INDEX)
-    #     # Extract maximum storage level variation (positive) within subperiod
-    #     @constraint(EP, cMaxSoCVarPos[y in STOR_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
-    #                 vdSOC_maxPos[y,w] >= vS[y,hours_per_subperiod*(w-1)+t] - vS[y,hours_per_subperiod*(w-1)+1])
-
-    #     # Extract maximum storage level variation (negative) within subperiod
-    #     @constraint(EP, cMaxSoCVarNeg[y in STOR_LONG_DURATION, w=1:REP_PERIOD, t=2:hours_per_subperiod],
-    #                 vdSOC_maxNeg[y,w] <= vS[y,hours_per_subperiod*(w-1)+t] - vS[y,hours_per_subperiod*(w-1)+1])
-
-    #     # Max storage content within each modeled period cannot exceed installed energy capacity
-    #     @constraint(EP, cSoCLongDurationStorageMaxInt[y in STOR_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
-    #             (1-self_discharge(gen[y]))*vSOCw[y,r]-(1/efficiency_down(gen[y])*vP[y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
-    #             +(efficiency_up(gen[y])*vCHARGE[y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
-    #             +vdSOC_maxPos[y,dfPeriodMap[r,:Rep_Period_Index]] <= eTotalCapEnergy[y])
-
-    #     # Min storage content within each modeled period cannot be negative
-    #     @constraint(EP, cSoCLongDurationStorageMinInt[y in STOR_LONG_DURATION, r in NON_REP_PERIODS_INDEX],
-    #             (1-self_discharge(gen[y]))*vSOCw[y,r]-(1/efficiency_down(gen[y])*vP[y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
-    #             +(efficiency_up(gen[y])*vCHARGE[y,hours_per_subperiod*(dfPeriodMap[r,:Rep_Period_Index]-1)+1])
-    #             +vdSOC_maxNeg[y,dfPeriodMap[r,:Rep_Period_Index]] >= 0)
-    # end
 end
 
