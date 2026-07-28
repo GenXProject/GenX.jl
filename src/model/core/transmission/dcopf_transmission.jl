@@ -100,6 +100,22 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
                     inputs["Line_Map"] = line_map
                 end
             end
+
+            existing_corridor_set = Set()
+            for i in 1:inputs["L_exist"]
+                from_idx = findfirst(x -> x == 1, inputs["pNet_Map"][i, :])
+                to_idx = findfirst(x -> x == -1, inputs["pNet_Map"][i, :])
+                push!(existing_corridor_set, (from_idx, to_idx))
+                push!(existing_corridor_set, (to_idx, from_idx))
+            end
+            NEW_CORRIDOR_LINES = []
+            for i in CANDIDATE_LINES
+                from_idx = findfirst(x -> x == 1, inputs["pNet_Map"][i, :])
+                to_idx = findfirst(x -> x == -1, inputs["pNet_Map"][i, :])
+                if !((from_idx, to_idx) in existing_corridor_set)
+                    push!(NEW_CORRIDOR_LINES, i)
+                end
+            end
         end
 
         if setup["ptdf"] == 1 && setup["bilinear"] == 0 #PTDF constraints
@@ -374,7 +390,7 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             @variable(EP, vCANDFLOW[l in CANDIDATE_LINES, t = 1:T])
             
             # Voltage angle variables of each zone "z" at hour "t" 
-            @variable(EP, -0.785 <= vANGLE[z = 1:Z, t = 1:T] <= 0.785)
+            @variable(EP, vANGLE[z = 1:Z, t = 1:T])
 
             @constraint(EP,
                 cPOWER_FLOW_OPF_NONRETIRE[l in CANNOT_RETIRE_LINES, t = 1:T],
@@ -416,6 +432,28 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
                 cMaxFlow_out_candidate[l in CANDIDATE_LINES, t = 1:T], EP[:vCANDFLOW][l, t] <= inputs["Line_Reinforcement_Cap_Size"][l]
                 cMaxFlow_in_candidate[l in CANDIDATE_LINES, t = 1:T], EP[:vCANDFLOW][l, t] >= -inputs["Line_Reinforcement_Cap_Size"][l]
             end)
+
+            # Bus angle limits
+            @constraints(EP,
+                begin
+                    cANGLE_ub[l in EXISTING_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <=
+                    inputs["Line_Angle_Limit"][l]
+                    cANGLE_lb[l in EXISTING_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >=
+                    -inputs["Line_Angle_Limit"][l]
+                end)
+            
+            M_angle = 2 * pi
+            @constraints(EP, 
+                begin
+                    cANGLE_new_corridor_ub[l in NEW_CORRIDOR_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <=
+                    inputs["Line_Angle_Limit"][l] + M_angle * (1 - EP[:vNEW_TRANS_CAP_DECISION_INT][l])
+                    cANGLE_new_corridor_lb[l in NEW_CORRIDOR_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >=
+                    -inputs["Line_Angle_Limit"][l] - M_angle * (1 - EP[:vNEW_TRANS_CAP_DECISION_INT][l])
+                end)
         else
             ### DC-OPF variables ###
             # Note, these are definable without overwriting the existing variables in the model because transmission.jl is not called when this file is called.
@@ -431,8 +469,7 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             @variable(EP, vCANDFLOW[l in CANDIDATE_LINES, t = 1:T])
 
             # Voltage angle variables of each zone "z" at hour "t" 
-            #@variable(EP, vANGLE[z = 1:Z, t = 1:T])
-            @variable(EP, -0.785 <= vANGLE[z = 1:Z, t = 1:T] <= 0.785)
+            @variable(EP, vANGLE[z = 1:Z, t = 1:T])
 
             @variable(EP, slack_vFLOW[l in CANNOT_RETIRE_LINES, t = 1:T])
             @variable(EP, slackup_vFLOW[l in CAN_RETIRE_LINES, t = 1:T])
@@ -524,6 +561,29 @@ function dcopf_transmission!(EP::Model, inputs::Dict, setup::Dict)
             @constraint(EP, 
                 cCAN_RETIRE_LOWER_LIMIT[l in CAN_RETIRE_LINES, t = 1:T], EP[:vFLOW][l, t] >= -BigM[l] * (1 - EP[:vNEW_TRANS_CAP_DECISION_INT][existing_to_cand_map[l]])
             )
+
+            # Bus angle limits
+            @constraints(EP,
+                begin
+                    cANGLE_ub[l in EXISTING_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <=
+                    inputs["Line_Angle_Limit"][l]
+                    cANGLE_lb[l in EXISTING_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >=
+                    -inputs["Line_Angle_Limit"][l]
+                end)
+            
+            M_angle = 2 * pi
+            @constraints(EP, 
+                begin
+                    cANGLE_new_corridor_ub[l in NEW_CORRIDOR_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) <=
+                    inputs["Line_Angle_Limit"][l] + M_angle * (1 - EP[:vNEW_TRANS_CAP_DECISION_INT][l])
+                    cANGLE_new_corridor_lb[l in NEW_CORRIDOR_LINES, t = 1:T],
+                    sum(inputs["pNet_Map"][l, z] * vANGLE[z, t] for z in 1:Z) >=
+                    -inputs["Line_Angle_Limit"][l] - M_angle * (1 - EP[:vNEW_TRANS_CAP_DECISION_INT][l])
+                end)
+            
         end
         EXISTING_LINES = inputs["EXISTING_LINES"]
         @expression(EP,

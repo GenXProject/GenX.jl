@@ -371,7 +371,7 @@ function load_network_data!(setup::Dict, p::Portfolio, inputs::Dict)
             end
 
             # Line angle limit (in radians)
-            inputs["Line_Angle_Limit"] = [deg2rad(10.0) for l in lines] #FIXME
+            inputs["Line_Angle_Limit"] = [pi/12 for l in lines]
             # DC-OPF coefficient for each line (in MW when not scaled, in GW when scaled) 
             # MW = (kV)^2/Ohms 
             inputs["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /

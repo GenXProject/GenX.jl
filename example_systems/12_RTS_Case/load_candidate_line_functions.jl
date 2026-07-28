@@ -27,7 +27,7 @@ function load_candidates_base(myinputs, T=168; demand_scale = 2, add_new_corrido
     myinputs["Z_cand"] = myinputs["Z"]
     myinputs["pNet_Map"] = vcat(myinputs["pNet_Map"], myinputs["pNet_Map"])
     myinputs["pDC_OPF_coeff"] = vcat(myinputs["pDC_OPF_coeff"], myinputs["pDC_OPF_coeff"])
-    myinputs["Line_Angle_Limit"] = [6.282 for i in 1:myinputs["L"]]
+    myinputs["Line_Angle_Limit"] = [pi / 12 for i in 1:myinputs["L"]]
     myinputs["Line_Reinforcement_Cap_Size"] = vcat([0 for i in 1:L_exist], [i for i in myinputs["pTrans_Max"]])
     myinputs["Max_Trans_Cap"] = vcat([0 for i in 1:L_exist], [1 for i in myinputs["pTrans_Max"]])
     myinputs["pTrans_Max"] = vcat([i for i in myinputs["pTrans_Max"]], [0 for i in 1:L_cand])
@@ -161,7 +161,7 @@ function load_candidates_base(myinputs, T=168; demand_scale = 2, add_new_corrido
                     push!(myinputs["pPercent_Loss"], 0)
                     push!(myinputs["pTrans_Max"], 0)
                     push!(myinputs["pDC_OPF_coeff"], 2040.8)
-                    push!(myinputs["Line_Angle_Limit"], 6.282)
+                    push!(myinputs["Line_Angle_Limit"], pi / 12)
                     push!(myinputs["Max_Trans_Cap"], 1)
                     push!(myinputs["Line_Reinforcement_Cap_Size"], 500)
                     push!(myinputs["CANDIDATE_LINES"], myinputs["L_exist"] + length(myinputs["CANDIDATE_LINES"]) + 1)
@@ -256,7 +256,7 @@ function load_no_candidates(myinputs, T=168; demand_scale = 2)
     myinputs["Z_cand"] = myinputs["Z"]
     myinputs["pNet_Map"] = vcat(myinputs["pNet_Map"])
     myinputs["pDC_OPF_coeff"] = vcat(myinputs["pDC_OPF_coeff"])
-    myinputs["Line_Angle_Limit"] = [6.282 for i in 1:myinputs["L"]]
+    myinputs["Line_Angle_Limit"] = [pi / 12 for i in 1:myinputs["L"]]
     myinputs["Line_Reinforcement_Cap_Size"] = vcat([0 for i in 1:L_exist], [i for i in myinputs["pTrans_Max"]])
     myinputs["Max_Trans_Cap"] = vcat([0 for i in 1:L_exist], [1 for i in myinputs["pTrans_Max"]])
     L_cand = 0
