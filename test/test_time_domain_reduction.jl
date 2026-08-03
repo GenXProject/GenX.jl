@@ -3,6 +3,7 @@ module TestTDR
 import GenX
 import Test
 import JLD2, Clustering
+import DataFrames
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
@@ -60,6 +61,42 @@ Test.@test round(I, digits = 1) == 1      # Mutual information should be equal t
 # test if output files are correct
 for file in filter(endswith(".csv"), readdir(TDR_Results_true))
     Test.@test cmp_csv(joinpath(TDR_Results_test, file), joinpath(TDR_Results_true, file))
+end
+
+Test.@testset "Demand multiplier edge cases" begin
+    input_data = DataFrames.DataFrame(Demand_MW_z1 = zeros(2))
+    cluster_output = DataFrames.DataFrame(Symbol(1) => zeros(2))
+    weights = [2.0]
+    timesteps = 2
+    demand_mults = GenX.get_demand_multipliers(cluster_output,
+        input_data,
+        [1],
+        weights,
+        [:Demand_MW_z1],
+        timesteps,
+        [:Demand_MW_z1, :GrpWeight],
+        1,
+        1)
+    Test.@test demand_mults[:Demand_MW_z1] == 1.0
+
+    input_data = DataFrames.DataFrame(Demand_MW_z1 = [1.0, 2.0])
+    cluster_output = DataFrames.DataFrame(Symbol(1) => [0.5, 0.5])
+    weights = [2.0]
+    timesteps = 2
+    demand_mults = GenX.get_demand_multipliers(cluster_output,
+        input_data,
+        [1],
+        weights,
+        [:Demand_MW_z1],
+        timesteps,
+        [:Demand_MW_z1, :GrpWeight],
+        1,
+        1)
+    # Mirror the demand multiplier formula to validate expected scaling.
+    expected_multiplier = sum(input_data.Demand_MW_z1) /
+                          ((weights[1] / timesteps) *
+                           sum(cluster_output[!, Symbol(1)]))
+    Test.@test demand_mults[:Demand_MW_z1] == expected_multiplier
 end
 
 end # module TestTDR
