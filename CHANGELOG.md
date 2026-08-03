@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `MacroEnergySolvers` (v0.2) as a package dependency, providing shared solver infrastructure used by the Benders decomposition framework.
 - Added `Gurobi` as a weak dependency with a `GenXGurobiExt` package extension, making Gurobi support optional and loaded only when the `Gurobi` package is available in the environment.
-- Core Benders decomposition framework in new `src/benders/` directory: `benders_planning_problem.jl` (master problem / investment stage), `benders_subproblems.jl` (operational subproblems per representative period), `benders_utility.jl` (shared cut/convergence/logging utilities), and `results.jl` (result aggregation from subproblems). Includes `src/configure_solver/configure_benders.jl` for solver configuration.
+- Core Benders decomposition framework in new `src/benders/` directory: `benders_planning_problem.jl` (master problem / investment stage), `benders_subproblems.jl` (operational subproblems per representative period), `benders_utility.jl` (shared cut/convergence/logging utilities), and `write_benders_output.jl` (result aggregation from subproblems). Includes `src/configure_solver/configure_benders.jl` for solver configuration.
 - VRE-STOR capacity investment support for Benders decomposition via new `src/model/resources/vre_stor/investment_vre_stor.jl`, adding investment decisions and linking constraints for co-located VRE+storage resources in the master problem.
 - Benders-specific policy modules for CO2 cap (`co2_cap.jl`), energy share requirement (`energy_share_requirement.jl`), and hydrogen demand (`hydrogen_demand.jl`), ensuring dual prices from each subproblem feed back into optimality cuts.
 - Benders-specific resource modules for hydro inter-period linkage (`hydro_inter_period_linkage.jl`) and long-duration storage (`long_duration_storage.jl`), supporting state-of-charge linking across representative periods in the subproblems.
@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `capacity_decisions.jl` refactored to support both monolithic and Benders decomposition modes, cleanly separating capacity (master problem) and operational (subproblem) variables.
-- `generate_model.jl` updated to route model construction through Benders subproblem or monolithic paths based on the `BendersDecomposition` settings flag.
+- `generate_model.jl` updated to route model construction through Benders subproblem or monolithic paths based on the `Benders` settings flag.
+- Removed support for Julia 1.6-1.8
+- Updated tests to run with a Project.toml so we can specify HiGHS version to avoid test hanging
 
 ### Fixed
 - Corrected investment and operational constraints in `allamcyclelox.jl` that caused incorrect capacity accounting for the Allam Cycle with LOX storage resource type.

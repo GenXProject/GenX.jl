@@ -179,7 +179,7 @@ function start_distributed_processes!(number_of_subproblems::Int; lsf_cpus_per_t
 
     if haskey(ENV, "SLURM_NTASKS")
         parse(Int, ENV["SLURM_NTASKS"]) > number_of_subproblems ?
-            @warn("SLURM_NTASKS is greater than the number of subproblems specified. Only $number_of_subproblems processes will be used.") : nothing
+            @warn("SLURM_NTASKS is greater than the number of subproblems specified. Only $number_of_subproblems of the $(ENV["SLURM_NTASKS"]) requested processors will be used by the algorithm.") : nothing
         cpus_per_task = parse(Int, ENV["SLURM_CPUS_PER_TASK"])
         new_pids = addprocs(SlurmClusterManager.SlurmManager();
             exeflags = benders_worker_exeflags(cpus_per_task))

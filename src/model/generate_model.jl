@@ -81,7 +81,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     else
         Model(OPTIMIZER)
     end
-    #set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
+    set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
 
     # Initialize Objective Function Expression
     EP[:eObj] = AffExpr(0.0)

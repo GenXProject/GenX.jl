@@ -12,6 +12,12 @@ Modules = [GenX]
 Pages = ["benders_subproblems.jl"]
 ```
 
+## Utilities
+```@autodocs
+Modules = [GenX]
+Pages = ["benders_utility.jl"]
+```
+
 ## Gurobi Optimizer Helper
 ```@docs
 GenX.benders_gurobi_optimizer

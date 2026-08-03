@@ -19,7 +19,7 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
     EP = Model(OPTIMIZER)
 
 	if setup["EnableJuMPStringNames"] == 0
-		@warn "Benders decomposition is not compatible with EnableJuMPStringNames == 0. Setting EnableJuMPStringNames = 1."
+		@warn "Benders decomposition is not compatible with EnableJuMPStringNames == 0. Using string names by default"
 	end
 
     # Introduce dummy variable fixed to zero to ensure that expressions like eTotalCap,

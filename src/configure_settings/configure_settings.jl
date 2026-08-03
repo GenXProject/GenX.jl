@@ -94,6 +94,8 @@ function validate_settings!(settings::Dict{Any, Any})
     end
 
     if settings["EnableJuMPStringNames"] == 0 && settings["ComputeConflicts"] == 1
+        @warn """EnableJuMPStringNames is turned off but ComputeConflicts is on. Computing 
+        conflicts requires JuMP string names. Resetting EnableJuMPStringNames to 1 """
         settings["EnableJuMPStringNames"] = 1
     end
 end
