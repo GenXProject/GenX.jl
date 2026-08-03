@@ -6,7 +6,7 @@ Below we outline how Benders decomposes a capacity expansion model mathematicall
 
 The standard capacity expansion problem that GenX solves can be formulated as a large, monolithic optimization problem. With Benders decomposition, this problem is restructured. The formulation below represents the full, undecomposed problem:
 
-$$
+```math
 \begin{aligned}
     \min \ & c_p^\top x_p + \sum_{w \in W} c_w^\top x_w & &(1) \\
     \textrm{s.t.}\ & A_w x_w + B_w x_p \le b_w, \quad & w  \in W &(2) \\
@@ -16,7 +16,7 @@ $$
     & x_w \in \mathcal{X}_w, \quad &  w  \in W \\
     & x_p \in \mathcal{X}_p & 
 \end{aligned}
-$$
+```
 
 ### Variables
 

@@ -9,7 +9,7 @@ The available examples are:
 
 - [1\_three\_zones](https://github.com/GenXProject/GenX/tree/main/example_systems/1_three_zones)
 - [2\_three\_zones\_w\_electrolyzer](https://github.com/GenXProject/GenX/tree/main/example_systems/2_three_zones_w_electrolyzer)
-- [3\_three\_zone\_w\_co2\_capture](https://github.com/GenXProject/GenX/tree/main/example_systems/3_three_zone_w_co2_capture)
+- [3\_three\_zones\_w\_co2\_capture](https://github.com/GenXProject/GenX/tree/main/example_systems/3_three_zones_w_co2_capture)
 - [4\_three\_zones\_w\_policies\_slack](https://github.com/GenXProject/GenX/tree/main/example_systems/4_three_zones_w_policies_slack)
 - [5\_three\_zones\_w\_piecewise\_fuel](https://github.com/GenXProject/GenX/tree/main/example_systems/5_three_zones_w_piecewise_fuel)
 - [6\_three\_zones\_w\_multistage](https://github.com/GenXProject/GenX/tree/main/example_systems/6_three_zones_w_multistage)
@@ -170,14 +170,14 @@ Here, `/path/to/env` is the path to the environment where GenX is installed.
 
 To solve a case using Benders decomposition, you need to enable it in the `genx_settings.yml` file and provide specific settings files for the Benders planning (master) and subproblems.
 
-1.  **Enable Benders Decomposition:** In your `genx_settings.yml` file, set the `Benders` flag to `1`.
+**1. Enable Benders Decomposition:** In your `genx_settings.yml` file, set the `Benders` flag to `1`.
 
-    ```yaml
-    # genx_settings.yml
-    Benders: 1
-    ```
+```yaml
+# genx_settings.yml
+Benders: 1
+```
 
-2.  **Provide Benders and Solver Settings:** You must create a benders settings yaml file and two specific solver settings files in the `settings` directory:
+**2. Provide Benders and Solver Settings:** You must create a benders settings yaml file and two specific solver settings files in the `settings` directory:
     * `benders_settings.yml`: contains Benders specific settings, such as the number of iterations or a convergence tolerance. See [Benders Decomposition](@ref) for a list and explanation of settings.   
     * `[solver_name]_benders_planning_settings.yml`: Contains the solver settings for the master (planning) problem.
     *   `[solver_name]_benders_subprob_settings.yml`: Contains the solver settings for the operational subproblems.
@@ -195,5 +195,7 @@ MyCase
 │   └── gurobi_benders_subprob_settings.yml  # Benders subproblem settings
 ...
 ```
+
+For examples of how to run Benders from the case runner, please see examples [1](https://github.com/GenXProject/GenX.jl/tree/main/example_systems/1_three_zones), [2](https://github.com/GenXProject/GenX/tree/main/example_systems/2_three_zones_w_electrolyzer), [3](https://github.com/GenXProject/GenX/tree/main/example_systems/3_three_zones_w_co2_capture), [4](https://github.com/GenXProject/GenX/tree/main/example_systems/4_three_zones_w_policies_slack), [5](https://github.com/GenXProject/GenX/tree/main/example_systems/5_three_zones_w_piecewise_fuel), [7](https://github.com/GenXProject/GenX/tree/main/example_systems/7_three_zones_w_colocated_VRE_storage) or [10](https://github.com/GenXProject/GenX/tree/main/example_systems/10_IEEE_9_bus_DC_OPF) in the `example_systems/` directory. Each of these examples has a `run_benders.jl` script. This script resets the `genx_settings.yml` file with the `genx_benders_settings.yml` file which has `Benders: 1` set in the yaml file. Note that some cases may be less stable or take a long time depending on choice of subproblem solvers. Gurobi is the recommended solver to use for these examples if it is available.
 
 For more details on Benders Decomposition, see the [Benders Decomposition](@ref) documentation.
