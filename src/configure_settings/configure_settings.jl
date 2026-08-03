@@ -37,7 +37,9 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
-        "ObjScale" => 1)
+        "Benders" => 0,
+        "ObjScale" => 1,
+        "LDES_Feasible" => 0,)
 end
 
 @doc raw"""
@@ -92,6 +94,8 @@ function validate_settings!(settings::Dict{Any, Any})
     end
 
     if settings["EnableJuMPStringNames"] == 0 && settings["ComputeConflicts"] == 1
+        @warn """EnableJuMPStringNames is turned off but ComputeConflicts is on. Computing 
+        conflicts requires JuMP string names. Resetting EnableJuMPStringNames to 1 """
         settings["EnableJuMPStringNames"] = 1
     end
 end

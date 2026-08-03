@@ -44,3 +44,42 @@ function hydrogen_demand!(EP::Model, inputs::Dict, setup::Dict)
         cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],
         EP[:eH2DemandRes][h2demand]>=inputs["H2DemandReq"][h2demand] * kt_to_t)
 end
+
+function hydrogen_demand_planning!(EP::Model, inputs::Dict, setup::Dict)
+    println("Hydrogen Demand Module (Planning Problem)")
+    kt_to_t = 10^3
+    NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
+
+    @variable(EP, vH2DemandBudget[w=1:inputs["REP_PERIOD"], h2demand = 1:NumberOfH2DemandReqs])#>=0)
+
+    @constraint(EP,
+        cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],
+        sum(vH2DemandBudget[w, h2demand] for w in 1:inputs["REP_PERIOD"])>=inputs["H2DemandReq"][h2demand] * kt_to_t)
+end
+
+function hydrogen_demand_subperiod!(EP::Model, inputs::Dict, setup::Dict)
+    println("Hydrogen Demand Module (Subproblem)")
+    NumberOfH2DemandReqs = inputs["NumberOfH2DemandReqs"]
+    w = inputs["SubPeriod"];
+
+    @variable(EP, vH2DemandBudget[[w], h2demand = 1:NumberOfH2DemandReqs]>=0)
+
+    ## Zonal level limit constraint
+    if haskey(inputs, "H2DemandPriceCap")
+        @variable(EP, vH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs]>=0)
+        add_similar_to_expression!(EP[:eH2DemandRes], vH2Demand_slack)
+
+        @expression(EP,
+            eCH2Demand_slack[h2demand = 1:NumberOfH2DemandReqs],
+            inputs["H2DemandPriceCap"][h2demand]*EP[:vH2Demand_slack][h2demand])
+        @expression(EP,
+            eTotalCH2DemandSlack,
+            sum(EP[:eCH2Demand_slack][h2demand] for h2demand in 1:NumberOfH2DemandReqs))
+
+        add_to_expression!(EP[:eObj], eTotalCH2DemandSlack)
+    end
+
+    @constraint(EP,
+        cZoneH2DemandReq[h2demand = 1:NumberOfH2DemandReqs],
+        EP[:eH2DemandRes][h2demand]>=vH2DemandBudget[w, h2demand])
+end

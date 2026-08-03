@@ -12,6 +12,9 @@ function thermal_plant_effective_capacity(EP,
         resources::Vector{Int},
         capres_zone::Int,
         timesteps::Vector{Int})::Matrix{Float64}
+    if isempty(resources)
+        return Matrix{Float64}(undef, length(timesteps), 0)
+    end
     eff_cap = thermal_plant_effective_capacity.(Ref(EP),
         Ref(inputs),
         resources,

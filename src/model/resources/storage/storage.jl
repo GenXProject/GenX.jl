@@ -152,17 +152,10 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     StorageVirtualDischarge = setup["StorageVirtualDischarge"]
 
     if !isempty(STOR_ALL)
-        investment_energy!(EP, inputs, setup)
         storage_all!(EP, inputs, setup)
-
-        # Include Long Duration Storage only when modeling representative periods and long-duration storage
-        if rep_periods > 1 && !isempty(inputs["STOR_LONG_DURATION"])
-            long_duration_storage!(EP, inputs, setup)
-        end
     end
 
     if !isempty(inputs["STOR_ASYMMETRIC"])
-        investment_charge!(EP, inputs, setup)
         storage_asymmetric!(EP, inputs, setup)
     end
 
@@ -203,5 +196,24 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
             add_similar_to_expression!(eCapResMarBalanceStor, eCapResMarBalanceStorVirtual)
         end
         add_similar_to_expression!(EP[:eCapResMarBalance], eCapResMarBalanceStor)
+    end
+end
+
+@doc raw"""
+    investment_storage!(EP, inputs, setup)
+
+    Benders-specific wrapper for storage investment.
+"""
+function investment_storage!(EP, inputs::Dict, setup::Dict)
+    println("Investment Storage Resources Module")
+
+    STOR_ALL = inputs["STOR_ALL"]
+
+    if !isempty(STOR_ALL)
+        investment_energy!(EP, inputs, setup)
+    end
+
+    if !isempty(inputs["STOR_ASYMMETRIC"])
+        investment_charge!(EP, inputs, setup)
     end
 end

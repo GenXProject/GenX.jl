@@ -35,7 +35,15 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
     mysetup = configure_settings(genx_settings, writeoutput_settings) # mysetup dictionary stores settings and GenX-specific parameters
 
     if mysetup["MultiStage"] == 0
-        run_genx_case_simple!(case, mysetup, optimizer)
+        if mysetup["Benders"] == 0
+            run_genx_case_simple!(case, mysetup, optimizer)
+        else
+            benders_settings_path = get_settings_path(case, "benders_settings.yml")
+            mysetup_benders = configure_benders(benders_settings_path)
+            mysetup = merge(mysetup, mysetup_benders)
+
+            run_genx_case_benders!(case, mysetup, optimizer)
+        end
     else
         run_genx_case_multistage!(case, mysetup, optimizer)
     end
@@ -206,4 +214,64 @@ function run_genx_case_multistage!(case::AbstractString, mysetup::Dict, optimize
     # Step 5) Write DDP summary outputs
 
     write_multi_stage_outputs(mystats_d, outpath, mysetup, inputs_dict)
+end
+
+function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::Any = HiGHS.Optimizer)
+    settings_path = get_settings_path(case)    
+    ### Cluster time series inputs if necessary and if specified by the user
+    if mysetup["TimeDomainReduction"] == 1
+        TDRpath = joinpath(case, mysetup["TimeDomainReductionFolder"])
+        system_path = joinpath(case, mysetup["SystemFolder"])
+        prevent_doubled_timedomainreduction(system_path)
+        if !time_domain_reduced_files_exist(TDRpath)
+            println("Clustering Time Series Data (Grouped)...")
+            cluster_inputs(case, settings_path, mysetup)
+        else
+            println("Time Series Data Already Clustered.")
+        end
+    end
+    mysetup["settings_path"] = settings_path;
+
+    myinputs = load_inputs(mysetup, case);
+
+    myinputs_decomp = separate_inputs_subperiods(myinputs);
+
+    # Worker setup happens here, rather than in run_genx_case!, because sizing the worker pool
+    # requires knowing how many operational subproblems there are.
+    setup_benders_workers!(mysetup, length(myinputs_decomp));
+
+    benders_inputs = generate_benders_inputs(mysetup, myinputs, myinputs_decomp, optimizer)
+    planning_problem = benders_inputs["planning_problem"]
+    planning_variables_sub = benders_inputs["planning_variables_sub"]
+    subproblems = benders_inputs["subproblems"]
+
+    results  = MacroEnergySolvers.benders(planning_problem, subproblems, planning_variables_sub, mysetup)
+
+    myinputs["solve_time"] = results.cpu_time[end]
+
+    subop_sol = MacroEnergySolvers.solve_subproblems(subproblems, results.planning_sol, true)
+    
+    results = (; results..., subop_sol = subop_sol)
+
+    # Note: the planning problem is intentionally NOT re-solved/realigned here. All first-stage
+    # outputs (capacity, network expansion, planning costs) are read directly from the incumbent
+    # results.planning_sol inside write_benders_output, so they reflect the same solution as the
+    # subproblem dispatch without depending on the planning-problem model's post-Benders state.
+    println("Writing Output")
+
+    outputs_path = joinpath(case, "results_benders")
+
+    if mysetup["OverwriteResults"] == 1
+		# Overwrite existing results if dir exists
+		# This is the default behaviour when there is no flag, to avoid breaking existing code
+		if !(isdir(outputs_path))
+		    mkdir(outputs_path)
+		end
+	else
+		# Find closest unused ouput directory name and create it
+		outputs_path = choose_output_dir(outputs_path)
+		mkdir(outputs_path)
+	end
+    
+    elapsed_time = @elapsed write_benders_output(results, outputs_path, mysetup, myinputs, planning_problem, subproblems);
 end

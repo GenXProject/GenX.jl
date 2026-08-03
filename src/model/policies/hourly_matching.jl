@@ -58,3 +58,69 @@ function hourly_matching!(EP::Model, inputs::Dict)
 
     @constraint(EP, cHourlyMatching[t = 1:T, hm = 1:nHM], EP[:eHM][t, hm] >= EP[:eHMDemand][t, hm])
 end
+
+function hourly_matching_planning!(EP::Model, inputs::Dict)
+    nHM = inputs["nHM"]
+    T = inputs["T"] # includes all time points of system
+
+    # Construct hourly matching demand by adding absolute profiles with zonal percentages, if applicable
+    @expression(EP, eHMDemand[t = 1:T, hm = 1:nHM],
+        inputs["dfHM_absolute"][t, hm])
+    if haskey(inputs, "dfHM_zonal")
+        
+        @expression(EP, eHMDemandZonal[t = 1:T, hm = 1:nHM],
+            sum(inputs["pD"][t, z] * inputs["dfHM_zonal"][z, hm]
+            for z in findall(x -> x != 0, inputs["dfHM_zonal"][:, hm])))
+        add_similar_to_expression!(EP[:eHMDemand], EP[:eHMDemandZonal])
+    end
+
+    # Define budget for shortfall
+    @variable(EP, vHMShortFallBudget[w=1:inputs["REP_PERIOD"], hm = 1:nHM]>=0)
+
+    @constraint(EP, cHourlyMatchingSFBudgetLim[hm = 1:nHM], sum(EP[:vHMShortFallBudget][w, hm] for w in 1:inputs["REP_PERIOD"]) 
+        <= (1-inputs["dfHM_matching_target"][hm])*sum(EP[:eHMDemand][t, hm] * inputs["omega"][t] for t in 1:T))
+end
+
+function hourly_matching_subperiod!(EP::Model, inputs::Dict)
+    println("Hourly Matching Policies Module")
+    T = inputs["T"]
+    nHM = inputs["nHM"]
+    w = inputs["SubPeriod"];
+
+    @variable(EP, vHMShortFallBudget[[w], hm = 1:nHM]>=0)
+    
+    # Construct hourly matching demand by adding absolute profiles with zonal percentages, if applicable
+    @expression(EP, eHMDemand[t = 1:T, hm = 1:nHM],
+        inputs["dfHM_absolute"][t, hm])
+    if haskey(inputs, "dfHM_zonal")
+        @expression(EP, eHMDemandZonal[t = 1:T, hm = 1:nHM],
+            sum(inputs["pD"][t, z] * inputs["dfHM_zonal"][z, hm]
+            for z in findall(x -> x != 0, inputs["dfHM_zonal"][:, hm])))
+        add_similar_to_expression!(EP[:eHMDemand], EP[:eHMDemandZonal])
+    end
+
+    # Define allowable shortfall in hourly matching requirement
+    @variable(EP, vHMShortFall[t = 1:T, hm = 1:nHM]>=0)
+    add_similar_to_expression!(EP[:eHM], vHMShortFall)
+
+    @constraint(EP, cHourlyMatchingSFLim_Subperiod[w, hm = 1:nHM], sum(EP[:vHMShortFall][t, hm] * inputs["omega"][t] for t in 1:T) 
+        <= EP[:vHMShortFallBudget][w, hm])
+
+
+    # if input files are present, add hourly matching requirement slack variables
+    if haskey(inputs, "dfHM_slack")
+        @variable(EP, vHMSlack[t = 1:T, hm = 1:nHM]>=0)
+        add_similar_to_expression!(EP[:eHM], vHMSlack)
+
+        @expression(EP,
+            eHMSlack_Year[hm = 1:nHM],
+            sum(EP[:vHMSlack][t, hm] * inputs["omega"][t] for t in 1:T))
+        @expression(EP,
+            eCHMSlack[hm = 1:nHM],
+            inputs["dfHM_slack"][hm, :PriceCap]*EP[:eHMSlack_Year][hm])
+        @expression(EP, eCTotalHMSlack, sum(EP[:eCHMSlack][hm] for hm in 1:nHM))
+        add_to_expression!(EP[:eObj], eCTotalHMSlack)
+    end
+
+    @constraint(EP, cHourlyMatching[t = 1:T, hm = 1:nHM], EP[:eHM][t, hm] >= EP[:eHMDemand][t, hm])
+end

@@ -29,9 +29,9 @@ The objective function of GenX minimizes total annual electricity system costs o
 
 The first summation represents the fixed costs of generation/discharge over all zones and technologies, which refects the sum of the annualized capital cost, $\pi^{INVEST}_{y,z}$, times the total new capacity added (if any),  plus the Fixed O&M cost, $\pi^{FOM}_{y,z}$, times the net installed generation capacity, $\overline{\Omega}^{size}_{y,z} \times \Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 
-The second summation corresponds to the fixed cost of installed energy storage capacity and is summed over only the storage resources. This term includes the sum of the annualized energy capital cost, $\pi^{INVEST,energy}_{y,z}$, times the total new energy capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed energy storage capacity, $\Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions).
+The second summation corresponds to the fixed cost of installed energy storage capacity and is summed over only the storage resources. This term includes the sum of the annualized energy capital cost, $\pi^{INVEST,energy}_{y,z}$, times the total new energy capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed energy storage capacity, $\Delta^{total,energy}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 
-The third summation corresponds to the fixed cost of installed charging power capacity and is summed over only over storage resources with independent/asymmetric charge and discharge power components ($\mathcal{O}^{asym}$). This term includes the sum of the annualized charging power capital cost, $\pi^{INVEST,charge}_{y,z}$, times the total new charging power capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed charging power capacity, $\Delta^{total}_{y,z}$ (e.g., existing capacity less retirements plus additions).
+The third summation corresponds to the fixed cost of installed charging power capacity and is summed over only over storage resources with independent/asymmetric charge and discharge power components ($\mathcal{O}^{asym}$). This term includes the sum of the annualized charging power capital cost, $\pi^{INVEST,charge}_{y,z}$, times the total new charging power capacity added (if any), plus the Fixed O&M cost, $\pi^{FOM, energy}_{y,z}$, times the net installed charging power capacity, $\Delta^{total,charge}_{y,z}$ (e.g., existing capacity less retirements plus additions).
 
 The fourth and fifth summations corresponds to the operational cost across all zones, technologies, and time steps. The fourth summation represents the sum of fuel cost, $\pi^{FUEL}_{y,z}$ (if any), plus variable O&M cost, $\pi^{VOM}_{y,z}$ times the energy generation/discharge by generation or storage resources (or demand satisfied via flexible demand resources, $y\in\mathcal{DF}$) in time step $t$, $\Theta_{y,z,t}$, and the weight of each time step $t$, $\omega_t$, where $\omega_t$ is equal to 1 when modeling grid operations over the entire year (8760 hours), but otherwise is equal to the number of hours in the year represented by the representative time step, $t$ such that the sum of $\omega_t \forall t \in T = 8760$, approximating annual operating costs. The fifth summation represents the variable charging O&M cost, $\pi^{VOM,charge}_{y,z}$ times the energy withdrawn for charging by storage resources (or demand deferred by flexible demand resources) in time step $t$ , $\Pi_{y,z,t}$ and the annual weight of time step $t$,$\omega_t$.
 
@@ -83,12 +83,129 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
     set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
 
+    # Initialize Objective Function Expression
+    EP[:eObj] = AffExpr(0.0)
+
+    # Delegate to planning_model! and operation_model! helper functions.
+    # planning_model! handles all investment/capacity decisions and must run first
+    # so that investment variables exist when operation_model! references them.
+    planning_model!(EP, setup, inputs)
+    operation_model!(EP, setup, inputs)
+
+    if setup["ModelingToGenerateAlternatives"] == 1
+        mga!(EP, inputs, setup)
+    end
+
+    ## Define the objective function
+    @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
+
+    ## Record pre-solver time
+    presolver_time = time() - presolver_start_time
+    if setup["PrintModel"] == 1
+        filepath = joinpath(pwd(), "YourModel.lp")
+        JuMP.write_to_file(EP, filepath)
+        println("Model Printed")
+    end
+
+    return EP
+end
+
+# planning_model! contains all investment/capacity decisions. These are separated
+# from operational decisions to support Benders decomposition, where investment
+# (first-stage) variables must be fixed before solving operational (second-stage) subproblems.
+# For non-Benders runs (setup["Benders"]==0) this produces an identical model to the
+# original monolithic generate_model, just with investment calls grouped here.
+function planning_model!(EP::Model, setup::Dict, inputs::Dict)
+
+    if setup["MinCapReq"] == 1
+        create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
+    end
+
+    if setup["MaxCapReq"] == 1
+        create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
+    end
+
+    # Infrastructure
+    investment_discharge!(EP, inputs, setup)
+
+    if inputs["Z"] > 1
+        investment_transmission!(EP, inputs, setup)
+    end
+
+    if !isempty(inputs["STOR_ALL"])
+        investment_storage!(EP, inputs, setup)
+    end
+
+    if !isempty(inputs["VRE_STOR"])
+        investment_discharge_vre_stor!(EP, inputs, setup)
+    end
+
+    # Model constraints, variables, expression related to retrofit technologies
+    if !isempty(inputs["RETROFIT_OPTIONS"])
+        EP = retrofit(EP, inputs)
+    end
+
+    # Benders-only long-duration storage planning constraints (cross-period state-of-charge)
+    if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["STOR_LONG_DURATION"])
+        long_duration_storage_planning!(EP, inputs, setup)
+    end
+
+    # Benders-only hydro inter-period linkage planning constraints
+    if setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+        hydro_inter_period_linkage_planning!(EP, inputs)
+    end
+
+    # Policies
+
+    if setup["MultiStage"] > 0
+        # Endogenous Retirements
+        endogenous_retirement!(EP, inputs, setup)
+    end
+
+    if setup["MinCapReq"] == 1
+        minimum_capacity_requirement!(EP, inputs, setup)
+    end
+
+    if setup["MaxCapReq"] == 1
+        maximum_capacity_requirement!(EP, inputs, setup)
+    end
+
+    # Benders-only planning-phase CO2 cap constraints (annual budget on investment)
+    if setup["CO2Cap"] > 0 && setup["Benders"] == 1
+        co2_cap_planning!(EP, inputs, setup)
+    end
+
+    # Benders-only planning-phase energy share requirement constraints
+    if setup["EnergyShareRequirement"] >= 1 && setup["Benders"] == 1
+        energy_share_requirement_planning!(EP, inputs, setup)
+    end
+
+    if setup["HydrogenMinimumProduction"] > 0 && setup["Benders"] == 1
+        hydrogen_demand_planning!(EP, inputs, setup)
+    end
+
+    if setup["HourlyMatchingRequirement"] == 1 && setup["Benders"] == 1
+        hourly_matching_planning!(EP, inputs)
+    end
+end
+
+# operation_model! contains all operational constraints, variables, and technology modules.
+# For non-Benders runs (setup["Benders"]==0) this produces an identical model to the
+# original monolithic generate_model. For Benders runs it uses subperiod-specific variants
+# of certain constraints to allow decomposition across representative periods.
+function operation_model!(EP::Model, setup::Dict, inputs::Dict)
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+
+    if setup["Benders"] == 1 
+        if setup["LDSAdditionalConstraints"] == 1
+            @warn "LDSAdditionalConstraints=1 applies to problems with non-representative periods and is not supported in the current Benders implementation. Benders will proceed as if LDSAdditionalConstraints=0"
+        end
+    end
+
     # Initialize Power Balance Expression
     # Expression for "baseline" power balance constraint
     create_empty_expression!(EP, :ePowerBalance, (T, Z))
-
-    # Initialize Objective Function Expression
-    EP[:eObj] = AffExpr(0.0)
 
     create_empty_expression!(EP, :eGenerationByZone, (Z, T))
 
@@ -112,24 +229,22 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         create_empty_expression!(EP, :eHM, (T, inputs["nHM"]))
     end
 
-    if setup["MinCapReq"] == 1
-        create_empty_expression!(EP, :eMinCapRes, inputs["NumberOfMinCapReqs"])
-    end
-
-    if setup["MaxCapReq"] == 1
-        create_empty_expression!(EP, :eMaxCapRes, inputs["NumberOfMaxCapReqs"])
-    end
-
     if setup["HydrogenMinimumProduction"] > 0
         create_empty_expression!(EP, :eH2DemandRes, inputs["NumberOfH2DemandReqs"])
     end
 
     # Infrastructure
+
+    # capacity_decisions! creates capacity variables needed by Benders subproblems.
+    # The haskey guard prevents double-registration when planning_model! already set up
+    # eTotalCap (e.g. via investment_discharge!).
+    if setup["Benders"] == 1
+        capacity_decisions!(EP, inputs, setup)
+    end
+
     discharge!(EP, inputs, setup)
 
     non_served_energy!(EP, inputs, setup)
-
-    investment_discharge!(EP, inputs, setup)
 
     if setup["UCommit"] > 0
         ucommit!(EP, inputs, setup)
@@ -144,7 +259,6 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     if Z > 1
-        investment_transmission!(EP, inputs, setup)
         transmission!(EP, inputs, setup)
     end
 
@@ -152,9 +266,14 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         dcopf_transmission!(EP, inputs, setup)
     end
 
+    # inter-period linkage constraints within each subproblem.
+    if setup["LDES_Feasible"] == 0 && ((setup["Benders"] == 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))) ||
+       (inputs["REP_PERIOD"] > 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))))
+        lds_slack!(EP, inputs, setup)
+    end
+
     # Technologies
     # Model constraints, variables, expression related to dispatchable renewable resources
-
     if !isempty(inputs["VRE"])
         curtailable_variable_renewable!(EP, inputs, setup)
     end
@@ -167,6 +286,16 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Model constraints, variables, expression related to energy storage modeling
     if !isempty(inputs["STOR_ALL"])
         storage!(EP, inputs, setup)
+        if setup["Benders"] == 1
+            if !isempty(inputs["STOR_LONG_DURATION"])
+                long_duration_storage_subperiod!(EP, inputs, setup)
+            end
+        else
+            # Include Long Duration Storage only when modeling representative periods and long-duration storage
+            if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_LONG_DURATION"])
+                long_duration_storage!(EP, inputs, setup)
+            end
+        end
     end
 
     # Model constraints, variables, expression related to reservoir hydropower resources
@@ -180,7 +309,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
-    if inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+    if setup["Benders"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+        # Benders uses subperiod variant of hydro inter-period linkage
+        hydro_inter_period_linkage_subperiod!(EP, inputs)
+    elseif inputs["REP_PERIOD"] > 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
         hydro_inter_period_linkage!(EP, inputs, setup)
     end
 
@@ -194,21 +326,20 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         thermal!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expression related to retrofit technologies
-    if !isempty(inputs["RETROFIT_OPTIONS"])
-        EP = retrofit(EP, inputs)
-    end
-
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
     if !isempty(inputs["VRE_STOR"])
+        if setup["LDES_Feasible"] == 0 && ((setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["VS_LDS"])) || ((inputs["REP_PERIOD"] > 1) && !isempty(inputs["VS_LDS"])))
+            vre_stor_lds_slack!(EP, inputs, setup)
+        end
         vre_stor!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expressions related to telectrolyzers
-    if !isempty(inputs["ELECTROLYZER"]) ||
-       (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
+    # Model constraints, variables, expressions related to electrolyzers.
+    # Also active for VRE-STOR cases that embed an electrolyzer (VS_ELEC).
+    if !isempty(inputs["ELECTROLYZER"]) || (!isempty(inputs["VRE_STOR"]) && !isempty(inputs["VS_ELEC"]))
         electrolyzer!(EP, inputs, setup)
     end
+
     # Policies
 
     if setup["OperationalReserves"] > 0
@@ -217,48 +348,46 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     # CO2 emissions limits
     if setup["CO2Cap"] > 0
-        co2_cap!(EP, inputs, setup)
-    end
-
-    # Endogenous Retirements
-    if setup["MultiStage"] > 0
-        endogenous_retirement!(EP, inputs, setup)
+        if setup["Benders"] == 1
+            # Benders uses subperiod-scaled CO2 cap for each operational subproblem
+            co2_cap_subperiod!(EP, inputs, setup)
+        else
+            co2_cap!(EP, inputs, setup)
+        end
     end
 
     # Energy Share Requirement
     if setup["EnergyShareRequirement"] >= 1
-        energy_share_requirement!(EP, inputs, setup)
+        if setup["Benders"] == 1
+            # Benders uses subperiod-scaled ESR for each operational subproblem
+            energy_share_requirement_subperiod!(EP, inputs, setup)
+        else
+            energy_share_requirement!(EP, inputs, setup)
+        end
     end
 
     # Hourly Matching Requirement
     if setup["HourlyMatchingRequirement"] == 1
-        hourly_matching!(EP, inputs)
+        if setup["Benders"] == 1
+            hourly_matching_subperiod!(EP, inputs)
+        else
+            hourly_matching!(EP, inputs)
+        end
     end
 
-    #Capacity Reserve Margin
+    # Capacity Reserve Margin
     if setup["CapacityReserveMargin"] > 0
         cap_reserve_margin!(EP, inputs, setup)
     end
 
-    if (setup["MinCapReq"] == 1)
-        minimum_capacity_requirement!(EP, inputs, setup)
-    end
-
-    if setup["MaxCapReq"] == 1
-        maximum_capacity_requirement!(EP, inputs, setup)
-    end
-
     # Hydrogen demand limits
     if setup["HydrogenMinimumProduction"] > 0
-        hydrogen_demand!(EP, inputs, setup)
+        if setup["Benders"] == 1
+            hydrogen_demand_subperiod!(EP, inputs, setup)
+        else
+            hydrogen_demand!(EP, inputs, setup)
+        end
     end
-
-    if setup["ModelingToGenerateAlternatives"] == 1
-        mga!(EP, inputs, setup)
-    end
-
-    ## Define the objective function
-    @objective(EP, Min, setup["ObjScale"]*EP[:eObj])
 
     ## Power balance constraints
     # demand = generation + storage discharge - storage charge - demand deferral + deferred demand satisfaction - demand curtailment (NSE)
@@ -266,14 +395,4 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     @constraint(EP,
         cPowerBalance[t = 1:T, z = 1:Z],
         EP[:ePowerBalance][t, z]==inputs["pD"][t, z])
-
-    ## Record pre-solver time
-    presolver_time = time() - presolver_start_time
-    if setup["PrintModel"] == 1
-        filepath = joinpath(pwd(), "YourModel.lp")
-        JuMP.write_to_file(EP, filepath)
-        println("Model Printed")
-    end
-
-    return EP
 end

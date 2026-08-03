@@ -44,3 +44,34 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
     ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
     @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR]>=0)
 end
+
+function energy_share_requirement_subperiod!(EP::Model, inputs::Dict, setup::Dict)
+    println("Energy Share Requirement Policies Operation Module")
+    w = inputs["SubPeriod"];
+    # if input files are present, add energy share requirement slack variables
+    if haskey(inputs, "dfESR_slack")
+        @variable(EP, vESR_slack[ESR = 1:inputs["nESR"]]>=0)
+        add_similar_to_expression!(EP[:eESR], vESR_slack)
+
+        @expression(EP,
+            eCESRSlack[ESR = 1:inputs["nESR"]],
+            inputs["dfESR_slack"][ESR, :PriceCap]*EP[:vESR_slack][ESR])
+        @expression(EP,
+            eCTotalESRSlack,
+            sum(EP[:eCESRSlack][ESR] for ESR in 1:inputs["nESR"]))
+
+        add_to_expression!(EP[:eObj], eCTotalESRSlack)
+    end
+    @variable(EP,vESRbudget[[w],1:inputs["nESR"]])
+
+    ## Energy Share Requirements (minimum energy share from qualifying renewable resources) constraint
+    @constraint(EP, cESRShare[ESR = 1:inputs["nESR"]], EP[:eESR][ESR]>=vESRbudget[w,ESR])
+end
+
+function energy_share_requirement_planning!(EP::Model, inputs::Dict, setup::Dict)
+    println("Energy Share Requirement Policies Planning Module")
+    
+    @variable(EP,vESRbudget[w=1:inputs["REP_PERIOD"],ESR=1:inputs["nESR"]])
+
+    @constraint(EP,cESRShare_planning[ESR=1:inputs["nESR"]],sum(vESRbudget[w,ESR] for w in 1:inputs["REP_PERIOD"]) ==0)
+end

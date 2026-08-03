@@ -2,5 +2,5 @@
 
 ```@autodocs
 Modules = [GenX]
-Pages = ["utility.jl"]
+Pages = ["model/utility.jl"]
 ```

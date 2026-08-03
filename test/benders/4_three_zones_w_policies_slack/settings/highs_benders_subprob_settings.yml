@@ -1,0 +1,14 @@
+# HiGHS settings for the Benders *operational subproblems*.
+#
+# Subproblems are LPs whose dual variables form the Benders optimality cuts.
+# Simplex is used instead of IPM to avoid the LAPACK/OpenBLAS thread pool
+# that IPM creates; in Julia < 1.10 those foreign threads are not tracked by
+# Julia's GC safepoint mechanism and can cause deadlocks.  Simplex already
+# terminates at a vertex (basic feasible) solution, so dual variables are
+# well-defined without a crossover step.
+
+Feasib_Tol: 1.0e-8          # Primal feasibility tolerance
+Optimal_Tol: 1.0e-8         # Dual feasibility tolerance
+Method: simplex              # Algorithm: simplex (avoids IPM's LAPACK threads)
+threads: 1                   # Single thread per subproblem worker
+output_flag: false            # Suppress HiGHS output from subproblems

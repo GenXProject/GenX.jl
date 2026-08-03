@@ -1,0 +1,18 @@
+# HiGHS settings for the Benders *planning* (master) problem.
+#
+# The master problem is a continuous LP when IntegerInvestment: false (the
+# default).  Simplex is used instead of IPM because IPM (barrier) triggers
+# LAPACK/OpenBLAS to create a persistent thread pool.  In Julia < 1.10 those
+# foreign threads are not tracked by Julia's GC safepoint mechanism and cause
+# a deadlock after a few Benders iterations.  Simplex uses only sparse LU
+# factorization, so no extra OS threads are created.
+# If IntegerInvestment: true is set the master becomes a MILP; the
+# mip_rel_gap entry below controls that tolerance.
+
+Feasib_Tol: 1.0e-6          # Primal feasibility tolerance
+Optimal_Tol: 1.0e-6         # Dual feasibility tolerance
+Method: simplex              # Algorithm: simplex (avoids IPM's LAPACK threads)
+mip_rel_gap: 1.0e-3          # MIP relative optimality gap (only relevant when
+                             # IntegerInvestment: true)
+output_flag: false            # Suppress HiGHS output; set to true to enable
+threads: 1                   # Single-thread simplex

@@ -92,11 +92,6 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     allam_dict = inputs["allam_dict"]
 
     # Variables
-    # retired capacity of Allam cycle 
-    @variable(EP, vRETCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
-    # new capacity of Allam cycle
-    @variable(EP, vCAP_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3]  >= 0)
-
     # construct a matrix represent the main output of each component (e.g., sCO2 Turbine, air separation unit (ASU), and liquid oxygen storage tank (LOX))
     # y represents the plant, i represents the specfic subcomponents, and t represents the time
     # The main output from sCO2Turbine/ASU/LOX is the gross power output from sCO2 cycle (MWh), power consumption associated with ASU (MWh), and the amout of LOX (tonne) stored in the LOX tank
@@ -141,68 +136,13 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
         sum((eP_Allam[y,t] - vCHARGE_ALLAM[y,t])
         for y in intersect(ALLAM_CYCLE_LOX, resources_in_zone_by_rid(gen, z))))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceAllam)
-
-    # Expressions and constraints related to Allam Cycle costs
-    @expression(EP, eExistingCap_AllamCycleLOX[y in ALLAM_CYCLE_LOX, i = 1:3], allam_dict[y, "existing_cap"][i])
-
-    # Note: Allam Cycle is not compatiable with RETRO for now.
-    @expression(EP, eTotalCap_AllamcycleLOX[y in ALLAM_CYCLE_LOX, i in 1:3],
-    if y in intersect(NEW_CAP_Allam, RET_CAP_Allam) # Resources eligible for new capacity and retirements 
-        if y in COMMIT_Allam
-            eExistingCap_AllamCycleLOX[y,i] +
-                allam_dict[y,"cap_size"][i] * (EP[:vCAP_AllamCycleLOX][y,i] - EP[:vRETCAP_AllamCycleLOX][y,i])
-        else
-            eExistingCap_AllamCycleLOX[y, i] + EP[:vCAP_AllamCycleLOX][y, i] - EP[:vRETCAP_AllamCycleLOX][y,i]
-        end
-    elseif y in setdiff(RET_CAP_Allam, NEW_CAP_Allam) # Resources eligible for only capacity retirements
-        if y in COMMIT_Allam
-            eExistingCap_AllamCycleLOX[y,i] - allam_dict[y,"cap_size"][i] * EP[:vRETCAP_AllamCycleLOX][y,i]
-        else
-            eExistingCap_AllamCycleLOX[y,i] - EP[:vRETCAP_AllamCycleLOX][y,i]
-        end
-    elseif y in setdiff(NEW_CAP_Allam, RET_CAP_Allam) # Resources eligible for new capacity
-        if y in COMMIT_Allam
-            eExistingCap_AllamCycleLOX[y,i] + allam_dict[y,"cap_size"][i] * (EP[:vCAP_AllamCycleLOX][y,i] )
-        else
-            eExistingCap_AllamCycleLOX[y,i] + EP[:vCAP_AllamCycleLOX][y,i] 
-        end
-    else # Resources not eligible for new capacity or retirement
-        eExistingCap_AllamCycleLOX[y,i]
-    end)
-
-    # LOX storage tank capacity -> if they are not in WITH_LOX
-    @constraint(EP, [y in setdiff(ALLAM_CYCLE_LOX, WITH_LOX)], eTotalCap_AllamcycleLOX[y,lox] == 0 )
-    # Fixed cost of each component in Allam Cycle w/ LOX
-    # Set of generator eligible for new sCO2 turbine
-    # Allam Cycle is eligible for unit commitment  
-    @expression(EP, eCFix_Allam[y in ALLAM_CYCLE_LOX, i in 1:3],
-        if y in NEW_CAP_Allam # Resources eligible for new capacity
-            if y in COMMIT_Allam  # Resource eligible for Unit commitment
-                allam_dict[y,"inv_cost"][i] * allam_dict[y,"cap_size"][i] * EP[:vCAP_AllamCycleLOX][y, i]+
-                allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i]
-            else
-                allam_dict[y,"inv_cost"][i] * EP[:vCAP_AllamCycleLOX][y, i]+
-                allam_dict[y,"fom_cost"][i] * eTotalCap_AllamcycleLOX[y,i]
-            end
-        else
-            allam_dict[y,"fom_cost"][i]  * eTotalCap_AllamcycleLOX[y,i]
-        end)
-
-    # connect eCFix_Allam_Plant to eCFix
-    @expression(EP, eCFix_Allam_Plant[y in ALLAM_CYCLE_LOX], sum(EP[:eCFix_Allam][y,i] for i in 1:3))
-    @expression(EP, eTotalCFix_Allam, sum(EP[:eCFix_Allam_Plant][y] for y in  ALLAM_CYCLE_LOX ))
-    # add this to eTotalCFix
-    add_to_expression!(EP[:eTotalCFix], eTotalCFix_Allam)
-
-    # add to Obj
-    add_to_expression!(EP[:eObj], eTotalCFix_Allam)
-
+    
     # Constraint 3: all the allam cycle output should be less than the capacity
-    @constraint(EP, [y in ALLAM_CYCLE_LOX, i in 1:3, t in 1:T], vOutput_AllamcycleLOX[y, i, t] <= eTotalCap_AllamcycleLOX[y,i])
+    @constraint(EP, [y in ALLAM_CYCLE_LOX, i in 1:3, t in 1:T], vOutput_AllamcycleLOX[y, i, t] <= EP[:eTotalCap_AllamcycleLOX][y,i])
     
     # Constraint 4: the duration of lox
-    @constraint(EP, cMaxLoxDuration_out[y in intersect(ids_with_positive(gen, lox_duration), WITH_LOX), t in 1:T], eTotalCap_AllamcycleLOX[y,lox]/lox_duration(gen[y]) >= eLOX_out[y,t])
-    @constraint(EP, cMinLoxDuration_out[y in intersect(ids_with_positive(gen, lox_duration), WITH_LOX), t in 1:T], eTotalCap_AllamcycleLOX[y,lox]/lox_duration(gen[y]) >= vLOX_in[y,t])
+    @constraint(EP, cMaxLoxDuration_out[y in intersect(ids_with_positive(gen, lox_duration), WITH_LOX), t in 1:T], EP[:eTotalCap_AllamcycleLOX][y,lox]/lox_duration(gen[y]) >= eLOX_out[y,t])
+    @constraint(EP, cMinLoxDuration_out[y in intersect(ids_with_positive(gen, lox_duration), WITH_LOX), t in 1:T], EP[:eTotalCap_AllamcycleLOX][y,lox]/lox_duration(gen[y]) >= vLOX_in[y,t])
 
     # connect eFuel_Allam to vFuel so the fuel cost will be determined in fuel.jl. We don't need to double account 
     # Allam cycle is exluded from the constraint on vFuel in fuel.jl
@@ -230,12 +170,10 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
     if setup["UCommit"] > 0 
         allamcycle_commit!(EP, inputs, setup)
     else
-        @warn("Warning: it is not recommended to run Allam Cycele wihtout unit commit. Please set UCommit to 1 in the setting file.")
+        @warn("Warning: it is not recommended to run Allam Cycle without unit commit. Please set UCommit to 1 in the setting file.")
         allamcycle_no_commit!(EP, inputs, setup)
     end
 
-    # system capacity equal to sCO2 turbine capacity
-    @constraint(EP, [y in ALLAM_CYCLE_LOX, t = 1:T], EP[:vCAP][y] == EP[:vCAP_AllamCycleLOX][y, sco2turbine])
 
     # Expressions related to policies
     # Capacity Reserves Margin policy
@@ -285,4 +223,5 @@ function allamcyclelox!(EP::Model, inputs::Dict, setup::Dict)
             for y in intersect(ids_with_policy(gen, hm, tag = HM), ALLAM_CYCLE_LOX)))
         add_similar_to_expression!(EP[:eHM], eHMAllam)
     end
+
 end

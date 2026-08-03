@@ -26,7 +26,7 @@ pages = OrderedDict(
         "Tutorial 5: Solving the Model" => "Tutorials/Tutorial_5_solve_model.md",
         "Tutorial 6: Solver Settings" => "Tutorials/Tutorial_6_solver_settings.md",
         "Tutorial 7: Policy Constraints" => "Tutorials/Tutorial_7_setup.md",
-        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md"
+        "Tutorial 8: Outputs" => "Tutorials/Tutorial_8_outputs.md",
     ],
     "User Guide" => [
         "Overall workflow" => "User_Guide/workflow.md",
@@ -35,18 +35,20 @@ pages = OrderedDict(
         "Model Inputs" => "User_Guide/model_input.md",
         "Time-domain Reduction Inputs" => "User_Guide/TDR_input.md",
         "Running the Time-domain Reduction" => "User_Guide/running_TDR.md",
+        "Benders Decomposition" => "User_Guide/benders_decomposition.md",
         "MGA package" => "User_Guide/generate_alternatives.md",
         "Multi-stage Model" => "User_Guide/multi_stage_input.md",
         "Slack Variables for Policies" => "User_Guide/slack_variables_overview.md",
         "Method of Morris Inputs" => "User_Guide/methodofmorris_input.md",
         "Running the Model" => "User_Guide/running_model.md",
-        "Model Outputs" => "User_Guide/model_output.md"
+        "Model Outputs" => "User_Guide/model_output.md",
     ],
     "Model Concept and Overview" => [
         "Model Introduction" => "Model_Concept_Overview/model_introduction.md",
         "Notation" => "Model_Concept_Overview/model_notation.md",
         "Objective Function" => "Model_Concept_Overview/objective_function.md",
-        "Power Balance" => "Model_Concept_Overview/power_balance.md"
+        "Power Balance" => "Model_Concept_Overview/power_balance.md",
+        "Benders Model Overview" => "Model_Concept_Overview/benders_math_overview.md",
     ],
     "Model Reference" => [
         "Core" => "Model_Reference/core.md",
@@ -95,7 +97,8 @@ pages = OrderedDict(
             "Endogenous Retirement" => "Model_Reference/Multi_Stage/endogenous_retirement.md"
         ],
         "Method of Morris" => "Model_Reference/methodofmorris.md",
-        "Utility Functions" => "Model_Reference/utility_functions.md"
+        "Utility Functions" => "Model_Reference/utility_functions.md",
+        "Benders Decomposition" => "Model_Reference/Benders/benders.md"
     ],
     "Public API Reference" => [
         "Public API" => "Public_API/public_api.md"],

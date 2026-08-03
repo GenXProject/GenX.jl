@@ -1,0 +1,8 @@
+Resource,HM_1
+CT_solar_pv,1
+MA_solar_pv,1
+CT_onshore_wind,1
+ME_onshore_wind,1
+MA_battery,1
+CT_battery,1
+ME_battery,1

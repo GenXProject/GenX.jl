@@ -38,6 +38,10 @@ using RecursiveArrayTools
 using Statistics
 using HiGHS
 using Logging
+using MacroEnergySolvers
+using Distributed
+using DistributedArrays
+using SlurmClusterManager
 
 using PrecompileTools: @compile_workload
 
@@ -47,6 +51,21 @@ using PrecompileTools: @compile_workload
 # To translate $ to $M, multiply by ModelScalingFactor^2
 # To translate $/MWh to $M/GWh, multiply by ModelScalingFactor
 const ModelScalingFactor = 1e+3
+
+# Gurobi environment – populated by GenXGurobiExt when Gurobi is loaded.
+const GRB_ENV = Ref{Any}(nothing)
+
+"""
+    benders_gurobi_optimizer(attributes::Dict)
+
+Return a Gurobi `OptimizerWithAttributes` for use in Benders sub/planning problems.
+Requires the `Gurobi` package to be loaded (triggers the `GenXGurobiExt` extension).
+Throws an informative error if Gurobi has not been loaded.
+"""
+function benders_gurobi_optimizer(attributes::Dict)
+    error("Gurobi must be loaded before running Benders decomposition. " *
+          "Add `using Gurobi` before calling `run_genx_case!`.")
+end
 
 """
 An abstract type that should be subtyped for users creating GenX resources.
@@ -70,6 +89,7 @@ include_all_in_folder("configure_settings")
 include_all_in_folder("configure_solver")
 include_all_in_folder("load_inputs")
 include_all_in_folder("model")
+include_all_in_folder("benders")
 include_all_in_folder("write_outputs")
 
 include("time_domain_reduction/time_domain_reduction.jl")

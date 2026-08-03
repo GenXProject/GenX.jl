@@ -8,10 +8,8 @@ include("utilities.jl")
     include("expression_manipulation_test.jl")
 end
 
-if VERSION ≥ v"1.7"
-    @testset "Resource loading" begin
-        include("test_load_resource_data.jl")
-    end
+@testset "Resource loading" begin
+    include("test_load_resource_data.jl")
 end
 
 # Test GenX modules
@@ -59,6 +57,10 @@ end
     @testset "Retrofit" begin
         include("test_retrofit.jl")
     end
+end
+
+@testset "Benders decomposition" begin
+    include("test_benders_vs_monolithic.jl")
 end
 
 # Test writing outputs

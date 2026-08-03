@@ -8,3 +8,6 @@ MinCapReq: 1
 CapacityReserveMargin: 1
 EnergyShareRequirement: 0
 WriteShadowPrices: 1
+TimeDomainReduction: 1
+Benders: 0
+OverwriteResults: 1

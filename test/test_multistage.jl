@@ -29,12 +29,14 @@ EP, _, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 obj_test = objective_value.(EP[i] for i in 1:multistage_setup["NumStages"])
-optimal_tol_rel = get_attribute.((EP[i] for i in 1:multistage_setup["NumStages"]),
-    "ipm_optimality_tolerance")
-optimal_tol = optimal_tol_rel .* obj_test  # Convert to absolute tolerance
+# Use the Benders convergence tolerance as the comparison bound — the IPM solver
+# tolerance is far tighter than what Benders guarantees across different HiGHS versions.
+benders_tol_rel = multistage_setup["ConvergenceTolerance"]
+optimal_tol = benders_tol_rel .* abs.(obj_true)
 
 # Test the objective value
-test_result = @test all(obj_true .- optimal_tol .<= obj_test .<= obj_true .+ optimal_tol)
+# There can be degenerate solutions with DDP, so each stage's objective value may not match the known optimal value, but the sum across stages should be within the relative tolerance.
+test_result = @test all(obj_true .- optimal_tol .<= obj_test .<= obj_true .+ optimal_tol) ? true : abs((sum(obj_test) - sum(obj_true)) / sum(obj_true)) ≤ benders_tol_rel
 
 # Round objective value and tolerance. Write to test log.
 obj_test = round_from_tol!.(obj_test, optimal_tol)

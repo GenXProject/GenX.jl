@@ -1,0 +1,27 @@
+# HiGHS settings for the Benders *operational subproblems* — case 7 only.
+#
+# Case 7 (colocated VRE+storage) has four layers of linking variables:
+#   1. Capacity investments (vCAP, vDCCAP, vSOLARCAP, vWINDCAP, vCAPENERGY_VS, …)
+#   2. LDS SOC carry-over (vSOCw_VRE_STOR, vdSOC_VRE_STOR)
+#   3. Capacity-reserve SOC (vCAPCONTRSTOR_VSOCw_VRE_STOR, vCAPCONTRSTOR_VdSOC_VRE_STOR)
+#   4. LDS slack bound (vVRE_STOR_LDS_SLACK_MAX)
+#
+# With this many planning variables fixed, the residual LP is tightly bounded
+# and NOT highly degenerate — simplex finds an exact vertex and returns exact
+# LP duals without the IPM/crossover uncertainty that caused failures with ipm.
+#
+# The "unreliable simplex duals" caveat in the other cases applies to capacity
+# variables (originally ≥ 0, freed, then re-fixed). That concern does not apply
+# to the LDS state variables (vSOCw_VRE_STOR etc.) which are always ≥ 0 and
+# never freed, so the dual sign convention is unambiguous with simplex.
+#
+# simplex_scale_strategy: 4 (HiGHS strategy) is the most aggressive scaling
+# option and helps with the wide range of cost/capacity units in this case.
+
+Feasib_Tol: 1.0e-9          # Primal feasibility tolerance
+Optimal_Tol: 1.0e-9         # Dual feasibility tolerance
+Pre_Solve: "on"              # Enable presolve
+Method: simplex              # Dual simplex — exact vertex duals, no IPM interior approximation
+simplex_scale_strategy: 4   # HiGHS aggressive scaling; handles wide cost/capacity ranges
+threads: 1                   # Single thread per subproblem worker
+output_flag: false           # Suppress HiGHS output from subproblems

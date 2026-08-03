@@ -1,0 +1,18 @@
+# Gurobi settings for the Benders *operational subproblems*.
+#
+# Subproblems are LPs whose dual variables form the Benders optimality cuts.
+# Crossover MUST be enabled so that the barrier solution is mapped to a
+# vertex (basic feasible solution) with well-defined simplex dual variables.
+#
+# Each subproblem runs on its own distributed worker, so thread count is set
+# to 1 to prevent contention across workers.
+
+Feasib_Tol: 1.0e-6        # Constraint (primal) feasibility tolerance
+Optimal_Tol: 1.0e-6       # Dual feasibility tolerance
+Method: 2                  # Algorithm: 2 = barrier (interior-point)
+BarConvTol: 1.0e-6         # Barrier convergence tolerance
+Crossover: 1               # Enable crossover — accurate dual variables are
+                           # required for valid Benders cuts
+Threads: 1                 # Single thread per subproblem worker
+NumericFocus: 0            # Numerical precision emphasis (0 = balanced)
+OutputFlag: 0              # Suppress Gurobi output; set to 1 to enable
