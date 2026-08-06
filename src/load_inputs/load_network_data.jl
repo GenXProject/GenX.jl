@@ -1,7 +1,8 @@
 @doc raw"""
     load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
-Function for reading input parameters related to the electricity transmission network
+Function for reading input parameters related to the electricity transmission network. When representing the presence of transformers, using DC-OPF, and/or using the 
+per-unit system of units, the scale_factor is also interpreted as the system base MVA, unless specified differently, otherwise. 
 """
 function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
@@ -23,16 +24,24 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
     inputs_nw["pNet_Map"] = load_network_map(network_var, Z, L)
 
     # Transmission capacity of the network (in MW)
-    inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    if setup["DC_OPF"] == 1
+        # DC-OPF requires the transmission capacity to be in pu
+        inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / to_floats(:MVA_Base)[1]  # convert to GW
+    else
+        # AC-OPF requires the transmission capacity to be in GW
+        inputs_nw["pTrans_Max"] = to_floats(:Line_Max_Flow_MW) / scale_factor  # convert to GW
+    end
 
     if setup["Trans_Loss_Segments"] == 1
         # Line percentage Loss - valid for case when modeling losses as a fixed percent of absolute value of power flows
         inputs_nw["pPercent_Loss"] = to_floats(:Line_Loss_Percentage)
     elseif setup["Trans_Loss_Segments"] >= 2
         # Transmission line voltage (in kV)
-        inputs_nw["kV"] = to_floats(:Line_Voltage_kV)
+        inputs_nw["kV_LT"] = to_floats(:Line_Voltage_kV_LT)
+        inputs_nw["kV_HT"] = to_floats(:Line_Voltage_kV_HT)
         # Transmission line resistance (in Ohms) - Used when modeling quadratic transmission losses
-        inputs_nw["Ohms"] = to_floats(:Line_Resistance_Ohms)
+        inputs_nw["Ohms_LT"] = to_floats(:Line_Resistance_Ohms_LT)
+        inputs_nw["Ohms_HT"] = to_floats(:Line_Resistance_Ohms_HT)
     end
 
     ## Inputs for the DC-OPF 
@@ -42,16 +51,122 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             setup["NetworkExpansion"] = 0
         end
         println("Reading DC-OPF values...")
-        # Transmission line voltage (in kV)
-        line_voltage_kV = to_floats(:Line_Voltage_kV)
+        #Adding the base quantities
+        # Base voltage (in kV)
+        line_voltage_kV_LT = to_floats(:Line_Voltage_kV_LT)
+        line_voltage_kV_HT = to_floats(:Line_Voltage_kV_HT)
+        # MVA_Base (in MVA)
+        MVA_Base = to_floats(:MVA_Base)
+        # Base reactance
+        line_reactance_Ohms_Base_LT = (line_voltage_kV_LT .^ 2) ./ MVA_Base
+        line_reactance_Ohms_Base_HT = (line_voltage_kV_HT .^ 2) ./ MVA_Base
+        ##Adding Transformer data
+        line_transformer_MVA_base = to_floats(:Transformer_MVA_Base)
+        
+        ##Transformer LT side data
+        # LT Base voltage (in kV)
+        transformer_lt_voltage_kV_Base = to_floats(:Transformer_LT_Voltage_kV_Base)
+        #Transformer LT Reactance in Ohms
+        line_transformer_lt_reactance = to_floats(:Transformer_LT_Reactance_Ohms)
+        #Transformer LT Turns
+        line_transformer_lt_turns = to_floats(:Transformer_LT_Turns)
+        # LT Base reactance
+        lt_reactance_Base = (transformer_lt_voltage_kV_Base .^ 2) ./ line_transformer_MVA_base
+        #Transformer LT Reactance in pu
+        transformer_lt_reactance_pu = to_floats(:Transformer_LT_Reactance_Ohms) ./ lt_reactance_Base
+        println("P.U. values of LT Reactance")
+        println(transformer_lt_reactance_pu)
+        
+        
+        ##Transformer HT side data
+        # HT Base voltage (in kV)
+        transformer_ht_voltage_kV_Base = to_floats(:Transformer_HT_Voltage_kV_Base)
+        #Transformer HT Reactance in Ohms
+        line_transformer_ht_reactance = to_floats(:Transformer_HT_Reactance_Ohms)
+        #Transformer HT Turns
+        line_transformer_ht_turns = to_floats(:Transformer_HT_Turns)
+        # HT Base reactance
+        ht_reactance_Base = (transformer_ht_voltage_kV_Base .^ 2) ./ line_transformer_MVA_base
+        #Transformer LT Reactance in pu
+        transformer_ht_reactance_pu = to_floats(:Transformer_HT_Reactance_Ohms) ./ ht_reactance_Base
+        println("P.U. values of HT Reactance")
+        println(transformer_ht_reactance_pu)
+
+        #Transmission Line parameters
         # Transmission line reactance (in Ohms)
-        line_reactance_Ohms = to_floats(:Line_Reactance_Ohms)
+        line_reactance_Ohms_LT = to_floats(:Line_Reactance_Ohms_LT)
+        line_reactance_Ohms_HT = to_floats(:Line_Reactance_Ohms_HT)
         # Line angle limit (in radians)
         inputs_nw["Line_Angle_Limit"] = to_floats(:Angle_Limit_Rad)
         # DC-OPF coefficient for each line (in MW when not scaled, in GW when scaled) 
         # MW = (kV)^2/Ohms 
-        inputs_nw["pDC_OPF_coeff"] = ((line_voltage_kV .^ 2) ./ line_reactance_Ohms) /
-                                     scale_factor
+        #Reactance in pu
+        inputs_nw["pu_reactance_lt"] = line_reactance_Ohms_LT ./ line_reactance_Ohms_Base_LT
+        println("P.U. values of Transmission Line Reactance on LT side")
+        println(inputs_nw["pu_reactance_lt"])
+        inputs_nw["pu_reactance_ht"] = line_reactance_Ohms_HT ./ line_reactance_Ohms_Base_HT
+        println("P.U. values of Transmission Line Reactance on HT side")
+        println(inputs_nw["pu_reactance_ht"])
+        #Transmission Line Reactance referred to LT side in Ohms
+        line_reactance_referred_to_lt = ((line_transformer_lt_turns ./ line_transformer_ht_turns) .^ 2) .* line_reactance_Ohms_HT
+        #Transmission Line Reactance referred to HT side in Ohms
+        line_reactance_referred_to_ht = ((line_transformer_ht_turns ./ line_transformer_lt_turns) .^ 2) .* line_reactance_Ohms_LT
+        #Total LT Reactance in Ohms
+        total_line_reactance_ohms_lt = line_reactance_Ohms_LT + line_reactance_referred_to_lt
+        #Total HT Reactance in Ohms
+        total_line_reactance_ohms_ht = line_reactance_Ohms_HT + line_reactance_referred_to_ht
+        #Total LT Reactance in pu
+        total_line_reactance_pu_lt = total_line_reactance_ohms_lt ./ line_reactance_Ohms_Base_LT
+        #Total HT Reactance in pu
+        total_line_reactance_pu_ht = total_line_reactance_ohms_ht ./ line_reactance_Ohms_Base_HT
+        println("P.U. values of Total LT Reactance")
+        println(total_line_reactance_pu_lt)
+        println("P.U. values of Total HT Reactance")
+        println(total_line_reactance_pu_ht)
+        #Conversion of Transmission line reactance to system pu
+
+
+        #LT Transformer Reactance referred to HT side in Ohms
+        lt_reactance_referred_to_ht = ((line_transformer_ht_turns ./ line_transformer_lt_turns) .^ 2) .* line_transformer_lt_reactance
+        #HT Transformer Reactance referred to LT side in Ohms
+        ht_reactance_referred_to_lt = ((line_transformer_lt_turns ./ line_transformer_ht_turns) .^ 2) .* line_transformer_ht_reactance
+        #Total LT Reactance in Ohms
+        total_lt_reactance_ohms = line_transformer_lt_reactance + ht_reactance_referred_to_lt
+        #Total LT Reactance in pu
+        total_lt_reactance_pu = total_lt_reactance_ohms ./ lt_reactance_Base
+        #Total HT Reactance in Ohms
+        total_ht_reactance_ohms = line_transformer_ht_reactance + lt_reactance_referred_to_ht
+        #Total HT Reactance in pu
+        total_ht_reactance_pu = total_ht_reactance_ohms ./ ht_reactance_Base
+        println("P.U. values of Total LT Reactance")
+        println(total_lt_reactance_pu)
+        println("P.U. values of Total HT Reactance")   
+        println(total_ht_reactance_pu)
+
+        #Conversion of Transformer pu reactance to system pu
+        println("Converting Transformer Reactance to System P.U")
+        println("Transformer LT Voltage Base in kV", collect(skipmissing(transformer_lt_voltage_kV_Base)))
+        println("Transformer HT Voltage Base in kV", collect(skipmissing(transformer_ht_voltage_kV_Base)))
+        total_ht_reactance_system_pu = total_ht_reactance_pu .* ((transformer_ht_voltage_kV_Base ./ line_voltage_kV_HT) .^ 2) .* (MVA_Base ./ line_transformer_MVA_base)
+        total_lt_reactance_system_pu = total_lt_reactance_pu .* ((transformer_lt_voltage_kV_Base ./ line_voltage_kV_LT) .^ 2) .* (MVA_Base ./ line_transformer_MVA_base)
+        println("Transformer data read successfully!")
+        println("Total HT reactance in System P.U", total_ht_reactance_system_pu)
+        println("Total LT reactance in System P.U", total_lt_reactance_system_pu)
+        total_ht_reactance_txr_line_system_pu = total_ht_reactance_system_pu + total_line_reactance_pu_ht
+        total_lt_reactance_txr_line_system_pu = total_lt_reactance_system_pu + total_line_reactance_pu_lt
+        println("Total HT reactance in System P.U", total_ht_reactance_txr_line_system_pu)
+        println("Total LT reactance in System P.U", total_lt_reactance_txr_line_system_pu)
+        total_ht_reactance_txr_line_Ohms = total_ht_reactance_txr_line_system_pu .* line_reactance_Ohms_Base_HT
+        total_lt_reactance_txr_line_Ohms = total_lt_reactance_txr_line_system_pu .* line_reactance_Ohms_Base_LT
+        println("Total HT reactance in Ohms", total_ht_reactance_txr_line_Ohms)
+        println("Total LT reactance in Ohms", total_lt_reactance_txr_line_Ohms)
+        #DC-OPF coefficient for each line (in MW when not scaled, in p.u. when scaled)
+        inputs_nw["pDC_OPF_coeff_ht"] = 1 ./ (total_ht_reactance_txr_line_system_pu)
+        println("DC-OPF Coefficient HT")
+        println(inputs_nw["pDC_OPF_coeff_ht"])
+        inputs_nw["pDC_OPF_coeff_lt"] = 1 ./ (total_lt_reactance_txr_line_system_pu)
+        println("DC-OPF Coefficient LT")
+        println(inputs_nw["pDC_OPF_coeff_lt"])
     end
 
     # Maximum possible flow after reinforcement for use in linear segments of piecewise approximation
