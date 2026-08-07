@@ -5,7 +5,7 @@
 # "with LP hot-starts" testset.
 
 ConvTol: 1.0e-3                   # Relative optimality-gap convergence tolerance
-MaxIter: 300                      # Maximum Benders iterations per pass
+MaxIter: 70                       # Maximum Benders iterations per pass
 MaxCpuTime: 7200                  # Wall-clock limit (s)
 StabParam: 0.5                    # Level-set stabilisation parameter; 0.0 = disabled
 StabDynamic: false                # Dynamic (in-out) stabilisation
