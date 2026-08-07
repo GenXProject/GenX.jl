@@ -92,7 +92,8 @@ This represents *building physical new circuits*, where you either build a new l
 ```
 n_new = floor(Line_Max_Reinforcement_MW / New_Line_Cap_Size_MW)
 ```
-If there is existing capacity defined in the network CSV, this is treated as its own line which cannot have continuous expansion. Lines marked with `Discrete_Build = 1` are not able to expand continuously. A corridor cannot be both continuously reinforced and
+If there is existing capacity defined in the network CSV, this is treated as its own line which cannot have continuous expansion. If the corridor has **no** existing capacity, no such row is created at
+all and the corridor consists solely of its candidate lines (see scenario 5 below for why). Lines marked with `Discrete_Build = 1` are not able to expand continuously. A corridor cannot be both continuously reinforced and
 discretely expanded. If `Line_Max_Reinforcement_MW` is not an integer multiple of
 `New_Line_Cap_Size_MW`, GenX warns and rounds down.
 
@@ -104,6 +105,8 @@ imposes a build order on each group of more than one identical candidate line
 ```math
 x_{g_{i-1}} \geq x_{g_{i}} \qquad \forall i \geq 2
 ```
+
+A user is free to use multiple rows of the `Network.csv` file for the same corridor, such as if they want to have an existing line with continuous expansion available and an option to build a parallel discrete line. 
 
 !!! note "User discretion recommended in setting transmission costs"
     Because GenX now supports both continuous and discrete line expansion, users will want to be deliberate in how they define this data, perhaps especially in costs. For instance, continuous reinforcement could be thougth of as reconductoring, which may be cheaper than building a new line. In this way, both reconductoring and new line constructions are both supported in GenX, but the use will need to set data deliberately to handle these cases. 
@@ -126,17 +129,21 @@ column when the setting is on.
 
 This is where the two features interact, and it is the reason discrete builds exist.
 
-Under DC-OPF, an unbuilt candidate line must not impose any physics. GenX partitions the lines into
-three disjoint sets and treats each differently:
+Under DC-OPF, an unbuilt candidate line must not impose any physics. GenX splits the lines into two
+disjoint sets and treats each differently:
 
 | Set | What it is | Flow–angle coupling | Angle limit |
 |:--|:--|:--|:--|
-| `FIXED_LINES` | Physically present lines | Exact, always on | Always on |
-| `DISCRETE_BUILD_LINES` | Candidate lines with binary $x_l$ | Build-gated | Build-gated |
-| `PHANTOM_LINES` | Zero-capacity residual row of a greenfield discrete corridor | None | None |
+| `DISCRETE_BUILD_LINES` | Candidate lines with binary $x_l$ | Build-gated | See below |
+| `FIXED_LINES` | Every other line | Exact, always on | Always on |
 
-For a candidate line, the angle-difference limit is relaxed by a big-M when the line is not built,
-so it only binds once something is actually built on the corridor:
+All parallel lines on a corridor share the same angle
+difference $\sum_z \varphi^{map}_{l,z}\theta_{z,t}$, so a candidate parallel to a fixed line is
+already governed by that line's always-on limit and needs no limit of its own. A candidate on a
+corridor with **no** fixed line is the only thing that can impose one. GenX identifies those lines
+as `NEW_CORRIDOR_DISCRETE_LINES` (a subset of `DISCRETE_BUILD_LINES`, computed at load time) and
+gives a build-gated angle limit, relaxed by a big-M when the line is not built so that it
+binds only once something is actually built on the corridor:
 
 ```math
 -\Delta\theta^{\max}_{l} - M^{\theta}(1 - x_{l}) \leq \sum_{z \in \mathcal{Z}} \varphi^{map}_{l,z}\,\theta_{z,t} \leq \Delta\theta^{\max}_{l} + M^{\theta}(1 - x_{l})
@@ -154,8 +161,7 @@ column) when the line is unbuilt, and the flow is separately forced to zero:
 \end{aligned}
 ```
 
-The model stays a MILP. The price is the big-M: too small and it wrongly constrains a built line, too
-large and it weakens the LP relaxation and slows the solve.
+The model stays a MILP. The big-M constraint can be loose in Benders decomposition, and if the value is too small, it can incorrectly constrain a built line. Too large a big M value can cause numerical challenges in the solver.
 
 **`Bilinear_DC_OPF: 1` — exact bilinear coupling.** The coupling is written as the literal product of
 the build variable and the angle difference:
@@ -245,44 +251,33 @@ $x_1 \geq x_2 \geq x_3$.
 Capacity is $0 + \bigtriangleup\varphi^{cap}_{l} \in [0, 300]$ MW. Under the **transport model this is
 perfectly fine** and is the normal way to offer a greenfield corridor.
 
-Under **DC-OPF it can overconstrain line angle limits** because ts coupling and angle limit are on in
+Under **DC-OPF it can overconstrain line angle limits** because its coupling and angle limit are on in
 every hour regardless of what is built. If the optimizer builds nothing, then
 $|\Phi_{l,t}| \leq \varphi^{cap}_{l} = 0$ forces $\Phi_{l,t} = 0$, and the coupling
-$\Phi_{l,t} = \mathcal{B}_l \Delta\theta_{l,t}$ then forces $\Delta\theta_{l,t} = 0$: the two zones
-are pinned to *identical phase angles*, as though joined by a zero-impedance tie that carries no
-power. That is a fictitious constraint on the rest of the meshed network, and it can distort flows
-throughout the model. It is recommended to use discrete new line corridors in this case instead.
+$\Phi_{l,t} = \mathcal{B}_l \Delta\theta_{l,t}$ then forces $\Delta\theta_{l,t} = 0$ so that the buses are forced to have identical phase angles. It is recommended to use discrete new line corridors in this case instead.
 
 ### 5. New corridor, discrete expansion
 
 `Line_Max_Flow_MW = 0`, `Line_Max_Reinforcement_MW = 300`, `Discrete_Build = 1`,
 `New_Line_Cap_Size_MW = 100`.
 
-When `DC_OPF = `, this avoids the challenge of unintentionally enforced angle limits:
+When `DC_OPF = 1`, this avoids the challenge of unintentionally enforced angle limits:
 
 | Internal row | Capacity | Role |
 |:--|:--|:--|
-| residual existing | 0 MW | `PHANTOM_LINE` — **no** coupling, **no** angle limit |
-| candidate 1–3 | 0 or 100 MW each | `DISCRETE_BUILD_LINE`, binary $x_i$ |
+| candidate 1–3 | 0 or 100 MW each | `DISCRETE_BUILD_LINE` and `NEW_CORRIDOR_DISCRETE_LINE`, binary $x_i$ |
 
-Because the residual row has zero capacity, is not expandable, and is not itself a candidate, GenX
-classifies it as a *phantom* line and exempts it from both the flow–angle coupling and the angle
-limit. That is precisely what prevents the scenario-4 failure: nothing pins $\Delta\theta$ while the
-corridor is unbuilt. The candidate lines carry build-gated coupling and angle limits, so the corridor
-imposes DC-OPF physics exactly when — and only when — at least one circuit is actually built.
+Note there is **no residual row**. Unlike scenario 3, a discrete corridor with no existing capacity
+produces only its candidate lines. A big-M constraint guards the line angle limit so that the line angle limit between the buses only applies when the line is built.
 
 ## 5. Warnings and recommended usage
 
-!!! warning "Greenfield corridors under DC-OPF should be discrete builds"
-    This is scenario 4 vs. scenario 5 above.
-
-    If a corridor has **no existing line** (`Line_Max_Flow_MW = 0`) and you expand it with
-    **continuous** reinforcement under `DC_OPF: 1`, the corridor's angle-difference limit
-    is enforced *for all hours regardless of whether any capacity is built*. Their flow–angle coupling and their
-    $\pm\Delta\theta^{\max}_{l}$ angle limit are always on. So a line that does not exist still
-    constrains the phase angles of the two zones it would have connected.
-
-    Continuous reinforcement can still be applied under DC-OPF for corridors that already have an existing line.
+!!! warning "Greenfield corridors are recommended to be discrete builds for DCOPF constrained problems"
+    This is scenario 4 vs. scenario 5 above. If a corridor has no existing line (`Line_Max_Flow_MW = 0`) and you expand it with
+    continuous reinforcement under `DC_OPF: 1`, its flow–angle coupling and its
+    $\pm\Delta\theta^{\max}_{l}$ angle limit are enforced in all hours regardless of whether any
+    capacity is built. So a line that does not exist still constrains the phase angles of the two
+    zones it would have connected.
 
 !!! warning "Choose `BigM` carefully"
     With `Bilinear_DC_OPF: 0`, `BigM` must be large enough that it does not create an unintended constraint if a line is not built since $\mathcal{B}_l \Delta\theta_l$ is constrained by $M_l$ in this case. However, its size can impact numerical performance of both the monolithic and Benders solves. The default (`10 × New_Line_Cap_Size_MW`) is a heuristic, not a guarantee. A `BigM` that is too small can silently cut off valid solutions; one that is too large

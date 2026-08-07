@@ -130,6 +130,12 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
             inputs_nw["DISCRETE_BUILD_LINES"] = Int[]
         end
 
+        # Discrete candidate lines whose corridor hosts no other (non-candidate) line. These are the
+        # only lines that can supply their corridor's DC-OPF angle-difference limit, and they do so
+        # build-gated. See find_new_corridor_discrete_lines.
+        inputs_nw["NEW_CORRIDOR_DISCRETE_LINES"] = find_new_corridor_discrete_lines(
+            inputs_nw["pNet_Map"], inputs_nw["DISCRETE_BUILD_LINES"])
+
         # Network lines eligible for continuous reinforcement have non-negative maximum reinforcement
         # inputs; discrete discrete-build lines are handled separately and excluded here. The raw
         # (unclamped) reinforcement column is used for the eligibility test so that lines flagged with
@@ -173,6 +179,13 @@ The residual "existing" line row keeps its `Line_Max_Flow_MW`, has `Discrete_Bui
 has `Line_Max_Reinforcement_MW` set negative so it is excluded from continuous expansion (all new
 capacity comes from the discrete lines instead).
 
+A discrete-build corridor with **no existing capacity** (`Line_Max_Flow_MW == 0`) is the exception:
+it emits no residual row at all, only its discrete new lines. A zero-capacity, non-expandable
+residual row would otherwise impose the exact DC-OPF flow-angle coupling on a line that does not
+exist, pinning the corridor's angle difference to zero and preventing any candidate line built there
+from carrying power. The row is still emitted when the corridor produces no discrete new lines, so
+that every original corridor keeps at least one row and none disappears from the outputs.
+
 An `Original_Line_Index` column is added so the corridor a row belongs to can be recovered later.
 
 The dataframe mixes zone-indexed columns (the leading label column and `Network_zones`, length Z)
@@ -195,31 +208,46 @@ function expand_discrete_build_lines(network_var::DataFrame)
     lineval(col) = [network_var[r, col] for r in line_rows]
     ib_vals = lineval(:Discrete_Build)
     reinf_vals = lineval(:Line_Max_Reinforcement_MW)
+    flow_vals = lineval(:Line_Max_Flow_MW)
     size_vals = "New_Line_Cap_Size_MW" in cols ? lineval(:New_Line_Cap_Size_MW) :
                 fill(missing, L_orig)
 
     is_discrete_build(p) = !ismissing(ib_vals[p]) && ib_vals[p] == 1
+    has_existing_capacity(p) = !ismissing(flow_vals[p]) && flow_vals[p] != 0
 
     # Build the expanded ordering as (source_line, role) pairs, with the existing line immediately
     # followed by its discrete new lines.
     order = Tuple{Int, Symbol}[]
     for p in 1:L_orig
-        push!(order, (p, :existing))
-        is_discrete_build(p) || continue
-        sz = size_vals[p]
-        if ismissing(sz) || sz <= 0
-            error("Network line $(p) has Discrete_Build = 1 but a missing or non-positive " *
-                  "New_Line_Cap_Size_MW. A positive discrete line size is required.")
+        n_new = 0
+        if is_discrete_build(p)
+            sz = size_vals[p]
+            if ismissing(sz) || sz <= 0
+                error("Network line $(p) has Discrete_Build = 1 but a missing or non-positive " *
+                      "New_Line_Cap_Size_MW. A positive discrete line size is required.")
+            end
+            # Line_Max_Reinforcement_MW is the additional capacity allowed on top of the existing
+            # Line_Max_Flow_MW, so the number of discrete new lines is that amount divided by the
+            # size.
+            additional_mw = reinf_vals[p]
+            n_new = additional_mw <= 0 ? 0 : floor(Int, additional_mw / sz)
+            if n_new > 0 && !isapprox(n_new * sz, additional_mw)
+                @warn "Network line $(p): additional reinforcement ($(additional_mw) MW) is not " *
+                      "an integer multiple of New_Line_Cap_Size_MW ($(sz) MW); building " *
+                      "$(n_new) discrete line(s) totaling $(n_new * sz) MW."
+            end
         end
-        # Line_Max_Reinforcement_MW is the additional capacity allowed on top of the existing
-        # Line_Max_Flow_MW, so the number of discrete new lines is that amount divided by the size.
-        additional_mw = reinf_vals[p]
-        n_new = additional_mw <= 0 ? 0 : floor(Int, additional_mw / sz)
-        if n_new > 0 && !isapprox(n_new * sz, additional_mw)
-            @warn "Network line $(p): additional reinforcement ($(additional_mw) MW) is not an " *
-                  "integer multiple of New_Line_Cap_Size_MW ($(sz) MW); building $(n_new) " *
-                  "discrete line(s) totaling $(n_new * sz) MW."
-        end
+
+        # A discrete-build corridor with no existing capacity emits no residual "existing" row. Such
+        # a row would be a zero-capacity, non-expandable line, and under DC-OPF that is not
+        # harmless: its flow is forced to zero, the exact flow-angle coupling then pins the
+        # corridor's angle difference to zero, and - because every parallel row on a corridor shares
+        # that angle difference - no candidate line built there could carry any power. Dropping it
+        # also leaves the corridor with no always-on angle limit, which is what allows the candidate
+        # lines to supply a build-gated one instead (see find_new_corridor_discrete_lines).
+        # Keep the row when n_new == 0 so a corridor never disappears from the model or the outputs.
+        new_corridor = is_discrete_build(p) && !has_existing_capacity(p) && n_new > 0
+        new_corridor || push!(order, (p, :existing))
         for _ in 1:n_new
             push!(order, (p, :new))
         end
@@ -278,6 +306,53 @@ function expand_discrete_build_lines(network_var::DataFrame)
                    for p in 1:L_orig if haskey(new_by_orig, p) && length(new_by_orig[p]) > 1]
 
     return df, line_map, line_groups
+end
+
+@doc raw"""
+    line_corridor(pNet_Map::AbstractMatrix, l::Int)
+
+The pair of zones line `l` connects, as a sorted tuple.
+
+Every row of `pNet_Map` has exactly one `+1` (start zone) and one `-1` (end zone) entry. The pair is
+returned unordered because the angle-difference limit is symmetric (``\pm\Delta\theta^{\max}``), so
+a parallel line of either orientation constrains the same corridor.
+"""
+function line_corridor(pNet_Map::AbstractMatrix, l::Int)
+    #TODO: Will need to update this for sparse pNet_Map in the future
+    zones = findall(!=(0), @view pNet_Map[l, :])
+    length(zones) == 2 ||
+        error("Network line $(l) connects $(length(zones)) zones; expected exactly 2.")
+    return minmax(zones[1], zones[2])
+end
+
+@doc raw"""
+    find_new_corridor_discrete_lines(pNet_Map::AbstractMatrix, DISCRETE_BUILD_LINES::Vector{Int})
+
+The discrete candidate lines that sit on a **new corridor** - one hosting no other, non-candidate
+line.
+
+Under DC-OPF every non-candidate line is a fixed line and therefore carries an *always-on*
+angle-difference limit for its corridor. A candidate line parallel to one of those needs no limit of
+its own: all parallel lines on a corridor share the same angle difference, so the existing line's
+limit already applies whether or not the candidate is built. That is true even when the existing
+line has zero capacity today (a continuously-expandable new corridor), which is precisely why a
+continuous decision cannot gate its corridor's angle limit and why new corridors should be built
+with discrete lines instead.
+
+A candidate on a corridor with no such line is the only thing that can supply the corridor's angle
+limit, and it must do so *build-gated* - active exactly when a circuit is built. Those are the lines
+returned here. They arise from a `Discrete_Build = 1` corridor with no existing capacity, whose
+zero-capacity residual row is dropped by [`expand_discrete_build_lines`](@ref).
+"""
+function find_new_corridor_discrete_lines(pNet_Map::AbstractMatrix,
+        DISCRETE_BUILD_LINES::Vector{Int})
+    isempty(DISCRETE_BUILD_LINES) && return Int[]
+    candidates = Set(DISCRETE_BUILD_LINES)
+    # Corridors that already carry an always-on angle limit, i.e. those hosting a non-candidate line.
+    backed_corridors = Set(line_corridor(pNet_Map, l)
+    for l in 1:size(pNet_Map, 1) if !(l in candidates))
+    return [l for l in DISCRETE_BUILD_LINES
+            if !(line_corridor(pNet_Map, l) in backed_corridors)]
 end
 
 @doc raw"""

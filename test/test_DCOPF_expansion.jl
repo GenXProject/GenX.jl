@@ -19,7 +19,7 @@ genx_setup = Dict("DC_OPF" => 1,
     "StorageLosses" => 0)
 
 # Run the case
-EP, _, _ = redirect_stdout(devnull) do
+EP, inputs, _ = redirect_stdout(devnull) do
     run_genx_case_testing(test_path, genx_setup)
 end
 obj_test = objective_value(EP)
@@ -36,6 +36,17 @@ test_result = @test obj_test≈obj_true atol=optimal_tol
 @test termination_status(EP) == JuMP.MOI.OPTIMAL
 @test sum(round.(Int, value.(EP[:vNEW_TRANS_LINES]))) >= 1
 @test value(EP[:eTotalCNetworkExp]) > 0
+
+# Confirm the new-corridor path is exercised rather than silently empty. Line 4 of Network.csv is
+# the only discrete corridor with no existing capacity, so its candidate lines - and only those -
+# are the ones that must carry a build-gated angle limit.
+NEW_CORRIDOR = inputs["NEW_CORRIDOR_DISCRETE_LINES"]
+@test !isempty(NEW_CORRIDOR)
+@test issubset(NEW_CORRIDOR, inputs["DISCRETE_BUILD_LINES"])
+@test unique(inputs["LINE_MAP_ORIGINAL"][l] for l in NEW_CORRIDOR) == [4]
+# That corridor contributes no zero-capacity residual row, but every original corridor still has at
+# least one row so results fold back to all 10 of them.
+@test length(unique(values(inputs["LINE_MAP_ORIGINAL"]))) == 10
 
 # Round objective value and tolerance. Write to test log.
 obj_test = round_from_tol!(obj_test, optimal_tol)
