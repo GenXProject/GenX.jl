@@ -291,6 +291,7 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
     planning_variables_sub = benders_inputs["planning_variables_sub"]
     subproblems = benders_inputs["subproblems"]
 
+    cpu_solve_time = 0
     if dcopf_requested == 1
         results = (planning_problem=nothing, planning_sol = nothing, subop_sol = nothing, LB_hist = Float64[], UB_hist = Float64[], gap_hist = Float64[], termination_status = nothing, cpu_time = Float64[], planning_sol_hist = nothing)
 
@@ -345,9 +346,10 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
                 set_integer.(integer_variables)
                 set_binary.(binary_variables)
                 results = append_to_benders_results(results, run_benders_pass!())
-
+                cpu_solve_time += results.cpu_time[end]
             else
                 results = append_to_benders_results(results, run_benders_pass!())
+                cpu_solve_time += results.cpu_time[end]
             end
 
             # Switch to DC-OPF. The transport model just solved is a relaxation of DC-OPF, so the
@@ -384,18 +386,22 @@ function run_genx_case_benders!(case::AbstractString, mysetup::Dict, optimizer::
             set_binary.(binary_variables)
 
             results = append_to_benders_results(results, run_benders_pass!())
+            cpu_solve_time += results.cpu_time[end]
         elseif !(mysetup[:RegularizationPostHotstart])
             mysetup[:StabParam] = 0.0
 
             results = append_to_benders_results(results, run_benders_pass!())
+            cpu_solve_time += results.cpu_time[end]
         else
             results = append_to_benders_results(results, run_benders_pass!())
+            cpu_solve_time += results.cpu_time[end]
         end
     else
         results = MacroEnergySolvers.benders(planning_problem, subproblems, planning_variables_sub, mysetup)
+        cpu_solve_time += results.cpu_time[end]
     end
 
-    myinputs["solve_time"] = results.cpu_time[end]
+    myinputs["solve_time"] = cpu_solve_time
 
     subop_sol = MacroEnergySolvers.solve_subproblems(subproblems, results.planning_sol, true)
     
