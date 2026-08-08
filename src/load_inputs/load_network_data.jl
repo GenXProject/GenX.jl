@@ -101,6 +101,19 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
         inputs_nw["NO_EXPANSION_LINES"] = findall(inputs_nw["pMax_Line_Reinforcement"] .< 0)
     end
 
+    # Transmission line hurdle rates (cost per MWh of flow) - optional input, defaults to 0 if not provided
+    # This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions 
+    # between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and 
+    # flows on interconnectors. (These 'frictions' are not real costs, but by imposing a variable cost, it 
+    # will constrain flows to periods when the difference in locational price on either side of the path are 
+    # larger than this variable cost.) This is a common practice to represent imperfect coordination between 
+    # balancing authorities/areas/jurisdictions. This cost is added to the objective function.
+    if "Line_Hurdle_Rates" in names(network_var)
+        inputs_nw["pLine_Hurdle_Rate"] = to_floats(:Line_Hurdle_Rates) / scale_factor # convert to $/GWh or million $/TWh
+    else
+        inputs_nw["pLine_Hurdle_Rate"] = zeros(Float64, L)
+    end
+
     println(filename * " Successfully Read!")
 
     return network_var

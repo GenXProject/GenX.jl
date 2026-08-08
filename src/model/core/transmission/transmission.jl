@@ -82,6 +82,16 @@ As with losses option 2, this segment-wise approximation of a quadratic loss fun
 	&\mathcal{S}^{-}_{0,l,t} \leq \varphi^{max}_{l} \times (1- ON^{-}_{1,l,t}), &\quad \forall l \in \mathcal{L}, \forall t  \in \mathcal{T}
 \end{aligned}
 ```
+**Accounting for Transmission Hurdle Rates**
+Transmission hurdle rates represent variable costs per unit of flow (e.g., \$/MWh) that can be applied to transmission lines. This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and flows on interconnectors. These 'frictions' are not real costs, but by imposing a variable cost, it will constrain flows to periods when the difference in locational price on either side of the path are larger than this variable cost. This is a common practice to represent imperfect coordination between balancing authorities/areas/jurisdictions. 
+
+The hurdle rate cost is calculated as the product of the hurdle rate, $h_l$, and the absolute value of the flow on each line, $|\Phi_{l,t}|$, summed across all time steps and weighted by the time step weight, $\omega_t$:
+```math
+\begin{aligned}
+	& \sum_{l \in \mathcal{L}} \sum_{t \in \mathcal{T}} \omega_t \times h_l \times |\Phi_{l,t}|
+\end{aligned}
+```
+This cost is added to the objective function. To compute the absolute value of flows, auxiliary positive and negative flow variables are used (similar to the approach for transmission losses), or existing auxiliary variables are reused when transmission losses are modeled with the linear loss approximation (TRANS_LOSS_SEGS = 1).
 """
 function transmission!(EP::Model, inputs::Dict, setup::Dict)
     println("Transmission Module")
@@ -317,5 +327,79 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
             sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * EP[:eLosses_By_Zone][z, t]
                 for t in 1:T, z in ALL_DF_ESR[ESR]))
         add_similar_to_expression!(EP[:eESR], -1.0, eESRTran)
+    end
+
+    # Transmission hurdle costs - variable cost per MWh of flow on each line
+    # This cost can represent 'wheeling charges' between transmission territories or frictions between 
+    # balancing areas that prevents perfect coordination. The cost is applied to the absolute value of flows.
+    # Identify lines with non-zero hurdle rates
+    HURDLE_RATE_LINES = findall(inputs["pLine_Hurdle_Rate"] .!= 0)
+    
+    if !isempty(HURDLE_RATE_LINES)
+        # For lines with hurdle rates, we need to calculate costs based on absolute value of flows
+        # We need auxiliary positive/negative flow variables to compute absolute value for hurdle costs
+        # If TRANS_LOSS_SEGS == 1, we already have vTAUX_POS and vTAUX_NEG for lines in LOSS_LINES
+        # For lines with hurdle rates but not in LOSS_LINES, we need to create auxiliary variables
+        
+        HURDLE_RATE_LOSS_LINES = intersect(HURDLE_RATE_LINES, LOSS_LINES)
+        HURDLE_RATE_NO_LOSS_LINES = setdiff(HURDLE_RATE_LINES, LOSS_LINES)
+        
+        if TRANS_LOSS_SEGS == 1 && !isempty(HURDLE_RATE_NO_LOSS_LINES)
+            # Create auxiliary variables for lines with hurdle rates but no losses
+            @variable(EP, vTAUX_NEG_HURDLE[l in HURDLE_RATE_NO_LOSS_LINES, t = 1:T] >= 0)
+            @variable(EP, vTAUX_POS_HURDLE[l in HURDLE_RATE_NO_LOSS_LINES, t = 1:T] >= 0)
+            
+            # Constraints to define auxiliary variables
+            @constraints(EP, begin
+                cTAuxSumHurdle[l in HURDLE_RATE_NO_LOSS_LINES, t = 1:T],
+                vTAUX_POS_HURDLE[l, t] - vTAUX_NEG_HURDLE[l, t] == vFLOW[l, t]
+                
+                cTAuxLimitHurdle[l in HURDLE_RATE_NO_LOSS_LINES, t = 1:T],
+                vTAUX_POS_HURDLE[l, t] + vTAUX_NEG_HURDLE[l, t] <= EP[:eAvail_Trans_Cap][l]
+            end)
+            
+            # Expression for total transmission hurdle costs
+            @expression(EP, eTotalCTransHurdle,
+                sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
+                    (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
+                    for l in HURDLE_RATE_LOSS_LINES, t in 1:T, init=0.0) +
+                sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
+                    (vTAUX_POS_HURDLE[l, t] + vTAUX_NEG_HURDLE[l, t])
+                    for l in HURDLE_RATE_NO_LOSS_LINES, t in 1:T, init=0.0)
+            )
+        elseif TRANS_LOSS_SEGS == 1
+            # All hurdle rate lines are also loss lines
+            @expression(EP, eTotalCTransHurdle,
+                sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
+                    (vTAUX_POS[l, t] + vTAUX_NEG[l, t])
+                    for l in HURDLE_RATE_LINES, t in 1:T, init=0.0)
+            )
+        else
+            # For TRANS_LOSS_SEGS > 1 or == 0, create auxiliary variables for all hurdle rate lines
+            @variable(EP, vTAUX_NEG_HURDLE[l in HURDLE_RATE_LINES, t = 1:T] >= 0)
+            @variable(EP, vTAUX_POS_HURDLE[l in HURDLE_RATE_LINES, t = 1:T] >= 0)
+            
+            # Constraints to define auxiliary variables
+            @constraints(EP, begin
+                cTAuxSumHurdle[l in HURDLE_RATE_LINES, t = 1:T],
+                vTAUX_POS_HURDLE[l, t] - vTAUX_NEG_HURDLE[l, t] == vFLOW[l, t]
+                
+                cTAuxLimitHurdle[l in HURDLE_RATE_LINES, t = 1:T],
+                vTAUX_POS_HURDLE[l, t] + vTAUX_NEG_HURDLE[l, t] <= EP[:eAvail_Trans_Cap][l]
+            end)
+            
+            # Expression for total transmission hurdle costs
+            @expression(EP, eTotalCTransHurdle,
+                sum(inputs["omega"][t] * inputs["pLine_Hurdle_Rate"][l] * 
+                    (vTAUX_POS_HURDLE[l, t] + vTAUX_NEG_HURDLE[l, t])
+                    for l in HURDLE_RATE_LINES, t in 1:T, init=0.0)
+            )
+        end
+        
+        # Add transmission hurdle costs to the objective function
+        add_to_expression!(EP[:eObj], eTotalCTransHurdle)
+    else
+        # No hurdle rates, create zero expression for consistency in output writing
+        EP[:eTotalCTransHurdle] = AffExpr(0.0)
     end
 end

@@ -85,6 +85,8 @@ This input file contains input parameters related to: 1) definition of model zon
 |**MultiStage == 1**|
 |Capital\_Recovery\_Period  |Capital recovery period (in years) used for determining overnight capital costs from annualized investment costs for network transmission line expansion.  |
 |Line\_Max\_Flow\_Possible\_MW  |Maximum possible line flow in the current model period. Overrides Line\_Max\_Reinforcement\_MW, which is not used when performing multi-stage modeling.  |
+|**Optional**|
+|Line\_Hurdle\_Rates | Variable cost per MWh of flow on each transmission line (in \$/MWh). This cost can represent 'wheeling charges' between transmission territories (where applied) or frictions between various balancing areas (such as two RTOs) that prevents perfect coordination of dispatch and flows on interconnectors. (These 'frictions' are not real costs, but by imposing a variable cost, it will constrain flows to periods when the difference in locational price on either side of the path are larger than this variable cost.) This is a common practice to represent imperfect coordination between balancing authorities/areas/jurisdictions. If not specified, defaults to 0 for all lines. This cost is added to the objective function.|
 
 There are two interfaces implemented for specifying the network topology itself: a matrix interface and a list interface.
 Only one choice is permitted in a given file.
