@@ -28,8 +28,8 @@ function write_hourly_matching_slack(path::AbstractString,
         end
         dfHM_slack = hcat(dfHM_slack,
             DataFrame(temp_HM_slack, [Symbol("t$t") for t in 1:T]))
-        CSV.write(joinpath(path, "HourlyMatching_slack_and_penalties.csv"),
-            dftranspose(dfHM_slack, false),
+        write_transposed_csv(joinpath(path, "HourlyMatching_slack_and_penalties.csv"),
+            dfHM_slack,
             writeheader = false)
     end
     return nothing

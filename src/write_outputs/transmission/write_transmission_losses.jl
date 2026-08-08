@@ -27,8 +27,8 @@ function write_transmission_losses(path::AbstractString,
             auxNew_Names)
         total[:, 3:(T + 2)] .= sum(tlosses, dims = 1)
         dfTLosses = vcat(dfTLosses, total)
-        CSV.write(joinpath(path, "tlosses.csv"),
-            dftranspose(dfTLosses, false),
+        write_transposed_csv(joinpath(path, "tlosses.csv"),
+            dfTLosses,
             writeheader = false)
 
         if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1

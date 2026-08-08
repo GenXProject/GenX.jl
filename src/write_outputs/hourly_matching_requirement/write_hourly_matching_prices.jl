@@ -23,7 +23,8 @@ function write_hourly_matching_prices(path::AbstractString,
     auxNew_Names = [Symbol("Zone"); [Symbol("t$t") for t in 1:T]]
     rename!(dfHourlyMatchPrices, auxNew_Names)
 
-    CSV.write(joinpath(path, "hourly_matching_prices.csv"),
-        dftranspose(dfHourlyMatchPrices, false), writeheader = false)
+    write_transposed_csv(joinpath(path, "hourly_matching_prices.csv"),
+        dfHourlyMatchPrices,
+        writeheader = false)
     return nothing
 end

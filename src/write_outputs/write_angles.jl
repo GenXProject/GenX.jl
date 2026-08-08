@@ -15,8 +15,6 @@ function write_angles(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     rename!(dfAngles, auxNew_Names)
 
     ## Linear configuration final output
-    CSV.write(joinpath(path, "angles.csv"),
-        dftranspose(dfAngles, false),
-        writeheader = false)
+    write_transposed_csv(joinpath(path, "angles.csv"), dfAngles, writeheader = false)
     return nothing
 end

@@ -61,6 +61,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         optimize!(EP)
     end
 
+    cache = build_output_cache(EP, inputs, setup, output_settings_d; selective = true)
+
     if output_settings_d["WriteCosts"]
         elapsed_time_costs = @elapsed write_costs(path, inputs, setup, EP)
         println("Time elapsed for writing costs is")
@@ -74,37 +76,45 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     end
 
     if output_settings_d["WritePower"] || output_settings_d["WriteNetRevenue"]
-        elapsed_time_power = @elapsed dfPower = write_power(path, inputs, setup, EP)
+        elapsed_time_power = @elapsed dfPower = write_power(path, inputs, setup, EP, cache)
         println("Time elapsed for writing power is")
         println(elapsed_time_power)
     end
 
     if output_settings_d["WriteCharge"]
-        elapsed_time_charge = @elapsed write_charge(path, inputs, setup, EP)
+        elapsed_time_charge = @elapsed write_charge(path, inputs, setup, EP, cache)
         println("Time elapsed for writing charge is")
         println(elapsed_time_charge)
     end
 
     if output_settings_d["WriteCapacityFactor"]
-        elapsed_time_capacityfactor = @elapsed write_capacityfactor(path, inputs, setup, EP)
+        elapsed_time_capacityfactor = @elapsed write_capacityfactor(path,
+            inputs,
+            setup,
+            EP,
+            cache)
         println("Time elapsed for writing capacity factor is")
         println(elapsed_time_capacityfactor)
     end
 
     if output_settings_d["WriteStorage"]
-        elapsed_time_storage = @elapsed write_storage(path, inputs, setup, EP)
+        elapsed_time_storage = @elapsed write_storage(path, inputs, setup, EP, cache)
         println("Time elapsed for writing storage is")
         println(elapsed_time_storage)
     end
 
     if output_settings_d["WriteCurtailment"]
-        elapsed_time_curtailment = @elapsed write_curtailment(path, inputs, setup, EP)
+        elapsed_time_curtailment = @elapsed write_curtailment(path,
+            inputs,
+            setup,
+            EP,
+            cache)
         println("Time elapsed for writing curtailment is")
         println(elapsed_time_curtailment)
     end
 
     if output_settings_d["WriteNSE"]
-        elapsed_time_nse = @elapsed write_nse(path, inputs, setup, EP)
+        elapsed_time_nse = @elapsed write_nse(path, inputs, setup, EP, cache)
         println("Time elapsed for writing nse is")
         println(elapsed_time_nse)
     end
@@ -139,7 +149,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
     end
 
     if output_settings_d["WriteEmissions"]
-        elapsed_time_emissions = @elapsed write_emissions(path, inputs, setup, EP)
+        elapsed_time_emissions = @elapsed write_emissions(path, inputs, setup, EP, cache)
         println("Time elapsed for writing emissions is")
         println(elapsed_time_emissions)
     end
@@ -174,7 +184,11 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         end
         if !isempty(inputs["STOR_ALL"]) || !isempty(VS_STOR)
             if output_settings_d["WriteStorageDual"]
-                elapsed_time_stordual = @elapsed write_storagedual(path, inputs, setup, EP)
+                elapsed_time_stordual = @elapsed write_storagedual(path,
+                    inputs,
+                    setup,
+                    EP,
+                    cache)
                 println("Time elapsed for writing storage duals is")
                 println(elapsed_time_stordual)
             end
@@ -278,7 +292,7 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
         dfRegSubRevenue = DataFrame()
         if has_duals(EP) == 1
             if output_settings_d["WritePrice"]
-                elapsed_time_price = @elapsed write_price(path, inputs, setup, EP)
+                elapsed_time_price = @elapsed write_price(path, inputs, setup, EP, cache)
                 println("Time elapsed for writing price is")
                 println(elapsed_time_price)
             end
@@ -289,7 +303,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                     path,
                     inputs,
                     setup,
-                    EP)
+                    EP,
+                    cache)
                 println("Time elapsed for writing energy revenue is")
                 println(elapsed_time_energy_rev)
             end
@@ -300,7 +315,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
                     path,
                     inputs,
                     setup,
-                    EP)
+                    EP,
+                    cache)
                 println("Time elapsed for writing charging cost is")
                 println(elapsed_time_charging_cost)
             end
@@ -537,18 +553,15 @@ function write_fulltimeseries(fullpath::AbstractString,
         dataOut::Matrix{Float64},
         dfOut::DataFrame)
     T = size(dataOut, 2)
-    dfOut = hcat(dfOut, DataFrame(dataOut, :auto))
-    auxNew_Names = [Symbol("Resource");
-                    Symbol("Zone");
-                    Symbol("AnnualSum");
-                    [Symbol("t$t") for t in 1:T]]
-    rename!(dfOut, auxNew_Names)
-    total = DataFrame(
-        ["Total" 0 sum(dfOut[!, :AnnualSum], init = 0.0) fill(0.0, (1, T))], auxNew_Names)
-    total[!, 4:(T + 3)] .= sum(dataOut, dims = 1, init = 0.0)
-    dfOut = vcat(dfOut, total)
+    for t in 1:T
+        dfOut[!, Symbol("t$t")] = dataOut[:, t]
+    end
 
-    CSV.write(fullpath, dftranspose(dfOut, false), writeheader = false)
+    total_row = Any["Total", 0, sum(dfOut[!, :AnnualSum], init = 0.0)]
+    append!(total_row, vec(sum(dataOut, dims = 1, init = 0.0)))
+    push!(dfOut, total_row)
+
+    write_transposed_csv(fullpath, dfOut, writeheader = false)
     return dfOut
 end
 
@@ -645,7 +658,10 @@ function write_full_time_series_reconstruction(
         path::AbstractString, setup::Dict, DF::DataFrame, name::String)
     FullTimeSeriesFolder = setup["OutputFullTimeSeriesFolder"]
     output_path = joinpath(path, FullTimeSeriesFolder)
-    dfOut_full = full_time_series_reconstruction(path, setup, dftranspose(DF, false))
+    dfOut_full = full_time_series_reconstruction(
+        path,
+        setup,
+        transpose_output_dataframe(DF))
     CSV.write(joinpath(output_path, "$name.csv"), dfOut_full, header = false)
     return nothing
 end
