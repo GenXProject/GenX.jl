@@ -46,6 +46,12 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     RETROFIT_CAP = inputs["RETROFIT_CAP"]  # Set of all resources being retrofitted
     ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"] # Set of allam cycle resources
 
+    # Resources whose capacity is built in integer multiples of Cap_Size: either unit
+    # commitment resources or resources flagged for integer (discrete) capacity builds.
+    # For these, capacity accounting and investment cost scale vCAP/vRETCAP by Cap_Size.
+    INTEGER_CAP = inputs["NEW_CAP_DISCRETE_BUILD"] # Set of resources with integer capacity builds
+    CAP_SIZE_SCALED = union(COMMIT, INTEGER_CAP)
+
     ### Variables ###
 
     # Retired capacity of resource "y" from existing capacity
@@ -53,6 +59,13 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
 
     # New installed capacity of resource "y"
     @variable(EP, vCAP[y in NEW_CAP]>=0)
+
+    if setup["DiscreteInvestments"] == 1
+        NEW_CAP_DISCRETE_BUILD = inputs["NEW_CAP_DISCRETE_BUILD"]
+        JuMP.set_integer.(vCAP[NEW_CAP_DISCRETE_BUILD])
+        RET_CAP_DISCRETE_BUILD = intersect(RET_CAP, NEW_CAP_DISCRETE_BUILD)
+        JuMP.set_integer.(vRETCAP[RET_CAP_DISCRETE_BUILD])
+    end
 
     create_empty_expression!(EP, :eTotalCFix)
 
@@ -78,33 +91,33 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     NEW_ONLY_CAP = intersect(setdiff(NEW_CAP, RET_CAP), setdiff(NEW_CAP, RETROFIT_CAP))  # Resources eligible for only new capacity
     @expression(EP, eTotalCap[y in 1:G],
         if y in NEW_RET_RETROFIT_CAP
-            if y in COMMIT
+            if y in CAP_SIZE_SCALED
                 eExistingCap[y] +
                 cap_size(gen[y]) * (EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROFITCAP][y])
             else
                 eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y] - EP[:vRETROFITCAP][y]
             end
         elseif y in RET_ONLY_CAP
-            if y in COMMIT
+            if y in CAP_SIZE_SCALED
                 eExistingCap[y] - cap_size(gen[y]) * EP[:vRETCAP][y]
             else
                 eExistingCap[y] - EP[:vRETCAP][y]
             end
         elseif y in RET_NEW_CAP
-            if y in COMMIT
+            if y in CAP_SIZE_SCALED
                 eExistingCap[y] + cap_size(gen[y]) * (EP[:vCAP][y] - EP[:vRETCAP][y])
             else
                 eExistingCap[y] + EP[:vCAP][y] - EP[:vRETCAP][y]
             end
         elseif y in RET_RETROFIT_CAP
-            if y in COMMIT
+            if y in CAP_SIZE_SCALED
                 eExistingCap[y] -
                 cap_size(gen[y]) * (EP[:vRETROFITCAP][y] + EP[:vRETCAP][y])
             else
                 eExistingCap[y] - (EP[:vRETROFITCAP][y] + EP[:vRETCAP][y])
             end
         elseif y in NEW_ONLY_CAP
-            if y in COMMIT
+            if y in CAP_SIZE_SCALED
                 eExistingCap[y] + cap_size(gen[y]) * EP[:vCAP][y]
             else
                 eExistingCap[y] + EP[:vCAP][y]
@@ -116,7 +129,7 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     ### Need editting ##
     @expression(EP, eCFix[y in 1:G],
         if y in NEW_CAP # Resources eligible for new capacity (Non-Retrofit)
-            if y in COMMIT
+            if y in CAP_SIZE_SCALED
                 inv_cost_per_mwyr(gen[y]) * cap_size(gen[y]) * vCAP[y] +
                 fixed_om_cost_per_mwyr(gen[y]) * eTotalCap[y]
             else
@@ -225,16 +238,16 @@ function investment_discharge!(EP::Model, inputs::Dict, setup::Dict)
     ## Constraints on retirements and capacity additions
     # Cannot retire more capacity than existing capacity
     @constraint(EP,
-        cMaxRetNoCommit[y in setdiff(RET_CAP, COMMIT)],
+        cMaxRetNoCommit[y in setdiff(RET_CAP, CAP_SIZE_SCALED)],
         vRETCAP[y]<=eExistingCap[y])
     @constraint(EP,
-        cMaxRetCommit[y in intersect(RET_CAP, COMMIT)],
+        cMaxRetCommit[y in intersect(RET_CAP, CAP_SIZE_SCALED)],
         cap_size(gen[y]) * vRETCAP[y]<=eExistingCap[y])
     @constraint(EP,
-        cMaxRetroNoCommit[y in setdiff(RETROFIT_CAP, COMMIT)],
+        cMaxRetroNoCommit[y in setdiff(RETROFIT_CAP, CAP_SIZE_SCALED)],
         vRETROFITCAP[y] + vRETCAP[y]<=eExistingCap[y])
     @constraint(EP,
-        cMaxRetroCommit[y in intersect(RETROFIT_CAP, COMMIT)],
+        cMaxRetroCommit[y in intersect(RETROFIT_CAP, CAP_SIZE_SCALED)],
         cap_size(gen[y]) * (vRETROFITCAP[y] + vRETCAP[y])<=eExistingCap[y])
 
     ## Constraints on new built capacity

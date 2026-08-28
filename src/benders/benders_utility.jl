@@ -62,6 +62,27 @@ function separate_inputs_subperiods(inputs::Dict)
 end
 
 @doc raw"""
+	init_benders_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+
+Build the Benders operational subproblems and return `(subproblems, planning_variables_sub)`.
+
+Selects the container based on the number of available Julia processes: a plain `Vector{Dict}`
+when `nworkers() == 1`, a `DArray` across workers otherwise.
+
+Called by `generate_benders_inputs` at setup, and again by `run_genx_case_benders!` when the
+subproblems have to be rebuilt from scratch mid-run (switching from the transport relaxation to
+DC-OPF while feasibility cuts are enabled).  The planning problem is untouched by a rebuild, so
+its accumulated cuts survive.
+"""
+function init_benders_subproblems(setup::Dict, inputs_decomp::Dict, planning_variables::Vector{String}, optimizer::Any)
+    if nworkers() == 1
+        return init_sequential_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+    else
+        return init_dist_subproblems(setup, inputs_decomp, planning_variables, optimizer)
+    end
+end
+
+@doc raw"""
 	generate_benders_inputs(setup, inputs, inputs_decomp, optimizer)
 
 Build and return the complete set of Benders decomposition inputs as a `Dict`.
@@ -83,11 +104,7 @@ function generate_benders_inputs(setup::Dict, inputs::Dict, inputs_decomp::Dict,
 
     planning_problem, planning_variables = init_planning_problem(setup, inputs, optimizer);
 
-    if nworkers() == 1
-        subproblems, planning_variables_sub = init_sequential_subproblems(setup, inputs_decomp, planning_variables, optimizer)
-    else
-        subproblems, planning_variables_sub = init_dist_subproblems(setup, inputs_decomp, planning_variables, optimizer)
-    end
+    subproblems, planning_variables_sub = init_benders_subproblems(setup, inputs_decomp, planning_variables, optimizer)
 
     benders_inputs = Dict();
 	benders_inputs["planning_problem"] = planning_problem;

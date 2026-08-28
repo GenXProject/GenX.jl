@@ -46,6 +46,10 @@ end
         include("test_DCOPF.jl")
     end
 
+    @testset "DCOPF Network Expansion" begin
+        include("test_DCOPF_expansion.jl")
+    end
+
     @testset "Multi Fuels" begin
         include("test_multifuels.jl")
     end

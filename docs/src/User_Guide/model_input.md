@@ -69,8 +69,16 @@ This input file contains input parameters related to: 1) definition of model zon
 | z* (Network map) **OR** Start\_Zone, End\_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
-|Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
+|Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line. **Note**: on a corridor with `Discrete_Build = 1` this budget is consumed entirely by the discrete new lines (it sets how many are created); the corridor receives no continuous reinforcement.|
 |Line\_Reinforcement\_Cost\_per\_MWyr | Cost of adding new capacity to the inter-regional transmission line.|
+|**DC\_OPF = 1**||
+|Line\_Voltage\_kV | Line voltage in kV. Used with the reactance to derive the line susceptance, $\mathcal{B}_l = \mathrm{kV}^2 / X$.|
+|Line\_Reactance\_Ohms | Line reactance $X$ in Ohms.|
+|Angle\_Limit\_Rad | Maximum voltage phase-angle difference across the line, in radians.|
+|**DiscreteInvestments = 1**||
+|Discrete\_Build | {0,1} Whether this corridor hosts discrete, fixed-size new lines (each with a binary build decision) instead of continuous reinforcement. Strongly recommended for greenfield corridors under DC-OPF — see [DC-OPF and Transmission Expansion](@ref).|
+|New\_Line\_Cap\_Size\_MW | MW capacity of each discrete new line on the corridor. Required when `DiscreteInvestments = 1`.|
+|BigM | Big-M used to relax the flow–angle coupling on an unbuilt candidate line. Only used when `DC_OPF = 1` and `Bilinear_DC_OPF = 0`. Defaults to `10 × New_Line_Cap_Size_MW` if the column is absent.|
 |**Trans\_Loss\_Segments = 1**||
 |Line\_Loss\_Percentage | fractional transmission loss for each transmission line||
 |**Trans\_Loss\_Segments > 1**||
@@ -189,6 +197,10 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
+|**DiscreteInvestments = 1**||
+|Discrete\_Build|{0,1}, Indicates if a resource should be built in discrete quantities| 
+| |Discrete\_Build = 1: requires new capacity and retired capacity to be in increments of the unit's `Cap_Size` (default of 1 MW if not defined by user). Results in a mixed-integer program. Useful for high resolution spacial models| 
+|||Discrete\_Build = 0: new and retired capacity decisions are continuous for the given unit|
 |**ModelingToGenerateAlternatives = 1**||
 |MGA |Eligibility of the technology for Modeling To Generate Alternative (MGA) run. |
 ||1 = Technology is available for the MGA run.|

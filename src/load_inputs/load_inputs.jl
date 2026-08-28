@@ -17,6 +17,12 @@ function load_inputs(setup::Dict, path::AbstractString)
     system_path = joinpath(path, setup["SystemFolder"])
     resources_path = joinpath(path, setup["ResourcesFolder"])
     policies_path = joinpath(path, setup["PoliciesFolder"])
+
+    # Warn if DiscreteInvestments is on but any present input file is missing Discrete_Build column
+    if setup["DiscreteInvestments"] == 1
+        _check_discrete_build_columns(system_path, resources_path)
+    end
+
     ## Declare Dict (dictionary) object used to store parameters
     inputs = Dict()
     # Read input data about power network topology, operating and expansion attributes
@@ -142,4 +148,48 @@ struct ErrorMsg <: AbstractLogMsg
 end
 struct WarnMsg <: AbstractLogMsg
     msg::String
+end
+
+"""
+    _check_discrete_build_columns(system_path, resources_path)
+
+When `DiscreteInvestments == 1`, warn for each present resource CSV and Network.csv
+that is missing a `Discrete_Build` column header. Reading only the first line of each
+file keeps this check fast.
+"""
+function _check_discrete_build_columns(system_path::AbstractString,
+        resources_path::AbstractString)
+    col_name = "Discrete_Build"
+    col_lower = lowercase(col_name)
+    cap_size_lower = "cap_size"
+
+    function _has_column(filepath::AbstractString, target_lower::AbstractString)::Bool
+        header = csv_header(filepath)
+        any(strip(lowercase(c)) == target_lower for c in split(header, ','))
+    end
+    _has_discrete_build(filepath) = _has_column(filepath, col_lower)
+
+    # Check Network.csv
+    network_file = joinpath(system_path, "Network.csv")
+    if isfile(network_file) && !_has_discrete_build(network_file)
+        @warn "DiscreteInvestments is set to 1, but \"$col_name\" column not found in Network.csv. " *
+              "No transmission lines will be treated as discrete-build."
+    end
+
+    # Check each resource CSV
+    for (filename, _) in values(_get_resource_info())
+        filepath = joinpath(resources_path, filename)
+        isfile(filepath) || continue
+        if !_has_discrete_build(filepath)
+            @warn "DiscreteInvestments is set to 1, but \"$col_name\" column not found in $filename. " *
+                  "Resources in this file will not be treated as discrete-build."
+        elseif !_has_column(filepath, cap_size_lower)
+            # Integer capacity builds scale vCAP by Cap_Size, so a discrete-build
+            # resource without a Cap_Size column is almost certainly a mistake.
+            @warn "$filename has a \"$col_name\" column but no \"Cap_Size\" column. " *
+                  "Discrete-build resources scale capacity by Cap_Size; without it " *
+                  "all resources default to a capacity size of 1 MW."
+        end
+    end
+    return nothing
 end

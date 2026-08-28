@@ -31,10 +31,14 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     L = inputs["L"]     # Number of transmission lines
     NetworkExpansion = setup["NetworkExpansion"]
     MultiStage = setup["MultiStage"]
+    DiscreteInvestments = setup["DiscreteInvestments"]
 
     if NetworkExpansion == 1
         # Network lines and zones that are expandable have non-negative maximum reinforcement inputs
         EXPANSION_LINES = inputs["EXPANSION_LINES"]
+        if setup["DiscreteInvestments"] == 1
+            DISCRETE_BUILD_LINES = inputs["DISCRETE_BUILD_LINES"]
+        end
     end
 
     ### Variables ###
@@ -46,6 +50,9 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     if NetworkExpansion == 1
         # Transmission network capacity reinforcements per line
         @variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
+        if DiscreteInvestments == 1
+            @variable(EP, vNEW_TRANS_LINES[l in DISCRETE_BUILD_LINES], Bin)
+        end
     end
 
     ### Expressions ###
@@ -59,9 +66,17 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     ## Transmission power flow and loss related expressions:
     # Total availabile maximum transmission capacity is the sum of existing maximum transmission capacity plus new transmission capacity
     if NetworkExpansion == 1
+        # Continuous-expansion lines (EXPANSION_LINES) add a continuous reinforcement variable;
+        # discrete-build lines (DISCRETE_BUILD_LINES, disjoint from EXPANSION_LINES) instead
+        # add a binary build variable times the discrete line size. Folding the binary term into the
+        # expression keeps eAvail_Trans_Cap an affine expression for those lines (a bare eTransMax[l]
+        # would be a Float64, which add_to_expression! cannot mutate).
         @expression(EP, eAvail_Trans_Cap[l = 1:L],
             if l in EXPANSION_LINES
                 eTransMax[l] + vNEW_TRANS_CAP[l]
+            elseif DiscreteInvestments == 1 && l in DISCRETE_BUILD_LINES
+                eTransMax[l] +
+                vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l]
             else
                 eTransMax[l]
             end)
@@ -76,6 +91,12 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
             eTotalCNetworkExp,
             sum(vNEW_TRANS_CAP[l] * inputs["pC_Line_Reinforcement"][l]
             for l in EXPANSION_LINES))
+
+        if DiscreteInvestments == 1
+            for l in DISCRETE_BUILD_LINES
+                add_to_expression!(eTotalCNetworkExp, vNEW_TRANS_LINES[l] * inputs["Line_Reinforcement_Cap_Size"][l] * inputs["pC_Line_Reinforcement"][l])
+            end
+        end
 
         if MultiStage == 1
             # OPEX multiplier to count multiple years between two model stages
@@ -112,4 +133,26 @@ function investment_transmission!(EP::Model, inputs::Dict, setup::Dict)
     end
     #END network expansion contraints
 
+end
+
+@doc raw"""
+    discrete_build_symmetry!(EP::Model, inputs::Dict)
+
+Break the symmetry between identical parallel candidate lines on a corridor by imposing a
+build order: line $g_i$ may only be built if line $g_{i-1}$ is.
+```math
+\begin{aligned}
+    x_{g_{i-1}} \geq x_{g_{i}} \quad \forall i \geq 2
+\end{aligned}
+```
+Only groups of more than one identical candidate line (`DISCRETE_BUILD_LINE_GROUPS`) are
+affected. This is a planning constraint and so must be added to the model that owns the build
+decisions: the monolithic model, or the Benders planning problem (never a Benders subproblem,
+where `vNEW_TRANS_LINES` is a parameter fixed by the master).
+"""
+function discrete_build_symmetry!(EP::Model, inputs::Dict)
+    haskey(inputs, "DISCRETE_BUILD_LINE_GROUPS") || return
+    for g in inputs["DISCRETE_BUILD_LINE_GROUPS"], i in 2:length(g)
+        @constraint(EP, EP[:vNEW_TRANS_LINES][g[i - 1]] >= EP[:vNEW_TRANS_LINES][g[i]])
+    end
 end

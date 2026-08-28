@@ -1,11 +1,11 @@
 ## Benders Decomposition
 
-Benders Decomposition is a powerful optimization technique used to solve large-scale problems by breaking them into a smaller master problem and one or more subproblems The master problem contains a set of "complicating variables" that, once fixed in the subproblems, makes the subproblems easier to solve. The algorithm works iteratively: it solves the master problem, fixes that solution in the subproblems, solves the subproblems, and then returns cuts (typically dual information) back to the master problem that refine the solution space. This process of passing information (primal and dual variables) between the master and subproblems continues until an upper and lower bound converge. For further details on Benders decomposition in capacity expansion models, please see this paper by [Jacobson et al.](https://pubsonline.informs.org/doi/abs/10.1287/ijoo.2023.0005) ([preprint](https://arxiv.org/abs/2302.10037)) or this paper by [Pecci and Jenkins](https://ieeexplore.ieee.org/abstract/document/10829583) ([preprint](https://arxiv.org/abs/2403.02559)). The mathematical formulation for the capacity expansion model and how it is decomposed is shown in more detail in the [Benders Decomposition Overview](@ref).
+Benders Decomposition is a powerful optimization technique used to solve large-scale problems by breaking them into a smaller master problem and one or more subproblems. The master problem contains a set of "complicating variables" that, once fixed in the subproblems, makes the subproblems easier to solve. The algorithm works iteratively: it solves the master problem, fixes that solution in the subproblems, solves the subproblems, and then returns cuts (typically dual information) back to the master problem that refine the solution space. This process of passing information (primal and dual variables) between the master and subproblems continues until an upper and lower bound converge. For further details on Benders decomposition in capacity expansion models, please see this paper by [Jacobson et al.](https://pubsonline.informs.org/doi/abs/10.1287/ijoo.2023.0005) ([preprint](https://arxiv.org/abs/2302.10037)) or this paper by [Pecci and Jenkins](https://ieeexplore.ieee.org/abstract/document/10829583) ([preprint](https://arxiv.org/abs/2403.02559)). The mathematical formulation for the capacity expansion model and how it is decomposed is shown in more detail in the [Benders Decomposition Overview](@ref).
 
 Benders decomposition can be especially useful when the problem can be decomposed with several independent subproblems. This is because the subproblems can each be solved in parallel after the master problem solve is complete. GenX exploits this ability by decomposing the problem in time and solving with representative time periods, such that the linking between time periods is only captured inside the master problem. This allows for each representative period to be solved independently in parallel during a single iteration of Benders. For this reason, it is generally advised that the user provide their data as representative periods or to use the time domain reduction capability of GenX, which automatically creates the representative periods for use in Benders.
 
 
-Benders decomposition is accessed by setting `Benders: 1` in the `genx_settings.yml` file. In addition, the user must  planning problem and subproblem solver settings as `[solver_name]_benders_planning_settings.yml` and `[solver_name]__benders_subprob_settings.yml` as well as a settings files for Benders called `benders_settings.yml`. Internally, GenX calls [MacroEnergySolvers.jl](https://github.com/macroenergy/MacroEnergySolvers.jl/tree/main) to run the Benders algorithm. The settings which can be passed to the `benders_settings.yml` file are shown in the following table. 
+Benders decomposition is accessed by setting `Benders: 1` in the `genx_settings.yml` file. In addition, the user must  planning problem and subproblem solver settings as `[solver_name]_benders_planning_settings.yml` and `[solver_name]__benders_subprob_settings.yml` as well as a settings files for Benders called `benders_settings.yml`. Internally, GenX calls [MacroEnergySolvers.jl](https://github.com/macroenergy/MacroEnergySolvers.jl/tree/main) to run the Benders algorithm. The settings which can be passed to the `benders_settings.yml` file are shown in the following table and are frequently equivalent to the MacroEnergySolvers settings. 
 
 |**Parameter** | **Allowed Values** |**Description**|
 | :------------ | :-----------|:-----------|
@@ -19,6 +19,65 @@ Benders decomposition is accessed by setting `Benders: 1` in the `genx_settings.
 | Distributed | $\{true, false\}$ | Whether to distribute subproblems to remote workers. When `true`, GenX will automatically launch the required worker processes. |
 | NWorkers | $-1$ or $\in \mathbb{Z}_+$ | Number of Julia worker processes to use for parallel subproblem solving. Only used when `Distributed: true`. `-1` (the default) sizes the worker pool automatically; a value greater than 1 requests that many workers explicitly; `0` or `1` disables parallel execution. |
 | ExpectFeasibleSubproblems | $\{true, false\}$ | # If true, skip feasibility cuts (assumes subproblems are always feasible); safe to leave false|
+| RunTransportModel | $\{true, false\}$ | Only for DC-OPF expansion. Solve the transport relaxation first and reuse its cuts as a warm start. Requires `DC_OPF: 1`. |
+| LPTransportHotstart | $\{true, false\}$ | Only with `RunTransportModel: true`. LP-relax the planning problem's integer/binary variables for the transport pass, then restore them and run it again. |
+| LPDCOPFHotstart | $\{true, false\}$ | Only for DC-OPF expansion. LP-relax the planning problem's integer/binary variables for the DC-OPF pass, then restore them and run it again. |
+| RegularizationPostHotstart | $\{true, false\}$ | If true, keep level-set regularization (`StabParam`) on for the final pass. If false, `StabParam` is forced to 0 once the hot-start passes are done. |
+
+### Benders for DC-OPF with Transmission Expansion
+
+When transmission expansion is combined with DC-OPF (see [DC-OPF and Transmission Expansion](@ref)),
+the line-build decisions live in the planning problem, but the DC-OPF constraints can slow convergence. Fruther, the problem
+can be infeasible for some early planning solutions, so the first iterations may produce poor cuts.
+
+The last four settings above stage the solve to address this. GenX runs a sequence of `benders` passes
+over the *same* planning problem, so cuts accumulate across passes:
+
+1. **Transport pass** (`RunTransportModel: true`). The subproblems are built **without** the DC-OPF
+   flow–angle constraints, i.e. as a transport model. Because the transport model is a relaxation
+   of DC-OPF on the same system, the optimality cuts it generates are valid underestimators of the
+   true DC-OPF recourse cost. They remain valid when DC-OPF is switched on, and the
+   planning problem is carried over as-is.
+2. **DC-OPF pass**. The subproblems gain the DC-OPF constraints and Benders continues against the
+   warm-started planning problem.
+3. **LP hot-starts** (`LPTransportHotstart`, `LPDCOPFHotstart`). Each of the above passes can be
+   preceded by a pass in which the planning problem's integer and binary variables are relaxed. The
+   LP relaxation is driven to convergence, generating cuts, and integrality is restored
+   and the pass re-run against the accumulated cuts.
+4. **Regularization** (`RegularizationPostHotstart`). In practice, level-set regularization (`StabParam > 0`)
+   may help most in the early, cut-poor iterations and when the problem is an LP. By default GenX turns it off (`StabParam = 0`) once
+   the hot-start passes are complete. Set `RegularizationPostHotstart: true` to keep it on throughout.
+
+
+These ideas are outlined in the manuscript available [here](https://arxiv.org/abs/2603.29867).
+
+A typical configuration:
+
+```yaml
+DC_OPF: 1                         # in genx_settings.yml
+NetworkExpansion: 1               # in genx_settings.yml
+DiscreteInvestments: 1            # in genx_settings.yml
+
+# benders_settings.yml
+RunTransportModel: true
+LPTransportHotstart: true
+LPDCOPFHotstart: true
+RegularizationPostHotstart: false
+StabParam: 0.5
+ExpectFeasibleSubproblems: false
+```
+
+
+!!! warning "`IntegerInvestment` and the LP hot-starts are mutually exclusive"
+    `IntegerInvestment: true` asks *MacroEnergySolvers* to run its own integer routine: it relaxes
+    the planning problem's integer variables on entry to `benders` and restores them once the
+    relaxation has converged. `LPTransportHotstart` / `LPDCOPFHotstart` do the same thing, at the
+    level of a whole `benders` pass and give slightly more flexibility to the user. `IntegerInvestment = true` is reset to `false` in the DC_OPF case and the user must use the GenX settings flag in this case.
+    GenX detects this combination, warns, and forces `IntegerInvestment: false`. If you want
+    MacroEnergySolvers to own the integer relaxation instead, set both hot-start flags to `false`.
+
+!!! note "`ExpectFeasibleSubproblems` set to `false` can require longer build times when hot starting with the transport model."
+   Currently, MacroEnergySolvers with `ExpectFeasibleSubproblems=false` adds a slack variable that facilitates feasibility cuts. When hot-starting with the transport model, the slacks are added to the subproblems under the transport model, solved to optimality, and then DCOPF constraints are added to the subproblems. MacroEnergySolvers would throw an error if it were asked to resolve with the slacks already in place. Consequently, the subproblems are regenerated between each hot-starting step. To avoid this, the user can set `ExpectFeasibleSubproblems=true`, but it is possible that this results in infeasible solutions.
 
 ### Running Benders in Parallel
 
