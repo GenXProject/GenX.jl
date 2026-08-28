@@ -43,7 +43,7 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
             mysetup = merge(mysetup, mysetup_benders)
 
             if mysetup["DC_OPF"] != 1 && mysetup[:RunTransportModel]
-                @warn "`RunTransportModel` only works with DC_OPF = 1 but DC_OPF is set to $(mysetup["DC_OPF"]). Turning off `RunTransportModel`"
+                @warn "DC_OPF = $(mysetup["DC_OPF"]) and `RunTransportModel` = true. `RunTransportModel`` is a setting for solving with Benders when DCOPF = 1. Did the user mean to set DC_OPF to 1?"
             end
 
             hotstart_requested = mysetup[:LPDCOPFHotstart] ||
@@ -56,26 +56,7 @@ function run_genx_case!(case::AbstractString, optimizer::Any = HiGHS.Optimizer)
                 @warn "`IntegerInvestment` is incompatible with the LP hot-starts (`LPTransportHotstart` / `LPDCOPFHotstart`), which perform the integer relaxation themselves. Turning off `IntegerInvestment`."
                 mysetup[:IntegerInvestment] = false
             end
-
-            if get(mysetup, :Distributed, false)
-                target = get(mysetup, :NWorkers, 0)
-                if target > 1
-                    current = nworkers()
-                    if current < target
-                        n_to_add = target - current
-                        @info "Benders: adding $n_to_add worker process(es) to reach $target total workers."
-                        addprocs(n_to_add; exeflags=["--project=$(Base.active_project())"])
-                        Distributed.remotecall_eval(Main, workers(), :(using GenX))
-                    elseif current > target
-                        @warn "Benders: $current workers are already running but NWorkers=$target was requested. Proceeding with $current workers."
-                    else
-                        @info "Benders: $current workers already running — no additional workers needed."
-                    end
-                else
-                    @warn "Benders: Distributed=true but NWorkers=$target (must be > 1 to enable parallel solving). Running sequentially."
-                end
-            end
-
+            
             run_genx_case_benders!(case, mysetup, optimizer)
         end
     else

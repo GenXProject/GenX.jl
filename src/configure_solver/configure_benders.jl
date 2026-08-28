@@ -38,7 +38,7 @@ function configure_benders(settings_path::String)
         :ExpectFeasibleSubproblems    => false,
         :IntegerInvestment            => false,
         :Distributed                  => false,
-        :NWorkers                     => 0,
+        :NWorkers                     => -1,
         :ThetaLB                      => 0.0,
         :RunTransportModel            => false,
         :LPTransportHotstart          => false,

@@ -81,17 +81,11 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     else
         Model(OPTIMIZER)
     end
-    #set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
+    set_string_names_on_creation(EP, Bool(setup["EnableJuMPStringNames"]))
 
     # Initialize Objective Function Expression
     EP[:eObj] = AffExpr(0.0)
 
-    # Guard against unsupported Benders + VRE-STOR combination
-    if setup["Benders"] == 1 
-        if setup["LDSAdditionalConstraints"] == 1
-            @warn "LDSAdditionalConstraints=1 applies to problems with non-representative periods and is not supported in the current Benders implementation. Benders will proceed as if LDSAdditionalConstraints=0"
-        end
-    end
     # Delegate to planning_model! and operation_model! helper functions.
     # planning_model! handles all investment/capacity decisions and must run first
     # so that investment variables exist when operation_model! references them.
@@ -195,6 +189,10 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
     if setup["HydrogenMinimumProduction"] > 0 && setup["Benders"] == 1
         hydrogen_demand_planning!(EP, inputs, setup)
     end
+
+    if setup["HourlyMatchingRequirement"] == 1 && setup["Benders"] == 1
+        hourly_matching_planning!(EP, inputs)
+    end
 end
 
 # operation_model! contains all operational constraints, variables, and technology modules.
@@ -204,6 +202,12 @@ end
 function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
+
+    if setup["Benders"] == 1 
+        if setup["LDSAdditionalConstraints"] == 1
+            @warn "LDSAdditionalConstraints=1 applies to problems with non-representative periods and is not supported in the current Benders implementation. Benders will proceed as if LDSAdditionalConstraints=0"
+        end
+    end
 
     # Initialize Power Balance Expression
     # Expression for "baseline" power balance constraint
@@ -269,8 +273,8 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     # inter-period linkage constraints within each subproblem.
-    if (setup["Benders"] == 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))) ||
-       (inputs["REP_PERIOD"] > 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"])))
+    if setup["LDES_Feasible"] == 0 && ((setup["Benders"] == 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))) ||
+       (inputs["REP_PERIOD"] > 1 && (!isempty(inputs["STOR_LONG_DURATION"]) || !isempty(inputs["STOR_HYDRO_LONG_DURATION"]))))
         lds_slack!(EP, inputs, setup)
     end
 
@@ -329,9 +333,8 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     # Model constraints, variables, expressions related to the co-located VRE-storage resources
-    # (Benders case with VRE_STOR already errored at generate_model entry point)
     if !isempty(inputs["VRE_STOR"])
-        if (setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["VS_LDS"])) || (inputs["REP_PERIOD"] > 1 && !isempty(inputs["VS_LDS"]))
+        if setup["LDES_Feasible"] == 0 && ((setup["Benders"] == 1 && haskey(inputs, "SubPeriod_Index") && !isempty(inputs["VS_LDS"])) || ((inputs["REP_PERIOD"] > 1) && !isempty(inputs["VS_LDS"])))
             vre_stor_lds_slack!(EP, inputs, setup)
         end
         vre_stor!(EP, inputs, setup)
@@ -371,7 +374,11 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
 
     # Hourly Matching Requirement
     if setup["HourlyMatchingRequirement"] == 1
-        hourly_matching!(EP, inputs)
+        if setup["Benders"] == 1
+            hourly_matching_subperiod!(EP, inputs)
+        else
+            hourly_matching!(EP, inputs)
+        end
     end
 
     # Capacity Reserve Margin
@@ -395,4 +402,3 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
         cPowerBalance[t = 1:T, z = 1:Z],
         EP[:ePowerBalance][t, z]==inputs["pD"][t, z])
 end
-

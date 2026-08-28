@@ -44,9 +44,7 @@ function discharge_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
 
     if setup["DiscreteInvestments"] == 1
         NEW_CAP_DISCRETE_BUILD = inputs["NEW_CAP_DISCRETE_BUILD"]
-        JuMP.set_integer.(vCAP[NEW_CAP_DISCRETE_BUILD])
         RET_CAP_DISCRETE_BUILD = intersect(RET_CAP, NEW_CAP_DISCRETE_BUILD)
-        JuMP.set_integer.(vRETCAP[RET_CAP_DISCRETE_BUILD])
     end
 
     # Allam cycle specific. By default, i = 1 -> sCO2Turbine; i = 2 -> ASU; i = 3 -> LOX
@@ -229,7 +227,7 @@ function transmission_capacity_decisions!(EP::Model, inputs::Dict, setup::Dict)
         # Transmission network capacity reinforcements per line
         @variable(EP, vNEW_TRANS_CAP[l in EXPANSION_LINES]>=0)
         if DiscreteInvestments == 1
-            @variable(EP, vNEW_TRANS_LINES[l in DISCRETE_BUILD_LINES], Bin)
+            @variable(EP, vNEW_TRANS_LINES[l in DISCRETE_BUILD_LINES])
         end
     end
 
