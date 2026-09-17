@@ -1,4 +1,85 @@
 @doc raw"""
+    stage_opex_multiplier(discount_rate::Real, stage_len::Int)
+
+Multiplier converting an annual operating cost into a stage-level cost, since a
+stage may span several years.
+
+```math
+\text{OPEXMULT} = \sum_{j=1}^{L}\frac{1}{(1+DR)^{j-1}}
+```
+
+where $L$ is the stage length in years and $DR$ the general discount rate. The
+exponent $j-1$ places each year's cost at the start of that year.
+"""
+function stage_opex_multiplier(discount_rate::Real, stage_len::Int)
+    return sum(1 / (1 + discount_rate)^(j - 1) for j in 1:stage_len; init = 0.0)
+end
+
+@doc raw"""
+    stage_discount_factor(discount_rate::Real, stage_lens, cur_stage::Int)
+
+Factor discounting a cost incurred in `cur_stage` back to the start of the
+modeling horizon.
+
+```math
+DF_i = \frac{1}{(1+DR)^{N_i}}, \qquad N_i = \sum_{s<i} L_s
+```
+"""
+function stage_discount_factor(discount_rate::Real, stage_lens, cur_stage::Int)
+    cum_years = sum(stage_lens[1:(cur_stage - 1)]; init = 0)
+    return 1 / (1 + discount_rate)^cum_years
+end
+
+@doc raw"""
+    payment_years_remaining(settings_d::Dict, crp)
+
+Per-resource count of investment annuity payments falling inside the modeling
+horizon:
+
+```math
+P_y = \min(CRP_y, \sum_{s \geq i} L_s)
+```
+
+Annuities due after the horizon are assumed fully recoverable and excluded.
+"""
+function payment_years_remaining(settings_d::Dict, crp)
+    cur_stage = settings_d["CurStage"]
+    stage_lens = settings_d["StageLengths"]
+
+    # Total time between the end of the final model stage and the start of the current stage
+    model_yrs_remaining = sum(stage_lens[cur_stage:end]; init = 0)
+
+    # For each resource, take the minimum of the capital recovery period and the end of the
+    # model horizon: annualized costs are summed through the full capital recovery period or
+    # the end of the planning horizon, whichever comes first
+    return min.(crp, model_yrs_remaining)
+end
+
+@doc raw"""
+    overnight_capital_cost_factor(settings_d::Dict, crp, tech_wacc)
+
+Per-resource factor converting an annualized investment cost into an overnight
+capital cost, over the payments falling inside the horizon:
+
+```math
+A_y = \sum_{p=1}^{P_y}\frac{1}{(1+WACC_y)^{p}}
+```
+
+Discounting starts at year 1, not year 0; the adjustment to year 0 is carried by
+the stage discount factor applied to the whole objective.
+"""
+function overnight_capital_cost_factor(settings_d::Dict, crp, tech_wacc)
+    payment_yrs = payment_years_remaining(settings_d, crp)
+
+    # Present value of the investment annuities associated with the capital recovery period
+    # within the model horizon - discounting to year 1 and not year 0. (The factor adjusting
+    # to year 0 for capital cost is included in the discounting coefficient applied to all
+    # terms in the objective function value.)
+    return [sum(1 / (1 + tech_wacc[i])^p for p in 1:payment_yrs[i]; init = 0.0)
+            for i in eachindex(payment_yrs)]
+end
+
+@doc raw"""
 	function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array,tech_wacc::Array)
 
 This function computes overnight capital costs incured within the model horizon, assuming that annualized costs to be paid after the model horizon are fully recoverable, and so are not included in the cost computation.
@@ -33,30 +114,13 @@ function compute_overnight_capital_cost(settings_d::Dict,
         error(msg)
     end
 
-    cur_stage = settings_d["CurStage"] # Current model
-    num_stages = settings_d["NumStages"] # Total number of model stages
-    stage_lens = settings_d["StageLengths"]
-
-    # 1) For each resource, find the minimum of the capital recovery period and the end of the model horizon
-    # Total time between the end of the final model stage and the start of the current stage
-    model_yrs_remaining = sum(stage_lens[cur_stage:end]; init = 0)
-
-    # We will sum annualized costs through the full capital recovery period or the end of planning horizon, whichever comes first
-    payment_yrs_remaining = min.(crp, model_yrs_remaining)
-
-    # KEY ASSUMPTION: Investment costs after the planning horizon are fully recoverable, so we don't need to include these costs
-    # 2) Compute the present value of investment associated with capital recovery period within the model horizon - discounting to year 1 and not year 0
-    #    (Factor to adjust discounting to year 0 for capital cost is included in the discounting coefficient applied to all terms in the objective function value.)
-    occ = zeros(length(inv_costs_yr))
-    for i in 1:length(occ)
-        occ[i] = sum(
-            inv_costs_yr[i] / (1 + tech_wacc[i]) .^ (p)
-            for p in 1:payment_yrs_remaining[i];
-            init = 0)
-    end
-
-    # 3) Return the overnight capital cost (discounted sum of annual investment costs incured within the model horizon)
-    return occ
+    # KEY ASSUMPTION: Investment costs after the planning horizon are fully recoverable, so we
+    # don't need to include these costs. Which annuities fall inside the horizon, and how they
+    # are discounted, is handled by `overnight_capital_cost_factor`.
+    #
+    # Returns the overnight capital cost: the discounted sum of annual investment costs
+    # incurred within the model horizon.
+    return inv_costs_yr .* overnight_capital_cost_factor(settings_d, crp, tech_wacc)
 end
 
 @doc raw"""

@@ -259,4 +259,56 @@ with_logger(ConsoleLogger(stderr, Logging.Error)) do
     test_can_retire_validation()
 end
 
+function test_discounting_helpers()
+    @testset "Discounting helpers reproduce the inline expressions" begin
+        dr = 0.045
+
+        # OPEXMULT: each year of a stage discounted to the start of that year.
+        for L in (1, 5, 10)
+            @test GenX.stage_opex_multiplier(dr, L) ≈
+                  sum([1 / (1 + dr)^(i - 1) for i in range(1, stop = L)])
+        end
+        @test GenX.stage_opex_multiplier(dr, 1) == 1.0
+        @test GenX.stage_opex_multiplier(0.0, 7) == 7.0
+
+        # Stage discount factor: years elapsed before the stage begins. Checked
+        # for uneven stages too, which GenX supports.
+        for stage_lens in ([10, 10, 10], [10, 5, 8])
+            for p in 1:3
+                @test GenX.stage_discount_factor(dr, stage_lens, p) ≈
+                      1 / (1 + dr)^sum(stage_lens[1:(p - 1)]; init = 0)
+            end
+            @test GenX.stage_discount_factor(dr, stage_lens, 1) == 1.0
+        end
+
+        # Payment years: capital recovery period truncated at the horizon.
+        settings = Dict("CurStage" => 1, "NumStages" => 3, "WACC" => dr,
+            "StageLengths" => [10, 5, 8])
+        @test GenX.payment_years_remaining(settings, [20, 40, 5]) == [20, 23, 5]
+        settings["CurStage"] = 2
+        @test GenX.payment_years_remaining(settings, [20, 40, 5]) == [13, 13, 5]
+        settings["CurStage"] = 3
+        @test GenX.payment_years_remaining(settings, [20, 40, 5]) == [8, 8, 5]
+
+        # Overnight capital cost is the annuity times the factor, matching the
+        # original per-resource loop.
+        settings["CurStage"] = 1
+        crp, wacc = [20, 40, 5], [0.039, 0.017, 0.027]
+        inv = [65400.0, 41000.0, 12000.0]
+        payment_yrs = GenX.payment_years_remaining(settings, crp)
+        expected = [sum(inv[i] / (1 + wacc[i])^p for p in 1:payment_yrs[i]; init = 0.0)
+                    for i in eachindex(inv)]
+        @test GenX.compute_overnight_capital_cost(settings, inv, crp, wacc) ≈ expected
+        @test GenX.overnight_capital_cost_factor(settings, crp, wacc) .* inv ≈ expected
+
+        # A zero capital recovery period is an error only when there is an
+        # investment cost to recover.
+        @test GenX.compute_overnight_capital_cost(settings, [0.0], [0], [0.05]) == [0.0]
+        @test_throws ErrorException GenX.compute_overnight_capital_cost(
+            settings, [100.0], [0], [0.05])
+    end
+end
+
+test_discounting_helpers()
+
 end # module TestMultiStage
