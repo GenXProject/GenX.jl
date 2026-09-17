@@ -47,7 +47,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if !isempty(VRE_STOR)
         cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) +
                  (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) +
-                 (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0))
+                 (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0) +
+                 (!isempty(inputs["VS_ELEC"]) ? value(EP[:eTotalCFixElec]) : 0.0))
         cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) +
                  (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
         if !isempty(inputs["VS_STOR"])
