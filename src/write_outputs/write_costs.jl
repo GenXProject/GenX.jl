@@ -1,353 +1,256 @@
+"""Sum a 1-D JuMP expression container over `ids`, returning 0.0 when empty."""
+_sum_over(expr, ids) = isempty(ids) ? 0.0 : sum(value.(expr[ids]))
+
+"""Sum a 2-D (resource, time) JuMP expression container over `ids` and all time."""
+_sum_over_time(expr, ids) = isempty(ids) ? 0.0 : sum(value.(expr[ids, :]))
+
+"""Accumulate `value(expr[y])` into `acc[y]` for every `y` in `ids`."""
+function _accumulate!(acc::Vector{Float64}, expr, ids)
+    for y in ids
+        acc[y] += value(expr[y])
+    end
+    return acc
+end
+
+"""Accumulate the time-sum of `expr[y, :]` into `acc[y]` for every `y` in `ids`."""
+function _accumulate_over_time!(acc::Vector{Float64}, expr, ids)
+    for y in ids
+        acc[y] += sum(value.(expr[y, :]))
+    end
+    return acc
+end
+
+@doc raw"""
+    cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
+
+Collect the solved cost terms that make up `costs.csv`, in model units and
+before any scaling.
+
+Costs that can be attributed to a resource are returned as vectors indexed by
+resource id, so that the system total is the sum of the vector and a zone's
+value is the sum over the resources in that zone. This is what makes the zone
+columns add up to the `Total` column by construction, rather than by two
+independent accumulations that can drift apart.
+
+Costs with no per-resource attribution are returned as scalars
+(`unmet_rsv`, `netexp`, `policy_penalty`) or per-zone vectors (`nse`).
+
+Returns a `NamedTuple`; see [`assemble_costs`](@ref) for how it becomes a table.
+"""
+function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
+    gen = inputs["RESOURCES"]
+    G = length(gen)
+    Z = inputs["Z"]
+
+    VRE_STOR = inputs["VRE_STOR"]
+    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
+    STOR_ALL = inputs["STOR_ALL"]
+    STOR_ASYMMETRIC = inputs["STOR_ASYMMETRIC"]
+    FLEX = inputs["FLEX"]
+    COMMIT = inputs["COMMIT"]
+    CCS = inputs["CCS"]
+
+    zeros_G() = zeros(Float64, G)
+    fix, var, fuel, start = zeros_G(), zeros_G(), zeros_G(), zeros_G()
+    co2, h2, grid = zeros_G(), zeros_G(), zeros_G()
+
+    # --- Fixed costs -------------------------------------------------------
+    # eTotalCFix is the sum of eCFix over all resources plus the Allam plant
+    # term, so both are needed here to reproduce it.
+    _accumulate!(fix, EP[:eCFix], 1:G)
+    !isempty(STOR_ALL) && _accumulate!(fix, EP[:eCFixEnergy], STOR_ALL)
+    !isempty(STOR_ASYMMETRIC) && _accumulate!(fix, EP[:eCFixCharge], STOR_ASYMMETRIC)
+    if !isempty(ALLAM_CYCLE_LOX)
+        _accumulate!(fix, EP[:eCFix_Allam_Plant], ALLAM_CYCLE_LOX)
+    end
+
+    # --- Variable costs ----------------------------------------------------
+    _accumulate_over_time!(var, EP[:eCVar_out], 1:G)
+    !isempty(STOR_ALL) && _accumulate_over_time!(var, EP[:eCVar_in], STOR_ALL)
+    !isempty(FLEX) && _accumulate_over_time!(var, EP[:eCVarFlex_in], FLEX)
+    if !isempty(ALLAM_CYCLE_LOX)
+        _accumulate!(var, EP[:eCVar_Allam], ALLAM_CYCLE_LOX)
+    end
+
+    # --- Fuel --------------------------------------------------------------
+    _accumulate_over_time!(fuel, EP[:ePlantCFuelOut], 1:G)
+
+    # --- Start-up ----------------------------------------------------------
+    if setup["UCommit"] >= 1
+        if !isempty(COMMIT)
+            _accumulate_over_time!(start, EP[:eCStart], COMMIT)
+            _accumulate_over_time!(start, EP[:ePlantCFuelStart], COMMIT)
+        end
+        if !isempty(ALLAM_CYCLE_LOX)
+            _accumulate_over_time!(start, EP[:eCStart_Allam], ALLAM_CYCLE_LOX)
+            _accumulate_over_time!(start, EP[:ePlantCFuelStart], ALLAM_CYCLE_LOX)
+        end
+    end
+
+    # --- CO2 sequestration -------------------------------------------------
+    !isempty(CCS) && _accumulate!(co2, EP[:ePlantCCO2Sequestration], CCS)
+
+    # --- Co-located VRE+storage -------------------------------------------
+    # Each component carries its own fixed-cost and (where applicable) variable
+    # O&M expression, indexed in the same resource-id space as everything else.
+    if !isempty(VRE_STOR)
+        fix_components = [
+            (:eCFixDC, "VS_DC"),
+            (:eCFixSolar, "VS_SOLAR"),
+            (:eCFixWind, "VS_WIND"),
+            (:eCFixElec, "VS_ELEC"),
+            (:eCFixEnergy_VS, "VS_STOR"),
+            (:eCFixCharge_DC, "VS_ASYM_DC_CHARGE"),
+            (:eCFixDischarge_DC, "VS_ASYM_DC_DISCHARGE"),
+            (:eCFixCharge_AC, "VS_ASYM_AC_CHARGE"),
+            (:eCFixDischarge_AC, "VS_ASYM_AC_DISCHARGE")
+        ]
+        for (sym, key) in fix_components
+            ids = inputs[key]
+            isempty(ids) || _accumulate!(fix, EP[sym], ids)
+        end
+
+        # Note the set families differ, and mixing them up silently drops costs.
+        # Fixed costs above are declared over VS_ASYM_*, since only asymmetric
+        # resources have a separately sized charge or discharge capacity to pay
+        # for. Variable O&M below is declared over the broader VS_STOR_* sets,
+        # because every storage resource incurs it whether symmetric or not.
+        var_components = [
+            (:eCVarOutSolar, "VS_SOLAR"),
+            (:eCVarOutWind, "VS_WIND"),
+            (:eCVar_Charge_DC, "VS_STOR_DC_CHARGE"),
+            (:eCVar_Discharge_DC, "VS_STOR_DC_DISCHARGE"),
+            (:eCVar_Charge_AC, "VS_STOR_AC_CHARGE"),
+            (:eCVar_Discharge_AC, "VS_STOR_AC_DISCHARGE")
+        ]
+        for (sym, key) in var_components
+            ids = inputs[key]
+            isempty(ids) || _accumulate_over_time!(var, EP[sym], ids)
+        end
+
+        # Grid connection is a memo row: it is the same expression already
+        # counted inside cFix for these resources, reported separately.
+        _accumulate!(grid, EP[:eCGrid], VRE_STOR)
+    end
+
+    # --- Hydrogen revenue (negative cost) ----------------------------------
+    VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Int[]
+    ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) :
+                       inputs["ELECTROLYZER"]
+    if !isempty(ELECTROLYZER_ALL)
+        for y in inputs["ELECTROLYZER"]
+            h2[y] -= sum(value.(EP[:eHydrogenValue][y, :]))
+        end
+        for y in VS_ELEC
+            h2[y] -= sum(value.(EP[:eHydrogenValue_vs][y, :]))
+        end
+    end
+
+    # --- Non-served energy, by zone ---------------------------------------
+    nse = [sum(value.(EP[:eCNSE][:, :, z])) for z in 1:Z]
+
+    # --- System-wide terms with no resource attribution -------------------
+    unmet_rsv = setup["OperationalReserves"] == 1 ? value(EP[:eTotalCRsvPen]) : 0.0
+    netexp = (setup["NetworkExpansion"] == 1 && Z > 1) ?
+             value(EP[:eTotalCNetworkExp]) : 0.0
+
+    policy_penalty = 0.0
+    for (key, sym) in [("dfCapRes_slack", :eCTotalCapResSlack),
+        ("dfESR_slack", :eCTotalESRSlack),
+        ("dfCO2Cap_slack", :eCTotalCO2CapSlack),
+        ("MinCapPriceCap", :eTotalCMinCapSlack),
+        ("MaxCapPriceCap", :eTotalCMaxCapSlack),
+        ("H2DemandPriceCap", :eTotalCH2DemandSlack)]
+        haskey(inputs, key) && (policy_penalty += value(EP[sym]))
+    end
+
+    return (fix = fix, var = var, fuel = fuel, start = start, co2 = co2, h2 = h2,
+        grid = grid, nse = nse, unmet_rsv = unmet_rsv, netexp = netexp,
+        policy_penalty = policy_penalty, obj = value(EP[:eObj]),
+        electrolyzer_all = ELECTROLYZER_ALL)
+end
+
+@doc raw"""
+    assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict)
+
+Turn a [`cost_breakdown`](@ref) into the `costs.csv` table: a `Costs` column of
+row names, a `Total` column, and one column per zone.
+
+Rows without a per-resource attribution (`cUnmetRsv`, `cNetworkExp`,
+`cUnmetPolicyPenalty`) and the `cGridConnection` memo row are written as `"-"`
+in the zone columns, matching the system-wide nature of those terms.
+
+`ParameterScale` is applied once, to every numeric cell, at the end.
+"""
+function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict)
+    gen = inputs["RESOURCES"]
+    Z = inputs["Z"]
+    VRE_STOR = inputs["VRE_STOR"]
+    ELECTROLYZER_ALL = bd.electrolyzer_all
+
+    cost_list = ["cTotal", "cFix", "cVar", "cFuel", "cNSE", "cStart",
+        "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cCO2"]
+    !isempty(VRE_STOR) && push!(cost_list, "cGridConnection")
+    !isempty(ELECTROLYZER_ALL) && push!(cost_list, "cHydrogenRevenue")
+
+    # The objective is the authoritative total; it includes terms that have no
+    # row of their own (e.g. capacity-reserve virtual charge/discharge costs).
+    total = Any[bd.obj,
+        sum(bd.fix),
+        sum(bd.var),
+        sum(bd.fuel),
+        sum(bd.nse),
+        sum(bd.start),
+        bd.unmet_rsv,
+        bd.netexp,
+        bd.policy_penalty,
+        sum(bd.co2)]
+    !isempty(VRE_STOR) && push!(total, sum(bd.grid))
+    !isempty(ELECTROLYZER_ALL) && push!(total, sum(bd.h2))
+
+    dfCost = DataFrame(Costs = cost_list, Total = total)
+
+    for z in 1:Z
+        ids = resources_in_zone_by_rid(gen, z)
+        zsum(v) = isempty(ids) ? 0.0 : sum(v[ids])
+
+        zone_fix = zsum(bd.fix)
+        zone_var = zsum(bd.var)
+        zone_fuel = zsum(bd.fuel)
+        zone_start = zsum(bd.start)
+        zone_co2 = zsum(bd.co2)
+        zone_h2 = zsum(bd.h2)
+        zone_nse = bd.nse[z]
+
+        zone_total = zone_fix + zone_var + zone_fuel + zone_start +
+                     zone_co2 + zone_h2 + zone_nse
+
+        col = Any[zone_total, zone_fix, zone_var, zone_fuel, zone_nse,
+            zone_start, "-", "-", "-", zone_co2]
+        !isempty(VRE_STOR) && push!(col, "-")
+        !isempty(ELECTROLYZER_ALL) && push!(col, zone_h2)
+
+        dfCost[!, Symbol("Zone$z")] = col
+    end
+
+    if setup["ParameterScale"] == 1
+        for col in names(dfCost)[2:end]
+            dfCost[!, col] = map(dfCost[!, col]) do v
+                v isa Real ? v * ModelScalingFactor^2 : v
+            end
+        end
+    end
+
+    return dfCost
+end
+
 @doc raw"""
 	write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing the costs pertaining to the objective function (fixed, variable O&M etc.).
 """
 function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
-    ## Cost results
-    gen = inputs["RESOURCES"]
-    SEG = inputs["SEG"]  # Number of lines
-    Z = inputs["Z"]     # Number of zones
-    T = inputs["T"]     # Number of time steps (hours)
-    VRE_STOR = inputs["VRE_STOR"]
-    VS_ELEC = !isempty(VRE_STOR) ? inputs["VS_ELEC"] : Vector{Int}[]
-    ELECTROLYZER_ALL = !isempty(VS_ELEC) ? union(VS_ELEC, inputs["ELECTROLYZER"]) :
-                       inputs["ELECTROLYZER"]
-    ALLAM_CYCLE_LOX = inputs["ALLAM_CYCLE_LOX"]
-
-    cost_list = [
-        "cTotal",
-        "cFix",
-        "cVar",
-        "cFuel",
-        "cNSE",
-        "cStart",
-        "cUnmetRsv",
-        "cNetworkExp",
-        "cUnmetPolicyPenalty",
-        "cCO2"
-    ]
-    if !isempty(VRE_STOR)
-        push!(cost_list, "cGridConnection")
-    end
-    if !isempty(ELECTROLYZER_ALL)
-        push!(cost_list, "cHydrogenRevenue")
-    end
-    dfCost = DataFrame(Costs = cost_list)
-
-    cVar = value(EP[:eTotalCVarOut]) +
-           (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0.0) +
-           (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0.0)
-    cFix = value(EP[:eTotalCFix]) +
-           (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFixEnergy]) : 0.0) +
-           (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFixCharge]) : 0.0)
-
-    cFuel = value.(EP[:eTotalCFuelOut])
-
-    if !isempty(VRE_STOR)
-        cFix += ((!isempty(inputs["VS_DC"]) ? value(EP[:eTotalCFixDC]) : 0.0) +
-                 (!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCFixSolar]) : 0.0) +
-                 (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCFixWind]) : 0.0) +
-                 (!isempty(inputs["VS_ELEC"]) ? value(EP[:eTotalCFixElec]) : 0.0))
-        cVar += ((!isempty(inputs["VS_SOLAR"]) ? value(EP[:eTotalCVarOutSolar]) : 0.0) +
-                 (!isempty(inputs["VS_WIND"]) ? value(EP[:eTotalCVarOutWind]) : 0.0))
-        if !isempty(inputs["VS_STOR"])
-            cFix += ((!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCFixStor]) : 0.0) +
-                     (!isempty(inputs["VS_ASYM_DC_CHARGE"]) ?
-                      value(EP[:eTotalCFixCharge_DC]) : 0.0) +
-                     (!isempty(inputs["VS_ASYM_DC_DISCHARGE"]) ?
-                      value(EP[:eTotalCFixDischarge_DC]) : 0.0) +
-                     (!isempty(inputs["VS_ASYM_AC_CHARGE"]) ?
-                      value(EP[:eTotalCFixCharge_AC]) : 0.0) +
-                     (!isempty(inputs["VS_ASYM_AC_DISCHARGE"]) ?
-                      value(EP[:eTotalCFixDischarge_AC]) : 0.0))
-            cVar += (!isempty(inputs["VS_STOR"]) ? value(EP[:eTotalCVarStor]) : 0.0)
-        end
-        total_cost = [
-            value(EP[:eObj]),
-            cFix,
-            cVar,
-            cFuel,
-            value(EP[:eTotalCNSE]),
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
-        ]
-    else
-        total_cost = [
-            value(EP[:eObj]),
-            cFix,
-            cVar,
-            cFuel,
-            value(EP[:eTotalCNSE]),
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0
-        ]
-    end
-
-    if !isempty(ELECTROLYZER_ALL)
-        push!(total_cost, -1 * value(EP[:eTotalHydrogenValue]))
-    end
-
-    dfCost[!, Symbol("Total")] = total_cost
-
-    if setup["ParameterScale"] == 1
-        dfCost.Total *= ModelScalingFactor^2
-    end
-
-    if setup["UCommit"] >= 1
-        dfCost[6, 2] = value(EP[:eTotalCStart]) + value(EP[:eTotalCFuelStart])
-    end
-
-    if setup["OperationalReserves"] == 1
-        dfCost[7, 2] = value(EP[:eTotalCRsvPen])
-    end
-
-    if setup["NetworkExpansion"] == 1 && Z > 1
-        dfCost[8, 2] = value(EP[:eTotalCNetworkExp])
-    end
-
-    if haskey(inputs, "dfCapRes_slack")
-        dfCost[9, 2] += value(EP[:eCTotalCapResSlack])
-    end
-
-    if haskey(inputs, "dfESR_slack")
-        dfCost[9, 2] += value(EP[:eCTotalESRSlack])
-    end
-
-    if haskey(inputs, "dfCO2Cap_slack")
-        dfCost[9, 2] += value(EP[:eCTotalCO2CapSlack])
-    end
-
-    if haskey(inputs, "MinCapPriceCap")
-        dfCost[9, 2] += value(EP[:eTotalCMinCapSlack])
-    end
-
-    if haskey(inputs, "MaxCapPriceCap")
-        dfCost[9, 2] += value(EP[:eTotalCMaxCapSlack])
-    end
-
-    if haskey(inputs, "H2DemandPriceCap")
-        dfCost[9, 2] += value(EP[:eTotalCH2DemandSlack])
-    end
-
-    if !isempty(VRE_STOR)
-        dfCost[!, 2][11] = value(EP[:eTotalCGrid]) *
-                           (setup["ParameterScale"] == 1 ? ModelScalingFactor^2 : 1)
-    end
-
-    if any(co2_capture_fraction.(gen) .!= 0)
-        dfCost[10, 2] += value(EP[:eTotaleCCO2Sequestration])
-    end
-
-    if setup["ParameterScale"] == 1
-        dfCost[6, 2] *= ModelScalingFactor^2
-        dfCost[7, 2] *= ModelScalingFactor^2
-        dfCost[8, 2] *= ModelScalingFactor^2
-        dfCost[9, 2] *= ModelScalingFactor^2
-        dfCost[10, 2] *= ModelScalingFactor^2
-    end
-
-    for z in 1:Z
-        tempCTotal = 0.0
-        tempCFix = 0.0
-        tempCVar = 0.0
-        tempCFuel = 0.0
-        tempCStart = 0.0
-        tempCNSE = 0.0
-        tempHydrogenValue = 0.0
-        tempCCO2 = 0.0
-
-        Y_ZONE = resources_in_zone_by_rid(gen, z)
-        STOR_ALL_ZONE = intersect(inputs["STOR_ALL"], Y_ZONE)
-        STOR_ASYMMETRIC_ZONE = intersect(inputs["STOR_ASYMMETRIC"], Y_ZONE)
-        FLEX_ZONE = intersect(inputs["FLEX"], Y_ZONE)
-        COMMIT_ZONE = intersect(inputs["COMMIT"], Y_ZONE)
-        ELECTROLYZERS_ZONE = intersect(inputs["ELECTROLYZER"], Y_ZONE)
-        CCS_ZONE = intersect(inputs["CCS"], Y_ZONE)
-
-        eCFix = sum(value.(EP[:eCFix][Y_ZONE]), init = 0.0)
-        tempCFix += eCFix
-        tempCTotal += eCFix
-
-        tempCVar = sum(value.(EP[:eCVar_out][Y_ZONE, :]))
-        tempCTotal += tempCVar
-
-        tempCFuel = sum(value.(EP[:ePlantCFuelOut][Y_ZONE, :]))
-        tempCTotal += tempCFuel
-
-        if !isempty(STOR_ALL_ZONE)
-            eCVar_in = sum(value.(EP[:eCVar_in][STOR_ALL_ZONE, :]))
-            tempCVar += eCVar_in
-            eCFixEnergy = sum(value.(EP[:eCFixEnergy][STOR_ALL_ZONE]))
-            tempCFix += eCFixEnergy
-            tempCTotal += eCVar_in + eCFixEnergy
-        end
-        if !isempty(STOR_ASYMMETRIC_ZONE)
-            eCFixCharge = sum(value.(EP[:eCFixCharge][STOR_ASYMMETRIC_ZONE]))
-            tempCFix += eCFixCharge
-            tempCTotal += eCFixCharge
-        end
-        if !isempty(FLEX_ZONE)
-            eCVarFlex_in = sum(value.(EP[:eCVarFlex_in][FLEX_ZONE, :]))
-            tempCVar += eCVarFlex_in
-            tempCTotal += eCVarFlex_in
-        end
-        if !isempty(VRE_STOR)
-            gen_VRE_STOR = gen.VreStorage
-            Y_ZONE_VRE_STOR = resources_in_zone_by_rid(gen_VRE_STOR, z)
-
-            # Fixed Costs
-            eCFix_VRE_STOR = 0.0
-            SOLAR_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_SOLAR"])
-            if !isempty(SOLAR_ZONE_VRE_STOR)
-                eCFix_VRE_STOR += sum(value.(EP[:eCFixSolar][SOLAR_ZONE_VRE_STOR]))
-            end
-            WIND_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_WIND"])
-            if !isempty(WIND_ZONE_VRE_STOR)
-                eCFix_VRE_STOR += sum(value.(EP[:eCFixWind][WIND_ZONE_VRE_STOR]))
-            end
-            ELEC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_ELEC"])
-            if !isempty(ELEC_ZONE_VRE_STOR)
-                eCFix_VRE_STOR += sum(value.(EP[:eCFixElec][ELEC_ZONE_VRE_STOR]))
-            end
-            DC_ZONE_VRE_STOR = intersect(Y_ZONE_VRE_STOR, inputs["VS_DC"])
-            if !isempty(DC_ZONE_VRE_STOR)
-                eCFix_VRE_STOR += sum(value.(EP[:eCFixDC][DC_ZONE_VRE_STOR]))
-            end
-            STOR_ALL_ZONE_VRE_STOR = intersect(inputs["VS_STOR"], Y_ZONE_VRE_STOR)
-            if !isempty(STOR_ALL_ZONE_VRE_STOR)
-                eCFix_VRE_STOR += sum(value.(EP[:eCFixEnergy_VS][STOR_ALL_ZONE_VRE_STOR]))
-                DC_CHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_DC_CHARGE"],
-                    Y_ZONE_VRE_STOR)
-                if !isempty(DC_CHARGE_ALL_ZONE_VRE_STOR)
-                    eCFix_VRE_STOR += sum(value.(EP[:eCFixCharge_DC][DC_CHARGE_ALL_ZONE_VRE_STOR]))
-                end
-                DC_DISCHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_DC_DISCHARGE"],
-                    Y_ZONE_VRE_STOR)
-                if !isempty(DC_DISCHARGE_ALL_ZONE_VRE_STOR)
-                    eCFix_VRE_STOR += sum(value.(EP[:eCFixDischarge_DC][DC_DISCHARGE_ALL_ZONE_VRE_STOR]))
-                end
-                AC_DISCHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_AC_DISCHARGE"],
-                    Y_ZONE_VRE_STOR)
-                if !isempty(AC_DISCHARGE_ALL_ZONE_VRE_STOR)
-                    eCFix_VRE_STOR += sum(value.(EP[:eCFixDischarge_AC][AC_DISCHARGE_ALL_ZONE_VRE_STOR]))
-                end
-                AC_CHARGE_ALL_ZONE_VRE_STOR = intersect(inputs["VS_ASYM_AC_CHARGE"],
-                    Y_ZONE_VRE_STOR)
-                if !isempty(AC_CHARGE_ALL_ZONE_VRE_STOR)
-                    eCFix_VRE_STOR += sum(value.(EP[:eCFixCharge_AC][AC_CHARGE_ALL_ZONE_VRE_STOR]))
-                end
-            end
-            tempCFix += eCFix_VRE_STOR
-
-            # Variable Costs
-            eCVar_VRE_STOR = 0.0
-            if !isempty(SOLAR_ZONE_VRE_STOR)
-                eCVar_VRE_STOR += sum(value.(EP[:eCVarOutSolar][SOLAR_ZONE_VRE_STOR, :]))
-            end
-            if !isempty(WIND_ZONE_VRE_STOR)
-                eCVar_VRE_STOR += sum(value.(EP[:eCVarOutWind][WIND_ZONE_VRE_STOR, :]))
-            end
-            if !isempty(STOR_ALL_ZONE_VRE_STOR)
-                vom_map = Dict(DC_CHARGE_ALL_ZONE_VRE_STOR => :eCVar_Charge_DC,
-                    DC_DISCHARGE_ALL_ZONE_VRE_STOR => :eCVar_Discharge_DC,
-                    AC_DISCHARGE_ALL_ZONE_VRE_STOR => :eCVar_Discharge_AC,
-                    AC_CHARGE_ALL_ZONE_VRE_STOR => :eCVar_Charge_AC)
-                for (set, symbol) in vom_map
-                    if !isempty(set)
-                        eCVar_VRE_STOR += sum(value.(EP[symbol][set, :]))
-                    end
-                end
-            end
-            tempCVar += eCVar_VRE_STOR
-
-            # Total Added Costs
-            tempCTotal += (eCFix_VRE_STOR + eCVar_VRE_STOR)
-        end
-
-        if setup["UCommit"] >= 1 && !isempty(COMMIT_ZONE)
-            eCStart = sum(value.(EP[:eCStart][COMMIT_ZONE, :])) +
-                      sum(value.(EP[:ePlantCFuelStart][COMMIT_ZONE, :]))
-            tempCStart += eCStart
-            tempCTotal += eCStart
-        end
-
-        if !isempty(ELECTROLYZER_ALL) # both electrolyzers and VRE+storage with electrolyzer component
-            tempHydrogenValue = 0.0
-            if !isempty(ELECTROLYZERS_ZONE)
-                tempHydrogenValue -= sum(value.(EP[:eHydrogenValue][ELECTROLYZERS_ZONE, :]))
-            end
-            if !isempty(VRE_STOR) && !isempty(ELEC_ZONE_VRE_STOR)
-                tempHydrogenValue -= sum(value.(EP[:eHydrogenValue_vs][ELEC_ZONE_VRE_STOR, :]))
-            end
-            tempCTotal += tempHydrogenValue
-        end
-
-        if !isempty(ALLAM_CYCLE_LOX)
-            Y_ZONE_ALLAM_CYCLE_LOX = resources_in_zone_by_rid(gen.AllamCycleLOX, z)
-            if !isempty(Y_ZONE_ALLAM_CYCLE_LOX)
-                # Fixed Costs
-                eCFix_Allam = sum(value.(EP[:eCFix_Allam_Plant][Y_ZONE_ALLAM_CYCLE_LOX]))
-                tempCFix += eCFix_Allam
-                # Variable Costs
-                eCVar_Allam = sum(value.(EP[:eCVar_Allam][Y_ZONE_ALLAM_CYCLE_LOX]))
-                tempCVar += eCVar_Allam
-                tempCTotal += eCFix_Allam + eCVar_Allam
-                if setup["UCommit"] >= 1 && !isempty(Y_ZONE_ALLAM_CYCLE_LOX)
-                    eCStart_Allam = sum(value.(EP[:eCStart_Allam][Y_ZONE_ALLAM_CYCLE_LOX, :])) +
-                                    sum(value.(EP[:ePlantCFuelStart][Y_ZONE_ALLAM_CYCLE_LOX, :]))
-                    tempCStart += eCStart_Allam
-                    tempCTotal += eCStart_Allam
-                end
-            end
-        end
-
-        tempCNSE = sum(value.(EP[:eCNSE][:, :, z]))
-        tempCTotal += tempCNSE
-
-        # if any(dfGen.CO2_Capture_Fraction .!=0)
-        if !isempty(CCS_ZONE)
-            tempCCO2 = sum(value.(EP[:ePlantCCO2Sequestration][CCS_ZONE]))
-            tempCTotal += tempCCO2
-        end
-
-        if setup["ParameterScale"] == 1
-            tempCTotal *= ModelScalingFactor^2
-            tempCFix *= ModelScalingFactor^2
-            tempCVar *= ModelScalingFactor^2
-            tempCFuel *= ModelScalingFactor^2
-            tempCNSE *= ModelScalingFactor^2
-            tempCStart *= ModelScalingFactor^2
-            tempHydrogenValue *= ModelScalingFactor^2
-            tempCCO2 *= ModelScalingFactor^2
-        end
-        temp_cost_list = [
-            tempCTotal,
-            tempCFix,
-            tempCVar,
-            tempCFuel,
-            tempCNSE,
-            tempCStart,
-            "-",
-            "-",
-            "-",
-            tempCCO2
-        ]
-        if !isempty(VRE_STOR)
-            push!(temp_cost_list, "-")
-        end
-        if !isempty(ELECTROLYZER_ALL)
-            push!(temp_cost_list, tempHydrogenValue)
-        end
-
-        dfCost[!, Symbol("Zone$z")] = temp_cost_list
-    end
+    bd = cost_breakdown(EP, inputs, setup)
+    dfCost = assemble_costs(bd, inputs, setup)
     CSV.write(joinpath(path, "costs.csv"), dfCost)
 end
