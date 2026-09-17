@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User Guide page `docs/src/User_Guide/dcopf_transmission_expansion.md` documenting the transport vs. DC-OPF models, continuous vs. discrete expansion, the five `Network.csv` corridor scenarios, the Benders hot-start flags, and the recommendation to use discrete builds for greenfield corridors under DC-OPF.
 
 ### Changed
+- `write_costs` split into `cost_breakdown`, which attributes each cost term to a resource, and `assemble_costs`, which applies scaling and builds the table. System totals and zone columns are now derived from one attribution rather than accumulated independently, so the zone columns sum to the `Total` column by construction. This is groundwork for multi-stage cost discounting.
 - `capacity_decisions.jl` refactored to support both monolithic and Benders decomposition modes, cleanly separating capacity (master problem) and operational (subproblem) variables.
 - `generate_model.jl` updated to route model construction through Benders subproblem or monolithic paths based on the `Benders` settings flag.
 - Removed support for Julia 1.6-1.8
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected investment and operational constraints in `allamcyclelox.jl` that caused incorrect capacity accounting for the Allam Cycle with LOX storage resource type.
 - Fixed effective capacity calculation in the capacity reserve margin subproblem for co-located VRE+storage resources with long-duration storage.
 - Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+- Per-zone `cVar` in `costs.csv` now includes charge and discharge variable O&M for symmetric co-located VRE+storage resources. The per-zone block reused the `VS_ASYM_*` sets that the fixed-cost block above it had built, but those contain only resources with a charge/discharge flag of 2, whereas the O&M expressions are declared over the broader `VS_STOR_*` sets. Symmetric storage O&M was therefore counted in the objective and in the `Total` column but omitted from every zone column. System totals are unchanged.
 - Corrected the resource set used for co-located VRE+storage AC discharge variable O&M in `eTotalCVarStor` (`vre_stor.jl`). The term summed `eCVar_Discharge_AC` over `AC_CHARGE` instead of `AC_DISCHARGE`, so resources with `STOR_AC_DISCHARGE` set but not `STOR_AC_CHARGE` (or vice versa) were charged the wrong AC discharge O&M in the objective function. No example system exercises this path, as all co-located cases set both flags to 0.
 - `costs.csv` now includes the electrolyzer component's fixed cost (`eTotalCFixElec`) in the system-wide `cFix` total. Previously this term was counted in the per-zone columns but omitted from the `Total` column, so the zone columns did not sum to the total for co-located VRE+storage resources with an electrolyzer component.
 
