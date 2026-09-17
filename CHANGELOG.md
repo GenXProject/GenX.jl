@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected investment and operational constraints in `allamcyclelox.jl` that caused incorrect capacity accounting for the Allam Cycle with LOX storage resource type.
 - Fixed effective capacity calculation in the capacity reserve margin subproblem for co-located VRE+storage resources with long-duration storage.
 - Fix writing of net revenue to include all sources of revenue, not just energy revenue (#855).
+- Corrected the resource set used for co-located VRE+storage AC discharge variable O&M in `eTotalCVarStor` (`vre_stor.jl`). The term summed `eCVar_Discharge_AC` over `AC_CHARGE` instead of `AC_DISCHARGE`, so resources with `STOR_AC_DISCHARGE` set but not `STOR_AC_CHARGE` (or vice versa) were charged the wrong AC discharge O&M in the objective function. No example system exercises this path, as all co-located cases set both flags to 0.
 - `costs.csv` now includes the electrolyzer component's fixed cost (`eTotalCFixElec`) in the system-wide `cFix` total. Previously this term was counted in the per-zone columns but omitted from the `Total` column, so the zone columns did not sum to the total for co-located VRE+storage resources with an electrolyzer component.
 
 ## [0.4.6] - 2026-01-06
