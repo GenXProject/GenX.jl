@@ -72,19 +72,29 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
         _accumulate!(var, EP[:eCVar_Allam], ALLAM_CYCLE_LOX)
     end
 
+    # Virtual charge/discharge penalties, present only when the capacity
+    # reserve margin is active. These are in the objective but had no row of
+    # their own, so they were missing from the reported breakdown entirely.
+    for (sym, ids) in [(:eCVar_in_virtual, STOR_ALL), (:eCVar_out_virtual, STOR_ALL)]
+        haskey(EP.obj_dict, sym) && !isempty(ids) &&
+            _accumulate_over_time!(var, EP[sym], ids)
+    end
+
     # --- Fuel --------------------------------------------------------------
     _accumulate_over_time!(fuel, EP[:ePlantCFuelOut], 1:G)
 
     # --- Start-up ----------------------------------------------------------
+    # Start-up O&M is only defined for committed resources, but start-up *fuel*
+    # (ePlantCFuelStart) is defined over all resources and that is what
+    # eTotalCFuelStart sums. Accumulating it over 1:G rather than over the
+    # commitment sets keeps this row equal to the objective's contribution even
+    # if a resource outside those sets ever carries start fuel.
     if setup["UCommit"] >= 1
-        if !isempty(COMMIT)
-            _accumulate_over_time!(start, EP[:eCStart], COMMIT)
-            _accumulate_over_time!(start, EP[:ePlantCFuelStart], COMMIT)
-        end
+        !isempty(COMMIT) && _accumulate_over_time!(start, EP[:eCStart], COMMIT)
         if !isempty(ALLAM_CYCLE_LOX)
             _accumulate_over_time!(start, EP[:eCStart_Allam], ALLAM_CYCLE_LOX)
-            _accumulate_over_time!(start, EP[:ePlantCFuelStart], ALLAM_CYCLE_LOX)
         end
+        _accumulate_over_time!(start, EP[:ePlantCFuelStart], 1:G)
     end
 
     # --- CO2 sequestration -------------------------------------------------
@@ -128,6 +138,20 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
             isempty(ids) || _accumulate_over_time!(var, EP[sym], ids)
         end
 
+        # Co-located virtual charge/discharge, again only under a capacity
+        # reserve margin. Declared over the same broad VS_STOR_* sets.
+        virtual_components = [
+            (:eCVar_Charge_DC_virtual, "VS_STOR_DC_CHARGE"),
+            (:eCVar_Discharge_DC_virtual, "VS_STOR_DC_DISCHARGE"),
+            (:eCVar_Charge_AC_virtual, "VS_STOR_AC_CHARGE"),
+            (:eCVar_Discharge_AC_virtual, "VS_STOR_AC_DISCHARGE")
+        ]
+        for (sym, key) in virtual_components
+            ids = inputs[key]
+            haskey(EP.obj_dict, sym) && !isempty(ids) &&
+                _accumulate_over_time!(var, EP[sym], ids)
+        end
+
         # Grid connection is a memo row: it is the same expression already
         # counted inside cFix for these resources, reported separately.
         _accumulate!(grid, EP[:eCGrid], VRE_STOR)
@@ -160,8 +184,18 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
         ("dfCO2Cap_slack", :eCTotalCO2CapSlack),
         ("MinCapPriceCap", :eTotalCMinCapSlack),
         ("MaxCapPriceCap", :eTotalCMaxCapSlack),
-        ("H2DemandPriceCap", :eTotalCH2DemandSlack)]
+        ("H2DemandPriceCap", :eTotalCH2DemandSlack),
+        ("dfHM_slack", :eCTotalHMSlack)]
         haskey(inputs, key) && (policy_penalty += value(EP[sym]))
+    end
+    # Three further penalties are gated on the model rather than on an inputs
+    # key. vslack_term exists only when a retrofit cluster opts out of
+    # contributing to the minimum retirement requirement. eObjSlack and
+    # eObjSlackVreStor penalise long-duration storage slack; note these two
+    # reach the objective via `EP[:eObj] += ...` rather than
+    # `add_to_expression!`, so they do not show up when grepping for the latter.
+    for sym in (:vslack_term, :eObjSlack, :eObjSlackVreStor)
+        haskey(EP.obj_dict, sym) && (policy_penalty += value(EP[sym]))
     end
 
     return (fix = fix, var = var, fuel = fuel, start = start, co2 = co2, h2 = h2,
