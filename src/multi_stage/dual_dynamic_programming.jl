@@ -565,7 +565,7 @@ where $WACC$ is the weighted average cost of capital, and $L_{p}$ is the length 
 The second term is a discounted sum of annual operational expenses incurred each year of a multi-year model stage:
 ```math
 \begin{aligned}
-    & OPEXMULT = \sum^{L}_{l=1}\frac{1}{(1+WACC)^{l-1}}
+    & OPEXMULT = \sum^{L}_{l=1}\frac{1}{(1+WACC)^{l}}
 \end{aligned}
 ```
 Note that although the objective function contains investment costs, which occur only once and thus do not need to be scaled by OPEXMULT, these costs are multiplied by a factor of $\frac{1}{WACC}$ before being added to the objective function in investment\_discharge\_multi\_stage(), investment\_charge\_multi\_stage(), investment\_energy\_multi\_stage(), and transmission\_multi\_stage(). Thus, this step scales these costs back to their correct value.

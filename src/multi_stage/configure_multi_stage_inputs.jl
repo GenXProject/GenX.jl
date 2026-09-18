@@ -5,14 +5,19 @@ Multiplier converting an annual operating cost into a stage-level cost, since a
 stage may span several years.
 
 ```math
-\text{OPEXMULT} = \sum_{j=1}^{L}\frac{1}{(1+DR)^{j-1}}
+\text{OPEXMULT} = \sum_{j=1}^{L}\frac{1}{(1+DR)^{j}}
 ```
 
-where $L$ is the stage length in years and $DR$ the general discount rate. The
-exponent $j-1$ places each year's cost at the start of that year.
+where $L$ is the stage length in years and $DR$ the general discount rate.
+
+Costs are treated as incurred at the *end* of each year, hence the exponent $j$.
+This matches how investment annuities are discounted in
+[`overnight_capital_cost_factor`](@ref), which also starts at year 1. Weighting
+an operating dollar and an annuity dollar the same way is what makes the two
+comparable within a stage.
 """
 function stage_opex_multiplier(discount_rate::Real, stage_len::Int)
-    return sum(1 / (1 + discount_rate)^(j - 1) for j in 1:stage_len; init = 0.0)
+    return sum(1 / (1 + discount_rate)^j for j in 1:stage_len; init = 0.0)
 end
 
 @doc raw"""
@@ -176,8 +181,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     # Define OPEXMULT here, include in inputs_dict[t] for use in dual_dynamic_programming.jl, transmission_multi_stage.jl, and investment_multi_stage.jl
-    OPEXMULT = myopic ? 1 :
-               sum([1 / (1 + wacc)^(i - 1) for i in range(1, stop = stage_len)])
+    OPEXMULT = myopic ? 1 : stage_opex_multiplier(wacc, stage_len)
     inputs_d["OPEXMULT"] = OPEXMULT
 
     if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs

@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = [79734.80032, 41630.03494, 27855.20631]
+obj_true = [77736.65081, 41383.80745, 27512.51426]
 test_path = joinpath(@__DIR__, "multi_stage")
 
 # Define test inputs
@@ -263,13 +263,18 @@ function test_discounting_helpers()
     @testset "Discounting helpers reproduce the inline expressions" begin
         dr = 0.045
 
-        # OPEXMULT: each year of a stage discounted to the start of that year.
+        # OPEXMULT: each year of a stage discounted to the end of that year,
+        # matching how investment annuities are discounted.
         for L in (1, 5, 10)
-            @test GenX.stage_opex_multiplier(dr, L) ≈
-                  sum([1 / (1 + dr)^(i - 1) for i in range(1, stop = L)])
+            @test GenX.stage_opex_multiplier(dr, L) ≈ sum(1 / (1 + dr)^j for j in 1:L)
         end
-        @test GenX.stage_opex_multiplier(dr, 1) == 1.0
+        @test GenX.stage_opex_multiplier(dr, 1) ≈ 1 / (1 + dr)
         @test GenX.stage_opex_multiplier(0.0, 7) == 7.0
+        # A stage of one year weights an operating dollar exactly as a
+        # single-year annuity payment, which is the point of the convention.
+        @test GenX.stage_opex_multiplier(dr, 1) ≈
+              GenX.overnight_capital_cost_factor(
+            Dict("CurStage" => 1, "StageLengths" => [1], "WACC" => dr), [1], [dr])[1]
 
         # Stage discount factor: years elapsed before the stage begins. Checked
         # for uneven stages too, which GenX supports.
