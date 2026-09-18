@@ -26,7 +26,7 @@ Instead of one set of input files, there is one directory of input files that ne
 | Min\_Retired\_Charge\_Cap\_MW | Minimum charge capacity in MW that must retire in this planning stage.                                                                                     |
 | Lifetime                     | The operational lifespan in years of this technology after which it must be retired.                                                                       |
 | Capital\_Recovery\_Period      | The technology-specific period in years over which initial capital costs must be recovered. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                               |
-| WACC                         | The technology-specific weighted average cost of capital. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                                 |
+| WACC                         | *Optional.* The technology-specific weighted average cost of capital, used to discount that resource's investment annuities. If the column is omitted, or a value is blank or zero, the general discount rate (the `WACC` field of `multi_stage_settings.yml`) is used for that resource instead. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                                 |
 |Contribute\_Min\_Retirement | {0, 1}, Flag to indicate whether the (retrofitting) resource can contribute to the minimum retirement requirement.|
 
 |                              |                                                                   **co-located VRE-STOR resources only**                                                                  |
@@ -57,7 +57,7 @@ Instead of one set of input files, there is one directory of input files that ne
 |:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Line\_Max\_Flow\_Possible\_MW | The maximum transmission capacity of the line, as opposed to Line\_Max\_Reinforcement\_MW which now specifies the maximum expansion to the line in one stage. |
 | Capital\_Recovery\_Period   | The line-specific period in years over which initial capital costs must be recovered.                                                                |
-| WACC                      | The line-specific weighted average cost of capital.                                                                                                  |
+| WACC                      | *Optional.* The line-specific weighted average cost of capital, used to discount that line's investment annuities. If the column is omitted, or a value is blank or zero, the general discount rate (the `WACC` field of `multi_stage_settings.yml`) is used for that line instead. |
 
 
 !!! note "Allowing retrofitted capacity to not contribute to minimum retirement requirements (`myopic=0` only)"
