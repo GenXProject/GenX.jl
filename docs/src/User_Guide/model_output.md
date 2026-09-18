@@ -51,9 +51,9 @@ For every row that can be attributed to a resource, the zone columns sum to the
 `Total` column, and `cTotal` is the sum of its component rows.
 
 Three rows have no per-resource attribution (`cUnmetRsv`, `cNetworkExp` and
-`cUnmetPolicyPenalty`) and are written as `-` in the zone columns. Note that this
-placeholder makes those columns text rather than numeric when the file is read
-back, so a numeric conversion is needed before aggregating them.
+`cUnmetPolicyPenalty`) and are written as empty cells in the zone columns, since
+those costs are system-wide. Empty cells read back as missing values while the
+column stays numeric.
 
 `cGridConnection`, written for co-located VRE+storage resources, is a memo: it
 repeats the grid-connection portion of `cFix` and is not added to `cTotal`.

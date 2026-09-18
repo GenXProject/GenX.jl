@@ -11,9 +11,11 @@ function prepare_costs_test(test_path, inputs, genx_setup, EP)
     GenX.write_costs(test_path, inputs, settings, EP)
     costs_path = joinpath(test_path, "costs.csv")
     costs_test = CSV.read(costs_path, DataFrame)
-    costs_test[!, :Zone1] = tryparse.(Float64, replace(costs_test[!, :Zone1], "-" => "0.0"))
-    costs_test[!, :Zone2] = tryparse.(Float64, replace(costs_test[!, :Zone2], "-" => "0.0"))
-    costs_test[!, :Zone2] = replace(costs_test[!, :Zone2], nothing => 0.0)
+    # Rows with no zonal attribution are written as empty cells, which read back
+    # as `missing`; treat them as zero for the comparison.
+    for col in (:Zone1, :Zone2)
+        costs_test[!, col] = coalesce.(costs_test[!, col], 0.0)
+    end
     return costs_test
 end
 

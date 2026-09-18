@@ -350,8 +350,10 @@ runs:
   * `:undiscounted` – cash flows over the stage, with no time value
 
 Rows without a per-resource attribution (`cUnmetRsv`, `cNetworkExp`,
-`cUnmetPolicyPenalty`) and the `cGridConnection` memo row are written as `"-"`
-in the zone columns, matching the system-wide nature of those terms.
+`cUnmetPolicyPenalty`) and the `cGridConnection` memo row are written as empty
+cells in the zone columns, matching the system-wide nature of those terms.
+Empty keeps the column numeric when read back, which a string placeholder
+would not.
 
 `ParameterScale` is applied once, to every numeric cell, at the end.
 """
@@ -440,9 +442,13 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
         zone_total = zone_fix + zone_var + zone_fuel + zone_start +
                      zone_co2 + zone_h2 + zone_nse
 
+        # cUnmetRsv, cNetworkExp and cUnmetPolicyPenalty are system-wide and have
+        # no zonal value, as is the cGridConnection memo. `missing` writes an
+        # empty cell, which keeps the column numeric when read back; a string
+        # placeholder would turn the whole column into text.
         col = Any[zone_total, zone_fix, zone_var, zone_fuel, zone_nse,
-            zone_start, "-", "-", "-", zone_co2]
-        !isempty(VRE_STOR) && push!(col, "-")
+            zone_start, missing, missing, missing, zone_co2]
+        !isempty(VRE_STOR) && push!(col, missing)
         !isempty(ELECTROLYZER_ALL) && push!(col, zone_h2)
 
         dfCost[!, Symbol("Zone$z")] = col
