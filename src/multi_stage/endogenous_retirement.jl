@@ -3,23 +3,38 @@
 
 This function determines the model stage before which all newly built capacity must be retired. Used to enforce endogenous lifetime retirements in multi-stage modeling.
 
+Capacity built in stage $r$ must have retired by the beginning of stage $i$ once
+the years elapsed between the *start* of stage $r$ and the *start* of stage $i$
+reach the technology's lifetime:
+
+```math
+\text{ret\_stage}(i) = \max\{\, r < i \;:\; \sum_{t=r}^{i-1} L_t \geq EL \,\}
+```
+
+returning 0 when no stage qualifies. A unit reaching end of life partway through
+a stage therefore remains available for the whole of that stage and retires at
+the start of the next.
+
+Measuring from the start of each stage, rather than from the end of the current
+one, only matters when stages have unequal lengths. With stages of 10, 5 and 8
+years and an 8-year lifetime, capacity built at the start of stage 2 (year 10)
+reaches end of life in year 18, part way through stage 3 (years 15 to 23): it
+stays available for stage 3 and retires at the start of stage 4.
+
 inputs:
 
   * cur\_stage – An Int representing the current model stage $p$.
   * lifetime – An Int representing the lifetime of a particular resource.
   * stage\_lens – An Int array representing the length $L$ of each model stage.
 
-returns: An Int representing the model stage in before which the resource must retire due to endogenous lifetime retirements.
+returns: An Int representing the model stage before which the resource must retire due to endogenous lifetime retirements; 0 if none.
 """
 function get_retirement_stage(cur_stage::Int, lifetime::Int, stage_lens::Array{Int, 1})
-    years_from_start = sum(stage_lens[1:cur_stage]) # Years from start from the END of the current stage
-    ret_years = years_from_start - lifetime # Difference between end of current stage and technology lifetime
-    ret_stage = 0 # Compute the stage before which all newly built capacity must be retired by the end of the current stage
-    while (ret_years - stage_lens[ret_stage + 1] >= 0) & (ret_stage < cur_stage)
-        ret_stage += 1
-        ret_years -= stage_lens[ret_stage]
-    end
-    return Int(ret_stage)
+    prior_stages = 1:(cur_stage - 1)
+    reached_eol = filter(
+        r -> sum(stage_lens[t] for t in r:(cur_stage - 1); init = 0) >= lifetime,
+        prior_stages)
+    return maximum(reached_eol; init = 0)
 end
 
 function update_cumulative_min_ret!(inputs_d::Dict,
