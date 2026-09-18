@@ -47,6 +47,62 @@ Reports optimal objective function value and contribution of each term by zone.
 | cEmissionsRevenue |Total and zonal emissions revenue |USD |
 | cEmissionsCost |Total an zonal emissions cost |USD |
 
+For every row that can be attributed to a resource, the zone columns sum to the
+`Total` column, and `cTotal` is the sum of its component rows.
+
+Three rows have no per-resource attribution (`cUnmetRsv`, `cNetworkExp` and
+`cUnmetPolicyPenalty`) and are written as `-` in the zone columns. Note that this
+placeholder makes those columns text rather than numeric when the file is read
+back, so a numeric conversion is needed before aggregating them.
+
+`cGridConnection`, written for co-located VRE+storage resources, is a memo: it
+repeats the grid-connection portion of `cFix` and is not added to `cTotal`.
+
+!!! note "Multi-stage runs"
+    In multi-stage runs `costs.csv` is written once per stage, under
+    `results_p1`, `results_p2` and so on, and reports **discounted** costs: the
+    present value at the start of the modeling horizon, which is what the
+    objective function weighs. A companion `costs_undiscounted.csv` reports the
+    same stage as a cash flow.
+
+### 1.2.1 costs\_undiscounted.csv
+
+*Multi-stage runs only.* The same rows as `costs.csv`, expressed as cash flows
+over the stage with no time value applied:
+
+* investment is the annuity multiplied by the number of payments falling inside
+  the modeling horizon;
+* fixed O&M and operating costs are the annual figure multiplied by the number of
+  years in the stage.
+
+Undiscounted costs are therefore always larger than their discounted
+counterparts.
+
+### 1.2.2 costs\_multi\_stage.csv
+
+*Multi-stage runs only.* Written to the top-level results directory, with one
+column per stage (`TotalCosts_p1`, `TotalCosts_p2`, …) holding that stage's
+`Total` column. `costs_undiscounted_multi_stage.csv` does the same for the
+undiscounted files.
+
+No further scaling is applied here, because the per-stage files are already
+final. Summing a row across the stage columns of `costs_multi_stage.csv`
+therefore gives the cost over the whole horizon, in present value at its start.
+
+!!! note "Comparing myopic and perfect foresight"
+    Both files include the investment annuities that fall beyond the stage being
+    solved. Under myopic foresight the objective charges only a single year of
+    each annuity, so the remaining payments are added back when reporting;
+    without that the two foresight modes would not be comparable. A consequence
+    is that in myopic runs the reported `cTotal` deliberately exceeds the
+    stage's own objective value.
+
+    Under perfect foresight the reported `cTotal`, summed across stages, is the
+    cost of the trajectory the algorithm converged on. This can differ slightly
+    from the final upper bound in `stats_multi_stage.csv`, which records the best
+    bound seen during iteration rather than the cost of the final forward pass.
+    The two agree to within the convergence tolerance.
+
 ### 1.3 emissions.csv
 
 Reports CO2 emissions by zone at each hour; an annual sum row will be provided. If any emission cap is present, emission prices each zone faced by each cap will be copied on top of this table with the following strucutre.

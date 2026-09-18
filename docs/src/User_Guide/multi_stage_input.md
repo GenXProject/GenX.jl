@@ -125,3 +125,53 @@ A separate settings.yml file includes a list of parameters to be specified to fo
 |                       |                                                                                  **time\_domain\_reduction\_settings.yml**                                                                                  |
 |:-----------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | MultiStageConcatenate | Designates whether to use time domain reduction for the full set of input data together (1) or to reduce only the first stage data and apply the returned representative periods to the rest of the input data (0). |
+
+### Discounting and cost accounting
+
+Write $DR$ for the general discount rate (the `WACC` field of
+`multi_stage_settings.yml`), $L_i$ for the length of stage $i$ in years, and
+$N_i = \sum_{s<i} L_s$ for the years elapsed before stage $i$ begins. For a
+resource $y$, let $WACC_y$ be its technology-specific cost of capital and $CRP_y$
+its capital recovery period.
+
+**Timing of costs.** All costs are treated as incurred at the end of the year in
+which they arise. Stage costs are discounted to the start of the modeling
+horizon:
+
+```math
+DF_i = \frac{1}{(1+DR)^{N_i}}
+```
+
+**Operating and fixed O&M costs.** A stage may span several years, so annual
+costs are scaled by
+
+```math
+\text{OPEXMULT}_i = \sum_{j=1}^{L_i}\frac{1}{(1+DR)^{j}}
+```
+
+**Investment costs.** Annuities are paid from the year after the investment until
+the technology's capital recovery period ends or the modeling horizon does,
+whichever comes first:
+
+```math
+P_{y,i} = \min\left(CRP_y,\; \sum_{s \geq i} L_s\right),
+\qquad
+A_{y,i} = \sum_{p=1}^{P_{y,i}} \frac{1}{(1+WACC_y)^{p}}
+```
+
+Costs falling beyond the horizon are assumed fully recoverable and are excluded,
+so the model carries no salvage value. If no technology WACC is given, $DR$ is
+used in its place.
+
+**Age-based retirement.** Capacity reaching the end of its life part way through
+a stage remains available for the whole of that stage and retires at the
+beginning of the next. Equivalently, capacity built in stage $r$ must have
+retired by stage $i$ once $\sum_{t=r}^{i-1} L_t \geq$ its lifetime. This only
+differs from measuring to the end of the current stage when stages have unequal
+lengths.
+
+**Myopic runs.** The myopic objective charges a single year of each investment
+annuity, so it values capital relative to operating costs differently from a
+perfect-foresight run, and will tend to build more of it. Reported costs add back
+the annuities the objective did not see, so the two modes can be compared; see
+the cost output documentation.
