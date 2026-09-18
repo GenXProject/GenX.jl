@@ -56,6 +56,25 @@ function payment_years_remaining(settings_d::Dict, crp)
 end
 
 @doc raw"""
+    annuity_discount_rate(settings_d::Dict, tech_wacc)
+
+Rate used to discount a resource's investment annuities, per resource.
+
+The technology-specific weighted average cost of capital is used where one is
+given. Where it is absent the general discount rate from
+`multi_stage_settings.yml` is used instead.
+
+A technology WACC is treated as absent when it is `missing` or non-positive.
+That makes an explicit `WACC` of 0 fall back to the discount rate rather than
+leaving annuities undiscounted, which is almost never what a user means; a
+genuinely undiscounted annuity requires setting the general discount rate to 0.
+"""
+function annuity_discount_rate(settings_d::Dict, tech_wacc)
+    dr = settings_d["WACC"]
+    return [(ismissing(w) || w <= 0) ? dr : w for w in tech_wacc]
+end
+
+@doc raw"""
     overnight_capital_cost_factor(settings_d::Dict, crp, tech_wacc)
 
 Per-resource factor converting an annualized investment cost into an overnight
@@ -70,12 +89,13 @@ the stage discount factor applied to the whole objective.
 """
 function overnight_capital_cost_factor(settings_d::Dict, crp, tech_wacc)
     payment_yrs = payment_years_remaining(settings_d, crp)
+    rate = annuity_discount_rate(settings_d, tech_wacc)
 
     # Present value of the investment annuities associated with the capital recovery period
     # within the model horizon - discounting to year 1 and not year 0. (The factor adjusting
     # to year 0 for capital cost is included in the discounting coefficient applied to all
     # terms in the objective function value.)
-    return [sum(1 / (1 + tech_wacc[i])^p for p in 1:payment_yrs[i]; init = 0.0)
+    return [sum(1 / (1 + rate[i])^p for p in 1:payment_yrs[i]; init = 0.0)
             for i in eachindex(payment_yrs)]
 end
 

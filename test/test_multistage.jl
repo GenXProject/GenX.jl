@@ -301,6 +301,19 @@ function test_discounting_helpers()
         @test GenX.compute_overnight_capital_cost(settings, inv, crp, wacc) ≈ expected
         @test GenX.overnight_capital_cost_factor(settings, crp, wacc) .* inv ≈ expected
 
+        # A technology WACC is used where given; the general discount rate
+        # stands in where it is absent, zero, or missing.
+        @test GenX.annuity_discount_rate(settings, [0.039, 0.0, 0.017]) ==
+              [0.039, dr, 0.017]
+        @test GenX.annuity_discount_rate(settings, [missing, -1.0]) == [dr, dr]
+
+        # A resource with no WACC is discounted at the general rate, and one
+        # with a WACC is unaffected by the fallback.
+        @test GenX.overnight_capital_cost_factor(settings, [20], [0.0]) ≈
+              GenX.overnight_capital_cost_factor(settings, [20], [dr])
+        @test GenX.overnight_capital_cost_factor(settings, [20], [0.039])[1] ≈
+              sum(1 / (1 + 0.039)^p for p in 1:20)
+
         # A zero capital recovery period is an error only when there is an
         # investment cost to recover.
         @test GenX.compute_overnight_capital_cost(settings, [0.0], [0], [0.05]) == [0.0]
