@@ -329,4 +329,66 @@ end
 
 test_discounting_helpers()
 
+function test_get_retirement_stage()
+    @testset "Age-based retirement stage" begin
+        # Equal stage lengths: unchanged from the previous rule.
+        equal = [10, 10, 10]
+        for (lifetime, expected) in [(5, [0, 1, 2]), (10, [0, 1, 2]),
+            (15, [0, 0, 1]), (20, [0, 0, 1]), (30, [0, 0, 0])]
+            @test [GenX.get_retirement_stage(c, lifetime, equal) for c in 1:3] == expected
+        end
+
+        # Uneven stages, where measuring from the start of a stage rather than
+        # the end of the current one changes the answer. Capacity built at the
+        # start of stage 2 (year 10) with an 8-year life dies in year 18, part
+        # way through stage 3 (years 15-23), so it survives stage 3.
+        uneven = [10, 5, 8]
+        @test GenX.get_retirement_stage(3, 8, uneven) == 1
+        @test GenX.get_retirement_stage(3, 10, uneven) == 1
+        # Stage 3 begins at year 15, so stage-1 capacity with a 15-year life is
+        # exactly at end of life and must retire; a 16-year life survives.
+        @test GenX.get_retirement_stage(3, 15, uneven) == 1
+        @test GenX.get_retirement_stage(3, 16, uneven) == 0
+        @test GenX.get_retirement_stage(2, 10, uneven) == 1
+        @test GenX.get_retirement_stage(2, 11, uneven) == 0
+
+        # Five uneven stages, starting at years 0, 10, 15, 23 and 29. This
+        # exercises results other than 0 and 1, so a rule that picked the wrong
+        # qualifying stage would be caught.
+        five = [10, 5, 8, 6, 4]
+        #                          cur, lifetime, expected
+        for (cur, lifetime, expected) in [(4, 6, 3), (4, 9, 2), (4, 14, 1),
+            (5, 6, 4), (5, 7, 3), (5, 15, 2), (5, 20, 1), (5, 30, 0),
+            (3, 4, 2), (3, 20, 0)]
+            @test GenX.get_retirement_stage(cur, lifetime, five) == expected
+        end
+
+        # The rule takes the latest qualifying stage, not the earliest: with
+        # stage 5 starting at year 29, a 7-year life rules out stage 4 (built
+        # year 23, only 6 years earlier) but admits stage 3 (year 15).
+        @test GenX.get_retirement_stage(5, 7, five) == 3
+        @test GenX.get_retirement_stage(5, 6, five) == 4
+
+        # Longer lifetimes never retire more stages than shorter ones.
+        for cur in 2:5
+            results = [GenX.get_retirement_stage(cur, l, five) for l in 1:35]
+            @test issorted(results, rev = true)
+        end
+
+        # Nothing can retire before the first stage, whatever the lifetime.
+        for lifetime in (1, 10, 100)
+            @test GenX.get_retirement_stage(1, lifetime, equal) == 0
+            @test GenX.get_retirement_stage(1, lifetime, uneven) == 0
+            @test GenX.get_retirement_stage(1, lifetime, five) == 0
+        end
+
+        # The result never exceeds the preceding stage.
+        for c in 1:3, lifetime in (1, 2, 5)
+            @test GenX.get_retirement_stage(c, lifetime, uneven) <= c - 1
+        end
+    end
+end
+
+test_get_retirement_stage()
+
 end # module TestMultiStage
