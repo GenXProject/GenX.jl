@@ -148,6 +148,103 @@ function compute_overnight_capital_cost(settings_d::Dict,
     return inv_costs_yr .* overnight_capital_cost_factor(settings_d, crp, tech_wacc)
 end
 
+"""
+Per-resource investment annuity data for one fixed-cost component.
+
+  * `annuity` - the factor converting an annualized investment cost into an
+    overnight capital cost, from `overnight_capital_cost_factor`. Gives the
+    discounted view.
+  * `payment_years` - the count of annuity payments falling inside the horizon,
+    from `payment_years_remaining`. Gives the undiscounted cash flow.
+"""
+struct ComponentAnnuity
+    annuity::Vector{Float64}
+    payment_years::Vector{Float64}
+end
+
+"""
+Per-stage factors that multi-stage cost reporting needs, all for the stage this
+was built for.
+
+  * `discount_factor` - discounts stage costs to the start of the horizon
+  * `opex_multiplier` - annual to stage-level operating costs. Always the
+    perfect-foresight value, since reporting discounts myopic runs too even
+    though the myopic objective does not.
+  * `stage_length` - years in this stage, for undiscounted cash flows
+  * `components` - a `ComponentAnnuity` per fixed-cost component
+"""
+struct MultiStageCostFactors
+    discount_factor::Float64
+    opex_multiplier::Float64
+    stage_length::Int
+    components::Dict{Symbol, ComponentAnnuity}
+end
+
+@doc raw"""
+    stash_cost_reporting_factors!(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int)
+
+Build a [`MultiStageCostFactors`](@ref) for the current stage and store it under
+`inputs_d["MULTISTAGE_COST_FACTORS"]`.
+
+Reporting has to undo and redo the scaling the model applies: investment costs
+become overnight capital costs and fixed O&M is multiplied by `OPEXMULT` before
+the model is built, so the writer needs the same factors to recover annual
+figures and re-scale them.
+
+Computing them here rather than at write time matters twice over. They depend on
+`CurStage`, a shared mutable setting that may have moved on by the time outputs
+are written. And under perfect foresight the resource cost fields are
+overwritten immediately below, so the factors must be taken beforehand.
+"""
+function stash_cost_reporting_factors!(inputs_d::Dict,
+        settings_d::Dict,
+        NetworkExpansion::Int)
+    gen = inputs_d["RESOURCES"]
+    cur_stage = settings_d["CurStage"]
+    wacc = settings_d["WACC"]
+    stage_len = settings_d["StageLengths"][cur_stage]
+
+    components = Dict{Symbol, ComponentAnnuity}()
+    add!(key, crp, tw) = components[key] = ComponentAnnuity(
+        collect(Float64, overnight_capital_cost_factor(settings_d, crp, tw)),
+        collect(Float64, payment_years_remaining(settings_d, crp)))
+
+    # Components carried on the generic resource fields. eCFixEnergy_VS and
+    # eCGrid use these too, despite belonging to co-located resources.
+    generic_crp, generic_wacc = capital_recovery_period.(gen), tech_wacc.(gen)
+    for key in (:discharge, :energy, :charge, :grid, :stor_vs)
+        add!(key, generic_crp, generic_wacc)
+    end
+
+    # Co-located components with their own recovery period and cost of capital.
+    if !isempty(inputs_d["VRE_STOR"])
+        vs = gen.VreStorage
+        for (key, crp_f, wacc_f) in [
+            (:dc, capital_recovery_period_dc, tech_wacc_dc),
+            (:solar, capital_recovery_period_solar, tech_wacc_solar),
+            (:wind, capital_recovery_period_wind, tech_wacc_wind),
+            (:elec, capital_recovery_period_elec, tech_wacc_elec),
+            (:charge_dc, capital_recovery_period_charge_dc, tech_wacc_charge_dc),
+            (:discharge_dc, capital_recovery_period_discharge_dc, tech_wacc_discharge_dc),
+            (:charge_ac, capital_recovery_period_charge_ac, tech_wacc_charge_ac),
+            (:discharge_ac, capital_recovery_period_discharge_ac, tech_wacc_discharge_ac)]
+            add!(key, crp_f.(vs), wacc_f.(vs))
+        end
+    end
+
+    if NetworkExpansion == 1 && inputs_d["Z"] > 1
+        add!(:transmission, inputs_d["Capital_Recovery_Period_Trans"],
+            inputs_d["transmission_WACC"])
+    end
+
+    inputs_d["MULTISTAGE_COST_FACTORS"] = MultiStageCostFactors(
+        stage_discount_factor(wacc, settings_d["StageLengths"], cur_stage),
+        stage_opex_multiplier(wacc, stage_len),
+        stage_len,
+        components)
+    return nothing
+end
+
 @doc raw"""
 	function configure_multi_stage_inputs(inputs_d::Dict, settings_d::Dict, NetworkExpansion::Int64)
 
@@ -183,6 +280,8 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     # Define OPEXMULT here, include in inputs_dict[t] for use in dual_dynamic_programming.jl, transmission_multi_stage.jl, and investment_multi_stage.jl
     OPEXMULT = myopic ? 1 : stage_opex_multiplier(wacc, stage_len)
     inputs_d["OPEXMULT"] = OPEXMULT
+
+    stash_cost_reporting_factors!(inputs_d, settings_d, NetworkExpansion)
 
     if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
         # 1. Convert annualized investment costs incured within the model horizon into overnight capital costs

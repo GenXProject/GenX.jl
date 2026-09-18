@@ -391,4 +391,51 @@ end
 
 test_get_retirement_stage()
 
+function test_cost_reporting_factors()
+    @testset "Stashed cost reporting factors" begin
+        settings = GenX.default_settings()
+        merge!(settings, genx_setup)
+        ms = settings["MultiStageSettingsDict"]
+        stage_lens = ms["StageLengths"]
+        dr = ms["WACC"]
+
+        for t in 1:ms["NumStages"]
+            ms["CurStage"] = t
+            inputs = redirect_stdout(devnull) do
+                with_logger(ConsoleLogger(stderr, Logging.Error)) do
+                    GenX.load_inputs(settings,
+                        joinpath(test_path, string("inputs_p", t)))
+                end
+            end
+            # Capture the annuities before configure overwrites the cost fields.
+            gen = inputs["RESOURCES"]
+            crp = GenX.capital_recovery_period.(gen)
+            inv_before = GenX.inv_cost_per_mwyr.(gen)
+            expected_occ = GenX.compute_overnight_capital_cost(
+                ms, inv_before, crp, GenX.tech_wacc.(gen))
+
+            inputs = GenX.configure_multi_stage_inputs(inputs, ms,
+                settings["NetworkExpansion"])
+            f = inputs["MULTISTAGE_COST_FACTORS"]
+
+            @test f.discount_factor ≈ GenX.stage_discount_factor(dr, stage_lens, t)
+            @test f.opex_multiplier ≈ GenX.stage_opex_multiplier(dr, stage_lens[t])
+            @test f.stage_length == stage_lens[t]
+
+            # The stashed annuity reproduces the overnight capital cost, and
+            # configure_multi_stage_inputs wrote that same cost into the
+            # resource fields. So the writer can recover the annual figure by
+            # dividing the field back through by the stashed annuity.
+            disc = f.components[:discharge]
+            @test disc.annuity .* inv_before ≈ expected_occ
+            @test GenX.inv_cost_per_mwyr.(inputs["RESOURCES"]) ≈ expected_occ
+            @test disc.payment_years == GenX.payment_years_remaining(ms, crp)
+            @test all(disc.payment_years .<= crp)
+        end
+        ms["CurStage"] = 1
+    end
+end
+
+test_cost_reporting_factors()
+
 end # module TestMultiStage
