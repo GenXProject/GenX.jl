@@ -204,21 +204,37 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     wacc = settings_d["WACC"]
     stage_len = settings_d["StageLengths"][cur_stage]
 
+    G = length(gen)
     components = Dict{Symbol, ComponentAnnuity}()
-    add!(key, crp, tw) = components[key] = ComponentAnnuity(
-        collect(Float64, overnight_capital_cost_factor(settings_d, crp, tw)),
-        collect(Float64, payment_years_remaining(settings_d, crp)))
 
-    # Components carried on the generic resource fields. eCFixEnergy_VS and
-    # eCGrid use these too, despite belonging to co-located resources.
+    # Resource components are stored indexed by global resource id, so the cost
+    # writer can index them the same way it indexes the model's expressions.
+    # `ids` scatters a sub-collection's values into that space; transmission
+    # passes `nothing` since it is indexed by line.
+    function add!(key, crp, tw; ids = nothing)
+        a = collect(Float64, overnight_capital_cost_factor(settings_d, crp, tw))
+        p = collect(Float64, payment_years_remaining(settings_d, crp))
+        if ids !== nothing
+            a_full, p_full = zeros(Float64, G), zeros(Float64, G)
+            a_full[ids], p_full[ids] = a, p
+            a, p = a_full, p_full
+        end
+        components[key] = ComponentAnnuity(a, p)
+    end
+
+    # Components carried on the generic resource fields, already indexed by
+    # resource id. eCFixEnergy_VS and eCGrid use these too, despite belonging
+    # to co-located resources.
     generic_crp, generic_wacc = capital_recovery_period.(gen), tech_wacc.(gen)
     for key in (:discharge, :energy, :charge, :grid, :stor_vs)
         add!(key, generic_crp, generic_wacc)
     end
 
     # Co-located components with their own recovery period and cost of capital.
+    # These come from the VreStorage sub-collection, so they need scattering.
     if !isempty(inputs_d["VRE_STOR"])
         vs = gen.VreStorage
+        vs_ids = resource_id.(vs)
         for (key, crp_f, wacc_f) in [
             (:dc, capital_recovery_period_dc, tech_wacc_dc),
             (:solar, capital_recovery_period_solar, tech_wacc_solar),
@@ -228,7 +244,7 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
             (:discharge_dc, capital_recovery_period_discharge_dc, tech_wacc_discharge_dc),
             (:charge_ac, capital_recovery_period_charge_ac, tech_wacc_charge_ac),
             (:discharge_ac, capital_recovery_period_discharge_ac, tech_wacc_discharge_ac)]
-            add!(key, crp_f.(vs), wacc_f.(vs))
+            add!(key, crp_f.(vs), wacc_f.(vs); ids = vs_ids)
         end
     end
 
