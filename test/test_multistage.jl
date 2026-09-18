@@ -438,4 +438,242 @@ end
 
 test_cost_reporting_factors()
 
+"""
+Solve `case_path` in multi-stage mode, write each stage's cost files, and return
+`(EP, inputs, outdir)` so the reported numbers can be checked against the model.
+"""
+function run_and_write_multistage(case_path, setup_overrides)
+    settings = GenX.default_settings()
+    merge!(settings, deepcopy(setup_overrides))
+    ms = settings["MultiStageSettingsDict"]
+    outdir = mktempdir()
+
+    EP, inputs, _ = redirect_stdout(devnull) do
+        with_logger(ConsoleLogger(stderr, Logging.Error)) do
+            run_genx_case_testing(case_path, settings)
+        end
+    end
+    for p in 1:ms["NumStages"]
+        ms["CurStage"] = p
+        stage_dir = joinpath(outdir, "results_p$p")
+        mkpath(stage_dir)
+        redirect_stdout(devnull) do
+            GenX.write_costs(stage_dir, inputs[p], settings, EP[p])
+        end
+    end
+    redirect_stdout(devnull) do
+        GenX.write_multi_stage_costs(outdir, ms)
+    end
+    return EP, inputs, outdir, settings
+end
+
+"""Read a cost file into a `row => Total` dictionary."""
+function cost_totals(path)
+    df = CSV.read(path, DataFrame)
+    Dict(string(df[i, "Costs"]) => something(tryparse(Float64,
+            string(df[i, "Total"])), 0.0) for i in 1:nrow(df))
+end
+
+"""Largest relative gap between a row's Total and the sum of its zone columns."""
+function zone_sum_gap(path, rows)
+    df = CSV.read(path, DataFrame)
+    zcols = filter(c -> startswith(c, "Zone"), names(df))
+    worst = 0.0
+    for r in rows
+        i = findfirst(==(r), df.Costs)
+        i === nothing && continue
+        t = something(tryparse(Float64, string(df[i, "Total"])), 0.0)
+        z = sum(something(tryparse(Float64, string(df[i, c])), 0.0) for c in zcols)
+        worst = max(worst, abs(t - z) / max(abs(t), 1e-30))
+    end
+    return worst
+end
+
+const ATTRIBUTED_ROWS = ["cFix", "cVar", "cFuel", "cNSE", "cStart", "cCO2"]
+
+function test_perfect_foresight_cost_reporting()
+    @testset "Perfect-foresight cost reporting" begin
+        EP, inputs, outdir, settings = run_and_write_multistage(test_path, genx_setup)
+        ms = settings["MultiStageSettingsDict"]
+        nstages = ms["NumStages"]
+        scale = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor^2 : 1.0
+
+        disc = [cost_totals(joinpath(outdir, "results_p$p", "costs.csv"))
+                for p in 1:nstages]
+        undisc = [cost_totals(joinpath(outdir, "results_p$p", "costs_undiscounted.csv"))
+                  for p in 1:nstages]
+
+        for p in 1:nstages
+            f = inputs[p]["MULTISTAGE_COST_FACTORS"]
+            DF, OM, L = f.discount_factor, f.opex_multiplier, float(f.stage_length)
+
+            # The discounted stage total is exactly what the objective charges
+            # for this stage, i.e. the objective less the cost-to-go term. This
+            # is the single strongest check: it ties the whole reported
+            # breakdown back to the optimisation.
+            stage_cost = objective_value(EP[p]) - value(EP[p][:vALPHA])
+            @test disc[p]["cTotal"] / scale ≈ stage_cost rtol=1e-8
+
+            # Under perfect foresight the model's own fixed-cost expression is
+            # already the stage-level present value, so discounting is the only
+            # thing left to do.
+            g(sym) = haskey(EP[p].obj_dict, sym) ? value(EP[p][sym]) : 0.0
+            model_fix = g(:eTotalCFix) + g(:eTotalCFixEnergy) + g(:eTotalCFixCharge)
+            @test disc[p]["cFix"] / scale ≈ DF * model_fix rtol=1e-8
+
+            # Operating costs are annual in the model, so they take the full
+            # discount factor times the stage multiplier, and the undiscounted
+            # view takes the stage length instead. Their ratio is a pure
+            # function of the conventions, independent of the solution.
+            if disc[p]["cVar"] != 0
+                @test undisc[p]["cVar"] / disc[p]["cVar"] ≈ L / (DF * OM) rtol=1e-8
+            end
+            for row in ("cFuel", "cNSE", "cStart")
+                disc[p][row] == 0 && continue
+                @test undisc[p][row] / disc[p][row] ≈ L / (DF * OM) rtol=1e-8
+            end
+
+            # Both views must be internally consistent: zones sum to totals,
+            # and cTotal is the sum of its component rows.
+            for file in ("costs.csv", "costs_undiscounted.csv")
+                path = joinpath(outdir, "results_p$p", file)
+                @test zone_sum_gap(path, ATTRIBUTED_ROWS) < 1e-9
+            end
+            for tab in (disc[p], undisc[p])
+                rows = sum(get(tab, r, 0.0) for r in
+                ["cFix", "cVar", "cFuel", "cNSE", "cStart", "cUnmetRsv",
+                    "cNetworkExp", "cUnmetPolicyPenalty", "cCO2",
+                    "cHydrogenRevenue"])
+                @test tab["cTotal"] ≈ rows rtol=1e-8
+            end
+
+            # Undiscounted costs are never smaller: they omit the time value
+            # but cover the same stage.
+            @test undisc[p]["cTotal"] > disc[p]["cTotal"]
+        end
+
+        # Summed across stages, the discounted totals are the cost of the whole
+        # trajectory the algorithm converged on.
+        horizon = sum(objective_value(EP[p]) - value(EP[p][:vALPHA])
+        for p in 1:nstages)
+        @test sum(disc[p]["cTotal"] for p in 1:nstages) / scale ≈ horizon rtol=1e-8
+
+        # The horizon summary stacks the per-stage files without rescaling.
+        summary = CSV.read(joinpath(outdir, "costs_multi_stage.csv"), DataFrame)
+        @test "cTotal" in summary.Costs
+        i = findfirst(==("cTotal"), summary.Costs)
+        for p in 1:nstages
+            @test summary[i, Symbol("TotalCosts_p$p")] ≈ disc[p]["cTotal"] rtol=1e-12
+        end
+        @test isfile(joinpath(outdir, "costs_undiscounted_multi_stage.csv"))
+        rm(outdir, recursive = true, force = true)
+    end
+end
+
+test_perfect_foresight_cost_reporting()
+
+function test_myopic_cost_addback()
+    @testset "Myopic reporting adds back unseen annuities" begin
+        myopic_setup = deepcopy(genx_setup)
+        myopic_setup["MultiStageSettingsDict"]["Myopic"] = 1
+        EP, inputs, outdir, settings = run_and_write_multistage(test_path, myopic_setup)
+        ms = settings["MultiStageSettingsDict"]
+        nstages = ms["NumStages"]
+        scale = settings["ParameterScale"] == 1 ? GenX.ModelScalingFactor^2 : 1.0
+
+        for p in 1:nstages
+            f = inputs[p]["MULTISTAGE_COST_FACTORS"]
+            DF, OM = f.discount_factor, f.opex_multiplier
+            gen = inputs[p]["RESOURCES"]
+            A = f.components[:discharge].annuity
+            P = f.components[:discharge].payment_years
+
+            # The myopic objective charges one year of each annuity, so the
+            # model's fixed cost is entirely in annual terms.
+            @test inputs[p]["OPEXMULT"] == 1
+
+            # Separate every fixed-cost component into its annual investment
+            # and O&M parts, and accumulate the annuity the reported figure
+            # should apply. Each component carries its own annuity factors, so
+            # they cannot be lumped together.
+            comps = Any[(:eCFix, 1:length(gen), GenX.fixed_om_cost_per_mwyr,
+                :eTotalCap, :discharge)]
+            isempty(inputs[p]["STOR_ALL"]) || push!(comps,
+                (:eCFixEnergy, inputs[p]["STOR_ALL"], GenX.fixed_om_cost_per_mwhyr,
+                    :eTotalCapEnergy, :energy))
+            isempty(inputs[p]["STOR_ASYMMETRIC"]) || push!(comps,
+                (:eCFixCharge, inputs[p]["STOR_ASYMMETRIC"],
+                    GenX.fixed_om_cost_charge_per_mwyr, :eTotalCapCharge, :charge))
+
+            obj_inv, obj_fom = 0.0, 0.0
+            expect_inv_A, expect_inv_P = 0.0, 0.0
+            for (sym, ids, fom_f, cap_sym, key) in comps
+                Ak = f.components[key].annuity
+                Pk = f.components[key].payment_years
+                for y in ids
+                    total = value(EP[p][sym][y])
+                    fom = fom_f(gen[y]) * value(EP[p][cap_sym][y])
+                    inv = total - fom
+                    obj_inv += inv
+                    obj_fom += fom
+                    expect_inv_A += Ak[y] * inv
+                    expect_inv_P += Pk[y] * inv
+                end
+            end
+
+            disc = cost_totals(joinpath(outdir, "results_p$p", "costs.csv"))
+            undisc = cost_totals(joinpath(outdir, "results_p$p",
+                "costs_undiscounted.csv"))
+
+            if obj_inv > 0
+                # Reported investment is each resource's annual annuity paid
+                # over every year inside the horizon, discounted to the start.
+                reported_inv = disc["cFix"] / scale - DF * OM * obj_fom
+                @test reported_inv ≈ DF * expect_inv_A rtol=1e-8
+
+                # It must exceed a plain discounting of what the objective
+                # charged, since the objective saw only one year of each.
+                @test reported_inv > DF * obj_inv
+
+                # The implied multiple sits inside the range of the individual
+                # annuity factors, which bounds the result independently of how
+                # it was computed.
+                active = [y for y in 1:length(gen) if A[y] > 0]
+                implied = reported_inv / (DF * obj_inv)
+                @test minimum(A[active]) - 1e-6 <= implied <= maximum(A[active]) + 1e-6
+                @test implied > 1  # an add-back actually happened
+
+                # The undiscounted view counts the same payments without time
+                # value, so it is larger still.
+                reported_inv_cf = undisc["cFix"] / scale -
+                                  float(f.stage_length) * obj_fom
+                @test reported_inv_cf ≈ expect_inv_P rtol=1e-8
+                @test reported_inv_cf > reported_inv
+                implied_cf = reported_inv_cf / obj_inv
+                @test minimum(P[active]) - 1e-6 <= implied_cf <= maximum(P[active]) + 1e-6
+            end
+
+            # Both views stay internally consistent, as in the PF case.
+            for file in ("costs.csv", "costs_undiscounted.csv")
+                @test zone_sum_gap(joinpath(outdir, "results_p$p", file),
+                    ATTRIBUTED_ROWS) < 1e-9
+            end
+            for tab in (disc, undisc)
+                rows = sum(get(tab, r, 0.0) for r in
+                ["cFix", "cVar", "cFuel", "cNSE", "cStart", "cUnmetRsv",
+                    "cNetworkExp", "cUnmetPolicyPenalty", "cCO2",
+                    "cHydrogenRevenue"])
+                @test tab["cTotal"] ≈ rows rtol=1e-8
+            end
+
+            # Unlike perfect foresight, the reported total is deliberately not
+            # the myopic objective: it includes annuities the objective omits.
+            @test disc["cTotal"] / scale > DF * objective_value(EP[p])
+        end
+        rm(outdir, recursive = true, force = true)
+    end
+end
+
+test_myopic_cost_addback()
+
 end # module TestMultiStage
