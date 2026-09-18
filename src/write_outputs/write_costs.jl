@@ -1,9 +1,3 @@
-"""Sum a 1-D JuMP expression container over `ids`, returning 0.0 when empty."""
-_sum_over(expr, ids) = isempty(ids) ? 0.0 : sum(value.(expr[ids]))
-
-"""Sum a 2-D (resource, time) JuMP expression container over `ids` and all time."""
-_sum_over_time(expr, ids) = isempty(ids) ? 0.0 : sum(value.(expr[ids, :]))
-
 """Accumulate `value(expr[y])` into `acc[y]` for every `y` in `ids`."""
 function _accumulate!(acc::Vector{Float64}, expr, ids)
     for y in ids
@@ -103,6 +97,22 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
     # Multi-stage reporting needs the investment/O&M split; single-stage does
     # not, and passing `nothing` for the annuity skips it.
     multistage = setup["MultiStage"] == 1 && haskey(inputs, "MULTISTAGE_COST_FACTORS")
+    if setup["MultiStage"] == 1 && !multistage
+        # Falling back here would quietly emit single-stage-shaped costs for a
+        # multi-stage run, with no undiscounted companion, so say so loudly.
+        @warn "Multi-stage cost factors are missing from inputs; costs will be " *
+              "reported on the model's own basis rather than discounted. This " *
+              "means configure_multi_stage_inputs did not run for this stage."
+    end
+    if multistage && !isempty(ALLAM_CYCLE_LOX)
+        # Allam fixed costs are accumulated whole, without the investment/O&M
+        # split, because the loader refuses Allam in multi-stage mode. If that
+        # restriction is ever lifted, they would silently vanish from the
+        # discounted and undiscounted views rather than be mis-stated.
+        error("Allam Cycle LOX resources are not supported in multi-stage cost " *
+              "reporting: their fixed costs are not split into investment and " *
+              "fixed O&M, so they cannot be rescaled per stage.")
+    end
     factors = multistage ? inputs["MULTISTAGE_COST_FACTORS"] : nothing
     myopic = multistage && setup["MultiStageSettingsDict"]["Myopic"] == 1
     model_opexmult = multistage ? inputs["OPEXMULT"] : 1.0
@@ -326,12 +336,12 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
 end
 
 @doc raw"""
-    assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict; view::Symbol = :model)
+    assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict; basis::Symbol = :model)
 
 Turn a [`cost_breakdown`](@ref) into the `costs.csv` table: a `Costs` column of
 row names, a `Total` column, and one column per zone.
 
-`view` selects how stage costs are expressed, and only applies to multi-stage
+`basis` selects how stage costs are expressed, and only applies to multi-stage
 runs:
 
   * `:model` – the model's own values, used for single-stage runs
@@ -346,7 +356,7 @@ in the zone columns, matching the system-wide nature of those terms.
 `ParameterScale` is applied once, to every numeric cell, at the end.
 """
 function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
-        view::Symbol = :model)
+        basis::Symbol = :model)
     gen = inputs["RESOURCES"]
     Z = inputs["Z"]
     VRE_STOR = inputs["VRE_STOR"]
@@ -361,20 +371,20 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
     #
     # Investment carries no operating multiplier: the years are already inside
     # the annuity vector (A payments discounted, or P payments undiscounted).
-    use_model = view == :model || !bd.multistage
+    use_model = basis == :model || !bd.multistage
     if use_model
         inv_vec, grid_inv, netexp_inv = bd.fix, bd.grid, bd.netexp
         inv_mult, fom_mult, opex_mult = 1.0, 0.0, 1.0
-    elseif view == :discounted
+    elseif basis == :discounted
         df, om = bd.factors.discount_factor, bd.factors.opex_multiplier
         inv_vec, grid_inv, netexp_inv = bd.fix_inv_A, bd.grid_inv_A, bd.netexp_A
         inv_mult, fom_mult, opex_mult = df, df * om, df * om
-    elseif view == :undiscounted
+    elseif basis == :undiscounted
         L = float(bd.factors.stage_length)
         inv_vec, grid_inv, netexp_inv = bd.fix_inv_P, bd.grid_inv_P, bd.netexp_P
         inv_mult, fom_mult, opex_mult = 1.0, L, L
     else
-        error("unknown cost view $view")
+        error("unknown cost basis $basis")
     end
 
     # For the model view the fixed-cost vector already holds investment and O&M
@@ -461,11 +471,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         # the companion file is the cash flow over the stage, with no time
         # value. See [`assemble_costs`](@ref).
         CSV.write(joinpath(path, "costs.csv"),
-            assemble_costs(bd, inputs, setup; view = :discounted))
+            assemble_costs(bd, inputs, setup; basis = :discounted))
         CSV.write(joinpath(path, "costs_undiscounted.csv"),
-            assemble_costs(bd, inputs, setup; view = :undiscounted))
+            assemble_costs(bd, inputs, setup; basis = :undiscounted))
     else
         CSV.write(joinpath(path, "costs.csv"),
-            assemble_costs(bd, inputs, setup; view = :model))
+            assemble_costs(bd, inputs, setup; basis = :model))
     end
 end
