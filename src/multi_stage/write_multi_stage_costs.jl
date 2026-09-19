@@ -32,7 +32,15 @@ function write_multi_stage_costs(outpath::String, settings_d::Dict)
         ("costs.csv", "costs_multi_stage.csv"),
         ("costs_undiscounted.csv", "costs_undiscounted_multi_stage.csv")]
         paths = [joinpath(outpath, "results_p$p", stage_file) for p in 1:num_stages]
-        all(isfile, paths) || continue
+        present = isfile.(paths)
+        # None present is normal: cost output can be switched off entirely.
+        # Some present is not, and silently writing no summary would hide it.
+        if !all(present)
+            any(present) && @warn "Not writing $summary_file: $stage_file is " *
+                  "missing for stage(s) $(findall(.!present)) but present for " *
+                  "the others."
+            continue
+        end
 
         costs_d = [load_dataframe(f) for f in paths]
         df_costs = DataFrame(Costs = costs_d[1][!, :Costs])

@@ -116,7 +116,19 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
     factors = multistage ? inputs["MULTISTAGE_COST_FACTORS"] : nothing
     myopic = multistage && setup["MultiStageSettingsDict"]["Myopic"] == 1
     model_opexmult = multistage ? inputs["OPEXMULT"] : 1.0
-    ann(key) = multistage ? get(factors.components, key, nothing) : nothing
+    # Returns nothing for single-stage runs, which is how _accumulate_fixed!
+    # knows to skip the investment/O&M split. In a multi-stage run a missing
+    # component is not a reason to skip: it would drop that component from the
+    # discounted and undiscounted views while leaving it in the model view, so
+    # the file would look self-consistent and understate costs.
+    function ann(key)
+        multistage || return nothing
+        haskey(factors.components, key) && return factors.components[key]
+        error("Multi-stage cost factors have no '$key' component, so its " *
+              "investment cannot be rescaled per stage. This means " *
+              "stash_cost_reporting_factors! and the cost writer disagree " *
+              "about which components exist.")
+    end
 
     # --- Fixed costs -------------------------------------------------------
     # eTotalCFix is the sum of eCFix over all resources plus the Allam plant
@@ -269,10 +281,13 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
 
     # Network expansion is a pure investment cost, so it gets the same treatment
     # as the fixed-cost investment terms but per line rather than per resource.
-    netexp = (setup["NetworkExpansion"] == 1 && Z > 1) ?
-             value(EP[:eTotalCNetworkExp]) : 0.0
+    # Unlike those, this component is genuinely absent when network expansion is
+    # off, so it is only looked up when the model has it; asking unconditionally
+    # would trip the missing-component guard on every single-zone case.
+    has_netexp = setup["NetworkExpansion"] == 1 && Z > 1
+    netexp = has_netexp ? value(EP[:eTotalCNetworkExp]) : 0.0
     netexp_A, netexp_P = netexp, 0.0
-    trans_ann = ann(:transmission)
+    trans_ann = (multistage && has_netexp) ? ann(:transmission) : nothing
     if trans_ann !== nothing && netexp != 0.0
         # Rebuild eTotalCNetworkExp line by line, because each line carries its
         # own recovery period and cost of capital. EXPANSION_LINES (continuous
