@@ -491,6 +491,55 @@ end
 
 const ATTRIBUTED_ROWS = ["cFix", "cVar", "cFuel", "cNSE", "cStart", "cCO2"]
 
+function test_investment_views()
+    @testset "Investment views for both foresight modes" begin
+        dr, crp = 0.045, 20
+        A = sum(1 / (1 + dr)^p for p in 1:crp)   # annuity factor
+        P = float(crp)                            # payments inside the horizon
+        aic = 65400.0                             # annual annuity per unit
+        cap = 2.5                                 # new capacity
+
+        # Perfect foresight: the model holds the overnight capital cost, so the
+        # discounted view reproduces it and the undiscounted view swaps A for P.
+        pf_scaled = aic * A * cap
+        d, u = GenX._investment_views(pf_scaled, A, P, false)
+        @test d ≈ pf_scaled
+        @test u ≈ aic * cap * P
+
+        # Myopic: the model holds one year's annuity, so both views add back the
+        # payments the objective never charged.
+        my_scaled = aic * cap
+        d, u = GenX._investment_views(my_scaled, A, P, true)
+        @test d ≈ aic * cap * A
+        @test u ≈ aic * cap * P
+        @test d > my_scaled          # the add-back actually happened
+        @test u > d                  # no time value, so larger still
+
+        # Both modes agree on what the investment is worth once reported, which
+        # is the property that makes myopic and perfect foresight comparable.
+        @test GenX._investment_views(pf_scaled, A, P, false) ==
+              GenX._investment_views(my_scaled, A, P, true)
+
+        # Degenerate cases.
+        @test GenX._investment_views(0.0, A, P, false) == (0.0, 0.0)
+        @test GenX._investment_views(0.0, 0.0, 0.0, false) == (0.0, 0.0)
+        # No payment years under perfect foresight means nothing to divide by;
+        # the guard returns zero rather than producing NaN or Inf.
+        d, u = GenX._investment_views(123.0, 0.0, 0.0, false)
+        @test d == 0.0 && u == 0.0
+        @test all(isfinite, GenX._investment_views(123.0, 0.0, 0.0, false))
+
+        # A shorter horizon truncates the annuity: fewer payments, smaller
+        # discounted value, and the undiscounted count follows P.
+        A_short = sum(1 / (1 + dr)^p for p in 1:8)
+        d_short, u_short = GenX._investment_views(aic * cap, A_short, 8.0, true)
+        @test d_short < aic * cap * A
+        @test u_short ≈ aic * cap * 8
+    end
+end
+
+test_investment_views()
+
 function test_perfect_foresight_cost_reporting()
     @testset "Perfect-foresight cost reporting" begin
         EP, inputs, outdir, settings = run_and_write_multistage(test_path, genx_setup)

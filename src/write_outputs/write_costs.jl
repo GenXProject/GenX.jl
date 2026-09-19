@@ -1,3 +1,24 @@
+"""
+    _investment_views(scaled, A, P, myopic) -> (discounted, undiscounted)
+
+Turn one investment cost as the model holds it into the two reported views.
+
+`A` is the annuity factor and `P` the count of payments falling inside the
+horizon, both for the item being priced.
+
+Under perfect foresight the model already holds the overnight capital cost, so
+dividing by `A` recovers the annual annuity. Under myopic the model holds a
+single year's annuity, so no division is needed, and multiplying by `A` *adds
+back* the payments the myopic objective never charged.
+
+Used for both resource fixed costs and transmission expansion, which differ only
+in what they iterate over.
+"""
+function _investment_views(scaled, A, P, myopic)
+    annual = myopic ? scaled : (A > 0 ? scaled / A : 0.0)
+    return annual * A, annual * P
+end
+
 """Accumulate `value(expr[y])` into `acc[y]` for every `y` in `ids`."""
 function _accumulate!(acc::Vector{Float64}, expr, ids)
     for y in ids
@@ -40,10 +61,10 @@ function _accumulate_fixed!(acc, expr, ids, fom_per_unit, cap_expr,
         inv_scaled = total - fom_scaled
         A, P = ann.annuity[y], ann.payment_years[y]
 
-        inv_annual = myopic ? inv_scaled : (A > 0 ? inv_scaled / A : 0.0)
+        inv_A, inv_P = _investment_views(inv_scaled, A, P, myopic)
         acc.fix_fom[y] += fom_scaled / model_opexmult
-        acc.fix_inv_A[y] += inv_annual * A
-        acc.fix_inv_P[y] += inv_annual * P
+        acc.fix_inv_A[y] += inv_A
+        acc.fix_inv_P[y] += inv_P
     end
     return acc
 end
@@ -296,10 +317,10 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
         acc_A, acc_P = 0.0, 0.0
         pC = inputs["pC_Line_Reinforcement"]
         add_line! = function (l, cost)
-            A, P = trans_ann.annuity[l], trans_ann.payment_years[l]
-            annual = myopic ? cost : (A > 0 ? cost / A : 0.0)
-            acc_A += annual * A
-            acc_P += annual * P
+            a, p = _investment_views(cost, trans_ann.annuity[l],
+                trans_ann.payment_years[l], myopic)
+            acc_A += a
+            acc_P += p
         end
         for l in inputs["EXPANSION_LINES"]
             add_line!(l, value(EP[:vNEW_TRANS_CAP][l]) * pC[l])
