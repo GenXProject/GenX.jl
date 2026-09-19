@@ -132,12 +132,7 @@ function compute_overnight_capital_cost(settings_d::Dict,
         crp::Array,
         tech_wacc::Array)
 
-    # Check for resources with non-zero investment costs and a Capital_Recovery_Period value of 0 years
-    if any((crp .== 0) .& (inv_costs_yr .> 0))
-        msg = "You have some resources with non-zero investment costs and a Capital_Recovery_Period value of 0 years.\n" *
-              "These resources will have a calculated overnight capital cost of \$0. Correct your inputs if this is a mistake.\n"
-        error(msg)
-    end
+    validate_capital_recovery_period(inv_costs_yr, crp)
 
     # KEY ASSUMPTION: Investment costs after the planning horizon are fully recoverable, so we
     # don't need to include these costs. Which annuities fall inside the horizon, and how they
@@ -146,6 +141,26 @@ function compute_overnight_capital_cost(settings_d::Dict,
     # Returns the overnight capital cost: the discounted sum of annual investment costs
     # incurred within the model horizon.
     return inv_costs_yr .* overnight_capital_cost_factor(settings_d, crp, tech_wacc)
+end
+
+"""
+    validate_capital_recovery_period(inv_costs_yr, crp)
+
+Error if any resource has a positive investment cost and a capital recovery
+period of zero years.
+
+Such a resource has no years over which to spread its annuity, so its annuity
+factor is zero and the investment silently disappears from both the model's
+overnight capital cost and the reported figures. That is almost always an input
+mistake, so it is rejected rather than absorbed.
+"""
+function validate_capital_recovery_period(inv_costs_yr, crp)
+    if any((crp .== 0) .& (inv_costs_yr .> 0))
+        msg = "You have some resources with non-zero investment costs and a Capital_Recovery_Period value of 0 years.\n" *
+              "These resources will have a calculated overnight capital cost of \$0. Correct your inputs if this is a mistake.\n"
+        error(msg)
+    end
+    return nothing
 end
 
 """
@@ -211,7 +226,13 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     # writer can index them the same way it indexes the model's expressions.
     # `ids` scatters a sub-collection's values into that space; transmission
     # passes `nothing` since it is indexed by line.
-    function add!(key, crp, tw; ids = nothing)
+    # Perfect foresight validates the recovery period inside
+    # compute_overnight_capital_cost, but myopic never takes that path, so the
+    # same check runs here. Without it a myopic resource with a zero recovery
+    # period and a positive investment cost would report zero investment while
+    # the objective charged it in full.
+    function add!(key, crp, tw, inv; ids = nothing)
+        validate_capital_recovery_period(inv, crp)
         a = collect(Float64, overnight_capital_cost_factor(settings_d, crp, tw))
         p = collect(Float64, payment_years_remaining(settings_d, crp))
         if ids !== nothing
@@ -225,9 +246,16 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     # Components carried on the generic resource fields, already indexed by
     # resource id. eCFixEnergy_VS and eCGrid use these too, despite belonging
     # to co-located resources.
+    # Each component is validated against the investment field it actually
+    # prices: :discharge and :grid against the per-MW cost, :energy and
+    # :stor_vs against the per-MWh cost, :charge against the charge-capacity
+    # cost. These are still the original annual values here, since the
+    # overwrite below has not run yet.
     generic_crp, generic_wacc = capital_recovery_period.(gen), tech_wacc.(gen)
-    for key in (:discharge, :energy, :charge, :grid, :stor_vs)
-        add!(key, generic_crp, generic_wacc)
+    for (key, inv_f) in [(:discharge, inv_cost_per_mwyr), (:grid, inv_cost_per_mwyr),
+        (:energy, inv_cost_per_mwhyr), (:stor_vs, inv_cost_per_mwhyr),
+        (:charge, inv_cost_charge_per_mwyr)]
+        add!(key, generic_crp, generic_wacc, inv_f.(gen))
     end
 
     # Co-located components with their own recovery period and cost of capital.
@@ -235,22 +263,30 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     if !isempty(inputs_d["VRE_STOR"])
         vs = gen.VreStorage
         vs_ids = resource_id.(vs)
-        for (key, crp_f, wacc_f) in [
-            (:dc, capital_recovery_period_dc, tech_wacc_dc),
-            (:solar, capital_recovery_period_solar, tech_wacc_solar),
-            (:wind, capital_recovery_period_wind, tech_wacc_wind),
-            (:elec, capital_recovery_period_elec, tech_wacc_elec),
-            (:charge_dc, capital_recovery_period_charge_dc, tech_wacc_charge_dc),
-            (:discharge_dc, capital_recovery_period_discharge_dc, tech_wacc_discharge_dc),
-            (:charge_ac, capital_recovery_period_charge_ac, tech_wacc_charge_ac),
-            (:discharge_ac, capital_recovery_period_discharge_ac, tech_wacc_discharge_ac)]
-            add!(key, crp_f.(vs), wacc_f.(vs); ids = vs_ids)
+        for (key, crp_f, wacc_f, inv_f) in [
+            (:dc, capital_recovery_period_dc, tech_wacc_dc,
+                inv_cost_inverter_per_mwyr),
+            (:solar, capital_recovery_period_solar, tech_wacc_solar,
+                inv_cost_solar_per_mwyr),
+            (:wind, capital_recovery_period_wind, tech_wacc_wind,
+                inv_cost_wind_per_mwyr),
+            (:elec, capital_recovery_period_elec, tech_wacc_elec,
+                inv_cost_elec_per_mwyr),
+            (:charge_dc, capital_recovery_period_charge_dc, tech_wacc_charge_dc,
+                inv_cost_charge_dc_per_mwyr),
+            (:discharge_dc, capital_recovery_period_discharge_dc,
+                tech_wacc_discharge_dc, inv_cost_discharge_dc_per_mwyr),
+            (:charge_ac, capital_recovery_period_charge_ac, tech_wacc_charge_ac,
+                inv_cost_charge_ac_per_mwyr),
+            (:discharge_ac, capital_recovery_period_discharge_ac,
+                tech_wacc_discharge_ac, inv_cost_discharge_ac_per_mwyr)]
+            add!(key, crp_f.(vs), wacc_f.(vs), inv_f.(vs); ids = vs_ids)
         end
     end
 
     if NetworkExpansion == 1 && inputs_d["Z"] > 1
         add!(:transmission, inputs_d["Capital_Recovery_Period_Trans"],
-            inputs_d["transmission_WACC"])
+            inputs_d["transmission_WACC"], inputs_d["pC_Line_Reinforcement"])
     end
 
     inputs_d["MULTISTAGE_COST_FACTORS"] = MultiStageCostFactors(
