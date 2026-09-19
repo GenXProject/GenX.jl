@@ -544,7 +544,7 @@ function generate_cut_component_inv(EP_cur::Model,
 end
 
 @doc raw"""
-	initialize_cost_to_go(settings_d::Dict, EP::Model)
+	initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
 
 This function scales the model objective function so that costs are consistent with multi-stage modeling and introduces a cost-to-go function variable to the objective function.
 
@@ -557,18 +557,18 @@ The updated objective function $OBJ^{*}$ returned by this method takes the form:
 where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. The first is a discount factor, which discounts costs associated with the model stage $p$ to year-0 dollars:
 ```math
 \begin{aligned}
-    DF = \frac{1}{(1+WACC)^{\sum^{(p-1)}_{k=0}L_{k}}}
+    DF = \frac{1}{(1+DR)^{\sum_{k<p}L_{k}}}
 \end{aligned}
 ```
-where $WACC$ is the weighted average cost of capital, and $L_{p}$ is the length of each stage in years (both set in multi\_stage\_settings.yml)
+where $DR$ is the general discount rate (the `WACC` field of multi\_stage\_settings.yml) and $L_{k}$ is the length of stage $k$ in years.
 
 The second term is a discounted sum of annual operational expenses incurred each year of a multi-year model stage:
 ```math
 \begin{aligned}
-    & OPEXMULT = \sum^{L}_{l=1}\frac{1}{(1+WACC)^{l}}
+    & OPEXMULT = \sum^{L}_{l=1}\frac{1}{(1+DR)^{l}}
 \end{aligned}
 ```
-Note that although the objective function contains investment costs, which occur only once and thus do not need to be scaled by OPEXMULT, these costs are multiplied by a factor of $\frac{1}{WACC}$ before being added to the objective function in investment\_discharge\_multi\_stage(), investment\_charge\_multi\_stage(), investment\_energy\_multi\_stage(), and transmission\_multi\_stage(). Thus, this step scales these costs back to their correct value.
+Investment costs must not be scaled by OPEXMULT, since an overnight capital cost already covers its own payment years. They are therefore divided by OPEXMULT when added to the objective, in the investment and transmission modules, and multiplying the whole objective by OPEXMULT here restores them. Only the operating terms are genuinely scaled.
 
 The cost-to-go function $\alpha$ represents an approximation of future costs given the investment and retirement decisions in the current stage. It is constructed through the addition of cuts to the cost-to-go function $\alpha$ during the backwards pass.
 
@@ -576,6 +576,7 @@ inputs:
 
   * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
   * EP – JuMP model.
+  * inputs – Dictionary of model inputs for this stage; supplies OPEXMULT.
 
 returns: JuMP model with updated objective function.
 """
