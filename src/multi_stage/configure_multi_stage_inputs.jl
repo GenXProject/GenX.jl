@@ -61,76 +61,62 @@ function payment_years_remaining(settings_d::Dict, crp)
 end
 
 @doc raw"""
-    annuity_discount_rate(settings_d::Dict, tech_wacc)
-
-Rate used to discount a resource's investment annuities, per resource.
-
-The technology-specific weighted average cost of capital is used where one is
-given. Where it is absent the general discount rate from
-`multi_stage_settings.yml` is used instead.
-
-A technology WACC is treated as absent when it is `missing` or non-positive.
-That makes an explicit `WACC` of 0 fall back to the discount rate rather than
-leaving annuities undiscounted, which is almost never what a user means; a
-genuinely undiscounted annuity requires setting the general discount rate to 0.
-"""
-function annuity_discount_rate(settings_d::Dict, tech_wacc)
-    dr = settings_d["WACC"]
-    return [(ismissing(w) || w <= 0) ? dr : w for w in tech_wacc]
-end
-
-@doc raw"""
-    overnight_capital_cost_factor(settings_d::Dict, crp, tech_wacc)
+    overnight_capital_cost_factor(settings_d::Dict, crp)
 
 Per-resource factor converting an annualized investment cost into an overnight
 capital cost, over the payments falling inside the horizon:
 
 ```math
-A_y = \sum_{p=1}^{P_y}\frac{1}{(1+WACC_y)^{p}}
+A_y = \sum_{p=1}^{P_y}\frac{1}{(1+DR)^{p}}
 ```
+
+where $DR$ is the general discount rate (the `WACC` field of
+`multi_stage_settings.yml`). Every annuity is discounted at this one rate, which
+represents the planner's time value of money, so two resources with the same
+annualized cost and recovery period are weighted identically whatever their
+financing. A technology-specific cost of capital belongs in the annualized
+investment cost itself, not in how its annuities are discounted.
 
 Discounting starts at year 1, not year 0; the adjustment to year 0 is carried by
 the stage discount factor applied to the whole objective.
 """
-function overnight_capital_cost_factor(settings_d::Dict, crp, tech_wacc)
+function overnight_capital_cost_factor(settings_d::Dict, crp)
     payment_yrs = payment_years_remaining(settings_d, crp)
-    rate = annuity_discount_rate(settings_d, tech_wacc)
+    dr = settings_d["WACC"]
 
     # Present value of the investment annuities associated with the capital recovery period
     # within the model horizon - discounting to year 1 and not year 0. (The factor adjusting
     # to year 0 for capital cost is included in the discounting coefficient applied to all
     # terms in the objective function value.)
-    return [sum(1 / (1 + rate[i])^p for p in 1:payment_yrs[i]; init = 0.0)
+    return [sum(1 / (1 + dr)^p for p in 1:payment_yrs[i]; init = 0.0)
             for i in eachindex(payment_yrs)]
 end
 
 @doc raw"""
-	function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array,tech_wacc::Array)
+	function compute_overnight_capital_cost(settings_d::Dict,inv_costs_yr::Array,crp::Array)
 
 This function computes overnight capital costs incured within the model horizon, assuming that annualized costs to be paid after the model horizon are fully recoverable, and so are not included in the cost computation.
 
 For each resource $y \in \mathcal{G}$ with annualized investment cost $AIC_{y}$ and capital recovery period $CRP_{y}$, overnight capital costs $OCC_{y}$ are computed as follows:
 ```math
 \begin{aligned}
-    & OCC_{y} = \sum^{min(CRP_{y},H)}_{i=1}\frac{AIC_{y}}{(1+WACC_{y})^{i}}
+    & OCC_{y} = \sum^{min(CRP_{y},H)}_{i=1}\frac{AIC_{y}}{(1+DR)^{i}}
 \end{aligned}
 ```
-where $WACC_y$ is the technology-specific weighted average cost of capital (set by the "WACC" field in the Generators\_data.csv or Network.csv files), $H$ is the number of years remaining between the start of the current model stage and the model horizon (the end of the final model stage) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Generators\_data.csv).
+where $DR$ is the general discount rate (the "WACC" field in multi\_stage\_settings.yml), $H$ is the number of years remaining between the start of the current model stage and the model horizon (the end of the final model stage) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Resource\_multistage\_data.csv, or Network.csv for transmission lines). A technology-specific cost of capital is not used here; it is assumed to be reflected in $AIC_y$ already. See [`overnight_capital_cost_factor`](@ref).
 
 inputs:
 
   * settings\_d - dict object containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
   * inv\_costs\_yr - array object containing annualized investment costs.
   * crp - array object of capital recovery period values.
-  * tech_wacc - array object containing technology-specific weighted costs of capital.
 NOTE: The inv\_costs\_yr and crp arrays must be the same length; values with the same index in each array correspond to the same resource $y \in \mathcal{G}$.
 
 returns: array object containing overnight capital costs, the discounted sum of annual investment costs incured within the model horizon.
 """
 function compute_overnight_capital_cost(settings_d::Dict,
         inv_costs_yr::Array,
-        crp::Array,
-        tech_wacc::Array)
+        crp::Array)
 
     validate_capital_recovery_period(inv_costs_yr, crp)
 
@@ -140,7 +126,7 @@ function compute_overnight_capital_cost(settings_d::Dict,
     #
     # Returns the overnight capital cost: the discounted sum of annual investment costs
     # incurred within the model horizon.
-    return inv_costs_yr .* overnight_capital_cost_factor(settings_d, crp, tech_wacc)
+    return inv_costs_yr .* overnight_capital_cost_factor(settings_d, crp)
 end
 
 """
@@ -231,9 +217,9 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     # same check runs here. Without it a myopic resource with a zero recovery
     # period and a positive investment cost would report zero investment while
     # the objective charged it in full.
-    function add!(key, crp, tw, inv; ids = nothing)
+    function add!(key, crp, inv; ids = nothing)
         validate_capital_recovery_period(inv, crp)
-        a = collect(Float64, overnight_capital_cost_factor(settings_d, crp, tw))
+        a = collect(Float64, overnight_capital_cost_factor(settings_d, crp))
         p = collect(Float64, payment_years_remaining(settings_d, crp))
         if ids !== nothing
             a_full, p_full = zeros(Float64, G), zeros(Float64, G)
@@ -251,42 +237,36 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     # :stor_vs against the per-MWh cost, :charge against the charge-capacity
     # cost. These are still the original annual values here, since the
     # overwrite below has not run yet.
-    generic_crp, generic_wacc = capital_recovery_period.(gen), tech_wacc.(gen)
+    generic_crp = capital_recovery_period.(gen)
     for (key, inv_f) in [(:discharge, inv_cost_per_mwyr), (:grid, inv_cost_per_mwyr),
         (:energy, inv_cost_per_mwhyr), (:stor_vs, inv_cost_per_mwhyr),
         (:charge, inv_cost_charge_per_mwyr)]
-        add!(key, generic_crp, generic_wacc, inv_f.(gen))
+        add!(key, generic_crp, inv_f.(gen))
     end
 
-    # Co-located components with their own recovery period and cost of capital.
-    # These come from the VreStorage sub-collection, so they need scattering.
+    # Co-located components with their own recovery period. These come from the
+    # VreStorage sub-collection, so they need scattering.
     if !isempty(inputs_d["VRE_STOR"])
         vs = gen.VreStorage
         vs_ids = resource_id.(vs)
-        for (key, crp_f, wacc_f, inv_f) in [
-            (:dc, capital_recovery_period_dc, tech_wacc_dc,
-                inv_cost_inverter_per_mwyr),
-            (:solar, capital_recovery_period_solar, tech_wacc_solar,
-                inv_cost_solar_per_mwyr),
-            (:wind, capital_recovery_period_wind, tech_wacc_wind,
-                inv_cost_wind_per_mwyr),
-            (:elec, capital_recovery_period_elec, tech_wacc_elec,
-                inv_cost_elec_per_mwyr),
-            (:charge_dc, capital_recovery_period_charge_dc, tech_wacc_charge_dc,
-                inv_cost_charge_dc_per_mwyr),
+        for (key, crp_f, inv_f) in [
+            (:dc, capital_recovery_period_dc, inv_cost_inverter_per_mwyr),
+            (:solar, capital_recovery_period_solar, inv_cost_solar_per_mwyr),
+            (:wind, capital_recovery_period_wind, inv_cost_wind_per_mwyr),
+            (:elec, capital_recovery_period_elec, inv_cost_elec_per_mwyr),
+            (:charge_dc, capital_recovery_period_charge_dc, inv_cost_charge_dc_per_mwyr),
             (:discharge_dc, capital_recovery_period_discharge_dc,
-                tech_wacc_discharge_dc, inv_cost_discharge_dc_per_mwyr),
-            (:charge_ac, capital_recovery_period_charge_ac, tech_wacc_charge_ac,
-                inv_cost_charge_ac_per_mwyr),
+                inv_cost_discharge_dc_per_mwyr),
+            (:charge_ac, capital_recovery_period_charge_ac, inv_cost_charge_ac_per_mwyr),
             (:discharge_ac, capital_recovery_period_discharge_ac,
-                tech_wacc_discharge_ac, inv_cost_discharge_ac_per_mwyr)]
-            add!(key, crp_f.(vs), wacc_f.(vs), inv_f.(vs); ids = vs_ids)
+                inv_cost_discharge_ac_per_mwyr)]
+            add!(key, crp_f.(vs), inv_f.(vs); ids = vs_ids)
         end
     end
 
     if NetworkExpansion == 1 && inputs_d["Z"] > 1
         add!(:transmission, inputs_d["Capital_Recovery_Period_Trans"],
-            inputs_d["transmission_WACC"], inputs_d["pC_Line_Reinforcement"])
+            inputs_d["pC_Line_Reinforcement"])
     end
 
     inputs_d["MULTISTAGE_COST_FACTORS"] = MultiStageCostFactors(
@@ -340,16 +320,13 @@ function configure_multi_stage_inputs(inputs_d::Dict,
         # NOTE: Although the "yr" suffix is still in use in these parameter names, they no longer represent annualized costs but rather truncated overnight capital costs
         gen.inv_cost_per_mwyr = compute_overnight_capital_cost(settings_d,
             inv_cost_per_mwyr.(gen),
-            capital_recovery_period.(gen),
-            tech_wacc.(gen))
+            capital_recovery_period.(gen))
         gen.inv_cost_per_mwhyr = compute_overnight_capital_cost(settings_d,
             inv_cost_per_mwhyr.(gen),
-            capital_recovery_period.(gen),
-            tech_wacc.(gen))
+            capital_recovery_period.(gen))
         gen.inv_cost_charge_per_mwyr = compute_overnight_capital_cost(settings_d,
             inv_cost_charge_per_mwyr.(gen),
-            capital_recovery_period.(gen),
-            tech_wacc.(gen))
+            capital_recovery_period.(gen))
 
         # 2. Update fixed O&M costs to account for the possibility of more than 1 year between two model stages
         # NOTE: Although the "yr" suffix is still in use in these parameter names, they now represent total costs incured in each stage, which may be multiple years
@@ -363,43 +340,35 @@ function configure_multi_stage_inputs(inputs_d::Dict,
             gen_VRE_STOR.inv_cost_inverter_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_inverter_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_dc.(gen_VRE_STOR),
-                tech_wacc_dc.(gen_VRE_STOR))
+                capital_recovery_period_dc.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_solar_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_solar_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_solar.(gen_VRE_STOR),
-                tech_wacc_solar.(gen_VRE_STOR))
+                capital_recovery_period_solar.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_wind_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_wind_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_wind.(gen_VRE_STOR),
-                tech_wacc_wind.(gen_VRE_STOR))
+                capital_recovery_period_wind.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_elec_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_elec_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_elec.(gen_VRE_STOR),
-                tech_wacc_elec.(gen_VRE_STOR))
+                capital_recovery_period_elec.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_discharge_dc_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_discharge_dc_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_discharge_dc.(gen_VRE_STOR),
-                tech_wacc_discharge_dc.(gen_VRE_STOR))
+                capital_recovery_period_discharge_dc.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_charge_dc_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_charge_dc_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_charge_dc.(gen_VRE_STOR),
-                tech_wacc_charge_dc.(gen_VRE_STOR))
+                capital_recovery_period_charge_dc.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_discharge_ac_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_discharge_ac_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_discharge_ac.(gen_VRE_STOR),
-                tech_wacc_discharge_ac.(gen_VRE_STOR))
+                capital_recovery_period_discharge_ac.(gen_VRE_STOR))
             gen_VRE_STOR.inv_cost_charge_ac_per_mwyr = compute_overnight_capital_cost(
                 settings_d,
                 inv_cost_charge_ac_per_mwyr.(gen_VRE_STOR),
-                capital_recovery_period_charge_ac.(gen_VRE_STOR),
-                tech_wacc_charge_ac.(gen_VRE_STOR))
+                capital_recovery_period_charge_ac.(gen_VRE_STOR))
 
             gen_VRE_STOR.fixed_om_inverter_cost_per_mwyr = fixed_om_inverter_cost_per_mwyr.(gen_VRE_STOR) .*
                                                            OPEXMULT
@@ -449,8 +418,7 @@ function configure_multi_stage_inputs(inputs_d::Dict,
             # 1. Convert annualized tramsmission investment costs incured within the model horizon into overnight capital costs
             inputs_d["pC_Line_Reinforcement"] = compute_overnight_capital_cost(settings_d,
                 inputs_d["pC_Line_Reinforcement"],
-                inputs_d["Capital_Recovery_Period_Trans"],
-                inputs_d["transmission_WACC"])
+                inputs_d["Capital_Recovery_Period_Trans"])
         end
 
         # Scale max_allowed_reinforcement to allow for possibility of deploying maximum reinforcement in each investment stage

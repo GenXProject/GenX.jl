@@ -662,14 +662,7 @@ In addition to the files described above, the `resources` folder can contain add
 |Min\_Retired\_Cap\_Charge_DC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_DC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Discharge_AC\_MW  |Minimum required discharge capacity retirements in the current model period for storage resources with `STOR_AC_DISCHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Charge_AC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_AC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
-| WACC\_DC | The line-specific weighted average cost of capital for the inverter component. |
-| WACC\_Solar | The line-specific weighted average cost of capital for the solar PV component. |
-| WACC\_Wind | The line-specific weighted average cost of capital for the wind component. |
-| WACC\_Elec | The line-specific weighted average cost of capital for the electrolyzer component. |
-| WACC\_Discharge\_DC | The line-specific weighted average cost of capital for the discharging DC storage component with `STOR_DC_DISCHARGE = 2`. |
-| WACC\_Charge\_DC | The line-specific weighted average cost of capital for the charging DC storage component with `STOR_DC_CHARGE = 2`. |
-| WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
-| WACC\_Charge\_AC | The line-specific weighted average cost of capital for the charging AC storage component with `STOR_AC_CHARGE = 2`. |
+| WACC\_DC, WACC\_Solar, WACC\_Wind, WACC\_Elec, WACC\_Discharge\_DC, WACC\_Charge\_DC, WACC\_Discharge\_AC, WACC\_Charge\_AC | *Optional, not used in discounting.* Component-specific costs of capital, accepted for backwards compatibility. Multi-stage investment annuities are discounted at the general discount rate in `multi_stage_settings.yml`; see the multi-stage input documentation. |
 
 #### 1.5 Generator\_variability.csv
 

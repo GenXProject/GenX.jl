@@ -4,7 +4,7 @@ using Test
 
 include(joinpath(@__DIR__, "utilities.jl"))
 
-obj_true = [77736.65081, 41383.80745, 27512.51426]
+obj_true = [74825.17788, 40212.34621, 25327.69958]
 test_path = joinpath(@__DIR__, "multi_stage")
 
 # Define test inputs
@@ -274,7 +274,7 @@ function test_discounting_helpers()
         # single-year annuity payment, which is the point of the convention.
         @test GenX.stage_opex_multiplier(dr, 1) ≈
               GenX.overnight_capital_cost_factor(
-            Dict("CurStage" => 1, "StageLengths" => [1], "WACC" => dr), [1], [dr])[1]
+            Dict("CurStage" => 1, "StageLengths" => [1], "WACC" => dr), [1])[1]
 
         # Stage discount factor: years elapsed before the stage begins. Checked
         # for uneven stages too, which GenX supports.
@@ -295,35 +295,31 @@ function test_discounting_helpers()
         settings["CurStage"] = 3
         @test GenX.payment_years_remaining(settings, [20, 40, 5]) == [8, 8, 5]
 
-        # Overnight capital cost is the annuity times the factor, matching the
-        # original per-resource loop.
+        # Overnight capital cost is the annuity times the factor. Every annuity
+        # is discounted at the general discount rate, so
+        # the factor depends only on the payment count.
         settings["CurStage"] = 1
-        crp, wacc = [20, 40, 5], [0.039, 0.017, 0.027]
+        crp = [20, 40, 5]
         inv = [65400.0, 41000.0, 12000.0]
         payment_yrs = GenX.payment_years_remaining(settings, crp)
-        expected = [sum(inv[i] / (1 + wacc[i])^p for p in 1:payment_yrs[i]; init = 0.0)
+        expected = [sum(inv[i] / (1 + dr)^p for p in 1:payment_yrs[i]; init = 0.0)
                     for i in eachindex(inv)]
-        @test GenX.compute_overnight_capital_cost(settings, inv, crp, wacc) ≈ expected
-        @test GenX.overnight_capital_cost_factor(settings, crp, wacc) .* inv ≈ expected
+        @test GenX.compute_overnight_capital_cost(settings, inv, crp) ≈ expected
+        @test GenX.overnight_capital_cost_factor(settings, crp) .* inv ≈ expected
 
-        # A technology WACC is used where given; the general discount rate
-        # stands in where it is absent, zero, or missing.
-        @test GenX.annuity_discount_rate(settings, [0.039, 0.0, 0.017]) ==
-              [0.039, dr, 0.017]
-        @test GenX.annuity_discount_rate(settings, [missing, -1.0]) == [dr, dr]
-
-        # A resource with no WACC is discounted at the general rate, and one
-        # with a WACC is unaffected by the fallback.
-        @test GenX.overnight_capital_cost_factor(settings, [20], [0.0]) ≈
-              GenX.overnight_capital_cost_factor(settings, [20], [dr])
-        @test GenX.overnight_capital_cost_factor(settings, [20], [0.039])[1] ≈
-              sum(1 / (1 + 0.039)^p for p in 1:20)
+        # Two resources with the same recovery period get the same factor, and
+        # a zero discount rate counts the payments without time value.
+        @test GenX.overnight_capital_cost_factor(settings, [20, 20]) ≈
+              fill(sum(1 / (1 + dr)^p for p in 1:20), 2)
+        @test GenX.overnight_capital_cost_factor(
+            Dict("CurStage" => 1, "StageLengths" => [10, 10, 10], "WACC" => 0.0),
+            [20, 5]) == [20.0, 5.0]
 
         # A zero capital recovery period is an error only when there is an
         # investment cost to recover.
-        @test GenX.compute_overnight_capital_cost(settings, [0.0], [0], [0.05]) == [0.0]
+        @test GenX.compute_overnight_capital_cost(settings, [0.0], [0]) == [0.0]
         @test_throws ErrorException GenX.compute_overnight_capital_cost(
-            settings, [100.0], [0], [0.05])
+            settings, [100.0], [0])
     end
 end
 
@@ -411,8 +407,7 @@ function test_cost_reporting_factors()
             gen = inputs["RESOURCES"]
             crp = GenX.capital_recovery_period.(gen)
             inv_before = GenX.inv_cost_per_mwyr.(gen)
-            expected_occ = GenX.compute_overnight_capital_cost(
-                ms, inv_before, crp, GenX.tech_wacc.(gen))
+            expected_occ = GenX.compute_overnight_capital_cost(ms, inv_before, crp)
 
             inputs = GenX.configure_multi_stage_inputs(inputs, ms,
                 settings["NetworkExpansion"])
