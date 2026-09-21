@@ -556,39 +556,39 @@ function test_perfect_foresight_cost_reporting()
             # is the single strongest check: it ties the whole reported
             # breakdown back to the optimisation.
             stage_cost = objective_value(EP[p]) - value(EP[p][:vALPHA])
-            @test disc[p]["cTotal"] / scale ≈ stage_cost rtol=1e-8
+            @test disc[p]["cTotal"] / scale ≈ stage_cost rtol=1e-10
 
             # Under perfect foresight the model's own fixed-cost expression is
             # already the stage-level present value, so discounting is the only
             # thing left to do.
             g(sym) = haskey(EP[p].obj_dict, sym) ? value(EP[p][sym]) : 0.0
             model_fix = g(:eTotalCFix) + g(:eTotalCFixEnergy) + g(:eTotalCFixCharge)
-            @test disc[p]["cFix"] / scale ≈ DF * model_fix rtol=1e-8
+            @test disc[p]["cFix"] / scale ≈ DF * model_fix rtol=1e-12
 
             # Operating costs are annual in the model, so they take the full
             # discount factor times the stage multiplier, and the undiscounted
             # view takes the stage length instead. Their ratio is a pure
             # function of the conventions, independent of the solution.
             if disc[p]["cVar"] != 0
-                @test undisc[p]["cVar"] / disc[p]["cVar"] ≈ L / (DF * OM) rtol=1e-8
+                @test undisc[p]["cVar"] / disc[p]["cVar"] ≈ L / (DF * OM) rtol=1e-12
             end
             for row in ("cFuel", "cNSE", "cStart")
                 disc[p][row] == 0 && continue
-                @test undisc[p][row] / disc[p][row] ≈ L / (DF * OM) rtol=1e-8
+                @test undisc[p][row] / disc[p][row] ≈ L / (DF * OM) rtol=1e-12
             end
 
             # Both views must be internally consistent: zones sum to totals,
             # and cTotal is the sum of its component rows.
             for file in ("costs.csv", "costs_undiscounted.csv")
                 path = joinpath(outdir, "results_p$p", file)
-                @test zone_sum_gap(path, ATTRIBUTED_ROWS) < 1e-9
+                @test zone_sum_gap(path, ATTRIBUTED_ROWS) < 1e-12
             end
             for tab in (disc[p], undisc[p])
                 rows = sum(get(tab, r, 0.0) for r in
                 ["cFix", "cVar", "cFuel", "cNSE", "cStart", "cUnmetRsv",
                     "cNetworkExp", "cUnmetPolicyPenalty", "cCO2",
                     "cHydrogenRevenue"])
-                @test tab["cTotal"] ≈ rows rtol=1e-8
+                @test tab["cTotal"] ≈ rows rtol=1e-12
             end
 
             # Undiscounted costs are never smaller: they omit the time value
@@ -600,7 +600,7 @@ function test_perfect_foresight_cost_reporting()
         # trajectory the algorithm converged on.
         horizon = sum(objective_value(EP[p]) - value(EP[p][:vALPHA])
         for p in 1:nstages)
-        @test sum(disc[p]["cTotal"] for p in 1:nstages) / scale ≈ horizon rtol=1e-8
+        @test sum(disc[p]["cTotal"] for p in 1:nstages) / scale ≈ horizon rtol=1e-10
 
         # The horizon summary stacks the per-stage files without rescaling.
         summary = CSV.read(joinpath(outdir, "costs_multi_stage.csv"), DataFrame)
@@ -673,7 +673,7 @@ function test_myopic_cost_addback()
                 # Reported investment is each resource's annual annuity paid
                 # over every year inside the horizon, discounted to the start.
                 reported_inv = disc["cFix"] / scale - DF * OM * obj_fom
-                @test reported_inv ≈ DF * expect_inv_A rtol=1e-8
+                @test reported_inv ≈ DF * expect_inv_A rtol=1e-10
 
                 # It must exceed a plain discounting of what the objective
                 # charged, since the objective saw only one year of each.
@@ -691,7 +691,7 @@ function test_myopic_cost_addback()
                 # value, so it is larger still.
                 reported_inv_cf = undisc["cFix"] / scale -
                                   float(f.stage_length) * obj_fom
-                @test reported_inv_cf ≈ expect_inv_P rtol=1e-8
+                @test reported_inv_cf ≈ expect_inv_P rtol=1e-10
                 @test reported_inv_cf > reported_inv
                 implied_cf = reported_inv_cf / obj_inv
                 @test minimum(P[active]) - 1e-6 <= implied_cf <= maximum(P[active]) + 1e-6
@@ -700,14 +700,14 @@ function test_myopic_cost_addback()
             # Both views stay internally consistent, as in the PF case.
             for file in ("costs.csv", "costs_undiscounted.csv")
                 @test zone_sum_gap(joinpath(outdir, "results_p$p", file),
-                    ATTRIBUTED_ROWS) < 1e-9
+                    ATTRIBUTED_ROWS) < 1e-12
             end
             for tab in (disc, undisc)
                 rows = sum(get(tab, r, 0.0) for r in
                 ["cFix", "cVar", "cFuel", "cNSE", "cStart", "cUnmetRsv",
                     "cNetworkExp", "cUnmetPolicyPenalty", "cCO2",
                     "cHydrogenRevenue"])
-                @test tab["cTotal"] ≈ rows rtol=1e-8
+                @test tab["cTotal"] ≈ rows rtol=1e-12
             end
 
             # Unlike perfect foresight, the reported total is deliberately not
