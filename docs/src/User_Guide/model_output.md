@@ -53,7 +53,9 @@ For every row that can be attributed to a resource, the zone columns sum to the
 Three rows have no per-resource attribution (`cUnmetRsv`, `cNetworkExp` and
 `cUnmetPolicyPenalty`) and are written as empty cells in the zone columns, since
 those costs are system-wide. Empty cells read back as missing values while the
-column stays numeric.
+column stays numeric. The `cTotal` row is therefore the one row whose zone
+columns do not sum to its `Total`: the difference is exactly the sum of these
+three system-wide rows.
 
 `cGridConnection`, written for co-located VRE+storage resources, is a memo: it
 repeats the grid-connection portion of `cFix` and is not added to `cTotal`.
