@@ -446,10 +446,12 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
     !isempty(VRE_STOR) && push!(cost_list, "cGridConnection")
     !isempty(ELECTROLYZER_ALL) && push!(cost_list, "cHydrogenRevenue")
 
-    # For a single-stage run the objective is the authoritative total, since it
-    # includes terms with no row of their own. Under a re-scaled multi-stage
-    # view there is no single objective to quote, so the total is the sum of
-    # the rows; every objective term now maps to one.
+    # Single-stage quotes the objective. It now equals the row sum, so this
+    # keeps cTotal an independent check on the rows rather than a restatement
+    # of them, and leaves the output identical to earlier releases. The
+    # multi-stage views rescale investment and operating rows by different
+    # factors, so eObj is not in their units; their total is the row sum, which
+    # comes out equal to objective_value - vALPHA.
     row_sum = sum(fix_v) + sum(var_v) + sum(fuel_v) + sum(nse_v) + sum(start_v) +
               unmet_rsv_v + netexp_v + policy_v + sum(co2_v) + sum(h2_v)
     total = Any[use_model ? bd.obj : row_sum,
