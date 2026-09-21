@@ -10,7 +10,7 @@ test_path = joinpath(@__DIR__, "multi_stage")
 # Define test inputs
 multistage_setup = Dict("NumStages" => 3,
     "StageLengths" => [10, 10, 10],
-    "WACC" => 0.045,
+    "DiscountRate" => 0.045,
     "ConvergenceTolerance" => 0.01,
     "Myopic" => 0,
     "WriteIntermittentOutputs" => 0)
@@ -274,7 +274,7 @@ function test_discounting_helpers()
         # single-year annuity payment, which is the point of the convention.
         @test GenX.stage_opex_multiplier(dr, 1) ≈
               GenX.overnight_capital_cost_factor(
-            Dict("CurStage" => 1, "StageLengths" => [1], "WACC" => dr), [1])[1]
+            Dict("CurStage" => 1, "StageLengths" => [1], "DiscountRate" => dr), [1])[1]
 
         # Stage discount factor: years elapsed before the stage begins. Checked
         # for uneven stages too, which GenX supports.
@@ -287,7 +287,7 @@ function test_discounting_helpers()
         end
 
         # Payment years: capital recovery period truncated at the horizon.
-        settings = Dict("CurStage" => 1, "NumStages" => 3, "WACC" => dr,
+        settings = Dict("CurStage" => 1, "NumStages" => 3, "DiscountRate" => dr,
             "StageLengths" => [10, 5, 8])
         @test GenX.payment_years_remaining(settings, [20, 40, 5]) == [20, 23, 5]
         settings["CurStage"] = 2
@@ -312,7 +312,7 @@ function test_discounting_helpers()
         @test GenX.overnight_capital_cost_factor(settings, [20, 20]) ≈
               fill(sum(1 / (1 + dr)^p for p in 1:20), 2)
         @test GenX.overnight_capital_cost_factor(
-            Dict("CurStage" => 1, "StageLengths" => [10, 10, 10], "WACC" => 0.0),
+            Dict("CurStage" => 1, "StageLengths" => [10, 10, 10], "DiscountRate" => 0.0),
             [20, 5]) == [20.0, 5.0]
 
         # A zero capital recovery period is an error only when there is an
@@ -393,7 +393,7 @@ function test_cost_reporting_factors()
         merge!(settings, genx_setup)
         ms = settings["MultiStageSettingsDict"]
         stage_lens = ms["StageLengths"]
-        dr = ms["WACC"]
+        dr = ms["DiscountRate"]
 
         for t in 1:ms["NumStages"]
             ms["CurStage"] = t
