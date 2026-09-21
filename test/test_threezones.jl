@@ -73,4 +73,32 @@ obj_test_int = round_from_tol!(obj_test_int, optimal_tol_int)
 optimal_tol_int = round_from_tol!(optimal_tol_int, optimal_tol_int)
 write_testlog(test_path, obj_test_int, optimal_tol_int, test_result_int)
 
+# In a single-stage run cTotal is written from the objective, not from the rows,
+# so comparing the two tests that every objective term reached a row.
+function test_costs_self_consistent(EP, inputs, setup)
+    settings = GenX.default_settings()
+    merge!(settings, setup)
+    dir = mktempdir()
+    redirect_stdout(devnull) do
+        GenX.write_costs(dir, inputs, settings, EP)
+    end
+    df = CSV.read(joinpath(dir, "costs.csv"), DataFrame)
+    rm(dir, recursive = true, force = true)
+
+    total = df[df.Costs .== "cTotal", :Total][1]
+    rows = sum(df[(df.Costs .!= "cTotal") .& (df.Costs .!= "cGridConnection"), :Total])
+    @test total≈rows rtol=1e-10
+
+    zcols = filter(n -> startswith(n, "Zone"), names(df))
+    for r in eachrow(df)
+        r.Costs == "cTotal" && continue
+        vals = [r[c] for c in zcols]
+        any(ismissing, vals) && continue
+        @test sum(vals)≈r.Total rtol=1e-12 atol=1e-9
+    end
+end
+
+test_costs_self_consistent(EP, inputs, genx_setup)
+test_costs_self_consistent(EP_int, inputs_int, genx_setup_int)
+
 end # module TestThreeZones
