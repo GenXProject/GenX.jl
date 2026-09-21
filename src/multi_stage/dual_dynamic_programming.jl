@@ -560,7 +560,7 @@ where $OBJ$ is the original objective function. $OBJ$ is scaled by two terms. Th
     DF = \frac{1}{(1+DR)^{\sum_{k<p}L_{k}}}
 \end{aligned}
 ```
-where $DR$ is the general discount rate (the `WACC` field of multi\_stage\_settings.yml) and $L_{k}$ is the length of stage $k$ in years.
+where $DR$ is the general discount rate (the `DiscountRate` field of multi\_stage\_settings.yml) and $L_{k}$ is the length of stage $k$ in years.
 
 The second term is a discounted sum of annual operational expenses incurred each year of a multi-year model stage:
 ```math

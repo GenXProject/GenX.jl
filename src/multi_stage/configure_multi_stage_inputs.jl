@@ -70,7 +70,7 @@ capital cost, over the payments falling inside the horizon:
 A_y = \sum_{p=1}^{P_y}\frac{1}{(1+DR)^{p}}
 ```
 
-where $DR$ is the general discount rate (the `WACC` field of
+where $DR$ is the general discount rate (the `DiscountRate` field of
 `multi_stage_settings.yml`). Every annuity is discounted at this one rate, which
 represents the planner's time value of money, so two resources with the same
 annualized cost and recovery period are weighted identically whatever their
@@ -103,7 +103,7 @@ For each resource $y \in \mathcal{G}$ with annualized investment cost $AIC_{y}$ 
     & OCC_{y} = \sum^{min(CRP_{y},H)}_{i=1}\frac{AIC_{y}}{(1+DR)^{i}}
 \end{aligned}
 ```
-where $DR$ is the general discount rate (the "WACC" field in multi\_stage\_settings.yml), $H$ is the number of years remaining between the start of the current model stage and the model horizon (the end of the final model stage) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Resource\_multistage\_data.csv, or Network.csv for transmission lines). A technology-specific cost of capital is not used here; it is assumed to be reflected in $AIC_y$ already. See [`overnight_capital_cost_factor`](@ref).
+where $DR$ is the general discount rate (the "DiscountRate" field in multi\_stage\_settings.yml), $H$ is the number of years remaining between the start of the current model stage and the model horizon (the end of the final model stage) and $CRP_y$ is the capital recovery period for technology $y$ (specified in Resource\_multistage\_data.csv, or Network.csv for transmission lines). A technology-specific cost of capital is not used here; it is assumed to be reflected in $AIC_y$ already. See [`overnight_capital_cost_factor`](@ref).
 
 inputs:
 
