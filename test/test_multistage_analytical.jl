@@ -57,7 +57,7 @@ expected_undiscounted(i) = paym(i) * inv_annual(i) +
                            STAGE_LENS[i] * (fom_annual(i) + var_annual(i) + fuel_annual(i))
 
 function run_case()
-    ms = Dict("NumStages" => 3, "StageLengths" => STAGE_LENS, "WACC" => DR,
+    ms = Dict("NumStages" => 3, "StageLengths" => STAGE_LENS, "DiscountRate" => DR,
         "ConvergenceTolerance" => 1e-6, "Myopic" => 0,
         "WriteIntermittentOutputs" => 0)
     gs = Dict("MultiStage" => 1, "MultiStageSettingsDict" => ms,

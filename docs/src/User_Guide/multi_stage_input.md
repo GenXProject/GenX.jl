@@ -26,7 +26,7 @@ Instead of one set of input files, there is one directory of input files that ne
 | Min\_Retired\_Charge\_Cap\_MW | Minimum charge capacity in MW that must retire in this planning stage.                                                                                     |
 | Lifetime                     | The operational lifespan in years of this technology after which it must be retired.                                                                       |
 | Capital\_Recovery\_Period      | The technology-specific period in years over which initial capital costs must be recovered. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                               |
-| WACC                         | *Optional, not used in discounting.* Investment annuities are discounted at the general discount rate (the `WACC` field of `multi_stage_settings.yml`); a technology-specific cost of capital should already be reflected in the annualized investment cost. The column is accepted for backwards compatibility but does not affect results.                                                                                                 |
+| WACC                         | *Optional, not used in discounting.* Investment annuities are discounted at the general discount rate (the `DiscountRate` field of `multi_stage_settings.yml`); a technology-specific cost of capital should already be reflected in the annualized investment cost. The column is accepted for backwards compatibility but does not affect results.                                                                                                 |
 |Contribute\_Min\_Retirement | {0, 1}, Flag to indicate whether the (retrofitting) resource can contribute to the minimum retirement requirement.|
 
 |                              |                                                                   **co-located VRE-STOR resources only**                                                                  |
@@ -51,7 +51,7 @@ Instead of one set of input files, there is one directory of input files that ne
 |:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Line\_Max\_Flow\_Possible\_MW | The maximum transmission capacity of the line, as opposed to Line\_Max\_Reinforcement\_MW which now specifies the maximum expansion to the line in one stage. |
 | Capital\_Recovery\_Period   | The line-specific period in years over which initial capital costs must be recovered.                                                                |
-| WACC                      | *Optional, not used in discounting.* Line investment annuities are discounted at the general discount rate (the `WACC` field of `multi_stage_settings.yml`). The column is accepted for backwards compatibility but does not affect results. |
+| WACC                      | *Optional, not used in discounting.* Line investment annuities are discounted at the general discount rate (the `DiscountRate` field of `multi_stage_settings.yml`). The column is accepted for backwards compatibility but does not affect results. |
 
 
 !!! note "Allowing retrofitted capacity to not contribute to minimum retirement requirements (`myopic=0` only)"
@@ -113,7 +113,7 @@ A separate settings.yml file includes a list of parameters to be specified to fo
 | StageLengths         | A list of lengths of each model stage in years (e.g., [10, 10, 10] for three stages each of length 10). Note that stages could be defined to be of varying length. |
 | Myopic               | 0 = perfect foresight, 1 = myopic model (see above table)                                                                                                          |
 | ConvergenceTolerance | The relative optimality gap used for convergence of the dual dynamic programming algorithm. Only required when Myopic = 0                                          |
-| WACC                 | Rate used to discount non-technology-specific costs from stage to stage (i.e., the “social discount rate”).                                                        |
+| DiscountRate         | The general discount rate: the planner's time value of money, used to discount every cost from stage to stage (the "social discount rate"). Formerly called `WACC`; that name is still accepted but warns, and is a different quantity from the per-resource `WACC` column. |
 | WriteIntermittentOutputs | (valid if Myopic = 1) 0 = do not write intermittent outputs, 1 = write intermittent output. |
 
 |                       |                                                                                  **time\_domain\_reduction\_settings.yml**                                                                                  |
@@ -122,7 +122,7 @@ A separate settings.yml file includes a list of parameters to be specified to fo
 
 ### Discounting and cost accounting
 
-Write $DR$ for the general discount rate (the `WACC` field of
+Write $DR$ for the general discount rate (the `DiscountRate` field of
 `multi_stage_settings.yml`), $L_i$ for the length of stage $i$ in years, and
 $N_i = \sum_{s<i} L_s$ for the years elapsed before stage $i$ begins. For a
 resource $y$, let $CRP_y$ be its capital recovery period.

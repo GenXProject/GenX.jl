@@ -189,10 +189,35 @@ end
 function default_settings_multistage()
     Dict{Any, Any}("NumStages" => 3,
         "StageLengths" => [10, 10, 10],
-        "WACC" => 0.045,
+        "DiscountRate" => 0.045,
         "ConvergenceTolerance" => 0.01,
         "Myopic" => 1,
         "WriteIntermittentOutputs" => 0)
+end
+
+"""
+    resolve_discount_rate_setting!(model_settings::Dict, settings_path::String)
+
+Accept the former name `WACC` for the general discount rate.
+
+The setting was called `WACC`, which collided with the per-resource `WACC`
+column of `Resource_multistage_data.csv`: the first is the planner's time value
+of money, the second a technology's cost of capital. They were never the same
+quantity. The setting is now `DiscountRate`; `WACC` is still read so existing
+cases keep working, with a warning.
+"""
+function resolve_discount_rate_setting!(model_settings::Dict, settings_path::String)
+    haskey(model_settings, "WACC") || return nothing
+    if haskey(model_settings, "DiscountRate")
+        error("$settings_path sets both DiscountRate and WACC. WACC is the " *
+              "former name for the same setting, so keep DiscountRate and " *
+              "remove WACC.")
+    end
+    @warn "$settings_path uses WACC for the general discount rate. That " *
+          "setting is now called DiscountRate; WACC still works but will be " *
+          "removed. Note the per-resource WACC column is a different quantity."
+    model_settings["DiscountRate"] = pop!(model_settings, "WACC")
+    return nothing
 end
 
 @doc raw"""
@@ -211,6 +236,7 @@ settings dictionary.
 function configure_settings_multistage(settings_path::String)
     println("Configuring Multistage Settings")
     model_settings = isfile(settings_path) ? YAML.load(open(settings_path)) : Dict{Any, Any}()
+    resolve_discount_rate_setting!(model_settings, settings_path)
 
     settings = default_settings_multistage()
     merge!(settings, model_settings)

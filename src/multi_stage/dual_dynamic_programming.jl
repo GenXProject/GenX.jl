@@ -582,14 +582,14 @@ returns: JuMP model with updated objective function.
 """
 function initialize_cost_to_go(settings_d::Dict, EP::Model, inputs::Dict)
     cur_stage = settings_d["CurStage"] # Current DDP Investment Planning Stage
-    wacc = settings_d["WACC"] # Interest Rate  and also the discount rate unless specified other wise
+    dr = settings_d["DiscountRate"] # Planner's time value of money
     OPEXMULT = inputs["OPEXMULT"] # OPEX multiplier to count multiple years between two model stages, set in configure_multi_stage_inputs.jl
 
     # Overwrite the objective function to include the cost-to-go variable (not in myopic case)
     # Multiply discount factor to all terms except the alpha term or the cost-to-go function
     # All OPEX terms get an additional adjustment factor
     # Discount factor applied to all costs in each stage
-    DF = stage_discount_factor(wacc, settings_d["StageLengths"], cur_stage)
+    DF = stage_discount_factor(dr, settings_d["StageLengths"], cur_stage)
     # Initialize the cost-to-go variable
     @variable(EP, vALPHA>=0)
     @objective(EP, Min, DF * OPEXMULT * EP[:eObj]+vALPHA)

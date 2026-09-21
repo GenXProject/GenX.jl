@@ -82,7 +82,7 @@ the stage discount factor applied to the whole objective.
 """
 function overnight_capital_cost_factor(settings_d::Dict, crp)
     payment_yrs = payment_years_remaining(settings_d, crp)
-    dr = settings_d["WACC"]
+    dr = settings_d["DiscountRate"]
 
     # Present value of the investment annuities associated with the capital recovery period
     # within the model horizon - discounting to year 1 and not year 0. (The factor adjusting
@@ -202,7 +202,7 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
         NetworkExpansion::Int)
     gen = inputs_d["RESOURCES"]
     cur_stage = settings_d["CurStage"]
-    wacc = settings_d["WACC"]
+    dr = settings_d["DiscountRate"]
     stage_len = settings_d["StageLengths"][cur_stage]
 
     G = length(gen)
@@ -270,8 +270,8 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     end
 
     inputs_d["MULTISTAGE_COST_FACTORS"] = MultiStageCostFactors(
-        stage_discount_factor(wacc, settings_d["StageLengths"], cur_stage),
-        stage_opex_multiplier(wacc, stage_len),
+        stage_discount_factor(dr, settings_d["StageLengths"], cur_stage),
+        stage_opex_multiplier(dr, stage_len),
         stage_len,
         components)
     return nothing
@@ -306,11 +306,11 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     # Parameter inputs when multi-year discounting is activated
     cur_stage = settings_d["CurStage"]
     stage_len = settings_d["StageLengths"][cur_stage]
-    wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
+    dr = settings_d["DiscountRate"] # Planner's time value of money; see resolve_discount_rate_setting!
     myopic = settings_d["Myopic"] == 1 # 1 if myopic (only one forward pass), 0 if full DDP
 
     # Define OPEXMULT here, include in inputs_dict[t] for use in dual_dynamic_programming.jl, transmission_multi_stage.jl, and investment_multi_stage.jl
-    OPEXMULT = myopic ? 1 : stage_opex_multiplier(wacc, stage_len)
+    OPEXMULT = myopic ? 1 : stage_opex_multiplier(dr, stage_len)
     inputs_d["OPEXMULT"] = OPEXMULT
 
     stash_cost_reporting_factors!(inputs_d, settings_d, NetworkExpansion)
