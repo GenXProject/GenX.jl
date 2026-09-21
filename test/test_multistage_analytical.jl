@@ -127,7 +127,10 @@ end
     # The discounted stage total is what the objective charges for that stage.
     for p in 1:3
         disc = totals(joinpath(outdir, "results_p$p", "costs.csv"))
-        @test disc["cTotal"] ≈ objective_value(EP[p]) - value(EP[p][:vALPHA]) rtol=1e-6
+        # Both sides come from the same solution, so solver error cancels and
+        # this is tighter than the checks against hand-computed values, which
+        # are bounded by the solver's feasibility tolerance.
+        @test disc["cTotal"] ≈ objective_value(EP[p]) - value(EP[p][:vALPHA]) rtol=1e-10
     end
 
     rm(outdir, recursive = true, force = true)
