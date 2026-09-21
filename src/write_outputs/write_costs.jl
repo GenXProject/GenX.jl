@@ -273,12 +273,16 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
                 _accumulate_over_time!(var, EP[sym], ids)
         end
 
-        # Grid connection is a memo row: it is the same expression already
-        # counted inside cFix for these resources, reported separately. It gets
-        # its own split so the memo scales the same way the cFix row does.
-        _accumulate_fixed!(grid_acc, EP[:eCGrid], VRE_STOR,
+        # Grid connection is a memo row. For a co-located resource eCFix is
+        # entirely the grid-connection cost, since every other component has its
+        # own expression above, so the memo reads eCFix over VRE_STOR rather
+        # than eCGrid. The two are the same wherever both are defined, except
+        # that eCFix scales the investment term by Cap_Size for a resource in
+        # CAP_SIZE_SCALED and eCGrid does not. Reading eCFix keeps the memo
+        # equal to the cFix it is quoting in every configuration.
+        _accumulate_fixed!(grid_acc, EP[:eCFix], VRE_STOR,
             y -> fixed_om_cost_per_mwyr(gen[y]), EP[:eTotalCap],
-            ann(:grid), model_opexmult, myopic)
+            ann(:discharge), model_opexmult, myopic)
     end
 
     # --- Hydrogen revenue (negative cost) ----------------------------------

@@ -230,15 +230,15 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     end
 
     # Components carried on the generic resource fields, already indexed by
-    # resource id. eCFixEnergy_VS and eCGrid use these too, despite belonging
-    # to co-located resources.
+    # resource id. eCFixEnergy_VS uses these too, despite belonging to
+    # co-located resources.
     # Each component is validated against the investment field it actually
-    # prices: :discharge and :grid against the per-MW cost, :energy and
-    # :stor_vs against the per-MWh cost, :charge against the charge-capacity
-    # cost. These are still the original annual values here, since the
-    # overwrite below has not run yet.
+    # prices: :discharge against the per-MW cost, :energy and :stor_vs against
+    # the per-MWh cost, :charge against the charge-capacity cost. These are
+    # still the original annual values here, since the overwrite below has not
+    # run yet.
     generic_crp = capital_recovery_period.(gen)
-    for (key, inv_f) in [(:discharge, inv_cost_per_mwyr), (:grid, inv_cost_per_mwyr),
+    for (key, inv_f) in [(:discharge, inv_cost_per_mwyr),
         (:energy, inv_cost_per_mwhyr), (:stor_vs, inv_cost_per_mwhyr),
         (:charge, inv_cost_charge_per_mwyr)]
         add!(key, generic_crp, inv_f.(gen))
