@@ -32,6 +32,10 @@ const FUEL_PRICE = 3.0    # $/MMBTU
 const HOURS = 8760.0
 const DEMAND = [100.0, 150.0, 200.0]
 const NEWCAP = [100.0, 50.0, 50.0]     # demand less what the previous stage left
+# Lifetime 50 exceeds the 23-year horizon, so nothing retires and capacity
+# accumulates to exactly peak demand. FOM is charged on that, not on demand.
+const TOTAL_CAP = cumsum(NEWCAP)
+@test TOTAL_CAP == DEMAND
 
 # --- the conventions, written out independently of GenX --------------------
 "Years elapsed before stage i begins."
@@ -47,7 +51,7 @@ annuity(i) = sum(1 / (1 + DR)^p for p in 1:paym(i))
 
 # --- the expected cost of each stage ---------------------------------------
 inv_annual(i) = AIC * NEWCAP[i]
-fom_annual(i) = FOM * DEMAND[i]
+fom_annual(i) = FOM * TOTAL_CAP[i]
 var_annual(i) = VOM * DEMAND[i] * HOURS
 fuel_annual(i) = HEAT_RATE * FUEL_PRICE * DEMAND[i] * HOURS
 
