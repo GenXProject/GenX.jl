@@ -103,7 +103,10 @@ therefore gives the cost over the whole horizon, in present value at its start.
     cost of the trajectory the algorithm converged on. This can differ slightly
     from the final upper bound in `stats_multi_stage.csv`, which records the best
     bound seen during iteration rather than the cost of the final forward pass.
-    The two agree to within the convergence tolerance.
+    The two agree to within the convergence tolerance. If the algorithm stops
+    at its iteration limit instead, the costs describe the final forward pass
+    rather than an optimal trajectory, and a warning is issued when the cost
+    files are written.
 
 ### 1.3 emissions.csv
 

@@ -720,4 +720,23 @@ end
 
 test_myopic_cost_addback()
 
+function test_convergence_warning()
+    @testset "Non-converged DDP is reported" begin
+        ms = Dict("Myopic" => 0, "ConvergenceTolerance" => 0.01)
+        converged = Dict("UPPER_BOUNDS" => [200.0, 100.5], "LOWER_BOUNDS" => [50.0, 100.0])
+        open_gap = Dict("UPPER_BOUNDS" => [200.0, 150.0], "LOWER_BOUNDS" => [50.0, 100.0])
+
+        @test_logs GenX.warn_if_not_converged(ms, converged)
+        @test_logs (:warn,) GenX.warn_if_not_converged(ms, open_gap)
+
+        # Nothing to check against, or a myopic run, must stay silent.
+        @test_logs GenX.warn_if_not_converged(ms, nothing)
+        @test_logs GenX.warn_if_not_converged(ms, Dict{String, Any}())
+        @test_logs GenX.warn_if_not_converged(
+            Dict("Myopic" => 1, "ConvergenceTolerance" => 0.01), open_gap)
+    end
+end
+
+test_convergence_warning()
+
 end # module TestMultiStage
