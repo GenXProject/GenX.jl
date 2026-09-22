@@ -188,6 +188,65 @@ function init_dist_subproblems(setup::Dict, inputs_decomp::Dict, planning_variab
 end
 
 @doc raw"""
+	add_dcopf_to_local_subproblems!(subproblems_local, inputs_local, setup)
+
+Add DC-OPF constraints in-place to the subproblems held on one worker.
+
+`inputs_local` maps subperiod index → that subperiod's `inputs` dict; each subproblem is
+matched to its inputs via `:subproblem_index`.
+"""
+function add_dcopf_to_local_subproblems!(subproblems_local::Vector{Dict{Any,Any}}, inputs_local::Dict, setup::Dict)
+    for sp in subproblems_local
+        dcopf_transmission!(sp[:model], inputs_local[sp[:subproblem_index]], setup)
+    end
+    return nothing
+end
+
+@doc raw"""
+	add_dcopf_to_subproblems!(subproblems, inputs_decomp, setup)
+
+Add the DC-OPF constraints to already-built Benders operational subproblems, in place.
+
+Used when a run first solves the transport (no DC-OPF) relaxation and then continues with
+DC-OPF: the subproblems were built with `DC_OPF = 0`, so `dcopf_transmission!` still has to be
+applied to each of them.  The subproblems are not rebuilt — `dcopf_transmission!` only adds
+`vANGLE` and the flow–angle constraints to the existing JuMP models.  Call with `setup["DC_OPF"]`
+already set to 1.
+
+Nothing else has to be updated: the DC-OPF variables and constraints are purely operational, and
+the linking variables (`vNEW_TRANS_CAP`, `vNEW_TRANS_LINES`) already exist in every subproblem
+via `transmission_capacity_decisions!`, so `planning_variables_sub` is unchanged and the master's
+accumulated cuts stay valid (the transport model is a relaxation of DC-OPF, so its cuts remain
+valid underestimators of the DC-OPF recourse cost).
+
+Dispatches on the subproblem container: for a `DArray` the work is spawned on the worker that
+owns each subproblem, and only that worker's slice of `inputs_decomp` is shipped to it.
+"""
+function add_dcopf_to_subproblems!(subproblems::Vector{Dict{Any,Any}}, inputs_decomp::Dict, setup::Dict)
+    add_dcopf_to_local_subproblems!(subproblems, inputs_decomp, setup)
+    return nothing
+end
+
+function add_dcopf_to_subproblems!(subproblems::DistributedArrays.DArray, inputs_decomp::Dict, setup::Dict)
+
+    da_pids = vec(subproblems.pids)
+    da_indices = vec(subproblems.indices)
+    pid_to_range = Dict(da_pids[k] => da_indices[k][1] for k in 1:length(da_pids))
+
+    futures = Future[]
+    for p in workers()
+        # Extract only this worker's subperiod inputs here on the master, as in init_dist_subproblems.
+        W_local = get(pid_to_range, p, 1:0)
+        inputs_local = Dict(w => inputs_decomp[w] for w in W_local)
+        push!(futures,
+            @spawnat p add_dcopf_to_local_subproblems!(localpart(subproblems), inputs_local, setup))
+    end
+    foreach(fetch, futures)
+
+    return nothing
+end
+
+@doc raw"""
     configure_benders_subprob_solver(solver_settings_path, optimizer)
 
 Return a solver `OptimizerWithAttributes` for Benders operational subproblems.

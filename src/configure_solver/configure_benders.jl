@@ -18,6 +18,10 @@ default values. The returned dictionary uses `Symbol` keys.
 | `Distributed`              | `false`  | Distribute subproblems to remote workers. When `true`, GenX will automatically launch worker processes (see `NWorkers`) if fewer are currently running. |
 | `NWorkers`                 | `-1`     | Target number of Julia worker processes for parallel subproblem solving. Only used when `Distributed: true`. `-1` (the default) sizes the pool automatically from the Slurm/LSF allocation, or from `min(n_subproblems, Sys.CPU_THREADS)` on a local machine; a value `> 1` requests that many workers explicitly; `0` or `1` disables parallel solving. |
 | `ThetaLB`                  | `0.0`    | Lower bound on the subproblem objective |
+| `RunTransportModel`                  | false    | Only for DCOPF expansion case: run transport model to generate initial cuts |
+| `LPTransportHotstart`                  | false    | Only for DCOPF expansion case with `RunTransportModel` = true; does an LP relaxation of planning problem before turning on integer builds; runs DCOPF after transport model solves |
+| `LPDCOPFHotstart`                  | false    | Only for DCOPF expansion case; does an LP relaxation of planning problem before turning on integer builds |
+| `RegularizationPostHotstart`                  | false    | If true, will continue to run regularization after hotstarting steps are complete |
 """
 function configure_benders(settings_path::String)
 
@@ -26,16 +30,20 @@ function configure_benders(settings_path::String)
 
     # GenX-convention string keys (configurable via benders_settings.yml)
     default_settings = Dict{Any,Any}(
-        :ConvTol                   => 1e-3,
-        :MaxIter                   => 50,
-        :MaxCpuTime                => 7200,
-        :StabParam                 => 0.0,
-        :StabDynamic               => false,
-        :ExpectFeasibleSubproblems => false,
-        :IntegerInvestment         => false,
-        :Distributed               => false,
-        :NWorkers                  => -1,
-        :ThetaLB                   => 0.0,
+        :ConvTol                      => 1e-3,
+        :MaxIter                      => 50,
+        :MaxCpuTime                   => 7200,
+        :StabParam                    => 0.0,
+        :StabDynamic                  => false,
+        :ExpectFeasibleSubproblems    => false,
+        :IntegerInvestment            => false,
+        :Distributed                  => false,
+        :NWorkers                     => -1,
+        :ThetaLB                      => 0.0,
+        :RunTransportModel            => false,
+        :LPTransportHotstart          => false,
+        :LPDCOPFHotstart              => false,
+        :RegularizationPostHotstart   => false,
     )
 
     merge!(default_settings, settings)
