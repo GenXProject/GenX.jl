@@ -130,6 +130,12 @@ function planning_model!(EP::Model, setup::Dict, inputs::Dict)
 
     if inputs["Z"] > 1
         investment_transmission!(EP, inputs, setup)
+        
+        if setup["DC_OPF"] == 1 && setup["NetworkExpansion"] == 1 && setup["DiscreteInvestments"] == 1
+            # The discrete_build_symmetry! function is used to break symmetry in the binary investment variables for transmission expansion. 
+            # This is important for improving solver performance and avoiding multiple equivalent solutions that can slow down the optimization process.
+            discrete_build_symmetry!(EP, inputs)
+        end
     end
 
     if !isempty(inputs["STOR_ALL"])

@@ -69,8 +69,16 @@ This input file contains input parameters related to: 1) definition of model zon
 | z* (Network map) **OR** Start\_Zone, End\_Zone | See below |
 |Line\_Max\_Flow\_MW | Existing capacity of the inter-regional transmission line.|
 |**NetworkExpansion = 1**||
-|Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line.|
+|Line\_Max\_Reinforcement\_MW |Maximum allowable capacity addition to the existing transmission line. **Note**: on a corridor with `Discrete_Build = 1` this budget is consumed entirely by the discrete new lines (it sets how many are created); the corridor receives no continuous reinforcement.|
 |Line\_Reinforcement\_Cost\_per\_MWyr | Cost of adding new capacity to the inter-regional transmission line.|
+|**DC\_OPF = 1**||
+|Line\_Voltage\_kV | Line voltage in kV. Used with the reactance to derive the line susceptance, $\mathcal{B}_l = \mathrm{kV}^2 / X$.|
+|Line\_Reactance\_Ohms | Line reactance $X$ in Ohms.|
+|Angle\_Limit\_Rad | Maximum voltage phase-angle difference across the line, in radians.|
+|**DiscreteInvestments = 1**||
+|Discrete\_Build | {0,1} Whether this corridor hosts discrete, fixed-size new lines (each with a binary build decision) instead of continuous reinforcement. Strongly recommended for greenfield corridors under DC-OPF — see [DC-OPF and Transmission Expansion](@ref).|
+|New\_Line\_Cap\_Size\_MW | MW capacity of each discrete new line on the corridor. Required when `DiscreteInvestments = 1`.|
+|BigM | Big-M used to relax the flow–angle coupling on an unbuilt candidate line. Only used when `DC_OPF = 1` and `Bilinear_DC_OPF = 0`. Defaults to `10 × New_Line_Cap_Size_MW` if the column is absent.|
 |**Trans\_Loss\_Segments = 1**||
 |Line\_Loss\_Percentage | fractional transmission loss for each transmission line||
 |**Trans\_Loss\_Segments > 1**||
@@ -189,6 +197,10 @@ Each file contains cost and performance parameters for various generators and ot
 ---
 |**Column Name** | **Description**|
 | :------------ | :-----------|
+|**DiscreteInvestments = 1**||
+|Discrete\_Build|{0,1}, Indicates if a resource should be built in discrete quantities| 
+| |Discrete\_Build = 1: requires new capacity and retired capacity to be in increments of the unit's `Cap_Size` (default of 1 MW if not defined by user). Results in a mixed-integer program. Useful for high resolution spacial models| 
+|||Discrete\_Build = 0: new and retired capacity decisions are continuous for the given unit|
 |**ModelingToGenerateAlternatives = 1**||
 |MGA |Eligibility of the technology for Modeling To Generate Alternative (MGA) run. |
 ||1 = Technology is available for the MGA run.|
@@ -650,14 +662,7 @@ In addition to the files described above, the `resources` folder can contain add
 |Min\_Retired\_Cap\_Charge_DC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_DC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Discharge_AC\_MW  |Minimum required discharge capacity retirements in the current model period for storage resources with `STOR_AC_DISCHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
 |Min\_Retired\_Cap\_Charge_AC\_MW  |Minimum required charge capacity retirements in the current model period for storage resources with `STOR_AC_CHARGE = 2`. This field can be used to enforce lifetime retirements of existing capacity.|
-| WACC\_DC | The line-specific weighted average cost of capital for the inverter component. |
-| WACC\_Solar | The line-specific weighted average cost of capital for the solar PV component. |
-| WACC\_Wind | The line-specific weighted average cost of capital for the wind component. |
-| WACC\_Elec | The line-specific weighted average cost of capital for the electrolyzer component. |
-| WACC\_Discharge\_DC | The line-specific weighted average cost of capital for the discharging DC storage component with `STOR_DC_DISCHARGE = 2`. |
-| WACC\_Charge\_DC | The line-specific weighted average cost of capital for the charging DC storage component with `STOR_DC_CHARGE = 2`. |
-| WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
-| WACC\_Charge\_AC | The line-specific weighted average cost of capital for the charging AC storage component with `STOR_AC_CHARGE = 2`. |
+| WACC\_DC, WACC\_Solar, WACC\_Wind, WACC\_Elec, WACC\_Discharge\_DC, WACC\_Charge\_DC, WACC\_Discharge\_AC, WACC\_Charge\_AC | *Optional, not used in discounting.* Component-specific costs of capital, accepted for backwards compatibility. Multi-stage investment annuities are discounted at the general discount rate in `multi_stage_settings.yml`; see the multi-stage input documentation. |
 
 #### 1.5 Generator\_variability.csv
 

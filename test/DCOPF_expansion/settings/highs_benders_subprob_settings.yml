@@ -1,0 +1,23 @@
+# HiGHS settings for the Benders *operational subproblems*.
+#
+# Method MUST be ipm (with presolve left on) for HiGHS, not simplex.
+# MacroEnergySolvers decides between an optimality cut and a feasibility cut with
+# `has_values(m)`. On an infeasible LP, HiGHS's simplex returns its last iterate as an
+# INFEASIBLE_POINT primal solution, so `has_values` is true and the algorithm builds an
+# "optimality cut" from the objective/duals of an infeasible point (the duals are an
+# infeasibility certificate). Those invalid cuts push the Benders lower bound above the
+# true optimum and the run "converges" to a wrong solution. With ipm (and presolve not
+# "off"), HiGHS reports NO_SOLUTION on infeasible models - like Gurobi - so the
+# feasibility-cut branch is taken correctly. The subproblems in this case really are
+# infeasible for some planning solutions (unbuilt discrete lines strand min-power
+# generation), so this matters on every run.
+#
+# run_crossover recovers a basic (vertex) solution after the interior-point solve, giving
+# well-defined duals for the Benders cuts.
+
+Feasib_Tol: 1.0e-8          # Primal feasibility tolerance
+Optimal_Tol: 1.0e-8         # Dual feasibility tolerance
+Method: ipm                  # Algorithm: ipm (see note above - simplex breaks feasibility cuts)
+run_crossover: "on"          # Crossover to a basic solution so cut duals are vertex duals
+threads: 1                   # Single thread per subproblem worker
+output_flag: false            # Suppress HiGHS output from subproblems

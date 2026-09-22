@@ -93,7 +93,13 @@ function run_genx_case_multistage_testing(test_path::AbstractString,
         # Step 2) Generate model
         model_dict[t] = generate_model(genx_setup, inputs_dict[t], OPTIMIZER)
     end
-    model_dict, _, inputs_dict = run_ddp(results_path, model_dict, genx_setup, inputs_dict)
+    if genx_setup["MultiStageSettingsDict"]["Myopic"] == 1
+        model_dict, inputs_dict = run_myopic_multistage(results_path, model_dict,
+            genx_setup, inputs_dict)
+    else
+        model_dict, _, inputs_dict = run_ddp(results_path, model_dict, genx_setup,
+            inputs_dict)
+    end
     return model_dict, inputs_dict, OPTIMIZER
 end
 

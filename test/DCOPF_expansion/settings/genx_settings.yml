@@ -1,0 +1,15 @@
+NetworkExpansion: 1
+DiscreteInvestments: 1
+WriteOutputs: "annual"
+EnergyShareRequirement: 0
+PrintModel: 0
+DC_OPF: 1
+Trans_Loss_Segments: 0
+CapacityReserveMargin: 0
+Benders: 1
+StorageLosses: 0
+OverwriteResults: 1
+MaxCapReq: 0
+MinCapReq: 0
+CO2Cap: 0
+WriteShadowPrices: 0
