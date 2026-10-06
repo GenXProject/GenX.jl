@@ -25,7 +25,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         "cUnmetRsv",
         "cNetworkExp",
         "cUnmetPolicyPenalty",
-        "cCO2"
+        "cCO2",
+        "cTransmissionHurdleCosts"
     ]
     if !isempty(VRE_STOR)
         push!(cost_list, "cGridConnection")
@@ -73,6 +74,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             0.0,
             0.0,
             0.0,
+            0.0,
             0.0
         ]
     else
@@ -82,6 +84,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             cVar,
             cFuel,
             value(EP[:eTotalCNSE]),
+            0.0,
             0.0,
             0.0,
             0.0,
@@ -145,12 +148,18 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         dfCost[10, 2] += value(EP[:eTotaleCCO2Sequestration])
     end
 
+    # Transmission hurdle costs (only if there are multiple zones)
+    if Z > 1 && haskey(EP, :eTotalCTransHurdle)
+        dfCost[11, 2] = value(EP[:eTotalCTransHurdle])
+    end
+
     if setup["ParameterScale"] == 1
         dfCost[6, 2] *= ModelScalingFactor^2
         dfCost[7, 2] *= ModelScalingFactor^2
         dfCost[8, 2] *= ModelScalingFactor^2
         dfCost[9, 2] *= ModelScalingFactor^2
         dfCost[10, 2] *= ModelScalingFactor^2
+        dfCost[11, 2] *= ModelScalingFactor^2
     end
 
     for z in 1:Z
@@ -337,7 +346,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
             "-",
             "-",
             "-",
-            tempCCO2
+            tempCCO2,
+            "-"
         ]
         if !isempty(VRE_STOR)
             push!(temp_cost_list, "-")
