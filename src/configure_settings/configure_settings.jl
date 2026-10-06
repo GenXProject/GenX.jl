@@ -39,7 +39,9 @@ function default_settings()
         "PoliciesFolder" => "policies",
         "Benders" => 0,
         "ObjScale" => 1,
-        "LDES_Feasible" => 0,)
+        "LDES_Feasible" => 0,
+        "DiscreteInvestments" => 0,
+        "Bilinear_DC_OPF" => 0)
 end
 
 @doc raw"""
@@ -97,6 +99,12 @@ function validate_settings!(settings::Dict{Any, Any})
         @warn """EnableJuMPStringNames is turned off but ComputeConflicts is on. Computing 
         conflicts requires JuMP string names. Resetting EnableJuMPStringNames to 1 """
         settings["EnableJuMPStringNames"] = 1
+    end
+
+    if settings["Bilinear_DC_OPF"] == 1 && settings["DC_OPF"] == 0
+        @warn """The Bilinear_DC_OPF setting is only relevant when DC_OPF = 1.
+        Setting DC_OPF = 1 to enable Bilinear_DC_OPF."""
+        settings["DC_OPF"] = 1
     end
 end
 

@@ -1,0 +1,8 @@
+# Output settings for the DC-OPF network-expansion example.
+# WriteOutputs is "annual", which by default disables the transmission flow writer
+# (configure_settings.jl sets WriteTransmissionFlows = false under "annual"). Re-enable it here so
+# flow.csv (per-corridor annual flow) is written, which is useful for confirming that the
+# expanded/built lines actually carry power.
+WriteTransmissionFlows: true
+WriteTransmissionLosses: true
+WriteNWExpansion: true

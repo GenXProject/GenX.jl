@@ -79,9 +79,16 @@ function generate_planning_problem(setup::Dict, inputs::Dict, OPTIMIZER::MOI.Opt
 			end
 		end
 	end
-	# vNEW_TRANS_CAP is already a container of variables, so register them directly.
+
+	# vNEW_TRANS_CAP and vNEW_TRANS_LINES are already a container of variables, so register them directly.
 	if haskey(EP, :vNEW_TRANS_CAP)
 		for v in EP[:vNEW_TRANS_CAP]
+			EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
+		end
+	end
+
+	if haskey(EP, :vNEW_TRANS_LINES)
+		for v in EP[:vNEW_TRANS_LINES]
 			EP[:eAvailableCapacity][length(EP[:eAvailableCapacity]) + 1] = v
 		end
 	end

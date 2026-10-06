@@ -6,6 +6,9 @@ Pre_Solve: on          # Presolve option: "off", "choose" or "on" # [type: strin
 Method: ipm            # HiGHS-specific solver settings # Solver option: "simplex", "choose" or "ipm" # [type: string, advanced: false, default: "choose"]
 ipm_optimality_tolerance: 1e-04
 
+# Tight MIP gap so the integer-build objective is reproducible
+mip_rel_gap: 1.0e-6
+
 # run the crossover routine for ipx
 # [type: string, advanced: "on", range: {"off", "on"}, default: "off"]
 run_crossover: "on"

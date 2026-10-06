@@ -100,7 +100,13 @@ The following tables summarize the model settings parameters and their default/p
 ||0 = modeling single zone or for multi-zone problems in which inter regional transmission expansion is not allowed.|
 | DC\_OPF | Flag for using the DC-OPF formulation for calculating transmission line MW flows and imposing constraints.|
 ||1 = use DC-OPF formulation|
-||0 = do not use DC-OPF formulation|
+||0 = do not use DC-OPF formulation (transport / "pipe-flow" model)|
+|DiscreteInvestments | Flag for discrete (binary/integer) investment decisions. Enables fixed-size new transmission lines on corridors flagged with `Discrete_Build = 1` in `Network.csv`, and integer capacity builds for resources with a `Discrete_Build` column. Makes the model a MILP. See [DC-OPF and Transmission Expansion](@ref).|
+||1 = active|
+||0 = all investments are continuous|
+|Bilinear\_DC\_OPF | Formulation used for the flow–angle coupling on discrete candidate lines. Only relevant when `DC_OPF = 1` and `DiscreteInvestments = 1`.|
+||0 = big-M relaxation; keeps the model mixed-integer **linear** (default)|
+||1 = exact bilinear coupling; tighter and needs no big-M, but makes the model mixed-integer **nonlinear** and requires a solver supporting bilinear terms (e.g. Gurobi)|
 |Trans\_Loss\_Segments | Number of segments to use in piece-wise linear approximation of losses.|
 ||1: linear|
 ||>=2: piece-wise quadratic|
