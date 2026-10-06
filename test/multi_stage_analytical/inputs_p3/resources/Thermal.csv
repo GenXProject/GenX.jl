@@ -1,0 +1,2 @@
+Resource,Zone,Model,New_Build,Can_Retire,Existing_Cap_MW,Max_Cap_MW,Min_Cap_MW,Inv_Cost_per_MWyr,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,Heat_Rate_MMBTU_per_MWh,Fuel,Cap_Size,Start_Cost_per_MW,Start_Fuel_MMBTU_per_MW,Up_Time,Down_Time,Ramp_Up_Percentage,Ramp_Dn_Percentage,Min_Power,Reg_Max,Rsv_Max,Reg_Cost,Rsv_Cost,region,cluster
+gen,1,1,1,0,0,-1,0,100000,10000,5.0,10.0,FUEL,1,0,0,0,0,1.0,1.0,0.0,0,0,0,0,R,1

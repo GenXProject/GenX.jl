@@ -26,7 +26,7 @@ Instead of one set of input files, there is one directory of input files that ne
 | Min\_Retired\_Charge\_Cap\_MW | Minimum charge capacity in MW that must retire in this planning stage.                                                                                     |
 | Lifetime                     | The operational lifespan in years of this technology after which it must be retired.                                                                       |
 | Capital\_Recovery\_Period      | The technology-specific period in years over which initial capital costs must be recovered. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                               |
-| WACC                         | The technology-specific weighted average cost of capital. Note that for the co-located VRE-STOR module, this value represents the grid connection component.                                                                                                 |
+| WACC                         | *Optional, not used in discounting.* Investment annuities are discounted at the general discount rate (the `DiscountRate` field of `multi_stage_settings.yml`); a technology-specific cost of capital should already be reflected in the annualized investment cost. The column is accepted for backwards compatibility but does not affect results.                                                                                                 |
 |Contribute\_Min\_Retirement | {0, 1}, Flag to indicate whether the (retrofitting) resource can contribute to the minimum retirement requirement.|
 
 |                              |                                                                   **co-located VRE-STOR resources only**                                                                  |
@@ -45,19 +45,13 @@ Instead of one set of input files, there is one directory of input files that ne
 |Capital\_Recovery\_Period_Charge_DC  |The technology-specific period in years over which initial capital costs for the storage DC charge component must be recovered when `STOR_DC_CHARGE = 2  `.|
 |Capital\_Recovery\_Period_Discharge_AC  |The technology-specific period in years over which initial capital costs for the storage AC discharge component must be recovered when `STOR_AC_DISCHARGE = 2  `.|
 |Capital\_Recovery\_Period_Charge_AC  |The technology-specific period in years over which initial capital costs for the storage AC charge component must be recovered when `STOR_DC_CHARGE = 2  `.|
-| WACC\_DC | The line-specific weighted average cost of capital for the inverter component. |
-| WACC\_Solar | The line-specific weighted average cost of capital for the solar PV component. |
-| WACC\_Wind | The line-specific weighted average cost of capital for the wind component. |
-| WACC\_Discharge\_DC | The line-specific weighted average cost of capital for the discharging DC storage component with `STOR_DC_DISCHARGE = 2`. |
-| WACC\_Charge\_DC | The line-specific weighted average cost of capital for the charging DC storage component with `STOR_DC_CHARGE = 2`. |
-| WACC\_Discharge\_AC | The line-specific weighted average cost of capital for the discharging AC storage component with `STOR_AC_DISCHARGE = 2`. |
-| WACC\_Charge\_AC | The line-specific weighted average cost of capital for the charging AC storage component with `STOR_AC_CHARGE = 2`. |
+| WACC\_DC, WACC\_Solar, WACC\_Wind, WACC\_Discharge\_DC, WACC\_Charge\_DC, WACC\_Discharge\_AC, WACC\_Charge\_AC | *Optional, not used in discounting.* Component-specific costs of capital, accepted for backwards compatibility. All annuities are discounted at the general discount rate; see the WACC row above. |
 
 |                           |                                                                       **Network.csv**                                                                      |
 |:---------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Line\_Max\_Flow\_Possible\_MW | The maximum transmission capacity of the line, as opposed to Line\_Max\_Reinforcement\_MW which now specifies the maximum expansion to the line in one stage. |
 | Capital\_Recovery\_Period   | The line-specific period in years over which initial capital costs must be recovered.                                                                |
-| WACC                      | The line-specific weighted average cost of capital.                                                                                                  |
+| WACC                      | *Optional, not used in discounting.* Line investment annuities are discounted at the general discount rate (the `DiscountRate` field of `multi_stage_settings.yml`). The column is accepted for backwards compatibility but does not affect results. |
 
 
 !!! note "Allowing retrofitted capacity to not contribute to minimum retirement requirements (`myopic=0` only)"
@@ -119,9 +113,60 @@ A separate settings.yml file includes a list of parameters to be specified to fo
 | StageLengths         | A list of lengths of each model stage in years (e.g., [10, 10, 10] for three stages each of length 10). Note that stages could be defined to be of varying length. |
 | Myopic               | 0 = perfect foresight, 1 = myopic model (see above table)                                                                                                          |
 | ConvergenceTolerance | The relative optimality gap used for convergence of the dual dynamic programming algorithm. Only required when Myopic = 0                                          |
-| WACC                 | Rate used to discount non-technology-specific costs from stage to stage (i.e., the “social discount rate”).                                                        |
+| DiscountRate         | The general discount rate: the planner's time value of money, used to discount every cost from stage to stage (the "social discount rate"). Formerly called `WACC`; that name is still accepted but warns, and is a different quantity from the per-resource `WACC` column. |
 | WriteIntermittentOutputs | (valid if Myopic = 1) 0 = do not write intermittent outputs, 1 = write intermittent output. |
 
 |                       |                                                                                  **time\_domain\_reduction\_settings.yml**                                                                                  |
 |:-----------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | MultiStageConcatenate | Designates whether to use time domain reduction for the full set of input data together (1) or to reduce only the first stage data and apply the returned representative periods to the rest of the input data (0). |
+
+### Discounting and cost accounting
+
+Write $DR$ for the general discount rate (the `DiscountRate` field of
+`multi_stage_settings.yml`), $L_i$ for the length of stage $i$ in years, and
+$N_i = \sum_{s<i} L_s$ for the years elapsed before stage $i$ begins. For a
+resource $y$, let $CRP_y$ be its capital recovery period.
+
+**Timing of costs.** All costs are treated as incurred at the end of the year in
+which they arise. Stage costs are discounted to the start of the modeling
+horizon:
+
+```math
+DF_i = \frac{1}{(1+DR)^{N_i}}
+```
+
+**Operating and fixed O&M costs.** A stage may span several years, so annual
+costs are scaled by
+
+```math
+\text{OPEXMULT}_i = \sum_{j=1}^{L_i}\frac{1}{(1+DR)^{j}}
+```
+
+**Investment costs.** Annuities are paid from the year after the investment until
+the technology's capital recovery period ends or the modeling horizon does,
+whichever comes first:
+
+```math
+P_{y,i} = \min\left(CRP_y,\; \sum_{s \geq i} L_s\right),
+\qquad
+A_{y,i} = \sum_{p=1}^{P_{y,i}} \frac{1}{(1+DR)^{p}}
+```
+
+Costs falling beyond the horizon are assumed fully recoverable and are excluded,
+so the model carries no salvage value. Every annuity is discounted at the general
+discount rate $DR$, which represents the planner's time value of money; a
+technology-specific cost of capital should be reflected in the annualized
+investment cost input itself.
+
+**Age-based retirement.** Capacity reaching the end of its life part way through
+a stage remains available for the whole of that stage and retires at the
+beginning of the next. Equivalently, capacity built in stage $r$ must have
+retired by stage $i$ once $\sum_{t=r}^{i-1} L_t \geq$ its lifetime. This only
+differs from measuring to the end of the current stage when stages have unequal
+lengths.
+
+**Myopic runs.** The myopic objective charges a single year of each investment
+annuity, so it values capital relative to operating costs differently from a
+perfect-foresight run, and will tend to build more of it. Reported costs add back
+the annuities the objective did not see, so the two modes can be compared; see
+the cost output documentation.
