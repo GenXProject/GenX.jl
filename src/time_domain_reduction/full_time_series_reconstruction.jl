@@ -38,34 +38,39 @@ function full_time_series_reconstruction(
 
     # Get a matrix of the input DataFrame
     DFMatrix = Matrix(DF)
-    # Initialize an array to add the reconstructed data to
-    recon = ["t$t" for t in 1:(TimestepsPerRepPeriod * numPeriods)]
+    total_timesteps = TimestepsPerRepPeriod * numPeriods
 
     # Find the index of the row with the first time step
     t1 = findfirst(x -> x == "t1", DF[!, 1])
 
     # Reconstruction of all hours of the year from TDR
-    for j in range(2, ncol(DF))
-        col = DF[t1:end, j]
-        recon_col = []
-        for i in range(1, numPeriods)
+    recon = Matrix{Any}(undef, total_timesteps, ncol(DF))
+    recon[:, 1] = ["t$t" for t in 1:total_timesteps]
+    for j in 2:ncol(DF)
+        col = DFMatrix[t1:end, j]
+        next_row = 1
+        for i in 1:numPeriods
             index = Period_map[i, "Rep_Period_Index"]
-            recon_temp = col[(TimestepsPerRepPeriod * index - (TimestepsPerRepPeriod - 1)):(TimestepsPerRepPeriod * index)]
-            recon_col = [recon_col; recon_temp]
+            source_start = TimestepsPerRepPeriod * (index - 1) + 1
+            source_end = TimestepsPerRepPeriod * index
+            target_end = next_row + TimestepsPerRepPeriod - 1
+            recon[next_row:target_end, j] = col[source_start:source_end]
+            next_row = target_end + 1
         end
-        recon = [recon recon_col]
     end
-    reconDF = DataFrame(recon, :auto)
+    reconDF = DataFrame(recon, names(DF))
 
     # Insert rows that were above "t1" in the original DataFrame (e.g. "Zone" and "AnnualSum") if present
-    for i in range(1, t1 - 1)
-        insert!(reconDF, i, DFMatrix[i, 1:end], promote = true)
+    if t1 > 1
+        reconDF = vcat(DataFrame(DFMatrix[1:(t1 - 1), :], names(DF)), reconDF)
     end
 
     # Repeat the last rows of the year to fill in the gap (should be 24 hours for non-leap year)
     end_diff = WeightTotal - nrow(reconDF) + 1
-    new_rows = reconDF[(nrow(reconDF) - end_diff):nrow(reconDF), 1:end]
-    new_rows[!, 1] = ["t$t" for t in (WeightTotal - end_diff):WeightTotal]
-    reconDF = [reconDF; new_rows]
+    if end_diff > 0
+        new_rows = copy(reconDF[(nrow(reconDF) - end_diff):nrow(reconDF), 1:end])
+        new_rows[!, 1] = ["t$t" for t in (WeightTotal - end_diff):WeightTotal]
+        append!(reconDF, new_rows)
+    end
     return reconDF
 end

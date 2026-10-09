@@ -22,8 +22,8 @@ function write_reserve_margin_slack(path::AbstractString,
         end
         dfResMar_slack = hcat(dfResMar_slack,
             DataFrame(temp_ResMar_slack, [Symbol("t$t") for t in 1:T]))
-        CSV.write(joinpath(path, "ReserveMargin_slack_and_penalties.csv"),
-            dftranspose(dfResMar_slack, false),
+        write_transposed_csv(joinpath(path, "ReserveMargin_slack_and_penalties.csv"),
+            dfResMar_slack,
             writeheader = false)
     end
     return nothing

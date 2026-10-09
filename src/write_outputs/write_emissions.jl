@@ -1,10 +1,17 @@
 @doc raw"""
-	write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model,
+        cache::OutputCache = build_output_cache(EP, inputs, setup))
 
 Function for reporting time-dependent CO$_2$ emissions by zone.
+The optional `cache` argument allows callers to reuse extracted model outputs across
+multiple write functions to reduce memory allocations.
 
 """
-function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_emissions(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model,
+    cache::OutputCache = build_output_cache(EP, inputs, setup))
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
 
@@ -39,11 +46,10 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Float64}(undef, Z))
         end
 
-        emissions_by_zone = value.(EP[:eEmissionsByZone])
-        for i in 1:Z
-            dfEmissions[i, :AnnualSum] = sum(inputs["omega"] .* emissions_by_zone[i, :]) *
-                                         scale_factor
-        end
+        emissions_by_zone = isnothing(cache.eEmissionsByZone) ?
+                            Matrix{Float64}(value.(EP[:eEmissionsByZone])) :
+                            cache.eEmissionsByZone
+        dfEmissions[!, :AnnualSum] .= emissions_by_zone * inputs["omega"] * scale_factor
 
         if setup["WriteOutputs"] == "annual"
             total = DataFrame(["Total" sum(dfEmissions.AnnualSum)], [:Zone; :AnnualSum])
@@ -88,14 +94,16 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"),
-                dftranspose(dfEmissions, false),
+            write_transposed_csv(joinpath(path, "emissions.csv"),
+                dfEmissions,
                 writeheader = false)
         end
         ## Aaron - Combined elseif setup["Dual_MIP"]==1 block with the first block since they were identical. Why do we have this third case? What is different about it?
     else
         # CO2 emissions by zone
-        emissions_by_zone = value.(EP[:eEmissionsByZone])
+        emissions_by_zone = isnothing(cache.eEmissionsByZone) ?
+                            Matrix{Float64}(value.(EP[:eEmissionsByZone])) :
+                            cache.eEmissionsByZone
         dfEmissions = hcat(DataFrame(Zone = 1:Z),
             DataFrame(AnnualSum = Array{Float64}(undef, Z)))
         for i in 1:Z
@@ -121,8 +129,8 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             end
             rename!(total, auxNew_Names)
             dfEmissions = vcat(dfEmissions, total)
-            CSV.write(joinpath(path, "emissions.csv"),
-                dftranspose(dfEmissions, false),
+            write_transposed_csv(joinpath(path, "emissions.csv"),
+                dfEmissions,
                 writeheader = false)
 
             if setup["OutputFullTimeSeries"] == 1 && setup["TimeDomainReduction"] == 1

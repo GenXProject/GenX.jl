@@ -1,10 +1,17 @@
 @doc raw"""
-	write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model,
+        cache::OutputCache = build_output_cache(EP, inputs, setup))
 
 Function for writing the capacity factor of different resources. For co-located VRE-storage resources, this
     value is calculated if the site has either or both a solar PV or wind resource.
+The optional `cache` argument allows callers to reuse extracted model outputs across
+multiple write functions to reduce memory allocations.
 """
-function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+function write_capacityfactor(path::AbstractString,
+    inputs::Dict,
+    setup::Dict,
+    EP::Model,
+    cache::OutputCache = build_output_cache(EP, inputs, setup))
     gen = inputs["RESOURCES"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
@@ -22,9 +29,9 @@ function write_capacityfactor(path::AbstractString, inputs::Dict, setup::Dict, E
         AnnualSum = zeros(G),
         Capacity = zeros(G),
         CapacityFactor = zeros(G))
-    scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
-    df.AnnualSum .= value.(EP[:vP]) * weight * scale_factor
-    df.Capacity .= value.(EP[:eTotalCap]) * scale_factor
+    scale_factor = cache.scale_factor
+    df.AnnualSum .= cache.vP * weight * scale_factor
+    df.Capacity .= cache.eTotalCap * scale_factor
 
     # The .data only works on DenseAxisArray variables or expressions
     # In contrast vP and eTotalCap are whole vectors / matrices
