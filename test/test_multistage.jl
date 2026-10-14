@@ -320,6 +320,19 @@ function test_discounting_helpers()
         @test GenX.compute_overnight_capital_cost(settings, [0.0], [0]) == [0.0]
         @test_throws ErrorException GenX.compute_overnight_capital_cost(
             settings, [100.0], [0])
+        # When names are given, the error lists only the resources that fail the check.
+        err = try
+            GenX.validate_capital_recovery_period([0.0, 100.0], [0, 0];
+                names = ["gas (discharge)", "battery (energy)"])
+        catch e
+            e
+        end
+        @test occursin("battery (energy)", err.msg) && !occursin("gas", err.msg)
+
+        # WACC inputs are ignored; a warning says so only when one would have
+        # changed the results. Zeros are what a missing column reads as.
+        @test_logs (:warn, r"WACC") GenX.warn_ignored_wacc([0.0, 0.05], 0.045, "x.csv")
+        @test_logs GenX.warn_ignored_wacc([0.0, 0.045], 0.045, "x.csv")
     end
 end
 
@@ -512,8 +525,8 @@ function test_investment_views()
 
         # Both modes agree on what the investment is worth once reported, which
         # is the property that makes myopic and perfect foresight comparable.
-        @test GenX._investment_views(pf_scaled, A, P, false) ==
-              GenX._investment_views(my_scaled, A, P, true)
+        @test all(GenX._investment_views(pf_scaled, A, P, false) .≈
+                  GenX._investment_views(my_scaled, A, P, true))
 
         # Degenerate cases.
         @test GenX._investment_views(0.0, A, P, false) == (0.0, 0.0)

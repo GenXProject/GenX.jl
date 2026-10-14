@@ -130,22 +130,43 @@ function compute_overnight_capital_cost(settings_d::Dict,
 end
 
 """
-    validate_capital_recovery_period(inv_costs_yr, crp)
+    validate_capital_recovery_period(inv_costs_yr, crp; names = nothing)
 
 Error if any resource has a positive investment cost and a capital recovery
-period of zero years.
+period of zero years. When `names` is given, the message lists those
+resources.
 
 Such a resource has no years over which to spread its annuity, so its annuity
 factor is zero and the investment silently disappears from both the model's
 overnight capital cost and the reported figures. That is almost always an input
 mistake, so it is rejected rather than absorbed.
 """
-function validate_capital_recovery_period(inv_costs_yr, crp)
-    if any((crp .== 0) .& (inv_costs_yr .> 0))
-        msg = "You have some resources with non-zero investment costs and a Capital_Recovery_Period value of 0 years.\n" *
+function validate_capital_recovery_period(inv_costs_yr, crp; names = nothing)
+    bad = findall((crp .== 0) .& (inv_costs_yr .> 0))
+    if !isempty(bad)
+        which = names === nothing ? "" : ": " * join(names[bad], ", ")
+        msg = "You have some resources with non-zero investment costs and a Capital_Recovery_Period value of 0 years$which.\n" *
               "These resources will have a calculated overnight capital cost of \$0. Correct your inputs if this is a mistake.\n"
         error(msg)
     end
+    return nothing
+end
+
+"""
+    warn_ignored_wacc(wacc, discount_rate, source)
+
+Warn when a `WACC` input differs from the general discount rate.
+
+Investment annuities are discounted at `DiscountRate`, so these columns no longer
+affect results. A user who set a technology-specific cost of capital would
+otherwise not notice. Zeros are skipped, since a missing column reads as zero.
+"""
+function warn_ignored_wacc(wacc, discount_rate, source::AbstractString)
+    any(w -> w != 0 && w != discount_rate, wacc) || return nothing
+    @warn "$source sets WACC values that differ from DiscountRate ($discount_rate). " *
+          "They are ignored: multi-stage investment annuities are discounted at " *
+          "DiscountRate, and a technology's cost of capital belongs in its " *
+          "annualized investment cost."
     return nothing
 end
 
@@ -217,8 +238,8 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     # same check runs here. Without it a myopic resource with a zero recovery
     # period and a positive investment cost would report zero investment while
     # the objective charged it in full.
-    function add!(key, crp, inv; ids = nothing)
-        validate_capital_recovery_period(inv, crp)
+    function add!(key, crp, inv, labels; ids = nothing)
+        validate_capital_recovery_period(inv, crp; names = string.(labels, " (", key, ")"))
         a = collect(Float64, overnight_capital_cost_factor(settings_d, crp))
         p = collect(Float64, payment_years_remaining(settings_d, crp))
         if ids !== nothing
@@ -241,7 +262,7 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
     for (key, inv_f) in [(:discharge, inv_cost_per_mwyr),
         (:energy, inv_cost_per_mwhyr), (:stor_vs, inv_cost_per_mwhyr),
         (:charge, inv_cost_charge_per_mwyr)]
-        add!(key, generic_crp, inv_f.(gen))
+        add!(key, generic_crp, inv_f.(gen), resource_name.(gen))
     end
 
     # Co-located components with their own recovery period. These come from the
@@ -260,13 +281,14 @@ function stash_cost_reporting_factors!(inputs_d::Dict,
             (:charge_ac, capital_recovery_period_charge_ac, inv_cost_charge_ac_per_mwyr),
             (:discharge_ac, capital_recovery_period_discharge_ac,
                 inv_cost_discharge_ac_per_mwyr)]
-            add!(key, crp_f.(vs), inv_f.(vs); ids = vs_ids)
+            add!(key, crp_f.(vs), inv_f.(vs), resource_name.(vs); ids = vs_ids)
         end
     end
 
     if NetworkExpansion == 1 && inputs_d["Z"] > 1
-        add!(:transmission, inputs_d["Capital_Recovery_Period_Trans"],
-            inputs_d["pC_Line_Reinforcement"])
+        trans_crp = inputs_d["Capital_Recovery_Period_Trans"]
+        add!(:transmission, trans_crp, inputs_d["pC_Line_Reinforcement"],
+            ["line $l" for l in eachindex(trans_crp)])
     end
 
     inputs_d["MULTISTAGE_COST_FACTORS"] = MultiStageCostFactors(
@@ -314,6 +336,20 @@ function configure_multi_stage_inputs(inputs_d::Dict,
     inputs_d["OPEXMULT"] = OPEXMULT
 
     stash_cost_reporting_factors!(inputs_d, settings_d, NetworkExpansion)
+
+    # Checked in the first stage only, so the warning appears once per run.
+    if cur_stage == 1
+        wacc = Float64[tech_wacc(y) for y in gen]
+        if !isempty(inputs_d["VRE_STOR"])
+            vs = gen.VreStorage
+            for f in (tech_wacc_dc, tech_wacc_solar, tech_wacc_wind, tech_wacc_elec,
+                tech_wacc_charge_dc, tech_wacc_discharge_dc, tech_wacc_charge_ac,
+                tech_wacc_discharge_ac)
+                append!(wacc, f.(vs))
+            end
+        end
+        warn_ignored_wacc(wacc, dr, "Resource_multistage_data.csv")
+    end
 
     if !myopic ### Leave myopic costs in annualized form and do not scale OPEX costs
         # 1. Convert annualized investment costs incured within the model horizon into overnight capital costs
