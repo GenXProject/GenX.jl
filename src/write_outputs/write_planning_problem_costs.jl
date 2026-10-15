@@ -19,7 +19,7 @@ are written and `cTotal` is taken from the master objective `value(eObj)`.
 Per-zone columns (`Zone1 … ZoneZ`) are appended when multiple zones exist. Fixed costs are
 always broken out by zone; with a bundle the operational costs are too (matching the monolithic
 per-zone layout). System-wide rows without a per-resource attribution — `cNetworkExp` and
-`cUnmetPlanningPolicyPenalty` — are written as `"-"` in each zone column.
+`cUnmetPlanningPolicyPenalty` — are written as empty cells in each zone column.
 """
 function write_planning_problem_costs(path::AbstractString, inputs::Dict, setup::Dict, benders_results::NamedTuple, planning_problem::Model, benders_bundle=nothing)
     gen = inputs["RESOURCES"]
@@ -76,7 +76,10 @@ function write_planning_problem_costs(path::AbstractString, inputs::Dict, setup:
         total_cost = [cTotal, cFix, cNetworkExp, cUnmetPolicy] .* scale2
         dfCost = DataFrame(Costs = cost_list, Total = total_cost)
         for z in 1:Z
-            dfCost[!, Symbol("Zone$z")] = ["-", cfix_zone[z] * scale2, "-", "-"]
+            # `missing` writes an empty cell, keeping the column numeric when
+            # read back; a string placeholder makes the whole column text.
+            dfCost[!, Symbol("Zone$z")] = [missing, cfix_zone[z] * scale2,
+                missing, missing]
         end
         CSV.write(joinpath(path, "planning_problem_costs.csv"), dfCost)
         return nothing
@@ -119,8 +122,8 @@ function write_planning_problem_costs(path::AbstractString, inputs::Dict, setup:
             cfuel_zone[z] * scale2,
             cnse_zone[z] * scale2,
             cstart_zone[z] * scale2,
-            "-",
-            "-",
+            missing,
+            missing,
         ]
     end
 

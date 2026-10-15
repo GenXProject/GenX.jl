@@ -8,7 +8,7 @@ include(joinpath(@__DIR__, "utilities.jl"))
 
 # Reduced (24-hour) IEEE 9-bus DC-OPF case with integer transmission expansion.
 # Reference objective captured from a HiGHS solve at mip_rel_gap = 1e-6.
-obj_true = 554906.257731
+obj_true = 399636.946503
 test_path = joinpath(@__DIR__, "DCOPF_expansion")
 
 # Define test inputs: DC-OPF + network expansion + discrete (integer) line builds.

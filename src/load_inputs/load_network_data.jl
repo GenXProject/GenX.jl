@@ -78,10 +78,18 @@ function load_network_data!(setup::Dict, path::AbstractString, inputs_nw::Dict)
 
     # Multi-Stage
     if setup["MultiStage"] == 1 
-        # Weighted Average Cost of Capital for Transmission Expansion
+        # Capital recovery period for transmission expansion. Annuities are
+        # discounted at the general discount rate from multi_stage_settings.yml,
+        # so a line-specific WACC column has no effect. It is only read, in the
+        # first stage, to warn when it would have changed the results. The
+        # multi-stage settings are absent when inputs are loaded outside a run.
         if setup["NetworkExpansion"] >= 1
-            inputs_nw["transmission_WACC"] = to_floats(:WACC)
             inputs_nw["Capital_Recovery_Period_Trans"] = to_floats(:Capital_Recovery_Period)
+            ms = get(setup, "MultiStageSettingsDict", nothing)
+            if ms !== nothing && get(ms, "CurStage", 1) == 1 &&
+               haskey(ms, "DiscountRate") && "WACC" in names(network_var)
+                warn_ignored_wacc(to_floats(:WACC), ms["DiscountRate"], "Network.csv")
+            end
         end
 
         # Max Flow Possible on Each Line

@@ -42,6 +42,10 @@ end
         include("test_multistage.jl")
     end
 
+    @testset "Multi Stage analytical" begin
+        include("test_multistage_analytical.jl")
+    end
+
     @testset "DCOPF" begin
         include("test_DCOPF.jl")
     end

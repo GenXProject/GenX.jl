@@ -51,6 +51,10 @@ function run_myopic_multistage(outpath::AbstractString, models_d::Dict, setup::D
         models_d[t], inputs_d[t]["solve_time"] = solve_model(models_d[t], setup)
 
         if write_intermittent_outputs
+            # Output writers read CurStage to work out which stage they are
+            # reporting on. Without this it still holds whatever model
+            # generation left behind, i.e. the final stage, for every stage.
+            settings_d["CurStage"] = t
             outpath_cur = joinpath(outpath, "results_p$t")
             write_outputs(models_d[t], outpath_cur, setup, inputs_d[t])
         end

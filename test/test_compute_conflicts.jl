@@ -33,7 +33,9 @@ if has_values(m)
         test_result)
 else
     try
-        compute_conflict!(m)
+        redirect_stdout(devnull) do
+            compute_conflict!(m)
+        end
         # Conflict computation supported -> solve_model returns (EP, time, conflicts)
         test_result = @test length(genxoutput) == 3
         write_testlog(test_path,

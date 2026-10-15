@@ -483,7 +483,7 @@ function stor_vre_stor!(EP::Model, inputs::Dict, setup::Dict)
         sum(eCVar_Charge_DC[y, t] for y in DC_CHARGE, t in 1:T)
         +sum(eCVar_Discharge_DC[y, t] for y in DC_DISCHARGE, t in 1:T)
         +sum(eCVar_Charge_AC[y, t] for y in AC_CHARGE, t in 1:T)
-        +sum(eCVar_Discharge_AC[y, t] for y in AC_CHARGE, t in 1:T))
+        +sum(eCVar_Discharge_AC[y, t] for y in AC_DISCHARGE, t in 1:T))
     add_to_expression!(EP[:eObj], eTotalCVarStor)
 
     # Inverter & Power Balance, SoC Expressions
