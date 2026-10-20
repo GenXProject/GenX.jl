@@ -139,5 +139,7 @@ function co2!(EP::Model, inputs::Dict)
     end
     @expression(EP, eEmissionsByZone[z = 1:Z, t = 1:T],
         sum(eEmissionsByPlant[y, t] for y in RESOURCES_BY_ZONE[z]))
+
+    add_similar_to_expression!(EP[:eTotalEmissionsByZone], eEmissionsByZone)
     return EP
 end

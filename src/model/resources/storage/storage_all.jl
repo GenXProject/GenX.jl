@@ -103,6 +103,8 @@ function storage_all!(EP::Model, inputs::Dict, setup::Dict)
         for y in STOR_ALL_BY_ZONE[z]))
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalanceStor)
 
+    add_similar_to_expression!(EP[:eTotalGenerationByZone], permutedims(ePowerBalanceStor))
+
     ### Constraints ###
 
     ## Storage energy capacity and state of charge related constraints:

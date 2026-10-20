@@ -218,6 +218,12 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     # Energy losses related to technologies
     create_empty_expression!(EP, :eELOSSByZone, Z)
 
+    # Total Generation from all resources
+    create_empty_expression!(EP, :eTotalGenerationByZone, (Z, T))
+
+    # Total CO2 emissions by zone (fuel burning emissions + market emissions)
+    create_empty_expression!(EP, :eTotalEmissionsByZone, (Z, T))
+
     # Initialize Capacity Reserve Margin Expression
     if setup["CapacityReserveMargin"] > 0
         create_empty_expression!(EP,
@@ -347,7 +353,10 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
     end
 
     # Policies
-
+    # Energy trading with markets
+    if setup["Markets"] == 1
+        markets!(EP, inputs, setup)
+    end
     if setup["OperationalReserves"] > 0
         operational_reserves_constraints!(EP, inputs)
     end

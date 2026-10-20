@@ -511,6 +511,13 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             println(elapsed_time_net_rev)
         end
     end
+    
+    if setup["Markets"] == 1
+        elapsed_time_markets = @elapsed write_market(path, inputs, setup, EP)
+        println("Time elapsed for writing markets purchases and sales is")
+        println(elapsed_time_markets)
+    end
+    
     ## Print confirmation
     println("Wrote outputs to $path")
 

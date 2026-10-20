@@ -41,8 +41,12 @@ function default_settings()
         "ObjScale" => 1,
         "LDES_Feasible" => 0,
         "DiscreteInvestments" => 0,
-        "Bilinear_DC_OPF" => 0)
-end
+        "Bilinear_DC_OPF" => 0,
+        "ObjScale" => 1,
+        "Markets" => 0,
+        "MarketDualFlow" => 1 # Allows simultaneous market purchase and sale in the same time step; set to 0 to enforce exclusive buy/sell (MILP).
+        )
+    end
 
 @doc raw"""
     configure_settings(settings_path::String, output_settings_path::String)

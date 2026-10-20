@@ -192,6 +192,8 @@ function vre_stor!(EP::Model, inputs::Dict, setup::Dict)
 
     # Power Balance
     add_similar_to_expression!(EP[:ePowerBalance], ePowerBalance_VRE_STOR)
+    add_similar_to_expression!(EP[:eTotalGenerationByZone], permutedims(ePowerBalance_VRE_STOR))
+
 
     ### CONSTRAINTS ###
 

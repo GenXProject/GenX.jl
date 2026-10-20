@@ -78,12 +78,14 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 
     # Set power variables for all bins that are not being modeled for hourly output to be zero
     for y in VRE_NO_POWER_OUT
-        fix.(EP[:vP][y, :], 0.0, force = true)
+        JuMP.set_upper_bound.(EP[:vP][y, :], 0.0)
     end
     ##CO2 Polcy Module VRE Generation by zone
     # We use the transpose here because eGenerationByZone is [1:Z, 1:T] and
     # ePowerBalanceDisp is [1:T, 1:Z].
-    add_similar_to_expression!(EP[:eGenerationByZone], ePowerBalanceDisp')
+    add_similar_to_expression!(EP[:eGenerationByZone], permutedims(ePowerBalanceDisp))
+    #### Add it to total generation by zone
+    add_similar_to_expression!(EP[:eTotalGenerationByZone], permutedims(ePowerBalanceDisp))
 end
 
 @doc raw"""
@@ -156,9 +158,9 @@ function remove_operational_reserves_for_binned_vre_resources!(EP::Model, inputs
     VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
     for y in intersect(VRE_NO_POWER_OUT, REG)
-        fix.(EP[:vREG][y, :], 0.0, force = true)
+        JuMP.set_upper_bound.(EP[:vREG][y, :], 0.0)
     end
     for y in intersect(VRE_NO_POWER_OUT, RSV)
-        fix.(EP[:vRSV][y, :], 0.0, force = true)
+        JuMP.set_upper_bound.(EP[:vRSV][y, :], 0.0)
     end
 end
