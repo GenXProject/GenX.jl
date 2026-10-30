@@ -1,0 +1,9 @@
+MinCapReqConstraint,Constraint_Description,Min_MW
+1,NY_offshorewind,9000
+2,PJM_EMAC_offshorewind,11000
+3,PJM_Rest_offshorewind,6900
+4,ISNE_offshorewind,13945
+5,NY_storage,6000
+6,PJM_EMAC_storage,2000
+7,PJM_Rest_storage,8600
+8,ISNE_storage,245

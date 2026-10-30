@@ -1,0 +1,180 @@
+# Flexible loads associated with increased electrification can be included using data
+# from NREL's EFS study (described below) or using user input files. This case study
+# uses EFS data.
+
+# Electrification scenarios are supplied in two files. EFS_STOCK_AGG.parquet has scenarios
+# from the NREL Electrification Futures Study (EFS). SCENARIO_STOCK.parquet has scenarios
+# from the Princeton Net Zero study. The scenario name will depend on which source you
+# use. The NREL EFS scenarios include:
+
+# HIGH ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+# MEDIUM ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+# REFERENCE ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+
+# The Princeton Net Zero scenarios include:
+
+# current_policy
+# stated_policy
+# deep_decarbonization
+# moderate_decarbonization
+
+# The type of flexible loads that can be included as flexible demand resources (with hourly
+# profiles from NREL EFS data) are:
+
+# res_space_heat_cool (residential space heating and cooling)
+# res_water_heat (residential water heating)
+# comm_space_heat_cool (commercial space heating and cooling)
+# comm_water_heat (commercial water heating)
+# trans_light_duty (light duty vehicles)
+# trans_medium_duty (medium duty vehicles)
+# trans_heavy_duty (heavy duty vehicles)
+# trans_bus (transit buses)
+
+# --- Merged settings from NY and CONUS ---
+electrification_stock_fn: EFS_STOCK_AGG.parquet
+electrification_scenario: REFERENCE ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+flexible_demand_resources:
+  2030:
+    trans_light_duty:
+      fraction_shiftable: 0.67
+      parameter_values:
+        Max_Flexible_Demand_Delay: 5
+        Max_Flexible_Demand_Advance: 0
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_water_heat:
+      fraction_shiftable: 0.11
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_water_heat:
+      fraction_shiftable: 0.11
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_space_heat_cool:
+      fraction_shiftable: 0.11
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_space_heat_cool:
+      fraction_shiftable: 0.15
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+  2035:
+    trans_light_duty:
+      fraction_shiftable: 0.73
+      parameter_values:
+        Max_Flexible_Demand_Delay: 5
+        Max_Flexible_Demand_Advance: 0
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_water_heat:
+      fraction_shiftable: 0.14
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_water_heat:
+      fraction_shiftable: 0.14
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_space_heat_cool:
+      fraction_shiftable: 0.14
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_space_heat_cool:
+      fraction_shiftable: 0.2
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+  2040:
+    trans_light_duty:
+      fraction_shiftable: 0.79
+      parameter_values:
+        Max_Flexible_Demand_Delay: 5
+        Max_Flexible_Demand_Advance: 0
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_water_heat:
+      fraction_shiftable: 0.18
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_water_heat:
+      fraction_shiftable: 0.18
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_space_heat_cool:
+      fraction_shiftable: 0.18
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_space_heat_cool:
+      fraction_shiftable: 0.25
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+  2050:
+    trans_light_duty:
+      fraction_shiftable: 0.90
+      parameter_values:
+        Max_Flexible_Demand_Delay: 5
+        Max_Flexible_Demand_Advance: 0
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_water_heat:
+      fraction_shiftable: 0.25
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_water_heat:
+      fraction_shiftable: 0.25
+      parameter_values:
+        Max_Flexible_Demand_Delay: 2
+        Max_Flexible_Demand_Advance: 2
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    comm_space_heat_cool:
+      fraction_shiftable: 0.25
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1
+    res_space_heat_cool:
+      fraction_shiftable: 0.35
+      parameter_values:
+        Max_Flexible_Demand_Delay: 1
+        Max_Flexible_Demand_Advance: 1
+        Flexible_Demand_Energy_Eff: 1
+        FLEX: 1

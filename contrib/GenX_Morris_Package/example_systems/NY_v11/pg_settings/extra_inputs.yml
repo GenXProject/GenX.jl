@@ -1,0 +1,22 @@
+# The location and name of additional input files needed to create outputs
+input_folder: extra_inputs_nyiso # Subfolder directly below the location of this settings file
+case_id_description_fn: case_id_description_test.csv # Match the case_id with longer case_name
+scenario_definitions_fn: scenario_inputs_testing.csv # Define policy/cost scenarios for each case
+# distributed_gen_profiles_fn: dg_profiles.csv # Hourly profiles of distributed gen by region
+# demand_response_fn: heat_load_shifting.csv # Load profiles of DR resources by model_year and scenario
+emission_policies_fn: existing_policies_rps_ces_20240403.csv # Emission policies for each model_year/region/case_id
+capacity_limit_spur_fn: resource_capacity_spur.csv # Max capacity and spur line distance for each renewable resource
+demand_segments_fn: demand_segments_voll.csv
+misc_gen_inputs_fn: misc_gen_inputs.csv
+genx_settings_folder: genx_settings
+co2_pipeline_cost_fn: co2_pipeline_cost_percentiles.csv
+user_transmission_costs: network_costs_NYISO.csv
+#user_transmission_constraints_fn: ipm_tx_corrections.csv
+hydro_variability_fn: regional_existing_hydro_profiles.csv # RR - download from Greg's google drive
+#reserves_fn: Reserves.csv
+
+# If regional load is provided by the user and it already includes demand response
+# loads, set this parameter to "true". If the regional hourly loads do not include
+# demand response - the DR should be added to the load profiles - set to "~" (None) or
+# "false".
+regional_load_includes_demand_response: ~

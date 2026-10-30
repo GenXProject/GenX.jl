@@ -1,0 +1,41 @@
+Resource,Zone,New_Build,Can_Retire,Existing_Cap_MW,region,technology,cluster,Cap_Size,minimum_load_mw,Heat_Rate_MMBTU_per_MWh,Fixed_OM_Cost_per_MWyr,Var_OM_Cost_per_MWh,heat_rate_mmbtu_mwh_iqr,heat_rate_mmbtu_mwh_std,num_units,capacity_factor,unmodified_cap_size,unmodified_existing_cap_mw,Fuel,Start_Cost_per_MW,MGA,Resource_Type,variable_CF,Max_DSM_delay,Unnamed: 21
+NENG_Rest_biomass_1,1,0,0,58.6,NENG_Rest,Biomass,1,1.58,4.476,12.28,157220,4.58,2.765,1.409,37,0.192,8.243,304.991,waste_biomass,209,0,Other_renewables,0,0,-1
+NENG_Rest_biomass_2,1,0,0,110.4,NENG_Rest,Biomass,2,5.02,7.973,17.3,157220,6.46,3.508,2.487,22,0.192,26.136,574.992,waste_biomass,209,0,Other_renewables,0,0,-1
+NENG_Rest_biomass_3,1,0,0,30.1,NENG_Rest,Biomass,3,7.54,4.975,29.25,157220,10.92,4.242,3.702,4,0.192,39.25,157,waste_biomass,209,0,Other_renewables,0,0,-1
+NENG_Rest_small_hydroelectric_1,1,0,0,392.9,NENG_Rest,Small Hydroelectric,1,0.89,0.467,8.84,57025,0,0,0,443,0.441,2.014,892.202,No_fuel,0,0,Other_renewables,0.4469697298845211,0,-1
+NY_Z_A_biomass_1,2,0,0,22.7,NY_Z_A,Biomass,1,1.19,0.947,11.74,157220,4.38,1.081,0.495,19,0.388,3.074,58.406,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_A_biomass_2,2,0,0,2.2,NY_Z_A,Biomass,2,0.31,0.6,13.5,157220,5.04,0,0,7,0.388,0.8,5.6,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_A_small_hydroelectric_1,2,0,0,1.1,NY_Z_A,Small Hydroelectric,1,1.05,1.8,8.84,57025,0,0,0,1,0.439,2.4,2.4,No_fuel,0,0,Other_renewables,0.6264021857923497,0,-1
+NY_Z_B_biomass_1,3,0,0,5.3,NY_Z_B,Biomass,1,0.66,0.5,12.35,157220,4.61,0,0,8,0.831,0.8,6.4,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_B_biomass_2,3,0,0,1,NY_Z_B,Biomass,2,1,0.8,14.74,157220,5.5,0.183,0.365,1,0.831,1.2,1.2,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_B_small_hydroelectric_1,3,0,0,318.1,NY_Z_B,Small Hydroelectric,1,35.35,0.344,8.84,57025,0,0,0,9,9.302,3.8,34.2,No_fuel,0,0,Other_renewables,0.10942095856102002,0,-1
+NY_Z_C&E_biomass_1,4,0,0,33,NY_Z_C&E,Biomass,1,0.92,0.689,11.32,157220,4.23,0.997,0.78,36,0.696,1.317,47.412,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_C&E_biomass_2,4,0,0,20.9,NY_Z_C&E,Biomass,2,20.88,3.5,18.45,157220,6.89,0,0,1,0.696,30,30,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_C&E_small_hydroelectric_1,4,0,0,275.8,NY_Z_C&E,Small Hydroelectric,1,1.37,0.801,8.84,57025,0,0,0,201,0.547,2.507,503.907,No_fuel,0,0,Other_renewables,0.393033311,0,-1
+NY_Z_D_biomass_1,5,0,0,3.9,NY_Z_D,Biomass,1,0.98,0.8,11.2,157220,4.18,0,0,4,0.615,1.6,6.4,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_D_small_hydroelectric_1,5,0,0,28.9,NY_Z_D,Small Hydroelectric,1,0.83,0.351,8.84,57025,0,0,0,35,0.455,1.814,63.49,No_fuel,0,0,Other_renewables,0.8089198201275046,0,-1
+NY_Z_F_biomass_1,6,0,0,4.5,NY_Z_F,Biomass,1,0.41,0.845,12.34,157220,4.61,1.224,1.085,11,0.288,1.409,15.499,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_F_biomass_2,6,0,0,3.3,NY_Z_F,Biomass,2,3.32,2,24.12,157220,9.01,0,0,1,0.288,11.5,11.5,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_F_small_hydroelectric_1,6,0,0,106.4,NY_Z_F,Small Hydroelectric,1,1.56,0.685,8.84,57025,0,0,0,68,0.526,2.975,202.3,No_fuel,0,0,Other_renewables,0.43371556238615666,0,-1
+NY_Z_G-I_biomass_1,7,0,0,2.8,NY_Z_G-I,Biomass,1,2.78,4,11.98,157220,4.47,1.382,1.596,1,0.376,7.4,7.4,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_G-I_biomass_2,7,0,0,19.9,NY_Z_G-I,Biomass,2,19.93,7,18.07,157220,6.75,0,0,1,0.376,53,53,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_G-I_small_hydroelectric_1,7,0,0,28,NY_Z_G-I,Small Hydroelectric,1,1.17,1.479,8.84,57025,0,0,0,24,0.258,4.529,108.696,No_fuel,0,0,Other_renewables,0.2950762067395264,0,-1
+NY_Z_K_biomass_1,9,0,0,10.7,NY_Z_K,Biomass,1,5.33,1,23.58,157220,8.8,3.155,4.462,2,0.42,12.7,25.4,waste_biomass,209,0,Other_renewables,0,0,-1
+NY_Z_K_biomass_2,9,0,0,40.4,NY_Z_K,Biomass,2,20.22,16,17.17,157220,6.41,4.179,4.678,2,0.42,48.15,96.3,waste_biomass,209,0,Other_renewables,0,0,-1
+PJM_EMAC_biomass_1,10,0,0,34,PJM_EMAC,Biomass,1,0.57,0.615,11.21,157220,4.18,1.826,1.264,60,0.397,1.425,85.5,waste_biomass,209,0,Other_renewables,0,0,-1
+PJM_EMAC_biomass_2,10,0,0,120.8,PJM_EMAC,Biomass,2,15.1,9.412,18.37,157220,6.86,2.32,1.868,8,0.397,38.025,304.2,waste_biomass,209,0,Other_renewables,0,0,-1
+PJM_EMAC_small_hydroelectric_1,10,0,0,2.2,PJM_EMAC,Small Hydroelectric,1,0.75,0.3,8.84,57025,0,0,0,3,0.227,3.3,9.9,No_fuel,0,0,Other_renewables,0.4854487021857924,0,-1
+PJM_Rest_biomass_1,11,0,0,146.6,PJM_Rest,Biomass,1,0.33,0.465,12.35,157220,4.61,0.688,0.937,443,0.243,1.359,602.037,waste_biomass,209,0,Other_renewables,0,0,-1
+PJM_Rest_biomass_2,11,0,0,137.8,PJM_Rest,Biomass,2,4.92,4.761,20.04,157220,7.48,2.087,2.971,28,0.243,20.225,566.3,waste_biomass,209,0,Other_renewables,0,0,-1
+PJM_Rest_small_hydroelectric_1,11,0,0,286.3,PJM_Rest,Small Hydroelectric,1,1.45,0.6,8.84,57025,0,0,0.001,198,0.512,2.823,558.954,No_fuel,0,0,Other_renewables,0.26623033528550605,0,-1
+NENG_Rest_distributed_generation_1,1,0,0,5664,NENG_Rest,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.18748287671232874,1,0
+NY_Z_A_distributed_generation_1,2,0,0,232,NY_Z_A,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_B_distributed_generation_1,3,0,0,176,NY_Z_B,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_C&E_distributed_generation_1,4,0,0,347,NY_Z_C&E,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_D_distributed_generation_1,5,0,0,40,NY_Z_D,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_F_distributed_generation_1,6,0,0,212,NY_Z_F,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_G-I_distributed_generation_1,7,0,0,393,NY_Z_G-I,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_J_distributed_generation_1,8,0,0,1407,NY_Z_J,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+NY_Z_K_distributed_generation_1,9,0,0,480,NY_Z_K,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19013436073059362,1,0
+PJM_EMAC_distributed_generation_1,10,0,0,6197,PJM_EMAC,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19035148401826485,1,0
+PJM_Rest_distributed_generation_1,11,0,0,14518,PJM_Rest,distributed_generation,1,0,0,0,0,0,0,0,0,0,0,0,No_fuel,0,0,Distributed_generation,0.19605422374429224,1,0

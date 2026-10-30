@@ -1,0 +1,12 @@
+Region_description,Network_zones,CO_2_Cap_Zone_1,CO_2_Max_Mtons_1,CO_2_Cap_Zone_2,CO_2_Max_Mtons_2
+NENG_Rest,z1,1.0,17.12,0.0,0.0
+NY_Z_A,z2,1.0,8.05,1.0,0.0
+NY_Z_B,z3,1.0,8.05,1.0,0.0
+NY_Z_C&E,z4,1.0,8.05,1.0,0.0
+NY_Z_D,z5,1.0,8.05,1.0,0.0
+NY_Z_F,z6,1.0,8.05,1.0,0.0
+NY_Z_G-I,z7,1.0,8.05,1.0,0.0
+NY_Z_J,z8,1.0,11.12,1.0,0.0
+NY_Z_K,z9,1.0,11.12,1.0,0.0
+PJM_EMAC,z10,1.0,65.58,0.0,0.0
+PJM_Rest,z11,0.0,0.0,0.0,0.0

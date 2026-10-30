@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the software and the associated research paper."
+title: "Uncertainty and Sensitivity Analysis of Energy System Models Using Morris and Optimal Transport"
+type: software
+authors:
+
+family-names: "Menezes"
+given-names: "Shane"
+version: "1.0"
+
+preferred-citation:
+type: conference-paper
+authors:
+- family-names: "Menezes"
+given-names: "Shane"
+- family-names: "Patankar"
+given-names: "Neha"
+title: "Zonal Global Sensitivity Analysis for Policy-Constrained Capacity Expansion Planning in New York"
+year: 2026
+month: 6
+collection-title: "11th North American International Conference on Industrial Engineering and Operations Management"
+doi: "10.46254/NA11.20260328"
+url: "https://doi.org/10.46254/NA11.20260328"

@@ -1,0 +1,53 @@
+# Merged transmission.yml (NY + CONUS)
+# Criteria:
+# 1. NY-only settings included
+# 2. For region-specific settings, NY as baseline, update from CONUS for ISNE, PJM, NY regions (using mapping)
+# 3. New region-specific settings (ISNE, PJM, NY) from CONUS included, mapped
+# 4. New non-region-specific CONUS settings included
+# 5. For non-region-specific settings in both, use CONUS value if different
+
+transmission_investment_cost: 
+  use_total: true
+  spur:
+    capex_mw_mile:
+      NY_Z_A: 9749  # NYUP
+      NY_Z_B: 9749  # NYUP
+      NY_Z_C&E: 9749  # NYUP
+      NY_Z_D: 9749  # NYUP
+      NY_Z_F: 9749  # NYUP
+      NY_Z_G-I: 9749  # NYUP
+      NY_Z_J: 60660  # NYCW
+      NY_Z_K: 60660  # NYCW
+      PJM_EMAC: 9749  # PJME
+      PJM_Rest: 9749  # PJMW
+      NENG_Rest: 9749  # ISNE
+    wacc: 0.044
+    investment_years: 60
+  offshore_spur:
+    capex_mw_mile:
+    wacc: 0.044
+    investment_years: 60
+  tx:
+    capex_mw_mile:
+      NY_Z_A: 3055  # NYUP
+      NY_Z_B: 3055  # NYUP
+      NY_Z_C&E: 3055  # NYUP
+      NY_Z_D: 3055  # NYUP
+      NY_Z_F: 3055  # NYUP
+      NY_Z_G-I: 3055  # NYUP
+      NY_Z_J: 20475  # NYCW
+      NY_Z_K: 20475  # NYCW
+      PJM_EMAC: 4722  # PJME
+      PJM_Rest: 4722  # PJMW
+      NENG_Rest: 4722  # ISNE
+    wacc: 0.044
+    investment_years: 60
+
+tx_expansion_per_period: 100.0
+# (from CONUS, overrides NY value if different)
+tx_expansion_mw_per_period: 20000
+# (from CONUS, new setting)
+tx_line_loss_100_miles: 0.01
+# (same in both)
+partial_ces: false
+# (from NY, not in CONUS)

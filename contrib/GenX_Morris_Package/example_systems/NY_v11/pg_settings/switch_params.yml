@@ -1,0 +1,5 @@
+# switch_params.yml (CONUS, filtered for NY/ISNE/PJM regions only if region-specific)
+# All settings are from the CONUS file. No region-specific filtering needed for these keys.
+
+interest_rate: 0.05
+discount_rate: 0.05

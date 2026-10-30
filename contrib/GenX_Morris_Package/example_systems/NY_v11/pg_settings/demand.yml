@@ -1,0 +1,81 @@
+# LOAD GROWTH ASSUMPTIONS
+#
+
+# Hourly demand from 2012 is included with PG. The growth rates from 2012-2019 can be
+# calculated using historical data. Different growth scenarios can be selected using the
+# same AEO scenarios used for fuel prices. Examples include HIGHMACRO for high growth and
+# LOWMACRO for low growth.
+regular_load_growth_start_year: 2023 # NOTE: [SRI] Update this Originally 2020
+growth_scenario: REF2023 # does this also need updating? originally REF2022
+load_eia_aeo_year: 2023 #NOTE: [SRI] originally 2022 . search for eia base year and check where powergenome is pulling that data from.  EIA2025 uses year 2024 but 2023 is the latest one without major model changes.
+# TODO: [SRI] update the yaml files and do the same thing 
+# DONE: [SRI] COMBINE scenarios into one file in the scenatio_inputs.csv
+
+historical_load_region_map:
+  TRE: [ERC_PHDL, ERC_REST, ERC_WEST]
+  FLRC: [FRCC] #FRCC
+  MWRCE: [MIS_WUMS]
+  MWRCW: [MIS_MAPP, SPP_WAUE, SPP_NEBR, MIS_MIDA, MIS_IA, MIS_MNWI]
+  NPCCNE: [NENG_ME, NENG_CT, NENGREST, NENG_Rest]
+  NPCCNYWE: [NY_Z_J]
+  NPCCLI: [NY_Z_K]
+  NPCCUPNY: [
+    NY_Z_A,
+    NY_Z_B,
+    NY_Z_C&E,
+    NY_Z_D,
+    NY_Z_F,
+    NY_Z_G-I,
+  ]
+  RFCET: [PJM_WMAC, PJM_EMAC, PJM_SMAC, PJM_PENE, PJM_Dom]
+  RFCMI: [MIS_LMI]
+  RFCWT: [PJM_West, PJM_AP, PJM_ATSI, PJM_COMD]
+  SERCDLT: [MIS_WOTA, MIS_LA, MIS_AMSO, MIS_AR, MIS_D_MS]
+  SERCGW: [MIS_MO, S_D_AECI, MIS_IL, MIS_INKY]
+  SERCSOES: [S_SOU]
+  SERCCNT: [S_C_TVA, S_C_KY]
+  SERCVC: [S_VACA]
+  SWPPNO: [SPP_N]
+  SWPPSO: [SPP_SPS, SPP_WEST]
+  WECCSW: [WECC_AZ, WECC_NM, WECC_SNV]
+  WECCCA: [WEC_CALN, WEC_BANC, WECC_IID, WECC_SCE, WEC_LADW, WEC_SDGE]
+  WENWPP: [WECC_PNW, WECC_MT, WECC_ID, WECC_WY, WECC_UT, WECC_NNV]
+  WECCRKS: [WECC_CO]
+
+future_load_region_map:
+  TRE: [ERC_PHDL, ERC_REST, ERC_WEST]
+  FLRC: [FRCC] #FRCC
+  MCW: [MIS_WUMS, MIS_MNWI, MIS_IA] #MISW
+  MCE: [MIS_LMI] #MISE
+  PJMCE: [PJM_COMD] #PJMC
+  MCC: [MIS_IL, MIS_MO, S_D_AECI, MIS_INKY] #MISC
+  SWPPNO: [MIS_MAPP, SPP_WAUE, SPP_NEBR, MIS_MIDA] #SPPN
+  SWPPC: [SPP_N] #SPPC
+  SWPPSO: [SPP_WEST, SPP_SPS] #SPPS
+  MCS: [MIS_AMSO, MIS_WOTA, MIS_LA, MIS_AR, MIS_D_MS] #MISS
+  SERCSOES: [S_SOU] #SRSE
+  SERCE: [S_VACA] #SRCA
+  PJMD: [PJM_Dom]
+  PJMW: [PJM_West, PJM_AP, PJM_ATSI]
+  PJME: [PJM_WMAC, PJM_EMAC, PJM_SMAC, PJM_PENE]
+  SERCCNT: [S_C_TVA, S_C_KY] #SRCE
+  NPCCUPNY: [
+      NY_Z_A,
+      NY_Z_B,
+      NY_Z_C&E,
+      NY_Z_D,
+      NY_Z_F,
+      NY_Z_G-I,
+  ] #NYUP
+  NENYCLI: [NY_Z_J, NY_Z_K] #NYCW
+  NPCCNE: [NENG_ME, NENGREST,NENG_Rest, NENG_CT] #ISNE
+  WECCRKS: [WECC_CO] #RMRG
+  WECCB: [WECC_ID, WECC_WY, WECC_UT, WECC_NNV] #BASN
+  WENWPP: [WECC_PNW, WECC_MT] #NWPP
+  WECCCAN: [WEC_CALN, WEC_BANC] #CANO
+  WECCCAS: [WECC_IID, WECC_SCE, WEC_LADW, WEC_SDGE] #CASO
+  WECCSW: [WECC_AZ, WECC_NM, WECC_SNV] #SRSG
+
+# Make none (~) if no regions are included here
+alt_growth_rate: ~
+  # WECC_AZ: 0.02

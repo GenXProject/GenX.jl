@@ -1,0 +1,18 @@
+# Merged time_clustering.yml (NY + CONUS)
+# Criteria:
+# 1. NY-only settings included
+# 2. For region-specific settings, NY as baseline, update from CONUS for ISNE, PJM, NY regions (using mapping)
+# 3. New region-specific settings (ISNE, PJM, NY) from CONUS included, mapped
+# 4. New non-region-specific CONUS settings included
+# 5. For non-region-specific settings in both, use CONUS value if different
+
+reduce_time_domain: true
+# (from CONUS, overrides NY value if different)
+time_domain_periods: 10
+# (from CONUS, overrides NY value if different)
+time_domain_days_per_period: 1
+# (from CONUS, overrides NY value if different)
+include_peak_day: true
+# (same in both)
+demand_weight_factor: 1
+# (same in both)

@@ -1,0 +1,159 @@
+# MODEL DEFINITION
+
+model_regions:
+  - NENG_Rest
+  - NY_Z_A
+  - NY_Z_B
+  - NY_Z_C&E
+  - NY_Z_D
+  - NY_Z_F
+  - NY_Z_G-I
+  - NY_Z_J
+  - NY_Z_K
+  - PJM_EMAC
+  - PJM_Rest
+
+region_aggregations:
+  PJM_Rest:
+    [PJM_COMD, PJM_Dom, PJM_WMAC, PJM_SMAC, PJM_PENE, PJM_West, PJM_AP, PJM_ATSI]
+  NENG_Rest:
+    [NENG_ME, NENGREST, NENG_CT]
+
+target_usd_year: 2024
+
+model_year: [2030, 2035, 2040, 2050]
+
+model_first_planning_year: [2024, 2031, 2036, 2041]
+
+utc_offset: -5
+
+regional_capacity_reserves:
+  CapRes_1:
+    NENG_Rest: 0.143
+  CapRes_2:
+    NY_Z_A: 0.156
+    NY_Z_B: 0.156
+    NY_Z_C&E: 0.156
+    NY_Z_D: 0.156
+    NY_Z_F: 0.156
+    NY_Z_G-I: 0.156
+    NY_Z_J: 0.156
+    NY_Z_K: 0.156
+  CapRes_3:
+    PJM_EMAC: 0.149
+    PJM_Rest: 0.149
+
+cap_res_network_derate_default: 0.95
+
+######################################################################################
+# MODEL OUTPUTS
+
+generator_columns:
+  - region
+  - Resource
+  - technology
+  - cluster
+  - R_ID
+  - Zone
+  - Num_VRE_Bins
+  - CapRes_1
+  - CapRes_2
+  - CapRes_3
+  - THERM
+  - VRE
+  - MUST_RUN
+  - STOR
+  - FLEX
+  - LDS
+  - HYDRO
+  - ESR_1
+  - ESR_2
+  - ESR_3
+  - ESR_4
+  - ESR_5
+  - ESR_6
+  - MinCapTag_1
+  - MinCapTag_2
+  - MinCapTag_3
+  - MinCapTag_4
+  - MinCapTag_5
+  - MinCapTag_6
+  - MinCapTag_7
+  - MinCapTag_8
+  - Min_Share
+  - Max_Share
+  - Existing_Cap_MWh
+  - Existing_Cap_MW
+  - Existing_Charge_Cap_MW
+  - num_units
+  - New_Build
+  - Can_Retire
+  - Cap_Size
+  - Min_Cap_MW
+  - Max_Cap_MW
+  - Max_Cap_MWh
+  - Min_Cap_MWh
+  - Max_Charge_Cap_MW
+  - Min_Charge_Cap_MW
+  - Min_Share_percent
+  - Max_Share_percent
+  - capex_mw
+  - Inv_Cost_per_MWyr
+  - Fixed_OM_Cost_per_MWyr
+  - capex_mwh
+  - Inv_Cost_per_MWhyr
+  - Fixed_OM_Cost_per_MWhyr
+  - Var_OM_Cost_per_MWh
+  - Var_OM_Cost_per_MWh_In
+  - Inv_Cost_Charge_per_MWyr
+  - Fixed_OM_Cost_Charge_per_MWyr
+  - Start_Cost_per_MW
+  - Start_Fuel_MMBTU_per_MW
+  - Heat_Rate_MMBTU_per_MWh
+  - heat_rate_mmbtu_mwh_iqr
+  - heat_rate_mmbtu_mwh_std
+  - Fuel
+  - Min_Power
+  - Self_Disch
+  - Eff_Up
+  - Eff_Down
+  - Hydro_Energy_to_Power_Ratio
+  - Min_Duration
+  - Max_Duration
+  - Max_Flexible_Demand_Delay
+  - Max_Flexible_Demand_Advance
+  - Flexible_Demand_Energy_Eff
+  - Ramp_Up_Percentage
+  - Ramp_Dn_Percentage
+  - Up_Time
+  - Down_Time
+  - Reg_Max
+  - Rsv_Max
+  - Reg_Cost
+  - Rsv_Cost
+  - spur_miles
+  - spur_capex
+  - offshore_spur_miles
+  - offshore_spur_capex
+  - tx_miles
+  - tx_capex
+  - interconnect_annuity
+  - unmodified_existing_cap_mw
+  - Ratio_power_to_energy
+  - NACC_Eff
+  - NACC_Peak_to_Base
+  - CO2_Capture_Cost_per_Metric_Ton
+  - co2_pipeline_annuity_mw
+  - co2_pipeline_capex_mw
+  - storage_cost_tonne
+  - tonne_co2_captured_mwh
+  - co2_cost_mwh
+  - Min_Retired_Cap_MW
+  - Min_Retired_Energy_Cap_MW
+  - Min_Retired_Charge_Cap_MW
+  - Resource_Type
+  - MGA
+  - Retrofit
+  - Can_Retrofit
+  - Retrofit_Efficiency
+  - Retrofit_Id

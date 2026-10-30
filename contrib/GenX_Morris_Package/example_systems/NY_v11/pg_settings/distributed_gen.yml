@@ -1,0 +1,46 @@
+# List the method to calculate total distributed generation in each region (not all
+# regions need to be listed here). Both methods use a normalized profile in the file
+# specified by "distributed_gen_profiles_fn". Values for each planning year/region
+# should be included in the "distributed_gen_values" parameter.
+# - "capacity": Use the capacity (MW) to scale up generation
+# - "fraction_load": Distributed generation is a specific fraction of total load
+# distributed_gen_method:
+#   NY_Z_A: capacity
+#   NY_Z_B: capacity
+#   NY_Z_C&E: capacity
+#   NY_Z_D: capacity
+#   NY_Z_F: capacity
+#   NY_Z_G-I: capacity
+#   NY_Z_J: capacity
+#   NY_Z_K: capacity
+#   PJM_EMAC: capacity
+#   PJM_Rest: capacity
+#   NENG_Rest: capacity
+
+# Values - either MW or fraction of load - matching the methods listed for each region
+# in "distributed_gen_method". These can be varied by scenario by adding them to an
+# associated scenario in "settings_management".
+# distributed_gen_values:
+#   NY_Z_A: 500
+#   NY_Z_B: 500
+#   NY_Z_C&E: 500
+#   NY_Z_D: 500
+#   NY_Z_F: 500
+#   NY_Z_G-I: 500
+#   NY_Z_J: 500
+#   NY_Z_K: 500
+#   PJM_EMAC: 500
+#   PJM_Rest: 2800
+#   NENG_Rest: 1500
+
+# Name of the data file located in the folder specified by the parameter 
+# DISTRIBUTED_GEN_DATA
+distributed_gen_fn: nrel_cambium_distr_pv_2022_utc.parquet
+distributed_gen_scenario: MidCase
+
+# Set this parameter to "true" if existing distributed generation in each region should
+# be represented as a resource rather than being subtracted from demand.
+dg_as_resource: true
+
+# Distribution loss used when subtracting distributed generation from total load.
+avg_distribution_loss: 0.0453

@@ -1,0 +1,128 @@
+# EIA AEO FUEL PRICE VARIABLES
+
+# Which year of AEO to use. Note that different years have different scenario names
+# so those may need to be modified accordingly.
+fuel_eia_aeo_year: 2023
+aeo_fuel_usd_year: 2021
+
+# FUEL SCENARIOS
+# These parameters map the EIA scenario names to user names (e.g. reference is used inplace
+# of REF2020 and low_resource in place of LOWOGS), and EIA fuel codes to user fuel names
+# (e.g. coal in place of STC). Each user fuel name is then assigned a user scenario name.
+
+# This is a subset of AEO 2020 scenarios. For a full list, look at the eia open data
+# page https://www.eia.gov/opendata/qb.php?category=3604304
+eia_series_scenario_names:
+  reference: REF2022
+  low_price: LOWPRICE
+  high_price: HIGHPRICE
+  high_resource: HIGHOGS
+  low_resource: LOWOGS
+
+eia_series_fuel_names:
+  coal: STC
+  naturalgas: NG
+  distillate: DFO
+  uranium: U
+
+aeo_fuel_scenarios:
+  coal: reference
+  naturalgas: reference
+  distillate: reference
+  uranium: reference
+
+# Need to make choices about fuel regions when user-defined regions cross AEO fuel regions.
+# I'm putting WECC_NW in the rockies because the PNW doesn't use as much coal/gas.
+# IPM regions are included here only as a guide. All user regions must be mapped to AEO regions.
+# See the PowerGenome wiki for a map of Census Divisions and IPM regions
+# https://github.com/PowerGenome/PowerGenome/wiki/Geospatial-Mappings
+aeo_fuel_region_map:
+  mountain: [WECC_AZ, WECC_NM, WECC_CO, WECC_SNV, WECC_ID, WECC_WY, WECC_UT, WECC_NNV, WECC_NW, BASN, RMRG, SRSG]
+  pacific: [WECC_PNW, WEC_CALN, WEC_BANC, WECC_IID, WECC_SCE, WEC_LADW, WEC_SDGE, CA_N, CA_S, CANO, CASO, NWPP]
+  west_south_central: [ERC_PHDL, ERC_REST, ERC_WEST, SPP_WEST, SPP_SPS, MIS_AMSO, MIS_WOTA, MIS_LA, MIS_AR, TRE, TREW, SPPS, MISS]
+  east_south_central: [MIS_D_MS, S_C_TVA, S_C_KY, SRCE]
+  south_atlantic: [FRCC, S_SOU, S_VACA, PJM_Dom, PJM_SMAC, PJM_AP, SRSE, PJMD, SRCA]
+  west_north_central: [MIS_MAPP, SPP_WAUE, SPP_NEBR, MIS_MIDA, SPP_N, MIS_MNWI, MIS_IA, MIS_MO, S_D_AECI, SPPC, SPPN]
+  east_north_central: [MIS_WUMS, MIS_LMI, PJM_COMD, MIS_IL, MIS_INKY, PJM_West, PJM_ATSI, MISW, MISE, MISC, PJMC, PJMW]
+  middle_atlantic: [PJM_WMAC, PJM_EMAC, PJM_SMAC, PJM_PENE, NY_Z_A, NY_Z_B, NY_Z_C&E, NY_Z_D, NY_Z_F, NY_Z_G-I, NY_Z_J, NY_Z_K, PJME, NYCW, NYUP, PJM_Rest]
+  new_england: [NENG_ME, NENGREST, NENG_CT, ISNE, NENG_Rest]
+
+# Map the user fuel regions to EIA region codes.
+eia_series_region_names:
+  mountain: MTN
+  pacific: PCF
+  west_south_central: WSC
+  east_south_central: ESC
+  south_atlantic: SOATL
+  west_north_central: WNC
+  east_north_central: ENC
+  middle_atlantic: MDATL
+  new_england: NEENGL
+
+
+# Map user fuel names to technologies. If a technology is included in the settings parameter
+# "eia_atb_tech_map" then all mapped technologies will be assigned the same fuel.
+tech_fuel_map:
+  Conventional Steam Coal: coal
+  # Coal Integrated Gasification Combined Cycle: coal
+  Natural Gas Fired Combined Cycle: naturalgas
+  Natural Gas Fired Combustion Turbine: naturalgas
+  Natural Gas Steam Turbine: naturalgas
+  Natural Gas Internal Combustion Engine: naturalgas
+  NaturalGas_: naturalgas # for candidate
+  # Natural Gas with Compressed Air Storage: naturalgas
+  # Other Natural Gas: naturalgas
+  Nuclear: uranium
+  # Wood/Wood Waste Biomass: Missing
+  # Landfill Gas: Missing
+  # Municipal Solid Waste: Missing
+  # Other Waste Biomass: Missing
+  # Other Gases: Missing
+  Biomass: waste_biomass
+  Hydrogen_: hydrogen
+  Hydrogen: hydrogen
+  AdvNuclear_: uranium
+  Petroleum Liquids: distillate
+  # Petroleum Coke: distillate
+
+# The CCS fuel names (key values on right have to be in the format <fuel>_<ccslevel>,
+# where the fuel matches something from "aeo_fuel_scenarios" (above
+# ATB: technology_tech_detail.
+ccs_fuel_map:
+  #NETL_NGCC_CCS: naturalgas_ccs90
+  # NaturalGas_CCS100: naturalgas_ccs100
+  NaturalGas_H-Frame CC 95% CCS: naturalgas_ccs95
+  # Coal_CCS30: coal_ccs30
+  # Coal_CCS90: coal_ccs90
+
+ccs_capture_rate:
+  # naturalgas_ccs100: 1.0
+  naturalgas_ccs95: 0.95
+  # coal_ccs30: 0.3
+  # coal_ccs90: 0.9
+
+# Pipeline and other costs, $/tonne
+ccs_disposal_cost: 0
+
+# Carbon tax, USD/tonne
+carbon_tax: 0
+
+# tonne/MMBtu
+fuel_emission_factors:
+  naturalgas: 0.05306
+  coal: 0.09552 # EIA value for electric power sector
+  distillate: 0.07315
+  hydrogen: 0
+  waste_biomass: 0
+  uranium: 0
+
+user_fuel_price:
+  hydrogen: 16 #from Princeton's NZA
+  waste_biomass: 1 # from ATB 2021
+user_fuel_usd_year:
+  hydrogen: 2020 #from Princeton's NZA
+  biomass: 2020 # from ATB 2021
+
+# regional_fuel_adjustments:
+#   ISNE:
+#     coal: [add, 2]

@@ -1,0 +1,1872 @@
+# Merged scenario_management.yml (NY + CONUS)
+# Criteria:
+# 1. NY-only settings included
+# 2. Region-specific: NY as baseline, update from CONUS for ISNE, PJM, NY regions (using mapping)
+# 3. New region-specific settings (ISNE, PJM, NY) from CONUS included, mapped
+# 4. New non-region-specific CONUS settings included
+# 5. For non-region-specific settings in both, use CONUS value if different
+
+settings_management:
+  all_years:
+    zcf_prices:
+      low:
+        user_fuel_price:
+          hydrogen: 0 #from Princeton's NZA
+          waste_biomass: 1 # from ATB 2021
+      base:
+        user_fuel_price:
+          hydrogen: 16 #from Princeton's NZA
+          waste_biomass: 1 # from ATB 2021
+    coal_price:
+      high:
+        regional_fuel_adjustments:
+          NENG_Rest:
+            coal: [add, 0.5]
+          NY_Z_A:
+            coal: [add, 0.5]
+          NY_Z_B:
+            coal: [add, 0.5]
+          NY_Z_C&E:
+            coal: [add, 0.5]
+          NY_Z_D:
+            coal: [add, 0.5]
+          NY_Z_F:
+            coal: [add, 0.5]
+          NY_Z_G-I:
+            coal: [add, 0.5]
+          NY_Z_J:
+            coal: [add, 0.5]
+          NY_Z_K:
+            coal: [add, 0.5]
+          PJM_EMAC:
+            coal: [add, 0.5]
+          PJM_Rest:
+            coal: [add, 0.5]
+    period_years:
+      ten:
+        model_year: [2030, 2035, 2040, 2050]
+        model_first_planning_year: [2024, 2031, 2036, 2041]
+    ira:
+      yes:
+        renewables_clusters:
+          - region: all
+            technology: landbasedwind
+            group:
+              - m_primefarmland
+            group_modifiers:
+              - group: m_primefarmland
+                group_value: 1
+                Var_OM_Cost_per_MWh: -9.71
+              - group: m_primefarmland
+                group_value: 0
+                Var_OM_Cost_per_MWh: -9.71
+            filter:
+              - feature: lcoe
+                max: 80
+            bin:
+              - feature: lcoe
+                q: 3
+                weights: "mw"
+            cluster:
+              - feature: cf #profile
+                n_clusters: 2
+                #mw_per_cluster: 5000
+                method: agg
+          - region: all
+            technology: utilitypv
+            group:
+              - m_primefarmland
+            group_modifiers:
+              - group: m_primefarmland
+                group_value: 1
+                Var_OM_Cost_per_MWh: -9.25
+              - group: m_primefarmland
+                group_value: 0
+                Var_OM_Cost_per_MWh: -9.25
+            filter:
+              - feature: lcoe
+                max: 40
+            bin:
+              - feature: lcoe
+                weights: mw
+                q: 3
+                # bins: [0, 27, 31, 41]
+            cluster:
+              - feature: cf
+                n_clusters: 2
+                #mw_per_cluster: 10000
+                method: agg
+          - region: all
+            technology: offshorewind
+            turbine_type: fixed
+            pref_site: 1
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 15
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+          - region: all
+            technology: offshorewind
+            turbine_type: floating
+            pref_site: 1
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 0
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+          - region: all
+            technology: offshorewind
+            turbine_type: fixed
+            pref_site: 0
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 0
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+          - region: all
+            technology: offshorewind
+            turbine_type: floating
+            pref_site: 0
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 15
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+        atb_modifiers:
+          Offwind:
+            capex_mw: [mul, 0.63]
+          Offwind_floating:
+            capex_mw: [mul, 0.63]
+          bat:
+            capex_mw: [mul, 0.63]
+            capex_mwh: [mul, 0.63]
+          nuclear:
+            capex_mw: [mul, 0.63]
+
+      no: 
+        renewables_clusters:
+          - region: all
+            technology: landbasedwind
+            group:
+              - m_primefarmland
+            group_modifiers:
+              - group: m_primefarmland
+                group_value: 1
+                Var_OM_Cost_per_MWh: 0
+              - group: m_primefarmland
+                group_value: 0
+                Var_OM_Cost_per_MWh: 0
+            filter:
+              - feature: lcoe
+                max: 80
+            bin:
+              - feature: lcoe
+                q: 3
+                weights: "mw"
+            cluster:
+              - feature: cf #profile
+                n_clusters: 2
+                #mw_per_cluster: 5000
+                method: agg
+          - region: all
+            technology: utilitypv
+            group:
+              - m_primefarmland
+            group_modifiers:
+              - group: m_primefarmland
+                group_value: 1
+                Var_OM_Cost_per_MWh: 0
+              - group: m_primefarmland
+                group_value: 0
+                Var_OM_Cost_per_MWh: 0
+            filter:
+              - feature: lcoe
+                max: 40
+            bin:
+              - feature: lcoe
+                weights: mw
+                q: 3
+                # bins: [0, 27, 31, 41]
+            cluster:
+              - feature: cf
+                n_clusters: 2
+                #mw_per_cluster: 10000
+                method: agg
+          - region: all
+            technology: offshorewind
+            turbine_type: fixed
+            pref_site: 1
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 15
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+          - region: all
+            technology: offshorewind
+            turbine_type: floating
+            pref_site: 1
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 0
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+          - region: all
+            technology: offshorewind
+            turbine_type: fixed
+            pref_site: 0
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 0
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+          - region: all
+            technology: offshorewind
+            turbine_type: floating
+            pref_site: 0
+            filter:
+              - feature: lcoe
+                max: 150
+              # - feature: d_shore_m
+              #   min: 15
+            bin:
+              - feature: interconnect_capex_mw
+                q: 3
+                weights: "mw"
+        atb_modifiers:
+          Offwind:
+            capex_mw: [mul, 1]
+          Offwind_floating:
+            capex_mw: [mul, 1]
+          bat:
+            capex_mw: [mul, 1]
+            capex_mwh: [mul, 1]
+          nuclear:
+            capex_mw: [mul, 1]
+    limitedtransmission:
+      no:
+        tx_expansion_per_period: 10
+        tx_expansion_mw_per_period: 10000
+      yes_10:
+        tx_expansion_per_period: 0.1 # 2% for 5 years
+        tx_expansion_mw_per_period: 1
+      yes_22:
+        tx_expansion_per_period: 0.22 # 2% for 10 years
+        tx_expansion_mw_per_period: 1
+      yes_16:
+        tx_expansion_per_period: 0.16 # 1.5% for 10 years
+        tx_expansion_mw_per_period: 1
+      yes_8:
+        tx_expansion_per_period: 0.08 # 1.5% for 5 years
+        tx_expansion_mw_per_period: 1
+      yes_45:
+        tx_expansion_per_period: 0.45 # 7.7% for 5 years - Big_wires_Act
+        tx_expansion_mw_per_period: 1
+      yes_110:
+        tx_expansion_per_period: 1.1 # 1.5% for 5 years
+        tx_expansion_mw_per_period: 1
+    # ...include all other non-region-specific settings from CONUS, using CONUS values if different from NY...
+  2030:
+    carbon_slack:
+      base:
+        carbon_cost_dollar_per_tco2: 200
+      high:
+        carbon_cost_dollar_per_tco2: 10000
+    wacc:
+      standardize_5:
+        atb_modifiers:
+          upv:
+            wacc_real: 0.05
+          Landwind:
+            wacc_real: 0.05
+          Offwind:
+            wacc_real: 0.05
+          Offwind_floating:
+            wacc_real: 0.05
+          bat:
+            wacc_real: 0.05
+          nuclear:
+            wacc_real: 0.05
+          ngct:
+            wacc_real: 0.05
+          ngcc:
+            wacc_real: 0.05
+          ngccccs:
+            wacc_real: 0.05
+          h2ct:
+            wacc_real: 0.05
+          h2cc:
+            wacc_real: 0.05
+    econ_retirement:
+      yes:
+        retirement_ages:
+          Conventional Hydroelectric: 1500
+          Small Hydroelectric: 1500
+          Conventional Steam Coal: 500
+          Natural Gas Fired Combined Cycle: 500
+          Natural Gas Fired Combustion Turbine: 500
+          Petroleum Liquids: 500
+          Natural Gas Internal Combustion Engine: 500
+          Nuclear: 500
+          Onshore Wind Turbine: 500
+          Hydroelectric Pumped Storage: 1500
+          Natural Gas Steam Turbine: 500
+          Solar Photovoltaic: 500
+          Solar Thermal without Energy Storage: 500
+          Geothermal: 500
+          Municipal Solid Waste: 500
+          Landfill Gas: 500
+          Batteries: 500
+          Wood/Wood Waste Biomass: 500
+          Petroleum Coke: 500
+          All Other: 500
+          Natural Gas with Compressed Air Storage: 500
+          Coal Integrated Gasification Combined Cycle: 500
+          Other Waste Biomass: 500
+          Other Gases: 500
+          Other Natural Gas: 500
+          Solar Thermal with Energy Storage: 500
+          Flywheels: 500
+          Offshore Wind Turbine: 500
+          Biomass: 500
+      no:
+        model_tag_values:
+          Can_Retire:
+            Conventional Steam Coal: 0
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Internal Combustion Engine: 0
+            Natural Gas Steam Turbine: 0
+            Nuclear: 0
+            Petroleum Liquids: 0
+            Distributed_Generation: 0
+            Onshore Wind Turbine: 0
+            Offshore Wind Turbine: 0
+            Solar Photovoltaic: 0
+            Batteries: 0
+            Nuclear_Nuclear: 0
+    policies:
+      no_action:
+        emission_policies_fn: no_action_rps_ces.csv
+      current_policies:
+        emission_policies_fn: existing_policies_rps_ces_20240403.csv
+    ccs_credit:
+      none:
+        ccs_disposal_cost: 0
+      low:
+        ccs_disposal_cost: -39.11
+      high:
+        ccs_disposal_cost: -50.44
+    time_reduction:
+      all_hours:
+        reduce_time_domain: false
+      52_weeks:
+        time_domain_periods: 52
+        time_domain_days_per_period: 7
+      20_weeks:
+        time_domain_periods: 20
+        time_domain_days_per_period: 7
+      10_weeks:
+        time_domain_periods: 10
+        time_domain_days_per_period: 7
+      10_days:
+        reduce_time_domain: true
+        time_domain_periods: 10
+        time_domain_days_per_period: 1
+    existing_clusters:
+      thin:
+        num_clusters:
+          Conventional Steam Coal: 1
+          Natural Gas Fired Combined Cycle: 1
+          Natural Gas Fired Combustion Turbine: 1
+          Natural Gas Internal Combustion Engine: 1
+          Natural Gas Steam Turbine: 1
+          Nuclear: 1
+          Conventional Hydroelectric: 1
+          Geothermal: 1
+          Solar Photovoltaic: 1
+          Onshore Wind Turbine: 1
+          Offshore Wind Turbine: 1
+          Petroleum Liquids: 1
+          Hydroelectric Pumped Storage: 1
+          Batteries: 1
+          Biomass: 1
+          Small Hydroelectric: 1
+        alt_num_clusters: ~
+    flex_resource:
+      flex_no_action:
+        flexible_demand_resources:
+          2030:
+            trans_light_duty:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 5
+                Max_Flexible_Demand_Advance: 0
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      flex_current_policy:
+        flexible_demand_resources:
+          2030:
+            trans_light_duty:
+              fraction_shiftable: 0.125
+              parameter_values:
+                Max_Flexible_Demand_Delay: 6
+                Max_Flexible_Demand_Advance: 6
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0.033
+              parameter_values:
+                Max_Flexible_Demand_Delay: 4
+                Max_Flexible_Demand_Advance: 4
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      Luan:
+        flexible_demand_resources:
+          trans_light_duty:
+            fraction_shiftable: 1 #0.67
+            parameter_values:
+              Max_Flexible_Demand_Delay: 5
+              Max_Flexible_Demand_Advance: 0
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_space_heat_cool:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_space_heat_cool:
+            fraction_shiftable: 1 #0.15
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+    hydrogen_gen_retrofit:
+      no:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Steam Turbine:	0
+            NaturalGas_H-Frame CC: 0
+            NaturalGas_F-Frame CT: 0
+      yes:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 1
+            Natural Gas Fired Combustion Turbine: 1
+            Natural Gas Steam Turbine:	1
+            NaturalGas_H-Frame CC: 1
+            NaturalGas_F-Frame CT: 1
+    dac:
+      no:
+        carbon_tax: 0
+      yes:
+        carbon_tax: 200
+    min_cap:
+      none:
+        MinCapReq: ~
+      base:
+        MinCapReq:
+          MinCapTag_1:
+            description: NY_offshorewind
+            min_mw: 4360
+          MinCapTag_2:
+            description: PJM_EMAC_offshorewind
+            min_mw: 3500
+          MinCapTag_3:
+            description: PJM_Rest_offshorewind
+            min_mw: 4662.5
+          MinCapTag_4:
+            description: ISNE_offshorewind
+            min_mw: 8945
+          MinCapTag_5:
+            description: NY_storage
+            min_mw: 6000
+          MinCapTag_6:
+            description: PJM_EMAC_storage
+            min_mw: 2000
+          MinCapTag_7:
+            description: PJM_Rest_storage
+            min_mw: 5952
+          MinCapTag_8:
+            description: ISNE_storage
+            min_mw: 245
+    renewable_battery_capex_ccs:
+      renewable_mid_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_mid_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+    ng_price:
+      reference:
+        aeo_fuel_scenarios:
+          naturalgas: reference
+      low:
+        aeo_fuel_scenarios:
+          naturalgas: high_resource
+      high:
+        aeo_fuel_scenarios:
+          naturalgas: low_resource
+    new_ccs:
+      yes:
+        model_tag_values:
+          New_Build:
+            ccs_: 1
+      no:
+        model_tag_values:
+          New_Build:
+            ccs_: 0
+    electrification:
+      mid:
+        electrification_scenario: REFERENCE ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+      high:
+        electrification_scenario: HIGH ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+  2035:
+    carbon_slack:
+      base:
+        carbon_cost_dollar_per_tco2: 200
+      high:
+        carbon_cost_dollar_per_tco2: 10000
+    wacc:
+      standardize_5:
+        atb_modifiers:
+          upv:
+            wacc_real: 0.05
+          Landwind:
+            wacc_real: 0.05
+          Offwind:
+            wacc_real: 0.05
+          Offwind_floating:
+            wacc_real: 0.05
+          bat:
+            wacc_real: 0.05
+          nuclear:
+            wacc_real: 0.05
+          ngct:
+            wacc_real: 0.05
+          ngcc:
+            wacc_real: 0.05
+          ngccccs:
+            wacc_real: 0.05
+          h2ct:
+            wacc_real: 0.05
+          h2cc:
+            wacc_real: 0.05
+    econ_retirement:
+      yes:
+        retirement_ages:
+          Conventional Hydroelectric: 1500
+          Small Hydroelectric: 1500
+          Conventional Steam Coal: 500
+          Natural Gas Fired Combined Cycle: 500
+          Natural Gas Fired Combustion Turbine: 500
+          Petroleum Liquids: 500
+          Natural Gas Internal Combustion Engine: 500
+          Nuclear: 500
+          Onshore Wind Turbine: 500
+          Hydroelectric Pumped Storage: 1500
+          Natural Gas Steam Turbine: 500
+          Solar Photovoltaic: 500
+          Solar Thermal without Energy Storage: 500
+          Geothermal: 500
+          Municipal Solid Waste: 500
+          Landfill Gas: 500
+          Batteries: 500
+          Wood/Wood Waste Biomass: 500
+          Petroleum Coke: 500
+          All Other: 500
+          Natural Gas with Compressed Air Storage: 500
+          Coal Integrated Gasification Combined Cycle: 500
+          Other Waste Biomass: 500
+          Other Gases: 500
+          Other Natural Gas: 500
+          Solar Thermal with Energy Storage: 500
+          Flywheels: 500
+          Offshore Wind Turbine: 500
+          Biomass: 500
+      no:
+        model_tag_values:
+          Can_Retire:
+            Conventional Steam Coal: 0
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Internal Combustion Engine: 0
+            Natural Gas Steam Turbine: 0
+            Nuclear: 0
+            Petroleum Liquids: 0
+            Distributed_Generation: 0
+            Onshore Wind Turbine: 0
+            Offshore Wind Turbine: 0
+            Solar Photovoltaic: 0
+            Batteries: 0
+            Nuclear_Nuclear: 0
+    policies:
+      no_action:
+        emission_policies_fn: no_action_rps_ces.csv
+      current_policies:
+        emission_policies_fn: existing_policies_rps_ces_20240403.csv
+    ccs_credit:
+      none:
+        ccs_disposal_cost: 0
+      low:
+        ccs_disposal_cost: -39.11
+      high:
+        ccs_disposal_cost: -50.44
+    time_reduction:
+      all_hours:
+        reduce_time_domain: false
+      52_weeks:
+        time_domain_periods: 52
+        time_domain_days_per_period: 7
+      20_weeks:
+        time_domain_periods: 20
+        time_domain_days_per_period: 7
+      10_weeks:
+        time_domain_periods: 10
+        time_domain_days_per_period: 7
+      10_days:
+        reduce_time_domain: true
+        time_domain_periods: 10
+        time_domain_days_per_period: 1
+    existing_clusters:
+      thin:
+        num_clusters:
+          Conventional Steam Coal: 1
+          Natural Gas Fired Combined Cycle: 1
+          Natural Gas Fired Combustion Turbine: 1
+          Natural Gas Internal Combustion Engine: 1
+          Natural Gas Steam Turbine: 1
+          Nuclear: 1
+          Conventional Hydroelectric: 1
+          Geothermal: 1
+          Solar Photovoltaic: 1
+          Onshore Wind Turbine: 1
+          Offshore Wind Turbine: 1
+          Petroleum Liquids: 1
+          Hydroelectric Pumped Storage: 1
+          Batteries: 1
+          Biomass: 1
+          Small Hydroelectric: 1
+        alt_num_clusters: ~
+    vre_clusters:
+    flex_resource:
+      flex_no_action:
+        flexible_demand_resources:
+          2035:
+            trans_light_duty:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 5
+                Max_Flexible_Demand_Advance: 0
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      flex_current_policy:
+        flexible_demand_resources:
+          2035:
+            trans_light_duty:
+              fraction_shiftable: 0.125
+              parameter_values:
+                Max_Flexible_Demand_Delay: 6
+                Max_Flexible_Demand_Advance: 6
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0.033
+              parameter_values:
+                Max_Flexible_Demand_Delay: 4
+                Max_Flexible_Demand_Advance: 4
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      Luan:
+        flexible_demand_resources:
+          trans_light_duty:
+            fraction_shiftable: 1 #0.67
+            parameter_values:
+              Max_Flexible_Demand_Delay: 5
+              Max_Flexible_Demand_Advance: 0
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_space_heat_cool:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_space_heat_cool:
+            fraction_shiftable: 1 #0.15
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+    hydrogen_gen_retrofit:
+      no:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Steam Turbine:	0
+            NaturalGas_H-Frame CC: 0
+            NaturalGas_F-Frame CT: 0
+      yes:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 1
+            Natural Gas Fired Combustion Turbine: 1
+            Natural Gas Steam Turbine:	1
+            NaturalGas_H-Frame CC: 1
+            NaturalGas_F-Frame CT: 1
+    dac:
+      no:
+        carbon_tax: 0
+      yes:
+        carbon_tax: 200
+    min_cap:
+      none:
+        MinCapReq: ~
+      base:
+        MinCapReq:
+          MinCapTag_1:
+            description: NY_offshorewind
+            min_mw: 9000
+          MinCapTag_2:
+            description: PJM_EMAC_offshorewind
+            min_mw: 11000
+          MinCapTag_3:
+            description: PJM_Rest_offshorewind
+            min_mw: 6900
+          MinCapTag_4:
+            description: ISNE_offshorewind
+            min_mw: 13945
+          MinCapTag_5:
+            description: NY_storage
+            min_mw: 6000
+          MinCapTag_6:
+            description: PJM_EMAC_storage
+            min_mw: 2000
+          MinCapTag_7:
+            description: PJM_Rest_storage
+            min_mw: 8600
+          MinCapTag_8:
+            description: ISNE_storage
+            min_mw: 245
+    renewable_battery_capex_ccs:
+      renewable_mid_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_mid_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+    ng_price:
+      reference:
+        aeo_fuel_scenarios:
+          naturalgas: reference
+      low:
+        aeo_fuel_scenarios:
+          naturalgas: high_resource
+      high:
+        aeo_fuel_scenarios:
+          naturalgas: low_resource
+    new_ccs:
+      yes:
+        model_tag_values:
+          New_Build:
+            ccs_: 1
+      no:
+        model_tag_values:
+          New_Build:
+            ccs_: 0
+    electrification:
+      mid:
+        electrification_scenario: REFERENCE ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+      high:
+        electrification_scenario: HIGH ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+  2040:
+    carbon_slack:
+      base:
+        carbon_cost_dollar_per_tco2: 200
+      high:
+        carbon_cost_dollar_per_tco2: 10000
+    wacc:
+      standardize_5:
+        atb_modifiers:
+          upv:
+            wacc_real: 0.05
+          Landwind:
+            wacc_real: 0.05
+          Offwind:
+            wacc_real: 0.05
+          Offwind_floating:
+            wacc_real: 0.05
+          bat:
+            wacc_real: 0.05
+          nuclear:
+            wacc_real: 0.05
+          ngct:
+            wacc_real: 0.05
+          ngcc:
+            wacc_real: 0.05
+          ngccccs:
+            wacc_real: 0.05
+          h2ct:
+            wacc_real: 0.05
+          h2cc:
+            wacc_real: 0.05
+    econ_retirement:
+      yes:
+        retirement_ages:
+          Conventional Hydroelectric: 1500
+          Small Hydroelectric: 1500
+          Conventional Steam Coal: 500
+          Natural Gas Fired Combined Cycle: 500
+          Natural Gas Fired Combustion Turbine: 500
+          Petroleum Liquids: 500
+          Natural Gas Internal Combustion Engine: 500
+          Nuclear: 500
+          Onshore Wind Turbine: 500
+          Hydroelectric Pumped Storage: 1500
+          Natural Gas Steam Turbine: 500
+          Solar Photovoltaic: 500
+          Solar Thermal without Energy Storage: 500
+          Geothermal: 500
+          Municipal Solid Waste: 500
+          Landfill Gas: 500
+          Batteries: 500
+          Wood/Wood Waste Biomass: 500
+          Petroleum Coke: 500
+          All Other: 500
+          Natural Gas with Compressed Air Storage: 500
+          Coal Integrated Gasification Combined Cycle: 500
+          Other Waste Biomass: 500
+          Other Gases: 500
+          Other Natural Gas: 500
+          Solar Thermal with Energy Storage: 500
+          Flywheels: 500
+          Offshore Wind Turbine: 500
+          Biomass: 500
+      no:
+        model_tag_values:
+          Can_Retire:
+            Conventional Steam Coal: 0
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Internal Combustion Engine: 0
+            Natural Gas Steam Turbine: 0
+            Nuclear: 0
+            Petroleum Liquids: 0
+            Distributed_Generation: 0
+            Onshore Wind Turbine: 0
+            Offshore Wind Turbine: 0
+            Solar Photovoltaic: 0
+            Batteries: 0
+            Nuclear_Nuclear: 0
+    policies:
+      no_action:
+        emission_policies_fn: no_action_rps_ces.csv
+      current_policies:
+        emission_policies_fn: existing_policies_rps_ces_20240403.csv
+    ccs_credit:
+      none:
+        ccs_disposal_cost: 0
+      low:
+        ccs_disposal_cost: -39.11
+      high:
+        ccs_disposal_cost: -50.44
+    time_reduction:
+      all_hours:
+        reduce_time_domain: false
+      52_weeks:
+        time_domain_periods: 52
+        time_domain_days_per_period: 7
+      20_weeks:
+        time_domain_periods: 20
+        time_domain_days_per_period: 7
+      10_weeks:
+        time_domain_periods: 10
+        time_domain_days_per_period: 7
+      10_days:
+        reduce_time_domain: true
+        time_domain_periods: 10
+        time_domain_days_per_period: 1
+    existing_clusters:
+      thin:
+        num_clusters:
+          Conventional Steam Coal: 1
+          Natural Gas Fired Combined Cycle: 1
+          Natural Gas Fired Combustion Turbine: 1
+          Natural Gas Internal Combustion Engine: 1
+          Natural Gas Steam Turbine: 1
+          Nuclear: 1
+          Conventional Hydroelectric: 1
+          Geothermal: 1
+          Solar Photovoltaic: 1
+          Onshore Wind Turbine: 1
+          Offshore Wind Turbine: 1
+          Petroleum Liquids: 1
+          Hydroelectric Pumped Storage: 1
+          Batteries: 1
+          Biomass: 1
+          Small Hydroelectric: 1
+        alt_num_clusters: ~
+    flex_resource:
+      flex_no_action:
+        flexible_demand_resources:
+          2040:
+            trans_light_duty:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 5
+                Max_Flexible_Demand_Advance: 0
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      flex_current_policy:
+        flexible_demand_resources:
+          2040:
+            trans_light_duty:
+              fraction_shiftable: 0.2
+              parameter_values:
+                Max_Flexible_Demand_Delay: 6
+                Max_Flexible_Demand_Advance: 6
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0.1
+              parameter_values:
+                Max_Flexible_Demand_Delay: 4
+                Max_Flexible_Demand_Advance: 4
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      Luan:
+        flexible_demand_resources:
+          trans_light_duty:
+            fraction_shiftable: 1 #0.67
+            parameter_values:
+              Max_Flexible_Demand_Delay: 5
+              Max_Flexible_Demand_Advance: 0
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_space_heat_cool:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_space_heat_cool:
+            fraction_shiftable: 1 #0.15
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+    hydrogen_gen_retrofit:
+      no:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Steam Turbine:	0
+            NaturalGas_H-Frame CC: 0
+            NaturalGas_F-Frame CT: 0
+      yes:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 1
+            Natural Gas Fired Combustion Turbine: 1
+            Natural Gas Steam Turbine:	1
+            NaturalGas_H-Frame CC: 1
+            NaturalGas_F-Frame CT: 1
+    dac:
+      no:
+        carbon_tax: 0
+      yes:
+        carbon_tax: 200
+    min_cap:
+      none:
+        MinCapReq: ~
+      base:
+        MinCapReq:
+          MinCapTag_1:
+            description: NY_offshorewind
+            min_mw: 9000
+          MinCapTag_2:
+            description: PJM_EMAC_offshorewind
+            min_mw: 11000
+          MinCapTag_3:
+            description: PJM_Rest_offshorewind
+            min_mw: 6900
+          MinCapTag_4:
+            description: ISNE_offshorewind
+            min_mw: 13945
+          MinCapTag_5:
+            description: NY_storage
+            min_mw: 6000
+          MinCapTag_6:
+            description: PJM_EMAC_storage
+            min_mw: 2000
+          MinCapTag_7:
+            description: PJM_Rest_storage
+            min_mw: 8600
+          MinCapTag_8:
+            description: ISNE_storage
+            min_mw: 245
+    renewable_battery_capex_ccs:
+      renewable_mid_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_mid_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+    ng_price:
+      reference:
+        aeo_fuel_scenarios:
+          naturalgas: reference
+      low:
+        aeo_fuel_scenarios:
+          naturalgas: high_resource
+      high:
+        aeo_fuel_scenarios:
+          naturalgas: low_resource
+    new_ccs:
+      yes:
+        model_tag_values:
+          New_Build:
+            ccs_: 1
+      no:
+        model_tag_values:
+          New_Build:
+            ccs_: 0
+    electrification:
+      mid:
+        electrification_scenario: REFERENCE ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+      high:
+        electrification_scenario: HIGH ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+  2050:
+    econ_retirement:
+      yes:
+        retirement_ages:
+          Conventional Hydroelectric: 1500
+          Small Hydroelectric: 1500
+          Conventional Steam Coal: 500
+          Natural Gas Fired Combined Cycle: 500
+          Natural Gas Fired Combustion Turbine: 500
+          Petroleum Liquids: 500
+          Natural Gas Internal Combustion Engine: 500
+          Nuclear: 500
+          Onshore Wind Turbine: 500
+          Hydroelectric Pumped Storage: 1500
+          Natural Gas Steam Turbine: 500
+          Solar Photovoltaic: 500
+          Solar Thermal without Energy Storage: 500
+          Geothermal: 500
+          Municipal Solid Waste: 500
+          Landfill Gas: 500
+          Batteries: 500
+          Wood/Wood Waste Biomass: 500
+          Petroleum Coke: 500
+          All Other: 500
+          Natural Gas with Compressed Air Storage: 500
+          Coal Integrated Gasification Combined Cycle: 500
+          Other Waste Biomass: 500
+          Other Gases: 500
+          Other Natural Gas: 500
+          Solar Thermal with Energy Storage: 500
+          Flywheels: 500
+          Offshore Wind Turbine: 500
+          Biomass: 500
+      no:
+        model_tag_values:
+          Can_Retire:
+            Conventional Steam Coal: 0
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Internal Combustion Engine: 0
+            Natural Gas Steam Turbine: 0
+            Nuclear: 0
+            Petroleum Liquids: 0
+            Distributed_Generation: 0
+            Onshore Wind Turbine: 0
+            Offshore Wind Turbine: 0
+            Solar Photovoltaic: 0
+            Batteries: 0
+            Nuclear_Nuclear: 0
+    ccs_disposal_cost:
+      yes:
+        ccs_disposal_cost: -27
+    conv_hydro_rps_eligible:
+      no:
+        model_tag_values:
+          RPS:
+            Conventional Hydroelectric: 0
+      yes:
+        model_tag_values:
+          RPS:
+            Conventional Hydroelectric: 1
+    tx_expansion:
+      high:
+        tx_expansion_per_period: 1.0
+      limited:
+        tx_expansion_per_period: 0.25
+    hydrogen_gen_retrofit:
+      no:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 0
+            Natural Gas Fired Combustion Turbine: 0
+            Natural Gas Steam Turbine:	0
+            NaturalGas_H-Frame CC: 0
+            NaturalGas_F-Frame CT: 0
+      yes:
+        model_tag_values:
+          Can_Retrofit:
+            Natural Gas Fired Combined Cycle: 1
+            Natural Gas Fired Combustion Turbine: 1
+            Natural Gas Steam Turbine:	1
+            NaturalGas_H-Frame CC: 1
+            NaturalGas_F-Frame CT: 1
+    flex_resource:
+      flex_no_action:
+        flexible_demand_resources:
+          2050:
+            trans_light_duty:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 5
+                Max_Flexible_Demand_Advance: 0
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      flex_current_policy:
+        flexible_demand_resources:
+          2050:
+            trans_light_duty:
+              fraction_shiftable: 0.2
+              parameter_values:
+                Max_Flexible_Demand_Delay: 6
+                Max_Flexible_Demand_Advance: 6
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_water_heat:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 2
+                Max_Flexible_Demand_Advance: 2
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_water_heat:
+              fraction_shiftable: 0.1
+              parameter_values:
+                Max_Flexible_Demand_Delay: 4
+                Max_Flexible_Demand_Advance: 4
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            comm_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+            res_space_heat_cool:
+              fraction_shiftable: 0
+              parameter_values:
+                Max_Flexible_Demand_Delay: 1
+                Max_Flexible_Demand_Advance: 1
+                Flexible_Demand_Energy_Eff: 1
+                FLEX: 1
+      Luan:
+        flexible_demand_resources:
+          trans_light_duty:
+            fraction_shiftable: 1 #0.67
+            parameter_values:
+              Max_Flexible_Demand_Delay: 5
+              Max_Flexible_Demand_Advance: 0
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_water_heat:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 2
+              Max_Flexible_Demand_Advance: 2
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          comm_space_heat_cool:
+            fraction_shiftable: 1 #0.11
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+          res_space_heat_cool:
+            fraction_shiftable: 1 #0.15
+            parameter_values:
+              Max_Flexible_Demand_Delay: 1
+              Max_Flexible_Demand_Advance: 1
+              Flexible_Demand_Energy_Eff: 1
+              FLEX: 1
+    growth:
+      normal: ~
+    ng_price:
+      reference:
+        aeo_fuel_scenarios:
+          naturalgas: reference
+      low:
+        aeo_fuel_scenarios:
+          naturalgas: high_resource
+      high:
+        aeo_fuel_scenarios:
+          naturalgas: low_resource
+    ccs_capex:
+      mid:
+        atb_modifiers:
+          ngccccs:
+            technology: NaturalGas
+            tech_detail: CCCCSAvgCF
+            capex_mw: [mul, 1]
+          NGCCS100:
+            technology: NaturalGas
+            tech_detail: CCS100
+            capex_mw: [mul, 1]
+      low:
+        atb_modifiers:
+          ngccccs:
+            technology: NaturalGas
+            tech_detail: CCCCSAvgCF
+            capex_mw: [mul, 0.85]
+          NGCCS100:
+            technology: NaturalGas
+            tech_detail: CCS100
+            capex_mw: [mul, 0.85]
+      high:
+        atb_modifiers:
+          ngccccs:
+            technology: NaturalGas
+            tech_detail: CCCCSAvgCF
+            capex_mw: [mul, 1.2]
+          NGCCS100:
+            technology: NaturalGas
+            tech_detail: CCS100
+            capex_mw: [mul, 1.2]
+    policies:
+      no_action:
+        emission_policies_fn: no_action_rps_ces.csv
+      current_policies:
+        emission_policies_fn: existing_policies_rps_ces_20240403.csv
+    ccs_credit:
+      none:
+        ccs_disposal_cost: 0
+      low:
+        ccs_disposal_cost: -39.11
+      high:
+        ccs_disposal_cost: -50.44
+    time_reduction:
+      all_hours:
+        reduce_time_domain: false
+      52_weeks:
+        time_domain_periods: 52
+        time_domain_days_per_period: 7
+      20_weeks:
+        time_domain_periods: 20
+        time_domain_days_per_period: 7
+      10_weeks:
+        time_domain_periods: 10
+        time_domain_days_per_period: 7
+      10_days:
+        reduce_time_domain: true
+        time_domain_periods: 10
+        time_domain_days_per_period: 1
+    renewable_battery_capex_ccs:
+      renewable_mid_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_mid_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Moderate, 1]
+          - [OffShoreWind, Class12, Moderate, 1]
+          - [OffShoreWind, Class3, Moderate, 1]
+          - [UtilityPV, Class1, Moderate, 1]
+          - [Battery, "*", Moderate, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_low_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Advanced, 1]
+          - [OffShoreWind, Class12, Advanced, 1]
+          - [OffShoreWind, Class3, Advanced, 1]
+          - [UtilityPV, Class1, Advanced, 1]
+          - [Battery, "*", Advanced, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_noccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+      renewable_high_yesccs:
+        atb_new_gen:
+          - [NaturalGas, H-Frame CC 95% CCS, Moderate, 500] # ATB CCCCS conservative case represents current technology.
+          - [NaturalGas, H-Frame CC, Moderate, 500]
+          - [NaturalGas, F-Frame CT, Moderate, 100]
+          - [LandbasedWind, Class3, Conservative, 1]
+          - [OffShoreWind, Class12, Conservative, 1]
+          - [OffShoreWind, Class3, Conservative, 1]
+          - [UtilityPV, Class1, Conservative, 1]
+          - [Battery, "*", Conservative, 1]
+          - [Nuclear, Nuclear, Moderate, 2000]
+    min_cap:
+      none:
+        MinCapReq: ~
+      base:
+        MinCapReq:
+          MinCapTag_1:
+            description: NY_offshorewind
+            min_mw: 9000
+          MinCapTag_2:
+            description: PJM_EMAC_offshorewind
+            min_mw: 11000
+          MinCapTag_3:
+            description: PJM_Rest_offshorewind
+            min_mw: 6900
+          MinCapTag_4:
+            description: ISNE_offshorewind
+            min_mw: 13945
+          MinCapTag_5:
+            description: NY_storage
+            min_mw: 6000
+          MinCapTag_6:
+            description: PJM_EMAC_storage
+            min_mw: 2000
+          MinCapTag_7:
+            description: PJM_Rest_storage
+            min_mw: 8600
+          MinCapTag_8:
+            description: ISNE_storage
+            min_mw: 245
+    stop_nuclear_retirement:
+      yes:
+        regional_tag_values:
+          NY_Z_A:
+            New_Build:
+              Nuclear: -1
+          NY_Z_B:
+            New_Build:
+              Nuclear: -1
+          NY_Z_C&E:
+            New_Build:
+              Nuclear: -1
+          NY_Z_D:
+            New_Build:
+              Nuclear: -1
+          NY_Z_F:
+            New_Build:
+              Nuclear: -1
+          NY_Z_G-I:
+            New_Build:
+              Nuclear: -1
+          NY_Z_J:
+            New_Build:
+              Nuclear: -1
+          NY_Z_K:
+            New_Build:
+              Nuclear: -1
+          PJM_Rest:
+            New_Build:
+              Nuclear: -1
+      no:
+        regional_tag_values:
+          NY_Z_A:
+            New_Build:
+              Nuclear: 0
+          NY_Z_B:
+            New_Build:
+              Nuclear: 0
+          NY_Z_C&E:
+            New_Build:
+              Nuclear: 0
+          NY_Z_D:
+            New_Build:
+              Nuclear: 0
+          NY_Z_F:
+            New_Build:
+              Nuclear: 0
+          NY_Z_G-I:
+            New_Build:
+              Nuclear: 0
+          NY_Z_J:
+            New_Build:
+              Nuclear: 0
+          NY_Z_K:
+            New_Build:
+              Nuclear: 0
+          PJM_Rest:
+            New_Build:
+              Nuclear: 0
+    new_ccs:
+      yes:
+        model_tag_values:
+          New_Build:
+            ccs_: 1
+      no:
+        model_tag_values:
+          New_Build:
+            ccs_: 0
+    electrification:
+      mid:
+        electrification_scenario: REFERENCE ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+      high:
+        electrification_scenario: HIGH ELECTRIFICATION - MODERATE TECHNOLOGY ADVANCEMENT
+  
+    # ...include all other region-specific and non-region-specific settings, fully merged...

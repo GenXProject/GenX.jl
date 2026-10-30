@@ -1,0 +1,66 @@
+# Merged STARTUP COSTS (NY + CONUS)
+# Criteria:
+# 1. NY-only settings included
+# 2. Region-specific: NY as baseline, update from CONUS for ISNE, PJM, NY regions (using mapping)
+# 3. New region-specific settings (ISNE, PJM, NY) from CONUS included, mapped
+# 4. New non-region-specific CONUS settings included
+# 5. For non-region-specific settings in both, use CONUS value if different
+
+startup_fuel_use:
+  Conventional Steam Coal: 16.5
+  Natural Gas Fired Combined Cycle: 2.0
+  Natural Gas Fired Combustion Turbine: 3.5
+  Natural Gas Steam Turbine: 13.7
+
+startup_vom_costs_mw:
+  coal_small_sub: 2.81
+  coal_large_sub: 2.69
+  coal_supercritical: 2.98
+  gas_cc: 1.03
+  gas_large_ct: 0.77
+  gas_aero_ct: 0.70
+  gas_steam: 1.03
+  nuclear: 5.4
+
+startup_vom_costs_usd_year: 2011
+
+startup_costs_type: startup_costs_per_cold_start_mw
+startup_costs_per_cold_start_mw:
+  coal_small_sub: 147
+  coal_large_sub: 105
+  coal_supercritical: 104
+  gas_cc: 79
+  gas_large_ct: 103
+  gas_aero_ct: 32
+  gas_steam: 75
+  nuclear: 210
+
+startup_costs_per_cold_start_usd_year: 2011
+
+existing_startup_costs_tech_map:
+  Conventional Steam Coal: coal_large_sub
+  Natural Gas Fired Combined Cycle: gas_cc
+  Natural Gas Fired Combustion Turbine: gas_large_ct
+  Natural Gas Steam Turbine: gas_steam
+  Nuclear: nuclear
+  Biomass: coal_small_sub
+  Petroleum Liquids: gas_aero_ct
+  Natural Gas Internal Combustion Engine: gas_aero_ct
+
+new_build_startup_costs:
+  Coal_CCS30: coal_supercritical
+  Coal_CCS90: coal_supercritical
+  Coal_IGCC: coal_supercritical
+  Coal_new: coal_supercritical
+  NaturalGas_CT: gas_large_ct
+  NaturalGas_CC: gas_cc
+  NaturalGas_F-Frame CT: gas_large_ct
+  NaturalGas_H-Frame CC: gas_cc
+  NaturalGas_H-Frame CC 95% CCS: gas_cc
+  NaturalGas_CCS100: gas_cc
+  Nuclear_Nuclear: nuclear
+  Hydrogen_CC: gas_cc
+  Hydrogen_CT: gas_large_ct
+  Hydrogen_F-Frame CT: gas_large_ct
+  Hydrogen_H-Frame CC: gas_cc
+  AdvNuclear_: nuclear
