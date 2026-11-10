@@ -28,79 +28,79 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
     if !isempty(FUSION)
         push!(Com_list, "Fusion_parasitic_power")
     end
+    if setup["Markets"] == 1
+        push!(Com_list, "Market_Buy")
+        push!(Com_list, "Market_Sell")
+    end
+
     L = length(Com_list)
+    Com_idx = Dict(Com_list[i] => i for i in 1:L)
     dfPowerBalance = DataFrame(BalanceComponent = repeat(Com_list, outer = Z),
         Zone = repeat(1:Z, inner = L),
         AnnualSum = zeros(L * Z))
     powerbalance = zeros(Z * L, T) # following the same style of power/charge/storage/nse
     for z in 1:Z
+        # Row of component `c` for the current zone
+        row(c) = (z - 1) * L + Com_idx[c]
+
         POWER_ZONE = intersect(resources_in_zone_by_rid(gen, z),
             union(THERM_ALL, VRE, MUST_RUN, HYDRO_RES, ALLAM_CYCLE_LOX))
         ALLAM_ZONE = intersect(resources_in_zone_by_rid(gen, z), ALLAM_CYCLE_LOX)
         if isempty(ALLAM_ZONE)
-            powerbalance[(z - 1) * L + 1, :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
+            powerbalance[row("Generation"), :] = sum(value.(EP[:vP][POWER_ZONE, :]), dims = 1)
         else
-            powerbalance[(z - 1) * L + 1, :] = sum(value.(Array(EP[:vP][POWER_ZONE, :])), dims = 1) - sum(value.(Array(EP[:vCHARGE_ALLAM][ALLAM_ZONE, :])), dims = 1)
+            powerbalance[row("Generation"), :] = sum(value.(Array(EP[:vP][POWER_ZONE, :])), dims = 1) - sum(value.(Array(EP[:vCHARGE_ALLAM][ALLAM_ZONE, :])), dims = 1)
         end
         STOR_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), STOR_ALL)
         if !isempty(STOR_ALL_ZONE)
-            powerbalance[(z - 1) * L + 2, :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]),
+            powerbalance[row("Storage_Discharge"), :] = sum(value.(EP[:vP][STOR_ALL_ZONE, :]),
                 dims = 1)
-            powerbalance[(z - 1) * L + 3, :] = (-1) * sum(
+            powerbalance[row("Storage_Charge"), :] = (-1) * sum(
                 (value.(EP[:vCHARGE][STOR_ALL_ZONE,:]).data),
                 dims = 1)
         end
         FLEX_ZONE = intersect(resources_in_zone_by_rid(gen, z), FLEX)
         if !isempty(FLEX_ZONE)
-            powerbalance[(z - 1) * L + 4, :] = sum(
+            powerbalance[row("Flexible_Demand_Defer"), :] = sum(
                 (value.(EP[:vCHARGE_FLEX][FLEX_ZONE,:]).data),
                 dims = 1)
-            powerbalance[(z - 1) * L + 5, :] = (-1) *
+            powerbalance[row("Flexible_Demand_Stasify"), :] = (-1) *
                                                sum(value.(EP[:vP][FLEX_ZONE, :]), dims = 1)
         end
         if SEG > 1
-            powerbalance[(z - 1) * L + 6, :] = sum(value.(EP[:vNSE][2:SEG, :, z]), dims = 1)
+            powerbalance[row("Demand_Response"), :] = sum(value.(EP[:vNSE][2:SEG, :, z]), dims = 1)
         end
-        powerbalance[(z - 1) * L + 7, :] = value.(EP[:vNSE][1, :, z])
+        powerbalance[row("Nonserved_Energy"), :] = value.(EP[:vNSE][1, :, z])
         if Z >= 2
-            powerbalance[(z - 1) * L + 8, :] = (value.(EP[:ePowerBalanceNetExportFlows][:,
+            powerbalance[row("Transmission_NetExport"), :] = (value.(EP[:ePowerBalanceNetExportFlows][:,
                 z]))' # Transpose
-            powerbalance[(z - 1) * L + 9, :] = -(value.(EP[:eLosses_By_Zone][z, :]))
+            powerbalance[row("Transmission_Losses"), :] = -(value.(EP[:eLosses_By_Zone][z, :]))
         end
-        powerbalance[(z - 1) * L + 10, :] = (((-1) * inputs["pD"][:, z]))' # Transpose
+        powerbalance[row("Demand"), :] = (((-1) * inputs["pD"][:, z]))' # Transpose
         if !isempty(ELECTROLYZER)
             ELECTROLYZER_ZONE = intersect(resources_in_zone_by_rid(gen, z), ELECTROLYZER)
-            powerbalance[(z - 1) * L + 11, :] = (-1) * sum(
+            powerbalance[row("Electrolyzer_Consumption"), :] = (-1) * sum(
                 value.(EP[:vUSE][ELECTROLYZER_ZONE,:].data),
                 dims = 1)
         end
         # VRE storage discharge and charge
         if !isempty(intersect(resources_in_zone_by_rid(gen, z), VRE_STOR))
             VS_ALL_ZONE = intersect(resources_in_zone_by_rid(gen, z), inputs["VS_STOR"])
-
-            # if ELECTROLYZER is not empty, increase indices by 1
-            is_electrolyzer_empty = isempty(ELECTROLYZER)
-            discharge_idx = is_electrolyzer_empty ? 11 : 12
-            charge_idx = is_electrolyzer_empty ? 12 : 13
-
-            powerbalance[(z - 1) * L + discharge_idx, :] = sum(
+            powerbalance[row("VRE_Storage_Discharge"), :] = sum(
                 value.(EP[:vP][VS_ALL_ZONE, :]), dims = 1)
-            powerbalance[(z - 1) * L + charge_idx, :] = (-1) * sum(
+            powerbalance[row("VRE_Storage_Charge"), :] = (-1) * sum(
                 value.(EP[:vCHARGE_VRE_STOR][VS_ALL_ZONE, :]).data, dims = 1)
         end
         FUSION_ZONE = intersect(resources_in_zone_by_rid(gen, z), FUSION)
         if !isempty(FUSION_ZONE)
-            # this index-modification strategy is becoming unsustainable. We should just use
-            # a dataframe with named columns or something else.
-            idx = 11
-            if !isempty(ELECTROLYZER)
-                idx += 1
-            end
-            if !isempty(VRE_STOR)
-                idx += 2
-            end
-            powerbalance[(z - 1) * L + idx, :] = -fusion_total_parasitic_power_unscaled(
+            powerbalance[row("Fusion_parasitic_power"), :] = -fusion_total_parasitic_power_unscaled(
                 EP, inputs, z)
+        end
+        # Market purchases enter the zone's balance as supply, sales as consumption
+        # (non-market zones keep the default zeros)
+        if setup["Markets"] == 1 && z in inputs["MZ"]
+            powerbalance[row("Market_Buy"), :] = value.(EP[:vMBUY][z, :])
+            powerbalance[row("Market_Sell"), :] = (-1) * value.(EP[:vMSELL][z, :])
         end
     end
     if setup["ParameterScale"] == 1
@@ -110,7 +110,7 @@ function write_power_balance(path::AbstractString, inputs::Dict, setup::Dict, EP
 
     if setup["WriteOutputs"] == "annual"
         CSV.write(joinpath(path, "power_balance.csv"), dfPowerBalance)
-    else # setup["WriteOutputs"] == "full"	
+    else # setup["WriteOutputs"] == "full"
         dfPowerBalance = hcat(dfPowerBalance, DataFrame(powerbalance, :auto))
         auxNew_Names = [Symbol("BalanceComponent");
                         Symbol("Zone");

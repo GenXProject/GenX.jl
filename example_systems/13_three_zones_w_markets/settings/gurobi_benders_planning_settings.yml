@@ -1,0 +1,18 @@
+# Gurobi settings for the Benders *planning* (master) problem.
+#
+# The master problem is a continuous LP when BD_IntegerInvestment: 0 (the
+# default).  The barrier algorithm without crossover solves the LP quickly and
+# still provides the accurate primal solution needed to fix investment
+# variables in the subproblems.  If BD_IntegerInvestment: 1 is set the master
+# becomes a MILP; the MIPGap entry below controls that tolerance.
+
+Feasib_Tol: 1.0e-6        # Constraint (primal) feasibility tolerance
+Optimal_Tol: 1.0e-6       # Dual feasibility tolerance
+Method: 2                  # Algorithm: 2 = barrier (interior-point)
+BarConvTol: 1.0e-6         # Barrier convergence tolerance
+Crossover: 0               # Disable crossover — barrier solution is sufficient
+                           # for the master (LP duals are not used here)
+MIPGap: 1.0e-3             # MIP optimality gap (only relevant when
+                           # BD_IntegerInvestment: 1)
+NumericFocus: 0            # Numerical precision emphasis (0 = balanced)
+OutputFlag: 0              # Suppress Gurobi output; set to 1 to enable

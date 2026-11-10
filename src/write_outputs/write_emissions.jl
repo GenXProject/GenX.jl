@@ -39,7 +39,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
             dfEmissions = DataFrame(Zone = 1:Z, AnnualSum = Array{Float64}(undef, Z))
         end
 
-        emissions_by_zone = value.(EP[:eEmissionsByZone])
+        emissions_by_zone = value.(EP[:eTotalEmissionsByZone])
         for i in 1:Z
             dfEmissions[i, :AnnualSum] = sum(inputs["omega"] .* emissions_by_zone[i, :]) *
                                          scale_factor
@@ -95,7 +95,7 @@ function write_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Mo
         ## Aaron - Combined elseif setup["Dual_MIP"]==1 block with the first block since they were identical. Why do we have this third case? What is different about it?
     else
         # CO2 emissions by zone
-        emissions_by_zone = value.(EP[:eEmissionsByZone])
+        emissions_by_zone = value.(EP[:eTotalEmissionsByZone])
         dfEmissions = hcat(DataFrame(Zone = 1:Z),
             DataFrame(AnnualSum = Array{Float64}(undef, Z)))
         for i in 1:Z

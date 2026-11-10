@@ -301,6 +301,18 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
     # --- Non-served energy, by zone ---------------------------------------
     nse = [sum(value.(EP[:eCNSE][:, :, z])) for z in 1:Z]
 
+    # --- Market purchases and sales, by zone ------------------------------
+    # Operating terms, so they take the same multi-stage scaling as variable
+    # O&M. eCMarketSell is already negative (revenue), matching the objective.
+    has_markets = setup["Markets"] == 1
+    mkt_buy, mkt_sell = zeros(Float64, Z), zeros(Float64, Z)
+    if has_markets
+        for m in inputs["MZ"]
+            mkt_buy[m] = value(EP[:eCMarketBuy][m])
+            mkt_sell[m] = value(EP[:eCMarketSell][m])
+        end
+    end
+
     # --- System-wide terms with no resource attribution -------------------
     unmet_rsv = setup["OperationalReserves"] == 1 ? value(EP[:eTotalCRsvPen]) : 0.0
 
@@ -362,6 +374,7 @@ function cost_breakdown(EP::Model, inputs::Dict, setup::Dict)
         grid = grid, nse = nse, unmet_rsv = unmet_rsv, netexp = netexp,
         policy_penalty = policy_penalty, obj = value(EP[:eObj]),
         electrolyzer_all = ELECTROLYZER_ALL,
+        has_markets = has_markets, mkt_buy = mkt_buy, mkt_sell = mkt_sell,
         # Multi-stage views; zero-filled and unused for single-stage runs.
         fix_fom = acc.fix_fom, 
         fix_inv_A = acc.fix_inv_A,
@@ -438,6 +451,7 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
     start_v = opex_mult .* bd.start
     co2_v, h2_v = opex_mult .* bd.co2, opex_mult .* bd.h2
     nse_v = opex_mult .* bd.nse
+    mkt_buy_v, mkt_sell_v = opex_mult .* bd.mkt_buy, opex_mult .* bd.mkt_sell
     unmet_rsv_v = opex_mult * bd.unmet_rsv
     policy_v = opex_mult * bd.policy_penalty
 
@@ -445,6 +459,7 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
         "cUnmetRsv", "cNetworkExp", "cUnmetPolicyPenalty", "cCO2"]
     !isempty(VRE_STOR) && push!(cost_list, "cGridConnection")
     !isempty(ELECTROLYZER_ALL) && push!(cost_list, "cHydrogenRevenue")
+    bd.has_markets && append!(cost_list, ["cMarketPurchase", "cMarketSales"])
 
     # Single-stage quotes the objective. It now equals the row sum, so this
     # keeps cTotal an independent check on the rows rather than a restatement
@@ -453,7 +468,8 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
     # factors, so eObj is not in their units; their total is the row sum, which
     # comes out equal to objective_value - vALPHA.
     row_sum = sum(fix_v) + sum(var_v) + sum(fuel_v) + sum(nse_v) + sum(start_v) +
-              unmet_rsv_v + netexp_v + policy_v + sum(co2_v) + sum(h2_v)
+              unmet_rsv_v + netexp_v + policy_v + sum(co2_v) + sum(h2_v) +
+              sum(mkt_buy_v) + sum(mkt_sell_v)
     total = Any[use_model ? bd.obj : row_sum,
         sum(fix_v),
         sum(var_v),
@@ -466,6 +482,7 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
         sum(co2_v)]
     !isempty(VRE_STOR) && push!(total, sum(grid_v))
     !isempty(ELECTROLYZER_ALL) && push!(total, sum(h2_v))
+    bd.has_markets && append!(total, [sum(mkt_buy_v), sum(mkt_sell_v)])
 
     dfCost = DataFrame(Costs = cost_list, Total = total)
 
@@ -480,9 +497,10 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
         zone_co2 = zsum(co2_v)
         zone_h2 = zsum(h2_v)
         zone_nse = nse_v[z]
+        zone_mkt_buy, zone_mkt_sell = mkt_buy_v[z], mkt_sell_v[z]
 
         zone_total = zone_fix + zone_var + zone_fuel + zone_start +
-                     zone_co2 + zone_h2 + zone_nse
+                     zone_co2 + zone_h2 + zone_nse + zone_mkt_buy + zone_mkt_sell
 
         # cUnmetRsv, cNetworkExp and cUnmetPolicyPenalty are system-wide and have
         # no zonal value, as is the cGridConnection memo. `missing` writes an
@@ -492,6 +510,7 @@ function assemble_costs(bd::NamedTuple, inputs::Dict, setup::Dict;
             zone_start, missing, missing, missing, zone_co2]
         !isempty(VRE_STOR) && push!(col, missing)
         !isempty(ELECTROLYZER_ALL) && push!(col, zone_h2)
+        bd.has_markets && append!(col, [zone_mkt_buy, zone_mkt_sell])
 
         dfCost[!, Symbol("Zone$z")] = col
     end

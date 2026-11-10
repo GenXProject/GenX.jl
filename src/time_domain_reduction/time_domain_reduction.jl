@@ -584,6 +584,72 @@ function update_deprecated_tdr_inputs!(setup::Dict{Any, Any})
 end
 
 @doc raw"""
+    get_market_tdr_data(inputs_list)
+
+Collect the market time series (buy prices, sell prices and CO``_2`` rates of market purchases)
+from one or more input dictionaries. With several dictionaries (multi-stage concatenation), the
+time series of the stages are concatenated in time. Returns `nothing` if markets are not modeled.
+The returned matrices are ``Z \times T`` and in the units of the input files.
+"""
+function get_market_tdr_data(inputs_list)
+    if !all(haskey(inp, "MZ") for inp in inputs_list)
+        return nothing
+    end
+    return Dict(
+        "MZ" => inputs_list[1]["MZ"],
+        "BuyPrice" => reduce(hcat, [inp["Market_BuyPrices"] for inp in inputs_list]),
+        "SellPrice" => reduce(hcat, [inp["Market_SellPrices"] for inp in inputs_list]),
+        "CO2_tons_MWh" => reduce(hcat, [inp["Market_CO2_tons_MWh"] for inp in inputs_list]))
+end
+
+@doc raw"""
+    get_market_tdr_profiles(mkt_data)
+
+Return the column names and profiles of the market buy and sell prices of the market zones, to be
+used as additional features in the clustering when `ClusterMarketPrices = 1`.
+"""
+function get_market_tdr_profiles(mkt_data)
+    col_names = String[]
+    profiles = []
+    for key in ("BuyPrice", "SellPrice"), z in mkt_data["MZ"]
+        push!(col_names, "Market_$(key)_$(z)")
+        push!(profiles, mkt_data[key][z, :])
+    end
+    return col_names, profiles
+end
+
+@doc raw"""
+    write_market_tdr_files(outdir, mkt_data, M, TimestepsPerRepPeriod)
+
+Write `Market_price.csv` and `Market_emissions.csv` to `outdir` for the representative periods
+`M`. For each representative period, the original market time series of that period are used, in
+the same order as the representative periods in the reduced `Demand_data.csv`. All zones are
+written, in the same format as the input files.
+"""
+function write_market_tdr_files(outdir, mkt_data, M, TimestepsPerRepPeriod)
+    hours = reduce(vcat,
+        [((m - 1) * TimestepsPerRepPeriod + 1):(m * TimestepsPerRepPeriod) for m in M])
+    Z = size(mkt_data["BuyPrice"], 1)
+    time_index = 1:length(hours)
+
+    price_df = DataFrame(Time_Index = time_index)
+    for z in 1:Z
+        price_df[!, "BuyPrice_$z"] = mkt_data["BuyPrice"][z, hours]
+    end
+    for z in 1:Z
+        price_df[!, "SellPrice_$z"] = mkt_data["SellPrice"][z, hours]
+    end
+    CSV.write(joinpath(outdir, "Market_price.csv"), price_df)
+
+    emissions_df = DataFrame(Time_Index = time_index)
+    for z in 1:Z
+        emissions_df[!, "CO2_tons_MWh_$z"] = mkt_data["CO2_tons_MWh"][z, hours]
+    end
+    CSV.write(joinpath(outdir, "Market_emissions.csv"), emissions_df)
+    return nothing
+end
+
+@doc raw"""
     cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; random=true)
 
 Use kmeans or kmedoids to cluster raw demand profiles and resource capacity factor profiles
@@ -626,6 +692,11 @@ In Demand_data.csv, include the following:
     Fuels\_data\_clustered.csv with reshaped fuel prices based on the number and size of the
     representative weeks, assuming a constant time series of fuel prices with length equal to the
     number of timesteps in the raw input data.
+ - ClusterMarketPrices - Either 1 or 0 (default 0), only considered if Markets = 1 in genx_settings.yml.
+    If 1, the market buy and sell price time series of the market zones in Market\_price.csv are
+    used as additional features in the clustering process. In both cases, Market\_price.csv and
+    Market\_emissions.csv are written to the TimeDomainReductionFolder, using the original market
+    time series of each representative period.
  -  MultiStageConcatenate - (Only considered if MultiStage = 1 in genx_settings.yml)
     If 1, this designates that the model should time domain reduce the input data
      of all model stages together. Else if 0, [still in development] the model will time domain reduce only
@@ -669,6 +740,8 @@ function cluster_inputs(inpath,
     DemandWeight = myTDRsetup["DemandWeight"]
     WeightTotal = myTDRsetup["WeightTotal"]
     ClusterFuelPrices = myTDRsetup["ClusterFuelPrices"]
+    ClusterMarketPrices = get(myTDRsetup, "ClusterMarketPrices", 0)
+    UseMarkets = get(mysetup, "Markets", 0) == 1
     TimeDomainReductionFolder = mysetup["TimeDomainReductionFolder"]
 
     MultiStage = mysetup["MultiStage"]
@@ -733,6 +806,8 @@ function cluster_inputs(inpath,
             demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
             demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
             col_to_zone_map, AllFuelsConst, stage_lengths, total_length, relative_lengths = parse_multi_stage_data(inputs_dict)
+            mkt_data = UseMarkets ?
+                       get_market_tdr_data([inputs_dict[t] for t in 1:NumStages]) : nothing
         else # TDR each period individually
             if v
                 println("MultiStage without Concatenation")
@@ -749,6 +824,7 @@ function cluster_inputs(inpath,
             demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
             demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
             col_to_zone_map, AllFuelsConst = parse_data(myinputs)
+            mkt_data = UseMarkets ? get_market_tdr_data([myinputs]) : nothing
         end
     else
         if v
@@ -763,9 +839,20 @@ function cluster_inputs(inpath,
         demand_col_names, var_col_names, solar_col_names, wind_col_names, fuel_col_names, all_col_names,
         demand_profiles, var_profiles, solar_profiles, wind_profiles, fuel_profiles, all_profiles,
         col_to_zone_map, AllFuelsConst = parse_data(myinputs)
+        mkt_data = UseMarkets ? get_market_tdr_data([myinputs]) : nothing
     end
     if v
         println()
+    end
+
+    # Optionally use market prices as additional clustering features
+    if UseMarkets && isnothing(mkt_data)
+        error("Markets = 1 but the market inputs were not loaded for time domain reduction.")
+    end
+    if UseMarkets && ClusterMarketPrices == 1
+        market_col_names, market_profiles = get_market_tdr_profiles(mkt_data)
+        all_col_names = [all_col_names; market_col_names]
+        all_profiles = [all_profiles..., market_profiles...]
     end
 
     # Remove Constant Columns - Add back later in final output
@@ -1370,6 +1457,16 @@ function cluster_inputs(inpath,
                 CSV.write(joinpath(inpath, "inputs", Stage_Outfiles[per]["Fuel"]),
                     NewFuelOutput)
 
+                ### TDR_Results/Market_price.csv and Market_emissions.csv
+                if UseMarkets
+                    if v
+                        println("Writing market profiles...")
+                    end
+                    write_market_tdr_files(
+                        joinpath(inpath, "inputs", "inputs_p$per", TimeDomainReductionFolder),
+                        mkt_data, M, TimestepsPerRepPeriod)
+                end
+
                 if mysetup["HourlyMatchingRequirement"] == 1
                     hm_in = load_dataframe(joinpath(inpath,
                         "inputs",
@@ -1534,6 +1631,16 @@ function cluster_inputs(inpath,
             CSV.write(joinpath(inpath, "inputs", input_stage_directory, Fuel_Outfile),
                 NewFuelOutput)
 
+            ### TDR_Results/Market_price.csv and Market_emissions.csv
+            if UseMarkets
+                if v
+                    println("Writing market profiles...")
+                end
+                write_market_tdr_files(
+                    joinpath(inpath, "inputs", input_stage_directory, TimeDomainReductionFolder),
+                    mkt_data, M, TimestepsPerRepPeriod)
+            end
+
             if mysetup["HourlyMatchingRequirement"] == 1
                 ### TDR_Results/HM_data.csv
                 hm_in = load_dataframe(joinpath(inpath,
@@ -1670,6 +1777,15 @@ function cluster_inputs(inpath,
             println("Writing fuel profiles...")
         end
         CSV.write(joinpath(inpath, Fuel_Outfile), NewFuelOutput)
+
+        ### TDR_Results/Market_price.csv and Market_emissions.csv
+        if UseMarkets
+            if v
+                println("Writing market profiles...")
+            end
+            write_market_tdr_files(joinpath(inpath, TimeDomainReductionFolder),
+                mkt_data, M, TimestepsPerRepPeriod)
+        end
 
         if mysetup["HourlyMatchingRequirement"] == 1
             ### TDR_Results/HM_data.csv

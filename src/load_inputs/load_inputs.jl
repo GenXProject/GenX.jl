@@ -89,7 +89,13 @@ function load_inputs(setup::Dict, path::AbstractString)
     if is_period_map_necessary(inputs) && is_period_map_exist(setup, path)
         load_period_map!(setup, path, inputs)
     end
-
+    
+    if setup["Markets"] == 1
+        load_zones_markets!(setup, system_path, inputs)
+        # Time series market files are read from the TDR folder when time domain reduction is used
+        load_market_price_data!(setup, path, inputs)
+        load_market_purchase_emissions_data!(setup, path, inputs)
+    end
     # Virtual charge discharge cost
     scale_factor = setup["ParameterScale"] == 1 ? ModelScalingFactor : 1
     inputs["VirtualChargeDischargeCost"] = setup["VirtualChargeDischargeCost"] /
