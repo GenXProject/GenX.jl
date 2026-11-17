@@ -423,6 +423,9 @@ function configure_multi_stage_inputs(inputs_d::Dict,
             gen_VRE_STOR.fixed_om_cost_charge_ac_per_mwyr = fixed_om_cost_charge_ac_per_mwyr.(gen_VRE_STOR) .*
                                                             OPEXMULT
         end
+
+        # Robust optimization: convert the investment-cost deltas the same way
+        ro_configure_multi_stage!(inputs_d, settings_d)
     end
 
     retirable = is_retirable(gen)
