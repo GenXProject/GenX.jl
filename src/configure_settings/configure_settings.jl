@@ -37,11 +37,13 @@ function default_settings()
         "ResourcePoliciesFolder" => "policy_assignments",
         "SystemFolder" => "system",
         "PoliciesFolder" => "policies",
+        "ToolsFolder" => "tools",
         "Benders" => 0,
         "ObjScale" => 1,
         "LDES_Feasible" => 0,
         "DiscreteInvestments" => 0,
-        "Bilinear_DC_OPF" => 0)
+        "Bilinear_DC_OPF" => 0,
+        "RO" => 0)
 end
 
 @doc raw"""
@@ -158,7 +160,8 @@ function default_writeoutput()
         "WriteTransmissionLosses" => true,
         "WriteVirtualDischarge" => true,
         "WriteVREStor" => true,
-        "WriteAngles" => true)
+        "WriteAngles" => true,
+        "WriteRO" => true)
 end
 
 function configure_writeoutput(output_settings_path::String, settings::Dict)
