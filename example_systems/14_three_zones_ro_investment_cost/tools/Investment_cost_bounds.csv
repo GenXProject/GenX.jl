@@ -1,0 +1,11 @@
+Resource,Inv_Cost_per_MWyr_bounds,Inv_Cost_per_MWhyr_bounds
+MA_battery,1960,2250
+CT_battery,1960,2250
+ME_battery,1960,2250
+MA_natural_gas_combined_cycle,6540,0
+CT_natural_gas_combined_cycle,6540,0
+ME_natural_gas_combined_cycle,6540,0
+MA_solar_pv,8530,0
+CT_onshore_wind,9720,0
+CT_solar_pv,8530,0
+ME_onshore_wind,9720,0

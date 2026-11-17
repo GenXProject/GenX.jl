@@ -1,0 +1,11 @@
+BudgetOfUncertainty: 4
+BudgetOfUncertainty_MarketBuyPrices: -1
+BudgetOfUncertainty_MarketSellPrices: -1
+BudgetOfUncertainty_FuelPrices: -1
+BudgetOfUncertainty_InvestmentCost: -1
+BudgetOfUncertainty_FixedOMCost: -1
+MarketBuyPrices: 0
+MarketSellPrices: 0
+FuelsCost: 0
+InvestmentCost: 1
+FixedOMCost: 0

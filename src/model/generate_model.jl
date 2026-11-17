@@ -386,6 +386,11 @@ function operation_model!(EP::Model, setup::Dict, inputs::Dict)
         cap_reserve_margin!(EP, inputs, setup)
     end
 
+    # Robust optimization: add the worst-case cost of uncertain parameters to the objective
+    if setup["RO"] == 1
+        ro!(EP, inputs, setup)
+    end
+
     # Hydrogen demand limits
     if setup["HydrogenMinimumProduction"] > 0
         if setup["Benders"] == 1
