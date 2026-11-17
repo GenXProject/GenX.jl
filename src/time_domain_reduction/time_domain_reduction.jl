@@ -584,6 +584,63 @@ function update_deprecated_tdr_inputs!(setup::Dict{Any, Any})
 end
 
 @doc raw"""
+    write_ro_tdr_bounds(source_dirs, out_dirs, mysetup, M, TimestepsPerRepPeriod)
+
+Robust optimization: write the hourly bounds files from `<ToolsFolder>` for the
+representative periods to `<TimeDomainReductionFolder>/<ToolsFolder>`.
+
+The bounds are not clustered. Each representative period takes the hours of the original
+period it stands for (`M`, i.e. `Rep_Period` in `Period_map.csv`), which is the same
+original data TDR writes for demand, variability and fuel prices, so the bounds stay
+aligned with them. Values are written in input units (no ParameterScale).
+
+`source_dirs` are the case folders whose `<ToolsFolder>` files are stacked in order to form
+the time series that `M` indexes, and the result is written to every folder in `out_dirs`:
+
+  * single stage, or multi-stage without concatenation: `[case]` → `[case]`
+  * multi-stage with concatenation: all `inputs_p<t>` folders → all `inputs_p<t>` folders
+    (the representative periods are drawn from the stacked stage time series and every stage
+    gets the same ones, as for demand)
+"""
+function write_ro_tdr_bounds(source_dirs::AbstractVector, out_dirs::AbstractVector, mysetup,
+        M, TimestepsPerRepPeriod)
+    H = TimestepsPerRepPeriod
+    rows = reduce(vcat, [((p - 1) * H + 1):(p * H) for p in M])
+
+    for filename in RO_HOURLY_BOUNDS_FILES
+        files = [joinpath(d, mysetup["ToolsFolder"], filename) for d in source_dirs]
+        present = isfile.(files)
+        any(present) || continue
+        all(present) ||
+            error("$filename is present for some stages but not others " *
+                  "(missing: $(files[.!present])); multi-stage TDR with concatenation " *
+                  "needs it in every stage.")
+        dfs = load_dataframe.(files)
+        df = try
+            reduce(vcat, dfs)
+        catch e
+            error("$filename: the stage files cannot be stacked (do they have the same " *
+                  "columns?): $(sprint(showerror, e))")
+        end
+        nrow(df) >= maximum(rows) ||
+            error("$filename has $(nrow(df)) rows; time domain reduction needs the full time " *
+                  "series (at least $(maximum(rows)) rows for representative periods $M).")
+        out = df[rows, :]
+        hasproperty(out, :Time_Index) && (out.Time_Index = 1:nrow(out))
+        for d in out_dirs
+            tools_out = joinpath(d, mysetup["TimeDomainReductionFolder"], mysetup["ToolsFolder"])
+            mkpath(tools_out)
+            CSV.write(joinpath(tools_out, filename), out)
+            println("TDR: wrote $filename for representative periods $(Int.(M)) to $tools_out")
+        end
+    end
+end
+
+function write_ro_tdr_bounds(inpath::AbstractString, mysetup, M, TimestepsPerRepPeriod)
+    write_ro_tdr_bounds([inpath], [inpath], mysetup, M, TimestepsPerRepPeriod)
+end
+
+@doc raw"""
     cluster_inputs(inpath, settings_path, mysetup, stage_id=-99, v=false; random=true)
 
 Use kmeans or kmedoids to cluster raw demand profiles and resource capacity factor profiles
@@ -692,12 +749,14 @@ function cluster_inputs(inpath,
     mysetup_local = copy(mysetup)
     # If ParameterScale =1 then make it zero, since clustered inputs will be scaled prior to generating model
     mysetup_local["ParameterScale"] = 0  # Performing cluster and report outputs in user-provided units
+    mysetup_local["RO"] = 0  # RO bounds are not clustered; they are written by write_ro_tdr_bounds
 
     # Define another local version of setup such that Multi-Stage Non-Concatentation TDR can iteratively read in the raw data
     mysetup_MS = copy(mysetup)
     mysetup_MS["TimeDomainReduction"] = 0
     mysetup_MS["DoNotReadPeriodMap"] = 1
     mysetup_MS["ParameterScale"] = 0
+    mysetup_MS["RO"] = 0
 
     if MultiStage == 1
         model_dict = Dict()
@@ -1403,6 +1462,15 @@ function cluster_inputs(inpath,
                     myTDRsetup)
             end
 
+            ### inputs_p<t>/TDR_Results/<ToolsFolder>/*_bounds.csv (robust optimization)
+            if get(mysetup, "RO", 0) == 1
+                if v
+                    println("Writing robust optimization bounds...")
+                end
+                stage_dirs = [joinpath(inpath, "inputs", "inputs_p$per") for per in 1:NumStages]
+                write_ro_tdr_bounds(stage_dirs, stage_dirs, mysetup, M, TimestepsPerRepPeriod)
+            end
+
         else
             if v
                 print("without Concatenation has not yet been fully implemented. ")
@@ -1570,6 +1638,15 @@ function cluster_inputs(inpath,
             YAML.write_file(
                 joinpath(inpath, "inputs", input_stage_directory, YAML_Outfile),
                 myTDRsetup)
+
+            ### inputs_p<t>/TDR_Results/<ToolsFolder>/*_bounds.csv (robust optimization)
+            if get(mysetup, "RO", 0) == 1
+                if v
+                    println("Writing robust optimization bounds...")
+                end
+                write_ro_tdr_bounds(joinpath(inpath, "inputs", input_stage_directory),
+                    mysetup, M, TimestepsPerRepPeriod)
+            end
         end
     else
         if v
@@ -1692,6 +1769,14 @@ function cluster_inputs(inpath,
             println("Writing period map...")
         end
         CSV.write(joinpath(inpath, PMap_Outfile), PeriodMap)
+
+        ### TDR_Results/<ToolsFolder>/*_bounds.csv (robust optimization)
+        if get(mysetup, "RO", 0) == 1
+            if v
+                println("Writing robust optimization bounds...")
+            end
+            write_ro_tdr_bounds(inpath, mysetup, M, TimestepsPerRepPeriod)
+        end
 
         ### TDR_Results/time_domain_reduction_settings.yml
         if v
